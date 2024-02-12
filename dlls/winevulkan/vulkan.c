@@ -61,48 +61,55 @@ static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
 
 static const struct vulkan_funcs *vk_funcs;
 
-#define WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, client_handle, host_handle, object) \
-    wine_vk_add_handle_mapping((instance), (uintptr_t)(client_handle), (uintptr_t)(host_handle), &(object)->mapping)
-#define WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, client_handle, host_handle, object) \
-    wine_vk_add_handle_mapping((instance), (uintptr_t)(client_handle), (host_handle), &(object)->mapping)
-static void wine_vk_add_handle_mapping(struct wine_instance *instance, uint64_t wrapped_handle,
-                                       uint64_t host_handle, struct wine_vk_mapping *mapping)
+static int wrapper_entry_compare(const void *key, const struct rb_entry *entry)
+{
+    struct wrapper_entry *wrapper = RB_ENTRY_VALUE(entry, struct wrapper_entry, entry);
+    const uint64_t *host_handle = key;
+    if (*host_handle < wrapper->host_handle) return -1;
+    if (*host_handle > wrapper->host_handle) return 1;
+    return 0;
+}
+
+static void add_handle_mapping(struct wine_instance *instance, uint64_t client_handle,
+                               uint64_t host_handle, struct wrapper_entry *entry)
 {
     if (instance->enable_wrapper_list)
     {
-        mapping->host_handle = host_handle;
-        mapping->wine_wrapped_handle = wrapped_handle;
+        entry->host_handle = host_handle;
+        entry->client_handle = client_handle;
+
         pthread_rwlock_wrlock(&instance->wrapper_lock);
-        list_add_tail(&instance->wrappers, &mapping->link);
+        rb_put(&instance->wrappers, &host_handle, &entry->entry);
         pthread_rwlock_unlock(&instance->wrapper_lock);
     }
 }
 
-#define WINE_VK_REMOVE_HANDLE_MAPPING(instance, object) \
-    wine_vk_remove_handle_mapping((instance), &(object)->mapping)
-static void wine_vk_remove_handle_mapping(struct wine_instance *instance, struct wine_vk_mapping *mapping)
+static void add_handle_mapping_ptr(struct wine_instance *instance, void *client_handle,
+                                   void *host_handle, struct wrapper_entry *entry)
+{
+    add_handle_mapping(instance, (uintptr_t)client_handle, (uintptr_t)host_handle, entry);
+}
+
+static void remove_handle_mapping(struct wine_instance *instance, struct wrapper_entry *entry)
 {
     if (instance->enable_wrapper_list)
     {
         pthread_rwlock_wrlock(&instance->wrapper_lock);
-        list_remove(&mapping->link);
+        rb_remove(&instance->wrappers, &entry->entry);
         pthread_rwlock_unlock(&instance->wrapper_lock);
     }
 }
 
-static uint64_t wine_vk_get_wrapper(struct wine_instance *instance, uint64_t host_handle)
+static uint64_t client_handle_from_host(struct wine_instance *instance, uint64_t host_handle)
 {
-    struct wine_vk_mapping *mapping;
+    struct rb_entry *entry;
     uint64_t result = 0;
 
     pthread_rwlock_rdlock(&instance->wrapper_lock);
-    LIST_FOR_EACH_ENTRY(mapping, &instance->wrappers, struct wine_vk_mapping, link)
+    if ((entry = rb_get(&instance->wrappers, &host_handle)))
     {
-        if (mapping->host_handle == host_handle)
-        {
-            result = mapping->wine_wrapped_handle;
-            break;
-        }
+        struct wrapper_entry *wrapper = RB_ENTRY_VALUE(entry, struct wrapper_entry, entry);
+        result = wrapper->client_handle;
     }
     pthread_rwlock_unlock(&instance->wrapper_lock);
     return result;
@@ -148,7 +155,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 
         if (wine_vk_is_type_wrapped(callback_data->pObjects[i].objectType))
         {
-            object_name_infos[i].objectHandle = wine_vk_get_wrapper(object->instance, callback_data->pObjects[i].objectHandle);
+            object_name_infos[i].objectHandle = client_handle_from_host(object->instance, callback_data->pObjects[i].objectHandle);
             if (!object_name_infos[i].objectHandle)
             {
                 WARN("handle conversion failed 0x%s\n", wine_dbgstr_longlong(callback_data->pObjects[i].objectHandle));
@@ -201,7 +208,7 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     params.layer_prefix = layer_prefix;
     params.message = message;
 
-    params.object_handle = wine_vk_get_wrapper(object->instance, object_handle);
+    params.object_handle = client_handle_from_host(object->instance, object_handle);
     if (!params.object_handle)
         params.object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
 
@@ -215,7 +222,7 @@ static void wine_vk_physical_device_free(struct wine_phys_dev *phys_dev)
     if (!phys_dev)
         return;
 
-    WINE_VK_REMOVE_HANDLE_MAPPING(phys_dev->instance, phys_dev);
+    remove_handle_mapping(phys_dev->instance, &phys_dev->wrapper_entry);
     free(phys_dev->extensions);
     free(phys_dev);
 }
@@ -239,7 +246,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
     object->host_physical_device = phys_dev;
 
     handle->base.unix_handle = (uintptr_t)object;
-    WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, handle, phys_dev, object);
+    add_handle_mapping_ptr(instance, handle, phys_dev, &object->wrapper_entry);
 
     instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(phys_dev, &object->memory_properties);
 
@@ -378,7 +385,7 @@ static void wine_vk_free_command_buffers(struct wine_device *device,
 
         device->funcs.p_vkFreeCommandBuffers(device->host_device, pool->host_command_pool, 1,
                                              &buffer->host_command_buffer);
-        WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, buffer);
+        remove_handle_mapping(device->phys_dev->instance, &buffer->wrapper_entry);
         buffer->handle->base.unix_handle = 0;
         free(buffer);
     }
@@ -421,7 +428,7 @@ static void wine_vk_device_get_queues(struct wine_device *device,
         }
 
         queue->handle->base.unix_handle = (uintptr_t)queue;
-        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, queue->handle, queue->host_queue, queue);
+        add_handle_mapping_ptr(device->phys_dev->instance, queue->handle, queue->host_queue, &queue->wrapper_entry);
 
         TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->host_queue);
     }
@@ -516,7 +523,7 @@ static void wine_vk_device_free(struct wine_device *device)
         {
             queue = &device->queues[i];
             if (queue && queue->host_queue)
-                WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, queue);
+                remove_handle_mapping(device->phys_dev->instance, &queue->wrapper_entry);
         }
         free(device->queues);
         device->queues = NULL;
@@ -524,7 +531,7 @@ static void wine_vk_device_free(struct wine_device *device)
 
     if (device->host_device && device->funcs.p_vkDestroyDevice)
     {
-        WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, device);
+        remove_handle_mapping(device->phys_dev->instance, &device->wrapper_entry);
         device->funcs.p_vkDestroyDevice(device->host_device, NULL /* pAllocator */);
     }
 
@@ -738,7 +745,7 @@ static void wine_vk_instance_free(struct wine_instance *instance)
     if (instance->host_instance)
     {
         vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
-        WINE_VK_REMOVE_HANDLE_MAPPING(instance, instance);
+        remove_handle_mapping(instance, &instance->wrapper_entry);
     }
 
     pthread_rwlock_destroy(&instance->wrapper_lock);
@@ -783,7 +790,7 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAll
         res = device->funcs.p_vkAllocateCommandBuffers(device->host_device, &allocate_info_host,
                                                        &buffer->host_command_buffer);
         buffer->handle->base.unix_handle = (uintptr_t)buffer;
-        WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, buffer->handle, buffer->host_command_buffer, buffer);
+        add_handle_mapping_ptr(device->phys_dev->instance, buffer->handle, buffer->host_command_buffer, &buffer->wrapper_entry);
         if (res != VK_SUCCESS)
         {
             ERR("Failed to allocate command buffer, res=%d.\n", res);
@@ -838,7 +845,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
         res = instance->funcs.p_vkCreateDevice(phys_dev->host_physical_device, &create_info_host,
                                                NULL /* allocator */, &object->host_device);
     free_conversion_context(&ctx);
-    WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, device_handle, object->host_device, object);
+    add_handle_mapping_ptr(instance, device_handle, object->host_device, &object->wrapper_entry);
     if (res != VK_SUCCESS)
     {
         WARN("Failed to create device, res=%d.\n", res);
@@ -914,7 +921,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         ERR("Failed to allocate memory for instance\n");
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
-    list_init(&object->wrappers);
+    rb_init(&object->wrappers, wrapper_entry_compare);
     pthread_rwlock_init(&object->wrapper_lock, NULL);
 
     init_conversion_context(&ctx);
@@ -930,7 +937,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
 
     object->handle = client_instance;
-    WINE_VK_ADD_DISPATCHABLE_MAPPING(object, object->handle, object->host_instance, object);
+    add_handle_mapping_ptr(object, object->handle, object->host_instance, &object->wrapper_entry);
 
     /* Load all instance functions we are aware of. Note the loader takes care
      * of any filtering for extensions which were not requested, but which the
@@ -1195,21 +1202,18 @@ VkResult wine_vkCreateCommandPool(VkDevice device_handle, const VkCommandPoolCre
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     res = device->funcs.p_vkCreateCommandPool(device->host_device, info, NULL, &object->host_command_pool);
-
-    if (res == VK_SUCCESS)
-    {
-        object->handle = (uintptr_t)handle;
-        handle->unix_handle = (uintptr_t)object;
-        WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object->handle,
-                                             object->host_command_pool, object);
-        *command_pool = object->handle;
-    }
-    else
+    if (res != VK_SUCCESS)
     {
         free(object);
+        return res;
     }
 
-    return res;
+    object->handle = (uintptr_t)handle;
+    handle->unix_handle = (uintptr_t)object;
+
+    *command_pool = object->handle;
+    add_handle_mapping(device->phys_dev->instance, *command_pool, object->host_command_pool, &object->wrapper_entry);
+    return VK_SUCCESS;
 }
 
 void wine_vkDestroyCommandPool(VkDevice device_handle, VkCommandPool handle,
@@ -1221,8 +1225,7 @@ void wine_vkDestroyCommandPool(VkDevice device_handle, VkCommandPool handle,
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, pool);
-
+    remove_handle_mapping(device->phys_dev->instance, &pool->wrapper_entry);
     device->funcs.p_vkDestroyCommandPool(device->host_device, pool->host_command_pool, NULL);
     free(pool);
 }
@@ -1604,13 +1607,10 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCre
     }
 
     object->host_surface = vk_funcs->p_wine_get_host_surface(object->driver_surface);
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->host_surface, object);
-
-    *surface = wine_surface_to_handle(object);
     if (dummy) NtUserDestroyWindow(dummy);
 
     *surface = wine_surface_to_handle(object);
-
+    add_handle_mapping(instance, *surface, object->host_surface, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -1624,7 +1624,7 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
         return;
 
     instance->funcs.p_vkDestroySurfaceKHR(instance->host_instance, object->driver_surface, NULL);
-    WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
+    remove_handle_mapping(instance, &object->wrapper_entry);
 
     free(object);
 }
@@ -1666,10 +1666,9 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object, object->host_swapchain, object);
     *swapchain_handle = wine_swapchain_to_handle(object);
-
-    return res;
+    add_handle_mapping(instance, *swapchain_handle, object->host_swapchain, &object->wrapper_entry);
+    return VK_SUCCESS;
 }
 
 void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain_handle,
@@ -1682,7 +1681,7 @@ void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain
     if (!swapchain) return;
 
     device->funcs.p_vkDestroySwapchainKHR(device->host_device, swapchain->host_swapchain, NULL);
-    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, swapchain);
+    remove_handle_mapping(device->phys_dev->instance, &swapchain->wrapper_entry);
 
     free(swapchain);
 }
@@ -1776,10 +1775,11 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
         return result;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, memory, memory->host_memory, memory);
     memory->size = info.allocationSize;
     memory->vm_map = mapping;
+
     *ret = (VkDeviceMemory)(uintptr_t)memory;
+    add_handle_mapping(device->phys_dev->instance, *ret, memory->host_memory, &memory->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -1803,7 +1803,7 @@ void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAl
         device->funcs.p_vkUnmapMemory2KHR(device->host_device, &info);
     }
 
-    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, memory);
+    remove_handle_mapping(device->phys_dev->instance, &memory->wrapper_entry);
     device->funcs.p_vkFreeMemory(device->host_device, memory->host_memory, NULL);
 
     if (memory->vm_map)
@@ -2155,9 +2155,8 @@ VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance handle,
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->host_debug_messenger, object);
     *messenger = wine_debug_utils_messenger_to_handle(object);
-
+    add_handle_mapping(instance, *messenger, object->host_debug_messenger, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2173,7 +2172,7 @@ void wine_vkDestroyDebugUtilsMessengerEXT(VkInstance handle, VkDebugUtilsMesseng
         return;
 
     instance->funcs.p_vkDestroyDebugUtilsMessengerEXT(instance->host_instance, object->host_debug_messenger, NULL);
-    WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
+    remove_handle_mapping(instance, &object->wrapper_entry);
 
     free(object);
 }
@@ -2211,9 +2210,8 @@ VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance handle,
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->host_debug_callback, object);
     *callback = wine_debug_report_callback_to_handle(object);
-
+    add_handle_mapping(instance, *callback, object->host_debug_callback, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2229,14 +2227,14 @@ void wine_vkDestroyDebugReportCallbackEXT(VkInstance handle, VkDebugReportCallba
         return;
 
     instance->funcs.p_vkDestroyDebugReportCallbackEXT(instance->host_instance, object->host_debug_callback, NULL);
-    WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
+    remove_handle_mapping(instance, &object->wrapper_entry);
 
     free(object);
 }
 
 VkResult wine_vkCreateDeferredOperationKHR(VkDevice                     handle,
                                            const VkAllocationCallbacks* allocator,
-                                           VkDeferredOperationKHR*      deferredOperation)
+                                           VkDeferredOperationKHR*      operation)
 {
     struct wine_device *device = wine_device_from_handle(handle);
     struct wine_deferred_operation *object;
@@ -2258,9 +2256,8 @@ VkResult wine_vkCreateDeferredOperationKHR(VkDevice                     handle,
 
     init_conversion_context(&object->ctx);
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, object, object->host_deferred_operation, object);
-    *deferredOperation = wine_deferred_operation_to_handle(object);
-
+    *operation = wine_deferred_operation_to_handle(object);
+    add_handle_mapping(device->phys_dev->instance, *operation, object->host_deferred_operation, &object->wrapper_entry);
     return VK_SUCCESS;
 }
 
@@ -2277,7 +2274,7 @@ void wine_vkDestroyDeferredOperationKHR(VkDevice                     handle,
         return;
 
     device->funcs.p_vkDestroyDeferredOperationKHR(device->host_device, object->host_deferred_operation, NULL);
-    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, object);
+    remove_handle_mapping(device->phys_dev->instance, &object->wrapper_entry);
 
     free_conversion_context(&object->ctx);
     free(object);

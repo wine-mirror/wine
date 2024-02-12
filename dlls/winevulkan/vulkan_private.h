@@ -28,14 +28,16 @@
 #include "vulkan_loader.h"
 #include "vulkan_thunks.h"
 
+#include "wine/rbtree.h"
+
 /* Some extensions have callbacks for those we need to be able to
  * get the wine wrapper for a host handle
  */
-struct wine_vk_mapping
+struct wrapper_entry
 {
-    struct list link;
+    struct rb_entry entry;
     uint64_t host_handle;
-    uint64_t wine_wrapped_handle;
+    uint64_t client_handle;
 };
 
 struct wine_cmd_buffer
@@ -45,7 +47,7 @@ struct wine_cmd_buffer
     VkCommandBuffer handle; /* client command buffer */
     VkCommandBuffer host_command_buffer;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffer handle)
@@ -64,7 +66,7 @@ struct wine_device
     struct wine_queue *queues;
     uint32_t queue_count;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_device *wine_device_from_handle(VkDevice handle)
@@ -83,7 +85,7 @@ struct wine_debug_report_callback
     PFN_vkDebugReportCallbackEXT user_callback;
     void *user_data;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 struct wine_instance
@@ -101,7 +103,7 @@ struct wine_instance
 
     VkBool32 enable_win32_surface;
     VkBool32 enable_wrapper_list;
-    struct list wrappers;
+    struct rb_tree wrappers;
     pthread_rwlock_t wrapper_lock;
 
     struct wine_debug_utils_messenger *utils_messengers;
@@ -111,7 +113,7 @@ struct wine_instance
 
     unsigned int quirks;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
@@ -133,7 +135,7 @@ struct wine_phys_dev
     uint32_t external_memory_align;
     uint32_t map_placed_align;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
@@ -152,7 +154,7 @@ struct wine_queue
     uint32_t queue_index;
     VkDeviceQueueCreateFlags flags;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
@@ -165,7 +167,7 @@ struct wine_cmd_pool
     VkCommandPool handle;
     VkCommandPool host_command_pool;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool handle)
@@ -180,7 +182,7 @@ struct wine_device_memory
     VkDeviceSize size;
     void *vm_map;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)
@@ -197,7 +199,7 @@ struct wine_debug_utils_messenger
     PFN_vkDebugUtilsMessengerCallbackEXT user_callback;
     void *user_data;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_debug_utils_messenger *wine_debug_utils_messenger_from_handle(
@@ -230,7 +232,7 @@ struct wine_surface
     VkSurfaceKHR driver_surface;
     HWND hwnd;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_surface *wine_surface_from_handle(VkSurfaceKHR handle)
@@ -247,7 +249,7 @@ struct wine_swapchain
 {
     VkSwapchainKHR host_swapchain;
 
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_swapchain *wine_swapchain_from_handle(VkSwapchainKHR handle)
@@ -314,7 +316,7 @@ struct wine_deferred_operation
 {
     VkDeferredOperationKHR host_deferred_operation;
     struct conversion_context ctx; /* to keep params alive. */
-    struct wine_vk_mapping mapping;
+    struct wrapper_entry wrapper_entry;
 };
 
 static inline struct wine_deferred_operation *wine_deferred_operation_from_handle(
