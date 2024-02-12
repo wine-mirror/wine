@@ -28,6 +28,7 @@ var JS_E_VBARRAY_EXPECTED = 0x800a1395;
 var JS_E_ENUMERATOR_EXPECTED = 0x800a1397;
 var JS_E_REGEXP_EXPECTED = 0x800a1398;
 var JS_E_UNEXPECTED_QUANTIFIER = 0x800a139a;
+var JS_E_INVALID_LENGTH = 0x800a13a5;
 var JS_E_INVALID_WRITABLE_PROP_DESC = 0x800a13ac;
 var JS_E_NONCONFIGURABLE_REDEFINED = 0x800a13d6;
 var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
@@ -1679,6 +1680,53 @@ sync_test("RegExp", function() {
         var n = ex.number >>> 0;
         ok(n === JS_E_UNEXPECTED_QUANTIFIER, "/(?<a>b)/ regex threw " + n);
     }
+});
+
+sync_test("ArrayBuffers & Views", function() {
+    var r, buf;
+
+    function test_own_props(obj_name, props) {
+        var obj = eval(obj_name);
+        for(var i = 0; i < props.length; i++)
+            ok(Object.prototype.hasOwnProperty.call(obj, props[i]), props[i] + " not a property of " + obj_name);
+    }
+
+    function test_readonly(obj, prop, val) {
+        var name = Object.getPrototypeOf(obj).constructor.toString();
+        name = name.substring(9, name.indexOf("(", 9)) + ".prototype." + prop;
+        obj[prop] = val + 42;
+        ok(obj[prop] === val, name + " not read-only");
+    }
+
+    test_own_props("ArrayBuffer", [ "isView" ]);
+    test_own_props("ArrayBuffer.prototype", [ "byteLength", "slice" ]);
+    test_own_data_prop_desc(ArrayBuffer.prototype, "byteLength", false, false, false);
+
+    r = Object.prototype.toString.call(new ArrayBuffer());
+    ok(r === "[object ArrayBuffer]", "Object toString(new ArrayBuffer()) = " + r);
+    r = ArrayBuffer.length;
+    ok(r === 1, "ArrayBuffer.length = " + r);
+    r = ArrayBuffer.isView.length;
+    ok(r === 1, "ArrayBuffer.isView.length = " + r);
+    r = ArrayBuffer.prototype.slice.length;
+    ok(r === 2, "ArrayBuffer.prototype.slice.length = " + r);
+
+    try {
+        new ArrayBuffer(-1);
+        ok(false, "new ArrayBuffer(-1) did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_INVALID_LENGTH, "new ArrayBuffer(-1) threw " + n);
+    }
+
+    buf = new ArrayBuffer();
+    ok(buf.byteLength === 0, "ArrayBuffer().byteLength = " + buf.byteLength);
+    buf = new ArrayBuffer(13.1);
+    ok(buf.byteLength === 13, "ArrayBuffer(13).byteLength = " + buf.byteLength);
+    buf = ArrayBuffer("10");
+    ok(buf.byteLength === 10, "ArrayBuffer(10).byteLength = " + buf.byteLength);
+    test_readonly(buf, "byteLength", 10);
+    test_own_data_prop_desc(buf, "byteLength", false, false, false);
 });
 
 sync_test("builtin_context", function() {

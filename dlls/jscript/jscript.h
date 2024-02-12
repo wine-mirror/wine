@@ -116,6 +116,7 @@ typedef enum {
     JSCLASS_ARGUMENTS,
     JSCLASS_VBARRAY,
     JSCLASS_JSON,
+    JSCLASS_ARRAYBUFFER,
     JSCLASS_MAP,
     JSCLASS_SET,
     JSCLASS_WEAKMAP,
@@ -435,11 +436,12 @@ struct _script_ctx_t {
             jsdisp_t *regexp_constr;
             jsdisp_t *string_constr;
             jsdisp_t *vbarray_constr;
+            jsdisp_t *arraybuf_constr;
             jsdisp_t *map_prototype;
             jsdisp_t *set_prototype;
             jsdisp_t *weakmap_prototype;
         };
-        jsdisp_t *global_objects[23];
+        jsdisp_t *global_objects[24];
     };
 };
 C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, weakmap_prototype) == RTL_SIZEOF_THROUGH_FIELD(script_ctx_t, global_objects));
@@ -464,6 +466,7 @@ HRESULT init_global(script_ctx_t*);
 HRESULT init_function_constr(script_ctx_t*,jsdisp_t*);
 HRESULT create_object_prototype(script_ctx_t*,jsdisp_t**);
 HRESULT init_set_constructor(script_ctx_t*);
+HRESULT init_arraybuf_constructors(script_ctx_t*);
 
 HRESULT create_activex_constr(script_ctx_t*,jsdisp_t**);
 HRESULT create_array_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**);

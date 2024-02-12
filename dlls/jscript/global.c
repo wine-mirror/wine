@@ -1148,5 +1148,9 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
+    hres = init_arraybuf_constructors(ctx);
+    if(FAILED(hres))
+        return hres;
+
     return init_set_constructor(ctx);
 }

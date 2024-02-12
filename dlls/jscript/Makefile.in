@@ -4,6 +4,7 @@ IMPORTS   = oleaut32 ole32 user32 advapi32
 SOURCES = \
 	activex.c \
 	array.c \
+	arraybuf.c \
 	bool.c \
 	cc_parser.y \
 	compile.c \
