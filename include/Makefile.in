@@ -673,6 +673,7 @@ SOURCES = \
 	rmxfguid.h \
 	rmxftmpl.x \
 	roapi.h \
+	robuffer.idl \
 	roerrorapi.h \
 	rometadata.h \
 	rometadataresolution.h \
