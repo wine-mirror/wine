@@ -2221,13 +2221,22 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 struct pointer
 {
     struct list entry;
+    struct timeout_user *timeout;
     struct desktop *desktop;
     user_handle_t win;
     int primary;
     hw_input_t input;
 };
 
-static void queue_pointer_message( struct pointer *pointer )
+static void queue_pointer_message( struct pointer *pointer, int repeated );
+
+static void pointer_message_timeout( void *private )
+{
+    struct pointer *pointer = private;
+    queue_pointer_message( pointer, 1 );
+}
+
+static void queue_pointer_message( struct pointer *pointer, int repeated )
 {
     static const unsigned int messages[][2] =
     {
@@ -2265,7 +2274,13 @@ static void queue_pointer_message( struct pointer *pointer )
         queue_hardware_message( desktop, msg, 1 );
     }
 
-    if (input->hw.msg == WM_POINTERUP)
+    if (input->hw.msg != WM_POINTERUP)
+    {
+        pointer->input.hw.msg = WM_POINTERUPDATE;
+        pointer->input.hw.wparam &= ~(POINTER_MESSAGE_FLAG_NEW << 16);
+        pointer->timeout = add_timeout_user( -160000, pointer_message_timeout, pointer );
+    }
+    else
     {
         list_remove( &pointer->entry );
         free( pointer );
@@ -2280,6 +2295,7 @@ static struct pointer *find_pointer_from_id( struct desktop *desktop, unsigned i
         if (LOWORD(pointer->input.hw.wparam) == id) return pointer;
 
     pointer = mem_alloc( sizeof(struct pointer) );
+    pointer->timeout = NULL;
     pointer->desktop = desktop;
     pointer->primary = list_empty( &desktop->pointers );
     list_add_tail( &desktop->pointers, &pointer->entry );
@@ -2321,10 +2337,11 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
     if (input->hw.msg == WM_POINTERDOWN || input->hw.msg == WM_POINTERUP || input->hw.msg == WM_POINTERUPDATE)
     {
         pointer = find_pointer_from_id( desktop, LOWORD(input->hw.wparam) );
+        if (pointer->timeout) remove_timeout_user( pointer->timeout );
         pointer->input = *input;
         pointer->win = win;
 
-        queue_pointer_message( pointer );
+        queue_pointer_message( pointer, 0 );
         return;
     }
 
@@ -2661,6 +2678,7 @@ void free_pointers( struct desktop *desktop )
     LIST_FOR_EACH_ENTRY_SAFE( pointer, next, &desktop->pointers, struct pointer, entry )
     {
         list_remove( &pointer->entry );
+        if (pointer->timeout) remove_timeout_user( pointer->timeout );
         free( pointer );
     }
 }
