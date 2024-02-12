@@ -236,6 +236,45 @@ static inline void copy_type_data(void *dst, const void *src, unsigned type_size
             out[i] = in[type_size - i - 1];
 }
 
+static HRESULT get_data(script_ctx_t *ctx, jsval_t vthis, unsigned argc, jsval_t *argv, unsigned type_size, void *ret)
+{
+    BOOL little_endian = FALSE;
+    DataViewInstance *view;
+    HRESULT hres;
+    DWORD offset;
+    BYTE *data;
+    double n;
+
+    if(!(view = dataview_this(vthis)))
+        return JS_E_NOT_DATAVIEW;
+    if(!argc || is_undefined(argv[0]))
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+
+    hres = to_integer(ctx, argv[0], &n);
+    if(FAILED(hres))
+        return hres;
+
+    if(n < 0.0 || n + type_size > view->size)
+        return JS_E_DATAVIEW_INVALID_ACCESS;
+
+    offset = n;
+    data = &view->buffer->buf[view->offset + offset];
+
+    if(type_size == 1) {
+        *(BYTE*)ret = data[0];
+        return S_OK;
+    }
+
+    if(argc > 1) {
+        hres = to_boolean(argv[1], &little_endian);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    copy_type_data(ret, data, type_size, little_endian);
+    return S_OK;
+}
+
 static HRESULT set_data(script_ctx_t *ctx, jsval_t vthis, unsigned argc, jsval_t *argv, unsigned type_size, const void *val)
 {
     BOOL little_endian = FALSE;
@@ -272,6 +311,118 @@ static HRESULT set_data(script_ctx_t *ctx, jsval_t vthis, unsigned argc, jsval_t
     }
 
     copy_type_data(data, val, type_size, little_endian);
+    return S_OK;
+}
+
+static HRESULT DataView_getFloat32(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    float v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getFloat64(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    double v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getInt8(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT8 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getInt16(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT16 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getInt32(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT32 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getUint8(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    UINT8 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getUint16(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    UINT16 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
+    return S_OK;
+}
+
+static HRESULT DataView_getUint32(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    UINT32 v;
+
+    TRACE("\n");
+
+    hres = get_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_number(v);
     return S_OK;
 }
 
@@ -382,6 +533,14 @@ static HRESULT DataView_setInt32(script_ctx_t *ctx, jsval_t vthis, WORD flags, u
 }
 
 static const builtin_prop_t DataView_props[] = {
+    {L"getFloat32",            DataView_getFloat32,        PROPF_METHOD|1},
+    {L"getFloat64",            DataView_getFloat64,        PROPF_METHOD|1},
+    {L"getInt16",              DataView_getInt16,          PROPF_METHOD|1},
+    {L"getInt32",              DataView_getInt32,          PROPF_METHOD|1},
+    {L"getInt8",               DataView_getInt8,           PROPF_METHOD|1},
+    {L"getUint16",             DataView_getUint16,         PROPF_METHOD|1},
+    {L"getUint32",             DataView_getUint32,         PROPF_METHOD|1},
+    {L"getUint8",              DataView_getUint8,          PROPF_METHOD|1},
     {L"setFloat32",            DataView_setFloat32,        PROPF_METHOD|1},
     {L"setFloat64",            DataView_setFloat64,        PROPF_METHOD|1},
     {L"setInt16",              DataView_setInt16,          PROPF_METHOD|1},

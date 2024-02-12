@@ -1751,10 +1751,10 @@ sync_test("ArrayBuffers & Views", function() {
 
     test_own_props("DataView.prototype", [
         "buffer", "byteLength", "byteOffset",
-        "setInt8",  "setUint8",
-        "setInt16", "setUint16",
-        "setInt32", "setUint32",
-        "setFloat32", "setFloat64"
+        "getInt8",  "setInt8",  "getUint8",  "setUint8",
+        "getInt16", "setInt16", "getUint16", "setUint16",
+        "getInt32", "setInt32", "getUint32", "setUint32",
+        "getFloat32", "setFloat32", "getFloat64", "setFloat64"
     ]);
 
     r = Object.prototype.toString.call(new DataView(buf));
@@ -1869,8 +1869,51 @@ sync_test("ArrayBuffers & Views", function() {
     ok(view.byteLength === 10, "DataView(buf).byteLength = " + view.byteLength);
     ok(view.byteOffset === 0,  "DataView(buf).byteOffset = " + view.byteOffset);
 
+    for(i = 0; i < 10; i++) {
+        r = view.getInt8(i);
+        ok(r === 0, "view byte " + i + " = " + r);
+    }
+
     for(i = 0; i < types.length; i++) {
-        var method = "set" + types[i][0], offs = 11 - types[i][1];
+        var method = "get" + types[i][0], offs = 11 - types[i][1];
+        r = DataView.prototype[method].length;
+        ok(r === 1, "DataView.prototype." + method + ".length = " + r);
+        try {
+            view[method]();
+            ok(false, "view." + method + "() did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_DATAVIEW_NO_ARGUMENT, "view." + method + "() threw " + n);
+        }
+        try {
+            view[method](-1);
+            ok(false, "view." + method + "(-1) did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_DATAVIEW_INVALID_ACCESS, "view." + method + "(-1) threw " + n);
+        }
+        try {
+            view[method](offs);
+            ok(false, "view." + method + "(" + offs + ") did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_DATAVIEW_INVALID_ACCESS, "view." + method + "(" + offs + ") threw " + n);
+        }
+        try {
+            view[method].call(null, 0);
+            ok(false, "view." + method + "(0) with null context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_DATAVIEW, "view." + method + "(0) with null context threw " + n);
+        }
+        try {
+            view[method].call({}, 0);
+            ok(false, "view." + method + "(0) with an object context did not throw exception");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === JS_E_NOT_DATAVIEW, "view." + method + "(0) with an object context threw " + n);
+        }
+        method = "set" + types[i][0];
         r = DataView.prototype[method].length;
         ok(r === 1, "DataView.prototype." + method + ".length = " + r);
         try {
@@ -1919,14 +1962,26 @@ sync_test("ArrayBuffers & Views", function() {
 
     r = view.setInt8(1, -257);
     ok(r === undefined, "view.setInt8(1, -1) returned " + r);
+    r = view.getUint16(0);
+    ok(r === 255, "view.getUint16(0) returned " + r);
+    r = view.getUint16(0, true);
+    ok(r === 65280, "view.getUint16(0, true) returned " + r);
     r = view.setUint32(2, "12345678", true);
     ok(r === undefined, "view.setUint32(2, '12345678', true) returned " + r);
+    r = view.getInt32(1);
+    ok(r === -11640388, "view.getInt32(1) returned " + r);
     r = view.setInt16(3, 65535, true);
     ok(r === undefined, "view.setInt16(3, 65535) returned " + r);
+    r = view.getUint16(3);
+    ok(r === 65535, "view.getUint16(3) returned " + r);
     r = view.setUint32(0, -2, true);
     ok(r === undefined, "view.setUint32(0, -2) returned " + r);
+    r = view.getInt32(0, true);
+    ok(r === -2, "view.getInt32(0) returned " + r);
     r = view.setFloat32(6, 1234.5, true);
     ok(r === undefined, "view.setFloat32(6, 1234.5) returned " + r);
+    r = view2.getFloat32(0, true);
+    ok(r === 1234.5, "view2.getFloat32(0) returned " + r);
 
     /* setters differing only in signedness have identical behavior, but they're not the same methods */
     ok(view.setInt8 !== view.setUint8, "setInt8 and setUint8 are the same method");
