@@ -3902,15 +3902,15 @@ msgstr "条件编译已关闭"
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:87
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 编译错误"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:88
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 运行时错误"
 
-#: dlls/jscript/jscript.rc:86 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:89 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知运行时错误"
 
@@ -4025,14 +4025,28 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性 '|'"
 
 #: dlls/jscript/jscript.rc:80
-msgid "'this' is not a | object"
+#, fuzzy
+#| msgid "'this' is not a | object"
+msgid "'this' is not a DataView object"
 msgstr "'this' 不是 | 对象"
 
 #: dlls/jscript/jscript.rc:81
+msgid "Required argument offset or value in DataView method is not specified"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:82
+msgid "DataView constructor argument offset is invalid"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:83
+msgid "'this' is not a | object"
+msgstr "'this' 不是 | 对象"
+
+#: dlls/jscript/jscript.rc:84
 msgid "'key' is not an object"
 msgstr "'key' 不是一个对象"
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:85
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 

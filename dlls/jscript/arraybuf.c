@@ -31,9 +31,28 @@ typedef struct {
     DECLSPEC_ALIGN(sizeof(double)) BYTE buf[];
 } ArrayBufferInstance;
 
+typedef struct {
+    jsdisp_t dispex;
+
+    ArrayBufferInstance *buffer;
+    DWORD offset;
+    DWORD size;
+} DataViewInstance;
+
 static inline ArrayBufferInstance *arraybuf_from_jsdisp(jsdisp_t *jsdisp)
 {
     return CONTAINING_RECORD(jsdisp, ArrayBufferInstance, dispex);
+}
+
+static inline DataViewInstance *dataview_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, DataViewInstance, dispex);
+}
+
+static inline ArrayBufferInstance *arraybuf_this(jsval_t vthis)
+{
+    jsdisp_t *jsdisp = is_object_instance(vthis) ? to_jsdisp(get_object(vthis)) : NULL;
+    return (jsdisp && is_class(jsdisp, JSCLASS_ARRAYBUFFER)) ? arraybuf_from_jsdisp(jsdisp) : NULL;
 }
 
 static HRESULT ArrayBuffer_get_byteLength(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
@@ -159,10 +178,180 @@ static const builtin_info_t ArrayBufferConstr_info = {
     NULL
 };
 
-HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
+static inline DataViewInstance *dataview_this(jsval_t vthis)
+{
+    jsdisp_t *jsdisp = is_object_instance(vthis) ? to_jsdisp(get_object(vthis)) : NULL;
+    return (jsdisp && is_class(jsdisp, JSCLASS_DATAVIEW)) ? dataview_from_jsdisp(jsdisp) : NULL;
+}
+
+static HRESULT DataView_get_buffer(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    DataViewInstance *view;
+
+    TRACE("\n");
+
+    if(!(view = dataview_this(vthis)))
+        return JS_E_NOT_DATAVIEW;
+    if(r) *r = jsval_obj(jsdisp_addref(&view->buffer->dispex));
+    return S_OK;
+}
+
+static HRESULT DataView_get_byteLength(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    DataViewInstance *view;
+
+    TRACE("\n");
+
+    if(!(view = dataview_this(vthis)))
+        return JS_E_NOT_DATAVIEW;
+    if(r) *r = jsval_number(view->size);
+    return S_OK;
+}
+
+static HRESULT DataView_get_byteOffset(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    DataViewInstance *view;
+
+    TRACE("\n");
+
+    if(!(view = dataview_this(vthis)))
+        return JS_E_NOT_DATAVIEW;
+    if(r) *r = jsval_number(view->offset);
+    return S_OK;
+}
+
+static void DataView_destructor(jsdisp_t *dispex)
+{
+    DataViewInstance *view = dataview_from_jsdisp(dispex);
+    if(view->buffer)
+        jsdisp_release(&view->buffer->dispex);
+    free(view);
+}
+
+static HRESULT DataView_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
+{
+    DataViewInstance *view = dataview_from_jsdisp(dispex);
+    return gc_process_linked_obj(gc_ctx, op, dispex, &view->buffer->dispex, (void**)&view->buffer);
+}
+
+static const builtin_info_t DataView_info = {
+    JSCLASS_DATAVIEW,
+    NULL,
+    0,
+    NULL,
+    DataView_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    DataView_gc_traverse
+};
+
+static const builtin_info_t DataViewInst_info = {
+    JSCLASS_DATAVIEW,
+    NULL,
+    0,
+    NULL,
+    DataView_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    DataView_gc_traverse
+};
+
+static HRESULT DataViewConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
 {
     ArrayBufferInstance *arraybuf;
+    DataViewInstance *view;
+    DWORD offset = 0, size;
     HRESULT hres;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_METHOD:
+    case DISPATCH_CONSTRUCT: {
+        if(!argc || !(arraybuf = arraybuf_this(argv[0])))
+            return JS_E_DATAVIEW_NO_ARGUMENT;
+        size = arraybuf->size;
+
+        if(argc > 1) {
+            double offs, len, maxsize = size;
+            hres = to_integer(ctx, argv[1], &offs);
+            if(FAILED(hres))
+                return hres;
+            if(offs < 0.0 || offs > maxsize)
+                return JS_E_DATAVIEW_INVALID_OFFSET;
+            offset = offs;
+
+            if(argc > 2 && !is_undefined(argv[2])) {
+                hres = to_integer(ctx, argv[2], &len);
+                if(FAILED(hres))
+                    return hres;
+                if(len < 0.0 || offs+len > maxsize)
+                    return JS_E_DATAVIEW_INVALID_OFFSET;
+                size = len;
+            }else
+                size -= offset;
+        }
+
+        if(!r)
+            return S_OK;
+
+        if(!(view = calloc(1, sizeof(DataViewInstance))))
+            return E_OUTOFMEMORY;
+
+        hres = init_dispex_from_constr(&view->dispex, ctx, &DataViewInst_info, ctx->dataview_constr);
+        if(FAILED(hres)) {
+            free(view);
+            return hres;
+        }
+
+        jsdisp_addref(&arraybuf->dispex);
+        view->buffer = arraybuf;
+        view->offset = offset;
+        view->size = size;
+
+        *r = jsval_obj(&view->dispex);
+        break;
+    }
+    default:
+        FIXME("unimplemented flags: %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static const builtin_info_t DataViewConstr_info = {
+    JSCLASS_FUNCTION,
+    Function_value,
+    0,
+    NULL,
+    NULL,
+    NULL
+};
+
+HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
+{
+    static const struct {
+        const WCHAR *name;
+        builtin_invoke_t get;
+    } DataView_getters[] = {
+        { L"buffer",        DataView_get_buffer },
+        { L"byteLength",    DataView_get_byteLength },
+        { L"byteOffset",    DataView_get_byteOffset },
+    };
+    ArrayBufferInstance *arraybuf;
+    DataViewInstance *view;
+    property_desc_t desc;
+    HRESULT hres;
+    unsigned i;
 
     if(ctx->version < SCRIPTLANGUAGEVERSION_ES5)
         return S_OK;
@@ -184,6 +373,52 @@ HRESULT init_arraybuf_constructors(script_ctx_t *ctx)
 
     hres = jsdisp_define_data_property(ctx->global, L"ArrayBuffer", PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                        jsval_obj(ctx->arraybuf_constr));
+    if(FAILED(hres))
+        return hres;
+
+    if(!(view = calloc(1, sizeof(DataViewInstance))))
+        return E_OUTOFMEMORY;
+
+    hres = create_arraybuf(ctx, 0, &view->buffer);
+    if(FAILED(hres)) {
+        free(view);
+        return hres;
+    }
+
+    hres = init_dispex(&view->dispex, ctx, &DataView_info, ctx->object_prototype);
+    if(FAILED(hres)) {
+        jsdisp_release(&view->buffer->dispex);
+        free(view);
+        return hres;
+    }
+
+    desc.flags = PROPF_CONFIGURABLE;
+    desc.mask  = PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+    desc.explicit_getter = desc.explicit_setter = TRUE;
+    desc.explicit_value = FALSE;
+    desc.setter = NULL;
+
+    /* FIXME: If we find we need builtin accessors in other places, we should consider a more generic solution */
+    for(i = 0; i < ARRAY_SIZE(DataView_getters); i++) {
+        hres = create_builtin_function(ctx, DataView_getters[i].get, NULL, NULL, PROPF_METHOD, NULL, &desc.getter);
+        if(SUCCEEDED(hres)) {
+            hres = jsdisp_define_property(&view->dispex, DataView_getters[i].name, &desc);
+            jsdisp_release(desc.getter);
+        }
+        if(FAILED(hres)) {
+            jsdisp_release(&view->dispex);
+            return hres;
+        }
+    }
+
+    hres = create_builtin_constructor(ctx, DataViewConstr_value, L"DataView", &DataViewConstr_info,
+                                      PROPF_CONSTR|1, &view->dispex, &ctx->dataview_constr);
+    jsdisp_release(&view->dispex);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_define_data_property(ctx->global, L"DataView", PROPF_CONFIGURABLE | PROPF_WRITABLE,
+                                       jsval_obj(ctx->dataview_constr));
 
     return hres;
 }
