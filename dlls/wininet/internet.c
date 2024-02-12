@@ -4376,6 +4376,12 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     {
         LPCWSTR scheme;
 
+        if (lpUrlComponents->nScheme == INTERNET_SCHEME_UNKNOWN)
+        {
+            INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
         nScheme = lpUrlComponents->nScheme;
 
         if (nScheme == INTERNET_SCHEME_DEFAULT)
