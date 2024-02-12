@@ -292,7 +292,7 @@ extern BOOL shape_layered_windows;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void);
 
 extern struct opengl_funcs *get_glx_driver(UINT);
-extern const struct vulkan_funcs *get_vulkan_driver(UINT);
+extern UINT X11DRV_VulkanInit( UINT, void *, struct vulkan_funcs * );
 
 extern struct format_entry *import_xdnd_selection( Display *display, Window win, Atom selection,
                                                    Atom *targets, UINT count,

@@ -915,9 +915,9 @@ static BOOL nulldrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr
     return FALSE;
 }
 
-static const struct vulkan_funcs *nulldrv_wine_get_vulkan_driver( UINT version )
+static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *vulkan_funcs )
 {
-    return NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static struct opengl_funcs *nulldrv_wine_get_wgl_driver( UINT version )
@@ -1231,9 +1231,9 @@ static BOOL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWI
     return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
 }
 
-static const struct vulkan_funcs * loaderdrv_wine_get_vulkan_driver( UINT version )
+static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *vulkan_funcs )
 {
-    return load_driver()->pwine_get_vulkan_driver( version );
+    return load_driver()->pVulkanInit( version, vulkan_handle, vulkan_funcs );
 }
 
 static const struct user_driver_funcs lazy_load_driver =
@@ -1302,7 +1302,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* system parameters */
     nulldrv_SystemParametersInfo,
     /* vulkan support */
-    loaderdrv_wine_get_vulkan_driver,
+    loaderdrv_VulkanInit,
     /* opengl support */
     nulldrv_wine_get_wgl_driver,
     /* thread management */
@@ -1386,7 +1386,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(WindowPosChanged);
     SET_USER_FUNC(SystemParametersInfo);
-    SET_USER_FUNC(wine_get_vulkan_driver);
+    SET_USER_FUNC(VulkanInit);
     SET_USER_FUNC(wine_get_wgl_driver);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC

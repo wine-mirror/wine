@@ -27,6 +27,8 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
@@ -64,7 +66,6 @@ static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalD
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
-static void *vulkan_handle;
 static const struct vulkan_funcs vulkan_funcs;
 
 static pthread_mutex_t wine_vk_swapchain_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -542,38 +543,6 @@ static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
     return wine_vk_surface_from_handle(surface)->host_surface;
 }
 
-static void wine_vk_init(void)
-{
-    if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
-    {
-        ERR("Failed to load %s.\n", SONAME_LIBVULKAN);
-        return;
-    }
-
-#define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
-#define LOAD_OPTIONAL_FUNCPTR(f) p##f = dlsym(vulkan_handle, #f)
-    LOAD_FUNCPTR(vkCreateInstance);
-    LOAD_FUNCPTR(vkCreateSwapchainKHR);
-    LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
-    LOAD_FUNCPTR(vkDestroyInstance);
-    LOAD_FUNCPTR(vkDestroySurfaceKHR);
-    LOAD_FUNCPTR(vkDestroySwapchainKHR);
-    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
-    LOAD_FUNCPTR(vkGetDeviceProcAddr);
-    LOAD_FUNCPTR(vkGetInstanceProcAddr);
-    LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
-    LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
-    LOAD_FUNCPTR(vkQueuePresentKHR);
-#undef LOAD_FUNCPTR
-#undef LOAD_OPTIONAL_FUNCPTR
-
-    return;
-
-fail:
-    dlclose(vulkan_handle);
-    vulkan_handle = NULL;
-}
-
 static const struct vulkan_funcs vulkan_funcs =
 {
     .p_vkCreateInstance = wayland_vkCreateInstance,
@@ -592,31 +561,41 @@ static const struct vulkan_funcs vulkan_funcs =
 };
 
 /**********************************************************************
- *           WAYLAND_wine_get_vulkan_driver
+ *           WAYLAND_VulkanInit
  */
-const struct vulkan_funcs *WAYLAND_wine_get_vulkan_driver(UINT version)
+UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
 {
-    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
-        ERR("version mismatch, vulkan wants %u but driver has %u\n", version, WINE_VULKAN_DRIVER_VERSION);
-        return NULL;
+        ERR("version mismatch, win32u wants %u but driver has %u\n", version, WINE_VULKAN_DRIVER_VERSION);
+        return STATUS_INVALID_PARAMETER;
     }
 
-    pthread_once(&init_once, wine_vk_init);
-    if (vulkan_handle)
-        return &vulkan_funcs;
+#define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) return STATUS_PROCEDURE_NOT_FOUND;
+    LOAD_FUNCPTR(vkCreateInstance);
+    LOAD_FUNCPTR(vkCreateSwapchainKHR);
+    LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
+    LOAD_FUNCPTR(vkDestroyInstance);
+    LOAD_FUNCPTR(vkDestroySurfaceKHR);
+    LOAD_FUNCPTR(vkDestroySwapchainKHR);
+    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
+    LOAD_FUNCPTR(vkGetDeviceProcAddr);
+    LOAD_FUNCPTR(vkGetInstanceProcAddr);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
+    LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
+    LOAD_FUNCPTR(vkQueuePresentKHR);
+#undef LOAD_FUNCPTR
 
-    return NULL;
+    *driver_funcs = vulkan_funcs;
+    return STATUS_SUCCESS;
 }
 
 #else /* No vulkan */
 
-const struct vulkan_funcs *WAYLAND_wine_get_vulkan_driver(UINT version)
+UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
 {
-    ERR("Wine was built without Vulkan support.\n");
-    return NULL;
+    ERR( "Wine was built without Vulkan support.\n" );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 #endif /* SONAME_LIBVULKAN */
