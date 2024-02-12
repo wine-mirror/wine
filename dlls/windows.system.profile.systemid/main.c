@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(systemid);
 struct system_id_statics
 {
     IActivationFactory IActivationFactory_iface;
+    ISystemIdentificationStatics ISystemIdentificationStatics_iface;
     LONG ref;
 };
 
@@ -44,6 +45,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ISystemIdentificationStatics ))
+    {
+        *out = &impl->ISystemIdentificationStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -106,9 +114,38 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( system_id_statics, ISystemIdentificationStatics, struct system_id_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI system_id_statics_GetSystemIdForPublisher( ISystemIdentificationStatics *iface, ISystemIdentificationInfo **result )
+{
+    FIXME( "iface %p, result %p stub!\n", iface, result );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI system_id_statics_GetSystemIdForUser( ISystemIdentificationStatics *iface, __x_ABI_CWindows_CSystem_CIUser *user, ISystemIdentificationInfo **result )
+{
+    FIXME( "iface %p, user %p, result %p stub!\n", iface, user, result );
+    return E_NOTIMPL;
+}
+
+static const struct ISystemIdentificationStaticsVtbl system_id_statics_vtbl =
+{
+    system_id_statics_QueryInterface,
+    system_id_statics_AddRef,
+    system_id_statics_Release,
+    /* IInspectable methods */
+    system_id_statics_GetIids,
+    system_id_statics_GetRuntimeClassName,
+    system_id_statics_GetTrustLevel,
+    /* ISystemIdentificationStatics methods */
+    system_id_statics_GetSystemIdForPublisher,
+    system_id_statics_GetSystemIdForUser,
+};
+
 static struct system_id_statics system_id_statics =
 {
     {&factory_vtbl},
+    {&system_id_statics_vtbl},
     1,
 };
 

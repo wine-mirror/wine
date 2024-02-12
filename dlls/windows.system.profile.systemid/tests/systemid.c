@@ -46,6 +46,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_SystemIdentification_Statics(void)
 {
     static const WCHAR *system_id_statics_name = L"Windows.System.Profile.SystemIdentification";
+    ISystemIdentificationStatics *system_id_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str = NULL;
     HRESULT hr;
@@ -66,6 +67,11 @@ static void test_SystemIdentification_Statics(void)
     check_interface( factory, &IID_IInspectable, TRUE );
     check_interface( factory, &IID_IAgileObject, FALSE );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_ISystemIdentificationStatics, (void **)&system_id_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = ISystemIdentificationStatics_Release( system_id_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
