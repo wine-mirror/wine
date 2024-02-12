@@ -4001,15 +4001,15 @@ msgstr "البناء الشرطي معطل"
 msgid "Expected '@'"
 msgstr "متوقع ';'"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4162,6 +4162,12 @@ msgid "'key' is not an object"
 msgstr "'[object]' ليس عنصر تاريخ"
 
 #: dlls/jscript/jscript.rc:86
+#, fuzzy
+#| msgid "Array object expected"
+msgid "ArrayBuffer object expected"
+msgstr "عنصر مصفوفة متوقع"
+
+#: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

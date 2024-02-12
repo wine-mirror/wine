@@ -3942,15 +3942,15 @@ msgstr "Podmíněná kompilace je vypnutá"
 msgid "Expected '@'"
 msgstr "Očekáváno „@“"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4103,6 +4103,12 @@ msgid "'key' is not an object"
 msgstr "„%s“ není platný název portu"
 
 #: dlls/jscript/jscript.rc:86
+#, fuzzy
+#| msgid "Array object expected"
+msgid "ArrayBuffer object expected"
+msgstr "Očekáván objekt typu pole"
+
+#: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

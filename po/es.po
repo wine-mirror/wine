@@ -3980,15 +3980,15 @@ msgstr "La compilación condicional está desactivada"
 msgid "Expected '@'"
 msgstr "Esperado '@'"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript compilation error"
 msgstr "Error de compilación Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript runtime error"
 msgstr "Error de ejecución  Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Error desconocido en tiempo de ejecución"
 
@@ -4139,6 +4139,12 @@ msgid "'key' is not an object"
 msgstr "'[this]' no es un objeto Map"
 
 #: dlls/jscript/jscript.rc:86
+#, fuzzy
+#| msgid "Array object expected"
+msgid "ArrayBuffer object expected"
+msgstr "Objeto array esperado"
+
+#: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
 msgstr "La propiedad no puede tener tanto descriptores de acceso como un valor"
 

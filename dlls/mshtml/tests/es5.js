@@ -37,6 +37,7 @@ var JS_E_DATAVIEW_NO_ARGUMENT = 0x800a13e0;
 var JS_E_DATAVIEW_INVALID_ACCESS = 0x800a13e1;
 var JS_E_DATAVIEW_INVALID_OFFSET = 0x800a13e2;
 var JS_E_WRONG_THIS = 0x800a13fc;
+var JS_E_ARRAYBUFFER_EXPECTED = 0x800a15e4;
 
 var tests = [];
 
@@ -1687,7 +1688,7 @@ sync_test("RegExp", function() {
 });
 
 sync_test("ArrayBuffers & Views", function() {
-    var i, r, buf, view, view2, arr;
+    var i, r, buf, buf2, view, view2, arr;
 
     var types = [
         [ "Int8",    1 ],
@@ -1732,6 +1733,20 @@ sync_test("ArrayBuffers & Views", function() {
     r = ArrayBuffer.prototype.slice.length;
     ok(r === 2, "ArrayBuffer.prototype.slice.length = " + r);
 
+    try {
+        ArrayBuffer.prototype.slice.call(null);
+        ok(false, "ArrayBuffer: calling slice with null context did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_ARRAYBUFFER_EXPECTED, "ArrayBuffer: calling slice with null context threw " + n);
+    }
+    try {
+        ArrayBuffer.prototype.slice.call({});
+        ok(false, "ArrayBuffer: calling slice with an object context did not throw exception");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_ARRAYBUFFER_EXPECTED, "ArrayBuffer: calling slice with an object context threw " + n);
+    }
     try {
         new ArrayBuffer(-1);
         ok(false, "new ArrayBuffer(-1) did not throw exception");
@@ -1983,10 +1998,39 @@ sync_test("ArrayBuffers & Views", function() {
     r = view2.getFloat32(0, true);
     ok(r === 1234.5, "view2.getFloat32(0) returned " + r);
 
+    r = buf.slice(-9, 1);
+    ok(r instanceof ArrayBuffer, "buf.slice did not return an ArrayBuffer");
+    ok(r.byteLength === 0, "buf.slice(-9, 1).byteLength = " + r.byteLength);
+    r = buf.slice();
+    ok(r.byteLength === 10, "buf.slice().byteLength = " + r.byteLength);
+    r = buf.slice(9, 16);
+    ok(r.byteLength === 1, "buf.slice(9, 16).byteLength = " + r.byteLength);
+    r = buf.slice(-9, -1);
+    ok(r.byteLength === 8, "buf.slice(-9, -1).byteLength = " + r.byteLength);
+
     /* setters differing only in signedness have identical behavior, but they're not the same methods */
     ok(view.setInt8 !== view.setUint8, "setInt8 and setUint8 are the same method");
     ok(view.setInt16 !== view.setUint16, "setInt16 and setUint16 are the same method");
     ok(view.setInt32 !== view.setUint32, "setInt32 and setUint32 are the same method");
+
+    /* slice makes a copy */
+    buf2 = buf.slice(-9);
+    ok(buf2.byteLength === 9, "buf.slice(-9).byteLength = " + buf2.byteLength);
+    view2 = DataView(buf2, 1);
+    ok(view2.byteLength === 8, "buf.slice(-9) view(1).byteLength = " + view2.byteLength);
+
+    r = view2.getUint32(0);
+    ok(r === 4294967040, "buf.slice(-9) view(1).getUint32(0) returned " + r);
+    view2.setInt16(0, -5);
+    r = view2.getUint16(1);
+    ok(r === 64511, "buf.slice(-9) view(1).getUint16(1) returned " + r);
+    r = view.getInt32(1);
+    ok(r === -1, "view.getInt32(1) after slice changed returned " + r);
+
+    r = view2.setFloat64(0, 11.875);
+    ok(r === undefined, "buf.slice(-9) view(1).setFloat64(0, 11.875) returned " + r);
+    r = view2.getFloat64(0);
+    ok(r === 11.875, "buf.slice(-9) view(1).getFloat64(0) returned " + r);
 });
 
 sync_test("builtin_context", function() {

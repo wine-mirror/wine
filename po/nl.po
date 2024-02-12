@@ -3967,15 +3967,15 @@ msgstr "Conditionele compilatie is uitgeschakeld"
 msgid "Expected '@'"
 msgstr "Verwacht '@'"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript compilatie fout"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime-fout"
 
-#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Onbekende runtime-fout"
 
@@ -4118,6 +4118,12 @@ msgid "'key' is not an object"
 msgstr "'key' is geen object"
 
 #: dlls/jscript/jscript.rc:86
+#, fuzzy
+#| msgid "Array object expected"
+msgid "ArrayBuffer object expected"
+msgstr "Array object verwacht"
+
+#: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschap kan niet zowel accessors als een waarde hebben"
 

@@ -487,6 +487,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_DATAVIEW_NO_ARGUMENT:
         case JS_E_WRONG_THIS:
         case JS_E_KEY_NOT_OBJECT:
+        case JS_E_ARRAYBUFFER_EXPECTED:
         case JS_E_PROP_DESC_MISMATCH:
         case JS_E_INVALID_WRITABLE_PROP_DESC:
             constr = ctx->type_error_constr;

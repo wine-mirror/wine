@@ -3936,15 +3936,15 @@ msgstr "პირობითი აგება გამორთულია"
 msgid "Expected '@'"
 msgstr "მოველოდი '@'"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript აგების შეცდომა"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript გაშვების გარემოს შეცდომა"
 
-#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "უცნობი გაშვების გარემოს შეცდომა"
 
@@ -4088,6 +4088,12 @@ msgid "'key' is not an object"
 msgstr "'this'-ი | ტიპის ობიექტი არაა"
 
 #: dlls/jscript/jscript.rc:86
+#, fuzzy
+#| msgid "Array object expected"
+msgid "ArrayBuffer object expected"
+msgstr "მოველოდი მასივის ობიექტს"
+
+#: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 
