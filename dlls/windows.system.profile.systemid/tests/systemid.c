@@ -80,10 +80,8 @@ static void test_SystemIdentification_Statics(void)
     check_interface( system_id_info, &IID_IAgileObject, FALSE );
 
     hr = ISystemIdentificationInfo_get_Source( system_id_info, NULL );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemIdentificationInfo_get_Source( system_id_info, &system_id_source );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( system_id_source == SystemIdentificationSource_Uefi, "ISystemIdentificationInfo_get_Source returned %u.\n", system_id_source );

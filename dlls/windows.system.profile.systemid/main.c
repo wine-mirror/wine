@@ -192,8 +192,14 @@ static HRESULT WINAPI system_identification_info_get_Id( ISystemIdentificationIn
 
 static HRESULT WINAPI system_identification_info_get_Source( ISystemIdentificationInfo *iface, SystemIdentificationSource *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct system_identification_info *impl = impl_from_ISystemIdentificationInfo( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (!value) return E_INVALIDARG;
+
+    *value = impl->system_id_source;
+    return S_OK;
 }
 
 static const struct ISystemIdentificationInfoVtbl system_identification_info_vtbl =
