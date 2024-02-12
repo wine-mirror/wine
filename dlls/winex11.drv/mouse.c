@@ -253,11 +253,10 @@ static void update_relative_valuators( XIAnyClassInfo **classes, int num_classes
 
 
 /***********************************************************************
- *              enable_xinput2
+ *              x11drv_xinput2_enable
  */
-static void enable_xinput2(void)
+void x11drv_xinput2_enable( Display *display, Window window )
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
 
@@ -267,21 +266,23 @@ static void enable_xinput2(void)
     mask.mask_len = sizeof(mask_bits);
     mask.deviceid = XIAllMasterDevices;
     memset( mask_bits, 0, sizeof(mask_bits) );
-    XISetMask( mask_bits, XI_DeviceChanged );
-    XISetMask( mask_bits, XI_RawMotion );
-    XISetMask( mask_bits, XI_ButtonPress );
-    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
+
+    if (window == DefaultRootWindow( display ))
+    {
+        XISetMask( mask_bits, XI_DeviceChanged );
+        XISetMask( mask_bits, XI_RawMotion );
+        XISetMask( mask_bits, XI_ButtonPress );
+    }
+
+    pXISelectEvents( display, window, &mask, 1 );
 }
 
-#endif
 
 /***********************************************************************
- *              disable_xinput2
+ *              x11drv_xinput2_disable
  */
-static void disable_xinput2(void)
+void x11drv_xinput2_disable( Display *display, Window window )
 {
-#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
-    struct x11drv_thread_data *data = x11drv_thread_data();
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     XIEventMask mask;
 
@@ -291,9 +292,11 @@ static void disable_xinput2(void)
     mask.mask_len = sizeof(mask_bits);
     mask.deviceid = XIAllMasterDevices;
     memset( mask_bits, 0, sizeof(mask_bits) );
-    XISetMask( mask_bits, XI_DeviceChanged );
-    pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
-#endif
+
+    if (window == DefaultRootWindow( display ))
+        XISetMask( mask_bits, XI_DeviceChanged );
+
+    pXISelectEvents( display, window, &mask, 1 );
 }
 
 
@@ -302,7 +305,6 @@ static void disable_xinput2(void)
  */
 void x11drv_xinput2_init( struct x11drv_thread_data *data )
 {
-#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
     int major = 2, minor = 2;
     XIEventMask mask;
@@ -332,9 +334,23 @@ void x11drv_xinput2_init( struct x11drv_thread_data *data )
     }
 
     TRACE( "XInput2 %d.%d available\n", major, minor );
-#endif
 }
 
+#else /* HAVE_X11_EXTENSIONS_XINPUT2_H */
+
+void x11drv_xinput2_enable( Display *display, Window window )
+{
+}
+
+void x11drv_xinput2_disable( Display *display, Window window )
+{
+}
+
+void x11drv_xinput2_init( struct x11drv_thread_data *data )
+{
+}
+
+#endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
 
 /***********************************************************************
  *		grab_clipping_window
@@ -370,7 +386,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     }
 
     /* enable XInput2 unless we are already clipping */
-    if (!data->clipping_cursor) enable_xinput2();
+    if (!data->clipping_cursor) x11drv_xinput2_enable( data->display, DefaultRootWindow( data->display ) );
 
     TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
@@ -403,7 +419,7 @@ static BOOL grab_clipping_window( const RECT *clip )
 
     if (!clipping_cursor)
     {
-        disable_xinput2();
+        x11drv_xinput2_disable( data->display, DefaultRootWindow( data->display ) );
         return FALSE;
     }
     clip_rect = *clip;
@@ -432,7 +448,7 @@ void ungrab_clipping_window(void)
     if (clipping_cursor) XUngrabPointer( data->display, CurrentTime );
     clipping_cursor = FALSE;
     data->clipping_cursor = FALSE;
-    disable_xinput2();
+    x11drv_xinput2_disable( data->display, DefaultRootWindow( data->display ) );
 }
 
 /***********************************************************************
