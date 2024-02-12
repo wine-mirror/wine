@@ -1225,7 +1225,7 @@ static void InternetCreateUrlA_test(void)
     urlComp.dwExtraInfoLength = strlen(urlComp.lpszExtraInfo);
     len = 256;
     szUrl = HeapAlloc(GetProcessHeap(), 0, len);
-    InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
+    ret = InternetCreateUrlA(&urlComp, ICU_ESCAPE, szUrl, &len);
     ok(ret, "Expected success\n");
     ok(len == strlen(CREATE_URL13), "Got len %lu\n", len);
     ok(!strcmp(szUrl, CREATE_URL13), "Expected \"%s\", got \"%s\"\n", CREATE_URL13, szUrl);
