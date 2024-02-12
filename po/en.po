@@ -3954,15 +3954,15 @@ msgstr "Conditional compilation is turned off"
 msgid "Expected '@'"
 msgstr "Expected '@'"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript compilation error"
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript runtime error"
 
-#: dlls/jscript/jscript.rc:89 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Unknown runtime error"
 
@@ -4087,18 +4087,22 @@ msgid "Required argument offset or value in DataView method is not specified"
 msgstr "Required argument offset or value in DataView method is not specified"
 
 #: dlls/jscript/jscript.rc:82
+msgid "DataView operation access beyond specified buffer length"
+msgstr "DataView operation access beyond specified buffer length"
+
+#: dlls/jscript/jscript.rc:83
 msgid "DataView constructor argument offset is invalid"
 msgstr "DataView constructor argument offset is invalid"
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "'this' is not a | object"
 msgstr "'this' is not a | object"
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 msgid "'key' is not an object"
 msgstr "'key' is not an object"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 msgid "Property cannot have both accessors and a value"
 msgstr "Property cannot have both accessors and a value"
 

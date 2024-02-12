@@ -496,6 +496,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_FRACTION_DIGITS_OUT_OF_RANGE:
         case JS_E_PRECISION_OUT_OF_RANGE:
         case JS_E_INVALID_LENGTH:
+        case JS_E_DATAVIEW_INVALID_ACCESS:
         case JS_E_DATAVIEW_INVALID_OFFSET:
             constr = ctx->range_error_constr;
             break;

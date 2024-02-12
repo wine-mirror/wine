@@ -3922,15 +3922,15 @@ msgstr ""
 msgid "Expected '@'"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:88
+#: dlls/jscript/jscript.rc:89
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:89 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:90 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown printer driver."
 msgid "Unknown runtime error"
@@ -4058,18 +4058,22 @@ msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:82
-msgid "DataView constructor argument offset is invalid"
+msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:83
-msgid "'this' is not a | object"
+msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:84
-msgid "'key' is not an object"
+msgid "'this' is not a | object"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:85
+msgid "'key' is not an object"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:86
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

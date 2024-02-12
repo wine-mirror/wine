@@ -78,6 +78,7 @@ STRINGTABLE
     IDS_NONWRITABLE_MODIFIED       "Cannot modify non-writable property '|'"
     IDS_NOT_DATAVIEW               "'this' is not a DataView object"
     IDS_DATAVIEW_NO_ARGUMENT       "Required argument offset or value in DataView method is not specified"
+    IDS_DATAVIEW_INVALID_ACCESS    "DataView operation access beyond specified buffer length"
     IDS_DATAVIEW_INVALID_OFFSET    "DataView constructor argument offset is invalid"
     IDS_WRONG_THIS                 "'this' is not a | object"
     IDS_KEY_NOT_OBJECT             "'key' is not an object"

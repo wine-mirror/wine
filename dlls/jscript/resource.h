@@ -76,6 +76,7 @@
 #define IDS_NONWRITABLE_MODIFIED            0x13D7
 #define IDS_NOT_DATAVIEW                    0x13DF
 #define IDS_DATAVIEW_NO_ARGUMENT            0x13E0
+#define IDS_DATAVIEW_INVALID_ACCESS         0x13E1
 #define IDS_DATAVIEW_INVALID_OFFSET         0x13E2
 #define IDS_WRONG_THIS                      0x13FC
 #define IDS_KEY_NOT_OBJECT                  0x13FD

@@ -223,6 +223,175 @@ static HRESULT DataView_get_byteOffset(script_ctx_t *ctx, jsval_t vthis, WORD fl
     return S_OK;
 }
 
+static inline void copy_type_data(void *dst, const void *src, unsigned type_size, BOOL little_endian)
+{
+    const BYTE *in = src;
+    BYTE *out = dst;
+    unsigned i;
+
+    if(little_endian)
+        memcpy(out, in, type_size);
+    else
+        for(i = 0; i < type_size; i++)
+            out[i] = in[type_size - i - 1];
+}
+
+static HRESULT set_data(script_ctx_t *ctx, jsval_t vthis, unsigned argc, jsval_t *argv, unsigned type_size, const void *val)
+{
+    BOOL little_endian = FALSE;
+    DataViewInstance *view;
+    HRESULT hres;
+    DWORD offset;
+    BYTE *data;
+    double n;
+
+    if(!(view = dataview_this(vthis)))
+        return JS_E_NOT_DATAVIEW;
+    if(is_undefined(argv[0]) || is_undefined(argv[1]))
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+
+    hres = to_integer(ctx, argv[0], &n);
+    if(FAILED(hres))
+        return hres;
+
+    if(n < 0.0 || n + type_size > view->size)
+        return JS_E_DATAVIEW_INVALID_ACCESS;
+
+    offset = n;
+    data = &view->buffer->buf[view->offset + offset];
+
+    if(type_size == 1) {
+        data[0] = *(const BYTE*)val;
+        return S_OK;
+    }
+
+    if(argc > 2) {
+        hres = to_boolean(argv[2], &little_endian);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    copy_type_data(data, val, type_size, little_endian);
+    return S_OK;
+}
+
+static HRESULT DataView_setFloat32(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    double n;
+    float v;
+
+    TRACE("\n");
+
+    if(argc < 2)
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+    hres = to_number(ctx, argv[1], &n);
+    if(FAILED(hres))
+        return hres;
+    v = n;  /* FIXME: don't assume rounding mode is round-to-nearest ties-to-even */
+
+    hres = set_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
+static HRESULT DataView_setFloat64(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    double v;
+
+    TRACE("\n");
+
+    if(argc < 2)
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+    hres = to_number(ctx, argv[1], &v);
+    if(FAILED(hres))
+        return hres;
+
+    hres = set_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
+static HRESULT DataView_setInt8(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT32 n;
+    INT8 v;
+
+    TRACE("\n");
+
+    if(argc < 2)
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+    hres = to_int32(ctx, argv[1], &n);
+    if(FAILED(hres))
+        return hres;
+    v = n;
+
+    hres = set_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
+static HRESULT DataView_setInt16(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT32 n;
+    INT16 v;
+
+    TRACE("\n");
+
+    if(argc < 2)
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+    hres = to_int32(ctx, argv[1], &n);
+    if(FAILED(hres))
+        return hres;
+    v = n;
+
+    hres = set_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
+static HRESULT DataView_setInt32(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    HRESULT hres;
+    INT32 v;
+
+    TRACE("\n");
+
+    if(argc < 2)
+        return JS_E_DATAVIEW_NO_ARGUMENT;
+    hres = to_int32(ctx, argv[1], &v);
+    if(FAILED(hres))
+        return hres;
+
+    hres = set_data(ctx, vthis, argc, argv, sizeof(v), &v);
+    if(FAILED(hres))
+        return hres;
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
+static const builtin_prop_t DataView_props[] = {
+    {L"setFloat32",            DataView_setFloat32,        PROPF_METHOD|1},
+    {L"setFloat64",            DataView_setFloat64,        PROPF_METHOD|1},
+    {L"setInt16",              DataView_setInt16,          PROPF_METHOD|1},
+    {L"setInt32",              DataView_setInt32,          PROPF_METHOD|1},
+    {L"setInt8",               DataView_setInt8,           PROPF_METHOD|1},
+    {L"setUint16",             DataView_setInt16,          PROPF_METHOD|1},
+    {L"setUint32",             DataView_setInt32,          PROPF_METHOD|1},
+    {L"setUint8",              DataView_setInt8,           PROPF_METHOD|1},
+};
+
 static void DataView_destructor(jsdisp_t *dispex)
 {
     DataViewInstance *view = dataview_from_jsdisp(dispex);
@@ -240,8 +409,8 @@ static HRESULT DataView_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op o
 static const builtin_info_t DataView_info = {
     JSCLASS_DATAVIEW,
     NULL,
-    0,
-    NULL,
+    ARRAY_SIZE(DataView_props),
+    DataView_props,
     DataView_destructor,
     NULL,
     NULL,
