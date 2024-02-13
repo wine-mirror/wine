@@ -113,6 +113,8 @@ static NTSTATUS start_device_read( DEVICE_OBJECT *device )
 
 static void add_contact( struct device *impl, struct list *old_contacts, ULONG id, LONG x, LONG y )
 {
+    UINT flags = POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT | POINTER_MESSAGE_FLAG_CONFIDENCE;
+    INPUT input = {.type = INPUT_HARDWARE};
     struct contact *contact;
 
     LIST_FOR_EACH_ENTRY( contact, old_contacts, struct contact, entry )
@@ -120,6 +122,7 @@ static void add_contact( struct device *impl, struct list *old_contacts, ULONG i
 
     if (&contact->entry != old_contacts)
     {
+        input.hi.uMsg = WM_POINTERUPDATE;
         list_remove( &contact->entry );
 
         contact->pos.x = x;
@@ -128,6 +131,9 @@ static void add_contact( struct device *impl, struct list *old_contacts, ULONG i
     }
     else if ((contact = calloc( 1, sizeof(*contact) )))
     {
+        input.hi.uMsg = WM_POINTERDOWN;
+        flags |= POINTER_MESSAGE_FLAG_NEW;
+
         contact->id = id;
         contact->pos.x = x;
         contact->pos.y = y;
@@ -139,6 +145,10 @@ static void add_contact( struct device *impl, struct list *old_contacts, ULONG i
         return;
     }
 
+    input.hi.wParamL = contact->id;
+    input.hi.wParamH = flags;
+    NtUserSendHardwareInput( 0, 0, &input, MAKELPARAM(contact->pos.x, contact->pos.y) );
+
     list_add_tail( &impl->contacts, &contact->entry );
 }
 
@@ -148,7 +158,16 @@ static void release_contacts( struct list *contacts )
 
     LIST_FOR_EACH_ENTRY_SAFE( contact, next, contacts, struct contact, entry )
     {
+        INPUT input = {.type = INPUT_HARDWARE};
+        ULONG flags = POINTER_MESSAGE_FLAG_CONFIDENCE;
+
         TRACE( "releasing contact %#lx, pos %s\n", contact->id, wine_dbgstr_point( &contact->pos ) );
+
+        input.hi.uMsg = WM_POINTERUP;
+        input.hi.wParamL = contact->id;
+        input.hi.wParamH = flags;
+        NtUserSendHardwareInput( 0, 0, &input, MAKELPARAM(contact->pos.x, contact->pos.y) );
+
         list_remove( &contact->entry );
         free( contact );
     }
