@@ -2000,10 +2000,7 @@ void X11DRV_SetDesktopWindow( HWND hwnd )
 
     if (!width && !height)  /* not initialized yet */
     {
-        RECT rect;
-
-        X11DRV_DisplayDevices_Init( TRUE );
-        rect = NtUserGetVirtualScreenRect();
+        RECT rect = NtUserGetVirtualScreenRect();
 
         SERVER_START_REQ( set_window_pos )
         {
@@ -2036,11 +2033,7 @@ void X11DRV_SetDesktopWindow( HWND hwnd )
     else
     {
         Window win = (Window)NtUserGetProp( hwnd, whole_window_prop );
-        if (win && win != root_window)
-        {
-            X11DRV_init_desktop( win, width, height );
-            X11DRV_DisplayDevices_Init( TRUE );
-        }
+        if (win && win != root_window) X11DRV_init_desktop( win, width, height );
     }
 }
 
