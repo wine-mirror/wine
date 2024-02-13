@@ -1111,6 +1111,25 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
 
 
 /**********************************************************************
+ *              RtlAddFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR base )
+{
+    ULONG_PTR end = base;
+    void *ret;
+
+    if (count)
+    {
+        RUNTIME_FUNCTION *func = table + count - 1;
+        ULONG len = func->Flag ? func->FunctionLength :
+            ((IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA *)(base + func->UnwindData))->FunctionLength;
+        end += func->BeginAddress + 4 * len;
+    }
+    return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
+}
+
+
+/**********************************************************************
  *           call_consolidate_callback
  *
  * Wrapper function to call a consolidate callback from a fake frame.

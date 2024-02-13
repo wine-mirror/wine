@@ -1079,6 +1079,20 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
 }
 
 
+/**********************************************************************
+ *              RtlAddFunctionTable   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR base )
+{
+    ULONG_PTR end = base;
+    void *ret;
+
+    if (count) end += table[count - 1].EndAddress;
+
+    return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
+}
+
+
 struct unwind_exception_frame
 {
     EXCEPTION_REGISTRATION_RECORD frame;
