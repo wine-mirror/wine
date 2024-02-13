@@ -2274,6 +2274,23 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
         queue_hardware_message( desktop, msg, 1 );
     }
 
+    if (!repeated && pointer->primary && (msg = alloc_hardware_message( 0xff515700, source, time, 0 )))
+    {
+        unsigned int message = WM_MOUSEMOVE;
+        if (input->hw.msg == WM_POINTERDOWN) message = WM_LBUTTONDOWN;
+        else if (input->hw.msg == WM_POINTERUP) message = WM_LBUTTONUP;
+
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = message;
+        msg->wparam    = 0;
+        msg->lparam    = 0;
+        msg->x         = x;
+        msg->y         = y;
+
+        if (!send_hook_ll_message( desktop, msg, input, NULL ))
+            queue_hardware_message( desktop, msg, 0 );
+    }
+
     if (input->hw.msg != WM_POINTERUP)
     {
         pointer->input.hw.msg = WM_POINTERUPDATE;
