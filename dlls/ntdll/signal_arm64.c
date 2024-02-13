@@ -148,7 +148,6 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
  */
 static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
-    LDR_DATA_TABLE_ENTRY *module;
     NTSTATUS status;
     DWORD64 pc;
 
@@ -159,7 +158,8 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
     pc = context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0);
 
-    if ((dispatch->FunctionEntry = lookup_function_info( pc, &dispatch->ImageBase, &module )))
+    if ((dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, &dispatch->ImageBase,
+                                                           dispatch->HistoryTable )))
     {
         dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc,
                                                       dispatch->FunctionEntry, context,
@@ -168,13 +168,8 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
         return STATUS_SUCCESS;
     }
 
+    WARN( "exception data not found for pc %p, lr %p\n", (void *)context->Pc, (void *)context->Lr );
     status = context->Pc != context->Lr ? STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
-    if (module)
-        WARN( "exception data not found in %s for pc %p, lr %p\n",
-              debugstr_w(module->BaseDllName.Buffer), (void *)context->Pc, (void *)context->Lr );
-    else
-        WARN( "no module found for pc %p, lr %p\n",
-              (void *)context->Pc, (void *)context->Lr );
     dispatch->EstablisherFrame = context->Sp;
     dispatch->LanguageHandler = NULL;
     context->Pc = context->Lr;
@@ -1060,6 +1055,31 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
     if (LdrFindEntryForAddress( (void *)pc, &module )) return NULL;
     *base = (ULONG_PTR)module->DllBase;
     return RtlImageDirectoryEntryToData( module->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, len );
+}
+
+
+/**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    RUNTIME_FUNCTION *func;
+    ULONG_PTR dynbase;
+    ULONG size;
+
+    if ((func = RtlLookupFunctionTable( pc, base, &size )))
+        return find_function_info( pc, *base, func, size / sizeof(*func));
+
+    if ((func = lookup_dynamic_function_table( pc, &dynbase, &size )))
+    {
+        RUNTIME_FUNCTION *ret = find_function_info( pc, dynbase, func, size );
+        if (ret) *base = dynbase;
+        return ret;
+    }
+
+    *base = 0;
+    return NULL;
 }
 
 

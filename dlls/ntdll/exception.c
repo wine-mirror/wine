@@ -595,9 +595,41 @@ BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
 }
 
 
+/**********************************************************************
+ *              lookup_dynamic_function_table
+ */
+RUNTIME_FUNCTION *lookup_dynamic_function_table( ULONG_PTR pc, ULONG_PTR *base, ULONG *count )
+{
+    struct dynamic_unwind_entry *entry;
+    RUNTIME_FUNCTION *ret = NULL;
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
+    {
+        if (pc >= entry->base && pc < entry->end)
+        {
+            *base = entry->base;
+            if (entry->callback)
+            {
+                ret = entry->callback( pc, entry->context );
+                *count = 1;
+            }
+            else
+            {
+                ret = entry->table;
+                *count = entry->count;
+            }
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+    return ret;
+}
+
+
 /* helper for lookup_function_info() */
-static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
-                                             RUNTIME_FUNCTION *func, ULONG size )
+RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
+                                      RUNTIME_FUNCTION *func, ULONG size )
 {
     int min = 0;
     int max = size - 1;
@@ -628,63 +660,6 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 #endif
     }
     return NULL;
-}
-
-/**********************************************************************
- *           lookup_function_info
- */
-RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_TABLE_ENTRY **module )
-{
-    RUNTIME_FUNCTION *func = NULL;
-    struct dynamic_unwind_entry *entry;
-    ULONG size;
-
-    /* PE module or wine module */
-    if ((func = RtlLookupFunctionTable( pc, base, &size )))
-    {
-        func = find_function_info( pc, (ULONG_PTR)(*module)->DllBase, func, size/sizeof(*func) );
-    }
-    else
-    {
-        *module = NULL;
-
-        RtlEnterCriticalSection( &dynamic_unwind_section );
-        LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
-        {
-            if (pc >= entry->base && pc < entry->end)
-            {
-                *base = entry->base;
-                /* use callback or lookup in function table */
-                if (entry->callback)
-                    func = entry->callback( pc, entry->context );
-                else
-                    func = find_function_info( pc, entry->base, entry->table, entry->count );
-                break;
-            }
-        }
-        RtlLeaveCriticalSection( &dynamic_unwind_section );
-    }
-
-    return func;
-}
-
-/**********************************************************************
- *              RtlLookupFunctionEntry   (NTDLL.@)
- */
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
-                                                 UNWIND_HISTORY_TABLE *table )
-{
-    LDR_DATA_TABLE_ENTRY *module;
-    RUNTIME_FUNCTION *func;
-
-    /* FIXME: should use the history table to make things faster */
-
-    if (!(func = lookup_function_info( pc, base, &module )))
-    {
-        *base = 0;
-        WARN( "no exception table found for %Ix\n", pc );
-    }
-    return func;
 }
 
 #endif  /* __x86_64__ || __arm__ || __aarch64__ */

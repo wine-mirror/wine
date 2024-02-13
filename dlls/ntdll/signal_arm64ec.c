@@ -1811,6 +1811,31 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
 }
 
 
+/**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    RUNTIME_FUNCTION *func;
+    ULONG_PTR dynbase;
+    ULONG size;
+
+    if ((func = RtlLookupFunctionTable( pc, base, &size )))
+        return find_function_info( pc, *base, func, size / sizeof(*func));
+
+    if ((func = lookup_dynamic_function_table( pc, &dynbase, &size )))
+    {
+        RUNTIME_FUNCTION *ret = find_function_info( pc, dynbase, func, size );
+        if (ret) *base = dynbase;
+        return ret;
+    }
+
+    *base = 0;
+    return NULL;
+}
+
+
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */

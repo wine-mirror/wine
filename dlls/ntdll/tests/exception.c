@@ -2969,6 +2969,11 @@ static void test_dynamic_unwind(void)
         "RtlLookupFunctionEntry returned invalid base, expected: %Ix, got: %Ix\n", (ULONG_PTR)code_mem, base );
 
     base = 0xdeadbeef;
+    func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 32, &base, NULL );
+    ok( func == NULL, "RtlLookupFunctionEntry got %p\n", func );
+    ok( base == 0xdeadbeef, "RtlLookupFunctionTable wrong base, got: %Ix\n", base );
+
+    base = 0xdeadbeef;
     func = pRtlLookupFunctionTable( (ULONG_PTR)code_mem + code_offset + 8, &base, &len );
     ok( func == NULL, "RtlLookupFunctionTable wrong table, got: %p\n", func );
     ok( base == 0xdeadbeef, "RtlLookupFunctionTable wrong base, got: %Ix\n", base );

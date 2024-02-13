@@ -117,7 +117,6 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
  */
 static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
-    LDR_DATA_TABLE_ENTRY *module;
     NTSTATUS status;
     DWORD pc;
 
@@ -128,57 +127,23 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
     pc = context->Pc - (dispatch->ControlPcIsUnwound ? 2 : 0);
 
-    /* first look for PE exception information */
-
-    if ((dispatch->FunctionEntry = lookup_function_info(pc,
-             (ULONG_PTR*)&dispatch->ImageBase, &module )))
+    if ((dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, (DWORD_PTR *)&dispatch->ImageBase,
+                                                           dispatch->HistoryTable )))
     {
         dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc,
                                                       dispatch->FunctionEntry, context,
-                                                      &dispatch->HandlerData, (ULONG_PTR *)&dispatch->EstablisherFrame,
-                                                      NULL );
+                                                      &dispatch->HandlerData,
+                                                      (ULONG_PTR *)&dispatch->EstablisherFrame, NULL );
         return STATUS_SUCCESS;
     }
 
-    /* then look for host system exception information */
-
-    if (!module || (module->Flags & LDR_WINE_INTERNAL))
-    {
-        struct unwind_builtin_dll_params params = { type, dispatch, context };
-
-        status = WINE_UNIX_CALL( unix_unwind_builtin_dll, &params );
-        if (status != STATUS_SUCCESS) return status;
-
-        if (dispatch->EstablisherFrame)
-        {
-            dispatch->FunctionEntry = NULL;
-            if (dispatch->LanguageHandler && !module)
-            {
-                FIXME( "calling personality routine in system library not supported yet\n" );
-                dispatch->LanguageHandler = NULL;
-            }
-            return STATUS_SUCCESS;
-        }
-    }
-    else
-    {
-        status = context->Pc != context->Lr ?
-                 STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
-        WARN( "exception data not found in %s for %p, LR %p, status %lx\n",
-               debugstr_w(module->BaseDllName.Buffer), (void*) context->Pc,
-               (void*) context->Lr, status );
-        dispatch->EstablisherFrame = context->Sp;
-        dispatch->LanguageHandler = NULL;
-        context->Pc = context->Lr;
-        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-        return status;
-    }
-
+    WARN( "exception data not found for pc %p, lr %p\n", (void *)context->Pc, (void *)context->Lr );
+    status = context->Pc != context->Lr ? STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
     dispatch->EstablisherFrame = context->Sp;
     dispatch->LanguageHandler = NULL;
     context->Pc = context->Lr;
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-    return STATUS_SUCCESS;
+    return status;
 }
 
 
@@ -1189,6 +1154,31 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
     if (LdrFindEntryForAddress( (void *)pc, &module )) return NULL;
     *base = (ULONG_PTR)module->DllBase;
     return RtlImageDirectoryEntryToData( module->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, len );
+}
+
+
+/**********************************************************************
+ *              RtlLookupFunctionEntry   (NTDLL.@)
+ */
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
+                                                 UNWIND_HISTORY_TABLE *table )
+{
+    RUNTIME_FUNCTION *func;
+    ULONG_PTR dynbase;
+    ULONG size;
+
+    if ((func = RtlLookupFunctionTable( pc, base, &size )))
+        return find_function_info( pc, *base, func, size / sizeof(*func));
+
+    if ((func = lookup_dynamic_function_table( pc, &dynbase, &size )))
+    {
+        RUNTIME_FUNCTION *ret = find_function_info( pc, dynbase, func, size );
+        if (ret) *base = dynbase;
+        return ret;
+    }
+
+    *base = 0;
+    return NULL;
 }
 
 
