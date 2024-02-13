@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-01-26 00:51+0200\n"
+"PO-Revision-Date: 2024-02-14 00:13+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -4082,22 +4082,21 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
 #: dlls/jscript/jscript.rc:80
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "„Šis“ nėra | objektas"
+msgstr "„Šis“ nėra DataView objektas"
 
 #: dlls/jscript/jscript.rc:81
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
+"DataView metode nenurodytas reikalingas argumentas poslinkis ar reikšmė"
 
 #: dlls/jscript/jscript.rc:82
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView operacijos kreiptis už nurodyto buferio ilgio"
 
 #: dlls/jscript/jscript.rc:83
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "DataView konstruktoriaus argumentas poslinkis yra netinkamas"
 
 #: dlls/jscript/jscript.rc:84
 msgid "'this' is not a | object"
@@ -4108,10 +4107,8 @@ msgid "'key' is not an object"
 msgstr "„raktas“ nėra objektas"
 
 #: dlls/jscript/jscript.rc:86
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "Tikėtasi masyvo objekto"
+msgstr "Tikėtasi ArrayBuffer objekto"
 
 #: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
