@@ -1035,10 +1035,11 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
         NtGetContextThread( GetCurrentThread(), &stack->context );
         stack->context.R0 = status;
     }
-    stack->func    = func;
-    stack->args[0] = arg1;
-    stack->args[1] = arg2;
-    stack->args[2] = arg3;
+    stack->func      = func;
+    stack->args[0]   = arg1;
+    stack->args[1]   = arg2;
+    stack->args[2]   = arg3;
+    stack->alertable = TRUE;
 
     frame->sp = (DWORD)stack;
     frame->pc = (DWORD)pKiUserApcDispatcher;
