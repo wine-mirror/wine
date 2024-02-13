@@ -252,6 +252,30 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 }
 
 
+static ARM64_RUNTIME_FUNCTION *find_function_info_arm64( ULONG_PTR pc, ULONG_PTR base,
+                                                         ARM64_RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        ULONG_PTR start = base + func[pos].BeginAddress;
+
+        if (pc >= start)
+        {
+            ULONG len = func[pos].Flag ? func[pos].FunctionLength :
+                ((IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA *)(base + func[pos].UnwindData))->FunctionLength;
+            if (pc < start + 4 * len) return func + pos;
+            min = pos + 1;
+        }
+        else max = pos - 1;
+    }
+    return NULL;
+}
+
+
 /*******************************************************************
  *         syscalls
  */
@@ -1844,11 +1868,26 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
     ULONG size;
 
     if ((func = RtlLookupFunctionTable( pc, base, &size )))
+    {
+        if (RtlIsEcCode( (void *)pc ))
+        {
+            ARM64_RUNTIME_FUNCTION *arm64func = (ARM64_RUNTIME_FUNCTION *)func;
+            size /= sizeof(*arm64func);
+            return (RUNTIME_FUNCTION *)find_function_info_arm64( pc, *base, arm64func, size );
+        }
         return find_function_info( pc, *base, func, size / sizeof(*func));
+    }
 
     if ((func = lookup_dynamic_function_table( pc, &dynbase, &size )))
     {
-        RUNTIME_FUNCTION *ret = find_function_info( pc, dynbase, func, size );
+        RUNTIME_FUNCTION *ret;
+
+        if (RtlIsEcCode( (void *)pc ))
+            ret = (RUNTIME_FUNCTION *)find_function_info_arm64( pc, dynbase,
+                                                                (ARM64_RUNTIME_FUNCTION *)func, size );
+        else
+            ret = find_function_info( pc, dynbase, func, size );
+
         if (ret) *base = dynbase;
         return ret;
     }
