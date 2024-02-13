@@ -1906,7 +1906,6 @@ static void test_hid_touch_screen(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1,0x02},
-        .todo = TRUE,
     };
 
     RAWINPUTDEVICE rawdevice = {.usUsagePage = HID_USAGE_PAGE_DIGITIZER, .usUsage = HID_USAGE_DIGITIZER_TOUCH_SCREEN};

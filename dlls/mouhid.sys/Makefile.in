@@ -1,5 +1,5 @@
 MODULE        = mouhid.sys
-IMPORTS       = ntoskrnl
+IMPORTS       = ntoskrnl hidparse
 EXTRADLLFLAGS = -Wl,--subsystem,native
 
 SOURCES = \
