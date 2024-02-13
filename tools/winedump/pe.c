@@ -863,6 +863,11 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
     }
     info = RVA( function->UnwindData, sizeof(*info) );
 
+    if (!info)
+    {
+        printf( "  no unwind info (%x)\n", function->UnwindData );
+        return;
+    }
     printf( "  unwind info at %08x\n", function->UnwindData );
     if (info->version > 2)
     {
