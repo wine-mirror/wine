@@ -1015,6 +1015,33 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *f
 
 
 /**********************************************************************
+ *              find_function_info
+ */
+static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        ULONG_PTR start = base + func[pos].BeginAddress;
+
+        if (pc >= start)
+        {
+            ULONG len = func[pos].Flag ? func[pos].FunctionLength :
+                ((IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA *)(base + func[pos].UnwindData))->FunctionLength;
+            if (pc < start + 4 * len) return func + pos;
+            min = pos + 1;
+        }
+        else max = pos - 1;
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
  *              RtlVirtualUnwind   (NTDLL.@)
  */
 PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,

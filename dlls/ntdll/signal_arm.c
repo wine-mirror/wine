@@ -1113,6 +1113,32 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *f
     return NULL;
 }
 
+/**********************************************************************
+ *              find_function_info
+ */
+static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        ULONG_PTR start = base + (func[pos].BeginAddress & ~1);
+
+        if (pc >= start)
+        {
+            struct unwind_info *info = (struct unwind_info *)(base + func[pos].UnwindData);
+            if (pc < start + 2 * (func[pos].Flag ? func[pos].FunctionLength : info->function_length))
+                return func + pos;
+            min = pos + 1;
+        }
+        else max = pos - 1;
+    }
+    return NULL;
+}
+
 /***********************************************************************
  *            RtlVirtualUnwind  (NTDLL.@)
  */

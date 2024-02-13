@@ -626,42 +626,6 @@ RUNTIME_FUNCTION *lookup_dynamic_function_table( ULONG_PTR pc, ULONG_PTR *base, 
     return ret;
 }
 
-
-/* helper for lookup_function_info() */
-RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
-                                      RUNTIME_FUNCTION *func, ULONG size )
-{
-    int min = 0;
-    int max = size - 1;
-
-    while (min <= max)
-    {
-#ifdef __x86_64__
-        int pos = (min + max) / 2;
-        if (pc < base + func[pos].BeginAddress) max = pos - 1;
-        else if (pc >= base + func[pos].EndAddress) min = pos + 1;
-        else
-        {
-            func += pos;
-            while (func->UnwindData & 1)  /* follow chained entry */
-                func = (RUNTIME_FUNCTION *)(base + (func->UnwindData & ~1));
-            return func;
-        }
-#elif defined(__arm__)
-        int pos = (min + max) / 2;
-        if (pc < base + (func[pos].BeginAddress & ~1)) max = pos - 1;
-        else if (pc >= base + get_runtime_function_end( &func[pos], base )) min = pos + 1;
-        else return func + pos;
-#else  /* __aarch64__ */
-        int pos = (min + max) / 2;
-        if (pc < base + func[pos].BeginAddress) max = pos - 1;
-        else if (pc >= base + get_runtime_function_end( &func[pos], base )) min = pos + 1;
-        else return func + pos;
-#endif
-    }
-    return NULL;
-}
-
 #endif  /* __x86_64__ || __arm__ || __aarch64__ */
 
 

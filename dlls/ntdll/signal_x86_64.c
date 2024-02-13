@@ -249,6 +249,28 @@ static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
                (char *)base + table->ScopeRecord[i].JumpTarget );
 }
 
+static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (pc < base + func[pos].BeginAddress) max = pos - 1;
+        else if (pc >= base + func[pos].EndAddress) min = pos + 1;
+        else
+        {
+            func += pos;
+            while (func->UnwindData & 1)  /* follow chained entry */
+                func = (RUNTIME_FUNCTION *)(base + (func->UnwindData & ~1));
+            return func;
+        }
+    }
+    return NULL;
+}
+
 
 /***********************************************************************
  *           virtual_unwind

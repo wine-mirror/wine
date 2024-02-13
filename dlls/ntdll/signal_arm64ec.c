@@ -229,6 +229,28 @@ static void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx )
     memcpy( ec_ctx->V, arm_ctx->V, sizeof(ec_ctx->V) );
 }
 
+static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (pc < base + func[pos].BeginAddress) max = pos - 1;
+        else if (pc >= base + func[pos].EndAddress) min = pos + 1;
+        else
+        {
+            func += pos;
+            while (func->UnwindData & 1)  /* follow chained entry */
+                func = (RUNTIME_FUNCTION *)(base + (func->UnwindData & ~1));
+            return func;
+        }
+    }
+    return NULL;
+}
+
 
 /*******************************************************************
  *         syscalls
