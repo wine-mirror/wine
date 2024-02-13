@@ -44,6 +44,11 @@ struct device
     DEVICE_OBJECT *bus_device;
     PHIDP_PREPARSED_DATA preparsed;
 
+    FILE_OBJECT dummy_file;
+    IO_STATUS_BLOCK io;
+    ULONG report_len;
+    char *report_buf;
+
     ULONG caps_count;
     ULONG contact_max;
     HIDP_VALUE_CAPS *id_caps;
@@ -71,6 +76,71 @@ static inline LONG scale_value( ULONG value, const HIDP_VALUE_CAPS *caps, LONG m
     return min + MulDiv( tmp - caps->LogicalMin, max - min, caps->LogicalMax - caps->LogicalMin );
 }
 
+static NTSTATUS WINAPI read_completion( DEVICE_OBJECT *device, IRP *irp, void *context );
+
+static NTSTATUS start_device_read( DEVICE_OBJECT *device )
+{
+    struct device *impl = impl_from_DEVICE_OBJECT( device );
+    IO_STACK_LOCATION *stack;
+    NTSTATUS status;
+    IRP *irp;
+
+    TRACE( "device %p\n", device );
+
+    irp = IoBuildAsynchronousFsdRequest( IRP_MJ_READ, device, impl->report_buf,
+                                         impl->report_len, NULL, &impl->io );
+    if (!irp) return STATUS_NO_MEMORY;
+    irp->Tail.Overlay.OriginalFileObject = &impl->dummy_file;
+    stack = IoGetNextIrpStackLocation( irp );
+    stack->FileObject = &impl->dummy_file;
+
+    TRACE( "created irp %p\n", irp );
+
+    IoSetCompletionRoutine( irp, read_completion, device, TRUE, TRUE, TRUE );
+    if ((status = IoCallDriver( impl->bus_device, irp )) && status != STATUS_PENDING) return status;
+    return STATUS_SUCCESS;
+}
+
+static void process_hid_report( struct device *impl, char *report_buf, UINT report_len )
+{
+    ULONG contact_count;
+    NTSTATUS status;
+
+    TRACE( "impl %p, report_buf %p, report_len %u\n", impl, report_buf, report_len );
+
+    status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_DIGITIZER, 0, HID_USAGE_DIGITIZER_CONTACT_COUNT,
+                                 &contact_count, impl->preparsed, report_buf, report_len );
+    if (status != HIDP_STATUS_SUCCESS) return;
+    if (contact_count > impl->contact_max)
+    {
+        WARN( "got %lu contacts, capping to %lu.\n", contact_count, impl->contact_max );
+        contact_count = impl->contact_max;
+    }
+
+    FIXME( "Not implemented\n" );
+}
+
+static NTSTATUS WINAPI read_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
+{
+    struct device *impl = impl_from_DEVICE_OBJECT( context );
+    NTSTATUS status;
+
+    TRACE( "device %p, irp %p, context %p\n", device, irp, context );
+
+    if (irp->IoStatus.Status)
+        WARN( "device read failed with status %#lx, stopping\n", irp->IoStatus.Status );
+    else
+    {
+        process_hid_report( impl, impl->report_buf, impl->report_len );
+
+        if (!InterlockedOr( &impl->removed, FALSE ) && (status = start_device_read( context )))
+            ERR( "Failed to start next read, status %#lx\n", status );
+    }
+
+    if (irp->PendingReturned) IoMarkIrpPending( irp );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
@@ -95,15 +165,25 @@ static NTSTATUS call_hid_device( DEVICE_OBJECT *device, DWORD major, DWORD code,
                                  DWORD in_len, void *out_buf, DWORD out_len )
 {
     struct device *impl = impl_from_DEVICE_OBJECT( device );
+    IO_STACK_LOCATION *stack;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
     KEVENT event;
     IRP *irp;
 
     KeInitializeEvent( &event, NotificationEvent, FALSE );
-    irp = IoBuildDeviceIoControlRequest( code, device, in_buf, in_len, out_buf, out_len,
-                                         FALSE, &event, &io );
+    if (major == IRP_MJ_DEVICE_CONTROL)
+        irp = IoBuildDeviceIoControlRequest( code, device, in_buf, in_len, out_buf, out_len,
+                                             FALSE, &event, &io );
+    else
+        irp = IoBuildSynchronousFsdRequest( code, device, out_buf, out_len, NULL, &event, &io );
     if (!irp) return STATUS_NO_MEMORY;
+
+    irp->Tail.Overlay.OriginalFileObject = &impl->dummy_file;
+    if (code == IRP_MJ_CREATE) irp->Flags |= IRP_CREATE_OPERATION;
+    if (code == IRP_MJ_CLOSE) irp->Flags |= IRP_CLOSE_OPERATION;
+    stack = IoGetNextIrpStackLocation( irp );
+    stack->FileObject = &impl->dummy_file;
 
     status = IoCallDriver( impl->bus_device, irp );
     if (status == STATUS_PENDING) KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
@@ -120,6 +200,7 @@ static NTSTATUS initialize_device( DEVICE_OBJECT *device )
     NTSTATUS status;
     HIDP_CAPS caps;
 
+    if ((status = call_hid_device( device, IRP_MJ_CREATE, 0, NULL, 0, NULL, 0 ))) return status;
     if ((status = call_hid_device( device, IRP_MJ_DEVICE_CONTROL, IOCTL_HID_GET_COLLECTION_INFORMATION,
                                    &info, 0, &info, sizeof(info) )))
         return status;
@@ -175,6 +256,10 @@ static NTSTATUS initialize_device( DEVICE_OBJECT *device )
                                             impl->y_caps, &count, impl->preparsed );
         if (status != HIDP_STATUS_SUCCESS) goto failed;
 
+        impl->report_len = caps.InputReportByteLength;
+        if (!(impl->report_buf = malloc( impl->report_len ))) return STATUS_NO_MEMORY;
+        impl->report_buf[0] = value_caps.ReportID;
+
         return STATUS_SUCCESS;
     }
 
@@ -213,6 +298,7 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
             status = irp->IoStatus.Status;
         }
         if (!status) status = initialize_device( device );
+        if (!status) status = start_device_read( device );
 
         if (status) irp->IoStatus.Status = status;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
@@ -220,6 +306,8 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
 
     case IRP_MN_SURPRISE_REMOVAL:
         status = STATUS_SUCCESS;
+        if (InterlockedExchange( &impl->removed, TRUE )) break;
+        call_hid_device( device, IRP_MJ_CLOSE, 0, NULL, 0, NULL, 0 );
         break;
 
     case IRP_MN_REMOVE_DEVICE:
@@ -229,6 +317,7 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
         free( impl->id_caps );
         free( impl->x_caps );
         free( impl->y_caps );
+        free( impl->report_buf );
         free( impl->preparsed );
         IoDeleteDevice( device );
         return status;
