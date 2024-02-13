@@ -38,6 +38,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
+struct contact
+{
+    struct list entry;
+    ULONG id;
+    POINT pos;
+};
+
 struct device
 {
     LONG removed;
@@ -48,6 +55,9 @@ struct device
     IO_STATUS_BLOCK io;
     ULONG report_len;
     char *report_buf;
+
+    ULONG contact_count;
+    struct list contacts;
 
     ULONG caps_count;
     ULONG contact_max;
@@ -101,10 +111,56 @@ static NTSTATUS start_device_read( DEVICE_OBJECT *device )
     return STATUS_SUCCESS;
 }
 
+static void add_contact( struct device *impl, struct list *old_contacts, ULONG id, LONG x, LONG y )
+{
+    struct contact *contact;
+
+    LIST_FOR_EACH_ENTRY( contact, old_contacts, struct contact, entry )
+        if (contact->id == id) break;
+
+    if (&contact->entry != old_contacts)
+    {
+        list_remove( &contact->entry );
+
+        contact->pos.x = x;
+        contact->pos.y = y;
+        TRACE( "updating contact %#lx, pos %s\n", contact->id, wine_dbgstr_point( &contact->pos ) );
+    }
+    else if ((contact = calloc( 1, sizeof(*contact) )))
+    {
+        contact->id = id;
+        contact->pos.x = x;
+        contact->pos.y = y;
+        TRACE( "new contact %#lx, pos %s\n", contact->id, wine_dbgstr_point( &contact->pos ) );
+    }
+    else
+    {
+        ERR( "failed to allocate new contact\n" );
+        return;
+    }
+
+    list_add_tail( &impl->contacts, &contact->entry );
+}
+
+static void release_contacts( struct list *contacts )
+{
+    struct contact *contact, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( contact, next, contacts, struct contact, entry )
+    {
+        TRACE( "releasing contact %#lx, pos %s\n", contact->id, wine_dbgstr_point( &contact->pos ) );
+        list_remove( &contact->entry );
+        free( contact );
+    }
+}
+
 static void process_hid_report( struct device *impl, char *report_buf, UINT report_len )
 {
-    ULONG contact_count;
+    struct list old_contacts = LIST_INIT( old_contacts );
+    ULONG i, value, contact_count, usage_count, id;
+    LONG x = 0, y = 0;
     NTSTATUS status;
+    USHORT usage;
 
     TRACE( "impl %p, report_buf %p, report_len %u\n", impl, report_buf, report_len );
 
@@ -117,7 +173,36 @@ static void process_hid_report( struct device *impl, char *report_buf, UINT repo
         contact_count = impl->contact_max;
     }
 
-    FIXME( "Not implemented\n" );
+    list_move_tail( &old_contacts, &impl->contacts );
+
+    for (i = 0; i < impl->caps_count; i++)
+    {
+        USHORT collection = impl->id_caps[i].LinkCollection;
+
+        usage_count = 1;
+        usage = HID_USAGE_DIGITIZER_TIP_SWITCH;
+        status = HidP_GetUsages( HidP_Input, HID_USAGE_PAGE_DIGITIZER, collection, &usage, &usage_count,
+                                 impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS || !usage_count) continue;
+
+        status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_DIGITIZER, collection, HID_USAGE_DIGITIZER_CONTACT_ID,
+                                     &id, impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) continue;
+
+        status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, collection, HID_USAGE_GENERIC_X,
+                                     &value, impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) continue;
+        else x = scale_value( value, impl->x_caps + i, 0, 65535 );
+
+        status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, collection, HID_USAGE_GENERIC_Y,
+                                     &value, impl->preparsed, report_buf, report_len );
+        if (status != HIDP_STATUS_SUCCESS) continue;
+        else y = scale_value( value, impl->y_caps + i, 0, 65535 );
+
+        add_contact( impl, &old_contacts, id, x, y );
+    }
+
+    release_contacts( &old_contacts );
 }
 
 static NTSTATUS WINAPI read_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
@@ -199,6 +284,8 @@ static NTSTATUS initialize_device( DEVICE_OBJECT *device )
     char *report_buf;
     NTSTATUS status;
     HIDP_CAPS caps;
+
+    list_init( &impl->contacts );
 
     if ((status = call_hid_device( device, IRP_MJ_CREATE, 0, NULL, 0, NULL, 0 ))) return status;
     if ((status = call_hid_device( device, IRP_MJ_DEVICE_CONTROL, IOCTL_HID_GET_COLLECTION_INFORMATION,
@@ -314,6 +401,7 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
         IoSkipCurrentIrpStackLocation( irp );
         status = IoCallDriver( impl->bus_device, irp );
         IoDetachDevice( impl->bus_device );
+        release_contacts( &impl->contacts );
         free( impl->id_caps );
         free( impl->x_caps );
         free( impl->y_caps );
