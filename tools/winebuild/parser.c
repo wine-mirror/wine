@@ -952,6 +952,29 @@ static void assign_ordinals( DLLSPEC *spec )
 }
 
 
+static void assign_exports( DLLSPEC *spec )
+{
+    struct exports *exports = &spec->exports;
+    unsigned int i;
+
+    exports->entry_points = xmalloc( spec->nb_entry_points * sizeof(*exports->entry_points) );
+    for (i = 0; i < spec->nb_entry_points; i++)
+    {
+        ORDDEF *entry = &spec->entry_points[i];
+        exports->entry_points[exports->nb_entry_points++] = entry;
+    }
+
+    assign_names( spec );
+    assign_ordinals( spec );
+
+    exports->nb_names = spec->nb_names;
+    exports->names = spec->names;
+    exports->base = spec->base;
+    exports->limit = spec->limit;
+    exports->ordinals = spec->ordinals;
+}
+
+
 /*******************************************************************
  *         add_16bit_exports
  *
@@ -1008,8 +1031,7 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
                                              odp->u.func.nb_args * sizeof(odp->u.func.args[0]) );
     }
 
-    assign_names( spec32 );
-    assign_ordinals( spec32 );
+    assign_exports( spec32 );
 }
 
 
@@ -1052,8 +1074,7 @@ int parse_spec_file( FILE *file, DLLSPEC *spec )
     }
 
     current_line = 0;  /* no longer parsing the input file */
-    assign_names( spec );
-    assign_ordinals( spec );
+    assign_exports( spec );
     return !nb_errors;
 }
 
@@ -1295,7 +1316,6 @@ int parse_def_file( FILE *file, DLLSPEC *spec )
     }
 
     current_line = 0;  /* no longer parsing the input file */
-    assign_names( spec );
-    assign_ordinals( spec );
+    assign_exports( spec );
     return !nb_errors;
 }
