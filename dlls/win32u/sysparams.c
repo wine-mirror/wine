@@ -1128,7 +1128,7 @@ struct device_manager_ctx
     unsigned int mode_count;
     HANDLE mutex;
     char gpuid[128];
-    WCHAR gpu_guid[64];
+    char gpu_guid[39];
     LUID gpu_luid;
     HKEY adapter_key;
     /* for the virtual desktop settings */
@@ -1178,7 +1178,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     char buffer[4096];
     WCHAR bufferW[512];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    unsigned int gpu_index, size;
+    unsigned int gpu_index, size, i;
     HKEY hkey, subkey;
     LARGE_INTEGER ft;
     ULONG memory_size;
@@ -1286,21 +1286,21 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     if ((subkey = reg_create_key( hkey, device_parametersW, sizeof(device_parametersW), 0, NULL )))
     {
-        if (!query_reg_value( subkey, video_idW, value, sizeof(buffer) ))
+        if (query_reg_value( subkey, video_idW, value, sizeof(buffer) ) != sizeof(ctx->gpu_guid) * sizeof(WCHAR))
         {
             GUID guid;
             uuid_create( &guid );
-            sprintf( buffer, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            sprintf( ctx->gpu_guid, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                      (unsigned int)guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
                      guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
-            size = asciiz_to_unicode( ctx->gpu_guid, buffer );
-            TRACE( "created guid %s\n", debugstr_w(ctx->gpu_guid) );
-            set_reg_value( subkey, video_idW, REG_SZ, ctx->gpu_guid, size );
+            TRACE( "created guid %s\n", debugstr_a(ctx->gpu_guid) );
+            set_reg_value( subkey, video_idW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, ctx->gpu_guid ) );
         }
         else
         {
-            memcpy( ctx->gpu_guid, value->Data, value->DataLength );
-            TRACE( "got guid %s\n", debugstr_w(ctx->gpu_guid) );
+            WCHAR *guidW = (WCHAR *)value->Data;
+            for (i = 0; i < sizeof(ctx->gpu_guid); i++) ctx->gpu_guid[i] = guidW[i];
+            TRACE( "got guid %s\n", debugstr_a(ctx->gpu_guid) );
         }
         NtClose( subkey );
     }
@@ -1415,16 +1415,12 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     ctx->monitor_count = 0;
     ctx->mode_count = 0;
 
-    len = asciiz_to_unicode( bufferW, "\\Registry\\Machine\\System\\CurrentControlSet\\"
-                             "Control\\Video\\" ) / sizeof(WCHAR) - 1;
-    lstrcpyW( bufferW + len, ctx->gpu_guid );
-    len += lstrlenW( bufferW + len );
-    sprintf( buffer, "\\%04x", adapter_index );
-    len += asciiz_to_unicode( bufferW + len, buffer ) / sizeof(WCHAR) - 1;
-    hkey = reg_create_key( NULL, bufferW, len * sizeof(WCHAR),
-                          REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
-    if (!hkey) hkey = reg_create_key( NULL, bufferW, len * sizeof(WCHAR),
-                                     REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
+    snprintf( buffer, ARRAY_SIZE(buffer), "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%s\\%04x",
+              ctx->gpu_guid, adapter_index );
+    len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
+
+    hkey = reg_create_key( NULL, bufferW, len, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
+    if (!hkey) hkey = reg_create_key( NULL, bufferW, len, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
 
     sprintf( name, "\\Device\\Video%u", video_index );
     asciiz_to_unicode( nameW, name );
@@ -1441,13 +1437,8 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     else ERR( "failed to create link key\n" );
 
     /* Following information is Wine specific, it doesn't really exist on Windows. */
-    len = asciiz_to_unicode( bufferW, "System\\CurrentControlSet\\Control\\Video\\" )
-        / sizeof(WCHAR) - 1;
-    lstrcpyW( bufferW + len, ctx->gpu_guid );
-    len += lstrlenW( bufferW + len );
-    sprintf( buffer, "\\%04x", adapter_index );
-    len += asciiz_to_unicode( bufferW + len, buffer ) / sizeof(WCHAR) - 1;
-    ctx->adapter_key = reg_create_key( config_key, bufferW, len * sizeof(WCHAR),
+    snprintf( buffer, ARRAY_SIZE(buffer), "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", ctx->gpu_guid, adapter_index );
+    ctx->adapter_key = reg_create_key( config_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR),
                                        REG_OPTION_VOLATILE, NULL );
 
     set_reg_value( ctx->adapter_key, gpu_idW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, ctx->gpuid ) );
