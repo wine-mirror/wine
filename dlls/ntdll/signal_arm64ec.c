@@ -229,52 +229,6 @@ static void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx )
     memcpy( ec_ctx->V, arm_ctx->V, sizeof(ec_ctx->V) );
 }
 
-static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
-                                             RUNTIME_FUNCTION *func, ULONG size )
-{
-    int min = 0;
-    int max = size - 1;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        if (pc < base + func[pos].BeginAddress) max = pos - 1;
-        else if (pc >= base + func[pos].EndAddress) min = pos + 1;
-        else
-        {
-            func += pos;
-            while (func->UnwindData & 1)  /* follow chained entry */
-                func = (RUNTIME_FUNCTION *)(base + (func->UnwindData & ~1));
-            return func;
-        }
-    }
-    return NULL;
-}
-
-
-static ARM64_RUNTIME_FUNCTION *find_function_info_arm64( ULONG_PTR pc, ULONG_PTR base,
-                                                         ARM64_RUNTIME_FUNCTION *func, ULONG size )
-{
-    int min = 0;
-    int max = size - 1;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        ULONG_PTR start = base + func[pos].BeginAddress;
-
-        if (pc >= start)
-        {
-            ULONG len = func[pos].Flag ? func[pos].FunctionLength :
-                ((IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA *)(base + func[pos].UnwindData))->FunctionLength;
-            if (pc < start + 4 * len) return func + pos;
-            min = pos + 1;
-        }
-        else max = pos - 1;
-    }
-    return NULL;
-}
-
 
 /*******************************************************************
  *         syscalls
@@ -1854,60 +1808,6 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
         return (RUNTIME_FUNCTION *)(*base + metadata->ExtraRFETable);
     }
     return RtlImageDirectoryEntryToData( module->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, len );
-}
-
-
-/**********************************************************************
- *              RtlLookupFunctionEntry   (NTDLL.@)
- */
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
-                                                 UNWIND_HISTORY_TABLE *table )
-{
-    RUNTIME_FUNCTION *func;
-    ULONG_PTR dynbase;
-    ULONG size;
-
-    if ((func = RtlLookupFunctionTable( pc, base, &size )))
-    {
-        if (RtlIsEcCode( (void *)pc ))
-        {
-            ARM64_RUNTIME_FUNCTION *arm64func = (ARM64_RUNTIME_FUNCTION *)func;
-            size /= sizeof(*arm64func);
-            return (RUNTIME_FUNCTION *)find_function_info_arm64( pc, *base, arm64func, size );
-        }
-        return find_function_info( pc, *base, func, size / sizeof(*func));
-    }
-
-    if ((func = lookup_dynamic_function_table( pc, &dynbase, &size )))
-    {
-        RUNTIME_FUNCTION *ret;
-
-        if (RtlIsEcCode( (void *)pc ))
-            ret = (RUNTIME_FUNCTION *)find_function_info_arm64( pc, dynbase,
-                                                                (ARM64_RUNTIME_FUNCTION *)func, size );
-        else
-            ret = find_function_info( pc, dynbase, func, size );
-
-        if (ret) *base = dynbase;
-        return ret;
-    }
-
-    *base = 0;
-    return NULL;
-}
-
-
-/**********************************************************************
- *              RtlAddFunctionTable   (NTDLL.@)
- */
-BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_PTR base )
-{
-    ULONG_PTR end = base;
-    void *ret;
-
-    if (count) end += table[count - 1].EndAddress;
-
-    return !RtlAddGrowableFunctionTable( &ret, table, count, 0, base, end );
 }
 
 

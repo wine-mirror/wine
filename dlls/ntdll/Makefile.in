@@ -66,6 +66,7 @@ SOURCES = \
 	unix/tape.c \
 	unix/thread.c \
 	unix/virtual.c \
+	unwind.c \
 	version.c \
 	version.rc \
 	wcstring.c
