@@ -416,16 +416,34 @@ static void wait_for_breakpoint_(unsigned line, struct debugger_context *ctx)
                        ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
 }
 
+#define check_thread_running(h)   ok(_check_thread_suspend_count(h) == 0, "Expecting running thread\n")
+#define check_thread_suspended(h) ok(_check_thread_suspend_count(h) >  0, "Expecting suspended thread\n")
+
+static LONG _check_thread_suspend_count(HANDLE h)
+{
+    DWORD suspend_count;
+
+    suspend_count = SuspendThread(h);
+    if (suspend_count != (DWORD)-1 && ResumeThread(h) == (DWORD)-1)
+        return (DWORD)-2;
+    return suspend_count;
+}
+
 static void process_attach_events(struct debugger_context *ctx, BOOL pass_exception)
 {
     DEBUG_EVENT ev;
     BOOL ret;
+    HANDLE prev_thread;
 
     ctx->ev.dwDebugEventCode = -1;
     next_event(ctx, 0);
     ok(ctx->ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
 
+    todo_wine
+    check_thread_suspended(ctx->ev.u.CreateProcessInfo.hThread);
+    prev_thread = ctx->ev.u.CreateProcessInfo.hThread;
     next_event(ctx, 0);
+
     if (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) /* Vista+ reports ntdll.dll before reporting threads */
     {
         ok(ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
@@ -434,7 +452,13 @@ static void process_attach_events(struct debugger_context *ctx, BOOL pass_except
     }
 
     while (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
+    {
+        todo_wine
+        check_thread_suspended(ctx->ev.u.CreateThread.hThread);
+        check_thread_running(prev_thread);
+        prev_thread = ctx->ev.u.CreateThread.hThread;
         next_event(ctx, 0);
+    }
 
     do
     {
@@ -455,9 +479,12 @@ static void process_attach_events(struct debugger_context *ctx, BOOL pass_except
         DWORD last_threads[5];
         unsigned thd_idx = 0, i;
 
+        check_thread_running(prev_thread);
+
         /* sometimes (at least Win10) several thread creations are reported here */
         do
         {
+            check_thread_running(ctx->ev.u.CreateThread.hThread);
             if (thd_idx < ARRAY_SIZE(last_threads))
                 last_threads[thd_idx++] = ctx->ev.dwThreadId;
             next_event(ctx, WAIT_EVENT_TIMEOUT);
