@@ -1916,4 +1916,28 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, ULONG_P
 
 #endif  /* __x86_64__ */
 
+
+/***********************************************************************
+ * Generic unwind functions
+ */
+
+
+/***********************************************************************
+ *            RtlUnwind  (NTDLL.@)
+ */
+void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void *retval )
+{
+    CONTEXT context;
+    RtlUnwindEx( frame, target_ip, rec, retval, &context, NULL );
+}
+
+
+/*******************************************************************
+ *		_local_unwind (NTDLL.@)
+ */
+void WINAPI _local_unwind( void *frame, void *target_ip )
+{
+    RtlUnwind( frame, target_ip, NULL, NULL );
+}
+
 #endif  /* !__i386__ */

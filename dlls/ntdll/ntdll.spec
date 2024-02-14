@@ -1513,7 +1513,7 @@
 @ cdecl __isascii(long)
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
-@ stdcall -arch=arm __jump_unwind(ptr ptr)
+@ stdcall -arch=arm __jump_unwind(ptr ptr) _local_unwind
 @ cdecl __toascii(long)
 @ cdecl -norelay -arch=i386 -ret64 _alldiv(int64 int64)
 @ cdecl -arch=i386 -norelay _alldvrm(int64 int64)

@@ -827,25 +827,6 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 }
 
 
-/***********************************************************************
- *            RtlUnwind  (NTDLL.@)
- */
-void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void *retval )
-{
-    CONTEXT context;
-    RtlUnwindEx( frame, target_ip, rec, retval, &context, NULL );
-}
-
-
-/*******************************************************************
- *		__jump_unwind (NTDLL.@)
- */
-void WINAPI __jump_unwind( void *frame, void *target_ip )
-{
-    CONTEXT context;
-    RtlUnwindEx( frame, target_ip, NULL, NULL, &context, NULL );
-}
-
 extern LONG __C_ExecuteExceptionFilter(PEXCEPTION_POINTERS ptrs, PVOID frame,
                                        PEXCEPTION_FILTER filter,
                                        PUCHAR nonvolatile);

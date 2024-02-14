@@ -982,25 +982,6 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
 
 /*******************************************************************
- *		RtlUnwind (NTDLL.@)
- */
-void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void *retval )
-{
-    CONTEXT context;
-    RtlUnwindEx( frame, target_ip, rec, retval, &context, NULL );
-}
-
-
-/*******************************************************************
- *		_local_unwind (NTDLL.@)
- */
-void WINAPI _local_unwind( void *frame, void *target_ip )
-{
-    CONTEXT context;
-    RtlUnwindEx( frame, target_ip, NULL, NULL, &context, NULL );
-}
-
-/*******************************************************************
  *		__C_specific_handler (NTDLL.@)
  */
 EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
