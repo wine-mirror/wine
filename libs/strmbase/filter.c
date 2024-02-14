@@ -524,10 +524,10 @@ void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
     filter->outer_unk = outer ? outer : &filter->IUnknown_inner;
     filter->refcount = 1;
 
-    InitializeCriticalSection(&filter->filter_cs);
+    InitializeCriticalSectionEx(&filter->filter_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     if (filter->filter_cs.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
         filter->filter_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.filter_cs");
-    InitializeCriticalSection(&filter->stream_cs);
+    InitializeCriticalSectionEx(&filter->stream_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     if (filter->stream_cs.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
         filter->stream_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.stream_cs");
     filter->clsid = *clsid;
