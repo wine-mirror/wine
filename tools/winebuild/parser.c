@@ -843,24 +843,24 @@ static int name_compare( const void *ptr1, const void *ptr2 )
  *
  * Build the name array and catch duplicates.
  */
-static void assign_names( DLLSPEC *spec )
+static void assign_names( struct exports *exports )
 {
     int i, j, nb_exp_names = 0;
     ORDDEF **all_names;
 
-    spec->nb_names = 0;
-    for (i = 0; i < spec->nb_entry_points; i++)
-        if (spec->entry_points[i].name) spec->nb_names++;
-        else if (spec->entry_points[i].export_name) nb_exp_names++;
+    exports->nb_names = 0;
+    for (i = 0; i < exports->nb_entry_points; i++)
+        if (exports->entry_points[i]->name) exports->nb_names++;
+        else if (exports->entry_points[i]->export_name) nb_exp_names++;
 
-    if (!spec->nb_names && !nb_exp_names) return;
+    if (!exports->nb_names && !nb_exp_names) return;
 
     /* check for duplicates */
 
-    all_names = xmalloc( (spec->nb_names + nb_exp_names) * sizeof(all_names[0]) );
-    for (i = j = 0; i < spec->nb_entry_points; i++)
-        if (spec->entry_points[i].name || spec->entry_points[i].export_name)
-            all_names[j++] = &spec->entry_points[i];
+    all_names = xmalloc( (exports->nb_names + nb_exp_names) * sizeof(all_names[0]) );
+    for (i = j = 0; i < exports->nb_entry_points; i++)
+        if (exports->entry_points[i]->name || exports->entry_points[i]->export_name)
+            all_names[j++] = exports->entry_points[i];
 
     qsort( all_names, j, sizeof(all_names[0]), name_compare );
 
@@ -879,15 +879,15 @@ static void assign_names( DLLSPEC *spec )
     }
     free( all_names );
 
-    if (spec->nb_names)
+    if (exports->nb_names)
     {
-        spec->names = xmalloc( spec->nb_names * sizeof(spec->names[0]) );
-        for (i = j = 0; i < spec->nb_entry_points; i++)
-            if (spec->entry_points[i].name) spec->names[j++] = &spec->entry_points[i];
+        exports->names = xmalloc( exports->nb_names * sizeof(exports->names[0]) );
+        for (i = j = 0; i < exports->nb_entry_points; i++)
+            if (exports->entry_points[i]->name) exports->names[j++] = exports->entry_points[i];
 
         /* sort the list of names */
-        qsort( spec->names, spec->nb_names, sizeof(spec->names[0]), name_compare );
-        for (i = 0; i < spec->nb_names; i++) spec->names[i]->hint = i;
+        qsort( exports->names, exports->nb_names, sizeof(exports->names[0]), name_compare );
+        for (i = 0; i < exports->nb_names; i++) exports->names[i]->hint = i;
     }
 }
 
@@ -962,11 +962,8 @@ static void assign_exports( DLLSPEC *spec )
         exports->entry_points[exports->nb_entry_points++] = entry;
     }
 
-    assign_names( spec );
+    assign_names( exports );
     assign_ordinals( exports );
-
-    exports->nb_names = spec->nb_names;
-    exports->names = spec->names;
 }
 
 

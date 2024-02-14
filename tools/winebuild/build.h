@@ -153,7 +153,6 @@ typedef struct
     int              heap_size;          /* exe heap size */
     int              nb_entry_points;    /* number of used entry points */
     int              alloc_entry_points; /* number of allocated entry points */
-    int              nb_names;           /* number of entry points with names */
     unsigned int     nb_resources;       /* number of resources */
     int              characteristics;    /* characteristics for the PE header */
     int              dll_characteristics;/* DLL characteristics for the PE header */
@@ -162,7 +161,6 @@ typedef struct
     int              subsystem_minor;    /* subsystem version minor number */
     int              unicode_app;        /* default to unicode entry point */
     ORDDEF          *entry_points;       /* spec entry points */
-    ORDDEF         **names;              /* array of entry point names (points into entry_points) */
     struct exports   exports;            /* dll exports */
     struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */
     struct apiset    apiset;             /* list of defined api sets */
