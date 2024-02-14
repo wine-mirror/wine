@@ -84,10 +84,6 @@ extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
 extern void WINAPI KiUserCallbackDispatcherReturn(void);
 extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
-#if defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
-extern RUNTIME_FUNCTION *lookup_dynamic_function_table( ULONG_PTR pc, ULONG_PTR *base, ULONG *count );
-#endif
-
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern const char *debugstr_exception_code( DWORD code );
