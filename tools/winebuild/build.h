@@ -149,8 +149,6 @@ typedef struct
     char            *init_func;          /* initialization routine */
     char            *main_module;        /* main Win32 module for Win16 specs */
     SPEC_TYPE        type;               /* type of dll (Win16/Win32) */
-    int              base;               /* ordinal base */
-    int              limit;              /* ordinal limit */
     int              stack_size;         /* exe stack size */
     int              heap_size;          /* exe heap size */
     int              nb_entry_points;    /* number of used entry points */
@@ -165,7 +163,6 @@ typedef struct
     int              unicode_app;        /* default to unicode entry point */
     ORDDEF          *entry_points;       /* spec entry points */
     ORDDEF         **names;              /* array of entry point names (points into entry_points) */
-    ORDDEF         **ordinals;           /* array of dll ordinals (points into entry_points) */
     struct exports   exports;            /* dll exports */
     struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */
     struct apiset    apiset;             /* list of defined api sets */

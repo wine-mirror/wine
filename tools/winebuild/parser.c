@@ -648,8 +648,6 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
             error( "Ordinal number %d too large\n", ordinal );
             goto error;
         }
-        if (ordinal > spec->limit) spec->limit = ordinal;
-        if (ordinal < spec->base) spec->base = ordinal;
         odp->ordinal = ordinal;
     }
 
@@ -898,57 +896,57 @@ static void assign_names( DLLSPEC *spec )
  *
  * Build the ordinal array.
  */
-static void assign_ordinals( DLLSPEC *spec )
+static void assign_ordinals( struct exports *exports )
 {
     int i, count, ordinal;
 
     /* start assigning from base, or from 1 if no ordinal defined yet */
 
-    spec->base = MAX_ORDINALS;
-    spec->limit = 0;
-    for (i = 0; i < spec->nb_entry_points; i++)
+    exports->base = MAX_ORDINALS;
+    exports->limit = 0;
+    for (i = 0; i < exports->nb_entry_points; i++)
     {
-        ordinal = spec->entry_points[i].ordinal;
+        ordinal = exports->entry_points[i]->ordinal;
         if (ordinal == -1) continue;
-        if (ordinal > spec->limit) spec->limit = ordinal;
-        if (ordinal < spec->base) spec->base = ordinal;
+        if (ordinal > exports->limit) exports->limit = ordinal;
+        if (ordinal < exports->base) exports->base = ordinal;
     }
-    if (spec->base == MAX_ORDINALS) spec->base = 1;
-    if (spec->limit < spec->base) spec->limit = spec->base;
+    if (exports->base == MAX_ORDINALS) exports->base = 1;
+    if (exports->limit < exports->base) exports->limit = exports->base;
 
-    count = max( spec->limit + 1, spec->base + spec->nb_entry_points );
-    spec->ordinals = xmalloc( count * sizeof(spec->ordinals[0]) );
-    memset( spec->ordinals, 0, count * sizeof(spec->ordinals[0]) );
+    count = max( exports->limit + 1, exports->base + exports->nb_entry_points );
+    exports->ordinals = xmalloc( count * sizeof(exports->ordinals[0]) );
+    memset( exports->ordinals, 0, count * sizeof(exports->ordinals[0]) );
 
     /* fill in all explicitly specified ordinals */
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < exports->nb_entry_points; i++)
     {
-        ordinal = spec->entry_points[i].ordinal;
+        ordinal = exports->entry_points[i]->ordinal;
         if (ordinal == -1) continue;
-        if (spec->ordinals[ordinal])
+        if (exports->ordinals[ordinal])
         {
-            current_line = max( spec->entry_points[i].lineno, spec->ordinals[ordinal]->lineno );
+            current_line = max( exports->entry_points[i]->lineno, exports->ordinals[ordinal]->lineno );
             error( "ordinal %d redefined\n%s:%d: First defined here\n",
                    ordinal, input_file_name,
-                   min( spec->entry_points[i].lineno, spec->ordinals[ordinal]->lineno ) );
+                   min( exports->entry_points[i]->lineno, exports->ordinals[ordinal]->lineno ) );
         }
-        else spec->ordinals[ordinal] = &spec->entry_points[i];
+        else exports->ordinals[ordinal] = exports->entry_points[i];
     }
 
     /* now assign ordinals to the rest */
-    for (i = 0, ordinal = spec->base; i < spec->nb_entry_points; i++)
+    for (i = 0, ordinal = exports->base; i < exports->nb_entry_points; i++)
     {
-        if (spec->entry_points[i].ordinal != -1) continue;
-        while (spec->ordinals[ordinal]) ordinal++;
+        if (exports->entry_points[i]->ordinal != -1) continue;
+        while (exports->ordinals[ordinal]) ordinal++;
         if (ordinal >= MAX_ORDINALS)
         {
-            current_line = spec->entry_points[i].lineno;
+            current_line = exports->entry_points[i]->lineno;
             fatal_error( "Too many functions defined (max %d)\n", MAX_ORDINALS );
         }
-        spec->entry_points[i].ordinal = ordinal;
-        spec->ordinals[ordinal] = &spec->entry_points[i];
+        exports->entry_points[i]->ordinal = ordinal;
+        exports->ordinals[ordinal] = exports->entry_points[i];
     }
-    if (ordinal > spec->limit) spec->limit = ordinal;
+    if (ordinal > exports->limit) exports->limit = ordinal;
 }
 
 
@@ -965,13 +963,10 @@ static void assign_exports( DLLSPEC *spec )
     }
 
     assign_names( spec );
-    assign_ordinals( spec );
+    assign_ordinals( exports );
 
     exports->nb_names = spec->nb_names;
     exports->names = spec->names;
-    exports->base = spec->base;
-    exports->limit = spec->limit;
-    exports->ordinals = spec->ordinals;
 }
 
 
@@ -1012,9 +1007,9 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
 
     /* add the explicit win32 exports */
 
-    for (i = 1; i <= spec16->limit; i++)
+    for (i = 1; i <= spec16->exports.limit; i++)
     {
-        ORDDEF *odp16 = spec16->ordinals[i];
+        ORDDEF *odp16 = spec16->exports.ordinals[i];
 
         if (!odp16 || !odp16->name) continue;
         if (!(odp16->flags & FLAG_EXPORT32)) continue;

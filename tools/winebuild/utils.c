@@ -609,7 +609,6 @@ DLLSPEC *alloc_dll_spec(void)
     spec = xmalloc( sizeof(*spec) );
     memset( spec, 0, sizeof(*spec) );
     spec->type               = SPEC_WIN32;
-    spec->base               = MAX_ORDINALS;
     spec->characteristics    = IMAGE_FILE_EXECUTABLE_IMAGE;
     spec->subsystem          = IMAGE_SUBSYSTEM_WINDOWS_CUI;
     spec->subsystem_major    = 4;
