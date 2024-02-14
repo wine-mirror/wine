@@ -130,7 +130,7 @@ static UINT fpcsr_to_mxcsr( UINT fpcr, UINT fpsr )
     return ret;
 }
 
-static void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const CONTEXT *ctx )
+void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const CONTEXT *ctx )
 {
     ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)ctx;
     UINT64 fpcsr;
@@ -177,7 +177,7 @@ static void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const CONTEXT *ctx )
     arm_ctx->Fpsr = fpcsr >> 32;
 }
 
-static void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx )
+void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx )
 {
     ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)ctx;
 
@@ -1766,19 +1766,6 @@ void WINAPI RtlCaptureContext( CONTEXT *context )
 void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 {
     FIXME( "not implemented\n" );
-}
-
-
-/**********************************************************************
- *              RtlVirtualUnwind   (NTDLL.@)
- */
-PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
-                               RUNTIME_FUNCTION *function, CONTEXT *context,
-                               PVOID *data, ULONG64 *frame_ret,
-                               KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
-{
-    FIXME( "not implemented\n" );
-    return NULL;
 }
 
 

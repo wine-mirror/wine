@@ -1751,6 +1751,20 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     unsigned int i, prolog_offset;
     BOOL mach_frame = FALSE;
 
+#ifdef __arm64ec__
+    if (RtlIsEcCode( (void *)pc ))
+    {
+        ARM64_NT_CONTEXT arm_context;
+        void *ret;
+
+        context_x64_to_arm( &arm_context, context );
+        ret = RtlVirtualUnwind_arm64( type, base, pc, (ARM64_RUNTIME_FUNCTION *)function,
+                                      &arm_context, data, frame_ret, NULL );
+        context_arm_to_x64( context, &arm_context );
+        return ret;
+    }
+#endif
+
     TRACE( "type %lx rip %I64x rsp %I64x\n", type, pc, context->Rsp );
     if (TRACE_ON(unwind)) dump_unwind_info( base, function );
 
