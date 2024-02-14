@@ -353,11 +353,11 @@ static DLLSPEC *read_import_lib( struct import *imp )
         return NULL;  /* the same file was already loaded, ignore this one */
     }
 
-    if (spec->nb_entry_points)
+    if (spec->exports.nb_entry_points)
     {
-        imp->exports = xmalloc( spec->nb_entry_points * sizeof(*imp->exports) );
-        for (i = 0; i < spec->nb_entry_points; i++)
-            imp->exports[imp->nb_exports++] = &spec->entry_points[i];
+        imp->exports = xmalloc( spec->exports.nb_entry_points * sizeof(*imp->exports) );
+        for (i = 0; i < spec->exports.nb_entry_points; i++)
+            imp->exports[imp->nb_exports++] = spec->exports.entry_points[i];
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
     }
     return spec;
@@ -493,13 +493,13 @@ static void add_undef_import( const char *name, int is_ordinal )
 }
 
 /* check if the spec file exports any stubs */
-static int has_stubs( const DLLSPEC *spec )
+static int has_stubs( const struct exports *exports )
 {
     int i;
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < exports->nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = exports->entry_points[i];
         if (odp->type == TYPE_STUB) return 1;
     }
     return 0;
@@ -510,12 +510,12 @@ static void add_extra_undef_symbols( DLLSPEC *spec )
 {
     add_extra_ld_symbol( spec->init_func );
     if (spec->type == SPEC_WIN16) add_extra_ld_symbol( "DllMain" );
-    if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
+    if (has_stubs( &spec->exports )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
     if (delayed_imports.count) add_extra_ld_symbol( "__delayLoadHelper2" );
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
-static int check_unused( const struct import* imp, const DLLSPEC *spec )
+static int check_unused( const struct import* imp, const struct exports *exports )
 {
     int i;
     const char *file_name = imp->dll_name;
@@ -523,9 +523,9 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
     const char *p = strchr( file_name, '.' );
     if (p && !strcasecmp( p, ".dll" )) len = p - file_name;
 
-    for (i = spec->base; i <= spec->limit; i++)
+    for (i = exports->base; i <= exports->limit; i++)
     {
-        ORDDEF *odp = spec->ordinals[i];
+        ORDDEF *odp = exports->ordinals[i];
         if (!odp || !(odp->flags & FLAG_FORWARD)) continue;
         if (!strncasecmp( odp->link_name, file_name, len ) &&
             odp->link_name[len] == '.')
@@ -541,9 +541,9 @@ static void check_undefined_forwards( DLLSPEC *spec )
     char *link_name, *api_name, *dll_name, *p;
     int i;
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < spec->exports.nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = spec->exports.entry_points[i];
 
         if (!(odp->flags & FLAG_FORWARD)) continue;
 
@@ -571,9 +571,9 @@ static void check_undefined_exports( DLLSPEC *spec )
 {
     int i;
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < spec->exports.nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = spec->exports.entry_points[i];
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
         if (find_name( odp->link_name, undef_symbols ))
@@ -611,9 +611,9 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     as_file = open_temp_output_file( ".s" );
     output( "\t.data\n" );
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < spec->exports.nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = spec->exports.entry_points[i];
         if (odp->type == TYPE_STUB || odp->type == TYPE_ABS || odp->type == TYPE_VARIABLE) continue;
         if (odp->flags & FLAG_FORWARD) continue;
         output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( odp )));
@@ -721,7 +721,7 @@ void resolve_dll_imports( DLLSPEC *spec, struct list *list )
         if (!imp->nb_imports)
         {
             /* the dll is not used, get rid of it */
-            if (check_unused( imp, spec ))
+            if (check_unused( imp, &spec->exports ))
                 warning( "winebuild: %s imported but no symbols used\n", imp->dll_name );
             list_remove( &imp->entry );
             free_imports( imp );
@@ -1180,16 +1180,17 @@ static void output_external_link_imports( DLLSPEC *spec )
  */
 void output_stubs( DLLSPEC *spec )
 {
+    struct exports *exports = &spec->exports;
     const char *name, *exp_name;
     int i;
 
-    if (!has_stubs( spec )) return;
+    if (!has_stubs( exports )) return;
 
     output( "\n/* stub functions */\n\n" );
 
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < exports->nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = exports->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
 
         name = get_stub_name( odp, spec );
@@ -1294,9 +1295,9 @@ void output_stubs( DLLSPEC *spec )
     output( "\t%s\n", get_asm_string_section() );
     output( ".L__wine_spec_file_name:\n" );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
-    for (i = 0; i < spec->nb_entry_points; i++)
+    for (i = 0; i < exports->nb_entry_points; i++)
     {
-        ORDDEF *odp = &spec->entry_points[i];
+        ORDDEF *odp = exports->entry_points[i];
         if (odp->type != TYPE_STUB) continue;
         exp_name = odp->name ? odp->name : odp->export_name;
         if (exp_name)
@@ -1611,9 +1612,9 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
     strarray_addall( &objs, as_files );
     as_files = empty_strarray;
 
-    for (i = total = 0; i < spec->nb_entry_points; i++)
+    for (i = total = 0; i < spec->exports.nb_entry_points; i++)
     {
-        const ORDDEF *odp = &spec->entry_points[i];
+        const ORDDEF *odp = spec->exports.entry_points[i];
         const char *abi_name;
         char *imp_name;
 
@@ -1745,9 +1746,9 @@ static void build_unix_import_lib( DLLSPEC *spec, struct strarray files )
 
     /* entry points */
 
-    for (i = total = 0; i < spec->nb_entry_points; i++)
+    for (i = total = 0; i < spec->exports.nb_entry_points; i++)
     {
-        const ORDDEF *odp = &spec->entry_points[i];
+        const ORDDEF *odp = spec->exports.entry_points[i];
 
         if (odp->name) name = odp->name;
         else if (odp->export_name) name = odp->export_name;
