@@ -1992,7 +1992,7 @@ HRESULT synth_create(IUnknown **ret_iface)
         goto failed;
     fluid_sfont_set_data(obj->fluid_sfont, obj);
 
-    InitializeCriticalSection(&obj->cs);
+    InitializeCriticalSectionEx(&obj->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     obj->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     TRACE("Created DirectMusicSynth %p\n", obj);

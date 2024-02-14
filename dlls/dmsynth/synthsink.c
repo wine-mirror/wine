@@ -754,7 +754,7 @@ HRESULT synth_sink_create(IUnknown **ret_iface)
     obj->ref = 1;
 
     obj->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-    InitializeCriticalSection(&obj->cs);
+    InitializeCriticalSectionEx(&obj->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     obj->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
     TRACE("Created DirectMusicSynthSink %p\n", obj);
