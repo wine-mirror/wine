@@ -623,13 +623,6 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         assert( 0 );
     }
 
-    if ((odp->flags & FLAG_CPU_MASK) && !(odp->flags & FLAG_CPU(target.cpu)))
-    {
-        /* ignore this entry point */
-        spec->nb_entry_points--;
-        return 1;
-    }
-
     if (data_only && !(odp->flags & FLAG_FORWARD))
     {
         error( "Only forwarded entry points are allowed in data-only mode\n" );
@@ -959,6 +952,8 @@ static void assign_exports( DLLSPEC *spec )
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *entry = &spec->entry_points[i];
+        if ((entry->flags & FLAG_CPU_MASK) && !(entry->flags & FLAG_CPU(target.cpu)))
+            continue;
         exports->entry_points[exports->nb_entry_points++] = entry;
     }
 
