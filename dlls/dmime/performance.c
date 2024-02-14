@@ -2291,7 +2291,7 @@ HRESULT create_dmperformance(REFIID iid, void **ret_iface)
     obj->ref = 1;
 
     obj->pDefaultPath = NULL;
-    InitializeCriticalSection(&obj->safe);
+    InitializeCriticalSectionEx(&obj->safe, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": performance->safe");
     wine_rb_init(&obj->channel_blocks, channel_block_compare);
 
