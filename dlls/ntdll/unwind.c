@@ -392,7 +392,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
     /* skip codes */
     while (ptr < end && skip)
     {
-        if (*ptr == 0xe4 || *ptr == 0xe5) break;
+        if (*ptr == 0xe4) break;
         ptr += unwind_code_len[*ptr];
         skip--;
     }
@@ -448,7 +448,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
         else if (*ptr == 0xe4)  /* end */
             break;
         else if (*ptr == 0xe5)  /* end_c */
-            break;
+            /* ignore */;
         else if (*ptr == 0xe6)  /* save_next */
         {
             save_next += 2;

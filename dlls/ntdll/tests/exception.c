@@ -8952,6 +8952,46 @@ static void test_virtual_unwind(void)
         { 0x1c,  0xa0,  0,     0xa8,    0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {d12, 0x60}, {d13, 0x70}, {d14, 0x80}, {d15, 0x90}, {lr, 0xa8}, {x29, 0xa0}, {-1,-1} }},
     };
 
+    static const BYTE function_15[] =
+    {
+        0x1f, 0x20, 0x03, 0xd5,   /* 00: nop */
+        0x1f, 0x20, 0x03, 0xd5,   /* 04: nop */
+        0x1f, 0x20, 0x03, 0xd5,   /* 08: nop */
+        0x1f, 0x20, 0x03, 0xd5,   /* 0c: nop */
+        0x1f, 0x20, 0x03, 0xd5,   /* 10: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 14: ret */
+    };
+
+    static const DWORD unwind_info_15_header =
+        (sizeof(function_15)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (2 << 27);  /* codes */
+
+    static const BYTE unwind_info_15[] =
+    {
+        DW(unwind_info_15_header),
+        UWOP_END_C,
+        UWOP_SET_FP,              /* mov x29, sp */
+        UWOP_SAVE_REGP(19, 0x10), /* stp r19, r20, [sp, #0x10] */
+        UWOP_SAVE_FPLR_X(0x20),   /* stp r29, lr, [sp,-#0x20]! */
+        UWOP_END,
+        UWOP_NOP,                 /* padding */
+        UWOP_NOP,                 /* padding */
+    };
+
+    static const struct results results_15[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+        { 0x04,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+        { 0x08,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+        { 0x10,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+        { 0x14,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
@@ -8971,6 +9011,7 @@ static void test_virtual_unwind(void)
         TEST(function_12, unwind_info_12, 1, results_12),
         TEST(function_13, unwind_info_13, 1, results_13),
         TEST(function_14, unwind_info_14, 0, results_14),
+        TEST(function_15, unwind_info_15, 0, results_15),
 #undef TEST
     };
     unsigned int i;
