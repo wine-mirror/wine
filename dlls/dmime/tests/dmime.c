@@ -1681,7 +1681,7 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     expect_track(segment, BandTrack, -1, 0);
-    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    expect_track(segment, ChordTrack, -1, 1);
     todo_wine expect_track(segment, TempoTrack, -1, 2);
     todo_wine expect_track(segment, TimeSigTrack, -1, 3);
     todo_wine expect_track(segment, SeqTrack, -1, 4);
@@ -1723,7 +1723,7 @@ static void test_midi(void)
     IStream_Release(stream);
     /* TempoTrack and TimeSigTrack seems to be optional. */
     expect_track(segment, BandTrack, -1, 0);
-    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    expect_track(segment, ChordTrack, -1, 1);
     todo_wine expect_track(segment, SeqTrack, -1, 2);
     IDirectMusicSegment_Release(segment);
 
@@ -1759,7 +1759,7 @@ static void test_midi(void)
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
-    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    expect_track(segment, ChordTrack, -1, 1);
     todo_wine expect_track(segment, TempoTrack, -1, 2);
     todo_wine expect_track(segment, SeqTrack, -1, 3);
     IDirectMusicSegment_Release(segment);
@@ -1795,7 +1795,7 @@ static void test_midi(void)
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
-    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    expect_track(segment, ChordTrack, -1, 1);
     /* there is no tempo track. */
     todo_wine expect_track(segment, SeqTrack, -1, 2);
     IDirectMusicSegment_Release(segment);
@@ -1832,7 +1832,7 @@ static void test_midi(void)
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
-    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    expect_track(segment, ChordTrack, -1, 1);
     todo_wine expect_track(segment, SeqTrack, -1, 2);
 
     hr = test_tool_create(message_types, ARRAY_SIZE(message_types), &tool);

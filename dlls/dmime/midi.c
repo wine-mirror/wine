@@ -40,6 +40,7 @@ struct midi_event
 
 struct midi_parser
 {
+    IDirectMusicTrack *chordtrack;
     IDirectMusicTrack *bandtrack;
     MUSIC_TIME time;
     IStream *stream;
@@ -221,13 +222,16 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     music_length = (ULONGLONG)music_length * DMUS_PPQ / parser->division + 1;
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_SetLength(segment, music_length);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->bandtrack, 0xffff);
+    if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->chordtrack, 0xffff);
+
     return hr;
 }
 
 static void midi_parser_destroy(struct midi_parser *parser)
 {
     IStream_Release(parser->stream);
-    IDirectMusicTrack_Release(parser->bandtrack);
+    if (parser->bandtrack) IDirectMusicTrack_Release(parser->bandtrack);
+    if (parser->chordtrack) IDirectMusicTrack_Release(parser->chordtrack);
     free(parser);
 }
 
@@ -267,18 +271,16 @@ static HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser)
 
     parser = calloc(1, sizeof(struct midi_parser));
     if (!parser) return E_OUTOFMEMORY;
+    IStream_AddRef(stream);
     parser->stream = stream;
     parser->division = division;
     hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicTrack, (void **)&parser->bandtrack);
-    if (FAILED(hr))
-    {
-        free(parser);
-        return hr;
-    }
-
-    *out_parser = parser;
-    IStream_AddRef(stream);
+    if (SUCCEEDED(hr))
+        hr = CoCreateInstance(&CLSID_DirectMusicChordTrack, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IDirectMusicTrack, (void **)&parser->chordtrack);
+    if (FAILED(hr)) midi_parser_destroy(parser);
+    else *out_parser = parser;
     return hr;
 }
 
