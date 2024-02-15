@@ -4154,6 +4154,9 @@ static void test__tcsncoll(void)
         { "English", "ABCe", "ABCf",  3,  0 },
         { "English", "abcd", "ABCD", 10, -1 },
 
+        { "English", "AB D", "AB-D",  4,  1 },
+        { "English", "AB D", "AB'D",  4,  1 },
+
         { "C",       "ABCD", "ABCD",  4,  0 },
         { "C",       "ABCD", "ABCD", 10,  0 },
 
@@ -4165,6 +4168,9 @@ static void test__tcsncoll(void)
 
         { "C",       "ABCe", "ABCf",  3,  0 },
         { "C",       "abcd", "ABCD", 10,  1 },
+
+        { "C",       "AB D", "AB-D",  4,  -1 },
+        { "C",       "AB D", "AB'D",  4,  -1 },
     };
     WCHAR str1W[16];
     WCHAR str2W[16];

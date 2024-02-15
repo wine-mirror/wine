@@ -1213,7 +1213,7 @@ int CDECL _strncoll_l( const char* str1, const char* str2, size_t count, _locale
 
     if(!locinfo->lc_handle[LC_COLLATE])
         return strncmp(str1, str2, count);
-    return CompareStringA(locinfo->lc_handle[LC_COLLATE], 0,
+    return CompareStringA(locinfo->lc_handle[LC_COLLATE], SORT_STRINGSORT,
               str1, strnlen(str1, count),
               str2, strnlen(str2, count))-CSTR_EQUAL;
 }
