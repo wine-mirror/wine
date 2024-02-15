@@ -2335,7 +2335,7 @@ SCODE WINAPI CreateIProp(LPCIID iid, ALLOCATEBUFFER *lpAlloc,
         lpPropData->ulObjAccess = IPROP_READWRITE;
         lpPropData->ulNumValues = 0;
         list_init(&lpPropData->values);
-        InitializeCriticalSection(&lpPropData->cs);
+        InitializeCriticalSectionEx(&lpPropData->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
         lpPropData->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IPropDataImpl.cs");
         *lppPropData = &lpPropData->IPropData_iface;
     }
