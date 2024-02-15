@@ -1756,7 +1756,7 @@ static RpcConnection *rpcrt4_ncacn_http_alloc(void)
     httpc->cancel_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     httpc->async_data->refs = 1;
     httpc->async_data->inet_buffers.dwStructSize = sizeof(INTERNET_BUFFERSW);
-    InitializeCriticalSection(&httpc->async_data->cs);
+    InitializeCriticalSectionEx(&httpc->async_data->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     httpc->async_data->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcHttpAsyncData.cs");
     return &httpc->common;
 }

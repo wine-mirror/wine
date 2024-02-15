@@ -950,7 +950,7 @@ static struct threaddata *get_or_create_threaddata(void)
         tdata = calloc(1, sizeof(*tdata));
         if (!tdata) return NULL;
 
-        InitializeCriticalSection(&tdata->cs);
+        InitializeCriticalSectionEx(&tdata->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
         tdata->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": threaddata.cs");
         tdata->thread_id = GetCurrentThreadId();
 

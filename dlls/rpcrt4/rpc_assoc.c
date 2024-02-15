@@ -72,7 +72,7 @@ static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
     assoc->refs = 1;
     list_init(&assoc->free_connection_pool);
     list_init(&assoc->context_handle_list);
-    InitializeCriticalSection(&assoc->cs);
+    InitializeCriticalSectionEx(&assoc->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     assoc->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcAssoc.cs");
     assoc->Protseq = strdup(Protseq);
     assoc->NetworkAddr = strdup(NetworkAddr);
@@ -463,7 +463,7 @@ RPC_STATUS RpcServerAssoc_AllocateContextHandle(RpcAssoc *assoc, void *CtxGuard,
         return RPC_S_OUT_OF_MEMORY;
 
     context_handle->ctx_guard = CtxGuard;
-    InitializeCriticalSection(&context_handle->lock);
+    InitializeCriticalSectionEx(&context_handle->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     context_handle->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcContextHandle.lock");
     context_handle->refs = 1;
 

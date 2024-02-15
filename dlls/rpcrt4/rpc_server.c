@@ -965,7 +965,7 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
   (*ps)->ops = ops;
   list_init(&(*ps)->listeners);
   list_init(&(*ps)->connections);
-  InitializeCriticalSection(&(*ps)->cs);
+  InitializeCriticalSectionEx(&(*ps)->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
   (*ps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcServerProtseq.cs");
 
   list_add_head(&protseqs, &(*ps)->entry);
