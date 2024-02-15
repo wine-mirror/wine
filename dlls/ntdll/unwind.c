@@ -306,8 +306,8 @@ static unsigned int get_sequence_len( BYTE *ptr, BYTE *end )
     while (ptr < end)
     {
         if (*ptr == 0xe4 || *ptr == 0xe5) break;
+        if ((*ptr & 0xf8) != 0xe8) ret++;  /* custom stack frames don't count */
         ptr += unwind_code_len[*ptr];
-        ret++;
     }
     return ret;
 }
