@@ -82,6 +82,15 @@ static inline struct tts_engine_site *impl_from_ISpTTSEngineSite(ISpTTSEngineSit
     return CONTAINING_RECORD(iface, struct tts_engine_site, ISpTTSEngineSite_iface);
 }
 
+static HRESULT create_token_category(const WCHAR *cat_id, ISpObjectTokenCategory **cat)
+{
+    HRESULT hr;
+    if (FAILED(hr = CoCreateInstance(&CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
+                                     &IID_ISpObjectTokenCategory, (void **)cat)))
+        return hr;
+    return ISpObjectTokenCategory_SetId(*cat, cat_id, FALSE);
+}
+
 static HRESULT create_default_token(const WCHAR *cat_id, ISpObjectToken **token)
 {
     ISpObjectTokenCategory *cat;
@@ -90,17 +99,13 @@ static HRESULT create_default_token(const WCHAR *cat_id, ISpObjectToken **token)
 
     TRACE("(%s, %p).\n", debugstr_w(cat_id), token);
 
-    if (FAILED(hr = CoCreateInstance(&CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
-                                     &IID_ISpObjectTokenCategory, (void **)&cat)))
+    if (FAILED(hr = create_token_category(cat_id, &cat)))
         return hr;
 
-    if (FAILED(hr = ISpObjectTokenCategory_SetId(cat, cat_id, FALSE)) ||
-        FAILED(hr = ISpObjectTokenCategory_GetDefaultTokenId(cat, &default_token_id)))
-    {
-        ISpObjectTokenCategory_Release(cat);
-        return hr;
-    }
+    hr = ISpObjectTokenCategory_GetDefaultTokenId(cat, &default_token_id);
     ISpObjectTokenCategory_Release(cat);
+    if (FAILED(hr))
+        return hr;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_SpObjectToken, NULL, CLSCTX_INPROC_SERVER,
                                      &IID_ISpObjectToken, (void **)token)))
