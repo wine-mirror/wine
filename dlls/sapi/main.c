@@ -145,3 +145,21 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **obj )
 
     return IClassFactory_QueryInterface( cf, iid, obj );
 }
+
+/******************************************************************
+ *             DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
+        break;
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        release_typelib();
+	break;
+    }
+    return TRUE;
+}
