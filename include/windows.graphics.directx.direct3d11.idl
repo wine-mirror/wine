@@ -32,6 +32,13 @@ namespace Windows.Graphics.DirectX.Direct3D11 {
     typedef struct Direct3DSurfaceDescription Direct3DSurfaceDescription;
 
     interface IDirect3DDevice;
+    interface IDirect3DSurface;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface *>;
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -61,5 +68,16 @@ namespace Windows.Graphics.DirectX.Direct3D11 {
         requires Windows.Foundation.IClosable
     {
         HRESULT Trim();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(0bf4a146-13c1-4694-bee3-7abf15eaf586)
+    ]
+    interface IDirect3DSurface : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        [propget] HRESULT Description(
+            [out, retval] Windows.Graphics.DirectX.Direct3D11.Direct3DSurfaceDescription *value);
     }
 }
