@@ -1395,7 +1395,7 @@ static const BYTE code_lengths[256] =
 /* 80 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 /* a0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 /* c0 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-/* e0 */ 4,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+/* e0 */ 4,1,2,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 };
 
 static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
@@ -1406,8 +1406,7 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
     {
         BYTE len = code_lengths[ptr[i]];
         unsigned int val = ptr[i];
-        if (len == 2) val = ptr[i] * 0x100 + ptr[i+1];
-        else if (len == 4) val = ptr[i] * 0x1000000 + ptr[i+1] * 0x10000 + ptr[i+2] * 0x100 + ptr[i+3];
+        for (j = 1; j < len; j++) val = val * 0x100 + ptr[i + j];
 
         printf( "    %04x: ", i );
         for (j = 0; j < 4; j++)
@@ -1507,21 +1506,18 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
         {
             printf( "save_next\n" );
         }
-        else if (ptr[i] == 0xe7)  /* arithmetic */
+        else if (ptr[i] == 0xe7)  /* save_any_reg */
         {
-            switch ((val >> 4) & 0x0f)
-            {
-            case 0: printf( "add lr,lr,x28\n" ); break;
-            case 1: printf( "add lr,lr,sp\n" ); break;
-            case 2: printf( "sub lr,lr,x28\n" ); break;
-            case 3: printf( "sub lr,lr,sp\n" ); break;
-            case 4: printf( "eor lr,lr,x28\n" ); break;
-            case 5: printf( "eor lr,lr,sp\n" ); break;
-            case 6: printf( "rol lr,lr,neg x28\n" ); break;
-            case 8: printf( "ror lr,lr,x28\n" ); break;
-            case 9: printf( "ror lr,lr,sp\n" ); break;
-            default:printf( "unknown op\n" ); break;
-            }
+            char reg = "xdq?"[(val >> 6) & 3];
+            int num = (val >> 8) & 0x1f;
+            if (val & 0x4000)
+                printf( "stp %c%u,%c%u", reg, num, reg, num + 1 );
+            else
+                printf( "str %c%u,", reg, num );
+            if (val & 0x2000)
+                printf( "[sp,#-%#x]!\n", 16 * (val & 0x3f) + 16 );
+            else
+                printf( "[sp,#%#x]\n", (val & 0x3f) * ((val & 0x4080) ? 16 : 8) );
         }
         else if (ptr[i] == 0xe8)  /* MSFT_OP_TRAP_FRAME */
         {
