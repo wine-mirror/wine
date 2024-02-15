@@ -4456,6 +4456,56 @@ static void check_dmus_tempo_pmsg_(int line, DMUS_TEMPO_PMSG *msg, MUSIC_TIME ti
     ok_(__FILE__, line)(msg->dblTempo == tempo, "got tempo %f\n", msg->dblTempo);
 }
 
+static void test_tempo_track(void)
+{
+    HRESULT hr;
+    IDirectMusicTrack *track;
+    DMUS_TEMPO_PARAM param;
+    MUSIC_TIME next;
+    hr = CoCreateInstance(&CLSID_DirectMusicTempoTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack, (void **)&track);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_TempoParam, 0, &next, &param);
+    ok(hr == DMUS_E_NOT_FOUND, "got %#lx\n", hr);
+
+    param.dblTempo = 150;
+    param.mtTime = 10;
+    hr = IDirectMusicTrack_SetParam(track, &GUID_TempoParam, 10, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_TempoParam, 0, &next, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(param.dblTempo == 150, "got %f, expected 150\n", param.dblTempo);
+    ok(param.mtTime == 10, "got %lu, expected 10\n", param.mtTime);
+    ok(next == 10, "got %lu, expected 10\n", next);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_TempoParam, 10, &next, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(param.dblTempo == 150, "got %f, expected 150\n", param.dblTempo);
+    ok(param.mtTime == 0, "got %lu, expected 0\n", param.mtTime);
+    ok(next == 0, "got %lu, expected 0\n", next);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_TempoParam, 11, &next, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(param.dblTempo == 150, "got %f, expected 150\n", param.dblTempo);
+    ok(param.mtTime == -1, "got %lu, expected 0\n", param.mtTime);
+    ok(next == 0, "got %lu, expected 0\n", next);
+
+    param.dblTempo = 180;
+    param.mtTime = 20;
+    hr = IDirectMusicTrack_SetParam(track, &GUID_TempoParam, 20, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicTrack_GetParam(track, &GUID_TempoParam, 11, &next, &param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(param.dblTempo == 150, "got %f, expected 150\n", param.dblTempo);
+    ok(param.mtTime == -1, "got %ld, expected -1\n", param.mtTime);
+    ok(next == 9, "got %lu, expected 9\n", next);
+
+    IDirectMusicTrack_Release(track);
+}
+
 static void test_tempo_track_play(void)
 {
     static const DWORD message_types[] =
@@ -5045,6 +5095,7 @@ START_TEST(dmime)
     test_wave_pmsg(0);
     test_wave_pmsg(10);
     test_sequence_track();
+    test_tempo_track();
     test_band_track_play();
     test_tempo_track_play();
     test_connect_to_collection();

@@ -203,9 +203,26 @@ static HRESULT WINAPI tempo_track_SetParam(IDirectMusicTrack8 *iface, REFGUID ty
         return S_OK;
     }
     if (IsEqualGUID(type, &GUID_TempoParam)) {
+        struct tempo_entry *item, *next_item;
+        DMUS_TEMPO_PARAM *tempo_param = param;
+        struct tempo_entry *entry;
         if (!param)
             return E_POINTER;
-        FIXME("GUID_TempoParam not handled yet\n");
+        if (!(entry = calloc(1, sizeof(*entry))))
+            return E_OUTOFMEMORY;
+        entry->item.lTime = time;
+        entry->item.dblTempo = tempo_param->dblTempo;
+        if (list_empty(&This->items))
+            list_add_tail(&This->items, &entry->entry);
+        else
+        {
+            LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &This->items, struct tempo_entry, entry)
+                if (item->entry.next == &This->items || next_item->item.lTime > time)
+                {
+                    list_add_after(&item->entry, &entry->entry);
+                    break;
+                }
+        }
         return S_OK;
     }
 
