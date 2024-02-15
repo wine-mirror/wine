@@ -67,7 +67,7 @@ static struct error *alloc_error(void)
     }
 
     ret->magic      = ERROR_MAGIC;
-    InitializeCriticalSection( &ret->cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": error.cs");
 
     prop_init( error_props, count, ret->prop, &ret[1] );

@@ -108,7 +108,7 @@ static struct msg *alloc_msg(void)
     ret->state       = WS_MESSAGE_STATE_EMPTY;
     ret->header_size = HEADER_ARRAY_SIZE;
 
-    InitializeCriticalSection( &ret->cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": msg.cs");
 
     prop_init( msg_props, count, ret->prop, &ret[1] );

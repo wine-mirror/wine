@@ -252,9 +252,9 @@ static struct channel *alloc_channel(void)
     if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = CHANNEL_MAGIC;
-    InitializeCriticalSection( &ret->cs );
-    InitializeCriticalSection( &ret->send_q.cs );
-    InitializeCriticalSection( &ret->recv_q.cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+    InitializeCriticalSectionEx( &ret->send_q.cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+    InitializeCriticalSectionEx( &ret->recv_q.cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.cs");
     ret->send_q.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.send_q.cs");
     ret->recv_q.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": channel.recv_q.cs");

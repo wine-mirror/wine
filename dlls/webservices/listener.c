@@ -141,7 +141,7 @@ static struct listener *alloc_listener(void)
         free( ret );
         return NULL;
     }
-    InitializeCriticalSection( &ret->cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": listener.cs");
 
     prop_init( listener_props, count, ret->prop, &ret[1] );

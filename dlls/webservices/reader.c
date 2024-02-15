@@ -422,7 +422,7 @@ static struct reader *alloc_reader(void)
     ret->nb_prefixes = ret->nb_prefixes_allocated = 1;
 
     ret->magic       = READER_MAGIC;
-    InitializeCriticalSection( &ret->cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": reader.cs");
 
     prop_init( reader_props, count, ret->prop, &ret[1] );

@@ -109,7 +109,7 @@ static struct writer *alloc_writer(void)
     if (!(ret = calloc( 1, size ))) return NULL;
 
     ret->magic      = WRITER_MAGIC;
-    InitializeCriticalSection( &ret->cs );
+    InitializeCriticalSectionEx( &ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": writer.cs");
 
     prop_init( writer_props, count, ret->prop, &ret[1] );
