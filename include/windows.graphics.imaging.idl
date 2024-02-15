@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2024 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.graphics.directx.direct3d11.idl";
+import "windows.storage.streams.idl";
+
+namespace Windows.Graphics.Imaging {
+    typedef struct BitmapPlaneDescription BitmapPlaneDescription;
+
+    interface IBitmapBuffer;
+
+    runtimeclass BitmapBuffer;
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapPlaneDescription
+    {
+        INT32 StartIndex;
+        INT32 Width;
+        INT32 Height;
+        INT32 Stride;
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Graphics.Imaging.BitmapBuffer),
+        uuid(a53e04c4-399c-438c-b28f-a63a6b83d1a1)
+    ]
+    interface IBitmapBuffer : IInspectable
+        requires Windows.Foundation.IMemoryBuffer, Windows.Foundation.IClosable
+    {
+        HRESULT GetPlaneCount([out, retval] INT32 *value);
+        HRESULT GetPlaneDescription([in] INT32 index, [out, retval] Windows.Graphics.Imaging.BitmapPlaneDescription *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass BitmapBuffer
+    {
+        [default] interface Windows.Graphics.Imaging.IBitmapBuffer;
+        interface Windows.Foundation.IMemoryBuffer;
+        interface Windows.Foundation.IClosable;
+    }
+}
