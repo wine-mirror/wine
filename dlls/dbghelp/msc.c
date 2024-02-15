@@ -2278,6 +2278,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
     struct symt*                        symt;
     struct symt_compiland*              compiland = NULL;
     struct location                     loc;
+    unsigned                            top_frame_size = -1;
 
     /* overwrite compiland name from outer context (if any) */
     if (objname)
@@ -2458,9 +2459,9 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             loc.kind = loc_regrel;
             loc.reg = sym->regrel_v3.reg;
             loc.offset = sym->regrel_v3.offset;
+            if (top_frame_size == -1) FIXME("S_REGREL32 without frameproc\n");
             symt_add_func_local(msc_dbg->module, curr_func,
-                                /* FIXME this is wrong !!! */
-                                sym->regrel_v3.offset > 0 ? DataIsParam : DataIsLocal,
+                                sym->regrel_v3.offset >= top_frame_size ? DataIsParam : DataIsLocal,
                                 &loc, block,
                                 codeview_get_type(sym->regrel_v3.symtype, FALSE),
                                 sym->regrel_v3.name);
@@ -2516,6 +2517,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             {
                 if (curr_func != top_func) FIXME("shouldn't close a top function with an opened inlined function\n");
                 top_func = curr_func = NULL;
+                top_frame_size = -1;
             }
             break;
 
@@ -2774,9 +2776,16 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 FIXME("S_SEPCODE inside top-level function %s\n", top_func->hash_elt.name);
             break;
 
+        case S_FRAMEPROC:
+            /* expecting only S_FRAMEPROC once for top level functions */
+            if (top_frame_size == -1 && curr_func && curr_func == top_func)
+                top_frame_size = sym->frame_info_v2.sz_frame;
+            else
+                FIXME("Unexpected S_FRAMEPROC %d (%p %p)\n", top_frame_size, top_func, curr_func);
+            break;
+
         /* the symbols we can safely ignore for now */
         case S_TRAMPOLINE:
-        case S_FRAMEPROC:
         case S_FRAMECOOKIE:
         case S_SECTION:
         case S_COFFGROUP:
