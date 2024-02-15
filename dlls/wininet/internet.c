@@ -2620,7 +2620,7 @@ static char *copy_optionA(WCHAR *value)
     if (!value)
         return NULL;
 
-    len = wcslen(value) * 3 + 1;
+    len = WideCharToMultiByte(CP_ACP, 0, value, -1, NULL, 0, NULL, NULL);
     if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
         return NULL;
 
