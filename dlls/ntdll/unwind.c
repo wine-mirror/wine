@@ -296,7 +296,7 @@ static const BYTE unwind_code_len[256] =
 /* 80 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 /* a0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 /* c0 */ 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-/* e0 */ 4,1,2,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+/* e0 */ 4,1,2,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 };
 
 static unsigned int get_sequence_len( BYTE *ptr, BYTE *end )
@@ -334,6 +334,40 @@ static void restore_fpregs( int reg, int count, int pos, ARM64_NT_CONTEXT *conte
         context->V[reg + i].D[0] = ((double *)context->Sp)[i + offset];
     }
     if (pos < 0) context->Sp += -8 * pos;
+}
+
+static void restore_qregs( int reg, int count, int pos, ARM64_NT_CONTEXT *context,
+                           KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs )
+{
+    int i, offset = max( 0, pos );
+    for (i = 0; i < count; i++)
+    {
+        if (ptrs && reg + i >= 8) (&ptrs->D8)[reg + i - 8] = (DWORD64 *)context->Sp + 2 * (i + offset);
+        context->V[reg + i].Low  = ((DWORD64 *)context->Sp)[2 * (i + offset)];
+        context->V[reg + i].High = ((DWORD64 *)context->Sp)[2 * (i + offset) + 1];
+    }
+    if (pos < 0) context->Sp += -16 * pos;
+}
+
+static void restore_any_reg( int reg, int count, int type, int pos, ARM64_NT_CONTEXT *context,
+                             KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs )
+{
+    if (reg & 0x20) pos = -pos - 1;
+
+    switch (type)
+    {
+    case 0:
+        if (count > 1 || pos < 0) pos *= 2;
+        restore_regs( reg & 0x1f, count, pos, context, ptrs );
+        break;
+    case 1:
+        if (count > 1 || pos < 0) pos *= 2;
+        restore_fpregs( reg & 0x1f, count, pos, context, ptrs );
+        break;
+    case 2:
+        restore_qregs( reg & 0x1f, count, pos, context, ptrs );
+        break;
+    }
 }
 
 static void do_pac_auth( ARM64_NT_CONTEXT *context )
@@ -420,6 +454,11 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
             save_next += 2;
             ptr += len;
             continue;
+        }
+        else if (*ptr == 0xe7)  /* save_any_reg */
+        {
+            restore_any_reg( ptr[1], (ptr[1] & 0x40) ? save_next : 1,
+                             ptr[2] >> 6, ptr[2] & 0x3f, context, ptrs );
         }
         else if (*ptr == 0xe9)  /* MSFT_OP_MACHINE_FRAME */
         {

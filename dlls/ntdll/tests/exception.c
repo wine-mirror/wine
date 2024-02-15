@@ -8092,6 +8092,7 @@ static void test_collided_unwind(void)
 #define UWOP_END                       0xE4
 #define UWOP_END_C                     0xE5
 #define UWOP_SAVE_NEXT                 0xE6
+#define UWOP_SAVE_ANY_REG(reg,offset)  0xE7,(reg),(offset)
 #define UWOP_TRAP_FRAME                0xE8
 #define UWOP_MACHINE_FRAME             0xE9
 #define UWOP_CONTEXT                   0xEA
@@ -8163,8 +8164,6 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         runtime_func.UnwindData = unwind_offset;
     else
         memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
-
-    trace( "code: %p stack: %p\n", code_mem, fake_stack );
 
     for (i = 0; i < test->nb_results; i++)
     {
@@ -8900,6 +8899,59 @@ static void test_virtual_unwind(void)
         { 0x24,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
     };
 
+    static const BYTE function_14[] =
+    {
+        0xe6, 0x9f, 0xba, 0xad,  /* 00: stp q6, q7, [sp, #-0xb0]! */
+        0xe8, 0x27, 0x01, 0xad,  /* 04: stp q8, q9, [sp, #0x20] */
+        0xea, 0x2f, 0x02, 0xad,  /* 08: stp q10, q11, [sp, #0x40] */
+        0xec, 0x37, 0x03, 0xad,  /* 0c: stp q12, q13, [sp, #0x60] */
+        0xee, 0x3f, 0x04, 0xad,  /* 10: stp q14, q15, [sp, #0x80] */
+        0xfd, 0x7b, 0x0a, 0xa9,  /* 14: stp x29, x30, [sp, #0xa0] */
+        0xfd, 0x83, 0x02, 0x91,  /* 18: add x29, sp, #0xa0 */
+        0x1f, 0x20, 0x03, 0xd5,  /* 1c: nop */
+        0xfd, 0x7b, 0x4a, 0xa9,  /* 20: ldp x29, x30, [sp, #0xa0] */
+        0xee, 0x3f, 0x44, 0xad,  /* 24: ldp q14, q15, [sp, #0x80] */
+        0xec, 0x37, 0x43, 0xad,  /* 28: ldp q12, q13, [sp, #0x60] */
+        0xea, 0x2f, 0x42, 0xad,  /* 2c: ldp q10, q11, [sp, #0x40] */
+        0xe8, 0x27, 0x41, 0xad,  /* 30: ldp q8, q9, [sp, #0x20] */
+        0xe6, 0x9f, 0xc5, 0xac,  /* 34: ldp q6, q7, [sp], #0xb0 */
+        0xc0, 0x03, 0x5f, 0xd6,  /* 38: ret */
+    };
+
+    static const DWORD unwind_info_14_header =
+        (sizeof(function_14)/4) | /* function length */
+        (0 << 20) | /* X */
+        (1 << 21) | /* E */
+        (2 << 22) | /* epilog */
+        (5 << 27);  /* codes */
+
+    static const BYTE unwind_info_14[] =
+    {
+        DW(unwind_info_14_header),
+        UWOP_ADD_FP(0xa0),             /* 18: add x29, sp, #0xa0 */
+        UWOP_SAVE_FPLR(0xa0),          /* 14: stp x29, x30, [sp, #0xa0] */
+        UWOP_SAVE_ANY_REG(0x4e,0x88),  /* 10: stp q14, q15, [sp, #0x80] */
+        UWOP_SAVE_NEXT,                /* 0c: stp q12, q13, [sp, #0x60] */
+        UWOP_SAVE_ANY_REG(0x4a,0x84),  /* 08: stp q10, q11, [sp, #0x40] */
+        UWOP_SAVE_ANY_REG(0x48,0x82),  /* 04: stp q8, q9, [sp, #0x20] */
+        UWOP_SAVE_ANY_REG(0x66,0x8a),  /* 00: stp q6, q7, [sp, #-0xb0]! */
+        UWOP_END,
+        UWOP_NOP                  /* padding */
+    };
+
+    static const struct results results_14[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {-1,-1} }},
+        { 0x10,  0x00,  0,     ORIG_LR, 0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {d12, 0x60}, {d13, 0x70}, {-1,-1} }},
+        { 0x14,  0x00,  0,     ORIG_LR, 0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {d12, 0x60}, {d13, 0x70}, {d14, 0x80}, {d15, 0x90}, {-1,-1} }},
+        { 0x18,  0x00,  0,     0xa8,    0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {d12, 0x60}, {d13, 0x70}, {d14, 0x80}, {d15, 0x90}, {lr, 0xa8}, {x29, 0xa0}, {-1,-1} }},
+        { 0x1c,  0xa0,  0,     0xa8,    0x0b0, TRUE, { {d6, 0x00}, {d7, 0x10}, {d8, 0x20}, {d9, 0x30}, {d10, 0x40}, {d11, 0x50}, {d12, 0x60}, {d13, 0x70}, {d14, 0x80}, {d15, 0x90}, {lr, 0xa8}, {x29, 0xa0}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
@@ -8918,6 +8970,7 @@ static void test_virtual_unwind(void)
         TEST(function_11, unwind_info_11, 1, results_11),
         TEST(function_12, unwind_info_12, 1, results_12),
         TEST(function_13, unwind_info_13, 1, results_13),
+        TEST(function_14, unwind_info_14, 0, results_14),
 #undef TEST
     };
     unsigned int i;
