@@ -619,13 +619,23 @@ static BOOL show_icon(struct icon *icon)
 
     if (icon->display != ICON_DISPLAY_HIDDEN) return TRUE;  /* already displayed */
 
-    if (!enable_taskbar && NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_INSERT, icon_cx, icon_cy,
-                                              icon, NtUserSystemTrayCall, FALSE ))
+    if (!enable_taskbar)
     {
-        icon->display = ICON_DISPLAY_DOCKED;
-        icon->layered = TRUE;
-        SetWindowLongW( icon->window, GWL_EXSTYLE, GetWindowLongW( icon->window, GWL_EXSTYLE ) | WS_EX_LAYERED );
-        SendMessageW( icon->window, WM_SIZE, SIZE_RESTORED, MAKELONG( icon_cx, icon_cy ) );
+        DWORD old_exstyle = GetWindowLongW( icon->window, GWL_EXSTYLE );
+
+        /* make sure it is layered before calling into the driver */
+        SetWindowLongW( icon->window, GWL_EXSTYLE, old_exstyle | WS_EX_LAYERED );
+        paint_layered_icon( icon );
+
+        if (!NtUserMessageCall( icon->window, WINE_SYSTRAY_DOCK_INSERT, icon_cx, icon_cy,
+                                icon, NtUserSystemTrayCall, FALSE ))
+            SetWindowLongW( icon->window, GWL_EXSTYLE, old_exstyle );
+        else
+        {
+            icon->display = ICON_DISPLAY_DOCKED;
+            icon->layered = TRUE;
+            SendMessageW( icon->window, WM_SIZE, SIZE_RESTORED, MAKELONG( icon_cx, icon_cy ) );
+        }
     }
     systray_add_icon( icon );
 
