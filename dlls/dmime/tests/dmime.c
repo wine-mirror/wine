@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <windef.h>
+#include <winternl.h>
 #include <wine/test.h>
 #include <initguid.h>
 #include <ole2.h>
@@ -31,6 +32,14 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(GUID_Bunk,0xFFFFFFFF,0xFFFF,0xFFFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_WORD(x) (x)
+#define GET_BE_DWORD(x) (x)
+#else
+#define GET_BE_WORD(x) RtlUshortByteSwap(x)
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
+#endif
 
 static ULONG get_refcount(void *iface)
 {
@@ -1554,14 +1563,81 @@ static void test_segment(void)
     while (IDirectMusicSegment_Release(dms));
 }
 
+static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char *name, DWORD group,
+        DWORD index, BOOL ignore_guid)
+{
+    IDirectMusicTrack *track;
+    IPersistStream *ps;
+    CLSID class;
+    HRESULT hr;
+
+    if (ignore_guid)
+        hr = IDirectMusicSegment8_GetTrack(seg, &GUID_NULL, group, index, &track);
+    else
+        hr = IDirectMusicSegment8_GetTrack(seg, expect, group, index, &track);
+    if (!expect) {
+        ok(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %#lx, expected DMUS_E_NOT_FOUND\n", hr);
+        return;
+    }
+
+    ok(hr == S_OK, "GetTrack failed: %#lx, expected S_OK\n", hr);
+    if (FAILED(hr)) return;
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %#lx\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %#lx\n", hr);
+    ok(IsEqualGUID(&class, expect), "For group %#lx index %lu: Expected class %s got %s\n",
+            group, index, name, wine_dbgstr_guid(&class));
+
+    IPersistStream_Release(ps);
+    IDirectMusicTrack_Release(track);
+}
+
+#define expect_track(seg, class, group, index) \
+    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, TRUE)
+#define expect_guid_track(seg, class, group, index) \
+    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, FALSE)
+
 static void test_midi(void)
 {
+    static const char midi_meta_set_tempo[] =
+    {
+        0x04,                   /* delta time = 4 */
+        0xff,                   /* event type, MIDI meta event */
+        0x51,                   /* meta event type, Set Tempo */
+        0x03,                   /* event data lenght, 3 bytes */
+        0x03,0x0d,0x40  /* tempo, 200000 us per quarter-note, i.e. 300 bpm */
+    };
     IDirectMusicSegment8 *segment = NULL;
     IDirectMusicTrack *track = NULL;
     IDirectMusicLoader8 *loader;
+    IPersistStream *persist;
+    IStream *stream;
+    LARGE_INTEGER zero = { .QuadPart = 0 };
+    ULARGE_INTEGER position = { .QuadPart = 0 };
     WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
     HRESULT hr;
-
+#include <pshpack1.h>
+    struct
+    {
+        char magic[4];
+        UINT32 length;
+        WORD format;
+        WORD count;
+        WORD ppqn;
+    } header =
+    {
+        .magic = "MThd",
+    };
+    struct
+    {
+        char magic[4];
+        UINT32 length;
+    } track_header =
+    {
+        .magic = "MTrk",
+    };
+#include <poppack.h>
     load_resource(L"test.mid", test_mid);
     /* This is a MIDI file with wrong track length. */
     load_resource(L"bogus.mid", bogus_mid);
@@ -1573,19 +1649,14 @@ static void test_midi(void)
             &IID_IDirectMusicSegment, test_mid, (void **)&segment);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    /* test.mid has 1 seq track, 1 tempo track, and 1 band track */
-    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicBandTrack, 0xffffffff, 0, &track);
-    todo_wine ok(hr == S_OK, "unable to get band track from midi file: %#lx\n", hr);
-    if (track)IDirectMusicTrack_Release(track);
-    track = NULL;
-    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicSeqTrack, 0xffffffff, 0, &track);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (track) IDirectMusicTrack_Release(track);
-    track = NULL;
-    hr = IDirectMusicSegment8_GetTrack(segment, &CLSID_DirectMusicTempoTrack, 0xffffffff, 0, &track);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (track) IDirectMusicTrack_Release(track);
-    track = NULL;
+    todo_wine expect_track(segment, BandTrack, -1, 0);
+    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    todo_wine expect_track(segment, TempoTrack, -1, 2);
+    todo_wine expect_track(segment, TimeSigTrack, -1, 3);
+    todo_wine expect_track(segment, SeqTrack, -1, 4);
+    /* no more tracks */
+    hr = IDirectMusicSegment8_GetTrack(segment, &GUID_NULL, -1, 5, &track);
+    ok(hr == DMUS_E_NOT_FOUND, "unexpected extra track\n");
     if (segment) IDirectMusicSegment8_Release(segment);
     segment = NULL;
 
@@ -1594,6 +1665,109 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     if (segment) IDirectMusicSegment8_Release(segment);
 
+    /* parse MIDI file without any track */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    header.format = GET_BE_WORD(123);
+    header.count = GET_BE_WORD(123);
+    header.ppqn = GET_BE_WORD(123);
+    header.length = GET_BE_DWORD(sizeof(header) - 8);
+    hr = IStream_Write(stream, &header, sizeof(header), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(position.QuadPart == sizeof(header), "got %lld\n", position.QuadPart);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+    /* TempoTrack and TimeSigTrack seems to be optional. */
+    todo_wine expect_track(segment, BandTrack, -1, 0);
+    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    todo_wine expect_track(segment, SeqTrack, -1, 2);
+    IDirectMusicSegment_Release(segment);
+
+    /* parse MIDI file with 1 track that has 1 event. */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    header.format = GET_BE_WORD(123);
+    header.count = GET_BE_WORD(123);
+    header.ppqn = GET_BE_WORD(123);
+    header.length = GET_BE_DWORD(sizeof(header) - 8);
+    hr = IStream_Write(stream, &header, sizeof(header), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    track_header.length = RtlUlongByteSwap(sizeof(track_header) - 8 + sizeof(midi_meta_set_tempo));
+    hr = IStream_Write(stream, &track_header, sizeof(track_header), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Write(stream, midi_meta_set_tempo, sizeof(midi_meta_set_tempo), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(position.QuadPart == sizeof(header) + sizeof(track_header) + sizeof(midi_meta_set_tempo),
+            "got %lld\n", position.QuadPart);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+    todo_wine expect_track(segment, BandTrack, -1, 0);
+    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    todo_wine expect_track(segment, TempoTrack, -1, 2);
+    todo_wine expect_track(segment, SeqTrack, -1, 3);
+    IDirectMusicSegment_Release(segment);
+
+    /* parse MIDI file with a track with 0 length, but has an event. */
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void **)&segment);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IDirectMusicSegment_QueryInterface(segment, &IID_IPersistStream, (void **)&persist);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    header.format = GET_BE_WORD(123);
+    header.count = GET_BE_WORD(123);
+    header.ppqn = GET_BE_WORD(123);
+    header.length = 0;
+    hr = IStream_Write(stream, &header, sizeof(header), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    track_header.length = 0;
+    hr = IStream_Write(stream, &track_header, sizeof(track_header), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Write(stream, midi_meta_set_tempo, sizeof(midi_meta_set_tempo), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, 0, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IPersistStream_Load(persist, stream);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(position.QuadPart == sizeof(header) + sizeof(track_header) + 4, "got %lld\n", position.QuadPart);
+    IPersistStream_Release(persist);
+    IStream_Release(stream);
+    todo_wine expect_track(segment, BandTrack, -1, 0);
+    todo_wine expect_track(segment, ChordTrack, -1, 1);
+    /* there is no tempo track. */
+    todo_wine expect_track(segment, SeqTrack, -1, 2);
+    IDirectMusicSegment_Release(segment);
     IDirectMusicLoader8_Release(loader);
 }
 
@@ -1614,40 +1788,6 @@ static void _add_track(IDirectMusicSegment8 *seg, REFCLSID class, const char *na
 }
 
 #define add_track(seg, class, group) _add_track(seg, &CLSID_DirectMusic ## class, #class, group)
-
-static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char *name, DWORD group,
-        DWORD index, BOOL ignore_guid)
-{
-    IDirectMusicTrack *track;
-    IPersistStream *ps;
-    CLSID class;
-    HRESULT hr;
-
-    if (ignore_guid)
-        hr = IDirectMusicSegment8_GetTrack(seg, &GUID_NULL, group, index, &track);
-    else
-        hr = IDirectMusicSegment8_GetTrack(seg, expect, group, index, &track);
-    if (!expect) {
-        ok(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %#lx, expected DMUS_E_NOT_FOUND\n", hr);
-        return;
-    }
-
-    ok(hr == S_OK, "GetTrack failed: %#lx, expected S_OK\n", hr);
-    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void**)&ps);
-    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %#lx\n", hr);
-    hr = IPersistStream_GetClassID(ps, &class);
-    ok(hr == S_OK, "IPersistStream_GetClassID failed: %#lx\n", hr);
-    ok(IsEqualGUID(&class, expect), "For group %#lx index %lu: Expected class %s got %s\n",
-            group, index, name, wine_dbgstr_guid(&class));
-
-    IPersistStream_Release(ps);
-    IDirectMusicTrack_Release(track);
-}
-
-#define expect_track(seg, class, group, index) \
-    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, TRUE)
-#define expect_guid_track(seg, class, group, index) \
-    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, FALSE)
 
 static void test_gettrack(void)
 {

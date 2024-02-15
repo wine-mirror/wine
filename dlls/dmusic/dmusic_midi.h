@@ -31,7 +31,10 @@ enum midi_message
     MIDI_PROGRAM_CHANGE = 0xc0,
     MIDI_CHANNEL_PRESSURE = 0xd0,
     MIDI_PITCH_BEND_CHANGE = 0xe0,
+    MIDI_SYSEX1 = 0xf0,
+    MIDI_SYSEX2 = 0xf7,
     MIDI_SYSTEM_RESET = 0xff,
+    MIDI_META = 0xff,
 };
 
 enum midi_control

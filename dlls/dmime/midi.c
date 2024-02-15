@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "dmusic_midi.h"
 #include "dmime_private.h"
 #include "winternl.h"
 
@@ -34,9 +35,127 @@ struct midi_parser
     IStream *stream;
 };
 
+static HRESULT stream_read_at_most(IStream *stream, void *buffer, ULONG size, ULONG *bytes_left)
+{
+    HRESULT hr;
+    ULONG read = 0;
+    if (size > *bytes_left) hr = IStream_Read(stream, buffer, *bytes_left, &read);
+    else hr = IStream_Read(stream, buffer, size, &read);
+    if (hr != S_OK) return hr;
+    *bytes_left -= read;
+    if (read < size) return S_FALSE;
+    return S_OK;
+}
+
+static HRESULT read_variable_length_number(IStream *stream, DWORD *out, ULONG *bytes_left)
+{
+    BYTE byte;
+    HRESULT hr = S_OK;
+
+    *out = 0;
+    do
+    {
+        hr = stream_read_at_most(stream, &byte, 1, bytes_left);
+        if (hr != S_OK) return hr;
+        *out = (*out << 7) | (byte & 0x7f);
+    } while (byte & 0x80);
+    return S_OK;
+}
+
+static HRESULT read_midi_event(IStream *stream, BYTE *last_status, ULONG *bytes_left)
+{
+    BYTE byte, status, meta_type;
+    DWORD length;
+    LARGE_INTEGER offset;
+    HRESULT hr = S_OK;
+    DWORD delta_time;
+
+    if ((hr = read_variable_length_number(stream, &delta_time, bytes_left)) != S_OK) return hr;
+
+    if ((hr = stream_read_at_most(stream, &byte, 1, bytes_left)) != S_OK) return hr;
+
+    if (byte & 0x80)
+    {
+        status = *last_status = byte;
+        if ((hr = stream_read_at_most(stream, &byte, 1, bytes_left)) != S_OK) return hr;
+    }
+    else status = *last_status;
+
+    if (status == MIDI_META)
+    {
+        meta_type = byte;
+
+        if ((hr = read_variable_length_number(stream, &length, bytes_left)) != S_OK) return hr;
+
+        switch (meta_type)
+        {
+        default:
+            if (*bytes_left < length) return S_FALSE;
+            offset.QuadPart = length;
+            if (FAILED(hr = IStream_Seek(stream, offset, STREAM_SEEK_CUR, NULL))) return hr;
+            FIXME("MIDI meta event type %#02x, length %lu, time +%lu. not supported\n", meta_type,
+                    length, delta_time);
+            *bytes_left -= length;
+        }
+        TRACE("MIDI meta event type %#02x, length %lu, time +%lu\n", meta_type, length, delta_time);
+    }
+    else if (status == MIDI_SYSEX1 || status == MIDI_SYSEX2)
+    {
+        if (byte & 0x80)
+        {
+            if ((hr = read_variable_length_number(stream, &length, bytes_left)) != S_OK) return hr;
+            length = length << 8 | (byte & 0x7f);
+        }
+        else length = byte;
+
+        if (*bytes_left < length) return S_FALSE;
+        offset.QuadPart = length;
+        if (FAILED(hr = IStream_Seek(stream, offset, STREAM_SEEK_CUR, NULL))) return hr;
+        *bytes_left -= length;
+        FIXME("MIDI sysex event type %#02x, length %lu, time +%lu. not supported\n", status, length, delta_time);
+    }
+    else
+    {
+        if ((status & 0xf0) != MIDI_PROGRAM_CHANGE && (status & 0xf0) != MIDI_CHANNEL_PRESSURE &&
+                (hr = stream_read_at_most(stream, &byte, 1, bytes_left)) != S_OK)
+            return hr;
+        FIXME("MIDI event status %#02x, time +%lu, not supported\n", status, delta_time);
+    }
+
+    return S_OK;
+}
+
 HRESULT midi_parser_next_track(struct midi_parser *parser, IDirectMusicTrack **out_track, MUSIC_TIME *out_length)
 {
-    TRACE("(%p, %p, %p): stub\n", parser, out_track, out_length);
+    WORD i = 0;
+    TRACE("(%p, %p): stub\n", parser, out_length);
+    for (i = 0;; i++)
+    {
+        HRESULT hr;
+        BYTE magic[4] = {0}, last_status = 0;
+        DWORD length_be;
+        ULONG length;
+        ULONG read = 0;
+
+        TRACE("Start parsing track %u\n", i);
+        if ((hr = IStream_Read(parser->stream, magic, sizeof(magic), &read)) != S_OK) return hr;
+        if (read < sizeof(magic)) break;
+        if (memcmp(magic, "MTrk", 4) != 0) break;
+
+        if ((hr = IStream_Read(parser->stream, &length_be, sizeof(length_be), &read)) != S_OK)
+            break;
+        if (read < sizeof(length_be)) break;
+        length = GET_BE_DWORD(length_be);
+        TRACE("Track %u, length %lu bytes\n", i, length);
+
+        while ((hr = read_midi_event(parser->stream, &last_status, &length)) == S_OK)
+            ;
+
+        if (FAILED(hr)) return hr;
+        TRACE("End of track %u\n", i);
+    }
+
+    TRACE("End of file\n");
     return S_FALSE;
 }
 
@@ -56,24 +175,9 @@ HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser)
 
     if (FAILED(hr = IStream_Read(stream, &length, sizeof(length), NULL))) return hr;
     length = GET_BE_DWORD(length);
-    if (length != 6)
-    {
-        WARN("Invalid MIDI header length %lu\n", length);
-        return DMUS_E_UNSUPPORTED_STREAM;
-    }
 
     if (FAILED(hr = IStream_Read(stream, &format, sizeof(format), NULL))) return hr;
     format = GET_BE_WORD(format);
-    if (format > 2)
-    {
-        WARN("Invalid MIDI format %u\n", format);
-        return DMUS_E_UNSUPPORTED_STREAM;
-    }
-    if (format == 2)
-    {
-        FIXME("MIDI format 2 not implemented yet\n");
-        return DMUS_E_UNSUPPORTED_STREAM;
-    }
 
     if (FAILED(hr = IStream_Read(stream, &number_of_tracks, sizeof(number_of_tracks), NULL)))
         return hr;
