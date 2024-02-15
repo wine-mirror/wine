@@ -32,6 +32,7 @@ namespace Windows.Graphics.Imaging {
     typedef enum BitmapAlphaMode BitmapAlphaMode;
     typedef enum BitmapBufferAccessMode BitmapBufferAccessMode;
     typedef enum BitmapPixelFormat BitmapPixelFormat;
+    typedef struct BitmapBounds BitmapBounds;
     typedef struct BitmapPlaneDescription BitmapPlaneDescription;
 
     interface IBitmapBuffer;
@@ -50,6 +51,7 @@ namespace Windows.Graphics.Imaging {
         interface Windows.Foundation.Collections.IVectorView<Windows.Graphics.Imaging.BitmapPixelFormat>;
         interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Imaging.SoftwareBitmap *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Imaging.SoftwareBitmap *>;
+        interface Windows.Foundation.IReference<Windows.Graphics.Imaging.BitmapBounds>;
     }
 
     [contract(Windows.Foundation.UniversalApiContract, 1.0)]
@@ -85,6 +87,15 @@ namespace Windows.Graphics.Imaging {
         P010    = 104,
         [contract(Windows.Foundation.UniversalApiContract, 1.0)]
         Yuy2    = 107,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapBounds
+    {
+        UINT32 X;
+        UINT32 Y;
+        UINT32 Width;
+        UINT32 Height;
     };
 
     [contract(Windows.Foundation.UniversalApiContract, 1.0)]
