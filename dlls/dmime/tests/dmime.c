@@ -1646,8 +1646,10 @@ static void test_midi(void)
     WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
     HRESULT hr;
     ULONG ret;
+    MUSIC_TIME next;
     DMUS_PMSG *msg;
     DMUS_PATCH_PMSG *patch;
+    DMUS_TEMPO_PARAM tempo_param;
 #include <pshpack1.h>
     struct
     {
@@ -1682,7 +1684,7 @@ static void test_midi(void)
 
     expect_track(segment, BandTrack, -1, 0);
     expect_track(segment, ChordTrack, -1, 1);
-    todo_wine expect_track(segment, TempoTrack, -1, 2);
+    expect_track(segment, TempoTrack, -1, 2);
     todo_wine expect_track(segment, TimeSigTrack, -1, 3);
     todo_wine expect_track(segment, SeqTrack, -1, 4);
     /* no more tracks */
@@ -1760,8 +1762,20 @@ static void test_midi(void)
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
     expect_track(segment, ChordTrack, -1, 1);
-    todo_wine expect_track(segment, TempoTrack, -1, 2);
+    expect_track(segment, TempoTrack, -1, 2);
     todo_wine expect_track(segment, SeqTrack, -1, 3);
+
+    hr = IDirectMusicSegment_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 0, &next, &tempo_param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(next == 24, "got %ld, expected 24\n", next);
+    ok(tempo_param.mtTime == 24, "got %ld, expected 24\n", tempo_param.mtTime);
+    ok(tempo_param.dblTempo == 300.0, "got %f, expected 300.0\n", tempo_param.dblTempo);
+
+    hr = IDirectMusicSegment_GetParam(segment, &GUID_TempoParam, -1, DMUS_SEG_ALLTRACKS, 26, &next, &tempo_param);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(next == 0, "got %ld, expected 24\n", next);
+    ok(tempo_param.mtTime == -2, "got %ld, expected -6\n", tempo_param.mtTime);
+    ok(tempo_param.dblTempo == 300.0, "got %f, expected 300.0\n", tempo_param.dblTempo);
     IDirectMusicSegment_Release(segment);
 
     /* parse MIDI file with a track with 0 length, but has an event. */

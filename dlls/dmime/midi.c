@@ -35,16 +35,47 @@ struct midi_event
 {
     MUSIC_TIME delta_time;
     BYTE status;
-    BYTE data[2];
+    union
+    {
+        struct
+        {
+            BYTE data[2];
+        };
+        struct
+        {
+            BYTE meta_type;
+            ULONG tempo;
+        };
+    };
 };
 
 struct midi_parser
 {
     IDirectMusicTrack *chordtrack;
     IDirectMusicTrack *bandtrack;
+    IDirectMusicTrack *tempotrack;
     MUSIC_TIME time;
     IStream *stream;
     DWORD division;
+};
+
+enum meta_event_type
+{
+    MIDI_META_SEQUENCE_NUMBER = 0x00,
+    MIDI_META_TEXT_EVENT = 0x01,
+    MIDI_META_COPYRIGHT_NOTICE = 0x02,
+    MIDI_META_TRACK_NAME = 0x03,
+    MIDI_META_INSTRUMENT_NAME = 0x04,
+    MIDI_META_LYRIC = 0x05,
+    MIDI_META_MARKER = 0x06,
+    MIDI_META_CUE_POINT = 0x07,
+    MIDI_META_CHANNEL_PREFIX_ASSIGNMENT = 0x20,
+    MIDI_META_END_OF_TRACK = 0x2f,
+    MIDI_META_SET_TEMPO = 0x51,
+    MIDI_META_SMPTE_OFFSET = 0x54,
+    MIDI_META_TIME_SIGNATURE = 0x58,
+    MIDI_META_KEY_SIGNATURE = 0x59,
+    MIDI_META_SEQUENCER_SPECIFIC = 0x7f,
 };
 
 static HRESULT stream_read_at_most(IStream *stream, void *buffer, ULONG size, ULONG *bytes_left)
@@ -76,8 +107,9 @@ static HRESULT read_variable_length_number(IStream *stream, DWORD *out, ULONG *b
 
 static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *last_status, ULONG *bytes_left)
 {
-    BYTE byte, status_type, meta_type;
+    BYTE byte, status_type;
     DWORD length;
+    BYTE data[3];
     LARGE_INTEGER offset;
     HRESULT hr = S_OK;
     DWORD delta_time;
@@ -96,21 +128,31 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
 
     if (event->status == MIDI_META)
     {
-        meta_type = byte;
+        event->meta_type = byte;
 
         if ((hr = read_variable_length_number(stream, &length, bytes_left)) != S_OK) return hr;
 
-        switch (meta_type)
+        switch (event->meta_type)
         {
+        case MIDI_META_SET_TEMPO:
+            if (length != 3)
+            {
+                ERR("Invalid MIDI meta event length %lu for set tempo event.\n", length);
+                return E_FAIL;
+            }
+            if (FAILED(hr = stream_read_at_most(stream, data, 3, bytes_left))) return hr;
+            event->tempo = (data[0] << 16) | (data[1] << 8) | data[2];
+            break;
         default:
             if (*bytes_left < length) return S_FALSE;
             offset.QuadPart = length;
             if (FAILED(hr = IStream_Seek(stream, offset, STREAM_SEEK_CUR, NULL))) return hr;
-            FIXME("MIDI meta event type %#02x, length %lu, time +%lu. not supported\n", meta_type,
-                    length, delta_time);
+            FIXME("MIDI meta event type %#02x, length %lu, time +%lu. not supported\n",
+                    event->meta_type, length, delta_time);
             *bytes_left -= length;
+            event->tempo = 0;
         }
-        TRACE("MIDI meta event type %#02x, length %lu, time +%lu\n", meta_type, length, delta_time);
+        TRACE("MIDI meta event type %#02x, length %lu, time +%lu\n", event->meta_type, length, delta_time);
         return S_OK;
     }
     else if (event->status == MIDI_SYSEX1 || event->status == MIDI_SYSEX2)
@@ -146,6 +188,22 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
     }
 
     return S_OK;
+}
+
+static HRESULT midi_parser_handle_set_tempo(struct midi_parser *parser, struct midi_event *event)
+{
+    DMUS_TEMPO_PARAM tempo;
+    MUSIC_TIME dmusic_time = (ULONGLONG)parser->time * DMUS_PPQ / parser->division;
+    HRESULT hr;
+
+    if (!parser->tempotrack && FAILED(hr = CoCreateInstance(&CLSID_DirectMusicTempoTrack, NULL, CLSCTX_INPROC_SERVER,
+                                              &IID_IDirectMusicTrack, (void **)&parser->tempotrack)))
+        return hr;
+
+    tempo.mtTime = dmusic_time;
+    tempo.dblTempo = 60 * 1000000.0 / event->tempo;
+    TRACE("Adding tempo at time %lu, tempo %f\n", dmusic_time, tempo.dblTempo);
+    return IDirectMusicTrack_SetParam(parser->tempotrack, &GUID_TempoParam, dmusic_time, &tempo);
 }
 
 static HRESULT midi_parser_handle_program_change(struct midi_parser *parser, struct midi_event *event)
@@ -206,7 +264,9 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
         while ((hr = read_midi_event(parser->stream, &event, &last_status, &length)) == S_OK)
         {
             parser->time += event.delta_time;
-            if ((event.status & 0xf0) == MIDI_PROGRAM_CHANGE)
+            if (event.status == 0xff && event.meta_type == MIDI_META_SET_TEMPO)
+                hr = midi_parser_handle_set_tempo(parser, &event);
+            else if ((event.status & 0xf0) == MIDI_PROGRAM_CHANGE)
                 hr = midi_parser_handle_program_change(parser, &event);
             if (FAILED(hr)) break;
         }
@@ -223,6 +283,8 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_SetLength(segment, music_length);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->bandtrack, 0xffff);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->chordtrack, 0xffff);
+    if (SUCCEEDED(hr) && parser->tempotrack)
+        hr = IDirectMusicSegment8_InsertTrack(segment, parser->tempotrack, 0xffff);
 
     return hr;
 }
@@ -232,6 +294,7 @@ static void midi_parser_destroy(struct midi_parser *parser)
     IStream_Release(parser->stream);
     if (parser->bandtrack) IDirectMusicTrack_Release(parser->bandtrack);
     if (parser->chordtrack) IDirectMusicTrack_Release(parser->chordtrack);
+    if (parser->tempotrack) IDirectMusicTrack_Release(parser->tempotrack);
     free(parser);
 }
 
