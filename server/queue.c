@@ -2229,10 +2229,17 @@ struct pointer
 
 static void queue_pointer_message( struct pointer *pointer )
 {
+    static const unsigned int messages[][2] =
+    {
+        {WM_POINTERUPDATE, 0},
+        {WM_POINTERENTER, WM_POINTERDOWN},
+        {WM_POINTERUP, WM_POINTERLEAVE},
+    };
     struct hw_msg_source source = { IMDT_UNAVAILABLE, IMDT_TOUCH };
     struct desktop *desktop = pointer->desktop;
     const hw_input_t *input = &pointer->input;
-    unsigned int wparam = input->hw.wparam;
+    unsigned int i, wparam = input->hw.wparam;
+    timeout_t time = get_tick_count();
     user_handle_t win = pointer->win;
     rectangle_t top_rect;
     struct message *msg;
@@ -2244,16 +2251,19 @@ static void queue_pointer_message( struct pointer *pointer )
 
     if (pointer->primary) wparam |= POINTER_MESSAGE_FLAG_PRIMARY << 16;
 
-    if (!(msg = alloc_hardware_message( 0, source, get_tick_count(), 0 ))) return;
+    for (i = 0; i < 2 && messages[input->hw.msg - WM_POINTERUPDATE][i]; i++)
+    {
+        if (!(msg = alloc_hardware_message( 0, source, time, 0 ))) return;
 
-    msg->win       = get_user_full_handle( win );
-    msg->msg       = input->hw.msg;
-    msg->wparam    = wparam;
-    msg->lparam    = MAKELONG(x, y);
-    msg->x         = desktop->cursor.x;
-    msg->y         = desktop->cursor.y;
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = messages[input->hw.msg - WM_POINTERUPDATE][i];
+        msg->wparam    = wparam;
+        msg->lparam    = MAKELONG(x, y);
+        msg->x         = desktop->cursor.x;
+        msg->y         = desktop->cursor.y;
 
-    queue_hardware_message( desktop, msg, 1 );
+        queue_hardware_message( desktop, msg, 1 );
+    }
 
     if (input->hw.msg == WM_POINTERUP)
     {

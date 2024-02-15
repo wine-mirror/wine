@@ -2004,7 +2004,6 @@ static void test_hid_touch_screen(void)
     res = msg_wait_for_events( 1, &touchleave_event, 500 );
     todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
-    todo_wine
     ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
     todo_wine
     ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
@@ -2012,13 +2011,10 @@ static void test_hid_touch_screen(void)
     expect_flags = POINTER_MESSAGE_FLAG_PRIMARY | POINTER_MESSAGE_FLAG_CONFIDENCE |
                    POINTER_MESSAGE_FLAG_FIRSTBUTTON | POINTER_MESSAGE_FLAG_NEW |
                    POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT;
-    todo_wine
+    todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
-    todo_wine
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
 
@@ -2027,6 +2023,7 @@ static void test_hid_touch_screen(void)
     ok( HIWORD( pointer_wparam[1] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
+    todo_wine
     ok( LOWORD( pointer_wparam[1] ) == id, "got wparam %#Ix\n", pointer_wparam[1] );
     todo_wine
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[1] );
@@ -2141,20 +2138,16 @@ static void test_hid_touch_screen(void)
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
-    todo_wine
     ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
     ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
 
     expect_flags = POINTER_MESSAGE_FLAG_PRIMARY | POINTER_MESSAGE_FLAG_CONFIDENCE |
                    POINTER_MESSAGE_FLAG_FIRSTBUTTON | POINTER_MESSAGE_FLAG_NEW |
                    POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT;
-    todo_wine
+    todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
-    todo_wine
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( pointer_wparam[1] == 0, "got wparam %#Ix\n", pointer_wparam[1] );
     ok( pointer_lparam[1] == 0, "got lparam %#Ix\n", pointer_lparam[1] );
@@ -2167,7 +2160,6 @@ static void test_hid_touch_screen(void)
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
 
     res = msg_wait_for_events( 1, &touchleave_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
@@ -2178,7 +2170,6 @@ static void test_hid_touch_screen(void)
     ok( HIWORD( pointer_wparam[0] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
@@ -2197,34 +2188,27 @@ static void test_hid_touch_screen(void)
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
-    todo_wine
     ok( pointer_enter_count == 2, "got pointer_enter_count %u\n", pointer_enter_count );
     ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
 
     expect_flags = POINTER_MESSAGE_FLAG_PRIMARY | POINTER_MESSAGE_FLAG_CONFIDENCE |
                    POINTER_MESSAGE_FLAG_FIRSTBUTTON | POINTER_MESSAGE_FLAG_NEW |
                    POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT;
-    todo_wine
+    todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[0] ) == expect_flags, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_wparam[0] ) > 0, "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
-    todo_wine
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
     id = LOWORD( pointer_wparam[0] );
 
     expect_flags = POINTER_MESSAGE_FLAG_CONFIDENCE | POINTER_MESSAGE_FLAG_FIRSTBUTTON |
                    POINTER_MESSAGE_FLAG_NEW | POINTER_MESSAGE_FLAG_INRANGE | POINTER_MESSAGE_FLAG_INCONTACT;
-    todo_wine
+    todo_wine /* missing POINTER_MESSAGE_FLAG_FIRSTBUTTON */
     ok( HIWORD( pointer_wparam[1] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
-    todo_wine
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
-    todo_wine
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
-    todo_wine
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
 
 
@@ -2234,10 +2218,8 @@ static void test_hid_touch_screen(void)
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
 
     res = msg_wait_for_events( 1, &touchleave_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchleave_event, 1000 );
-    todo_wine
     ok( res == 0, "WaitForSingleObject returned %#lx\n", res );
     res = msg_wait_for_events( 1, &touchdown_event, 10 );
     ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
@@ -2248,7 +2230,6 @@ static void test_hid_touch_screen(void)
     ok( HIWORD( pointer_wparam[0] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[0] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[0] );
-    todo_wine
     ok( LOWORD( pointer_wparam[0] ) == id, "got wparam %#Ix\n", pointer_wparam[0] );
     ok( LOWORD( pointer_lparam[0] ) * 128 / width == 0x08, "got lparam %#Ix\n", pointer_lparam[0] );
     ok( HIWORD( pointer_lparam[0] ) * 128 / height == 0x10, "got lparam %#Ix\n", pointer_lparam[0] );
@@ -2257,7 +2238,6 @@ static void test_hid_touch_screen(void)
     ok( HIWORD( pointer_wparam[1] ) == expect_flags ||
         broken(HIWORD( pointer_wparam[1] ) == (expect_flags & ~POINTER_MESSAGE_FLAG_CONFIDENCE)), /* Win8 32bit */
         "got wparam %#Ix\n", pointer_wparam[1] );
-    todo_wine
     ok( LOWORD( pointer_wparam[1] ) == id + 1, "got wparam %#Ix\n", pointer_wparam[1] );
     ok( LOWORD( pointer_lparam[1] ) * 128 / width == 0x18, "got lparam %#Ix\n", pointer_lparam[1] );
     ok( HIWORD( pointer_lparam[1] ) * 128 / height == 0x20, "got lparam %#Ix\n", pointer_lparam[1] );
