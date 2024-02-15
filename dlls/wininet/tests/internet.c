@@ -1317,7 +1317,7 @@ static void test_Option_PerConnectionOption(void)
     ret = HeapValidate(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
     ok(ret, "HeapValidate failed, last error %lu\n", GetLastError());
 
-    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
+    GlobalFree(list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* disable the proxy server */
@@ -1381,6 +1381,7 @@ static void test_Option_PerConnectionOption(void)
     ret = InternetSetOptionW(ses, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, size);
     ok(ret == TRUE, "InternetSetOption should've succeeded\n");
 
+    GlobalFree(list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     InternetCloseHandle(ses);
@@ -1443,7 +1444,7 @@ static void test_Option_PerConnectionOptionA(void)
             "Retrieved flags should've been PROXY_TYPE_PROXY, was: %ld\n",
             list.pOptions[1].Value.dwValue);
 
-    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
+    GlobalFree(list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* test with NULL as proxy server */
@@ -1469,7 +1470,7 @@ static void test_Option_PerConnectionOptionA(void)
             "Retrieved proxy server should've been NULL, was: \"%s\"\n",
             list.pOptions[0].Value.pszValue);
 
-    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
+    GlobalFree(list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     /* restore original settings */
@@ -1480,6 +1481,7 @@ static void test_Option_PerConnectionOptionA(void)
             &list, size);
     ok(ret == TRUE, "InternetSetOption should've succeeded\n");
 
+    GlobalFree(list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
     InternetCloseHandle(ses);

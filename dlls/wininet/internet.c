@@ -2606,7 +2606,7 @@ static WCHAR *copy_optionW(WCHAR *value)
         return NULL;
 
     len = (wcslen(value) + 1) * sizeof(WCHAR);
-    if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
+    if (!(tmp = GlobalAlloc(0, len)))
         return NULL;
 
     return memcpy(tmp, value, len);
@@ -2621,7 +2621,7 @@ static char *copy_optionA(WCHAR *value)
         return NULL;
 
     len = WideCharToMultiByte(CP_ACP, 0, value, -1, NULL, 0, NULL, NULL);
-    if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
+    if (!(tmp = GlobalAlloc(0, len)))
         return NULL;
 
     WideCharToMultiByte(CP_ACP, 0, value, -1, tmp, len, NULL, NULL);
