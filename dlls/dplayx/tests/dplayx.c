@@ -1046,8 +1046,8 @@ static void checkSpData_( int line, SpData *spData )
     ok_( __FILE__, line )( !spData->tcpAddr.sin_addr.s_addr, "got TCP address %#lx.\n",
                            spData->tcpAddr.sin_addr.s_addr );
     ok_( __FILE__, line )( spData->udpAddr.sin_family == AF_INET, "got UDP family %d.\n", spData->udpAddr.sin_family );
-    ok_( __FILE__, line )( 2350 <= ntohs( spData->udpAddr.sin_port ) && ntohs( spData->udpAddr.sin_port ) < 2400,
-                           "got UDP port %d.\n", ntohs( spData->udpAddr.sin_port ) );
+    todo_wine ok_( __FILE__, line )( 2350 <= ntohs( spData->udpAddr.sin_port ) && ntohs( spData->udpAddr.sin_port ) < 2400,
+                                     "got UDP port %d.\n", ntohs( spData->udpAddr.sin_port ) );
     ok_( __FILE__, line )( !spData->udpAddr.sin_addr.s_addr, "got UDP address %#lx.\n",
                            spData->udpAddr.sin_addr.s_addr );
 }
@@ -1246,10 +1246,13 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
 
     wsResult = receiveMessage_( line, sock, &request, sizeof( request ) );
     ok_( __FILE__, line )( wsResult == sizeof( request ), "recv() returned %d.\n", wsResult );
+    if ( wsResult == SOCKET_ERROR )
+        return 0;
 
-    port = checkSpHeader_( line, &request.spHeader, expectedSize, FALSE );
+    port = checkSpHeader_( line, &request.spHeader, expectedSize, expectedPasswordSize != 2 );
     checkMessageHeader_( line, &request.request.header, 19 );
-    ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
+    todo_wine_if( request.request.toId ) ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n",
+                                                                request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
                            request.request.playerId );
     ok_( __FILE__, line )( !request.request.groupId, "got group id %#lx.\n", request.request.groupId );
@@ -1263,13 +1266,16 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
 
     wsResult = receiveMessage_( line, sock, password, expectedPasswordSize );
 
-    ok_( __FILE__, line )( wsResult == expectedPasswordSize, "recv() returned %d.\n", wsResult );
-    ok_( __FILE__, line )( !lstrcmpW( password, expectedPassword ), "got password %s.\n", wine_dbgstr_w( password ) );
+    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( wsResult == expectedPasswordSize,
+                                                                     "recv() returned %d.\n", wsResult );
+    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( !lstrcmpW( password, expectedPassword ),
+                                                                     "got password %s.\n", wine_dbgstr_w( password ) );
 
     wsResult = receiveMessage_( line, sock, &tickCount, sizeof( DWORD ) );
 
-    ok_( __FILE__, line )( wsResult == sizeof( DWORD ), "recv() returned %d.\n", wsResult );
-    ok_( __FILE__, line )( tickCount == expectedTickCount, "got tick count %#lx.\n", tickCount );
+    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( wsResult == sizeof( DWORD ),
+                                                                     "recv() returned %d.\n", wsResult );
+    todo_wine ok_( __FILE__, line )( tickCount == expectedTickCount, "got tick count %#lx.\n", tickCount );
 
     return port;
 }
@@ -1944,8 +1950,8 @@ static BOOL CALLBACK EnumSessions_cb2( LPCDPSESSIONDESC2 lpThisSD,
     return TRUE;
 }
 
-#define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr, hrTodo ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr, hrTodo )
-static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd, BOOL requestExpected, unsigned short port, const WCHAR *expectedPassword, HRESULT expectedHr, BOOL hrTodo )
+#define check_Open( dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr ) check_Open_( __LINE__, dp, dpsd, serverDpsd, requestExpected, port, expectedPassword, expectedHr )
+static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, const DPSESSIONDESC2 *serverDpsd, BOOL requestExpected, unsigned short port, const WCHAR *expectedPassword, HRESULT expectedHr )
 {
     SOCKET listenSock;
     OpenParam *param;
@@ -1967,16 +1973,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
         unsigned short port;
 
         recvSock = acceptTcp_( line, listenSock );
-        todo_wine ok_( __FILE__, line )( recvSock != INVALID_SOCKET, "accept() returned %#Ix.\n", recvSock );
-        if ( recvSock == INVALID_SOCKET )
-        {
-            hr = openAsyncWait( param, 2000 );
-            todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
-
-            closesocket( listenSock );
-            WSACleanup();
-            return;
-        }
+        ok_( __FILE__, line )( recvSock != INVALID_SOCKET, "accept() returned %#Ix.\n", recvSock );
 
         port = receiveRequestPlayerId_( line, recvSock, 0x9 );
 
@@ -1991,7 +1988,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
         checkNoMoreMessages_( line, recvSock );
 
         hr = openAsyncWait( param, 2000 );
-        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+        ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
 
         hr = IDirectPlayX_Close( dp );
         checkHR( DP_OK, hr );
@@ -2002,7 +1999,7 @@ static void check_Open_( int line, IDirectPlay4A *dp, DPSESSIONDESC2 *dpsd, cons
     else
     {
         hr = openAsyncWait( param, 2000 );
-        todo_wine_if( hrTodo ) ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
+        ok_( __FILE__, line )( hr == expectedHr, "Open() returned %#lx.\n", hr );
     }
 
     checkNoMoreAccepts_( line, listenSock );
@@ -2072,9 +2069,9 @@ static void test_Open(void)
 
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED, FALSE );
+    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_UNINITIALIZED );
 
     init_TCPIP_provider( dp, "127.0.0.1", 0 );
 
@@ -2082,19 +2079,19 @@ static void test_Open(void)
     /* - Checking how strict dplay is with sizes */
     dpsd = dpsdZero;
     dpsd.dwSize = 0;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) - 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
 
     dpsd = dpsdZero;
     dpsd.dwSize = sizeof( DPSESSIONDESC2 ) + 1;
-    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS, FALSE );
+    check_Open( dp, &dpsd, NULL, FALSE, 2349, NULL, DPERR_INVALIDPARAMS );
 
-    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE );
+    check_Open( dp, &dpsdZero, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
 
-    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS, FALSE );
+    check_Open( dp, &dpsdAppGuid, NULL, FALSE, 2349, NULL, DPERR_NOSESSIONS );
 
     enumSock = bindUdp( 47624 );
 
@@ -2124,7 +2121,7 @@ static void test_Open(void)
         break;
     }
 
-    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, 2349, L"", DP_OK, TRUE );
+    check_Open( dp, &dpsdAppGuid, &normalDpsd, TRUE, 2349, L"", DP_OK );
 
     /* Join to protected session */
     for ( tryIndex = 0; ; ++tryIndex )
@@ -2155,7 +2152,7 @@ static void test_Open(void)
 
     dpsd = dpsdAppGuid;
     dpsd.lpszPasswordA = (char *) "hadouken";
-    check_Open( dp, &dpsd, &protectedDpsd, TRUE, 2349, L"hadouken", DP_OK, TRUE );
+    check_Open( dp, &dpsd, &protectedDpsd, TRUE, 2349, L"hadouken", DP_OK );
 
     closesocket( enumSock );
 
