@@ -34,6 +34,7 @@ namespace Windows.Graphics.Imaging {
     typedef enum BitmapPixelFormat BitmapPixelFormat;
     typedef struct BitmapBounds BitmapBounds;
     typedef struct BitmapPlaneDescription BitmapPlaneDescription;
+    typedef struct BitmapSize BitmapSize;
 
     interface IBitmapBuffer;
     interface ISoftwareBitmap;
@@ -105,6 +106,13 @@ namespace Windows.Graphics.Imaging {
         INT32 Width;
         INT32 Height;
         INT32 Stride;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+    struct BitmapSize
+    {
+        UINT32 Width;
+        UINT32 Height;
     };
 
     [
