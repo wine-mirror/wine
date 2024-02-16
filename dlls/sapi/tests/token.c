@@ -205,6 +205,16 @@ static void test_token_category(void)
 
     IEnumSpObjectTokens_Release( enum_tokens );
 
+    hr = ISpObjectTokenCategory_EnumTokens( cat, L"", NULL, &enum_tokens );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    count = 0xdeadbeef;
+    hr = IEnumSpObjectTokens_GetCount( enum_tokens, &count );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( count == 5, "got %lu\n", count );
+
+    IEnumSpObjectTokens_Release( enum_tokens );
+
     hr = ISpObjectTokenCategory_EnumTokens( cat, L"Language=409", NULL, &enum_tokens );
     ok( hr == S_OK, "got %08lx\n", hr );
 

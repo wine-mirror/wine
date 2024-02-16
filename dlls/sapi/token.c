@@ -947,7 +947,7 @@ static HRESULT score_attributes( ISpObjectToken *token, const WCHAR *attrs,
     unsigned int i, j;
     HRESULT hr;
 
-    if (!attrs)
+    if (!attrs || !*attrs)
     {
         *score = 1;
         return S_OK;
