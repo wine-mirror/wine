@@ -8096,6 +8096,7 @@ static void test_collided_unwind(void)
 #define UWOP_TRAP_FRAME                0xE8
 #define UWOP_MACHINE_FRAME             0xE9
 #define UWOP_CONTEXT                   0xEA
+#define UWOP_EC_CONTEXT                0xEB
 #define UWOP_CLEAR_UNWOUND_TO_CALL     0xEC
 
 struct results
@@ -8969,6 +8970,42 @@ static void test_virtual_unwind(void)
         { 0x14,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
     };
 
+    static const BYTE function_16[] =
+    {
+        0xff, 0x43, 0x00, 0xd1,   /* 00: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 04: nop */
+        0xff, 0x43, 0x00, 0xd1,   /* 08: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 0c: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 10: ret */
+    };
+
+    static const DWORD unwind_info_16_header =
+        (sizeof(function_16)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (1 << 27);  /* codes */
+
+    static const BYTE unwind_info_16[] =
+    {
+        DW(unwind_info_16_header),
+
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_EC_CONTEXT,
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_END,
+    };
+
+    static const struct results results_16[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
+        { 0x04,  0x00,  0 ,    0x00f8,  0x0a8, FALSE, { {x0, 0x80}, {x1, 0x88}, {x2, 0xb8}, {x3, 0xc0}, {x4, 0xc8}, {x5, 0xd0}, {x6, 0x130}, {x7, 0x140}, {x8, 0x78}, {x9, 0x150}, {x10, 0x160}, {x11, 0x170}, {x12, 0x180}, {x13, 0}, {x14, 0}, {x15, 0x190}, {x16, 0x0158014801380128}, {x17, 0x0198018801780168}, {x18, 0}, {x19, 0xd8}, {x20, 0xe0}, {x21, 0xe8}, {x22, 0x0f0}, {x23, 0}, {x24, 0}, {x25, 0xa8}, {x26, 0xb0}, {x27, 0x90}, {x28, 0}, {x29, 0xa0}, {lr, 0x120}, {d0, 0x1a0}, {d1, 0x1b0}, {d2, 0x1c0}, {d3, 0x1d0}, {d4, 0x1e0}, {d5, 0x1f0}, {d6, 0x200}, {d7, 0x210}, {d8, 0x220}, {d9, 0x230}, {d10, 0x240}, {d11, 0x250}, {d12, 0x260}, {d13, 0x270}, {d14, 0x280}, {d15, 0x290}, {-1,-1} }},
+        { 0x08,  0x00,  0 ,    0x0108,  0x0b8, FALSE, { {x0, 0x90}, {x1, 0x98}, {x2, 0xc8}, {x3, 0xd0}, {x4, 0xd8}, {x5, 0xe0}, {x6, 0x140}, {x7, 0x150}, {x8, 0x88}, {x9, 0x160}, {x10, 0x170}, {x11, 0x180}, {x12, 0x190}, {x13, 0}, {x14, 0}, {x15, 0x1a0}, {x16, 0x0168015801480138}, {x17, 0x01a8019801880178}, {x18, 0}, {x19, 0xe8}, {x20, 0xf0}, {x21, 0xf8}, {x22, 0x100}, {x23, 0}, {x24, 0}, {x25, 0xb8}, {x26, 0xc0}, {x27, 0xa0}, {x28, 0}, {x29, 0xb0}, {lr, 0x130}, {d0, 0x1b0}, {d1, 0x1c0}, {d2, 0x1d0}, {d3, 0x1e0}, {d4, 0x1f0}, {d5, 0x200}, {d6, 0x210}, {d7, 0x220}, {d8, 0x230}, {d9, 0x240}, {d10, 0x250}, {d11, 0x260}, {d12, 0x270}, {d13, 0x280}, {d14, 0x290}, {d15, 0x2a0}, {-1,-1} }},
+        { 0x0c,  0x00,  0 ,    0x0108,  0x0b8, FALSE, { {x0, 0x90}, {x1, 0x98}, {x2, 0xc8}, {x3, 0xd0}, {x4, 0xd8}, {x5, 0xe0}, {x6, 0x140}, {x7, 0x150}, {x8, 0x88}, {x9, 0x160}, {x10, 0x170}, {x11, 0x180}, {x12, 0x190}, {x13, 0}, {x14, 0}, {x15, 0x1a0}, {x16, 0x0168015801480138}, {x17, 0x01a8019801880178}, {x18, 0}, {x19, 0xe8}, {x20, 0xf0}, {x21, 0xf8}, {x22, 0x100}, {x23, 0}, {x24, 0}, {x25, 0xb8}, {x26, 0xc0}, {x27, 0xa0}, {x28, 0}, {x29, 0xb0}, {lr, 0x130}, {d0, 0x1b0}, {d1, 0x1c0}, {d2, 0x1d0}, {d3, 0x1e0}, {d4, 0x1f0}, {d5, 0x200}, {d6, 0x210}, {d7, 0x220}, {d8, 0x230}, {d9, 0x240}, {d10, 0x250}, {d11, 0x260}, {d12, 0x270}, {d13, 0x280}, {d14, 0x290}, {d15, 0x2a0}, {-1,-1} }},
+        { 0x10,  0x00,  0 ,    0x0108,  0x0b8, FALSE, { {x0, 0x90}, {x1, 0x98}, {x2, 0xc8}, {x3, 0xd0}, {x4, 0xd8}, {x5, 0xe0}, {x6, 0x140}, {x7, 0x150}, {x8, 0x88}, {x9, 0x160}, {x10, 0x170}, {x11, 0x180}, {x12, 0x190}, {x13, 0}, {x14, 0}, {x15, 0x1a0}, {x16, 0x0168015801480138}, {x17, 0x01a8019801880178}, {x18, 0}, {x19, 0xe8}, {x20, 0xf0}, {x21, 0xf8}, {x22, 0x100}, {x23, 0}, {x24, 0}, {x25, 0xb8}, {x26, 0xc0}, {x27, 0xa0}, {x28, 0}, {x29, 0xb0}, {lr, 0x130}, {d0, 0x1b0}, {d1, 0x1c0}, {d2, 0x1d0}, {d3, 0x1e0}, {d4, 0x1f0}, {d5, 0x200}, {d6, 0x210}, {d7, 0x220}, {d8, 0x230}, {d9, 0x240}, {d10, 0x250}, {d11, 0x260}, {d12, 0x270}, {d13, 0x280}, {d14, 0x290}, {d15, 0x2a0}, {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
@@ -8989,6 +9026,7 @@ static void test_virtual_unwind(void)
         TEST(function_13, unwind_info_13, 1, results_13),
         TEST(function_14, unwind_info_14, 0, results_14),
         TEST(function_15, unwind_info_15, 0, results_15),
+        TEST(function_16, unwind_info_16, 0, results_16),
 #undef TEST
     };
     unsigned int i;
