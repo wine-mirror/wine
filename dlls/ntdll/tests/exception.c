@@ -8119,6 +8119,7 @@ struct unwind_test
     const struct results *results;
     unsigned int nb_results;
     int unwound_clear;
+    int last_set_reg_ptr;
 };
 
 enum regs
@@ -8170,7 +8171,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
     for (i = 0; i < test->nb_results; i++)
     {
         winetest_push_context( "%u/%u", testnum, i );
-        memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
+        memset( &ctx_ptr, 0x55, sizeof(ctx_ptr) );
         memset( &context, 0x55, sizeof(context) );
         memset( &unset_reg, 0x55, sizeof(unset_reg) );
         for (j = 0; j < 256; j++) fake_stack[j] = j * 8;
@@ -8255,17 +8256,27 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 if (test->results[i].regs[k][0] == j) break;
             }
 
-            if (regptr)
-                ok( k < nb_regs, "register %s should not be set to %llx\n", reg_names[j], regval );
-
             if (k < nb_regs)
             {
                 ok( regval == test->results[i].regs[k][1],
                     "register %s wrong %llx/%llx\n", reg_names[j], regval, test->results[i].regs[k][1] );
+                if (regptr)
+                {
+                    if (test->last_set_reg_ptr && j > test->last_set_reg_ptr && j <= 30)
+                        ok( regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names[j] );
+                    else
+                    {
+                        ok( regptr != (void *)unset_reg, "register %s should have pointer set\n", reg_names[j] );
+                        if (regptr != (void *)unset_reg)
+                            ok( *regptr == regval, "register %s should have reg pointer to %llx / %llx\n",
+                                reg_names[j], *regptr, regval );
+                    }
+                }
             }
             else
             {
                 ok( k == nb_regs, "register %s should be set\n", reg_names[j] );
+                ok( !regptr || regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names[j] );
                 if (j == lr)
                     ok( context.Lr == ORIG_LR, "register lr wrong %llx/unset\n", context.Lr );
                 else if (j == x29)
@@ -9052,26 +9063,26 @@ static void test_virtual_unwind(void)
 
     static const struct unwind_test tests[] =
     {
-#define TEST(func, unwind, unwind_packed, results, unwound_clear) \
-        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results), unwound_clear }
-        TEST(function_0, unwind_info_0, 0, results_0, 0),
-        TEST(function_1, unwind_info_1, 1, results_1, 0),
-        TEST(function_2, unwind_info_2, 0, results_2, 1),
-        TEST(function_3, unwind_info_3, 0, results_3, 1),
-        TEST(function_4, unwind_info_4, 0, results_4, 0),
-        TEST(function_5, unwind_info_5, 0, results_5, 0),
-        TEST(function_6, unwind_info_6, 1, results_6, 0),
-        TEST(function_7, unwind_info_7, 1, results_7, 0),
-        TEST(function_8, unwind_info_8, 1, results_8, 0),
-        TEST(function_9, unwind_info_9, 1, results_9, 0),
-        TEST(function_10, unwind_info_10, 1, results_10, 0),
-        TEST(function_11, unwind_info_11, 1, results_11, 0),
-        TEST(function_12, unwind_info_12, 1, results_12, 0),
-        TEST(function_13, unwind_info_13, 1, results_13, 0),
-        TEST(function_14, unwind_info_14, 0, results_14, 0),
-        TEST(function_15, unwind_info_15, 0, results_15, 0),
-        TEST(function_16, unwind_info_16, 0, results_16, 1),
-        TEST(function_17, unwind_info_17, 0, results_17, 2),
+#define TEST(func, unwind, unwind_packed, results, unwound_clear, last_ptr) \
+        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results), unwound_clear, last_ptr }
+        TEST(function_0, unwind_info_0, 0, results_0, 0, 0),
+        TEST(function_1, unwind_info_1, 1, results_1, 0, 0),
+        TEST(function_2, unwind_info_2, 0, results_2, 1, 0),
+        TEST(function_3, unwind_info_3, 0, results_3, 1, x28),
+        TEST(function_4, unwind_info_4, 0, results_4, 0, 0),
+        TEST(function_5, unwind_info_5, 0, results_5, 0, 0),
+        TEST(function_6, unwind_info_6, 1, results_6, 0, 0),
+        TEST(function_7, unwind_info_7, 1, results_7, 0, 0),
+        TEST(function_8, unwind_info_8, 1, results_8, 0, 0),
+        TEST(function_9, unwind_info_9, 1, results_9, 0, 0),
+        TEST(function_10, unwind_info_10, 1, results_10, 0, 0),
+        TEST(function_11, unwind_info_11, 1, results_11, 0, 0),
+        TEST(function_12, unwind_info_12, 1, results_12, 0, 0),
+        TEST(function_13, unwind_info_13, 1, results_13, 0, 0),
+        TEST(function_14, unwind_info_14, 0, results_14, 0, 0),
+        TEST(function_15, unwind_info_15, 0, results_15, 0, 0),
+        TEST(function_16, unwind_info_16, 0, results_16, 1, x18),
+        TEST(function_17, unwind_info_17, 0, results_17, 2, 0),
 #undef TEST
     };
     unsigned int i;

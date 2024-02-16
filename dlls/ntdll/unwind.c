@@ -388,7 +388,7 @@ static void do_pac_auth( ARM64_NT_CONTEXT *context )
 static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *context,
                                   KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs, int skip )
 {
-    unsigned int val, len, save_next = 2;
+    unsigned int i, val, len, save_next = 2;
 
     /* skip codes */
     while (ptr < end && skip)
@@ -473,6 +473,11 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
             ARM64_NT_CONTEXT *src_ctx = (ARM64_NT_CONTEXT *)context->Sp;
             *context = *src_ctx;
             context->ContextFlags = flags | (src_ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+            if (ptrs)
+            {
+                for (i = 19; i < 29; i++) (&ptrs->X19)[i - 19] = &src_ctx->X[i];
+                for (i = 8; i < 16; i++) (&ptrs->D8)[i - 8] = &src_ctx->V[i].Low;
+            }
         }
         else if (*ptr == 0xeb)  /* MSFT_OP_EC_CONTEXT */
         {
@@ -480,6 +485,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
             ARM64EC_NT_CONTEXT *src_ctx = (ARM64EC_NT_CONTEXT *)context->Sp;
             context_x64_to_arm( context, src_ctx );
             context->ContextFlags = flags | (src_ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+            if (ptrs) for (i = 8; i < 16; i++) (&ptrs->D8)[i - 8] = &src_ctx->V[i].Low;
         }
         else if (*ptr == 0xec)  /* MSFT_OP_CLEAR_UNWOUND_TO_CALL */
         {
@@ -562,10 +568,9 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
     {
         if (func->CR == 3 || func->CR == 2)
         {
-            DWORD64 *fp = (DWORD64 *) context->Fp; /* X[29] */
+            /* mov x29,sp */
             context->Sp = context->Fp;
-            context->X[29] = fp[0];
-            context->X[30] = fp[1];
+            restore_regs( 29, 2, 0, context, ptrs );
         }
         context->Sp += local_size;
         if (fp_size) restore_fpregs( 8, fp_regs, int_regs, context, ptrs );
