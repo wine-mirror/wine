@@ -3141,21 +3141,22 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
     HeapFree(GetProcessHeap(), 0, pdb_file->stream_dict);
 }
 
-static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const char* str, unsigned cb)
+static struct pdb_stream_name* pdb_load_stream_name_table(const char* str, unsigned cb)
 {
-    DWORD*      pdw;
-    DWORD*      ok_bits;
-    DWORD       count, numok;
-    unsigned    i, j;
-    char*       cpstr;
+    struct pdb_stream_name*     stream_dict;
+    DWORD*                      pdw;
+    DWORD*                      ok_bits;
+    DWORD                       count, numok;
+    unsigned                    i, j;
+    char*                       cpstr;
 
     pdw = (DWORD*)(str + cb);
     numok = *pdw++;
     count = *pdw++;
 
-    pdb_file->stream_dict = HeapAlloc(GetProcessHeap(), 0, (numok + 1) * sizeof(struct pdb_stream_name) + cb);
-    if (!pdb_file->stream_dict) return FALSE;
-    cpstr = (char*)(pdb_file->stream_dict + numok + 1);
+    stream_dict = HeapAlloc(GetProcessHeap(), 0, (numok + 1) * sizeof(struct pdb_stream_name) + cb);
+    if (!stream_dict) return NULL;
+    cpstr = (char*)(stream_dict + numok + 1);
     memcpy(cpstr, str, cb);
 
     /* bitfield: first dword is len (in dword), then data */
@@ -3168,15 +3169,14 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
         if (ok_bits[i / 32] & (1 << (i % 32)))
         {
             if (j >= numok) break;
-            pdb_file->stream_dict[j].name = &cpstr[*pdw++];
-            pdb_file->stream_dict[j].index = *pdw++;
+            stream_dict[j].name = &cpstr[*pdw++];
+            stream_dict[j].index = *pdw++;
             j++;
         }
     }
     /* add sentinel */
-    pdb_file->stream_dict[numok].name = NULL;
-    pdb_file->fpoext_stream = -1;
-    return TRUE;
+    stream_dict[numok].name = NULL;
+    return stream_dict;
 }
 
 static unsigned pdb_get_stream_by_name(const struct pdb_file_info* pdb_file, const char* name)
@@ -3494,8 +3494,6 @@ static const char       PDB_DS_IDENT[] = "Microsoft C/C++ MSF 7.00\r\n\032DS\0";
 static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* pdb_file,
                      const char* image, unsigned* matched)
 {
-    BOOL        ret = TRUE;
-
     /* check the file header, and if ok, load the TOC */
     TRACE("PDB(%s): %.40s\n", pdb_lookup->filename, debugstr_an(image, 40));
 
@@ -3539,7 +3537,8 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
         TRACE("found JG for %s: age=%x timestamp=%x\n",
               pdb_lookup->filename, root->Age, root->TimeDateStamp);
-        ret = pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
+        pdb_file->stream_dict = pdb_load_stream_name_table(&root->names[0], root->cbNames);
+        pdb_file->fpoext_stream = -1;
         pdb_free(root);
     }
     else if (!memcmp(image, PDB_DS_IDENT, sizeof(PDB_DS_IDENT)))
@@ -3575,7 +3574,8 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
         TRACE("found DS for %s: age=%x guid=%s\n",
               pdb_lookup->filename, root->Age, debugstr_guid(&root->guid));
-        ret = pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
+        pdb_file->stream_dict = pdb_load_stream_name_table(&root->names[0], root->cbNames);
+        pdb_file->fpoext_stream = -1;
 
         pdb_free(root);
     }
@@ -3599,7 +3599,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
             pdb_free(x);
         }
     }
-    return ret;
+    return pdb_file->stream_dict != NULL;
 }
 
 static BOOL pdb_process_internal(const struct process* pcs, 
