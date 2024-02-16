@@ -319,7 +319,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->websocket_receive_buffer_size = 32768;
     session->websocket_send_buffer_size = 32768;
     list_init( &session->cookie_cache );
-    InitializeCriticalSection( &session->cs );
+    InitializeCriticalSectionEx( &session->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": session.cs");
 
     if (agent && !(session->agent = wcsdup( agent ))) goto end;
