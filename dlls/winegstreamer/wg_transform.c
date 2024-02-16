@@ -770,7 +770,7 @@ static NTSTATUS copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_
     return status;
 }
 
-static NTSTATUS copy_buffer(GstBuffer *buffer, GstCaps *caps, struct wg_sample *sample,
+static NTSTATUS copy_buffer(GstBuffer *buffer, struct wg_sample *sample,
         gsize *total_size)
 {
     GstMapInfo info;
@@ -839,8 +839,8 @@ static bool sample_needs_buffer_copy(struct wg_sample *sample, GstBuffer *buffer
     return needs_copy;
 }
 
-static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsize plane_align,
-        struct wg_sample *sample)
+static NTSTATUS read_transform_output_video(struct wg_sample *sample, GstBuffer *buffer,
+        GstCaps *caps, gsize plane_align)
 {
     gsize total_size;
     NTSTATUS status;
@@ -848,10 +848,8 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
 
     if (!(needs_copy = sample_needs_buffer_copy(sample, buffer, &total_size)))
         status = STATUS_SUCCESS;
-    else if (stream_type_from_caps(caps) == GST_STREAM_TYPE_VIDEO)
-        status = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
     else
-        status = copy_buffer(buffer, caps, sample, &total_size);
+        status = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
 
     if (status)
     {
@@ -863,12 +861,37 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
     set_sample_flags_from_buffer(sample, buffer, total_size);
 
     if (needs_copy)
+        GST_WARNING("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    else if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
+        GST_ERROR("Partial read %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    else
+        GST_INFO("Read %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS read_transform_output(struct wg_sample *sample, GstBuffer *buffer)
+{
+    gsize total_size;
+    NTSTATUS status;
+    bool needs_copy;
+
+    if (!(needs_copy = sample_needs_buffer_copy(sample, buffer, &total_size)))
+        status = STATUS_SUCCESS;
+    else
+        status = copy_buffer(buffer, sample, &total_size);
+
+    if (status)
     {
-        if (stream_type_from_caps(caps) == GST_STREAM_TYPE_VIDEO)
-            GST_WARNING("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
-        else
-            GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+        GST_ERROR("Failed to copy buffer %"GST_PTR_FORMAT, buffer);
+        sample->size = 0;
+        return status;
     }
+
+    set_sample_flags_from_buffer(sample, buffer, total_size);
+
+    if (needs_copy)
+        GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
     else if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
         GST_ERROR("Partial read %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
     else
@@ -959,8 +982,13 @@ NTSTATUS wg_transform_read_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if ((status = read_transform_output_data(output_buffer, output_caps,
-                transform->attrs.output_plane_align, sample)))
+    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO)
+        status = read_transform_output_video(sample, output_buffer, output_caps,
+                transform->attrs.output_plane_align);
+    else
+        status = read_transform_output(sample, output_buffer);
+
+    if (status)
     {
         wg_allocator_release_sample(transform->allocator, sample, false);
         return status;
