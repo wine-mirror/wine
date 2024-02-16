@@ -431,6 +431,7 @@ static void test_spvoice(void)
     ULONG stream_num;
     DWORD regid;
     DWORD start, duration;
+    ISpeechVoice *speech_voice;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -680,6 +681,14 @@ static void test_spvoice(void)
     duration = GetTickCount() - start;
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(duration < 300, "took %lu ms.\n", duration);
+
+    hr = ISpVoice_QueryInterface(voice, &IID_ISpeechVoice, (void **)&speech_voice);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = ISpeechVoice_Speak(speech_voice, NULL, SVSFPurgeBeforeSpeak, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    ISpeechVoice_Release(speech_voice);
 
 done:
     reset_engine_params(&test_engine);

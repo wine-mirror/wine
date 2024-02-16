@@ -357,9 +357,11 @@ static HRESULT WINAPI speech_voice_get_SynchronousSpeakTimeout(ISpeechVoice *ifa
 
 static HRESULT WINAPI speech_voice_Speak(ISpeechVoice *iface, BSTR text, SpeechVoiceSpeakFlags flags, LONG *number)
 {
-    FIXME("(%p, %s, %#x, %p): stub.\n", iface, debugstr_w(text), flags, number);
+    struct speech_voice *This = impl_from_ISpeechVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %#x, %p).\n", iface, debugstr_w(text), flags, number);
+
+    return ISpVoice_Speak(&This->ISpVoice_iface, text, flags, (ULONG *)number);
 }
 
 static HRESULT WINAPI speech_voice_SpeakStream(ISpeechVoice *iface, ISpeechBaseStream *stream,
