@@ -84,11 +84,6 @@ extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
 extern void WINAPI KiUserCallbackDispatcherReturn(void);
 extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
-#ifdef __arm64ec__
-extern void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const CONTEXT *ctx );
-extern void context_arm_to_x64( CONTEXT *ctx, const ARM64_NT_CONTEXT *arm_ctx );
-#endif
-
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern const char *debugstr_exception_code( DWORD code );

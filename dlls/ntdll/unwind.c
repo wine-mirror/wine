@@ -31,6 +31,7 @@
 #include "wine/exception.h"
 #include "wine/list.h"
 #include "ntdll_misc.h"
+#include "unwind.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(unwind);
@@ -1796,10 +1797,10 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         ARM64_NT_CONTEXT arm_context;
         void *ret;
 
-        context_x64_to_arm( &arm_context, context );
+        context_x64_to_arm( &arm_context, (ARM64EC_NT_CONTEXT *)context );
         ret = RtlVirtualUnwind_arm64( type, base, pc, (ARM64_RUNTIME_FUNCTION *)function,
                                       &arm_context, data, frame_ret, NULL );
-        context_arm_to_x64( context, &arm_context );
+        context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_context );
         return ret;
     }
 #endif
