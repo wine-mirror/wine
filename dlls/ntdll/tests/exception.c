@@ -8106,7 +8106,7 @@ struct results
     ULONG_PTR pc;       /* expected final pc value */
     int frame;          /* expected frame return value */
     int frame_offset;   /* whether the frame return value is an offset or an absolute value */
-    int regs[48][2];    /* expected values for registers */
+    ULONG_PTR regs[48][2]; /* expected values for registers */
 };
 
 struct unwind_test
@@ -8153,7 +8153,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k;
     ULONG64 fake_stack[256];
-    ULONG64 frame, orig_pc, orig_fp, unset_reg, sp_offset = 0;
+    ULONG64 frame, orig_pc, orig_fp, unset_reg, sp_offset = 0, regval, *regptr;
     static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
 
     memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
@@ -8167,6 +8167,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
     for (i = 0; i < test->nb_results; i++)
     {
+        winetest_push_context( "%u/%u", testnum, i );
         memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
         memset( &context, 0x55, sizeof(context) );
         memset( &unset_reg, 0x55, sizeof(unset_reg) );
@@ -8178,8 +8179,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         orig_fp = context.Fp;
         orig_pc = (ULONG64)code_mem + code_offset + test->results[i].pc_offset;
 
-        trace( "%u/%u: pc=%p (%02x) fp=%p sp=%p\n", testnum, i,
-               (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
+        trace( "pc=%p (%02x) fp=%p sp=%p\n", (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
 
         data = (void *)0xdeadbeef;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_pc,
@@ -8187,23 +8187,22 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         if (test->results[i].handler > 0)
         {
             ok( (char *)handler == (char *)code_mem + 0x200,
-                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
+                "wrong handler %p/%p\n", handler, (char *)code_mem + 0x200 );
             if (handler) ok( *(DWORD *)data == 0x08070605,
-                             "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
+                             "wrong handler data %lx\n", *(DWORD *)data );
         }
         else
         {
-            ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
-            ok( data == (test->results[i].handler < 0 ?
-                        (void *)0xdeadbeef : NULL),
-                "%u/%u: handler data set to %p/%p\n", testnum, i, data,
+            ok( handler == NULL, "handler %p instead of NULL\n", handler );
+            ok( data == (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL),
+                "handler data set to %p/%p\n", data,
                 (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL) );
         }
 
-        ok( context.Pc == test->results[i].pc, "%u/%u: wrong pc %p/%p\n",
-            testnum, i, (void *)context.Pc, (void*)test->results[i].pc );
-        ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "%u/%u: wrong frame %p/%p\n",
-            testnum, i, (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
+        ok( context.Pc == test->results[i].pc, "wrong pc %p/%p\n",
+            (void *)context.Pc, (void*)test->results[i].pc );
+        ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
+            (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
 
         sp_offset = 0;
         for (k = 0; k < nb_regs; k++)
@@ -8217,12 +8216,23 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 break;
             }
         }
-        ok( frame - sp_offset == context.Sp, "%u/%u: wrong sp %p/%p\n",
-            testnum, i, (void *)(frame - sp_offset), (void *)context.Sp);
+        ok( frame - sp_offset == context.Sp, "wrong sp %p/%p\n",
+            (void *)(frame - sp_offset), (void *)context.Sp);
 
         for (j = 0; j < 48; j++)
         {
             if (j == sp) continue; /* Handling sp separately above */
+
+            if (j <= 30)
+            {
+                regval = context.X[j];
+                regptr = j < 19 ? NULL : (&ctx_ptr.X19)[j - 19];
+            }
+            else
+            {
+                regval = context.V[j - d0].Low;
+                regptr = j < d8 ? NULL : (&ctx_ptr.D8)[j - d8];
+            }
 
             for (k = 0; k < nb_regs; k++)
             {
@@ -8234,54 +8244,26 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 if (test->results[i].regs[k][0] == j) break;
             }
 
-            if (j >= 19 && j <= 30 && (&ctx_ptr.X19)[j - 19])
+            if (regptr)
+                ok( k < nb_regs, "register %s should not be set to %llx\n", reg_names[j], regval );
+
+            if (k < nb_regs)
             {
-                ok( k < nb_regs, "%u/%u: register %s should not be set to %llx\n",
-                    testnum, i, reg_names[j], context.X[j] );
-                if (k < nb_regs)
-                    ok( context.X[j] == test->results[i].regs[k][1],
-                        "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)context.X[j], test->results[i].regs[k][1] );
-            }
-            else if (j >= d8 && j <= d15 && (&ctx_ptr.D8)[j - d8])
-            {
-                ok( k < nb_regs, "%u/%u: register %s should not be set to %llx\n",
-                    testnum, i, reg_names[j], context.V[j - d0].Low );
-                if (k < nb_regs)
-                    ok( context.V[j - d0].Low == test->results[i].regs[k][1],
-                        "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)context.V[j - d0].Low, test->results[i].regs[k][1] );
-            }
-            else if (k < nb_regs)
-            {
-                if (j < d0)
-                  ok( context.X[j] == test->results[i].regs[k][1],
-                      "%u/%u: register %s wrong %p/%x\n",
-                      testnum, i, reg_names[j], (void *)context.X[j], test->results[i].regs[k][1] );
-                else
-                  ok( context.V[j - d0].Low == test->results[i].regs[k][1],
-                      "%u/%u: register %s wrong %p/%x\n",
-                      testnum, i, reg_names[j], (void *)context.V[j - d0].Low, test->results[i].regs[k][1] );
+                ok( regval == test->results[i].regs[k][1],
+                    "register %s wrong %llx/%llx\n", reg_names[j], regval, test->results[i].regs[k][1] );
             }
             else
             {
-                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names[j] );
+                ok( k == nb_regs, "register %s should be set\n", reg_names[j] );
                 if (j == lr)
-                    ok( context.Lr == ORIG_LR, "%u/%u: register lr wrong %p/unset\n",
-                        testnum, i, (void *)context.Lr );
+                    ok( context.Lr == ORIG_LR, "register lr wrong %llx/unset\n", context.Lr );
                 else if (j == x29)
-                    ok( context.Fp == orig_fp, "%u/%u: register fp wrong %p/unset\n",
-                        testnum, i, (void *)context.Fp );
-                else if (j < d0)
-                    ok( context.X[j] == unset_reg,
-                        "%u/%u: register %s wrong %p/unset\n",
-                        testnum, i, reg_names[j], (void *)context.X[j]);
+                    ok( context.Fp == orig_fp, "register fp wrong %llx/unset\n", context.Fp );
                 else
-                    ok( context.V[j - d0].Low == unset_reg,
-                        "%u/%u: register %s wrong %p/unset\n",
-                        testnum, i, reg_names[j], (void *)context.V[j - d0].Low);
+                    ok( regval == unset_reg, "register %s wrong %llx/unset\n", reg_names[j], regval);
             }
         }
+        winetest_pop_context();
     }
 }
 
