@@ -489,7 +489,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
 {
     int i;
     unsigned int len, offset, skip = 0;
-    unsigned int int_size = func->RegI * 8, fp_size = func->RegF * 8, regsave, local_size;
+    unsigned int int_size = func->RegI * 8, fp_size = func->RegF * 8, h_size = func->H * 4, regsave, local_size;
     unsigned int int_regs, fp_regs, saved_regs, local_size_regs;
 
     TRACE( "function %I64x-%I64x: len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
@@ -530,14 +530,14 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
                 if (local_size > 4088) len++;  /* sub sp,sp,#4088 */
                 break;
             }
-            len += 4 * func->H;
-            if (offset < len)  /* prolog */
+            if (offset < len + h_size)  /* prolog */
             {
-                skip = len - offset;
+                skip = len + h_size - offset;
             }
             else if (offset >= func->FunctionLength - (len + 1))  /* epilog */
             {
                 skip = offset - (func->FunctionLength - (len + 1));
+                h_size = 0;
             }
         }
     }
@@ -584,7 +584,7 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
             break;
         }
 
-        if (func->H) pos += 4;
+        pos += h_size;
 
         if (fp_size)
         {
