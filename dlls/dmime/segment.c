@@ -844,7 +844,9 @@ static HRESULT WINAPI segment_persist_stream_Load(IPersistStream *iface, IStream
         }
     }
 
-    stream_skip_chunk(stream, &chunk);
+    if (chunk.id != mmioFOURCC('M', 'T', 'h', 'd'))
+        stream_skip_chunk(stream, &chunk);
+
     if (FAILED(hr))
     {
         WARN("Failed to load segment from stream %p, hr %#lx\n", stream, hr);
