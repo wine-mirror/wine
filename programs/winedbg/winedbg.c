@@ -763,7 +763,7 @@ int main(int argc, char** argv)
         {
             argc--; argv++;
             filename = argv[0];
-            hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, 0, 
+            hFile = CreateFileA(argv[0], GENERIC_READ|DELETE, FILE_SHARE_READ|FILE_SHARE_DELETE,
                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
             if (hFile == INVALID_HANDLE_VALUE)
             {
