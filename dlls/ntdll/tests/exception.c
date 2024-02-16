@@ -8118,6 +8118,7 @@ struct unwind_test
     size_t unwind_size;
     const struct results *results;
     unsigned int nb_results;
+    int unwound_clear;
 };
 
 enum regs
@@ -8177,6 +8178,9 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         context.Sp = (ULONG_PTR)fake_stack;
         context.Lr = (ULONG_PTR)ORIG_LR;
         context.Fp = (ULONG_PTR)fake_stack + test->results[i].fp_offset;
+        context.ContextFlags = 0xcccc;
+        if (test->unwound_clear) context.ContextFlags |= CONTEXT_ARM64_UNWOUND_TO_CALL;
+
         orig_fp = context.Fp;
         orig_pc = (ULONG64)code_mem + code_offset + test->results[i].pc_offset;
 
@@ -8204,6 +8208,12 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             (void *)context.Pc, (void*)test->results[i].pc );
         ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
             (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
+        if (!test->unwound_clear || i < test->unwound_clear)
+            ok( context.ContextFlags == (0xcccc | CONTEXT_ARM64_UNWOUND_TO_CALL),
+                "wrong flags %lx\n", context.ContextFlags );
+        else
+            ok( context.ContextFlags == 0xcccc,
+                "wrong flags %lx\n", context.ContextFlags );
 
         sp_offset = 0;
         for (k = 0; k < nb_regs; k++)
@@ -9006,27 +9016,62 @@ static void test_virtual_unwind(void)
         { 0x10,  0x00,  0 ,    0x0108,  0x0b8, FALSE, { {x0, 0x90}, {x1, 0x98}, {x2, 0xc8}, {x3, 0xd0}, {x4, 0xd8}, {x5, 0xe0}, {x6, 0x140}, {x7, 0x150}, {x8, 0x88}, {x9, 0x160}, {x10, 0x170}, {x11, 0x180}, {x12, 0x190}, {x13, 0}, {x14, 0}, {x15, 0x1a0}, {x16, 0x0168015801480138}, {x17, 0x01a8019801880178}, {x18, 0}, {x19, 0xe8}, {x20, 0xf0}, {x21, 0xf8}, {x22, 0x100}, {x23, 0}, {x24, 0}, {x25, 0xb8}, {x26, 0xc0}, {x27, 0xa0}, {x28, 0}, {x29, 0xb0}, {lr, 0x130}, {d0, 0x1b0}, {d1, 0x1c0}, {d2, 0x1d0}, {d3, 0x1e0}, {d4, 0x1f0}, {d5, 0x200}, {d6, 0x210}, {d7, 0x220}, {d8, 0x230}, {d9, 0x240}, {d10, 0x250}, {d11, 0x260}, {d12, 0x270}, {d13, 0x280}, {d14, 0x290}, {d15, 0x2a0}, {-1,-1} }},
     };
 
+    static const BYTE function_17[] =
+    {
+        0xff, 0x43, 0x00, 0xd1,   /* 00: sub sp, sp, #16 */
+        0xff, 0x43, 0x00, 0xd1,   /* 04: sub sp, sp, #16 */
+        0x1f, 0x20, 0x03, 0xd5,   /* 08: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 0c: ret */
+    };
+
+    static const DWORD unwind_info_17_header =
+        (sizeof(function_17)/4) | /* function length */
+        (0 << 20) | /* X */
+        (0 << 21) | /* E */
+        (0 << 22) | /* epilog */
+        (1 << 27);  /* codes */
+
+    static const BYTE unwind_info_17[] =
+    {
+        DW(unwind_info_17_header),
+
+        UWOP_CLEAR_UNWOUND_TO_CALL,
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_ALLOC_SMALL(16),   /* sub sp,  sp,  #16 */
+        UWOP_END,
+    };
+
+    static const struct results results_17[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
+        { 0x04,  0x00,  0,     ORIG_LR, 0x020, TRUE,  { {-1,-1} }},
+        { 0x08,  0x00,  0,     ORIG_LR, 0x020, TRUE,  { {-1,-1} }},
+        { 0x0c,  0x00,  0,     ORIG_LR, 0x020, TRUE,  { {-1,-1} }},
+    };
+
     static const struct unwind_test tests[] =
     {
-#define TEST(func, unwind, unwind_packed, results) \
-        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results) }
-        TEST(function_0, unwind_info_0, 0, results_0),
-        TEST(function_1, unwind_info_1, 1, results_1),
-        TEST(function_2, unwind_info_2, 0, results_2),
-        TEST(function_3, unwind_info_3, 0, results_3),
-        TEST(function_4, unwind_info_4, 0, results_4),
-        TEST(function_5, unwind_info_5, 0, results_5),
-        TEST(function_6, unwind_info_6, 1, results_6),
-        TEST(function_7, unwind_info_7, 1, results_7),
-        TEST(function_8, unwind_info_8, 1, results_8),
-        TEST(function_9, unwind_info_9, 1, results_9),
-        TEST(function_10, unwind_info_10, 1, results_10),
-        TEST(function_11, unwind_info_11, 1, results_11),
-        TEST(function_12, unwind_info_12, 1, results_12),
-        TEST(function_13, unwind_info_13, 1, results_13),
-        TEST(function_14, unwind_info_14, 0, results_14),
-        TEST(function_15, unwind_info_15, 0, results_15),
-        TEST(function_16, unwind_info_16, 0, results_16),
+#define TEST(func, unwind, unwind_packed, results, unwound_clear) \
+        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results), unwound_clear }
+        TEST(function_0, unwind_info_0, 0, results_0, 0),
+        TEST(function_1, unwind_info_1, 1, results_1, 0),
+        TEST(function_2, unwind_info_2, 0, results_2, 1),
+        TEST(function_3, unwind_info_3, 0, results_3, 1),
+        TEST(function_4, unwind_info_4, 0, results_4, 0),
+        TEST(function_5, unwind_info_5, 0, results_5, 0),
+        TEST(function_6, unwind_info_6, 1, results_6, 0),
+        TEST(function_7, unwind_info_7, 1, results_7, 0),
+        TEST(function_8, unwind_info_8, 1, results_8, 0),
+        TEST(function_9, unwind_info_9, 1, results_9, 0),
+        TEST(function_10, unwind_info_10, 1, results_10, 0),
+        TEST(function_11, unwind_info_11, 1, results_11, 0),
+        TEST(function_12, unwind_info_12, 1, results_12, 0),
+        TEST(function_13, unwind_info_13, 1, results_13, 0),
+        TEST(function_14, unwind_info_14, 0, results_14, 0),
+        TEST(function_15, unwind_info_15, 0, results_15, 0),
+        TEST(function_16, unwind_info_16, 0, results_16, 1),
+        TEST(function_17, unwind_info_17, 0, results_17, 2),
 #undef TEST
     };
     unsigned int i;

@@ -469,11 +469,22 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
         }
         else if (*ptr == 0xea)  /* MSFT_OP_CONTEXT */
         {
-            memcpy( context, (DWORD64 *)context->Sp, sizeof(CONTEXT) );
+            DWORD flags = context->ContextFlags & ~CONTEXT_UNWOUND_TO_CALL;
+            ARM64_NT_CONTEXT *src_ctx = (ARM64_NT_CONTEXT *)context->Sp;
+            *context = *src_ctx;
+            context->ContextFlags = flags | (src_ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
         }
         else if (*ptr == 0xeb)  /* MSFT_OP_EC_CONTEXT */
         {
-            context_x64_to_arm( context, (ARM64EC_NT_CONTEXT *)context->Sp );
+            DWORD flags = context->ContextFlags & ~CONTEXT_UNWOUND_TO_CALL;
+            ARM64EC_NT_CONTEXT *src_ctx = (ARM64EC_NT_CONTEXT *)context->Sp;
+            context_x64_to_arm( context, src_ctx );
+            context->ContextFlags = flags | (src_ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
+        }
+        else if (*ptr == 0xec)  /* MSFT_OP_CLEAR_UNWOUND_TO_CALL */
+        {
+            context->Pc = context->Lr;
+            context->ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
         }
         else if (*ptr == 0xfc)  /* pac_sign_lr */
         {
@@ -766,19 +777,16 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     TRACE( "type %lx pc %I64x sp %I64x func %I64x\n", type, pc, context->Sp, base + func->BeginAddress );
 
     *handler_data = NULL;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
 
-    context->Pc = 0;
     if (func->Flag)
         handler = unwind_packed_data( base, pc, func, context, ctx_ptr );
     else
         handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
 
+    if (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) context->Pc = context->Lr;
+
     TRACE( "ret: pc=%I64x lr=%I64x sp=%I64x handler=%p\n", context->Pc, context->Lr, context->Sp, handler );
-    if (!context->Pc)
-    {
-        context->Pc = context->Lr;
-        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-    }
     *frame_ret = context->Sp;
     return handler;
 }
@@ -1798,6 +1806,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 #ifdef __arm64ec__
     if (RtlIsEcCode( (void *)pc ))
     {
+        DWORD flags = context->ContextFlags & ~CONTEXT_UNWOUND_TO_CALL;
         ARM64_NT_CONTEXT arm_context;
         void *ret;
 
@@ -1805,6 +1814,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         ret = RtlVirtualUnwind_arm64( type, base, pc, (ARM64_RUNTIME_FUNCTION *)function,
                                       &arm_context, data, frame_ret, NULL );
         context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_context );
+        context->ContextFlags = flags | (arm_context.ContextFlags & CONTEXT_UNWOUND_TO_CALL);
         return ret;
     }
 #endif
