@@ -41,13 +41,13 @@ static int my_free_called;
 static void * CALLBACK my_alloc(SIZE_T size)
 {
     my_alloc_called++;
-    return NdrOleAllocate(size);
+    return malloc(size);
 }
 
 static void CALLBACK my_free(void *ptr)
 {
     my_free_called++;
-    NdrOleFree(ptr);
+    free(ptr);
 }
 
 static const MIDL_STUB_DESC Object_StubDesc = 
@@ -2222,7 +2222,7 @@ static void test_nonconformant_string(void)
     ok(mem != mem_orig, "mem not alloced\n");
     ok(mem != StubMsg.BufferStart + 8, "mem pointing at buffer\n");
     ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
-    NdrOleFree(mem);
+    free(mem);
 
     my_alloc_called = 0;
     mem = mem_orig;
@@ -2295,7 +2295,7 @@ static void test_nonconformant_string(void)
     ok(mem != mem_orig, "mem not alloced\n");
     ok(mem != StubMsg.BufferStart + 8, "mem pointing at buffer\n");
     ok(my_alloc_called == 1, "alloc called %d\n", my_alloc_called);
-    NdrOleFree(mem);
+    free(mem);
 
     my_alloc_called = 0;
     mem = mem_orig;

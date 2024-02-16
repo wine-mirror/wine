@@ -62,13 +62,13 @@ static int my_free_called;
 static void * CALLBACK my_alloc(SIZE_T size)
 {
     my_alloc_called++;
-    return NdrOleAllocate(size);
+    return malloc(size);
 }
 
 static void CALLBACK my_free(void *ptr)
 {
     my_free_called++;
-    NdrOleFree(ptr);
+    free(ptr);
 }
 
 typedef struct _MIDL_PROC_FORMAT_STRING
