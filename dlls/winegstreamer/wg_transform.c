@@ -821,13 +821,10 @@ static void set_sample_flags_from_buffer(struct wg_sample *sample, GstBuffer *bu
         sample->flags |= WG_SAMPLE_FLAG_DISCONTINUITY;
 }
 
-static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsize plane_align,
-        struct wg_sample *sample)
+static bool sample_needs_buffer_copy(struct wg_sample *sample, GstBuffer *buffer, gsize *total_size)
 {
-    gsize total_size;
-    bool needs_copy;
-    NTSTATUS status;
     GstMapInfo info;
+    bool needs_copy;
 
     if (!gst_buffer_map(buffer, &info, GST_MAP_READ))
     {
@@ -836,10 +833,20 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
         return STATUS_UNSUCCESSFUL;
     }
     needs_copy = info.data != wg_sample_data(sample);
-    total_size = sample->size = info.size;
+    *total_size = sample->size = info.size;
     gst_buffer_unmap(buffer, &info);
 
-    if (!needs_copy)
+    return needs_copy;
+}
+
+static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsize plane_align,
+        struct wg_sample *sample)
+{
+    gsize total_size;
+    NTSTATUS status;
+    bool needs_copy;
+
+    if (!(needs_copy = sample_needs_buffer_copy(sample, buffer, &total_size)))
         status = STATUS_SUCCESS;
     else if (stream_type_from_caps(caps) == GST_STREAM_TYPE_VIDEO)
         status = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
