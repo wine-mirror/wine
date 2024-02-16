@@ -401,9 +401,26 @@ static HRESULT WINAPI speech_voice_Skip(ISpeechVoice *iface, const BSTR type, LO
 static HRESULT WINAPI speech_voice_GetVoices(ISpeechVoice *iface, BSTR required, BSTR optional,
                                              ISpeechObjectTokens **tokens)
 {
-    FIXME("(%p, %s, %s, %p): stub.\n", iface, debugstr_w(required), debugstr_w(optional), tokens);
 
-    return E_NOTIMPL;
+    ISpObjectTokenCategory *cat;
+    IEnumSpObjectTokens *token_enum;
+    HRESULT hr;
+
+    TRACE("(%p, %s, %s, %p).\n", iface, debugstr_w(required), debugstr_w(optional), tokens);
+
+    if (!tokens) return E_POINTER;
+
+    if (FAILED(hr = create_token_category(SPCAT_VOICES, &cat)))
+        return hr;
+
+    if (SUCCEEDED(hr = ISpObjectTokenCategory_EnumTokens(cat, required, optional, &token_enum)))
+    {
+        hr = IEnumSpObjectTokens_QueryInterface(token_enum, &IID_ISpeechObjectTokens, (void **)tokens);
+        IEnumSpObjectTokens_Release(token_enum);
+    }
+
+    ISpObjectTokenCategory_Release(cat);
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_GetAudioOutputs(ISpeechVoice *iface, BSTR required, BSTR optional,
