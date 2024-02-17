@@ -3808,6 +3808,13 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
         mediatype_set_blob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &hr);
     }
 
+    if (SUCCEEDED(hr) && vih->AvgTimePerFrame)
+    {
+        UINT32 num, den;
+        if (SUCCEEDED(hr = MFAverageTimePerFrameToFrameRate(vih->AvgTimePerFrame, &num, &den)))
+            mediatype_set_uint64(media_type, &MF_MT_FRAME_RATE, num, den, &hr);
+    }
+
     return hr;
 }
 
