@@ -125,7 +125,7 @@ HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName,
             ret->name = CryptMemAlloc(strlen(pszFuncName) + 1);
             if (ret->name)
             {
-                InitializeCriticalSection(&ret->cs);
+                InitializeCriticalSectionEx(&ret->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
                 ret->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": OIDFunctionSet.cs");
                 list_init(&ret->functions);
                 strcpy(ret->name, pszFuncName);

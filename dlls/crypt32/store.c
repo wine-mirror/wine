@@ -388,7 +388,7 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
         {
             memset(store, 0, sizeof(WINE_MEMSTORE));
             CRYPT_InitStore(&store->hdr, dwFlags, StoreTypeMem, &MemStoreVtbl);
-            InitializeCriticalSection(&store->cs);
+            InitializeCriticalSectionEx(&store->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
             store->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ContextList.cs");
             list_init(&store->certs);
             list_init(&store->crls);

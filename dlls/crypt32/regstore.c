@@ -545,7 +545,7 @@ WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                     regInfo->dwOpenFlags = dwFlags;
                     regInfo->memStore = memStore;
                     regInfo->key = key;
-                    InitializeCriticalSection(&regInfo->cs);
+                    InitializeCriticalSectionEx(&regInfo->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
                     regInfo->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PWINE_REGSTOREINFO->cs");
                     list_init(&regInfo->certsToDelete);
                     list_init(&regInfo->crlsToDelete);
