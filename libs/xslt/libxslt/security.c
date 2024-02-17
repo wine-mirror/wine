@@ -37,7 +37,7 @@
 #endif
 
 #include <libxml/xmlmemory.h>
-#include <libxml/tree.h>
+#include <libxml/parser.h>
 #include <libxml/uri.h>
 #include "xslt.h"
 #include "xsltInternals.h"
@@ -463,4 +463,3 @@ xsltCheckRead(xsltSecurityPrefsPtr sec,
     xmlFreeURI(uri);
     return(1);
 }
-
