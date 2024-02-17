@@ -1267,7 +1267,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
         goto error;
     }
 
-    RtlInitializeCriticalSection( &info->cs );
+    RtlInitializeCriticalSectionEx( &info->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     info->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FIND_FIRST_INFO.cs");
     info->path      = nt_name;
     info->magic     = FIND_FIRST_MAGIC;
