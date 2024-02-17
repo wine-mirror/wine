@@ -72,7 +72,8 @@ typedef enum _TASK_TRIGGER_TYPE2
     TASK_TRIGGER_REGISTRATION,
     TASK_TRIGGER_BOOT,
     TASK_TRIGGER_LOGON,
-    TASK_TRIGGER_SESSION_STATE_CHANGE = 11
+    TASK_TRIGGER_SESSION_STATE_CHANGE = 11,
+    TASK_TRIGGER_CUSTOM_TRIGGER_01
 } TASK_TRIGGER_TYPE2;
 
 typedef enum _TASK_ACTION_TYPE
@@ -96,7 +97,10 @@ typedef enum _TASK_COMPATIBILITY
     TASK_COMPATIBILITY_AT,
     TASK_COMPATIBILITY_V1,
     TASK_COMPATIBILITY_V2,
-    TASK_COMPATIBILITY_V2_1
+    TASK_COMPATIBILITY_V2_1,
+    TASK_COMPATIBILITY_V2_2,
+    TASK_COMPATIBILITY_V2_3,
+    TASK_COMPATIBILITY_V2_4
 } TASK_COMPATIBILITY;
 
 typedef enum _TASK_CREATION
@@ -123,7 +127,15 @@ interface IRunningTask;
 interface IRunningTaskCollection;
 interface ITrigger;
 interface ITriggerCollection;
+interface IIdleTrigger;
+interface ILogonTrigger;
 interface ITimeTrigger;
+interface IDailyTrigger;
+interface IWeeklyTrigger;
+interface IMonthlyTrigger;
+interface IMonthlyDOWTrigger;
+interface IBootTrigger;
+interface IRegistrationTrigger;
 interface IRepetitionPattern;
 interface IAction;
 interface IActionCollection;
@@ -393,6 +405,42 @@ interface ITrigger : IDispatch
 }
 
 [
+    uuid(d537d2b0-9fb3-4d34-9739-1ff5ce7b1ef3),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IIdleTrigger : ITrigger
+{
+}
+
+[
+    uuid(72dade38-fae4-4b3e-baf4-5d009af02b1c),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface ILogonTrigger : ITrigger
+{
+    [propget] HRESULT Delay([out, retval] BSTR *pDelay);
+    [propput] HRESULT Delay([in] BSTR delay);
+    [propget] HRESULT UserId([out, retval] BSTR *pUser);
+    [propput] HRESULT UserId([in] BSTR user);
+}
+
+[
+    uuid(b45747e0-eba7-4276-9f29-85c5bb300006),
+    object,
+    oleautomation,
+    nonextensible
+]
+interface ITimeTrigger : ITrigger
+{
+    [propget] HRESULT RandomDelay([out, retval] BSTR *delay);
+    [propput] HRESULT RandomDelay([in] BSTR delay);
+}
+
+[
     odl,
     uuid(126c5cd8-b288-41d5-8dbf-e491446adc5c),
     oleautomation,
@@ -405,6 +453,72 @@ interface IDailyTrigger : ITrigger
     [propput] HRESULT DaysInterval([in] short days);
     [propget] HRESULT RandomDelay([out, retval] BSTR *pRandomDelay);
     [propput] HRESULT RandomDelay([in] BSTR randomDelay);
+}
+
+[
+    uuid(5038fc98-82ff-436d-8728-a512a57c9dc1),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IWeeklyTrigger : ITrigger
+{
+    [propget] HRESULT DaysOfWeek([out, retval] short *pDays);
+    [propput] HRESULT DaysOfWeek([in] short days);
+    [propget] HRESULT WeeksInterval([out, retval] short *pWeeks);
+    [propput] HRESULT WeeksInterval([in] short weeks);
+    [propget] HRESULT RandomDelay([out, retval] BSTR *pRandomDelay);
+    [propput] HRESULT RandomDelay([in] BSTR randomDelay);
+}
+
+[
+    uuid(97c45ef1-6b02-4a1a-9c0e-1ebfba1500ac),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IMonthlyTrigger : ITrigger
+{
+    [propget] HRESULT DaysOfMonth([out, retval] short *pDays);
+    [propput] HRESULT DaysOfMonth([in] short days);
+    [propget] HRESULT MonthsOfYear([out, retval] short *pMonths);
+    [propput] HRESULT MonthsOfYear([in] short months);
+    [propget] HRESULT RunOnLastDayOfMonth([out, retval] VARIANT_BOOL *pLastDay);
+    [propput] HRESULT RunOnLastDayOfMonth([in] VARIANT_BOOL lastDay);
+    [propget] HRESULT RandomDelay([out, retval] BSTR *pRandomDelay);
+    [propput] HRESULT RandomDelay([in] BSTR randomDelay);
+}
+
+[
+    uuid(77d025a3-90fa-43aa-b52e-cda5499b946a),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IMonthlyDOWTrigger : ITrigger
+{
+    [propget] HRESULT DaysOfWeek([out, retval] short *pDays);
+    [propput] HRESULT DaysOfWeek([in] short days);
+    [propget] HRESULT WeeksOfMonth([out, retval] short *pWeeks);
+    [propput] HRESULT WeeksOfMonth([in] short weeks);
+    [propget] HRESULT MonthsOfYear([out, retval] short *pMonths);
+    [propput] HRESULT MonthsOfYear([in] short months);
+    [propget] HRESULT RunOnLastWeekOfMonth([out, retval] VARIANT_BOOL *pLastWeek);
+    [propput] HRESULT RunOnLastWeekOfMonth([in] VARIANT_BOOL lastWeek);
+    [propget] HRESULT RandomDelay([out, retval] BSTR *pRandomDelay);
+    [propput] HRESULT RandomDelay([in] BSTR randomDelay);
+}
+
+[
+    uuid(2a9c35da-d357-41f4-bbc1-207ac1b1f3cb),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IBootTrigger : ITrigger
+{
+    [propget] HRESULT Delay([out, retval] BSTR *pDelay);
+    [propput] HRESULT Delay([in] BSTR delay);
 }
 
 [
@@ -432,17 +546,6 @@ interface ITriggerCollection : IDispatch
     HRESULT Create([in] TASK_TRIGGER_TYPE2 type, [out, retval] ITrigger **trigger);
     HRESULT Remove([in] VARIANT index);
     HRESULT Clear();
-}
-
-[
-    object,
-    oleautomation,
-    uuid(b45747e0-eba7-4276-9f29-85c5bb300006)
-]
-interface ITimeTrigger : ITrigger
-{
-    [propget] HRESULT RandomDelay([out, retval] BSTR *delay);
-    [propput] HRESULT RandomDelay([in] BSTR delay);
 }
 
 [
