@@ -91,8 +91,8 @@ msgstr "技術支援資訊"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:272 dlls/shell32/shell32.rc:296
-#: dlls/shell32/shell32.rc:318 dlls/shell32/shell32.rc:337
+#: dlls/shell32/shell32.rc:273 dlls/shell32/shell32.rc:297
+#: dlls/shell32/shell32.rc:319 dlls/shell32/shell32.rc:338
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
@@ -194,9 +194,9 @@ msgstr "安裝(&I)"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:273
-#: dlls/shell32/shell32.rc:297 dlls/shell32/shell32.rc:308
-#: dlls/shell32/shell32.rc:338 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:274
+#: dlls/shell32/shell32.rc:298 dlls/shell32/shell32.rc:309
+#: dlls/shell32/shell32.rc:339 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
@@ -264,7 +264,7 @@ msgid "Not specified"
 msgstr "未指定"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:237
+#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:238
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "名稱"
@@ -286,7 +286,7 @@ msgid "Programs (*.exe)"
 msgstr "程式 (*.exe)"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
-#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:195
+#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:196
 #: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
@@ -444,7 +444,7 @@ msgstr "重設(&E)"
 #: dlls/comdlg32/comdlg32.rc:482 dlls/comdlg32/comdlg32.rc:508
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
-#: dlls/shell32/shell32.rc:128 programs/clock/clock.rc:44
+#: dlls/shell32/shell32.rc:124 programs/clock/clock.rc:44
 #: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:126
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
@@ -490,12 +490,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "無"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:305
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:306
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "是(&Y)"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:307
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:308
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "否(&N)"
@@ -551,7 +551,7 @@ msgid "Dri&ves:"
 msgstr "磁碟機(&V):"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
+#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "唯讀(&R)"
@@ -810,7 +810,7 @@ msgstr "取代全部(&A)"
 
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
-#: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
+#: dlls/shell32/shell32.rc:104 programs/clock/clock.rc:31
 #: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "內容(&P)"
@@ -934,7 +934,7 @@ msgstr "以唯讀方式開啟(&R)"
 
 #: dlls/comdlg32/comdlg32.rc:480 dlls/comdlg32/comdlg32.rc:506
 #: dlls/comdlg32/comdlg32.rc:524 dlls/shdoclc/shdoclc.rc:127
-#: dlls/shell32/shell32.rc:99
+#: dlls/shell32/shell32.rc:162
 msgid "&Open"
 msgstr "開啟(&O)"
 
@@ -2235,8 +2235,8 @@ msgid "Notice Text="
 msgstr "通知文字="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:344
-#: dlls/shell32/shell32.rc:373
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:345
+#: dlls/shell32/shell32.rc:374
 msgid "General"
 msgstr "一般"
 
@@ -2445,7 +2445,7 @@ msgid "Certificate intended purposes"
 msgstr "憑證預定目的"
 
 #: dlls/cryptui/cryptui.rc:355 dlls/ieframe/ieframe.rc:45
-#: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:120
+#: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:116
 #: programs/notepad/notepad.rc:61 programs/oleview/oleview.rc:59
 #: programs/oleview/oleview.rc:61 programs/oleview/oleview.rc:85
 #: programs/regedit/regedit.rc:65 programs/taskmgr/taskmgr.rc:52
@@ -2717,7 +2717,7 @@ msgstr "進階金鑰用法 (內容)"
 msgid "Friendly name"
 msgstr "易記名稱"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:238
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:239
 #: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "描述"
@@ -2810,7 +2810,7 @@ msgstr "已選取憑證存放區"
 msgid "Automatically determined by the program"
 msgstr "由程式自動決定"
 
-#: dlls/cryptui/cryptui.rc:91 dlls/shell32/shell32.rc:137
+#: dlls/cryptui/cryptui.rc:91 dlls/shell32/shell32.rc:133
 msgid "File"
 msgstr "檔案"
 
@@ -3092,7 +3092,7 @@ msgstr "註記: 用於這個憑證的私鑰不可匯出。"
 msgid "Intended Use"
 msgstr "預定目的"
 
-#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:150
+#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:146
 msgid "Location"
 msgstr "位置"
 
@@ -3318,7 +3318,7 @@ msgstr "剪下(&T)"
 #: dlls/hhctrl.ocx/hhctrl.rc:88 dlls/shdoclc/shdoclc.rc:80
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
-#: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
+#: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:98
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3330,6 +3330,7 @@ msgid "Paste"
 msgstr "貼上"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:91 dlls/shdoclc/shdoclc.rc:121
+#: dlls/shell32/shell32.rc:163
 msgid "&Print"
 msgstr "列印(&P)"
 
@@ -3396,7 +3397,7 @@ msgstr "下一頁"
 msgid "Cinepak Video codec"
 msgstr "Cinepak 視訊編碼解碼器"
 
-#: dlls/ieframe/ieframe.rc:28 dlls/shell32/shell32.rc:114
+#: dlls/ieframe/ieframe.rc:28 dlls/shell32/shell32.rc:110
 #: programs/notepad/notepad.rc:29 programs/oleview/oleview.rc:30
 #: programs/oleview/oleview.rc:80 programs/progman/progman.rc:32
 #: programs/taskmgr/taskmgr.rc:35 programs/view/view.rc:31
@@ -8214,7 +8215,7 @@ msgstr "功能來自:"
 msgid "choose which folder contains %s"
 msgstr "選擇包含 %s 的資料夾"
 
-#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:234
+#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:235
 msgid "New Folder"
 msgstr "新資料夾"
 
@@ -9372,7 +9373,7 @@ msgstr ""
 "將這個檔案的內容以物件的方式插入到您的文件中，以便您使用建立該檔案的程式來啟"
 "動它。"
 
-#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:193
+#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:194
 msgid "Browse"
 msgstr "瀏覽"
 
@@ -9663,12 +9664,12 @@ msgstr "內容(&R)"
 msgid "&Undo"
 msgstr "復原(&U)"
 
-#: dlls/shdoclc/shdoclc.rc:96 dlls/shell32/shell32.rc:105
+#: dlls/shdoclc/shdoclc.rc:96 dlls/shell32/shell32.rc:101
 #: dlls/user32/user32.rc:63
 msgid "&Delete"
 msgstr "刪除(&D)"
 
-#: dlls/shdoclc/shdoclc.rc:103 dlls/shell32/shell32.rc:97
+#: dlls/shdoclc/shdoclc.rc:103
 msgid "&Select"
 msgstr "選擇(&S)"
 
@@ -9837,26 +9838,26 @@ msgid "&w&bPage &p"
 msgstr "&w&b第 &p 頁"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
-#: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:160
+#: dlls/shell32/shell32.rc:118 dlls/shell32/shell32.rc:156
 #: programs/taskmgr/taskmgr.rc:65 programs/taskmgr/taskmgr.rc:110
 #: programs/taskmgr/taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "大型圖示(&G)"
 
 #: dlls/shell32/shell32.rc:31 dlls/shell32/shell32.rc:46
-#: dlls/shell32/shell32.rc:123 dlls/shell32/shell32.rc:161
+#: dlls/shell32/shell32.rc:119 dlls/shell32/shell32.rc:157
 #: programs/taskmgr/taskmgr.rc:66 programs/taskmgr/taskmgr.rc:111
 #: programs/taskmgr/taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "小型圖示(&M)"
 
 #: dlls/shell32/shell32.rc:32 dlls/shell32/shell32.rc:47
-#: dlls/shell32/shell32.rc:124 dlls/shell32/shell32.rc:162
+#: dlls/shell32/shell32.rc:120 dlls/shell32/shell32.rc:158
 msgid "&List"
 msgstr "清單(&L)"
 
 #: dlls/shell32/shell32.rc:33 dlls/shell32/shell32.rc:48
-#: dlls/shell32/shell32.rc:125 dlls/shell32/shell32.rc:163
+#: dlls/shell32/shell32.rc:121 dlls/shell32/shell32.rc:159
 #: programs/taskmgr/taskmgr.rc:67 programs/taskmgr/taskmgr.rc:112
 #: programs/taskmgr/taskmgr.rc:254
 msgid "&Details"
@@ -9916,23 +9917,19 @@ msgstr "回復(&R)"
 msgid "&Erase"
 msgstr "清除(&E)"
 
-#: dlls/shell32/shell32.rc:98
-msgid "E&xplore"
-msgstr "瀏覽(&X)"
-
-#: dlls/shell32/shell32.rc:101
+#: dlls/shell32/shell32.rc:97
 msgid "C&ut"
 msgstr "剪下(&U)"
 
-#: dlls/shell32/shell32.rc:104
+#: dlls/shell32/shell32.rc:100
 msgid "Create &Link"
 msgstr "建立連結(&L)"
 
-#: dlls/shell32/shell32.rc:106
+#: dlls/shell32/shell32.rc:102
 msgid "&Rename"
 msgstr "重新命名(&R)"
 
-#: dlls/shell32/shell32.rc:117 programs/notepad/notepad.rc:39
+#: dlls/shell32/shell32.rc:113 programs/notepad/notepad.rc:39
 #: programs/oleview/oleview.rc:38 programs/regedit/regedit.rc:41
 #: programs/view/view.rc:34 programs/winefile/winefile.rc:40
 #: programs/winemine/winemine.rc:51 programs/winhlp32/winhlp32.rc:37
@@ -9940,333 +9937,341 @@ msgstr "重新命名(&R)"
 msgid "E&xit"
 msgstr "結束(&X)"
 
-#: dlls/shell32/shell32.rc:130
+#: dlls/shell32/shell32.rc:126
 msgid "&About Control Panel"
 msgstr "關於控制臺(&A)"
 
-#: dlls/shell32/shell32.rc:269 dlls/shell32/shell32.rc:284
+#: dlls/shell32/shell32.rc:270 dlls/shell32/shell32.rc:285
 msgid "Browse for Folder"
 msgstr "瀏覽資料夾"
 
-#: dlls/shell32/shell32.rc:289
+#: dlls/shell32/shell32.rc:290
 msgid "Folder:"
 msgstr "資料夾:"
 
-#: dlls/shell32/shell32.rc:295
+#: dlls/shell32/shell32.rc:296
 msgid "&Make New Folder"
 msgstr "建立新資料夾(&M)"
 
-#: dlls/shell32/shell32.rc:302
+#: dlls/shell32/shell32.rc:303
 msgid "Message"
 msgstr "訊息"
 
-#: dlls/shell32/shell32.rc:306
+#: dlls/shell32/shell32.rc:307
 msgid "Yes to &all"
 msgstr "全部皆是(&A)"
 
-#: dlls/shell32/shell32.rc:315
+#: dlls/shell32/shell32.rc:316
 msgid "About %s"
 msgstr "關於 %s"
 
-#: dlls/shell32/shell32.rc:319
+#: dlls/shell32/shell32.rc:320
 msgid "Wine &license"
 msgstr "Wine 使用許可(&L)"
 
-#: dlls/shell32/shell32.rc:324
+#: dlls/shell32/shell32.rc:325
 msgid "Running on %s"
 msgstr "執行於 %s"
 
-#: dlls/shell32/shell32.rc:325
+#: dlls/shell32/shell32.rc:326
 msgid "Wine was brought to you by:"
 msgstr "Wine 開發人員:"
 
-#: dlls/shell32/shell32.rc:330
+#: dlls/shell32/shell32.rc:331
 msgid "Run"
 msgstr "執行"
 
-#: dlls/shell32/shell32.rc:334
+#: dlls/shell32/shell32.rc:335
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr "輸入程式、資料夾、文件或網際網路資源名稱。Wine 將為您開啟它。"
 
-#: dlls/shell32/shell32.rc:335
+#: dlls/shell32/shell32.rc:336
 msgid "&Open:"
 msgstr "開啟(&O):"
 
-#: dlls/shell32/shell32.rc:339 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:340 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "瀏覽(&B)..."
 
-#: dlls/shell32/shell32.rc:351 dlls/shell32/shell32.rc:380
+#: dlls/shell32/shell32.rc:352 dlls/shell32/shell32.rc:381
 msgid "File type:"
 msgstr "檔案類型:"
 
-#: dlls/shell32/shell32.rc:355 dlls/shell32/shell32.rc:388
+#: dlls/shell32/shell32.rc:356 dlls/shell32/shell32.rc:389
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "位置:"
 
-#: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
+#: dlls/shell32/shell32.rc:358 dlls/shell32/shell32.rc:391
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "大小:"
 
-#: dlls/shell32/shell32.rc:361 dlls/shell32/shell32.rc:394
+#: dlls/shell32/shell32.rc:362 dlls/shell32/shell32.rc:395
 msgid "Creation date:"
 msgstr "建立日期:"
 
-#: dlls/shell32/shell32.rc:365 dlls/shell32/shell32.rc:402
+#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
 msgid "Attributes:"
 msgstr "屬性:"
 
-#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
+#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "隱藏(&I)"
 
-#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
+#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "封存(&A)"
 
-#: dlls/shell32/shell32.rc:382
+#: dlls/shell32/shell32.rc:383
 msgid "Open with:"
 msgstr "開啟檔案:"
 
-#: dlls/shell32/shell32.rc:385
+#: dlls/shell32/shell32.rc:386
 msgid "&Change..."
 msgstr "變更(&C)..."
 
-#: dlls/shell32/shell32.rc:396
+#: dlls/shell32/shell32.rc:397
 msgid "Last modified:"
 msgstr "上次修改日期:"
 
-#: dlls/shell32/shell32.rc:398
+#: dlls/shell32/shell32.rc:399
 msgid "Last accessed:"
 msgstr "上次存取日期:"
 
-#: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
+#: dlls/shell32/shell32.rc:134 dlls/shell32/shell32.rc:138
 #: programs/winefile/winefile.rc:107
 msgid "Size"
 msgstr "大小"
 
-#: dlls/shell32/shell32.rc:139 programs/regedit/regedit.rc:151
+#: dlls/shell32/shell32.rc:135 programs/regedit/regedit.rc:151
 msgid "Type"
 msgstr "類型"
 
-#: dlls/shell32/shell32.rc:140
+#: dlls/shell32/shell32.rc:136
 msgid "Modified"
 msgstr "已修改"
 
-#: dlls/shell32/shell32.rc:141 programs/winefile/winefile.rc:171
+#: dlls/shell32/shell32.rc:137 programs/winefile/winefile.rc:171
 #: programs/winefile/winefile.rc:113
 msgid "Attributes"
 msgstr "屬性"
 
-#: dlls/shell32/shell32.rc:143
+#: dlls/shell32/shell32.rc:139
 msgid "Size available"
 msgstr "剩餘空間"
 
-#: dlls/shell32/shell32.rc:145
+#: dlls/shell32/shell32.rc:141
 msgid "Comments"
 msgstr "備註"
 
-#: dlls/shell32/shell32.rc:146
+#: dlls/shell32/shell32.rc:142
 msgid "Original location"
 msgstr "原來的位置"
 
-#: dlls/shell32/shell32.rc:147
+#: dlls/shell32/shell32.rc:143
 msgid "Date deleted"
 msgstr "日期已刪除"
 
-#: dlls/shell32/shell32.rc:154 programs/winecfg/winecfg.rc:106
+#: dlls/shell32/shell32.rc:150 programs/winecfg/winecfg.rc:106
 #: programs/winefile/winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "桌面"
 
-#: dlls/shell32/shell32.rc:155 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:151 programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "我的電腦"
 
-#: dlls/shell32/shell32.rc:157
+#: dlls/shell32/shell32.rc:153
 msgid "Control Panel"
 msgstr "控制臺"
 
-#: dlls/shell32/shell32.rc:185
+#: dlls/shell32/shell32.rc:161
+msgid "E&xplore"
+msgstr "瀏覽(&X)"
+
+#: dlls/shell32/shell32.rc:164
+msgid "Run as &Administrator"
+msgstr ""
+
+#: dlls/shell32/shell32.rc:186
 msgid "Restart"
 msgstr "重新啟動"
 
-#: dlls/shell32/shell32.rc:186
+#: dlls/shell32/shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "您確定要模擬 Windows 的重新開機程序嗎?"
 
-#: dlls/shell32/shell32.rc:187
+#: dlls/shell32/shell32.rc:188
 msgid "Shutdown"
 msgstr "關機"
 
-#: dlls/shell32/shell32.rc:188
+#: dlls/shell32/shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "您確定要關閉您的 Wine 工作階段嗎?"
 
-#: dlls/shell32/shell32.rc:199 programs/progman/progman.rc:83
+#: dlls/shell32/shell32.rc:200 programs/progman/progman.rc:83
 msgid "Programs"
 msgstr "程式"
 
-#: dlls/shell32/shell32.rc:200 dlls/shell32/shell32.rc:215
-#: dlls/shell32/shell32.rc:148 dlls/shell32/shell32.rc:231
+#: dlls/shell32/shell32.rc:201 dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:232
 msgid "Documents"
 msgstr "文件"
 
-#: dlls/shell32/shell32.rc:201
+#: dlls/shell32/shell32.rc:202
 msgid "Favorites"
 msgstr "我的最愛"
 
-#: dlls/shell32/shell32.rc:202
+#: dlls/shell32/shell32.rc:203
 msgid "StartUp"
 msgstr "啟動"
 
-#: dlls/shell32/shell32.rc:203
+#: dlls/shell32/shell32.rc:204
 msgid "Start Menu"
 msgstr "開始功能表"
 
-#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:217
+#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:218
 msgid "Music"
 msgstr "音樂"
 
-#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:206 dlls/shell32/shell32.rc:220
 msgid "Videos"
 msgstr "視訊"
 
-#: dlls/shell32/shell32.rc:206
+#: dlls/shell32/shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
 msgstr "桌面"
 
-#: dlls/shell32/shell32.rc:207
+#: dlls/shell32/shell32.rc:208
 msgid "NetHood"
 msgstr "NetHood"
 
-#: dlls/shell32/shell32.rc:208
+#: dlls/shell32/shell32.rc:209
 msgid "Templates"
 msgstr "範本"
 
-#: dlls/shell32/shell32.rc:209
+#: dlls/shell32/shell32.rc:210
 msgid "PrintHood"
 msgstr "PrintHood"
 
-#: dlls/shell32/shell32.rc:210 programs/winhlp32/winhlp32.rc:49
+#: dlls/shell32/shell32.rc:211 programs/winhlp32/winhlp32.rc:49
 msgid "History"
 msgstr "歷程記錄"
 
-#: dlls/shell32/shell32.rc:211
+#: dlls/shell32/shell32.rc:212
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:213 dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:214 dlls/shell32/shell32.rc:219
 msgid "Pictures"
 msgstr "圖片"
 
-#: dlls/shell32/shell32.rc:214
+#: dlls/shell32/shell32.rc:215
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:217
 msgid "Administrative Tools"
 msgstr "系統管理工具"
 
-#: dlls/shell32/shell32.rc:212
+#: dlls/shell32/shell32.rc:213
 msgid "Program Files (x86)"
 msgstr "Program Files (x86)"
 
-#: dlls/shell32/shell32.rc:220
+#: dlls/shell32/shell32.rc:221
 msgid "Contacts"
 msgstr "聯絡人"
 
-#: dlls/shell32/shell32.rc:221 programs/winefile/winefile.rc:112
+#: dlls/shell32/shell32.rc:222 programs/winefile/winefile.rc:112
 msgid "Links"
 msgstr "連結"
 
-#: dlls/shell32/shell32.rc:222
+#: dlls/shell32/shell32.rc:223
 msgid "Slide Shows"
 msgstr "投影片放映"
 
-#: dlls/shell32/shell32.rc:223
+#: dlls/shell32/shell32.rc:224
 msgid "Playlists"
 msgstr "播放清單"
 
-#: dlls/shell32/shell32.rc:149 programs/taskmgr/taskmgr.rc:326
+#: dlls/shell32/shell32.rc:145 programs/taskmgr/taskmgr.rc:326
 msgid "Status"
 msgstr "狀態"
 
-#: dlls/shell32/shell32.rc:151
+#: dlls/shell32/shell32.rc:147
 msgid "Model"
 msgstr "型號"
 
-#: dlls/shell32/shell32.rc:224
+#: dlls/shell32/shell32.rc:225
 msgid "Sample Music"
 msgstr "範例音樂"
 
-#: dlls/shell32/shell32.rc:225
+#: dlls/shell32/shell32.rc:226
 msgid "Sample Pictures"
 msgstr "範例圖片"
 
-#: dlls/shell32/shell32.rc:226
+#: dlls/shell32/shell32.rc:227
 msgid "Sample Playlists"
 msgstr "範例播放清單"
 
-#: dlls/shell32/shell32.rc:227
+#: dlls/shell32/shell32.rc:228
 msgid "Sample Videos"
 msgstr "範例影片"
 
-#: dlls/shell32/shell32.rc:228
+#: dlls/shell32/shell32.rc:229
 msgid "Saved Games"
 msgstr "儲存的遊戲"
 
-#: dlls/shell32/shell32.rc:229
+#: dlls/shell32/shell32.rc:230
 msgid "Searches"
 msgstr "搜尋"
 
-#: dlls/shell32/shell32.rc:230
+#: dlls/shell32/shell32.rc:231
 msgid "Users"
 msgstr "使用者"
 
-#: dlls/shell32/shell32.rc:232
+#: dlls/shell32/shell32.rc:233
 msgid "Downloads"
 msgstr "下載"
 
-#: dlls/shell32/shell32.rc:165
+#: dlls/shell32/shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
 msgstr "無法建立新的資料夾: 權限被拒絕。"
 
-#: dlls/shell32/shell32.rc:166
+#: dlls/shell32/shell32.rc:167
 msgid "Error during creation of a new folder"
 msgstr "在建立新資料夾時發生錯誤"
 
-#: dlls/shell32/shell32.rc:167
+#: dlls/shell32/shell32.rc:168
 msgid "Confirm file deletion"
 msgstr "確認刪除檔案"
 
-#: dlls/shell32/shell32.rc:168
+#: dlls/shell32/shell32.rc:169
 msgid "Confirm folder deletion"
 msgstr "確認刪除資料夾"
 
-#: dlls/shell32/shell32.rc:169
+#: dlls/shell32/shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
 msgstr "您確定要刪除 '%1' 嗎?"
 
-#: dlls/shell32/shell32.rc:170
+#: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
 msgstr "您確定要刪除 %1 個項目嗎?"
 
-#: dlls/shell32/shell32.rc:177
+#: dlls/shell32/shell32.rc:178
 msgid "Confirm file overwrite"
 msgstr "確認覆寫檔案"
 
-#: dlls/shell32/shell32.rc:176
+#: dlls/shell32/shell32.rc:177
 msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
@@ -10276,28 +10281,28 @@ msgstr ""
 "\n"
 "您要取代它嗎?"
 
-#: dlls/shell32/shell32.rc:171
+#: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
 msgstr "您確定要刪除已選取的項目嗎?"
 
-#: dlls/shell32/shell32.rc:173
+#: dlls/shell32/shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr "您確定要將 '%1' 和它的所有內容送到回收筒嗎?"
 
-#: dlls/shell32/shell32.rc:172
+#: dlls/shell32/shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
 msgstr "您確定要將 '%1' 送到回收筒嗎?"
 
-#: dlls/shell32/shell32.rc:174
+#: dlls/shell32/shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr "您確定要將 %1 個項目送到回收筒嗎?"
 
-#: dlls/shell32/shell32.rc:175
+#: dlls/shell32/shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr "無法將項目 '%1' 送到回收筒。您要改為刪除它嗎?"
 
-#: dlls/shell32/shell32.rc:182
+#: dlls/shell32/shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -10311,39 +10316,39 @@ msgstr ""
 "的檔案同名，那麼它們將被取代。您仍然要移動或複製\n"
 "資料夾嗎?"
 
-#: dlls/shell32/shell32.rc:236
+#: dlls/shell32/shell32.rc:237
 msgid "Wine Control Panel"
 msgstr "Wine 控制臺"
 
-#: dlls/shell32/shell32.rc:191
+#: dlls/shell32/shell32.rc:192
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "無法顯示 [執行] 對話方塊 (內部錯誤)"
 
-#: dlls/shell32/shell32.rc:192
+#: dlls/shell32/shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "無法顯示 [瀏覽] 對話方塊 (內部錯誤)"
 
-#: dlls/shell32/shell32.rc:194
+#: dlls/shell32/shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "可執行檔 (*.exe)"
 
-#: dlls/shell32/shell32.rc:240
+#: dlls/shell32/shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr "沒有設定開啟這種類型的檔案的 Windows 程式。"
 
-#: dlls/shell32/shell32.rc:242
+#: dlls/shell32/shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "您確定要永久刪除 '%1' 嗎?"
 
-#: dlls/shell32/shell32.rc:243
+#: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "您確定要永久刪除 %1 個項目嗎?"
 
-#: dlls/shell32/shell32.rc:244
+#: dlls/shell32/shell32.rc:245
 msgid "Confirm deletion"
 msgstr "確認刪除"
 
-#: dlls/shell32/shell32.rc:245
+#: dlls/shell32/shell32.rc:246
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -10353,7 +10358,7 @@ msgstr ""
 "\n"
 "您要取代它嗎?"
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:247
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -10363,11 +10368,11 @@ msgstr ""
 "\n"
 "您要取代它嗎?"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:248
 msgid "Confirm overwrite"
 msgstr "確認覆寫"
 
-#: dlls/shell32/shell32.rc:264
+#: dlls/shell32/shell32.rc:265
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -10394,11 +10399,11 @@ msgstr ""
 "Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA "
 "02110-1301, USA。"
 
-#: dlls/shell32/shell32.rc:252
+#: dlls/shell32/shell32.rc:253
 msgid "Wine License"
 msgstr "Wine 授權"
 
-#: dlls/shell32/shell32.rc:156
+#: dlls/shell32/shell32.rc:152
 msgid "Trash"
 msgstr "回收筒"
 

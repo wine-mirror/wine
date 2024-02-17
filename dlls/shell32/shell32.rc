@@ -93,10 +93,6 @@ MENU_SHV_FILE MENU
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Open",		FCIDM_SHVIEW_OPEN
-	  MENUITEM SEPARATOR
 	  MENUITEM "C&ut",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copy",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
@@ -160,6 +156,11 @@ STRINGTABLE
 	IDS_VIEW_SMALL		"S&mall Icons"
 	IDS_VIEW_LIST		"&List"
 	IDS_VIEW_DETAILS	"&Details"
+
+        IDS_VERB_EXPLORE        "E&xplore"
+        IDS_VERB_OPEN           "&Open"
+        IDS_VERB_PRINT          "&Print"
+        IDS_VERB_RUNAS          "Run as &Administrator"
 
 	IDS_CREATEFOLDER_DENIED "Unable to create new Folder: Permission denied."
 	IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"

@@ -43,6 +43,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 #define FCIDM_BASE 0x7000
 
+#define VERB_ID_OFFSET 0x200
+
+struct verb
+{
+    WCHAR *desc;
+    WCHAR *verb;
+};
+
 typedef struct
 {
     IContextMenu3 IContextMenu3_iface;
@@ -52,11 +60,14 @@ typedef struct
 
     IShellFolder* parent;
 
+    struct verb *verbs;
+    size_t verb_count;
+    WCHAR filetype[MAX_PATH];
+
     /* item menu data */
     LPITEMIDLIST  pidl;  /* root pidl */
     LPITEMIDLIST *apidl; /* array of child pidls */
     UINT cidl;
-    BOOL allvalues;
 
     /* background menu data */
     BOOL desktop;
@@ -134,6 +145,12 @@ static ULONG WINAPI ContextMenu_Release(IContextMenu3 *iface)
         SHFree(This->pidl);
         _ILFreeaPidl(This->apidl, This->cidl);
 
+        for (unsigned int i = 0; i < This->verb_count; ++i)
+        {
+            free(This->verbs[i].desc);
+            free(This->verbs[i].verb);
+        }
+        free(This->verbs);
         free(This);
     }
 
@@ -180,6 +197,7 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
 	UINT uFlags)
 {
     ContextMenu *This = impl_from_IContextMenu3(iface);
+    MENUITEMINFOW mi;
     INT uIDMax;
 
     TRACE("(%p)->(%p %d 0x%x 0x%x 0x%x )\n", This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -188,32 +206,28 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
     {
         HMENU hmenures = LoadMenuW(shell32_hInstance, MAKEINTRESOURCEW(MENU_SHV_FILE));
 
-        if(uFlags & CMF_EXPLORE)
-            RemoveMenu(hmenures, FCIDM_SHVIEW_OPEN, MF_BYCOMMAND);
-
         Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst - FCIDM_BASE, idCmdLast, MM_SUBMENUSHAVEIDS);
         uIDMax = max_menu_id(GetSubMenu(hmenures, 0), idCmdFirst - FCIDM_BASE, idCmdLast);
 
         DestroyMenu(hmenures);
 
-        if(This->allvalues)
+        for (size_t i = 0; i < This->verb_count; ++i)
         {
-            MENUITEMINFOW mi;
-            WCHAR str[255];
             mi.cbSize = sizeof(mi);
-            mi.fMask = MIIM_ID | MIIM_STRING | MIIM_FTYPE;
-            mi.dwTypeData = str;
-            mi.cch = 255;
-            GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND, &mi);
-            RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND);
-
-            mi.cbSize = sizeof(mi);
-            mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE | MIIM_STRING;
-            mi.dwTypeData = str;
+            mi.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+            mi.dwTypeData = This->verbs[i].desc;
             mi.fState = MFS_ENABLED;
-            mi.wID = FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst;
+            mi.wID = idCmdFirst + VERB_ID_OFFSET + i;
             mi.fType = MFT_STRING;
-            InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, &mi);
+            InsertMenuItemW(hmenu, i, MF_BYPOSITION, &mi);
+            uIDMax = max(uIDMax, mi.wID + 1);
+        }
+        if (This->verb_count)
+        {
+            mi.cbSize = sizeof(mi);
+            mi.fMask = MIIM_FTYPE;
+            mi.fType = MFT_SEPARATOR;
+            InsertMenuItemW(hmenu, This->verb_count, MF_BYPOSITION, &mi);
         }
 
         SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
@@ -243,45 +257,23 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
     return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 }
 
-/**************************************************************************
-* DoOpenExplore
-*
-*  for folders only
-*/
-
-static void DoOpenExplore(ContextMenu *This, HWND hwnd, LPCSTR verb)
+static void execute_verb(ContextMenu *menu, HWND hwnd, const WCHAR *verb)
 {
-        UINT i;
-        BOOL bFolderFound = FALSE;
-	LPITEMIDLIST	pidlFQ;
-	SHELLEXECUTEINFOA	sei;
+    for (unsigned int i = 0; i < menu->cidl; ++i)
+    {
+        LPITEMIDLIST abs_pidl = ILCombine(menu->pidl, menu->apidl[i]);
+        SHELLEXECUTEINFOW info = {0};
 
-	/* Find the first item in the list that is not a value. These commands
-	    should never be invoked if there isn't at least one folder item in the list.*/
-
-	for(i = 0; i<This->cidl; i++)
-	{
-	  if(!_ILIsValue(This->apidl[i]))
-	  {
-	    bFolderFound = TRUE;
-	    break;
-	  }
-	}
-
-	if (!bFolderFound) return;
-
-	pidlFQ = ILCombine(This->pidl, This->apidl[i]);
-
-	ZeroMemory(&sei, sizeof(sei));
-	sei.cbSize = sizeof(sei);
-	sei.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
-	sei.lpIDList = pidlFQ;
-	sei.lpClass = "Folder";
-	sei.hwnd = hwnd;
-	sei.nShow = SW_SHOWNORMAL;
-	sei.lpVerb = verb;
-	ShellExecuteExA(&sei);
-	ILFree(pidlFQ);
+        info.cbSize = sizeof(info);
+        info.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
+        info.lpIDList = abs_pidl;
+        info.lpClass = menu->filetype;
+        info.hwnd = hwnd;
+        info.nShow = SW_SHOWNORMAL;
+        info.lpVerb = verb;
+        ShellExecuteExW(&info);
+        ILFree(abs_pidl);
+    }
 }
 
 /**************************************************************************
@@ -757,16 +749,16 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 
     if (IS_INTRESOURCE(lpcmi->lpVerb))
     {
-        switch(LOWORD(lpcmi->lpVerb) + FCIDM_BASE)
+        unsigned int id = LOWORD(lpcmi->lpVerb);
+
+        if (id >= VERB_ID_OFFSET && id - VERB_ID_OFFSET < This->verb_count)
         {
-        case FCIDM_SHVIEW_EXPLORE:
-            TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
-            DoOpenExplore(This, lpcmi->hwnd, "explore");
-            break;
-        case FCIDM_SHVIEW_OPEN:
-            TRACE("Verb FCIDM_SHVIEW_OPEN\n");
-            DoOpenExplore(This, lpcmi->hwnd, "open");
-            break;
+            execute_verb(This, lpcmi->hwnd, This->verbs[id - VERB_ID_OFFSET].verb);
+            return S_OK;
+        }
+
+        switch (id + FCIDM_BASE)
+        {
         case FCIDM_SHVIEW_RENAME:
         {
             IShellBrowser *browser;
@@ -804,7 +796,7 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
             DoOpenProperties(This, lpcmi->hwnd);
             break;
         default:
-            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
+            FIXME("Unhandled verb %#x.\n", id);
             return E_INVALIDARG;
         }
     }
@@ -847,12 +839,6 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
     case GCS_VERBW:
         switch (cmdid + FCIDM_BASE)
         {
-        case FCIDM_SHVIEW_OPEN:
-            cmdW = L"open";
-            break;
-        case FCIDM_SHVIEW_EXPLORE:
-            cmdW = L"explore";
-            break;
         case FCIDM_SHVIEW_CUT:
             cmdW = L"cut";
             break;
@@ -872,6 +858,9 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
             cmdW = L"rename";
             break;
         }
+
+        if (cmdid >= VERB_ID_OFFSET && cmdid - VERB_ID_OFFSET < This->verb_count)
+            cmdW = This->verbs[cmdid - VERB_ID_OFFSET].verb;
 
         if (!cmdW)
         {
@@ -1009,15 +998,130 @@ static const IObjectWithSiteVtbl ObjectWithSiteVtbl =
     ObjectWithSite_GetSite,
 };
 
+static WCHAR *get_verb_desc(HKEY key, const WCHAR *verb)
+{
+    DWORD size = 0;
+    WCHAR *desc;
+    DWORD ret;
+
+    static const struct
+    {
+        const WCHAR *verb;
+        unsigned int id;
+    }
+    builtin_verbs[] =
+    {
+        {L"explore", IDS_VERB_EXPLORE},
+        {L"open", IDS_VERB_OPEN},
+        {L"print", IDS_VERB_PRINT},
+        {L"runas", IDS_VERB_RUNAS},
+    };
+
+    if ((ret = RegGetValueW(key, verb, NULL, RRF_RT_REG_SZ, NULL, NULL, &size)) == ERROR_MORE_DATA)
+    {
+        desc = malloc(size);
+        RegGetValueW(key, verb, NULL, RRF_RT_REG_SZ, NULL, desc, &size);
+        return desc;
+    }
+
+    /* Some verbs appear to have builtin descriptions on Windows, which aren't
+     * stored in the registry. */
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(builtin_verbs); ++i)
+    {
+        if (!wcscmp(verb, builtin_verbs[i].verb))
+        {
+            const WCHAR *resource;
+
+            size = LoadStringW(shell32_hInstance, builtin_verbs[i].id, (WCHAR *)&resource, 0);
+            desc = malloc((size + 1) * sizeof(WCHAR));
+            memcpy(desc, resource, size * sizeof(WCHAR));
+            desc[size] = 0;
+            return desc;
+        }
+    }
+
+    return wcsdup(verb);
+}
+
+static void build_verb_list(ContextMenu *menu)
+{
+    HKEY type_key, shell_key;
+    size_t verb_capacity;
+    WCHAR *verb_buffer;
+    DWORD ret;
+
+    if (!menu->cidl)
+        return;
+
+    get_filetype(menu->apidl[0], menu->filetype);
+
+    /* If all of the files are not of the same type, we can't do anything
+     * with them. */
+    if (menu->cidl > 1)
+    {
+        WCHAR other_filetype[MAX_PATH];
+
+        for (unsigned int i = 1; i < menu->cidl; ++i)
+        {
+            get_filetype(menu->apidl[i], other_filetype);
+            if (wcscmp(menu->filetype, other_filetype))
+                return;
+        }
+    }
+
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, menu->filetype, 0, KEY_READ, &type_key)))
+        return;
+
+    if ((ret = RegOpenKeyExW(type_key, L"shell", 0, KEY_READ, &shell_key)))
+    {
+        RegCloseKey(type_key);
+        return;
+    }
+
+    verb_capacity = 256;
+    verb_buffer = malloc(verb_capacity * sizeof(WCHAR));
+    for (unsigned int i = 0; ; ++i)
+    {
+        DWORD size = verb_capacity;
+        WCHAR *desc;
+
+        ret = RegEnumKeyExW(shell_key, i, verb_buffer, &size, NULL, NULL, NULL, NULL);
+        if (ret == ERROR_MORE_DATA)
+        {
+            verb_capacity = size;
+            verb_buffer = realloc(verb_buffer, verb_capacity * sizeof(WCHAR));
+            ret = RegEnumKeyExW(shell_key, i, verb_buffer, &size, NULL, NULL, NULL, NULL);
+        }
+        if (ret)
+            break;
+
+        if (!(desc = get_verb_desc(shell_key, verb_buffer)))
+            continue;
+
+        menu->verbs = realloc(menu->verbs, (menu->verb_count + 1) * sizeof(*menu->verbs));
+        menu->verbs[menu->verb_count].verb = wcsdup(verb_buffer);
+        menu->verbs[menu->verb_count].desc = desc;
+        ++menu->verb_count;
+
+        TRACE("Found verb %s, description %s.\n", debugstr_w(verb_buffer), debugstr_w(desc));
+    }
+
+    RegCloseKey(shell_key);
+
+    /* TODO: Enumerate the shellex key as well. */
+
+    RegCloseKey(type_key);
+}
+
 HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl,
     REFIID riid, void **pObj)
 {
     ContextMenu* This;
     HRESULT hr;
-    UINT i;
 
-    This = malloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(This = calloc(1, sizeof(*This))))
+        return E_OUTOFMEMORY;
 
     This->IContextMenu3_iface.lpVtbl = &ItemContextMenuVtbl;
     This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
@@ -1029,12 +1133,10 @@ HRESULT ItemMenu_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPC
     This->pidl = ILClone(pidl);
     This->apidl = _ILCopyaPidl(apidl, cidl);
     This->cidl = cidl;
-    This->allvalues = TRUE;
 
     This->desktop = FALSE;
 
-    for (i = 0; i < cidl; i++)
-       This->allvalues &= (_ILIsValue(apidl[i]) ? 1 : 0);
+    build_verb_list(This);
 
     hr = IContextMenu3_QueryInterface(&This->IContextMenu3_iface, riid, pObj);
     IContextMenu3_Release(&This->IContextMenu3_iface);
@@ -1451,7 +1553,6 @@ HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID ri
     This->pidl = NULL;
     This->apidl = NULL;
     This->cidl = 0;
-    This->allvalues = FALSE;
 
     This->desktop = desktop;
     if (parent) IShellFolder_AddRef(parent);

@@ -99,8 +99,8 @@ msgstr "Támogatási információ"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:272 dlls/shell32/shell32.rc:296
-#: dlls/shell32/shell32.rc:318 dlls/shell32/shell32.rc:337
+#: dlls/shell32/shell32.rc:273 dlls/shell32/shell32.rc:297
+#: dlls/shell32/shell32.rc:319 dlls/shell32/shell32.rc:338
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
@@ -206,9 +206,9 @@ msgstr "&Telepítés"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:273
-#: dlls/shell32/shell32.rc:297 dlls/shell32/shell32.rc:308
-#: dlls/shell32/shell32.rc:338 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:274
+#: dlls/shell32/shell32.rc:298 dlls/shell32/shell32.rc:309
+#: dlls/shell32/shell32.rc:339 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
@@ -294,7 +294,7 @@ msgid "Not specified"
 msgstr "Nincs megadva"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:237
+#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:238
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "Név"
@@ -316,7 +316,7 @@ msgid "Programs (*.exe)"
 msgstr "Programok (*.exe)"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
-#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:195
+#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:196
 #: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
@@ -476,7 +476,7 @@ msgstr "Alaph&elyzet"
 #: dlls/comdlg32/comdlg32.rc:482 dlls/comdlg32/comdlg32.rc:508
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
-#: dlls/shell32/shell32.rc:128 programs/clock/clock.rc:44
+#: dlls/shell32/shell32.rc:124 programs/clock/clock.rc:44
 #: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:126
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
@@ -522,12 +522,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Nincs"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:305
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:306
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "&Igen"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:307
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:308
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "&Nem"
@@ -587,7 +587,7 @@ msgid "Dri&ves:"
 msgstr "&Meghajtó:"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
+#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "&Csak olvasható"
@@ -848,7 +848,7 @@ msgstr "M&indent cserél"
 
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
-#: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
+#: dlls/shell32/shell32.rc:104 programs/clock/clock.rc:31
 #: programs/conhost/conhost.rc:34
 msgid "&Properties"
 msgstr "&Tulajdonságok"
@@ -972,7 +972,7 @@ msgstr "Me&gnyitás csak olvashatóként"
 
 #: dlls/comdlg32/comdlg32.rc:480 dlls/comdlg32/comdlg32.rc:506
 #: dlls/comdlg32/comdlg32.rc:524 dlls/shdoclc/shdoclc.rc:127
-#: dlls/shell32/shell32.rc:99
+#: dlls/shell32/shell32.rc:162
 msgid "&Open"
 msgstr "&Megnyitás"
 
@@ -2279,8 +2279,8 @@ msgid "Notice Text="
 msgstr "Tanúsítvány szöveg="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:344
-#: dlls/shell32/shell32.rc:373
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:345
+#: dlls/shell32/shell32.rc:374
 msgid "General"
 msgstr "Általános"
 
@@ -2498,7 +2498,7 @@ msgid "Certificate intended purposes"
 msgstr "Tanúsítvány kulcshasználat"
 
 #: dlls/cryptui/cryptui.rc:355 dlls/ieframe/ieframe.rc:45
-#: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:120
+#: dlls/shell32/shell32.rc:43 dlls/shell32/shell32.rc:116
 #: programs/notepad/notepad.rc:61 programs/oleview/oleview.rc:59
 #: programs/oleview/oleview.rc:61 programs/oleview/oleview.rc:85
 #: programs/regedit/regedit.rc:65 programs/taskmgr/taskmgr.rc:52
@@ -2789,7 +2789,7 @@ msgstr "Kibővített kulcs használat (tulajdonság)"
 msgid "Friendly name"
 msgstr "Keresztnév"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:238
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:239
 #: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "Leírás"
@@ -2886,7 +2886,7 @@ msgstr "Tanúsítvány tár megadva"
 msgid "Automatically determined by the program"
 msgstr "A program által automatikusan felismert"
 
-#: dlls/cryptui/cryptui.rc:91 dlls/shell32/shell32.rc:137
+#: dlls/cryptui/cryptui.rc:91 dlls/shell32/shell32.rc:133
 msgid "File"
 msgstr "Fájl"
 
@@ -3189,7 +3189,7 @@ msgstr "Üzenet: A tanúsítványhoz tartozó privát kulcsok nem exportálható
 msgid "Intended Use"
 msgstr "F&elhasználási szándék:"
 
-#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:150
+#: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:146
 msgid "Location"
 msgstr "Hely"
 
@@ -3419,7 +3419,7 @@ msgstr "Kivá&gás"
 #: dlls/hhctrl.ocx/hhctrl.rc:88 dlls/shdoclc/shdoclc.rc:80
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
-#: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:102
+#: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:98
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
@@ -3431,6 +3431,7 @@ msgid "Paste"
 msgstr "Beillesztés"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:91 dlls/shdoclc/shdoclc.rc:121
+#: dlls/shell32/shell32.rc:163
 msgid "&Print"
 msgstr "&Nyomtatás"
 
@@ -3497,7 +3498,7 @@ msgstr "Előre"
 msgid "Cinepak Video codec"
 msgstr "Cinepak Video kodek"
 
-#: dlls/ieframe/ieframe.rc:28 dlls/shell32/shell32.rc:114
+#: dlls/ieframe/ieframe.rc:28 dlls/shell32/shell32.rc:110
 #: programs/notepad/notepad.rc:29 programs/oleview/oleview.rc:30
 #: programs/oleview/oleview.rc:80 programs/progman/progman.rc:32
 #: programs/taskmgr/taskmgr.rc:35 programs/view/view.rc:31
@@ -8622,7 +8623,7 @@ msgstr "tulajdonság innen:"
 msgid "choose which folder contains %s"
 msgstr "válassza ki, melyik mappa tartalmazza ezt: %s"
 
-#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:234
+#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:235
 msgid "New Folder"
 msgstr "Új mappa"
 
@@ -9941,7 +9942,7 @@ msgstr ""
 "Kérem illesssze be a fájl tartalmát, mint objektumot a dokumentumába, azzal "
 "a programmal amivel létrehozta."
 
-#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:193
+#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:194
 msgid "Browse"
 msgstr "Tallózás"
 
@@ -10247,12 +10248,12 @@ msgstr "Tula&jdonságok"
 msgid "&Undo"
 msgstr "&Visszavonás"
 
-#: dlls/shdoclc/shdoclc.rc:96 dlls/shell32/shell32.rc:105
+#: dlls/shdoclc/shdoclc.rc:96 dlls/shell32/shell32.rc:101
 #: dlls/user32/user32.rc:63
 msgid "&Delete"
 msgstr "Tö&rlés"
 
-#: dlls/shdoclc/shdoclc.rc:103 dlls/shell32/shell32.rc:97
+#: dlls/shdoclc/shdoclc.rc:103
 msgid "&Select"
 msgstr "Tár&sítás"
 
@@ -10421,26 +10422,26 @@ msgid "&w&bPage &p"
 msgstr "&w&bOldal &p"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
-#: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:160
+#: dlls/shell32/shell32.rc:118 dlls/shell32/shell32.rc:156
 #: programs/taskmgr/taskmgr.rc:65 programs/taskmgr/taskmgr.rc:110
 #: programs/taskmgr/taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "Na&gy ikonok"
 
 #: dlls/shell32/shell32.rc:31 dlls/shell32/shell32.rc:46
-#: dlls/shell32/shell32.rc:123 dlls/shell32/shell32.rc:161
+#: dlls/shell32/shell32.rc:119 dlls/shell32/shell32.rc:157
 #: programs/taskmgr/taskmgr.rc:66 programs/taskmgr/taskmgr.rc:111
 #: programs/taskmgr/taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "Ki&s ikonok"
 
 #: dlls/shell32/shell32.rc:32 dlls/shell32/shell32.rc:47
-#: dlls/shell32/shell32.rc:124 dlls/shell32/shell32.rc:162
+#: dlls/shell32/shell32.rc:120 dlls/shell32/shell32.rc:158
 msgid "&List"
 msgstr "&Lista"
 
 #: dlls/shell32/shell32.rc:33 dlls/shell32/shell32.rc:48
-#: dlls/shell32/shell32.rc:125 dlls/shell32/shell32.rc:163
+#: dlls/shell32/shell32.rc:121 dlls/shell32/shell32.rc:159
 #: programs/taskmgr/taskmgr.rc:67 programs/taskmgr/taskmgr.rc:112
 #: programs/taskmgr/taskmgr.rc:254
 msgid "&Details"
@@ -10500,23 +10501,19 @@ msgstr "&Előző méret"
 msgid "&Erase"
 msgstr "&Törlés"
 
-#: dlls/shell32/shell32.rc:98
-msgid "E&xplore"
-msgstr "B&öngészés"
-
-#: dlls/shell32/shell32.rc:101
+#: dlls/shell32/shell32.rc:97
 msgid "C&ut"
 msgstr "Ki&vágás"
 
-#: dlls/shell32/shell32.rc:104
+#: dlls/shell32/shell32.rc:100
 msgid "Create &Link"
 msgstr "&Link létrehozása"
 
-#: dlls/shell32/shell32.rc:106
+#: dlls/shell32/shell32.rc:102
 msgid "&Rename"
 msgstr "Átneve&zés"
 
-#: dlls/shell32/shell32.rc:117 programs/notepad/notepad.rc:39
+#: dlls/shell32/shell32.rc:113 programs/notepad/notepad.rc:39
 #: programs/oleview/oleview.rc:38 programs/regedit/regedit.rc:41
 #: programs/view/view.rc:34 programs/winefile/winefile.rc:40
 #: programs/winemine/winemine.rc:51 programs/winhlp32/winhlp32.rc:37
@@ -10524,53 +10521,53 @@ msgstr "Átneve&zés"
 msgid "E&xit"
 msgstr "&Kilépés"
 
-#: dlls/shell32/shell32.rc:130
+#: dlls/shell32/shell32.rc:126
 msgid "&About Control Panel"
 msgstr "&Névjegy"
 
-#: dlls/shell32/shell32.rc:269 dlls/shell32/shell32.rc:284
+#: dlls/shell32/shell32.rc:270 dlls/shell32/shell32.rc:285
 msgid "Browse for Folder"
 msgstr "Mappa tallózása"
 
-#: dlls/shell32/shell32.rc:289
+#: dlls/shell32/shell32.rc:290
 msgid "Folder:"
 msgstr "Mappa:"
 
-#: dlls/shell32/shell32.rc:295
+#: dlls/shell32/shell32.rc:296
 msgid "&Make New Folder"
 msgstr "&Új mappa létrehozása"
 
-#: dlls/shell32/shell32.rc:302
+#: dlls/shell32/shell32.rc:303
 msgid "Message"
 msgstr "Üzenet"
 
-#: dlls/shell32/shell32.rc:306
+#: dlls/shell32/shell32.rc:307
 msgid "Yes to &all"
 msgstr "&Összesre igen"
 
-#: dlls/shell32/shell32.rc:315
+#: dlls/shell32/shell32.rc:316
 msgid "About %s"
 msgstr "%s névjegye"
 
-#: dlls/shell32/shell32.rc:319
+#: dlls/shell32/shell32.rc:320
 msgid "Wine &license"
 msgstr "Wine &licensz"
 
-#: dlls/shell32/shell32.rc:324
+#: dlls/shell32/shell32.rc:325
 msgid "Running on %s"
 msgstr "Ezen fut: %s"
 
-#: dlls/shell32/shell32.rc:325
+#: dlls/shell32/shell32.rc:326
 msgid "Wine was brought to you by:"
 msgstr "A Wine-t készítették:"
 
-#: dlls/shell32/shell32.rc:330
+#: dlls/shell32/shell32.rc:331
 #, fuzzy
 #| msgid "&Run..."
 msgid "Run"
 msgstr "&Futtatás..."
 
-#: dlls/shell32/shell32.rc:334
+#: dlls/shell32/shell32.rc:335
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
@@ -10578,297 +10575,305 @@ msgstr ""
 "Adja meg a program, a mappa, a dokumentum, vagy az internetes erőforrás "
 "nevét és a Wine megnyitja azt."
 
-#: dlls/shell32/shell32.rc:335
+#: dlls/shell32/shell32.rc:336
 msgid "&Open:"
 msgstr "&Megnyitás:"
 
-#: dlls/shell32/shell32.rc:339 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:340 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "&Tallózás..."
 
-#: dlls/shell32/shell32.rc:351 dlls/shell32/shell32.rc:380
+#: dlls/shell32/shell32.rc:352 dlls/shell32/shell32.rc:381
 #, fuzzy
 #| msgid "File type"
 msgid "File type:"
 msgstr "Fájltípus"
 
-#: dlls/shell32/shell32.rc:355 dlls/shell32/shell32.rc:388
+#: dlls/shell32/shell32.rc:356 dlls/shell32/shell32.rc:389
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "Hely:"
 
-#: dlls/shell32/shell32.rc:357 dlls/shell32/shell32.rc:390
+#: dlls/shell32/shell32.rc:358 dlls/shell32/shell32.rc:391
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "Méret:"
 
-#: dlls/shell32/shell32.rc:361 dlls/shell32/shell32.rc:394
+#: dlls/shell32/shell32.rc:362 dlls/shell32/shell32.rc:395
 #, fuzzy
 #| msgid "Creation failed.\n"
 msgid "Creation date:"
 msgstr "Létrehozás sikertelen.\n"
 
-#: dlls/shell32/shell32.rc:365 dlls/shell32/shell32.rc:402
+#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
 #, fuzzy
 #| msgid "&Attributes:"
 msgid "Attributes:"
 msgstr "&Attribútumok:"
 
-#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
+#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "Re&jtett"
 
-#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
+#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "&Archivált"
 
-#: dlls/shell32/shell32.rc:382
+#: dlls/shell32/shell32.rc:383
 #, fuzzy
 #| msgid "Open:"
 msgid "Open with:"
 msgstr "Megnyitás:"
 
-#: dlls/shell32/shell32.rc:385
+#: dlls/shell32/shell32.rc:386
 #, fuzzy
 #| msgid "Change &Icon..."
 msgid "&Change..."
 msgstr "&Ikon megváltoztatása..."
 
-#: dlls/shell32/shell32.rc:396
+#: dlls/shell32/shell32.rc:397
 #, fuzzy
 #| msgid "Modified"
 msgid "Last modified:"
 msgstr "Módosítva"
 
-#: dlls/shell32/shell32.rc:398
+#: dlls/shell32/shell32.rc:399
 #, fuzzy
 #| msgid "Last Change:"
 msgid "Last accessed:"
 msgstr "Utolsó módosítás:"
 
-#: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
+#: dlls/shell32/shell32.rc:134 dlls/shell32/shell32.rc:138
 #: programs/winefile/winefile.rc:107
 msgid "Size"
 msgstr "Méret"
 
-#: dlls/shell32/shell32.rc:139 programs/regedit/regedit.rc:151
+#: dlls/shell32/shell32.rc:135 programs/regedit/regedit.rc:151
 msgid "Type"
 msgstr "Típus"
 
-#: dlls/shell32/shell32.rc:140
+#: dlls/shell32/shell32.rc:136
 msgid "Modified"
 msgstr "Módosítva"
 
-#: dlls/shell32/shell32.rc:141 programs/winefile/winefile.rc:171
+#: dlls/shell32/shell32.rc:137 programs/winefile/winefile.rc:171
 #: programs/winefile/winefile.rc:113
 msgid "Attributes"
 msgstr "Attribútumok"
 
-#: dlls/shell32/shell32.rc:143
+#: dlls/shell32/shell32.rc:139
 msgid "Size available"
 msgstr "Elérhető méret"
 
-#: dlls/shell32/shell32.rc:145
+#: dlls/shell32/shell32.rc:141
 msgid "Comments"
 msgstr "Megjegyzések"
 
-#: dlls/shell32/shell32.rc:146
+#: dlls/shell32/shell32.rc:142
 msgid "Original location"
 msgstr "Eredeti hely"
 
-#: dlls/shell32/shell32.rc:147
+#: dlls/shell32/shell32.rc:143
 msgid "Date deleted"
 msgstr "Törlési dátum"
 
-#: dlls/shell32/shell32.rc:154 programs/winecfg/winecfg.rc:106
+#: dlls/shell32/shell32.rc:150 programs/winecfg/winecfg.rc:106
 #: programs/winefile/winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Asztal"
 
-#: dlls/shell32/shell32.rc:155 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:151 programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Sajátgép"
 
-#: dlls/shell32/shell32.rc:157
+#: dlls/shell32/shell32.rc:153
 msgid "Control Panel"
 msgstr "Vezérlőpult"
 
-#: dlls/shell32/shell32.rc:185
+#: dlls/shell32/shell32.rc:161
+msgid "E&xplore"
+msgstr "B&öngészés"
+
+#: dlls/shell32/shell32.rc:164
+msgid "Run as &Administrator"
+msgstr ""
+
+#: dlls/shell32/shell32.rc:186
 msgid "Restart"
 msgstr "Újraindítás"
 
-#: dlls/shell32/shell32.rc:186
+#: dlls/shell32/shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Szimulálni szeretne egy Windows újraindítást?"
 
-#: dlls/shell32/shell32.rc:187
+#: dlls/shell32/shell32.rc:188
 msgid "Shutdown"
 msgstr "Leállítás"
 
-#: dlls/shell32/shell32.rc:188
+#: dlls/shell32/shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Le szeretné állítani a Wine munkamenetét?"
 
-#: dlls/shell32/shell32.rc:199 programs/progman/progman.rc:83
+#: dlls/shell32/shell32.rc:200 programs/progman/progman.rc:83
 msgid "Programs"
 msgstr "Programok"
 
-#: dlls/shell32/shell32.rc:200 dlls/shell32/shell32.rc:215
-#: dlls/shell32/shell32.rc:148 dlls/shell32/shell32.rc:231
+#: dlls/shell32/shell32.rc:201 dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:232
 msgid "Documents"
 msgstr "Dokumentumok"
 
-#: dlls/shell32/shell32.rc:201
+#: dlls/shell32/shell32.rc:202
 msgid "Favorites"
 msgstr "Kedvencek"
 
-#: dlls/shell32/shell32.rc:202
+#: dlls/shell32/shell32.rc:203
 msgid "StartUp"
 msgstr "Indítópult"
 
-#: dlls/shell32/shell32.rc:203
+#: dlls/shell32/shell32.rc:204
 msgid "Start Menu"
 msgstr "Start menü"
 
-#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:217
+#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:218
 msgid "Music"
 msgstr "Zene"
 
-#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:206 dlls/shell32/shell32.rc:220
 msgid "Videos"
 msgstr "Videók"
 
-#: dlls/shell32/shell32.rc:206
+#: dlls/shell32/shell32.rc:207
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Asztal"
 
-#: dlls/shell32/shell32.rc:207
+#: dlls/shell32/shell32.rc:208
 msgid "NetHood"
 msgstr "Hálózatok"
 
-#: dlls/shell32/shell32.rc:208
+#: dlls/shell32/shell32.rc:209
 msgid "Templates"
 msgstr "Sablonok"
 
-#: dlls/shell32/shell32.rc:209
+#: dlls/shell32/shell32.rc:210
 msgid "PrintHood"
 msgstr "Nyomtatók"
 
-#: dlls/shell32/shell32.rc:210 programs/winhlp32/winhlp32.rc:49
+#: dlls/shell32/shell32.rc:211 programs/winhlp32/winhlp32.rc:49
 msgid "History"
 msgstr "Előzmény"
 
-#: dlls/shell32/shell32.rc:211
+#: dlls/shell32/shell32.rc:212
 msgid "Program Files"
 msgstr "Programok"
 
-#: dlls/shell32/shell32.rc:213 dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:214 dlls/shell32/shell32.rc:219
 msgid "Pictures"
 msgstr "Képek"
 
-#: dlls/shell32/shell32.rc:214
+#: dlls/shell32/shell32.rc:215
 msgid "Common Files"
 msgstr "Egyszerű név"
 
-#: dlls/shell32/shell32.rc:216
+#: dlls/shell32/shell32.rc:217
 msgid "Administrative Tools"
 msgstr "Felügyeleti eszközök"
 
-#: dlls/shell32/shell32.rc:212
+#: dlls/shell32/shell32.rc:213
 msgid "Program Files (x86)"
 msgstr "Programok (x86)"
 
-#: dlls/shell32/shell32.rc:220
+#: dlls/shell32/shell32.rc:221
 msgid "Contacts"
 msgstr "Szerződések"
 
-#: dlls/shell32/shell32.rc:221 programs/winefile/winefile.rc:112
+#: dlls/shell32/shell32.rc:222 programs/winefile/winefile.rc:112
 msgid "Links"
 msgstr "Hivatkozások"
 
-#: dlls/shell32/shell32.rc:222
+#: dlls/shell32/shell32.rc:223
 msgid "Slide Shows"
 msgstr "Diavetítés"
 
-#: dlls/shell32/shell32.rc:223
+#: dlls/shell32/shell32.rc:224
 msgid "Playlists"
 msgstr "Lejátszási listák"
 
-#: dlls/shell32/shell32.rc:149 programs/taskmgr/taskmgr.rc:326
+#: dlls/shell32/shell32.rc:145 programs/taskmgr/taskmgr.rc:326
 msgid "Status"
 msgstr "Állapot"
 
-#: dlls/shell32/shell32.rc:151
+#: dlls/shell32/shell32.rc:147
 msgid "Model"
 msgstr "Modell"
 
-#: dlls/shell32/shell32.rc:224
+#: dlls/shell32/shell32.rc:225
 msgid "Sample Music"
 msgstr "Minta zene"
 
-#: dlls/shell32/shell32.rc:225
+#: dlls/shell32/shell32.rc:226
 msgid "Sample Pictures"
 msgstr "Minta képek"
 
-#: dlls/shell32/shell32.rc:226
+#: dlls/shell32/shell32.rc:227
 msgid "Sample Playlists"
 msgstr "Példa lejátszási listák"
 
-#: dlls/shell32/shell32.rc:227
+#: dlls/shell32/shell32.rc:228
 msgid "Sample Videos"
 msgstr "Minta videók"
 
-#: dlls/shell32/shell32.rc:228
+#: dlls/shell32/shell32.rc:229
 msgid "Saved Games"
 msgstr "Mentett játékok"
 
-#: dlls/shell32/shell32.rc:229
+#: dlls/shell32/shell32.rc:230
 msgid "Searches"
 msgstr "Keresések"
 
-#: dlls/shell32/shell32.rc:230
+#: dlls/shell32/shell32.rc:231
 msgid "Users"
 msgstr "Felhasználók"
 
-#: dlls/shell32/shell32.rc:232
+#: dlls/shell32/shell32.rc:233
 msgid "Downloads"
 msgstr "Letöltések"
 
-#: dlls/shell32/shell32.rc:165
+#: dlls/shell32/shell32.rc:166
 msgid "Unable to create new Folder: Permission denied."
 msgstr "Nem lehet új mappát létrehozni: Hozzáférés megtagadva."
 
-#: dlls/shell32/shell32.rc:166
+#: dlls/shell32/shell32.rc:167
 msgid "Error during creation of a new folder"
 msgstr "Hiba az új mappa létrehozása során"
 
-#: dlls/shell32/shell32.rc:167
+#: dlls/shell32/shell32.rc:168
 msgid "Confirm file deletion"
 msgstr "Fájl törlési megerősítés"
 
-#: dlls/shell32/shell32.rc:168
+#: dlls/shell32/shell32.rc:169
 msgid "Confirm folder deletion"
 msgstr "Mappa törlési megerősítés"
 
-#: dlls/shell32/shell32.rc:169
+#: dlls/shell32/shell32.rc:170
 msgid "Are you sure you want to delete '%1'?"
 msgstr "Biztos hogy törölni szeretné ezt: '%1'?"
 
-#: dlls/shell32/shell32.rc:170
+#: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete these %1 items?"
 msgstr "Biztos hogy törölni szeretné ezt a(z) %1 elemet?"
 
-#: dlls/shell32/shell32.rc:177
+#: dlls/shell32/shell32.rc:178
 msgid "Confirm file overwrite"
 msgstr "Fájl felülírási megerősítés"
 
-#: dlls/shell32/shell32.rc:176
+#: dlls/shell32/shell32.rc:177
 msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
@@ -10878,30 +10883,30 @@ msgstr ""
 "\n"
 "Le szeretné cserélni?"
 
-#: dlls/shell32/shell32.rc:171
+#: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
 msgstr "Biztos hogy törölni szeretné a kiváalsztott elem(eke)t?"
 
-#: dlls/shell32/shell32.rc:173
+#: dlls/shell32/shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
 "Biztos hogy bele szeretné helyezni ezt: '%1' és teljes tartalmát a lomtárba?"
 
-#: dlls/shell32/shell32.rc:172
+#: dlls/shell32/shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
 msgstr "Biztos hogy bele szeretné helyezni ezt: '%1' a lomtárba?"
 
-#: dlls/shell32/shell32.rc:174
+#: dlls/shell32/shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr "Biztos ohgy bele szeretné helyezni ezt a(z) %1 elemet a lomtárba?"
 
-#: dlls/shell32/shell32.rc:175
+#: dlls/shell32/shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
 "A(z) '%1' elem nem helyezhető bele a lomtárba. Szeretné törölni ehelyett?"
 
-#: dlls/shell32/shell32.rc:182
+#: dlls/shell32/shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -10915,41 +10920,41 @@ msgstr ""
 "akkor le lesznek cserélve. Még mindig folytatni szeretné a mappa\n"
 "másolását vagy áthelyezését?"
 
-#: dlls/shell32/shell32.rc:236
+#: dlls/shell32/shell32.rc:237
 msgid "Wine Control Panel"
 msgstr "Wine vezérlőpult"
 
-#: dlls/shell32/shell32.rc:191
+#: dlls/shell32/shell32.rc:192
 #, fuzzy
 #| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "Nem tudom megjeleníteni a fájl futtatás dialógusablakot (belső hiba)"
 
-#: dlls/shell32/shell32.rc:192
+#: dlls/shell32/shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Nem tudom megjeleníteni a tallózás dialógusablakot (belső hiba)"
 
-#: dlls/shell32/shell32.rc:194
+#: dlls/shell32/shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "Futtatható fájlok (*.exe)"
 
-#: dlls/shell32/shell32.rc:240
+#: dlls/shell32/shell32.rc:241
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Nincs Windowsos program társítva ennek a fájltípusnak a megnyitásához."
 
-#: dlls/shell32/shell32.rc:242
+#: dlls/shell32/shell32.rc:243
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Biztos hogy törölni szeretné ezt: '%1'?"
 
-#: dlls/shell32/shell32.rc:243
+#: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Biztos hogy törölni szeretné ezt a(z) %1 elemet?"
 
-#: dlls/shell32/shell32.rc:244
+#: dlls/shell32/shell32.rc:245
 msgid "Confirm deletion"
 msgstr "Fájl törlési megerősítés"
 
-#: dlls/shell32/shell32.rc:245
+#: dlls/shell32/shell32.rc:246
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -10959,7 +10964,7 @@ msgstr ""
 "\n"
 "Cseréli a fájlt?"
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:247
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -10969,11 +10974,11 @@ msgstr ""
 "\n"
 "Cseréli a mappát?"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:248
 msgid "Confirm overwrite"
 msgstr "Fájl felülírási megerősítés"
 
-#: dlls/shell32/shell32.rc:264
+#: dlls/shell32/shell32.rc:265
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -11003,11 +11008,11 @@ msgstr ""
 "ha nem írjon a Free Software Foundation, Inc-nek: 51 Franklin St, Fifth "
 "Floor, Boston, MA 02110-1301, USA."
 
-#: dlls/shell32/shell32.rc:252
+#: dlls/shell32/shell32.rc:253
 msgid "Wine License"
 msgstr "Wine Licensz"
 
-#: dlls/shell32/shell32.rc:156
+#: dlls/shell32/shell32.rc:152
 msgid "Trash"
 msgstr "Lomtár"
 

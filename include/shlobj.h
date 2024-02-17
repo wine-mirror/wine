@@ -391,8 +391,6 @@ typedef struct
 #define FCIDM_SHVIEW_NEWFOLDER  0x7053
 
 #define FCIDM_SHVIEW_REFRESH    0x7100 /* FIXME */
-#define FCIDM_SHVIEW_EXPLORE    0x7101 /* FIXME */
-#define FCIDM_SHVIEW_OPEN       0x7102 /* FIXME */
 
 #define FCIDM_SHVIEWLAST        0x7fff
 #define FCIDM_BROWSERFIRST      0xA000
