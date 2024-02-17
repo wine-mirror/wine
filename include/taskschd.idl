@@ -135,11 +135,14 @@ interface ITaskSettings;
 interface IIdleSettings;
 interface IRunningTask;
 interface IRunningTaskCollection;
+interface ITaskNamedValuePair;
+interface ITaskNamedValueCollection;
 interface ITrigger;
 interface ITriggerCollection;
 interface IIdleTrigger;
 interface ILogonTrigger;
 interface ISessionStateChangeTrigger;
+interface IEventTrigger;
 interface ITimeTrigger;
 interface IDailyTrigger;
 interface IWeeklyTrigger;
@@ -396,6 +399,38 @@ interface IRunningTaskCollection : IDispatch
 [
     object,
     oleautomation,
+    dual,
+    nonextensible,
+    uuid(39038068-2b46-4afd-8662-7bb6f868d221)
+]
+interface ITaskNamedValuePair : IDispatch
+{
+    [propget] HRESULT Name([out, retval] BSTR *pName);
+    [propput] HRESULT Name([in] BSTR name);
+    [propget] HRESULT Value([out, retval] BSTR *pValue);
+    [propput] HRESULT Value([in] BSTR value);
+}
+
+[
+    object,
+    oleautomation,
+    dual,
+    nonextensible,
+    uuid(b4ef826b-63c3-46e4-a504-ef69e4f7ea4d)
+]
+interface ITaskNamedValueCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] VARIANT index, [out, retval] ITaskNamedValuePair **pair);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+    HRESULT Create([in] BSTR name, [in] BSTR value, [out, retval] ITaskNamedValuePair **pair);
+    HRESULT Remove([in] LONG index);
+    HRESULT Clear();
+}
+
+[
+    object,
+    oleautomation,
     uuid(09941815-ea89-4b5b-89e0-2a773801fac3)
 ]
 interface ITrigger : IDispatch
@@ -453,6 +488,22 @@ interface ISessionStateChangeTrigger : ITrigger
     [propput] HRESULT UserId([in] BSTR user);
     [propget] HRESULT StateChange([out, retval] TASK_SESSION_STATE_CHANGE_TYPE *pType);
     [propput] HRESULT StateChange([in] TASK_SESSION_STATE_CHANGE_TYPE type);
+}
+
+[
+    uuid(d45b0167-9653-4eef-b94f-0732ca7af251),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IEventTrigger : ITrigger
+{
+    [propget] HRESULT Subscription([out, retval] BSTR *pQuery);
+    [propput] HRESULT Subscription([in] BSTR query);
+    [propget] HRESULT Delay([out, retval] BSTR *pDelay);
+    [propput] HRESULT Delay([in] BSTR delay);
+    [propget] HRESULT ValueQueries([out, retval] ITaskNamedValueCollection **ppNamedXPaths);
+    [propput] HRESULT ValueQueries([in] ITaskNamedValueCollection *pNamedXPaths);
 }
 
 [
