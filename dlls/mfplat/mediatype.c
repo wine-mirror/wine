@@ -21,6 +21,7 @@
 #include "mfplat_private.h"
 #include <math.h>
 
+#include "dxva.h"
 #include "dxva2api.h"
 #include "uuids.h"
 #include "strmif.h"
@@ -3815,6 +3816,24 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
             mediatype_set_uint64(media_type, &MF_MT_FRAME_RATE, num, den, &hr);
     }
 
+    if (vih->dwControlFlags & AMCONTROL_COLORINFO_PRESENT)
+    {
+        DXVA_ExtendedFormat *format = (DXVA_ExtendedFormat *)&vih->dwControlFlags;
+
+        if (format->VideoChromaSubsampling)
+            mediatype_set_uint32(media_type, &MF_MT_VIDEO_CHROMA_SITING, format->VideoChromaSubsampling, &hr);
+        if (format->NominalRange)
+            mediatype_set_uint32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, format->NominalRange, &hr);
+        if (format->VideoTransferMatrix)
+            mediatype_set_uint32(media_type, &MF_MT_YUV_MATRIX, format->VideoTransferMatrix, &hr);
+        if (format->VideoLighting)
+            mediatype_set_uint32(media_type, &MF_MT_VIDEO_LIGHTING, format->VideoLighting, &hr);
+        if (format->VideoPrimaries)
+            mediatype_set_uint32(media_type, &MF_MT_VIDEO_PRIMARIES, format->VideoPrimaries, &hr);
+        if (format->VideoTransferFunction)
+            mediatype_set_uint32(media_type, &MF_MT_TRANSFER_FUNCTION, format->VideoTransferFunction, &hr);
+    }
+
     return hr;
 }
 
@@ -3930,7 +3949,8 @@ static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 us
 static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, IMFMediaType *media_type)
 {
     struct uncompressed_video_format *video_format = mf_get_video_format(subtype);
-    UINT32 image_size, bitrate, sample_size, width, height;
+    DXVA_ExtendedFormat *format = (DXVA_ExtendedFormat *)&vih->dwControlFlags;
+    UINT32 image_size, bitrate, sample_size, width, height, value;
     UINT64 frame_size, frame_rate;
 
     vih->bmiHeader.biSize = sizeof(vih->bmiHeader);
@@ -3975,6 +3995,23 @@ static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, 
             vih->rcSource.bottom = vih->rcTarget.bottom = height;
         }
     }
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_CHROMA_SITING, &value)))
+        format->VideoChromaSubsampling = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value)))
+        format->NominalRange = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &value)))
+        format->VideoTransferMatrix = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_LIGHTING, &value)))
+        format->VideoLighting = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_PRIMARIES, &value)))
+        format->VideoPrimaries = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_TRANSFER_FUNCTION, &value)))
+        format->VideoTransferFunction = value;
+
+    if (format->VideoChromaSubsampling || format->NominalRange || format->VideoTransferMatrix
+            || format->VideoLighting || format->VideoPrimaries || format->VideoTransferFunction)
+        format->SampleFormat = AMCONTROL_COLORINFO_PRESENT;
 }
 
 static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)

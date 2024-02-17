@@ -10348,9 +10348,7 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == MFVideoTransferMatrix_SMPTE240M, "Unexpected value %#x.\n", value32);
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value32);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
@@ -10360,9 +10358,7 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == MFNominalRange_Wide, "Unexpected value %#x.\n", value32);
 
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value32);
