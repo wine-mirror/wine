@@ -1566,7 +1566,7 @@ static inline XA2VoiceImpl *create_voice(IXAudio2Impl *This)
     voice->IXAudio2SubmixVoice_iface.lpVtbl = &XAudio2SubmixVoice_Vtbl;
     voice->FAudioVoiceCallback_vtbl = FAudioVoiceCallback_Vtbl;
 
-    InitializeCriticalSection(&voice->lock);
+    InitializeCriticalSectionEx(&voice->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     voice->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2VoiceImpl.lock");
 
     return voice;
@@ -1900,10 +1900,10 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
     list_init(&object->voices);
 
-    InitializeCriticalSection(&object->lock);
+    InitializeCriticalSectionEx(&object->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IXAudio2Impl.lock");
 
-    InitializeCriticalSection(&object->mst.lock);
+    InitializeCriticalSectionEx(&object->mst.lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->mst.lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2MasteringVoice.lock");
 
     FAudioCOMConstructWithCustomAllocatorEXT(
