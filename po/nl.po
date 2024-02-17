@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2023-12-11 19:30+0100\n"
+"PO-Revision-Date: 2024-02-17 17:00+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -4092,22 +4092,21 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kan onschrijfbare eigenschap '|' niet veranderen"
 
 #: dlls/jscript/jscript.rc:80
-#, fuzzy
-#| msgid "'this' is not a | object"
 msgid "'this' is not a DataView object"
-msgstr "'this' is geen | object"
+msgstr "'this' is geen DataView object"
 
 #: dlls/jscript/jscript.rc:81
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
+"Vereiste argument offset of waarde in DataView methode is niet opgegeven"
 
 #: dlls/jscript/jscript.rc:82
 msgid "DataView operation access beyond specified buffer length"
-msgstr ""
+msgstr "DataView bewerkingstoegang buiten opgegeven bufferlengte"
 
 #: dlls/jscript/jscript.rc:83
 msgid "DataView constructor argument offset is invalid"
-msgstr ""
+msgstr "Ongeldige offset van het DataView constructor argument"
 
 #: dlls/jscript/jscript.rc:84
 msgid "'this' is not a | object"
@@ -4118,10 +4117,8 @@ msgid "'key' is not an object"
 msgstr "'key' is geen object"
 
 #: dlls/jscript/jscript.rc:86
-#, fuzzy
-#| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
-msgstr "Array object verwacht"
+msgstr "ArrayBuffer object verwacht"
 
 #: dlls/jscript/jscript.rc:87
 msgid "Property cannot have both accessors and a value"
@@ -7147,7 +7144,7 @@ msgstr "Ongeldig argument.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "Kan het gevraagde adres niet toewijzen.\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -15117,7 +15114,7 @@ msgstr "De volgende services draaien:\n"
 
 #: programs/net/net.rc:44
 msgid "A command was used with conflicting switches.\n"
-msgstr ""
+msgstr "Er is een opdracht gebruikt met tegenstrijdige parameters.\n"
 
 #: programs/netstat/netstat.rc:30
 msgid "Active Connections"
