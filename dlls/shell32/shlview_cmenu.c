@@ -634,6 +634,39 @@ error:
     free(props);
 }
 
+static void get_filetype(LPCITEMIDLIST pidl, WCHAR filetype[MAX_PATH])
+{
+    if (_ILIsValue(pidl))
+    {
+        char ext[64], filetypeA[64];
+
+        if (_ILGetExtension(pidl, ext, 64))
+        {
+            HCR_MapTypeToValueA(ext, filetypeA, 64, TRUE);
+            MultiByteToWideChar(CP_ACP, 0, filetypeA, -1, filetype, MAX_PATH);
+        }
+        else
+        {
+            filetype[0] = 0;
+        }
+    }
+    else if (_ILIsFolder(pidl))
+    {
+        wcscpy(filetype, L"Folder");
+    }
+    else if (_ILIsSpecialFolder(pidl))
+    {
+        GUID *guid = _ILGetGUIDPointer(pidl);
+
+        wcscpy(filetype, L"CLSID\\");
+        StringFromGUID2(guid, &filetype[6], MAX_PATH - 6);
+    }
+    else
+    {
+        FIXME("Unknown pidl type.\n");
+    }
+}
+
 #define MAX_PROP_PAGES 99
 
 static void DoOpenProperties(ContextMenu *This, HWND hwnd)
@@ -661,37 +694,7 @@ static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 	_ILSimpleGetTextW(This->apidl[0], (LPVOID)wszFilename, MAX_PATH);
 	psh.pszCaption = (LPCWSTR)wszFilename;
 
-	/* Find out where to look for the shell extensions */
-	if (_ILIsValue(This->apidl[0]))
-	{
-	    char sTemp[64];
-	    sTemp[0] = 0;
-	    if (_ILGetExtension(This->apidl[0], sTemp, 64))
-	    {
-		HCR_MapTypeToValueA(sTemp, sTemp, 64, TRUE);
-		MultiByteToWideChar(CP_ACP, 0, sTemp, -1, wszFiletype, MAX_PATH);
-	    }
-	    else
-	    {
-		wszFiletype[0] = 0;
-	    }
-	}
-	else if (_ILIsFolder(This->apidl[0]))
-	{
-	    lstrcpynW(wszFiletype, L"Folder", 64);
-	}
-	else if (_ILIsSpecialFolder(This->apidl[0]))
-	{
-	    LPGUID folderGUID;
-	    folderGUID = _ILGetGUIDPointer(This->apidl[0]);
-	    lstrcpyW(wszFiletype, L"CLSID\\");
-	    StringFromGUID2(folderGUID, &wszFiletype[6], MAX_PATH - 6);
-	}
-	else
-	{
-	    FIXME("Requested properties for unknown type.\n");
-	    return;
-	}
+    get_filetype(This->apidl[0], wszFiletype);
 
 	/* Get a suitable DataObject for accessing the files */
 	SHGetDesktopFolder(&lpDesktopSF);
