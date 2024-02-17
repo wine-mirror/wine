@@ -76,6 +76,16 @@ typedef enum _TASK_TRIGGER_TYPE2
     TASK_TRIGGER_CUSTOM_TRIGGER_01
 } TASK_TRIGGER_TYPE2;
 
+typedef enum _TASK_SESSION_STATE_CHANGE_TYPE
+{
+    TASK_CONSOLE_CONNECT = 1,
+    TASK_CONSOLE_DISCONNECT,
+    TASK_REMOTE_CONNECT,
+    TASK_REMOTE_DISCONNECT,
+    TASK_SESSION_LOCK = 7,
+    TASK_SESSION_UNLOCK
+} TASK_SESSION_STATE_CHANGE_TYPE;
+
 typedef enum _TASK_ACTION_TYPE
 {
     TASK_ACTION_EXEC = 0,
@@ -129,6 +139,7 @@ interface ITrigger;
 interface ITriggerCollection;
 interface IIdleTrigger;
 interface ILogonTrigger;
+interface ISessionStateChangeTrigger;
 interface ITimeTrigger;
 interface IDailyTrigger;
 interface IWeeklyTrigger;
@@ -426,6 +437,22 @@ interface ILogonTrigger : ITrigger
     [propput] HRESULT Delay([in] BSTR delay);
     [propget] HRESULT UserId([out, retval] BSTR *pUser);
     [propput] HRESULT UserId([in] BSTR user);
+}
+
+[
+    uuid(754da71b-4385-4475-9dd9-598294fa3641),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface ISessionStateChangeTrigger : ITrigger
+{
+    [propget] HRESULT Delay([out, retval] BSTR *pDelay);
+    [propput] HRESULT Delay([in] BSTR delay);
+    [propget] HRESULT UserId([out, retval] BSTR *pUser);
+    [propput] HRESULT UserId([in] BSTR user);
+    [propget] HRESULT StateChange([out, retval] TASK_SESSION_STATE_CHANGE_TYPE *pType);
+    [propput] HRESULT StateChange([in] TASK_SESSION_STATE_CHANGE_TYPE type);
 }
 
 [
