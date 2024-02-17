@@ -3791,6 +3791,9 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
         mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
     }
 
+    if (vih->bmiHeader.biSizeImage)
+        mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, vih->bmiHeader.biSizeImage, &hr);
+
     return hr;
 }
 
