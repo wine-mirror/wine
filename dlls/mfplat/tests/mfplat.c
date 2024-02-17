@@ -10084,28 +10084,20 @@ static void test_MFInitMediaTypeFromVideoInfoHeader(void)
     value32 = 0xdeadbeef;
     memset(&aperture, 0xcd, sizeof(aperture));
     hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == sizeof(aperture), "got %d.\n", value32);
-    todo_wine
     ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     value32 = 0xdeadbeef;
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == 1, "got %d.\n", (UINT32)value32);
 
     value32 = 0xdeadbeef;
     memset(&aperture, 0xcd, sizeof(aperture));
     hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == sizeof(aperture), "got %d.\n", value32);
-    todo_wine
     ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     hr = IMFMediaType_GetItem(media_type, &MF_MT_GEOMETRIC_APERTURE, NULL);
@@ -10407,28 +10399,20 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     value32 = 0xdeadbeef;
     memset(&aperture, 0xcd, sizeof(aperture));
     hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == sizeof(aperture), "got %d.\n", value32);
-    todo_wine
     ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     value32 = 0xdeadbeef;
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == 1, "got %d.\n", (UINT32)value32);
 
     value32 = 0xdeadbeef;
     memset(&aperture, 0xcd, sizeof(aperture));
     hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == sizeof(aperture), "got %d.\n", value32);
-    todo_wine
     ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     hr = IMFMediaType_GetItem(media_type, &MF_MT_GEOMETRIC_APERTURE, NULL);
@@ -10706,11 +10690,8 @@ static void test_MFInitMediaTypeFromAMMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value32 == 12345678, "got %d.\n", (UINT32)value32);
     hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(value32 == sizeof(aperture), "got %d.\n", value32);
-    todo_wine
     ok(!memcmp(&aperture, &expect_aperture, sizeof(aperture)), "unexpected aperture\n");
 
     vih.bmiHeader.biHeight = 24;

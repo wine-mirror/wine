@@ -3794,6 +3794,20 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
     if (vih->bmiHeader.biSizeImage)
         mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, vih->bmiHeader.biSizeImage, &hr);
 
+    if (vih->rcSource.left || vih->rcSource.top || vih->rcSource.right || vih->rcSource.bottom)
+    {
+        MFVideoArea aperture = {{0}};
+
+        aperture.OffsetX.value = vih->rcSource.left;
+        aperture.OffsetY.value = vih->rcSource.top;
+        aperture.Area.cx = vih->rcSource.right - vih->rcSource.left;
+        aperture.Area.cy = vih->rcSource.bottom - vih->rcSource.top;
+
+        mediatype_set_uint32(media_type, &MF_MT_PAN_SCAN_ENABLED, 1, &hr);
+        mediatype_set_blob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &hr);
+        mediatype_set_blob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &hr);
+    }
+
     return hr;
 }
 
