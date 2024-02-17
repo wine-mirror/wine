@@ -1606,12 +1606,12 @@ fluid_server_socket_t *
 new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 {
     fluid_server_socket_t *server_socket;
+    struct sockaddr_in addr4;
 #ifdef IPV6_SUPPORT
-    struct sockaddr_in6 addr;
-#else
-    struct sockaddr_in addr;
+    struct sockaddr_in6 addr6;
 #endif
-
+    const struct sockaddr *addr;
+    size_t addr_size;
     fluid_socket_t sock;
 
     fluid_return_val_if_fail(func != NULL, NULL);
@@ -1621,38 +1621,46 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
 
+    FLUID_MEMSET(&addr4, 0, sizeof(addr4));
+    addr4.sin_family = AF_INET;
+    addr4.sin_port = htons((uint16_t)port);
+    addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+
 #ifdef IPV6_SUPPORT
-    sock = socket(AF_INET6, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
-    addr.sin6_port = htons((uint16_t)port);
-    addr.sin6_addr = in6addr_any;
-#else
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons((uint16_t)port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    FLUID_MEMSET(&addr6, 0, sizeof(addr6));
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_port = htons((uint16_t)port);
+    addr6.sin6_addr = in6addr_any;
 #endif
 
-    if(bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR)
+#ifdef IPV6_SUPPORT
+    sock = socket(AF_INET6, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr6;
+    addr_size = sizeof(addr6);
+
+    if(sock == INVALID_SOCKET)
+    {
+        FLUID_LOG(FLUID_WARN, "Failed to create IPv6 server socket: %d (will try with IPv4)", fluid_socket_get_error());
+
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        addr = (const struct sockaddr *) &addr4;
+        addr_size = sizeof(addr4);
+    }
+
+#else
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr4;
+    addr_size = sizeof(addr4);
+#endif
+
+    if(sock == INVALID_SOCKET)
+    {
+        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
+        fluid_socket_cleanup();
+        return NULL;
+    }
+
+    if(bind(sock, addr, addr_size) == SOCKET_ERROR)
     {
         FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
         fluid_socket_close(sock);

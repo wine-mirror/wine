@@ -1641,6 +1641,23 @@ fluid_player_handle_reset_synth(void *data, const char *name, int value)
     player->reset_synth_between_songs = value;
 }
 
+static int check_for_on_notes(fluid_synth_t *synth)
+{
+    fluid_voice_t* v[1024];
+    int i, res=FALSE;
+    fluid_synth_get_voicelist(synth, v, FLUID_N_ELEMENTS(v), -1);
+    for(i=0; i<FLUID_N_ELEMENTS(v) && v[i] != NULL; i++)
+    {
+        fluid_voice_t *vv = v[i];
+        if(vv != NULL && fluid_voice_is_on(vv))
+        {
+            res = TRUE;
+            FLUID_LOG(FLUID_DBG, "Voice is on! channel %d, key %d", fluid_voice_get_channel(vv), fluid_voice_get_key(vv));
+        }
+    }
+    return res;
+}
+
 /**
  * Create a new MIDI player.
  * @param synth Fluid synthesizer instance to create player for
@@ -2197,10 +2214,16 @@ fluid_player_callback(void *data, unsigned int msec)
                 /* The first time we notice we've run out of MIDI events but there are still active voices, disable all hold pedals */
                 if(!player->end_pedals_disabled)
                 {
+                    if(check_for_on_notes(synth))
+                    {
+                        FLUID_LOG(FLUID_WARN, "End of the MIDI file reached, but not all notes have received a note off event! OFFing them now! Run with --verbose to spot pending voices.");
+                    }
+
                     for(i = 0; i < synth->midi_channels; i++)
                     {
                         fluid_synth_cc(player->synth, i, SUSTAIN_SWITCH, 0);
                         fluid_synth_cc(player->synth, i, SOSTENUTO_SWITCH, 0);
+                        fluid_synth_cc(player->synth, i, ALL_NOTES_OFF, 0);
                     }
 
                     player->end_pedals_disabled = 1;
@@ -2268,6 +2291,7 @@ fluid_player_play(fluid_player_t *player)
     if(!player->use_system_timer)
     {
         fluid_sample_timer_reset(player->synth, player->sample_timer);
+        player->cur_msec = 0;
     }
 
     /* If we're at the end of the playlist and there are no loops left, loop once */
