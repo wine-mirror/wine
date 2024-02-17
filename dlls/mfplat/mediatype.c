@@ -3903,11 +3903,51 @@ static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 us
     return S_OK;
 }
 
-static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, IMFMediaType *media_type)
 {
+    struct uncompressed_video_format *video_format = mf_get_video_format(subtype);
     UINT32 image_size, bitrate, sample_size;
     UINT64 frame_size, frame_rate;
     INT32 width, height;
+
+    vih->bmiHeader.biSize = sizeof(vih->bmiHeader);
+    vih->bmiHeader.biPlanes = 1;
+    vih->bmiHeader.biBitCount = video_format ? video_format->bpp : 0;
+
+    if (video_format && video_format->compression != -1)
+        vih->bmiHeader.biCompression = video_format->compression;
+    else
+        vih->bmiHeader.biCompression = subtype->Data1;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &bitrate)))
+        vih->dwBitRate = bitrate;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &bitrate)))
+        vih->dwBitErrorRate = bitrate;
+    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &frame_rate)) && (frame_rate >> 32))
+        vih->AvgTimePerFrame = round(10000000. * (UINT32)frame_rate / (frame_rate >> 32));
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &sample_size)))
+        vih->bmiHeader.biSizeImage = sample_size;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        BOOL bottom_up = vih->bmiHeader.biCompression == BI_RGB || vih->bmiHeader.biCompression == BI_BITFIELDS;
+
+        if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&width)))
+            width = (frame_size >> 32) * (bottom_up ? -1 : 1);
+        else if (video_format)
+            width /= video_format->bpp / 8;
+        height = (UINT32)frame_size;
+
+        vih->bmiHeader.biWidth = abs(width);
+        vih->bmiHeader.biHeight = height * (bottom_up && width >= 0 ? -1 : 1);
+
+        if (SUCCEEDED(MFCalculateImageSize(subtype, abs(width), height, &image_size)))
+            vih->bmiHeader.biSizeImage = image_size;
+    }
+}
+
+static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+{
     HRESULT hr;
 
     if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx))
@@ -3920,7 +3960,7 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
     if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
             || IsEqualGUID(&am_type->formattype, &GUID_NULL))
     {
-        struct uncompressed_video_format *video_format = mf_get_video_format(&am_type->subtype);
+        VIDEOINFOHEADER2 vih = {{0}};
         VIDEOINFOHEADER *format;
 
         am_type->cbFormat = sizeof(*format) + user_size;
@@ -3929,53 +3969,41 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
         format = (VIDEOINFOHEADER *)am_type->pbFormat;
         memset(format, 0, sizeof(*format));
 
-        format->bmiHeader.biSize = sizeof(format->bmiHeader) + user_size;
-        format->bmiHeader.biPlanes = 1;
-        format->bmiHeader.biBitCount = video_format ? video_format->bpp : 0;
-
-        if (video_format && video_format->compression != -1)
-            format->bmiHeader.biCompression = video_format->compression;
-        else
-            format->bmiHeader.biCompression = am_type->subtype.Data1;
-
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &bitrate)))
-            format->dwBitRate = bitrate;
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &bitrate)))
-            format->dwBitErrorRate = bitrate;
-        if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &frame_rate)) && (frame_rate >> 32))
-            format->AvgTimePerFrame = round(10000000. * (UINT32)frame_rate / (frame_rate >> 32));
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &sample_size)))
-            format->bmiHeader.biSizeImage = sample_size;
-
-        if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
-        {
-            BOOL bottom_up = format->bmiHeader.biCompression == BI_RGB || format->bmiHeader.biCompression == BI_BITFIELDS;
-
-            if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&width)))
-                width = (frame_size >> 32) * (bottom_up ? -1 : 1);
-            else if (video_format)
-                width /= video_format->bpp / 8;
-            height = (UINT32)frame_size;
-
-            format->bmiHeader.biWidth = abs(width);
-            format->bmiHeader.biHeight = height * (bottom_up && width >= 0 ? -1 : 1);
-
-            if (SUCCEEDED(MFCalculateImageSize(&am_type->subtype, abs(width), height, &image_size)))
-                format->bmiHeader.biSizeImage = image_size;
-        }
+        init_video_info_header2(&vih, &am_type->subtype, media_type);
+        format->rcSource = vih.rcSource;
+        format->rcTarget = vih.rcTarget;
+        format->dwBitRate = vih.dwBitRate;
+        format->dwBitErrorRate = vih.dwBitErrorRate;
+        format->AvgTimePerFrame = vih.AvgTimePerFrame;
+        format->bmiHeader = vih.bmiHeader;
 
         if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
                 (BYTE *)(format + 1), user_size, NULL)))
             return hr;
+        format->bmiHeader.biSize += user_size;
 
         am_type->formattype = FORMAT_VideoInfo;
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
     }
     else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
     {
-        FIXME("Not implemented!\n");
-        am_type->formattype = GUID_NULL;
-        return E_NOTIMPL;
+        VIDEOINFOHEADER2 *format;
+
+        am_type->cbFormat = sizeof(*format) + user_size;
+        if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
+            return E_OUTOFMEMORY;
+        format = (VIDEOINFOHEADER2 *)am_type->pbFormat;
+        memset(format, 0, sizeof(*format));
+
+        init_video_info_header2(format, &am_type->subtype, media_type);
+
+        if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                (BYTE *)(format + 1), user_size, NULL)))
+            return hr;
+        format->bmiHeader.biSize += user_size;
+
+        am_type->formattype = FORMAT_VideoInfo2;
+        am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
     }
     else
     {

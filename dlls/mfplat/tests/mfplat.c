@@ -7213,11 +7213,11 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_VideoInfo2, &am_type);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
-    todo_wine ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
-    todo_wine ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo2), "got %s.\n", debugstr_guid(&am_type.formattype));
-    todo_wine ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER2), "got %lu\n", am_type.cbFormat);
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo2), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER2), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
     hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
