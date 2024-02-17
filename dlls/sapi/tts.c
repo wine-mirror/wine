@@ -179,11 +179,11 @@ static ULONG WINAPI speech_voice_Release(ISpeechVoice *iface)
     return ref;
 }
 
-static HRESULT WINAPI speech_voice_GetTypeInfoCount(ISpeechVoice *iface, UINT *info)
+static HRESULT WINAPI speech_voice_GetTypeInfoCount(ISpeechVoice *iface, UINT *count)
 {
-    FIXME("(%p, %p): stub.\n", iface, info);
-
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, count);
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT info, LCID lcid,

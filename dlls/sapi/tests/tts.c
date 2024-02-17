@@ -435,6 +435,7 @@ static void test_spvoice(void)
     ISpeechObjectTokens *speech_tokens;
     LONG count;
     BSTR req = NULL, opt = NULL;
+    UINT info_count;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -712,6 +713,11 @@ static void test_spvoice(void)
 
     hr = ISpeechVoice_Speak(speech_voice, NULL, SVSFPurgeBeforeSpeak, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
+
+    info_count = 0xdeadbeef;
+    hr = ISpeechVoice_GetTypeInfoCount(speech_voice, &info_count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(info_count == 1, "got %u.\n", info_count);
 
     ISpeechVoice_Release(speech_voice);
 
