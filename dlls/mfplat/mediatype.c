@@ -3923,9 +3923,8 @@ static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 us
 static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, IMFMediaType *media_type)
 {
     struct uncompressed_video_format *video_format = mf_get_video_format(subtype);
-    UINT32 image_size, bitrate, sample_size;
+    UINT32 image_size, bitrate, sample_size, width, height;
     UINT64 frame_size, frame_rate;
-    INT32 width, height;
 
     vih->bmiHeader.biSize = sizeof(vih->bmiHeader);
     vih->bmiHeader.biPlanes = 1;
@@ -3948,18 +3947,26 @@ static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, 
     if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
         BOOL bottom_up = vih->bmiHeader.biCompression == BI_RGB || vih->bmiHeader.biCompression == BI_BITFIELDS;
+        INT32 stride;
 
-        if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&width)))
-            width = (frame_size >> 32) * (bottom_up ? -1 : 1);
+        width = frame_size >> 32;
+        if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)))
+            stride = width * (bottom_up ? -1 : 1);
         else if (video_format)
-            width /= video_format->bpp / 8;
+            stride /= video_format->bpp / 8;
         height = (UINT32)frame_size;
 
-        vih->bmiHeader.biWidth = abs(width);
-        vih->bmiHeader.biHeight = height * (bottom_up && width >= 0 ? -1 : 1);
+        vih->bmiHeader.biWidth = abs(stride);
+        vih->bmiHeader.biHeight = height * (bottom_up && stride >= 0 ? -1 : 1);
 
-        if (SUCCEEDED(MFCalculateImageSize(subtype, abs(width), height, &image_size)))
+        if (SUCCEEDED(MFCalculateImageSize(subtype, abs(stride), height, &image_size)))
             vih->bmiHeader.biSizeImage = image_size;
+
+        if (vih->bmiHeader.biWidth > width)
+        {
+            vih->rcSource.right = vih->rcTarget.right = width;
+            vih->rcSource.bottom = vih->rcTarget.bottom = height;
+        }
     }
 }
 
