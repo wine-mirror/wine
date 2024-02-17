@@ -441,7 +441,7 @@ static WCHAR *query_container_id(DEVICE_OBJECT *device)
     WCHAR *dst;
 
     if ((dst = ExAllocatePool(PagedPool, size)))
-        memcpy(dst, ext->instance_id, size);
+        memcpy(dst, ext->container_id, size);
 
     return dst;
 }
