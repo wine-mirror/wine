@@ -39,12 +39,10 @@
 /** DOC_DISABLE */
 /* Compatibility */
 #define XMLCALL
-#define XMLCDECL WINAPIV
+#define XMLCDECL
 #if !defined(LIBXML_DLL_IMPORT)
 #define LIBXML_DLL_IMPORT XMLPUBVAR
 #endif
 /** DOC_ENABLE */
 
 #endif /* __XML_EXPORTS_H__ */
-
-

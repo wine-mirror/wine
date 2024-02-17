@@ -92,7 +92,7 @@ typedef xmlSchema *xmlSchemaPtr;
  *
  * Signature of an error callback from an XSD validation
  */
-typedef void (XMLCDECL *xmlSchemaValidityErrorFunc)
+typedef void (*xmlSchemaValidityErrorFunc)
                  (void *ctx, const char *msg, ...) LIBXML_ATTR_FORMAT(2,3);
 
 /**
@@ -103,7 +103,7 @@ typedef void (XMLCDECL *xmlSchemaValidityErrorFunc)
  *
  * Signature of a warning callback from an XSD validation
  */
-typedef void (XMLCDECL *xmlSchemaValidityWarningFunc)
+typedef void (*xmlSchemaValidityWarningFunc)
                  (void *ctx, const char *msg, ...) LIBXML_ATTR_FORMAT(2,3);
 
 /**
@@ -128,7 +128,7 @@ typedef xmlSchemaValidCtxt *xmlSchemaValidCtxtPtr;
  * Returns: 0 in case of success and -1 in case of error
  */
 
-typedef int (XMLCDECL *xmlSchemaValidityLocatorFunc) (void *ctx,
+typedef int (*xmlSchemaValidityLocatorFunc) (void *ctx,
                            const char **file, unsigned long *line);
 
 /*

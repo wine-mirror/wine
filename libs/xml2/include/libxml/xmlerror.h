@@ -844,7 +844,7 @@ typedef enum {
  * Signature of the function to use when there is an error and
  * no parsing or validity context available .
  */
-typedef void (XMLCDECL *xmlGenericErrorFunc) (void *ctx,
+typedef void (*xmlGenericErrorFunc) (void *ctx,
 				 const char *msg,
 				 ...) LIBXML_ATTR_FORMAT(2,3);
 /**
@@ -875,19 +875,19 @@ XMLPUBFUN void
  * Default message routines used by SAX and Valid context for error
  * and warning reporting.
  */
-XMLPUBFUN void XMLCDECL
+XMLPUBFUN void
     xmlParserError		(void *ctx,
 				 const char *msg,
 				 ...) LIBXML_ATTR_FORMAT(2,3);
-XMLPUBFUN void XMLCDECL
+XMLPUBFUN void
     xmlParserWarning		(void *ctx,
 				 const char *msg,
 				 ...) LIBXML_ATTR_FORMAT(2,3);
-XMLPUBFUN void XMLCDECL
+XMLPUBFUN void
     xmlParserValidityError	(void *ctx,
 				 const char *msg,
 				 ...) LIBXML_ATTR_FORMAT(2,3);
-XMLPUBFUN void XMLCDECL
+XMLPUBFUN void
     xmlParserValidityWarning	(void *ctx,
 				 const char *msg,
 				 ...) LIBXML_ATTR_FORMAT(2,3);

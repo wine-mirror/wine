@@ -20342,7 +20342,7 @@ xmlSchemaResolveAttrUseReferences(xmlSchemaAttributeUsePtr ause,
 		WXS_BASIC_CAST ause, ause->node,
 		"ref", ref->name, ref->targetNamespace,
 		XML_SCHEMA_TYPE_ATTRIBUTE, NULL);
-            return(ctxt->err);;
+            return(ctxt->err);
         }
     }
     return(0);
@@ -23011,7 +23011,7 @@ xmlSchemaXPathProcessHistory(xmlSchemaValidCtxtPtr vctxt,
 		} else if (pos >= matcher->sizeKeySeqs) {
 		    int i = matcher->sizeKeySeqs;
 
-		    matcher->sizeKeySeqs *= 2;
+		    matcher->sizeKeySeqs = pos * 2;
 		    matcher->keySeqs = (xmlSchemaPSVIIDCKeyPtr **)
 			xmlRealloc(matcher->keySeqs,
 			matcher->sizeKeySeqs *
@@ -28716,7 +28716,7 @@ commentSplit(void *ctx, const xmlChar *value)
  * Varargs error callbacks to the user application, harder ...
  */
 
-static void XMLCDECL
+static void
 warningSplit(void *ctx, const char *msg ATTRIBUTE_UNUSED, ...) {
     xmlSchemaSAXPlugPtr ctxt = (xmlSchemaSAXPlugPtr) ctx;
     if ((ctxt != NULL) && (ctxt->user_sax != NULL) &&
@@ -28724,7 +28724,7 @@ warningSplit(void *ctx, const char *msg ATTRIBUTE_UNUSED, ...) {
 	TODO
     }
 }
-static void XMLCDECL
+static void
 errorSplit(void *ctx, const char *msg ATTRIBUTE_UNUSED, ...) {
     xmlSchemaSAXPlugPtr ctxt = (xmlSchemaSAXPlugPtr) ctx;
     if ((ctxt != NULL) && (ctxt->user_sax != NULL) &&
@@ -28732,7 +28732,7 @@ errorSplit(void *ctx, const char *msg ATTRIBUTE_UNUSED, ...) {
 	TODO
     }
 }
-static void XMLCDECL
+static void
 fatalErrorSplit(void *ctx, const char *msg ATTRIBUTE_UNUSED, ...) {
     xmlSchemaSAXPlugPtr ctxt = (xmlSchemaSAXPlugPtr) ctx;
     if ((ctxt != NULL) && (ctxt->user_sax != NULL) &&
@@ -29117,7 +29117,7 @@ xmlSchemaValidateStream(xmlSchemaValidCtxtPtr ctxt,
     pctxt->linenumbers = 1;
     xmlSchemaValidateSetLocator(ctxt, xmlSchemaValidateStreamLocator, pctxt);
 
-    inputStream = xmlNewIOInputStream(pctxt, input, enc);;
+    inputStream = xmlNewIOInputStream(pctxt, input, enc);
     if (inputStream == NULL) {
         ret = -1;
 	goto done;

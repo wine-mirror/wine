@@ -67,7 +67,7 @@
  *
  * Default handler for out of context error messages.
  */
-void XMLCDECL
+void
 xmlGenericErrorDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
     va_list args;
 
@@ -466,7 +466,7 @@ xmlReportError(xmlErrorPtr err, xmlParserCtxtPtr ctxt, const char *str,
  * then forward the error message down the parser or generic
  * error callback handler
  */
-void XMLCDECL
+void
 __xmlRaiseError(xmlStructuredErrorFunc schannel,
               xmlGenericErrorFunc channel, void *data, void *ctx,
               void *nod, int domain, int code, xmlErrorLevel level,
@@ -705,7 +705,7 @@ __xmlSimpleError(int domain, int code, xmlNodePtr node,
  * Display and format an error messages, gives file, line, position and
  * extra parameters.
  */
-void XMLCDECL
+void
 xmlParserError(void *ctx, const char *msg, ...)
 {
     xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) ctx;
@@ -748,7 +748,7 @@ xmlParserError(void *ctx, const char *msg, ...)
  * Display and format a warning messages, gives file, line, position and
  * extra parameters.
  */
-void XMLCDECL
+void
 xmlParserWarning(void *ctx, const char *msg, ...)
 {
     xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) ctx;
@@ -797,7 +797,7 @@ xmlParserWarning(void *ctx, const char *msg, ...)
  * Display and format an validity error messages, gives file,
  * line, position and extra parameters.
  */
-void XMLCDECL
+void
 xmlParserValidityError(void *ctx, const char *msg, ...)
 {
     xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) ctx;
@@ -841,7 +841,7 @@ xmlParserValidityError(void *ctx, const char *msg, ...)
  * Display and format a validity warning messages, gives file, line,
  * position and extra parameters.
  */
-void XMLCDECL
+void
 xmlParserValidityWarning(void *ctx, const char *msg, ...)
 {
     xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) ctx;
@@ -1021,4 +1021,3 @@ xmlCopyError(xmlErrorPtr from, xmlErrorPtr to) {
 
     return 0;
 }
-
