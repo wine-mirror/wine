@@ -123,7 +123,7 @@
 @ stub MFInitMediaTypeFromMFVideoFormat
 @ stub MFInitMediaTypeFromMPEG1VideoInfo
 @ stub MFInitMediaTypeFromMPEG2VideoInfo
-@ stub MFInitMediaTypeFromVideoInfoHeader2
+@ stdcall MFInitMediaTypeFromVideoInfoHeader2(ptr ptr long ptr)
 @ stdcall MFInitMediaTypeFromVideoInfoHeader(ptr ptr long ptr)
 @ stdcall MFInitMediaTypeFromWaveFormatEx(ptr ptr long)
 @ stub MFInitVideoFormat

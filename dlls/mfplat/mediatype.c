@@ -25,6 +25,7 @@
 #include "uuids.h"
 #include "strmif.h"
 #include "initguid.h"
+#include "dvdmedia.h"
 #include "ks.h"
 #include "ksmedia.h"
 #include "amvideo.h"
@@ -3747,9 +3748,9 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADE
 }
 
 /***********************************************************************
- *      MFInitMediaTypeFromVideoInfoHeader (mfplat.@)
+ *      MFInitMediaTypeFromVideoInfoHeader2 (mfplat.@)
  */
-HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, const VIDEOINFOHEADER *vih, UINT32 size,
+HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, const VIDEOINFOHEADER2 *vih, UINT32 size,
         const GUID *subtype)
 {
     HRESULT hr = S_OK;
@@ -3791,6 +3792,27 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
     }
 
     return hr;
+}
+
+/***********************************************************************
+ *      MFInitMediaTypeFromVideoInfoHeader (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, const VIDEOINFOHEADER *vih, UINT32 size,
+        const GUID *subtype)
+{
+    VIDEOINFOHEADER2 vih2 =
+    {
+        .rcSource = vih->rcSource,
+        .rcTarget = vih->rcTarget,
+        .dwBitRate = vih->dwBitRate,
+        .dwBitErrorRate = vih->dwBitErrorRate,
+        .AvgTimePerFrame = vih->AvgTimePerFrame,
+        .bmiHeader = vih->bmiHeader,
+    };
+
+    TRACE("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
+
+    return MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih2, sizeof(vih2), subtype);
 }
 
 static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
