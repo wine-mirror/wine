@@ -187,7 +187,7 @@ static struct stub_manager *new_stub_manager(struct apartment *apt, IUnknown *ob
 
     list_init(&sm->ifstubs);
 
-    InitializeCriticalSection(&sm->lock);
+    InitializeCriticalSectionEx(&sm->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     sm->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": stub_manager");
 
     IUnknown_AddRef(object);

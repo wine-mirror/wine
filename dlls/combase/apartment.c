@@ -376,7 +376,7 @@ static struct apartment *apartment_construct(DWORD model)
     apt->refs = 1;
     apt->remunk_exported = FALSE;
     apt->oidc = 1;
-    InitializeCriticalSection(&apt->cs);
+    InitializeCriticalSectionEx(&apt->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     apt->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": apartment");
 
     apt->multi_threaded = !(model & COINIT_APARTMENTTHREADED);

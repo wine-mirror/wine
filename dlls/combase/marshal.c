@@ -1575,7 +1575,7 @@ static HRESULT proxy_manager_construct(
     list_init(&This->entry);
     list_init(&This->interfaces);
 
-    InitializeCriticalSection(&This->cs);
+    InitializeCriticalSectionEx(&This->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": proxy_manager");
 
     /* the apartment the object was unmarshaled into */
