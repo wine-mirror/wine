@@ -2697,13 +2697,14 @@ struct uncompressed_video_format
 
 static int __cdecl uncompressed_video_format_compare(const void *a, const void *b)
 {
-    const GUID *guid = a;
-    const struct uncompressed_video_format *format = b;
-    return memcmp(guid, format->subtype, sizeof(*guid));
+    const struct uncompressed_video_format *a_format = a, *b_format = b;
+    return memcmp(a_format->subtype, b_format->subtype, sizeof(GUID));
 }
 
-static const struct uncompressed_video_format video_formats[] =
+static struct uncompressed_video_format video_formats[] =
 {
+    { &MFVideoFormat_RGB1,          1, 0, 1, 0, BI_RGB },
+    { &MFVideoFormat_RGB4,          4, 0, 1, 0, BI_RGB },
     { &MFVideoFormat_RGB24,         24, 3, 1, 0, BI_RGB },
     { &MFVideoFormat_ARGB32,        32, 3, 1, 0, BI_RGB },
     { &MFVideoFormat_RGB32,         32, 3, 1, 0, BI_RGB },
@@ -2736,14 +2737,26 @@ static const struct uncompressed_video_format video_formats[] =
     { &MEDIASUBTYPE_RGB32,          32, 3, 1, 0, BI_RGB },
 };
 
+static BOOL WINAPI mf_video_formats_init(INIT_ONCE *once, void *param, void **context)
+{
+    qsort(video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats), uncompressed_video_format_compare);
+    return TRUE;
+}
+
 static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype)
 {
-    return bsearch(subtype, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    struct uncompressed_video_format key = {.subtype = subtype};
+
+    InitOnceExecuteOnce(&init_once, mf_video_formats_init, NULL, NULL);
+
+    return bsearch(&key, video_formats, ARRAY_SIZE(video_formats), sizeof(*video_formats),
             uncompressed_video_format_compare);
 }
 
 static unsigned int mf_get_stride_for_format(const struct uncompressed_video_format *format, unsigned int width)
 {
+    if (format->bpp < 8) return (width * format->bpp) / 8;
     return (width * (format->bpp / 8) + format->alignment) & ~format->alignment;
 }
 
@@ -3743,14 +3756,22 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
     DWORD height;
     LONG stride;
 
-    FIXME("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
+    TRACE("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
 
     IMFMediaType_DeleteAllItems(media_type);
 
     if (!subtype)
     {
-        FIXME("Implicit subtype is not supported.\n");
-        return E_NOTIMPL;
+        switch (vih->bmiHeader.biBitCount)
+        {
+        case 1: subtype = &MFVideoFormat_RGB1; break;
+        case 4: subtype = &MFVideoFormat_RGB4; break;
+        case 8: subtype = &MFVideoFormat_RGB8; break;
+        case 16: subtype = &MFVideoFormat_RGB555; break;
+        case 24: subtype = &MFVideoFormat_RGB24; break;
+        case 32: subtype = &MFVideoFormat_RGB32; break;
+        default: return E_INVALIDARG;
+        }
     }
 
     height = abs(vih->bmiHeader.biHeight);
