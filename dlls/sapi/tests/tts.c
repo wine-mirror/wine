@@ -436,6 +436,8 @@ static void test_spvoice(void)
     LONG count;
     BSTR req = NULL, opt = NULL;
     UINT info_count;
+    ITypeInfo *typeinfo;
+    TYPEATTR *typeattr;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -718,6 +720,17 @@ static void test_spvoice(void)
     hr = ISpeechVoice_GetTypeInfoCount(speech_voice, &info_count);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(info_count == 1, "got %u.\n", info_count);
+
+    typeinfo = NULL;
+    typeattr = NULL;
+    hr = ISpeechVoice_GetTypeInfo(speech_voice, 0, 0, &typeinfo);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(typeattr->typekind == TKIND_DISPATCH, "got %u.\n", typeattr->typekind);
+    ok(IsEqualGUID(&typeattr->guid, &IID_ISpeechVoice), "got %s.\n", wine_dbgstr_guid(&typeattr->guid));
+    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
+    ITypeInfo_Release(typeinfo);
 
     ISpeechVoice_Release(speech_voice);
 

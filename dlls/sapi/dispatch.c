@@ -36,6 +36,7 @@ static REFIID tid_id[] =
 {
     &IID_ISpeechObjectToken,
     &IID_ISpeechObjectTokens,
+    &IID_ISpeechVoice,
 };
 
 HRESULT get_typeinfo(enum type_id tid, ITypeInfo **ret)

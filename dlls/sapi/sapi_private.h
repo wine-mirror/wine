@@ -57,6 +57,7 @@ enum type_id
 {
     ISpeechObjectToken_tid,
     ISpeechObjectTokens_tid,
+    ISpeechVoice_tid,
     last_tid
 };
 

@@ -186,12 +186,12 @@ static HRESULT WINAPI speech_voice_GetTypeInfoCount(ISpeechVoice *iface, UINT *c
     return S_OK;
 }
 
-static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT info, LCID lcid,
+static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT index, LCID lcid,
                                                ITypeInfo **type_info)
 {
-    FIXME("(%p, %u, %lu, %p): stub.\n", iface, info, lcid, type_info);
-
-    return E_NOTIMPL;
+    TRACE("(%p, %u, %#lx, %p).\n", iface, index, lcid, type_info);
+    if (index != 0) return DISP_E_BADINDEX;
+    return get_typeinfo(ISpeechVoice_tid, type_info);
 }
 
 static HRESULT WINAPI speech_voice_GetIDsOfNames(ISpeechVoice *iface, REFIID riid, LPOLESTR *names,
