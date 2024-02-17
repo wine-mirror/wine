@@ -3781,7 +3781,6 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
     mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video, &hr);
     mediatype_set_guid(media_type, &MF_MT_SUBTYPE, subtype, &hr);
     mediatype_set_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1, &hr);
-    mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, &hr);
     mediatype_set_uint64(media_type, &MF_MT_FRAME_SIZE, vih->bmiHeader.biWidth, height, &hr);
 
     if (SUCCEEDED(mf_get_stride_for_bitmap_info_header(subtype->Data1, &vih->bmiHeader, &stride)))
@@ -3833,6 +3832,13 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, con
         if (format->VideoTransferFunction)
             mediatype_set_uint32(media_type, &MF_MT_TRANSFER_FUNCTION, format->VideoTransferFunction, &hr);
     }
+
+    if (!(vih->dwInterlaceFlags & AMINTERLACE_IsInterlaced))
+        mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, &hr);
+    else if (vih->dwInterlaceFlags & AMINTERLACE_DisplayModeBobOrWeave)
+        mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, MFVideoInterlace_MixedInterlaceOrProgressive, &hr);
+    else
+        FIXME("dwInterlaceFlags %#lx not implemented\n", vih->dwInterlaceFlags);
 
     return hr;
 }
@@ -4012,6 +4018,22 @@ static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, 
     if (format->VideoChromaSubsampling || format->NominalRange || format->VideoTransferMatrix
             || format->VideoLighting || format->VideoPrimaries || format->VideoTransferFunction)
         format->SampleFormat = AMCONTROL_COLORINFO_PRESENT;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value)))
+    {
+        switch (value)
+        {
+        case MFVideoInterlace_Progressive:
+            break;
+        case MFVideoInterlace_MixedInterlaceOrProgressive:
+            vih->dwInterlaceFlags = AMINTERLACE_DisplayModeBobOrWeave | AMINTERLACE_IsInterlaced;
+            break;
+        default:
+            FIXME("MF_MT_INTERLACE_MODE %u not implemented!\n", value);
+            vih->dwInterlaceFlags = AMINTERLACE_IsInterlaced;
+            break;
+        }
+    }
 }
 
 static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
