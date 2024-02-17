@@ -418,6 +418,7 @@ static void test_spvoice(void)
 {
     static const WCHAR test_token_id[] = L"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Speech\\Voices\\Tokens\\WinetestVoice";
     static const WCHAR test_text[] = L"Hello! This is a test sentence.";
+    static const WCHAR *get_voices = L"GetVoices";
 
     ISpVoice *voice;
     IUnknown *dummy;
@@ -438,6 +439,7 @@ static void test_spvoice(void)
     UINT info_count;
     ITypeInfo *typeinfo;
     TYPEATTR *typeattr;
+    DISPID dispid;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -731,6 +733,11 @@ static void test_spvoice(void)
     ok(IsEqualGUID(&typeattr->guid, &IID_ISpeechVoice), "got %s.\n", wine_dbgstr_guid(&typeattr->guid));
     ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
     ITypeInfo_Release(typeinfo);
+
+    dispid = 0xdeadbeef;
+    hr = ISpeechVoice_GetIDsOfNames(speech_voice, &IID_NULL, (WCHAR **)&get_voices, 1, 0x409, &dispid);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(dispid == DISPID_SVGetVoices, "got %#lx.\n", dispid);
 
     ISpeechVoice_Release(speech_voice);
 

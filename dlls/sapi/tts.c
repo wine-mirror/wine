@@ -195,11 +195,18 @@ static HRESULT WINAPI speech_voice_GetTypeInfo(ISpeechVoice *iface, UINT index, 
 }
 
 static HRESULT WINAPI speech_voice_GetIDsOfNames(ISpeechVoice *iface, REFIID riid, LPOLESTR *names,
-                                                 UINT count, LCID lcid, DISPID *dispid)
+                                                 UINT count, LCID lcid, DISPID *dispids)
 {
-    FIXME("(%p, %s, %p, %u, %lu, %p): stub.\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %p, %u, %#lx, %p).\n", iface, debugstr_guid(riid), names, count, lcid, dispids);
+
+    if (FAILED(hr = get_typeinfo(ISpeechVoice_tid, &typeinfo)))
+        return hr;
+    hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispids);
+    ITypeInfo_Release(typeinfo);
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_Invoke(ISpeechVoice *iface, DISPID dispid, REFIID riid, LCID lcid,
