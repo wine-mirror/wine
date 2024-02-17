@@ -13,7 +13,7 @@
 #define _MPG123_GETBITS_H_
 
 #include "mpg123lib_intern.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 #define backbits(fr,nob) ((void)( \
   fr->bits_avail  += nob, \

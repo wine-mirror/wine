@@ -10,9 +10,9 @@
 #include "mpg123lib_intern.h"
 #include "config.h"
 #include "mpg123.h"
-#include "compat.h"
+#include "../compat/compat.h"
 #include <string.h>
-#include "debug.h"
+#include "../common/debug.h"
 
 mpg123_string* attribute_align_arg mpg123_new_string(const char *val)
 {

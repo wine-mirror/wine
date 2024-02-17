@@ -21,9 +21,17 @@
 #include "huffman.h"
 #endif
 #include "getbits.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 
+/* Predeclare the assembly routines, only called from wrappers here. */
+void INT123_dct36_3dnow   (real *,real *,real *,const real *,real *);
+void INT123_dct36_3dnowext(real *,real *,real *,const real *,real *);
+void INT123_dct36_x86_64  (real *,real *,real *,const real *,real *);
+void INT123_dct36_sse     (real *,real *,real *,const real *,real *);
+void INT123_dct36_avx     (real *,real *,real *,const real *,real *);
+void INT123_dct36_neon    (real *,real *,real *,const real *,real *);
+void INT123_dct36_neon64  (real *,real *,real *,const real *,real *);
 
 /* define CUT_SFB21 if you want to cut-off the frequency above 16kHz */
 #if 0
@@ -1256,10 +1264,7 @@ static void III_antialias(real xr[SBLIMIT][SSLIMIT],struct gr_info_s *gr_info)
 	    Mathematics of Computation, Volume 32, Number 141, January 1978,
 	    Pages 175-199
 */
-
-/* Calculation of the inverse MDCT
-   used to be static without 3dnow - does that really matter? */
-void INT123_dct36(real *inbuf,real *o1,real *o2,const real *wintab,real *tsbuf)
+static void INT123_dct36(real *inbuf,real *o1,real *o2,const real *wintab,real *tsbuf)
 {
 	real tmp[18];
 
@@ -1449,6 +1454,105 @@ void INT123_dct36(real *inbuf,real *o1,real *o2,const real *wintab,real *tsbuf)
 	}
 }
 
+// Wrap the assembly routine calls into C functions that serve as jump target to satisfy
+// indirect branch protection if the toolchain enables that. Otherwise, we'd need to anticipate
+// that in the assembly (and ensure assemblers support endbr64 and friends).
+// Loss of efficiency:
+
+// In the case of one static optimization choice, we do not have that problem.
+
+#ifdef OPT_THE_DCT36
+
+#define DCT36_WRAP(asmfunc) \
+static void asmfunc ## _wrap(real *inbuf,real *o1,real *o2,const real *wintab,real *tsbuf) \
+{ \
+	asmfunc(inbuf, o1, o2, wintab, tsbuf); \
+}
+
+#ifdef OPT_SSE
+DCT36_WRAP(INT123_dct36_sse)
+#endif
+#ifdef OPT_3DNOWEXT_VINTAGE
+DCT36_WRAP(INT123_dct36_3dnowext)
+#endif
+#ifdef OPT_3DNOW_VINTAGE
+DCT36_WRAP(INT123_dct36_3dnow)
+#endif
+#ifdef OPT_X86_64
+DCT36_WRAP(INT123_dct36_x86_64)
+#endif
+#ifdef OPT_AVX
+DCT36_WRAP(INT123_dct36_avx)
+#endif
+#ifdef OPT_NEON
+DCT36_WRAP(INT123_dct36_neon)
+#endif
+#ifdef OPT_NEON64
+DCT36_WRAP(INT123_dct36_neon64)
+#endif
+
+int INT123_dct36_match(mpg123_handle *fr, enum optdec t)
+{
+#ifdef OPT_SSE
+	if(t == sse && fr->cpu_opts.the_dct36 == INT123_dct36_sse_wrap)
+		return 1;
+#endif
+#ifdef OPT_3DNOWEXT_VINTAGE
+	if(t == dreidnowext_vintage && fr->cpu_opts.the_dct36 == INT123_dct36_3dnowext_wrap)
+		return 1;
+#endif
+#ifdef OPT_3DNOW_VINTAGE
+	if(t == dreidnow_vintage && fr->cpu_opts.the_dct36 == INT123_dct36_3dnow_wrap)
+		return 1;
+#endif
+	return 0;
+}
+
+void INT123_dct36_choose(mpg123_handle *fr)
+{
+	switch(fr->cpu_opts.type)
+	{
+#ifdef OPT_SSE
+	case sse:
+		fr->cpu_opts.the_dct36 = INT123_dct36_sse_wrap;
+	break;
+#endif
+#ifdef OPT_3DNOWEXT_VINTAGE
+	case dreidnowext_vintage:
+		fr->cpu_opts.the_dct36 = INT123_dct36_3dnowext_wrap;
+	break;
+#endif
+#ifdef OPT_3DNOW_VINTAGE
+	case dreidnow_vintage:
+		fr->cpu_opts.the_dct36 = INT123_dct36_3dnow_wrap;
+	break;
+#endif
+#ifdef OPT_AVX
+	case avx:
+		fr->cpu_opts.the_dct36 = INT123_dct36_avx_wrap;
+	break;
+#endif
+#ifdef OPT_X86_64
+	case x86_64:
+		fr->cpu_opts.the_dct36 = INT123_dct36_x86_64_wrap;
+	break;
+#endif
+#ifdef OPT_NEON
+	case neon:
+		fr->cpu_opts.the_dct36 = INT123_dct36_neon_wrap;
+	break;
+#endif
+#ifdef OPT_NEON64
+	case neon:
+		fr->cpu_opts.the_dct36 = INT123_dct36_neon64_wrap;
+	break;
+#endif
+	default:
+		fr->cpu_opts.the_dct36 = INT123_dct36;
+	}
+}
+
+#endif
 
 /* new DCT12 */
 static void dct12(real *in,real *rawout1,real *rawout2,register const real *wi,register real *ts)

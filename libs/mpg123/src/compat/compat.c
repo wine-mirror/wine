@@ -39,7 +39,7 @@
 #include <shlwapi.h>
 #endif
 
-#include "debug.h"
+#include "../common/debug.h"
 
 #ifndef WINDOWS_UWP
 

@@ -85,7 +85,7 @@
 
 #include "mpg123lib_intern.h"
 #include "id3.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 #ifndef NO_ID3V2 /* Only the main parsing routine will always be there. */
 
@@ -352,7 +352,7 @@ static void store_id3_text(mpg123_string *sb, unsigned char *source, size_t sour
 		}
 		memcpy(sb->p, source, source_size);
 		sb->fill = source_size;
-		debug1("stored undecoded ID3 text of size %"SIZE_P, (size_p)source_size);
+		debug1("stored undecoded ID3 text of size %zu", source_size);
 		return;
 	}
 
@@ -567,7 +567,7 @@ static void process_comment(mpg123_handle *fr, enum frame_types tt, unsigned cha
 
 	if(realsize < (size_t)(descr-realdata))
 	{
-		if(NOQUIET) error1("Invalid frame size of %"SIZE_P" (too small for anything).", (size_p)realsize);
+		if(NOQUIET) error1("Invalid frame size of %zu (too small for anything).", realsize);
 		return;
 	}
 	if(encoding > mpg123_id3_enc_max)
@@ -622,8 +622,8 @@ static void process_comment(mpg123_handle *fr, enum frame_types tt, unsigned cha
 
 	if(VERBOSE4) /* Do _not_ print the verbatim text: The encoding might be funny! */
 	{
-		fprintf(stderr, "Note: ID3 comm/uslt desc of length %"SIZE_P".\n", (size_p)xcom->description.fill);
-		fprintf(stderr, "Note: ID3 comm/uslt text of length %"SIZE_P".\n", (size_p)xcom->text.fill);
+		fprintf(stderr, "Note: ID3 comm/uslt desc of length %zu.\n", xcom->description.fill);
+		fprintf(stderr, "Note: ID3 comm/uslt text of length %zu.\n", xcom->text.fill);
 	}
 	/* Look out for RVA info only when we really deal with a straight comment. */
 	if(tt == comment && localcom.description.fill > 0)

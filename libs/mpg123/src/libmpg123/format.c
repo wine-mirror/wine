@@ -26,8 +26,8 @@
 */
 
 #include "mpg123lib_intern.h"
-#include "sample.h"
-#include "debug.h"
+#include "../common/sample.h"
+#include "../common/debug.h"
 
 /* static int chans[NUM_CHANNELS] = { 1 , 2 }; */
 static const long my_rates[MPG123_RATES] = /* only the standard rates */
@@ -686,7 +686,7 @@ static void conv_s16_to_s32(struct outbuffer *buf)
 #endif
 #endif
 
-#include "swap_bytes_impl.h"
+#include "../common/swap_bytes_impl.h"
 
 void swap_endian(struct outbuffer *buf, int block)
 {

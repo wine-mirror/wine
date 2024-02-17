@@ -11,7 +11,7 @@
 
 #include "mpg123lib_intern.h"
 
-#include "debug.h"
+#include "../common/debug.h"
 
 static int stream_init(mpg123_handle *fr);
 static int64_t get_fileinfo(mpg123_handle *);
@@ -526,7 +526,7 @@ static struct buffy* bc_alloc(struct bufferchain *bc, size_t size)
 		buf->next = NULL; /* That shall be set to a sensible value later. */
 		buf->size = 0;
 		--bc->pool_fill;
-		debug2("bc_alloc: picked %p from pool (fill now %"SIZE_P")", (void*)buf, (size_p)bc->pool_fill);
+		debug2("bc_alloc: picked %p from pool (fill now %zu)", (void*)buf, bc->pool_fill);
 		return buf;
 	}
 	else return buffy_new(size, bc->bufblock);

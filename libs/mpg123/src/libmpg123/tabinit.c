@@ -7,7 +7,7 @@
 */
 
 #include "mpg123lib_intern.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 // The (normally precomputed) cos tables.
 #include "costabs.h"

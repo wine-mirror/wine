@@ -7,7 +7,7 @@
 */
 
 #include "config.h"
-#include "compat.h"
+#include "../compat/compat.h"
 #include "dither.h"
 
 static const uint32_t init_seed = 2463534242UL;

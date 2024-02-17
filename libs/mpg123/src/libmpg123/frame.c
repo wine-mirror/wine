@@ -9,7 +9,7 @@
 #define WANT_GETCPUFLAGS
 #include "mpg123lib_intern.h"
 #include "getcpuflags.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 static void frame_fixed_reset(mpg123_handle *fr);
 
@@ -193,13 +193,12 @@ int INT123_frame_outbuffer(mpg123_handle *fr)
 		{
 			fr->err = MPG123_BAD_BUFFER;
 			if(NOQUIET)
-				merror( "have external buffer of size %"SIZE_P", need %"SIZE_P
-				,	(size_p)fr->buffer.size, (size_p)size );
+				merror("have external buffer of size %zu, need %zu", fr->buffer.size, size);
 			return MPG123_ERR;
 		}
 	}
 
-	debug1("need frame buffer of %"SIZE_P, (size_p)size);
+	debug1("need frame buffer of %zu", size);
 	if(fr->buffer.rdata != NULL && fr->buffer.size != size)
 	{
 		free(fr->buffer.rdata);
@@ -222,7 +221,7 @@ int INT123_frame_outbuffer(mpg123_handle *fr)
 
 int attribute_align_arg mpg123_replace_buffer(mpg123_handle *mh, void *data, size_t size)
 {
-	debug2("replace buffer with %p size %"SIZE_P, data, (size_p)size);
+	debug2("replace buffer with %p size %zu", data, size);
 	if(mh == NULL) return MPG123_BAD_HANDLE;
 	/* Will accept any size, the error comes later... */
 	if(data == NULL)

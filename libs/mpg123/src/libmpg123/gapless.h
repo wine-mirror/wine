@@ -7,7 +7,7 @@
 	This is no stand-alone header, precisely to be able to fool it into using fake handle types for testing the math.
 */
 
-#include "debug.h"
+#include "../common/debug.h"
 
 #ifdef GAPLESS
 /* From internal sample number to external. */
@@ -81,8 +81,8 @@ static void frame_buffercheck(mpg123_handle *fr)
 		}
 		if(VERBOSE3)
 			fprintf(stderr, "\nNote: Cut frame %" PRIi64 " buffer on end of stream to %"
-				 PRIi64 " samples, fill now %"SIZE_P" bytes.\n"
-			,	fr->num, (fr->num == fr->lastframe ? fr->lastoff : 0), (size_p)fr->buffer.fill);
+				 PRIi64 " samples, fill now %zu bytes.\n"
+			,	fr->num, (fr->num == fr->lastframe ? fr->lastoff : 0), fr->buffer.fill);
 	}
 
 	/* The first interesting frame: Skip some leading samples. */

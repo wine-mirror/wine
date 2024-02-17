@@ -21,10 +21,8 @@
 
 #include <errno.h>
 
-#ifdef HAVE_STDLIB_H
 /* realloc, size_t */
 #include <stdlib.h>
-#endif
 
 #include <stddef.h>
 
@@ -48,16 +46,10 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
-#endif
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 /* We want SIZE_MAX, etc. */
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
  
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -85,26 +77,11 @@
 #define INT32_MIN (-INT32_MAX - 1)
 #endif
 
-#ifndef OFF_MAX
-#undef OFF_MIN
-#if SIZEOF_OFF_T == 4
-#define OFF_MAX INT32_MAX
-#define OFF_MIN INT32_MIN
-#elif SIZEOF_OFF_T == 8
-#define OFF_MAX INT64_MAX
-#define OFF_MIN INT64_MIN
-#else
-#error "Unexpected width of off_t."
-#endif
-#endif
-
 // Add two values (themselves assumed to be < limit), saturating to given limit.
 #define SATURATE_ADD(inout, add, limit) inout = (limit-add >= inout) ? inout+add : limit;
 #define SATURATE_SUB(inout, sub, limit) inout = (limit+sub >= inout) ? inout-sub : limit;
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
@@ -150,29 +127,6 @@ const char *INT123_strerror(int errnum);
    and returns NULL on NULL input instead of crashing. */
 char* INT123_compat_strdup(const char *s);
 
-/* If we have the size checks enabled, try to derive some sane printfs.
-   Simple start: Use max integer type and format if long is not big enough.
-   I am hesitating to use %ll without making sure that it's there... */
-#if (defined SIZEOF_OFF_T) && (SIZEOF_OFF_T > SIZEOF_LONG) && (defined PRIiMAX)
-# define OFF_P PRIiMAX
-typedef intmax_t off_p;
-#else
-# define OFF_P "li"
-typedef long off_p;
-#endif
-
-#if (defined SIZEOF_SIZE_T) && (SIZEOF_SIZE_T > SIZEOF_LONG) && (defined PRIuMAX) && (defined PRIiMAX)
-# define SIZE_P PRIuMAX
-typedef uintmax_t size_p;
-# define SSIZE_P PRIiMAX
-typedef intmax_t ssize_p;
-#else
-# define SIZE_P "lu"
-typedef unsigned long size_p;
-# define SSIZE_P "ld"
-typedef long ssize_p;
-#endif
-
 /* Get an environment variable, possibly converted to UTF-8 from wide string.
    The return value is a copy that you shall free. */
 char *INT123_compat_getenv(const char* name);
@@ -199,7 +153,6 @@ FILE* INT123_compat_fdopen(int fd, const char *mode);
  */
 int INT123_compat_close(int infd);
 int INT123_compat_fclose(FILE* stream);
-
 
 /**
  * Setting binary mode on a descriptor, where necessary.
@@ -326,10 +279,15 @@ size_t INT123_unintr_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *st
 #define normal mpg123_normal
 #endif
 
-#include "true.h"
+#include "../common/true.h"
 
 #if (!defined(WIN32) || defined (__CYGWIN__)) && defined(HAVE_SIGNAL_H)
 void (*INT123_catchsignal(int signum, void(*handler)(int)))(int);
+#endif
+
+// Some ancient toolchains miss the documented errno value.
+#if defined(_WIN32) && !defined(EOVERFLOW)
+#define EOVERFLOW 132
 #endif
 
 #endif

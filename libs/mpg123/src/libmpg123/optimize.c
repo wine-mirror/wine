@@ -12,7 +12,7 @@
 #define WANT_GETCPUFLAGS
 #include "mpg123lib_intern.h" /* includes optimize.h */
 #include "getcpuflags.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 
 /* Ugly macros to build conditional synth function array values. */
@@ -160,8 +160,8 @@ static enum optdec sse_or_vintage(mpg123_handle *fr)
 	enum optdec type;
 	type = sse_vintage;
 #	ifdef OPT_SSE
-#	ifdef OPT_MULTI
-	if(fr->cpu_opts.the_dct36 == INT123_dct36_sse)
+#	ifdef OPT_THE_DCT36
+	if(INT123_dct36_match(fr, sse))
 #	endif
 	type = sse;
 #	endif
@@ -192,7 +192,7 @@ static int find_dectype(mpg123_handle *fr)
 		type = dreidnowext;
 #		ifdef OPT_3DNOWEXT_VINTAGE
 #		ifdef OPT_MULTI
-		if(fr->cpu_opts.the_dct36 == INT123_dct36_3dnowext)
+		if(INT123_dct36_match(fr, dreidnowext_vintage))
 #		endif
 		type = dreidnowext_vintage;
 #		endif
@@ -210,7 +210,7 @@ static int find_dectype(mpg123_handle *fr)
 		type = dreidnow;
 #		ifdef OPT_3DNOW_VINTAGE
 #		ifdef OPT_MULTI
-		if(fr->cpu_opts.the_dct36 == INT123_dct36_3dnow)
+		if(INT123_dct36_match(fr, dreidnow_vintage))
 #		endif
 		type = dreidnow_vintage;
 #		endif
@@ -503,13 +503,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 #endif
 
 	fr->cpu_opts.type = nodec;
-#ifdef OPT_MULTI
-#ifndef NO_LAYER3
-#if (defined OPT_3DNOW_VINTAGE || defined OPT_3DNOWEXT_VINTAGE || defined OPT_SSE || defined OPT_X86_64 || defined OPT_AVX || defined OPT_NEON || defined OPT_NEON64)
-	fr->cpu_opts.the_dct36 = INT123_dct36;
-#endif
-#endif
-#endif
 	/* covers any i386+ cpu; they actually differ only in the INT123_synth_1to1 function, mostly... */
 #ifdef OPT_X86
 	if(cpu_i586(fr->cpu_flags))
@@ -523,11 +516,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		{
 			chosen = dn_sse;
 			fr->cpu_opts.type = sse;
-#ifdef OPT_MULTI
-#			ifndef NO_LAYER3
-			/* if(cpu_fast_sse(fr->cpu_flags)) */ fr->cpu_opts.the_dct36 = INT123_dct36_sse;
-#			endif
-#endif
 #			ifndef NO_16BIT
 			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_sse;
 #			ifdef ACCURATE_ROUNDING
@@ -590,11 +578,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		{
 			chosen = dn_dreidnowext_vintage;
 			fr->cpu_opts.type = dreidnowext_vintage;
-#ifdef OPT_MULTI
-#			ifndef NO_LAYER3
-			fr->cpu_opts.the_dct36 = INT123_dct36_3dnowext;
-#			endif
-#endif
 #			ifndef NO_16BIT
 			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnowext;
 #			endif
@@ -619,11 +602,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 		{
 			chosen = dn_dreidnow_vintage;
 			fr->cpu_opts.type = dreidnow_vintage;
-#ifdef OPT_MULTI
-#			ifndef NO_LAYER3
-			fr->cpu_opts.the_dct36 = INT123_dct36_3dnow;
-#			endif
-#endif
 #			ifndef NO_16BIT
 			fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_3dnow;
 #			endif
@@ -723,11 +701,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	{
 		chosen = "x86-64 (AVX)";
 		fr->cpu_opts.type = avx;
-#ifdef OPT_MULTI
-#		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = INT123_dct36_avx;
-#		endif
-#endif
 #		ifndef NO_16BIT
 		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_avx;
 		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_avx;
@@ -749,11 +722,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	{
 		chosen = "x86-64 (SSE)";
 		fr->cpu_opts.type = x86_64;
-#ifdef OPT_MULTI
-#		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = INT123_dct36_x86_64;
-#		endif
-#endif
 #		ifndef NO_16BIT
 		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_x86_64;
 		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_x86_64;
@@ -796,11 +764,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	{
 		chosen = dn_neon;
 		fr->cpu_opts.type = neon;
-#ifdef OPT_MULTI
-#		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = INT123_dct36_neon;
-#		endif
-#endif
 #		ifndef NO_16BIT
 		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_neon;
 		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_neon;
@@ -834,11 +797,6 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	{
 		chosen = dn_neon64;
 		fr->cpu_opts.type = neon64;
-#ifdef OPT_MULTI
-#		ifndef NO_LAYER3
-		fr->cpu_opts.the_dct36 = INT123_dct36_neon64;
-#		endif
-#endif
 #		ifndef NO_16BIT
 		fr->synths.plain[r_1to1][f_16] = INT123_synth_1to1_neon64;
 		fr->synths.stereo[r_1to1][f_16] = INT123_synth_1to1_stereo_neon64;
@@ -896,6 +854,10 @@ int INT123_frame_cpu_opt(mpg123_handle *fr, const char* cpu)
 	}
 #	endif
 #	endif
+
+#ifdef OPT_THE_DCT36
+	INT123_dct36_choose(fr);
+#endif
 
 #ifdef OPT_DITHER
 	if(done && dithered)

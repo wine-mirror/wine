@@ -7,19 +7,19 @@
 */
 
 #include "mpg123lib_intern.h"
-#include "version.h"
+#include "../version.h"
 #include "icy2utf8.h"
 
 #include "gapless.h"
 /* Want accurate rounding function regardless of decoder setup. */
 #define FORCE_ACCURATE
-#include "sample.h"
+#include "../common/sample.h"
 #include "parse.h"
 #ifndef PORTABLE_API
 #include "lfs_wrap.h"
 #endif
 
-#include "debug.h"
+#include "../common/debug.h"
 
 #define SEEKFRAME(mh) ((mh)->ignoreframe < 0 ? 0 : (mh)->ignoreframe)
 
@@ -648,9 +648,10 @@ int attribute_align_arg mpg123_open_handle(mpg123_handle *mh, void *iohandle)
 #ifndef PORTABLE_API
 	ret = INT123_wrap_open( mh, iohandle, NULL, -1
 	,	mh->p.timeout, mh->p.flags & MPG123_QUIET );
+	iohandle = ret == LFS_WRAP_NONE ? iohandle : mh->wrapperdata;
 	if(ret >= 0)
 #endif
-		ret = INT123_open_stream_handle(mh, ret == LFS_WRAP_NONE ? iohandle : mh->wrapperdata);
+		ret = INT123_open_stream_handle(mh, iohandle);
 	return ret;
 }
 
@@ -911,7 +912,8 @@ static void decode_the_frame(mpg123_handle *fr)
 		if(fr->buffer.fill < needed_bytes)
 		{
 			if(VERBOSE2)
-			fprintf(stderr, "Note: broken frame %li, filling up with %"SIZE_P" zeroes, from %"SIZE_P"\n", (long)fr->num, (size_p)(needed_bytes-fr->buffer.fill), (size_p)fr->buffer.fill);
+				fprintf( stderr, "Note: broken frame %li, filling up with %zu zeroes, from %zu\n"
+				,	(long)fr->num, (needed_bytes-fr->buffer.fill), fr->buffer.fill );
 
 			/*
 				One could do a loop with individual samples instead... but zero is zero
@@ -931,7 +933,7 @@ static void decode_the_frame(mpg123_handle *fr)
 		else
 		{
 			if(NOQUIET)
-			error2("I got _more_ bytes than expected (%"SIZE_P" / %"SIZE_P"), that should not be possible!", (size_p)fr->buffer.fill, (size_p)needed_bytes);
+			error2("I got _more_ bytes than expected (%zu / %zu), that should not be possible!", fr->buffer.fill, needed_bytes);
 		}
 	}
 #endif

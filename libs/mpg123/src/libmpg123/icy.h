@@ -10,7 +10,7 @@
 
 #ifndef NO_ICY
 
-#include "compat.h"
+#include "../compat/compat.h"
 #include "mpg123.h"
 
 struct icy_meta

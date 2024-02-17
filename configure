@@ -13572,7 +13572,7 @@ then :
   MPG123_PE_LIBS=mpg123
    if ${MPG123_PE_CFLAGS:+false} :
 then :
-  MPG123_PE_CFLAGS="-I\$(top_srcdir)/libs/mpg123/src/libmpg123"
+  MPG123_PE_CFLAGS="-I\$(top_srcdir)/libs/mpg123/src/include"
 else $as_nop
   enable_mpg123=no
 fi

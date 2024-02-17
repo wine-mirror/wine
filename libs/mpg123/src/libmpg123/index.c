@@ -8,7 +8,7 @@
 */
 
 #include "index.h"
-#include "debug.h"
+#include "../common/debug.h"
 
 /* The next expected frame offset, one step ahead. */
 static int64_t fi_next(struct frame_index *fi)
@@ -124,7 +124,7 @@ int INT123_fi_set(struct frame_index *fi, int64_t *offsets, int64_t step, size_t
 
 void INT123_fi_reset(struct frame_index *fi)
 {
-	debug1("reset with size %"SIZE_P, (size_p)fi->size);
+	debug1("reset with size %zu", fi->size);
 	fi->fill = 0;
 	fi->step = 1;
 	fi->next = fi_next(fi);

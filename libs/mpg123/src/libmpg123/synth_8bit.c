@@ -7,8 +7,8 @@
 */
 
 #include "mpg123lib_intern.h"
-#include "sample.h"
-#include "debug.h"
+#include "../common/sample.h"
+#include "../common/debug.h"
 
 /* 
 	Part 2: All synth functions that produce 8bit output.

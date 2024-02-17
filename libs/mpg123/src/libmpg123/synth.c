@@ -10,8 +10,8 @@
 #ifdef OPT_GENERIC_DITHER
 #define FORCE_ACCURATE
 #endif
-#include "sample.h"
-#include "debug.h"
+#include "../common/sample.h"
+#include "../common/debug.h"
 
 /*
 	Part 1: All synth functions that produce signed short.

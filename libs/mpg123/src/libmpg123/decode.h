@@ -203,16 +203,6 @@ void INT123_dct64_i386   (real *,real *,real *);
 void INT123_dct64_altivec(real *,real *,real *);
 void INT123_dct64_i486(int*, int* , real*); /* Yeah, of no use outside of synth_i486.c .*/
 
-/* This is used by the layer 3 decoder, one generic function and 3DNow variants. */
-void INT123_dct36         (real *,real *,real *,const real *,real *);
-void INT123_dct36_3dnow   (real *,real *,real *,const real *,real *);
-void INT123_dct36_3dnowext(real *,real *,real *,const real *,real *);
-void INT123_dct36_x86_64  (real *,real *,real *,const real *,real *);
-void INT123_dct36_sse     (real *,real *,real *,const real *,real *);
-void INT123_dct36_avx     (real *,real *,real *,const real *,real *);
-void INT123_dct36_neon    (real *,real *,real *,const real *,real *);
-void INT123_dct36_neon64  (real *,real *,real *,const real *,real *);
-
 /* Tools for NtoM resampling synth, defined in ntom.c . */
 int INT123_synth_ntom_set_step(mpg123_handle *fr); /* prepare ntom decoding */
 unsigned long INT123_ntom_val(mpg123_handle *fr, int64_t frame); /* compute INT123_ntom_val for frame offset */
@@ -232,6 +222,13 @@ int64_t INT123_ntom_frameoff(mpg123_handle *fr, int64_t soff);
 /* Initialization of any static data that majy be needed at runtime.
    Make sure you call these once before it is too late. */
 #ifndef NO_LAYER3
+
+#ifdef OPT_THE_DCT36
+// Set the current dct36 function choice. The pointers themselves are to static functions.
+void INT123_dct36_choose(mpg123_handle *fr);
+int INT123_dct36_match(mpg123_handle *fr, enum optdec t);
+#endif
+
 #ifdef RUNTIME_TABLES
 void INT123_init_layer3(void);
 #endif
