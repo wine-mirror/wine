@@ -440,6 +440,8 @@ static void test_spvoice(void)
     ITypeInfo *typeinfo;
     TYPEATTR *typeattr;
     DISPID dispid;
+    DISPPARAMS params;
+    VARIANT args[2], ret;
     HRESULT hr;
 
     if (waveOutGetNumDevs() == 0) {
@@ -738,6 +740,29 @@ static void test_spvoice(void)
     hr = ISpeechVoice_GetIDsOfNames(speech_voice, &IID_NULL, (WCHAR **)&get_voices, 1, 0x409, &dispid);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(dispid == DISPID_SVGetVoices, "got %#lx.\n", dispid);
+
+    memset(&params, 0, sizeof(params));
+    params.cArgs = 2;
+    params.cNamedArgs = 0;
+    params.rgvarg = args;
+    VariantInit(&args[0]);
+    VariantInit(&args[1]);
+    V_VT(&args[0]) = VT_BSTR;
+    V_VT(&args[1]) = VT_BSTR;
+    V_BSTR(&args[0]) = opt;
+    V_BSTR(&args[1]) = req;
+    VariantInit(&ret);
+    hr = ISpeechVoice_Invoke(speech_voice, dispid, &IID_NULL, 0, DISPATCH_METHOD, &params, &ret, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(V_VT(&ret) == VT_DISPATCH, "got %#x.\n", V_VT(&ret));
+    hr = IDispatch_QueryInterface(V_DISPATCH(&ret), &IID_ISpeechObjectTokens, (void **)&speech_tokens);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    count = -1;
+    hr = ISpeechObjectTokens_get_Count(speech_tokens, &count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(count == 1, "got %ld.\n", count);
+    ISpeechObjectTokens_Release(speech_tokens);
+    VariantClear(&ret);
 
     ISpeechVoice_Release(speech_voice);
 

@@ -213,10 +213,17 @@ static HRESULT WINAPI speech_voice_Invoke(ISpeechVoice *iface, DISPID dispid, RE
                                           WORD flags, DISPPARAMS *params, VARIANT *result,
                                           EXCEPINFO *excepinfo, UINT *argerr)
 {
-    FIXME("(%p, %ld, %s, %#lx, %#x, %p, %p, %p, %p): stub.\n", iface, dispid, debugstr_guid(riid),
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p, %ld, %s, %#lx, %#x, %p, %p, %p, %p).\n", iface, dispid, debugstr_guid(riid),
           lcid, flags, params, result, excepinfo, argerr);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = get_typeinfo(ISpeechVoice_tid, &typeinfo)))
+        return hr;
+    hr = ITypeInfo_Invoke(typeinfo, iface, dispid, flags, params, result, excepinfo, argerr);
+    ITypeInfo_Release(typeinfo);
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_get_Status(ISpeechVoice *iface, ISpeechVoiceStatus **status)
