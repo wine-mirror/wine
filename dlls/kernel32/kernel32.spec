@@ -257,6 +257,7 @@
 @ stdcall -import ConvertThreadToFiberEx(ptr long)
 @ stdcall ConvertToGlobalHandle(long)
 @ stdcall -import CopyContext(ptr long ptr)
+@ stdcall -import CopyFile2(wstr wstr ptr)
 @ stdcall CopyFileA(str str long)
 @ stdcall CopyFileExA (str str ptr ptr ptr long)
 @ stdcall -import CopyFileExW(wstr wstr ptr ptr ptr long)

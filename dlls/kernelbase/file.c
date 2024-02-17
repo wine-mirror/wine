@@ -487,13 +487,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH AreFileApisANSI(void)
     return !oem_file_apis;
 }
 
-
-/***********************************************************************
- *	CopyFileExW   (kernelbase.@)
+/******************************************************************************
+ *  copy_file
  */
-BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUTINE progress,
-                         void *param, BOOL *cancel_ptr, DWORD flags )
+static BOOL copy_file( const WCHAR *source, const WCHAR *dest, COPYFILE2_EXTENDED_PARAMETERS *params )
 {
+    DWORD flags = params ? params->dwCopyFlags : 0;
+    BOOL *cancel_ptr = params ? params->pfCancel : NULL;
+    PCOPYFILE2_PROGRESS_ROUTINE progress = params ? params->pProgressRoutine : NULL;
+
     static const int buffer_size = 65536;
     HANDLE h1, h2;
     FILE_BASIC_INFORMATION info;
@@ -501,6 +503,11 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
     DWORD count;
     BOOL ret = FALSE;
     char *buffer;
+
+    if (cancel_ptr)
+        FIXME("pfCancel is not supported\n");
+    if (progress)
+        FIXME("PCOPYFILE2_PROGRESS_ROUTINE is not supported\n");
 
     if (!source || !dest)
     {
@@ -577,7 +584,7 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
             count -= res;
         }
     }
-    ret =  TRUE;
+    ret = TRUE;
 done:
     /* Maintain the timestamp of source file to destination file */
     info.FileAttributes = 0;
@@ -587,6 +594,37 @@ done:
     CloseHandle( h2 );
     if (ret) SetLastError( 0 );
     return ret;
+}
+
+/***********************************************************************
+ *	CopyFile2   (kernelbase.@)
+ */
+HRESULT WINAPI CopyFile2( const WCHAR *source, const WCHAR *dest, COPYFILE2_EXTENDED_PARAMETERS *params )
+{
+    return copy_file(source, dest, params) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+}
+
+
+/***********************************************************************
+ *	CopyFileExW   (kernelbase.@)
+ */
+BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUTINE progress,
+                         void *param, BOOL *cancel_ptr, DWORD flags )
+{
+    COPYFILE2_EXTENDED_PARAMETERS params;
+
+    if (progress)
+        FIXME("LPPROGRESS_ROUTINE is not supported\n");
+    if (cancel_ptr)
+        FIXME("cancel_ptr is not supported\n");
+
+    params.dwSize = sizeof(params);
+    params.dwCopyFlags = flags;
+    params.pProgressRoutine = NULL;
+    params.pvCallbackContext = NULL;
+    params.pfCancel = NULL;
+
+    return copy_file( source, dest, &params );
 }
 
 
