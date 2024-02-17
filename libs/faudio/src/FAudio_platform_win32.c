@@ -1300,6 +1300,7 @@ error:
 uint32_t FAudio_WMADEC_init(FAudioSourceVoice *voice, uint32_t type)
 {
 	static const uint8_t fake_codec_data[16] = {0, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	uint8_t fake_codec_data_wma3[18] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 224, 0, 0, 0};
 	const FAudioWaveFormatExtensible *wfx = (FAudioWaveFormatExtensible *)voice->src.format;
 	struct FAudioWMADEC *impl;
 	MFT_OUTPUT_STREAM_INFO info = {0};
@@ -1361,11 +1362,17 @@ uint32_t FAudio_WMADEC_init(FAudioSourceVoice *voice, uint32_t type)
 		FAudio_assert(!FAILED(hr) && "Failed set input block align!");
 		break;
 	case FAUDIO_FORMAT_WMAUDIO3:
+                *(uint16_t *)fake_codec_data_wma3  = voice->src.format->wBitsPerSample;
+                for (i = 0; i < voice->src.format->nChannels; i++)
+                {
+                    fake_codec_data_wma3[2] <<= 1;
+                    fake_codec_data_wma3[2] |= 1;
+                }
 		hr = IMFMediaType_SetBlob(
 			media_type,
 			&MF_MT_USER_DATA,
-			(void *)&wfx->Samples,
-			wfx->Format.cbSize
+			(void *)fake_codec_data_wma3,
+			sizeof(fake_codec_data_wma3)
 		);
 		FAudio_assert(!FAILED(hr) && "Failed set codec private data!");
 		hr = IMFMediaType_SetGUID(
