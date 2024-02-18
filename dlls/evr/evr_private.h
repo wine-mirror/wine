@@ -24,27 +24,6 @@
 #include "wine/strmbase.h"
 #include "wine/debug.h"
 
-static inline const char *debugstr_time(LONGLONG time)
-{
-    ULONGLONG abstime = time >= 0 ? time : -time;
-    unsigned int i = 0, j = 0;
-    char buffer[23], rev[23];
-
-    while (abstime || i <= 8)
-    {
-        buffer[i++] = '0' + (abstime % 10);
-        abstime /= 10;
-        if (i == 7) buffer[i++] = '.';
-    }
-    if (time < 0) buffer[i++] = '-';
-
-    while (i--) rev[j++] = buffer[i];
-    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
-    rev[j] = 0;
-
-    return wine_dbg_sprintf("%s", rev);
-}
-
 static inline const char *debugstr_normalized_rect(const MFVideoNormalizedRect *rect)
 {
     if (!rect) return "(null)";
