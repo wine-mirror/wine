@@ -211,8 +211,15 @@ static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR 
 static HRESULT WINAPI DailyTrigger_get_EndBoundary(IDailyTrigger *iface, BSTR *end)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, end);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, end);
+
+    if (!end) return E_POINTER;
+
+    if (!This->end_boundary) *end = NULL;
+    else if (!(*end = SysAllocString(This->end_boundary))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_put_EndBoundary(IDailyTrigger *iface, BSTR end)

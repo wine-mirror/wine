@@ -1367,10 +1367,18 @@ static void test_daily_trigger(ITrigger *trigger)
     hr = IDailyTrigger_get_StartBoundary(daily_trigger, NULL);
     ok(hr == E_POINTER, "get_StartBoundary failed: %08lx\n", hr);
 
+    hr = IDailyTrigger_get_EndBoundary(daily_trigger, NULL);
+    ok(hr == E_POINTER, "get_EndBoundary failed: %08lx\n", hr);
+
     start_boundary = (BSTR)0xdeadbeef;
     hr = IDailyTrigger_get_StartBoundary(daily_trigger, &start_boundary);
     ok(hr == S_OK, "get_StartBoundary failed: %08lx\n", hr);
     ok(start_boundary == NULL, "start_boundary not set\n");
+
+    end_boundary = (BSTR)0xdeadbeef;
+    hr = IDailyTrigger_get_EndBoundary(daily_trigger, &end_boundary);
+    ok(hr == S_OK, "get_EndBoundary failed: %08lx\n", hr);
+    ok(end_boundary == NULL, "end_boundary not set\n");
 
     for (i = 0; i < ARRAY_SIZE(start_test); i++)
     {
@@ -1393,6 +1401,15 @@ static void test_daily_trigger(ITrigger *trigger)
         hr = IDailyTrigger_put_EndBoundary(daily_trigger, end_boundary);
         ok(hr == start_test[i].hr, "got %08lx expected %08lx\n", hr, start_test[i].hr);
         SysFreeString(end_boundary);
+        if (hr == S_OK)
+        {
+            end_boundary = NULL;
+            hr = IDailyTrigger_get_EndBoundary(daily_trigger, &end_boundary);
+            ok(hr == S_OK, "got %08lx\n", hr);
+            ok(end_boundary != NULL, "end_boundary not set\n");
+            ok(!lstrcmpW(end_boundary, start_test[i].end), "got %s\n", wine_dbgstr_w(end_boundary));
+            SysFreeString(end_boundary);
+        }
         winetest_pop_context();
     }
 
