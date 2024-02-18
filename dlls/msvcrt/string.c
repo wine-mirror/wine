@@ -1162,7 +1162,8 @@ int CDECL _strcoll_l( const char* str1, const char* str2, _locale_t locale )
 
     if(!locinfo->lc_handle[LC_COLLATE])
         return strcmp(str1, str2);
-    return CompareStringA(locinfo->lc_handle[LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
+    return CompareStringA(locinfo->lc_handle[LC_COLLATE], SORT_STRINGSORT,
+              str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
 /*********************************************************************

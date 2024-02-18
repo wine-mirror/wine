@@ -1994,7 +1994,8 @@ int CDECL _wcscoll_l(const wchar_t* str1, const wchar_t* str2, _locale_t locale)
 
     if(!locinfo->lc_handle[LC_COLLATE])
         return wcscmp(str1, str2);
-    return CompareStringW(locinfo->lc_handle[LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
+    return CompareStringW(locinfo->lc_handle[LC_COLLATE], SORT_STRINGSORT,
+              str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
 /*********************************************************************

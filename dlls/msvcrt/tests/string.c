@@ -4234,7 +4234,6 @@ static void test__tcscoll(void)
         const char *str1;
         const char *str2;
         int exp;
-        BOOL todo;
     };
     static const struct test tests[] = {
         { "English", "ABCD", "ABCD",  0 },
@@ -4242,8 +4241,8 @@ static void test__tcscoll(void)
         { "English", "ABCD",  "ABC",  1 },
         { "English", "ABCe", "ABCf", -1 },
         { "English", "abcd", "ABCD", -1 },
-        { "English", "AB D", "AB-D",  1, TRUE },
-        { "English", "AB D", "AB'D",  1, TRUE },
+        { "English", "AB D", "AB-D",  1 },
+        { "English", "AB D", "AB'D",  1 },
 
         { "C",       "ABCD", "ABCD",  0 },
         { "C",       "ABC",  "ABCD", -1 },
@@ -4284,7 +4283,6 @@ static void test__tcscoll(void)
             ok(ret < 0, "expected < 0, got %d for %s, %s for locale %s\n",
                ret, str1, str2, tests[i].locale);
         else
-            todo_wine_if(tests[i].todo)
             ok(ret > 0, "expected > 0, got %d for %s, %s for locale %s\n",
                ret, str1, str2, tests[i].locale);
 
@@ -4304,7 +4302,6 @@ static void test__tcscoll(void)
             ok(ret < 0, "expected < 0, got %d for %s, %s for locale %s\n",
                ret, str1, str2, tests[i].locale);
         else
-            todo_wine_if(tests[i].todo)
             ok(ret > 0, "expected > 0, got %d for %s, %s for locale %s\n",
                ret, str1, str2, tests[i].locale);
     }
