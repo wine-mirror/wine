@@ -4197,11 +4197,14 @@ static void test__tcsncoll(void)
 
         ret = _strncoll(str1, str2, tests[i].count);
         if (!tests[i].exp)
-            ok(!ret, "expected 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(!ret, "expected 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
         else if (tests[i].exp < 0)
-            ok(ret < 0, "expected < 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(ret < 0, "expected < 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
         else
-            ok(ret > 0, "expected > 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(ret > 0, "expected > 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
 
         memset(str1W, 0xee, sizeof(str1W));
         len = mbstowcs(str1W, str1, ARRAY_SIZE(str1W));
@@ -4213,11 +4216,14 @@ static void test__tcsncoll(void)
 
         ret = _wcsncoll(str1W, str2W, tests[i].count);
         if (!tests[i].exp)
-            ok(!ret, "expected 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(!ret, "expected 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
         else if (tests[i].exp < 0)
-            ok(ret < 0, "expected < 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(ret < 0, "expected < 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
         else
-            ok(ret > 0, "expected > 0, got %d for %s, %s, %d\n", ret, str1, str2, (int)tests[i].count);
+            ok(ret > 0, "expected > 0, got %d for %s, %s, %d for locale %s\n",
+               ret, str1, str2, (int)tests[i].count, tests[i].locale);
     }
 }
 
