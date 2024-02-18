@@ -106,7 +106,7 @@ static ULONG WINAPI domfrag_Release(IXMLDOMDocumentFragment *iface)
     if (!ref)
     {
         destroy_xmlnode(&domfrag->node);
-        heap_free(domfrag);
+        free(domfrag);
     }
 
     return ref;
@@ -581,7 +581,7 @@ IUnknown* create_doc_fragment( xmlNodePtr fragment )
 {
     domfrag *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof(*This));
     if ( !This )
         return NULL;
 

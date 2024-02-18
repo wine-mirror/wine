@@ -209,7 +209,7 @@ static ULONG WINAPI DOMClassFactory_Release(IClassFactory *iface )
     TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
-        heap_free(factory);
+        free(factory);
 
     return ref;
 }
@@ -260,7 +260,7 @@ static const struct IClassFactoryVtbl DOMClassFactoryVtbl =
 
 static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv, DOMFactoryCreateInstanceFunc fnCreateInstance)
 {
-    DOMFactory *ret = heap_alloc(sizeof(DOMFactory));
+    DOMFactory *ret = malloc(sizeof(DOMFactory));
     HRESULT hres;
 
     ret->IClassFactory_iface.lpVtbl = &DOMClassFactoryVtbl;
@@ -270,7 +270,7 @@ static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv
 
     hres = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
     if(FAILED(hres)) {
-        heap_free(ret);
+        free(ret);
         *ppv = NULL;
     }
     return hres;

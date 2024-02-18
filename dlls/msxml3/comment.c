@@ -107,7 +107,7 @@ static ULONG WINAPI domcomment_Release(IXMLDOMComment *iface)
     if (!ref)
     {
         destroy_xmlnode(&comment->node);
-        heap_free(comment);
+        free(comment);
     }
 
     return ref;
@@ -826,7 +826,7 @@ IUnknown* create_comment( xmlNodePtr comment )
 {
     domcomment *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof(*This));
     if ( !This )
         return NULL;
 

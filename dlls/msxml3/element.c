@@ -120,7 +120,7 @@ static ULONG WINAPI domelem_Release(IXMLDOMElement *iface)
     if (!ref)
     {
         destroy_xmlnode(&element->node);
-        heap_free(element);
+        free(element);
     }
 
     return ref;
@@ -1249,7 +1249,7 @@ static HRESULT WINAPI domelem_getAttribute(
             xml_value = xmlGetNsProp(element, xml_name, NULL);
     }
 
-    heap_free(xml_name);
+    free(xml_name);
     if(xml_value)
     {
         V_VT(value) = VT_BSTR;
@@ -1311,8 +1311,8 @@ static HRESULT WINAPI domelem_setAttribute(
         if (ns)
         {
             int cmp = xmlStrEqual(ns->href, xml_value);
-            heap_free(xml_value);
-            heap_free(xml_name);
+            free(xml_value);
+            free(xml_name);
             return cmp ? S_OK : E_INVALIDARG;
         }
     }
@@ -1320,8 +1320,8 @@ static HRESULT WINAPI domelem_setAttribute(
     if (!xmlSetNsProp(element, NULL, xml_name, xml_value))
         hr = E_FAIL;
 
-    heap_free(xml_value);
-    heap_free(xml_name);
+    free(xml_value);
+    free(xml_name);
 
     return hr;
 }
@@ -1365,13 +1365,13 @@ static HRESULT WINAPI domelem_getAttributeNode(
     nameA = xmlchar_from_wchar(p);
     if (!xmlValidateNameValue(nameA))
     {
-        heap_free(nameA);
+        free(nameA);
         return E_FAIL;
     }
 
     if (!attributeNode)
     {
-        heap_free(nameA);
+        free(nameA);
         return S_FALSE;
     }
 
@@ -1396,7 +1396,7 @@ static HRESULT WINAPI domelem_getAttributeNode(
         if (attr && attr->ns) attr = NULL;
     }
 
-    heap_free(nameA);
+    free(nameA);
 
     if (attr)
     {
@@ -1470,8 +1470,8 @@ static HRESULT WINAPI domelem_setAttributeNode(
     {
         SysFreeString(nameW);
         VariantClear(&valueW);
-        heap_free(name);
-        heap_free(value);
+        free(name);
+        free(value);
         return E_OUTOFMEMORY;
     }
 
@@ -1481,8 +1481,8 @@ static HRESULT WINAPI domelem_setAttributeNode(
 
     SysFreeString(nameW);
     VariantClear(&valueW);
-    heap_free(name);
-    heap_free(value);
+    free(name);
+    free(value);
 
     return attr ? S_OK : E_FAIL;
 }
@@ -1606,14 +1606,14 @@ static HRESULT domelem_get_qualified_item(const xmlNodePtr node, BSTR name, BSTR
     nameA = xmlchar_from_wchar(name);
     if (!nameA)
     {
-        heap_free(href);
+        free(href);
         return E_OUTOFMEMORY;
     }
 
     attr = xmlHasNsProp(node, nameA, href);
 
-    heap_free(nameA);
-    heap_free(href);
+    free(nameA);
+    free(href);
 
     if (!attr)
     {
@@ -1637,7 +1637,7 @@ static HRESULT domelem_get_named_item(const xmlNodePtr node, BSTR name, IXMLDOMN
 
     nameA = xmlchar_from_wchar(name);
     local = xmlSplitQName2(nameA, &prefix);
-    heap_free(nameA);
+    free(nameA);
 
     if (!local)
         return domelem_get_qualified_item(node, name, NULL, item);
@@ -1718,14 +1718,14 @@ static HRESULT domelem_remove_qualified_item(xmlNodePtr node, BSTR name, BSTR ur
     nameA = xmlchar_from_wchar(name);
     if (!nameA)
     {
-        heap_free(href);
+        free(href);
         return E_OUTOFMEMORY;
     }
 
     attr = xmlHasNsProp(node, nameA, href);
 
-    heap_free(nameA);
-    heap_free(href);
+    free(nameA);
+    free(href);
 
     if (!attr)
     {
@@ -1759,7 +1759,7 @@ static HRESULT domelem_remove_named_item(xmlNodePtr node, BSTR name, IXMLDOMNode
 
     nameA = xmlchar_from_wchar(name);
     local = xmlSplitQName2(nameA, &prefix);
-    heap_free(nameA);
+    free(nameA);
 
     if (!local)
         return domelem_remove_qualified_item(node, name, NULL, item);
@@ -1937,7 +1937,7 @@ IUnknown* create_element( xmlNodePtr element )
 {
     domelem *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof *This);
     if ( !This )
         return NULL;
 

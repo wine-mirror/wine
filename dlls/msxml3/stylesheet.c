@@ -96,7 +96,7 @@ static void xslprocessor_par_free(struct xslprocessor_params *params, struct xsl
     list_remove(&par->entry);
     SysFreeString(par->name);
     SysFreeString(par->value);
-    heap_free(par);
+    free(par);
 }
 
 static void xsltemplate_set_node( xsltemplate *This, IXMLDOMNode *node )
@@ -152,7 +152,7 @@ static ULONG WINAPI xsltemplate_Release( IXSLTemplate *iface )
     if ( ref == 0 )
     {
         if (This->node) IXMLDOMNode_Release( This->node );
-        heap_free( This );
+        free( This );
     }
 
     return ref;
@@ -267,7 +267,7 @@ HRESULT XSLTemplate_create(void **ppObj)
 
     TRACE("(%p)\n", ppObj);
 
-    This = heap_alloc( sizeof (*This) );
+    This = malloc(sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -340,7 +340,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
             xslprocessor_par_free(&This->params, par);
 
         IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -726,13 +726,13 @@ static HRESULT WINAPI xslprocessor_addParameter(
     else
     {
         /* new parameter */
-        par = heap_alloc(sizeof(struct xslprocessor_par));
+        par = malloc(sizeof(struct xslprocessor_par));
         if (!par) return E_OUTOFMEMORY;
 
         par->name = SysAllocString(p);
         if (!par->name)
         {
-            heap_free(par);
+            free(par);
             return E_OUTOFMEMORY;
         }
         list_add_tail(&This->params.list, &par->entry);
@@ -810,7 +810,7 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
 
     TRACE("(%p)\n", ppObj);
 
-    This = heap_alloc( sizeof (*This) );
+    This = malloc(sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 

@@ -107,7 +107,7 @@ static ULONG WINAPI domcdata_Release(IXMLDOMCDATASection *iface)
     if (!ref)
     {
         destroy_xmlnode(&cdata->node);
-        heap_free(cdata);
+        free(cdata);
     }
 
     return ref;
@@ -875,7 +875,7 @@ IUnknown* create_cdata( xmlNodePtr text )
 {
     domcdata *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof(*This));
     if ( !This )
         return NULL;
 

@@ -114,7 +114,7 @@ static ULONG WINAPI XMLView_Binding_Release(IBinding *iface)
 
     if(!ref) {
         IBinding_Release(This->binding);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -185,7 +185,7 @@ static inline HRESULT XMLView_Binding_Create(IBinding *binding, IBinding **ret)
 {
     Binding *bind;
 
-    bind = heap_alloc_zero(sizeof(Binding));
+    bind = calloc(1, sizeof(Binding));
     if(!bind)
         return E_OUTOFMEMORY;
 
@@ -247,7 +247,7 @@ static ULONG WINAPI XMLView_BindStatusCallback_Release(
             IStream_Release(This->stream);
         IBindStatusCallback_Release(This->bsc);
         IMoniker_Release(This->mon);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -555,7 +555,7 @@ static inline HRESULT XMLView_BindStatusCallback_Create(IBindStatusCallback *bsc
 {
     BindStatusCallback *bsc;
 
-    bsc = heap_alloc_zero(sizeof(BindStatusCallback));
+    bsc = calloc(1, sizeof(BindStatusCallback));
     if(!bsc)
         return E_OUTOFMEMORY;
 
@@ -615,7 +615,7 @@ static ULONG WINAPI XMLView_Moniker_Release(IMoniker *iface)
 
     if(!ref) {
         IMoniker_Release(This->mon);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -819,7 +819,7 @@ static inline HRESULT XMLView_Moniker_Create(IMoniker *mon,
 {
     Moniker *wrap;
 
-    wrap = heap_alloc_zero(sizeof(Moniker));
+    wrap = calloc(1, sizeof(Moniker));
     if(!wrap)
         return E_OUTOFMEMORY;
 
@@ -884,7 +884,7 @@ static ULONG WINAPI XMLView_PersistMoniker_Release(IPersistMoniker *iface)
         if(This->mon)
             IMoniker_Release(This->mon);
         IUnknown_Release(This->html_doc);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1405,7 +1405,7 @@ HRESULT XMLView_create(void **ppObj)
 
     TRACE("(%p)\n", ppObj);
 
-    This = heap_alloc_zero(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if(!This)
         return E_OUTOFMEMORY;
 
@@ -1418,7 +1418,7 @@ HRESULT XMLView_create(void **ppObj)
     hres = CoCreateInstance(&CLSID_HTMLDocument, (IUnknown*)&This->IPersistMoniker_iface,
             CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&This->html_doc);
     if(FAILED(hres)) {
-        heap_free(This);
+        free(This);
         return hres;
     }
 

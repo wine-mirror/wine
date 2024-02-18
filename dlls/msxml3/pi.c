@@ -110,7 +110,7 @@ static ULONG WINAPI dom_pi_Release(
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -303,7 +303,7 @@ static HRESULT xml_get_value(xmlChar **p, xmlChar **value)
     if (!len) return XML_E_MISSINGNAME;
     *p += 1;
 
-    *value = heap_alloc(len + 1);
+    *value = malloc(len + 1);
     if (!*value) return E_OUTOFMEMORY;
     memcpy(*value, v, len);
     *(*value + len) = 0;
@@ -409,9 +409,9 @@ fail:
         node->properties = NULL;
     }
 
-    heap_free(version);
-    heap_free(encoding);
-    heap_free(standalone);
+    free(version);
+    free(encoding);
+    free(standalone);
     return hr;
 }
 
@@ -867,7 +867,7 @@ static HRESULT dom_pi_get_named_item(const xmlNodePtr node, BSTR name, IXMLDOMNo
     if (!nameA) return E_OUTOFMEMORY;
 
     attr = node_has_prop(node, nameA);
-    heap_free(nameA);
+    free(nameA);
 
     if (!attr)
     {
@@ -945,7 +945,7 @@ IUnknown* create_pi( xmlNodePtr pi )
 {
     dom_pi *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof(*This));
     if ( !This )
         return NULL;
 

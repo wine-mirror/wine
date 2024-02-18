@@ -87,7 +87,7 @@ static HRESULT declare_prefix(namespacemanager *This, const WCHAR *prefix, const
     if (ctxt->count == ctxt->max_alloc)
     {
         ctxt->max_alloc *= 2;
-        ctxt->ns = heap_realloc(ctxt->ns, ctxt->max_alloc*sizeof(*ctxt->ns));
+        ctxt->ns = realloc(ctxt->ns, ctxt->max_alloc * sizeof(*ctxt->ns));
     }
 
     if (!prefix) prefix = emptyW;
@@ -173,15 +173,15 @@ static struct nscontext* alloc_ns_context(void)
 {
     struct nscontext *ctxt;
 
-    ctxt = heap_alloc(sizeof(*ctxt));
+    ctxt = malloc(sizeof(*ctxt));
     if (!ctxt) return NULL;
 
     ctxt->count = 0;
     ctxt->max_alloc = DEFAULT_PREFIX_ALLOC_COUNT;
-    ctxt->ns = heap_alloc(ctxt->max_alloc*sizeof(*ctxt->ns));
+    ctxt->ns = malloc(ctxt->max_alloc * sizeof(*ctxt->ns));
     if (!ctxt->ns)
     {
-        heap_free(ctxt);
+        free(ctxt);
         return NULL;
     }
 
@@ -191,8 +191,8 @@ static struct nscontext* alloc_ns_context(void)
     ctxt->count++;
     if (!ctxt->ns[0].prefix || !ctxt->ns[0].uri)
     {
-        heap_free(ctxt->ns);
-        heap_free(ctxt);
+        free(ctxt->ns);
+        free(ctxt);
         return NULL;
     }
 
@@ -209,8 +209,8 @@ static void free_ns_context(struct nscontext *ctxt)
         SysFreeString(ctxt->ns[i].uri);
     }
 
-    heap_free(ctxt->ns);
-    heap_free(ctxt);
+    free(ctxt->ns);
+    free(ctxt);
 }
 
 static HRESULT WINAPI namespacemanager_QueryInterface(IMXNamespaceManager *iface, REFIID riid, void **ppvObject)
@@ -452,7 +452,7 @@ static ULONG WINAPI vbnamespacemanager_Release(IVBMXNamespaceManager *iface)
             free_ns_context(ctxt);
         }
 
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -642,7 +642,7 @@ HRESULT MXNamespaceManager_create(void **obj)
 
     TRACE("(%p)\n", obj);
 
-    This = heap_alloc( sizeof (*This) );
+    This = malloc(sizeof(*This));
     if( !This )
         return E_OUTOFMEMORY;
 
@@ -655,7 +655,7 @@ HRESULT MXNamespaceManager_create(void **obj)
     ctxt = alloc_ns_context();
     if (!ctxt)
     {
-        heap_free(This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 

@@ -171,7 +171,7 @@ static ULONG WINAPI domselection_Release(
         xmlXPathFreeObject(This->result);
         xmldoc_release(This->node->doc);
         if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -481,7 +481,7 @@ static ULONG WINAPI enumvariant_Release(IEnumVARIANT *iface )
     if ( ref == 0 )
     {
         if (This->own) IUnknown_Release(This->outer);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -566,7 +566,7 @@ HRESULT create_enumvariant(IUnknown *outer, BOOL own, const struct enumvariant_f
 {
     enumvariant *This;
 
-    This = heap_alloc(sizeof(enumvariant));
+    This = malloc(sizeof(enumvariant));
     if (!This) return E_OUTOFMEMORY;
 
     This->IEnumVARIANT_iface.lpVtbl = &EnumVARIANTVtbl;
@@ -763,7 +763,7 @@ static void query_serror(void* ctx, xmlErrorPtr err)
 
 HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
 {
-    domselection *This = heap_alloc(sizeof(domselection));
+    domselection *This = malloc(sizeof(domselection));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
     HRESULT hr;
 
@@ -773,7 +773,7 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     if (!This || !ctxt || !query)
     {
         xmlXPathFreeContext(ctxt);
-        heap_free(This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 

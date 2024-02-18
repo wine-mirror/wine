@@ -97,7 +97,7 @@ static ULONG WINAPI xmlelem_Release(IXMLElement *iface)
     if (ref == 0)
     {
         if (This->own) xmlFreeNode(This->node);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -232,8 +232,8 @@ static HRESULT WINAPI xmlelem_setAttribute(IXMLElement *iface, BSTR strPropertyN
     value = xmlchar_from_wchar(V_BSTR(&PropertyValue));
     attr = xmlSetProp(This->node, name, value);
 
-    heap_free(name);
-    heap_free(value);
+    free(name);
+    free(value);
     return (attr) ? S_OK : S_FALSE;
 }
 
@@ -285,7 +285,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR name,
             SysFreeString(attr_name);
         }
 
-        heap_free(xml_name);
+        free(xml_name);
     }
 
     if (val)
@@ -323,7 +323,7 @@ static HRESULT WINAPI xmlelem_removeAttribute(IXMLElement *iface, BSTR strProper
         hr = S_OK;
 
 done:
-    heap_free(name);
+    free(name);
     return hr;
 }
 
@@ -408,7 +408,7 @@ static HRESULT WINAPI xmlelem_put_text(IXMLElement *iface, BSTR p)
     content = xmlchar_from_wchar(p);
     xmlNodeSetContent(This->node, content);
 
-    heap_free(content);
+    free(content);
 
     return S_OK;
 }
@@ -488,7 +488,7 @@ HRESULT XMLElement_create(xmlNodePtr node, LPVOID *ppObj, BOOL own)
 
     *ppObj = NULL;
 
-    elem = heap_alloc(sizeof (*elem));
+    elem = malloc(sizeof(*elem));
     if(!elem)
         return E_OUTOFMEMORY;
 
@@ -585,7 +585,7 @@ static ULONG WINAPI xmlelem_collection_Release(IXMLElementCollection *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -815,7 +815,7 @@ static HRESULT XMLElementCollection_create(xmlNodePtr node, LPVOID *ppObj)
     if (!node->children)
         return S_FALSE;
 
-    collection = heap_alloc(sizeof (*collection));
+    collection = malloc(sizeof(*collection));
     if(!collection)
         return E_OUTOFMEMORY;
 

@@ -27,7 +27,6 @@
 #include "xmlparser.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -92,7 +91,7 @@ static ULONG WINAPI xmlparser_Release(IXMLParser* iface)
         if(This->nodefactory)
             IXMLNodeFactory_Release(This->nodefactory);
 
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -418,7 +417,7 @@ HRESULT XMLParser_create(void **ppObj)
 
     TRACE("(%p)\n", ppObj);
 
-    This = heap_alloc( sizeof(xmlparser) );
+    This = malloc(sizeof(xmlparser));
     if(!This)
         return E_OUTOFMEMORY;
 

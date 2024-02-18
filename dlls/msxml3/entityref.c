@@ -108,7 +108,7 @@ static ULONG WINAPI entityref_Release(
     if (!ref)
     {
         destroy_xmlnode(&This->node);
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -578,7 +578,7 @@ IUnknown* create_doc_entity_ref( xmlNodePtr entity )
 {
     entityref *This;
 
-    This = heap_alloc( sizeof *This );
+    This = malloc(sizeof(*This));
     if ( !This )
         return NULL;
 

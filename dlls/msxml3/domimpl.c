@@ -92,7 +92,7 @@ static ULONG WINAPI domimpl_Release(IXMLDOMImplementation *iface)
     TRACE("%p, refcount %lu.\n", iface, ref);
 
     if (!ref)
-        heap_free(domimpl);
+        free(domimpl);
 
     return ref;
 }
@@ -194,7 +194,7 @@ HRESULT create_dom_implementation(IXMLDOMImplementation **ret)
 {
     domimpl *object;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = malloc(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IXMLDOMImplementation_iface.lpVtbl = &domimpl_vtbl;
