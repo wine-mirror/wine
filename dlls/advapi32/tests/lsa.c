@@ -243,15 +243,15 @@ static void test_LsaLookupNames2(void)
         return;
     }
 
-    name[0].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n1));
+    name[0].Buffer = malloc(sizeof(n1));
     name[0].Length = name[0].MaximumLength = sizeof(n1);
     memcpy(name[0].Buffer, n1, sizeof(n1));
 
-    name[1].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n1));
+    name[1].Buffer = malloc(sizeof(n1));
     name[1].Length = name[1].MaximumLength = sizeof(n1) - sizeof(WCHAR);
     memcpy(name[1].Buffer, n1, sizeof(n1) - sizeof(WCHAR));
 
-    name[2].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n2));
+    name[2].Buffer = malloc(sizeof(n2));
     name[2].Length = name[2].MaximumLength = sizeof(n2);
     memcpy(name[2].Buffer, n2, sizeof(n2));
 
@@ -307,9 +307,9 @@ static void test_LsaLookupNames2(void)
     LsaFreeMemory(sids);
     LsaFreeMemory(domains);
 
-    HeapFree(GetProcessHeap(), 0, name[0].Buffer);
-    HeapFree(GetProcessHeap(), 0, name[1].Buffer);
-    HeapFree(GetProcessHeap(), 0, name[2].Buffer);
+    free(name[0].Buffer);
+    free(name[1].Buffer);
+    free(name[2].Buffer);
 
     status = LsaClose(handle);
     ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);

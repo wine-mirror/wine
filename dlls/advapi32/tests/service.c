@@ -1000,14 +1000,14 @@ static void test_query_svc(void)
     }
 
     /* Pass a correct buffer and buffersize but a NULL handle */
-    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
+    statusproc = malloc(sizeof(SERVICE_STATUS_PROCESS));
     bufsize = needed;
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(NULL, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, statusproc);
+    free(statusproc);
 
     /* Correct handle and info level */
     SetLastError(0xdeadbeef);
@@ -1023,21 +1023,21 @@ static void test_query_svc(void)
     }
 
     /* All parameters are OK but we don't have enough rights */
-    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
+    statusproc = malloc(sizeof(SERVICE_STATUS_PROCESS));
     bufsize = sizeof(SERVICE_STATUS_PROCESS);
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED,
        "Expected ERROR_ACCESS_DENIED, got %ld\n", GetLastError());
-    HeapFree(GetProcessHeap(), 0, statusproc);
+    free(statusproc);
 
     /* Open the service with just enough rights. */
     CloseServiceHandle(svc_handle);
     svc_handle = OpenServiceA(scm_handle, spooler, SERVICE_QUERY_STATUS);
 
     /* Everything should be fine now. */
-    statusproc = HeapAlloc(GetProcessHeap(), 0, sizeof(SERVICE_STATUS_PROCESS));
+    statusproc = malloc(sizeof(SERVICE_STATUS_PROCESS));
     bufsize = sizeof(SERVICE_STATUS_PROCESS);
     SetLastError(0xdeadbeef);
     ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, &needed);
@@ -1056,7 +1056,7 @@ static void test_query_svc(void)
     ok(broken(GetLastError() == ERROR_INVALID_PARAMETER) /* NT4 */ ||
        GetLastError() == ERROR_INVALID_ADDRESS, "got %ld\n", GetLastError());
 
-    HeapFree(GetProcessHeap(), 0, statusproc);
+    free(statusproc);
 
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
@@ -1274,14 +1274,14 @@ static BOOL test_enum_svc(int attempt)
     tempneeded = needed;
 
     /* Allocate the correct needed bytes */
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     bufsize = needed;
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, bufsize, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
@@ -1291,14 +1291,14 @@ static BOOL test_enum_svc(int attempt)
     /* Store the number of returned services */
     tempreturned = returned;
 
-    servicesA = HeapAlloc(GetProcessHeap(), 0, neededA);
+    servicesA = malloc(neededA);
     bufsize = neededA;
     neededA = 0xdeadbeef;
     returnedA = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = EnumServicesStatusA(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               servicesA, bufsize, &neededA, &returnedA, NULL);
-    HeapFree(GetProcessHeap(), 0, servicesA);
+    free(servicesA);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     if (!ret && GetLastError() == ERROR_NOT_ENOUGH_MEMORY && GetACP() == CP_UTF8)
@@ -1314,7 +1314,7 @@ static BOOL test_enum_svc(int attempt)
      * More than one service will be missing because of the space needed for
      * the strings.
      */
-    services = HeapAlloc(GetProcessHeap(), 0, tempneeded);
+    services = malloc(tempneeded);
     bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSW);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
@@ -1323,7 +1323,7 @@ static BOOL test_enum_svc(int attempt)
                               services, bufsize, &needed, &returned, NULL);
     if (ret && needed == 0 && attempt)
     {
-        HeapFree(GetProcessHeap(), 0, services);
+        free(services);
         goto retry; /* service stop race condition */
     }
     ok(!ret, "Expected failure\n");
@@ -1346,7 +1346,7 @@ static BOOL test_enum_svc(int attempt)
                               services, bufsize, &needed, &returned, &resume);
     if (ret && needed == 0 && attempt)
     {
-        HeapFree(GetProcessHeap(), 0, services);
+        free(services);
         goto retry; /* service stop race condition */
     }
     ok(!ret, "Expected failure\n");
@@ -1365,7 +1365,7 @@ static BOOL test_enum_svc(int attempt)
     SetLastError(0xdeadbeef);
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, bufsize, &needed, &returned, &resume);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
@@ -1390,10 +1390,10 @@ static BOOL test_enum_svc(int attempt)
     /* Get the number of active win32 services */
     EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_ACTIVE, NULL, 0,
                         &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_ACTIVE,
                               services, needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1402,10 +1402,10 @@ static BOOL test_enum_svc(int attempt)
     /* Get the number of inactive win32 services */
     EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_INACTIVE, NULL, 0,
                         &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_INACTIVE,
                               services, needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1414,10 +1414,10 @@ static BOOL test_enum_svc(int attempt)
     /* Get the number of win32 services */
     EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL, NULL, 0,
                         &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1435,7 +1435,7 @@ static BOOL test_enum_svc(int attempt)
      */
     EnumServicesStatusW(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
                         NULL, 0, &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     ret = EnumServicesStatusW(scm_handle, SERVICE_DRIVER | SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, needed, &needed, &returned, NULL);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
@@ -1482,7 +1482,7 @@ static BOOL test_enum_svc(int attempt)
             }
         }
     }
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
 
     if ((servicecountactive || servicecountinactive) && attempt)
          goto retry; /* service start|stop race condition */
@@ -1695,11 +1695,11 @@ static BOOL test_enum_svc_ex(int attempt)
     /* Show the Ex call returns the same service count as the regular enum */
     EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                         NULL, 0, &needed, &returned, NULL);
-    services = HeapAlloc(GetProcessHeap(), 0, needed);
+    services = malloc(needed);
     returned = 0xdeadbeef;
     ret = EnumServicesStatusW(scm_handle, SERVICE_WIN32, SERVICE_STATE_ALL,
                               services, needed, &needed, &returned, NULL);
-    HeapFree(GetProcessHeap(), 0, services);
+    free(services);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
@@ -1710,14 +1710,14 @@ static BOOL test_enum_svc_ex(int attempt)
     tempreturned = returned;
 
     /* Allocate the correct needed bytes */
-    exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded);
+    exservices = malloc(tempneeded);
     bufsize = tempneeded;
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  (BYTE*)exservices, bufsize, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
@@ -1731,7 +1731,7 @@ static BOOL test_enum_svc_ex(int attempt)
      * More than one service will be missing because of the space needed for
      * the strings.
      */
-    exservices = HeapAlloc(GetProcessHeap(), 0, tempneeded);
+    exservices = malloc(tempneeded);
     bufsize = (tempreturned - 1) * sizeof(ENUM_SERVICE_STATUSW);
     needed = 0xdeadbeef;
     returned = 0xdeadbeef;
@@ -1740,7 +1740,7 @@ static BOOL test_enum_svc_ex(int attempt)
                                  (BYTE*)exservices, bufsize, &needed, &returned, NULL, NULL);
     if (ret && needed == 0 && attempt)
     {
-        HeapFree(GetProcessHeap(), 0, exservices);
+        free(exservices);
         goto retry; /* service stop race condition */
     }
     ok(!ret, "Expected failure\n");
@@ -1763,7 +1763,7 @@ static BOOL test_enum_svc_ex(int attempt)
                                  (BYTE*)exservices, bufsize, &needed, &returned, &resume, NULL);
     if (ret && needed == 0 && attempt)
     {
-        HeapFree(GetProcessHeap(), 0, exservices);
+        free(exservices);
         goto retry; /* service stop race condition */
     }
     ok(!ret, "Expected failure\n");
@@ -1782,7 +1782,7 @@ static BOOL test_enum_svc_ex(int attempt)
     SetLastError(0xdeadbeef);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  (BYTE*)exservices, bufsize, &needed, &returned, &resume, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
     ok(ret, "Expected success, got error %lu\n", GetLastError());
@@ -1795,10 +1795,10 @@ static BOOL test_enum_svc_ex(int attempt)
     /* Get the number of active win32 services */
     pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_ACTIVE,
                            NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
+    exservices = malloc(needed);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_ACTIVE,
                                  (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1807,10 +1807,10 @@ static BOOL test_enum_svc_ex(int attempt)
     /* Get the number of inactive win32 services */
     pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_INACTIVE,
                            NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
+    exservices = malloc(needed);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_INACTIVE,
                                  (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1819,10 +1819,10 @@ static BOOL test_enum_svc_ex(int attempt)
     /* Get the number of win32 services */
     pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                            NULL, 0, &needed, &returned, NULL, NULL);
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
+    exservices = malloc(needed);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
         goto retry; /* service start race condition */
 
@@ -1837,7 +1837,7 @@ static BOOL test_enum_svc_ex(int attempt)
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32 | SERVICE_DRIVER,
                                  SERVICE_STATE_ALL, NULL, 0, &needed, &returned, NULL, NULL);
     ok(!ret, "Expected failure\n");
-    exservices = HeapAlloc(GetProcessHeap(), 0, needed);
+    exservices = malloc(needed);
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32 | SERVICE_DRIVER,
                                  SERVICE_STATE_ALL, (BYTE*)exservices, needed, &needed, &returned, NULL, NULL);
     if (!ret && GetLastError() == ERROR_MORE_DATA && attempt)
@@ -1908,7 +1908,7 @@ static BOOL test_enum_svc_ex(int attempt)
             }
         }
     }
-    HeapFree(GetProcessHeap(), 0, exservices);
+    free(exservices);
 
     if ((servicecountactive || servicecountinactive) && attempt)
          goto retry; /* service start|stop race condition */
@@ -2154,7 +2154,7 @@ static void test_sequence(void)
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Expected ERROR_INSUFFICIENT_BUFFER, got %ld\n", GetLastError());
 
-    config = HeapAlloc(GetProcessHeap(), 0, needed);
+    config = malloc(needed);
     given = needed;
     SetLastError(0xdeadbeef);
     ret = QueryServiceConfigA(svc_handle, config, given, &needed);
@@ -2182,7 +2182,7 @@ static void test_sequence(void)
     ok(ret, "ChangeServiceConfig failed (err=%ld)\n", GetLastError());
 
     QueryServiceConfigA(svc_handle, NULL, 0, &needed);
-    config = HeapReAlloc(GetProcessHeap(), 0, config, needed);
+    config = realloc(config, needed);
     ok(QueryServiceConfigA(svc_handle, config, needed, &needed), "QueryServiceConfig failed\n");
     ok(config->lpBinaryPathName && config->lpLoadOrderGroup && config->lpDependencies && config->lpServiceStartName &&
         config->lpDisplayName, "Expected all string struct members to be non-NULL\n");
@@ -2201,7 +2201,7 @@ static void test_sequence(void)
     ok(ret, "Expected success, got error %lu\n", GetLastError());
     CloseServiceHandle(svc_handle);
     CloseServiceHandle(scm_handle);
-    HeapFree(GetProcessHeap(), 0, config);
+    free(config);
 }
 
 static void test_queryconfig2(void)
@@ -2890,7 +2890,7 @@ static void test_EventLog(void)
     ok(!ret, "QueryServiceConfig should fail\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", GetLastError());
 
-    config = HeapAlloc(GetProcessHeap(), 0, size);
+    config = malloc(size);
     ret = QueryServiceConfigA(svc_handle, config, size, &size);
     ok(ret, "QueryServiceConfig error %lu\n", GetLastError());
 
@@ -2912,7 +2912,7 @@ static void test_EventLog(void)
        !strcmp(config->lpDisplayName, "Event Log") /* XP */ ||
        !strcmp(config->lpDisplayName, "Windows Event Log") /* Vista+ */, "got %s\n", config->lpDisplayName);
 
-    HeapFree(GetProcessHeap(), 0, config);
+    free(config);
 
     memset(&status, 0, sizeof(status));
     size = sizeof(status);
