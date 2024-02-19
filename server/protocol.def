@@ -903,6 +903,7 @@ struct shared_cursor
 {
     int                  x;                /* cursor position */
     int                  y;
+    unsigned int         last_change;      /* time of last position change */
 };
 
 typedef volatile struct

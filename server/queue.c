@@ -469,6 +469,7 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
     int updated;
+    unsigned int time = get_tick_count();
 
     x = max( min( x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
     y = max( min( y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
@@ -478,10 +479,9 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
         updated = shared->cursor.x != x || shared->cursor.y != y;
         shared->cursor.x = x;
         shared->cursor.y = y;
+        shared->cursor.last_change = time;
     }
     SHARED_WRITE_END;
-
-    desktop->cursor.last_change = get_tick_count();
 
     if (!win || !is_window_visible( win ) || is_window_transparent( win ))
         win = shallow_window_from_point( desktop, x, y );
@@ -1998,7 +1998,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     struct rawinput_message raw_msg;
     struct message *msg;
     struct thread *foreground;
-    unsigned int i, time, flags;
+    unsigned int i, time = get_tick_count(), flags;
     struct hw_msg_source source = { IMDT_MOUSE, origin };
     lparam_t wparam = input->mouse.data << 16;
     int wait = 0, x, y;
@@ -2020,10 +2020,15 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         WM_MOUSEHWHEEL   /* 0x1000 = MOUSEEVENTF_HWHEEL */
     };
 
-    desktop->cursor.last_change = get_tick_count();
+    SHARED_WRITE_BEGIN( desktop_shm, desktop_shm_t )
+    {
+        shared->cursor.last_change = time;
+    }
+    SHARED_WRITE_END;
+
     flags = input->mouse.flags;
     time  = input->mouse.time;
-    if (!time) time = desktop->cursor.last_change;
+    if (!time) time = desktop_shm->cursor.last_change;
 
     if (flags & MOUSEEVENTF_MOVE)
     {
@@ -3741,7 +3746,7 @@ DECL_HANDLER(set_cursor)
     reply->new_x       = desktop_shm->cursor.x;
     reply->new_y       = desktop_shm->cursor.y;
     reply->new_clip    = desktop->cursor.clip;
-    reply->last_change = desktop->cursor.last_change;
+    reply->last_change = desktop_shm->cursor.last_change;
 }
 
 /* Get the history of the 64 last cursor positions */

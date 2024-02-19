@@ -309,6 +309,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             {
                 shared->cursor.x = 0;
                 shared->cursor.y = 0;
+                shared->cursor.last_change = 0;
             }
             SHARED_WRITE_END;
         }
