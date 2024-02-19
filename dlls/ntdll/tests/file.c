@@ -4357,6 +4357,57 @@ static void test_file_attribute_tag_information(void)
     CloseHandle( h );
 }
 
+static void test_file_stat_information(void)
+{
+    BY_HANDLE_FILE_INFORMATION info;
+    FILE_STAT_INFORMATION fsd;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE h;
+    BOOL ret;
+
+    if (!(h = create_temp_file(0))) return;
+
+    memset( &fsd, 0x11, sizeof(fsd) );
+    status = pNtQueryInformationFile( h, &io, &fsd, sizeof(fsd), FileStatInformation );
+    if (status == STATUS_NOT_IMPLEMENTED || status == STATUS_INVALID_INFO_CLASS)
+    {
+        skip( "FileStatInformation not supported\n" );
+        CloseHandle( h );
+        return;
+    }
+    ok( status == STATUS_SUCCESS, "query FileStatInformation returned %#lx\n", status );
+
+    memset( &info, 0x22, sizeof(info) );
+    ret = GetFileInformationByHandle( h, &info );
+    ok( ret, "GetFileInformationByHandle failed\n" );
+
+    ok( fsd.FileId.u.LowPart == info.nFileIndexLow, "expected %08lx, got %08lx\n", info.nFileIndexLow, fsd.FileId.u.LowPart );
+    ok( fsd.FileId.u.HighPart == info.nFileIndexHigh, "expected %08lx, got %08lx\n", info.nFileIndexHigh, fsd.FileId.u.HighPart );
+    ok( fsd.CreationTime.u.LowPart == info.ftCreationTime.dwLowDateTime, "expected %08lx, got %08lx\n",
+        info.ftCreationTime.dwLowDateTime, fsd.CreationTime.u.LowPart );
+    ok( fsd.CreationTime.u.HighPart == info.ftCreationTime.dwHighDateTime, "expected %08lx, got %08lx\n",
+        info.ftCreationTime.dwHighDateTime, fsd.CreationTime.u.HighPart );
+    ok( fsd.LastAccessTime.u.LowPart == info.ftLastAccessTime.dwLowDateTime, "expected %08lx, got %08lx\n",
+        info.ftLastAccessTime.dwLowDateTime, fsd.LastAccessTime.u.LowPart );
+    ok( fsd.LastAccessTime.u.HighPart == info.ftLastAccessTime.dwHighDateTime, "expected %08lx, got %08lx\n",
+        info.ftLastAccessTime.dwHighDateTime, fsd.LastAccessTime.u.HighPart );
+    ok( fsd.LastWriteTime.u.LowPart == info.ftLastWriteTime.dwLowDateTime, "expected %08lx, got %08lx\n",
+        info.ftLastWriteTime.dwLowDateTime, fsd.LastWriteTime.u.LowPart );
+    ok( fsd.LastWriteTime.u.HighPart == info.ftLastWriteTime.dwHighDateTime, "expected %08lx, got %08lx\n",
+        info.ftLastWriteTime.dwHighDateTime, fsd.LastWriteTime.u.HighPart );
+    /* TODO: ChangeTime */
+    /* TODO: AllocationSize */
+    ok( fsd.EndOfFile.u.LowPart == info.nFileSizeLow, "expected %08lx, got %08lx\n", info.nFileSizeLow, fsd.EndOfFile.u.LowPart );
+    ok( fsd.EndOfFile.u.HighPart == info.nFileSizeHigh, "expected %08lx, got %08lx\n", info.nFileSizeHigh, fsd.EndOfFile.u.HighPart );
+    ok( fsd.FileAttributes == info.dwFileAttributes, "expected %08lx, got %08lx\n", info.dwFileAttributes, fsd.FileAttributes );
+    ok( !fsd.ReparseTag, "got reparse tag %#lx\n", fsd.ReparseTag );
+    ok( fsd.NumberOfLinks == info.nNumberOfLinks, "expected %08lx, got %08lx\n", info.nNumberOfLinks, fsd.NumberOfLinks );
+    ok( fsd.EffectiveAccess == FILE_ALL_ACCESS, "got %08lx\n", fsd.EffectiveAccess );
+
+    CloseHandle( h );
+}
+
 static void rename_file( HANDLE h, const WCHAR *filename )
 {
     FILE_RENAME_INFORMATION *fri;
@@ -5900,6 +5951,7 @@ START_TEST(file)
     test_file_id_information();
     test_file_access_information();
     test_file_attribute_tag_information();
+    test_file_stat_information();
     test_dotfile_file_attributes();
     test_file_mode();
     test_file_readonly_access();
