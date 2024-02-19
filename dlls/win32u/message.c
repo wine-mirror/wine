@@ -2140,7 +2140,7 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
         return FALSE;
     }
 
-    SERVER_START_REQ( get_thread_input )
+    SERVER_START_REQ( get_thread_input_data )
     {
         req->tid = id;
         if ((ret = !wine_server_call_err( req )))

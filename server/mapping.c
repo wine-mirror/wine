@@ -1407,6 +1407,18 @@ void free_shared_object( const volatile void *object_shm )
     list_add_tail( &session.free_objects, &object->entry );
 }
 
+/* invalidate client caches for a shared object by giving it a new id */
+void invalidate_shared_object( const volatile void *object_shm )
+{
+    struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
+
+    SHARED_WRITE_BEGIN( &object->obj.shm, object_shm_t )
+    {
+        CONTAINING_RECORD( shared, shared_object_t, shm )->id = ++session.last_object_id;
+    }
+    SHARED_WRITE_END;
+}
+
 obj_locator_t get_shared_object_locator( const volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );

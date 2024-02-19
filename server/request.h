@@ -303,6 +303,7 @@ DECL_HANDLER(set_user_object_info);
 DECL_HANDLER(register_hotkey);
 DECL_HANDLER(unregister_hotkey);
 DECL_HANDLER(attach_thread_input);
+DECL_HANDLER(get_thread_input_data);
 DECL_HANDLER(get_thread_input);
 DECL_HANDLER(get_last_input_time);
 DECL_HANDLER(get_key_state);
@@ -595,6 +596,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_register_hotkey,
     (req_handler)req_unregister_hotkey,
     (req_handler)req_attach_thread_input,
+    (req_handler)req_get_thread_input_data,
     (req_handler)req_get_thread_input,
     (req_handler)req_get_last_input_time,
     (req_handler)req_get_key_state,
@@ -1788,19 +1790,23 @@ C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, tid_from) == 12 );
 C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, tid_to) == 16 );
 C_ASSERT( FIELD_OFFSET(struct attach_thread_input_request, attach) == 20 );
 C_ASSERT( sizeof(struct attach_thread_input_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_request, tid) == 12 );
+C_ASSERT( sizeof(struct get_thread_input_data_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, focus) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, capture) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, active) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, foreground) == 20 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, menu_owner) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, move_size) == 28 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, caret) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, cursor) == 36 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, show_count) == 40 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_data_reply, rect) == 44 );
+C_ASSERT( sizeof(struct get_thread_input_data_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct get_thread_input_request, tid) == 12 );
 C_ASSERT( sizeof(struct get_thread_input_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, focus) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, capture) == 12 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, active) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, foreground) == 20 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, menu_owner) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, move_size) == 28 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, caret) == 32 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, cursor) == 36 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, show_count) == 40 );
-C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, rect) == 44 );
-C_ASSERT( sizeof(struct get_thread_input_reply) == 64 );
+C_ASSERT( FIELD_OFFSET(struct get_thread_input_reply, locator) == 8 );
+C_ASSERT( sizeof(struct get_thread_input_reply) == 24 );
 C_ASSERT( sizeof(struct get_last_input_time_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_last_input_time_reply, time) == 8 );
 C_ASSERT( sizeof(struct get_last_input_time_reply) == 16 );

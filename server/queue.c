@@ -119,6 +119,7 @@ struct thread_input
     unsigned char          keystate[256]; /* state of each key */
     unsigned char          desktop_keystate[256]; /* desktop keystate when keystate was synced */
     int                    keystate_lock; /* keystate is locked */
+    const input_shm_t     *shared;        /* thread input in session shared memory */
 };
 
 struct msg_queue
@@ -269,6 +270,7 @@ static struct thread_input *create_thread_input( struct thread *thread )
         set_caret_window( input, 0 );
         memset( input->keystate, 0, sizeof(input->keystate) );
         input->keystate_lock = 0;
+        input->shared = NULL;
 
         if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
         {
@@ -277,6 +279,12 @@ static struct thread_input *create_thread_input( struct thread *thread )
         }
         memcpy( input->desktop_keystate, (const void *)input->desktop->shared->keystate,
                 sizeof(input->desktop_keystate) );
+
+        if (!(input->shared = alloc_shared_object()))
+        {
+            release_object( input );
+            return NULL;
+        }
     }
     return input;
 }
@@ -395,6 +403,9 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
     {
         queue->input->cursor_count -= queue->cursor_count;
         if (queue->keystate_lock) unlock_input_keystate( queue->input );
+
+        /* invalidate the old object to force clients to refresh their cached thread input */
+        invalidate_shared_object( queue->input->shared );
         release_object( queue->input );
     }
     queue->input = (struct thread_input *)grab_object( new_input );
@@ -1295,6 +1306,7 @@ static void thread_input_destroy( struct object *obj )
         if (desktop->foreground_input == input) desktop->foreground_input = NULL;
         release_object( desktop );
     }
+    if (input->shared) free_shared_object( input->shared );
 }
 
 /* fix the thread input data when a window is destroyed */
@@ -3579,7 +3591,7 @@ DECL_HANDLER(attach_thread_input)
 
 
 /* get thread input data */
-DECL_HANDLER(get_thread_input)
+DECL_HANDLER(get_thread_input_data)
 {
     struct thread *thread = NULL;
     struct desktop *desktop;
@@ -3618,6 +3630,30 @@ DECL_HANDLER(get_thread_input)
     reply->foreground = desktop->foreground_input ? desktop->foreground_input->active : 0;
     if (thread) release_object( thread );
     release_object( desktop );
+}
+
+
+/* get the thread input of the given thread */
+DECL_HANDLER(get_thread_input)
+{
+    struct thread_input *input;
+
+    if (req->tid)
+    {
+        struct thread *thread;
+        if (!(thread = get_thread_from_id( req->tid ))) return;
+        input = thread->queue ? thread->queue->input : NULL;
+        release_object( thread );
+    }
+    else
+    {
+        struct desktop *desktop;
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        input = desktop->foreground_input;  /* get the foreground thread info */
+        release_object( desktop );
+    }
+
+    if (input && input->shared) reply->locator = get_shared_object_locator( input->shared );
 }
 
 

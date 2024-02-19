@@ -923,10 +923,16 @@ typedef volatile struct
     unsigned int         changed_bits;     /* changed wakeup bits */
 } queue_shm_t;
 
+typedef volatile struct
+{
+    int placeholder;
+} input_shm_t;
+
 typedef volatile union
 {
     desktop_shm_t        desktop;
     queue_shm_t          queue;
+    input_shm_t          input;
 } object_shm_t;
 
 typedef volatile struct
@@ -2914,7 +2920,7 @@ enum coords_relative
 
 
 /* Get input data for a given thread */
-@REQ(get_thread_input)
+@REQ(get_thread_input_data)
     thread_id_t    tid;           /* id of thread */
 @REPLY
     user_handle_t  focus;         /* handle to the focus window */
@@ -2927,6 +2933,14 @@ enum coords_relative
     user_handle_t  cursor;        /* handle to the cursor */
     int            show_count;    /* cursor show count */
     rectangle_t    rect;          /* caret rectangle */
+@END
+
+
+/* Get the thread input of the given thread */
+@REQ(get_thread_input)
+    thread_id_t    tid;           /* id of thread */
+@REPLY
+    obj_locator_t  locator;       /* locator for the shared session object */
 @END
 
 

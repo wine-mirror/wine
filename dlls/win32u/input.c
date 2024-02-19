@@ -553,7 +553,7 @@ HWND WINAPI NtUserGetForegroundWindow(void)
 {
     HWND ret = 0;
 
-    SERVER_START_REQ( get_thread_input )
+    SERVER_START_REQ( get_thread_input_data )
     {
         req->tid = 0;
         if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->foreground );
@@ -775,7 +775,7 @@ BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
 
     if (!info) return FALSE;
 
-    SERVER_START_REQ( get_thread_input )
+    SERVER_START_REQ( get_thread_input_data )
     {
         req->tid = 0;
         if ((ret = !wine_server_call( req )))
