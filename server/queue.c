@@ -2902,13 +2902,21 @@ DECL_HANDLER(is_window_hung)
 }
 
 
-/* get the message queue of the current thread */
-DECL_HANDLER(get_msg_queue)
+/* get a handle for the current thread message queue */
+DECL_HANDLER(get_msg_queue_handle)
 {
     struct msg_queue *queue = get_current_queue();
 
     reply->handle = 0;
     if (queue) reply->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
+}
+
+
+/* get the message queue of the current thread */
+DECL_HANDLER(get_msg_queue)
+{
+    struct msg_queue *queue = get_current_queue();
+    if (queue) reply->locator = get_shared_object_locator( queue->shared );
 }
 
 

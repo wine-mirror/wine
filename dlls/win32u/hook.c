@@ -62,10 +62,16 @@ static const char *debugstr_hook_id( unsigned int id )
 
 BOOL is_hooked( INT id )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    BOOL ret = TRUE;
+    UINT status;
 
-    if (!thread_info->active_hooks) return TRUE;
-    return (thread_info->active_hooks & (1 << (id - WH_MINHOOK))) != 0;
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+        ret = queue_shm->hooks_count[id - WH_MINHOOK] > 0;
+
+    if (status) return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -430,7 +436,7 @@ LRESULT call_message_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, size
 
     if (!is_hooked( id ))
     {
-        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
+        TRACE( "skipping hook %s\n", hook_names[id - WH_MINHOOK] );
         return 0;
     }
 
@@ -569,7 +575,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
 
     if (!is_hooked( WH_WINEVENT ))
     {
-        TRACE( "skipping hook mask %x\n", thread_info->active_hooks );
+        TRACE( "skipping hook\n" );
         return;
     }
 

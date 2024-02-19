@@ -219,6 +219,7 @@ struct object_lock
  * on it, within the loop, or after, unless the function has returned STATUS_SUCCESS.
  */
 extern NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **desktop_shm );
+extern NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_shm );
 
 extern BOOL is_virtual_desktop(void);
 

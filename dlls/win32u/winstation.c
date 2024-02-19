@@ -48,6 +48,7 @@ WINE_DECLARE_DEBUG_CHANNEL(win);
 struct session_thread_data
 {
     const shared_object_t *shared_desktop;         /* thread desktop shared session cached object */
+    const shared_object_t *shared_queue;           /* thread message queue shared session cached object */
 };
 
 struct session_block
@@ -212,6 +213,40 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
     {
         shared_object_acquire_seqlock( object, &lock->seq );
         *desktop_shm = &object->shm.desktop;
+        lock->id = object->id;
+        return STATUS_PENDING;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_shm )
+{
+    struct session_thread_data *data = get_session_thread_data();
+    const shared_object_t *object;
+
+    TRACE( "lock %p, queue_shm %p\n", lock, queue_shm );
+
+    if (!(object = data->shared_queue))
+    {
+        obj_locator_t locator;
+
+        SERVER_START_REQ( get_msg_queue )
+        {
+            wine_server_call( req );
+            locator = reply->locator;
+        }
+        SERVER_END_REQ;
+
+        data->shared_queue = find_shared_session_object( locator );
+        if (!(object = data->shared_queue)) return STATUS_INVALID_HANDLE;
+        memset( lock, 0, sizeof(*lock) );
+    }
+
+    if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
+    {
+        shared_object_acquire_seqlock( object, &lock->seq );
+        *queue_shm = &object->shm.queue;
         lock->id = object->id;
         return STATUS_PENDING;
     }

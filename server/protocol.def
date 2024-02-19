@@ -2115,10 +2115,17 @@ struct process_info
 @END
 
 
+/* Get a handle for the current thread message queue */
+@REQ(get_msg_queue_handle)
+@REPLY
+    obj_handle_t handle;       /* handle to the queue */
+@END
+
+
 /* Get the message queue of the current thread */
 @REQ(get_msg_queue)
 @REPLY
-    obj_handle_t handle;       /* handle to the queue */
+    obj_locator_t  locator;    /* locator for the shared session object */
 @END
 
 

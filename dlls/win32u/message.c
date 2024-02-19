@@ -2945,7 +2945,7 @@ static HANDLE get_server_queue_handle(void)
 
     if (!(ret = thread_info->server_queue))
     {
-        SERVER_START_REQ( get_msg_queue )
+        SERVER_START_REQ( get_msg_queue_handle )
         {
             wine_server_call( req );
             ret = wine_server_ptr_handle( reply->handle );
