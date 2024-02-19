@@ -930,6 +930,8 @@ typedef volatile struct
     user_handle_t        capture;          /* handle to the capture window */
     user_handle_t        menu_owner;       /* handle to the menu owner */
     user_handle_t        move_size;        /* handle to the moving/resizing window */
+    user_handle_t        caret;            /* handle to the caret window */
+    rectangle_t          caret_rect;       /* caret rectangle */
 } input_shm_t;
 
 typedef volatile union
