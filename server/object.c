@@ -102,8 +102,19 @@ void close_objects(void)
 
 /*****************************************************************/
 
+/* mark a block of memory as not accessible for debugging purposes */
+void mark_block_noaccess( void *ptr, size_t size )
+{
+    memset( ptr, 0xfe, size );
+#if defined(VALGRIND_MAKE_MEM_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ) );
+#elif defined(VALGRIND_MAKE_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ) );
+#endif
+}
+
 /* mark a block of memory as uninitialized for debugging purposes */
-static inline void mark_block_uninitialized( void *ptr, size_t size )
+void mark_block_uninitialized( void *ptr, size_t size )
 {
     memset( ptr, 0x55, size );
 #if defined(VALGRIND_MAKE_MEM_UNDEFINED)

@@ -42,6 +42,7 @@ my %formats =
     "file_pos_t"    => [  8,   8,  "&dump_uint64" ],
     "mem_size_t"    => [  8,   8,  "&dump_uint64" ],
     "affinity_t"    => [  8,   8,  "&dump_uint64" ],
+    "object_id_t"   => [  8,   8,  "&dump_uint64" ],
     "timeout_t"     => [  8,   8,  "&dump_timeout" ],
     "abstime_t"     => [  8,   8,  "&dump_abstime" ],
     "rectangle_t"   => [  16,  4,  "&dump_rectangle" ],

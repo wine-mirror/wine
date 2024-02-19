@@ -188,6 +188,25 @@ extern struct mapping *create_fd_mapping( struct object *root, const struct unic
                                           unsigned int attr, const struct security_descriptor *sd );
 extern struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
                                                 unsigned int attr, const struct security_descriptor *sd );
+extern struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
+                                               unsigned int attr, const struct security_descriptor *sd );
+extern void set_session_mapping( struct mapping *mapping );
+
+#define SHARED_WRITE_BEGIN( object_shm, type )                          \
+    do {                                                                \
+        const type *__shared = (object_shm);                            \
+        type *shared = (type *)__shared;                                \
+        shared_object_t *__obj = CONTAINING_RECORD( shared, shared_object_t, shm );  \
+        LONG64 __seq = __obj->seq + 1, __end = __seq + 1;               \
+        assert( (__seq & 1) != 0 );                                     \
+        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__seq );             \
+        do
+
+#define SHARED_WRITE_END                                                \
+        while(0);                                                       \
+        assert( __seq == __obj->seq );                                  \
+        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__end );             \
+    } while(0)
 
 /* device functions */
 

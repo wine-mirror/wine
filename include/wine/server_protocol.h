@@ -29,6 +29,7 @@ typedef unsigned __int64 mem_size_t;
 typedef unsigned __int64 file_pos_t;
 typedef unsigned __int64 client_ptr_t;
 typedef unsigned __int64 affinity_t;
+typedef unsigned __int64 object_id_t;
 typedef client_ptr_t mod_handle_t;
 
 struct request_header
@@ -878,6 +879,21 @@ struct directory_entry
 
 
 };
+
+
+
+
+typedef volatile union
+{
+    char placeholder;
+} object_shm_t;
+
+typedef volatile struct
+{
+    LONG64               seq;
+    object_id_t          id;
+    object_shm_t         shm;
+} shared_object_t;
 
 
 
@@ -6531,7 +6547,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 808
+#define SERVER_PROTOCOL_VERSION 809
 
 /* ### protocol_version end ### */
 

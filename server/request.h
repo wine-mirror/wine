@@ -721,6 +721,7 @@ C_ASSERT( sizeof(mem_size_t) == 8 );
 C_ASSERT( sizeof(message_data_t) == 48 );
 C_ASSERT( sizeof(mod_handle_t) == 8 );
 C_ASSERT( sizeof(obj_handle_t) == 4 );
+C_ASSERT( sizeof(object_id_t) == 8 );
 C_ASSERT( sizeof(pe_image_info_t) == 88 );
 C_ASSERT( sizeof(process_id_t) == 4 );
 C_ASSERT( sizeof(property_data_t) == 16 );

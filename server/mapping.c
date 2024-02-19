@@ -225,6 +225,23 @@ static const mem_size_t granularity_mask = 0xffff;
 static struct addr_range ranges32;
 static struct addr_range ranges64;
 
+struct session_block
+{
+    struct list entry;      /* entry in the session block list */
+    const char *data;       /* base pointer for the mmaped data */
+};
+
+struct session
+{
+    struct list blocks;
+};
+
+static struct mapping *session_mapping;
+static struct session session =
+{
+    .blocks = LIST_INIT(session.blocks),
+};
+
 #define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
 void init_memory(void)
@@ -1254,6 +1271,34 @@ void free_map_addr( client_ptr_t base, mem_size_t size )
 int get_page_size(void)
 {
     return page_mask + 1;
+}
+
+struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
+                                        unsigned int attr, const struct security_descriptor *sd )
+{
+    static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
+    mem_size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
+
+    return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
+}
+
+void set_session_mapping( struct mapping *mapping )
+{
+    int unix_fd = get_unix_fd( mapping->fd );
+    mem_size_t size = mapping->size;
+    struct session_block *block;
+    void *tmp;
+
+    if (!(block = mem_alloc( sizeof(*block) ))) return;
+    if ((tmp = mmap( NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, unix_fd, 0 )) == MAP_FAILED)
+    {
+        free( block );
+        return;
+    }
+
+    block->data = tmp;
+    session_mapping = mapping;
+    list_add_tail( &session.blocks, &block->entry );
 }
 
 struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
