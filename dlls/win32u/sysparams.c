@@ -200,14 +200,10 @@ static const WCHAR guid_devclass_monitorW[] =
     {'{','4','D','3','6','E','9','6','E','-','E','3','2','5','-','1','1','C','E','-',
      'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}',0};
 
-static const WCHAR guid_devinterface_display_adapterW[] =
-    {'{','5','B','4','5','2','0','1','D','-','F','2','F','2','-','4','F','3','B','-',
-     '8','5','B','B','-','3','0','F','F','1','F','9','5','3','5','9','9','}',0};
+static const char guid_devinterface_display_adapterA[] = "{5B45201D-F2F2-4F3B-85BB-30FF1F953599}";
+static const char guid_display_device_arrivalA[] = "{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}";
 
-static const WCHAR guid_display_device_arrivalW[] =
-    {'{','1','C','A','0','5','1','8','0','-','A','6','9','9','-','4','5','0','A','-',
-     '9','A','0','C','-','D','E','4','F','B','E','3','D','D','D','8','9','}',0};
-
+static const char guid_devinterface_monitorA[] = "{E6F07B5F-EE97-4A90-B076-33F57BF4EAA7}";
 static const WCHAR guid_devinterface_monitorW[] =
     {'{','E','6','F','0','7','B','5','F','-','E','E','9','7','-','4','A','9','0','-',
      'B','0','7','6','-','3','3','F','5','7','B','F','4','E','A','A','7','}',0};
@@ -1131,7 +1127,7 @@ struct device_manager_ctx
     unsigned int output_count;
     unsigned int mode_count;
     HANDLE mutex;
-    WCHAR gpuid[128];
+    char gpuid[128];
     WCHAR gpu_guid[64];
     LUID gpu_luid;
     HKEY adapter_key;
@@ -1142,41 +1138,30 @@ struct device_manager_ctx
     UINT primary_height;
 };
 
-static void link_device( const WCHAR *instance, const WCHAR *class )
+static void link_device( const char *instance, const char *class )
 {
-    unsigned int instance_len = lstrlenW( instance ), len;
-    unsigned int class_len = lstrlenW( class );
-    WCHAR buffer[MAX_PATH], *ptr;
+    char buffer[MAX_PATH], *ptr;
+    WCHAR bufferW[MAX_PATH];
     HKEY hkey, subkey;
+    unsigned int pos;
 
     static const WCHAR symbolic_linkW[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
     static const WCHAR hashW[] = {'#'};
 
-    len = asciiz_to_unicode( buffer, "DeviceClasses\\" ) / sizeof(WCHAR) - 1;
-    memcpy( buffer + len, class, class_len * sizeof(WCHAR) );
-    len += class_len;
-    len += asciiz_to_unicode( buffer + len, "\\##?#" ) / sizeof(WCHAR) - 1;
-    memcpy( buffer + len, instance, instance_len * sizeof(WCHAR) );
-    for (ptr = buffer + len; *ptr; ptr++) if (*ptr == '\\') *ptr = '#';
-    len += instance_len;
-    buffer[len++] = '#';
-    memcpy( buffer + len, class, class_len * sizeof(WCHAR) );
-    len += class_len;
-    hkey = reg_create_key( control_key, buffer, len * sizeof(WCHAR), 0, NULL );
+    pos = snprintf( buffer, ARRAY_SIZE(buffer), "DeviceClasses\\%s\\", class );
+    snprintf( buffer + pos, ARRAY_SIZE(buffer) - pos, "##?#%s#%s", instance, class );
+    for (ptr = buffer + pos; *ptr; ptr++) if (*ptr == '\\') *ptr = '#';
 
-    set_reg_value( hkey, device_instanceW, REG_SZ, instance, (instance_len + 1) * sizeof(WCHAR) );
+    hkey = reg_create_key( control_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR), 0, NULL );
+    set_reg_value( hkey, device_instanceW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, instance ) );
 
     subkey = reg_create_key( hkey, hashW, sizeof(hashW), REG_OPTION_VOLATILE, NULL );
     NtClose( hkey );
     hkey = subkey;
 
-    len = asciiz_to_unicode( buffer, "\\\\?\\" ) / sizeof(WCHAR) - 1;
-    memcpy( buffer + len, instance, (instance_len + 1) * sizeof(WCHAR) );
-    len += instance_len;
-    memcpy( buffer + len, class, (class_len + 1) * sizeof(WCHAR) );
-    len += class_len + 1;
+    snprintf( buffer, ARRAY_SIZE(buffer), "\\\\?\\%s#%s", instance, class );
     for (ptr = buffer + 4; *ptr; ptr++) if (*ptr == '\\') *ptr = '#';
-    set_reg_value( hkey, symbolic_linkW, REG_SZ, buffer, len * sizeof(WCHAR) );
+    set_reg_value( hkey, symbolic_linkW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, buffer ) );
 
     if ((subkey = reg_create_key( hkey, controlW, sizeof(controlW), REG_OPTION_VOLATILE, NULL )))
     {
@@ -1246,10 +1231,10 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
         prepare_devices();
     }
 
-    sprintf( buffer, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
+    sprintf( ctx->gpuid, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
              gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index );
-    size = asciiz_to_unicode( ctx->gpuid, buffer );
-    if (!(hkey = reg_create_key( enum_key, ctx->gpuid, size - sizeof(WCHAR), 0, NULL ))) return;
+    size = asciiz_to_unicode( bufferW, ctx->gpuid );
+    if (!(hkey = reg_create_key( enum_key, bufferW, size - sizeof(WCHAR), 0, NULL ))) return;
 
     set_reg_value( hkey, classW, REG_SZ, displayW, sizeof(displayW) );
     set_reg_value( hkey, class_guidW, REG_SZ, guid_devclass_displayW,
@@ -1405,8 +1390,8 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     NtClose( hkey );
 
-    link_device( ctx->gpuid, guid_devinterface_display_adapterW );
-    link_device( ctx->gpuid, guid_display_device_arrivalW );
+    link_device( ctx->gpuid, guid_devinterface_display_adapterA );
+    link_device( ctx->gpuid, guid_display_device_arrivalA );
 }
 
 static void add_adapter( const struct gdi_adapter *adapter, void *param )
@@ -1465,8 +1450,7 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     ctx->adapter_key = reg_create_key( config_key, bufferW, len * sizeof(WCHAR),
                                        REG_OPTION_VOLATILE, NULL );
 
-    set_reg_value( ctx->adapter_key, gpu_idW, REG_SZ, ctx->gpuid,
-                   (lstrlenW( ctx->gpuid ) + 1) * sizeof(WCHAR) );
+    set_reg_value( ctx->adapter_key, gpu_idW, REG_SZ, bufferW, asciiz_to_unicode( bufferW, ctx->gpuid ) );
     set_reg_value( ctx->adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
                    sizeof(adapter->state_flags) );
 }
@@ -1501,7 +1485,7 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
                           0, NULL );
     if (!hkey) return;
 
-    link_device( bufferW, guid_devinterface_monitorW );
+    link_device( instance, guid_devinterface_monitorA );
 
     asciiz_to_unicode( bufferW, "Generic Non-PnP Monitor" );
     set_reg_value( hkey, device_descW, REG_SZ, bufferW, (lstrlenW( bufferW ) + 1) * sizeof(WCHAR) );
