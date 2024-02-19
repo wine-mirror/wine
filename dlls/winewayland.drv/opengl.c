@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
 static EGLDisplay egl_display;
+static char wgl_extensions[4096];
 
 #define USE_GL_FUNC(name) #name,
 static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
@@ -56,6 +57,18 @@ DECL_FUNCPTR(eglGetProcAddress);
 DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglQueryString);
 #undef DECL_FUNCPTR
+
+static const char *wayland_wglGetExtensionsStringARB(HDC hdc)
+{
+    TRACE("() returning \"%s\"\n", wgl_extensions);
+    return wgl_extensions;
+}
+
+static const char *wayland_wglGetExtensionsStringEXT(void)
+{
+    TRACE("() returning \"%s\"\n", wgl_extensions);
+    return wgl_extensions;
+}
 
 static BOOL has_extension(const char *list, const char *ext)
 {
@@ -72,6 +85,13 @@ static BOOL has_extension(const char *list, const char *ext)
     return FALSE;
 }
 
+static void register_extension(const char *ext)
+{
+    if (wgl_extensions[0]) strcat(wgl_extensions, " ");
+    strcat(wgl_extensions, ext);
+    TRACE("%s\n", ext);
+}
+
 static BOOL init_opengl_funcs(void)
 {
     unsigned int i;
@@ -84,6 +104,12 @@ static BOOL init_opengl_funcs(void)
             return FALSE;
         }
     }
+
+    register_extension("WGL_ARB_extensions_string");
+    opengl_funcs.ext.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
+
+    register_extension("WGL_EXT_extensions_string");
+    opengl_funcs.ext.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
 
     return TRUE;
 }
