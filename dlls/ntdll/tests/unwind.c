@@ -76,7 +76,7 @@ static NTSTATUS  (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE,PVOID*,SIZE_T*,ULON
 #define UWOP_END_NOP32                 0xFE
 #define UWOP_END                       0xFF
 
-struct results
+struct results_arm
 {
     int pc_offset;      /* pc offset from code start */
     int fp_offset;      /* fp offset from stack pointer */
@@ -87,13 +87,13 @@ struct results
     LONGLONG regs[47][2];/* expected values for registers */
 };
 
-struct unwind_test
+struct unwind_test_arm
 {
     const BYTE *function;
     size_t function_size;
     const BYTE *unwind_info;
     size_t unwind_size;
-    const struct results *results;
+    const struct results_arm *results;
     unsigned int nb_results;
 };
 
@@ -108,7 +108,7 @@ enum regs
     d24, d25, d26, d27, d28, d29, d30, d31,
 };
 
-static const char * const reg_names[47] =
+static const char * const reg_names_arm[47] =
 {
     "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
     "r8",  "r9",  "r10", "r11", "r12", "lr",  "sp",
@@ -120,7 +120,7 @@ static const char * const reg_names[47] =
 
 #define ORIG_LR 0xCCCCCCCC
 
-static void call_virtual_unwind( int testnum, const struct unwind_test *test )
+static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *test )
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
@@ -201,27 +201,27 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             if (j >= 4 && j <= 11 && (&ctx_ptr.R4)[j - 4])
             {
                 ok( k < nb_regs, "%u/%u: register %s should not be set to %lx\n",
-                    testnum, i, reg_names[j], (&context.R0)[j] );
+                    testnum, i, reg_names_arm[j], (&context.R0)[j] );
                 if (k < nb_regs)
                     ok( (&context.R0)[j] == test->results[i].regs[k][1],
                         "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
+                        testnum, i, reg_names_arm[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
             }
             else if (j == lr && ctx_ptr.Lr)
             {
                 ok( k < nb_regs, "%u/%u: register %s should not be set to %lx\n",
-                    testnum, i, reg_names[j], context.Lr );
+                    testnum, i, reg_names_arm[j], context.Lr );
                 if (k < nb_regs)
                     ok( context.Lr == test->results[i].regs[k][1],
                         "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
+                        testnum, i, reg_names_arm[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
             }
             else if (j == sp)
             {
                 if (k < nb_regs)
                     ok( context.Sp == test->results[i].regs[k][1],
                         "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)context.Sp, (int)test->results[i].regs[k][1] );
+                        testnum, i, reg_names_arm[j], (void *)context.Sp, (int)test->results[i].regs[k][1] );
                 else
                     ok( context.Sp == frame, "%u/%u: wrong sp %p/%p\n",
                         testnum, i, (void *)context.Sp, (void *)frame);
@@ -229,30 +229,30 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             else if (j >= d8 && j <= d15 && (&ctx_ptr.D8)[j - d8])
             {
                 ok( k < nb_regs, "%u/%u: register %s should not be set to %llx\n",
-                    testnum, i, reg_names[j], context.D[j - d0] );
+                    testnum, i, reg_names_arm[j], context.D[j - d0] );
                 if (k < nb_regs)
                     ok( context.D[j - d0] == test->results[i].regs[k][1],
                         "%u/%u: register %s wrong %llx/%llx\n",
-                        testnum, i, reg_names[j], context.D[j - d0], test->results[i].regs[k][1] );
+                        testnum, i, reg_names_arm[j], context.D[j - d0], test->results[i].regs[k][1] );
             }
             else if (k < nb_regs)
             {
                 if (j <= r12)
                   ok( (&context.R0)[j] == test->results[i].regs[k][1],
                       "%u/%u: register %s wrong %p/%x\n",
-                      testnum, i, reg_names[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
+                      testnum, i, reg_names_arm[j], (void *)(&context.R0)[j], (int)test->results[i].regs[k][1] );
                 else if (j == lr)
                   ok( context.Lr == test->results[i].regs[k][1],
                       "%u/%u: register %s wrong %p/%x\n",
-                      testnum, i, reg_names[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
+                      testnum, i, reg_names_arm[j], (void *)context.Lr, (int)test->results[i].regs[k][1] );
                 else
                   ok( context.D[j - d0] == test->results[i].regs[k][1],
                       "%u/%u: register %s wrong %llx/%llx\n",
-                      testnum, i, reg_names[j], context.D[j - d0], test->results[i].regs[k][1] );
+                      testnum, i, reg_names_arm[j], context.D[j - d0], test->results[i].regs[k][1] );
             }
             else
             {
-                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names[j] );
+                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names_arm[j] );
                 if (j == lr)
                     ok( context.Lr == ORIG_LR, "%u/%u: register lr wrong %p/unset\n",
                         testnum, i, (void *)context.Lr );
@@ -262,11 +262,11 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
                 else if (j < d0)
                     ok( (&context.R0)[j] == unset_reg,
                         "%u/%u: register %s wrong %p/unset\n",
-                        testnum, i, reg_names[j], (void *)(&context.R0)[j]);
+                        testnum, i, reg_names_arm[j], (void *)(&context.R0)[j]);
                 else
                     ok( context.D[j - d0] == unset_reg64,
                         "%u/%u: register %s wrong %llx/unset\n",
-                        testnum, i, reg_names[j], context.D[j - d0]);
+                        testnum, i, reg_names_arm[j], context.D[j - d0]);
             }
         }
     }
@@ -274,7 +274,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
 #define DW(dword) ((dword >> 0) & 0xff), ((dword >> 8) & 0xff), ((dword >> 16) & 0xff), ((dword >> 24) & 0xff)
 
-static void test_virtual_unwind(void)
+static void test_virtual_unwind_arm(void)
 {
 
     static const BYTE function_0[] =
@@ -334,7 +334,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,       /* data */
     };
 
-    static const struct results results_0[] =
+    static const struct results_arm results_0[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -392,7 +392,7 @@ static void test_virtual_unwind(void)
         UWOP_END_NOP16,               /* bx     lr */
     };
 
-    static const struct results results_1[] =
+    static const struct results_arm results_1[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -433,7 +433,7 @@ static void test_virtual_unwind(void)
         UWOP_END_NOP32,               /* b      tailcall */
     };
 
-    static const struct results results_2[] =
+    static const struct results_arm results_2[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
@@ -473,7 +473,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_3[] =
+    static const struct results_arm results_3[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     0x30, 0x034, TRUE,  { {r4,0x10}, {r5,0x14}, {r6,0x18}, {r7,0x1c}, {r8,0x20}, {r9,0x24}, {r10,0x28}, {r11,0x2c}, {lr,0x30}, {-1,-1} }},
@@ -509,7 +509,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_4[] =
+    static const struct results_arm results_4[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
@@ -552,7 +552,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_5[] =
+    static const struct results_arm results_5[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
@@ -586,7 +586,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_6[] = { DW(unwind_info_6_packed) };
 
-    static const struct results results_6[] =
+    static const struct results_arm results_6[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -616,7 +616,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_7[] = { DW(unwind_info_7_packed) };
 
-    static const struct results results_7[] =
+    static const struct results_arm results_7[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -646,7 +646,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_8[] = { DW(unwind_info_8_packed) };
 
-    static const struct results results_8[] =
+    static const struct results_arm results_8[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -681,7 +681,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_9[] = { DW(unwind_info_9_packed) };
 
-    static const struct results results_9[] =
+    static const struct results_arm results_9[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -723,7 +723,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_10[] = { DW(unwind_info_10_packed) };
 
-    static const struct results results_10[] =
+    static const struct results_arm results_10[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -765,7 +765,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_11[] = { DW(unwind_info_11_packed) };
 
-    static const struct results results_11[] =
+    static const struct results_arm results_11[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -801,7 +801,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_12[] = { DW(unwind_info_12_packed) };
 
-    static const struct results results_12[] =
+    static const struct results_arm results_12[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -835,7 +835,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_13[] = { DW(unwind_info_13_packed) };
 
-    static const struct results results_13[] =
+    static const struct results_arm results_13[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -868,7 +868,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_14[] = { DW(unwind_info_14_packed) };
 
-    static const struct results results_14[] =
+    static const struct results_arm results_14[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -902,7 +902,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_15[] = { DW(unwind_info_15_packed) };
 
-    static const struct results results_15[] =
+    static const struct results_arm results_15[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -938,7 +938,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_16[] = { DW(unwind_info_16_packed) };
 
-    static const struct results results_16[] =
+    static const struct results_arm results_16[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -975,7 +975,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_17[] = { DW(unwind_info_17_packed) };
 
-    static const struct results results_17[] =
+    static const struct results_arm results_17[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1008,7 +1008,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_18[] = { DW(unwind_info_18_packed) };
 
-    static const struct results results_18[] =
+    static const struct results_arm results_18[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1039,7 +1039,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_19[] = { DW(unwind_info_19_packed) };
 
-    static const struct results results_19[] =
+    static const struct results_arm results_19[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1074,7 +1074,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_20[] = { DW(unwind_info_20_packed) };
 
-    static const struct results results_20[] =
+    static const struct results_arm results_20[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1110,7 +1110,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_21[] = { DW(unwind_info_21_packed) };
 
-    static const struct results results_21[] =
+    static const struct results_arm results_21[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1144,7 +1144,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_22[] = { DW(unwind_info_22_packed) };
 
-    static const struct results results_22[] =
+    static const struct results_arm results_22[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     0x204,   0x218, TRUE, { {r4,0x200}, {lr,0x204}, {-1,-1} }},
@@ -1176,7 +1176,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_23[] = { DW(unwind_info_23_packed) };
 
-    static const struct results results_23[] =
+    static const struct results_arm results_23[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1208,7 +1208,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_24[] = { DW(unwind_info_24_packed) };
 
-    static const struct results results_24[] =
+    static const struct results_arm results_24[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1240,7 +1240,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_25[] = { DW(unwind_info_25_packed) };
 
-    static const struct results results_25[] =
+    static const struct results_arm results_25[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1275,7 +1275,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_26[] = { DW(unwind_info_26_packed) };
 
-    static const struct results results_26[] =
+    static const struct results_arm results_26[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1308,7 +1308,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_27[] = { DW(unwind_info_27_packed) };
 
-    static const struct results results_27[] =
+    static const struct results_arm results_27[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1338,7 +1338,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_28[] = { DW(unwind_info_28_packed) };
 
-    static const struct results results_28[] =
+    static const struct results_arm results_28[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1368,7 +1368,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_29[] =
+    static const struct results_arm results_29[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     0x40,    0x38, FALSE, { {r0,0x04}, {r1,0x08}, {r2,0x0c}, {r3,0x10}, {r4,0x14}, {r5,0x18}, {r6,0x1c}, {r7,0x20}, {r8,0x24}, {r9,0x28}, {r10,0x2c}, {r11,0x30}, {r12,0x34}, {sp,0x38}, {lr,0x3c},
@@ -1403,7 +1403,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_30[] =
+    static const struct results_arm results_30[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     0x04,    0x00, FALSE, { {sp,0x00}, {-1,-1} }},
@@ -1411,7 +1411,7 @@ static void test_virtual_unwind(void)
         { 0x04,  0x10,  0,     0x14,    0x10, FALSE, { {lr,0x0c}, {sp,0x10}, {-1,-1} }},
     };
 
-    static const struct unwind_test tests[] =
+    static const struct unwind_test_arm tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results) \
         { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results) }
@@ -1451,10 +1451,12 @@ static void test_virtual_unwind(void)
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-        call_virtual_unwind( i, &tests[i] );
+        call_virtual_unwind_arm( i, &tests[i] );
 }
 
-#elif defined(__aarch64__)
+#endif  /* __arm__ */
+
+#if defined(__aarch64__) || defined(__x86_64__)
 
 #define UWOP_TWOBYTES(x) (((x) >> 8) & 0xff), ((x) & 0xff)
 
@@ -1486,7 +1488,7 @@ static void test_virtual_unwind(void)
 #define UWOP_EC_CONTEXT                0xEB
 #define UWOP_CLEAR_UNWOUND_TO_CALL     0xEC
 
-struct results
+struct results_arm64
 {
     int pc_offset;      /* pc offset from code start */
     int fp_offset;      /* fp offset from stack pointer */
@@ -1497,19 +1499,19 @@ struct results
     ULONG_PTR regs[48][2]; /* expected values for registers */
 };
 
-struct unwind_test
+struct unwind_test_arm64
 {
     const BYTE *function;
     size_t function_size;
     const BYTE *unwind_info;
     size_t unwind_size;
-    const struct results *results;
+    const struct results_arm64 *results;
     unsigned int nb_results;
     int unwound_clear;
     int last_set_reg_ptr;
 };
 
-enum regs
+enum regs_arm64
 {
     x0,  x1,  x2,  x3,  x4,  x5,  x6,  x7,
     x8,  x9,  x10, x11, x12, x13, x14, x15,
@@ -1519,7 +1521,7 @@ enum regs
     d8,  d9,  d10, d11, d12, d13, d14, d15
 };
 
-static const char * const reg_names[48] =
+static const char * const reg_names_arm64[48] =
 {
     "x0",  "x1",  "x2",  "x3",  "x4",  "x5",  "x6",  "x7",
     "x8",  "x9",  "x10", "x11", "x12", "x13", "x14", "x15",
@@ -1531,13 +1533,17 @@ static const char * const reg_names[48] =
 
 #define ORIG_LR 0xCCCCCCCC
 
-static void call_virtual_unwind( int testnum, const struct unwind_test *test )
+static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct unwind_test_arm64 *test )
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
     void *handler, *data;
-    CONTEXT context;
-    RUNTIME_FUNCTION runtime_func;
+#ifdef __x86_64__
+    ARM64EC_NT_CONTEXT context;
+#else
+    ARM64_NT_CONTEXT context;
+#endif
+    ARM64_RUNTIME_FUNCTION runtime_func;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k;
     ULONG64 fake_stack[256];
@@ -1574,7 +1580,8 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
         data = (void *)0xdeadbeef;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_pc,
-                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+                                    (RUNTIME_FUNCTION *)&runtime_func,
+                                    (CONTEXT *)&context, &data, &frame, &ctx_ptr );
         if (test->results[i].handler > 0)
         {
             ok( (char *)handler == (char *)code_mem + 0x200,
@@ -1616,20 +1623,40 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         ok( frame - sp_offset == context.Sp, "wrong sp %p/%p\n",
             (void *)(frame - sp_offset), (void *)context.Sp);
 
+#ifdef __x86_64__
+        for (j = 0; j < sizeof(ctx_ptr)/sizeof(void*); j++)
+            ok( ((void **)&ctx_ptr)[j] == (void *)unset_reg,
+                "ctx_ptr %u set to %p\n", j, ((void **)&ctx_ptr)[j] );
+#endif
+
         for (j = 0; j < 48; j++)
         {
-            if (j == sp) continue; /* Handling sp separately above */
+            switch (j)
+            {
+#define GET(i) case i: regval = context.X##i; break
+            GET(0); GET(1); GET(2); GET(3); GET(4); GET(5); GET(6); GET(7);
+            GET(8); GET(9); GET(10); GET(11); GET(12);
+            GET(15); GET(19); GET(20); GET(21); GET(22); GET(25); GET(26); GET(27);
+#ifdef __x86_64__
+            case x13: case x14: continue;
+            case x16: regval = context.X16_0 | ((DWORD64)context.X16_1 << 16) | ((DWORD64)context.X16_2 << 32) | ((DWORD64)context.X16_3 << 48); break;
+            case x17: regval = context.X17_0 | ((DWORD64)context.X17_1 << 16) | ((DWORD64)context.X17_2 << 32) | ((DWORD64)context.X17_3 << 48); break;
+            case x18: case x23: case x24: case x28: continue;
+#else
+            GET(13); GET(14); GET(16); GET(17); GET(18); GET(23); GET(24); GET(28);
+#endif
+#undef GET
+            case x29: regval = context.Fp; break;
+            case lr: regval = context.Lr; break;
+            case sp: continue; /* Handling sp separately above */
+            default: regval = context.V[j - d0].Low; break;
+            }
 
-            if (j <= 30)
-            {
-                regval = context.X[j];
-                regptr = j < 19 ? NULL : (&ctx_ptr.X19)[j - 19];
-            }
-            else
-            {
-                regval = context.V[j - d0].Low;
-                regptr = j < d8 ? NULL : (&ctx_ptr.D8)[j - d8];
-            }
+            regptr = NULL;
+#ifndef __x86_64__
+            if (j >= 19 && j <= 30) regptr = (&ctx_ptr.X19)[j - 19];
+            else if (j >= d8 && j <= d15) regptr = (&ctx_ptr.D8)[j - d8];
+#endif
 
             for (k = 0; k < nb_regs; k++)
             {
@@ -1644,30 +1671,30 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             if (k < nb_regs)
             {
                 ok( regval == test->results[i].regs[k][1],
-                    "register %s wrong %llx/%llx\n", reg_names[j], regval, test->results[i].regs[k][1] );
+                    "register %s wrong %llx/%llx\n", reg_names_arm64[j], regval, test->results[i].regs[k][1] );
                 if (regptr)
                 {
                     if (test->last_set_reg_ptr && j > test->last_set_reg_ptr && j <= 30)
-                        ok( regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names[j] );
+                        ok( regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names_arm64[j] );
                     else
                     {
-                        ok( regptr != (void *)unset_reg, "register %s should have pointer set\n", reg_names[j] );
+                        ok( regptr != (void *)unset_reg, "register %s should have pointer set\n", reg_names_arm64[j] );
                         if (regptr != (void *)unset_reg)
                             ok( *regptr == regval, "register %s should have reg pointer to %llx / %llx\n",
-                                reg_names[j], *regptr, regval );
+                                reg_names_arm64[j], *regptr, regval );
                     }
                 }
             }
             else
             {
-                ok( k == nb_regs, "register %s should be set\n", reg_names[j] );
-                ok( !regptr || regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names[j] );
+                ok( k == nb_regs, "register %s should be set\n", reg_names_arm64[j] );
+                ok( !regptr || regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names_arm64[j] );
                 if (j == lr)
                     ok( context.Lr == ORIG_LR, "register lr wrong %llx/unset\n", context.Lr );
                 else if (j == x29)
                     ok( context.Fp == orig_fp, "register fp wrong %llx/unset\n", context.Fp );
                 else
-                    ok( regval == unset_reg, "register %s wrong %llx/unset\n", reg_names[j], regval);
+                    ok( regval == unset_reg, "register %s wrong %llx/unset\n", reg_names_arm64[j], regval);
             }
         }
         winetest_pop_context();
@@ -1676,7 +1703,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
 
 #define DW(dword) ((dword >> 0) & 0xff), ((dword >> 8) & 0xff), ((dword >> 16) & 0xff), ((dword >> 24) & 0xff)
 
-static void test_virtual_unwind(void)
+static void test_virtual_unwind_arm64(void)
 {
     static const BYTE function_0[] =
     {
@@ -1715,7 +1742,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08, /* data */
     };
 
-    static const struct results results_0[] =
+    static const struct results_arm64 results_0[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1750,7 +1777,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_1[] = { DW(unwind_info_1_packed) };
 
-    static const struct results results_1[] =
+    static const struct results_arm64 results_1[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -1792,7 +1819,7 @@ static void test_virtual_unwind(void)
     /* Partial prologues with the custom frame opcodes (machine frame,
      * context) behave like there's one less instruction to skip, because the
      * custom frame is set up externally without an explicit instruction. */
-    static const struct results results_2[] =
+    static const struct results_arm64 results_2[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
@@ -1828,7 +1855,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_3[] =
+    static const struct results_arm64 results_3[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
@@ -1891,7 +1918,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_4[] =
+    static const struct results_arm64 results_4[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
@@ -1957,7 +1984,7 @@ static void test_virtual_unwind(void)
      * float registers, contrary to what the documentation says. The tests
      * for those cases are commented out; they succeed in wine but fail
      * on native windows. */
-    static const struct results results_5[] =
+    static const struct results_arm64 results_5[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x00000, TRUE, { {-1,-1} }},
@@ -2002,7 +2029,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_6[] = { DW(unwind_info_6_packed) };
 
-    static const struct results results_6[] =
+    static const struct results_arm64 results_6[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2044,7 +2071,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_7[] = { DW(unwind_info_7_packed) };
 
-    static const struct results results_7[] =
+    static const struct results_arm64 results_7[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2080,7 +2107,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_8[] = { DW(unwind_info_8_packed) };
 
-    static const struct results results_8[] =
+    static const struct results_arm64 results_8[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2120,7 +2147,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_9[] = { DW(unwind_info_9_packed) };
 
-    static const struct results results_9[] =
+    static const struct results_arm64 results_9[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2160,7 +2187,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_10[] = { DW(unwind_info_10_packed) };
 
-    static const struct results results_10[] =
+    static const struct results_arm64 results_10[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2194,7 +2221,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_11[] = { DW(unwind_info_11_packed) };
 
-    static const struct results results_11[] =
+    static const struct results_arm64 results_11[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2230,7 +2257,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_12[] = { DW(unwind_info_12_packed) };
 
-    static const struct results results_12[] =
+    static const struct results_arm64 results_12[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2268,7 +2295,7 @@ static void test_virtual_unwind(void)
 
     static const BYTE unwind_info_13[] = { DW(unwind_info_13_packed) };
 
-    static const struct results results_13[] =
+    static const struct results_arm64 results_13[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x10,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2323,7 +2350,7 @@ static void test_virtual_unwind(void)
         UWOP_NOP                  /* padding */
     };
 
-    static const struct results results_14[] =
+    static const struct results_arm64 results_14[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x000, TRUE, { {-1,-1} }},
@@ -2365,7 +2392,7 @@ static void test_virtual_unwind(void)
         UWOP_NOP,                 /* padding */
     };
 
-    static const struct results results_15[] =
+    static const struct results_arm64 results_15[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     0x08,    0x020, TRUE, { {x29, 0x00}, {lr, 0x08}, {x19,0x10}, {x20,0x18}, {-1,-1} }},
@@ -2402,7 +2429,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_16[] =
+    static const struct results_arm64 results_16[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
@@ -2437,7 +2464,7 @@ static void test_virtual_unwind(void)
         UWOP_END,
     };
 
-    static const struct results results_17[] =
+    static const struct results_arm64 results_17[] =
     {
       /* offset  fp    handler  pc      frame offset  registers */
         { 0x00,  0x00,  0,     ORIG_LR, 0x010, TRUE,  { {-1,-1} }},
@@ -2446,7 +2473,7 @@ static void test_virtual_unwind(void)
         { 0x0c,  0x00,  0,     ORIG_LR, 0x020, TRUE,  { {-1,-1} }},
     };
 
-    static const struct unwind_test tests[] =
+    static const struct unwind_test_arm64 tests[] =
     {
 #define TEST(func, unwind, unwind_packed, results, unwound_clear, last_ptr) \
         { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results), unwound_clear, last_ptr }
@@ -2472,11 +2499,30 @@ static void test_virtual_unwind(void)
     };
     unsigned int i;
 
+#ifdef __x86_64__
+    void *code_mem = NULL;
+    SIZE_T code_size = 0x10000;
+    MEM_EXTENDED_PARAMETER param = { 0 };
+
+    param.Type = MemExtendedParameterAttributeFlags;
+    param.ULong64 = MEM_EXTENDED_PARAMETER_EC_CODE;
+    if (!pNtAllocateVirtualMemoryEx ||
+        pNtAllocateVirtualMemoryEx( GetCurrentProcess(), &code_mem, &code_size, MEM_RESERVE | MEM_COMMIT,
+                                    PAGE_EXECUTE_READWRITE, &param, 1 ))
+        return;
+    trace( "running arm64ec tests\n" );
+#endif
+
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-        call_virtual_unwind( i, &tests[i] );
+        call_virtual_unwind_arm64( code_mem, i, &tests[i] );
 }
 
-#elif defined(__x86_64__)
+#undef UWOP_ALLOC_SMALL
+#undef UWOP_ALLOC_LARGE
+
+#endif  /* __aarch64__ || __x86_64__ */
+
+#ifdef __x86_64__
 
 #define UWOP_PUSH_NONVOL     0
 #define UWOP_ALLOC_LARGE     1
@@ -2488,7 +2534,7 @@ static void test_virtual_unwind(void)
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME  10
 
-struct results
+struct results_x86
 {
     int rip_offset;   /* rip offset from code start */
     int rbp_offset;   /* rbp offset from stack pointer */
@@ -2498,14 +2544,14 @@ struct results
     int regs[8][2];   /* expected values for registers */
 };
 
-struct unwind_test
+struct unwind_test_x86
 {
     const BYTE *function;
     size_t function_size;
     const BYTE *unwind_info;
-    const struct results *results;
+    const struct results_x86 *results;
     unsigned int nb_results;
-    const struct results *broken_results;
+    const struct results_x86 *broken_results;
 };
 
 enum regs
@@ -2514,7 +2560,7 @@ enum regs
     r8,  r9,  r10, r11, r12, r13, r14, r15
 };
 
-static const char * const reg_names[16] =
+static const char * const reg_names_x86[16] =
 {
     "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
     "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"
@@ -2522,7 +2568,7 @@ static const char * const reg_names[16] =
 
 #define UWOP(code,info) (UWOP_##code | ((info) << 4))
 
-static void call_virtual_unwind( int testnum, const struct unwind_test *test )
+static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *test )
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
@@ -2638,30 +2684,30 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             if (ctx_ptr.IntegerContext[j])
             {
                 ok( k < nb_regs || broken( broken_k < nb_regs ), "%u/%u: register %s should not be set to %Ix\n",
-                    testnum, i, reg_names[j], *(&context.Rax + j) );
+                    testnum, i, reg_names_x86[j], *(&context.Rax + j) );
                 ok( k == nb_regs || *(&context.Rax + j) == test->results[i].regs[k][1]
                         || broken( broken_k == nb_regs || *(&context.Rax + j)
                         == test->broken_results[i].regs[broken_k][1] ),
                         "%u/%u: register %s wrong %p/%x\n",
-                        testnum, i, reg_names[j], (void *)*(&context.Rax + j), test->results[i].regs[k][1] );
+                        testnum, i, reg_names_x86[j], (void *)*(&context.Rax + j), test->results[i].regs[k][1] );
             }
             else
             {
                 ok( k == nb_regs || broken( broken_k == nb_regs ), "%u/%u: register %s should be set\n",
-                        testnum, i, reg_names[j] );
+                        testnum, i, reg_names_x86[j] );
                 if (j == rbp)
                     ok( context.Rbp == orig_rbp, "%u/%u: register rbp wrong %p/unset\n",
                         testnum, i, (void *)context.Rbp );
                 else
                     ok( *(&context.Rax + j) == unset_reg,
                         "%u/%u: register %s wrong %p/unset\n",
-                        testnum, i, reg_names[j], (void *)*(&context.Rax + j));
+                        testnum, i, reg_names_x86[j], (void *)*(&context.Rax + j));
             }
         }
     }
 }
 
-static void test_virtual_unwind(void)
+static void test_virtual_unwind_x86(void)
 {
     static const BYTE function_0[] =
     {
@@ -2695,7 +2741,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct results results_0[] =
+    static const struct results_x86 results_0[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x00,  0x40,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
@@ -2711,7 +2757,7 @@ static void test_virtual_unwind(void)
         { 0x33,  0x40,  FALSE, 0x000, 0x010, { {rsp,0x008}, {-1,-1}}},
     };
 
-    static const struct results broken_results_0[] =
+    static const struct results_x86 broken_results_0[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x00,  0x40,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
@@ -2764,7 +2810,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct results results_1[] =
+    static const struct results_x86 results_1[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x00,  0x50,  FALSE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
@@ -2805,7 +2851,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct results results_2[] =
+    static const struct results_x86 results_2[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x01,  0x50,  TRUE, 0x008, 0x000, { {rsp,-0x020}, {rbp,0x000}, {-1,-1} }},
@@ -2825,7 +2871,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct results results_3[] =
+    static const struct results_x86 results_3[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x01,  0x50,  TRUE, 0x010, 0x000, { {rsp,-0x028}, {rbp,0x000}, {-1,-1} }},
@@ -2849,19 +2895,19 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct results results_4[] =
+    static const struct results_x86 results_4[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x01,  0x50,  TRUE, 0x000, 0x000, { {rsp,0x008}, {-1,-1} }},
     };
 
-    static const struct results broken_results_4[] =
+    static const struct results_x86 broken_results_4[] =
     {
       /* offset  rbp   handler  rip   frame   registers */
         { 0x01,  0x50,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
     };
 
-    static const struct unwind_test tests[] =
+    static const struct unwind_test_x86 tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
         { function_1, sizeof(function_1), unwind_info_1, results_1, ARRAY_SIZE(results_1) },
@@ -2874,7 +2920,7 @@ static void test_virtual_unwind(void)
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
-        call_virtual_unwind( i, &tests[i] );
+        call_virtual_unwind_x86( i, &tests[i] );
 }
 
 #endif  /* __x86_64__ */
@@ -3208,11 +3254,12 @@ START_TEST(unwind)
 #undef X
 
 #ifdef __arm__
-    test_virtual_unwind();
+    test_virtual_unwind_arm();
 #elif defined(__aarch64__)
-    test_virtual_unwind();
+    test_virtual_unwind_arm64();
 #elif defined(__x86_64__)
-    test_virtual_unwind();
+    test_virtual_unwind_x86();
+    test_virtual_unwind_arm64();
 #endif
 
     test_dynamic_unwind();
