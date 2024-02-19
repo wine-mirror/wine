@@ -70,6 +70,12 @@ static const char *wayland_wglGetExtensionsStringEXT(void)
     return wgl_extensions;
 }
 
+static PROC wayland_wglGetProcAddress(LPCSTR name)
+{
+    if (!strncmp(name, "wgl", 3)) return NULL;
+    return (PROC)p_eglGetProcAddress(name);
+}
+
 static BOOL has_extension(const char *list, const char *ext)
 {
     size_t len = strlen(ext);
@@ -185,6 +191,14 @@ static BOOL has_opengl(void)
 
     return !pthread_once(&init_once, init_opengl) && egl_handle;
 }
+
+static struct opengl_funcs opengl_funcs =
+{
+    .wgl =
+    {
+        .p_wglGetProcAddress = wayland_wglGetProcAddress,
+    }
+};
 
 /**********************************************************************
  *           WAYLAND_wine_get_wgl_driver
