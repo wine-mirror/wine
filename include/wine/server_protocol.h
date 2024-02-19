@@ -888,6 +888,7 @@ struct shared_cursor
     int                  x;
     int                  y;
     unsigned int         last_change;
+    rectangle_t          clip;
 };
 
 typedef volatile struct
@@ -6567,7 +6568,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 813
+#define SERVER_PROTOCOL_VERSION 814
 
 /* ### protocol_version end ### */
 

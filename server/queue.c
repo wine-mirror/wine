@@ -410,7 +410,8 @@ static struct message *alloc_hardware_message( lparam_t info, struct hw_msg_sour
 
 static int is_cursor_clipped( struct desktop *desktop )
 {
-    rectangle_t top_rect, clip_rect = desktop->cursor.clip;
+    const desktop_shm_t *desktop_shm = desktop->shared;
+    rectangle_t top_rect, clip_rect = desktop_shm->cursor.clip;
     get_top_window_rectangle( desktop, &top_rect );
     return !is_rect_equal( &clip_rect, &top_rect );
 }
@@ -471,8 +472,8 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
     int updated;
     unsigned int time = get_tick_count();
 
-    x = max( min( x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
-    y = max( min( y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
+    x = max( min( x, desktop_shm->cursor.clip.right - 1 ), desktop_shm->cursor.clip.left );
+    y = max( min( y, desktop_shm->cursor.clip.bottom - 1 ), desktop_shm->cursor.clip.top );
 
     SHARED_WRITE_BEGIN( desktop_shm, desktop_shm_t )
     {
@@ -537,29 +538,34 @@ static void get_message_defaults( struct msg_queue *queue, int *x, int *y, unsig
 void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsigned int flags, int reset )
 {
     const desktop_shm_t *desktop_shm = desktop->shared;
-    rectangle_t top_rect;
+    rectangle_t top_rect, new_rect;
     unsigned int old_flags;
     int x, y;
 
     get_top_window_rectangle( desktop, &top_rect );
     if (rect)
     {
-        rectangle_t new_rect = *rect;
+        new_rect = *rect;
         if (new_rect.left   < top_rect.left)   new_rect.left   = top_rect.left;
         if (new_rect.right  > top_rect.right)  new_rect.right  = top_rect.right;
         if (new_rect.top    < top_rect.top)    new_rect.top    = top_rect.top;
         if (new_rect.bottom > top_rect.bottom) new_rect.bottom = top_rect.bottom;
         if (new_rect.left > new_rect.right || new_rect.top > new_rect.bottom) new_rect = top_rect;
-        desktop->cursor.clip = new_rect;
     }
-    else desktop->cursor.clip = top_rect;
+    else new_rect = top_rect;
+
+    SHARED_WRITE_BEGIN( desktop_shm, desktop_shm_t )
+    {
+        shared->cursor.clip = new_rect;
+    }
+    SHARED_WRITE_END;
 
     old_flags = desktop->cursor.clip_flags;
     desktop->cursor.clip_flags = flags;
 
     /* warp the mouse to be inside the clip rect */
-    x = max( min( desktop_shm->cursor.x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
-    y = max( min( desktop_shm->cursor.y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
+    x = max( min( desktop_shm->cursor.x, new_rect.right - 1 ), new_rect.left );
+    y = max( min( desktop_shm->cursor.y, new_rect.bottom - 1 ), new_rect.top );
     if (x != desktop_shm->cursor.x || y != desktop_shm->cursor.y) set_cursor_pos( desktop, x, y );
 
     /* request clip cursor rectangle reset to the desktop thread */
@@ -3745,7 +3751,7 @@ DECL_HANDLER(set_cursor)
 
     reply->new_x       = desktop_shm->cursor.x;
     reply->new_y       = desktop_shm->cursor.y;
-    reply->new_clip    = desktop->cursor.clip;
+    reply->new_clip    = desktop_shm->cursor.clip;
     reply->last_change = desktop_shm->cursor.last_change;
 }
 
