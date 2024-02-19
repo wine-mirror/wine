@@ -897,9 +897,15 @@ typedef volatile struct
     unsigned char        keystate[256];
 } desktop_shm_t;
 
+typedef volatile struct
+{
+    int                  placeholder;
+} queue_shm_t;
+
 typedef volatile union
 {
     desktop_shm_t        desktop;
+    queue_shm_t          queue;
 } object_shm_t;
 
 typedef volatile struct
@@ -6569,7 +6575,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 815
+#define SERVER_PROTOCOL_VERSION 816
 
 /* ### protocol_version end ### */
 

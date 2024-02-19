@@ -146,6 +146,7 @@ struct msg_queue
     struct hook_table     *hooks;           /* hook table */
     timeout_t              last_get_msg;    /* time of last get message call */
     int                    keystate_lock;   /* owns an input keystate lock */
+    const queue_shm_t     *shared;          /* queue in session shared memory */
 };
 
 struct hotkey
@@ -320,6 +321,12 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         list_init( &queue->pending_timers );
         list_init( &queue->expired_timers );
         for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
+
+        if (!(queue->shared = alloc_shared_object()))
+        {
+            release_object( queue );
+            return NULL;
+        }
 
         thread->queue = queue;
     }
@@ -1210,6 +1217,7 @@ static void msg_queue_destroy( struct object *obj )
     release_object( queue->input );
     if (queue->hooks) release_object( queue->hooks );
     if (queue->fd) release_object( queue->fd );
+    if (queue->shared) free_shared_object( queue->shared );
 }
 
 static void msg_queue_poll_event( struct fd *fd, int event )

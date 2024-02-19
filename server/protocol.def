@@ -913,9 +913,15 @@ typedef volatile struct
     unsigned char        keystate[256];    /* asynchronous key state */
 } desktop_shm_t;
 
+typedef volatile struct
+{
+    int                  placeholder;
+} queue_shm_t;
+
 typedef volatile union
 {
     desktop_shm_t        desktop;
+    queue_shm_t          queue;
 } object_shm_t;
 
 typedef volatile struct
