@@ -692,7 +692,8 @@ RPCRTAPI void RPC_ENTRY
                        PMIDL_STUB_MESSAGE pStubMsg, PMIDL_STUB_DESC pStubDesc,
                        PFORMAT_STRING pFormat, void *pParamList );
 RPCRTAPI unsigned char* RPC_ENTRY
-  NdrGetBuffer( PMIDL_STUB_MESSAGE stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle );
+  NdrGetBuffer( PMIDL_STUB_MESSAGE stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle )
+  __WINE_ALLOC_SIZE(2) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrFreeBuffer( PMIDL_STUB_MESSAGE pStubMsg );
 RPCRTAPI unsigned char* RPC_ENTRY
