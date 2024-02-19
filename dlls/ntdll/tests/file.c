@@ -4372,7 +4372,7 @@ static void test_file_stat_information(void)
     status = pNtQueryInformationFile( h, &io, &fsd, sizeof(fsd), FileStatInformation );
     if (status == STATUS_NOT_IMPLEMENTED || status == STATUS_INVALID_INFO_CLASS)
     {
-        skip( "FileStatInformation not supported\n" );
+        win_skip( "FileStatInformation not supported\n" );
         CloseHandle( h );
         return;
     }

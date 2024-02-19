@@ -4334,7 +4334,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
         0,                                             /* FileRenameInformationEx */
         0,                                             /* FileRenameInformationExBypassAccessCheck */
         0,                                             /* FileDesiredStorageClassInformation */
-        0,                                             /* FileStatInformation */
+        sizeof(FILE_STAT_INFORMATION),                 /* FileStatInformation */
         0,                                             /* FileMemoryPartitionInformation */
         0,                                             /* FileStatLxInformation */
         0,                                             /* FileCaseSensitiveInformation */
@@ -4547,6 +4547,34 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             info->ReparseTag = 0; /* FIXME */
             if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, &st ))
                 info->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+        }
+        break;
+    case FileStatInformation:
+        if (fd_get_file_info( fd, options, &st, &attr ) == -1) status = errno_to_status( errno );
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            status = STATUS_INVALID_INFO_CLASS;
+        else
+        {
+            FILE_STAT_INFORMATION *info = ptr;
+            FILE_BASIC_INFORMATION basic;
+            FILE_STANDARD_INFORMATION std;
+
+            fill_file_info( &st, attr, &basic, FileBasicInformation );
+            fill_file_info( &st, attr, &std, FileStandardInformation );
+
+            info->FileId.QuadPart = st.st_ino;
+            info->CreationTime   = basic.CreationTime;
+            info->LastAccessTime = basic.LastAccessTime;
+            info->LastWriteTime  = basic.LastWriteTime;
+            info->ChangeTime     = basic.ChangeTime;
+            info->AllocationSize = std.AllocationSize;
+            info->EndOfFile      = std.EndOfFile;
+            info->FileAttributes = attr;
+            info->ReparseTag     = 0; /* FIXME */
+            if ((options & FILE_OPEN_REPARSE_POINT) && fd_is_mount_point( fd, &st ))
+                info->ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+            info->NumberOfLinks  = std.NumberOfLinks;
+            info->EffectiveAccess = FILE_ALL_ACCESS; /* FIXME */
         }
         break;
     default:
