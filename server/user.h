@@ -54,12 +54,6 @@ struct winstation
     struct namespace  *desktop_names;      /* namespace for desktops of this winstation */
 };
 
-struct global_cursor
-{
-    unsigned int         clip_flags;       /* last cursor clip flags */
-    user_handle_t        win;              /* window that contains the cursor */
-};
-
 struct key_repeat
 {
     int                  enable;           /* enable auto-repeat */
@@ -86,9 +80,10 @@ struct desktop
     struct timeout_user *close_timeout;    /* timeout before closing the desktop */
     struct thread_input *foreground_input; /* thread input of foreground thread */
     unsigned int         users;            /* processes and threads using this desktop */
-    struct global_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
     struct key_repeat    key_repeat;       /* key auto-repeat */
+    unsigned int         clip_flags;       /* last cursor clip flags */
+    user_handle_t        cursor_win;       /* window that contains the cursor */
     const desktop_shm_t *shared;           /* desktop session shared memory */
 };
 
