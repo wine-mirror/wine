@@ -37,15 +37,14 @@
 static void *code_mem;
 static HMODULE ntdll;
 
-static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG64, ULONG64*, UNWIND_HISTORY_TABLE*);
-static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionTable)(ULONG64, ULONG64*, ULONG*);
+static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionEntry)(ULONG_PTR, ULONG_PTR*, UNWIND_HISTORY_TABLE*);
+static PRUNTIME_FUNCTION (WINAPI *pRtlLookupFunctionTable)(ULONG_PTR, ULONG_PTR*, ULONG*);
 static BOOLEAN   (CDECL *pRtlInstallFunctionTableCallback)(DWORD64, DWORD64, DWORD, PGET_RUNTIME_FUNCTION_CALLBACK, PVOID, PCWSTR);
 static BOOLEAN   (CDECL  *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL  *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static DWORD     (WINAPI *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
 static void      (WINAPI *pRtlGrowFunctionTable)(void*, DWORD);
 static void      (WINAPI *pRtlDeleteGrowableFunctionTable)(void*);
-static NTSTATUS  (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS  (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE,PVOID*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
 
 #ifdef __arm__
@@ -2878,15 +2877,25 @@ static void test_virtual_unwind(void)
         call_virtual_unwind( i, &tests[i] );
 }
 
-static RUNTIME_FUNCTION* CALLBACK dynamic_unwind_callback( DWORD64 pc, PVOID context )
+#endif  /* __x86_64__ */
+
+#ifdef __x86_64__
+#define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->EndAddress = (func)->BeginAddress + (len); } while(0)
+#elif defined(__arm__)
+#define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->FunctionLength = len / 2; (func)->Flag = 1; } while(0)
+#else
+#define SET_RUNTIME_FUNC_LEN(func,len) do { (func)->FunctionLength = len / 4; (func)->Flag = 1; } while(0)
+#endif
+
+static RUNTIME_FUNCTION * CALLBACK dynamic_unwind_callback( DWORD_PTR pc, PVOID context )
 {
     static const int code_offset = 1024;
     static RUNTIME_FUNCTION runtime_func;
     (*(DWORD *)context)++;
 
     runtime_func.BeginAddress = code_offset + 16;
-    runtime_func.EndAddress   = code_offset + 32;
     runtime_func.UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( &runtime_func, 16 );
     return &runtime_func;
 }
 
@@ -2894,11 +2903,12 @@ static void test_dynamic_unwind(void)
 {
     static const int code_offset = 1024;
     char buf[2 * sizeof(RUNTIME_FUNCTION) + 4];
-    SYSTEM_CPU_INFORMATION info;
+    MEM_EXTENDED_PARAMETER param = { 0 };
     RUNTIME_FUNCTION *runtime_func, *func;
-    ULONG_PTR table, base;
+    ULONG_PTR table, base, ec_code;
     void *growable_table, *ptr;
     NTSTATUS status;
+    SIZE_T size = 0x1000;
     DWORD count;
     ULONG len, len2;
 
@@ -2911,8 +2921,8 @@ static void test_dynamic_unwind(void)
     /* Test RtlAddFunctionTable with aligned RUNTIME_FUNCTION pointer */
     runtime_func = (RUNTIME_FUNCTION *)buf;
     runtime_func->BeginAddress = code_offset;
-    runtime_func->EndAddress   = code_offset + 16;
     runtime_func->UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( runtime_func, 16 );
     ok( pRtlAddFunctionTable( runtime_func, 1, (ULONG_PTR)code_mem ),
         "RtlAddFunctionTable failed for runtime_func = %p (aligned)\n", runtime_func );
 
@@ -2941,8 +2951,8 @@ static void test_dynamic_unwind(void)
     /* Unaligned RUNTIME_FUNCTION pointer */
     runtime_func = (RUNTIME_FUNCTION *)((ULONG_PTR)buf | 0x3);
     runtime_func->BeginAddress = code_offset;
-    runtime_func->EndAddress   = code_offset + 16;
     runtime_func->UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( runtime_func, 16 );
     ok( pRtlAddFunctionTable( runtime_func, 1, (ULONG_PTR)code_mem ),
         "RtlAddFunctionTable failed for runtime_func = %p (unaligned)\n", runtime_func );
     ok( pRtlDeleteFunctionTable( runtime_func ),
@@ -2951,8 +2961,8 @@ static void test_dynamic_unwind(void)
     /* Attempt to insert the same entry twice */
     runtime_func = (RUNTIME_FUNCTION *)buf;
     runtime_func->BeginAddress = code_offset;
-    runtime_func->EndAddress   = code_offset + 16;
     runtime_func->UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( runtime_func, 16 );
     ok( pRtlAddFunctionTable( runtime_func, 1, (ULONG_PTR)code_mem ),
         "RtlAddFunctionTable failed for runtime_func = %p (first attempt)\n", runtime_func );
     ok( pRtlAddFunctionTable( runtime_func, 1, (ULONG_PTR)code_mem ),
@@ -2997,12 +3007,15 @@ static void test_dynamic_unwind(void)
     count = 0;
     base = 0xdeadbeef;
     func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 24, &base, NULL );
-    ok( func != NULL && func->BeginAddress == code_offset + 16 && func->EndAddress == code_offset + 32,
-        "RtlLookupFunctionEntry didn't return expected function, got: %p\n", func );
-    ok( base == (ULONG_PTR)code_mem,
-        "RtlLookupFunctionEntry returned invalid base, expected: %Ix, got: %Ix\n", (ULONG_PTR)code_mem, base );
-    ok( count == 1,
+    ok( count == 1 || broken(!count), /* win10 arm */
         "RtlLookupFunctionEntry issued %ld calls to dynamic_unwind_callback, expected: 1\n", count );
+    if (count)
+    {
+        ok( func != NULL && func->BeginAddress == code_offset + 16,
+            "RtlLookupFunctionEntry didn't return expected function, got: %p\n", func );
+        ok( base == (ULONG_PTR)code_mem,
+            "RtlLookupFunctionEntry returned invalid base: %Ix / %Ix\n", (ULONG_PTR)code_mem, base );
+    }
 
     /* Clean up again */
     ok( pRtlDeleteFunctionTable( (PRUNTIME_FUNCTION)table ),
@@ -3018,12 +3031,12 @@ static void test_dynamic_unwind(void)
 
     runtime_func = (RUNTIME_FUNCTION *)buf;
     runtime_func->BeginAddress = code_offset;
-    runtime_func->EndAddress   = code_offset + 16;
     runtime_func->UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( runtime_func, 16 );
     runtime_func++;
     runtime_func->BeginAddress = code_offset + 16;
-    runtime_func->EndAddress   = code_offset + 32;
     runtime_func->UnwindData   = 0;
+    SET_RUNTIME_FUNC_LEN( runtime_func, 16 );
     runtime_func = (RUNTIME_FUNCTION *)buf;
 
     growable_table = NULL;
@@ -3099,15 +3112,18 @@ static void test_dynamic_unwind(void)
 
     pRtlDeleteGrowableFunctionTable( growable_table );
 
-    if (pRtlGetNativeSystemInformation &&
-        !pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len ) &&
-        info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+    param.Type = MemExtendedParameterAttributeFlags;
+    param.ULong64 = MEM_EXTENDED_PARAMETER_EC_CODE;
+    ec_code = 0;
+    if (pNtAllocateVirtualMemoryEx &&
+        !pNtAllocateVirtualMemoryEx( GetCurrentProcess(), (void **)&ec_code, &size,
+                                     MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE, &param, 1 ))
     {
         static const BYTE fast_forward[] = { 0x48, 0x8b, 0xc4, 0x48, 0x89, 0x58, 0x20, 0x55, 0x5d, 0xe9 };
         IMAGE_ARM64EC_METADATA *metadata;
         ARM64_RUNTIME_FUNCTION *arm64func = (ARM64_RUNTIME_FUNCTION *)buf;
-        MEM_EXTENDED_PARAMETER param = { 0 };
-        SIZE_T size = 0x1000;
+
+        trace( "running arm64ec tests\n" );
 
         if (!memcmp( pRtlLookupFunctionEntry, fast_forward, sizeof(fast_forward) ))
         {
@@ -3145,43 +3161,34 @@ static void test_dynamic_unwind(void)
         arm64func->CR = 1;
         arm64func->FrameSize = 1;
 
-        param.Type = MemExtendedParameterAttributeFlags;
-        param.ULong64 = MEM_EXTENDED_PARAMETER_EC_CODE;
-        ptr = NULL;
-        status = pNtAllocateVirtualMemoryEx( GetCurrentProcess(), &ptr, &size, MEM_RESERVE | MEM_COMMIT,
-                                             PAGE_EXECUTE_READWRITE, &param, 1 );
-        ok( !status, "NtAllocateVirtualMemoryEx failed %lx\n", status );
-
         growable_table = NULL;
         status = pRtlAddGrowableFunctionTable( &growable_table, (RUNTIME_FUNCTION *)buf,
-                                               2, 2, (ULONG_PTR)ptr, (ULONG_PTR)ptr + code_offset + 64 );
+                                               2, 2, ec_code, ec_code + code_offset + 64 );
         ok( !status, "RtlAddGrowableFunctionTable failed %lx\n", status );
 
         base = 0xdeadbeef;
-        func = pRtlLookupFunctionEntry( (ULONG_PTR)ptr + code_offset + 8, &base, NULL );
+        func = pRtlLookupFunctionEntry( ec_code + code_offset + 8, &base, NULL );
         ok( func == (RUNTIME_FUNCTION *)buf, "RtlLookupFunctionEntry expected func: %p, got: %p\n",
             buf, func );
-        ok( base == (ULONG_PTR)ptr, "RtlLookupFunctionEntry expected base: %Ix, got: %Ix\n",
-            (ULONG_PTR)ptr, base );
+        ok( base == ec_code, "RtlLookupFunctionEntry expected base: %Ix, got: %Ix\n",
+            ec_code, base );
 
         base = 0xdeadbeef;
-        func = pRtlLookupFunctionEntry( (ULONG_PTR)ptr + code_offset + 16, &base, NULL );
+        func = pRtlLookupFunctionEntry( ec_code + code_offset + 16, &base, NULL );
         ok( func == (RUNTIME_FUNCTION *)(buf + sizeof(*arm64func)),
             "RtlLookupFunctionEntry expected func: %p, got: %p\n", buf + sizeof(*arm64func), func );
-        ok( base == (ULONG_PTR)ptr, "RtlLookupFunctionEntry expected base: %Ix, got: %Ix\n",
-            (ULONG_PTR)ptr, base );
+        ok( base == ec_code, "RtlLookupFunctionEntry expected base: %Ix, got: %Ix\n", ec_code, base );
 
         base = 0xdeadbeef;
-        func = pRtlLookupFunctionEntry( (ULONG_PTR)ptr + code_offset + 32, &base, NULL );
+        func = pRtlLookupFunctionEntry( ec_code + code_offset + 32, &base, NULL );
         ok( !func, "RtlLookupFunctionEntry got: %p\n", func );
         ok( base == 0xdeadbeef, "RtlLookupFunctionEntry got: %Ix\n", base );
 
         pRtlDeleteGrowableFunctionTable( growable_table );
-        VirtualFree( ptr, 0, MEM_RELEASE );
+        VirtualFree( (void *)ec_code, 0, MEM_RELEASE );
     }
 }
 
-#endif
 
 START_TEST(unwind)
 {
@@ -3194,7 +3201,6 @@ START_TEST(unwind)
     X(RtlAddGrowableFunctionTable);
     X(RtlDeleteFunctionTable);
     X(RtlDeleteGrowableFunctionTable);
-    X(RtlGetNativeSystemInformation);
     X(RtlGrowFunctionTable);
     X(RtlInstallFunctionTableCallback);
     X(RtlLookupFunctionEntry);
@@ -3207,8 +3213,9 @@ START_TEST(unwind)
     test_virtual_unwind();
 #elif defined(__x86_64__)
     test_virtual_unwind();
-    test_dynamic_unwind();
 #endif
+
+    test_dynamic_unwind();
 }
 
 #else  /* !__i386__ */
