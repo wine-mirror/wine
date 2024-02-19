@@ -4122,7 +4122,7 @@ static void test_sequence_track(void)
             &IID_IDirectMusicTrack, (void **)&track);
     ok(hr == S_OK, "got %#lx\n", hr);
 
-    hr = IDirectMusicSegment_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
+    hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void **)&persist);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = CreateStreamOnHGlobal(0, TRUE, &stream);
     ok(hr == S_OK, "got %#lx\n", hr);
