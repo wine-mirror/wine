@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-02-14 00:13+0200\n"
+"PO-Revision-Date: 2024-02-20 00:47+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10150,7 +10150,7 @@ msgstr "Naršy&ti"
 
 #: dlls/shell32/shell32.rc:164
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "Paleisti kaip &administratorius"
 
 #: dlls/shell32/shell32.rc:186
 msgid "Restart"
