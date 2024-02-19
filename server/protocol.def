@@ -916,6 +916,8 @@ typedef volatile struct
 typedef volatile struct
 {
     int                  hooks_count[WH_MAX - WH_MIN + 2]; /* active hooks count */
+    unsigned int         wake_mask;        /* wakeup mask */
+    unsigned int         changed_mask;     /* changed wakeup mask */
 } queue_shm_t;
 
 typedef volatile union
