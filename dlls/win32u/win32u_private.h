@@ -205,6 +205,14 @@ extern void free_vulkan_gpu( struct vulkan_gpu *gpu );
 extern BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid );
 
 /* winstation.c */
+
+struct object_lock
+{
+    UINT64 id;
+    UINT64 seq;
+};
+#define OBJECT_LOCK_INIT {0}
+
 extern BOOL is_virtual_desktop(void);
 
 /* window.c */

@@ -22,9 +22,14 @@
 #pragma makedep unix
 #endif
 
+#include <assert.h>
+#include <stdarg.h>
+#include <stddef.h>
+
+#include <pthread.h>
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "ntuser.h"
@@ -39,6 +44,145 @@ WINE_DECLARE_DEBUG_CHANNEL(win);
 
 
 #define DESKTOP_ALL_ACCESS 0x01ff
+
+struct session_thread_data
+{
+    const shared_object_t *shared_desktop;         /* thread desktop shared session cached object */
+};
+
+struct session_block
+{
+    struct list entry;      /* entry in the session block list */
+    const char *data;       /* base pointer for the mmaped data */
+    SIZE_T      offset;     /* offset of data in the session shared mapping */
+    SIZE_T      size;       /* size of the mmaped data */
+};
+
+static pthread_mutex_t session_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct list session_blocks = LIST_INIT(session_blocks);
+
+static struct session_thread_data *get_session_thread_data(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    if (!thread_info->session_data) thread_info->session_data = calloc(1, sizeof(*thread_info->session_data));
+    return thread_info->session_data;
+}
+
+#if defined(__i386__) || defined(__x86_64__)
+/* this prevents compilers from incorrectly reordering non-volatile reads (e.g., memcpy) from shared memory */
+#define __SHARED_READ_FENCE do { __asm__ __volatile__( "" ::: "memory" ); } while (0)
+#else
+#define __SHARED_READ_FENCE __atomic_thread_fence( __ATOMIC_ACQUIRE )
+#endif
+
+static void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
+{
+    while ((*seq = ReadNoFence64( &object->seq )) & 1) YieldProcessor();
+    __SHARED_READ_FENCE;
+}
+
+static BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq )
+{
+    __SHARED_READ_FENCE;
+    return ReadNoFence64( &object->seq ) == seq;
+}
+
+static object_id_t shared_object_get_id( const shared_object_t *object )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    do
+    {
+        shared_object_acquire_seqlock( object, &lock.seq );
+        lock.id = object->id;
+    } while (!shared_object_release_seqlock( object, lock.seq ));
+    return lock.id;
+}
+
+static NTSTATUS map_shared_session_block( SIZE_T offset, SIZE_T size, struct session_block **ret )
+{
+    static const WCHAR nameW[] =
+    {
+        '\\','K','e','r','n','e','l','O','b','j','e','c','t','s','\\',
+        '_','_','w','i','n','e','_','s','e','s','s','i','o','n',0
+    };
+    UNICODE_STRING name = RTL_CONSTANT_STRING( nameW );
+    LARGE_INTEGER off = {.QuadPart = offset - (offset % system_info.AllocationGranularity)};
+    struct session_block *block;
+    OBJECT_ATTRIBUTES attr;
+    unsigned int status;
+    HANDLE handle;
+
+    assert( offset + size > offset );
+
+    if (!(block = calloc( 1, sizeof(*block) ))) return STATUS_NO_MEMORY;
+
+    InitializeObjectAttributes( &attr, &name, 0, NULL, NULL );
+    if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))
+        WARN( "Failed to open shared session section, status %#x\n", status );
+    else
+    {
+        if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), (void **)&block->data, 0, 0,
+                                          &off, &block->size, ViewUnmap, 0, PAGE_READONLY )))
+            WARN( "Failed to map shared session block, status %#x\n", status );
+        else
+        {
+            list_add_tail( &session_blocks, &block->entry );
+            block->offset = off.QuadPart;
+            assert( block->offset + block->size > block->offset );
+        }
+        NtClose( handle );
+    }
+
+    if (status) free( block );
+    else *ret = block;
+    return status;
+}
+
+static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct session_block **ret )
+{
+    struct session_block *block;
+    UINT status;
+
+    assert( offset + size > offset );
+
+    pthread_mutex_lock( &session_lock );
+
+    LIST_FOR_EACH_ENTRY( block, &session_blocks, struct session_block, entry )
+    {
+        if (block->offset < offset && offset + size <= block->offset + block->size)
+        {
+            *ret = block;
+            pthread_mutex_unlock( &session_lock );
+            return STATUS_SUCCESS;
+        }
+    }
+
+    if ((status = map_shared_session_block( offset, size, ret )))
+    {
+        WARN( "Failed to map session block for offset %s, size %s, status %#x\n",
+            wine_dbgstr_longlong(offset), wine_dbgstr_longlong(size), status );
+    }
+
+    pthread_mutex_unlock( &session_lock );
+
+    return status;
+}
+
+static const shared_object_t *find_shared_session_object( obj_locator_t locator )
+{
+    const shared_object_t *object;
+    struct session_block *block;
+    NTSTATUS status;
+
+    if (locator.id && !(status = find_shared_session_block( locator.offset, sizeof(*object), &block )))
+    {
+        object = (const shared_object_t *)(block->data + locator.offset - block->offset);
+        if (locator.id == shared_object_get_id( object )) return object;
+        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(locator.id) );
+    }
+
+    return NULL;
+}
 
 BOOL is_virtual_desktop(void)
 {
@@ -249,11 +393,13 @@ HDESK WINAPI NtUserGetThreadDesktop( DWORD thread )
 BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
 {
     BOOL ret, was_virtual_desktop = is_virtual_desktop();
+    obj_locator_t locator;
 
     SERVER_START_REQ( set_thread_desktop )
     {
         req->handle = wine_server_obj_handle( handle );
         ret = !wine_server_call_err( req );
+        locator = reply->locator;
     }
     SERVER_END_REQ;
 
@@ -261,6 +407,7 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     {
         struct user_thread_info *thread_info = get_user_thread_info();
         struct user_key_state_info *key_state_info = thread_info->key_state;
+        get_session_thread_data()->shared_desktop = find_shared_session_object( locator );
         thread_info->client_info.top_window = 0;
         thread_info->client_info.msg_window = 0;
         if (key_state_info) key_state_info->time = 0;
