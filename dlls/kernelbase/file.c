@@ -3041,27 +3041,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushFileBuffers( HANDLE file )
 BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandle( HANDLE file, BY_HANDLE_FILE_INFORMATION *info )
 {
     FILE_FS_VOLUME_INFORMATION volume_info;
-    FILE_ALL_INFORMATION all_info;
+    FILE_STAT_INFORMATION stat_info;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
-    status = NtQueryInformationFile( file, &io, &all_info, sizeof(all_info), FileAllInformation );
-    if (status == STATUS_BUFFER_OVERFLOW) status = STATUS_SUCCESS;
+    status = NtQueryInformationFile( file, &io, &stat_info, sizeof(stat_info), FileStatInformation );
     if (!set_ntstatus( status )) return FALSE;
 
-    info->dwFileAttributes                = all_info.BasicInformation.FileAttributes;
-    info->ftCreationTime.dwHighDateTime   = all_info.BasicInformation.CreationTime.u.HighPart;
-    info->ftCreationTime.dwLowDateTime    = all_info.BasicInformation.CreationTime.u.LowPart;
-    info->ftLastAccessTime.dwHighDateTime = all_info.BasicInformation.LastAccessTime.u.HighPart;
-    info->ftLastAccessTime.dwLowDateTime  = all_info.BasicInformation.LastAccessTime.u.LowPart;
-    info->ftLastWriteTime.dwHighDateTime  = all_info.BasicInformation.LastWriteTime.u.HighPart;
-    info->ftLastWriteTime.dwLowDateTime   = all_info.BasicInformation.LastWriteTime.u.LowPart;
+    info->dwFileAttributes                = stat_info.FileAttributes;
+    info->ftCreationTime.dwHighDateTime   = stat_info.CreationTime.u.HighPart;
+    info->ftCreationTime.dwLowDateTime    = stat_info.CreationTime.u.LowPart;
+    info->ftLastAccessTime.dwHighDateTime = stat_info.LastAccessTime.u.HighPart;
+    info->ftLastAccessTime.dwLowDateTime  = stat_info.LastAccessTime.u.LowPart;
+    info->ftLastWriteTime.dwHighDateTime  = stat_info.LastWriteTime.u.HighPart;
+    info->ftLastWriteTime.dwLowDateTime   = stat_info.LastWriteTime.u.LowPart;
     info->dwVolumeSerialNumber            = 0;
-    info->nFileSizeHigh                   = all_info.StandardInformation.EndOfFile.u.HighPart;
-    info->nFileSizeLow                    = all_info.StandardInformation.EndOfFile.u.LowPart;
-    info->nNumberOfLinks                  = all_info.StandardInformation.NumberOfLinks;
-    info->nFileIndexHigh                  = all_info.InternalInformation.IndexNumber.u.HighPart;
-    info->nFileIndexLow                   = all_info.InternalInformation.IndexNumber.u.LowPart;
+    info->nFileSizeHigh                   = stat_info.EndOfFile.u.HighPart;
+    info->nFileSizeLow                    = stat_info.EndOfFile.u.LowPart;
+    info->nNumberOfLinks                  = stat_info.NumberOfLinks;
+    info->nFileIndexHigh                  = stat_info.FileId.u.HighPart;
+    info->nFileIndexLow                   = stat_info.FileId.u.LowPart;
 
     status = NtQueryVolumeInformationFile( file, &io, &volume_info, sizeof(volume_info), FileFsVolumeInformation );
     if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
