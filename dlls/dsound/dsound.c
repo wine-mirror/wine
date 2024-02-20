@@ -490,6 +490,9 @@ static HRESULT DirectSoundDevice_CreateSoundBuffer(
             return DSERR_INVALIDPARAM;
         }
 
+        if (dsbd->lpwfxFormat->nChannels > 2 && dsbd->lpwfxFormat->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+            return DSERR_INVALIDPARAM;
+
         if (dsbd->lpwfxFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
             WAVEFORMATEXTENSIBLE *pwfxe = (WAVEFORMATEXTENSIBLE*)dsbd->lpwfxFormat;

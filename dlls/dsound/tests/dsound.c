@@ -1500,7 +1500,6 @@ static void perform_invalid_fmt_tests(const char *testname, IDirectSound *dso, I
     wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
-    todo_wine
     ok(rc == (buf ? DSERR_ALLOCATED : DSERR_INVALIDPARAM), "%s: SetFormat: %08lx\n", testname, rc);
 
     wfx.wFormatTag = WAVE_FORMAT_PCM;
@@ -1510,7 +1509,6 @@ static void perform_invalid_fmt_tests(const char *testname, IDirectSound *dso, I
     wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
-    todo_wine
     ok(rc == (buf ? DSERR_ALLOCATED : DSERR_INVALIDPARAM), "%s: SetFormat: %08lx\n", testname, rc);
 
     fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);

@@ -465,6 +465,9 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 			return DSERR_INVALIDPARAM;
 	}
 
+        if (passed_fmt->nChannels > 2 && passed_fmt->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
+            return DSERR_ALLOCATED;
+
 	/* **** */
 	AcquireSRWLockExclusive(&device->buffer_list_lock);
 	EnterCriticalSection(&(device->mixlock));
