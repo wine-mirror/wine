@@ -125,14 +125,14 @@ static void determine_pointer_marshalling_style(void)
                            0);
 
     StubMsg.BufferLength = 8;
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     NdrPointerMarshall(&StubMsg, (unsigned char*)&ch, fmtstr_up_char);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 5, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
 
     use_pointer_ids = (*(unsigned int *)StubMsg.BufferStart != (UINT_PTR)&ch);
     trace("Pointer marshalling using %s\n", use_pointer_ids ? "pointer ids" : "pointer value");
 
-    free(StubMsg.BufferStart);
+    NdrOleFree(StubMsg.BufferStart);
 }
 
 static void test_ndr_simple_type(void)
@@ -152,7 +152,7 @@ static void test_ndr_simple_type(void)
                            0);
 
     StubMsg.BufferLength = 16;
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.Buffer + StubMsg.BufferLength;
     l = 0xcafebabe;
     NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, FC_LONG);
@@ -169,7 +169,7 @@ static void test_ndr_simple_type(void)
     ok(StubMsg.Buffer == StubMsg.BufferStart + 8, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
     ok(l2 == l, "%ld\n", l2);
 
-    free(StubMsg.BufferStart);
+    NdrOleFree(StubMsg.BufferStart);
 }
 
 static void test_pointer_marshal(const unsigned char *formattypes,
@@ -206,7 +206,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(StubMsg.BufferLength >= wiredatalen, "%s: length %ld\n", msgpfx, StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     memset(StubMsg.BufferStart, 0x0, StubMsg.BufferLength); /* This is a hack to clear the padding between the ptr and longlong/double */
@@ -491,7 +491,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     else
         ok(my_free_called == num_additional_allocs, "%s: my_free got called %d times\n", msgpfx, my_free_called);
 
-    free(StubMsg.BufferStart);
+    NdrOleFree(StubMsg.BufferStart);
 }
 
 static int deref_cmp(const void *s1, const void *s2, size_t num)
@@ -756,7 +756,7 @@ static void test_nontrivial_pointer_types(void)
     ok(StubMsg.BufferLength >= 5, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)p1, &fmtstr_ref_unique_out[4] );
@@ -864,7 +864,7 @@ static void test_nontrivial_pointer_types(void)
     my_free(mem);
 
     free(mem_orig);
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 }
 
 static void test_simple_struct_marshal(const unsigned char *formattypes,
@@ -894,7 +894,7 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     StubMsg.BufferLength = 0;
     NdrSimpleStructBufferSize( &StubMsg, memsrc, formattypes );
     ok(StubMsg.BufferLength >= wiredatalen, "%s: length %ld\n", msgpfx, StubMsg.BufferLength);
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
     ptr = NdrSimpleStructMarshall( &StubMsg,  memsrc, formattypes );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
@@ -1032,7 +1032,7 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     my_free(mem);
 
     free(mem_orig);
-    free(StubMsg.BufferStart);
+    NdrOleFree(StubMsg.BufferStart);
 }
 
 typedef struct
@@ -1251,7 +1251,7 @@ static void test_struct_align(void)
     StubMsg.BufferLength = 0;
     NdrComplexStructBufferSize(&StubMsg, (unsigned char *)memsrc, fmtstr);
 
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrComplexStructMarshall(&StubMsg, (unsigned char *)memsrc, fmtstr);
@@ -1266,7 +1266,7 @@ static void test_struct_align(void)
     ok(!memcmp(mem, memsrc, sizeof(*memsrc)), "struct wasn't unmarshalled correctly\n");
     StubMsg.pfnFree(mem);
 
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
     free(memsrc_orig);
 }
 
@@ -1359,7 +1359,7 @@ static void test_iface_ptr(void)
     StubMsg.BufferLength = 0;
     NdrInterfacePointerBufferSize(&StubMsg, (unsigned char *)&client_obj.IPersist_iface, fmtstr_ip);
 
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     /* server -> client */
@@ -1539,7 +1539,7 @@ static void test_iface_ptr(void)
     NdrInterfacePointerFree(&StubMsg, (unsigned char *)proxy, fmtstr_ip);
     ok(client_obj.ref == 1, "got %ld references\n", client_obj.ref);
 
-    free(StubMsg.BufferStart);
+    NdrOleFree(StubMsg.BufferStart);
 
     CoUninitialize();
 }
@@ -1947,7 +1947,7 @@ static void test_conformant_array(void)
     ok(StubMsg.BufferLength >= 20, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrConformantArrayMarshall( &StubMsg,  memsrc, fmtstr_conf_array );
@@ -2021,7 +2021,7 @@ static void test_conformant_array(void)
     StubMsg.pfnFree(mem);
     StubMsg.pfnFree(mem_orig);
 
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 }
 
 static void test_conformant_string(void)
@@ -2058,7 +2058,7 @@ static void test_conformant_string(void)
     ok(StubMsg.BufferLength >= sizeof(memsrc) + 12, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrPointerMarshall( &StubMsg, (unsigned char *)memsrc, fmtstr_conf_str );
@@ -2146,7 +2146,7 @@ static void test_conformant_string(void)
     ok(my_free_called == 1, "free called %d\n", my_free_called);
 
     free(mem_orig);
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 }
 
 static void test_nonconformant_string(void)
@@ -2183,7 +2183,7 @@ static void test_nonconformant_string(void)
     ok(StubMsg.BufferLength >= strlen((char *)memsrc) + 1 + 8, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrNonConformantStringMarshall( &StubMsg, memsrc, fmtstr_nonconf_str );
@@ -2241,7 +2241,7 @@ static void test_nonconformant_string(void)
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 
     free(mem_orig);
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 
     /* length = size */
     NdrClientInitializeNew(
@@ -2256,7 +2256,7 @@ static void test_nonconformant_string(void)
     ok(StubMsg.BufferLength >= strlen((char *)memsrc2) + 1 + 8, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrNonConformantStringMarshall( &StubMsg, memsrc2, fmtstr_nonconf_str );
@@ -2314,7 +2314,7 @@ static void test_nonconformant_string(void)
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 
     free(mem_orig);
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 }
 
 static void test_conf_complex_struct(void)
@@ -2382,7 +2382,7 @@ static void test_conf_complex_struct(void)
     ok(StubMsg.BufferLength >= 92, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
     ptr = NdrComplexStructMarshall(&StubMsg, (unsigned char *)memsrc, &fmtstr_complex_struct[12]);
@@ -2408,7 +2408,7 @@ static void test_conf_complex_struct(void)
     ok(mem->array[0] == 0, "mem->array[0] wasn't unmarshalled correctly (%u)\n", mem->array[0]);
     StubMsg.pfnFree(mem);
 
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
     free(memsrc);
 }
 
@@ -2525,7 +2525,7 @@ static void test_conf_complex_array(void)
     ok(StubMsg.BufferLength >= expected_length, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
-    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = malloc(StubMsg.BufferLength);
+    StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = NdrOleAllocate(StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
 #ifdef _WIN64
@@ -2589,7 +2589,7 @@ static void test_conf_complex_array(void)
     NdrSimpleStructFree( &StubMsg, (unsigned char*)mem, &fmtstr_complex_array[32]);
 #endif
 
-    free(StubMsg.RpcMsg->Buffer);
+    NdrOleFree(StubMsg.RpcMsg->Buffer);
 
     for(i = 0; i < memsrc.dim1; i++)
         free(memsrc.array[i]);
