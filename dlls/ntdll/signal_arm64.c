@@ -37,7 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 
 /* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
@@ -338,11 +337,11 @@ static DWORD call_teb_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCH
 
 
 /**********************************************************************
- *           call_function_handlers
+ *           call_seh_handlers
  *
- * Call the per-function handlers.
+ * Call the SEH handlers.
  */
-static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
+NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 {
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     UNWIND_HISTORY_TABLE table;
@@ -438,65 +437,6 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
         prev_context = context;
     }
     return STATUS_UNHANDLED_EXCEPTION;
-}
-
-
-NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status;
-    DWORD c;
-
-    if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
-    {
-        if (rec->ExceptionInformation[1] >> 16)
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
-                     rec->ExceptionAddress,
-                     (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
-        else
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%Id, aborting\n",
-                     rec->ExceptionAddress,
-                     (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
-    }
-    else if (rec->ExceptionCode == EXCEPTION_WINE_NAME_THREAD && rec->ExceptionInformation[0] == 0x1000)
-    {
-        if ((DWORD)rec->ExceptionInformation[2] == -1 || (DWORD)rec->ExceptionInformation[2] == GetCurrentThreadId())
-            WARN_(threadname)( "Thread renamed to %s\n", debugstr_a((char *)rec->ExceptionInformation[1]) );
-        else
-            WARN_(threadname)( "Thread ID %04lx renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
-                               debugstr_a((char *)rec->ExceptionInformation[1]) );
-
-        set_native_thread_name((DWORD)rec->ExceptionInformation[2], (char *)rec->ExceptionInformation[1]);
-    }
-    else if (rec->ExceptionCode == DBG_PRINTEXCEPTION_C)
-    {
-        WARN( "%s\n", debugstr_an((char *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
-    }
-    else if (rec->ExceptionCode == DBG_PRINTEXCEPTION_WIDE_C)
-    {
-        WARN( "%s\n", debugstr_wn((WCHAR *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
-    }
-    else
-    {
-        if (rec->ExceptionCode == STATUS_ASSERTION_FAILURE)
-            ERR( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
-        else
-            WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
-    }
-
-    TRACE( "code=%lx flags=%lx addr=%p\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-    for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%ld]=%016I64x\n", c, rec->ExceptionInformation[c] );
-    TRACE_CONTEXT( context );
-
-    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
-        NtContinue( context, FALSE );
-
-    if ((status = call_function_handlers( rec, context )) == STATUS_SUCCESS)
-        NtContinue( context, FALSE );
-
-    if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
-    return NtRaiseException( rec, context, FALSE );
 }
 
 

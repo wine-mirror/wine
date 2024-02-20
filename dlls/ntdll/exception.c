@@ -36,6 +36,7 @@
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 typedef struct
 {
@@ -58,7 +59,7 @@ static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0
 
 static PRTL_EXCEPTION_FILTER unhandled_exception_filter;
 
-const char *debugstr_exception_code( DWORD code )
+static const char *debugstr_exception_code( DWORD code )
 {
     switch (code)
     {
@@ -143,7 +144,7 @@ static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLE
  *
  * Call the vectored handlers chain.
  */
-LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct list *ptr;
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
@@ -182,6 +183,77 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     RtlLeaveCriticalSection( &vectored_handlers_section );
     RtlFreeHeap( GetProcessHeap(), 0, to_free );
     return ret;
+}
+
+
+/*******************************************************************
+ *		dispatch_exception
+ */
+NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+    DWORD i;
+
+    switch (rec->ExceptionCode)
+    {
+    case EXCEPTION_WINE_STUB:
+        if (rec->ExceptionInformation[1] >> 16)
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                     rec->ExceptionAddress,
+                     (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        else
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%u, aborting\n",
+                     rec->ExceptionAddress,
+                     (char *)rec->ExceptionInformation[0], (USHORT)rec->ExceptionInformation[1] );
+        break;
+
+    case EXCEPTION_WINE_NAME_THREAD:
+        if (rec->ExceptionInformation[0] == 0x1000)
+        {
+            const char *name = (char *)rec->ExceptionInformation[1];
+            DWORD tid = (DWORD)rec->ExceptionInformation[2];
+
+            if (tid == -1 || tid == GetCurrentThreadId())
+                WARN_(threadname)( "Thread renamed to %s\n", debugstr_a(name) );
+            else
+                WARN_(threadname)( "Thread ID %04lx renamed to %s\n", tid, debugstr_a(name) );
+            set_native_thread_name( tid, name );
+        }
+        break;
+
+    case DBG_PRINTEXCEPTION_C:
+        WARN( "%s\n", debugstr_an((char *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
+        break;
+
+    case DBG_PRINTEXCEPTION_WIDE_C:
+        WARN( "%s\n", debugstr_wn((WCHAR *)rec->ExceptionInformation[1], rec->ExceptionInformation[0] - 1) );
+        break;
+
+    case STATUS_ASSERTION_FAILURE:
+        ERR( "assertion failure exception\n" );
+        break;
+
+    default:
+        if (!TRACE_ON(seh)) WARN( "%s exception (code=%lx) raised\n",
+                                  debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+        break;
+    }
+
+    TRACE( "code=%lx (%s) flags=%lx addr=%p\n",
+           rec->ExceptionCode, debugstr_exception_code(rec->ExceptionCode),
+           rec->ExceptionFlags, rec->ExceptionAddress );
+    for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
+        TRACE( " info[%ld]=%p\n", i, (void *)rec->ExceptionInformation[i] );
+    TRACE_CONTEXT( context );
+
+    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+        NtContinue( context, FALSE );
+
+    if ((status = call_seh_handlers( rec, context )) == STATUS_SUCCESS)
+        NtContinue( context, FALSE );
+
+    if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
+    return NtRaiseException( rec, context, FALSE );
 }
 
 

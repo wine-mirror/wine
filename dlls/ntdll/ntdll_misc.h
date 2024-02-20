@@ -60,7 +60,8 @@ extern UINT_PTR page_size;
 #endif
 
 /* exceptions */
-extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
+extern NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
+extern NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context );
 extern NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id );
 extern EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
                                                            CONTEXT *context, void *dispatch );
@@ -86,7 +87,6 @@ extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT 
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
-extern const char *debugstr_exception_code( DWORD code );
 extern void set_native_thread_name( DWORD tid, const char *name );
 
 /* init routines */
