@@ -177,7 +177,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
     device->primary_pwfx->nAvgBytesPerSec = device->primary_pwfx->nSamplesPerSec * device->primary_pwfx->nBlockAlign;
     device->primary_pwfx->cbSize = 0;
 
-    InitializeCriticalSection(&(device->mixlock));
+    InitializeCriticalSectionEx(&(device->mixlock), 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     device->mixlock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundDevice.mixlock");
 
     InitializeSRWLock(&device->buffer_list_lock);

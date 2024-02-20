@@ -832,7 +832,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
     device->ref = 1;
     device->state = STATE_STOPPED;
 
-    InitializeCriticalSection( &(device->lock) );
+    InitializeCriticalSectionEx( &(device->lock), 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     device->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": DirectSoundCaptureDevice.lock");
 
     *ppDevice = device;
