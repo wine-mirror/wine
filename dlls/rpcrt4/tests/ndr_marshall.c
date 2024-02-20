@@ -2633,7 +2633,9 @@ static void test_ndr_buffer(void)
 
     NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 5);
 
+    my_alloc_called = 0;
     ret = NdrGetBuffer(&StubMsg, 10, Handle);
+    ok(!my_alloc_called, "my_alloc got called\n");
     ok(ret == StubMsg.Buffer, "NdrGetBuffer should have returned the same value as StubMsg.Buffer instead of %p\n", ret);
     ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
     ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
@@ -2654,7 +2656,9 @@ static void test_ndr_buffer(void)
 
     prev_buffer_length = RpcMessage.BufferLength;
     StubMsg.BufferLength = 1;
+    my_free_called = 0;
     NdrFreeBuffer(&StubMsg);
+    ok(!my_free_called, "my_free got called\n");
     ok(RpcMessage.Handle != NULL, "RpcMessage.Handle should not have been NULL\n");
     ok(RpcMessage.Buffer != NULL, "RpcMessage.Buffer should not have been NULL\n");
     ok(RpcMessage.BufferLength == prev_buffer_length, "RpcMessage.BufferLength should have been left as %ld instead of %d\n", prev_buffer_length, RpcMessage.BufferLength);
