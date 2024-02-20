@@ -28535,6 +28535,161 @@ static void test_default_diffuse(void)
     release_test_context(&context);
 }
 
+/* Test the default values of attribute components when the vertex declaration
+ * includes less than all 4 components. */
+static void test_default_attribute_components(void)
+{
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    struct d3d9_test_context context;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    static const DWORD vs_texcoord1_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x80010005, 0x900f0001,                 /* dcl_texcoord1 v1     */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_texcoord2_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x80020005, 0x900f0001,                 /* dcl_texcoord2 v1     */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_texcoord3_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x80030005, 0x900f0001,                 /* dcl_texcoord3 v1     */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_color1_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x8001000a, 0x900f0001,                 /* dcl_color1 v1        */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_color2_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x8002000a, 0x900f0001,                 /* dcl_color2 v1        */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_color3_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x8003000a, 0x900f0001,                 /* dcl_color3 v1        */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90390001,                 /* mov oD0, v1.yzwx     */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
+        {0,   0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0,  12,  D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+        {0,  16,  D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 2},
+        {0,  24,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 3},
+        {0,  36,  D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 1},
+        {0,  40,  D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 2},
+        {0,  48,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 3},
+        D3DDECL_END()
+    };
+
+    static const struct
+    {
+        struct vec3 position;
+        float texcoord1;
+        struct vec2 texcoord2;
+        struct vec3 texcoord3;
+        float color1;
+        struct vec2 color2;
+        struct vec3 color3;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}},
+        {{-1.0f,  1.0f, 0.1f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}},
+        {{ 1.0f, -1.0f, 0.1f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}},
+        {{ 1.0f,  1.0f, 0.1f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, 0.1f, {0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}},
+    };
+
+    static const struct
+    {
+        const DWORD *vs_code;
+        D3DCOLOR color;
+    }
+    tests[] =
+    {
+        {vs_texcoord1_code, 0x0000ff},
+        {vs_texcoord2_code, 0x3300ff},
+        {vs_texcoord3_code, 0x4c4cff},
+        {vs_color1_code,    0x0000ff},
+        {vs_color2_code,    0x3300ff},
+        {vs_color3_code,    0x4c4cff},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int j = 0; j < ARRAY_SIZE(tests); ++j)
+    {
+        winetest_push_context("test %u", j);
+
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_CreateVertexShader(device, tests[j].vs_code, &vs);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_SetVertexShader(device, vs);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad, sizeof(*quad));
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        check_rt_color(context.backbuffer, tests[j].color);
+
+        IDirect3DVertexShader9_Release(vs);
+        winetest_pop_context();
+    }
+
+    IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -28690,4 +28845,5 @@ START_TEST(visual)
     test_managed_generate_mipmap();
     test_mipmap_upload();
     test_default_diffuse();
+    test_default_attribute_components();
 }
