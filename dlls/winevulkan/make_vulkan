@@ -2032,14 +2032,11 @@ class VkStruct(Sequence):
 
         # Those structs seem to be broken in spec, they are specified as
         # returned only, but documented as input structs.
-        if name in ["VkSubpassShadingPipelineCreateInfoHUAWEI",
-                    "VkPipelineShaderStageRequiredSubgroupSizeCreateInfo"]:
+        if name in ["VkPipelineShaderStageRequiredSubgroupSizeCreateInfo"]:
             returnedonly = False
 
         # Those structs don't have returnedonly in spec, but they could (should?).
-        if name in ["VkSurfaceCapabilitiesPresentBarrierNV",
-                    "VkCooperativeMatrixPropertiesNV",
-                    "VkPerformanceValueINTEL"]:
+        if name in ["VkSurfaceCapabilitiesPresentBarrierNV"]:
             returnedonly = True
 
         structextends = struct.attrib.get("structextends")
