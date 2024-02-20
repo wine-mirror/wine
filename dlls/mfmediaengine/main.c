@@ -3020,9 +3020,24 @@ static HRESULT WINAPI media_engine_SetRealTimeMode(IMFMediaEngineEx *iface, BOOL
 
 static HRESULT WINAPI media_engine_SetCurrentTimeEx(IMFMediaEngineEx *iface, double seektime, MF_MEDIA_ENGINE_SEEK_MODE mode)
 {
-    FIXME("%p, %f, %#x stub.\n", iface, seektime, mode);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f, %#x.\n", iface, seektime, mode);
+
+    if (mode)
+        FIXME("mode %#x is ignored.\n", mode);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = media_engine_set_current_time(engine, seektime);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_EnableTimeUpdateTimer(IMFMediaEngineEx *iface, BOOL enable)
