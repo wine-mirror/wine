@@ -2131,7 +2131,7 @@ void dinput_device_init( struct dinput_device *device, const struct dinput_devic
     device->device_gain = 10000;
     device->autocenter = DIPROPAUTOCENTER_ON;
     device->force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
-    InitializeCriticalSection( &device->crit );
+    InitializeCriticalSectionEx( &device->crit, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     dinput_internal_addref( (device->dinput = dinput) );
     device->vtbl = vtbl;
 
