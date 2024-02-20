@@ -545,8 +545,8 @@ static void     doChild(const char* file, const char* option)
         ok( ret, "Setting mode (%ld)\n", GetLastError());
         ret = SetConsoleMode(hConOut, modeOut ^ 1);
         ok( ret, "Setting mode (%ld)\n", GetLastError());
-        sbi.dwCursorPosition.X ^= 1;
-        sbi.dwCursorPosition.Y ^= 1;
+        sbi.dwCursorPosition.X = !sbi.dwCursorPosition.X;
+        sbi.dwCursorPosition.Y = !sbi.dwCursorPosition.Y;
         ret = SetConsoleCursorPosition(hConOut, sbi.dwCursorPosition);
         ok( ret, "Setting cursor position (%ld)\n", GetLastError());
     }
