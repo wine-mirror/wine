@@ -446,11 +446,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    TRACE( "code=%lx flags=%lx addr=%p pc=%016I64x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Pc );
-    for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%ld]=%016I64x\n", c, rec->ExceptionInformation[c] );
-
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
         if (rec->ExceptionInformation[1] >> 16)
@@ -486,24 +481,13 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
             ERR( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
         else
             WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
-
-        TRACE("  x0=%016I64x  x1=%016I64x  x2=%016I64x  x3=%016I64x\n",
-              context->X0, context->X1, context->X2, context->X3 );
-        TRACE("  x4=%016I64x  x5=%016I64x  x6=%016I64x  x7=%016I64x\n",
-              context->X4, context->X5, context->X6, context->X7 );
-        TRACE("  x8=%016I64x  x9=%016I64x x10=%016I64x x11=%016I64x\n",
-              context->X8, context->X9, context->X10, context->X11 );
-        TRACE(" x12=%016I64x x13=%016I64x x14=%016I64x x15=%016I64x\n",
-              context->X12, context->X13, context->X14, context->X15 );
-        TRACE(" x16=%016I64x x17=%016I64x x18=%016I64x x19=%016I64x\n",
-              context->X16, context->X17, context->X18, context->X19 );
-        TRACE(" x20=%016I64x x21=%016I64x x22=%016I64x x23=%016I64x\n",
-              context->X20, context->X21, context->X22, context->X23 );
-        TRACE(" x24=%016I64x x25=%016I64x x26=%016I64x x27=%016I64x\n",
-              context->X24, context->X25, context->X26, context->X27 );
-        TRACE(" x28=%016I64x  fp=%016I64x  lr=%016I64x  sp=%016I64x\n",
-              context->X28, context->Fp, context->Lr, context->Sp );
     }
+
+    TRACE( "code=%lx flags=%lx addr=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+    for (c = 0; c < rec->NumberParameters; c++)
+        TRACE( " info[%ld]=%016I64x\n", c, rec->ExceptionInformation[c] );
+    TRACE_CONTEXT( context );
 
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
@@ -736,26 +720,11 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p pc=%016I64x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, context->Pc );
+    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
     for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
         TRACE( " info[%ld]=%016I64x\n", i, rec->ExceptionInformation[i] );
-    TRACE("  x0=%016I64x  x1=%016I64x  x2=%016I64x  x3=%016I64x\n",
-          context->X0, context->X1, context->X2, context->X3 );
-    TRACE("  x4=%016I64x  x5=%016I64x  x6=%016I64x  x7=%016I64x\n",
-          context->X4, context->X5, context->X6, context->X7 );
-    TRACE("  x8=%016I64x  x9=%016I64x x10=%016I64x x11=%016I64x\n",
-          context->X8, context->X9, context->X10, context->X11 );
-    TRACE(" x12=%016I64x x13=%016I64x x14=%016I64x x15=%016I64x\n",
-          context->X12, context->X13, context->X14, context->X15 );
-    TRACE(" x16=%016I64x x17=%016I64x x18=%016I64x x19=%016I64x\n",
-          context->X16, context->X17, context->X18, context->X19 );
-    TRACE(" x20=%016I64x x21=%016I64x x22=%016I64x x23=%016I64x\n",
-          context->X20, context->X21, context->X22, context->X23 );
-    TRACE(" x24=%016I64x x25=%016I64x x26=%016I64x x27=%016I64x\n",
-          context->X24, context->X25, context->X26, context->X27 );
-    TRACE(" x28=%016I64x  fp=%016I64x  lr=%016I64x  sp=%016I64x\n",
-          context->X28, context->Fp, context->Lr, context->Sp );
+    TRACE_CONTEXT( context );
 
     dispatch.TargetPc         = (ULONG64)target_ip;
     dispatch.ContextRecord    = context;

@@ -200,11 +200,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    TRACE( "code=%lx flags=%lx addr=%p ip=%08lx\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
-    for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
-
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
         if (rec->ExceptionInformation[1] >> 16)
@@ -240,14 +235,13 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
             ERR( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
         else
             WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
-
-        TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-              context->Eax, context->Ebx, context->Ecx,
-              context->Edx, context->Esi, context->Edi );
-        TRACE(" ebp=%08lx esp=%08lx cs=%04lx ss=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
-              context->Ebp, context->Esp, context->SegCs, context->SegSs, context->SegDs,
-              context->SegEs, context->SegFs, context->SegGs, context->EFlags );
     }
+
+    TRACE( "code=%lx flags=%lx addr=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+    for (c = 0; c < rec->NumberParameters; c++)
+        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
+    TRACE_CONTEXT( context );
 
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
@@ -409,11 +403,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID ta
     pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
 
     TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
-    TRACE( "eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
-           context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
-    TRACE( "ebp=%08lx esp=%08lx eip=%08lx cs=%04x ds=%04x fs=%04x gs=%04x flags=%08lx\n",
-           context->Ebp, context->Esp, context->Eip, LOWORD(context->SegCs), LOWORD(context->SegDs),
-           LOWORD(context->SegFs), LOWORD(context->SegGs), context->EFlags );
+    TRACE_CONTEXT( context );
 
     /* get chain of exception frames */
     frame = NtCurrentTeb()->Tib.ExceptionList;

@@ -446,11 +446,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    TRACE( "code=%lx flags=%lx addr=%p pc=%08lx\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Pc );
-    for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
-
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
         if (rec->ExceptionInformation[1] >> 16)
@@ -487,13 +482,13 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
         else
             WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
 
-        TRACE( " r0=%08lx r1=%08lx r2=%08lx r3=%08lx r4=%08lx r5=%08lx\n",
-               context->R0, context->R1, context->R2, context->R3, context->R4, context->R5 );
-        TRACE( " r6=%08lx r7=%08lx r8=%08lx r9=%08lx r10=%08lx r11=%08lx\n",
-               context->R6, context->R7, context->R8, context->R9, context->R10, context->R11 );
-        TRACE( " r12=%08lx sp=%08lx lr=%08lx pc=%08lx cpsr=%08lx\n",
-               context->R12, context->Sp, context->Lr, context->Pc, context->Cpsr );
     }
+
+    TRACE( "code=%lx flags=%lx addr=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+    for (c = 0; c < rec->NumberParameters; c++)
+        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
+    TRACE_CONTEXT( context );
 
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
@@ -730,18 +725,11 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p pc=%08lx\n",
-           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, context->Pc );
+    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
     for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
         TRACE( " info[%ld]=%08Ix\n", i, rec->ExceptionInformation[i] );
-    TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
-          context->R0, context->R1, context->R2, context->R3 );
-    TRACE("  r4=%08lx  r5=%08lx  r6=%08lx  r7=%08lx\n",
-          context->R4, context->R5, context->R6, context->R7 );
-    TRACE("  r8=%08lx  r9=%08lx r10=%08lx r11=%08lx\n",
-          context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%08lx  sp=%08lx  lr=%08lx  pc=%08lx\n",
-          context->R12, context->Sp, context->Lr, context->Pc );
+    TRACE_CONTEXT( context );
 
     dispatch.TargetPc         = (ULONG_PTR)target_ip;
     dispatch.ContextRecord    = context;

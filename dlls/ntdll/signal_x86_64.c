@@ -364,11 +364,6 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    TRACE( "code=%lx flags=%lx addr=%p ip=%Ix\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Rip );
-    for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
-        TRACE( " info[%ld]=%016I64x\n", c, rec->ExceptionInformation[c] );
-
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
         if (rec->ExceptionInformation[1] >> 16)
@@ -404,16 +399,13 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
             ERR( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
         else
             WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
-
-        TRACE( " rax=%016I64x rbx=%016I64x rcx=%016I64x rdx=%016I64x\n",
-               context->Rax, context->Rbx, context->Rcx, context->Rdx );
-        TRACE( " rsi=%016I64x rdi=%016I64x rbp=%016I64x rsp=%016I64x\n",
-               context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-        TRACE( "  r8=%016I64x  r9=%016I64x r10=%016I64x r11=%016I64x\n",
-               context->R8, context->R9, context->R10, context->R11 );
-        TRACE( " r12=%016I64x r13=%016I64x r14=%016I64x r15=%016I64x\n",
-               context->R12, context->R13, context->R14, context->R15 );
     }
+
+    TRACE( "code=%lx flags=%lx addr=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+    for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
+        TRACE( " info[%ld]=%016I64x\n", c, rec->ExceptionInformation[c] );
+    TRACE_CONTEXT( context );
 
     if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
         NtContinue( context, FALSE );
@@ -881,18 +873,11 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p rip=%016I64x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, context->Rip );
+    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
     for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
         TRACE( " info[%ld]=%016I64x\n", i, rec->ExceptionInformation[i] );
-    TRACE(" rax=%016I64x rbx=%016I64x rcx=%016I64x rdx=%016I64x\n",
-          context->Rax, context->Rbx, context->Rcx, context->Rdx );
-    TRACE(" rsi=%016I64x rdi=%016I64x rbp=%016I64x rsp=%016I64x\n",
-          context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-    TRACE("  r8=%016I64x  r9=%016I64x r10=%016I64x r11=%016I64x\n",
-          context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%016I64x r13=%016I64x r14=%016I64x r15=%016I64x\n",
-          context->R12, context->R13, context->R14, context->R15 );
+    TRACE_CONTEXT( context );
 
     dispatch.EstablisherFrame = context->Rsp;
     dispatch.TargetIp         = (ULONG64)target_ip;
