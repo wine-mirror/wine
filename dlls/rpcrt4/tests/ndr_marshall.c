@@ -273,7 +273,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
-    /* On Windows 7+ unmarshalling may involve calls to NdrFree, for unclear reasons. */
+    /* On Windows 7+ unmarshalling may involve calls to StubMsg.pfnFree, for unclear reasons. */
     my_free_called = 0;
 
     NdrPointerFree(&StubMsg, mem, formattypes);
