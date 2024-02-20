@@ -1481,6 +1481,51 @@ static void perform_invalid_fmt_tests(const char *testname, IDirectSound *dso, I
     fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
     rc = do_invalid_fmt_test(dso, buf, (WAVEFORMATEX*)&fmtex, &got_buf);
     ok(rc == E_INVALIDARG, "%s: SetFormat: %08lx\n", testname, rc);
+
+    /* The following 4 tests show that formats with more than two channels require WAVEFORMATEXTENSIBLE */
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 2;
+    wfx.nSamplesPerSec = 44100;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
+    ok(rc == S_OK, "%s: SetFormat: %08lx\n", testname, rc);
+    IDirectSoundBuffer_Release(got_buf);
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 4;
+    wfx.nSamplesPerSec = 44100;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
+    todo_wine
+    ok(rc == (buf ? DSERR_ALLOCATED : DSERR_INVALIDPARAM), "%s: SetFormat: %08lx\n", testname, rc);
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 6;
+    wfx.nSamplesPerSec = 44100;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    rc = do_invalid_fmt_test(dso, buf, &wfx, &got_buf);
+    todo_wine
+    ok(rc == (buf ? DSERR_ALLOCATED : DSERR_INVALIDPARAM), "%s: SetFormat: %08lx\n", testname, rc);
+
+    fmtex.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+    fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    fmtex.Format.nChannels = 6;
+    fmtex.Format.nSamplesPerSec = 44100;
+    fmtex.Format.wBitsPerSample = 16;
+    fmtex.Format.nBlockAlign = fmtex.Format.nChannels * fmtex.Format.wBitsPerSample / 8;
+    fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
+    fmtex.Samples.wValidBitsPerSample = fmtex.Format.wBitsPerSample;
+    fmtex.dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+    fmtex.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    rc = do_invalid_fmt_test(dso, buf, (WAVEFORMATEX *)&fmtex, &got_buf);
+    ok(rc == S_OK, "%s: SetFormat: %08lx\n", testname, rc);
+    IDirectSoundBuffer_Release(got_buf);
 }
 
 static HRESULT test_invalid_fmts(LPGUID lpGuid)
