@@ -526,7 +526,7 @@ HRESULT MimeInternational_Construct(IMimeInternational **internat)
     global_internat = HeapAlloc(GetProcessHeap(), 0, sizeof(*global_internat));
     global_internat->IMimeInternational_iface.lpVtbl = &mime_internat_vtbl;
     global_internat->refs = 0;
-    InitializeCriticalSection(&global_internat->cs);
+    InitializeCriticalSectionEx(&global_internat->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     global_internat->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": global_internat.cs");
 
     list_init(&global_internat->charsets);
