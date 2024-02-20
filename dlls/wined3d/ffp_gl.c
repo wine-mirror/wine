@@ -5254,7 +5254,7 @@ HRESULT compile_state_table(struct wined3d_state_entry *state_table, APPLYSTATEF
                     break;
                 case 1:
                     state_table[cur[i].state].apply = multistate_apply_2;
-                    if (!(dev_multistate_funcs[cur[i].state] = heap_calloc(2, sizeof(**dev_multistate_funcs))))
+                    if (!(dev_multistate_funcs[cur[i].state] = calloc(2, sizeof(**dev_multistate_funcs))))
                         goto out_of_mem;
 
                     dev_multistate_funcs[cur[i].state][0] = multistate_funcs[cur[i].state][0];
@@ -5262,7 +5262,7 @@ HRESULT compile_state_table(struct wined3d_state_entry *state_table, APPLYSTATEF
                     break;
                 case 2:
                     state_table[cur[i].state].apply = multistate_apply_3;
-                    if (!(funcs_array = heap_realloc(dev_multistate_funcs[cur[i].state],
+                    if (!(funcs_array = realloc(dev_multistate_funcs[cur[i].state],
                             sizeof(**dev_multistate_funcs) * 3)))
                         goto out_of_mem;
 
@@ -5292,7 +5292,7 @@ HRESULT compile_state_table(struct wined3d_state_entry *state_table, APPLYSTATEF
 out_of_mem:
     for (i = 0; i <= STATE_HIGHEST; ++i)
     {
-        heap_free(dev_multistate_funcs[i]);
+        free(dev_multistate_funcs[i]);
     }
 
     memset(dev_multistate_funcs, 0, (STATE_HIGHEST + 1) * sizeof(*dev_multistate_funcs));

@@ -443,7 +443,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
         /* glReadPixels returns the image upside down, and there is no way to
          * prevent this. Flip the lines in software. */
 
-        if (!(row = heap_alloc(row_pitch)))
+        if (!(row = malloc(row_pitch)))
             goto error;
 
         if (data.buffer_object)
@@ -463,7 +463,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
             top += row_pitch;
             bottom -= row_pitch;
         }
-        heap_free(row);
+        free(row);
 
         if (data.buffer_object)
             GL_EXTCALL(glUnmapBuffer(GL_PIXEL_PACK_BUFFER));
@@ -541,7 +541,7 @@ static void cpu_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
     if ((next = blitter->next))
         next->ops->blitter_destroy(next, context);
 
-    heap_free(blitter);
+    free(blitter);
 }
 
 static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
@@ -748,7 +748,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         {
             wined3d_format_calculate_pitch(dst_format, 1, dst_box->right, dst_box->bottom,
                     &dst_map.row_pitch, &dst_map.slice_pitch);
-            dst_map.data = heap_alloc(dst_map.slice_pitch);
+            dst_map.data = malloc(dst_map.slice_pitch);
         }
         else
         {
@@ -1157,7 +1157,7 @@ release:
 
     if (upload)
     {
-        heap_free(dst_map.data);
+        free(dst_map.data);
     }
     else
     {
@@ -1350,7 +1350,7 @@ struct wined3d_blitter *wined3d_cpu_blitter_create(void)
 {
     struct wined3d_blitter *blitter;
 
-    if (!(blitter = heap_alloc(sizeof(*blitter))))
+    if (!(blitter = malloc(sizeof(*blitter))))
         return NULL;
 
     TRACE("Created blitter %p.\n", blitter);

@@ -3915,7 +3915,7 @@ static void clone_sig(struct wined3d_shader_signature *new, const struct wined3d
     char *name;
 
     new->element_count = sig->element_count;
-    new->elements = heap_calloc(new->element_count, sizeof(*new->elements));
+    new->elements = calloc(new->element_count, sizeof(*new->elements));
     for (i = 0; i < sig->element_count; ++i)
     {
         new->elements[i] = sig->elements[i];
@@ -3924,7 +3924,7 @@ static void clone_sig(struct wined3d_shader_signature *new, const struct wined3d
             continue;
 
         /* Clone the semantic string */
-        name = heap_alloc(strlen(sig->elements[i].semantic_name) + 1);
+        name = malloc(strlen(sig->elements[i].semantic_name) + 1);
         strcpy(name, sig->elements[i].semantic_name);
         new->elements[i].semantic_name = name;
     }
@@ -3941,7 +3941,7 @@ static unsigned int find_input_signature(struct shader_arb_priv *priv, const str
         TRACE("Found existing signature %u\n", found_sig->idx);
         return found_sig->idx;
     }
-    found_sig = heap_alloc_zero(sizeof(*found_sig));
+    found_sig = calloc(1, sizeof(*found_sig));
     clone_sig(&found_sig->sig, sig);
     found_sig->idx = priv->ps_sig_number++;
     TRACE("New signature stored and assigned number %u\n", found_sig->idx);
@@ -4282,7 +4282,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_context_gl
     {
         struct shader_arb_priv *priv = device->shader_priv;
 
-        shader->backend_data = heap_alloc_zero(sizeof(*shader_data));
+        shader->backend_data = calloc(1, sizeof(*shader_data));
         shader_data = shader->backend_data;
         shader_data->clamp_consts = shader->reg_maps.shader_version.major == 1;
 
@@ -4316,12 +4316,11 @@ static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_context_gl
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, shader_data->gl_shaders,
-                                    new_size * sizeof(*shader_data->gl_shaders));
+            new_array = _recalloc(shader_data->gl_shaders, new_size, sizeof(*shader_data->gl_shaders));
         }
         else
         {
-            new_array = heap_alloc_zero(sizeof(*shader_data->gl_shaders));
+            new_array = calloc(1, sizeof(*shader_data->gl_shaders));
             new_size = 1;
         }
 
@@ -4377,7 +4376,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
     {
         const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
 
-        shader->backend_data = heap_alloc_zero(sizeof(*shader_data));
+        shader->backend_data = calloc(1, sizeof(*shader_data));
         shader_data = shader->backend_data;
 
         if ((gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT)
@@ -4415,12 +4414,11 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, shader_data->gl_shaders,
-                                    new_size * sizeof(*shader_data->gl_shaders));
+            new_array = _recalloc(shader_data->gl_shaders, new_size, sizeof(*shader_data->gl_shaders));
         }
         else
         {
-            new_array = heap_alloc_zero(sizeof(*shader_data->gl_shaders));
+            new_array = calloc(1, sizeof(*shader_data->gl_shaders));
             new_size = 1;
         }
 
@@ -4818,7 +4816,7 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
         for (i = 0; i < shader_data->num_gl_shaders; ++i)
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
 
-        heap_free(shader_data->gl_shaders);
+        free(shader_data->gl_shaders);
     }
     else
     {
@@ -4827,14 +4825,14 @@ static void shader_arb_destroy(struct wined3d_shader *shader)
         for (i = 0; i < shader_data->num_gl_shaders; ++i)
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
 
-        heap_free(shader_data->gl_shaders);
+        free(shader_data->gl_shaders);
     }
 
     checkGLcall("delete programs");
 
     context_release(context);
 
-    heap_free(shader->backend_data);
+    free(shader->backend_data);
     shader->backend_data = NULL;
 }
 
@@ -4851,13 +4849,13 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     void *vertex_priv, *fragment_priv;
     struct shader_arb_priv *priv;
 
-    if (!(priv = heap_alloc_zero(sizeof(*priv))))
+    if (!(priv = calloc(1, sizeof(*priv))))
         return E_OUTOFMEMORY;
 
     if (!(vertex_priv = vertex_pipe->vp_alloc(&arb_program_shader_backend, priv)))
     {
         ERR("Failed to initialize vertex pipe.\n");
-        heap_free(priv);
+        free(priv);
         return E_FAIL;
     }
 
@@ -4865,7 +4863,7 @@ static HRESULT shader_arb_alloc(struct wined3d_device *device, const struct wine
     {
         ERR("Failed to initialize fragment pipe.\n");
         vertex_pipe->vp_free(device, NULL);
-        heap_free(priv);
+        free(priv);
         return E_FAIL;
     }
 
@@ -4893,10 +4891,10 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
 
     for (i = 0; i < sig->sig.element_count; ++i)
     {
-        heap_free((char *)sig->sig.elements[i].semantic_name);
+        free((char *)sig->sig.elements[i].semantic_name);
     }
-    heap_free(sig->sig.elements);
-    heap_free(sig);
+    free(sig->sig.elements);
+    free(sig);
 }
 
 /* Context activation is done by the caller. */
@@ -4907,7 +4905,7 @@ static void shader_arb_free(struct wined3d_device *device, struct wined3d_contex
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     priv->fragment_pipe->free_private(device, context);
     priv->vertex_pipe->vp_free(device, context);
-    heap_free(device->shader_priv);
+    free(device->shader_priv);
 }
 
 static BOOL shader_arb_allocate_context_data(struct wined3d_context *context)
@@ -5383,33 +5381,33 @@ static void record_instruction(struct list *list, const struct wined3d_shader_in
     struct recorded_instruction *rec;
     unsigned int i;
 
-    if (!(rec = heap_alloc_zero(sizeof(*rec))))
+    if (!(rec = calloc(1, sizeof(*rec))))
     {
         ERR("Out of memory\n");
         return;
     }
 
     rec->ins = *ins;
-    if (!(dst_param = heap_alloc(sizeof(*dst_param))))
+    if (!(dst_param = malloc(sizeof(*dst_param))))
         goto free;
     *dst_param = *ins->dst;
     if (ins->dst->reg.idx[0].rel_addr)
     {
-        if (!(rel_addr = heap_alloc(sizeof(*rel_addr))))
+        if (!(rel_addr = malloc(sizeof(*rel_addr))))
             goto free;
         *rel_addr = *ins->dst->reg.idx[0].rel_addr;
         dst_param->reg.idx[0].rel_addr = rel_addr;
     }
     rec->ins.dst = dst_param;
 
-    if (!(src_param = heap_calloc(ins->src_count, sizeof(*src_param))))
+    if (!(src_param = calloc(ins->src_count, sizeof(*src_param))))
         goto free;
     for (i = 0; i < ins->src_count; ++i)
     {
         src_param[i] = ins->src[i];
         if (ins->src[i].reg.idx[0].rel_addr)
         {
-            if (!(rel_addr = heap_alloc(sizeof(*rel_addr))))
+            if (!(rel_addr = malloc(sizeof(*rel_addr))))
                 goto free;
             *rel_addr = *ins->src[i].reg.idx[0].rel_addr;
             src_param[i].reg.idx[0].rel_addr = rel_addr;
@@ -5423,18 +5421,18 @@ free:
     ERR("Out of memory\n");
     if (dst_param)
     {
-        heap_free((void *)dst_param->reg.idx[0].rel_addr);
-        heap_free(dst_param);
+        free((void *)dst_param->reg.idx[0].rel_addr);
+        free(dst_param);
     }
     if (src_param)
     {
         for (i = 0; i < ins->src_count; ++i)
         {
-            heap_free((void *)src_param[i].reg.idx[0].rel_addr);
+            free((void *)src_param[i].reg.idx[0].rel_addr);
         }
-        heap_free(src_param);
+        free(src_param);
     }
-    heap_free(rec);
+    free(rec);
 }
 
 static void free_recorded_instruction(struct list *list)
@@ -5447,18 +5445,18 @@ static void free_recorded_instruction(struct list *list)
         list_remove(&rec_ins->entry);
         if (rec_ins->ins.dst)
         {
-            heap_free((void *)rec_ins->ins.dst->reg.idx[0].rel_addr);
-            heap_free((void *)rec_ins->ins.dst);
+            free((void *)rec_ins->ins.dst->reg.idx[0].rel_addr);
+            free((void *)rec_ins->ins.dst);
         }
         if (rec_ins->ins.src)
         {
             for (i = 0; i < rec_ins->ins.src_count; ++i)
             {
-                heap_free((void *)rec_ins->ins.src[i].reg.idx[0].rel_addr);
+                free((void *)rec_ins->ins.src[i].reg.idx[0].rel_addr);
             }
-            heap_free((void *)rec_ins->ins.src);
+            free((void *)rec_ins->ins.src);
         }
-        heap_free(rec_ins);
+        free(rec_ins);
     }
 }
 
@@ -5472,7 +5470,7 @@ static void pop_control_frame(const struct wined3d_shader_instruction *ins)
         struct list *e = list_head(&priv->control_frames);
         control_frame = LIST_ENTRY(e, struct control_frame, entry);
         list_remove(&control_frame->entry);
-        heap_free(control_frame);
+        free(control_frame);
         priv->loop_depth--;
     }
     else if (ins->handler_idx == WINED3DSIH_ENDIF)
@@ -5481,7 +5479,7 @@ static void pop_control_frame(const struct wined3d_shader_instruction *ins)
         struct list *e = list_head(&priv->control_frames);
         control_frame = LIST_ENTRY(e, struct control_frame, entry);
         list_remove(&control_frame->entry);
-        heap_free(control_frame);
+        free(control_frame);
     }
 }
 
@@ -5495,7 +5493,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
     if(ins->handler_idx == WINED3DSIH_LOOP || ins->handler_idx == WINED3DSIH_REP)
     {
-        control_frame = heap_alloc_zero(sizeof(*control_frame));
+        control_frame = calloc(1, sizeof(*control_frame));
         list_add_head(&priv->control_frames, &control_frame->entry);
 
         if(ins->handler_idx == WINED3DSIH_LOOP) control_frame->type = LOOP;
@@ -5592,13 +5590,13 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
                 shader_addline(buffer, "#end loop/rep\n");
 
                 free_recorded_instruction(&copy);
-                heap_free(control_frame);
+                free(control_frame);
                 return; /* Instruction is handled */
             }
             else
             {
                 /* This is a nested loop. Proceed to the normal recording function */
-                heap_free(control_frame);
+                free(control_frame);
             }
         }
     }
@@ -5612,7 +5610,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     /* boolean if */
     if(ins->handler_idx == WINED3DSIH_IF)
     {
-        control_frame = heap_alloc_zero(sizeof(*control_frame));
+        control_frame = calloc(1, sizeof(*control_frame));
         list_add_head(&priv->control_frames, &control_frame->entry);
         control_frame->type = IF;
 
@@ -5632,7 +5630,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     else if(ins->handler_idx == WINED3DSIH_IFC)
     {
         /* IF(bool) and if_cond(a, b) use the same ELSE and ENDIF tokens */
-        control_frame = heap_alloc_zero(sizeof(*control_frame));
+        control_frame = calloc(1, sizeof(*control_frame));
         control_frame->type = IFC;
         control_frame->no.ifc = priv->num_ifcs++;
         list_add_head(&priv->control_frames, &control_frame->entry);
@@ -5667,7 +5665,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
             shader_addline(buffer, "#} endif\n");
             if(control_frame->muting) priv->muted = FALSE;
             list_remove(&control_frame->entry);
-            heap_free(control_frame);
+            free(control_frame);
             return; /* Instruction is handled */
         }
         /* In case of an ifc, generate a HW shader instruction */
@@ -5758,7 +5756,7 @@ static void *arbfp_alloc(const struct wined3d_shader_backend_ops *shader_backend
      * invalidate some data when switching between FFP and fragment shaders. */
     if (shader_backend == &arb_program_shader_backend)
         priv = shader_priv;
-    else if (!(priv = heap_alloc_zero(sizeof(*priv))))
+    else if (!(priv = calloc(1, sizeof(*priv))))
         return NULL;
 
     wine_rb_init(&priv->fragment_shaders, wined3d_ffp_frag_program_key_compare);
@@ -5776,7 +5774,7 @@ static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *param)
     gl_info = context_gl->gl_info;
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
     checkGLcall("delete ffp program");
-    heap_free(entry_arb);
+    free(entry_arb);
 }
 
 /* Context activation is done by the caller. */
@@ -5788,7 +5786,7 @@ static void arbfp_free(struct wined3d_device *device, struct wined3d_context *co
     wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, context_gl);
 
     if (device->shader_backend != &arb_program_shader_backend)
-        heap_free(device->fragment_priv);
+        free(device->fragment_priv);
 }
 
 static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
@@ -6552,7 +6550,7 @@ static void arbfp_update_shader(struct wined3d_context *context, const struct wi
     {
         struct arbfp_ffp_desc *new_desc;
 
-        if (!(new_desc = heap_alloc(sizeof(*new_desc))))
+        if (!(new_desc = malloc(sizeof(*new_desc))))
         {
             ERR("Out of memory\n");
             return;
@@ -6845,7 +6843,7 @@ static void arbfp_free_blit_shader(struct wine_rb_entry *entry, void *ctx)
 
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
     checkGLcall("glDeleteProgramsARB(1, &entry_arb->shader)");
-    heap_free(entry_arb);
+    free(entry_arb);
 }
 
 /* Context activation is done by the caller. */
@@ -6867,7 +6865,7 @@ static void arbfp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3
     if (arbfp_blitter->palette_texture)
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &arbfp_blitter->palette_texture);
 
-    heap_free(arbfp_blitter);
+    free(arbfp_blitter);
 }
 
 static void gen_packed_yuv_read(struct wined3d_string_buffer *buffer,
@@ -7580,7 +7578,7 @@ static HRESULT arbfp_blit_set(struct wined3d_arbfp_blitter *blitter, struct wine
             return E_NOTIMPL;
         }
 
-        if (!(desc = heap_alloc(sizeof(*desc))))
+        if (!(desc = malloc(sizeof(*desc))))
             goto err_out;
 
         desc->type = type;
@@ -7593,7 +7591,7 @@ err_out:
             checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader))");
             GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0));
             checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, 0)");
-            heap_free(desc);
+            free(desc);
             return E_OUTOFMEMORY;
         }
     }
@@ -7894,7 +7892,7 @@ void wined3d_arbfp_blitter_create(struct wined3d_blitter **next, const struct wi
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         return;
 
-    if (!(blitter = heap_alloc(sizeof(*blitter))))
+    if (!(blitter = malloc(sizeof(*blitter))))
     {
         ERR("Failed to allocate blitter.\n");
         return;

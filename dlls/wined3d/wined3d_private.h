@@ -45,7 +45,6 @@
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "objbase.h"
 #include "wine/wined3d.h"
@@ -3409,7 +3408,7 @@ static inline void *wined3d_texture_allocate_object_memory(SIZE_T s, SIZE_T leve
     if (level_count > ((~(SIZE_T)0 - s) / sizeof(*t->sub_resources)) / layer_count)
         return NULL;
 
-    return heap_alloc_zero(s + level_count * layer_count * sizeof(*t->sub_resources));
+    return calloc(1, s + level_count * layer_count * sizeof(*t->sub_resources));
 }
 
 static inline struct wined3d_texture *texture_from_resource(struct wined3d_resource *resource)

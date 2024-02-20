@@ -180,8 +180,8 @@ void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 
     for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
         wined3d_output_cleanup(&adapter->outputs[output_idx]);
-    heap_free(adapter->outputs);
-    heap_free(adapter->formats);
+    free(adapter->outputs);
+    free(adapter->formats);
     close_adapter_desc.hAdapter = adapter->kmt_adapter;
     D3DKMTCloseAdapter(&close_adapter_desc);
 }
@@ -212,7 +212,7 @@ ULONG CDECL wined3d_decref(struct wined3d *wined3d)
 
             adapter->adapter_ops->adapter_destroy(adapter);
         }
-        heap_free(wined3d);
+        free(wined3d);
         wined3d_mutex_unlock();
     }
 
@@ -1122,7 +1122,7 @@ HRESULT CDECL wined3d_adapter_register_budget_change_notification(const struct w
     struct wined3d_adapter_budget_change_notification *notification, *new_notification;
     BOOL found = FALSE;
 
-    new_notification = heap_alloc_zero(sizeof(*new_notification));
+    new_notification = calloc(1, sizeof(*new_notification));
     if (!new_notification)
         return E_OUTOFMEMORY;
 
@@ -1178,7 +1178,7 @@ HRESULT CDECL wined3d_adapter_unregister_budget_change_notification(DWORD cookie
         if (notification->cookie == cookie)
         {
             list_remove(&notification->entry);
-            heap_free(notification);
+            free(notification);
             break;
         }
     }
@@ -1396,11 +1396,11 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
         return E_FAIL;
     }
 
-    if (!(modes = heap_calloc(mode_count, sizeof(*modes))))
+    if (!(modes = calloc(mode_count, sizeof(*modes))))
         return E_OUTOFMEMORY;
-    if (!(matching_modes = heap_calloc(mode_count, sizeof(*matching_modes))))
+    if (!(matching_modes = calloc(mode_count, sizeof(*matching_modes))))
     {
-        heap_free(modes);
+        free(modes);
         return E_OUTOFMEMORY;
     }
 
@@ -1409,8 +1409,8 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
         if (FAILED(hr = wined3d_output_get_mode(output, mode->format_id,
                 WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &modes[i], true)))
         {
-            heap_free(matching_modes);
-            heap_free(modes);
+            free(matching_modes);
+            free(modes);
             return hr;
         }
         matching_modes[i] = &modes[i];
@@ -1445,8 +1445,8 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
         struct wined3d_display_mode current_mode;
         if (FAILED(hr = wined3d_output_get_display_mode(output, &current_mode, NULL)))
         {
-            heap_free(matching_modes);
-            heap_free(modes);
+            free(matching_modes);
+            free(modes);
             return hr;
         }
         mode->width = current_mode.width;
@@ -1468,8 +1468,8 @@ HRESULT CDECL wined3d_output_find_closest_matching_mode(struct wined3d_output *o
 
     *mode = *matching_modes[j];
 
-    heap_free(matching_modes);
-    heap_free(modes);
+    free(matching_modes);
+    free(modes);
 
     TRACE("Returning %ux%u@%u %s %#x.\n", mode->width, mode->height,
             mode->refresh_rate, debug_d3dformat(mode->format_id),
@@ -2858,7 +2858,7 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
 static void adapter_no3d_destroy(struct wined3d_adapter *adapter)
 {
     wined3d_adapter_cleanup(adapter);
-    heap_free(adapter);
+    free(adapter);
 }
 
 static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct wined3d_adapter *adapter,
@@ -2871,14 +2871,14 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
     struct wined3d_device_no3d *device_no3d;
     HRESULT hr;
 
-    if (!(device_no3d = heap_alloc_zero(sizeof(*device_no3d))))
+    if (!(device_no3d = calloc(1, sizeof(*device_no3d))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type, focus_window,
             flags, surface_alignment, levels, level_count, supported_extensions, device_parent)))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);
-        heap_free(device_no3d);
+        free(device_no3d);
         return hr;
     }
 
@@ -2890,7 +2890,7 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
 static void adapter_no3d_destroy_device(struct wined3d_device *device)
 {
     wined3d_device_cleanup(device);
-    heap_free(device);
+    free(device);
 }
 
 static struct wined3d_context *adapter_no3d_acquire_context(struct wined3d_device *device,
@@ -3031,14 +3031,14 @@ static HRESULT adapter_no3d_create_swapchain(struct wined3d_device *device,
     TRACE("device %p, desc %p, state_parent %p, parent %p, parent_ops %p, swapchain %p.\n",
             device, desc, state_parent, parent, parent_ops, swapchain);
 
-    if (!(swapchain_no3d = heap_alloc_zero(sizeof(*swapchain_no3d))))
+    if (!(swapchain_no3d = calloc(1, sizeof(*swapchain_no3d))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_swapchain_no3d_init(swapchain_no3d, device, desc, state_parent, parent,
             parent_ops)))
     {
         WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
-        heap_free(swapchain_no3d);
+        free(swapchain_no3d);
         return hr;
     }
 
@@ -3051,7 +3051,7 @@ static HRESULT adapter_no3d_create_swapchain(struct wined3d_device *device,
 static void adapter_no3d_destroy_swapchain(struct wined3d_swapchain *swapchain)
 {
     wined3d_swapchain_cleanup(swapchain);
-    heap_free(swapchain);
+    free(swapchain);
 }
 
 static HRESULT adapter_no3d_create_buffer(struct wined3d_device *device,
@@ -3064,13 +3064,13 @@ static HRESULT adapter_no3d_create_buffer(struct wined3d_device *device,
     TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p.\n",
             device, desc, data, parent, parent_ops, buffer);
 
-    if (!(buffer_no3d = heap_alloc_zero(sizeof(*buffer_no3d))))
+    if (!(buffer_no3d = calloc(1, sizeof(*buffer_no3d))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_buffer_no3d_init(buffer_no3d, device, desc, data, parent, parent_ops)))
     {
         WARN("Failed to initialise buffer, hr %#lx.\n", hr);
-        heap_free(buffer_no3d);
+        free(buffer_no3d);
         return hr;
     }
 
@@ -3094,7 +3094,7 @@ static void adapter_no3d_destroy_buffer(struct wined3d_buffer *buffer)
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_buffer_cleanup(buffer);
-    wined3d_cs_destroy_object(device->cs, heap_free, buffer);
+    wined3d_cs_destroy_object(device->cs, free, buffer);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
@@ -3116,7 +3116,7 @@ static HRESULT adapter_no3d_create_texture(struct wined3d_device *device,
             layer_count, level_count, flags, parent, parent_ops)))
     {
         WARN("Failed to initialise texture, hr %#lx.\n", hr);
-        heap_free(texture_no3d);
+        free(texture_no3d);
         return hr;
     }
 
@@ -3144,7 +3144,7 @@ static void adapter_no3d_destroy_texture(struct wined3d_texture *texture)
     texture->resource.parent_ops->wined3d_object_destroyed(texture->resource.parent);
 
     wined3d_texture_cleanup(texture);
-    wined3d_cs_destroy_object(device->cs, heap_free, texture);
+    wined3d_cs_destroy_object(device->cs, free, texture);
 
     if (swapchain_count)
         wined3d_device_decref(device);
@@ -3160,13 +3160,13 @@ static HRESULT adapter_no3d_create_rendertarget_view(const struct wined3d_view_d
     TRACE("desc %s, resource %p, parent %p, parent_ops %p, view %p.\n",
             wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops, view);
 
-    if (!(view_no3d = heap_alloc_zero(sizeof(*view_no3d))))
+    if (!(view_no3d = calloc(1, sizeof(*view_no3d))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_rendertarget_view_no3d_init(view_no3d, desc, resource, parent, parent_ops)))
     {
         WARN("Failed to initialise view, hr %#lx.\n", hr);
-        heap_free(view_no3d);
+        free(view_no3d);
         return hr;
     }
 
@@ -3190,7 +3190,7 @@ static void adapter_no3d_destroy_rendertarget_view(struct wined3d_rendertarget_v
     if (swapchain_count)
         wined3d_device_incref(device);
     wined3d_rendertarget_view_cleanup(view);
-    wined3d_cs_destroy_object(device->cs, heap_free, view);
+    wined3d_cs_destroy_object(device->cs, free, view);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
@@ -3336,7 +3336,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
 
     TRACE("ordinal %u, wined3d_creation_flags %#x.\n", ordinal, wined3d_creation_flags);
 
-    if (!(adapter = heap_alloc_zero(sizeof(*adapter))))
+    if (!(adapter = calloc(1, sizeof(*adapter))))
         return NULL;
 
     if (ordinal == 0 && wined3d_get_primary_adapter_luid(&primary_luid))
@@ -3344,21 +3344,21 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
 
     if (!wined3d_adapter_init(adapter, ordinal, luid, &wined3d_adapter_no3d_ops))
     {
-        heap_free(adapter);
+        free(adapter);
         return NULL;
     }
 
     if (!wined3d_adapter_no3d_init_format_info(adapter))
     {
         wined3d_adapter_cleanup(adapter);
-        heap_free(adapter);
+        free(adapter);
         return NULL;
     }
 
     if (!wined3d_driver_info_init(&adapter->driver_info, &gpu_description, WINED3D_FEATURE_LEVEL_NONE, 0, 0))
     {
         wined3d_adapter_cleanup(adapter);
-        heap_free(adapter);
+        free(adapter);
         return NULL;
     }
     adapter->vram_bytes_used = 0;
@@ -3465,7 +3465,7 @@ done:
     {
         for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
             wined3d_output_cleanup(&adapter->outputs[output_idx]);
-        heap_free(adapter->outputs);
+        free(adapter->outputs);
         close_adapter_desc.hAdapter = adapter->kmt_adapter;
         D3DKMTCloseAdapter(&close_adapter_desc);
     }

@@ -57,7 +57,7 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
             if (wined3d_texture_decref(swapchain->back_buffers[i]))
                 WARN("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
         }
-        heap_free(swapchain->back_buffers);
+        free(swapchain->back_buffers);
         swapchain->back_buffers = NULL;
     }
 
@@ -106,13 +106,13 @@ static void wined3d_swapchain_vk_destroy_vulkan_swapchain(struct wined3d_swapcha
 
     if ((vr = VK_CALL(vkQueueWaitIdle(device_vk->vk_queue))) < 0)
         ERR("Failed to wait on queue, vr %s.\n", wined3d_debug_vkresult(vr));
-    heap_free(swapchain_vk->vk_images);
+    free(swapchain_vk->vk_images);
     for (i = 0; i < swapchain_vk->image_count; ++i)
     {
         VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].available, NULL));
         VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].presentable, NULL));
     }
-    heap_free(swapchain_vk->vk_semaphores);
+    free(swapchain_vk->vk_semaphores);
     VK_CALL(vkDestroySwapchainKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, NULL));
     VK_CALL(vkDestroySurfaceKHR(vk_info->instance, swapchain_vk->vk_surface, NULL));
 }
@@ -681,7 +681,7 @@ static bool wined3d_swapchain_vk_present_mode_supported(struct wined3d_swapchain
         return false;
     }
 
-    if (!(vk_modes = heap_calloc(count, sizeof(*vk_modes))))
+    if (!(vk_modes = calloc(count, sizeof(*vk_modes))))
         return false;
 
     if ((vr = VK_CALL(vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
@@ -701,7 +701,7 @@ static bool wined3d_swapchain_vk_present_mode_supported(struct wined3d_swapchain
     }
 
 done:
-    heap_free(vk_modes);
+    free(vk_modes);
     return supported;
 }
 
@@ -751,14 +751,14 @@ static VkFormat wined3d_swapchain_vk_select_vk_format(struct wined3d_swapchain_v
         return VK_FORMAT_UNDEFINED;
     }
 
-    if (!(vk_formats = heap_calloc(format_count, sizeof(*vk_formats))))
+    if (!(vk_formats = calloc(format_count, sizeof(*vk_formats))))
         return VK_FORMAT_UNDEFINED;
 
     if ((vr = VK_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device,
             vk_surface, &format_count, vk_formats))) < 0)
     {
         WARN("Failed to get supported surface formats, vr %s.\n", wined3d_debug_vkresult(vr));
-        heap_free(vk_formats);
+        free(vk_formats);
         return VK_FORMAT_UNDEFINED;
     }
 
@@ -778,7 +778,7 @@ static VkFormat wined3d_swapchain_vk_select_vk_format(struct wined3d_swapchain_v
                 break;
         }
     }
-    heap_free(vk_formats);
+    free(vk_formats);
     if (i == format_count)
     {
         FIXME("Failed to find Vulkan swapchain format for %s.\n", debug_d3dformat(desc->backbuffer_format));
@@ -807,7 +807,7 @@ static bool wined3d_swapchain_vk_create_vulkan_swapchain_images(struct wined3d_s
         return false;
     }
 
-    if (!(swapchain_vk->vk_images = heap_calloc(image_count, sizeof(*swapchain_vk->vk_images))))
+    if (!(swapchain_vk->vk_images = calloc(image_count, sizeof(*swapchain_vk->vk_images))))
     {
         ERR("Failed to allocate images array.\n");
         return false;
@@ -817,14 +817,14 @@ static bool wined3d_swapchain_vk_create_vulkan_swapchain_images(struct wined3d_s
             vk_swapchain, &image_count, swapchain_vk->vk_images))) < 0)
     {
         ERR("Failed to get swapchain images, vr %s.\n", wined3d_debug_vkresult(vr));
-        heap_free(swapchain_vk->vk_images);
+        free(swapchain_vk->vk_images);
         return false;
     }
 
-    if (!(swapchain_vk->vk_semaphores = heap_calloc(image_count, sizeof(*swapchain_vk->vk_semaphores))))
+    if (!(swapchain_vk->vk_semaphores = calloc(image_count, sizeof(*swapchain_vk->vk_semaphores))))
     {
         ERR("Failed to allocate semaphores array.\n");
-        heap_free(swapchain_vk->vk_images);
+        free(swapchain_vk->vk_images);
         return false;
     }
 
@@ -859,8 +859,8 @@ fail:
         if (swapchain_vk->vk_semaphores[i].presentable)
             VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].presentable, NULL));
     }
-    heap_free(swapchain_vk->vk_semaphores);
-    heap_free(swapchain_vk->vk_images);
+    free(swapchain_vk->vk_semaphores);
+    free(swapchain_vk->vk_images);
     return false;
 }
 
@@ -1593,7 +1593,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     if (swapchain->state.desc.backbuffer_count > 0)
     {
-        if (!(swapchain->back_buffers = heap_calloc(swapchain->state.desc.backbuffer_count,
+        if (!(swapchain->back_buffers = calloc(swapchain->state.desc.backbuffer_count,
                 sizeof(*swapchain->back_buffers))))
         {
             ERR("Failed to allocate backbuffer array memory.\n");
@@ -1668,7 +1668,7 @@ err:
                 wined3d_texture_decref(swapchain->back_buffers[i]);
             }
         }
-        heap_free(swapchain->back_buffers);
+        free(swapchain->back_buffers);
     }
 
     if (swapchain->front_buffer)
@@ -1769,7 +1769,7 @@ static struct wined3d_context_gl *wined3d_swapchain_gl_create_context(struct win
 
     wined3d_from_cs(device->cs);
 
-    if (!(context_gl = heap_alloc_zero(sizeof(*context_gl))))
+    if (!(context_gl = calloc(1, sizeof(*context_gl))))
     {
         ERR("Failed to allocate context memory.\n");
         return NULL;
@@ -1778,7 +1778,7 @@ static struct wined3d_context_gl *wined3d_swapchain_gl_create_context(struct win
     if (FAILED(wined3d_context_gl_init(context_gl, swapchain_gl)))
     {
         WARN("Failed to initialise context.\n");
-        heap_free(context_gl);
+        free(context_gl);
         return NULL;
     }
 
@@ -2181,7 +2181,7 @@ static DWORD WINAPI set_window_state_thread(void *ctx)
 
     wined3d_filter_messages(s->window, filter);
 
-    heap_free(s);
+    free(s);
 
     return 0;
 }
@@ -2236,7 +2236,7 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(s = heap_alloc(sizeof(*s))))
+    if (!(s = malloc(sizeof(*s))))
         return E_OUTOFMEMORY;
     s->window = window;
     s->window_pos_after = HWND_TOPMOST;
@@ -2282,7 +2282,7 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
     if (!state->style && !state->exstyle)
         return;
 
-    if (!(s = heap_alloc(sizeof(*s))))
+    if (!(s = malloc(sizeof(*s))))
         return;
 
     s->window = window;
@@ -2468,7 +2468,7 @@ void CDECL wined3d_swapchain_state_get_size(const struct wined3d_swapchain_state
 void CDECL wined3d_swapchain_state_destroy(struct wined3d_swapchain_state *state)
 {
     wined3d_swapchain_state_cleanup(state);
-    heap_free(state);
+    free(state);
 }
 
 HRESULT CDECL wined3d_swapchain_state_create(const struct wined3d_swapchain_desc *desc,
@@ -2480,12 +2480,12 @@ HRESULT CDECL wined3d_swapchain_state_create(const struct wined3d_swapchain_desc
 
     TRACE("desc %p, window %p, wined3d %p, state %p.\n", desc, window, wined3d, state);
 
-    if (!(s = heap_alloc_zero(sizeof(*s))))
+    if (!(s = calloc(1, sizeof(*s))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_swapchain_state_init(s, desc, window, wined3d, state_parent)))
     {
-        heap_free(s);
+        free(s);
         return hr;
     }
 

@@ -36,7 +36,7 @@ static void wined3d_palette_destroy_object(void *object)
 {
     TRACE("object %p.\n", object);
 
-    heap_free(object);
+    free(object);
 }
 
 ULONG CDECL wined3d_palette_decref(struct wined3d_palette *palette)
@@ -167,13 +167,13 @@ HRESULT CDECL wined3d_palette_create(struct wined3d_device *device, uint32_t fla
     TRACE("device %p, flags %#x, entry_count %u, entries %p, palette %p.\n",
             device, flags, entry_count, entries, palette);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_palette_init(object, device, flags, entry_count, entries)))
     {
         WARN("Failed to initialize palette, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

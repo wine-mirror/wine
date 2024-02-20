@@ -430,7 +430,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
     }
     else
     {
-        if (!(slab = heap_alloc_zero(sizeof(*slab))))
+        if (!(slab = calloc(1, sizeof(*slab))))
         {
             wined3d_device_vk_allocator_unlock(device_vk);
             ERR("Failed to allocate bo slab.\n");
@@ -441,7 +441,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
         {
             wined3d_device_vk_allocator_unlock(device_vk);
             ERR("Failed to add slab to available tree.\n");
-            heap_free(slab);
+            free(slab);
             return false;
         }
 
@@ -451,7 +451,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
             wined3d_device_vk_allocator_unlock(device_vk);
             ERR("Failed to create slab bo.\n");
             wine_rb_remove(&context_vk->bo_slab_available, &slab->entry);
-            heap_free(slab);
+            free(slab);
             return false;
         }
         slab->map = ~0u;
@@ -1277,7 +1277,7 @@ static void wined3d_context_vk_destroy_bo_slab(struct wine_rb_entry *entry, void
     {
         next = slab->next;
         wined3d_context_vk_destroy_bo(context_vk, &slab->bo);
-        heap_free(slab);
+        free(slab);
         slab = next;
     }
 }
@@ -1294,7 +1294,7 @@ static void wined3d_context_vk_destroy_graphics_pipeline(struct wine_rb_entry *e
     device_vk = wined3d_device_vk(context_vk->c.device);
 
     VK_CALL(vkDestroyPipeline(device_vk->vk_device, pipeline_vk->vk_pipeline, NULL));
-    heap_free(pipeline_vk);
+    free(pipeline_vk);
 }
 
 static void wined3d_context_vk_destroy_pipeline_layout(struct wine_rb_entry *entry, void *ctx)
@@ -1310,8 +1310,8 @@ static void wined3d_context_vk_destroy_pipeline_layout(struct wine_rb_entry *ent
 
     VK_CALL(vkDestroyPipelineLayout(device_vk->vk_device, layout->vk_pipeline_layout, NULL));
     VK_CALL(vkDestroyDescriptorSetLayout(device_vk->vk_device, layout->vk_set_layout, NULL));
-    heap_free(layout->key.bindings);
-    heap_free(layout);
+    free(layout->key.bindings);
+    free(layout);
 }
 
 static void wined3d_render_pass_key_vk_init(struct wined3d_render_pass_key_vk *key,
@@ -1511,12 +1511,12 @@ VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *conte
     if ((entry = wine_rb_get(&context_vk->render_passes, &key)))
         return WINE_RB_ENTRY_VALUE(entry, struct wined3d_render_pass_vk, entry)->vk_render_pass;
 
-    if (!(pass = heap_alloc(sizeof(*pass))))
+    if (!(pass = malloc(sizeof(*pass))))
         return VK_NULL_HANDLE;
 
     if (!wined3d_render_pass_vk_init(pass, context_vk, &key))
     {
-        heap_free(pass);
+        free(pass);
         return VK_NULL_HANDLE;
     }
 
@@ -1524,7 +1524,7 @@ VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *conte
     {
         ERR("Failed to insert render pass.\n");
         wined3d_render_pass_vk_cleanup(pass, context_vk);
-        heap_free(pass);
+        free(pass);
         return VK_NULL_HANDLE;
     }
 
@@ -1571,12 +1571,12 @@ static void wined3d_context_vk_destroy_render_pass(struct wine_rb_entry *entry, 
             struct wined3d_render_pass_vk, entry);
 
     wined3d_render_pass_vk_cleanup(pass, ctx);
-    heap_free(pass);
+    free(pass);
 }
 
 static void wined3d_shader_descriptor_writes_vk_cleanup(struct wined3d_shader_descriptor_writes_vk *writes)
 {
-    heap_free(writes->writes);
+    free(writes->writes);
 }
 
 static void wined3d_context_vk_destroy_query_pools(struct wined3d_context_vk *context_vk, struct list *free_pools)
@@ -1586,7 +1586,7 @@ static void wined3d_context_vk_destroy_query_pools(struct wined3d_context_vk *co
     LIST_FOR_EACH_ENTRY_SAFE(pool_vk, entry, free_pools, struct wined3d_query_pool_vk, entry)
     {
         wined3d_query_pool_vk_cleanup(pool_vk, context_vk);
-        heap_free(pool_vk);
+        free(pool_vk);
     }
 }
 
@@ -1635,11 +1635,11 @@ bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         list_init(&pool_vk->entry);
     }
 
-    if (!(pool_vk = heap_alloc_zero(sizeof(*pool_vk))))
+    if (!(pool_vk = calloc(1, sizeof(*pool_vk))))
         return false;
     if (!wined3d_query_pool_vk_init(pool_vk, context_vk, type, free_pools))
     {
-        heap_free(pool_vk);
+        free(pool_vk);
         return false;
     }
 
@@ -1681,7 +1681,7 @@ bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
     if (!wined3d_query_pool_vk_allocate_query(pool_vk, &idx))
     {
         wined3d_query_pool_vk_cleanup(pool_vk, context_vk);
-        heap_free(pool_vk);
+        free(pool_vk);
         return false;
     }
 
@@ -1710,11 +1710,11 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     for (i = 0; i < context_vk->completed.buffer_count; ++i)
         free_command_buffer(context_vk, &context_vk->completed.buffers[i]);
 
-    heap_free(context_vk->compute.bindings.bindings);
-    heap_free(context_vk->graphics.bindings.bindings);
+    free(context_vk->compute.bindings.bindings);
+    free(context_vk->graphics.bindings.bindings);
     for (i = 0; i < context_vk->vk_descriptor_pool_count; ++i)
         VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, context_vk->vk_descriptor_pools[i], NULL));
-    heap_free(context_vk->vk_descriptor_pools);
+    free(context_vk->vk_descriptor_pools);
     if (context_vk->vk_framebuffer)
         VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, context_vk->vk_framebuffer, NULL));
     if (context_vk->vk_so_counter_bo.vk_buffer)
@@ -1729,9 +1729,9 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_pipeline_statistics_query_pools);
     wined3d_context_vk_destroy_query_pools(context_vk, &context_vk->free_stream_output_statistics_query_pools);
     wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
-    heap_free(context_vk->submitted.buffers);
-    heap_free(context_vk->completed.buffers);
-    heap_free(context_vk->retired.objects);
+    free(context_vk->submitted.buffers);
+    free(context_vk->completed.buffers);
+    free(context_vk->retired.objects);
 
     wined3d_shader_descriptor_writes_vk_cleanup(&context_vk->descriptor_writes);
     wine_rb_destroy(&context_vk->graphics_pipelines, wined3d_context_vk_destroy_graphics_pipeline, context_vk);
@@ -3271,12 +3271,12 @@ struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(
     if ((entry = wine_rb_get(&context_vk->pipeline_layouts, &key)))
         return WINE_RB_ENTRY_VALUE(entry, struct wined3d_pipeline_layout_vk, entry);
 
-    if (!(layout = heap_alloc(sizeof(*layout))))
+    if (!(layout = malloc(sizeof(*layout))))
         return NULL;
 
-    if (!(layout->key.bindings = heap_alloc(sizeof(*layout->key.bindings) * key.binding_count)))
+    if (!(layout->key.bindings = malloc(sizeof(*layout->key.bindings) * key.binding_count)))
     {
-        heap_free(layout);
+        free(layout);
         return NULL;
     }
     memcpy(layout->key.bindings, key.bindings, sizeof(*layout->key.bindings) * key.binding_count);
@@ -3315,8 +3315,8 @@ struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(
     return layout;
 
 fail:
-    heap_free(layout->key.bindings);
-    heap_free(layout);
+    free(layout->key.bindings);
+    free(layout);
     return NULL;
 }
 
@@ -3333,7 +3333,7 @@ static VkPipeline wined3d_context_vk_get_graphics_pipeline(struct wined3d_contex
     if ((entry = wine_rb_get(&context_vk->graphics_pipelines, key)))
         return WINE_RB_ENTRY_VALUE(entry, struct wined3d_graphics_pipeline_vk, entry)->vk_pipeline;
 
-    if (!(pipeline_vk = heap_alloc(sizeof(*pipeline_vk))))
+    if (!(pipeline_vk = malloc(sizeof(*pipeline_vk))))
         return VK_NULL_HANDLE;
     pipeline_vk->key = *key;
 
@@ -3341,7 +3341,7 @@ static VkPipeline wined3d_context_vk_get_graphics_pipeline(struct wined3d_contex
             VK_NULL_HANDLE, 1, &key->pipeline_desc, NULL, &pipeline_vk->vk_pipeline))) < 0)
     {
         WARN("Failed to create graphics pipeline, vr %s.\n", wined3d_debug_vkresult(vr));
-        heap_free(pipeline_vk);
+        free(pipeline_vk);
         return VK_NULL_HANDLE;
     }
 

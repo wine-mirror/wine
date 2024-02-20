@@ -203,7 +203,7 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
     if (!--bo_gl->b.refcount)
     {
         wined3d_context_gl_destroy_bo(context_gl, bo_gl);
-        heap_free(bo_gl);
+        free(bo_gl);
     }
     buffer_gl->b.buffer_object = NULL;
 }
@@ -224,7 +224,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
     TRACE("Creating an OpenGL buffer object for wined3d buffer %p with usage %s.\n",
             buffer_gl, debug_d3dusage(buffer_gl->b.resource.usage));
 
-    if (!(bo = heap_alloc(sizeof(*bo))))
+    if (!(bo = malloc(sizeof(*bo))))
         return FALSE;
 
     size = buffer_gl->b.resource.size;
@@ -240,7 +240,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         ERR("Failed to create OpenGL buffer object.\n");
         buffer_gl->b.flags &= ~WINED3D_BUFFER_USE_BO;
         buffer_clear_dirty_areas(&buffer_gl->b);
-        heap_free(bo);
+        free(bo);
         return FALSE;
     }
 
@@ -283,8 +283,8 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
              */
             TRACE("Reconverting because converted attributes occur, and the stride changed.\n");
             buffer->stride = *stride_this_run;
-            heap_free(buffer->conversion_map);
-            buffer->conversion_map = heap_calloc(buffer->stride, sizeof(*buffer->conversion_map));
+            free(buffer->conversion_map);
+            buffer->conversion_map = calloc(buffer->stride, sizeof(*buffer->conversion_map));
             ret = TRUE;
         }
     }
@@ -366,7 +366,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
         TRACE("No fixup required.\n");
         if(This->conversion_map)
         {
-            heap_free(This->conversion_map);
+            free(This->conversion_map);
             This->conversion_map = NULL;
             This->stride = 0;
             return TRUE;
@@ -457,7 +457,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
         /* Sanity test */
         if (!ret)
             ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
-        heap_free(This->conversion_map);
+        free(This->conversion_map);
         This->conversion_map = NULL;
         This->stride = 0;
     }
@@ -528,7 +528,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     /* Now for each vertex in the buffer that needs conversion. */
     vertex_count = buffer->resource.size / buffer->stride;
 
-    if (!(data = heap_alloc(buffer->resource.size)))
+    if (!(data = malloc(buffer->resource.size)))
     {
         ERR("Out of memory.\n");
         return;
@@ -571,7 +571,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     wined3d_context_copy_bo_address(context, &dst, &src,
             buffer->dirty_range_count, buffer->dirty_ranges, WINED3D_MAP_WRITE);
 
-    heap_free(data);
+    free(data);
 }
 
 BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
@@ -747,7 +747,7 @@ static void buffer_resource_unload(struct wined3d_resource *resource)
 
         context_release(context);
 
-        heap_free(buffer->conversion_map);
+        free(buffer->conversion_map);
         buffer->conversion_map = NULL;
         buffer->stride = 0;
         buffer->conversion_stride = 0;
@@ -776,8 +776,8 @@ static void wined3d_buffer_destroy_object(void *object)
         wined3d_buffer_unload_location(buffer, context, WINED3D_LOCATION_BUFFER);
         context_release(context);
     }
-    heap_free(buffer->conversion_map);
-    heap_free(buffer->dirty_ranges);
+    free(buffer->conversion_map);
+    free(buffer->dirty_ranges);
 }
 
 void wined3d_buffer_cleanup(struct wined3d_buffer *buffer)
@@ -1144,7 +1144,7 @@ static void wined3d_buffer_set_bo(struct wined3d_buffer *buffer, struct wined3d_
         if (!--prev_bo->refcount)
         {
             wined3d_context_destroy_bo(context, prev_bo);
-            heap_free(prev_bo);
+            free(prev_bo);
         }
     }
 
@@ -1570,7 +1570,7 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
     struct wined3d_resource *resource = &buffer_vk->b.resource;
     struct wined3d_bo_vk *bo_vk;
 
-    if (!(bo_vk = heap_alloc(sizeof(*bo_vk))))
+    if (!(bo_vk = malloc(sizeof(*bo_vk))))
         return FALSE;
 
     if (!(wined3d_context_vk_create_bo(context_vk, resource->size,
@@ -1578,7 +1578,7 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
             vk_memory_type_from_access_flags(resource->access, resource->usage), bo_vk)))
     {
         WARN("Failed to create Vulkan buffer.\n");
-        heap_free(bo_vk);
+        free(bo_vk);
         return FALSE;
     }
 
@@ -1642,7 +1642,7 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
             if (!--bo_vk->b.refcount)
             {
                 wined3d_context_vk_destroy_bo(context_vk, bo_vk);
-                heap_free(bo_vk);
+                free(bo_vk);
             }
             buffer->buffer_object = NULL;
             break;

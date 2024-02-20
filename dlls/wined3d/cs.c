@@ -2050,7 +2050,7 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
     if (!(light_info = wined3d_light_state_get_light(&cs->state.light_state, light_idx)))
     {
         TRACE("Adding new light.\n");
-        if (!(light_info = heap_alloc_zero(sizeof(*light_info))))
+        if (!(light_info = calloc(1, sizeof(*light_info))))
         {
             ERR("Failed to allocate light info.\n");
             return;
@@ -2758,7 +2758,7 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
         if (op->bo.addr.buffer_object)
             FIXME("Free BO address %s.\n", debug_const_bo_address(&op->bo.addr));
         else
-            heap_free((void *)op->bo.addr.addr);
+            free((void *)op->bo.addr.addr);
     }
 }
 
@@ -3021,9 +3021,9 @@ static void *wined3d_cs_st_require_space(struct wined3d_device_context *context,
 
         new_size = max(size, cs->data_size * 2);
         if (!cs->end)
-            new_data = heap_realloc(cs->data, new_size);
+            new_data = realloc(cs->data, new_size);
         else
-            new_data = heap_alloc(new_size);
+            new_data = malloc(new_size);
         if (!new_data)
             return NULL;
 
@@ -3057,7 +3057,7 @@ static void wined3d_cs_st_submit(struct wined3d_device_context *context, enum wi
     if (cs->data == data)
         cs->start = cs->end = start;
     else if (!start)
-        heap_free(data);
+        free(data);
 }
 
 static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
@@ -3170,7 +3170,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
             + ((box->bottom - box->top - 1) / format->block_height) * map_desc->row_pitch
             + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
 
-    if (!(map_desc->data = heap_alloc(size)))
+    if (!(map_desc->data = malloc(size)))
     {
         WARN_(d3d_perf)("Failed to allocate a heap memory buffer.\n");
         return false;
@@ -3563,12 +3563,12 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_cs *cs;
 
-    if (!(cs = heap_alloc_zero(sizeof(*cs))))
+    if (!(cs = calloc(1, sizeof(*cs))))
         return NULL;
 
     if (FAILED(wined3d_state_create(device, levels, level_count, &cs->c.state)))
     {
-        heap_free(cs);
+        free(cs);
         return NULL;
     }
 
@@ -3582,7 +3582,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
     state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT, cs->c.state->feature_level);
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
-    if (!(cs->data = heap_alloc(cs->data_size)))
+    if (!(cs->data = malloc(cs->data_size)))
         goto fail;
 
     if (wined3d_settings.cs_multithreaded & WINED3D_CSMT_ENABLE)
@@ -3610,13 +3610,13 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         if (!pNtAlertThreadByThreadId && !(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         {
             ERR("Failed to create command stream event.\n");
-            heap_free(cs->data);
+            free(cs->data);
             goto fail;
         }
         if (!(cs->present_event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         {
             ERR("Failed to create command stream present event.\n");
-            heap_free(cs->data);
+            free(cs->data);
             goto fail;
         }
 
@@ -3627,7 +3627,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
             CloseHandle(cs->present_event);
             if (cs->event)
                 CloseHandle(cs->event);
-            heap_free(cs->data);
+            free(cs->data);
             goto fail;
         }
 
@@ -3638,7 +3638,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
             CloseHandle(cs->present_event);
             if (cs->event)
                 CloseHandle(cs->event);
-            heap_free(cs->data);
+            free(cs->data);
             goto fail;
         }
     }
@@ -3649,7 +3649,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
 fail:
     wined3d_state_destroy(cs->c.state);
     state_cleanup(&cs->state);
-    heap_free(cs);
+    free(cs);
     return NULL;
 }
 
@@ -3667,8 +3667,8 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
 
     wined3d_state_destroy(cs->c.state);
     state_cleanup(&cs->state);
-    heap_free(cs->data);
-    heap_free(cs);
+    free(cs->data);
+    free(cs);
 }
 
 static void wined3d_cs_packet_decref_objects(const struct wined3d_cs_packet *packet)
@@ -4310,7 +4310,7 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
                 return false;
             }
 
-            if (!(deferred->upload_heap_refcount = heap_alloc(sizeof(*deferred->upload_heap_refcount))))
+            if (!(deferred->upload_heap_refcount = malloc(sizeof(*deferred->upload_heap_refcount))))
             {
                 HeapDestroy(deferred->upload_heap);
                 deferred->upload_heap = 0;
@@ -4435,12 +4435,12 @@ HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, str
 
     TRACE("device %p, context %p.\n", device, context);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_state_create(device, &device->cs->c.state->feature_level, 1, &object->c.state)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -4467,7 +4467,7 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
 
     for (i = 0; i < deferred->resource_count; ++i)
         wined3d_resource_decref(deferred->resources[i]);
-    heap_free(deferred->resources);
+    free(deferred->resources);
 
     for (i = 0; i < deferred->upload_count; ++i)
     {
@@ -4480,19 +4480,19 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
         if (!InterlockedDecrement(deferred->upload_heap_refcount))
         {
             HeapDestroy(deferred->upload_heap);
-            heap_free(deferred->upload_heap_refcount);
+            free(deferred->upload_heap_refcount);
         }
     }
 
-    heap_free(deferred->uploads);
+    free(deferred->uploads);
 
     for (i = 0; i < deferred->command_list_count; ++i)
         wined3d_command_list_decref(deferred->command_lists[i]);
-    heap_free(deferred->command_lists);
+    free(deferred->command_lists);
 
     for (i = 0; i < deferred->query_count; ++i)
         wined3d_query_decref(deferred->queries[i].query);
-    heap_free(deferred->queries);
+    free(deferred->queries);
 
     while (offset < deferred->data_size)
     {
@@ -4501,8 +4501,8 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
     }
 
     wined3d_state_destroy(deferred->c.state);
-    heap_free(deferred->data);
-    heap_free(deferred);
+    free(deferred->data);
+    free(deferred);
 }
 
 HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device_context *context,
@@ -4515,7 +4515,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     TRACE("context %p, list %p.\n", context, list);
 
     wined3d_device_context_lock(context);
-    memory = heap_alloc(sizeof(*object) + deferred->resource_count * sizeof(*object->resources)
+    memory = malloc(sizeof(*object) + deferred->resource_count * sizeof(*object->resources)
             + deferred->upload_count * sizeof(*object->uploads)
             + deferred->command_list_count * sizeof(*object->command_lists)
             + deferred->query_count * sizeof(*object->queries)
@@ -4604,7 +4604,7 @@ static void wined3d_command_list_destroy_object(void *object)
             if (!--bo->refcount)
             {
                 wined3d_context_destroy_bo(context, bo);
-                heap_free(bo);
+                free(bo);
             }
         }
         else
@@ -4620,11 +4620,11 @@ static void wined3d_command_list_destroy_object(void *object)
         if (!InterlockedDecrement(list->upload_heap_refcount))
         {
             HeapDestroy(list->upload_heap);
-            heap_free(list->upload_heap_refcount);
+            free(list->upload_heap_refcount);
         }
     }
 
-    heap_free(list);
+    free(list);
 }
 
 ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)

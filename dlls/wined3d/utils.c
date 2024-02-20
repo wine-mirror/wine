@@ -4150,7 +4150,7 @@ static BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, si
 {
     unsigned int count = WINED3D_FORMAT_COUNT + ARRAY_SIZE(typeless_depth_stencil_formats);
 
-    if (!(adapter->formats = heap_calloc(count, format_size)))
+    if (!(adapter->formats = calloc(count, format_size)))
     {
         ERR("Failed to allocate memory.\n");
         return FALSE;
@@ -4169,7 +4169,7 @@ static BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, si
     return TRUE;
 
 fail:
-    heap_free(adapter->formats);
+    free(adapter->formats);
     adapter->formats = NULL;
     return FALSE;
 }
@@ -4237,7 +4237,7 @@ BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter, struct
     return TRUE;
 
 fail:
-    heap_free(adapter->formats);
+    free(adapter->formats);
     adapter->formats = NULL;
     return FALSE;
 }
@@ -4460,7 +4460,7 @@ BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
     return TRUE;
 
 fail:
-    heap_free(adapter->formats);
+    free(adapter->formats);
     adapter->formats = NULL;
     return FALSE;
 }
@@ -7001,10 +7001,7 @@ BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE
     if (new_capacity < count)
         new_capacity = count;
 
-    if (!*elements)
-        new_elements = heap_alloc_zero(new_capacity * size);
-    else
-        new_elements = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *elements, new_capacity * size);
+    new_elements = _recalloc(*elements, new_capacity, size);
     if (!new_elements)
         return FALSE;
 
@@ -7319,7 +7316,7 @@ static struct wined3d_allocator_block *wined3d_allocator_acquire_block(struct wi
     struct wined3d_allocator_block *block;
 
     if (!allocator->free)
-        return heap_alloc(sizeof(*block));
+        return malloc(sizeof(*block));
 
     block = allocator->free;
     allocator->free = block->parent;
@@ -7417,13 +7414,13 @@ void wined3d_allocator_cleanup(struct wined3d_allocator *allocator)
             allocator->ops->allocator_destroy_chunk(chunk);
         }
     }
-    heap_free(allocator->pools);
+    free(allocator->pools);
 
     next = allocator->free;
     while ((block = next))
     {
         next = block->parent;
-        heap_free(block);
+        free(block);
     }
 }
 
@@ -7512,7 +7509,7 @@ bool wined3d_allocator_init(struct wined3d_allocator *allocator,
 
     allocator->ops = allocator_ops;
     allocator->pool_count = pool_count;
-    if (!(allocator->pools = heap_calloc(pool_count, sizeof(*allocator->pools))))
+    if (!(allocator->pools = calloc(pool_count, sizeof(*allocator->pools))))
         return false;
     for (i = 0; i < pool_count; ++i)
     {

@@ -373,7 +373,7 @@ static void wined3d_fence_free(struct wined3d_fence *fence)
 void wined3d_fence_destroy(struct wined3d_fence *fence)
 {
     wined3d_fence_free(fence);
-    heap_free(fence);
+    free(fence);
 }
 
 static HRESULT wined3d_fence_init(struct wined3d_fence *fence, const struct wined3d_gl_info *gl_info)
@@ -395,12 +395,12 @@ HRESULT wined3d_fence_create(struct wined3d_device *device, struct wined3d_fence
 
     TRACE("device %p, fence %p.\n", device, fence);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_fence_init(object, gl_info)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1025,7 +1025,7 @@ static void wined3d_event_query_ops_destroy(struct wined3d_query *query)
     struct wined3d_event_query *event_query = wined3d_event_query_from_query(query);
 
     wined3d_fence_free(&event_query->fence);
-    heap_free(event_query);
+    free(event_query);
 }
 
 static const struct wined3d_query_ops event_query_ops =
@@ -1046,13 +1046,13 @@ static HRESULT wined3d_event_query_create(struct wined3d_device *device,
     TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
             device, type, parent, parent_ops, query);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_fence_init(&object->fence, gl_info)))
     {
         WARN("Event queries not supported.\n");
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1071,7 +1071,7 @@ static void wined3d_occlusion_query_ops_destroy(struct wined3d_query *query)
 
     if (oq->context_gl)
         wined3d_context_gl_free_occlusion_query(oq);
-    heap_free(oq);
+    free(oq);
 }
 
 static const struct wined3d_query_ops occlusion_query_ops =
@@ -1097,7 +1097,7 @@ static HRESULT wined3d_occlusion_query_create(struct wined3d_device *device,
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->samples,
@@ -1115,7 +1115,7 @@ static void wined3d_timestamp_query_ops_destroy(struct wined3d_query *query)
 
     if (tq->context_gl)
         wined3d_context_gl_free_timestamp_query(tq);
-    heap_free(tq);
+    free(tq);
 }
 
 static const struct wined3d_query_ops timestamp_query_ops =
@@ -1141,7 +1141,7 @@ static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->timestamp,
@@ -1155,7 +1155,7 @@ static HRESULT wined3d_timestamp_query_create(struct wined3d_device *device,
 
 static void wined3d_timestamp_disjoint_query_ops_destroy(struct wined3d_query *query)
 {
-    heap_free(query);
+    free(query);
 }
 
 static const struct wined3d_query_ops timestamp_disjoint_query_ops =
@@ -1181,7 +1181,7 @@ static HRESULT wined3d_timestamp_disjoint_query_create(struct wined3d_device *de
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (type == WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT)
@@ -1211,7 +1211,7 @@ static void wined3d_so_statistics_query_ops_destroy(struct wined3d_query *query)
 
     if (pq->context_gl)
         wined3d_context_gl_free_so_statistics_query(pq);
-    heap_free(pq);
+    free(pq);
 }
 
 static const struct wined3d_query_ops so_statistics_query_ops =
@@ -1250,7 +1250,7 @@ static HRESULT wined3d_so_statistics_query_create(struct wined3d_device *device,
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->statistics,
@@ -1268,7 +1268,7 @@ static void wined3d_pipeline_query_ops_destroy(struct wined3d_query *query)
     struct wined3d_pipeline_statistics_query *pq = wined3d_pipeline_statistics_query_from_query(query);
     if (pq->context_gl)
         wined3d_context_gl_free_pipeline_statistics_query(pq);
-    heap_free(pq);
+    free(pq);
 }
 
 static const struct wined3d_query_ops pipeline_query_ops =
@@ -1294,7 +1294,7 @@ static HRESULT wined3d_pipeline_query_create(struct wined3d_device *device,
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     wined3d_query_init(&object->query, device, type, &object->statistics,
@@ -1742,8 +1742,8 @@ static void wined3d_query_vk_destroy(struct wined3d_query *query)
     if (query_vk->vk_event)
         wined3d_context_vk_destroy_vk_event(context_vk, query_vk->vk_event, query_vk->command_buffer_id);
     context_release(&context_vk->c);
-    heap_free(query_vk->pending);
-    heap_free(query_vk);
+    free(query_vk->pending);
+    free(query_vk);
 }
 
 static const struct wined3d_query_ops wined3d_query_vk_ops =
@@ -1948,7 +1948,7 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
             return WINED3DERR_NOTAVAILABLE;
     }
 
-    if (!(query_vk = heap_alloc_zero(sizeof(*query_vk) + data_size)))
+    if (!(query_vk = calloc(1, sizeof(*query_vk) + data_size)))
         return E_OUTOFMEMORY;
     data = query_vk + 1;
 

@@ -54,8 +54,8 @@ static void wined3d_vertex_declaration_destroy_object(void *object)
 
     TRACE("declaration %p.\n", declaration);
 
-    heap_free(declaration->elements);
-    heap_free(declaration);
+    free(declaration->elements);
+    free(declaration);
 }
 
 ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration)
@@ -190,7 +190,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
     declaration->parent = parent;
     declaration->parent_ops = parent_ops;
     declaration->device = device;
-    if (!(declaration->elements = heap_calloc(element_count, sizeof(*declaration->elements))))
+    if (!(declaration->elements = calloc(element_count, sizeof(*declaration->elements))))
     {
         ERR("Failed to allocate elements memory.\n");
         return E_OUTOFMEMORY;
@@ -230,7 +230,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
         {
             FIXME("The application tries to use an unsupported format (%s).\n",
                     debug_d3dformat(elements[i].format));
-            heap_free(declaration->elements);
+            free(declaration->elements);
             return E_INVALIDARG;
         }
 
@@ -255,7 +255,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
         {
             WARN("Declaration element %u with format %s and offset %u is not %u byte aligned.\n",
                     i, debug_d3dformat(elements[i].format), e->offset, alignment);
-            heap_free(declaration->elements);
+            free(declaration->elements);
             return E_INVALIDARG;
         }
     }
@@ -273,14 +273,14 @@ HRESULT CDECL wined3d_vertex_declaration_create(struct wined3d_device *device,
     TRACE("device %p, elements %p, element_count %u, parent %p, parent_ops %p, declaration %p.\n",
             device, elements, element_count, parent, parent_ops, declaration);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = vertexdeclaration_init(object, device, elements, element_count, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex declaration, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -348,7 +348,7 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_adapter *ada
            has_psize + has_diffuse + has_specular + num_textures;
 
     state.adapter = adapter;
-    if (!(state.elements = heap_calloc(size, sizeof(*state.elements))))
+    if (!(state.elements = calloc(size, sizeof(*state.elements))))
         return ~0u;
     state.offset = 0;
     state.idx = 0;
@@ -448,6 +448,6 @@ HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *
         return E_OUTOFMEMORY;
 
     hr = wined3d_vertex_declaration_create(device, elements, size, parent, parent_ops, declaration);
-    heap_free(elements);
+    free(elements);
     return hr;
 }

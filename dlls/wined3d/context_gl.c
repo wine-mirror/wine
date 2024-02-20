@@ -578,7 +578,7 @@ static struct fbo_entry *wined3d_context_gl_create_fbo_entry(const struct wined3
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct fbo_entry *entry;
 
-    entry = heap_alloc(sizeof(*entry));
+    entry = malloc(sizeof(*entry));
     wined3d_context_gl_generate_fbo_key(context_gl, &entry->key,
             render_targets, depth_stencil, color_location, ds_location);
     entry->flags = 0;
@@ -629,7 +629,7 @@ static void wined3d_context_gl_destroy_fbo_entry(struct wined3d_context_gl *cont
     }
     --context_gl->fbo_entry_count;
     list_remove(&entry->entry);
-    heap_free(entry);
+    free(entry);
 }
 
 /* Context activation is done by the caller. */
@@ -1462,12 +1462,12 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
         checkGLcall("context cleanup");
     }
-    heap_free(context_gl->submitted.fences);
-    heap_free(context_gl->free_pipeline_statistics_queries);
-    heap_free(context_gl->free_so_statistics_queries);
-    heap_free(context_gl->free_timestamp_queries);
-    heap_free(context_gl->free_fences);
-    heap_free(context_gl->free_occlusion_queries);
+    free(context_gl->submitted.fences);
+    free(context_gl->free_pipeline_statistics_queries);
+    free(context_gl->free_so_statistics_queries);
+    free(context_gl->free_timestamp_queries);
+    free(context_gl->free_fences);
+    free(context_gl->free_occlusion_queries);
 
     LIST_FOR_EACH_ENTRY(pipeline_statistics_query, &context_gl->pipeline_statistics_queries,
             struct wined3d_pipeline_statistics_query, entry)
@@ -1534,7 +1534,7 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
         wined3d_context_gl_destroy_fbo_entry(context_gl, entry);
     }
 
-    heap_free(context_gl->texture_type);
+    free(context_gl->texture_type);
 
     wined3d_context_gl_restore_pixel_format(context_gl);
     if (restore_ctx)
@@ -1584,8 +1584,8 @@ BOOL wined3d_context_gl_set_current(struct wined3d_context_gl *context_gl)
         {
             TRACE("Switching away from destroyed context %p.\n", old);
             wined3d_context_gl_cleanup(old);
-            heap_free((void *)old->gl_info);
-            heap_free(old);
+            free((void *)old->gl_info);
+            free(old);
         }
         else
         {
@@ -2169,7 +2169,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
         }
     }
 
-    if (!(context_gl->texture_type = heap_calloc(gl_info->limits.combined_samplers,
+    if (!(context_gl->texture_type = calloc(gl_info->limits.combined_samplers,
             sizeof(*context_gl->texture_type))))
         goto fail;
 
@@ -2341,7 +2341,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
     return WINED3D_OK;
 
 fail:
-    heap_free(context_gl->texture_type);
+    free(context_gl->texture_type);
     wined3d_release_dc(context_gl->window, context_gl->dc);
     return E_FAIL;
 }
@@ -2375,7 +2375,7 @@ void wined3d_context_gl_destroy(struct wined3d_context_gl *context_gl)
 
         /* Make a copy of gl_info for wined3d_context_gl_cleanup() use, the
          * one in wined3d_adapter may go away in the meantime. */
-        gl_info = heap_alloc(sizeof(*gl_info));
+        gl_info = malloc(sizeof(*gl_info));
         *gl_info = *context_gl->gl_info;
         context_gl->gl_info = gl_info;
         context_gl->c.destroyed = 1;
@@ -2385,7 +2385,7 @@ void wined3d_context_gl_destroy(struct wined3d_context_gl *context_gl)
 
     wined3d_context_gl_cleanup(context_gl);
     TlsSetValue(context_get_tls_idx(), NULL);
-    heap_free(context_gl);
+    free(context_gl);
 }
 
 const unsigned int *wined3d_context_gl_get_tex_unit_mapping(const struct wined3d_context_gl *context_gl,

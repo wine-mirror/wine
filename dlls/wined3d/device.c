@@ -108,7 +108,7 @@ BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *c
         return FALSE;
     }
 
-    if (!(new_array = heap_realloc(device->contexts, sizeof(*new_array) * (device->context_count + 1))))
+    if (!(new_array = realloc(device->contexts, sizeof(*new_array) * (device->context_count + 1))))
     {
         ERR("Failed to grow the context array.\n");
         device->adapter->fragment_pipe->free_context_data(context);
@@ -150,13 +150,13 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
 
     if (!--device->context_count)
     {
-        heap_free(device->contexts);
+        free(device->contexts);
         device->contexts = NULL;
         return;
     }
 
     memmove(&device->contexts[i], &device->contexts[i + 1], (device->context_count - i) * sizeof(*device->contexts));
-    if (!(new_array = heap_realloc(device->contexts, device->context_count * sizeof(*device->contexts))))
+    if (!(new_array = realloc(device->contexts, device->context_count * sizeof(*device->contexts))))
     {
         ERR("Failed to shrink context array. Oh well.\n");
         return;
@@ -178,7 +178,7 @@ static void device_free_so_desc(struct wine_rb_entry *entry, void *context)
 {
     struct wined3d_so_desc_entry *s = WINE_RB_ENTRY_VALUE(entry, struct wined3d_so_desc_entry, entry);
 
-    heap_free(s);
+    free(s);
 }
 
 static void device_leftover_sampler(struct wine_rb_entry *entry, void *context)
@@ -220,7 +220,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
 
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
     {
-        heap_free(device->multistate_funcs[i]);
+        free(device->multistate_funcs[i]);
         device->multistate_funcs[i] = NULL;
     }
 
@@ -285,7 +285,7 @@ static void wined3d_blend_state_destroy_object(void *object)
 {
     TRACE("object %p.\n", object);
 
-    heap_free(object);
+    free(object);
 }
 
 ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
@@ -326,7 +326,7 @@ HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
     TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
             device, desc, parent, parent_ops, state);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->refcount = 1;
@@ -360,7 +360,7 @@ static void wined3d_depth_stencil_state_destroy_object(void *object)
 {
     TRACE("object %p.\n", object);
 
-    heap_free(object);
+    free(object);
 }
 
 ULONG CDECL wined3d_depth_stencil_state_decref(struct wined3d_depth_stencil_state *state)
@@ -417,7 +417,7 @@ HRESULT CDECL wined3d_depth_stencil_state_create(struct wined3d_device *device,
     TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
             device, desc, parent, parent_ops, state);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->refcount = 1;
@@ -447,7 +447,7 @@ static void wined3d_rasterizer_state_destroy_object(void *object)
 {
     TRACE("object %p.\n", object);
 
-    heap_free(object);
+    free(object);
 }
 
 ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
@@ -483,7 +483,7 @@ HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
     TRACE("device %p, desc %p, parent %p, parent_ops %p, state %p.\n",
             device, desc, parent, parent_ops, state);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->refcount = 1;
@@ -1209,12 +1209,12 @@ static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct 
         return NULL;
     context_gl = wined3d_context_gl(context);
 
-    if (!(chunk_gl = heap_alloc(sizeof(*chunk_gl))))
+    if (!(chunk_gl = malloc(sizeof(*chunk_gl))))
         return NULL;
 
     if (!wined3d_allocator_chunk_init(&chunk_gl->c, allocator))
     {
-        heap_free(chunk_gl);
+        free(chunk_gl);
         return NULL;
     }
 
@@ -1222,7 +1222,7 @@ static struct wined3d_allocator_chunk *wined3d_allocator_gl_create_chunk(struct 
     if (!(chunk_gl->gl_buffer = wined3d_context_gl_allocate_vram_chunk_buffer(context_gl, memory_type, chunk_size)))
     {
         wined3d_allocator_chunk_cleanup(&chunk_gl->c);
-        heap_free(chunk_gl);
+        free(chunk_gl);
         return NULL;
     }
     list_add_head(&allocator->pools[memory_type].chunks, &chunk_gl->c.entry);
@@ -1248,7 +1248,7 @@ static void wined3d_allocator_gl_destroy_chunk(struct wined3d_allocator_chunk *c
     GL_EXTCALL(glDeleteBuffers(1, &chunk_gl->gl_buffer));
     TRACE("Freed buffer %u.\n", chunk_gl->gl_buffer);
     wined3d_allocator_chunk_cleanup(&chunk_gl->c);
-    heap_free(chunk_gl);
+    free(chunk_gl);
 
     context_release(&context_gl->c);
 }
@@ -1569,7 +1569,7 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
         return WINED3DERR_INVALIDCALL;
 
     device->swapchain_count = 1;
-    if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
+    if (!(device->swapchains = calloc(device->swapchain_count, sizeof(*device->swapchains))))
     {
         ERR("Failed to allocate swapchain array.\n");
         hr = E_OUTOFMEMORY;
@@ -1628,7 +1628,7 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
     return WINED3D_OK;
 
 err_out:
-    heap_free(device->swapchains);
+    free(device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
 
@@ -1733,7 +1733,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
         wined3d_rendertarget_view_decref(view);
     }
 
-    heap_free(device->swapchains);
+    free(device->swapchains);
     device->swapchains = NULL;
 
     wined3d_state_reset(state, &device->adapter->d3d_info);
@@ -4806,7 +4806,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         /* 32-bit user32 cursors ignore the alpha channel if it's all
          * zeroes, and use the mask instead. Fill the mask with all ones
          * to ensure we still get a fully transparent cursor. */
-        if (!(mask_bits = heap_alloc(mask_size)))
+        if (!(mask_bits = malloc(mask_size)))
             return E_OUTOFMEMORY;
         memset(mask_bits, 0xff, mask_size);
 
@@ -4831,7 +4831,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         if (device->bCursorVisible)
             SetCursor(cursor);
 
-        heap_free(mask_bits);
+        free(mask_bits);
     }
 
     TRACE("New cursor dimensions are %ux%u.\n", cursor_width, cursor_height);
@@ -5538,7 +5538,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 err:
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
     {
-        heap_free(device->multistate_funcs[i]);
+        free(device->multistate_funcs[i]);
     }
     wine_rb_destroy(&device->samplers, NULL, NULL);
     wine_rb_destroy(&device->rasterizer_states, NULL, NULL);

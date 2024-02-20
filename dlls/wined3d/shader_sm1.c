@@ -546,7 +546,7 @@ static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
         return NULL;
     }
 
-    if (!(priv = heap_alloc(sizeof(*priv))))
+    if (!(priv = malloc(sizeof(*priv))))
         return NULL;
 
     if (output_signature->element_count)
@@ -566,7 +566,7 @@ static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
 
         default:
             FIXME("Unrecognized shader type %#lx.\n", *byte_code >> 16);
-            heap_free(priv);
+            free(priv);
             return NULL;
     }
     priv->shader_version.major = WINED3D_SM1_VERSION_MAJOR(*byte_code);
@@ -579,7 +579,7 @@ static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
 
 static void shader_sm1_free(void *data)
 {
-    heap_free(data);
+    free(data);
 }
 
 static void shader_sm1_read_header(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version)
