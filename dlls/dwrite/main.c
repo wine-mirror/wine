@@ -2097,7 +2097,7 @@ static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYP
     list_init(&factory->file_loaders);
     list_init(&factory->localfontfaces);
 
-    InitializeCriticalSection(&factory->cs);
+    InitializeCriticalSectionEx(&factory->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     factory->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": dwritefactory.lock");
 }
 
