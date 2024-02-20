@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.3.277"
+VK_XML_VERSION = "1.3.278"
 WINE_VK_VERSION = (1, 3)
 
 # Filenames to create.
@@ -129,6 +129,7 @@ UNSUPPORTED_EXTENSIONS = [
 # winevulkan may nonetheless use, or extensions we want to generate headers for
 # but not expose to applications (useful for test commits)
 UNEXPOSED_EXTENSIONS = {
+    "VK_EXT_map_memory_placed",
     "VK_KHR_external_memory_win32",
 }
 
@@ -1315,7 +1316,7 @@ class VkVariable(object):
         Vulkan uses this for dynamically sized arrays for which
         there is a 'count' parameter.
         """
-        return self.dyn_array_len is not None
+        return self.dyn_array_len is not None and self.array_len is None
 
     def is_static_array(self):
         """ Returns if the member is an array.

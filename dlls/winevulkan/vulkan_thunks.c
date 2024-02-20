@@ -3297,6 +3297,22 @@ typedef struct VkPhysicalDeviceShaderQuadControlFeaturesKHR32
     VkBool32 shaderQuadControl;
 } VkPhysicalDeviceShaderQuadControlFeaturesKHR32;
 
+typedef struct VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderFloat16VectorAtomics;
+} VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32;
+
+typedef struct VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 memoryMapPlaced;
+    VkBool32 memoryMapRangePlaced;
+    VkBool32 memoryUnmapReserve;
+} VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32;
+
 typedef struct VkDeviceCreateInfo32
 {
     VkStructureType sType;
@@ -6385,6 +6401,13 @@ typedef struct VkPhysicalDeviceRenderPassStripedPropertiesARM32
     uint32_t maxRenderPassStripes;
 } VkPhysicalDeviceRenderPassStripedPropertiesARM32;
 
+typedef struct VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceSize DECLSPEC_ALIGN(8) minPlacedMemoryMapAlignment;
+} VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32;
+
 typedef struct VkPhysicalDeviceProperties232
 {
     VkStructureType sType;
@@ -6648,6 +6671,13 @@ typedef struct VkLatencySleepInfoNV32
     VkSemaphore DECLSPEC_ALIGN(8) signalSemaphore;
     uint64_t DECLSPEC_ALIGN(8) value;
 } VkLatencySleepInfoNV32;
+
+typedef struct VkMemoryMapPlacedInfoEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pPlacedAddress;
+} VkMemoryMapPlacedInfoEXT32;
 
 typedef struct VkMemoryMapInfoKHR32
 {
@@ -13608,6 +13638,30 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *in_ext = (const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderFloat16VectorAtomics = in_ext->shaderFloat16VectorAtomics;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
+            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
+            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -15863,6 +15917,30 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_QUAD_CONTROL_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->shaderQuadControl = in_ext->shaderQuadControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *in_ext = (const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderFloat16VectorAtomics = in_ext->shaderFloat16VectorAtomics;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
+            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
+            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20699,20 +20777,6 @@ static inline void convert_VkLatencyTimingsFrameReportNV_win32_to_host(const VkL
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->presentID = in->presentID;
-    out->inputSampleTimeUs = in->inputSampleTimeUs;
-    out->simStartTimeUs = in->simStartTimeUs;
-    out->simEndTimeUs = in->simEndTimeUs;
-    out->renderSubmitStartTimeUs = in->renderSubmitStartTimeUs;
-    out->renderSubmitEndTimeUs = in->renderSubmitEndTimeUs;
-    out->presentStartTimeUs = in->presentStartTimeUs;
-    out->presentEndTimeUs = in->presentEndTimeUs;
-    out->driverStartTimeUs = in->driverStartTimeUs;
-    out->driverEndTimeUs = in->driverEndTimeUs;
-    out->osRenderQueueStartTimeUs = in->osRenderQueueStartTimeUs;
-    out->osRenderQueueEndTimeUs = in->osRenderQueueEndTimeUs;
-    out->gpuRenderStartTimeUs = in->gpuRenderStartTimeUs;
-    out->gpuRenderEndTimeUs = in->gpuRenderEndTimeUs;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -23266,6 +23330,30 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *in_ext = (const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderFloat16VectorAtomics = in_ext->shaderFloat16VectorAtomics;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
+            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
+            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -25087,6 +25175,26 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV);
+            const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *in_ext = (const VkPhysicalDeviceShaderAtomicFloat16VectorFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT16_VECTOR_FEATURES_NV;
+            out_ext->shaderFloat16VectorAtomics = in_ext->shaderFloat16VectorAtomics;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT);
+            const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT;
+            out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
+            out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
+            out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -26533,6 +26641,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -27708,6 +27825,15 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT);
+            const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
+            out_ext->minPlacedMemoryMapAlignment = in_ext->minPlacedMemoryMapAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             break;
         }
@@ -27744,11 +27870,8 @@ static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct convers
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR:
         {
             VkQueueFamilyGlobalPriorityPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkQueueFamilyGlobalPriorityPropertiesKHR32 *in_ext = (const VkQueueFamilyGlobalPriorityPropertiesKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR;
             out_ext->pNext = NULL;
-            out_ext->priorityCount = in_ext->priorityCount;
-            memcpy(out_ext->priorities, in_ext->priorities, VK_MAX_GLOBAL_PRIORITY_SIZE_KHR * sizeof(VkQueueGlobalPriorityKHR));
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28624,8 +28747,11 @@ static inline void convert_VkLatencySleepInfoNV_win32_to_host(const VkLatencySle
         FIXME("Unexpected pNext\n");
 }
 
-static inline void convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(const VkMemoryMapInfoKHR32 *in, VkMemoryMapInfoKHR *out)
+static inline void convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(struct conversion_context *ctx, const VkMemoryMapInfoKHR32 *in, VkMemoryMapInfoKHR *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
@@ -28634,8 +28760,27 @@ static inline void convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(const VkMe
     out->memory = in->memory;
     out->offset = in->offset;
     out->size = in->size;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT:
+        {
+            VkMemoryMapPlacedInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryMapPlacedInfoEXT32 *in_ext = (const VkMemoryMapPlacedInfoEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->pPlacedAddress = (void *)UlongToPtr(in_ext->pPlacedAddress);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 #ifdef _WIN64
@@ -44705,11 +44850,15 @@ static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
         VkResult result;
     } *params = args;
     VkMemoryMapInfoKHR pMemoryMapInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%#x, %#x, %#x\n", params->device, params->pMemoryMapInfo, params->ppData);
 
-    convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host((const VkMemoryMapInfoKHR32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
+    init_conversion_context(ctx);
+    convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(ctx, (const VkMemoryMapInfoKHR32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
     params->result = wine_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, (void **)UlongToPtr(params->ppData));
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 
@@ -46484,6 +46633,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_representative_fragment_test",
     "VK_NV_sample_mask_override_coverage",
     "VK_NV_scissor_exclusive",
+    "VK_NV_shader_atomic_float16_vector",
     "VK_NV_shader_image_footprint",
     "VK_NV_shader_sm_builtins",
     "VK_NV_shader_subgroup_partitioned",
