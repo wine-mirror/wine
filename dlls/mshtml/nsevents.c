@@ -48,7 +48,6 @@ typedef struct {
 static nsresult handle_blur(HTMLDocumentNode*,nsIDOMEvent*);
 static nsresult handle_focus(HTMLDocumentNode*,nsIDOMEvent*);
 static nsresult handle_keypress(HTMLDocumentNode*,nsIDOMEvent*);
-static nsresult handle_dom_content_loaded(HTMLDocumentNode*,nsIDOMEvent*);
 static nsresult handle_pageshow(HTMLDocumentNode*,nsIDOMEvent*);
 static nsresult handle_pagehide(HTMLDocumentNode*,nsIDOMEvent*);
 static nsresult handle_load(HTMLDocumentNode*,nsIDOMEvent*);
@@ -68,7 +67,6 @@ static const struct {
     { EVENTID_BLUR,             0,                  handle_blur },
     { EVENTID_FOCUS,            0,                  handle_focus },
     { EVENTID_KEYPRESS,         BUBBLES,            handle_keypress },
-    { EVENTID_DOMCONTENTLOADED, OVERRIDE,           handle_dom_content_loaded },
     { EVENTID_PAGESHOW,         OVERRIDE,           handle_pageshow },
     { EVENTID_PAGEHIDE,         OVERRIDE,           handle_pagehide },
     { EVENTID_LOAD,             OVERRIDE,           handle_load },
@@ -230,26 +228,6 @@ static nsresult handle_keypress(HTMLDocumentNode *doc, nsIDOMEvent *event)
     update_doc(doc->browser->doc, UPDATE_UI);
     if(doc->browser->usermode == EDITMODE)
         handle_edit_event(doc, event);
-
-    return NS_OK;
-}
-
-static nsresult handle_dom_content_loaded(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
-{
-    DOMEvent *event;
-    HRESULT hres;
-
-    if(doc->window)
-        doc->window->dom_content_loaded_event_start_time = get_time_stamp();
-
-    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
-    if(SUCCEEDED(hres)) {
-        dispatch_event(&doc->node.event_target, event);
-        IDOMEvent_Release(&event->IDOMEvent_iface);
-    }
-
-    if(doc->window)
-        doc->window->dom_content_loaded_event_end_time = get_time_stamp();
 
     return NS_OK;
 }

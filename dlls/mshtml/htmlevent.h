@@ -131,6 +131,7 @@ typedef struct {
     nsISupports *(*get_gecko_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,eventid_t);
     EventTarget *(*get_parent_event_target)(DispatchEx*);
+    HRESULT (*pre_handle_event)(DispatchEx*,DOMEvent*);
     HRESULT (*handle_event)(DispatchEx*,DOMEvent*,BOOL*);
     ConnectionPointContainer *(*get_cp_container)(DispatchEx*);
     IHTMLEventObj *(*set_current_event)(DispatchEx*,IHTMLEventObj*);

@@ -118,7 +118,7 @@ typedef struct {
 /* Keep these sorted case sensitively */
 static const event_info_t event_info[] = {
     {L"DOMContentLoaded",  EVENT_TYPE_EVENT,     0,
-        EVENT_BUBBLES | EVENT_CANCELABLE},
+        EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE },
     {L"abort",             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_TARGET},
     {L"afterprint",        EVENT_TYPE_EVENT,     DISPID_EVMETH_ONAFTERPRINT,
@@ -5100,6 +5100,18 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     IEventTarget_AddRef(&event_target->IEventTarget_iface);
 
     event->phase = DEP_CAPTURING_PHASE;
+
+    if(event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS) {
+        for(i = 0; i < chain_cnt; i++) {
+            vtbl = dispex_get_vtbl(&target_chain[i]->dispex);
+            if(!vtbl->pre_handle_event)
+                continue;
+            hres = vtbl->pre_handle_event(&target_chain[i]->dispex, event);
+            if(FAILED(hres) || event->stop_propagation)
+                break;
+        }
+    }
+
     i = chain_cnt-1;
     while(!event->stop_propagation && i)
         call_event_handlers(target_chain[i--], event, dispatch_mode);
