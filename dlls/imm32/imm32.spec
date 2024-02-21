@@ -1,3 +1,26 @@
+@ stub CtfImmAppCompatEnableIMEonProtectedCode
+@ stub CtfImmCoUninitialize
+@ stub CtfImmDispatchDefImeMessage
+@ stub CtfImmEnterCoInitCountSkipMode
+@ stub CtfImmGenerateMessage
+@ stub CtfImmGetCompatibleKeyboardLayout
+@ stub CtfImmGetGuidAtom
+@ stub CtfImmGetIMEFileName
+@ stub CtfImmGetTMAEFlags
+@ stub CtfImmHideToolbarWnd
+@ stub CtfImmIsCiceroEnabled
+@ stub CtfImmIsCiceroStartedInThread
+@ stub CtfImmIsGuidMapEnable
+@ stub CtfImmIsTextFrameServiceDisabled
+@ stub CtfImmLastEnabledWndDestroy
+@ stub CtfImmLeaveCoInitCountSkipMode
+@ stub CtfImmNotify
+@ stub CtfImmRestoreToolbarWnd
+@ stub CtfImmSetAppCompatFlags
+@ stub CtfImmSetCiceroStartInThread
+@ stub CtfImmSetDefaultRemoteKeyboardLayout
+@ stub CtfImmTIMActivate
+@ stub GetKeyboardLayoutCP
 @ stdcall ImmActivateLayout(long)
 @ stdcall ImmAssociateContext(long long)
 @ stdcall ImmAssociateContextEx(long long long)
