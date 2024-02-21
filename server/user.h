@@ -22,6 +22,7 @@
 #define __WINE_SERVER_USER_H
 
 #include "wine/server_protocol.h"
+#include "unicode.h"
 
 struct thread;
 struct region;
@@ -186,8 +187,8 @@ extern client_ptr_t get_class_client_ptr( struct window_class *class );
 extern struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct winstation *get_process_winstation( struct process *process, unsigned int access );
 extern struct desktop *get_thread_desktop( struct thread *thread, unsigned int access );
-extern void connect_process_winstation( struct process *process, struct thread *parent_thread,
-                                        struct process *parent_process );
+extern void connect_process_winstation( struct process *process, struct unicode_str *desktop_path,
+                                        struct thread *parent_thread, struct process *parent_process );
 extern void set_process_default_desktop( struct process *process, struct desktop *desktop,
                                          obj_handle_t handle );
 extern void close_process_desktop( struct process *process );

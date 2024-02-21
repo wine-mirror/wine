@@ -1133,7 +1133,7 @@ DECL_HANDLER(new_process)
 {
     struct startup_info *info;
     const void *info_ptr;
-    struct unicode_str name;
+    struct unicode_str name, desktop_path = {0};
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     struct process *process = NULL;
@@ -1276,7 +1276,9 @@ DECL_HANDLER(new_process)
         FIXUP_LEN( info->data->imagepath_len );
         FIXUP_LEN( info->data->cmdline_len );
         FIXUP_LEN( info->data->title_len );
+        desktop_path.str = (WCHAR *)((char *)info->data + pos);
         FIXUP_LEN( info->data->desktop_len );
+        desktop_path.len = info->data->desktop_len;
         FIXUP_LEN( info->data->shellinfo_len );
         FIXUP_LEN( info->data->runtime_len );
 #undef FIXUP_LEN
@@ -1327,7 +1329,7 @@ DECL_HANDLER(new_process)
     }
 
     /* connect to the window station */
-    connect_process_winstation( process, parent_thread, parent );
+    connect_process_winstation( process, &desktop_path, parent_thread, parent );
 
     /* inherit the process console, but keep pseudo handles (< 0), and 0 (= not attached to a console) as is */
     if ((int)info->data->console > 0)

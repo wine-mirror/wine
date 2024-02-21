@@ -3855,19 +3855,19 @@ static void test_SendInput_mouse_messages(void)
     ok_ne( NULL, thread, HANDLE, "%p" );
 
     ok_ret( 0, WaitForSingleObject( params.start_event, 5000 ) );
-    todo_wine ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), TRUE ) );
+    ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), TRUE ) );
     ok_ret( 0, SendMessageW( params.hwnd, WM_USER, 0, 0 ) );
 
     mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
-    button_down_hwnd[1].message.hwnd = hwnd;
-    ok_seq( button_down_hwnd );
+    button_down_hwnd_todo[1].message.hwnd = hwnd;
+    ok_seq( button_down_hwnd_todo );
     mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
     wait_messages( 5, FALSE );
     button_up_hwnd[1].message.hwnd = hwnd;
     ok_seq( button_up_hwnd );
 
-    todo_wine ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), FALSE ) );
+    ok_ret( 1, AttachThreadInput( thread_id, GetCurrentThreadId(), FALSE ) );
     ok_ret( 1, SetEvent( params.end_event ) );
     ok_ret( 0, WaitForSingleObject( thread, 5000 ) );
     ok_ret( 1, CloseHandle( thread ) );
