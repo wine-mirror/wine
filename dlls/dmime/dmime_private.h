@@ -89,6 +89,8 @@ extern BOOL segment_state_has_track(IDirectMusicSegmentState *iface, DWORD track
 extern HRESULT wave_track_create_from_chunk(IStream *stream, struct chunk_entry *parent,
         IDirectMusicTrack8 **ret_iface);
 
+extern void sequence_track_set_items(IDirectMusicTrack8 *track, DMUS_IO_SEQ_ITEM *items, unsigned int count);
+
 extern HRESULT performance_get_dsound(IDirectMusicPerformance8 *iface, IDirectSound **dsound);
 extern HRESULT performance_send_segment_start(IDirectMusicPerformance8 *iface, MUSIC_TIME music_time,
         IDirectMusicSegmentState *state);

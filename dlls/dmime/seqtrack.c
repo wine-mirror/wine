@@ -483,3 +483,11 @@ HRESULT create_dmseqtrack(REFIID lpcGUID, void **ppobj)
 
     return hr;
 }
+
+void sequence_track_set_items(IDirectMusicTrack8 *track, DMUS_IO_SEQ_ITEM *items, unsigned int count)
+{
+    struct sequence_track *This = impl_from_IDirectMusicTrack8(track);
+    free(This->items);
+    This->items = items;
+    This->count = count;
+}
