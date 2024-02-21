@@ -1703,7 +1703,7 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
         return result;
     }
 
-    memory->mapping = mapping;
+    memory->vm_map = mapping;
     *ret = (VkDeviceMemory)(uintptr_t)memory;
     return VK_SUCCESS;
 }
@@ -1719,10 +1719,10 @@ void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAl
 
     device->funcs.p_vkFreeMemory(device->host_device, memory->host_memory, NULL);
 
-    if (memory->mapping)
+    if (memory->vm_map)
     {
         SIZE_T alloc_size = 0;
-        NtFreeVirtualMemory(GetCurrentProcess(), &memory->mapping, &alloc_size, MEM_RELEASE);
+        NtFreeVirtualMemory(GetCurrentProcess(), &memory->vm_map, &alloc_size, MEM_RELEASE);
     }
 
     free(memory);
@@ -1751,9 +1751,9 @@ VkResult wine_vkMapMemory2KHR(VkDevice handle, const VkMemoryMapInfoKHR *map_inf
     VkResult result;
 
     info.memory = memory->host_memory;
-    if (memory->mapping)
+    if (memory->vm_map)
     {
-        *data = (char *)memory->mapping + info.offset;
+        *data = (char *)memory->vm_map + info.offset;
         TRACE("returning %p\n", *data);
         return VK_SUCCESS;
     }
@@ -1799,7 +1799,7 @@ VkResult wine_vkUnmapMemory2KHR(VkDevice handle, const VkMemoryUnmapInfoKHR *unm
     struct wine_device_memory *memory = wine_device_memory_from_handle(unmap_info->memory);
     VkMemoryUnmapInfoKHR info;
 
-    if (memory->mapping)
+    if (memory->vm_map)
         return VK_SUCCESS;
 
     if (!device->funcs.p_vkUnmapMemory2KHR)

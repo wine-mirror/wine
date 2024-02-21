@@ -175,7 +175,7 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
 struct wine_device_memory
 {
     VkDeviceMemory host_memory;
-    void *mapping;
+    void *vm_map;
 };
 
 static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)
