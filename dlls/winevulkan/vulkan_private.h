@@ -176,6 +176,8 @@ struct wine_device_memory
 {
     VkDeviceMemory host_memory;
     void *vm_map;
+
+    struct wine_vk_mapping mapping;
 };
 
 static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)

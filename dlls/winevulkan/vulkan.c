@@ -1703,6 +1703,7 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
         return result;
     }
 
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(device->phys_dev->instance, memory, memory->host_memory, memory);
     memory->vm_map = mapping;
     *ret = (VkDeviceMemory)(uintptr_t)memory;
     return VK_SUCCESS;
@@ -1717,6 +1718,7 @@ void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAl
         return;
     memory = wine_device_memory_from_handle(memory_handle);
 
+    WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, memory);
     device->funcs.p_vkFreeMemory(device->host_device, memory->host_memory, NULL);
 
     if (memory->vm_map)
