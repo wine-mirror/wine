@@ -1618,7 +1618,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movl 0x18(%ebp),%edx\n\t"  /* teb */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
                    "subl $0x280,%esp\n\t"      /* sizeof(struct syscall_frame) */
-                   "subl %fs:0x204,%esp\n\t"   /* x86_thread_data()->xstate_features_size */
+                   "subl 0x204(%edx),%esp\n\t" /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%esp\n\t"
                    "leal 8(%ebp),%eax\n\t"
                    "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
@@ -2547,7 +2547,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
                    "leal -0x280(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
-                   "subl %fs:0x204,%eax\n\t"    /* x86_thread_data()->xstate_features_size */
+                   "subl 0x204(%ecx),%eax\n\t"  /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
                    /* switch to kernel stack */

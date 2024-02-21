@@ -1584,12 +1584,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq %rsi,-0x38(%rbp)\n\t" /* ret_ptr */
                    "movq %rdx,-0x40(%rbp)\n\t" /* ret_len */
                    "subq $0x308,%rsp\n\t"      /* sizeof(struct syscall_frame) + exception */
-#ifdef __APPLE__
-                   "movq %gs:0x30,%rsi\n\t"
-                   "movl 0x33c(%rsi),%esi\n\t"
-#else
-                   "movl %gs:0x33c,%esi\n\t"   /* amd64_thread_data()->xstate_features_size */
-#endif
+                   "movl 0x33c(%r8),%esi\n\t"  /* amd64_thread_data()->xstate_features_size */
                    "subq %rsi,%rsp\n\t"
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
@@ -1629,12 +1624,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    __ASM_CFI(".cfi_rel_offset %r13,-0x18\n\t")
                    __ASM_CFI(".cfi_rel_offset %r14,-0x20\n\t")
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
-#ifdef __APPLE__
-                   "movq %gs:0x30,%rax\n\t"
-                   "movl 0x33c(%rax),%eax\n\t"
-#else
-                   "movl %gs:0x33c,%eax\n\t"   /* amd64_thread_data()->xstate_features_size */
-#endif
+                   "movl 0x33c(%rcx),%eax\n\t" /* amd64_thread_data()->xstate_features_size */
                    "movq 0x300(%r10,%rax),%rax\n\t" /* exception list */
                    "movq %rax,0(%rcx)\n\t"     /* teb->Tib.ExceptionList */
                    "movq -0x38(%rbp),%r10\n\t"  /* ret_ptr */
@@ -2600,12 +2590,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "orq %r8,%r8\n\t"
                    "jnz 1f\n\t"
                    "leaq -0x300(%rsp),%r8\n\t"     /* sizeof(struct syscall_frame) */
-#ifdef __APPLE__
-                   "movq %gs:0x30,%rax\n\t"
-                   "movl 0x33c(%rax),%eax\n\t"
-#else
-                   "movl %gs:0x33c,%eax\n\t"       /* amd64_thread_data()->xstate_features_size */
-#endif
+                   "movl 0x33c(%rcx),%eax\n\t"     /* amd64_thread_data()->xstate_features_size */
                    "subq %rax,%r8\n\t"
                    "andq $~63,%r8\n\t"
                    "movq %r8,0x328(%rcx)\n"        /* amd64_thread_data()->syscall_frame */
