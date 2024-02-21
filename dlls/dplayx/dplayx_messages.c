@@ -297,87 +297,56 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
   LPVOID                   lpMsg;
   DPMSG_FORWARDADDPLAYER   msgBody;
   DWORD                    dwMsgSize;
-  HRESULT                  hr = DP_OK;
+  DPLAYI_PACKEDPLAYER      playerInfo;
+  void                    *spPlayerData;
+  DWORD                    spPlayerDataSize;
+  const WCHAR             *password = L"";
+  HRESULT                  hr;
 
-  /* Compose dplay message envelope */
+  hr = IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, dpidServer,
+                                      &spPlayerData, &spPlayerDataSize, DPSET_REMOTE );
+  if( FAILED( hr ) )
+    return hr;
+
   msgBody.envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
   msgBody.envelope.wCommandId = DPMSGCMD_FORWARDADDPLAYER;
   msgBody.envelope.wVersion   = DPMSGVER_DP6;
+  msgBody.toId                = 0;
+  msgBody.playerId            = dpidServer;
+  msgBody.groupId             = 0;
+  msgBody.createOffset        = sizeof( msgBody );
+  msgBody.passwordOffset      = sizeof( msgBody ) + sizeof( playerInfo ) + spPlayerDataSize;
 
-#if 0
-  {
-    LPBYTE lpPData;
-    DWORD  dwDataSize;
-
-    /* SP Player remote data needs to be propagated at some point - is this the point? */
-    IDirectPlaySP_GetSPPlayerData( This->dp2->spData.lpISP, 0, &lpPData, &dwDataSize, DPSET_REMOTE );
-
-    ERR( "Player Data size is 0x%08lx\n"
-         "[%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x]\n"
-         "[%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x]\n",
-
-	 dwDataSize,
-         lpPData[0], lpPData[1], lpPData[2], lpPData[3], lpPData[4],
-	 lpPData[5], lpPData[6], lpPData[7], lpPData[8], lpPData[9],
-         lpPData[10], lpPData[11], lpPData[12], lpPData[13], lpPData[14],
-	 lpPData[15], lpPData[16], lpPData[17], lpPData[18], lpPData[19],
-         lpPData[20], lpPData[21], lpPData[22], lpPData[23], lpPData[24],
-	 lpPData[25], lpPData[26], lpPData[27], lpPData[28], lpPData[29],
-         lpPData[30], lpPData[31]
-        );
-    DebugBreak();
-  }
-#endif
-
-  /* Compose body of message */
-  msgBody.unknown = 0;
-  msgBody.dpidAppServer = dpidServer;
-  msgBody.unknown2[0] = 0x0;
-  msgBody.unknown2[1] = 0x1c;
-  msgBody.unknown2[2] = 0x6c;
-  msgBody.unknown2[3] = 0x50;
-  msgBody.unknown2[4] = 0x9;
-
-  msgBody.dpidAppServer2 = dpidServer;
-  msgBody.unknown3[0] = 0x0;
-  msgBody.unknown3[1] = 0x0;
-  msgBody.unknown3[2] = 0x20;
-  msgBody.unknown3[3] = 0x0;
-  msgBody.unknown3[4] = 0x0;
-
-  msgBody.dpidAppServer3 = dpidServer;
-  msgBody.unknown4[0] =  0x30;
-  msgBody.unknown4[1] =  0xb;
-  msgBody.unknown4[2] =  0x0;
-
-  msgBody.unknown4[3] =  NS_GetNsMagic( This->dp2->lpNameServerData ) -
-                         0x02000000;
-  TRACE( "Setting first magic to 0x%08lx\n", msgBody.unknown4[3] );
-
-  msgBody.unknown4[4] =  0x0;
-  msgBody.unknown4[5] =  0x0;
-  msgBody.unknown4[6] =  0x0;
-
-  msgBody.unknown4[7] =  NS_GetNsMagic( This->dp2->lpNameServerData );
-  TRACE( "Setting second magic to 0x%08lx\n", msgBody.unknown4[7] );
-
-  msgBody.unknown4[8] =  0x0;
-  msgBody.unknown4[9] =  0x0;
-  msgBody.unknown4[10] = 0x0;
-  msgBody.unknown4[11] = 0x0;
-
-  msgBody.unknown5[0] = 0x0;
-  msgBody.unknown5[1] = 0x0;
+  playerInfo.size             = sizeof( playerInfo ) + spPlayerDataSize;
+  playerInfo.flags            = DPLAYI_PLAYER_SYSPLAYER | DPLAYI_PLAYER_PLAYERLOCAL;
+  playerInfo.id               = dpidServer;
+  playerInfo.shortNameLength  = 0;
+  playerInfo.longNameLength   = 0;
+  playerInfo.spDataLength     = spPlayerDataSize;
+  playerInfo.playerDataLength = 0;
+  playerInfo.playerCount      = 0;
+  playerInfo.systemPlayerId   = dpidServer;
+  playerInfo.fixedSize        = sizeof( playerInfo );
+  playerInfo.version          = DPMSGVER_DP6;
+  playerInfo.parentId         = 0;
 
   /* Send the message */
   {
     WORD replyCommands[] = { DPMSGCMD_GETNAMETABLEREPLY, DPMSGCMD_SUPERENUMPLAYERSREPLY };
-    SGBUFFER buffers[ 2 ] = { 0 };
+    SGBUFFER buffers[ 6 ] = { 0 };
     DPSP_SENDEXDATA data = { 0 };
 
     buffers[ 0 ].len = This->dp2->spData.dwSPHeaderSize;
     buffers[ 1 ].len = sizeof( msgBody );
     buffers[ 1 ].pData = (UCHAR *) &msgBody;
+    buffers[ 2 ].len = sizeof( playerInfo );
+    buffers[ 2 ].pData = (UCHAR *) &playerInfo;
+    buffers[ 3 ].len = spPlayerDataSize;
+    buffers[ 3 ].pData = (UCHAR *) spPlayerData;
+    buffers[ 4 ].len = (lstrlenW( password ) + 1) * sizeof( WCHAR );
+    buffers[ 4 ].pData = (UCHAR *) password;
+    buffers[ 5 ].len = sizeof( This->dp2->lpSessionDesc->dwReserved1 );
+    buffers[ 5 ].pData = (UCHAR *) &This->dp2->lpSessionDesc->dwReserved1;
 
     data.lpISP          = This->dp2->spData.lpISP;
     data.dwFlags        = DPSEND_GUARANTEED;

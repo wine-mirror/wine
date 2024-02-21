@@ -35,7 +35,6 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID lpNSAddrHdr,
                                        DWORD msgSize,
                                        LPVOID lpNSInfo );
 LPVOID NS_GetNSAddr( LPVOID lpNSInfo );
-DWORD NS_GetNsMagic( LPVOID lpNSInfo );
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize );
 
 void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,

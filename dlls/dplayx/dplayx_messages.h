@@ -50,6 +50,22 @@ void DP_MSG_ToSelf( IDirectPlayImpl *This, DPID dpidSelf );
 /* Message types etc. */
 #include "pshpack1.h"
 
+typedef struct
+{
+  DWORD size;
+  DWORD flags;
+  DPID id;
+  DWORD shortNameLength;
+  DWORD longNameLength;
+  DWORD spDataLength;
+  DWORD playerDataLength;
+  DWORD playerCount;
+  DPID systemPlayerId;
+  DWORD fixedSize;
+  DWORD version;
+  DPID parentId;
+} DPLAYI_PACKEDPLAYER;
+
 /* Non provided messages for DPLAY - guess work which may be wrong :( */
 #define DPMSGCMD_ENUMSESSIONSREPLY    1
 #define DPMSGCMD_ENUMSESSIONSREQUEST  2
@@ -186,25 +202,11 @@ typedef struct tagDPMSG_FORWARDADDPLAYER
 {
   DPMSG_SENDENVELOPE envelope;
 
-  DWORD unknown; /* 0 */
-
-  DPID  dpidAppServer; /* Remote application server id */
-  DWORD unknown2[5]; /* 0x0, 0x1c, 0x6c, 0x50, 0x9 */
-
-  DPID  dpidAppServer2; /* Remote application server id again !? */
-  DWORD unknown3[5]; /* 0x0, 0x0, 0x20, 0x0, 0x0 */
-
-  DPID  dpidAppServer3; /* Remote application server id again !? */
-
-  DWORD unknown4[12]; /* ??? - Is this a clump of 5 and then 8? */
-                      /* NOTE: 1 byte in front of the two 0x??090002 entries changes!
-                      *       Is it a timestamp of some sort? 1st always smaller than
-                      *       other...
-                      */
-#define FORWARDADDPLAYER_UNKNOWN4_INIT { 0x30, 0xb, 0x0, 0x1e090002, 0x0, 0x0, 0x0, 0x32090002, 0x0, 0x0, 0x0, 0x0 }
-
-  BYTE unknown5[2]; /* 2 bytes at the end. This may be a part of something! ( 0x0, 0x0) */
-
+  DPID toId;
+  DPID playerId;
+  DPID groupId;
+  DWORD createOffset;
+  DWORD passwordOffset;
 } DPMSG_FORWARDADDPLAYER, *LPDPMSG_FORWARDADDPLAYER;
 typedef const DPMSG_FORWARDADDPLAYER* LPCDPMSG_FORWARDADDPLAYER;
 
