@@ -7,7 +7,7 @@ Class=HIDClass
 Wine=mfg_section
 
 [mfg_section]
-Wine HID device=device_section,HID\
+Wine HID device=device_section,HID_DEVICE
 
 [device_section.Services]
 AddService = ,0x2
