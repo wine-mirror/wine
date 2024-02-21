@@ -3339,6 +3339,10 @@ static HRESULT DP_SecureOpen( IDirectPlayImpl *This, const DPSESSIONDESC2 *lpsd,
     sessionDesc = NS_WalkSessions( This->dp2->lpNameServerData, &spMessageHeader );
     if ( !sessionDesc )
       return DPERR_NOSESSIONS;
+
+    This->dp2->lpSessionDesc = DP_DuplicateSessionDesc( sessionDesc, bAnsi, bAnsi );
+    if ( !This->dp2->lpSessionDesc )
+      return DPERR_OUTOFMEMORY;
   }
 
   /* Invoke the conditional callback for the service provider */

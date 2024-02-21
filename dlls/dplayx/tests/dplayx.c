@@ -1274,7 +1274,8 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
 
     todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( wsResult == sizeof( DWORD ),
                                                                      "recv() returned %d.\n", wsResult );
-    todo_wine ok_( __FILE__, line )( tickCount == expectedTickCount, "got tick count %#lx.\n", tickCount );
+    todo_wine_if( expectedPasswordSize != 2 ) ok_( __FILE__, line )( tickCount == expectedTickCount,
+                                                                     "got tick count %#lx.\n", tickCount );
 
     return port;
 }
