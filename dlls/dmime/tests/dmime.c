@@ -1564,7 +1564,7 @@ static void test_segment(void)
 }
 
 static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char *name, DWORD group,
-        DWORD index, BOOL ignore_guid)
+        DWORD index, BOOL ignore_guid, const char *file, UINT line)
 {
     IDirectMusicTrack *track;
     IPersistStream *ps;
@@ -1576,17 +1576,17 @@ static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char
     else
         hr = IDirectMusicSegment8_GetTrack(seg, expect, group, index, &track);
     if (!expect) {
-        ok(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %#lx, expected DMUS_E_NOT_FOUND\n", hr);
+        ok_(file, line)(hr == DMUS_E_NOT_FOUND, "GetTrack failed: %#lx, expected DMUS_E_NOT_FOUND\n", hr);
         return;
     }
 
-    ok(hr == S_OK, "GetTrack failed: %#lx, expected S_OK\n", hr);
+    ok_(file, line)(hr == S_OK, "GetTrack failed: %#lx, expected S_OK\n", hr);
     if (FAILED(hr)) return;
     hr = IDirectMusicTrack_QueryInterface(track, &IID_IPersistStream, (void**)&ps);
-    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %#lx\n", hr);
+    ok_(file, line)(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %#lx\n", hr);
     hr = IPersistStream_GetClassID(ps, &class);
-    ok(hr == S_OK, "IPersistStream_GetClassID failed: %#lx\n", hr);
-    ok(IsEqualGUID(&class, expect), "For group %#lx index %lu: Expected class %s got %s\n",
+    ok_(file, line)(hr == S_OK, "IPersistStream_GetClassID failed: %#lx\n", hr);
+    ok_(file, line)(IsEqualGUID(&class, expect), "For group %#lx index %lu: Expected class %s got %s\n",
             group, index, name, wine_dbgstr_guid(&class));
 
     IPersistStream_Release(ps);
@@ -1594,9 +1594,9 @@ static void _expect_track(IDirectMusicSegment8 *seg, REFCLSID expect, const char
 }
 
 #define expect_track(seg, class, group, index) \
-    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, TRUE)
+    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, TRUE, __FILE__, __LINE__)
 #define expect_guid_track(seg, class, group, index) \
-    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, FALSE)
+    _expect_track(seg, &CLSID_DirectMusic ## class, #class, group, index, FALSE, __FILE__, __LINE__)
 
 static void test_midi(void)
 {
@@ -1816,15 +1816,15 @@ static void test_gettrack(void)
     expect_track(seg, SeqTrack, 0x1, 2);
     expect_track(seg, TempoTrack, 0x1, 3);
     expect_track(seg, WaveTrack, 0x1, 4);
-    _expect_track(seg, NULL, "", 0x1, 5, TRUE);
-    _expect_track(seg, NULL, "", 0x1, DMUS_SEG_ANYTRACK, TRUE);
+    _expect_track(seg, NULL, "", 0x1, 5, TRUE, __FILE__, __LINE__);
+    _expect_track(seg, NULL, "", 0x1, DMUS_SEG_ANYTRACK, TRUE, __FILE__, __LINE__);
     expect_track(seg, ParamControlTrack, 0x2, 0);
     expect_track(seg, WaveTrack, 0x80000000, 0);
     expect_track(seg, SegmentTriggerTrack, 0x3, 2);  /* groups 1+2 combined index */
     expect_track(seg, SeqTrack, 0x3, 3);             /* groups 1+2 combined index */
     expect_track(seg, TempoTrack, 0x7, 4);           /* groups 1+2+3 combined index */
     expect_track(seg, TempoTrack, 0xffffffff, 4);    /* all groups combined index */
-    _expect_track(seg, NULL, "", 0xffffffff, DMUS_SEG_ANYTRACK, TRUE);
+    _expect_track(seg, NULL, "", 0xffffffff, DMUS_SEG_ANYTRACK, TRUE, __FILE__, __LINE__);
 
     /* Use the GUID in GetTrack */
     hr = IDirectMusicSegment8_GetTrack(seg, &CLSID_DirectMusicLyricsTrack, 0, 0, &track);
