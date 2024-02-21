@@ -391,10 +391,21 @@ static void wine_vk_device_get_queues(struct wine_device *device,
     }
 }
 
+static const char *find_extension(const char *const *extensions, uint32_t count, const char *ext)
+{
+    while (count--)
+    {
+        if (!strcmp(extensions[count], ext))
+            return extensions[count];
+    }
+    return NULL;
+}
+
 static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_dev,
         struct conversion_context *ctx, const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
 {
-    unsigned int i;
+    const char *extra_extensions[2], * const*extensions = src->ppEnabledExtensionNames;
+    unsigned int i, extra_count = 0, extensions_count = src->enabledExtensionCount;
 
     *dst = *src;
 
@@ -402,10 +413,10 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
     dst->enabledLayerCount = 0;
     dst->ppEnabledLayerNames = NULL;
 
-    TRACE("Enabled %u extensions.\n", dst->enabledExtensionCount);
-    for (i = 0; i < dst->enabledExtensionCount; i++)
+    TRACE("Enabled %u extensions.\n", extensions_count);
+    for (i = 0; i < extensions_count; i++)
     {
-        const char *extension_name = dst->ppEnabledExtensionNames[i];
+        const char *extension_name = extensions[i];
         TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
         if (!wine_vk_device_extension_supported(extension_name))
         {
@@ -416,14 +427,20 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
 
     if (phys_dev->external_memory_align)
     {
+        if (!find_extension(extensions, extensions_count, "VK_KHR_external_memory"))
+            extra_extensions[extra_count++] = "VK_KHR_external_memory";
+        if (!find_extension(extensions, extensions_count, "VK_EXT_external_memory_host"))
+            extra_extensions[extra_count++] = "VK_EXT_external_memory_host";
+    }
+
+    if (extra_count)
+    {
         const char **new_extensions;
 
-        new_extensions = conversion_context_alloc(ctx, (dst->enabledExtensionCount + 2) *
-                                                  sizeof(*dst->ppEnabledExtensionNames));
-        memcpy(new_extensions, src->ppEnabledExtensionNames,
-               dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
-        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_external_memory";
-        new_extensions[dst->enabledExtensionCount++] = "VK_EXT_external_memory_host";
+        dst->enabledExtensionCount += extra_count;
+        new_extensions = conversion_context_alloc(ctx, dst->enabledExtensionCount * sizeof(*new_extensions));
+        memcpy(new_extensions, extensions, extensions_count * sizeof(*new_extensions));
+        memcpy(new_extensions + extensions_count, extra_extensions, extra_count * sizeof(*new_extensions));
         dst->ppEnabledExtensionNames = new_extensions;
     }
 
