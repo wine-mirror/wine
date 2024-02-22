@@ -3465,10 +3465,10 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->send_timeout = session->send_timeout;
     request->receive_timeout = session->receive_timeout;
 
-    InitializeCriticalSection( &request->headers_section );
+    InitializeCriticalSectionEx( &request->headers_section, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     request->headers_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.headers_section");
 
-    InitializeCriticalSection( &request->read_section );
+    InitializeCriticalSectionEx( &request->read_section, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     request->read_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.read_section");
 
     WININET_AddRef( &session->hdr );
