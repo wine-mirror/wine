@@ -2632,15 +2632,17 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
     UINT i, j, k, broken_k;
     ULONG64 fake_stack[256];
     ULONG64 frame, orig_rip, orig_rbp, unset_reg;
-    UINT unwind_size = 4 + 2 * test->unwind_info[2] + 8;
     void *expected_handler, *broken_handler;
 
     memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
-    memcpy( (char *)code_mem + unwind_offset, test->unwind_info, unwind_size );
-
-    runtime_func.BeginAddress = code_offset;
-    runtime_func.EndAddress = code_offset + test->function_size;
-    runtime_func.UnwindData = unwind_offset;
+    if (test->unwind_info)
+    {
+        UINT unwind_size = 4 + 2 * test->unwind_info[2] + 8;
+        memcpy( (char *)code_mem + unwind_offset, test->unwind_info, unwind_size );
+        runtime_func.BeginAddress = code_offset;
+        runtime_func.EndAddress = code_offset + test->function_size;
+        runtime_func.UnwindData = unwind_offset;
+    }
 
     trace( "code: %p stack: %p\n", code_mem, fake_stack );
 
@@ -2660,8 +2662,10 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
                (void *)orig_rip, *(BYTE *)orig_rip, (void *)orig_rbp, (void *)context.Rsp );
 
         data = (void *)0xdeadbeef;
+        if (!test->unwind_info) fake_stack[0] = 0x1234;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
-                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+                                    test->unwind_info ? &runtime_func : NULL,
+                                    &context, &data, &frame, &ctx_ptr );
 
         expected_handler = test->results[i].handler ? (char *)code_mem + 0x200 : NULL;
         broken_handler = test->broken_results && test->broken_results[i].handler ? (char *)code_mem + 0x200 : NULL;
@@ -2671,7 +2675,8 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
         if (handler)
             ok( *(DWORD *)data == 0x08070605, "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
         else
-            ok( data == (void *)0xdeadbeef, "%u/%u: handler data set to %p\n", testnum, i, data );
+            ok( data == (test->unwind_info ? (void *)0xdeadbeef : NULL),
+                "%u/%u: handler data set to %p\n", testnum, i, data );
 
         ok( context.Rip == test->results[i].rip
                 || broken( test->broken_results && context.Rip == test->broken_results[i].rip ),
@@ -2960,6 +2965,22 @@ static void test_virtual_unwind_x86(void)
         { 0x01,  0x50,  FALSE, 0x008, 0x000, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
     };
 
+#if 0
+    static const BYTE function_5[] =
+    {
+        0x90,                     /* 00: nop */
+        0x90,                     /* 01: nop */
+        0xc3                      /* 02: ret */
+     };
+
+    static const struct results_x86 results_5[] =
+    {
+      /* offset  rbp   handler  rip   frame   registers */
+        { 0x01,  0x00,  FALSE, 0x1234, 0x000, { {rsp,0x08}, {-1,-1} }},
+        { 0x02,  0x00,  FALSE, 0x1234, 0x000, { {rsp,0x08}, {-1,-1} }},
+    };
+#endif
+
     static const struct unwind_test_x86 tests[] =
     {
         { function_0, sizeof(function_0), unwind_info_0, results_0, ARRAY_SIZE(results_0), broken_results_0 },
@@ -2969,6 +2990,9 @@ static void test_virtual_unwind_x86(void)
 
         /* Broken before Win10 1809. */
         { function_4, sizeof(function_4), unwind_info_4, results_4, ARRAY_SIZE(results_4), broken_results_4 },
+#if 0  /* crashes before Win10 21H2 */
+        { function_5, sizeof(function_5), NULL,          results_5, ARRAY_SIZE(results_5) },
+#endif
     };
     unsigned int i;
 

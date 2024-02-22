@@ -1838,9 +1838,19 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 #endif
 
     TRACE( "type %lx rip %I64x rsp %I64x\n", type, pc, context->Rsp );
-    if (TRACE_ON(unwind)) dump_unwind_info( base, function );
 
     frame = *frame_ret = context->Rsp;
+
+    if (!function)  /* leaf function */
+    {
+        context->Rip = *(ULONG64 *)context->Rsp;
+        context->Rsp += sizeof(ULONG64);
+        *data = NULL;
+        return NULL;
+    }
+
+    if (TRACE_ON(unwind)) dump_unwind_info( base, function );
+
     for (;;)
     {
         info = (struct UNWIND_INFO *)((char *)base + function->UnwindData);
