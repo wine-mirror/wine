@@ -2291,7 +2291,7 @@ static HRESULT WINAPI ComponentEnum_Clone(IEnumUnknown *iface, IEnumUnknown **pp
     new_enum->ref = 1;
     new_enum->cursor = NULL;
     list_init(&new_enum->objects);
-    InitializeCriticalSection(&new_enum->lock);
+    InitializeCriticalSectionEx(&new_enum->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     new_enum->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ComponentEnum.lock");
 
     EnterCriticalSection(&This->lock);
@@ -2361,7 +2361,7 @@ HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnkn
     This->IEnumUnknown_iface.lpVtbl = &ComponentEnumVtbl;
     This->ref = 1;
     list_init(&This->objects);
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ComponentEnum.lock");
 
     for (category=categories; category->type && hr == S_OK; category++)

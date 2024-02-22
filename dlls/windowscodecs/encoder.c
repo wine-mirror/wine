@@ -889,7 +889,7 @@ HRESULT CommonEncoder_CreateInstance(struct encoder *encoder,
     This->frame_count = 0;
     This->uncommitted_frame = FALSE;
     This->committed = FALSE;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CommonEncoder.lock");
 
     ret = IWICBitmapEncoder_QueryInterface(&This->IWICBitmapEncoder_iface, iid, ppv);

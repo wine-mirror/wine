@@ -527,7 +527,7 @@ HRESULT BitmapScaler_Create(IWICBitmapScaler **scaler)
     This->src_height = 0;
     This->mode = 0;
     This->bpp = 0;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BitmapScaler.lock");
 
     *scaler = &This->IWICBitmapScaler_iface;

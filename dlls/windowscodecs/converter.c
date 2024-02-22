@@ -1843,7 +1843,7 @@ HRESULT FormatConverter_CreateInstance(REFIID iid, void** ppv)
     This->ref = 1;
     This->source = NULL;
     This->palette = NULL;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FormatConverter.lock");
 
     ret = IWICFormatConverter_QueryInterface(&This->IWICFormatConverter_iface, iid, ppv);

@@ -770,7 +770,7 @@ HRESULT IcoDecoder_CreateInstance(REFIID iid, void** ppv)
     This->ref = 1;
     This->stream = NULL;
     This->initialized = FALSE;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IcoDecoder.lock");
 
     ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);

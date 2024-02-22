@@ -825,7 +825,7 @@ HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight, UINT stride, UINT datasiz
     This->bpp = bpp;
     memcpy(&This->pixelformat, pixelFormat, sizeof(GUID));
     This->dpix = This->dpiy = 0.0;
-    InitializeCriticalSection(&This->cs);
+    InitializeCriticalSectionEx(&This->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BitmapImpl.lock");
 
     *ppIBitmap = &This->IWICBitmap_iface;

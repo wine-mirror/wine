@@ -1415,7 +1415,7 @@ HRESULT GifDecoder_CreateInstance(REFIID iid, void** ppv)
     This->initialized = FALSE;
     This->gif = NULL;
     This->current_frame = 0;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": GifDecoder.lock");
 
     ret = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
@@ -2481,7 +2481,7 @@ HRESULT GifEncoder_CreateInstance(REFIID iid, void **ppv)
     This->IWICBitmapEncoder_iface.lpVtbl = &GifEncoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": GifEncoder.lock");
     This->initialized = FALSE;
     This->info_written = FALSE;

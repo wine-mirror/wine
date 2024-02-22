@@ -797,7 +797,7 @@ HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
     This->stream = NULL;
     This->decoder = decoder;
     This->decoder_info = *decoder_info;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CommonDecoder.lock");
 
     hr = IWICBitmapDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
