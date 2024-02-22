@@ -236,7 +236,7 @@ static struct record *create_record( struct table *table )
         record->fields[i].u.ival  = 0;
     }
     record->count = table->num_cols;
-    record->table = addref_table( table );
+    record->table = grab_table( table );
     return record;
 }
 

@@ -215,8 +215,8 @@ HRESULT execute_view( struct view * );
 struct table *get_view_table( const struct view *, UINT );
 void init_table_list( void );
 enum wbm_namespace get_namespace_from_string( const WCHAR *namespace );
-struct table *grab_table( enum wbm_namespace, const WCHAR * );
-struct table *addref_table( struct table * );
+struct table *find_table( enum wbm_namespace, const WCHAR * );
+struct table *grab_table( struct table * );
 void release_table( struct table * );
 struct table *create_table( const WCHAR *, UINT, const struct column *, UINT, UINT, BYTE *,
                             enum fill_status (*)(struct table *, const struct expr *) );
