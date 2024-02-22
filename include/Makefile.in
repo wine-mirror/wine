@@ -844,12 +844,14 @@ SOURCES = \
 	windows.graphics.directx.idl \
 	windows.graphics.effects.idl \
 	windows.graphics.holographic.idl \
+	windows.graphics.imaging.idl \
 	windows.h \
 	windows.management.deployment.idl \
 	windows.media.capture.idl \
 	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
 	windows.media.effects.idl \
+	windows.media.faceanalysis.idl \
 	windows.media.idl \
 	windows.media.render.idl \
 	windows.media.speechrecognition.idl \
