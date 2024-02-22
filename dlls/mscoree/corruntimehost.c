@@ -1592,7 +1592,7 @@ HRESULT RuntimeHost_Construct(CLRRuntimeInfo *runtime_version, RuntimeHost** res
 
     This->ref = 1;
     This->version = runtime_version;
-    InitializeCriticalSection(&This->lock);
+    InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RuntimeHost.lock");
 
     *result = This;
