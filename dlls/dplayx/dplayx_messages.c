@@ -330,6 +330,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlayImpl *This, DPID dpidServer )
 #endif
 
   /* Compose body of message */
+  msgBody.unknown = 0;
   msgBody.dpidAppServer = dpidServer;
   msgBody.unknown2[0] = 0x0;
   msgBody.unknown2[1] = 0x1c;

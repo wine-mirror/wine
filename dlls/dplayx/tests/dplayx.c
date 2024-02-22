@@ -1251,8 +1251,7 @@ static unsigned short receiveAddForwardRequest_( int line, SOCKET sock, DPID exp
 
     port = checkSpHeader_( line, &request.spHeader, expectedSize, expectedPasswordSize != 2 );
     checkMessageHeader_( line, &request.request.header, 19 );
-    todo_wine_if( request.request.toId ) ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n",
-                                                                request.request.toId );
+    ok_( __FILE__, line )( !request.request.toId, "got destination id %#lx.\n", request.request.toId );
     ok_( __FILE__, line )( request.request.playerId == expectedPlayerId, "got player id %#lx.\n",
                            request.request.playerId );
     ok_( __FILE__, line )( !request.request.groupId, "got group id %#lx.\n", request.request.groupId );
