@@ -187,22 +187,12 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
 
     status_type = event->status & 0xf0;
     event->data[0] = byte;
-    if (status_type == MIDI_PROGRAM_CHANGE)
-    {
-        TRACE("MIDI program change event status %#02x, data: %#02x, time +%lu\n", event->status,
-                event->data[0], delta_time);
-    }
-    else
-    {
-        if (status_type != MIDI_CHANNEL_PRESSURE && (hr = stream_read_at_most(stream, &byte, 1, bytes_left)) != S_OK)
-            return hr;
-        event->data[1] = byte;
-        if (status_type == MIDI_NOTE_ON || status_type == MIDI_NOTE_OFF)
-            TRACE("MIDI note event status %#02x, data: %#02x, %#02x, time +%lu\n", event->status,
-                    event->data[0], event->data[1], delta_time);
-        else
-            FIXME("MIDI event status %#02x, time +%lu, not supported\n", event->status, delta_time);
-    }
+    if (status_type != MIDI_PROGRAM_CHANGE && status_type != MIDI_CHANNEL_PRESSURE &&
+            (hr = stream_read_at_most(stream, &byte, 1, bytes_left)) != S_OK)
+        return hr;
+    event->data[1] = byte;
+    TRACE("MIDI event status %#02x, data: %#02x, %#02x, time +%lu\n", event->status, event->data[0],
+            event->data[1], delta_time);
 
     return S_OK;
 }
@@ -303,6 +293,27 @@ static HRESULT midi_parser_handle_note_on_off(struct midi_parser *parser, struct
     return S_OK;
 }
 
+static HRESULT midi_parser_handle_control(struct midi_parser *parser, struct midi_event *event)
+{
+    struct midi_seqtrack_item *item;
+    DMUS_IO_SEQ_ITEM *seq_item;
+    MUSIC_TIME dmusic_time = (ULONGLONG)parser->time * DMUS_PPQ / parser->division;
+
+    if ((item = calloc(1, sizeof(struct midi_seqtrack_item))) == NULL) return E_OUTOFMEMORY;
+
+    seq_item = &item->item;
+    seq_item->mtTime = dmusic_time;
+    seq_item->mtDuration = 0;
+    seq_item->dwPChannel = event->status & 0xf;
+    seq_item->bStatus = event->status & 0xf0;
+    seq_item->bByte1 = event->data[0];
+    seq_item->bByte2 = event->data[1];
+    list_add_tail(&parser->seqtrack_items, &item->entry);
+    parser->seqtrack_items_count++;
+
+    return S_OK;
+}
+
 static int midi_seqtrack_item_compare(const void *a, const void *b)
 {
     const DMUS_IO_SEQ_ITEM *item_a = a, *item_b = b;
@@ -350,6 +361,11 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
                 case MIDI_NOTE_ON:
                 case MIDI_NOTE_OFF:
                     hr = midi_parser_handle_note_on_off(parser, &event);
+                    break;
+                case MIDI_CHANNEL_PRESSURE:
+                case MIDI_PITCH_BEND_CHANGE:
+                case MIDI_CONTROL_CHANGE:
+                    hr = midi_parser_handle_control(parser, &event);
                     break;
                 case MIDI_PROGRAM_CHANGE:
                     hr = midi_parser_handle_program_change(parser, &event);

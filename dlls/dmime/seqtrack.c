@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "dmusic_midi.h"
 #include "dmime_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
@@ -130,27 +131,46 @@ static HRESULT WINAPI sequence_track_Play(IDirectMusicTrack8 *iface, void *state
     for (i = 0; SUCCEEDED(hr) &&i < This->count; i++)
     {
         DMUS_IO_SEQ_ITEM *item = This->items + i;
-        DMUS_NOTE_PMSG *msg;
+        DMUS_PMSG *msg;
 
         if (item->mtTime < start_time) continue;
         if (item->mtTime >= end_time) continue;
 
-        if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*msg),
-                (DMUS_PMSG **)&msg)))
-            break;
+        if (item->bStatus == MIDI_NOTE_ON)
+        {
+            DMUS_NOTE_PMSG *note;
+            if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*note),
+                    (DMUS_PMSG **)&note)))
+                break;
+
+            note->dwType = DMUS_PMSGT_NOTE;
+            note->mtDuration = item->mtDuration;
+            note->wMusicValue = item->bByte1;
+            note->nOffset = item->nOffset;
+            note->bVelocity = item->bByte2;
+            note->bFlags = 1;
+            note->bMidiValue = item->bByte1;
+            msg = (DMUS_PMSG *)note;
+        }
+        else
+        {
+            DMUS_MIDI_PMSG *midi;
+            if (FAILED(hr = IDirectMusicPerformance_AllocPMsg(performance, sizeof(*midi),
+                    (DMUS_PMSG **)&midi)))
+                break;
+
+            midi->dwType = DMUS_PMSGT_MIDI;
+            midi->bStatus = item->bStatus;
+            midi->bByte1 = item->bByte1;
+            midi->bByte2 = item->bByte2;
+            msg = (DMUS_PMSG *)midi;
+        }
 
         msg->mtTime = item->mtTime + time_offset;
         msg->dwFlags = DMUS_PMSGF_MUSICTIME;
         msg->dwPChannel = item->dwPChannel;
         msg->dwVirtualTrackID = track_id;
-        msg->dwType = DMUS_PMSGT_NOTE;
         msg->dwGroupID = 1;
-        msg->mtDuration = item->mtDuration;
-        msg->wMusicValue = item->bByte1;
-        msg->nOffset = item->nOffset;
-        msg->bVelocity = item->bByte2;
-        msg->bFlags = 1;
-        msg->bMidiValue = item->bByte1;
 
         if (FAILED(hr = IDirectMusicGraph_StampPMsg(graph, (DMUS_PMSG *)msg))
                 || FAILED(hr = IDirectMusicPerformance_SendPMsg(performance, (DMUS_PMSG *)msg)))

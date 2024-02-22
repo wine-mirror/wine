@@ -1633,6 +1633,13 @@ static void test_midi(void)
         0xc1,                   /* event type, program change, channel 1 */
         0x30,                   /* event data, patch 48 */
     };
+    static const char midi_control_change[] =
+    {
+        0x04,                   /* delta time = 4 */
+        0xb1,                   /* event type, control change, channel 1 */
+        0x07,                   /* event data, channel volume */
+        0x40,                   /* event data, 64 */
+    };
     static const char midi_note_on[] =
     {
         0x04,                   /* delta time = 4 */
@@ -1667,10 +1674,11 @@ static void test_midi(void)
     WCHAR test_mid[MAX_PATH], bogus_mid[MAX_PATH];
     HRESULT hr;
     ULONG ret;
-    DWORD track_length;
+    DWORD track_length, trace2_length;
     MUSIC_TIME next;
     DMUS_PMSG *msg;
     DMUS_NOTE_PMSG *note;
+    DMUS_MIDI_PMSG *midi;
     DMUS_PATCH_PMSG *patch;
     DMUS_TEMPO_PARAM tempo_param;
 #include <pshpack1.h>
@@ -1873,12 +1881,15 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     /* Add a second track, to test the duration of the trailing note. */
-    track_header.length = RtlUlongByteSwap(sizeof(track_header) - 8 + sizeof(midi_note_on) + sizeof(midi_note_off));
+    trace2_length = sizeof(midi_note_on) + sizeof(midi_note_off2) + sizeof(midi_control_change);
+    track_header.length = RtlUlongByteSwap(sizeof(track_header) - 8 + trace2_length);
     hr = IStream_Write(stream, &track_header, sizeof(track_header), NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Write(stream, midi_note_on, sizeof(midi_note_on), NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Write(stream, midi_note_off2, sizeof(midi_note_off2), NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IStream_Write(stream, midi_control_change, sizeof(midi_control_change), NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = IStream_Seek(stream, zero, 0, NULL);
@@ -1887,7 +1898,7 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(position.QuadPart == sizeof(header) + sizeof(track_header) * 2 + track_length + sizeof(midi_note_on) + sizeof(midi_note_off),
+    ok(position.QuadPart == sizeof(header) + sizeof(track_header) * 2 + track_length + trace2_length,
             "got %lld\n", position.QuadPart);
     IPersistStream_Release(persist);
     IStream_Release(stream);
@@ -1978,6 +1989,18 @@ static void test_midi(void)
     ok(note->bVelocity == 0x40, "got velocity %#x, expected 0x40\n", note->bVelocity);
     ok(note->mtDuration == 1, "got mtDuration %ld, expected 1\n", note->mtDuration);
     ok(note->dwPChannel == 1, "got pchannel %lu, expected 1\n", note->dwPChannel);
+    hr = IDirectMusicPerformance_FreePMsg(performance, msg);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    ret = test_tool_wait_message(tool, 500, (DMUS_PMSG **)&msg);
+    ok(!ret, "got %#lx\n", ret);
+    ok(msg->dwType == DMUS_PMSGT_MIDI, "got msg type %#lx, expected MIDI\n", msg->dwType);
+    ok(msg->mtTime == 649, "got mtTime %lu, expected 649\n", msg->mtTime);
+    ok(msg->dwPChannel == 1, "got pchannel %lu, expected 1\n", msg->dwPChannel);
+    midi = (DMUS_MIDI_PMSG *)msg;
+    ok(midi->bStatus == 0xb0, "got status %#x, expected 0xb1\n", midi->bStatus);
+    ok(midi->bByte1 == 0x07, "got byte1 %#x, expected 0x07\n", midi->bByte1);
+    ok(midi->bByte2 == 0x40, "got byte2 %#x, expected 0x40\n", midi->bByte2);
     hr = IDirectMusicPerformance_FreePMsg(performance, msg);
     ok(hr == S_OK, "got %#lx\n", hr);
 
