@@ -82,7 +82,7 @@ struct results_arm
     int fp_offset;      /* fp offset from stack pointer */
     int handler;        /* expect handler to be set? */
     ULONG_PTR pc;       /* expected final pc value */
-    int frame;          /* expected frame return value */
+    ULONG_PTR frame;    /* expected frame return value */
     int frame_offset;   /* whether the frame return value is an offset or an absolute value */
     LONGLONG regs[47][2];/* expected values for registers */
 };
@@ -135,15 +135,15 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
     static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
 
     memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
-    memcpy( (char *)code_mem + unwind_offset, test->unwind_info, test->unwind_size );
-
-    runtime_func.BeginAddress = code_offset;
-    if (test->unwind_size)
-        runtime_func.UnwindData = unwind_offset;
-    else
-        memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
-
-    trace( "code: %p stack: %p\n", code_mem, fake_stack );
+    if (test->unwind_info)
+    {
+        memcpy( (char *)code_mem + unwind_offset, test->unwind_info, test->unwind_size );
+        runtime_func.BeginAddress = code_offset;
+        if (test->unwind_size)
+            runtime_func.UnwindData = unwind_offset;
+        else
+            memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
+    }
 
     for (i = 0; i < test->nb_results; i++)
     {
@@ -163,8 +163,11 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
                (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
 
         data = (void *)0xdeadbeef;
+        frame = 0xdeadbeef;
+        if (test->results[i].handler == -2) orig_pc = context.Lr;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG)code_mem, orig_pc,
-                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+                                    test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
+                                    &context, &data, &frame, &ctx_ptr );
         if (test->results[i].handler > 0)
         {
             ok( (char *)handler == (char *)code_mem + 0x200,
@@ -175,8 +178,7 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
         else
         {
             ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
-            ok( data == (test->results[i].handler < 0 ?
-                        (void *)0xdeadbeef : NULL),
+            ok( data == (test->results[i].handler < -1 ? (void *)0xdeadbeef : NULL),
                 "%u/%u: handler data set to %p/%p\n", testnum, i, data,
                 (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL) );
         }
@@ -222,6 +224,9 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
                     ok( context.Sp == test->results[i].regs[k][1],
                         "%u/%u: register %s wrong %p/%x\n",
                         testnum, i, reg_names_arm[j], (void *)context.Sp, (int)test->results[i].regs[k][1] );
+                else if (test->results[i].frame == 0xdeadbeef)
+                    ok( (void *)context.Sp == fake_stack, "%u/%u: wrong sp %p/%p\n",
+                        testnum, i, (void *)context.Sp, fake_stack);
                 else
                     ok( context.Sp == frame, "%u/%u: wrong sp %p/%p\n",
                         testnum, i, (void *)context.Sp, (void *)frame);
@@ -1411,41 +1416,56 @@ static void test_virtual_unwind_arm(void)
         { 0x04,  0x10,  0,     0x14,    0x10, FALSE, { {lr,0x0c}, {sp,0x10}, {-1,-1} }},
     };
 
+    static const BYTE function_31[] =
+    {
+        0x00, 0xbf,               /* 00: nop */
+        0x00, 0xbf,               /* 02: nop */
+    };
+
+    static const struct results_arm results_31[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0,    -1,     ORIG_LR, 0x00, TRUE,  { {-1,-1} }},
+        { 0x02,  0,    -1,     ORIG_LR, 0x00, TRUE,  { {-1,-1} }},
+        { 0x04,  0,    -2,     0, 0xdeadbeef, FALSE, { {-1,-1} }},
+    };
+
     static const struct unwind_test_arm tests[] =
     {
-#define TEST(func, unwind, unwind_packed, results) \
-        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results) }
-        TEST(function_0, unwind_info_0, 0, results_0),
-        TEST(function_1, unwind_info_1, 0, results_1),
-        TEST(function_2, unwind_info_2, 0, results_2),
-        TEST(function_3, unwind_info_3, 0, results_3),
-        TEST(function_4, unwind_info_4, 0, results_4),
-        TEST(function_5, unwind_info_5, 0, results_5),
-        TEST(function_6, unwind_info_6, 1, results_6),
-        TEST(function_7, unwind_info_7, 1, results_7),
-        TEST(function_8, unwind_info_8, 1, results_8),
-        TEST(function_9, unwind_info_9, 1, results_9),
-        TEST(function_10, unwind_info_10, 1, results_10),
-        TEST(function_11, unwind_info_11, 1, results_11),
-        TEST(function_12, unwind_info_12, 1, results_12),
-        TEST(function_13, unwind_info_13, 1, results_13),
-        TEST(function_14, unwind_info_14, 1, results_14),
-        TEST(function_15, unwind_info_15, 1, results_15),
-        TEST(function_16, unwind_info_16, 1, results_16),
-        TEST(function_17, unwind_info_17, 1, results_17),
-        TEST(function_18, unwind_info_18, 1, results_18),
-        TEST(function_19, unwind_info_19, 1, results_19),
-        TEST(function_20, unwind_info_20, 1, results_20),
-        TEST(function_21, unwind_info_21, 1, results_21),
-        TEST(function_22, unwind_info_22, 1, results_22),
-        TEST(function_23, unwind_info_23, 1, results_23),
-        TEST(function_24, unwind_info_24, 1, results_24),
-        TEST(function_25, unwind_info_25, 1, results_25),
-        TEST(function_26, unwind_info_26, 1, results_26),
-        TEST(function_27, unwind_info_27, 1, results_27),
-        TEST(function_28, unwind_info_28, 1, results_28),
-        TEST(function_29, unwind_info_29, 0, results_29),
-        TEST(function_30, unwind_info_30, 0, results_30),
+#define TEST(func, unwind, size, results) \
+        { func, sizeof(func), unwind, size, results, ARRAY_SIZE(results) }
+        TEST(function_0, unwind_info_0, sizeof(unwind_info_0), results_0),
+        TEST(function_1, unwind_info_1, sizeof(unwind_info_1), results_1),
+        TEST(function_2, unwind_info_2, sizeof(unwind_info_2), results_2),
+        TEST(function_3, unwind_info_3, sizeof(unwind_info_3), results_3),
+        TEST(function_4, unwind_info_4, sizeof(unwind_info_4), results_4),
+        TEST(function_5, unwind_info_5, sizeof(unwind_info_5), results_5),
+        TEST(function_6, unwind_info_6, 0, results_6),
+        TEST(function_7, unwind_info_7, 0, results_7),
+        TEST(function_8, unwind_info_8, 0, results_8),
+        TEST(function_9, unwind_info_9, 0, results_9),
+        TEST(function_10, unwind_info_10, 0, results_10),
+        TEST(function_11, unwind_info_11, 0, results_11),
+        TEST(function_12, unwind_info_12, 0, results_12),
+        TEST(function_13, unwind_info_13, 0, results_13),
+        TEST(function_14, unwind_info_14, 0, results_14),
+        TEST(function_15, unwind_info_15, 0, results_15),
+        TEST(function_16, unwind_info_16, 0, results_16),
+        TEST(function_17, unwind_info_17, 0, results_17),
+        TEST(function_18, unwind_info_18, 0, results_18),
+        TEST(function_19, unwind_info_19, 0, results_19),
+        TEST(function_20, unwind_info_20, 0, results_20),
+        TEST(function_21, unwind_info_21, 0, results_21),
+        TEST(function_22, unwind_info_22, 0, results_22),
+        TEST(function_23, unwind_info_23, 0, results_23),
+        TEST(function_24, unwind_info_24, 0, results_24),
+        TEST(function_25, unwind_info_25, 0, results_25),
+        TEST(function_26, unwind_info_26, 0, results_26),
+        TEST(function_27, unwind_info_27, 0, results_27),
+        TEST(function_28, unwind_info_28, 0, results_28),
+        TEST(function_29, unwind_info_29, sizeof(unwind_info_29), results_29),
+        TEST(function_30, unwind_info_30, sizeof(unwind_info_30), results_30),
+        TEST(function_31, NULL,           0, results_31),
 #undef TEST
     };
     unsigned int i;

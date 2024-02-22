@@ -1377,12 +1377,17 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 {
     void *handler;
 
-    TRACE( "type %lx pc %Ix sp %lx func %lx\n", type, pc, context->Sp, base + func->BeginAddress );
+    TRACE( "type %lx pc %Ix sp %lx\n", type, pc, context->Sp );
+
+    context->Pc = 0;
+
+    if (!func && pc == context->Lr) return NULL;  /* invalid leaf function */
 
     *handler_data = NULL;
 
-    context->Pc = 0;
-    if (func->Flag)
+    if (!func)  /* leaf function */
+        handler = NULL;
+    else if (func->Flag)
         handler = unwind_packed_data( base, pc, func, context, ctx_ptr );
     else
         handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
