@@ -1494,7 +1494,7 @@ struct results_arm64
     int fp_offset;      /* fp offset from stack pointer */
     int handler;        /* expect handler to be set? */
     ULONG_PTR pc;       /* expected final pc value */
-    int frame;          /* expected frame return value */
+    ULONG_PTR frame;    /* expected frame return value */
     int frame_offset;   /* whether the frame return value is an offset or an absolute value */
     ULONG_PTR regs[48][2]; /* expected values for registers */
 };
@@ -1551,13 +1551,15 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
     static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
 
     memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
-    memcpy( (char *)code_mem + unwind_offset, test->unwind_info, test->unwind_size );
-
-    runtime_func.BeginAddress = code_offset;
-    if (test->unwind_size)
-        runtime_func.UnwindData = unwind_offset;
-    else
-        memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
+    if (test->unwind_info)
+    {
+        memcpy( (char *)code_mem + unwind_offset, test->unwind_info, test->unwind_size );
+        runtime_func.BeginAddress = code_offset;
+        if (test->unwind_size)
+            runtime_func.UnwindData = unwind_offset;
+        else
+            memcpy(&runtime_func.UnwindData, test->unwind_info, 4);
+    }
 
     for (i = 0; i < test->nb_results; i++)
     {
@@ -1579,8 +1581,14 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
         trace( "pc=%p (%02x) fp=%p sp=%p\n", (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
 
         data = (void *)0xdeadbeef;
+        frame = 0xdeadbeef;
+#ifdef __x86_64__
+        if (test->results[i].handler == -2) continue;  /* skip invalid leaf function test */
+#else
+        if (test->results[i].handler == -2) orig_pc = context.Lr;
+#endif
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_pc,
-                                    (RUNTIME_FUNCTION *)&runtime_func,
+                                    test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
                                     (CONTEXT *)&context, &data, &frame, &ctx_ptr );
         if (test->results[i].handler > 0)
         {
@@ -1592,7 +1600,7 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
         else
         {
             ok( handler == NULL, "handler %p instead of NULL\n", handler );
-            ok( data == (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL),
+            ok( data == (test->results[i].handler < -1 ? (void *)0xdeadbeef : NULL),
                 "handler data set to %p/%p\n", data,
                 (test->results[i].handler < 0 ? (void *)0xdeadbeef : NULL) );
         }
@@ -1601,27 +1609,35 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
             (void *)context.Pc, (void*)test->results[i].pc );
         ok( frame == (test->results[i].frame_offset ? (ULONG64)fake_stack : 0) + test->results[i].frame, "wrong frame %p/%p\n",
             (void *)frame, (char *)(test->results[i].frame_offset ? fake_stack : NULL) + test->results[i].frame );
-        if (!test->unwound_clear || i < test->unwound_clear)
-            ok( context.ContextFlags == (0xcccc | CONTEXT_ARM64_UNWOUND_TO_CALL),
-                "wrong flags %lx\n", context.ContextFlags );
-        else
-            ok( context.ContextFlags == 0xcccc,
-                "wrong flags %lx\n", context.ContextFlags );
-
-        sp_offset = 0;
-        for (k = 0; k < nb_regs; k++)
+        if (test->results[i].handler == -2) /* invalid leaf function */
         {
-            if (test->results[i].regs[k][0] == -1)
-                break;
-            if (test->results[i].regs[k][0] == sp) {
-                /* If sp is part of the registers list, treat it as an offset
-                 * between the returned frame pointer and the sp register. */
-                sp_offset = test->results[i].regs[k][1];
-                break;
-            }
+            ok( context.ContextFlags == 0xcccc, "wrong flags %lx\n", context.ContextFlags );
+            ok( context.Sp == (ULONG_PTR)fake_stack, "wrong sp %p/%p\n", (void *)context.Sp, fake_stack);
         }
-        ok( frame - sp_offset == context.Sp, "wrong sp %p/%p\n",
-            (void *)(frame - sp_offset), (void *)context.Sp);
+        else
+        {
+            if (!test->unwound_clear || i < test->unwound_clear)
+                ok( context.ContextFlags == (0xcccc | CONTEXT_ARM64_UNWOUND_TO_CALL),
+                    "wrong flags %lx\n", context.ContextFlags );
+            else
+                ok( context.ContextFlags == 0xcccc,
+                    "wrong flags %lx\n", context.ContextFlags );
+
+            sp_offset = 0;
+            for (k = 0; k < nb_regs; k++)
+            {
+                if (test->results[i].regs[k][0] == -1)
+                    break;
+                if (test->results[i].regs[k][0] == sp) {
+                    /* If sp is part of the registers list, treat it as an offset
+                     * between the returned frame pointer and the sp register. */
+                    sp_offset = test->results[i].regs[k][1];
+                    break;
+                }
+            }
+            ok( frame - sp_offset == context.Sp, "wrong sp %p/%p\n",
+                (void *)(frame - sp_offset), (void *)context.Sp);
+        }
 
 #ifdef __x86_64__
         for (j = 0; j < sizeof(ctx_ptr)/sizeof(void*); j++)
@@ -1671,7 +1687,7 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
             if (k < nb_regs)
             {
                 ok( regval == test->results[i].regs[k][1],
-                    "register %s wrong %llx/%llx\n", reg_names_arm64[j], regval, test->results[i].regs[k][1] );
+                    "register %s wrong %I64x/%I64x\n", reg_names_arm64[j], regval, test->results[i].regs[k][1] );
                 if (regptr)
                 {
                     if (test->last_set_reg_ptr && j > test->last_set_reg_ptr && j <= 30)
@@ -1680,7 +1696,7 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
                     {
                         ok( regptr != (void *)unset_reg, "register %s should have pointer set\n", reg_names_arm64[j] );
                         if (regptr != (void *)unset_reg)
-                            ok( *regptr == regval, "register %s should have reg pointer to %llx / %llx\n",
+                            ok( *regptr == regval, "register %s should have reg pointer to %I64x / %I64x\n",
                                 reg_names_arm64[j], *regptr, regval );
                     }
                 }
@@ -1690,11 +1706,11 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
                 ok( k == nb_regs, "register %s should be set\n", reg_names_arm64[j] );
                 ok( !regptr || regptr == (void *)unset_reg, "register %s should not have pointer set\n", reg_names_arm64[j] );
                 if (j == lr)
-                    ok( context.Lr == ORIG_LR, "register lr wrong %llx/unset\n", context.Lr );
+                    ok( context.Lr == ORIG_LR, "register lr wrong %I64x/unset\n", context.Lr );
                 else if (j == x29)
-                    ok( context.Fp == orig_fp, "register fp wrong %llx/unset\n", context.Fp );
+                    ok( context.Fp == orig_fp, "register fp wrong %I64x/unset\n", context.Fp );
                 else
-                    ok( regval == unset_reg, "register %s wrong %llx/unset\n", reg_names_arm64[j], regval);
+                    ok( regval == unset_reg, "register %s wrong %I64x/unset\n", reg_names_arm64[j], regval);
             }
         }
         winetest_pop_context();
@@ -2473,28 +2489,45 @@ static void test_virtual_unwind_arm64(void)
         { 0x0c,  0x00,  0,     ORIG_LR, 0x020, TRUE,  { {-1,-1} }},
     };
 
+    static const BYTE function_18[] =
+    {
+        0x1f, 0x20, 0x03, 0xd5,   /* 00: nop */
+        0x1f, 0x20, 0x03, 0xd5,   /* 04: nop */
+        0xc0, 0x03, 0x5f, 0xd6,   /* 08: ret */
+    };
+
+    static const struct results_arm64 results_18[] =
+    {
+      /* offset  fp    handler  pc      frame offset  registers */
+        { 0x00,  0x00,  -1,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
+        { 0x04,  0x00,  -1,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
+        { 0x08,  0x00,  -1,     ORIG_LR, 0x000, TRUE,  { {-1,-1} }},
+        { 0x0c,  0x00,  -2,     0, 0xdeadbeef, FALSE, { {-1,-1} }},
+    };
+
     static const struct unwind_test_arm64 tests[] =
     {
-#define TEST(func, unwind, unwind_packed, results, unwound_clear, last_ptr) \
-        { func, sizeof(func), unwind, unwind_packed ? 0 : sizeof(unwind), results, ARRAY_SIZE(results), unwound_clear, last_ptr }
-        TEST(function_0, unwind_info_0, 0, results_0, 0, 0),
-        TEST(function_1, unwind_info_1, 1, results_1, 0, 0),
-        TEST(function_2, unwind_info_2, 0, results_2, 1, 0),
-        TEST(function_3, unwind_info_3, 0, results_3, 1, x28),
-        TEST(function_4, unwind_info_4, 0, results_4, 0, 0),
-        TEST(function_5, unwind_info_5, 0, results_5, 0, 0),
-        TEST(function_6, unwind_info_6, 1, results_6, 0, 0),
-        TEST(function_7, unwind_info_7, 1, results_7, 0, 0),
-        TEST(function_8, unwind_info_8, 1, results_8, 0, 0),
-        TEST(function_9, unwind_info_9, 1, results_9, 0, 0),
-        TEST(function_10, unwind_info_10, 1, results_10, 0, 0),
-        TEST(function_11, unwind_info_11, 1, results_11, 0, 0),
-        TEST(function_12, unwind_info_12, 1, results_12, 0, 0),
-        TEST(function_13, unwind_info_13, 1, results_13, 0, 0),
-        TEST(function_14, unwind_info_14, 0, results_14, 0, 0),
-        TEST(function_15, unwind_info_15, 0, results_15, 0, 0),
-        TEST(function_16, unwind_info_16, 0, results_16, 1, x18),
-        TEST(function_17, unwind_info_17, 0, results_17, 2, 0),
+#define TEST(func, unwind, size, results, unwound_clear, last_ptr) \
+        { func, sizeof(func), unwind, size, results, ARRAY_SIZE(results), unwound_clear, last_ptr }
+        TEST(function_0, unwind_info_0, sizeof(unwind_info_0), results_0, 0, 0),
+        TEST(function_1, unwind_info_1, 0, results_1, 0, 0),
+        TEST(function_2, unwind_info_2, sizeof(unwind_info_2), results_2, 1, 0),
+        TEST(function_3, unwind_info_3, sizeof(unwind_info_3), results_3, 1, x28),
+        TEST(function_4, unwind_info_4, sizeof(unwind_info_4), results_4, 0, 0),
+        TEST(function_5, unwind_info_5, sizeof(unwind_info_5), results_5, 0, 0),
+        TEST(function_6, unwind_info_6, 0, results_6, 0, 0),
+        TEST(function_7, unwind_info_7, 0, results_7, 0, 0),
+        TEST(function_8, unwind_info_8, 0, results_8, 0, 0),
+        TEST(function_9, unwind_info_9, 0, results_9, 0, 0),
+        TEST(function_10, unwind_info_10, 0, results_10, 0, 0),
+        TEST(function_11, unwind_info_11, 0, results_11, 0, 0),
+        TEST(function_12, unwind_info_12, 0, results_12, 0, 0),
+        TEST(function_13, unwind_info_13, 0, results_13, 0, 0),
+        TEST(function_14, unwind_info_14, sizeof(unwind_info_14), results_14, 0, 0),
+        TEST(function_15, unwind_info_15, sizeof(unwind_info_15), results_15, 0, 0),
+        TEST(function_16, unwind_info_16, sizeof(unwind_info_16), results_16, 1, x18),
+        TEST(function_17, unwind_info_17, sizeof(unwind_info_17), results_17, 2, 0),
+        TEST(function_18, NULL, 0, results_18, 0, 0),
 #undef TEST
     };
     unsigned int i;

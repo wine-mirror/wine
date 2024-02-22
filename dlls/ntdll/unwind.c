@@ -779,12 +779,20 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 {
     void *handler;
 
-    TRACE( "type %lx pc %I64x sp %I64x func %I64x\n", type, pc, context->Sp, base + func->BeginAddress );
+    TRACE( "type %lx pc %I64x sp %I64x\n", type, pc, context->Sp );
+
+    if (!func && pc == context->Lr)  /* invalid leaf function */
+    {
+        context->Pc = 0;
+        return NULL;
+    }
 
     *handler_data = NULL;
     context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
 
-    if (func->Flag)
+    if (!func)  /* leaf function */
+        handler = NULL;
+    else if (func->Flag)
         handler = unwind_packed_data( base, pc, func, context, ctx_ptr );
     else
         handler = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );

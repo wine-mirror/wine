@@ -147,33 +147,23 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
  */
 static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
-    NTSTATUS status;
-    DWORD64 pc;
+    DWORD64 pc = context->Pc;
 
-    dispatch->ImageBase        = 0;
-    dispatch->ScopeIndex       = 0;
-    dispatch->EstablisherFrame = 0;
-    dispatch->ControlPc        = context->Pc;
+    dispatch->ScopeIndex = 0;
+    dispatch->ControlPc  = pc;
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
-    pc = context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0);
+    if (dispatch->ControlPcIsUnwound) pc -= 4;
 
-    if ((dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, &dispatch->ImageBase,
-                                                           dispatch->HistoryTable )))
+    dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, &dispatch->ImageBase, dispatch->HistoryTable );
+    dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc, dispatch->FunctionEntry,
+                                                  context, &dispatch->HandlerData,
+                                                  &dispatch->EstablisherFrame, NULL );
+    if (!context->Pc)
     {
-        dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc,
-                                                      dispatch->FunctionEntry, context,
-                                                      &dispatch->HandlerData, &dispatch->EstablisherFrame,
-                                                      NULL );
-        return STATUS_SUCCESS;
+        WARN( "exception data not found for pc %p, lr %p\n", (void *)pc, (void *)context->Lr );
+        return STATUS_INVALID_DISPOSITION;
     }
-
-    WARN( "exception data not found for pc %p, lr %p\n", (void *)context->Pc, (void *)context->Lr );
-    status = context->Pc != context->Lr ? STATUS_SUCCESS : STATUS_INVALID_DISPOSITION;
-    dispatch->EstablisherFrame = context->Sp;
-    dispatch->LanguageHandler = NULL;
-    context->Pc = context->Lr;
-    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
-    return status;
+    return STATUS_SUCCESS;
 }
 
 
@@ -383,7 +373,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 break;
             case ExceptionNestedException:
                 rec->ExceptionFlags |= EH_NESTED_CALL;
-                TRACE_(seh)( "nested exception\n" );
+                TRACE( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
@@ -414,7 +404,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 break;
             case ExceptionNestedException:
                 rec->ExceptionFlags |= EH_NESTED_CALL;
-                TRACE_(seh)( "nested exception\n" );
+                TRACE( "nested exception\n" );
                 break;
             case ExceptionCollidedUnwind: {
                 ULONG64 frame;
