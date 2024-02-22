@@ -29,6 +29,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
+static CRITICAL_SECTION table_cs;
+static CRITICAL_SECTION_DEBUG table_debug =
+{
+    0, 0, &table_cs,
+    { &table_debug.ProcessLocksList, &table_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": table_cs") }
+};
+static CRITICAL_SECTION table_cs = { &table_debug, -1, 0, 0, 0, 0 };
+
 HRESULT get_column_index( const struct table *table, const WCHAR *name, UINT *column )
 {
     UINT i;
@@ -329,6 +338,7 @@ void free_table( struct table *table )
 {
     if (!table) return;
 
+    EnterCriticalSection( &table_cs );
     clear_table( table );
     if (table->flags & TABLE_FLAG_DYNAMIC)
     {
@@ -339,20 +349,23 @@ void free_table( struct table *table )
         list_remove( &table->entry );
         free( table );
     }
+    LeaveCriticalSection( &table_cs );
 }
 
 void release_table( struct table *table )
 {
     if (!InterlockedDecrement( &table->refs )) free_table( table );
+    LeaveCriticalSection( &table_cs );
 }
 
-struct table *addref_table( struct table *table )
+struct table *grab_table( struct table *table )
 {
+    EnterCriticalSection( &table_cs );
     InterlockedIncrement( &table->refs );
     return table;
 }
 
-struct table *grab_table( enum wbm_namespace ns, const WCHAR *name )
+struct table *find_table( enum wbm_namespace ns, const WCHAR *name )
 {
     struct table *table;
 
@@ -363,7 +376,7 @@ struct table *grab_table( enum wbm_namespace ns, const WCHAR *name )
         if (name && !wcsicmp( table->name, name ))
         {
             TRACE("returning %p\n", table);
-            return addref_table( table );
+            return grab_table( table );
         }
     }
     return NULL;
@@ -395,15 +408,19 @@ BOOL add_table( enum wbm_namespace ns, struct table *table )
 
     if (ns == WBEMPROX_NAMESPACE_LAST) return FALSE;
 
+    EnterCriticalSection( &table_cs );
     LIST_FOR_EACH_ENTRY( iter, table_list[ns], struct table, entry )
     {
         if (!wcsicmp( iter->name, table->name ))
         {
             TRACE("table %s already exists\n", debugstr_w(table->name));
+            LeaveCriticalSection( &table_cs );
             return FALSE;
         }
     }
     list_add_tail( table_list[ns], &table->entry );
+    LeaveCriticalSection( &table_cs );
+
     TRACE("added %p\n", table);
     return TRUE;
 }
@@ -414,7 +431,7 @@ BSTR get_method_name( enum wbm_namespace ns, const WCHAR *class, UINT index )
     UINT i, count = 0;
     BSTR ret;
 
-    if (!(table = grab_table( ns, class ))) return NULL;
+    if (!(table = find_table( ns, class ))) return NULL;
 
     for (i = 0; i < table->num_cols; i++)
     {
