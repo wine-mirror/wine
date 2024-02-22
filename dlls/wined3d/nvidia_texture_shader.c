@@ -481,16 +481,17 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 
 static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    unsigned int stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    BOOL tex_used = context->fixed_function_usage_map & (1u << stage);
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+}
+
+static void nvrc_update_color_op(struct wined3d_context_gl *context_gl,
+        const struct wined3d_state *state, unsigned int stage)
+{
+    BOOL tex_used = context_gl->c.fixed_function_usage_map & (1u << stage);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int mapped_stage = context_gl->tex_unit_map[stage];
 
     TRACE("Setting color op for stage %u.\n", stage);
-
-    /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-    if (use_ps(state)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 
@@ -504,16 +505,16 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
         wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
     }
 
-    if (context->lowest_disabled_stage > 0)
+    if (context_gl->c.lowest_disabled_stage > 0)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_REGISTER_COMBINERS_NV);
-        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, context->lowest_disabled_stage));
+        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, context_gl->c.lowest_disabled_stage));
     }
     else
     {
         gl_info->gl_ops.gl.p_glDisable(GL_REGISTER_COMBINERS_NV);
     }
-    if (stage >= context->lowest_disabled_stage)
+    if (stage >= context_gl->c.lowest_disabled_stage)
     {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
@@ -542,18 +543,12 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
         return;
     }
 
-    /* The sampler will also activate the correct texture dimensions, so no need to do it here
-     * if the sampler for this stage is dirty
-     */
-    if (!isStateDirty(context, STATE_SAMPLER(stage)))
+    if (tex_used)
     {
-        if (tex_used)
-        {
-            if (gl_info->supported[NV_TEXTURE_SHADER2])
-                nvts_activate_dimensions(state, stage, context_gl);
-            else
-                texture_activate_dimensions(wined3d_state_get_ffp_texture(state, stage), gl_info);
-        }
+        if (gl_info->supported[NV_TEXTURE_SHADER2])
+            nvts_activate_dimensions(state, stage, context_gl);
+        else
+            texture_activate_dimensions(wined3d_state_get_ffp_texture(state, stage), gl_info);
     }
 
     /* Set the texture combiners */
@@ -572,7 +567,7 @@ static void nvrc_colorop(struct wined3d_context *context, const struct wined3d_s
     {
         BOOL usesBump = (state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP_LUMINANCE
                 || state->texture_states[stage][WINED3D_TSS_COLOR_OP] == WINED3D_TOP_BUMPENVMAP);
-        BOOL usedBump = !!(context->texShaderBumpMap & 1u << (stage + 1));
+        BOOL usedBump = !!(context_gl->c.texShaderBumpMap & 1u << (stage + 1));
         if (usesBump != usedBump)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage + 1);
@@ -672,6 +667,12 @@ static void nvrc_apply_draw_state(struct wined3d_context *context, const struct 
 
     gl_info->gl_ops.gl.p_glEnable(GL_REGISTER_COMBINERS_NV);
     checkGLcall("glEnable(GL_REGISTER_COMBINERS_NV)");
+
+    if (context->shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL))
+    {
+        for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+            nvrc_update_color_op(context_gl, state, i);
+    }
 
     if (context->constant_update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
