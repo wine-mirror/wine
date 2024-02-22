@@ -391,40 +391,41 @@ static void wine_vk_free_command_buffers(struct wine_device *device,
     }
 }
 
-static void wine_vk_device_get_queues(struct wine_device *device,
-        uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags,
-        struct wine_queue *queues, VkQueue *handles)
+static void wine_vk_device_init_queues(struct wine_device *device, const VkDeviceQueueCreateInfo *info,
+        VkQueue *handles)
 {
     VkDeviceQueueInfo2 queue_info;
-    unsigned int i;
+    UINT i;
 
-    for (i = 0; i < queue_count; i++)
+    TRACE("Queue family index %u, queue count %u.\n", info->queueFamilyIndex, info->queueCount);
+
+    for (i = 0; i < info->queueCount; i++)
     {
-        struct wine_queue *queue = &queues[i];
+        struct wine_queue *queue = device->queues + device->queue_count + i;
 
         queue->device = device;
         queue->handle = (*handles)++;
-        queue->family_index = family_index;
+        queue->family_index = info->queueFamilyIndex;
         queue->queue_index = i;
-        queue->flags = flags;
+        queue->flags = info->flags;
 
         /* The Vulkan spec says:
          *
          * "vkGetDeviceQueue must only be used to get queues that were created
          * with the flags parameter of VkDeviceQueueCreateInfo set to zero."
          */
-        if (flags && device->funcs.p_vkGetDeviceQueue2)
+        if (info->flags && device->funcs.p_vkGetDeviceQueue2)
         {
             queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
             queue_info.pNext = NULL;
-            queue_info.flags = flags;
-            queue_info.queueFamilyIndex = family_index;
+            queue_info.flags = info->flags;
+            queue_info.queueFamilyIndex = info->queueFamilyIndex;
             queue_info.queueIndex = i;
             device->funcs.p_vkGetDeviceQueue2(device->host_device, &queue_info, &queue->host_queue);
         }
         else
         {
-            device->funcs.p_vkGetDeviceQueue(device->host_device, family_index, i, &queue->host_queue);
+            device->funcs.p_vkGetDeviceQueue(device->host_device, info->queueFamilyIndex, i, &queue->host_queue);
         }
 
         queue->handle->base.unix_handle = (uintptr_t)queue;
@@ -432,6 +433,8 @@ static void wine_vk_device_get_queues(struct wine_device *device,
 
         TRACE("Got device %p queue %p, host_queue %p.\n", device, queue, queue->host_queue);
     }
+
+    device->queue_count += info->queueCount;
 }
 
 static const char *find_extension(const char *const *extensions, uint32_t count, const char *ext)
@@ -807,7 +810,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     VkDevice device_handle = client_ptr;
     VkDeviceCreateInfo create_info_host;
     struct VkQueue_T *queue_handles;
-    struct wine_queue *next_queue;
     struct conversion_context ctx;
     struct wine_device *object;
     unsigned int queue_count, i;
@@ -859,20 +861,9 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     ALL_VK_DEVICE_FUNCS()
 #undef USE_VK_FUNC
 
-    next_queue = object->queues;
     queue_handles = device_handle->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-    {
-        uint32_t flags = create_info_host.pQueueCreateInfos[i].flags;
-        uint32_t family_index = create_info_host.pQueueCreateInfos[i].queueFamilyIndex;
-        uint32_t queue_count = create_info_host.pQueueCreateInfos[i].queueCount;
-
-        TRACE("Queue family index %u, queue count %u.\n", family_index, queue_count);
-
-        wine_vk_device_get_queues(object, family_index, queue_count, flags, next_queue, &queue_handles);
-        next_queue += queue_count;
-    }
-    object->queue_count = next_queue - object->queues;
+        wine_vk_device_init_queues(object, create_info_host.pQueueCreateInfos + i, &queue_handles);
 
     device_handle->quirks = instance->quirks;
     device_handle->base.unix_handle = (uintptr_t)object;
