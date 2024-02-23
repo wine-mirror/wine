@@ -496,8 +496,13 @@ static HRESULT WINAPI RegistrationTrigger_put_EndBoundary(IRegistrationTrigger *
 static HRESULT WINAPI RegistrationTrigger_get_Enabled(IRegistrationTrigger *iface, VARIANT_BOOL *enabled)
 {
     RegistrationTrigger *This = impl_from_IRegistrationTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, enabled);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, enabled);
+
+    if (!enabled) return E_POINTER;
+
+    *enabled = This->enabled ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationTrigger_put_Enabled(IRegistrationTrigger *iface, VARIANT_BOOL enabled)
@@ -559,7 +564,7 @@ static HRESULT RegistrationTrigger_create(ITrigger **trigger)
 
     registration_trigger->IRegistrationTrigger_iface.lpVtbl = &RegistrationTrigger_vtbl;
     registration_trigger->ref = 1;
-    registration_trigger->enabled = FALSE;
+    registration_trigger->enabled = TRUE;
 
     *trigger = (ITrigger*)&registration_trigger->IRegistrationTrigger_iface;
     return S_OK;

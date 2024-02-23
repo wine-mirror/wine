@@ -1402,16 +1402,16 @@ static void test_registration_trigger(ITrigger *trigger)
 
     enabled = VARIANT_FALSE;
     hr = IRegistrationTrigger_get_Enabled(reg_trigger, &enabled);
-    todo_wine ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
-    todo_wine ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
 
     hr = IRegistrationTrigger_put_Enabled(reg_trigger, VARIANT_FALSE);
     ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
 
     enabled = VARIANT_TRUE;
     hr = IRegistrationTrigger_get_Enabled(reg_trigger, &enabled);
-    todo_wine ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
-    todo_wine ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
+    ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
 
     IRegistrationTrigger_Release(reg_trigger);
 }
