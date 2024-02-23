@@ -1700,12 +1700,10 @@ int main(int argc, char **argv)
                     else if (!strcmp("-marm", opts.args.str[i] ) || !strcmp("-mthumb", opts.args.str[i] ))
                     {
 			raw_linker_arg = 1;
-                        raw_winebuild_arg = 1;
                     }
                     else if (!strncmp("-mcpu=", opts.args.str[i], 6) ||
                              !strncmp("-mfpu=", opts.args.str[i], 6) ||
-                             !strncmp("-march=", opts.args.str[i], 7) ||
-                             !strncmp("-mfloat-abi=", opts.args.str[i], 12))
+                             !strncmp("-march=", opts.args.str[i], 7))
                         raw_winebuild_arg = 1;
 		    break;
                 case 'n':
