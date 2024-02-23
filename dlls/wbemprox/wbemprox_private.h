@@ -241,8 +241,9 @@ VARTYPE to_vartype( CIMTYPE );
 void destroy_array( struct array *, CIMTYPE );
 BOOL is_result_prop( const struct view *, const WCHAR * );
 HRESULT get_properties( const struct view *, UINT, LONG, SAFEARRAY ** );
-HRESULT get_object( enum wbm_namespace ns, const WCHAR *, IWbemClassObject ** );
-BSTR get_method_name( enum wbm_namespace ns, const WCHAR *, UINT );
+HRESULT get_object( enum wbm_namespace, const WCHAR *, IWbemClassObject ** );
+BSTR get_method_name( enum wbm_namespace, const WCHAR *, UINT );
+WCHAR *get_first_key_property( enum wbm_namespace, const WCHAR * );
 void set_variant( VARTYPE, LONGLONG, void *, VARIANT * );
 HRESULT create_signature( enum wbm_namespace ns, const WCHAR *, const WCHAR *, enum param_direction,
                           IWbemClassObject ** );

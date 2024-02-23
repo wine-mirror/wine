@@ -449,3 +449,24 @@ BSTR get_method_name( enum wbm_namespace ns, const WCHAR *class, UINT index )
     release_table( table );
     return NULL;
 }
+
+WCHAR *get_first_key_property( enum wbm_namespace ns, const WCHAR *class )
+{
+    struct table *table;
+    WCHAR *ret = NULL;
+    UINT i;
+
+    if (!(table = find_table( ns, class ))) return NULL;
+
+    for (i = 0; i < table->num_cols; i++)
+    {
+        if (table->columns[i].type & COL_FLAG_KEY)
+        {
+            ret = wcsdup( table->columns[i].name );
+            break;
+        }
+    }
+
+    release_table( table );
+    return ret;
+}
