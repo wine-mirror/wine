@@ -408,6 +408,18 @@ interface IDailyTrigger : ITrigger
 }
 
 [
+    uuid(4c8fec3a-c218-4e0c-b23d-629024db91a2),
+    oleautomation,
+    dual,
+    nonextensible
+]
+interface IRegistrationTrigger : ITrigger
+{
+    [propget] HRESULT Delay([out, retval] BSTR *pDelay);
+    [propput] HRESULT Delay([in] BSTR delay);
+}
+
+[
     object,
     oleautomation,
     uuid(85df5081-1b24-4f32-878a-d9d14df4cb77)
