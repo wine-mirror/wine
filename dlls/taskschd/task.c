@@ -326,6 +326,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
 
 typedef struct {
     IRegistrationTrigger IRegistrationTrigger_iface;
+    BOOL enabled;
     LONG ref;
 } RegistrationTrigger;
 
@@ -502,8 +503,11 @@ static HRESULT WINAPI RegistrationTrigger_get_Enabled(IRegistrationTrigger *ifac
 static HRESULT WINAPI RegistrationTrigger_put_Enabled(IRegistrationTrigger *iface, VARIANT_BOOL enabled)
 {
     RegistrationTrigger *This = impl_from_IRegistrationTrigger(iface);
-    FIXME("(%p)->(%x)\n", This, enabled);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, enabled);
+
+    This->enabled = !!enabled;
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationTrigger_get_Delay(IRegistrationTrigger *iface, BSTR *pDelay)
@@ -555,6 +559,7 @@ static HRESULT RegistrationTrigger_create(ITrigger **trigger)
 
     registration_trigger->IRegistrationTrigger_iface.lpVtbl = &RegistrationTrigger_vtbl;
     registration_trigger->ref = 1;
+    registration_trigger->enabled = FALSE;
 
     *trigger = (ITrigger*)&registration_trigger->IRegistrationTrigger_iface;
     return S_OK;

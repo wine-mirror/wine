@@ -1406,7 +1406,7 @@ static void test_registration_trigger(ITrigger *trigger)
     todo_wine ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
 
     hr = IRegistrationTrigger_put_Enabled(reg_trigger, VARIANT_FALSE);
-    todo_wine ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
+    ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
 
     enabled = VARIANT_TRUE;
     hr = IRegistrationTrigger_get_Enabled(reg_trigger, &enabled);
