@@ -4705,6 +4705,7 @@ static void free_window_handle( HWND hwnd )
  */
 LRESULT destroy_window( HWND hwnd )
 {
+    struct list vulkan_surfaces = LIST_INIT(vulkan_surfaces);
     struct window_surface *surface;
     HMENU menu = 0, sys_menu;
     WND *win;
@@ -4751,6 +4752,7 @@ LRESULT destroy_window( HWND hwnd )
     free_dce( win->dce, hwnd );
     win->dce = NULL;
     NtUserDestroyCursor( win->hIconSmall2, 0 );
+    list_move_tail( &vulkan_surfaces, &win->vulkan_surfaces );
     surface = win->surface;
     win->surface = NULL;
     release_win_ptr( win );
@@ -4763,6 +4765,7 @@ LRESULT destroy_window( HWND hwnd )
         window_surface_release( surface );
     }
 
+    vulkan_detach_surfaces( &vulkan_surfaces );
     user_driver->pDestroyWindow( hwnd );
 
     free_window_handle( hwnd );
@@ -4885,6 +4888,8 @@ void destroy_thread_windows(void)
         free_list = win->obj.handle;
         TRACE( "destroying %p\n", win );
 
+        vulkan_detach_surfaces( &win->vulkan_surfaces );
+
         if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
             NtUserDestroyMenu( UlongToHandle(win->wIDmenu) );
         if (win->hSysMenu) NtUserDestroyMenu( win->hSysMenu );
@@ -4987,6 +4992,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->cbWndExtra = extra_bytes;
     win->dpi        = dpi;
     win->dpi_awareness = awareness;
+    list_init( &win->vulkan_surfaces );
     set_user_handle_ptr( handle, &win->obj );
     if (is_winproc_unicode( win->winproc, !ansi )) win->flags |= WIN_ISUNICODE;
     return win;

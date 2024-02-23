@@ -77,6 +77,7 @@ typedef struct tagWND
     UINT               dpi;           /* window DPI */
     DPI_AWARENESS      dpi_awareness; /* DPI awareness */
     struct window_surface *surface;   /* Window surface if any */
+    struct list        vulkan_surfaces; /* list of vulkan surfaces created for this window */
     struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */
     int                pixel_format;  /* Pixel format set by the graphics driver */
     int                internal_pixel_format; /* Internal pixel format set via WGL_WINE_pixel_format_passthrough */
@@ -253,6 +254,9 @@ extern BOOL set_keyboard_auto_repeat( BOOL enable );
 
 /* systray.c */
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
+
+/* vulkan.c */
+extern void vulkan_detach_surfaces( struct list *surfaces );
 
 /* window.c */
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );
