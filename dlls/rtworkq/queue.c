@@ -892,9 +892,13 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
                 IRtwqAsyncResult_SetStatus(item->result, RTWQ_E_OPERATION_CANCELLED);
                 invoke_async_callback(item->result);
                 CloseThreadpoolWait(item->u.wait_object);
+                item->u.wait_object = NULL;
             }
             else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
+            {
                 CloseThreadpoolTimer(item->u.timer_object);
+                item->u.timer_object = NULL;
+            }
             else
                 WARN("Unknown item key mask %#I64x.\n", key);
             queue_release_pending_item(item);
