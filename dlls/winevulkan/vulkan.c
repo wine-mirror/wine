@@ -893,8 +893,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
             object->quirks |= WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR;
     }
 
-    object->quirks |= WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT;
-
     client_instance->base.unix_handle = (uintptr_t)object;
     *instance = client_instance;
     TRACE("Created instance %p, host_instance %p.\n", object, object->host_instance);
@@ -1866,7 +1864,7 @@ static void adjust_surface_capabilities(struct wine_instance *instance, struct w
      * https://vulkan.gpuinfo.org/displayreport.php?id=9122#surface
      * https://vulkan.gpuinfo.org/displayreport.php?id=9121#surface
      */
-    if ((instance->quirks & WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT) && !capabilities->maxImageCount)
+    if (!capabilities->maxImageCount)
         capabilities->maxImageCount = max(capabilities->minImageCount, 16);
 
     /* Update the image extents to match what the Win32 WSI would provide. */
