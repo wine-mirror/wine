@@ -1391,6 +1391,31 @@ static void test_daily_trigger(ITrigger *trigger)
     IDailyTrigger_Release(daily_trigger);
 }
 
+static void test_registration_trigger(ITrigger *trigger)
+{
+    IRegistrationTrigger *reg_trigger;
+    VARIANT_BOOL enabled;
+    HRESULT hr;
+
+    hr = ITrigger_QueryInterface(trigger, &IID_IRegistrationTrigger, (void**)&reg_trigger);
+    ok(hr == S_OK, "Could not get IRegistrationTrigger iface: %08lx\n", hr);
+
+    enabled = VARIANT_FALSE;
+    hr = IRegistrationTrigger_get_Enabled(reg_trigger, &enabled);
+    todo_wine ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    todo_wine ok(enabled == VARIANT_TRUE, "got %d\n", enabled);
+
+    hr = IRegistrationTrigger_put_Enabled(reg_trigger, VARIANT_FALSE);
+    todo_wine ok(hr == S_OK, "put_Enabled failed: %08lx\n", hr);
+
+    enabled = VARIANT_TRUE;
+    hr = IRegistrationTrigger_get_Enabled(reg_trigger, &enabled);
+    todo_wine ok(hr == S_OK, "get_Enabled failed: %08lx\n", hr);
+    todo_wine ok(enabled == VARIANT_FALSE, "got %d\n", enabled);
+
+    IRegistrationTrigger_Release(reg_trigger);
+}
+
 static void create_action(ITaskDefinition *taskdef)
 {
     static WCHAR task1_exe[] = L"task1.exe";
@@ -1788,6 +1813,12 @@ static void test_TaskDefinition(void)
     ok(hr == S_OK, "Create failed: %08lx\n", hr);
     ok(trigger != NULL, "trigger = NULL\n");
     test_daily_trigger(trigger);
+    ITrigger_Release(trigger);
+
+    hr = ITriggerCollection_Create(trigger_col, TASK_TRIGGER_REGISTRATION, &trigger);
+    ok(hr == S_OK, "Create failed: %08lx\n", hr);
+    ok(trigger != NULL, "trigger = NULL\n");
+    test_registration_trigger(trigger);
     ITrigger_Release(trigger);
     ITriggerCollection_Release(trigger_col);
 
