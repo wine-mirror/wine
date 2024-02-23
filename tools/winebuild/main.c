@@ -69,17 +69,6 @@ struct strarray nm_command = { 0 };
 char *cpu_option = NULL;
 char *fpu_option = NULL;
 char *arch_option = NULL;
-#ifdef __SOFTFP__
-const char *float_abi_option = "soft";
-#else
-const char *float_abi_option = "softfp";
-#endif
-
-#ifdef __thumb__
-int thumb_mode = 1;
-#else
-int thumb_mode = 0;
-#endif
 
 static struct strarray res_files;
 
@@ -164,7 +153,6 @@ static void set_target( const char *name )
     target_alias = xstrdup( name );
 
     if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
-    thumb_mode = target.cpu == CPU_ARM && is_pe();
     if (is_pe()) unwind_tables = 1;
 }
 
@@ -396,14 +384,11 @@ static void option_callback( int optc, char *optarg )
         if (!strcmp( optarg, "16" )) main_spec->type = SPEC_WIN16;
         else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
         else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
-        else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
-        else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
         else if (!strcmp( optarg, "unicode" )) main_spec->unicode_app = 1;
         else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
         else if (!strncmp( optarg, "fpu=", 4 )) fpu_option = xstrdup( optarg + 4 );
         else if (!strncmp( optarg, "arch=", 5 )) arch_option = xstrdup( optarg + 5 );
-        else if (!strncmp( optarg, "float-abi=", 10 )) float_abi_option = xstrdup( optarg + 10 );
         else fatal_error( "Unknown -m option '%s'\n", optarg );
         break;
     case 'M':
