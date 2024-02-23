@@ -1435,6 +1435,232 @@ static void test_find_in_path_pdb(void)
     ok(ret, "Couldn't remove directory\n");
 }
 
+static void test_load_modules_path(void)
+{
+    static const WCHAR* top_subdirs[] = {L"mismatch",
+                                         L"search.tmp", L"search.tmp\\dll", L"search.tmp\\symbols", L"search.tmp\\symbols\\dll", L"search.tmp\\dummy"};
+    static const struct debug_info_file
+    {
+        const GUID* guid; /* non-NULL means PDB/DS, DBG otherwise */
+        DWORD       age_or_timestamp; /* age for PDB, timestamp for DBG */
+        const WCHAR*module_path;
+    }
+    test_files[] =
+    {
+        /*  0 */ { &guid1, 0x0030cafe, L"bar.pdb" },
+        /*  1 */ { &guid1, 0x0030cafe, L"search.tmp\\bar.pdb" },
+        /*  2 */ { &guid1, 0x0030cafe, L"search.tmp\\dll\\bar.pdb" },
+        /*  3 */ { &guid1, 0x0030cafe, L"search.tmp\\symbols\\dll\\bar.pdb" },
+        /*  4 */ { &guid1, 0x0030cafe, L"search.tmp\\dummy\\bar.pdb" },
+        /*  5 */ { &guid1, 0x0031cafe, L"mismatch\\bar.pdb" },
+        /*  6 */ { &guid1, 0x0032cafe, L"search.tmp\\bar.pdb" },
+        /*  7 */ { &guid1, 0x0033cafe, L"search.tmp\\dll\\bar.pdb" },
+    };
+
+    static const struct module_path_test
+    {
+        /* input parameters */
+        DWORD        options;
+        const char  *search;     /* search path in SymInitialize (s=search, t=top=dll's dir, m=mismatch) */
+        const char  *test_files; /* various test_files to be created */
+        /* output parameters */
+        int          found_file;
+    }
+    module_path_tests[] =
+    {
+/* 0*/   {0,                            NULL,      "0",     0},
+         /* matching pdb, various directories searched */
+         {0,                            "s",       "0",     0},
+         {0,                            "s",       "01",    1},
+         {0,                            "s",       "1",     1},
+         {0,                            "s",       "2",     2},
+/* 5*/   {0,                            "s",       "3",     3},
+         {0,                            "s",       "1234",  1},
+         {0,                            "s",       "234",   2},
+         {0,                            "s",       "34",    3},
+         {0,                            "s",       "4",    -1},
+         /* no matching pdb, impact of options */
+/*10*/   {0,                            "s",       "7",    -1},
+         {SYMOPT_LOAD_ANYTHING,         "s",       "7",     7},
+         {SYMOPT_LOAD_ANYTHING,         "s",       "67",    6},
+         {SYMOPT_EXACT_SYMBOLS,         "s",       "7",    -1}, /* doesn't seem effective on path search */
+         /* mismatch and several search directories */
+         {0,                            "ms",      "51",    1},
+/*15*/   {0,                            "sm",      "51",    1},
+         {SYMOPT_LOAD_ANYTHING,         "ms",      "51",    1},
+         {SYMOPT_LOAD_ANYTHING,         "sm",      "51",    1},
+         {0,                            "ms",      "57",   -1},
+         {0,                            "sm",      "57",   -1},
+/*20*/   {SYMOPT_LOAD_ANYTHING,         "ms",      "57",    5},
+         {SYMOPT_LOAD_ANYTHING,         "sm",      "57",    7},
+    };
+
+    int i;
+    HANDLE dummy = (HANDLE)(ULONG_PTR)0xc4fef00d;
+    DWORD old_options;
+    IMAGEHLP_MODULEW64 im;
+    BOOL ret;
+    DWORD64 base;
+    WCHAR topdir[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    DWORD len;
+    union nt_header h;
+    struct debug_directory_blob* blob_ref;
+
+    old_options = SymGetOptions();
+    im.SizeOfStruct = sizeof(im);
+
+    len = GetTempPathW(ARRAY_SIZE(topdir), topdir);
+    ok(len && len < ARRAY_SIZE(topdir), "Unexpected length\n");
+    wcscat(topdir, L"dh.tmp\\");
+    ret = CreateDirectoryW(topdir, NULL);
+    ok(ret, "Couldn't create directory\n");
+    for (i = 0; i < ARRAY_SIZE(top_subdirs); i++)
+    {
+        make_path(filename, topdir, top_subdirs[i], NULL);
+        ret = CreateDirectoryW(filename, NULL);
+        ok(ret, "Couldn't create directory %ls\n", filename);
+    }
+
+    init_headers64(&h.nt_header64, 12324, 3242, 0);
+    blob_ref = make_pdb_ds_blob(12324, &guid1, 0x0030cafe, "bar.pdb");
+    make_path(filename, topdir, NULL, L"bar.dll");
+    create_test_dll(&h, sizeof(h.nt_header64), &blob_ref, 1, filename);
+
+    for (i = 0; i < ARRAY_SIZE(module_path_tests); i++)
+    {
+        const struct module_path_test *test = module_path_tests + i;
+        const char* ptr;
+
+        winetest_push_context("module_path_test %d", i);
+
+        /* setup debug info files */
+        for (ptr = test->test_files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(filename, topdir, NULL, test_files[val].module_path);
+                if (test_files[val].guid)
+                    create_test_pdb_ds(filename, test_files[val].guid, test_files[val].age_or_timestamp);
+                else
+                    create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64 /* FIXME */, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+
+        if (test->search)
+        {
+            filename[0]= L'\0';
+            for (ptr = test->search; *ptr; ptr++)
+            {
+                if (*filename) wcscat(filename, L";");
+                wcscat(filename, topdir);
+                switch (*ptr)
+                {
+                case 'm':
+                    wcscat(filename, L"mismatch\\");
+                    break;
+                case 's':
+                    wcscat(filename, L"search.tmp\\");
+                    break;
+                case 't':
+                    break;
+                default: assert(0);
+                }
+            }
+        }
+        SymSetOptions((SymGetOptions() & ~(SYMOPT_EXACT_SYMBOLS | SYMOPT_LOAD_ANYTHING)) | test->options);
+        ret = SymInitializeW(dummy, test->search ? filename : NULL, FALSE);
+        ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+        make_path(filename, topdir, NULL, L"bar.dll");
+        base = SymLoadModuleExW(dummy, NULL, filename, NULL, 0x4000, 0x6666, NULL, 0);
+        todo_wine_if(sizeof(void*) == 4)
+        ok(base == 0x4000, "SymLoadModuleExW failed: %lu\n", GetLastError());
+        if (base == 0x4000 && sizeof(void*) != 4) { /* temp */
+        im.SizeOfStruct = sizeof(im);
+        ret = SymGetModuleInfoW64(dummy, base, &im);
+        ok(ret, "SymGetModuleInfow64 failed: %lu\n", GetLastError());
+
+        make_path(filename, topdir, NULL, L"bar.dll");
+        ok(!wcscmp(im.LoadedImageName, filename),
+                   "Expected %ls as loaded image file, got '%ls' instead\n", L"bar.dll", im.LoadedImageName);
+        if (test->found_file == -1)
+        {
+            todo_wine
+            ok(im.SymType == SymNone, "Unexpected symtype %x\n", im.SymType);
+            ok(!im.LoadedPdbName[0], "Expected empty loaded pdb file, got '%ls' instead\n", im.LoadedPdbName);
+            todo_wine
+            ok(im.PdbAge == 0x0030cafe, "Expected %x as pdb-age, got %lx instead\n", 0x0030cafe, im.PdbAge);
+            ok(!im.PdbUnmatched, "Expecting matched PDB\n");
+        }
+        else
+        {
+            todo_wine
+            ok(im.SymType == SymPdb, "Unexpected symtype %x\n", im.SymType);
+            make_path(filename, topdir, NULL, test_files[test->found_file].module_path);
+            todo_wine
+            ok(!wcscmp(im.LoadedPdbName, filename),
+               "Expected %ls as loaded pdb file, got '%ls' instead\n", test_files[test->found_file].module_path, im.LoadedPdbName);
+            todo_wine
+            ok(im.PdbAge == test_files[test->found_file].age_or_timestamp,
+               "Expected %lx as pdb-age, got %lx instead\n",  test_files[test->found_file].age_or_timestamp, im.PdbAge);
+            todo_wine_if(i == 11 || i == 16 || i == 17)
+            ok(im.PdbUnmatched == !(test_files[test->found_file].age_or_timestamp == 0x0030cafe), "Expecting matched PDB\n");
+        }
+        todo_wine
+        ok(IsEqualGUID(&im.PdbSig70, &guid1), "Unexpected PDB GUID\n");
+        } /* temp */
+        ret = SymCleanup(dummy);
+        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+        for (ptr = test->test_files; *ptr; ptr++)
+        {
+            unsigned val = char2index(*ptr);
+            if (val < ARRAY_SIZE(test_files))
+            {
+                make_path(filename, topdir, NULL, test_files[val].module_path);
+                ret = DeleteFileW(filename);
+                ok(ret, "Couldn't delete file %c %ls\n", *ptr, filename);
+            }
+            else ok(0, "Unrecognized file reference %c\n", *ptr);
+        }
+        winetest_pop_context();
+    }
+    SymSetOptions(old_options);
+    free(blob_ref);
+    make_path(filename, topdir, NULL, L"bar.dll");
+    ret = DeleteFileW(filename);
+    ok(ret, "Couldn't delete file %ls\n", filename);
+    for (i = ARRAY_SIZE(top_subdirs) - 1; i >= 0; i--)
+    {
+        make_path(filename, topdir, top_subdirs[i], NULL);
+        ret = RemoveDirectoryW(filename);
+        ok(ret, "Couldn't create directory %ls\n", filename);
+    }
+    ret = RemoveDirectoryW(topdir);
+    todo_wine /* bug in Wine not closing all mappings */
+    ok(ret, "Couldn't remove directory\n");
+}
+
+static BOOL skip_too_old_dbghelp(void)
+{
+    IMAGEHLP_MODULEW64 im64 = {sizeof(im64)};
+    IMAGEHLP_MODULE im0 = {sizeof(im0)};
+    BOOL will_skip = TRUE;
+
+    if (!strcmp(winetest_platform, "wine")) return FALSE;
+    if (SymInitialize(GetCurrentProcess(), NULL, FALSE))
+    {
+        DWORD64 base = SymLoadModule(GetCurrentProcess(), NULL, "c:\\windows\\system32\\ntdll.dll", NULL, 0x4000, 0);
+        /* test if get module info succeeds with oldest structure format */
+        if (base)
+            will_skip = !SymGetModuleInfoW64(GetCurrentProcess(), base, &im64) &&
+                SymGetModuleInfo(GetCurrentProcess(), base, &im0);
+        SymCleanup(GetCurrentProcess());
+    }
+    return will_skip;
+}
+
 START_TEST(path)
 {
     /* cleanup env variables that affect dbghelp's behavior */
@@ -1446,4 +1672,11 @@ START_TEST(path)
     test_srvgetindexes_dbg();
     test_find_in_path_pe();
     test_find_in_path_pdb();
+
+    if (skip_too_old_dbghelp())
+        win_skip("Not testing on too old dbghelp version\n");
+    else
+    {
+        test_load_modules_path();
+    }
 }
