@@ -619,12 +619,22 @@ struct gdip_font_link_info {
     struct list sections;
 };
 
+struct gdip_format_string_info {
+    GpGraphics *graphics;
+    GDIPCONST WCHAR *string;
+    INT index;
+    INT length;
+    struct gdip_font_link_info font_link_info;
+    GDIPCONST RectF *rect;
+    GDIPCONST GpStringFormat *format;
+    INT lineno;
+    const RectF *bounds;
+    INT *underlined_indexes;
+    INT underlined_index_count;
+    void *user_data;
+};
 
-typedef GpStatus (*gdip_format_string_callback)(GpGraphics *graphics,
-    GDIPCONST WCHAR *string, INT index, INT length, struct gdip_font_link_info *sections,
-    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, INT *underlined_indexes,
-    INT underlined_index_count, void *user_data);
+typedef GpStatus (*gdip_format_string_callback)(struct gdip_format_string_info *info);
 
 GpStatus gdip_format_string(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,

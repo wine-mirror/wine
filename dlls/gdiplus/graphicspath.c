@@ -997,33 +997,29 @@ struct format_string_args
     float ascent;
 };
 
-static GpStatus format_string_callback(GpGraphics *graphics,
-    GDIPCONST WCHAR *string, INT index, INT length, struct gdip_font_link_info *font_link_info,
-    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    INT lineno, const RectF *bounds, INT *underlined_indexes,
-    INT underlined_index_count, void *priv)
+static GpStatus format_string_callback(struct gdip_format_string_info* info)
 {
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
-    struct format_string_args *args = priv;
+    struct format_string_args *args = info->user_data;
     GpPath *path = args->path;
     GpStatus status = Ok;
-    float x = rect->X + (bounds->X - rect->X) * args->scale;
-    float y = rect->Y + (bounds->Y - rect->Y) * args->scale;
+    float x = info->rect->X + (info->bounds->X - info->rect->X) * args->scale;
+    float y = info->rect->Y + (info->bounds->Y - info->rect->Y) * args->scale;
     int i;
 
-    if (underlined_index_count)
+    if (info->underlined_index_count)
         FIXME("hotkey underlines not drawn yet\n");
 
-    if (y + bounds->Height * args->scale > args->maxY)
-        args->maxY = y + bounds->Height * args->scale;
+    if (y + info->bounds->Height * args->scale > args->maxY)
+        args->maxY = y + info->bounds->Height * args->scale;
 
-    for (i = index; i < length + index; ++i)
+    for (i = info->index; i < info->length + info->index; ++i)
     {
         GLYPHMETRICS gm;
         TTPOLYGONHEADER *ph = NULL, *origph;
         char *start;
         DWORD len, ofs = 0;
-        len = GetGlyphOutlineW(graphics->hdc, string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
+        len = GetGlyphOutlineW(info->graphics->hdc, info->string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
         if (len == GDI_ERROR)
         {
             status = GenericError;
@@ -1037,7 +1033,7 @@ static GpStatus format_string_callback(GpGraphics *graphics,
             status = OutOfMemory;
             break;
         }
-        GetGlyphOutlineW(graphics->hdc, string[i], GGO_BEZIER, &gm, len, start, &identity);
+        GetGlyphOutlineW(info->graphics->hdc, info->string[i], GGO_BEZIER, &gm, len, start, &identity);
 
         ofs = 0;
         while (ofs < len)
