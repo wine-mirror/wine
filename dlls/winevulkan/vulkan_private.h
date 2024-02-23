@@ -99,6 +99,7 @@ struct wine_instance
     struct wine_phys_dev **phys_devs;
     uint32_t phys_dev_count;
 
+    VkBool32 enable_win32_surface;
     VkBool32 enable_wrapper_list;
     struct list wrappers;
     pthread_rwlock_t wrapper_lock;

@@ -617,6 +617,10 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         {
             object->enable_wrapper_list = VK_TRUE;
         }
+        if (!strcmp(extension_name, "VK_KHR_win32_surface"))
+        {
+            object->enable_win32_surface = VK_TRUE;
+        }
     }
 
     if (use_external_memory())
@@ -2285,6 +2289,12 @@ NTSTATUS vk_is_available_instance_function(void *arg)
 {
     struct is_available_instance_function_params *params = arg;
     struct wine_instance *instance = wine_instance_from_handle(params->instance);
+
+    if (!strcmp(params->name, "vkCreateWin32SurfaceKHR"))
+        return instance->enable_win32_surface;
+    if (!strcmp(params->name, "vkGetPhysicalDeviceWin32PresentationSupportKHR"))
+        return instance->enable_win32_surface;
+
     return !!vk_funcs->p_vkGetInstanceProcAddr(instance->host_instance, params->name);
 }
 
