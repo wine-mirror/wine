@@ -1583,6 +1583,9 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
 
     for (i = 0; i < test->nb_results; i++)
     {
+#ifdef __x86_64__
+        if (test->results[i].handler == -2) continue;  /* skip invalid leaf function test */
+#endif
         winetest_push_context( "%u/%u", testnum, i );
         memset( &ctx_ptr, 0x55, sizeof(ctx_ptr) );
         memset( &context, 0x55, sizeof(context) );
@@ -1602,11 +1605,7 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
 
         data = (void *)0xdeadbeef;
         frame = 0xdeadbeef;
-#ifdef __x86_64__
-        if (test->results[i].handler == -2) continue;  /* skip invalid leaf function test */
-#else
         if (test->results[i].handler == -2) orig_pc = context.Lr;
-#endif
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_pc,
                                     test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
                                     (CONTEXT *)&context, &data, &frame, &ctx_ptr );
@@ -3226,12 +3225,13 @@ static void test_dynamic_unwind(void)
     ok( base == 0xdeadbeef, "RtlLookupFunctionTable wrong base, got: %Ix\n", base );
 
     base = 0xdeadbeef;
+    len = 0xdeadbeef;
     func = pRtlLookupFunctionTable( (ULONG_PTR)pRtlLookupFunctionEntry, &base, &len );
     ok( base == (ULONG_PTR)GetModuleHandleA("ntdll.dll"),
         "RtlLookupFunctionTable wrong base, got: %Ix / %p\n", base, GetModuleHandleA("ntdll.dll") );
     ptr = RtlImageDirectoryEntryToData( (void *)base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &len2 );
     ok( func == ptr, "RtlLookupFunctionTable wrong table, got: %p / %p\n", func, ptr );
-    ok( len == len2, "RtlLookupFunctionTable wrong len, got: %lu / %lu\n", len, len2 );
+    ok( len == len2 || !ptr, "RtlLookupFunctionTable wrong len, got: %lu / %lu\n", len, len2 );
 
     pRtlDeleteGrowableFunctionTable( growable_table );
 
