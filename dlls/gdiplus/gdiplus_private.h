@@ -621,6 +621,7 @@ struct gdip_font_link_info {
 
 struct gdip_format_string_info {
     GpGraphics *graphics;
+    HDC hdc;
     GDIPCONST WCHAR *string;
     INT index;
     INT length;
@@ -636,7 +637,7 @@ struct gdip_format_string_info {
 
 typedef GpStatus (*gdip_format_string_callback)(struct gdip_format_string_info *info);
 
-GpStatus gdip_format_string(GpGraphics *graphics,
+GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data);

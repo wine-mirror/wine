@@ -5217,7 +5217,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
     IUnknown_Release(unk);
 
     get_font_hfont(info->graphics, base_font, NULL, &hfont, NULL, NULL);
-    IMLangFontLink_GetFontCodePages(iMLFL, info->graphics->hdc, hfont, &font_codepages);
+    IMLangFontLink_GetFontCodePages(iMLFL, info->hdc, hfont, &font_codepages);
 
     while (progress < length)
     {
@@ -5232,10 +5232,10 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
         }
         else
         {
-            IMLangFontLink_MapFont(iMLFL, info->graphics->hdc, string_codepages, hfont, &map_hfont);
-            old_font = SelectObject(info->graphics->hdc, map_hfont);
-            GdipCreateFontFromDC(info->graphics->hdc, &gpfont);
-            SelectObject(info->graphics->hdc, old_font);
+            IMLangFontLink_MapFont(iMLFL, info->hdc, string_codepages, hfont, &map_hfont);
+            old_font = SelectObject(info->hdc, map_hfont);
+            GdipCreateFontFromDC(info->hdc, &gpfont);
+            SelectObject(info->hdc, old_font);
             IMLangFontLink_ReleaseFont(iMLFL, map_hfont);
             section->font = gpfont;
         }
@@ -5271,9 +5271,9 @@ static void font_link_get_text_extent_point(struct gdip_format_string_info *info
         to_measure_length = min(length - (i - index), section->end - i);
 
         get_font_hfont(info->graphics, section->font, NULL, &hfont, NULL, NULL);
-        oldhfont = SelectObject(info->graphics->hdc, hfont);
-        GetTextExtentExPointW(info->graphics->hdc, &info->string[i], to_measure_length, max_ext, &fitaux, NULL, &sizeaux);
-        SelectObject(info->graphics->hdc, oldhfont);
+        oldhfont = SelectObject(info->hdc, hfont);
+        GetTextExtentExPointW(info->hdc, &info->string[i], to_measure_length, max_ext, &fitaux, NULL, &sizeaux);
+        SelectObject(info->hdc, oldhfont);
         DeleteObject(hfont);
 
         max_ext -= sizeaux.cx;
@@ -5301,7 +5301,7 @@ static void release_font_link_info(struct gdip_font_link_info *font_link_info)
     }
 }
 
-GpStatus gdip_format_string(GpGraphics *graphics,
+GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, int ignore_empty_clip,
     gdip_format_string_callback callback, void *user_data)
@@ -5321,6 +5321,7 @@ GpStatus gdip_format_string(GpGraphics *graphics,
     struct gdip_format_string_info info;
 
     info.graphics = graphics;
+    info.hdc = hdc;
     info.rect = rect;
     info.bounds = &bounds;
     info.user_data = user_data;
@@ -5645,7 +5646,7 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     gdi_transform_acquire(graphics);
 
-    stat = gdip_format_string(graphics, string, length, font, &scaled_rect, stringFormat,
+    stat = gdip_format_string(graphics, hdc, string, length, font, &scaled_rect, stringFormat,
         (stringFormat->attr & StringFormatFlagsNoClip) != 0, measure_ranges_callback, &args);
 
     gdi_transform_release(graphics);
@@ -5755,7 +5756,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     gdi_transform_acquire(graphics);
 
-    gdip_format_string(graphics, string, length, font, &scaled_rect, format, TRUE,
+    gdip_format_string(graphics, hdc, string, length, font, &scaled_rect, format, TRUE,
         measure_string_callback, &args);
 
     gdi_transform_release(graphics);
@@ -5814,7 +5815,7 @@ static GpStatus draw_string_callback(struct gdip_format_string_info *info)
         REAL underline_y, underline_height;
         int i;
 
-        GetOutlineTextMetricsW(info->graphics->hdc, sizeof(otm), &otm);
+        GetOutlineTextMetricsW(info->hdc, sizeof(otm), &otm);
 
         underline_height = otm.otmsUnderscoreSize / args->rel_height;
         underline_y = position.Y - otm.otmsUnderscorePosition / args->rel_height - underline_height / 2;
@@ -5942,7 +5943,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     GetTextMetricsW(hdc, &textmetric);
     args.ascent = textmetric.tmAscent / rel_height;
 
-    gdip_format_string(graphics, string, length, font, &scaled_rect, format, TRUE,
+    gdip_format_string(graphics, hdc, string, length, font, &scaled_rect, format, TRUE,
         draw_string_callback, &args);
 
     gdi_transform_release(graphics);
