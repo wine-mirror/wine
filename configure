@@ -929,7 +929,6 @@ with_capi
 with_coreaudio
 with_cups
 with_dbus
-with_float_abi
 with_fontconfig
 with_freetype
 with_gettext
@@ -2489,7 +2488,6 @@ Optional Packages:
   --without-coreaudio     do not use the CoreAudio sound support
   --without-cups          do not use CUPS
   --without-dbus          do not use DBus (dynamic device support)
-  --with-float-abi=abi    specify the ABI (soft|softfp|hard) for ARM platforms
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettext       do not use gettext
@@ -4270,13 +4268,6 @@ fi
 if test ${with_dbus+y}
 then :
   withval=$with_dbus;
-fi
-
-
-# Check whether --with-float-abi was given.
-if test ${with_float_abi+y}
-then :
-  withval=$with_float_abi;
 fi
 
 
@@ -6367,19 +6358,8 @@ printf "%s\n" "$wine_cv_thumb2" >&6; }
     else
         CFLAGS="$CFLAGS -marm"
     fi
-    case $with_float_abi in
-      soft|softfp|hard)
-        float_abi=$with_float_abi ;;
-      *)
-        case $host_os in
-          *eabihf)
-            float_abi=hard ;;
-          *)
-            float_abi=softfp
-            saved_CFLAGS=$CFLAGS
-            CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
-            { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
-printf %s "checking whether $CC supports -mfloat-abi=$float_abi... " >&6; }
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports floating point instructions" >&5
+printf %s "checking whether $CC supports floating point instructions... " >&6; }
 if test ${wine_cv_float_abi+y}
 then :
   printf %s "(cached) " >&6
@@ -6406,16 +6386,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_float_abi" >&5
 printf "%s\n" "$wine_cv_float_abi" >&6; }
-            if test $wine_cv_float_abi = no
-            then
-                float_abi=soft
-                as_fn_append wine_warnings "|Floating point is not supported for this target. The resulting build won't be compatible with Windows ARM binaries."
-            fi
-            CFLAGS=$saved_CFLAGS
-        esac
-        ;;
-    esac
-    CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
+    test $wine_cv_float_abi != no || as_fn_error $? "The ARM target needs to support floating point instructions." "$LINENO" 5
     ;;
 esac
 
