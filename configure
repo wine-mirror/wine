@@ -6364,10 +6364,8 @@ printf "%s\n" "$wine_cv_thumb2" >&6; }
     if test x"$wine_cv_thumb2" = xyes
     then
         CFLAGS="$CFLAGS -mthumb"
-        TARGETFLAGS="$TARGETFLAGS -mthumb"
     else
         CFLAGS="$CFLAGS -marm"
-        TARGETFLAGS="$TARGETFLAGS -marm"
     fi
     case $with_float_abi in
       soft|softfp|hard)
@@ -6418,7 +6416,6 @@ printf "%s\n" "$wine_cv_float_abi" >&6; }
         ;;
     esac
     CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
-    TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
     ;;
 esac
 
