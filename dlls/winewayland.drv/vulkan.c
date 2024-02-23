@@ -62,19 +62,10 @@ static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
 static const struct vulkan_funcs vulkan_funcs;
 
-static pthread_mutex_t wine_vk_swapchain_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct list wine_vk_swapchain_list = LIST_INIT(wine_vk_swapchain_list);
-
 struct wine_vk_surface
 {
     struct wayland_client_surface *client;
     VkSurfaceKHR host_surface;
-};
-
-struct wine_vk_swapchain
-{
-    struct list entry;
-    VkSwapchainKHR host_swapchain;
 };
 
 static struct wine_vk_surface *wine_vk_surface_from_handle(VkSurfaceKHR handle)
@@ -106,82 +97,24 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
     free(wine_vk_surface);
 }
 
-static BOOL wine_vk_surface_is_valid(struct wine_vk_surface *wine_vk_surface)
-{
-    HWND hwnd = wine_vk_surface_get_hwnd(wine_vk_surface);
-    struct wayland_surface *wayland_surface;
-
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
-    {
-        pthread_mutex_unlock(&wayland_surface->mutex);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-static struct wine_vk_swapchain *wine_vk_swapchain_from_handle(VkSwapchainKHR handle)
-{
-    struct wine_vk_swapchain *wine_vk_swapchain;
-
-    pthread_mutex_lock(&wine_vk_swapchain_mutex);
-    LIST_FOR_EACH_ENTRY(wine_vk_swapchain, &wine_vk_swapchain_list,
-                        struct wine_vk_swapchain, entry)
-    {
-        if (wine_vk_swapchain->host_swapchain == handle)
-        {
-            pthread_mutex_unlock(&wine_vk_swapchain_mutex);
-            return wine_vk_swapchain;
-        }
-    }
-    pthread_mutex_unlock(&wine_vk_swapchain_mutex);
-
-    return NULL;
-}
-
 static VkResult wayland_vkCreateSwapchainKHR(VkDevice device,
                                              const VkSwapchainCreateInfoKHR *create_info,
                                              const VkAllocationCallbacks *allocator,
                                              VkSwapchainKHR *swapchain)
 {
-    VkResult res;
     VkSwapchainCreateInfoKHR create_info_host;
-    struct wine_vk_surface *wine_vk_surface;
-    struct wine_vk_swapchain *wine_vk_swapchain;
+    struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(create_info->surface);
 
     TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    wine_vk_surface = wine_vk_surface_from_handle(create_info->surface);
-    if (!wine_vk_surface_is_valid(wine_vk_surface))
-        return VK_ERROR_SURFACE_LOST_KHR;
-
-    wine_vk_swapchain = calloc(1, sizeof(*wine_vk_swapchain));
-    if (!wine_vk_swapchain)
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
     create_info_host = *create_info;
     create_info_host.surface = wine_vk_surface->host_surface;
 
-    res = pvkCreateSwapchainKHR(device, &create_info_host, NULL /* allocator */,
+    return pvkCreateSwapchainKHR(device, &create_info_host, NULL /* allocator */,
                                 swapchain);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to create vulkan wayland swapchain, res=%d\n", res);
-        free(wine_vk_swapchain);
-        return res;
-    }
-
-    wine_vk_swapchain->host_swapchain = *swapchain;
-
-    pthread_mutex_lock(&wine_vk_swapchain_mutex);
-    list_add_head(&wine_vk_swapchain_list, &wine_vk_swapchain->entry);
-    pthread_mutex_unlock(&wine_vk_swapchain_mutex);
-
-    TRACE("Created swapchain=0x%s\n", wine_dbgstr_longlong(*swapchain));
-    return res;
 }
 
 static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
@@ -270,22 +203,12 @@ static void wayland_vkDestroySwapchainKHR(VkDevice device,
                                           VkSwapchainKHR swapchain,
                                           const VkAllocationCallbacks *allocator)
 {
-    struct wine_vk_swapchain *wine_vk_swapchain;
-
     TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
     pvkDestroySwapchainKHR(device, swapchain, NULL /* allocator */);
-
-    if ((wine_vk_swapchain = wine_vk_swapchain_from_handle(swapchain)))
-    {
-        pthread_mutex_lock(&wine_vk_swapchain_mutex);
-        list_remove(&wine_vk_swapchain->entry);
-        pthread_mutex_unlock(&wine_vk_swapchain_mutex);
-        free(wine_vk_swapchain);
-    }
 }
 
 static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
