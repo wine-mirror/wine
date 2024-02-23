@@ -67,6 +67,7 @@ DECL_FUNCPTR(eglGetProcAddress);
 DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglMakeCurrent);
 DECL_FUNCPTR(eglQueryString);
+DECL_FUNCPTR(eglSwapBuffers);
 #undef DECL_FUNCPTR
 
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -88,7 +89,7 @@ struct wgl_context
     struct list entry;
     EGLConfig config;
     EGLContext context;
-    struct wayland_gl_drawable *draw, *read;
+    struct wayland_gl_drawable *draw, *read, *new_draw, *new_read;
 };
 
 /* lookup the existing drawable for a window, gl_object_mutex must be held */
@@ -200,6 +201,18 @@ err:
     return NULL;
 }
 
+static void update_context_drawables(struct wayland_gl_drawable *new,
+                                     struct wayland_gl_drawable *old)
+{
+    struct wgl_context *ctx;
+
+    LIST_FOR_EACH_ENTRY(ctx, &gl_contexts, struct wgl_context, entry)
+    {
+        if (ctx->draw == old || ctx->new_draw == old) ctx->new_draw = new;
+        if (ctx->read == old || ctx->new_read == old) ctx->new_read = new;
+    }
+}
+
 static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *new)
 {
     struct wayland_gl_drawable *old;
@@ -208,11 +221,31 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 
     if ((old = find_drawable_for_hwnd(hwnd))) list_remove(&old->entry);
     if (new) list_add_head(&gl_drawables, &new->entry);
-    /* TODO: Update context drawables */
+    if (old && new) update_context_drawables(new, old);
 
     pthread_mutex_unlock(&gl_object_mutex);
 
     if (old) wayland_gl_drawable_release(old);
+}
+
+static void wayland_gl_drawable_sync_surface_state(struct wayland_gl_drawable *gl)
+{
+    struct wayland_surface *wayland_surface;
+
+    if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
+
+    wayland_surface_ensure_contents(wayland_surface);
+
+    /* Handle any processed configure request, to ensure the related
+     * surface state is applied by the compositor. */
+    if (wayland_surface->processing.serial &&
+        wayland_surface->processing.processed &&
+        wayland_surface_reconfigure(wayland_surface))
+    {
+        wl_surface_commit(wayland_surface->wl_surface);
+    }
+
+    pthread_mutex_unlock(&wayland_surface->mutex);
 }
 
 static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
@@ -242,6 +275,7 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
         old_read = ctx->read;
         ctx->draw = draw;
         ctx->read = read;
+        ctx->new_draw = ctx->new_read = NULL;
         NtCurrentTeb()->glContext = ctx;
     }
     else
@@ -256,6 +290,35 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
     if (old_read) wayland_gl_drawable_release(old_read);
 
     return ret;
+}
+
+static void wgl_context_refresh(struct wgl_context *ctx)
+{
+    BOOL refresh = FALSE;
+    struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
+
+    pthread_mutex_lock(&gl_object_mutex);
+
+    if (ctx->new_draw)
+    {
+        old_draw = ctx->draw;
+        ctx->draw = wayland_gl_drawable_acquire(ctx->new_draw);
+        ctx->new_draw = NULL;
+        refresh = TRUE;
+    }
+    if (ctx->new_read)
+    {
+        old_read = ctx->read;
+        ctx->read = wayland_gl_drawable_acquire(ctx->new_read);
+        ctx->new_read = NULL;
+        refresh = TRUE;
+    }
+    if (refresh) p_eglMakeCurrent(egl_display, ctx->draw, ctx->read, ctx->context);
+
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    if (old_draw) wayland_gl_drawable_release(old_draw);
+    if (old_read) wayland_gl_drawable_release(old_read);
 }
 
 static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
@@ -454,6 +517,23 @@ static BOOL wayland_wglSetPixelFormatWINE(HDC hdc, int format)
     return set_pixel_format(hdc, format, TRUE);
 }
 
+static BOOL wayland_wglSwapBuffers(HDC hdc)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    HWND hwnd = NtUserWindowFromDC(hdc);
+    struct wayland_gl_drawable *gl;
+
+    if (!(gl = wayland_gl_drawable_get(hwnd))) return FALSE;
+
+    if (ctx) wgl_context_refresh(ctx);
+    wayland_gl_drawable_sync_surface_state(gl);
+    p_eglSwapBuffers(egl_display, gl->surface);
+
+    wayland_gl_drawable_release(gl);
+
+    return TRUE;
+}
+
 static BOOL has_extension(const char *list, const char *ext)
 {
     size_t len = strlen(ext);
@@ -606,6 +686,7 @@ static void init_opengl(void)
     LOAD_FUNCPTR_EGL(eglGetPlatformDisplay);
     LOAD_FUNCPTR_EGL(eglInitialize);
     LOAD_FUNCPTR_EGL(eglMakeCurrent);
+    LOAD_FUNCPTR_EGL(eglSwapBuffers);
 #undef LOAD_FUNCPTR_EGL
 
     egl_display = p_eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_KHR,
@@ -660,6 +741,7 @@ static struct opengl_funcs opengl_funcs =
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
         .p_wglMakeCurrent = wayland_wglMakeCurrent,
         .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
+        .p_wglSwapBuffers = wayland_wglSwapBuffers,
     }
 };
 
