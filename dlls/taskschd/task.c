@@ -1620,7 +1620,7 @@ static HRESULT WINAPI Principal_get_RunLevel(IPrincipal *iface, TASK_RUNLEVEL_TY
 static HRESULT WINAPI Principal_put_RunLevel(IPrincipal *iface, TASK_RUNLEVEL_TYPE run_level)
 {
     FIXME("%p,%u: stub\n", iface, run_level);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IPrincipalVtbl Principal_vtbl =
