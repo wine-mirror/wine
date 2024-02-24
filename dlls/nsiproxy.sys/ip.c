@@ -1544,7 +1544,7 @@ struct in6_addr str_to_in6_addr(char *nptr, char **endptr)
 
     for (int i = 0; i < sizeof(ret); i++)
     {
-        if (!isxdigit( *nptr ) || !isxdigit( *nptr + 1 ))
+        if (!isxdigit( *nptr ) || !isxdigit( *(nptr + 1) ))
         {
             /* invalid hex string */
             if (endptr) *endptr = nptr;
@@ -1574,7 +1574,7 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
 
 #ifdef __linux__
     {
-        char buf[512], *ptr;
+        char buf[512], *ptr, *end;
         UINT rtf_flags;
         FILE *fp;
 
@@ -1582,9 +1582,6 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
 
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
-            while (!isspace( *ptr )) ptr++;
-            *ptr++ = '\0';
-
             entry.prefix = str_to_in6_addr( ptr, &ptr );
             entry.prefix_len = strtoul( ptr + 1, &ptr, 16 );
             str_to_in6_addr( ptr + 1, &ptr ); /* source network, skip */
@@ -1597,6 +1594,10 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void 
             entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
             entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
 
+            while (isspace( *ptr )) ptr++;
+            end = ptr;
+            while (*end && !isspace(*end)) ++end;
+            *end = 0;
             if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
             if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
 
