@@ -396,6 +396,11 @@ static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *
     return res;
 }
 
+static const char *X11DRV_get_host_surface_extension(void)
+{
+    return "VK_KHR_xlib_surface";
+}
+
 static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
 {
     struct wine_vk_surface *x11_surface = surface_from_handle(surface);
@@ -419,6 +424,7 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkGetSwapchainImagesKHR,
     X11DRV_vkQueuePresentKHR,
 
+    X11DRV_get_host_surface_extension,
     X11DRV_wine_get_host_surface,
 };
 

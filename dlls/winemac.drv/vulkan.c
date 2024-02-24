@@ -361,6 +361,11 @@ static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *
     return res;
 }
 
+static const char *macdrv_get_host_surface_extension(void)
+{
+    return pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
+}
+
 static VkSurfaceKHR macdrv_wine_get_host_surface(VkSurfaceKHR surface)
 {
     struct wine_vk_surface *mac_surface = surface_from_handle(surface);
@@ -384,6 +389,7 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkGetSwapchainImagesKHR,
     macdrv_vkQueuePresentKHR,
 
+    macdrv_get_host_surface_extension,
     macdrv_wine_get_host_surface,
 };
 

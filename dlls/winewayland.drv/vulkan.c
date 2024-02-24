@@ -469,6 +469,11 @@ static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR 
     return check_queue_present(present_info, res);
 }
 
+static const char *wayland_get_host_surface_extension(void)
+{
+    return "VK_KHR_wayland_surface";
+}
+
 static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
 {
     return wine_vk_surface_from_handle(surface)->host_surface;
@@ -485,6 +490,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_vkGetSwapchainImagesKHR = wayland_vkGetSwapchainImagesKHR,
     .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
+    .p_get_host_surface_extension = wayland_get_host_surface_extension,
     .p_wine_get_host_surface = wayland_wine_get_host_surface,
 };
 

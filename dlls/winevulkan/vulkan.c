@@ -571,6 +571,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 {
     VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
     VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
+    const char **new_extensions;
     VkBaseInStructure *header;
     unsigned int i;
 
@@ -614,38 +615,45 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
-    TRACE("Enabled %u instance extensions.\n", dst->enabledExtensionCount);
-    for (i = 0; i < dst->enabledExtensionCount; i++)
+    for (i = 0; i < src->enabledExtensionCount; i++)
     {
-        const char *extension_name = dst->ppEnabledExtensionNames[i];
+        const char *extension_name = src->ppEnabledExtensionNames[i];
         TRACE("Extension %u: %s.\n", i, debugstr_a(extension_name));
         if (!wine_vk_instance_extension_supported(extension_name))
         {
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
+    }
+
+    new_extensions = conversion_context_alloc(ctx, (src->enabledExtensionCount + 2) *
+                                              sizeof(*src->ppEnabledExtensionNames));
+    memcpy(new_extensions, src->ppEnabledExtensionNames,
+           dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
+    dst->ppEnabledExtensionNames = new_extensions;
+    dst->enabledExtensionCount = src->enabledExtensionCount;
+
+    for (i = 0; i < dst->enabledExtensionCount; i++)
+    {
+        const char *extension_name = dst->ppEnabledExtensionNames[i];
         if (!strcmp(extension_name, "VK_EXT_debug_utils") || !strcmp(extension_name, "VK_EXT_debug_report"))
         {
             object->enable_wrapper_list = VK_TRUE;
         }
         if (!strcmp(extension_name, "VK_KHR_win32_surface"))
         {
+            new_extensions[i] = vk_funcs->p_get_host_surface_extension();
             object->enable_win32_surface = VK_TRUE;
         }
     }
 
     if (use_external_memory())
     {
-        const char **new_extensions;
-
-        new_extensions = conversion_context_alloc(ctx, (dst->enabledExtensionCount + 2) *
-                                                  sizeof(*dst->ppEnabledExtensionNames));
-        memcpy(new_extensions, src->ppEnabledExtensionNames,
-               dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
         new_extensions[dst->enabledExtensionCount++] = "VK_KHR_get_physical_device_properties2";
         new_extensions[dst->enabledExtensionCount++] = "VK_KHR_external_memory_capabilities";
-        dst->ppEnabledExtensionNames = new_extensions;
     }
+
+    TRACE("Enabled %u instance extensions.\n", dst->enabledExtensionCount);
 
     return VK_SUCCESS;
 }

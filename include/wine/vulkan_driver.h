@@ -42,6 +42,7 @@ struct vulkan_funcs
     VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
     /* winevulkan specific functions */
+    const char *(*p_get_host_surface_extension)(void);
     VkSurfaceKHR (*p_wine_get_host_surface)(VkSurfaceKHR);
 };
 
