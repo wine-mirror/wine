@@ -371,13 +371,8 @@ static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
-    if (x11_surface)
-    {
-        pvkDestroySurfaceKHR( instance, x11_surface->host_surface, NULL /* allocator */ );
-
-        wine_vk_surface_release(x11_surface);
-    }
+    pvkDestroySurfaceKHR( instance, x11_surface->host_surface, NULL /* allocator */ );
+    wine_vk_surface_release(x11_surface);
 }
 
 static void X11DRV_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
