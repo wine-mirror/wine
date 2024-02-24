@@ -417,9 +417,6 @@ static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surfac
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
-    if (!wine_vk_surface) return;
-
     pvkDestroySurfaceKHR(instance, wine_vk_surface->host_surface, NULL /* allocator */);
     wine_vk_surface_destroy(wine_vk_surface);
 }
