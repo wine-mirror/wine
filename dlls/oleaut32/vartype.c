@@ -6550,10 +6550,18 @@ static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
   if (!(locale = _create_locale(LC_ALL, "C"))) return E_OUTOFMEMORY;
   len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*G", locale, ndigits, dblIn);
   e = wcschr(buff, 'E');
-  if (e && labs(wcstol(e+1, NULL, 10)) < ndigits)
+  if (e)
   {
-    len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*f", locale, ndigits, dblIn);
-    while (len > 0 && (buff[len-1] == '0')) len--;
+      int extra_decimals;
+      WCHAR *dot;
+
+      dot = wcschr(buff, '.');
+      extra_decimals = dot ? e - dot - 2 : 0;
+      if (labs(wcstol(e+1, NULL, 10)) + extra_decimals < ndigits)
+      {
+          len = _swprintf_l(buff, ARRAY_SIZE(buff), L"%.*f", locale, ndigits, dblIn);
+          while (len > 0 && (buff[len-1] == '0')) len--;
+      }
   }
   buff[len] = 0;
   _free_locale(locale);
