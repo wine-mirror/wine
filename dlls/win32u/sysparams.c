@@ -2216,24 +2216,10 @@ DPI_AWARENESS get_thread_dpi_awareness(void)
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
     ULONG_PTR context = info->dpi_awareness;
 
-    switch (context)
-    {
-    case 0: /* process default */
+    if (context == 0) /* process default */
         return NtUserGetProcessDpiAwarenessContext( NULL ) & 3;
-    case 0x10:
-    case 0x11:
-    case 0x12:
-    case 0x80000010:
-    case 0x80000011:
-    case 0x80000012:
-        return context & 3;
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
-        return ~context;
-    default:
-        return DPI_AWARENESS_INVALID;
-    }
+
+    return get_awareness_from_dpi_awareness_context((DPI_AWARENESS_CONTEXT)context);
 }
 
 DWORD get_process_layout(void)
