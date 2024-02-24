@@ -48,20 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 #ifdef SONAME_LIBVULKAN
 
-static pthread_mutex_t vulkan_mutex;
-
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
-
-static struct list surface_list = LIST_INIT( surface_list );
-
-struct wine_vk_surface
-{
-    LONG ref;
-    struct list entry;
-    Window window;
-    HWND hwnd;
-    DWORD hwnd_thread_id;
-};
 
 typedef struct VkXlibSurfaceCreateInfoKHR
 {
@@ -77,41 +64,13 @@ static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevi
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
 
-static void wine_vk_surface_release( struct wine_vk_surface *surface )
-{
-    if (InterlockedDecrement(&surface->ref))
-        return;
-
-    if (surface->entry.next)
-    {
-        pthread_mutex_lock(&vulkan_mutex);
-        list_remove(&surface->entry);
-        pthread_mutex_unlock(&vulkan_mutex);
-    }
-
-    destroy_client_window( surface->hwnd, surface->window );
-    free(surface);
-}
-
-void destroy_vk_surface( HWND hwnd )
-{
-    struct wine_vk_surface *surface, *next;
-
-    pthread_mutex_lock( &vulkan_mutex );
-    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &surface_list, struct wine_vk_surface, entry )
-    {
-        if (surface->hwnd != hwnd) continue;
-        surface->hwnd_thread_id = 0;
-        surface->hwnd = NULL;
-    }
-    pthread_mutex_unlock( &vulkan_mutex );
-}
-
 static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
 {
-    VkResult res;
-    VkXlibSurfaceCreateInfoKHR create_info_host;
-    struct wine_vk_surface *x11_surface;
+    VkXlibSurfaceCreateInfoKHR info =
+    {
+        .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+        .dpy = gdi_display,
+    };
 
     TRACE( "%p %p %p %p\n", hwnd, instance, surface, private );
 
@@ -122,44 +81,20 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
-    x11_surface = calloc(1, sizeof(*x11_surface));
-    if (!x11_surface)
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-
-    x11_surface->ref = 1;
-    x11_surface->hwnd = hwnd;
-    x11_surface->window = create_client_window( hwnd, &default_visual, default_colormap );
-    x11_surface->hwnd_thread_id = NtUserGetWindowThread( x11_surface->hwnd, NULL );
-
-    if (!x11_surface->window)
+    if (!(info.window = create_client_window( hwnd, &default_visual, default_colormap )))
     {
         ERR("Failed to allocate client window for hwnd=%p\n", hwnd);
-
-        /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
-        free(x11_surface);
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    create_info_host.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-    create_info_host.pNext = NULL;
-    create_info_host.flags = 0; /* reserved */
-    create_info_host.dpy = gdi_display;
-    create_info_host.window = x11_surface->window;
-
-    res = pvkCreateXlibSurfaceKHR( instance, &create_info_host, NULL /* allocator */, surface );
-    if (res != VK_SUCCESS)
+    if (pvkCreateXlibSurfaceKHR( instance, &info, NULL /* allocator */, surface ))
     {
-        ERR("Failed to create Xlib surface, res=%d\n", res);
-        destroy_client_window( x11_surface->hwnd, x11_surface->window );
-        free(x11_surface);
-        return res;
+        ERR("Failed to create Xlib surface\n");
+        destroy_client_window( hwnd, info.window );
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    pthread_mutex_lock(&vulkan_mutex);
-    list_add_tail(&surface_list, &x11_surface->entry);
-    pthread_mutex_unlock(&vulkan_mutex);
-
-    *private = x11_surface;
+    *private = (void *)info.window;
 
     TRACE("Created surface 0x%s, private %p\n", wine_dbgstr_longlong(*surface), *private);
     return VK_SUCCESS;
@@ -167,23 +102,23 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
 
 static void X11DRV_vulkan_surface_destroy( HWND hwnd, void *private )
 {
-    struct wine_vk_surface *x11_surface = private;
+    Window client_window = (Window)private;
 
     TRACE( "%p %p\n", hwnd, private );
 
-    wine_vk_surface_release(x11_surface);
+    destroy_client_window( hwnd, client_window );
 }
 
 static void X11DRV_vulkan_surface_detach( HWND hwnd, void *private )
 {
-    struct wine_vk_surface *x11_surface = private;
+    Window client_window = (Window)private;
     struct x11drv_win_data *data;
 
     TRACE( "%p %p\n", hwnd, private );
 
     if ((data = get_win_data( hwnd )))
     {
-        detach_client_window( data, x11_surface->window );
+        detach_client_window( data, client_window );
         release_win_data( data );
     }
 }
@@ -224,8 +159,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_d
         ERR( "version mismatch, win32u wants %u but driver has %u\n", version, WINE_VULKAN_DRIVER_VERSION );
         return STATUS_INVALID_PARAMETER;
     }
-
-    init_recursive_mutex( &vulkan_mutex );
 
 #define LOAD_FUNCPTR( f ) if (!(p##f = dlsym( vulkan_handle, #f ))) return STATUS_PROCEDURE_NOT_FOUND;
     LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
