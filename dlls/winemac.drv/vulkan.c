@@ -80,7 +80,7 @@ static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCrea
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
 
-static const struct vulkan_funcs vulkan_funcs;
+static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs;
 
 static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
@@ -196,6 +196,10 @@ static void macdrv_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     wine_vk_surface_destroy(instance, mac_surface);
 }
 
+static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
+{
+}
+
 static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -218,25 +222,18 @@ static VkSurfaceKHR macdrv_wine_get_host_surface(VkSurfaceKHR surface)
     return mac_surface->host_surface;
 }
 
-static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
+static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
-}
+    .p_vkCreateWin32SurfaceKHR = macdrv_vkCreateWin32SurfaceKHR,
+    .p_vkDestroySurfaceKHR = macdrv_vkDestroySurfaceKHR,
+    .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
 
-static const struct vulkan_funcs vulkan_funcs =
-{
-    macdrv_vkCreateWin32SurfaceKHR,
-    macdrv_vkDestroySurfaceKHR,
-    NULL,
-    NULL,
-    macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
-    NULL,
-
-    macdrv_get_host_surface_extension,
-    macdrv_wine_get_host_surface,
-    macdrv_vulkan_surface_presented,
+    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_host_surface_extension = macdrv_get_host_surface_extension,
+    .p_wine_get_host_surface = macdrv_wine_get_host_surface,
 };
 
-UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
+UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
 {
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
@@ -250,13 +247,13 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *d
     LOAD_FUNCPTR(vkDestroySurfaceKHR)
 #undef LOAD_FUNCPTR
 
-    *driver_funcs = vulkan_funcs;
+    *driver_funcs = &macdrv_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
 
 #else /* No vulkan */
 
-UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
+UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
 {
     ERR("Wine was built without Vulkan support.\n");
     return STATUS_NOT_IMPLEMENTED;

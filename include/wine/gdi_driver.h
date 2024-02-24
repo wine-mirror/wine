@@ -269,6 +269,8 @@ struct gdi_device_manager
 
 struct tagUPDATELAYEREDWINDOWINFO;
 
+struct vulkan_driver_funcs;
+
 struct user_driver_funcs
 {
     struct gdi_dc_funcs dc_funcs;
@@ -339,7 +341,7 @@ struct user_driver_funcs
     /* system parameters */
     BOOL    (*pSystemParametersInfo)(UINT,UINT,void*,UINT);
     /* vulkan support */
-    UINT    (*pVulkanInit)(UINT,void *,struct vulkan_funcs *);
+    UINT    (*pVulkanInit)(UINT,void *,const struct vulkan_driver_funcs **);
     /* opengl support */
     struct opengl_funcs * (*pwine_get_wgl_driver)(UINT);
     /* thread management */

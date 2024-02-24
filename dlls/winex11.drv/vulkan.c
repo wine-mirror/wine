@@ -77,7 +77,7 @@ static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreate
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 
-static const struct vulkan_funcs vulkan_funcs;
+static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
 
 static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
@@ -209,6 +209,10 @@ static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     wine_vk_surface_release(x11_surface);
 }
 
+static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
+{
+}
+
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -232,25 +236,18 @@ static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
     return x11_surface->host_surface;
 }
 
-static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
+static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
-}
+    .p_vkCreateWin32SurfaceKHR = X11DRV_vkCreateWin32SurfaceKHR,
+    .p_vkDestroySurfaceKHR = X11DRV_vkDestroySurfaceKHR,
+    .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 
-static const struct vulkan_funcs vulkan_funcs =
-{
-    X11DRV_vkCreateWin32SurfaceKHR,
-    X11DRV_vkDestroySurfaceKHR,
-    NULL,
-    NULL,
-    X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
-    NULL,
-
-    X11DRV_get_host_surface_extension,
-    X11DRV_wine_get_host_surface,
-    X11DRV_vulkan_surface_presented,
+    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_host_surface_extension = X11DRV_get_host_surface_extension,
+    .p_wine_get_host_surface = X11DRV_wine_get_host_surface,
 };
 
-UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs )
+UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
 {
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
@@ -266,13 +263,13 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
 #undef LOAD_FUNCPTR
 
-    *driver_funcs = vulkan_funcs;
+    *driver_funcs = &x11drv_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
 
 #else /* No vulkan */
 
-UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs )
+UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
 {
     ERR( "Wine was built without Vulkan support.\n" );
     return STATUS_NOT_IMPLEMENTED;

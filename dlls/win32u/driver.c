@@ -897,7 +897,7 @@ static BOOL nulldrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr
     return FALSE;
 }
 
-static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *vulkan_funcs )
+static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
 {
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -1213,9 +1213,9 @@ static BOOL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWI
     return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect );
 }
 
-static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *vulkan_funcs )
+static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
 {
-    return load_driver()->pVulkanInit( version, vulkan_handle, vulkan_funcs );
+    return load_driver()->pVulkanInit( version, vulkan_handle, driver_funcs );
 }
 
 static const struct user_driver_funcs lazy_load_driver =

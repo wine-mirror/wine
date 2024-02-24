@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #ifdef SONAME_LIBVULKAN
 
 static void *vulkan_handle;
+static const struct vulkan_driver_funcs *driver_funcs;
 static struct vulkan_funcs vulkan_funcs;
 
 static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -60,7 +61,7 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR 
     for (i = 0; i < present_info->swapchainCount; i++)
     {
         VkResult swapchain_res = present_info->pResults ? present_info->pResults[i] : res;
-        vulkan_funcs.p_vulkan_surface_presented( surfaces[i], swapchain_res );
+        driver_funcs->p_vulkan_surface_presented( surfaces[i], swapchain_res );
     }
 
     return res;
@@ -70,7 +71,7 @@ static void *win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
 {
     TRACE( "device %p, name %s\n", device, debugstr_a(name) );
 
-    if (!strcmp( name, "vkGetDeviceProcAddr" )) return win32u_vkGetDeviceProcAddr;
+    if (!strcmp( name, "vkGetDeviceProcAddr" )) return vulkan_funcs.p_vkGetDeviceProcAddr;
     if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
 
     return p_vkGetDeviceProcAddr( device, name );
@@ -84,15 +85,62 @@ static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name
 
     if (!strcmp( name, "vkCreateWin32SurfaceKHR" )) return vulkan_funcs.p_vkCreateWin32SurfaceKHR;
     if (!strcmp( name, "vkDestroySurfaceKHR" )) return vulkan_funcs.p_vkDestroySurfaceKHR;
-    if (!strcmp( name, "vkGetInstanceProcAddr" )) return win32u_vkGetInstanceProcAddr;
+    if (!strcmp( name, "vkGetInstanceProcAddr" )) return vulkan_funcs.p_vkGetInstanceProcAddr;
     if (!strcmp( name, "vkGetPhysicalDeviceWin32PresentationSupportKHR" )) return vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
 
     /* vkGetInstanceProcAddr also loads any children of instance, so device functions as well. */
-    if (!strcmp( name, "vkGetDeviceProcAddr" )) return win32u_vkGetDeviceProcAddr;
+    if (!strcmp( name, "vkGetDeviceProcAddr" )) return vulkan_funcs.p_vkGetDeviceProcAddr;
     if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
 
     return p_vkGetInstanceProcAddr( instance, name );
 }
+
+static struct vulkan_funcs vulkan_funcs =
+{
+    .p_vkQueuePresentKHR = win32u_vkQueuePresentKHR,
+    .p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr,
+    .p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr,
+};
+
+static VkResult nulldrv_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *info,
+                                                 const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface )
+{
+    FIXME( "stub!\n" );
+    return VK_ERROR_INCOMPATIBLE_DRIVER;
+}
+
+static void nulldrv_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks *allocator )
+{
+}
+
+static void nulldrv_vulkan_surface_presented( HWND hwnd, VkResult result )
+{
+}
+
+static VkBool32 nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
+{
+    return VK_TRUE;
+}
+
+static const char *nulldrv_get_host_surface_extension(void)
+{
+    return "VK_WINE_nulldrv_surface";
+}
+
+static VkSurfaceKHR nulldrv_wine_get_host_surface( VkSurfaceKHR surface )
+{
+    return surface;
+}
+
+static const struct vulkan_driver_funcs nulldrv_funcs =
+{
+    .p_vkCreateWin32SurfaceKHR = nulldrv_vkCreateWin32SurfaceKHR,
+    .p_vkDestroySurfaceKHR = nulldrv_vkDestroySurfaceKHR,
+    .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
+    .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
+    .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
+    .p_wine_get_host_surface = nulldrv_wine_get_host_surface,
+};
 
 static void vulkan_init(void)
 {
@@ -104,13 +152,24 @@ static void vulkan_init(void)
         return;
     }
 
-    if ((status = user_driver->pVulkanInit( WINE_VULKAN_DRIVER_VERSION, vulkan_handle, &vulkan_funcs )) &&
+    if ((status = user_driver->pVulkanInit( WINE_VULKAN_DRIVER_VERSION, vulkan_handle, &driver_funcs )) &&
         status != STATUS_NOT_IMPLEMENTED)
     {
         ERR( "Failed to initialize the driver vulkan functions, status %#x\n", status );
         dlclose( vulkan_handle );
         vulkan_handle = NULL;
         return;
+    }
+
+    if (status == STATUS_NOT_IMPLEMENTED)
+        driver_funcs = &nulldrv_funcs;
+    else
+    {
+        vulkan_funcs.p_vkCreateWin32SurfaceKHR = driver_funcs->p_vkCreateWin32SurfaceKHR;
+        vulkan_funcs.p_vkDestroySurfaceKHR = driver_funcs->p_vkDestroySurfaceKHR;
+        vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR = driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+        vulkan_funcs.p_get_host_surface_extension = driver_funcs->p_get_host_surface_extension;
+        vulkan_funcs.p_wine_get_host_surface = driver_funcs->p_wine_get_host_surface;
     }
 
 #define LOAD_FUNCPTR( f )                                                                          \
@@ -126,10 +185,6 @@ static void vulkan_init(void)
     LOAD_FUNCPTR( vkGetInstanceProcAddr );
     LOAD_FUNCPTR( vkQueuePresentKHR );
 #undef LOAD_FUNCPTR
-
-    vulkan_funcs.p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr;
-    vulkan_funcs.p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr;
-    vulkan_funcs.p_vkQueuePresentKHR = win32u_vkQueuePresentKHR;
 }
 
 /***********************************************************************

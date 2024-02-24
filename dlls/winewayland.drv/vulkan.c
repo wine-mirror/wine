@@ -57,7 +57,7 @@ static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurface
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 
-static const struct vulkan_funcs vulkan_funcs;
+static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs;
 
 struct wine_vk_surface
 {
@@ -176,25 +176,6 @@ static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surfac
     wine_vk_surface_destroy(wine_vk_surface);
 }
 
-static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
-                                                                       uint32_t index)
-{
-    TRACE("%p %u\n", phys_dev, index);
-
-    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(phys_dev, index,
-                                                             process_wayland.wl_display);
-}
-
-static const char *wayland_get_host_surface_extension(void)
-{
-    return "VK_KHR_wayland_surface";
-}
-
-static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
-{
-    return wine_vk_surface_from_handle(surface)->host_surface;
-}
-
 static void wayland_vulkan_surface_presented(HWND hwnd, VkResult result)
 {
     struct wayland_surface *wayland_surface;
@@ -216,20 +197,40 @@ static void wayland_vulkan_surface_presented(HWND hwnd, VkResult result)
     }
 }
 
-static const struct vulkan_funcs vulkan_funcs =
+static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
+                                                                       uint32_t index)
+{
+    TRACE("%p %u\n", phys_dev, index);
+
+    return pvkGetPhysicalDeviceWaylandPresentationSupportKHR(phys_dev, index,
+                                                             process_wayland.wl_display);
+}
+
+static const char *wayland_get_host_surface_extension(void)
+{
+    return "VK_KHR_wayland_surface";
+}
+
+static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
+{
+    return wine_vk_surface_from_handle(surface)->host_surface;
+}
+
+static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
     .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
     .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
+    .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
+
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = wayland_get_host_surface_extension,
     .p_wine_get_host_surface = wayland_wine_get_host_surface,
-    .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 };
 
 /**********************************************************************
  *           WAYLAND_VulkanInit
  */
-UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
+UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
 {
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
@@ -243,13 +244,13 @@ UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
 #undef LOAD_FUNCPTR
 
-    *driver_funcs = vulkan_funcs;
+    *driver_funcs = &wayland_vulkan_driver_funcs;
     return STATUS_SUCCESS;
 }
 
 #else /* No vulkan */
 
-UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)
+UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
 {
     ERR( "Wine was built without Vulkan support.\n" );
     return STATUS_NOT_IMPLEMENTED;
