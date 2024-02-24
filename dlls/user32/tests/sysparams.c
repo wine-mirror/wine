@@ -3866,7 +3866,6 @@ static void test_AreDpiAwarenessContextsEqual(ULONG_PTR flags)
             int map_i = map_context(contexts[i], flags);
             int map_j = map_context(contexts[j], flags);
             BOOL equal_expected = map_i == map_j;
-            todo_wine_if((map_i == 0x22 && map_j == 0x12) || (map_j == 0x22 && map_i == 0x12))
             ok(equal == equal_expected, "(%d, %d) (%p == %p) - Expected equal to be %d but got %d\n", i, j, (DPI_AWARENESS_CONTEXT)contexts[i], (DPI_AWARENESS_CONTEXT)contexts[j], equal_expected, equal);
         }
     }
