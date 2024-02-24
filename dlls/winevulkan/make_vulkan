@@ -202,7 +202,6 @@ USER_DRIVER_FUNCS = {
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDeviceWin32PresentationSupportKHR",
-    "vkGetSwapchainImagesKHR",
     "vkQueuePresentKHR",
 }
 

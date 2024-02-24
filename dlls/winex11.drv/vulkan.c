@@ -78,7 +78,6 @@ static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreate
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
-static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
 static const struct vulkan_funcs vulkan_funcs;
@@ -253,13 +252,6 @@ static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysical
             default_visual.visual->visualid);
 }
 
-static VkResult X11DRV_vkGetSwapchainImagesKHR(VkDevice device,
-        VkSwapchainKHR swapchain, uint32_t *count, VkImage *images)
-{
-    TRACE("%p, 0x%s %p %p\n", device, wine_dbgstr_longlong(swapchain), count, images);
-    return pvkGetSwapchainImagesKHR(device, swapchain, count, images);
-}
-
 static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
 {
     TRACE("%p, %p\n", queue, present_info);
@@ -289,7 +281,6 @@ static const struct vulkan_funcs vulkan_funcs =
     NULL,
     NULL,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
-    X11DRV_vkGetSwapchainImagesKHR,
     X11DRV_vkQueuePresentKHR,
 
     X11DRV_get_host_surface_extension,
@@ -312,7 +303,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR( vkDestroySurfaceKHR );
     LOAD_FUNCPTR( vkDestroySwapchainKHR );
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
-    LOAD_FUNCPTR( vkGetSwapchainImagesKHR );
     LOAD_FUNCPTR( vkQueuePresentKHR );
 #undef LOAD_FUNCPTR
 
