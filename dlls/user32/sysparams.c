@@ -747,7 +747,9 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
         prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
         prev |= 0x80000010;  /* restore to process default */
     }
-    if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
+    if (((ULONG_PTR)context & ~(ULONG_PTR)0x33) == 0x80000000) info->dpi_awareness = 0;
+    else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 || context == (DPI_AWARENESS_CONTEXT)0x22)
+        info->dpi_awareness = 0x22;
     else info->dpi_awareness = val | 0x10;
     return ULongToHandle( prev );
 }

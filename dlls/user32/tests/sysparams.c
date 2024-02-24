@@ -3790,21 +3790,19 @@ static void test_ThreadDpiAwarenessContext(ULONG_PTR flags)
         ULONG_PTR context;
         ULONG_PTR result_get;
         ULONG_PTR result_set;
-        BOOL todo_get;
-        BOOL todo_set;
     } awareness_contexts[] = {
         { 0x10 | flags, 0x10 | flags, 0x10 | flags },
         { 0x11 | flags, 0x11 | flags, 0x11 | flags },
         { 0x12, 0x12, 0x12 },
-        { 0x22, 0x22, 0x22, TRUE, TRUE },
+        { 0x22, 0x22, 0x22},
         { 0x80000010 | flags, 0x10 | awareness | flags, 0x80000010 | awareness | flags },
         { 0x80000011 | flags, 0x10 | awareness | flags, 0x80000010 | awareness | flags },
         { 0x80000012, 0x10 | awareness | flags, 0x80000010 | awareness | flags },
-        { 0x80000022, 0x10 | awareness | flags, 0x80000010 | awareness | flags, FALSE, TRUE },
+        { 0x80000022, 0x10 | awareness | flags, 0x80000010 | awareness | flags },
         { (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE, 0x10 | flags, 0x10 | flags },
         { (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, 0x11 | flags, 0x11 | flags },
         { (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, 0x12, 0x12 },
-        { (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, 0x22, 0x22, TRUE, TRUE },
+        { (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, 0x22, 0x22 },
         { 0x12, 0x12 }, /* Only for last_result test */
     };
 
@@ -3818,11 +3816,9 @@ static void test_ThreadDpiAwarenessContext(ULONG_PTR flags)
         if (i != 0)
         {
             struct awareness_context_thread *last = &awareness_contexts[i - 1];
-            todo_wine_if(awareness_contexts[i - 1].todo_set)
             ok( last_context == (DPI_AWARENESS_CONTEXT)last->result_set, "For context %p - after set expected %p, got %p\n", (DPI_AWARENESS_CONTEXT)last->context, (DPI_AWARENESS_CONTEXT)last->result_set, last_context );
         }
         context = pGetThreadDpiAwarenessContext();
-        todo_wine_if(item->todo_get)
         ok( context == (DPI_AWARENESS_CONTEXT)item->result_get, "For context %p - after get expected %p, got %p\n", (DPI_AWARENESS_CONTEXT)item->context, (DPI_AWARENESS_CONTEXT)item->result_get, context );
     }
 }
