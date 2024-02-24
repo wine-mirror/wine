@@ -2187,7 +2187,7 @@ UINT get_win_monitor_dpi( HWND hwnd )
     return system_dpi;
 }
 
-/* see GetAwarenessFromDpiAwarenessContext */
+/* copied from user32 GetAwarenessFromDpiAwarenessContext, make sure to keep that in sync */
 static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
 {
     switch ((ULONG_PTR)context)
@@ -2195,14 +2195,18 @@ static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CON
     case 0x10:
     case 0x11:
     case 0x12:
+    case 0x22:
     case 0x80000010:
     case 0x80000011:
     case 0x80000012:
+    case 0x80000022:
         return (ULONG_PTR)context & 3;
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
     case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
         return ~(ULONG_PTR)context;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
+        return ~(ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
     default:
         return DPI_AWARENESS_INVALID;
     }
@@ -2249,6 +2253,7 @@ UINT get_system_dpi(void)
 
 /**********************************************************************
  *           SetThreadDpiAwarenessContext   (win32u.so)
+ *           copied from user32, make sure to keep that in sync
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
@@ -2265,7 +2270,9 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
         prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
         prev |= 0x80000010;  /* restore to process default */
     }
-    if (((ULONG_PTR)context & ~(ULONG_PTR)0x13) == 0x80000000) info->dpi_awareness = 0;
+    if (((ULONG_PTR)context & ~(ULONG_PTR)0x33) == 0x80000000) info->dpi_awareness = 0;
+    else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 || context == (DPI_AWARENESS_CONTEXT)0x22)
+        info->dpi_awareness = 0x22;
     else info->dpi_awareness = val | 0x10;
     return ULongToHandle( prev );
 }

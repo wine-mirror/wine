@@ -655,6 +655,7 @@ BOOL WINAPI AreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT ctx1, DPI_AWAREN
 
 /***********************************************************************
  *              GetAwarenessFromDpiAwarenessContext   (USER32.@)
+ *              copied into win32u, make sure to keep that in sync
  */
 DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
@@ -738,6 +739,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
 
 /**********************************************************************
  *              SetThreadDpiAwarenessContext   (USER32.@)
+ *              copied into win32u, make sure to keep that in sync
  */
 DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
