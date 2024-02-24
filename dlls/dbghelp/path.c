@@ -455,7 +455,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path
 
 struct module_find
 {
-    BOOL                is_pdb;
+    BOOL                        is_pdb;
     /* pdb: guid        PDB guid (if DS PDB file)
      *      or dw1      PDB timestamp (if JG PDB file)
      *      dw2         PDB age
@@ -465,7 +465,8 @@ struct module_find
     const GUID*                 guid;
     DWORD                       dw1;
     DWORD                       dw2;
-    WCHAR                       filename[MAX_PATH];
+    SYMSRV_INDEX_INFOW         *info;
+    WCHAR                      *buffer; /* MAX_PATH + 1 */
     unsigned                    matched;
 };
 
@@ -483,48 +484,56 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
     info.sizeofstruct = sizeof(info);
     if (!SymSrvGetFileIndexInfoW(buffer, &info, 0))
         return FALSE;
+    matched++;
     if (!memcmp(&info.guid, mf->guid, sizeof(GUID))) matched++;
     if (info.timestamp == mf->dw1) matched++;
     if (info.age == mf->dw2) matched++;
 
     if (matched > mf->matched)
     {
-        lstrcpyW(mf->filename, buffer);
+        size_t len = min(wcslen(buffer), MAX_PATH);
+        memcpy(mf->buffer, buffer, len * sizeof(WCHAR));
+        mf->buffer[len] = L'\0';
         mf->matched = matched;
+        mf->info->guid = info.guid;
+        mf->info->timestamp = info.timestamp;
+        mf->info->age = info.age;
     }
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
      */
-    return mf->matched == 3;
+    return mf->matched == 4;
 }
 
 BOOL path_find_symbol_file(const struct process* pcs, const struct module* module,
                            PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
-                           WCHAR *buffer, BOOL* is_unmatched)
+                           SYMSRV_INDEX_INFOW *info, BOOL* is_unmatched)
 {
     struct module_find  mf;
-    WCHAR               full_pathW[MAX_PATH];
-    WCHAR*              ptr;
+    WCHAR              *ptr;
     const WCHAR*        filename;
-    WCHAR*              searchPath = pcs->search_path;
+    WCHAR              *searchPath = pcs->search_path;
+    WCHAR               buffer[MAX_PATH];
 
-    TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx, buffer = %p)\n",
-          pcs, debugstr_a(full_path), debugstr_guid(guid), dw1, dw2, buffer);
+    TRACE("(pcs = %p, full_path = %s, guid = %s, dw1 = 0x%08lx, dw2 = 0x%08lx)\n",
+          pcs, debugstr_a(full_path), debugstr_guid(guid), dw1, dw2);
 
+    mf.info = info;
     mf.guid = guid;
     mf.dw1 = dw1;
     mf.dw2 = dw2;
     mf.matched = 0;
+    mf.buffer = is_pdb ? info->pdbfile : info->dbgfile;
 
-    MultiByteToWideChar(CP_ACP, 0, full_path, -1, full_pathW, MAX_PATH);
-    filename = file_name(full_pathW);
+    MultiByteToWideChar(CP_ACP, 0, full_path, -1, info->file, MAX_PATH);
+    filename = file_name(info->file);
     mf.is_pdb = is_pdb;
     *is_unmatched = FALSE;
 
     /* first check full path to file */
-    if (module_find_cb(full_pathW, &mf))
+    if (is_pdb && module_find_cb(info->file, &mf))
     {
-        lstrcpyW( buffer, full_pathW );
+        wcscpy( info->pdbfile, info->file );
         return TRUE;
     }
 
@@ -548,28 +557,29 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
 
     while (searchPath)
     {
+        size_t len;
+
         ptr = wcschr(searchPath, ';');
-        if (ptr)
+        len = (ptr) ? ptr - searchPath : wcslen(searchPath);
+
+        if (len < ARRAY_SIZE(buffer))
         {
-            memcpy(buffer, searchPath, (ptr - searchPath) * sizeof(WCHAR));
-            buffer[ptr - searchPath] = '\0';
-            searchPath = ptr + 1;
+            memcpy(buffer, searchPath, len * sizeof(WCHAR));
+            buffer[len] = '\0';
+            /* return first fully matched file */
+            if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
         }
         else
-        {
-            lstrcpyW(buffer, searchPath);
-            searchPath = NULL;
-        }
-        /* return first fully matched file */
-        if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+            ERR("Too long search element %ls\n", searchPath);
+        searchPath = ptr ? ptr + 1 : NULL;
     }
     /* if no fully matching file is found, return the best matching file if any */
     if ((dbghelp_options & SYMOPT_LOAD_ANYTHING) && mf.matched)
     {
-        lstrcpyW( buffer, mf.filename );
         *is_unmatched = TRUE;
         return TRUE;
     }
+    mf.buffer[0] = L'\0';
     return FALSE;
 }
 

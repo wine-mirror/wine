@@ -60,7 +60,6 @@ enum pdb_kind {PDB_JG, PDB_DS};
 struct pdb_file_info
 {
     enum pdb_kind               kind;
-    DWORD                       age;
     HANDLE                      hMap;
     const char*                 image;
     struct pdb_stream_name*     stream_dict;
@@ -69,12 +68,10 @@ struct pdb_file_info
     {
         struct
         {
-            DWORD               timestamp;
             struct PDB_JG_TOC*  toc;
         } jg;
         struct
         {
-            GUID                guid;
             struct PDB_DS_TOC*  toc;
         } ds;
     } u;
@@ -3306,30 +3303,6 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
     }
 }
 
-static HANDLE map_pdb_file(const struct process* pcs,
-                           const char *filename, const GUID *guid, DWORD timestamp, DWORD age,
-                           struct module* module)
-{
-    HANDLE      hFile, hMap = NULL;
-    WCHAR       dbg_file_path[MAX_PATH];
-    BOOL        ret = FALSE;
-
-    ret = path_find_symbol_file(pcs, module, filename, TRUE, guid, timestamp, age,
-                                dbg_file_path, &module->module.PdbUnmatched);
-    if (!ret)
-    {
-        WARN("\tCouldn't find %s\n", filename);
-        return NULL;
-    }
-    if ((hFile = CreateFileW(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL,
-                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE)
-    {
-        hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-        CloseHandle(hFile);
-    }
-    return hMap;
-}
-
 static void pdb_dispose_type_parse(struct codeview_type_parse* ctp)
 {
     pdb_free(ctp->hash_stream);
@@ -3479,13 +3452,8 @@ static const char       PDB_DS_IDENT[] = "Microsoft C/C++ MSF 7.00\r\n\032DS\0";
  *		pdb_init
  *
  * Tries to load a pdb file
- * 'matched' is filled with the number of correct matches for this file:
- *      - age counts for one
- *      - timestamp or guid depending on kind counts for one
- * a wrong kind of file returns FALSE (FIXME ?)
  */
-static BOOL pdb_init(struct pdb_file_info* pdb_file,
-                     const char* image)
+static BOOL pdb_init(struct pdb_file_info* pdb_file, const char* image)
 {
     /* check the file header, and if ok, load the TOC */
     TRACE("PDB: %.40s\n", debugstr_an(image, 40));
@@ -3494,12 +3462,19 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file,
     {
         const struct PDB_JG_HEADER* pdb = (const struct PDB_JG_HEADER*)image;
         struct PDB_JG_ROOT*         root;
+        struct PDB_JG_TOC*          jg_toc;
 
-        pdb_file->u.jg.toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
-        root = pdb_read_jg_stream(pdb, pdb_file->u.jg.toc, 1);
+        jg_toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
+        if (!jg_toc)
+        {
+            ERR("-Unable to get TOC from .PDB\n");
+            return FALSE;
+        }
+        root = pdb_read_jg_stream(pdb, jg_toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB\n");
+            pdb_free(jg_toc);
             return FALSE;
         }
         switch (root->Version)
@@ -3513,25 +3488,31 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file,
             ERR("-Unknown root block version %d\n", root->Version);
         }
         pdb_file->kind = PDB_JG;
-        pdb_file->u.jg.timestamp = root->TimeDateStamp;
-        pdb_file->age = root->Age;
+        pdb_file->u.jg.toc = jg_toc;
         TRACE("found JG: age=%x timestamp=%x\n", root->Age, root->TimeDateStamp);
         pdb_file->stream_dict = pdb_load_stream_name_table(&root->names[0], root->cbNames);
         pdb_file->fpoext_stream = -1;
+
         pdb_free(root);
     }
     else if (!memcmp(image, PDB_DS_IDENT, sizeof(PDB_DS_IDENT)))
     {
         const struct PDB_DS_HEADER* pdb = (const struct PDB_DS_HEADER*)image;
         struct PDB_DS_ROOT*         root;
+        struct PDB_DS_TOC*          ds_toc;
 
-        pdb_file->u.ds.toc =
-            pdb_ds_read(pdb, (const UINT*)((const char*)pdb + pdb->toc_block * pdb->block_size),
-                        pdb->toc_size);
-        root = pdb_read_ds_stream(pdb, pdb_file->u.ds.toc, 1);
+        ds_toc = pdb_ds_read(pdb, (const UINT*)((const char*)pdb + pdb->toc_block * pdb->block_size),
+                             pdb->toc_size);
+        if (!ds_toc)
+        {
+            ERR("-Unable to get TOC from .PDB\n");
+            return FALSE;
+        }
+        root = pdb_read_ds_stream(pdb, ds_toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB\n");
+            pdb_free(ds_toc);
             return FALSE;
         }
         switch (root->Version)
@@ -3542,9 +3523,8 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file,
             ERR("-Unknown root block version %u\n", root->Version);
         }
         pdb_file->kind = PDB_DS;
-        pdb_file->u.ds.guid = root->guid;
-        pdb_file->age = root->Age;
-        TRACE("found DS: age=%x guid=%s\n", root->Age, debugstr_guid(&root->guid));
+        pdb_file->u.ds.toc = ds_toc;
+        TRACE("found DS for: age=%x guid=%s\n", root->Age, debugstr_guid(&root->guid));
         pdb_file->stream_dict = pdb_load_stream_name_table(&root->names[0], root->cbNames);
         pdb_file->fpoext_stream = -1;
 
@@ -3574,9 +3554,9 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file,
 }
 
 static BOOL pdb_process_internal(const struct process *pcs,
-                                 const struct msc_debug_info* msc_dbg,
-                                 const char *filename, const GUID *guid, DWORD timestamp, DWORD age,
-                                 struct pdb_module_info* pdb_module_info,
+                                 const struct msc_debug_info *msc_dbg,
+                                 const WCHAR *filename,
+                                 struct pdb_module_info *pdb_module_info,
                                  unsigned module_index);
 
 DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
@@ -3711,11 +3691,15 @@ static void pdb_process_symbol_imports(const struct process *pcs,
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {
+            SYMSRV_INDEX_INFOW info;
+
             ptr = (const char*)imp + sizeof(*imp) + strlen(imp->filename);
             if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
             TRACE("got for %s: age=%u ts=%x\n",
                   imp->filename, imp->Age, imp->TimeDateStamp);
-            pdb_process_internal(pcs, msc_dbg, imp->filename, NULL, imp->TimeDateStamp, imp->Age, pdb_module_info, i);
+            if (path_find_symbol_file(pcs, msc_dbg->module, imp->filename, TRUE, NULL, imp->TimeDateStamp, imp->Age, &info,
+                                      &msc_dbg->module->module.PdbUnmatched))
+                pdb_process_internal(pcs, msc_dbg, info.pdbfile, pdb_module_info, i);
             i++;
             imp = (const PDB_SYMBOL_IMPORT*)((const char*)first + ((ptr - (const char*)first + strlen(ptr) + 1 + 3) & ~3));
         }
@@ -3733,27 +3717,31 @@ static void pdb_process_symbol_imports(const struct process *pcs,
 
 static BOOL pdb_process_internal(const struct process *pcs,
                                  const struct msc_debug_info *msc_dbg,
-                                 const char *filename, const GUID *guid, DWORD timestamp, DWORD age,
+                                 const WCHAR *filename,
                                  struct pdb_module_info *pdb_module_info,
                                  unsigned module_index)
 {
-    HANDLE                      hMap = NULL;
+    HANDLE                      hFile = NULL, hMap = NULL;
     char*                       image = NULL;
     BYTE*                       symbols_image = NULL;
     PDB_STRING_TABLE*           files_image = NULL;
     struct pdb_file_info*       pdb_file;
 
-    TRACE("Processing PDB file %s\n", filename);
+    TRACE("Processing PDB file %ls\n", filename);
 
     pdb_file = &pdb_module_info->pdb_files[module_index == -1 ? 0 : module_index];
     /* Open and map() .PDB file */
-    if ((hMap = map_pdb_file(pcs, filename, guid, timestamp, age, msc_dbg->module)) == NULL ||
-        ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
+    if ((hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE ||
+        (hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL ||
+        (image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL)
     {
-        WARN("Unable to open .PDB file: %s\n", filename);
+        WARN("Unable to open .PDB file: %ls\n", filename);
         CloseHandle(hMap);
+        CloseHandle(hFile);
         return FALSE;
     }
+    CloseHandle(hFile);
     if (!pdb_init(pdb_file, image))
     {
         CloseHandle(hMap);
@@ -3902,48 +3890,53 @@ static BOOL pdb_process_file(const struct process *pcs,
     BOOL                        ret;
     struct module_format*       modfmt;
     struct pdb_module_info*     pdb_module_info;
+    SYMSRV_INDEX_INFOW          info;
+    BOOL                        unmatched;
 
-    modfmt = HeapAlloc(GetProcessHeap(), 0,
-                       sizeof(struct module_format) + sizeof(struct pdb_module_info));
-    if (!modfmt) return FALSE;
-
-    pdb_module_info = (void*)(modfmt + 1);
-    msc_dbg->module->format_info[DFI_PDB] = modfmt;
-    modfmt->module      = msc_dbg->module;
-    modfmt->remove      = pdb_module_remove;
-    modfmt->loc_compute = pdb_location_compute;
-    modfmt->u.pdb_info  = pdb_module_info;
-
-    memset(cv_zmodules, 0, sizeof(cv_zmodules));
-    codeview_init_basic_types(msc_dbg->module);
-    ret = pdb_process_internal(pcs, msc_dbg, filename, guid, timestamp, age,
-                               msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1);
-    codeview_clear_type_table();
-    if (ret)
+    if (path_find_symbol_file(pcs, msc_dbg->module, filename, TRUE, guid, timestamp, age, &info, &unmatched) &&
+        (modfmt = HeapAlloc(GetProcessHeap(), 0,
+                             sizeof(struct module_format) + sizeof(struct pdb_module_info))))
     {
-        struct pdb_module_info*     pdb_info = msc_dbg->module->format_info[DFI_PDB]->u.pdb_info;
-        msc_dbg->module->module.SymType = SymPdb;
-        if (pdb_info->pdb_files[0].kind == PDB_JG)
-            msc_dbg->module->module.PdbSig = pdb_info->pdb_files[0].u.jg.timestamp;
-        else
-            msc_dbg->module->module.PdbSig70 = pdb_info->pdb_files[0].u.ds.guid;
-        msc_dbg->module->module.PdbAge = pdb_info->pdb_files[0].age;
-        MultiByteToWideChar(CP_ACP, 0, filename, -1,
-                            msc_dbg->module->module.LoadedPdbName,
-                            ARRAY_SIZE(msc_dbg->module->module.LoadedPdbName));
-        /* FIXME: we could have a finer grain here */
-        msc_dbg->module->module.LineNumbers = TRUE;
-        msc_dbg->module->module.GlobalSymbols = TRUE;
-        msc_dbg->module->module.TypeInfo = TRUE;
-        msc_dbg->module->module.SourceIndexed = TRUE;
-        msc_dbg->module->module.Publics = TRUE;
-    }
-    else
-    {
+        pdb_module_info = (void*)(modfmt + 1);
+        msc_dbg->module->format_info[DFI_PDB] = modfmt;
+        modfmt->module      = msc_dbg->module;
+        modfmt->remove      = pdb_module_remove;
+        modfmt->loc_compute = pdb_location_compute;
+        modfmt->u.pdb_info  = pdb_module_info;
+
+        memset(cv_zmodules, 0, sizeof(cv_zmodules));
+        codeview_init_basic_types(msc_dbg->module);
+        ret = pdb_process_internal(pcs, msc_dbg, info.pdbfile,
+                                   msc_dbg->module->format_info[DFI_PDB]->u.pdb_info, -1);
+        codeview_clear_type_table();
+        if (ret)
+        {
+            msc_dbg->module->module.SymType = SymPdb;
+            msc_dbg->module->module.PdbSig = info.sig;
+            msc_dbg->module->module.PdbAge = info.age;
+            msc_dbg->module->module.PdbSig70 = info.guid;
+            msc_dbg->module->module.PdbUnmatched = unmatched;
+            wcscpy(msc_dbg->module->module.LoadedPdbName, info.pdbfile);
+
+            /* FIXME: we could have a finer grain here */
+            msc_dbg->module->module.LineNumbers = TRUE;
+            msc_dbg->module->module.GlobalSymbols = TRUE;
+            msc_dbg->module->module.TypeInfo = TRUE;
+            msc_dbg->module->module.SourceIndexed = TRUE;
+            msc_dbg->module->module.Publics = TRUE;
+            return TRUE;
+        }
         msc_dbg->module->format_info[DFI_PDB] = NULL;
         HeapFree(GetProcessHeap(), 0, modfmt);
     }
-    return ret;
+    msc_dbg->module->module.SymType = SymNone;
+    if (guid)
+        msc_dbg->module->module.PdbSig70 = *guid;
+    else
+        memset(&msc_dbg->module->module.PdbSig70, 0, sizeof(GUID));
+    msc_dbg->module->module.PdbSig = timestamp;
+    msc_dbg->module->module.PdbAge = age;
+    return FALSE;
 }
 
 /*========================================================================
@@ -4262,8 +4255,8 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
 #define CODEVIEW_NB11_SIG       MAKESIG('N','B','1','1')
 #define CODEVIEW_RSDS_SIG       MAKESIG('R','S','D','S')
 
-static BOOL codeview_process_info(const struct process* pcs, 
-                                  const struct msc_debug_info* msc_dbg)
+static BOOL codeview_process_info(const struct process *pcs,
+                                  const struct msc_debug_info *msc_dbg)
 {
     const DWORD*                signature = (const DWORD*)msc_dbg->root;
     BOOL                        ret = FALSE;

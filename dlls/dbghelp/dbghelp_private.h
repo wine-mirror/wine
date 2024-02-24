@@ -758,9 +758,9 @@ extern DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW*
 extern DWORD dbg_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
 
 /* path.c */
-extern BOOL         path_find_symbol_file(const struct process* pcs, const struct module* module,
+extern BOOL         path_find_symbol_file(const struct process *pcs, const struct module *module,
                                           PCSTR full_path, BOOL is_pdb, const GUID* guid, DWORD dw1, DWORD dw2,
-                                          WCHAR *buffer, BOOL* is_unmatched);
+                                          SYMSRV_INDEX_INFOW *info, BOOL *unmatched);
 extern WCHAR *get_dos_file_name(const WCHAR *filename) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC;
 extern BOOL         search_dll_path(const struct process* process, const WCHAR *name, WORD machine,
                                     BOOL (*match)(void*, HANDLE, const WCHAR*), void *param);
