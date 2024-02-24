@@ -178,10 +178,6 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
 
 static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface *surface)
 {
-    /* vkDestroySurfaceKHR must handle VK_NULL_HANDLE (0) for surface. */
-    if (!surface)
-        return;
-
     pvkDestroySurfaceKHR(instance, surface->host_surface, NULL /* allocator */);
 
     if (surface->view)
