@@ -46749,6 +46749,23 @@ static const char * const vk_instance_extensions[] =
     "VK_KHR_win32_surface",
 };
 
+static const char * const vk_host_surface_extensions[] =
+{
+    "VK_KHR_xlib_surface",
+    "VK_KHR_xcb_surface",
+    "VK_KHR_wayland_surface",
+    "VK_KHR_mir_surface",
+    "VK_KHR_android_surface",
+    "VK_GGP_stream_descriptor_surface",
+    "VK_NN_vi_surface",
+    "VK_MVK_ios_surface",
+    "VK_MVK_macos_surface",
+    "VK_FUCHSIA_imagepipe_surface",
+    "VK_EXT_metal_surface",
+    "VK_EXT_directfb_surface",
+    "VK_QNX_screen_surface",
+};
+
 BOOL wine_vk_device_extension_supported(const char *name)
 {
     unsigned int i;
@@ -46766,6 +46783,17 @@ BOOL wine_vk_instance_extension_supported(const char *name)
     for (i = 0; i < ARRAY_SIZE(vk_instance_extensions); i++)
     {
         if (strcmp(vk_instance_extensions[i], name) == 0)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL wine_vk_is_host_surface_extension(const char *name)
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(vk_host_surface_extensions); i++)
+    {
+        if (strcmp(vk_host_surface_extensions[i], name) == 0)
             return TRUE;
     }
     return FALSE;

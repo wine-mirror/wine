@@ -1003,7 +1003,7 @@ VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t 
 {
     uint32_t num_properties = 0, num_host_properties;
     VkExtensionProperties *host_properties;
-    unsigned int i, j;
+    unsigned int i, j, surface;
     VkResult res;
 
     res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
@@ -1025,9 +1025,10 @@ VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t 
      * including extension fixup (e.g. VK_KHR_xlib_surface -> VK_KHR_win32_surface). It is
      * up to us here to filter the list down to extensions for which we have thunks.
      */
-    for (i = 0; i < num_host_properties; i++)
+    for (i = 0, surface = 0; i < num_host_properties; i++)
     {
-        if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
+        if (wine_vk_instance_extension_supported(host_properties[i].extensionName)
+                || (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++))
             num_properties++;
         else
             TRACE("Instance extension '%s' is not supported.\n", host_properties[i].extensionName);
@@ -1041,12 +1042,18 @@ VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t 
         return VK_SUCCESS;
     }
 
-    for (i = 0, j = 0; i < num_host_properties && j < *count; i++)
+    for (i = 0, j = 0, surface = 0; i < num_host_properties && j < *count; i++)
     {
         if (wine_vk_instance_extension_supported(host_properties[i].extensionName))
         {
             TRACE("Enabling extension '%s'.\n", host_properties[i].extensionName);
             properties[j++] = host_properties[i];
+        }
+        else if (wine_vk_is_host_surface_extension(host_properties[i].extensionName) && !surface++)
+        {
+            VkExtensionProperties win32_surface = {VK_KHR_WIN32_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_SPEC_VERSION};
+            TRACE("Enabling VK_KHR_win32_surface.\n");
+            properties[j++] = win32_surface;
         }
     }
     *count = min(*count, num_properties);
