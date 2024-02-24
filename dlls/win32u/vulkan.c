@@ -70,7 +70,6 @@ static void *win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
 {
     TRACE( "device %p, name %s\n", device, debugstr_a(name) );
 
-    if (!strcmp( name, "vkCreateSwapchainKHR" )) return vulkan_funcs.p_vkCreateSwapchainKHR;
     if (!strcmp( name, "vkGetDeviceProcAddr" )) return win32u_vkGetDeviceProcAddr;
     if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
 
@@ -89,7 +88,6 @@ static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name
     if (!strcmp( name, "vkGetPhysicalDeviceWin32PresentationSupportKHR" )) return vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
 
     /* vkGetInstanceProcAddr also loads any children of instance, so device functions as well. */
-    if (!strcmp( name, "vkCreateSwapchainKHR" )) return vulkan_funcs.p_vkCreateSwapchainKHR;
     if (!strcmp( name, "vkGetDeviceProcAddr" )) return win32u_vkGetDeviceProcAddr;
     if (!strcmp( name, "vkQueuePresentKHR" )) return vulkan_funcs.p_vkQueuePresentKHR;
 

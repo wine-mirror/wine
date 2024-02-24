@@ -1695,7 +1695,7 @@ VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCrea
         return VK_ERROR_INITIALIZATION_FAILED;
     }
 
-    if (surface) create_info_host.surface = surface->driver_surface;
+    if (surface) create_info_host.surface = surface->host_surface;
     if (old_swapchain) create_info_host.oldSwapchain = old_swapchain->host_swapchain;
 
     /* Windows allows client rect to be empty, but host Vulkan often doesn't, adjust extents back to the host capabilities */

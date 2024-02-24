@@ -195,7 +195,6 @@ FUNCTION_OVERRIDES = {
 
 # functions for which a user driver entry must be generated
 USER_DRIVER_FUNCS = {
-    "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroySurfaceKHR",
     "vkGetDeviceProcAddr",

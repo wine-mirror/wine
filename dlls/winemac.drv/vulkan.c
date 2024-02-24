@@ -75,7 +75,6 @@ typedef struct VkMetalSurfaceCreateInfoEXT
     const void *pLayer; /* CAMetalLayer */
 } VkMetalSurfaceCreateInfoEXT;
 
-static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
@@ -99,23 +98,6 @@ static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface 
         macdrv_release_metal_device(surface->device);
 
     free(surface);
-}
-
-static VkResult macdrv_vkCreateSwapchainKHR(VkDevice device,
-        const VkSwapchainCreateInfoKHR *create_info,
-        const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain)
-{
-    VkSwapchainCreateInfoKHR create_info_host;
-    TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    create_info_host = *create_info;
-    create_info_host.surface = surface_from_handle(create_info->surface)->host_surface;
-
-    return pvkCreateSwapchainKHR(device, &create_info_host, NULL /* allocator */,
-            swapchain);
 }
 
 static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
@@ -242,7 +224,6 @@ static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
 
 static const struct vulkan_funcs vulkan_funcs =
 {
-    macdrv_vkCreateSwapchainKHR,
     macdrv_vkCreateWin32SurfaceKHR,
     macdrv_vkDestroySurfaceKHR,
     NULL,
@@ -264,7 +245,6 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *d
     }
 
 #define LOAD_FUNCPTR(f) if ((p##f = dlsym(vulkan_handle, #f)) == NULL) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR(vkCreateSwapchainKHR)
     LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
     LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
     LOAD_FUNCPTR(vkDestroySurfaceKHR)

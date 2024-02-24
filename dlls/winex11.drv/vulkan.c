@@ -73,7 +73,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR
     Window window;
 } VkXlibSurfaceCreateInfoKHR;
 
-static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
@@ -131,26 +130,6 @@ void vulkan_thread_detach(void)
         XSync(gdi_display, False);
     }
     pthread_mutex_unlock(&vulkan_mutex);
-}
-
-static VkResult X11DRV_vkCreateSwapchainKHR(VkDevice device,
-        const VkSwapchainCreateInfoKHR *create_info,
-        const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain)
-{
-    struct wine_vk_surface *x11_surface = surface_from_handle(create_info->surface);
-    VkSwapchainCreateInfoKHR create_info_host;
-    TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    if (!x11_surface->hwnd)
-        return VK_ERROR_SURFACE_LOST_KHR;
-
-    create_info_host = *create_info;
-    create_info_host.surface = x11_surface->host_surface;
-
-    return pvkCreateSwapchainKHR(device, &create_info_host, NULL /* allocator */, swapchain);
 }
 
 static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
@@ -259,7 +238,6 @@ static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
 
 static const struct vulkan_funcs vulkan_funcs =
 {
-    X11DRV_vkCreateSwapchainKHR,
     X11DRV_vkCreateWin32SurfaceKHR,
     X11DRV_vkDestroySurfaceKHR,
     NULL,
@@ -283,7 +261,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     init_recursive_mutex( &vulkan_mutex );
 
 #define LOAD_FUNCPTR( f ) if (!(p##f = dlsym( vulkan_handle, #f ))) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR( vkCreateSwapchainKHR );
     LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
     LOAD_FUNCPTR( vkDestroySurfaceKHR );
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
