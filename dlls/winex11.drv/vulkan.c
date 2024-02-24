@@ -76,7 +76,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR
 static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
-static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 
 static const struct vulkan_funcs vulkan_funcs;
@@ -231,17 +230,6 @@ static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     wine_vk_surface_release(x11_surface);
 }
 
-static void X11DRV_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
-         const VkAllocationCallbacks *allocator)
-{
-    TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    pvkDestroySwapchainKHR(device, swapchain, NULL /* allocator */);
-}
-
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -274,7 +262,6 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkCreateSwapchainKHR,
     X11DRV_vkCreateWin32SurfaceKHR,
     X11DRV_vkDestroySurfaceKHR,
-    X11DRV_vkDestroySwapchainKHR,
     NULL,
     NULL,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
@@ -299,7 +286,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR( vkCreateSwapchainKHR );
     LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
     LOAD_FUNCPTR( vkDestroySurfaceKHR );
-    LOAD_FUNCPTR( vkDestroySwapchainKHR );
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
 #undef LOAD_FUNCPTR
 

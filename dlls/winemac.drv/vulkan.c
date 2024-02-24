@@ -79,7 +79,6 @@ static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKH
 static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
-static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
 
 static const struct vulkan_funcs vulkan_funcs;
@@ -215,17 +214,6 @@ static void macdrv_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface
     wine_vk_surface_destroy(instance, mac_surface);
 }
 
-static void macdrv_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
-         const VkAllocationCallbacks *allocator)
-{
-    TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    pvkDestroySwapchainKHR(device, swapchain, NULL /* allocator */);
-}
-
 static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -257,7 +245,6 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkCreateSwapchainKHR,
     macdrv_vkCreateWin32SurfaceKHR,
     macdrv_vkDestroySurfaceKHR,
-    macdrv_vkDestroySwapchainKHR,
     NULL,
     NULL,
     macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
@@ -281,7 +268,6 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *d
     LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
     LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
     LOAD_FUNCPTR(vkDestroySurfaceKHR)
-    LOAD_FUNCPTR(vkDestroySwapchainKHR)
 #undef LOAD_FUNCPTR
 
     *driver_funcs = vulkan_funcs;

@@ -56,7 +56,6 @@ typedef struct VkWaylandSurfaceCreateInfoKHR
 static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
-static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 
 static const struct vulkan_funcs vulkan_funcs;
@@ -198,18 +197,6 @@ static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surfac
     wine_vk_surface_destroy(wine_vk_surface);
 }
 
-static void wayland_vkDestroySwapchainKHR(VkDevice device,
-                                          VkSwapchainKHR swapchain,
-                                          const VkAllocationCallbacks *allocator)
-{
-    TRACE("%p, 0x%s %p\n", device, wine_dbgstr_longlong(swapchain), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    pvkDestroySwapchainKHR(device, swapchain, NULL /* allocator */);
-}
-
 static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
                                                                        uint32_t index)
 {
@@ -255,7 +242,6 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkCreateSwapchainKHR = wayland_vkCreateSwapchainKHR,
     .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
     .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
-    .p_vkDestroySwapchainKHR = wayland_vkDestroySwapchainKHR,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = wayland_get_host_surface_extension,
     .p_wine_get_host_surface = wayland_wine_get_host_surface,
@@ -277,7 +263,6 @@ UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR(vkCreateSwapchainKHR);
     LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
     LOAD_FUNCPTR(vkDestroySurfaceKHR);
-    LOAD_FUNCPTR(vkDestroySwapchainKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
 #undef LOAD_FUNCPTR
 

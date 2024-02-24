@@ -198,7 +198,6 @@ USER_DRIVER_FUNCS = {
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
     "vkDestroySurfaceKHR",
-    "vkDestroySwapchainKHR",
     "vkGetDeviceProcAddr",
     "vkGetInstanceProcAddr",
     "vkGetPhysicalDeviceWin32PresentationSupportKHR",
