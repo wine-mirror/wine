@@ -1740,7 +1740,7 @@ void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain
 VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *present_info)
 {
     VkSwapchainKHR swapchains_buffer[16], *swapchains = swapchains_buffer;
-    HWND surfaces_buffer[ARRAY_SIZE(swapchains_buffer)], *surfaces = surfaces_buffer;
+    VkSurfaceKHR surfaces_buffer[ARRAY_SIZE(swapchains_buffer)], *surfaces = surfaces_buffer;
     struct wine_queue *queue = wine_queue_from_handle(queue_handle);
     VkPresentInfoKHR present_info_host = *present_info;
     VkResult res;
@@ -1759,7 +1759,7 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
         struct wine_swapchain *swapchain = wine_swapchain_from_handle(present_info->pSwapchains[i]);
         struct wine_surface *surface = swapchain->surface;
         swapchains[i] = swapchain->host_swapchain;
-        surfaces[i] = surface->hwnd;
+        surfaces[i] = surface->driver_surface;
     }
 
     present_info_host.pSwapchains = swapchains;

@@ -52,6 +52,7 @@ struct surface
 {
     VkSurfaceKHR host_surface;
     VkSurfaceKHR driver_surface;
+    HWND hwnd;
 };
 
 static inline struct surface *surface_from_handle( VkSurfaceKHR handle )
@@ -80,6 +81,7 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin
         return res;
     }
 
+    surface->hwnd = info->hwnd;
     surface->host_surface = driver_funcs->p_wine_get_host_surface( surface->driver_surface );
     *handle = surface_to_handle( surface );
     return VK_SUCCESS;
@@ -96,20 +98,21 @@ static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle
     free( surface );
 }
 
-static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces )
+static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR *present_info, VkSurfaceKHR *surfaces )
 {
-    VkPresentInfoKHR host_present_info = *present_info;
     VkResult res;
     UINT i;
 
     TRACE( "queue %p, present_info %p\n", queue, present_info );
 
-    res = p_vkQueuePresentKHR( queue, &host_present_info );
+    res = p_vkQueuePresentKHR( queue, present_info );
 
     for (i = 0; i < present_info->swapchainCount; i++)
     {
         VkResult swapchain_res = present_info->pResults ? present_info->pResults[i] : res;
-        driver_funcs->p_vulkan_surface_presented( surfaces[i], swapchain_res );
+        struct surface *surface = surface_from_handle( surfaces[i] );
+
+        driver_funcs->p_vulkan_surface_presented( surface->hwnd, swapchain_res );
     }
 
     return res;
