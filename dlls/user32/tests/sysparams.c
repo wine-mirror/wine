@@ -49,6 +49,7 @@ static BOOL (WINAPI *pAdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
 static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 static LONG (WINAPI *pGetAutoRotationState)(PAR_STATE);
+static BOOL (WINAPI *pAreDpiAwarenessContextsEqual)(DPI_AWARENESS_CONTEXT,DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -3823,6 +3824,54 @@ static void test_ThreadDpiAwarenessContext(ULONG_PTR flags)
     }
 }
 
+static int map_context(ULONG_PTR context, ULONG_PTR flags)
+{
+    switch (context)
+    {
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
+        return (~(ULONG_PTR)context) | 0x10;
+    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
+        return 0x22;
+    default:
+       context = context & (~flags);
+       return context & 0x33;
+    }
+}
+
+static void test_AreDpiAwarenessContextsEqual(ULONG_PTR flags)
+{
+    int i, j;
+    ULONG_PTR contexts[] = {
+        0x10 | flags,
+        0x11 | flags,
+        0x12,
+        0x22,
+        0x80000010 | flags,
+        0x80000011 | flags,
+        0x80000012,
+        0x80000022,
+        (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE,
+        (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE,
+        (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE,
+        (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(contexts); i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(contexts); j++)
+        {
+            BOOL equal = pAreDpiAwarenessContextsEqual((DPI_AWARENESS_CONTEXT)contexts[i], (DPI_AWARENESS_CONTEXT)contexts[j]);
+            int map_i = map_context(contexts[i], flags);
+            int map_j = map_context(contexts[j], flags);
+            BOOL equal_expected = map_i == map_j;
+            todo_wine_if((map_i == 0x22 && map_j == 0x12) || (map_j == 0x22 && map_i == 0x12))
+            ok(equal == equal_expected, "(%d, %d) (%p == %p) - Expected equal to be %d but got %d\n", i, j, (DPI_AWARENESS_CONTEXT)contexts[i], (DPI_AWARENESS_CONTEXT)contexts[j], equal_expected, equal);
+        }
+    }
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
@@ -3970,6 +4019,7 @@ static void test_dpi_context(void)
     ok( context == (DPI_AWARENESS_CONTEXT)(0x11 | flags), "wrong context %p\n", context );
 
     test_ThreadDpiAwarenessContext(flags);
+    test_AreDpiAwarenessContextsEqual(flags);
 
     for (i = 0; i < 0x100; i++)
     {
@@ -4265,6 +4315,7 @@ START_TEST(sysparams)
     pLogicalToPhysicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "LogicalToPhysicalPointForPerMonitorDPI");
     pPhysicalToLogicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "PhysicalToLogicalPointForPerMonitorDPI");
     pGetAutoRotationState = (void*)GetProcAddress(hdll, "GetAutoRotationState");
+    pAreDpiAwarenessContextsEqual = (void*)GetProcAddress(hdll, "AreDpiAwarenessContextsEqual");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
