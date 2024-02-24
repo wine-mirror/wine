@@ -32,6 +32,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
+static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
+
 static int window_surface_compare(const void *key, const struct rb_entry *entry)
 {
     const struct wine_surface *surface = RB_ENTRY_VALUE(entry, struct wine_surface, window_entry);
@@ -545,6 +548,9 @@ NTSTATUS init_vulkan(void *args)
         return STATUS_UNSUCCESSFUL;
     }
 
+    p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
+    p_vkEnumerateInstanceExtensionProperties = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceExtensionProperties");
+
     if (is_wow64())
     {
         SYSTEM_BASIC_INFORMATION info;
@@ -1006,14 +1012,14 @@ VkResult wine_vkEnumerateInstanceExtensionProperties(const char *name, uint32_t 
     unsigned int i, j, surface;
     VkResult res;
 
-    res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
+    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
     if (res != VK_SUCCESS)
         return res;
 
     if (!(host_properties = calloc(num_host_properties, sizeof(*host_properties))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, host_properties);
+    res = p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, host_properties);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to retrieve host properties, res=%d.\n", res);
@@ -1072,10 +1078,6 @@ VkResult wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev, uint32
 VkResult wine_vkEnumerateInstanceVersion(uint32_t *version)
 {
     VkResult res;
-
-    static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
-    if (!p_vkEnumerateInstanceVersion)
-        p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 
     if (p_vkEnumerateInstanceVersion)
     {
