@@ -3351,12 +3351,14 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
         ERR("-Unsupported hash of size %u\n", ctp->header.hash_value_size);
         return FALSE;
     }
-    ctp->hash_stream = pdb_read_stream(pdb_file, ctp->header.hash_stream);
-    /* FIXME always present? if not reconstruct ?*/
-    if (!ctp->hash_stream)
+    if (!(ctp->hash_stream = pdb_read_stream(pdb_file, ctp->header.hash_stream)))
     {
-        ERR("-Missing hash table in PDB file\n");
-        return FALSE;
+        if (ctp->header.last_index > ctp->header.first_index)
+        {
+            /* may be reconstruct hash table ? */
+            FIXME("-No hash table, while types exist\n");
+            return FALSE;
+        }
     }
 
     ctp->module = msc_dbg->module;
@@ -3388,7 +3390,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     /* parse the remap table
      * => move listed type_id at first position of their hash buckets so that we force remap to them
      */
-    if (ctp->header.type_remap_size)
+    if (ctp->hash_stream && ctp->header.type_remap_size)
     {
         const unsigned* remap = (const unsigned*)((const BYTE*)ctp->hash_stream + ctp->header.type_remap_offset);
         unsigned i, capa, count_present;
