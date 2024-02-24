@@ -1,12 +1,20 @@
-/* Automatically generated from Vulkan vk.xml; DO NOT EDIT!
+/*
+ * Copyright 2017-2018 Roderick Colenbrander
+ * Copyright 2022 Jacek Caban for CodeWeavers
  *
- * This file is generated from Vulkan vk.xml file covered
- * by the following copyright and permission notice:
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- * Copyright 2015-2024 The Khronos Group Inc.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * SPDX-License-Identifier: Apache-2.0 OR MIT
- *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifndef __WINE_VULKAN_DRIVER_H
