@@ -758,7 +758,11 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
 done:
     free( vk_physical_devices );
     if (vk_instance)
-        vulkan_funcs->p_vkDestroyInstance( vk_instance, NULL );
+    {
+        PFN_vkDestroyInstance p_vkDestroyInstance;
+        p_vkDestroyInstance = vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, "vkDestroyInstance" );
+        p_vkDestroyInstance( vk_instance, NULL );
+    }
     return ret;
 }
 

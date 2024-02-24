@@ -78,6 +78,7 @@ static void d3dkmt_init_vulkan(void)
         .enabledExtensionCount = ARRAY_SIZE( extensions ),
         .ppEnabledExtensionNames = extensions,
     };
+    PFN_vkDestroyInstance p_vkDestroyInstance;
     PFN_vkCreateInstance p_vkCreateInstance;
     VkResult vr;
 
@@ -95,11 +96,12 @@ static void d3dkmt_init_vulkan(void)
         return;
     }
 
+    p_vkDestroyInstance = vulkan_funcs->p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
 #define LOAD_VK_FUNC( f )                                                                      \
     if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( d3dkmt_vk_instance, #f )))     \
     {                                                                                          \
         WARN( "Failed to load " #f ".\n" );                                                    \
-        vulkan_funcs->p_vkDestroyInstance( d3dkmt_vk_instance, NULL );                         \
+        p_vkDestroyInstance( d3dkmt_vk_instance, NULL );                                       \
         vulkan_funcs = NULL;                                                                   \
         return;                                                                                \
     }

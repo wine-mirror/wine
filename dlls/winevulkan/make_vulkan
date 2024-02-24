@@ -175,7 +175,6 @@ FUNCTION_OVERRIDES = {
 
     # Instance functions
     "vkCreateDevice" : {"extra_param" : "client_ptr"},
-    "vkDestroyInstance" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalBufferProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalFenceProperties" : {"dispatch" : False},
     "vkGetPhysicalDeviceExternalSemaphoreProperties" : {"dispatch" : False},
@@ -198,7 +197,6 @@ FUNCTION_OVERRIDES = {
 USER_DRIVER_FUNCS = {
     "vkCreateSwapchainKHR",
     "vkCreateWin32SurfaceKHR",
-    "vkDestroyInstance",
     "vkDestroySurfaceKHR",
     "vkDestroySwapchainKHR",
     "vkGetDeviceProcAddr",

@@ -912,7 +912,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to load physical devices, res=%d\n", res);
-        vk_funcs->p_vkDestroyInstance(object->host_instance, NULL /* allocator */);
+        object->funcs.p_vkDestroyInstance(object->host_instance, NULL /* allocator */);
         free(object->utils_messengers);
         free(object);
         return res;
@@ -976,7 +976,7 @@ void wine_vkDestroyInstance(VkInstance handle, const VkAllocationCallbacks *allo
     if (!instance)
         return;
 
-    vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
+    instance->funcs.p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
     for (i = 0; i < instance->phys_dev_count; i++)
     {
         remove_handle_mapping(instance, &instance->phys_devs[i].wrapper_entry);
