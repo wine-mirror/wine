@@ -1805,7 +1805,6 @@ static void test_load_modules_details(void)
             loaded_img_name = test->in_image_name;
         ok(!wcsicmp(im.LoadedImageName, (test->options & SYMOPT_DEFERRED_LOADS) ? L"" : loaded_img_name),
            "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
-        todo_wine_if(i == 4 || i == 6 || i == 16)
         ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
         if (test->mismatch_in)
         {
@@ -1814,16 +1813,12 @@ static void test_load_modules_details(void)
             {
                 ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
                 make_path(filename, topdir, NULL, L"bar.pdb");
-                todo_wine
                 ok(!wcscmp(filename, im.LoadedPdbName), "Unexpected value '%ls\n", im.LoadedPdbName);
-                todo_wine
                 ok(im.PdbUnmatched, "Unexpected value\n");
                 ok(!im.DbgUnmatched, "Unexpected value\n");
-                todo_wine
                 ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
                    wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
                 ok(im.PdbSig == 0, "Unexpected value\n");
-                todo_wine
                 ok(im.PdbAge == test_files[val].age_or_timestamp, "Unexpected value\n");
             }
             else if (has_mismatch(test->mismatch_in, 'P', &val))
@@ -1865,7 +1860,6 @@ static void test_load_modules_details(void)
             ok(im.PdbSig == 0, "Unexpected value\n");
             ok(!im.PdbAge, "Unexpected value\n");
             /* native returns either 0 or the actual timestamp depending on test case */
-            todo_wine_if(i == 4 || i == 16)
             ok(!im.TimeDateStamp || broken(im.TimeDateStamp == 12324), "Unexpected value\n");
         }
         ok(im.ImageSize == 0x6666, "Unexpected image size\n");

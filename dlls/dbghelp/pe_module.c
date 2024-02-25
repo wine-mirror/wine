@@ -598,7 +598,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
     if (!(mapping = pe_map_full(fmap, &nth))) return FALSE;
     /* Read in debug directory */
     dbg = RtlImageDirectoryEntryToData( mapping, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &nDbg );
-    if (!dbg || !(nDbg /= sizeof(IMAGE_DEBUG_DIRECTORY))) goto done;
+    nDbg = dbg ? nDbg / sizeof(IMAGE_DEBUG_DIRECTORY) : 0;
 
     /* Parse debug directory */
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
@@ -624,7 +624,6 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
         ret = pe_load_debug_directory(pcs, module, mapping, IMAGE_FIRST_SECTION( nth ),
                                       nth->FileHeader.NumberOfSections, dbg, nDbg);
     }
-done:
     pe_unmap_full(fmap);
     return ret;
 }
