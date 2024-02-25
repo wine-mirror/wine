@@ -1583,7 +1583,7 @@ static void test_load_modules_path(void)
         }
         else
         {
-            todo_wine
+            todo_wine_if(i == 4 || i == 5 || i == 7 || i == 8 || i == 11)
             ok(im.SymType == SymPdb, "Unexpected symtype %x\n", im.SymType);
             make_path(filename, topdir, NULL, test_files[test->found_file].module_path);
             todo_wine
@@ -1595,7 +1595,7 @@ static void test_load_modules_path(void)
             todo_wine_if(i == 11)
             ok(im.PdbUnmatched == !(test_files[test->found_file].age_or_timestamp == 0x0030cafe), "Expecting matched PDB\n");
         }
-        todo_wine
+        todo_wine_if(i == 4 || i == 5 || i == 7 || i == 8 || i == 9 || i == 10 || i == 11 || i == 13 || i == 18 || i == 19)
         ok(IsEqualGUID(&im.PdbSig70, &guid1), "Unexpected PDB GUID\n");
         ret = SymCleanup(dummy);
         ok(ret, "SymCleanup failed: %lu\n", GetLastError());
@@ -1811,8 +1811,9 @@ static void test_load_modules_details(void)
         todo_wine_if(test->options & SYMOPT_DEFERRED_LOADS)
         ok(!wcsicmp(im.LoadedImageName, (test->options & SYMOPT_DEFERRED_LOADS) ? L"" : loaded_img_name),
            "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
-        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 10 || i == 12 || i == 14)
+        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 12 || i == 14)
         ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
+        todo_wine_if(i == 8 || i == 10)
         ok(!im.TypeInfo, "No type info present\n");
         if (test->mismatch_in)
         {

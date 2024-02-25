@@ -548,17 +548,6 @@ struct module_pair
     struct module*              effective; /* out: module with debug info */
 };
 
-enum pdb_kind {PDB_JG, PDB_DS};
-
-struct pdb_lookup
-{
-    const char*                 filename;
-    enum pdb_kind               kind;
-    unsigned int                age;
-    unsigned int                timestamp;
-    GUID                        guid;
-};
-
 struct cpu_stack_walk
 {
     HANDLE                      hProcess;
