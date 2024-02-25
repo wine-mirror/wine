@@ -1053,6 +1053,30 @@ static void test_shader_profiles(void)
     ok(!strcmp(profile, "ps_4_0"), "Unexpected profile %s.\n", profile);
 }
 
+static void test_compile_effect(void)
+{
+    char default_bs_source[] = "BlendState default_blend_state {};";
+    char bs_source2[] =
+            "BlendState blend_state\n"
+            "{\n"
+            "     srcblend[0] = zero;\n"
+            "};";
+    ID3D10Blob *blob;
+    HRESULT hr;
+
+    hr = D3D10CompileEffectFromMemory(default_bs_source, strlen(default_bs_source),
+            NULL, NULL, NULL, 0, 0, &blob, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D10Blob_Release(blob);
+
+    /* Compilation fails due to 10.1 feature incompatibility with fx_4_0 profile. */
+    hr = D3D10CompileEffectFromMemory(bs_source2, strlen(bs_source2), NULL, NULL, NULL,
+            0, 0, &blob, NULL);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(d3d10_1)
 {
     test_create_device();
@@ -1062,4 +1086,5 @@ START_TEST(d3d10_1)
     test_getdc();
     test_fx_4_1_blend_state();
     test_shader_profiles();
+    test_compile_effect();
 }
