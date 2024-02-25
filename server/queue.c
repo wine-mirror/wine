@@ -2598,6 +2598,28 @@ void free_hotkeys( struct desktop *desktop, user_handle_t window )
     }
 }
 
+/* retrieve the desktop which should receive some hardware input event */
+static struct desktop *get_hardware_input_desktop( user_handle_t win )
+{
+    struct winstation *winstation;
+    struct desktop *desktop;
+    struct thread *thread;
+
+    if (!win || !(thread = get_window_thread( win )))
+    {
+        if (!(winstation = get_visible_winstation())) return NULL;
+        return get_input_desktop( winstation );
+    }
+    else
+    {
+        /* if window is specified, use its desktop to make it the input desktop */
+        desktop = (struct desktop *)grab_object( thread->queue->input->desktop );
+        release_object( thread );
+    }
+
+    return desktop;
+}
+
 
 /* check if the thread owning the window is hung */
 DECL_HANDLER(is_window_hung)
@@ -2767,22 +2789,17 @@ DECL_HANDLER(send_message)
 /* send a hardware message to a thread queue */
 DECL_HANDLER(send_hardware_message)
 {
-    struct thread *thread = NULL;
     struct desktop *desktop;
     unsigned int origin = (req->flags & SEND_HWMSG_INJECTED ? IMO_INJECTED : IMO_HARDWARE);
     struct msg_queue *sender = get_current_queue();
 
-    if (!(desktop = get_thread_desktop( current, 0 ))) return;
-
-    if (req->win)
+    if (!(desktop = get_hardware_input_desktop( req->win ))) return;
+    if ((origin == IMO_INJECTED && desktop != current->queue->input->desktop) ||
+        !set_input_desktop( desktop->winstation, desktop ))
     {
-        if (!(thread = get_window_thread( req->win ))) return;
-        if (desktop != thread->queue->input->desktop)
-        {
-            /* don't allow queuing events to a different desktop */
-            release_object( desktop );
-            return;
-        }
+        release_object( desktop );
+        set_error( STATUS_ACCESS_DENIED );
+        return;
     }
 
     reply->prev_x = desktop->cursor.x;
@@ -2802,7 +2819,6 @@ DECL_HANDLER(send_hardware_message)
     default:
         set_error( STATUS_INVALID_PARAMETER );
     }
-    if (thread) release_object( thread );
 
     reply->new_x = desktop->cursor.x;
     reply->new_y = desktop->cursor.y;

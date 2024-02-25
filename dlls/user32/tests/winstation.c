@@ -652,9 +652,8 @@ static void test_inputdesktop(void)
         win_skip("Skip tests on NT4\n");
         return;
     }
-    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected last error %08lx\n", GetLastError());
-    ok(ret == 1 || broken(ret == 0) /* Win64 */, "unexpected return count %ld\n", ret);
+    ok(ret == 0 || broken(ret == 1) /* Win32 */, "unexpected return count %ld\n", ret);
 
     /* Set thread desktop back to the old thread desktop, SendInput should success. */
     ret = SetThreadDesktop(old_thread_desk);
@@ -699,9 +698,8 @@ static void test_inputdesktop(void)
 
     SetLastError(0xdeadbeef);
     ret = SendInput(1, inputs, sizeof(INPUT));
-    todo_wine
     ok(GetLastError() == ERROR_ACCESS_DENIED, "unexpected last error %08lx\n", GetLastError());
-    ok(ret == 1 || broken(ret == 0) /* Win64 */, "unexpected return count %ld\n", ret);
+    ok(ret == 0 || broken(ret == 1) /* Win32 */, "unexpected return count %ld\n", ret);
 
     /* Set thread desktop to the new desktop, SendInput should success. */
     ret = SetThreadDesktop(new_desk);

@@ -212,8 +212,17 @@ struct winstation *get_process_winstation( struct process *process, unsigned int
                                                 access, &winstation_ops );
 }
 
+/* retrieve the visible winstation */
+struct winstation *get_visible_winstation(void)
+{
+    struct winstation *winstation;
+    LIST_FOR_EACH_ENTRY( winstation, &winstation_list, struct winstation, entry )
+        if (winstation->flags & WSF_VISIBLE) return winstation;
+    return NULL;
+}
+
 /* retrieve the winstation current input desktop */
-static struct desktop *get_input_desktop( struct winstation *winstation )
+struct desktop *get_input_desktop( struct winstation *winstation )
 {
     struct desktop *desktop;
     if (!(desktop = winstation->input_desktop)) return NULL;
@@ -221,7 +230,7 @@ static struct desktop *get_input_desktop( struct winstation *winstation )
 }
 
 /* changes the winstation current input desktop and update its input time */
-static int set_input_desktop( struct winstation *winstation, struct desktop *new_desktop )
+int set_input_desktop( struct winstation *winstation, struct desktop *new_desktop )
 {
     if (!(winstation->flags & WSF_VISIBLE)) return 0;
     if (new_desktop) new_desktop->input_time = current_time;
