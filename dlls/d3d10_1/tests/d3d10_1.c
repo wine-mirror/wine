@@ -1039,6 +1039,20 @@ static void test_fx_4_1_blend_state(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_shader_profiles(void)
+{
+    const char *profile;
+
+    profile = D3D10GetVertexShaderProfile(NULL);
+    ok(!strcmp(profile, "vs_4_0"), "Unexpected profile %s.\n", profile);
+
+    profile = D3D10GetGeometryShaderProfile(NULL);
+    ok(!strcmp(profile, "gs_4_0"), "Unexpected profile %s.\n", profile);
+
+    profile = D3D10GetPixelShaderProfile(NULL);
+    ok(!strcmp(profile, "ps_4_0"), "Unexpected profile %s.\n", profile);
+}
+
 START_TEST(d3d10_1)
 {
     test_create_device();
@@ -1047,4 +1061,5 @@ START_TEST(d3d10_1)
     test_create_blend_state();
     test_getdc();
     test_fx_4_1_blend_state();
+    test_shader_profiles();
 }
