@@ -125,6 +125,7 @@ extern void post_win_event( struct thread *thread, unsigned int event,
                             const WCHAR *module, data_size_t module_size,
                             user_handle_t handle );
 extern void free_hotkeys( struct desktop *desktop, user_handle_t window );
+extern void set_rawinput_process( struct process *process, int enable );
 
 /* region functions */
 

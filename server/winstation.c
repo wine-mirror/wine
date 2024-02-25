@@ -232,9 +232,27 @@ struct desktop *get_input_desktop( struct winstation *winstation )
 /* changes the winstation current input desktop and update its input time */
 int set_input_desktop( struct winstation *winstation, struct desktop *new_desktop )
 {
+    struct desktop *old_desktop = winstation->input_desktop;
+    struct thread *thread;
+
     if (!(winstation->flags & WSF_VISIBLE)) return 0;
     if (new_desktop) new_desktop->input_time = current_time;
-    winstation->input_desktop = new_desktop;
+    if (old_desktop == new_desktop) return 1;
+
+    if (old_desktop)
+    {
+        /* disconnect every process of the old input desktop from rawinput */
+        LIST_FOR_EACH_ENTRY( thread, &old_desktop->threads, struct thread, desktop_entry )
+            set_rawinput_process( thread->process, 0 );
+    }
+
+    if ((winstation->input_desktop = new_desktop))
+    {
+        /* connect every process of the new input desktop to rawinput */
+        LIST_FOR_EACH_ENTRY( thread, &new_desktop->threads, struct thread, desktop_entry )
+            set_rawinput_process( thread->process, 1 );
+    }
+
     return 1;
 }
 
@@ -376,6 +394,9 @@ static void add_desktop_thread( struct desktop *desktop, struct thread *thread )
             desktop->close_timeout = NULL;
         }
     }
+
+    /* if thread process is now connected to the input desktop, let it receive rawinput */
+    if (desktop == desktop->winstation->input_desktop) set_rawinput_process( thread->process, 1 );
 }
 
 /* remove a user of the desktop and start the close timeout if necessary */
@@ -393,6 +414,13 @@ static void remove_desktop_thread( struct desktop *desktop, struct thread *threa
         /* if we have one remaining user, it has to be the manager of the desktop window */
         if ((process = get_top_window_owner( desktop )) && desktop->users == process->running_threads && !desktop->close_timeout)
             desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
+    }
+
+    if (desktop == desktop->winstation->input_desktop)
+    {
+        /* thread process might still be connected the input desktop through another thread, update the full list */
+        LIST_FOR_EACH_ENTRY( thread, &desktop->threads, struct thread, desktop_entry )
+            set_rawinput_process( thread->process, 1 );
     }
 }
 

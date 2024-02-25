@@ -50,6 +50,8 @@
 enum message_kind { SEND_MESSAGE, POST_MESSAGE };
 #define NB_MSG_KINDS (POST_MESSAGE+1)
 
+/* list of processes registered for rawinput in the input desktop */
+static struct list rawinput_processes = LIST_INIT(rawinput_processes);
 
 struct message_result
 {
@@ -2620,6 +2622,14 @@ static struct desktop *get_hardware_input_desktop( user_handle_t win )
     return desktop;
 }
 
+/* enable or disable rawinput for a given process */
+void set_rawinput_process( struct process *process, int enable )
+{
+    list_remove( &process->rawinput_entry ); /* remove it first, it might already be in the list */
+    if (!process->rawinput_device_count || !enable) list_init( &process->rawinput_entry );
+    else list_add_tail( &rawinput_processes, &process->rawinput_entry );
+}
+
 
 /* check if the thread owning the window is hung */
 DECL_HANDLER(is_window_hung)
@@ -3639,12 +3649,15 @@ DECL_HANDLER(update_rawinput_devices)
     unsigned int device_count = get_req_data_size() / sizeof (*devices);
     size_t size = device_count * sizeof(*devices);
     struct process *process = current->process;
+    struct winstation *winstation;
+    struct desktop *desktop;
 
     if (!size)
     {
         process->rawinput_device_count = 0;
         process->rawinput_mouse = NULL;
         process->rawinput_kbd = NULL;
+        set_rawinput_process( process, 0 );
         return;
     }
 
@@ -3659,4 +3672,15 @@ DECL_HANDLER(update_rawinput_devices)
 
     process->rawinput_mouse = find_rawinput_device( process, MAKELONG(HID_USAGE_GENERIC_MOUSE, HID_USAGE_PAGE_GENERIC) );
     process->rawinput_kbd = find_rawinput_device( process, MAKELONG(HID_USAGE_GENERIC_KEYBOARD, HID_USAGE_PAGE_GENERIC) );
+
+    if ((winstation = get_visible_winstation()) && (desktop = get_input_desktop( winstation )))
+    {
+        struct thread *thread;
+
+        /* one of the process thread might be connected to the input desktop, update the full list */
+        LIST_FOR_EACH_ENTRY( thread, &desktop->threads, struct thread, desktop_entry )
+            set_rawinput_process( thread->process, 1 );
+
+        release_object( desktop );
+    }
 }
