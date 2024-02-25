@@ -1541,18 +1541,14 @@ HRESULT BackgroundMenu_Constructor(IShellFolder *parent, BOOL desktop, REFIID ri
     ContextMenu *This;
     HRESULT hr;
 
-    This = malloc(sizeof(*This));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(This = calloc(1, sizeof(*This))))
+        return E_OUTOFMEMORY;
 
     This->IContextMenu3_iface.lpVtbl = &BackgroundContextMenuVtbl;
     This->IShellExtInit_iface.lpVtbl = &ShellExtInitVtbl;
     This->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
     This->ref = 1;
     This->parent = parent;
-
-    This->pidl = NULL;
-    This->apidl = NULL;
-    This->cidl = 0;
 
     This->desktop = desktop;
     if (parent) IShellFolder_AddRef(parent);
