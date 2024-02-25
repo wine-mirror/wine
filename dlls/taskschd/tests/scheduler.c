@@ -64,6 +64,7 @@ static BOOL check_win_version(int min_major, int min_minor)
 static void test_Connect(void)
 {
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR user_name[256];
     DWORD len;
     HRESULT hr;
     BSTR bstr;
@@ -91,6 +92,12 @@ static void test_Connect(void)
     ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
 
     hr = ITaskService_get_TargetServer(service, &bstr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#lx\n", hr);
+
+    hr = ITaskService_get_ConnectedUser(service, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
+
+    hr = ITaskService_get_ConnectedUser(service, &bstr);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#lx\n", hr);
 
     /* Win7 doesn't support UNC \\ prefix, but according to a user
@@ -142,6 +149,14 @@ static void test_Connect(void)
     hr = ITaskService_get_TargetServer(service, &bstr);
     ok(hr == S_OK, "get_TargetServer error %#lx\n", hr);
     ok(!lstrcmpW(comp_name, bstr), "compname %s != server name %s\n", wine_dbgstr_w(comp_name), wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    len = ARRAY_SIZE(user_name);
+    GetUserNameW(user_name, &len);
+
+    hr = ITaskService_get_ConnectedUser(service, &bstr);
+    ok(hr == S_OK, "get_ConnectedUser error %#lx\n", hr);
+    ok(!lstrcmpW(user_name, bstr), "username %s != user name %s\n", wine_dbgstr_w(user_name), wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     ITaskService_Release(service);
