@@ -354,6 +354,7 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, I
     LONG src_stride;
     HRESULT hr;
     BYTE *src;
+    BYTE *dst_uv;
 
     if (FAILED(hr = IMFMediaType_GetUINT32(filter->media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&src_stride)))
     {
@@ -364,14 +365,6 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, I
     width = frame_size >> 32;
     lines = frame_size;
 
-    if (IsEqualGUID(subtype, &MFVideoFormat_YUY2))
-    {
-        width = (3 * width + 3) & ~3;
-    }
-    else
-    {
-        width *= 4;
-    }
 
     if (FAILED(hr = IMediaSample_GetPointer(input_sample, &src)))
     {
@@ -392,6 +385,30 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, I
             if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_DISCARD)))
             {
                 if (src_stride < 0) src += (-src_stride) * (lines - 1);
+
+                if (IsEqualGUID(subtype, &MFVideoFormat_YUY2))
+                {
+                    width = (3 * width + 3) & ~3;
+                    MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
+                }
+                else if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
+                {
+                    /* Width and height must be rounded up to even. */
+                    width = (width + 1) & ~1;
+                    lines = (lines + 1) & ~1;
+
+                    /* Y plane */
+                    MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
+
+                    /* UV plane */
+                    dst_uv = (BYTE *)locked_rect.pBits + (lines * locked_rect.Pitch);
+                    MFCopyImage(dst_uv, locked_rect.Pitch, src + (lines * src_stride), src_stride, width, lines / 2);
+                }
+                else
+                {
+                    /* All other formats are 32-bit, single plane. */
+                    MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 4, lines);
+                }
                 MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
                 IDirect3DSurface9_UnlockRect(surface);
             }
@@ -427,7 +444,8 @@ static HRESULT evr_render(struct strmbase_renderer *iface, IMediaSample *input_s
 
     if (IsEqualGUID(&subtype, &MFVideoFormat_ARGB32)
             || IsEqualGUID(&subtype, &MFVideoFormat_RGB32)
-            || IsEqualGUID(&subtype, &MFVideoFormat_YUY2))
+            || IsEqualGUID(&subtype, &MFVideoFormat_YUY2)
+            || IsEqualGUID(&subtype, &MFVideoFormat_NV12))
     {
         if (SUCCEEDED(hr = evr_copy_sample_buffer(filter, &subtype, input_sample, &sample)))
         {
