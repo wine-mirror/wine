@@ -23,6 +23,7 @@ SOURCES = \
 	enumidlist.c \
 	folders.c \
 	iconcache.c \
+	new_menu.c \
 	pidl.c \
 	recyclebin.c \
 	resources/audio.svg \

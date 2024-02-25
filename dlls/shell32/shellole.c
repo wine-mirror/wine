@@ -70,6 +70,7 @@ static const struct {
 	{&CLSID_MyComputer,	ISF_MyComputer_Constructor},
 	{&CLSID_MyDocuments,    MyDocuments_Constructor},
 	{&CLSID_NetworkPlaces,  ISF_NetworkPlaces_Constructor},
+	{&CLSID_NewMenu,        new_menu_create},
 	{&CLSID_Printers,       Printers_Constructor},
 	{&CLSID_QueryAssociations, QueryAssociations_Constructor},
 	{&CLSID_RecycleBin,     RecycleBin_Constructor},

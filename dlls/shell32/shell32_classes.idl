@@ -183,3 +183,9 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(75048700-ef1f-11d0-9888-006097deacf9)
 ] coclass ActiveDesktop { interface IActiveDesktop; }
+
+[
+    threading(apartment),
+    uuid(d969a300-e7ff-11d0-a93b-00a0c90f2719)
+]
+coclass NewMenu {}

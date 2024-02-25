@@ -114,6 +114,8 @@ HRESULT WINAPI ApplicationAssociationRegistration_Constructor(IUnknown *outer, R
 HRESULT WINAPI ApplicationDestinations_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv);
 HRESULT WINAPI ApplicationDocumentLists_Constructor(IUnknown *outer, REFIID riid, LPVOID *ppv);
 
+HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out);
+
 HRESULT IShellLink_ConstructFromFile(IUnknown * pUnkOuter, REFIID riid, LPCITEMIDLIST pidl, IUnknown **ppv);
 
 LPEXTRACTICONA	IExtractIconA_Constructor(LPCITEMIDLIST);
