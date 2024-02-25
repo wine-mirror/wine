@@ -1581,16 +1581,12 @@ static void test_load_modules_path(void)
         }
         else
         {
-            todo_wine_if(i == 4 || i == 5 || i == 7 || i == 8 || i == 11)
             ok(im.SymType == SymPdb, "Unexpected symtype %x\n", im.SymType);
             make_path(filename, topdir, NULL, test_files[test->found_file].module_path);
-            todo_wine_if(i == 2 || i == 4 || i == 5 || i == 7 || i == 8 || i == 11 || i == 21)
             ok(!wcscmp(im.LoadedPdbName, filename),
                "Expected %ls as loaded pdb file, got '%ls' instead\n", test_files[test->found_file].module_path, im.LoadedPdbName);
-            todo_wine_if(i == 11 || i == 21)
             ok(im.PdbAge == test_files[test->found_file].age_or_timestamp,
                "Expected %lx as pdb-age, got %lx instead\n",  test_files[test->found_file].age_or_timestamp, im.PdbAge);
-            todo_wine_if(i == 11)
             ok(im.PdbUnmatched == !(test_files[test->found_file].age_or_timestamp == 0x0030cafe), "Expecting matched PDB\n");
         }
         ok(IsEqualGUID(&im.PdbSig70, &guid1), "Unexpected PDB GUID\n");

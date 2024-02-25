@@ -510,7 +510,7 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
                            SYMSRV_INDEX_INFOW *info, BOOL* is_unmatched)
 {
     struct module_find  mf;
-    WCHAR              *ptr;
+    WCHAR              *ptr, *ext;
     const WCHAR*        filename;
     WCHAR              *searchPath = pcs->search_path;
     WCHAR               buffer[MAX_PATH];
@@ -539,22 +539,9 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
 
     /* FIXME: Use Environment-Variables (see MS docs)
                  _NT_SYMBOL_PATH and _NT_ALT_SYMBOL_PATH
-       FIXME: Implement "Standard Path Elements" (Path) ... (see MS docs)
-              do a search for (every?) path-element like this ...
-              <path>
-              <path>\dll
-              <path>\symbols\dll
-              (dll may be exe, or sys depending on the file extension)   */
+    */
 
-    /* 2. check module-path */
-    file_pathW(module->module.LoadedImageName, buffer);
-    if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
-    if (module->real_path)
-    {
-        file_pathW(module->real_path, buffer);
-        if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
-    }
-
+    ext = wcsrchr(module->module.LoadedImageName, L'.');
     while (searchPath)
     {
         size_t len;
@@ -562,17 +549,40 @@ BOOL path_find_symbol_file(const struct process* pcs, const struct module* modul
         ptr = wcschr(searchPath, ';');
         len = (ptr) ? ptr - searchPath : wcslen(searchPath);
 
-        if (len < ARRAY_SIZE(buffer))
+        if (len + 1 < ARRAY_SIZE(buffer))
         {
             memcpy(buffer, searchPath, len * sizeof(WCHAR));
-            buffer[len] = '\0';
+            buffer[len] = L'\0';
             /* return first fully matched file */
             if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+            len = wcslen(buffer); /* do_searchW removes the trailing \ in buffer when present */
+            /* check once max size for \symbols\<ext>\ */
+            if (ext && len + 9 /* \symbols\ */ + wcslen(ext + 1) + 1 + 1 <= ARRAY_SIZE(buffer))
+            {
+                buffer[len++] = L'\\';
+                wcscpy(buffer + len, ext + 1);
+                wcscat(buffer + len, L"\\");
+                if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+                wcscpy(buffer + len, L"symbols\\");
+                wcscat(buffer + len, ext + 1);
+                wcscat(buffer + len, L"\\");
+                if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+            }
         }
         else
             ERR("Too long search element %ls\n", searchPath);
         searchPath = ptr ? ptr + 1 : NULL;
     }
+
+    /* check module-path */
+    if (module->real_path)
+    {
+        file_pathW(module->real_path, buffer);
+        if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+    }
+    file_pathW(module->module.LoadedImageName, buffer);
+    if (do_searchW(filename, buffer, FALSE, module_find_cb, &mf)) return TRUE;
+
     /* if no fully matching file is found, return the best matching file if any */
     if ((dbghelp_options & SYMOPT_LOAD_ANYTHING) && mf.matched)
     {
