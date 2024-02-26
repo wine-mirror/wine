@@ -114,6 +114,14 @@ static void test_VirtualAllocEx(void)
     ok(b && (bytes_read == alloc_size), "%Iu bytes read\n", bytes_read);
     ok(!memcmp(src, dst, alloc_size), "Data from remote process differs\n");
 
+    /* test 0 length */
+    bytes_written = 0xdeadbeef;
+    b = WriteProcessMemory(hProcess, addr1, src, 0, &bytes_written);
+    ok((b && !bytes_written) || broken(!b && GetLastError() == ERROR_INVALID_PARAMETER), "write failed: %lu\n", GetLastError());
+    bytes_read = 0xdeadbeef;
+    b = ReadProcessMemory(hProcess, addr1, src, 0, &bytes_read);
+    ok(b && !bytes_read, "read failed: %lu\n", GetLastError());
+
     /* test invalid source buffers */
 
     b = VirtualProtect( src + 0x2000, 0x2000, PAGE_NOACCESS, &old_prot );

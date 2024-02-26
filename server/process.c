@@ -1667,7 +1667,6 @@ DECL_HANDLER(write_process_memory)
     {
         data_size_t len = get_req_data_size();
         if (len) write_process_memory( process, req->addr, len, get_req_data() );
-        else set_error( STATUS_INVALID_PARAMETER );
         release_object( process );
     }
 }
