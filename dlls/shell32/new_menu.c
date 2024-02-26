@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 struct new_menu
 {
     IShellExtInit IShellExtInit_iface;
+    IContextMenu3 IContextMenu3_iface;
     LONG refcount;
 };
 
@@ -43,6 +44,10 @@ static HRESULT WINAPI ext_init_QueryInterface(IShellExtInit *iface, REFIID iid, 
 
     if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IShellExtInit))
         *out = &menu->IShellExtInit_iface;
+    else if (IsEqualGUID(iid, &IID_IContextMenu)
+            || IsEqualGUID(iid, &IID_IContextMenu2)
+            || IsEqualGUID(iid, &IID_IContextMenu3))
+        *out = &menu->IContextMenu3_iface;
     else
     {
         *out = NULL;
@@ -94,6 +99,85 @@ static const IShellExtInitVtbl ext_init_vtbl =
     ext_init_Initialize,
 };
 
+static struct new_menu *impl_from_IContextMenu3(IContextMenu3 *iface)
+{
+    return CONTAINING_RECORD(iface, struct new_menu, IContextMenu3_iface);
+}
+
+static HRESULT WINAPI context_menu_QueryInterface(IContextMenu3 *iface, REFIID iid, void **out)
+{
+    struct new_menu *menu = impl_from_IContextMenu3(iface);
+
+    return IShellExtInit_QueryInterface(&menu->IShellExtInit_iface, iid, out);
+}
+
+static ULONG WINAPI context_menu_AddRef(IContextMenu3 *iface)
+{
+    struct new_menu *menu = impl_from_IContextMenu3(iface);
+
+    return IShellExtInit_AddRef(&menu->IShellExtInit_iface);
+}
+
+static ULONG WINAPI context_menu_Release(IContextMenu3 *iface)
+{
+    struct new_menu *menu = impl_from_IContextMenu3(iface);
+
+    return IShellExtInit_Release(&menu->IShellExtInit_iface);
+}
+
+static HRESULT WINAPI context_menu_QueryContextMenu(IContextMenu3 *iface,
+        HMENU hmenu, UINT index, UINT min_id, UINT max_id, UINT flags)
+{
+    FIXME("iface %p, hmenu %p, index %u, min_id %u, max_id %u, flags %#x, stub!\n",
+            iface, hmenu, index, min_id, max_id, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI context_menu_InvokeCommand(IContextMenu3 *iface, CMINVOKECOMMANDINFO *info)
+{
+    FIXME("iface %p, info %p, stub!\n", iface, info);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI context_menu_GetCommandString(IContextMenu3 *iface,
+        UINT_PTR id, UINT type, UINT *reserved, char *string, UINT size)
+{
+    FIXME("iface %p, id %Iu, type %#x, reserved %p, string %p, size %u, stub!\n",
+            iface, id, type, reserved, string, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI context_menu_HandleMenuMsg(IContextMenu3 *iface, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    FIXME("iface %p, msg %#x, wparam %#Ix, lparam %#Ix, stub!\n", iface, msg, wparam, lparam);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI context_menu_HandleMenuMsg2(IContextMenu3 *iface,
+        UINT msg, WPARAM wparam, LPARAM lparam, LRESULT *result)
+{
+    FIXME("iface %p, msg %#x, wparam %#Ix, lparam %#Ix, result %p, stub!\n",
+            iface, msg, wparam, lparam, result);
+
+    return E_NOTIMPL;
+}
+
+static const IContextMenu3Vtbl context_menu_vtbl =
+{
+    context_menu_QueryInterface,
+    context_menu_AddRef,
+    context_menu_Release,
+    context_menu_QueryContextMenu,
+    context_menu_InvokeCommand,
+    context_menu_GetCommandString,
+    context_menu_HandleMenuMsg,
+    context_menu_HandleMenuMsg2,
+};
+
 HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out)
 {
     struct new_menu *menu;
@@ -106,6 +190,7 @@ HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out)
         return E_OUTOFMEMORY;
 
     menu->IShellExtInit_iface.lpVtbl = &ext_init_vtbl;
+    menu->IContextMenu3_iface.lpVtbl = &context_menu_vtbl;
     menu->refcount = 1;
 
     TRACE("Created New menu %p.\n", menu);
