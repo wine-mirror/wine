@@ -11526,6 +11526,41 @@ then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -Wenum-conversion"
 fi }
 
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-flarge-source-files -Wmisleading-indentation" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -flarge-source-files -Wmisleading-indentation" >&5
+printf %s "checking whether $CC supports -flarge-source-files -Wmisleading-indentation... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -flarge-source-files -Wmisleading-indentation"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else $as_nop
+  eval "$as_ac_var=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-misleading-indentation"
+fi }
+
     case $wine_arch in
       i386) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-omit-frame-pointer" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-omit-frame-pointer" >&5
@@ -19471,6 +19506,35 @@ printf "%s\n" "$ac_cv_cflags__Wwrite_strings" >&6; }
 if test "x$ac_cv_cflags__Wwrite_strings" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
+fi
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -flarge-source-files -Wmisleading-indentation" >&5
+printf %s "checking whether the compiler supports -flarge-source-files -Wmisleading-indentation... " >&6; }
+if test ${ac_cv_cflags__flarge_source_files__Wmisleading_indentation+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -flarge-source-files -Wmisleading-indentation"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__flarge_source_files__Wmisleading_indentation=yes
+else $as_nop
+  ac_cv_cflags__flarge_source_files__Wmisleading_indentation=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__flarge_source_files__Wmisleading_indentation" >&5
+printf "%s\n" "$ac_cv_cflags__flarge_source_files__Wmisleading_indentation" >&6; }
+if test "x$ac_cv_cflags__flarge_source_files__Wmisleading_indentation" = xyes
+then :
+  EXTRACFLAGS="$EXTRACFLAGS -Wno-misleading-indentation"
 fi
 
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpointer-arith" >&5
