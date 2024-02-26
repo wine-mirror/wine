@@ -157,6 +157,8 @@ STRINGTABLE
 	IDS_VIEW_LIST		"&List"
 	IDS_VIEW_DETAILS	"&Details"
 
+        IDS_NEW_MENU            "Ne&w"
+
         IDS_VERB_EXPLORE        "E&xplore"
         IDS_VERB_OPEN           "&Open"
         IDS_VERB_PRINT          "&Print"

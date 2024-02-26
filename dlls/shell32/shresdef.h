@@ -54,6 +54,8 @@
 #define IDS_VIEW_LIST		27
 #define IDS_VIEW_DETAILS	28
 
+#define IDS_NEW_MENU                29
+
 #define IDS_VERB_EXPLORE            30
 #define IDS_VERB_OPEN               31
 #define IDS_VERB_PRINT              32

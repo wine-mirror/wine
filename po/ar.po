@@ -97,8 +97,8 @@ msgstr "معلومات الدّعم"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:273 dlls/shell32/shell32.rc:297
-#: dlls/shell32/shell32.rc:319 dlls/shell32/shell32.rc:338
+#: dlls/shell32/shell32.rc:275 dlls/shell32/shell32.rc:299
+#: dlls/shell32/shell32.rc:321 dlls/shell32/shell32.rc:340
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
@@ -200,9 +200,9 @@ msgstr "&تثبيت"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:274
-#: dlls/shell32/shell32.rc:298 dlls/shell32/shell32.rc:309
-#: dlls/shell32/shell32.rc:339 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:276
+#: dlls/shell32/shell32.rc:300 dlls/shell32/shell32.rc:311
+#: dlls/shell32/shell32.rc:341 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
@@ -272,7 +272,7 @@ msgid "Not specified"
 msgstr "غير مُصنّف"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:238
+#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:240
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "الاسم"
@@ -294,7 +294,7 @@ msgid "Programs (*.exe)"
 msgstr "برامج بتنسيق exe"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
-#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:196
+#: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:198
 #: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
@@ -503,12 +503,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "لا شيء"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:306
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:308
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "ن&عم"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:308
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:310
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "لا"
@@ -568,7 +568,7 @@ msgid "Dri&ves:"
 msgstr "الم&حرّكات:"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:367 dlls/shell32/shell32.rc:404
+#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "القراءة ف&قط"
@@ -953,7 +953,7 @@ msgstr "افتح لل&قراءة فقط"
 
 #: dlls/comdlg32/comdlg32.rc:480 dlls/comdlg32/comdlg32.rc:506
 #: dlls/comdlg32/comdlg32.rc:524 dlls/shdoclc/shdoclc.rc:127
-#: dlls/shell32/shell32.rc:162
+#: dlls/shell32/shell32.rc:164
 msgid "&Open"
 msgstr "ا&فتح"
 
@@ -2258,8 +2258,8 @@ msgid "Notice Text="
 msgstr "نص المرجعية="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:345
-#: dlls/shell32/shell32.rc:374
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:347
+#: dlls/shell32/shell32.rc:376
 msgid "General"
 msgstr "عام"
 
@@ -2755,7 +2755,7 @@ msgstr "استخدام المفتاح المعزز (ملكية)"
 msgid "Friendly name"
 msgstr "الاسم المعروف"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:239
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:241
 #: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "الوصف"
@@ -3388,7 +3388,7 @@ msgid "Paste"
 msgstr "الصق"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:91 dlls/shdoclc/shdoclc.rc:121
-#: dlls/shell32/shell32.rc:163
+#: dlls/shell32/shell32.rc:165
 msgid "&Print"
 msgstr "اط&بع"
 
@@ -8595,7 +8595,7 @@ msgstr "الميزة من:"
 msgid "choose which folder contains %s"
 msgstr "اختر المجلد الحاوي على %s"
 
-#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:235
+#: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:237
 msgid "New Folder"
 msgstr "مجلد جديد"
 
@@ -9912,7 +9912,7 @@ msgstr ""
 "أدخل محتويات الملف كعنصر في مستندك ، لذلك يجب عليك تفعيله قبل أن تستخدم "
 "البرنامج الذي انشأه."
 
-#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:194
+#: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:196
 msgid "Browse"
 msgstr "استعرض"
 
@@ -10488,122 +10488,122 @@ msgstr "ا&خرج"
 msgid "&About Control Panel"
 msgstr "معلوما&ت حول لوحة التحكم"
 
-#: dlls/shell32/shell32.rc:270 dlls/shell32/shell32.rc:285
+#: dlls/shell32/shell32.rc:272 dlls/shell32/shell32.rc:287
 msgid "Browse for Folder"
 msgstr "استعرض مجلدًا"
 
-#: dlls/shell32/shell32.rc:290
+#: dlls/shell32/shell32.rc:292
 msgid "Folder:"
 msgstr "المجلد:"
 
-#: dlls/shell32/shell32.rc:296
+#: dlls/shell32/shell32.rc:298
 msgid "&Make New Folder"
 msgstr "أنش&ئ مجلدًا جديدًا"
 
-#: dlls/shell32/shell32.rc:303
+#: dlls/shell32/shell32.rc:305
 msgid "Message"
 msgstr "الرسالة"
 
-#: dlls/shell32/shell32.rc:307
+#: dlls/shell32/shell32.rc:309
 msgid "Yes to &all"
 msgstr "نعم &للكل"
 
-#: dlls/shell32/shell32.rc:316
+#: dlls/shell32/shell32.rc:318
 msgid "About %s"
 msgstr "معلوماتٌ حول %s"
 
-#: dlls/shell32/shell32.rc:320
+#: dlls/shell32/shell32.rc:322
 msgid "Wine &license"
 msgstr "&رخصة واين"
 
-#: dlls/shell32/shell32.rc:325
+#: dlls/shell32/shell32.rc:327
 msgid "Running on %s"
 msgstr "يجري التشغيل على %s"
 
-#: dlls/shell32/shell32.rc:326
+#: dlls/shell32/shell32.rc:328
 msgid "Wine was brought to you by:"
 msgstr "تم تحضير برنامج واين من أجلكم بواسطة:"
 
-#: dlls/shell32/shell32.rc:331
+#: dlls/shell32/shell32.rc:333
 #, fuzzy
 #| msgid "&Run..."
 msgid "Run"
 msgstr "ش&غل..."
 
-#: dlls/shell32/shell32.rc:335
+#: dlls/shell32/shell32.rc:337
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
 "أدخل اسم برنامج أو مجلد أو موقعًا على الشابكة و سيحاول واين فتحه من أجلك."
 
-#: dlls/shell32/shell32.rc:336
+#: dlls/shell32/shell32.rc:338
 msgid "&Open:"
 msgstr "ا&فتح:"
 
-#: dlls/shell32/shell32.rc:340 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:342 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "ا&ستعرض..."
 
-#: dlls/shell32/shell32.rc:352 dlls/shell32/shell32.rc:381
+#: dlls/shell32/shell32.rc:354 dlls/shell32/shell32.rc:383
 #, fuzzy
 #| msgid "File type"
 msgid "File type:"
 msgstr "نوع الملف"
 
-#: dlls/shell32/shell32.rc:356 dlls/shell32/shell32.rc:389
+#: dlls/shell32/shell32.rc:358 dlls/shell32/shell32.rc:391
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "المكان:"
 
-#: dlls/shell32/shell32.rc:358 dlls/shell32/shell32.rc:391
+#: dlls/shell32/shell32.rc:360 dlls/shell32/shell32.rc:393
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "الح&جم:"
 
-#: dlls/shell32/shell32.rc:362 dlls/shell32/shell32.rc:395
+#: dlls/shell32/shell32.rc:364 dlls/shell32/shell32.rc:397
 #, fuzzy
 #| msgid "Creation date"
 msgid "Creation date:"
 msgstr "تاريخ الإنشاء"
 
-#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:403
+#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #, fuzzy
 #| msgid "&Attributes:"
 msgid "Attributes:"
 msgstr "الس&مات:"
 
-#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
+#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "م&خفي"
 
-#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
+#: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "أرشي&في"
 
-#: dlls/shell32/shell32.rc:383
+#: dlls/shell32/shell32.rc:385
 #, fuzzy
 #| msgid "Open:"
 msgid "Open with:"
 msgstr "افتح:"
 
-#: dlls/shell32/shell32.rc:386
+#: dlls/shell32/shell32.rc:388
 #, fuzzy
 #| msgid "Change &Icon..."
 msgid "&Change..."
 msgstr "غ&ير الرمز..."
 
-#: dlls/shell32/shell32.rc:397
+#: dlls/shell32/shell32.rc:399
 #, fuzzy
 #| msgid "Modified"
 msgid "Last modified:"
 msgstr "معدل"
 
-#: dlls/shell32/shell32.rc:399
+#: dlls/shell32/shell32.rc:401
 #, fuzzy
 #| msgid "Last Change:"
 msgid "Last accessed:"
@@ -10658,112 +10658,116 @@ msgid "Control Panel"
 msgstr "لوحة التحكم"
 
 #: dlls/shell32/shell32.rc:161
+msgid "Ne&w"
+msgstr ""
+
+#: dlls/shell32/shell32.rc:163
 msgid "E&xplore"
 msgstr "استعرا&ض"
 
-#: dlls/shell32/shell32.rc:164
+#: dlls/shell32/shell32.rc:166
 msgid "Run as &Administrator"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:186
+#: dlls/shell32/shell32.rc:188
 msgid "Restart"
 msgstr "أعد التشغيل"
 
-#: dlls/shell32/shell32.rc:187
+#: dlls/shell32/shell32.rc:189
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "هل أنت متأكد من رغبتك في محاكاة إعادة تشغيل وندوز ؟"
 
-#: dlls/shell32/shell32.rc:188
+#: dlls/shell32/shell32.rc:190
 msgid "Shutdown"
 msgstr "إيقاف التشغيل"
 
-#: dlls/shell32/shell32.rc:189
+#: dlls/shell32/shell32.rc:191
 msgid "Do you want to shutdown your Wine session?"
 msgstr "هل ترغب بإنهاء جلسة واين ؟"
 
-#: dlls/shell32/shell32.rc:200 programs/progman/progman.rc:83
+#: dlls/shell32/shell32.rc:202 programs/progman/progman.rc:83
 msgid "Programs"
 msgstr "البرامج"
 
-#: dlls/shell32/shell32.rc:201 dlls/shell32/shell32.rc:216
-#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:232
+#: dlls/shell32/shell32.rc:203 dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:234
 msgid "Documents"
 msgstr "المستندات"
 
-#: dlls/shell32/shell32.rc:202
+#: dlls/shell32/shell32.rc:204
 msgid "Favorites"
 msgstr "المفضلة"
 
-#: dlls/shell32/shell32.rc:203
+#: dlls/shell32/shell32.rc:205
 msgid "StartUp"
 msgstr "بدء التشغيل"
 
-#: dlls/shell32/shell32.rc:204
+#: dlls/shell32/shell32.rc:206
 msgid "Start Menu"
 msgstr "قائمة ابدأ"
 
-#: dlls/shell32/shell32.rc:205 dlls/shell32/shell32.rc:218
+#: dlls/shell32/shell32.rc:207 dlls/shell32/shell32.rc:220
 msgid "Music"
 msgstr "الصوتيات"
 
-#: dlls/shell32/shell32.rc:206 dlls/shell32/shell32.rc:220
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:222
 msgid "Videos"
 msgstr "المرئيات"
 
-#: dlls/shell32/shell32.rc:207
+#: dlls/shell32/shell32.rc:209
 msgctxt "directory"
 msgid "Desktop"
 msgstr "سطح المكتب"
 
-#: dlls/shell32/shell32.rc:208
+#: dlls/shell32/shell32.rc:210
 msgid "NetHood"
 msgstr "الشبكة"
 
-#: dlls/shell32/shell32.rc:209
+#: dlls/shell32/shell32.rc:211
 msgid "Templates"
 msgstr "النماذج"
 
-#: dlls/shell32/shell32.rc:210
+#: dlls/shell32/shell32.rc:212
 msgid "PrintHood"
 msgstr "الطباعة"
 
-#: dlls/shell32/shell32.rc:211 programs/winhlp32/winhlp32.rc:49
+#: dlls/shell32/shell32.rc:213 programs/winhlp32/winhlp32.rc:49
 msgid "History"
 msgstr "التأريخ"
 
-#: dlls/shell32/shell32.rc:212
+#: dlls/shell32/shell32.rc:214
 msgid "Program Files"
 msgstr "ملفات البرامج"
 
-#: dlls/shell32/shell32.rc:214 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:216 dlls/shell32/shell32.rc:221
 msgid "Pictures"
 msgstr "الصور"
 
-#: dlls/shell32/shell32.rc:215
+#: dlls/shell32/shell32.rc:217
 msgid "Common Files"
 msgstr "الشائعات"
 
-#: dlls/shell32/shell32.rc:217
+#: dlls/shell32/shell32.rc:219
 msgid "Administrative Tools"
 msgstr "أدوات الإدارة"
 
-#: dlls/shell32/shell32.rc:213
+#: dlls/shell32/shell32.rc:215
 msgid "Program Files (x86)"
 msgstr "ملفات البرامج 32بت"
 
-#: dlls/shell32/shell32.rc:221
+#: dlls/shell32/shell32.rc:223
 msgid "Contacts"
 msgstr "جهات الاتصال"
 
-#: dlls/shell32/shell32.rc:222 programs/winefile/winefile.rc:112
+#: dlls/shell32/shell32.rc:224 programs/winefile/winefile.rc:112
 msgid "Links"
 msgstr "الوصلات"
 
-#: dlls/shell32/shell32.rc:223
+#: dlls/shell32/shell32.rc:225
 msgid "Slide Shows"
 msgstr "العروض التقديمية"
 
-#: dlls/shell32/shell32.rc:224
+#: dlls/shell32/shell32.rc:226
 msgid "Playlists"
 msgstr "قوائم التشغيل"
 
@@ -10775,67 +10779,67 @@ msgstr "الحالة"
 msgid "Model"
 msgstr "النموذج"
 
-#: dlls/shell32/shell32.rc:225
+#: dlls/shell32/shell32.rc:227
 msgid "Sample Music"
 msgstr "النماذج الصوتية"
 
-#: dlls/shell32/shell32.rc:226
+#: dlls/shell32/shell32.rc:228
 msgid "Sample Pictures"
 msgstr "نماذج الصور"
 
-#: dlls/shell32/shell32.rc:227
+#: dlls/shell32/shell32.rc:229
 msgid "Sample Playlists"
 msgstr "نماذج قوائم التشغيل"
 
-#: dlls/shell32/shell32.rc:228
+#: dlls/shell32/shell32.rc:230
 msgid "Sample Videos"
 msgstr "النماذج المرئية"
 
-#: dlls/shell32/shell32.rc:229
+#: dlls/shell32/shell32.rc:231
 msgid "Saved Games"
 msgstr "الألعاب المحفوظة"
 
-#: dlls/shell32/shell32.rc:230
+#: dlls/shell32/shell32.rc:232
 msgid "Searches"
 msgstr "البحوث"
 
-#: dlls/shell32/shell32.rc:231
+#: dlls/shell32/shell32.rc:233
 msgid "Users"
 msgstr "المستخدمون"
 
-#: dlls/shell32/shell32.rc:233
+#: dlls/shell32/shell32.rc:235
 msgid "Downloads"
 msgstr "التحميلات"
 
-#: dlls/shell32/shell32.rc:166
+#: dlls/shell32/shell32.rc:168
 msgid "Unable to create new Folder: Permission denied."
 msgstr "غير قادر على إنشاء مجلد جديد ، الصلاحيات لا تسمح"
 
-#: dlls/shell32/shell32.rc:167
+#: dlls/shell32/shell32.rc:169
 msgid "Error during creation of a new folder"
 msgstr "خطأ أثناء إنشاء مجلد جديد"
 
-#: dlls/shell32/shell32.rc:168
+#: dlls/shell32/shell32.rc:170
 msgid "Confirm file deletion"
 msgstr "أكد حذف الملف"
 
-#: dlls/shell32/shell32.rc:169
+#: dlls/shell32/shell32.rc:171
 msgid "Confirm folder deletion"
 msgstr "توكيد حذف المجلد"
 
-#: dlls/shell32/shell32.rc:170
+#: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete '%1'?"
 msgstr "هل أنت متأكد من رغبتك في حذف '%1' ؟"
 
-#: dlls/shell32/shell32.rc:171
+#: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete these %1 items?"
 msgstr "هل أنت متاكد من رغبتك في حذف العناصر الـ %1 ؟"
 
-#: dlls/shell32/shell32.rc:178
+#: dlls/shell32/shell32.rc:180
 msgid "Confirm file overwrite"
 msgstr "توكيد الكتابة فوق الموجود"
 
-#: dlls/shell32/shell32.rc:177
+#: dlls/shell32/shell32.rc:179
 msgid ""
 "This folder already contains a file called '%1'.\n"
 "\n"
@@ -10845,28 +10849,28 @@ msgstr ""
 "\n"
 "هل ترغب باستبداله ؟"
 
-#: dlls/shell32/shell32.rc:172
+#: dlls/shell32/shell32.rc:174
 msgid "Are you sure you want to delete the selected item(s)?"
 msgstr "هل أنت متأكد من رغبتك في حذف العناصر المختارة ؟"
 
-#: dlls/shell32/shell32.rc:174
+#: dlls/shell32/shell32.rc:176
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr "هل أنت متأكد من رغبتك في إرسال '%1' و جميع محتوياته إلى المحذوفات ؟"
 
-#: dlls/shell32/shell32.rc:173
+#: dlls/shell32/shell32.rc:175
 msgid "Are you sure that you want to send '%1' to the Trash?"
 msgstr "هل أنت متأكد من رغبتك في إرسال '%1' إلى المحذوفات ؟"
 
-#: dlls/shell32/shell32.rc:175
+#: dlls/shell32/shell32.rc:177
 msgid "Are you sure that you want to send these %1 items to the Trash?"
 msgstr "هل أنت متأكد من رغبتك في إرسال العناصر %1 إلى المحذوفات ؟"
 
-#: dlls/shell32/shell32.rc:176
+#: dlls/shell32/shell32.rc:178
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr "لا يمكن إرسال العنصر '%1'إلى المحذوفات هل ترغب في حذفه بدلًا من ذاك ؟"
 
-#: dlls/shell32/shell32.rc:183
+#: dlls/shell32/shell32.rc:185
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -10880,41 +10884,41 @@ msgstr ""
 "سيتم استبدالها بمثيلاتها من المصدر، هل لا زلت ترغب في نقل أو نسخ\n"
 "هذا المجلد؟"
 
-#: dlls/shell32/shell32.rc:237
+#: dlls/shell32/shell32.rc:239
 msgid "Wine Control Panel"
 msgstr "لوحة تحكم واين"
 
-#: dlls/shell32/shell32.rc:192
+#: dlls/shell32/shell32.rc:194
 #, fuzzy
 #| msgid "Unable to display Run File dialog box (internal error)"
 msgid "Unable to display Run dialog box (internal error)"
 msgstr "غير قادر على عرض مربع حوار التشغيل ( خطأ داخلي )"
 
-#: dlls/shell32/shell32.rc:193
+#: dlls/shell32/shell32.rc:195
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "غير قادر على عرض مربع حوار الاستعراض ( خطأ داخلي )"
 
-#: dlls/shell32/shell32.rc:195
+#: dlls/shell32/shell32.rc:197
 msgid "Executable files (*.exe)"
 msgstr "الملفات التطبيقية (*.exe)"
 
-#: dlls/shell32/shell32.rc:241
+#: dlls/shell32/shell32.rc:243
 msgid "There is no Windows program configured to open this type of file."
 msgstr "لا يوجد برنامج وندوزي معد للتعامل مع هذا النوع من الملفات ."
 
-#: dlls/shell32/shell32.rc:243
+#: dlls/shell32/shell32.rc:245
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "هل أنت متاكد من رغبتك بالاستمرار في حذف '%1' ؟"
 
-#: dlls/shell32/shell32.rc:244
+#: dlls/shell32/shell32.rc:246
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "هل أنت متاكد من رغبتك بالاستمرار في حذف هذه العناصر '%1' ؟"
 
-#: dlls/shell32/shell32.rc:245
+#: dlls/shell32/shell32.rc:247
 msgid "Confirm deletion"
 msgstr "توكيد الحذف"
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:248
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -10924,7 +10928,7 @@ msgstr ""
 "\n"
 "هل ترغب في استبداله ؟"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:249
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -10934,11 +10938,11 @@ msgstr ""
 "\n"
 "هل ترغب في استبداله ؟"
 
-#: dlls/shell32/shell32.rc:248
+#: dlls/shell32/shell32.rc:250
 msgid "Confirm overwrite"
 msgstr "توكيد الكتابة فوق الموجود"
 
-#: dlls/shell32/shell32.rc:265
+#: dlls/shell32/shell32.rc:267
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -10965,7 +10969,7 @@ msgstr ""
 "عدم عثورك عليها راسل منظمة البرمجيات الحرة 51 شارع فرنكلين الطابق الرابع "
 "بوسطنMA 02110-1301 الولايات المتحدة الأمريكية."
 
-#: dlls/shell32/shell32.rc:253
+#: dlls/shell32/shell32.rc:255
 msgid "Wine License"
 msgstr "رخصة واين"
 

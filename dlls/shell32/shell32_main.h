@@ -273,4 +273,6 @@ typedef struct
 BOOL WINAPI StrRetToStrNA(char *, DWORD, STRRET *, const ITEMIDLIST *);
 BOOL WINAPI StrRetToStrNW(WCHAR *, DWORD, STRRET *, const ITEMIDLIST *);
 
+WCHAR *shell_get_resource_string(UINT id);
+
 #endif

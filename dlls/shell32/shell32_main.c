@@ -1137,6 +1137,19 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
+WCHAR *shell_get_resource_string(UINT id)
+{
+    const WCHAR *resource;
+    unsigned int size;
+    WCHAR *ret;
+
+    size = LoadStringW(shell32_hInstance, id, (WCHAR *)&resource, 0);
+    ret = malloc((size + 1) * sizeof(WCHAR));
+    memcpy(ret, resource, size * sizeof(WCHAR));
+    ret[size] = 0;
+    return ret;
+}
+
 /*************************************************************************
  * DllInstall         [SHELL32.@]
  *

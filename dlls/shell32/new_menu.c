@@ -20,6 +20,10 @@
 
 #include "shobjidl.h"
 
+#include "shell32_main.h"
+#include "shresdef.h"
+#include "pidl.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
@@ -30,6 +34,8 @@ struct new_menu
     IContextMenu3 IContextMenu3_iface;
     IObjectWithSite IObjectWithSite_iface;
     LONG refcount;
+
+    ITEMIDLIST *pidl;
 };
 
 static struct new_menu *impl_from_IShellExtInit(IShellExtInit *iface)
@@ -80,7 +86,10 @@ static ULONG WINAPI ext_init_Release(IShellExtInit *iface)
     TRACE("%p decreasing refcount to %lu.\n", menu, refcount);
 
     if (!refcount)
+    {
+        ILFree(menu->pidl);
         free(menu);
+    }
 
     return refcount;
 }
@@ -91,6 +100,10 @@ static HRESULT WINAPI ext_init_Initialize(IShellExtInit *iface, LPCITEMIDLIST pi
 
     TRACE("menu %p, pidl %p, obj %p, key %p.\n", menu, pidl, obj, key);
 
+    if (!pidl)
+        return E_INVALIDARG;
+
+    menu->pidl = ILClone(pidl);
     return S_OK;
 }
 
@@ -131,10 +144,36 @@ static ULONG WINAPI context_menu_Release(IContextMenu3 *iface)
 static HRESULT WINAPI context_menu_QueryContextMenu(IContextMenu3 *iface,
         HMENU hmenu, UINT index, UINT min_id, UINT max_id, UINT flags)
 {
-    FIXME("iface %p, hmenu %p, index %u, min_id %u, max_id %u, flags %#x, stub!\n",
-            iface, hmenu, index, min_id, max_id, flags);
+    struct new_menu *menu = impl_from_IContextMenu3(iface);
+    MENUITEMINFOW info;
+    WCHAR *new_string;
+    HMENU submenu;
 
-    return E_NOTIMPL;
+    TRACE("menu %p, hmenu %p, index %u, min_id %u, max_id %u, flags %#x.\n",
+            menu, hmenu, index, min_id, max_id, flags);
+
+    if (!_ILIsFolder(ILFindLastID(menu->pidl)) && !_ILIsDrive(ILFindLastID(menu->pidl)))
+    {
+        TRACE("Not returning a New item for this pidl type.\n");
+        return S_OK;
+    }
+
+    submenu = CreatePopupMenu();
+    new_string = shell_get_resource_string(IDS_NEW_MENU);
+
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING | MIIM_SUBMENU;
+    info.dwTypeData = new_string;
+    info.fState = MFS_ENABLED;
+    info.wID = min_id;
+    info.fType = MFT_STRING;
+    info.hSubMenu = submenu;
+    InsertMenuItemW(hmenu, 0, MF_BYPOSITION, &info);
+
+    free(new_string);
+
+    /* Native doesn't return the highest ID; it instead just returns 0x40. */
+    return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0x40);
 }
 
 static HRESULT WINAPI context_menu_InvokeCommand(IContextMenu3 *iface, CMINVOKECOMMANDINFO *info)
@@ -238,7 +277,7 @@ HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(menu = malloc(sizeof(*menu))))
+    if (!(menu = calloc(1, sizeof(*menu))))
         return E_OUTOFMEMORY;
 
     menu->IShellExtInit_iface.lpVtbl = &ext_init_vtbl;

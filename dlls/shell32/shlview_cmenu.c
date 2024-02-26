@@ -1030,15 +1030,7 @@ static WCHAR *get_verb_desc(HKEY key, const WCHAR *verb)
     for (unsigned int i = 0; i < ARRAY_SIZE(builtin_verbs); ++i)
     {
         if (!wcscmp(verb, builtin_verbs[i].verb))
-        {
-            const WCHAR *resource;
-
-            size = LoadStringW(shell32_hInstance, builtin_verbs[i].id, (WCHAR *)&resource, 0);
-            desc = malloc((size + 1) * sizeof(WCHAR));
-            memcpy(desc, resource, size * sizeof(WCHAR));
-            desc[size] = 0;
-            return desc;
-        }
+            return shell_get_resource_string(builtin_verbs[i].id);
     }
 
     return wcsdup(verb);
