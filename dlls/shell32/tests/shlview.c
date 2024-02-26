@@ -1493,9 +1493,8 @@ static void test_newmenu(void)
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void **)&unk2);
-    todo_wine ok(hr == S_OK, "Failed to get IObjectWithSite, hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IUnknown_Release(unk2);
+    ok(hr == S_OK, "Failed to get IObjectWithSite, hr %#lx.\n", hr);
+    IUnknown_Release(unk2);
 
     IUnknown_Release(unk);
 }

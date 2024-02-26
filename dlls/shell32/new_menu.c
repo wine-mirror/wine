@@ -28,6 +28,7 @@ struct new_menu
 {
     IShellExtInit IShellExtInit_iface;
     IContextMenu3 IContextMenu3_iface;
+    IObjectWithSite IObjectWithSite_iface;
     LONG refcount;
 };
 
@@ -48,6 +49,8 @@ static HRESULT WINAPI ext_init_QueryInterface(IShellExtInit *iface, REFIID iid, 
             || IsEqualGUID(iid, &IID_IContextMenu2)
             || IsEqualGUID(iid, &IID_IContextMenu3))
         *out = &menu->IContextMenu3_iface;
+    else if (IsEqualGUID(iid, &IID_IObjectWithSite))
+        *out = &menu->IObjectWithSite_iface;
     else
     {
         *out = NULL;
@@ -178,6 +181,55 @@ static const IContextMenu3Vtbl context_menu_vtbl =
     context_menu_HandleMenuMsg2,
 };
 
+static struct new_menu *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return CONTAINING_RECORD(iface, struct new_menu, IObjectWithSite_iface);
+}
+
+static HRESULT WINAPI object_with_site_QueryInterface(IObjectWithSite *iface, REFIID iid, void **out)
+{
+    struct new_menu *menu = impl_from_IObjectWithSite(iface);
+
+    return IShellExtInit_QueryInterface(&menu->IShellExtInit_iface, iid, out);
+}
+
+static ULONG WINAPI object_with_site_AddRef(IObjectWithSite *iface)
+{
+    struct new_menu *menu = impl_from_IObjectWithSite(iface);
+
+    return IShellExtInit_AddRef(&menu->IShellExtInit_iface);
+}
+
+static ULONG WINAPI object_with_site_Release(IObjectWithSite *iface)
+{
+    struct new_menu *menu = impl_from_IObjectWithSite(iface);
+
+    return IShellExtInit_Release(&menu->IShellExtInit_iface);
+}
+
+static HRESULT WINAPI object_with_site_SetSite(IObjectWithSite *iface, IUnknown *site)
+{
+    FIXME("iface %p, site %p, stub!\n", iface, site);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI object_with_site_GetSite(IObjectWithSite *iface, REFIID iid, void **out)
+{
+    FIXME("iface %p, iid %s, out %p, stub!\n", iface, debugstr_guid(iid), out);
+
+    return E_NOTIMPL;
+}
+
+static const IObjectWithSiteVtbl object_with_site_vtbl =
+{
+    object_with_site_QueryInterface,
+    object_with_site_AddRef,
+    object_with_site_Release,
+    object_with_site_SetSite,
+    object_with_site_GetSite,
+};
+
 HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out)
 {
     struct new_menu *menu;
@@ -191,6 +243,7 @@ HRESULT WINAPI new_menu_create(IUnknown *outer, REFIID iid, void **out)
 
     menu->IShellExtInit_iface.lpVtbl = &ext_init_vtbl;
     menu->IContextMenu3_iface.lpVtbl = &context_menu_vtbl;
+    menu->IObjectWithSite_iface.lpVtbl = &object_with_site_vtbl;
     menu->refcount = 1;
 
     TRACE("Created New menu %p.\n", menu);
