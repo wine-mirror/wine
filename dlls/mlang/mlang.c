@@ -3471,7 +3471,10 @@ static HRESULT WINAPI fnIMLangFontLink2_GetFontCodePages(IMLangFontLink2 *iface,
 
     TRACE("(%p)->(%p %p %p)\n", This, hdc, hfont, codepages);
 
+    if (codepages) *codepages = 0;
+
     old_font = SelectObject(hdc, hfont);
+    if (!old_font) return E_FAIL;
     GetTextCharsetInfo(hdc, &fontsig, 0);
     SelectObject(hdc, old_font);
 

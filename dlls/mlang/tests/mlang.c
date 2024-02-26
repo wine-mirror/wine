@@ -2809,6 +2809,24 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     ok((codepages & (~font_codepages)) != 0 && (codepages & font_codepages) != 0,
        "code pages of font is incorrect\n");
 
+    font_codepages = 1;
+    ret = IMLangFontLink_GetFontCodePages(font_link, NULL, font1, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+    font_codepages = 2;
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, NULL, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+
+    font_codepages = 3;
+    ret = IMLangFontLink_GetFontCodePages(font_link, (void*)0xabc, font1, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+    font_codepages = 4;
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, (void*)0x123456, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+
     IMLangFontLink_ResetFontMapping(font_link);
     IMLangFontLink2_ResetFontMapping(font_link2);
     ReleaseDC(NULL, hdc);
