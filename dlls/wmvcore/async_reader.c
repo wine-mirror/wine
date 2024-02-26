@@ -1924,9 +1924,9 @@ static HRESULT WINAPI async_reader_create(IWMReader **reader)
         goto failed;
     IWMReader_Release(&object->IWMReader_iface);
 
-    InitializeCriticalSection(&object->cs);
+    InitializeCriticalSectionEx(&object->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_reader.cs");
-    InitializeCriticalSection(&object->callback_cs);
+    InitializeCriticalSectionEx(&object->callback_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->callback_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_reader.callback_cs");
 
     QueryPerformanceFrequency(&object->clock_frequency);
