@@ -416,6 +416,7 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
     nsIDOMEventTarget *event_target;
     EventTarget *target;
     nsIDOMNode *nsnode;
+    HTMLDOMNode *node = NULL;
     DOMEvent *event;
     nsresult nsres;
     HRESULT hres;
@@ -436,7 +437,6 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
         target = &doc->window->event_target;
         IHTMLWindow2_AddRef(&doc->window->base.IHTMLWindow2_iface);
     }else {
-        HTMLDOMNode *node;
         hres = get_node(nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
         if(FAILED(hres))
@@ -451,7 +451,7 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
     }
 
     /* If we fine need for more special cases here, we may consider handling it in a more generic way. */
-    if(event->event_id == EVENTID_FOCUS || event->event_id == EVENTID_BLUR) {
+    if((!node || doc == node->doc) && (event->event_id == EVENTID_FOCUS || event->event_id == EVENTID_BLUR)) {
         DOMEvent *focus_event;
 
         hres = create_document_event(doc, event->event_id == EVENTID_FOCUS ? EVENTID_FOCUSIN : EVENTID_FOCUSOUT, &focus_event);
