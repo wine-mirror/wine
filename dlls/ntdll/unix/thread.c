@@ -62,6 +62,9 @@
 #ifdef __APPLE__
 #include <mach/mach.h>
 #endif
+#ifdef __FreeBSD__
+#include <sys/thr.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -1935,6 +1938,36 @@ static void set_native_thread_name( HANDLE handle, const UNICODE_STRING *name )
     len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA) - 1, FALSE );
     nameA[len] = '\0';
     pthread_setname_np( nameA );
+#elif defined(__FreeBSD__)
+    unsigned int status;
+    char nameA[64];
+    int unix_pid, unix_tid, len;
+
+    SERVER_START_REQ( get_thread_times )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        status = wine_server_call( req );
+        if (status == STATUS_SUCCESS)
+        {
+            unix_pid = reply->unix_pid;
+            unix_tid = reply->unix_tid;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_SUCCESS || unix_pid == -1 || unix_tid == -1)
+        return;
+
+    if (unix_pid != getpid())
+    {
+        static int once;
+        if (!once++) FIXME("cross-process native thread naming not supported\n");
+        return;
+    }
+
+    len = ntdll_wcstoumbs( name->Buffer, name->Length / sizeof(WCHAR), nameA, sizeof(nameA), FALSE );
+    nameA[len] = '\0';
+    thr_set_name( unix_tid, nameA );
 #else
     static int once;
     if (!once++) FIXME("not implemented on this platform\n");
