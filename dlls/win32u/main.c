@@ -46,7 +46,7 @@ ALL_SYSCALLS64
 };
 
 #define SYSCALL_API __attribute__((naked))
-#define SYSCALL_FUNC(name) __ASM_SYSCALL_FUNC( __id_##name )
+#define SYSCALL_FUNC(name) __ASM_SYSCALL_FUNC( __id_##name, name )
 
 INT SYSCALL_API NtGdiAbortDoc( HDC hdc )
 {

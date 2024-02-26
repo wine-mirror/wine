@@ -48,7 +48,7 @@ ALL_SYSCALLS64
 };
 
 #define SYSCALL_API __attribute__((naked))
-#define SYSCALL_FUNC(name) __ASM_SYSCALL_FUNC( __id_##name )
+#define SYSCALL_FUNC(name) __ASM_SYSCALL_FUNC( __id_##name, name )
 
 NTSTATUS SYSCALL_API NtAcceptConnectPort( HANDLE *handle, ULONG id, LPC_MESSAGE *msg, BOOLEAN accept,
                                           LPC_SECTION_WRITE *write, LPC_SECTION_READ *read )
@@ -203,7 +203,7 @@ NTSTATUS SYSCALL_API NtConnectPort( HANDLE *handle, UNICODE_STRING *name, SECURI
 
 static NTSTATUS SYSCALL_API syscall_NtContinue( ARM64_NT_CONTEXT *context, BOOLEAN alertable )
 {
-    __ASM_SYSCALL_FUNC( __id_NtContinue );
+    __ASM_SYSCALL_FUNC( __id_NtContinue, syscall_NtContinue );
 }
 
 NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
@@ -502,7 +502,7 @@ NTSTATUS SYSCALL_API NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
 static NTSTATUS SYSCALL_API syscall_NtGetContextThread( HANDLE handle, ARM64_NT_CONTEXT *context )
 {
-    __ASM_SYSCALL_FUNC( __id_NtGetContextThread );
+    __ASM_SYSCALL_FUNC( __id_NtGetContextThread, syscall_NtGetContextThread );
 }
 
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
@@ -995,7 +995,7 @@ NTSTATUS SYSCALL_API NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR
 
 static NTSTATUS SYSCALL_API syscall_NtRaiseException( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *context, BOOL first_chance )
 {
-    __ASM_SYSCALL_FUNC( __id_NtRaiseException );
+    __ASM_SYSCALL_FUNC( __id_NtRaiseException, syscall_NtRaiseException );
 }
 
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
@@ -1137,7 +1137,7 @@ NTSTATUS SYSCALL_API NtSecureConnectPort( HANDLE *handle, UNICODE_STRING *name,
 
 static NTSTATUS SYSCALL_API syscall_NtSetContextThread( HANDLE handle, const ARM64_NT_CONTEXT *context )
 {
-    __ASM_SYSCALL_FUNC( __id_NtSetContextThread );
+    __ASM_SYSCALL_FUNC( __id_NtSetContextThread, syscall_NtSetContextThread );
 }
 
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
