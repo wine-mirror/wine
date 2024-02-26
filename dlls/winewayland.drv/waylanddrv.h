@@ -297,6 +297,7 @@ void wayland_pointer_clear_constraint(void);
  */
 
 void wayland_destroy_gl_drawable(HWND hwnd);
+void wayland_resize_gl_drawable(HWND hwnd);
 
 /**********************************************************************
  *          Helpers

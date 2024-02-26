@@ -519,6 +519,8 @@ static void wayland_surface_reconfigure_client(struct wayland_surface *surface)
     }
 
     wl_surface_commit(surface->client->wl_surface);
+
+    wayland_resize_gl_drawable(surface->hwnd);
 }
 
 /**********************************************************************

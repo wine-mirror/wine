@@ -68,6 +68,7 @@ DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglMakeCurrent);
 DECL_FUNCPTR(eglQueryString);
 DECL_FUNCPTR(eglSwapBuffers);
+DECL_FUNCPTR(glClear);
 #undef DECL_FUNCPTR
 
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -82,6 +83,7 @@ struct wayland_gl_drawable
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
+    LONG resized;
 };
 
 struct wgl_context
@@ -228,6 +230,28 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
     if (old) wayland_gl_drawable_release(old);
 }
 
+static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
+{
+    int client_width, client_height;
+    struct wayland_surface *wayland_surface;
+
+    if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
+    {
+        if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
+
+        client_width = wayland_surface->window.client_rect.right -
+                       wayland_surface->window.client_rect.left;
+        client_height = wayland_surface->window.client_rect.bottom -
+                        wayland_surface->window.client_rect.top;
+        if (client_width == 0 || client_height == 0)
+            client_width = client_height = 1;
+
+        wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
+
+        pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+}
+
 static void wayland_gl_drawable_sync_surface_state(struct wayland_gl_drawable *gl)
 {
     struct wayland_surface *wayland_surface;
@@ -262,6 +286,10 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
           draw_hwnd, read_hwnd, ctx->context,
           draw ? draw->surface : EGL_NO_SURFACE,
           read ? read->surface : EGL_NO_SURFACE);
+
+    /* Since making an EGL surface current may latch the native size,
+     * perform any pending resizes before calling it. */
+    if (draw) wayland_gl_drawable_sync_size(draw);
 
     pthread_mutex_lock(&gl_object_mutex);
 
@@ -378,6 +406,15 @@ static struct wgl_context *create_context(HDC hdc)
 out:
     wayland_gl_drawable_release(gl);
     return ctx;
+}
+
+void wayland_glClear(GLbitfield mask)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    /* Since glClear is one of the operations that may latch the native size,
+     * perform any pending resizes before calling it. */
+    if (ctx && ctx->draw) wayland_gl_drawable_sync_size(ctx->draw);
+    p_glClear(mask);
 }
 
 static BOOL wayland_wglCopyContext(struct wgl_context *src,
@@ -528,6 +565,7 @@ static BOOL wayland_wglSwapBuffers(HDC hdc)
     if (ctx) wgl_context_refresh(ctx);
     wayland_gl_drawable_sync_surface_state(gl);
     p_eglSwapBuffers(egl_display, gl->surface);
+    wayland_gl_drawable_sync_size(gl);
 
     wayland_gl_drawable_release(gl);
 
@@ -568,6 +606,9 @@ static BOOL init_opengl_funcs(void)
             return FALSE;
         }
     }
+
+    p_glClear = opengl_funcs.gl.p_glClear;
+    opengl_funcs.gl.p_glClear = wayland_glClear;
 
     register_extension("WGL_ARB_extensions_string");
     opengl_funcs.ext.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
@@ -768,6 +809,20 @@ void wayland_destroy_gl_drawable(HWND hwnd)
     wayland_update_gl_drawable(hwnd, NULL);
 }
 
+/**********************************************************************
+ *           wayland_resize_gl_drawable
+ */
+void wayland_resize_gl_drawable(HWND hwnd)
+{
+    struct wayland_gl_drawable *gl;
+
+    if (!(gl = wayland_gl_drawable_get(hwnd))) return;
+    /* wl_egl_window_resize is not thread safe, so we just mark the
+     * drawable as resized and perform the resize in the proper thread. */
+    InterlockedExchange(&gl->resized, TRUE);
+    wayland_gl_drawable_release(gl);
+}
+
 #else /* No GL */
 
 struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
@@ -776,6 +831,10 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
 }
 
 void wayland_destroy_gl_drawable(HWND hwnd)
+{
+}
+
+void wayland_resize_gl_drawable(HWND hwnd)
 {
 }
 
