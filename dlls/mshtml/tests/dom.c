@@ -12029,6 +12029,81 @@ static void test_document_mode_lock(void)
     IHTMLDocument2_Release(doc);
 }
 
+static void test_document_mode_after_initnew(void)
+{
+    IHTMLDocument2 *doc;
+    IHTMLDocument6 *doc6;
+    IEventTarget *event_target;
+    IPersistStreamInit *init;
+    IStream *stream;
+    HRESULT hres;
+    HGLOBAL mem;
+    VARIANT var;
+    SIZE_T len;
+    MSG msg;
+
+    notif_doc = doc = create_document();
+    if(!doc)
+        return;
+    doc_complete = FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IEventTarget) returned %08lx.\n", hres);
+    ok(event_target == NULL, "event_target != NULL\n");
+
+    len = strlen(doc_blank_ie9);
+    mem = GlobalAlloc(0, len);
+    memcpy(mem, doc_blank_ie9, len);
+    hres = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create stream: %08lx.\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08lx.\n", hres);
+
+    IPersistStreamInit_InitNew(init);
+    IPersistStreamInit_Load(init, stream);
+    IPersistStreamInit_Release(init);
+    IStream_Release(stream);
+
+    set_client_site(doc, TRUE);
+    do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument6) failed: %08lx\n", hres);
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IHTMLDocument6_get_documentMode(doc6, &var);
+    ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&var));
+    ok(V_R4(&var) == 5, "documentMode = %f, expected 5\n", V_R4(&var));
+    VariantClear(&var);
+
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    todo_wine
+    ok(hres == S_OK, "QueryInterface(IID_IEventTarget) returned %08lx.\n", hres);
+    todo_wine
+    ok(event_target != NULL, "event_target == NULL\n");
+    if (event_target != NULL)
+        IEventTarget_Release(event_target);
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IHTMLDocument6_get_documentMode(doc6, &var);
+    ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+    ok(V_VT(&var) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&var));
+    todo_wine
+    ok(V_R4(&var) == 9, "documentMode = %f, expected 9\n", V_R4(&var));
+    IHTMLDocument6_Release(doc6);
+    VariantClear(&var);
+
+    set_client_site(doc, FALSE);
+    IHTMLDocument2_Release(doc);
+}
+
 static DWORD WINAPI create_document_proc(void *param)
 {
     IHTMLDocument2 *doc = NULL;
@@ -12152,6 +12227,7 @@ START_TEST(dom)
 
     test_quirks_mode();
     test_document_mode_lock();
+    test_document_mode_after_initnew();
     test_threads();
 
     /* Run this last since it messes with the process-wide user agent */
