@@ -149,7 +149,7 @@ HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 
     This->IRunnableTask_iface.lpVtbl = &CompCatCacheDaemonVtbl;
     This->refCount = 1;
-    InitializeCriticalSection(&This->cs);
+    InitializeCriticalSectionEx(&This->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CompCatCacheDaemon.cs");
 
     TRACE("returning %p\n", This);

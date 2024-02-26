@@ -626,7 +626,7 @@ HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->IProgressDialog_iface.lpVtbl = &ProgressDialogVtbl;
     This->IOleWindow_iface.lpVtbl = &OleWindowVtbl;
     This->refCount = 1;
-    InitializeCriticalSection(&This->cs);
+    InitializeCriticalSectionEx(&This->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ProgressDialog.cs");
 
     TRACE("returning %p\n", This);
