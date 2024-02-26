@@ -12084,18 +12084,14 @@ static void test_document_mode_after_initnew(void)
     }
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
-    todo_wine
     ok(hres == S_OK, "QueryInterface(IID_IEventTarget) returned %08lx.\n", hres);
-    todo_wine
     ok(event_target != NULL, "event_target == NULL\n");
-    if (event_target != NULL)
-        IEventTarget_Release(event_target);
+    IEventTarget_Release(event_target);
 
     V_VT(&var) = VT_EMPTY;
     hres = IHTMLDocument6_get_documentMode(doc6, &var);
     ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&var));
-    todo_wine
     ok(V_R4(&var) == 9, "documentMode = %f, expected 9\n", V_R4(&var));
     IHTMLDocument6_Release(doc6);
     VariantClear(&var);

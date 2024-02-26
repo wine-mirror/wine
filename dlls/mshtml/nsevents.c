@@ -444,7 +444,7 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
         target = &node->event_target;
     }
 
-    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
+    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&target->dispex), &event);
     if(FAILED(hres)) {
         IEventTarget_Release(&target->IEventTarget_iface);
         return NS_OK;
