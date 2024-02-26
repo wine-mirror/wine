@@ -686,11 +686,11 @@ struct chmFile *chm_openW(const WCHAR *filename)
     }
 
     /* initialize mutexes, if needed */
-    InitializeCriticalSection(&newHandle->mutex);
+    InitializeCriticalSectionEx(&newHandle->mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.mutex");
-    InitializeCriticalSection(&newHandle->lzx_mutex);
+    InitializeCriticalSectionEx(&newHandle->lzx_mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->lzx_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.lzx_mutex");
-    InitializeCriticalSection(&newHandle->cache_mutex);
+    InitializeCriticalSectionEx(&newHandle->cache_mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->cache_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.cache_mutex");
 
     /* read and verify header */
@@ -817,11 +817,11 @@ struct chmFile *chm_dup(struct chmFile *oldHandle)
     newHandle->cache_num_blocks = 0;
 
     /* initialize mutexes, if needed */
-    InitializeCriticalSection(&newHandle->mutex);
+    InitializeCriticalSectionEx(&newHandle->mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.mutex");
-    InitializeCriticalSection(&newHandle->lzx_mutex);
+    InitializeCriticalSectionEx(&newHandle->lzx_mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->lzx_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.lzx_mutex");
-    InitializeCriticalSection(&newHandle->cache_mutex);
+    InitializeCriticalSectionEx(&newHandle->cache_mutex, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     newHandle->cache_mutex.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": chmFile.cache_mutex");
 
     /* initialize cache */
