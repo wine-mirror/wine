@@ -703,6 +703,15 @@ DWORD WINAPI DrvDeviceCapabilities(HANDLE printer, WCHAR *device_name, WORD capa
                 lp += 2;
             }
         }
+        if (!i)
+        {
+            if (output != NULL)
+            {
+                lp[0] = pi->ppd->DefaultResolution;
+                lp[1] = pi->ppd->DefaultResolution;
+            }
+            i = 1;
+        }
         ret = i;
         break;
     }
