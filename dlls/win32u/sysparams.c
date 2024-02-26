@@ -1343,10 +1343,10 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     size = (lstrlenW( desc ) + 1) * sizeof(WCHAR);
     set_reg_value( hkey, driver_descW, REG_SZ, desc, size );
-    set_reg_value( hkey, adapter_stringW, REG_BINARY, desc, size );
-    set_reg_value( hkey, bios_stringW, REG_BINARY, desc, size );
-    set_reg_value( hkey, chip_typeW, REG_BINARY, desc, size );
-    set_reg_value( hkey, dac_typeW, REG_BINARY, ramdacW, sizeof(ramdacW) );
+    set_reg_value( hkey, adapter_stringW, REG_SZ, desc, size );
+    set_reg_value( hkey, bios_stringW, REG_SZ, desc, size );
+    set_reg_value( hkey, chip_typeW, REG_SZ, desc, size );
+    set_reg_value( hkey, dac_typeW, REG_SZ, ramdacW, sizeof(ramdacW) );
 
     /* If we failed to retrieve the gpu memory size set a default of 1Gb */
     qw_memory_size = gpu->memory_size ? gpu->memory_size : 1073741824;
