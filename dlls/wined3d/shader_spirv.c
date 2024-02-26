@@ -325,7 +325,7 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
 
     if (ret < 0)
     {
-        ERR("Failed to compile DXBC, ret %d.\n", ret);
+        ERR("Failed to compile shader, ret %d.\n", ret);
         return VK_NULL_HANDLE;
     }
 
