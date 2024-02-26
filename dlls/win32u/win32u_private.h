@@ -260,8 +260,11 @@ extern int muldiv( int a, int b, int c );
 
 extern HKEY reg_create_key( HKEY root, const WCHAR *name, ULONG name_len,
                             DWORD options, DWORD *disposition );
+extern HKEY reg_create_ascii_key( HKEY root, const char *name, DWORD options,
+                                  DWORD *disposition );
 extern HKEY reg_open_hkcu_key( const char *name );
 extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len );
+extern HKEY reg_open_ascii_key( HKEY root, const char *name );
 extern ULONG query_reg_value( HKEY hkey, const WCHAR *name,
                               KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size );
 extern ULONG query_reg_ascii_value( HKEY hkey, const char *name,
