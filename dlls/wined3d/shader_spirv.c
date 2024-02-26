@@ -751,8 +751,16 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
     info.next = descriptor_info;
-    info.source.code = shader->byte_code;
-    info.source.size = shader->byte_code_size;
+    if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+    {
+        info.source.code = shader->function;
+        info.source.size = shader->functionLength;
+    }
+    else
+    {
+        info.source.code = shader->byte_code;
+        info.source.size = shader->byte_code_size;
+    }
     info.source_type = shader->source_type;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
     info.options = spirv_compile_options;
