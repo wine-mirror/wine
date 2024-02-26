@@ -159,14 +159,6 @@ static const WCHAR wine_devpropkey_monitor_rcworkW[] =
     '\\','0','0','0','4'
 };
 
-static const WCHAR wine_devpropkey_monitor_adapternameW[] =
-{
-    'P','r','o','p','e','r','t','i','e','s','\\',
-    '{','2','3','3','a','9','e','f','3','-','a','f','c','4','-','4','a','b','d',
-    '-','b','5','6','4','-','c','3','2','f','2','1','f','1','5','3','5','b','}',
-    '\\','0','0','0','5'
-};
-
 static const WCHAR device_instanceW[] = {'D','e','v','i','c','e','I','n','s','t','a','n','c','e',0};
 static const WCHAR controlW[] = {'C','o','n','t','r','o','l'};
 static const WCHAR device_parametersW[] =
@@ -1518,16 +1510,6 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
         TRACE( "rc_work %s\n", wine_dbgstr_rect(&monitor->rc_work) );
         set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_BINARY, &monitor->rc_work,
                        sizeof(monitor->rc_work) );
-        NtClose( subkey );
-    }
-
-    /* WINE_DEVPROPKEY_MONITOR_ADAPTERNAME */
-    if ((subkey = reg_create_key( hkey, wine_devpropkey_monitor_adapternameW,
-                                  sizeof(wine_devpropkey_monitor_adapternameW), 0, NULL )))
-    {
-        sprintf( buffer, "\\\\.\\DISPLAY%u", ctx->video_count );
-        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
-                       asciiz_to_unicode( bufferW, buffer ));
         NtClose( subkey );
     }
 
