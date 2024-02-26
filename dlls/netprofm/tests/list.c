@@ -381,14 +381,21 @@ static void test_INetworkListManager( void )
     hr = INetworkListManager_GetNetworks( mgr, NLM_ENUM_NETWORK_ALL, &network_iter );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok(network_iter != NULL, "network_iter not set\n");
+    hr = IEnumNetworks_Next( network_iter, 0, NULL, NULL );
+    ok( hr == E_POINTER, "got %08lx\n", hr );
+    network = (INetwork *)0xdeadbeef;
     while ((hr = IEnumNetworks_Next( network_iter, 1, &network, NULL )) == S_OK)
     {
+        ok( network != (INetwork *)0xdeadbeef, "network not set\n" );
         connected = 1;
         hr = INetwork_get_IsConnected( network, &connected );
         ok( hr == S_OK, "got %08lx\n", hr );
         ok( connected == -1 || connected == 0, "got %d\n", connected );
         INetwork_Release( network );
+        network = (INetwork *)0xdeadbeef;
     }
+    ok( hr == S_FALSE, "got %08lx\n", hr );
+    ok( network == NULL, "network not set\n" );
     IEnumNetworks_Release( network_iter );
 
     hr = INetworkListManager_GetNetworks( mgr, NLM_ENUM_NETWORK_CONNECTED, &network_iter );

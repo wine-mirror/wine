@@ -812,6 +812,8 @@ static HRESULT WINAPI networks_enum_Next(
 
     TRACE( "%p, %lu %p %p\n", iter, count, ret, fetched );
 
+    if (!ret) return E_POINTER;
+    *ret = NULL;
     if (fetched) *fetched = 0;
     if (!count) return S_OK;
 
