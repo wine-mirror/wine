@@ -96,13 +96,24 @@ struct display_device
     WCHAR device_key[128];     /* DeviceKey in DISPLAY_DEVICEW */
 };
 
+struct pci_id
+{
+    UINT16 vendor;
+    UINT16 device;
+    UINT16 subsystem;
+    UINT16 revision;
+};
+
 struct gpu
 {
     LONG refcount;
     struct list entry;
     char path[MAX_PATH];
+    WCHAR name[128];
+    char guid[39];
     LUID luid;
-    unsigned int adapter_count;
+    UINT index;
+    UINT adapter_count;
 };
 
 struct adapter
@@ -983,15 +994,12 @@ static unsigned int format_date( WCHAR *bufferW, LONGLONG time )
 struct device_manager_ctx
 {
     unsigned int gpu_count;
-    unsigned int adapter_count;
     unsigned int video_count;
     unsigned int monitor_count;
     unsigned int output_count;
     unsigned int mode_count;
     HANDLE mutex;
-    char gpuid[128];
-    char gpu_guid[39];
-    LUID gpu_luid;
+    struct gpu gpu;
     HKEY adapter_key;
     /* for the virtual desktop settings */
     BOOL is_primary;
@@ -1029,18 +1037,44 @@ static void link_device( const char *instance, const char *class )
     }
 }
 
-static void add_gpu( const struct gdi_gpu *gpu, void *param )
+static BOOL read_gpu_from_registry( struct gpu *gpu )
 {
-    struct device_manager_ctx *ctx = param;
-    const WCHAR *desc;
-    char buffer[4096];
-    WCHAR bufferW[512];
+    char buffer[1024];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    unsigned int gpu_index, size, i;
+    WCHAR *value_str = (WCHAR *)value->Data;
     HKEY hkey, subkey;
+
+    if (!(hkey = reg_open_ascii_key( enum_key, gpu->path ))) return FALSE;
+
+    if (query_reg_ascii_value( hkey, "Driver", value, sizeof(buffer) ) && value->Type == REG_SZ)
+        gpu->index = wcstoul( wcsrchr( value_str, '\\' ) + 1, NULL, 16 );
+
+    if (query_reg_ascii_value( hkey, "DeviceDesc", value, sizeof(buffer) ) && value->Type == REG_SZ)
+        memcpy( gpu->name, value->Data, value->DataLength );
+
+    if ((subkey = reg_open_ascii_key( hkey, devpropkey_gpu_luidA )))
+    {
+        if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) == sizeof(LUID))
+            gpu->luid = *(const LUID *)value->Data;
+        NtClose( subkey );
+    }
+
+    NtClose( hkey );
+
+    return TRUE;
+}
+
+static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *pci,
+                                   const GUID *vulkan_uuid, ULONGLONG memory_size )
+{
+    const WCHAR *desc;
+    char buffer[4096], *tmp;
+    WCHAR bufferW[512];
+    unsigned int size;
+    HKEY subkey;
     LARGE_INTEGER ft;
-    ULONG memory_size;
-    ULONGLONG qw_memory_size;
+    ULONG value;
+    HKEY hkey;
 
     static const BOOL present = TRUE;
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
@@ -1068,43 +1102,23 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
         {'I','n','t','e','r','g','r','a','t','e','d',' ','R','A','M','D','A','C',0};
     static const WCHAR driver_dateW[] = {'D','r','i','v','e','r','D','a','t','e',0};
 
-    TRACE( "%s %04X %04X %08X %02X\n", debugstr_w(gpu->name),
-           gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id );
 
-    gpu_index = ctx->gpu_count++;
-    ctx->adapter_count = 0;
-    ctx->monitor_count = 0;
-    ctx->mode_count = 0;
-
-    if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
-        return;
-
-    if (!ctx->mutex)
-    {
-        pthread_mutex_lock( &display_lock );
-        ctx->mutex = get_display_device_init_mutex();
-        prepare_devices();
-    }
-
-    sprintf( ctx->gpuid, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
-             gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index );
-    size = asciiz_to_unicode( bufferW, ctx->gpuid );
-    if (!(hkey = reg_create_ascii_key( enum_key, ctx->gpuid, 0, NULL ))) return;
+    if (!(hkey = reg_create_ascii_key( enum_key, gpu->path, 0, NULL ))) return FALSE;
 
     set_reg_ascii_value( hkey, "Class", "Display" );
     set_reg_ascii_value( hkey, "ClassGUID", guid_devclass_displayA );
-    sprintf( buffer, "%s\\%04X", guid_devclass_displayA, gpu_index );
+    sprintf( buffer, "%s\\%04X", guid_devclass_displayA, gpu->index );
     set_reg_ascii_value( hkey, "Driver", buffer );
 
-    sprintf( buffer, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X",
-             gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id );
+    strcpy( buffer, gpu->path );
+    if ((tmp = strrchr( buffer, '\\' ))) *tmp = 0;
     size = asciiz_to_unicode( bufferW, buffer );
     bufferW[size / sizeof(WCHAR)] = 0; /* for REG_MULTI_SZ */
     set_reg_value( hkey, hardware_idW, REG_MULTI_SZ, bufferW, size + sizeof(WCHAR) );
 
     if ((subkey = reg_create_ascii_key( hkey, devpkey_device_matching_device_id, 0, NULL )))
     {
-        if (gpu->vendor_id && gpu->device_id)
+        if (pci->vendor && pci->device)
             set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW, size );
         else
             set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
@@ -1112,12 +1126,12 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
         NtClose( subkey );
     }
 
-    if (gpu->vendor_id && gpu->device_id)
+    if (pci->vendor && pci->device)
     {
         if ((subkey = reg_create_ascii_key( hkey, devpkey_device_bus_number, 0, NULL )))
         {
             set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT32,
-                           &gpu_index, sizeof(gpu_index) );
+                           &gpu->index, sizeof(gpu->index) );
             NtClose( subkey );
         }
     }
@@ -1137,29 +1151,14 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     if ((subkey = reg_create_ascii_key( hkey, "Device Parameters", 0, NULL )))
     {
-        if (query_reg_ascii_value( subkey, "VideoID", value, sizeof(buffer) ) != sizeof(ctx->gpu_guid) * sizeof(WCHAR))
-        {
-            GUID guid;
-            uuid_create( &guid );
-            sprintf( ctx->gpu_guid, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                     (unsigned int)guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
-                     guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
-            TRACE( "created guid %s\n", debugstr_a(ctx->gpu_guid) );
-            set_reg_ascii_value( subkey, "VideoID", ctx->gpu_guid );
-        }
-        else
-        {
-            WCHAR *guidW = (WCHAR *)value->Data;
-            for (i = 0; i < sizeof(ctx->gpu_guid); i++) ctx->gpu_guid[i] = guidW[i];
-            TRACE( "got guid %s\n", debugstr_a(ctx->gpu_guid) );
-        }
+        set_reg_ascii_value( subkey, "VideoID", gpu->guid );
         NtClose( subkey );
     }
 
     if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_vulkan_uuidA, 0, NULL )))
     {
         set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_GUID,
-                       &gpu->vulkan_uuid, sizeof(gpu->vulkan_uuid) );
+                       &vulkan_uuid, sizeof(vulkan_uuid) );
         NtClose( subkey );
     }
 
@@ -1172,25 +1171,16 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_luidA, 0, NULL )))
     {
-        if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) != sizeof(LUID))
-        {
-            NtAllocateLocallyUniqueId( &ctx->gpu_luid );
-            TRACE("allocated luid %08x%08x\n", (int)ctx->gpu_luid.HighPart, (int)ctx->gpu_luid.LowPart );
-            set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT64,
-                           &ctx->gpu_luid, sizeof(ctx->gpu_luid) );
-        }
-        else
-        {
-            memcpy( &ctx->gpu_luid, value->Data, sizeof(ctx->gpu_luid) );
-            TRACE("got luid %08x%08x\n", (int)ctx->gpu_luid.HighPart, (int)ctx->gpu_luid.LowPart );
-        }
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_UINT64,
+                       &gpu->luid, sizeof(gpu->luid) );
         NtClose( subkey );
     }
 
     NtClose( hkey );
 
-    sprintf( buffer, "Class\\%s\\%04X", guid_devclass_displayA, gpu_index );
-    hkey = reg_create_ascii_key( control_key, buffer, 0, NULL );
+
+    sprintf( buffer, "Class\\%s\\%04X", guid_devclass_displayA, gpu->index );
+    if (!(hkey = reg_create_ascii_key( control_key, buffer, 0, NULL ))) return FALSE;
 
     NtQuerySystemTime( &ft );
     set_reg_value( hkey, driver_dateW, REG_SZ, bufferW, format_date( bufferW, ft.QuadPart ));
@@ -1205,16 +1195,16 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     set_reg_value( hkey, dac_typeW, REG_SZ, ramdacW, sizeof(ramdacW) );
 
     /* If we failed to retrieve the gpu memory size set a default of 1Gb */
-    qw_memory_size = gpu->memory_size ? gpu->memory_size : 1073741824;
+    if (!memory_size) memory_size = 1073741824;
 
-    set_reg_value( hkey, qw_memory_sizeW, REG_QWORD, &qw_memory_size, sizeof(qw_memory_size) );
-    memory_size = (ULONG)min( gpu->memory_size, (ULONGLONG)ULONG_MAX );
-    set_reg_value( hkey, memory_sizeW, REG_DWORD, &memory_size, sizeof(memory_size) );
+    set_reg_value( hkey, qw_memory_sizeW, REG_QWORD, &memory_size, sizeof(memory_size) );
+    value = (ULONG)min( memory_size, (ULONGLONG)ULONG_MAX );
+    set_reg_value( hkey, memory_sizeW, REG_DWORD, &value, sizeof(value) );
 
-    if (gpu->vendor_id && gpu->device_id)
+    if (pci->vendor && pci->device)
     {
         /* The last seven digits are the driver number. */
-        switch (gpu->vendor_id)
+        switch (pci->vendor)
         {
         /* Intel */
         case 0x8086:
@@ -1238,8 +1228,93 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     NtClose( hkey );
 
-    link_device( ctx->gpuid, guid_devinterface_display_adapterA );
-    link_device( ctx->gpuid, guid_display_device_arrivalA );
+
+    link_device( gpu->path, guid_devinterface_display_adapterA );
+    link_device( gpu->path, guid_display_device_arrivalA );
+
+    return TRUE;
+}
+
+static void add_gpu( const struct gdi_gpu *gpu, void *param )
+{
+    const struct pci_id pci_id =
+    {
+        .vendor = gpu->vendor_id,
+        .device = gpu->device_id,
+        .subsystem = gpu->subsys_id,
+        .revision = gpu->revision_id,
+    };
+    struct device_manager_ctx *ctx = param;
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    unsigned int i;
+    HKEY hkey, subkey;
+
+    TRACE( "%s %04X %04X %08X %02X\n", debugstr_w(gpu->name),
+           gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id );
+
+    if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
+        return;
+
+    if (!ctx->mutex)
+    {
+        pthread_mutex_lock( &display_lock );
+        ctx->mutex = get_display_device_init_mutex();
+        prepare_devices();
+    }
+
+    memset( &ctx->gpu, 0, sizeof(ctx->gpu) );
+    ctx->gpu.index = ctx->gpu_count;
+    lstrcpyW( ctx->gpu.name, gpu->name );
+
+    ctx->monitor_count = 0;
+    ctx->mode_count = 0;
+
+    sprintf( ctx->gpu.path, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
+             gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, ctx->gpu.index );
+    if (!(hkey = reg_create_ascii_key( enum_key, ctx->gpu.path, 0, NULL ))) return;
+
+    if ((subkey = reg_create_ascii_key( hkey, "Device Parameters", 0, NULL )))
+    {
+        if (query_reg_ascii_value( subkey, "VideoID", value, sizeof(buffer) ) != sizeof(ctx->gpu.guid) * sizeof(WCHAR))
+        {
+            GUID guid;
+            uuid_create( &guid );
+            sprintf( ctx->gpu.guid, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                     (unsigned int)guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2],
+                     guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
+            TRACE( "created guid %s\n", debugstr_a(ctx->gpu.guid) );
+        }
+        else
+        {
+            WCHAR *guidW = (WCHAR *)value->Data;
+            for (i = 0; i < sizeof(ctx->gpu.guid); i++) ctx->gpu.guid[i] = guidW[i];
+            TRACE( "got guid %s\n", debugstr_a(ctx->gpu.guid) );
+        }
+        NtClose( subkey );
+    }
+
+    if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_luidA, 0, NULL )))
+    {
+        if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) != sizeof(LUID))
+        {
+            NtAllocateLocallyUniqueId( &ctx->gpu.luid );
+            TRACE("allocated luid %08x%08x\n", (int)ctx->gpu.luid.HighPart, (int)ctx->gpu.luid.LowPart );
+        }
+        else
+        {
+            memcpy( &ctx->gpu.luid, value->Data, sizeof(ctx->gpu.luid) );
+            TRACE("got luid %08x%08x\n", (int)ctx->gpu.luid.HighPart, (int)ctx->gpu.luid.LowPart );
+        }
+        NtClose( subkey );
+    }
+
+    NtClose( hkey );
+
+    if (!write_gpu_to_registry( &ctx->gpu, &pci_id, &gpu->vulkan_uuid, gpu->memory_size ))
+        WARN( "Failed to write gpu to registry\n" );
+    else
+        ctx->gpu_count++;
 }
 
 static void add_adapter( const struct gdi_adapter *adapter, void *param )
@@ -1258,13 +1333,13 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
         ctx->adapter_key = NULL;
     }
 
-    adapter_index = ctx->adapter_count++;
+    adapter_index = ctx->gpu.adapter_count++;
     video_index = ctx->video_count++;
     ctx->monitor_count = 0;
     ctx->mode_count = 0;
 
     snprintf( buffer, ARRAY_SIZE(buffer), "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%s\\%04x",
-              ctx->gpu_guid, adapter_index );
+              ctx->gpu.guid, adapter_index );
     len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
 
     hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
@@ -1284,10 +1359,10 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     else ERR( "failed to create link key\n" );
 
     /* Following information is Wine specific, it doesn't really exist on Windows. */
-    snprintf( buffer, ARRAY_SIZE(buffer), "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", ctx->gpu_guid, adapter_index );
+    snprintf( buffer, ARRAY_SIZE(buffer), "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", ctx->gpu.guid, adapter_index );
     ctx->adapter_key = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE, NULL );
 
-    set_reg_ascii_value( ctx->adapter_key, "GPUID", ctx->gpuid );
+    set_reg_ascii_value( ctx->adapter_key, "GPUID", ctx->gpu.path );
     set_reg_value( ctx->adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
                    sizeof(adapter->state_flags) );
 }
@@ -1368,7 +1443,7 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     if ((subkey = reg_create_ascii_key( hkey, devpropkey_monitor_gpu_luidA, 0, NULL )))
     {
         set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_INT64,
-                       &ctx->gpu_luid, sizeof(ctx->gpu_luid) );
+                       &ctx->gpu.luid, sizeof(ctx->gpu.luid) );
         NtClose( subkey );
     }
 
@@ -1392,7 +1467,7 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
     struct device_manager_ctx *ctx = param;
     DEVMODEW nopos_mode;
 
-    if (!ctx->adapter_count)
+    if (!ctx->gpu.adapter_count)
     {
         static const struct gdi_adapter default_adapter =
         {
@@ -1556,11 +1631,9 @@ static struct gpu *find_gpu_from_path( const char *path )
 
 static BOOL update_display_cache_from_registry(void)
 {
-    char buffer[1024], path[MAX_PATH];
+    char path[MAX_PATH];
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
-    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     KEY_BASIC_INFORMATION key;
-    HKEY gpu_key, prop_key;
     struct adapter *adapter;
     struct monitor *monitor, *monitor2;
     HANDLE mutex = NULL;
@@ -1590,16 +1663,8 @@ static BOOL update_display_cache_from_registry(void)
 
     LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
-        if (!(gpu_key = reg_open_ascii_key( enum_key, gpu->path ))) continue;
-
-        if ((prop_key = reg_open_ascii_key( gpu_key, devpropkey_gpu_luidA )))
-        {
-            if (query_reg_value( prop_key, NULL, value, sizeof(buffer) ) == sizeof(LUID))
-                gpu->luid = *(const LUID *)value->Data;
-            NtClose( prop_key );
-        }
-
-        NtClose( gpu_key );
+        if (!read_gpu_from_registry( gpu ))
+            WARN( "Failed to read gpu from registry\n" );
     }
 
     for (adapter_id = 0;; adapter_id++)
