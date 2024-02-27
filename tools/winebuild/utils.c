@@ -823,15 +823,8 @@ const char *asm_name( const char *sym )
 /* return the assembly name for an ARM64/ARM64EC function */
 const char *arm64_name( const char *sym )
 {
-    switch (target.platform)
-    {
-    case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
-        if (target.cpu == CPU_ARM64EC) return strmake( "\"#%s\"", sym );
-        /* fall through */
-    default:
-        return asm_name( sym );
-    }
+    if (target.cpu == CPU_ARM64EC) return strmake( "\"#%s\"", sym );
+    return asm_name( sym );
 }
 
 /* return an assembly function declaration for a C function name */
@@ -967,16 +960,7 @@ void output_gnu_stack_note(void)
     case PLATFORM_APPLE:
         break;
     default:
-        switch (target.cpu)
-        {
-        case CPU_ARM:
-        case CPU_ARM64:
-            output( "\t.section .note.GNU-stack,\"\",%%progbits\n" );
-            break;
-        default:
-            output( "\t.section .note.GNU-stack,\"\",@progbits\n" );
-            break;
-        }
+        output( "\t.section .note.GNU-stack,\"\",@progbits\n" );
         break;
     }
 }
@@ -1066,36 +1050,4 @@ const char *get_asm_string_section(void)
     case PLATFORM_APPLE: return ".cstring";
     default:             return ".section .rodata";
     }
-}
-
-const char *arm64_page( const char *sym )
-{
-    static char *buffer;
-
-    switch (target.platform)
-    {
-    case PLATFORM_APPLE:
-        free( buffer );
-        buffer = strmake( "%s@PAGE", sym );
-        return buffer;
-    default:
-        return sym;
-    }
-}
-
-const char *arm64_pageoff( const char *sym )
-{
-    static char *buffer;
-
-    free( buffer );
-    switch (target.platform)
-    {
-    case PLATFORM_APPLE:
-        buffer = strmake( "%s@PAGEOFF", sym );
-        break;
-    default:
-        buffer = strmake( ":lo12:%s", sym );
-        break;
-    }
-    return buffer;
 }

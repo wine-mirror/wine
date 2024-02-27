@@ -777,19 +777,7 @@ static void output_import_thunk( const char *name, const char *table, int pos )
     case CPU_x86_64:
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
-    case CPU_ARM:
-        output( "\tldr ip, 1f\n");
-        output( "\tldr pc, [ip]\n");
-        output( "1:\t.long %s+%u\n", table, pos );
-        break;
-    case CPU_ARM64:
-        output( "\tadrp x16, %s\n", arm64_page( table ) );
-        output( "\tadd x16, x16, #%s\n", arm64_pageoff( table ) );
-        if (pos & ~0x7fff) output( "\tadd x16, x16, #%u\n", pos & ~0x7fff );
-        output( "\tldr x16, [x16, #%u]\n", pos & 0x7fff );
-        output( "\tbr x16\n" );
-        break;
-    case CPU_ARM64EC:
+    default:
         assert( 0 );
         break;
     }
@@ -1077,9 +1065,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset -0x98" );
             output( "\tjmp *%%rax\n" );
             break;
-        case CPU_ARM:
-        case CPU_ARM64:
-        case CPU_ARM64EC:
+        default:
             assert( 0 );
             break;
         }
@@ -1109,9 +1095,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tleaq .L__wine_delay_IAT+%d(%%rip),%%rax\n", iat_pos );
                 output( "\tjmp %s\n", asm_name(module_func) );
                 break;
-            case CPU_ARM:
-            case CPU_ARM64:
-            case CPU_ARM64EC:
+            default:
                 assert( 0 );
                 break;
             }
@@ -1274,14 +1258,12 @@ void output_stubs( DLLSPEC *spec )
         case CPU_ARM64EC:
             output( "\t.seh_proc %s\n", arm64_name(name) );
             output( "\t.seh_endprologue\n" );
-            output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_file_name") );
-            output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_file_name") );
+            output( "\tadrp x0, .L__wine_spec_file_name\n" );
+            output( "\tadd x0, x0, #:lo12:.L__wine_spec_file_name\n" );
             if (exp_name)
             {
-                char *sym = strmake( ".L%s_string", name );
-                output( "\tadrp x1, %s\n", arm64_page( sym ) );
-                output( "\tadd x1, x1, #%s\n", arm64_pageoff( sym ) );
-                free( sym );
+                output( "\tadrp x1, .L%s_string\n", name );
+                output( "\tadd x1, x1, #:lo12:.L%s_string\n", name );
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
@@ -1532,7 +1514,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             output( "\tstp x6, x7, [sp, #64]\n" );
             output( "\tmov x1, x16\n" );
             output( "\tadrp x0, %s\n", asm_name( import_desc ) );
-            output( "\tadd x0, x0, #%s\n", asm_name( import_desc ) );
+            output( "\tadd x0, x0, #:lo12:%s\n", asm_name( import_desc ) );
             output( "\tbl __delayLoadHelper2\n" );
             output( "\tmov x16, x0\n" );
             output( "\tldp x0, x1, [sp, #16]\n" );
@@ -1677,15 +1659,15 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 output( "1:\t.long %s\n", asm_name( imp_name ) );
                 break;
             case CPU_ARM64:
-                output( "\tadrp x16, %s\n", arm64_page( asm_name( imp_name ) ) );
-                output( "\tadd x16, x16, #%s\n", arm64_pageoff( asm_name( imp_name ) ) );
+                output( "\tadrp x16, %s\n", asm_name( imp_name ) );
+                output( "\tadd x16, x16, #:lo12:%s\n", asm_name( imp_name ) );
                 output( "\tbr x16\n" );
                 if (is_delay)
                 {
                     output( "\n\t.section .text$1\n" );
                     output( ".L__wine_delay_import:\n" );
-                    output( "\tadrp x16, %s\n", arm64_page( asm_name( imp_name ) ) );
-                    output( "\tadd x16, x16, #%s\n", arm64_pageoff( asm_name( imp_name ) ) );
+                    output( "\tadrp x16, %s\n", asm_name( imp_name ) );
+                    output( "\tadd x16, x16, #:lo12:%s\n", asm_name( imp_name ) );
                     output( "\tb %s\n", asm_name( delay_load ) );
                 }
                 break;

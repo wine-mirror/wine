@@ -352,8 +352,8 @@ static void output_relay_debug( struct exports *exports )
             output( "\tstp x8, x9, [SP,#-16]!\n" );
             output( "\tmov w1, #%u\n", odp->u.func.args_str_offset << 16 );
             if (i - exports->base) output( "\tadd w1, w1, #%u\n", i - exports->base );
-            output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_relay_descr") );
-            output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_relay_descr") );
+            output( "\tadrp x0, .L__wine_spec_relay_descr\n" );
+            output( "\tadd x0, x0, #:lo12:.L__wine_spec_relay_descr\n" );
             output( "\tldr x3, [x0, #8]\n");
             output( "\tblr x3\n");
             output( "\tmov sp, x29\n" );
@@ -636,25 +636,8 @@ void output_module( DLLSPEC *spec )
         output( "\t.skip %u\n", 65536 + page_size );
         break;
     default:
-        switch (target.cpu)
-        {
-        case CPU_i386:
-        case CPU_x86_64:
-            output( "\n\t.section \".init\",\"ax\"\n" );
-            output( "\tjmp 1f\n" );
-            break;
-        case CPU_ARM:
-            output( "\n\t.section \".text\",\"ax\"\n" );
-            output( "\tb 1f\n" );
-            break;
-        case CPU_ARM64:
-            output( "\n\t.section \".init\",\"ax\"\n" );
-            output( "\tb 1f\n" );
-            break;
-        case CPU_ARM64EC:
-            assert( 0 );
-            break;
-        }
+        output( "\n\t.section \".init\",\"ax\"\n" );
+        output( "\tjmp 1f\n" );
         output( "__wine_spec_pe_header:\n" );
         output( "\t.skip %u\n", 65536 + page_size );
         output( "1:\n" );
