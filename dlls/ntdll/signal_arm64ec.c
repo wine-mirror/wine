@@ -1740,17 +1740,25 @@ void WINAPI RtlRaiseException( struct _EXCEPTION_RECORD * rec)
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
-void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
+void __attribute__((naked)) RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
-    __TRY
-    {
-        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
-    }
-    __EXCEPT(call_unhandled_exception_filter)
-    {
-        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
-    }
-    __ENDTRY
+    asm( ".seh_proc RtlUserThreadStart\n\t"
+         "stp x29, x30, [sp, #-16]!\n\t"
+         ".seh_save_fplr_x 16\n\t"
+         ".seh_endprologue\n\t"
+         "adrp x11, pBaseThreadInitThunk\n\t"
+         "ldr x11, [x11, #:lo12:pBaseThreadInitThunk]\n\t"
+         "adr x10, $iexit_thunk$cdecl$v$i8i8i8\n\t"
+         "mov x2, x1\n\t"
+         "mov x1, x0\n\t"
+         "mov x0, #0\n\t"
+         "adrp x16, __os_arm64x_dispatch_icall\n\t"
+         "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_icall]\n\t"
+         "blr x16\n\t"
+         "blr x11\n\t"
+         "brk #1\n\t"
+         ".seh_handler call_unhandled_exception_handler, @except\n\t"
+         ".seh_endproc" );
 }
 
 
