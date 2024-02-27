@@ -1257,13 +1257,44 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
         ctx->gpu_count++;
 }
 
-static void add_adapter( const struct gdi_adapter *adapter, void *param )
+static BOOL write_adapter_to_registry( const struct adapter *adapter, HKEY *adapter_key )
 {
-    struct device_manager_ctx *ctx = param;
-    unsigned int adapter_index, len;
+    struct gpu *gpu = adapter->gpu;
+    unsigned int len, adapter_index = gpu->adapter_count;
     char name[64], buffer[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
     HKEY hkey;
+
+    sprintf( buffer, "%s\\Video\\%s\\%04x", control_keyA, gpu->guid, adapter_index );
+    len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
+
+    hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
+    if (!hkey) hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
+
+    sprintf( name, "\\Device\\Video%u", adapter->id );
+    set_reg_ascii_value( video_key, name, buffer );
+
+    if (!hkey) return FALSE;
+
+    sprintf( buffer, "%s\\Class\\%s\\%04X", control_keyA, guid_devclass_displayA, gpu->index );
+    len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
+    set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
+    NtClose( hkey );
+
+    /* Following information is Wine specific, it doesn't really exist on Windows. */
+    sprintf( buffer, "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, adapter_index );
+    *adapter_key = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE, NULL );
+
+    set_reg_ascii_value( *adapter_key, "GPUID", gpu->path );
+    set_reg_value( *adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
+                   sizeof(adapter->state_flags) );
+
+    return TRUE;
+}
+
+static void add_adapter( const struct gdi_adapter *adapter, void *param )
+{
+    struct device_manager_ctx *ctx = param;
 
     TRACE( "\n" );
 
@@ -1273,37 +1304,18 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
         ctx->adapter_key = NULL;
     }
 
-    adapter_index = ctx->gpu.adapter_count++;
-
     memset( &ctx->adapter, 0, sizeof(ctx->adapter) );
     ctx->adapter.gpu = &ctx->gpu;
-    ctx->adapter.id = ctx->adapter_count++;
+    ctx->adapter.id = ctx->adapter_count;
+    ctx->adapter.state_flags = adapter->state_flags;
 
-    snprintf( buffer, ARRAY_SIZE(buffer), "%s\\Video\\%s\\%04x", control_keyA, ctx->gpu.guid, adapter_index );
-    len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
-
-    hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
-    if (!hkey) hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
-
-    sprintf( name, "\\Device\\Video%u", ctx->adapter.id );
-    set_reg_ascii_value( video_key, name, buffer );
-
-    if (hkey)
+    if (!write_adapter_to_registry( &ctx->adapter, &ctx->adapter_key ))
+        WARN( "Failed to write adapter to registry\n" );
+    else
     {
-        sprintf( buffer, "%s\\Class\\%s\\%04X", control_keyA, guid_devclass_displayA, ctx->gpu.index );
-        len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
-        set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
-        NtClose( hkey );
+        ctx->gpu.adapter_count++;
+        ctx->adapter_count++;
     }
-    else ERR( "failed to create link key\n" );
-
-    /* Following information is Wine specific, it doesn't really exist on Windows. */
-    snprintf( buffer, ARRAY_SIZE(buffer), "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", ctx->gpu.guid, adapter_index );
-    ctx->adapter_key = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE, NULL );
-
-    set_reg_ascii_value( ctx->adapter_key, "GPUID", ctx->gpu.path );
-    set_reg_value( ctx->adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
-                   sizeof(adapter->state_flags) );
 }
 
 static BOOL write_monitor_to_registry( struct monitor *monitor, const BYTE *edid, UINT edid_len )
