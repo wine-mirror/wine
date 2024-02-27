@@ -69,6 +69,7 @@ DECL_FUNCPTR(eglInitialize);
 DECL_FUNCPTR(eglMakeCurrent);
 DECL_FUNCPTR(eglQueryString);
 DECL_FUNCPTR(eglSwapBuffers);
+DECL_FUNCPTR(eglSwapInterval);
 DECL_FUNCPTR(glClear);
 #undef DECL_FUNCPTR
 
@@ -85,6 +86,7 @@ struct wayland_gl_drawable
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
     LONG resized;
+    int swap_interval;
 };
 
 struct wgl_context
@@ -157,6 +159,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
 
     gl->ref = 1;
     gl->hwnd = hwnd;
+    gl->swap_interval = 1;
 
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
@@ -227,7 +230,11 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 
     if ((old = find_drawable_for_hwnd(hwnd))) list_remove(&old->entry);
     if (new) list_add_head(&gl_drawables, &new->entry);
-    if (old && new) update_context_drawables(new, old);
+    if (old && new)
+    {
+        update_context_drawables(new, old);
+        new->swap_interval = old->swap_interval;
+    }
 
     pthread_mutex_unlock(&gl_object_mutex);
 
@@ -408,7 +415,11 @@ static void wgl_context_refresh(struct wgl_context *ctx)
         ctx->new_read = NULL;
         refresh = TRUE;
     }
-    if (refresh) p_eglMakeCurrent(egl_display, ctx->draw, ctx->read, ctx->context);
+    if (refresh)
+    {
+        p_eglMakeCurrent(egl_display, ctx->draw, ctx->read, ctx->context);
+        if (ctx->draw) p_eglSwapInterval(egl_display, ctx->draw->swap_interval);
+    }
 
     pthread_mutex_unlock(&gl_object_mutex);
 
@@ -608,6 +619,21 @@ static PROC wayland_wglGetProcAddress(LPCSTR name)
     return (PROC)p_eglGetProcAddress(name);
 }
 
+static int wayland_wglGetSwapIntervalEXT(void)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+
+    if (!ctx || !ctx->draw)
+    {
+        WARN("No GL drawable found, returning swap interval 0\n");
+        return 0;
+    }
+
+    /* It's safe to read the value without a lock, since only
+     * the current thread can write to it. */
+    return ctx->draw->swap_interval;
+}
+
 static BOOL wayland_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc,
                                              struct wgl_context *ctx)
 {
@@ -705,6 +731,37 @@ static BOOL wayland_wglSwapBuffers(HDC hdc)
     return TRUE;
 }
 
+static BOOL wayland_wglSwapIntervalEXT(int interval)
+{
+    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    BOOL ret;
+
+    TRACE("(%d)\n", interval);
+
+    if (interval < 0)
+    {
+        RtlSetLastWin32Error(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    if (!ctx || !ctx->draw)
+    {
+        RtlSetLastWin32Error(ERROR_DC_NOT_FOUND);
+        return FALSE;
+    }
+
+    /* Lock to protect against concurrent access to drawable swap_interval
+     * from wayland_update_gl_drawable */
+    pthread_mutex_lock(&gl_object_mutex);
+    if ((ret = p_eglSwapInterval(egl_display, interval)))
+        ctx->draw->swap_interval = interval;
+    else
+        RtlSetLastWin32Error(ERROR_DC_NOT_FOUND);
+    pthread_mutex_unlock(&gl_object_mutex);
+
+    return ret;
+}
+
 static BOOL has_extension(const char *list, const char *ext)
 {
     size_t len = strlen(ext);
@@ -760,6 +817,10 @@ static BOOL init_opengl_funcs(void)
     register_extension("WGL_ARB_create_context_no_error");
     register_extension("WGL_ARB_create_context_profile");
     opengl_funcs.ext.p_wglCreateContextAttribsARB = wayland_wglCreateContextAttribsARB;
+
+    register_extension("WGL_EXT_swap_control");
+    opengl_funcs.ext.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
+    opengl_funcs.ext.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
 
     return TRUE;
 }
@@ -866,6 +927,7 @@ static void init_opengl(void)
     LOAD_FUNCPTR_EGL(eglInitialize);
     LOAD_FUNCPTR_EGL(eglMakeCurrent);
     LOAD_FUNCPTR_EGL(eglSwapBuffers);
+    LOAD_FUNCPTR_EGL(eglSwapInterval);
 #undef LOAD_FUNCPTR_EGL
 
     egl_display = p_eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_KHR,
