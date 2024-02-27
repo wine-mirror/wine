@@ -100,6 +100,7 @@ struct gpu
 {
     LONG refcount;
     struct list entry;
+    char path[MAX_PATH];
     LUID luid;
     unsigned int adapter_count;
 };
@@ -109,7 +110,6 @@ struct adapter
     LONG refcount;
     struct list entry;
     struct display_device dev;
-    LUID gpu_luid;
     unsigned int id;
     struct gpu *gpu;
     const WCHAR *config_key;
@@ -600,7 +600,7 @@ static unsigned int query_reg_subkey_value( HKEY hkey, const char *name, KEY_VAL
     return size;
 }
 
-static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info )
+static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info, char *gpu_path )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -669,16 +669,9 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     NtClose( hkey );
     if (!size || value->Type != REG_SZ || !info->mode_count || !info->modes) return FALSE;
 
+    for (i = 0; i < value->DataLength / sizeof(WCHAR); i++) gpu_path[i] = value_str[i];
     if (!(hkey = reg_open_key( enum_key, value_str, value->DataLength - sizeof(WCHAR) )))
         return FALSE;
-
-    size = query_reg_subkey_value( hkey, devpropkey_gpu_luidA, value, sizeof(buffer) );
-    if (size != sizeof(info->gpu_luid))
-    {
-        NtClose( hkey );
-        return FALSE;
-    }
-    memcpy( &info->gpu_luid, value->Data, sizeof(info->gpu_luid) );
 
     size = query_reg_ascii_value( hkey, "HardwareID", value, sizeof(buffer) );
     NtClose( hkey );
@@ -1496,9 +1489,20 @@ static void clear_display_devices(void)
     }
 }
 
+static struct gpu *find_gpu_from_path( const char *path )
+{
+    struct gpu *gpu;
+
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+        if (!strcmp( gpu->path, path )) return gpu_acquire( gpu );
+
+    ERR( "Failed to find gpu with path %s\n", debugstr_a(path) );
+    return NULL;
+}
+
 static BOOL update_display_cache_from_registry(void)
 {
-    char buffer[1024];
+    char path[MAX_PATH], buffer[1024];
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     KEY_BASIC_INFORMATION key, *key2 = (void *)buffer;
@@ -1582,21 +1586,12 @@ static BOOL update_display_cache_from_registry(void)
         adapter->refcount = 1;
         adapter->id = adapter_id;
 
-        if (!read_display_adapter_settings( adapter_id, adapter ))
+        if (!read_display_adapter_settings( adapter_id, adapter, path ) ||
+            !(adapter->gpu = find_gpu_from_path( path )))
         {
             free( adapter->modes );
             free( adapter );
             break;
-        }
-
-        LIST_FOR_EACH_ENTRY(gpu, &gpus, struct gpu, entry)
-        {
-            if (!memcmp( &adapter->gpu_luid, &gpu->luid, sizeof(LUID) ))
-            {
-                adapter->gpu = gpu_acquire( gpu );
-                gpu->adapter_count++;
-                break;
-            }
         }
 
         list_add_tail( &adapters, &adapter->entry );
@@ -2478,7 +2473,7 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
             continue;
 
         adapter_index = monitor->adapter->id;
-        gpu_luid = &monitor->adapter->gpu_luid;
+        gpu_luid = &monitor->adapter->gpu->luid;
         output_id = monitor->output_id;
 
         memset( &devmode, 0, sizeof(devmode) );
@@ -6273,7 +6268,7 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
         {
             if (source_name->header.id != adapter->id) continue;
-            if (memcmp( &source_name->header.adapterId, &adapter->gpu_luid, sizeof(adapter->gpu_luid) )) continue;
+            if (memcmp( &source_name->header.adapterId, &adapter->gpu->luid, sizeof(adapter->gpu->luid) )) continue;
 
             lstrcpyW( source_name->viewGdiDeviceName, adapter->dev.device_name );
             ret = STATUS_SUCCESS;
@@ -6301,8 +6296,8 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
         {
             if (target_name->header.id != monitor->output_id) continue;
-            if (memcmp( &target_name->header.adapterId, &monitor->adapter->gpu_luid,
-                        sizeof(monitor->adapter->gpu_luid) ))
+            if (memcmp( &target_name->header.adapterId, &monitor->adapter->gpu->luid,
+                        sizeof(monitor->adapter->gpu->luid) ))
                 continue;
 
             target_name->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL;
@@ -6348,8 +6343,8 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
         {
             if (preferred_mode->header.id != monitor->output_id) continue;
-            if (memcmp( &preferred_mode->header.adapterId, &monitor->adapter->gpu_luid,
-                        sizeof(monitor->adapter->gpu_luid) ))
+            if (memcmp( &preferred_mode->header.adapterId, &monitor->adapter->gpu->luid,
+                        sizeof(monitor->adapter->gpu->luid) ))
                 continue;
 
             for (i = 0; i < monitor->adapter->mode_count; ++i)
