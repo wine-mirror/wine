@@ -74,6 +74,9 @@ static const WCHAR guid_devclass_displayW[] =
     {'{','4','D','3','6','E','9','6','8','-','E','3','2','5','-','1','1','C','E','-',
      'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}',0};
 static const char  guid_devclass_monitorA[] = "{4D36E96E-E325-11CE-BFC1-08002BE10318}";
+static const WCHAR guid_devclass_monitorW[] =
+    {'{','4','D','3','6','E','9','6','E','-','E','3','2','5','-','1','1','C','E','-',
+     'B','F','C','1','-','0','8','0','0','2','B','E','1','0','3','1','8','}',0};
 
 static const char guid_devinterface_display_adapterA[] = "{5B45201D-F2F2-4F3B-85BB-30FF1F953599}";
 static const char guid_display_device_arrivalA[] = "{1CA05180-A699-450A-9A0C-DE4FBE3DDD89}";
@@ -658,28 +661,14 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     return TRUE;
 }
 
-static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct monitor *monitor )
+static BOOL read_monitor_from_registry( struct monitor *monitor )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    WCHAR *value_str = (WCHAR *)value->Data;
     HKEY hkey, subkey;
     DWORD size;
-    UINT i;
 
-    if (!(hkey = reg_open_key( config_key, adapter->config_key,
-                               lstrlenW( adapter->config_key ) * sizeof(WCHAR) )))
-        return FALSE;
-
-    /* Interface name */
-    sprintf( buffer, "MonitorID%u", index );
-    size = query_reg_ascii_value( hkey, buffer, value, sizeof(buffer) );
-    NtClose( hkey );
-    if (!size || value->Type != REG_SZ) return FALSE;
-
-    for (i = 0; i < value->DataLength / sizeof(WCHAR); i++) monitor->path[i] = value_str[i];
-    if (!(hkey = reg_open_key( enum_key, value_str, value->DataLength - sizeof(WCHAR) )))
-        return FALSE;
+    if (!(hkey = reg_open_ascii_key( enum_key, monitor->path ))) return FALSE;
 
     /* Output ID */
     size = query_reg_subkey_value( hkey, devpropkey_monitor_output_idA,
@@ -720,6 +709,22 @@ static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct m
     }
 
     NtClose( hkey );
+    return TRUE;
+}
+
+static BOOL read_adapter_monitor_path( HKEY hkey, UINT index, char *path )
+{
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    WCHAR *value_str = (WCHAR *)value->Data;
+    DWORD size;
+    UINT i;
+
+    sprintf( buffer, "MonitorID%u", index );
+    size = query_reg_ascii_value( hkey, buffer, value, sizeof(buffer) );
+    if (!size || value->Type != REG_SZ) return FALSE;
+
+    for (i = 0; i < value->DataLength / sizeof(WCHAR); i++) path[i] = value_str[i];
     return TRUE;
 }
 
@@ -1598,16 +1603,36 @@ static struct gpu *find_gpu_from_path( const char *path )
     return NULL;
 }
 
+static void enum_monitors( const char *path )
+{
+    struct monitor *monitor;
+    if (!(monitor = calloc( 1, sizeof(*monitor) ))) return;
+    strcpy( monitor->path, path );
+    list_add_tail( &monitors, &monitor->entry );
+}
+
+static struct monitor *find_monitor_from_path( const char *path )
+{
+    struct monitor *monitor;
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+        if (!strcmp( monitor->path, path )) return monitor;
+
+    ERR( "Failed to find monitor with path %s\n", debugstr_a(path) );
+    return NULL;
+}
+
 static BOOL update_display_cache_from_registry(void)
 {
     char path[MAX_PATH];
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
     KEY_BASIC_INFORMATION key;
     struct adapter *adapter;
-    struct monitor *monitor, *monitor2;
+    struct monitor *monitor;
     HANDLE mutex = NULL;
     NTSTATUS status;
     struct gpu *gpu;
+    HKEY hkey;
     BOOL ret;
 
     /* If user driver did initialize the registry, then exit */
@@ -1629,11 +1654,18 @@ static BOOL update_display_cache_from_registry(void)
     clear_display_devices();
 
     enum_device_keys( "PCI", guid_devclass_displayW, sizeof(guid_devclass_displayW), enum_gpus );
+    enum_device_keys( "DISPLAY", guid_devclass_monitorW, sizeof(guid_devclass_monitorW), enum_monitors );
 
     LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
         if (!read_gpu_from_registry( gpu ))
             WARN( "Failed to read gpu from registry\n" );
+    }
+
+    LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
+    {
+        if (!read_monitor_from_registry( monitor ))
+            WARN( "Failed to read monitor from registry\n" );
     }
 
     for (adapter_id = 0;; adapter_id++)
@@ -1651,34 +1683,24 @@ static BOOL update_display_cache_from_registry(void)
         }
 
         list_add_tail( &adapters, &adapter->entry );
+
+        size = lstrlenW( adapter->config_key ) * sizeof(WCHAR);
+        if (!(hkey = reg_open_key( config_key, adapter->config_key, size ))) continue;
+
         for (monitor_id = 0;; monitor_id++)
         {
-            if (!(monitor = calloc( 1, sizeof(*monitor) ))) break;
-            if (!read_monitor_settings( adapter, monitor_id, monitor ))
-            {
-                free( monitor );
-                break;
-            }
+            struct monitor *monitor;
+
+            if (!read_adapter_monitor_path( hkey, monitor_id, path )) break;
+            if (!(monitor = find_monitor_from_path( path ))) continue;
 
             monitor->id = monitor_id;
             monitor->adapter = adapter_acquire( adapter );
-
-            if (adapter->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
-            {
-                LIST_FOR_EACH_ENTRY( monitor2, &monitors, struct monitor, entry )
-                {
-                    if (!is_monitor_active( monitor2 )) continue;
-                    if (EqualRect( &monitor2->rc_monitor, &monitor->rc_monitor ))
-                    {
-                        monitor->is_clone = TRUE;
-                        break;
-                    }
-                }
-            }
-
             monitor->handle = UlongToHandle( ++monitor_count );
-            list_add_tail( &monitors, &monitor->entry );
+            if (adapter->monitor_count++) monitor->is_clone = TRUE;
         }
+
+        NtClose( hkey );
     }
 
     if ((ret = !list_empty( &adapters ) && !list_empty( &monitors )))
@@ -3378,6 +3400,18 @@ INT get_display_depth( UNICODE_STRING *name )
     return depth;
 }
 
+static BOOL should_enumerate_monitor( struct monitor *monitor, const POINT *origin,
+                                      const RECT *limit, RECT *rect )
+{
+    if (!is_monitor_active( monitor )) return FALSE;
+    if (monitor->is_clone) return FALSE;
+
+    *rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
+                          get_thread_dpi() );
+    OffsetRect( rect, -origin->x, -origin->y );
+    return intersect_rect( rect, rect, limit );
+}
+
 /***********************************************************************
  *	     NtUserEnumDisplayMonitors    (win32u.@)
  */
@@ -3419,21 +3453,22 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     }
 
     count = 0;
+
+    /* enumerate primary monitors first */
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
-        RECT monrect;
+        if (!is_monitor_primary( monitor )) continue;
+        if (should_enumerate_monitor( monitor, &origin, &limit, &enum_info[count].rect ))
+            enum_info[count++].handle = monitor->handle;
+        break;
+    }
 
-        if (!is_monitor_active( monitor )) continue;
-
-        monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
-                                get_thread_dpi() );
-        OffsetRect( &monrect, -origin.x, -origin.y );
-        if (!intersect_rect( &monrect, &monrect, &limit )) continue;
-        if (monitor->is_clone) continue;
-
-        enum_info[count].handle = monitor->handle;
-        enum_info[count].rect = monrect;
-        count++;
+    /* then non-primary monitors */
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+    {
+        if (is_monitor_primary( monitor )) continue;
+        if (should_enumerate_monitor( monitor, &origin, &limit, &enum_info[count].rect ))
+            enum_info[count++].handle = monitor->handle;
     }
 
     unlock_display_devices();
