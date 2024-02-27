@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +93,7 @@ struct wgl_context
     EGLConfig config;
     EGLContext context;
     struct wayland_gl_drawable *draw, *read, *new_draw, *new_read;
+    EGLint attribs[16];
 };
 
 /* lookup the existing drawable for a window, gl_object_mutex must be held */
@@ -320,6 +322,68 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
     return ret;
 }
 
+static BOOL wgl_context_populate_attribs(struct wgl_context *ctx, const int *wgl_attribs)
+{
+    EGLint *attribs_end = ctx->attribs;
+
+    if (!wgl_attribs) goto out;
+
+    for (; wgl_attribs[0] != 0; wgl_attribs += 2)
+    {
+        EGLint name;
+
+        TRACE("%#x %#x\n", wgl_attribs[0], wgl_attribs[1]);
+
+        /* Find the EGL attribute names corresponding to the WGL names.
+         * For all of the attributes below, the values match between the two
+         * systems, so we can use them directly. */
+        switch (wgl_attribs[0])
+        {
+        case WGL_CONTEXT_MAJOR_VERSION_ARB:
+            name = EGL_CONTEXT_MAJOR_VERSION_KHR;
+            break;
+        case WGL_CONTEXT_MINOR_VERSION_ARB:
+            name = EGL_CONTEXT_MINOR_VERSION_KHR;
+            break;
+        case WGL_CONTEXT_FLAGS_ARB:
+            name = EGL_CONTEXT_FLAGS_KHR;
+            break;
+        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
+            name = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
+            break;
+        case WGL_CONTEXT_PROFILE_MASK_ARB:
+            if (wgl_attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+            {
+                ERR("OpenGL ES contexts are not supported\n");
+                return FALSE;
+            }
+            name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
+            break;
+        default:
+            name = EGL_NONE;
+            FIXME("Unhandled attributes: %#x %#x\n", wgl_attribs[0], wgl_attribs[1]);
+        }
+
+        if (name != EGL_NONE)
+        {
+            EGLint *dst = ctx->attribs;
+            /* Check if we have already set the same attribute and replace it. */
+            for (; dst != attribs_end && *dst != name; dst += 2) continue;
+            /* Our context attribute array should have enough space for all the
+             * attributes we support (we merge repetitions), plus EGL_NONE. */
+            assert(dst - ctx->attribs <= ARRAY_SIZE(ctx->attribs) - 3);
+            dst[0] = name;
+            dst[1] = wgl_attribs[1];
+            if (dst == attribs_end) attribs_end += 2;
+        }
+    }
+
+out:
+    *attribs_end = EGL_NONE;
+    return TRUE;
+}
+
+
 static void wgl_context_refresh(struct wgl_context *ctx)
 {
     BOOL refresh = FALSE;
@@ -381,7 +445,8 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
     return TRUE;
 }
 
-static struct wgl_context *create_context(HDC hdc)
+static struct wgl_context *create_context(HDC hdc, struct wgl_context *share,
+                                          const int *attribs)
 {
     struct wayland_gl_drawable *gl;
     struct wgl_context *ctx;
@@ -394,8 +459,23 @@ static struct wgl_context *create_context(HDC hdc)
         goto out;
     }
 
+    if (!wgl_context_populate_attribs(ctx, attribs))
+    {
+        ctx->attribs[0] = EGL_NONE;
+        goto out;
+    }
+
+    /* For now only OpenGL is supported. It's enough to set the API only for
+     * context creation, since:
+     * 1. the default API is EGL_OPENGL_ES_API
+     * 2. the EGL specification says in section 3.7:
+     *    > EGL_OPENGL_API and EGL_OPENGL_ES_API are interchangeable for all
+     *    > purposes except eglCreateContext.
+     */
+    p_eglBindAPI(EGL_OPENGL_API);
     ctx->context = p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR,
-                                      EGL_NO_CONTEXT, NULL);
+                                      share ? share->context : EGL_NO_CONTEXT,
+                                      ctx->attribs);
 
     pthread_mutex_lock(&gl_object_mutex);
     list_add_head(&gl_contexts, &ctx->entry);
@@ -427,8 +507,15 @@ static BOOL wayland_wglCopyContext(struct wgl_context *src,
 static struct wgl_context *wayland_wglCreateContext(HDC hdc)
 {
     TRACE("hdc=%p\n", hdc);
-    p_eglBindAPI(EGL_OPENGL_API);
-    return create_context(hdc);
+    return create_context(hdc, NULL, NULL);
+}
+
+static struct wgl_context *wayland_wglCreateContextAttribsARB(HDC hdc,
+                                                              struct wgl_context *share,
+                                                              const int *attribs)
+{
+    TRACE("hdc=%p share=%p attribs=%p\n", hdc, share, attribs);
+    return create_context(hdc, share, attribs);
 }
 
 static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
@@ -623,6 +710,11 @@ static BOOL init_opengl_funcs(void)
     opengl_funcs.ext.p_wglGetCurrentReadDCARB = (void *)1;  /* never called */
     opengl_funcs.ext.p_wglMakeContextCurrentARB = wayland_wglMakeContextCurrentARB;
 
+    register_extension("WGL_ARB_create_context");
+    register_extension("WGL_ARB_create_context_no_error");
+    register_extension("WGL_ARB_create_context_profile");
+    opengl_funcs.ext.p_wglCreateContextAttribsARB = wayland_wglCreateContextAttribsARB;
+
     return TRUE;
 }
 
@@ -751,6 +843,8 @@ static void init_opengl(void)
         if (!has_extension(egl_exts, #ext)) \
             { ERR("Failed to find required extension %s\n", #ext); goto err; } \
     } while(0)
+    REQUIRE_EXT(EGL_KHR_create_context);
+    REQUIRE_EXT(EGL_KHR_create_context_no_error);
     REQUIRE_EXT(EGL_KHR_no_config_context);
 #undef REQUIRE_EXT
 
