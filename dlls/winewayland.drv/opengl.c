@@ -94,6 +94,8 @@ struct wgl_context
     EGLContext context;
     struct wayland_gl_drawable *draw, *read, *new_draw, *new_read;
     EGLint attribs[16];
+    BOOL has_been_current;
+    BOOL sharing;
 };
 
 /* lookup the existing drawable for a window, gl_object_mutex must be held */
@@ -306,6 +308,7 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HWND draw_hwnd,
         ctx->draw = draw;
         ctx->read = read;
         ctx->new_draw = ctx->new_read = NULL;
+        ctx->has_been_current = TRUE;
         NtCurrentTeb()->glContext = ctx;
     }
     else
@@ -641,6 +644,49 @@ static BOOL wayland_wglSetPixelFormatWINE(HDC hdc, int format)
     return set_pixel_format(hdc, format, TRUE);
 }
 
+static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *dest)
+{
+    struct wgl_context *keep, *clobber;
+
+    TRACE("(%p, %p)\n", orig, dest);
+
+    /* Sharing of display lists works differently in EGL and WGL. In case of EGL
+     * it is done at context creation time but in case of WGL it is done using
+     * wglShareLists. We create an EGL context in wglCreateContext /
+     * wglCreateContextAttribsARB and when a program requests sharing we
+     * recreate the destination or source context if it hasn't been made current
+     * and it hasn't shared display lists before. */
+
+    if (!dest->has_been_current && !dest->sharing)
+    {
+        keep = orig;
+        clobber = dest;
+    }
+    else if (!orig->has_been_current && !orig->sharing)
+    {
+        keep = dest;
+        clobber = orig;
+    }
+    else
+    {
+        ERR("Could not share display lists because both of the contexts have "
+            "already been current or shared\n");
+        return FALSE;
+    }
+
+    p_eglDestroyContext(egl_display, clobber->context);
+    clobber->context = p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR,
+                                          keep->context, clobber->attribs);
+    TRACE("re-created context (%p) for Wine context %p (%p) "
+          "sharing lists with ctx %p (%p)\n",
+          clobber->context, clobber, clobber->config,
+          keep->context, keep->config);
+
+    orig->sharing = TRUE;
+    dest->sharing = TRUE;
+    return TRUE;
+}
+
 static BOOL wayland_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
@@ -876,6 +922,7 @@ static struct opengl_funcs opengl_funcs =
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
         .p_wglMakeCurrent = wayland_wglMakeCurrent,
         .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
+        .p_wglShareLists = wayland_wglShareLists,
         .p_wglSwapBuffers = wayland_wglSwapBuffers,
     }
 };
