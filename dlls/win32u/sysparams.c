@@ -137,7 +137,6 @@ struct monitor
     struct adapter *adapter;
     HANDLE handle;
     unsigned int id;
-    unsigned int flags;
     unsigned int output_id;
     RECT rc_monitor;
     RECT rc_work;
@@ -157,7 +156,6 @@ BOOL enable_thunk_lock = FALSE;
 static struct monitor virtual_monitor =
 {
     .handle = VIRTUAL_HMONITOR,
-    .flags = MONITORINFOF_PRIMARY,
     .rc_monitor.right = 1024,
     .rc_monitor.bottom = 768,
     .rc_work.right = 1024,
@@ -663,14 +661,11 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
 static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct monitor *monitor )
 {
     char buffer[4096];
-    BOOL is_primary = !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     WCHAR *value_str = (WCHAR *)value->Data;
     HKEY hkey, subkey;
     DWORD size;
     UINT i;
-
-    monitor->flags = is_primary ? MONITORINFOF_PRIMARY : 0;
 
     if (!(hkey = reg_open_key( config_key, adapter->config_key,
                                lstrlenW( adapter->config_key ) * sizeof(WCHAR) )))
@@ -1530,6 +1525,14 @@ static BOOL is_monitor_active( struct monitor *monitor )
     return !IsRectEmpty( &monitor->rc_monitor );
 }
 
+static BOOL is_monitor_primary( struct monitor *monitor )
+{
+    struct adapter *adapter;
+    /* services do not have any adapters, only a virtual monitor */
+    if (!(adapter = monitor->adapter)) return TRUE;
+    return !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+}
+
 static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
 {
     char buffer[1024];
@@ -2304,7 +2307,7 @@ RECT get_primary_monitor_rect( UINT dpi )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
-        if (!(monitor->flags & MONITORINFOF_PRIMARY)) continue;
+        if (!is_monitor_primary( monitor )) continue;
         rect = monitor->rc_monitor;
         break;
     }
@@ -3471,7 +3474,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
         /* FIXME: map dpi */
         info->rcMonitor = monitor->rc_monitor;
         info->rcWork = monitor->rc_work;
-        info->dwFlags = monitor->flags;
+        info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
         if (info->cbSize >= sizeof(MONITORINFOEXW))
         {
             char buffer[CCHDEVICENAME];
@@ -3550,7 +3553,7 @@ HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
             }
         }
 
-        if (monitor->flags & MONITORINFOF_PRIMARY) primary = monitor->handle;
+        if (is_monitor_primary( monitor )) primary = monitor->handle;
     }
 
     unlock_display_devices();
@@ -5120,7 +5123,7 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
 
             LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
             {
-                if (!(monitor->flags & MONITORINFOF_PRIMARY)) continue;
+                if (!is_monitor_primary( monitor )) continue;
                 work_area = monitor->rc_work;
                 break;
             }
