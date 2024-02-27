@@ -210,12 +210,12 @@ static void wayland_add_device_gpu(const struct gdi_device_manager *device_manag
     device_manager->add_gpu(&gpu, param);
 }
 
-static void wayland_add_device_adapter(const struct gdi_device_manager *device_manager,
+static void wayland_add_device_source(const struct gdi_device_manager *device_manager,
                                        void *param, UINT state_flags, struct output_info *output_info)
 {
     TRACE("name=%s state_flags=0x%x\n",
           output_info->output->name, state_flags);
-    device_manager->add_adapter(output_info->output->name, state_flags, param);
+    device_manager->add_source(output_info->output->name, state_flags, param);
 }
 
 static void wayland_add_device_monitor(const struct gdi_device_manager *device_manager,
@@ -305,7 +305,7 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     wl_array_for_each(output_info, &output_info_array)
     {
-        wayland_add_device_adapter(device_manager, param, state_flags, output_info);
+        wayland_add_device_source(device_manager, param, state_flags, output_info);
         wayland_add_device_monitor(device_manager, param, output_info);
         wayland_add_device_modes(device_manager, param, output_info);
         state_flags &= ~DISPLAY_DEVICE_PRIMARY_DEVICE;

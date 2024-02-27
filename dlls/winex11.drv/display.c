@@ -549,7 +549,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             BOOL is_primary = adapters[adapter].state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE;
 
             sprintf( buffer, "%04lx", adapters[adapter].id );
-            device_manager->add_adapter( buffer, adapters[adapter].state_flags, param );
+            device_manager->add_source( buffer, adapters[adapter].state_flags, param );
 
             if (!host_handler.get_monitors( adapters[adapter].id, &monitors, &monitor_count )) break;
             TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);

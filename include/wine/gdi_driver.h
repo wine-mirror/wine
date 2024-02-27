@@ -260,7 +260,7 @@ struct gdi_monitor
 struct gdi_device_manager
 {
     void (*add_gpu)( const struct gdi_gpu *gpu, void *param );
-    void (*add_adapter)( const char *name, UINT state_flags, void *param );
+    void (*add_source)( const char *name, UINT state_flags, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_mode)( const DEVMODEW *mode, BOOL current, void *param );
 };

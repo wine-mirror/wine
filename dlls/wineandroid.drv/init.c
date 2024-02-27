@@ -287,7 +287,7 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
             .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
         };
         device_manager->add_gpu( &gpu, param );
-        device_manager->add_adapter( "Default", source_flags, param );
+        device_manager->add_source( "Default", source_flags, param );
         device_manager->add_monitor( &gdi_monitor, param );
         device_manager->add_mode( &mode, TRUE, param );
         force_display_devices_refresh = FALSE;

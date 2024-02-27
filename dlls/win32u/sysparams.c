@@ -102,10 +102,10 @@ struct gpu
     LUID luid;
     UINT index;
     GUID vulkan_uuid;
-    UINT adapter_count;
+    UINT source_count;
 };
 
-struct adapter
+struct source
 {
     LONG refcount;
     struct list entry;
@@ -137,7 +137,7 @@ struct monitor
 {
     struct list entry;
     char path[MAX_PATH];
-    struct adapter *adapter;
+    struct source *source;
     HANDLE handle;
     unsigned int id;
     unsigned int output_id;
@@ -148,7 +148,7 @@ struct monitor
 };
 
 static struct list gpus = LIST_INIT(gpus);
-static struct list adapters = LIST_INIT(adapters);
+static struct list sources = LIST_INIT(sources);
 static struct list monitors = LIST_INIT(monitors);
 static INT64 last_query_display_time;
 static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -348,19 +348,19 @@ static void gpu_release( struct gpu *gpu )
         free( gpu );
 }
 
-static struct adapter *adapter_acquire( struct adapter *adapter )
+static struct source *source_acquire( struct source *source )
 {
-    InterlockedIncrement( &adapter->refcount );
-    return adapter;
+    InterlockedIncrement( &source->refcount );
+    return source;
 }
 
-static void adapter_release( struct adapter *adapter )
+static void source_release( struct source *source )
 {
-    if (!InterlockedDecrement( &adapter->refcount ))
+    if (!InterlockedDecrement( &source->refcount ))
     {
-        gpu_release( adapter->gpu );
-        free( adapter->modes );
-        free( adapter );
+        gpu_release( source->gpu );
+        free( source->modes );
+        free( source );
     }
 }
 
@@ -416,30 +416,30 @@ static void get_monitor_info_from_edid( struct edid_monitor_info *info, const un
     }
 }
 
-static BOOL write_adapter_mode( HKEY adapter_key, UINT index, const DEVMODEW *mode )
+static BOOL write_source_mode( HKEY hkey, UINT index, const DEVMODEW *mode )
 {
     WCHAR bufferW[MAX_PATH] = {0};
     char buffer[MAX_PATH];
 
     sprintf( buffer, "Modes\\%08X", index );
     asciiz_to_unicode( bufferW, buffer );
-    return set_reg_value( adapter_key, bufferW, REG_BINARY, &mode->dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
+    return set_reg_value( hkey, bufferW, REG_BINARY, &mode->dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
 }
 
-static BOOL read_adapter_mode( HKEY adapter_key, UINT index, DEVMODEW *mode )
+static BOOL read_source_mode( HKEY hkey, UINT index, DEVMODEW *mode )
 {
     char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(*mode)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
     char buffer[MAX_PATH];
 
     sprintf( buffer, "Modes\\%08X", index );
-    if (!query_reg_ascii_value( adapter_key, buffer, value, sizeof(value_buf) )) return FALSE;
+    if (!query_reg_ascii_value( hkey, buffer, value, sizeof(value_buf) )) return FALSE;
 
     memcpy( &mode->dmFields, value->Data, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
     return TRUE;
 }
 
-static BOOL adapter_get_registry_settings( const struct adapter *adapter, DEVMODEW *mode )
+static BOOL source_get_registry_settings( const struct source *source, DEVMODEW *mode )
 {
     BOOL ret = FALSE;
     HANDLE mutex;
@@ -447,10 +447,10 @@ static BOOL adapter_get_registry_settings( const struct adapter *adapter, DEVMOD
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
     else
     {
-        ret = read_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
+        ret = read_source_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -458,7 +458,7 @@ static BOOL adapter_get_registry_settings( const struct adapter *adapter, DEVMOD
     return ret;
 }
 
-static BOOL adapter_set_registry_settings( const struct adapter *adapter, const DEVMODEW *mode )
+static BOOL source_set_registry_settings( const struct source *source, const DEVMODEW *mode )
 {
     HANDLE mutex;
     HKEY hkey;
@@ -466,10 +466,10 @@ static BOOL adapter_set_registry_settings( const struct adapter *adapter, const 
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
     else
     {
-        ret = write_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
+        ret = write_source_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -477,16 +477,16 @@ static BOOL adapter_set_registry_settings( const struct adapter *adapter, const 
     return ret;
 }
 
-static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODEW *mode )
+static BOOL source_get_current_settings( const struct source *source, DEVMODEW *mode )
 {
-    BOOL is_primary = !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    BOOL is_primary = !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
     WCHAR device_nameW[CCHDEVICENAME];
     char device_name[CCHDEVICENAME];
     HANDLE mutex;
     HKEY hkey;
     BOOL ret;
 
-    sprintf( device_name, "\\\\.\\DISPLAY%d", adapter->id + 1 );
+    sprintf( device_name, "\\\\.\\DISPLAY%d", source->id + 1 );
     asciiz_to_unicode( device_nameW, device_name );
 
     /* use the default implementation in virtual desktop mode */
@@ -499,10 +499,10 @@ static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODE
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
     else
     {
-        ret = read_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+        ret = read_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -510,7 +510,7 @@ static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODE
     return ret;
 }
 
-static BOOL adapter_set_current_settings( const struct adapter *adapter, const DEVMODEW *mode )
+static BOOL source_set_current_settings( const struct source *source, const DEVMODEW *mode )
 {
     HANDLE mutex;
     HKEY hkey;
@@ -518,10 +518,10 @@ static BOOL adapter_set_current_settings( const struct adapter *adapter, const D
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) ret = FALSE;
     else
     {
-        ret = write_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
+        ret = write_source_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
         NtClose( hkey );
     }
 
@@ -603,7 +603,7 @@ static unsigned int query_reg_subkey_value( HKEY hkey, const char *name, KEY_VAL
     return size;
 }
 
-static BOOL read_display_adapter_settings( unsigned int index, struct adapter *info, char *gpu_path )
+static BOOL reade_source_from_registry( unsigned int index, struct source *source, char *gpu_path )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -615,7 +615,7 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     if (!enum_key && !(enum_key = reg_open_ascii_key( NULL, enum_keyA )))
         return FALSE;
 
-    /* Find adapter */
+    /* Find source */
     sprintf( buffer, "\\Device\\Video%d", index );
     size = query_reg_ascii_value( video_key, buffer, value, sizeof(buffer) );
     if (!size || value->Type != REG_SZ) return FALSE;
@@ -623,35 +623,35 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     /* DeviceKey */
     size = sizeof("\\Registry\\Machine");
     if (value->DataLength / sizeof(WCHAR) <= size) return FALSE;
-    for (i = 0; i < value->DataLength / sizeof(WCHAR) - size; i++) info->path[i] = value_str[size + i];
-    if (!(hkey = reg_open_ascii_key( config_key, info->path ))) return FALSE;
+    for (i = 0; i < value->DataLength / sizeof(WCHAR) - size; i++) source->path[i] = value_str[size + i];
+    if (!(hkey = reg_open_ascii_key( config_key, source->path ))) return FALSE;
 
     /* StateFlags */
     if (query_reg_ascii_value( hkey, "StateFlags", value, sizeof(buffer) ) && value->Type == REG_DWORD)
-        info->state_flags = *(const DWORD *)value->Data;
+        source->state_flags = *(const DWORD *)value->Data;
 
     /* ModeCount */
     if (query_reg_ascii_value( hkey, "ModeCount", value, sizeof(buffer) ) && value->Type == REG_DWORD)
-        info->mode_count = *(const DWORD *)value->Data;
+        source->mode_count = *(const DWORD *)value->Data;
 
     /* Modes, allocate an extra mode for easier iteration */
-    if ((info->modes = calloc( info->mode_count + 1, sizeof(DEVMODEW) )))
+    if ((source->modes = calloc( source->mode_count + 1, sizeof(DEVMODEW) )))
     {
-        for (i = 0, mode = info->modes; i < info->mode_count; i++)
+        for (i = 0, mode = source->modes; i < source->mode_count; i++)
         {
             mode->dmSize = offsetof(DEVMODEW, dmICMMethod);
-            if (!read_adapter_mode( hkey, i, mode )) break;
+            if (!read_source_mode( hkey, i, mode )) break;
             mode = NEXT_DEVMODEW(mode);
         }
-        info->mode_count = i;
+        source->mode_count = i;
 
-        qsort(info->modes, info->mode_count, sizeof(*info->modes) + info->modes->dmDriverExtra, mode_compare);
+        qsort(source->modes, source->mode_count, sizeof(*source->modes) + source->modes->dmDriverExtra, mode_compare);
     }
 
     /* DeviceID */
     size = query_reg_ascii_value( hkey, "GPUID", value, sizeof(buffer) );
     NtClose( hkey );
-    if (!size || value->Type != REG_SZ || !info->mode_count || !info->modes) return FALSE;
+    if (!size || value->Type != REG_SZ || !source->mode_count || !source->modes) return FALSE;
 
     for (i = 0; i < value->DataLength / sizeof(WCHAR); i++) gpu_path[i] = value_str[i];
     return TRUE;
@@ -708,7 +708,7 @@ static BOOL read_monitor_from_registry( struct monitor *monitor )
     return TRUE;
 }
 
-static BOOL read_adapter_monitor_path( HKEY hkey, UINT index, char *path )
+static BOOL read_source_monitor_path( HKEY hkey, UINT index, char *path )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -766,7 +766,7 @@ static void prepare_devices(void)
     set_reg_ascii_value( hkey, "Class", "Monitor" );
     NtClose( hkey );
 
-    /* delete adapters */
+    /* delete sources */
     reg_empty_key( video_key, NULL );
 
     /* clean GPUs */
@@ -914,12 +914,12 @@ static unsigned int format_date( WCHAR *bufferW, LONGLONG time )
 struct device_manager_ctx
 {
     UINT gpu_count;
-    UINT adapter_count;
+    UINT source_count;
     UINT monitor_count;
     HANDLE mutex;
     struct gpu gpu;
-    struct adapter adapter;
-    HKEY adapter_key;
+    struct source source;
+    HKEY source_key;
     /* for the virtual desktop settings */
     BOOL is_primary;
     UINT primary_bpp;
@@ -1253,21 +1253,21 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
         ctx->gpu_count++;
 }
 
-static BOOL write_adapter_to_registry( const struct adapter *adapter, HKEY *adapter_key )
+static BOOL write_source_to_registry( const struct source *source, HKEY *source_key )
 {
-    struct gpu *gpu = adapter->gpu;
-    unsigned int len, adapter_index = gpu->adapter_count;
+    struct gpu *gpu = source->gpu;
+    unsigned int len, source_index = gpu->source_count;
     char name[64], buffer[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
     HKEY hkey;
 
-    sprintf( buffer, "%s\\Video\\%s\\%04x", control_keyA, gpu->guid, adapter_index );
+    sprintf( buffer, "%s\\Video\\%s\\%04x", control_keyA, gpu->guid, source_index );
     len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
 
     hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
     if (!hkey) hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
 
-    sprintf( name, "\\Device\\Video%u", adapter->id );
+    sprintf( name, "\\Device\\Video%u", source->id );
     set_reg_ascii_value( video_key, name, buffer );
 
     if (!hkey) return FALSE;
@@ -1278,49 +1278,49 @@ static BOOL write_adapter_to_registry( const struct adapter *adapter, HKEY *adap
     NtClose( hkey );
 
     /* Following information is Wine specific, it doesn't really exist on Windows. */
-    *adapter_key = reg_create_ascii_key( NULL, adapter->path, REG_OPTION_VOLATILE, NULL );
-    set_reg_ascii_value( *adapter_key, "GPUID", gpu->path );
-    set_reg_value( *adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
-                   sizeof(adapter->state_flags) );
+    *source_key = reg_create_ascii_key( NULL, source->path, REG_OPTION_VOLATILE, NULL );
+    set_reg_ascii_value( *source_key, "GPUID", gpu->path );
+    set_reg_value( *source_key, state_flagsW, REG_DWORD, &source->state_flags,
+                   sizeof(source->state_flags) );
 
-    sprintf( buffer, "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, adapter_index );
+    sprintf( buffer, "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, source_index );
     hkey = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
     if (!hkey) hkey = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
 
-    len = asciiz_to_unicode( bufferW, adapter->path ) - sizeof(WCHAR);
+    len = asciiz_to_unicode( bufferW, source->path ) - sizeof(WCHAR);
     set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
     NtClose( hkey );
 
     return TRUE;
 }
 
-static void add_adapter( const char *name, UINT state_flags, void *param )
+static void add_source( const char *name, UINT state_flags, void *param )
 {
     struct device_manager_ctx *ctx = param;
 
     TRACE( "name %s, state_flags %#x\n", name, state_flags );
 
-    if (ctx->adapter_key)
+    if (ctx->source_key)
     {
-        NtClose( ctx->adapter_key );
-        ctx->adapter_key = NULL;
+        NtClose( ctx->source_key );
+        ctx->source_key = NULL;
     }
 
-    memset( &ctx->adapter, 0, sizeof(ctx->adapter) );
-    ctx->adapter.gpu = &ctx->gpu;
-    ctx->adapter.id = ctx->adapter_count;
-    ctx->adapter.state_flags = state_flags;
+    memset( &ctx->source, 0, sizeof(ctx->source) );
+    ctx->source.gpu = &ctx->gpu;
+    ctx->source.id = ctx->source_count;
+    ctx->source.state_flags = state_flags;
 
     /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
-    sprintf( ctx->adapter.path, "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
+    sprintf( ctx->source.path, "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
              control_keyA + strlen( "\\Registry\\Machine" ), ctx->gpu.guid, name );
 
-    if (!write_adapter_to_registry( &ctx->adapter, &ctx->adapter_key ))
-        WARN( "Failed to write adapter to registry\n" );
+    if (!write_source_to_registry( &ctx->source, &ctx->source_key ))
+        WARN( "Failed to write source to registry\n" );
     else
     {
-        ctx->gpu.adapter_count++;
-        ctx->adapter_count++;
+        ctx->gpu.source_count++;
+        ctx->source_count++;
     }
 }
 
@@ -1379,7 +1379,7 @@ static BOOL write_monitor_to_registry( struct monitor *monitor, const BYTE *edid
     if ((subkey = reg_create_ascii_key( hkey, devpropkey_monitor_gpu_luidA, 0, NULL )))
     {
         set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_INT64,
-                       &monitor->adapter->gpu->luid, sizeof(monitor->adapter->gpu->luid) );
+                       &monitor->source->gpu->luid, sizeof(monitor->source->gpu->luid) );
         NtClose( subkey );
     }
 
@@ -1410,8 +1410,8 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     char buffer[MAX_PATH];
     char monitor_id_string[16];
 
-    monitor.adapter = &ctx->adapter;
-    monitor.id = ctx->adapter.monitor_count;
+    monitor.source = &ctx->source;
+    monitor.id = ctx->source.monitor_count;
     monitor.output_id = ctx->monitor_count;
     monitor.rc_monitor = gdi_monitor->rc_monitor;
     monitor.rc_work = gdi_monitor->rc_work;
@@ -1425,14 +1425,14 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
         strcpy( monitor_id_string, "Default_Monitor" );
 
     sprintf( buffer, "MonitorID%u", monitor.id );
-    sprintf( monitor.path, "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->adapter.id, monitor.id );
-    set_reg_ascii_value( ctx->adapter_key, buffer, monitor.path );
+    sprintf( monitor.path, "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->source.id, monitor.id );
+    set_reg_ascii_value( ctx->source_key, buffer, monitor.path );
 
     if (!write_monitor_to_registry( &monitor, gdi_monitor->edid, gdi_monitor->edid_len ))
         WARN( "Failed to write monitor to registry\n" );
     else
     {
-        ctx->adapter.monitor_count++;
+        ctx->source.monitor_count++;
         ctx->monitor_count++;
     }
 }
@@ -1442,11 +1442,11 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
     struct device_manager_ctx *ctx = param;
     DEVMODEW nopos_mode;
 
-    if (!ctx->gpu.adapter_count)
+    if (!ctx->gpu.source_count)
     {
         static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
         TRACE( "adding default fake source\n" );
-        add_adapter( "Default", source_flags, ctx );
+        add_source( "Default", source_flags, ctx );
     }
 
     nopos_mode = *mode;
@@ -1454,15 +1454,15 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
     nopos_mode.dmPosition.y = 0;
     nopos_mode.dmFields &= ~DM_POSITION;
 
-    if (write_adapter_mode( ctx->adapter_key, ctx->adapter.mode_count, &nopos_mode ))
+    if (write_source_mode( ctx->source_key, ctx->source.mode_count, &nopos_mode ))
     {
-        ctx->adapter.mode_count++;
-        set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->adapter.mode_count, sizeof(ctx->adapter.mode_count) );
+        ctx->source.mode_count++;
+        set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &ctx->source.mode_count, sizeof(ctx->source.mode_count) );
         if (current)
         {
-            if (!read_adapter_mode( ctx->adapter_key, ENUM_REGISTRY_SETTINGS, &nopos_mode ))
-                write_adapter_mode( ctx->adapter_key, ENUM_REGISTRY_SETTINGS, mode );
-            write_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, mode );
+            if (!read_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, &nopos_mode ))
+                write_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, mode );
+            write_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, mode );
         }
     }
 }
@@ -1470,7 +1470,7 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
 static const struct gdi_device_manager device_manager =
 {
     add_gpu,
-    add_adapter,
+    add_source,
     add_monitor,
     add_mode,
 };
@@ -1479,9 +1479,9 @@ static void reset_display_manager_ctx( struct device_manager_ctx *ctx )
 {
     HANDLE mutex = ctx->mutex;
 
-    if (ctx->adapter_key)
+    if (ctx->source_key)
     {
-        NtClose( ctx->adapter_key );
+        NtClose( ctx->source_key );
         last_query_display_time = 0;
     }
     if (ctx->gpu_count) cleanup_devices();
@@ -1503,7 +1503,7 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 
 static void clear_display_devices(void)
 {
-    struct adapter *adapter;
+    struct source *source;
     struct monitor *monitor;
     struct gpu *gpu;
 
@@ -1516,16 +1516,16 @@ static void clear_display_devices(void)
     while (!list_empty( &monitors ))
     {
         monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
-        if (monitor->adapter) adapter_release( monitor->adapter );
+        if (monitor->source) source_release( monitor->source );
         list_remove( &monitor->entry );
         free( monitor );
     }
 
-    while (!list_empty( &adapters ))
+    while (!list_empty( &sources ))
     {
-        adapter = LIST_ENTRY( list_head( &adapters ), struct adapter, entry );
-        list_remove( &adapter->entry );
-        adapter_release( adapter );
+        source = LIST_ENTRY( list_head( &sources ), struct source, entry );
+        list_remove( &source->entry );
+        source_release( source );
     }
 
     while (!list_empty( &gpus ))
@@ -1538,19 +1538,19 @@ static void clear_display_devices(void)
 
 static BOOL is_monitor_active( struct monitor *monitor )
 {
-    struct adapter *adapter;
+    struct source *source;
     /* services do not have any adapters, only a virtual monitor */
-    if (!(adapter = monitor->adapter)) return TRUE;
-    if (!(adapter->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return FALSE;
+    if (!(source = monitor->source)) return TRUE;
+    if (!(source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return FALSE;
     return !IsRectEmpty( &monitor->rc_monitor );
 }
 
 static BOOL is_monitor_primary( struct monitor *monitor )
 {
-    struct adapter *adapter;
+    struct source *source;
     /* services do not have any adapters, only a virtual monitor */
-    if (!(adapter = monitor->adapter)) return TRUE;
-    return !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    if (!(source = monitor->source)) return TRUE;
+    return !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
 }
 
 static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
@@ -1640,9 +1640,9 @@ static struct monitor *find_monitor_from_path( const char *path )
 static BOOL update_display_cache_from_registry(void)
 {
     char path[MAX_PATH];
-    DWORD adapter_id, monitor_id, monitor_count = 0, size;
+    DWORD source_id, monitor_id, monitor_count = 0, size;
     KEY_BASIC_INFORMATION key;
-    struct adapter *adapter;
+    struct source *source;
     struct monitor *monitor;
     HANDLE mutex = NULL;
     NTSTATUS status;
@@ -1683,40 +1683,40 @@ static BOOL update_display_cache_from_registry(void)
             WARN( "Failed to read monitor from registry\n" );
     }
 
-    for (adapter_id = 0;; adapter_id++)
+    for (source_id = 0;; source_id++)
     {
-        if (!(adapter = calloc( 1, sizeof(*adapter) ))) break;
-        adapter->refcount = 1;
-        adapter->id = adapter_id;
+        if (!(source = calloc( 1, sizeof(*source) ))) break;
+        source->refcount = 1;
+        source->id = source_id;
 
-        if (!read_display_adapter_settings( adapter_id, adapter, path ) ||
-            !(adapter->gpu = find_gpu_from_path( path )))
+        if (!reade_source_from_registry( source_id, source, path ) ||
+            !(source->gpu = find_gpu_from_path( path )))
         {
-            free( adapter->modes );
-            free( adapter );
+            free( source->modes );
+            free( source );
             break;
         }
 
-        list_add_tail( &adapters, &adapter->entry );
-        if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) continue;
+        list_add_tail( &sources, &source->entry );
+        if (!(hkey = reg_open_ascii_key( config_key, source->path ))) continue;
 
         for (monitor_id = 0;; monitor_id++)
         {
             struct monitor *monitor;
 
-            if (!read_adapter_monitor_path( hkey, monitor_id, path )) break;
+            if (!read_source_monitor_path( hkey, monitor_id, path )) break;
             if (!(monitor = find_monitor_from_path( path ))) continue;
 
             monitor->id = monitor_id;
-            monitor->adapter = adapter_acquire( adapter );
+            monitor->source = source_acquire( source );
             monitor->handle = UlongToHandle( ++monitor_count );
-            if (adapter->monitor_count++) monitor->is_clone = TRUE;
+            if (source->monitor_count++) monitor->is_clone = TRUE;
         }
 
         NtClose( hkey );
     }
 
-    if ((ret = !list_empty( &adapters ) && !list_empty( &monitors )))
+    if ((ret = !list_empty( &sources ) && !list_empty( &monitors )))
         last_query_display_time = key.LastWriteTime.QuadPart;
     pthread_mutex_unlock( &display_lock );
     release_display_device_init_mutex( mutex );
@@ -1761,9 +1761,9 @@ static BOOL default_update_display_devices( const struct gdi_device_manager *man
     if (!force) return TRUE;
 
     manager->add_gpu( &gpu, ctx );
-    manager->add_adapter( "Default", source_flags, ctx );
+    manager->add_source( "Default", source_flags, ctx );
 
-    if (!read_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, &mode ))
+    if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &mode ))
     {
         mode = modes[2];
         mode.dmFields |= DM_POSITION;
@@ -1825,7 +1825,7 @@ static void desktop_add_gpu( const struct gdi_gpu *gpu, void *param )
 {
 }
 
-static void desktop_add_adapter( const char *name, UINT state_flags, void *param )
+static void desktop_add_source( const char *name, UINT state_flags, void *param )
 {
     struct device_manager_ctx *ctx = param;
     ctx->is_primary = !!(state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
@@ -1850,7 +1850,7 @@ static void desktop_add_mode( const DEVMODEW *mode, BOOL current, void *param )
 static const struct gdi_device_manager desktop_device_manager =
 {
     desktop_add_gpu,
-    desktop_add_adapter,
+    desktop_add_source,
     desktop_add_monitor,
     desktop_add_mode,
 };
@@ -1923,8 +1923,8 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     }
 
     add_gpu( &gpu, ctx );
-    add_adapter( "Default", source_flags, ctx );
-    if (!read_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, &current ))
+    add_source( "Default", source_flags, ctx );
+    if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &current ))
     {
         current = mode;
         current.dmFields |= DM_POSITION;
@@ -2318,7 +2318,7 @@ RECT get_display_rect( const WCHAR *display )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
-        if (!monitor->adapter || monitor->adapter->id + 1 != index) continue;
+        if (!monitor->source || monitor->source->id + 1 != index) continue;
         rect = monitor->rc_monitor;
         break;
     }
@@ -2521,7 +2521,7 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
                                       UINT32 *modes_count, DISPLAYCONFIG_MODE_INFO *modes,
                                       DISPLAYCONFIG_TOPOLOGY_ID *topology_id )
 {
-    ULONG adapter_index;
+    ULONG source_index;
     LONG ret;
     UINT32 output_id, source_mode_index, path_index = 0, mode_index = 0;
     const LUID *gpu_luid;
@@ -2563,17 +2563,15 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (!is_monitor_active( monitor )) continue;
+        if (!monitor->source) continue;
 
-        if (!monitor->adapter)
-            continue;
-
-        adapter_index = monitor->adapter->id;
-        gpu_luid = &monitor->adapter->gpu->luid;
+        source_index = monitor->source->id;
+        gpu_luid = &monitor->source->gpu->luid;
         output_id = monitor->output_id;
 
         memset( &devmode, 0, sizeof(devmode) );
         devmode.dmSize = sizeof(devmode);
-        if (!adapter_get_current_settings( monitor->adapter, &devmode ))
+        if (!source_get_current_settings( monitor->source, &devmode ))
         {
             goto done;
         }
@@ -2598,13 +2596,13 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
         /* Multiple targets can be driven by the same source, ensure a mode
          * hasn't already been added for this source.
          */
-        if (!source_mode_exists( modes, mode_index, adapter_index, &source_mode_index ))
+        if (!source_mode_exists( modes, mode_index, source_index, &source_mode_index ))
         {
-            set_mode_source_info( &modes[mode_index], gpu_luid, adapter_index, &devmode );
+            set_mode_source_info( &modes[mode_index], gpu_luid, source_index, &devmode );
             source_mode_index = mode_index;
             mode_index++;
         }
-        set_path_source_info( &paths[path_index].sourceInfo, gpu_luid, adapter_index, source_mode_index );
+        set_path_source_info( &paths[path_index].sourceInfo, gpu_luid, source_index, source_mode_index );
         path_index++;
     }
 
@@ -2618,75 +2616,75 @@ done:
 }
 
 /* display_lock mutex must be held */
-static struct monitor *find_monitor_by_index( struct adapter *adapter, UINT index )
+static struct monitor *find_monitor_by_index( struct source *source, UINT index )
 {
     struct monitor *monitor;
 
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
-        if (monitor->adapter == adapter && index == monitor->id)
+        if (monitor->source == source && index == monitor->id)
             return monitor;
 
-    WARN( "Failed to find adapter %u monitor with id %u.\n", adapter->id, index );
+    WARN( "Failed to find source %u monitor with id %u.\n", source->id, index );
     return NULL;
 }
 
 /* display_lock mutex must be held */
-static struct adapter *find_adapter_by_index( UINT index )
+static struct source *find_source_by_index( UINT index )
 {
-    struct adapter *adapter;
+    struct source *source;
 
-    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-        if (index == adapter->id) return adapter;
+    LIST_FOR_EACH_ENTRY(source, &sources, struct source, entry)
+        if (index == source->id) return source;
 
-    WARN( "Failed to find adapter with id %u.\n", index );
+    WARN( "Failed to find source with id %u.\n", index );
     return NULL;
 }
 
 /* display_lock mutex must be held */
-static struct adapter *find_primary_adapter(void)
+static struct source *find_primary_source(void)
 {
-    struct adapter *adapter;
+    struct source *source;
 
-    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-        if (adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-            return adapter;
+    LIST_FOR_EACH_ENTRY(source, &sources, struct source, entry)
+        if (source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+            return source;
 
-    WARN( "Failed to find primary adapter.\n" );
+    WARN( "Failed to find primary source.\n" );
     return NULL;
 }
 
 /* display_lock mutex must be held */
-static struct adapter *find_adapter_by_name( UNICODE_STRING *name )
+static struct source *find_source_by_name( UNICODE_STRING *name )
 {
-    struct adapter *adapter;
+    struct source *source;
     UINT index;
 
     if (!(index = get_display_index( name ))) return NULL;
 
-    LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-        if (adapter->id + 1 == index)
-            return adapter;
+    LIST_FOR_EACH_ENTRY(source, &sources, struct source, entry)
+        if (source->id + 1 == index)
+            return source;
 
-    WARN( "Failed to find adapter with name %s.\n", debugstr_us(name) );
+    WARN( "Failed to find source with name %s.\n", debugstr_us(name) );
     return NULL;
 }
 
-/* Find and acquire the adapter matching name, or primary adapter if name is NULL.
- * If not NULL, the returned adapter needs to be released with adapter_release.
+/* Find and acquire the source matching name, or primary source if name is NULL.
+ * If not NULL, the returned source needs to be released with source_release.
  */
-static struct adapter *find_adapter( UNICODE_STRING *name )
+static struct source *find_source( UNICODE_STRING *name )
 {
-    struct adapter *adapter;
+    struct source *source;
 
     if (!lock_display_devices()) return NULL;
 
-    if (name && name->Length) adapter = find_adapter_by_name( name );
-    else adapter = find_primary_adapter();
+    if (name && name->Length) source = find_source_by_name( name );
+    else source = find_primary_source();
 
-    if (adapter) adapter = adapter_acquire( adapter );
+    if (source) source = source_acquire( source );
 
     unlock_display_devices();
-    return adapter;
+    return source;
 }
 
 static void monitor_get_interface_name( struct monitor *monitor, WCHAR *interface_name )
@@ -2695,12 +2693,12 @@ static void monitor_get_interface_name( struct monitor *monitor, WCHAR *interfac
     const char *id;
 
     *interface_name = 0;
-    if (!monitor->adapter) return;
+    if (!monitor->source) return;
 
     if (!(monitor->edid_info.flags & MONITOR_INFO_HAS_MONITOR_ID)) id = "Default_Monitor";
     else id = monitor->edid_info.monitor_id_string;
 
-    sprintf( buffer, "\\\\?\\DISPLAY\\%s\\%04X&%04X#%s", id, monitor->adapter->id,
+    sprintf( buffer, "\\\\?\\DISPLAY\\%s\\%04X&%04X#%s", id, monitor->source->id,
              monitor->id, guid_devinterface_monitorA );
     for (tmp = buffer + 4; *tmp; tmp++) if (*tmp == '\\') *tmp = '#';
 
@@ -2714,7 +2712,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {
     struct monitor *monitor = NULL;
-    struct adapter *adapter = NULL;
+    struct source *source = NULL;
     BOOL found = FALSE;
 
     TRACE( "%s %u %p %#x\n", debugstr_us( device ), (int)index, info, (int)flags );
@@ -2725,11 +2723,11 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 
     if (!device || !device->Length)
     {
-        if ((adapter = find_adapter_by_index( index ))) found = TRUE;
+        if ((source = find_source_by_index( index ))) found = TRUE;
     }
-    else if ((adapter = find_adapter_by_name( device )))
+    else if ((source = find_source_by_name( device )))
     {
-        if ((monitor = find_monitor_by_index( adapter, index ))) found = TRUE;
+        if ((monitor = find_monitor_by_index( source, index ))) found = TRUE;
     }
 
     if (found)
@@ -2738,18 +2736,18 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceName) + sizeof(info->DeviceName))
         {
-            if (monitor) sprintf( buffer, "\\\\.\\DISPLAY%d\\Monitor%d", adapter->id + 1, monitor->id );
-            else sprintf( buffer, "\\\\.\\DISPLAY%d", adapter->id + 1 );
+            if (monitor) sprintf( buffer, "\\\\.\\DISPLAY%d\\Monitor%d", source->id + 1, monitor->id );
+            else sprintf( buffer, "\\\\.\\DISPLAY%d", source->id + 1 );
             asciiz_to_unicode( info->DeviceName, buffer );
         }
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceString) + sizeof(info->DeviceString))
         {
             if (monitor) asciiz_to_unicode( info->DeviceString, "Generic Non-PnP Monitor" );
-            else lstrcpynW( info->DeviceString, adapter->gpu->name, ARRAY_SIZE(info->DeviceString) );
+            else lstrcpynW( info->DeviceString, source->gpu->name, ARRAY_SIZE(info->DeviceString) );
         }
         if (info->cb >= offsetof(DISPLAY_DEVICEW, StateFlags) + sizeof(info->StateFlags))
         {
-            if (!monitor) info->StateFlags = adapter->state_flags;
+            if (!monitor) info->StateFlags = source->state_flags;
             else
             {
                 info->StateFlags = DISPLAY_DEVICE_ATTACHED;
@@ -2773,7 +2771,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                 }
                 else
                 {
-                    strcpy( buffer, adapter->gpu->path );
+                    strcpy( buffer, source->gpu->path );
                     if ((tmp = strrchr( buffer, '\\' ))) *tmp = 0;
                 }
                 asciiz_to_unicode( info->DeviceID, buffer );
@@ -2782,7 +2780,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceKey) + sizeof(info->DeviceKey))
         {
             if (monitor) sprintf( buffer, "%s\\Class\\%s\\%04X", control_keyA, guid_devclass_monitorA, monitor->output_id );
-            else sprintf( buffer, "%s\\Video\\%s\\%04x", control_keyA, adapter->gpu->guid, adapter->id );
+            else sprintf( buffer, "%s\\Video\\%s\\%04x", control_keyA, source->gpu->guid, source->id );
             asciiz_to_unicode( info->DeviceKey, buffer );
         }
     }
@@ -2902,9 +2900,9 @@ static const DEVMODEW *find_display_mode( const DEVMODEW *modes, DEVMODEW *devmo
     return NULL;
 }
 
-static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW *devmode, DEVMODEW *full_mode )
+static BOOL source_get_full_mode( const struct source *source, const DEVMODEW *devmode, DEVMODEW *full_mode )
 {
-    const DEVMODEW *adapter_mode;
+    const DEVMODEW *source_mode;
 
     if (devmode)
     {
@@ -2922,7 +2920,7 @@ static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW
     if (devmode) memcpy( full_mode, devmode, devmode->dmSize );
     else
     {
-        if (!adapter_get_registry_settings( adapter, full_mode )) return FALSE;
+        if (!source_get_registry_settings( source, full_mode )) return FALSE;
         TRACE( "Return to original display mode\n" );
     }
 
@@ -2936,7 +2934,7 @@ static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
 
-        if (!adapter_get_current_settings( adapter, &current_mode )) return FALSE;
+        if (!source_get_current_settings( source, &current_mode )) return FALSE;
         if (!full_mode->dmPelsWidth) full_mode->dmPelsWidth = current_mode.dmPelsWidth;
         if (!full_mode->dmPelsHeight) full_mode->dmPelsHeight = current_mode.dmPelsHeight;
         if (!(full_mode->dmFields & DM_POSITION))
@@ -2946,38 +2944,38 @@ static BOOL adapter_get_full_mode( const struct adapter *adapter, const DEVMODEW
         }
     }
 
-    if ((adapter_mode = find_display_mode( adapter->modes, full_mode )) && adapter_mode != full_mode)
+    if ((source_mode = find_display_mode( source->modes, full_mode )) && source_mode != full_mode)
     {
         POINTL position = full_mode->dmPosition;
-        *full_mode = *adapter_mode;
+        *full_mode = *source_mode;
         full_mode->dmFields |= DM_POSITION;
         full_mode->dmPosition = position;
     }
 
-    return adapter_mode != NULL;
+    return source_mode != NULL;
 }
 
-static DEVMODEW *get_display_settings( struct adapter *target, const DEVMODEW *devmode )
+static DEVMODEW *get_display_settings( struct source *target, const DEVMODEW *devmode )
 {
     DEVMODEW *mode, *displays;
-    struct adapter *adapter;
+    struct source *source;
     BOOL ret;
 
     /* allocate an extra mode for easier iteration */
-    if (!(displays = calloc( list_count( &adapters ) + 1, sizeof(DEVMODEW) ))) return NULL;
+    if (!(displays = calloc( list_count( &sources ) + 1, sizeof(DEVMODEW) ))) return NULL;
     mode = displays;
 
-    LIST_FOR_EACH_ENTRY( adapter, &adapters, struct adapter, entry )
+    LIST_FOR_EACH_ENTRY( source, &sources, struct source, entry )
     {
         char buffer[CCHDEVICENAME];
 
         mode->dmSize = sizeof(DEVMODEW);
-        if (devmode && adapter->id == target->id)
+        if (devmode && source->id == target->id)
             memcpy( &mode->dmFields, &devmode->dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
         else
         {
-            if (!target) ret = adapter_get_registry_settings( adapter, mode );
-            else ret = adapter_get_current_settings( adapter, mode );
+            if (!target) ret = source_get_registry_settings( source, mode );
+            else ret = source_get_current_settings( source, mode );
             if (!ret)
             {
                 free( displays );
@@ -2985,7 +2983,7 @@ static DEVMODEW *get_display_settings( struct adapter *target, const DEVMODEW *d
             }
         }
 
-        sprintf( buffer, "\\\\.\\DISPLAY%d", adapter->id + 1 );
+        sprintf( buffer, "\\\\.\\DISPLAY%d", source->id + 1 );
         asciiz_to_unicode( mode->dmDeviceName, buffer );
         mode = NEXT_DEVMODEW(mode);
     }
@@ -3180,11 +3178,11 @@ static BOOL all_detached_settings( const DEVMODEW *displays )
     return TRUE;
 }
 
-static LONG apply_display_settings( struct adapter *target, const DEVMODEW *devmode,
+static LONG apply_display_settings( struct source *target, const DEVMODEW *devmode,
                                     HWND hwnd, DWORD flags, void *lparam )
 {
     WCHAR primary_name[CCHDEVICENAME];
-    struct adapter *primary, *adapter;
+    struct source *primary, *source;
     DEVMODEW *mode, *displays;
     LONG ret;
 
@@ -3205,7 +3203,7 @@ static LONG apply_display_settings( struct adapter *target, const DEVMODEW *devm
 
     place_all_displays( displays );
 
-    if (!(primary = find_primary_adapter())) primary_name[0] = 0;
+    if (!(primary = find_primary_source())) primary_name[0] = 0;
     else
     {
         char device_name[CCHDEVICENAME];
@@ -3221,10 +3219,10 @@ static LONG apply_display_settings( struct adapter *target, const DEVMODEW *devm
     {
         /* default implementation: write current display settings to the registry. */
         mode = displays;
-        LIST_FOR_EACH_ENTRY( adapter, &adapters, struct adapter, entry )
+        LIST_FOR_EACH_ENTRY( source, &sources, struct source, entry )
         {
-            if (!adapter_set_current_settings( adapter, mode ))
-                WARN( "Failed to write adapter %u current mode.\n", adapter->id );
+            if (!source_set_current_settings( source, mode ))
+                WARN( "Failed to write source %u current mode.\n", source->id );
             mode = NEXT_DEVMODEW(mode);
         }
         ret = DISP_CHANGE_SUCCESSFUL;
@@ -3237,12 +3235,12 @@ static LONG apply_display_settings( struct adapter *target, const DEVMODEW *devm
     if (!update_display_cache( TRUE ))
         WARN( "Failed to update display cache after mode change.\n" );
 
-    if ((adapter = find_adapter( NULL )))
+    if ((source = find_source( NULL )))
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
 
-        if (!adapter_get_current_settings( adapter, &current_mode )) WARN( "Failed to get primary adapter current display settings.\n" );
-        adapter_release( adapter );
+        if (!source_get_current_settings( source, &current_mode )) WARN( "Failed to get primary source current display settings.\n" );
+        source_release( source );
 
         NtUserClipCursor( NULL );
         send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
@@ -3265,53 +3263,53 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
 {
     DEVMODEW full_mode = {.dmSize = sizeof(DEVMODEW)};
     int ret = DISP_CHANGE_SUCCESSFUL;
-    struct adapter *adapter;
+    struct source *source;
 
     TRACE( "%s %p %p %#x %p\n", debugstr_us(devname), devmode, hwnd, (int)flags, lparam );
     TRACE( "flags=%s\n", _CDS_flags(flags) );
 
     if ((!devname || !devname->Length) && !devmode) return apply_display_settings( NULL, NULL, hwnd, flags, lparam );
 
-    if (!(adapter = find_adapter( devname ))) return DISP_CHANGE_BADPARAM;
+    if (!(source = find_source( devname ))) return DISP_CHANGE_BADPARAM;
 
-    if (!adapter_get_full_mode( adapter, devmode, &full_mode )) ret = DISP_CHANGE_BADMODE;
-    else if ((flags & CDS_UPDATEREGISTRY) && !adapter_set_registry_settings( adapter, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
+    if (!source_get_full_mode( source, devmode, &full_mode )) ret = DISP_CHANGE_BADMODE;
+    else if ((flags & CDS_UPDATEREGISTRY) && !source_set_registry_settings( source, &full_mode )) ret = DISP_CHANGE_NOTUPDATED;
     else if (flags & (CDS_TEST | CDS_NORESET)) ret = DISP_CHANGE_SUCCESSFUL;
-    else ret = apply_display_settings( adapter, &full_mode, hwnd, flags, lparam );
-    adapter_release( adapter );
+    else ret = apply_display_settings( source, &full_mode, hwnd, flags, lparam );
+    source_release( source );
 
     if (ret) ERR( "Changing %s display settings returned %d.\n", debugstr_us(devname), ret );
     return ret;
 }
 
-static BOOL adapter_enum_display_settings( const struct adapter *adapter, UINT index, DEVMODEW *devmode, UINT flags )
+static BOOL source_enum_display_settings( const struct source *source, UINT index, DEVMODEW *devmode, UINT flags )
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-    const DEVMODEW *adapter_mode;
+    const DEVMODEW *source_mode;
 
-    if (!(flags & EDS_ROTATEDMODE) && !adapter_get_current_settings( adapter, &current_mode ))
+    if (!(flags & EDS_ROTATEDMODE) && !source_get_current_settings( source, &current_mode ))
     {
         WARN( "Failed to query current display mode for EDS_ROTATEDMODE flag.\n" );
         return FALSE;
     }
 
-    for (adapter_mode = adapter->modes; adapter_mode->dmSize; adapter_mode = NEXT_DEVMODEW(adapter_mode))
+    for (source_mode = source->modes; source_mode->dmSize; source_mode = NEXT_DEVMODEW(source_mode))
     {
-        if (!(flags & EDS_ROTATEDMODE) && (adapter_mode->dmFields & DM_DISPLAYORIENTATION) &&
-            adapter_mode->dmDisplayOrientation != current_mode.dmDisplayOrientation)
+        if (!(flags & EDS_ROTATEDMODE) && (source_mode->dmFields & DM_DISPLAYORIENTATION) &&
+            source_mode->dmDisplayOrientation != current_mode.dmDisplayOrientation)
             continue;
-        if (!(flags & EDS_RAWMODE) && (adapter_mode->dmFields & DM_DISPLAYFLAGS) &&
-            (adapter_mode->dmDisplayFlags & WINE_DM_UNSUPPORTED))
+        if (!(flags & EDS_RAWMODE) && (source_mode->dmFields & DM_DISPLAYFLAGS) &&
+            (source_mode->dmDisplayFlags & WINE_DM_UNSUPPORTED))
             continue;
         if (!index--)
         {
-            memcpy( &devmode->dmFields, &adapter_mode->dmFields, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields) );
+            memcpy( &devmode->dmFields, &source_mode->dmFields, devmode->dmSize - FIELD_OFFSET(DEVMODEW, dmFields) );
             devmode->dmDisplayFlags &= ~WINE_DM_UNSUPPORTED;
             return TRUE;
         }
     }
 
-    WARN( "device %d, index %#x, flags %#x display mode not found.\n", adapter->id, index, flags );
+    WARN( "device %d, index %#x, flags %#x display mode not found.\n", source->id, index, flags );
     RtlSetLastWin32Error( ERROR_NO_MORE_FILES );
     return FALSE;
 }
@@ -3322,13 +3320,13 @@ static BOOL adapter_enum_display_settings( const struct adapter *adapter, UINT i
 BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVMODEW *devmode, DWORD flags )
 {
     static const WCHAR wine_display_driverW[] = {'W','i','n','e',' ','D','i','s','p','l','a','y',' ','D','r','i','v','e','r',0};
-    struct adapter *adapter;
+    struct source *source;
     BOOL ret;
 
     TRACE( "device %s, index %#x, devmode %p, flags %#x\n",
            debugstr_us(device), (int)index, devmode, (int)flags );
 
-    if (!(adapter = find_adapter( device ))) return FALSE;
+    if (!(source = find_source( device ))) return FALSE;
 
     lstrcpynW( devmode->dmDeviceName, wine_display_driverW, ARRAY_SIZE(devmode->dmDeviceName) );
     devmode->dmSpecVersion = DM_SPECVERSION;
@@ -3336,10 +3334,10 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD index, DEVM
     devmode->dmSize = offsetof(DEVMODEW, dmICMMethod);
     devmode->dmDriverExtra = 0;
 
-    if (index == ENUM_REGISTRY_SETTINGS) ret = adapter_get_registry_settings( adapter, devmode );
-    else if (index == ENUM_CURRENT_SETTINGS) ret = adapter_get_current_settings( adapter, devmode );
-    else ret = adapter_enum_display_settings( adapter, index, devmode, flags );
-    adapter_release( adapter );
+    if (index == ENUM_REGISTRY_SETTINGS) ret = source_get_registry_settings( source, devmode );
+    else if (index == ENUM_CURRENT_SETTINGS) ret = source_get_current_settings( source, devmode );
+    else ret = source_enum_display_settings( source, index, devmode, flags );
+    source_release( source );
 
     if (!ret) WARN( "Failed to query %s display settings.\n", debugstr_us(device) );
     else TRACE( "position %dx%d, resolution %ux%u, frequency %u, depth %u, orientation %#x.\n",
@@ -3372,24 +3370,24 @@ INT get_display_depth( UNICODE_STRING *name )
 {
     WCHAR device_nameW[CCHDEVICENAME];
     char device_name[CCHDEVICENAME];
-    struct adapter *adapter;
+    struct source *source;
     BOOL is_primary;
     INT depth;
 
     if (!lock_display_devices())
         return 32;
 
-    if (name && name->Length) adapter = find_adapter_by_name( name );
-    else adapter = find_primary_adapter();
+    if (name && name->Length) source = find_source_by_name( name );
+    else source = find_primary_source();
 
-    if (!adapter)
+    if (!source)
     {
         unlock_display_devices();
         return 32;
     }
 
-    is_primary = !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
-    sprintf( device_name, "\\\\.\\DISPLAY%d", adapter->id + 1 );
+    is_primary = !!(source->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    sprintf( device_name, "\\\\.\\DISPLAY%d", source->id + 1 );
     asciiz_to_unicode( device_nameW, device_name );
 
     /* use the default implementation in virtual desktop mode */
@@ -3399,7 +3397,7 @@ INT get_display_depth( UNICODE_STRING *name )
     if (depth < 0)
     {
         DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-        if (!adapter_get_current_settings( adapter, &current_mode )) depth = 32;
+        if (!source_get_current_settings( source, &current_mode )) depth = 32;
         else depth = current_mode.dmBitsPerPel;
     }
 
@@ -3522,7 +3520,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
         if (info->cbSize >= sizeof(MONITORINFOEXW))
         {
             char buffer[CCHDEVICENAME];
-            if (monitor->adapter) sprintf( buffer, "\\\\.\\DISPLAY%d", monitor->adapter->id + 1 );
+            if (monitor->source) sprintf( buffer, "\\\\.\\DISPLAY%d", monitor->source->id + 1 );
             else strcpy( buffer, "WinDisc" );
             asciiz_to_unicode( ((MONITORINFOEXW *)info)->szDevice, buffer );
         }
@@ -6437,7 +6435,7 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
     case DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME:
     {
         DISPLAYCONFIG_SOURCE_DEVICE_NAME *source_name = (DISPLAYCONFIG_SOURCE_DEVICE_NAME *)packet;
-        struct adapter *adapter;
+        struct source *source;
 
         TRACE( "DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME.\n" );
 
@@ -6446,12 +6444,12 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
 
         if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
 
-        LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
+        LIST_FOR_EACH_ENTRY(source, &sources, struct source, entry)
         {
-            if (source_name->header.id != adapter->id) continue;
-            if (memcmp( &source_name->header.adapterId, &adapter->gpu->luid, sizeof(adapter->gpu->luid) )) continue;
+            if (source_name->header.id != source->id) continue;
+            if (memcmp( &source_name->header.adapterId, &source->gpu->luid, sizeof(source->gpu->luid) )) continue;
 
-            sprintf( buffer, "\\\\.\\DISPLAY%d", adapter->id + 1 );
+            sprintf( buffer, "\\\\.\\DISPLAY%d", source->id + 1 );
             asciiz_to_unicode( source_name->viewGdiDeviceName, buffer );
             ret = STATUS_SUCCESS;
             break;
@@ -6478,8 +6476,8 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
         {
             if (target_name->header.id != monitor->output_id) continue;
-            if (memcmp( &target_name->header.adapterId, &monitor->adapter->gpu->luid,
-                        sizeof(monitor->adapter->gpu->luid) ))
+            if (memcmp( &target_name->header.adapterId, &monitor->source->gpu->luid,
+                        sizeof(monitor->source->gpu->luid) ))
                 continue;
 
             target_name->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL;
@@ -6525,13 +6523,13 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
         LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
         {
             if (preferred_mode->header.id != monitor->output_id) continue;
-            if (memcmp( &preferred_mode->header.adapterId, &monitor->adapter->gpu->luid,
-                        sizeof(monitor->adapter->gpu->luid) ))
+            if (memcmp( &preferred_mode->header.adapterId, &monitor->source->gpu->luid,
+                        sizeof(monitor->source->gpu->luid) ))
                 continue;
 
-            for (i = 0; i < monitor->adapter->mode_count; ++i)
+            for (i = 0; i < monitor->source->mode_count; ++i)
             {
-                DEVMODEW *mode = &monitor->adapter->modes[i];
+                DEVMODEW *mode = &monitor->source->modes[i];
 
                 if (!have_edid_mode && monitor->edid_info.flags & MONITOR_INFO_HAS_PREFERRED_MODE
                     && mode->dmPelsWidth == monitor->edid_info.preferred_width
@@ -6668,7 +6666,7 @@ NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
 
         desc->pAdapters[idx].hAdapter = open_adapter_from_luid.hAdapter;
         desc->pAdapters[idx].AdapterLuid = gpu->luid;
-        desc->pAdapters[idx].NumOfSources = gpu->adapter_count;
+        desc->pAdapters[idx].NumOfSources = gpu->source_count;
         desc->pAdapters[idx].bPrecisePresentRegionsPreferred = FALSE;
     }
 
