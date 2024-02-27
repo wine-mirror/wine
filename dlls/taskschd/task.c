@@ -3688,6 +3688,7 @@ typedef struct
     DWORD version;
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     WCHAR user_name[256];
+    WCHAR domain_name[256];
 } TaskService;
 
 static inline TaskService *impl_from_ITaskService(ITaskService *iface)
@@ -3860,6 +3861,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     TaskService *task_svc = impl_from_ITaskService(iface);
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     WCHAR user_name[256];
+    WCHAR domain_name[256];
     DWORD len;
     HRESULT hr;
     RPC_WSTR binding_str;
@@ -3878,6 +3880,14 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     len = ARRAY_SIZE(user_name);
     if (!GetUserNameW(user_name, &len))
         return HRESULT_FROM_WIN32(GetLastError());
+
+    len = ARRAY_SIZE(domain_name);
+    if(!GetEnvironmentVariableW(L"USERDOMAIN", domain_name, len))
+    {
+        if (!GetComputerNameExW(ComputerNameDnsHostname, domain_name, &len))
+            return HRESULT_FROM_WIN32(GetLastError());
+        wcsupr(domain_name);
+    }
 
     if (!is_variant_null(&server))
     {
@@ -3918,6 +3928,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
 
     lstrcpyW(task_svc->comp_name, comp_name);
     lstrcpyW(task_svc->user_name, user_name);
+    lstrcpyW(task_svc->domain_name, domain_name);
     task_svc->connected = TRUE;
 
     return S_OK;
@@ -3972,8 +3983,19 @@ static HRESULT WINAPI TaskService_get_ConnectedUser(ITaskService *iface, BSTR *u
 
 static HRESULT WINAPI TaskService_get_ConnectedDomain(ITaskService *iface, BSTR *domain)
 {
-    FIXME("%p,%p: stub\n", iface, domain);
-    return E_NOTIMPL;
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
+    TRACE("%p,%p\n", iface, domain);
+
+    if (!domain) return E_POINTER;
+
+    if (!task_svc->connected)
+        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
+
+    *domain = SysAllocString(task_svc->domain_name);
+    if (!*domain) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskService_get_HighestVersion(ITaskService *iface, DWORD *version)
