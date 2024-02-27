@@ -275,9 +275,41 @@ static HRESULT WINAPI context_menu_QueryContextMenu(IContextMenu3 *iface,
 
 static HRESULT WINAPI context_menu_InvokeCommand(IContextMenu3 *iface, CMINVOKECOMMANDINFO *info)
 {
-    FIXME("iface %p, info %p, stub!\n", iface, info);
+    struct new_menu *menu = impl_from_IContextMenu3(iface);
+    WCHAR path[MAX_PATH], name[MAX_PATH];
+    unsigned int id;
 
-    return E_NOTIMPL;
+    TRACE("menu %p, info %p.\n", menu, info);
+
+    id = (UINT_PTR)info->lpVerb - 1;
+
+    if (id >= menu->item_count)
+    {
+        ERR("Invalid verb %p.\n", info->lpVerb);
+        return E_FAIL;
+    }
+
+    if (!SHGetPathFromIDListW(menu->pidl, path))
+    {
+        ERR("Failed to get path.\n");
+        return E_FAIL;
+    }
+
+    for (unsigned int i = 0;; ++i)
+    {
+        if (!i)
+            swprintf(name, ARRAY_SIZE(name), L"%s/%s", path, menu->items[id].name);
+        else
+            swprintf(name, ARRAY_SIZE(name), L"%s/%s (%u)", path, menu->items[id].name, i);
+
+        if (CreateDirectoryW(name, NULL))
+            return S_OK;
+        if (GetLastError() != ERROR_ALREADY_EXISTS)
+        {
+            WARN("Failed to create %s, error %lu.\n", debugstr_w(name), GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
 }
 
 static HRESULT WINAPI context_menu_GetCommandString(IContextMenu3 *iface,
