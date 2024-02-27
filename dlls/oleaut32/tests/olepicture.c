@@ -1254,9 +1254,7 @@ static void test_load_save_bmp(void)
 
     maxsize.QuadPart = 0;
     hr = IPersistStream_GetSizeMax(src_stream, &maxsize);
-    todo_wine
     ok(hr == S_OK, "GetSizeMax error %#lx\n", hr);
-    todo_wine
     ok(maxsize.QuadPart == 74, "expected 74, got %s\n", wine_dbgstr_longlong(maxsize.QuadPart));
 
     hr = IPersistStream_Save(src_stream, dst_stream, TRUE);

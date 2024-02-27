@@ -1533,68 +1533,81 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
   return hr;
 }
 
-static BOOL serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLength)
+/* pass NULL buffer to fetch size */
+static HRESULT serializeBMP(HBITMAP hbmp, void **buffer, unsigned int *length)
 {
-    BOOL success = FALSE;
-    HDC hDC;
-    BITMAPINFO * pInfoBitmap;
-    int iNumPaletteEntries;
-    unsigned char * pPixelData;
-    BITMAPFILEHEADER * pFileHeader;
-    BITMAPINFO * pInfoHeader;
-
-    pInfoBitmap = calloc(1, sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
+    char infobuf[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)] = { 0 };
+    BITMAPINFO *info = (BITMAPINFO *)infobuf;
+    BITMAPINFO *bitmap;
+    BITMAPFILEHEADER *filehdr;
+    int numentries;
+    HDC hdc;
+    HRESULT hr = S_OK;
+    unsigned char *data = NULL;
 
     /* Find out bitmap size and padded length */
-    hDC = GetDC(0);
-    pInfoBitmap->bmiHeader.biSize = sizeof(pInfoBitmap->bmiHeader);
-    GetDIBits(hDC, hBitmap, 0, 0, NULL, pInfoBitmap, DIB_RGB_COLORS);
-
-    /* Fetch bitmap palette & pixel data */
-
-    pPixelData = calloc(1, pInfoBitmap->bmiHeader.biSizeImage);
-    GetDIBits(hDC, hBitmap, 0, pInfoBitmap->bmiHeader.biHeight, pPixelData, pInfoBitmap, DIB_RGB_COLORS);
+    hdc = GetDC(0);
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    if (!GetDIBits(hdc, hbmp, 0, 0, NULL, info, DIB_RGB_COLORS)) {
+        hr = E_INVALIDARG;
+        goto done;
+    }
 
     /* Calculate the total length required for the BMP data */
-    if (pInfoBitmap->bmiHeader.biClrUsed != 0) {
-	iNumPaletteEntries = pInfoBitmap->bmiHeader.biClrUsed;
-	if (iNumPaletteEntries > 256) iNumPaletteEntries = 256;
+    if (info->bmiHeader.biClrUsed != 0) {
+        numentries = info->bmiHeader.biClrUsed;
+    if (numentries > 256)
+        numentries = 256;
     } else {
-	if (pInfoBitmap->bmiHeader.biBitCount <= 8)
-	    iNumPaletteEntries = 1 << pInfoBitmap->bmiHeader.biBitCount;
-	else
-    	    iNumPaletteEntries = 0;
+        if (info->bmiHeader.biBitCount <= 8)
+            numentries = 1 << info->bmiHeader.biBitCount;
+        else
+            numentries = 0;
     }
-    *pLength =
+
+    *length =
         sizeof(BITMAPFILEHEADER) +
         sizeof(BITMAPINFOHEADER) +
-        iNumPaletteEntries * sizeof(RGBQUAD) +
-        pInfoBitmap->bmiHeader.biSizeImage;
-    *ppBuffer = calloc(1, *pLength);
+        numentries * sizeof(RGBQUAD) +
+        info->bmiHeader.biSizeImage;
+
+    if (!buffer)
+        goto done;
+
+    /* Fetch bitmap palette & pixel data */
+    if (!(data = malloc(info->bmiHeader.biSizeImage))) {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    if (!GetDIBits(hdc, hbmp, 0, info->bmiHeader.biHeight, data, info, DIB_RGB_COLORS)) {
+        hr = E_INVALIDARG;
+        goto done;
+    }
+
+    if (!(*buffer = malloc(*length))) {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
 
     /* Fill the BITMAPFILEHEADER */
-    pFileHeader = *ppBuffer;
-    pFileHeader->bfType = BITMAP_FORMAT_BMP;
-    pFileHeader->bfSize = *pLength;
-    pFileHeader->bfOffBits =
+    filehdr = *buffer;
+    filehdr->bfType = BITMAP_FORMAT_BMP;
+    filehdr->bfSize = *length;
+    filehdr->bfOffBits =
         sizeof(BITMAPFILEHEADER) +
         sizeof(BITMAPINFOHEADER) +
-        iNumPaletteEntries * sizeof(RGBQUAD);
+        numentries * sizeof(RGBQUAD);
 
     /* Fill the BITMAPINFOHEADER and the palette data */
-    pInfoHeader = (BITMAPINFO *)((unsigned char *)(*ppBuffer) + sizeof(BITMAPFILEHEADER));
-    memcpy(pInfoHeader, pInfoBitmap, sizeof(BITMAPINFOHEADER) + iNumPaletteEntries * sizeof(RGBQUAD));
-    memcpy(
-        (unsigned char *)(*ppBuffer) +
-            sizeof(BITMAPFILEHEADER) +
-            sizeof(BITMAPINFOHEADER) +
-            iNumPaletteEntries * sizeof(RGBQUAD),
-        pPixelData, pInfoBitmap->bmiHeader.biSizeImage);
-    success = TRUE;
+    bitmap = (BITMAPINFO *)((unsigned char *)(*buffer) + sizeof(BITMAPFILEHEADER));
+    memcpy(bitmap, info, sizeof(BITMAPINFOHEADER) + numentries * sizeof(RGBQUAD));
+    memcpy((unsigned char *)(*buffer) + filehdr->bfOffBits, data, bitmap->bmiHeader.biSizeImage);
 
-    free(pPixelData);
-    free(pInfoBitmap);
-    return success;
+done:
+    free(data);
+    ReleaseDC(0, hdc);
+    return hr;
 }
 
 static BOOL serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
@@ -1755,7 +1768,6 @@ static HRESULT WINAPI OLEPictureImpl_Save(
     unsigned int iDataSize;
     DWORD header[2];
     ULONG dummy;
-    BOOL serializeResult = FALSE;
     OLEPictureImpl *This = impl_from_IPersistStream(iface);
 
     TRACE("%p %p %d\n", This, pStm, fClearDirty);
@@ -1789,7 +1801,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
         if (This->bIsDirty || !This->data) {
             switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
             case BITMAP_FORMAT_BMP:
-                serializeResult = serializeBMP(This->desc.bmp.hbitmap, &pIconData, &iDataSize);
+                hResult = serializeBMP(This->desc.bmp.hbitmap, &pIconData, &iDataSize);
                 break;
             case BITMAP_FORMAT_JPEG:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format JPEG) not implemented!\n",This,pStm,fClearDirty);
@@ -1805,11 +1817,8 @@ static HRESULT WINAPI OLEPictureImpl_Save(
                 break;
             }
 
-            if (!serializeResult)
-            {
-                hResult = E_FAIL;
+            if (hResult != S_OK)
                 break;
-            }
 
             free(This->data);
             This->data = pIconData;
@@ -1858,7 +1867,7 @@ static HRESULT WINAPI OLEPictureImpl_GetSizeMax(IPersistStream *iface, ULARGE_IN
         if (This->bIsDirty || !This->data) {
             switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
             case BITMAP_FORMAT_BMP:
-                FIXME("(%p), PICTYPE_BITMAP (format BMP) not implemented!\n",This);
+                hr = serializeBMP(This->desc.bmp.hbitmap, NULL, &datasize);
                 break;
             case BITMAP_FORMAT_JPEG:
                 FIXME("(%p), PICTYPE_BITMAP (format JPEG) not implemented!\n",This);
