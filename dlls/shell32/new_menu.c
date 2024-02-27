@@ -35,6 +35,12 @@ struct new_menu
     IObjectWithSite IObjectWithSite_iface;
     LONG refcount;
 
+    struct
+    {
+        WCHAR *name;
+    } *items;
+    size_t item_count;
+
     ITEMIDLIST *pidl;
 };
 
@@ -87,6 +93,9 @@ static ULONG WINAPI ext_init_Release(IShellExtInit *iface)
 
     if (!refcount)
     {
+        for (unsigned int i = 0; i < menu->item_count; ++i)
+            free(menu->items[i].name);
+        free(menu->items);
         ILFree(menu->pidl);
         free(menu);
     }
@@ -141,6 +150,84 @@ static ULONG WINAPI context_menu_Release(IContextMenu3 *iface)
     return IShellExtInit_Release(&menu->IShellExtInit_iface);
 }
 
+static WCHAR *load_mui_string(HKEY key, const WCHAR *value)
+{
+    WCHAR *string;
+    DWORD size;
+
+    if (RegLoadMUIStringW(key, value, NULL, 0, &size, 0, NULL) != ERROR_MORE_DATA)
+        return NULL;
+    string = malloc(size + sizeof(WCHAR));
+    RegLoadMUIStringW(key, value, string, size + sizeof(WCHAR), NULL, 0, NULL);
+    string[size / sizeof(WCHAR)] = 0;
+    return string;
+}
+
+static void add_menu_item(struct new_menu *menu, HMENU hmenu, const WCHAR *ext, UINT id)
+{
+    HKEY ext_key, shellnew_key, config_key;
+    WCHAR *menu_text, *item_name;
+    MENUITEMINFOW info;
+    DWORD ret;
+
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, ext, 0, KEY_READ, &ext_key)))
+    {
+        ERR("Failed to open %s, error %lu.\n", debugstr_w(ext), ret);
+        return;
+    }
+
+    if ((ret = RegOpenKeyExW(ext_key, L"ShellNew", 0, KEY_READ, &shellnew_key)))
+    {
+        ERR("Failed to open ShellNew key, error %lu.\n", ret);
+        RegCloseKey(ext_key);
+        return;
+    }
+    RegCloseKey(ext_key);
+
+    if (RegQueryValueExW(shellnew_key, L"Directory", NULL, NULL, NULL, NULL))
+    {
+        FIXME("Ignoring non-directory item for extension %s.\n", debugstr_w(ext));
+        RegCloseKey(shellnew_key);
+        return;
+    }
+
+    if (!RegOpenKeyExW(shellnew_key, L"Config", 0, KEY_READ, &config_key))
+    {
+        FIXME("Ignoring Config key for extension %s.\n", debugstr_w(ext));
+        RegCloseKey(config_key);
+    }
+
+    if (!(item_name = load_mui_string(shellnew_key, L"ItemName")))
+    {
+        ERR("Missing ItemName value for extension %s.\n", debugstr_w(ext));
+        RegCloseKey(shellnew_key);
+        return;
+    }
+
+    if (!(menu_text = load_mui_string(shellnew_key, L"MenuText")))
+    {
+        ERR("Missing MenuText value for extension %s.\n", debugstr_w(ext));
+        free(item_name);
+        RegCloseKey(shellnew_key);
+        return;
+    }
+
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
+    info.dwTypeData = menu_text;
+    info.fState = MFS_ENABLED;
+    info.wID = id;
+    info.fType = MFT_STRING;
+    InsertMenuItemW(hmenu, menu->item_count, MF_BYPOSITION, &info);
+
+    menu->items = realloc(menu->items, (menu->item_count + 1) * sizeof(*menu->items));
+    menu->items[menu->item_count].name = item_name;
+    ++menu->item_count;
+
+    free(menu_text);
+    RegCloseKey(shellnew_key);
+}
+
 static HRESULT WINAPI context_menu_QueryContextMenu(IContextMenu3 *iface,
         HMENU hmenu, UINT index, UINT min_id, UINT max_id, UINT flags)
 {
@@ -160,6 +247,16 @@ static HRESULT WINAPI context_menu_QueryContextMenu(IContextMenu3 *iface,
 
     submenu = CreatePopupMenu();
     new_string = shell_get_resource_string(IDS_NEW_MENU);
+
+    /* Native apparently hardcodes "Folder" and "Briefcase".
+     * The remaining entries come from scanning all extension registry keys
+     * (not the file types). Then, for e.g. .txt, it looks up a ShellNew key in
+     * both .txt/txtfile [possibly an accident] and .txt itself.
+     *
+     * FIXME: For now only implement Folder. We don't currently have any other
+     * builtin verbs anyway. */
+
+    add_menu_item(menu, submenu, L"Folder", min_id + 1);
 
     info.cbSize = sizeof(info);
     info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING | MIIM_SUBMENU;
