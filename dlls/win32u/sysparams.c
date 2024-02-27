@@ -125,7 +125,8 @@ struct adapter
     unsigned int id;
     struct gpu *gpu;
     const WCHAR *config_key;
-    unsigned int mode_count;
+    UINT monitor_count;
+    UINT mode_count;
     DEVMODEW *modes;
 };
 
@@ -994,13 +995,12 @@ static unsigned int format_date( WCHAR *bufferW, LONGLONG time )
 
 struct device_manager_ctx
 {
-    unsigned int gpu_count;
-    unsigned int video_count;
-    unsigned int monitor_count;
-    unsigned int output_count;
-    unsigned int mode_count;
+    UINT gpu_count;
+    UINT adapter_count;
+    UINT monitor_count;
     HANDLE mutex;
     struct gpu gpu;
+    struct adapter adapter;
     HKEY adapter_key;
     /* for the virtual desktop settings */
     BOOL is_primary;
@@ -1276,9 +1276,6 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     lstrcpyW( ctx->gpu.name, gpu->name );
     ctx->gpu.vulkan_uuid = gpu->vulkan_uuid;
 
-    ctx->monitor_count = 0;
-    ctx->mode_count = 0;
-
     sprintf( ctx->gpu.path, "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
              gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, ctx->gpu.index );
     if (!(hkey = reg_create_ascii_key( enum_key, ctx->gpu.path, 0, NULL ))) return;
@@ -1329,7 +1326,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 static void add_adapter( const struct gdi_adapter *adapter, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    unsigned int adapter_index, video_index, len;
+    unsigned int adapter_index, len;
     char name[64], buffer[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
     HKEY hkey;
@@ -1343,24 +1340,23 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     }
 
     adapter_index = ctx->gpu.adapter_count++;
-    video_index = ctx->video_count++;
-    ctx->monitor_count = 0;
-    ctx->mode_count = 0;
 
-    snprintf( buffer, ARRAY_SIZE(buffer), "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Video\\%s\\%04x",
-              ctx->gpu.guid, adapter_index );
+    memset( &ctx->adapter, 0, sizeof(ctx->adapter) );
+    ctx->adapter.gpu = &ctx->gpu;
+    ctx->adapter.id = ctx->adapter_count++;
+
+    snprintf( buffer, ARRAY_SIZE(buffer), "%s\\Video\\%s\\%04x", control_keyA, ctx->gpu.guid, adapter_index );
     len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
 
     hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
     if (!hkey) hkey = reg_create_ascii_key( NULL, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
 
-    sprintf( name, "\\Device\\Video%u", video_index );
+    sprintf( name, "\\Device\\Video%u", ctx->adapter.id );
     set_reg_ascii_value( video_key, name, buffer );
 
     if (hkey)
     {
-        sprintf( buffer, "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Class\\"
-                 "%s\\%04X", guid_devclass_displayA, ctx->gpu_count - 1 );
+        sprintf( buffer, "%s\\Class\\%s\\%04X", control_keyA, guid_devclass_displayA, ctx->gpu.index );
         len = asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR);
         set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
         NtClose( hkey );
@@ -1387,8 +1383,8 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     HKEY hkey, subkey;
     unsigned int len;
 
-    monitor_index = ctx->monitor_count++;
-    output_index = ctx->output_count++;
+    monitor_index = ctx->adapter.monitor_count++;
+    output_index = ctx->monitor_count++;
 
     TRACE( "%u %s %s\n", monitor_index, wine_dbgstr_rect(&monitor->rc_monitor), wine_dbgstr_rect(&monitor->rc_work) );
 
@@ -1399,7 +1395,7 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
         strcpy( monitor_id_string, "Default_Monitor" );
 
     sprintf( buffer, "MonitorID%u", monitor_index );
-    sprintf( instance, "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->video_count - 1, monitor_index );
+    sprintf( instance, "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->adapter.id, monitor_index );
     set_reg_ascii_value( ctx->adapter_key, buffer, instance );
 
     hkey = reg_create_ascii_key( enum_key, instance, 0, NULL );
@@ -1491,10 +1487,10 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
     nopos_mode.dmPosition.y = 0;
     nopos_mode.dmFields &= ~DM_POSITION;
 
-    if (write_adapter_mode( ctx->adapter_key, ctx->mode_count, &nopos_mode ))
+    if (write_adapter_mode( ctx->adapter_key, ctx->adapter.mode_count, &nopos_mode ))
     {
-        ctx->mode_count++;
-        set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->mode_count, sizeof(ctx->mode_count) );
+        ctx->adapter.mode_count++;
+        set_reg_value( ctx->adapter_key, mode_countW, REG_DWORD, &ctx->adapter.mode_count, sizeof(ctx->adapter.mode_count) );
         if (current)
         {
             if (!read_adapter_mode( ctx->adapter_key, ENUM_REGISTRY_SETTINGS, &nopos_mode ))
