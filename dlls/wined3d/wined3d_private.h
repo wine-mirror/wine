@@ -4145,7 +4145,7 @@ struct wined3d_shader_limits
 #define wined3d_lock_init(lock, name) wined3d_lock_init_(lock, __FILE__ ": " name)
 static inline void wined3d_lock_init_(CRITICAL_SECTION *lock, const char *name)
 {
-    InitializeCriticalSection(lock);
+    InitializeCriticalSectionEx(lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     if (lock->DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
         lock->DebugInfo->Spare[0] = (DWORD_PTR)name;
 }
