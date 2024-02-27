@@ -109,10 +109,10 @@ struct adapter
 {
     LONG refcount;
     struct list entry;
+    char path[MAX_PATH];
     unsigned int id;
     struct gpu *gpu;
     UINT state_flags;
-    WCHAR config_key[MAX_PATH];
     UINT monitor_count;
     UINT mode_count;
     DEVMODEW *modes;
@@ -447,7 +447,7 @@ static BOOL adapter_get_registry_settings( const struct adapter *adapter, DEVMOD
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
     else
     {
         ret = read_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
@@ -466,7 +466,7 @@ static BOOL adapter_set_registry_settings( const struct adapter *adapter, const 
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
     else
     {
         ret = write_adapter_mode( hkey, ENUM_REGISTRY_SETTINGS, mode );
@@ -499,7 +499,7 @@ static BOOL adapter_get_current_settings( const struct adapter *adapter, DEVMODE
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
     else
     {
         ret = read_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
@@ -518,7 +518,7 @@ static BOOL adapter_set_current_settings( const struct adapter *adapter, const D
 
     mutex = get_display_device_init_mutex();
 
-    if (!(hkey = reg_open_key( config_key, adapter->config_key, lstrlenW( adapter->config_key ) * sizeof(WCHAR) ))) ret = FALSE;
+    if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) ret = FALSE;
     else
     {
         ret = write_adapter_mode( hkey, ENUM_CURRENT_SETTINGS, mode );
@@ -618,17 +618,13 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     /* Find adapter */
     sprintf( buffer, "\\Device\\Video%d", index );
     size = query_reg_ascii_value( video_key, buffer, value, sizeof(buffer) );
-    if (!size || value->Type != REG_SZ ||
-        value->DataLength <= sizeof("\\Registry\\Machine\\") * sizeof(WCHAR))
-        return FALSE;
+    if (!size || value->Type != REG_SZ) return FALSE;
 
     /* DeviceKey */
-    size = sizeof("\\Registry\\Machine\\") - 1;
-    memcpy( info->config_key, value_str + size, value->DataLength - size );
-
-    if (!(hkey = reg_open_key( config_key, info->config_key,
-                               lstrlenW( info->config_key ) * sizeof(WCHAR) )))
-        return FALSE;
+    size = sizeof("\\Registry\\Machine");
+    if (value->DataLength / sizeof(WCHAR) <= size) return FALSE;
+    for (i = 0; i < value->DataLength / sizeof(WCHAR) - size; i++) info->path[i] = value_str[size + i];
+    if (!(hkey = reg_open_ascii_key( config_key, info->path ))) return FALSE;
 
     /* StateFlags */
     if (query_reg_ascii_value( hkey, "StateFlags", value, sizeof(buffer) ) && value->Type == REG_DWORD)
@@ -1282,12 +1278,18 @@ static BOOL write_adapter_to_registry( const struct adapter *adapter, HKEY *adap
     NtClose( hkey );
 
     /* Following information is Wine specific, it doesn't really exist on Windows. */
-    sprintf( buffer, "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, adapter_index );
-    *adapter_key = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE, NULL );
-
+    *adapter_key = reg_create_ascii_key( NULL, adapter->path, REG_OPTION_VOLATILE, NULL );
     set_reg_ascii_value( *adapter_key, "GPUID", gpu->path );
     set_reg_value( *adapter_key, state_flagsW, REG_DWORD, &adapter->state_flags,
                    sizeof(adapter->state_flags) );
+
+    sprintf( buffer, "System\\CurrentControlSet\\Control\\Video\\%s\\%04x", gpu->guid, adapter_index );
+    hkey = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, NULL );
+    if (!hkey) hkey = reg_create_ascii_key( config_key, buffer, REG_OPTION_VOLATILE | REG_OPTION_OPEN_LINK, NULL );
+
+    len = asciiz_to_unicode( bufferW, adapter->path ) - sizeof(WCHAR);
+    set_reg_value( hkey, symbolic_link_valueW, REG_LINK, bufferW, len );
+    NtClose( hkey );
 
     return TRUE;
 }
@@ -1308,6 +1310,10 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     ctx->adapter.gpu = &ctx->gpu;
     ctx->adapter.id = ctx->adapter_count;
     ctx->adapter.state_flags = adapter->state_flags;
+
+    /* Wine specific config key where adapter settings will be held, symlinked with the logically indexed config key */
+    sprintf( ctx->adapter.path, "%s\\%s\\Video\\%s\\Adapters\\%04x", config_keyA,
+             control_keyA + strlen( "\\Registry\\Machine" ), ctx->gpu.guid, ctx->gpu.adapter_count );
 
     if (!write_adapter_to_registry( &ctx->adapter, &ctx->adapter_key ))
         WARN( "Failed to write adapter to registry\n" );
@@ -1695,9 +1701,7 @@ static BOOL update_display_cache_from_registry(void)
         }
 
         list_add_tail( &adapters, &adapter->entry );
-
-        size = lstrlenW( adapter->config_key ) * sizeof(WCHAR);
-        if (!(hkey = reg_open_key( config_key, adapter->config_key, size ))) continue;
+        if (!(hkey = reg_open_ascii_key( config_key, adapter->path ))) continue;
 
         for (monitor_id = 0;; monitor_id++)
         {
