@@ -1489,6 +1489,60 @@ static void clear_display_devices(void)
     }
 }
 
+static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
+{
+    char buffer[1024];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    KEY_BASIC_INFORMATION *key2 = (void *)buffer;
+    HKEY root_key, device_key, instance_key;
+    DWORD size, root_len, i = 0;
+    char path[MAX_PATH];
+
+    if (!(root_key = reg_open_ascii_key( enum_key, root ))) return;
+    root_len = sprintf( path, "%s\\", root );
+
+    while (!NtEnumerateKey( root_key, i++, KeyBasicInformation, key2, sizeof(buffer), &size ))
+    {
+        DWORD j = 0, k, len, device_len;
+
+        if (!(device_key = reg_open_key( root_key, key2->Name, key2->NameLength ))) continue;
+        for (k = 0, len = root_len; k < key2->NameLength / sizeof(WCHAR); k++) path[len++] = key2->Name[k];
+        path[len++] = '\\';
+        device_len = len;
+
+        while (!NtEnumerateKey( device_key, j++, KeyBasicInformation, key2, sizeof(buffer), &size ))
+        {
+            if (!(instance_key = reg_open_key( device_key, key2->Name, key2->NameLength ))) continue;
+            for (k = 0, len = device_len; k < key2->NameLength / sizeof(WCHAR); k++) path[len++] = key2->Name[k];
+            path[len++] = 0;
+
+            size = query_reg_ascii_value( instance_key, "ClassGUID", value, sizeof(buffer) );
+            if (size != class_size || wcscmp( (WCHAR *)value->Data, classW ))
+            {
+                NtClose( instance_key );
+                continue;
+            }
+
+            callback( path );
+
+            NtClose( instance_key );
+        }
+
+        NtClose( device_key );
+    }
+
+    NtClose( root_key );
+}
+
+static void enum_gpus( const char *path )
+{
+    struct gpu *gpu;
+    if (!(gpu = calloc( 1, sizeof(*gpu) ))) return;
+    gpu->refcount = 1;
+    strcpy( gpu->path, path );
+    list_add_tail( &gpus, &gpu->entry );
+}
+
 static struct gpu *find_gpu_from_path( const char *path )
 {
     struct gpu *gpu;
@@ -1502,11 +1556,11 @@ static struct gpu *find_gpu_from_path( const char *path )
 
 static BOOL update_display_cache_from_registry(void)
 {
-    char path[MAX_PATH], buffer[1024];
+    char buffer[1024], path[MAX_PATH];
     DWORD adapter_id, monitor_id, monitor_count = 0, size;
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
-    KEY_BASIC_INFORMATION key, *key2 = (void *)buffer;
-    HKEY pci_key, device_key, gpu_key, prop_key;
+    KEY_BASIC_INFORMATION key;
+    HKEY gpu_key, prop_key;
     struct adapter *adapter;
     struct monitor *monitor, *monitor2;
     HANDLE mutex = NULL;
@@ -1532,52 +1586,20 @@ static BOOL update_display_cache_from_registry(void)
 
     clear_display_devices();
 
-    if ((pci_key = reg_open_ascii_key( enum_key, "PCI" )))
+    enum_device_keys( "PCI", guid_devclass_displayW, sizeof(guid_devclass_displayW), enum_gpus );
+
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
-        unsigned int i = 0;
+        if (!(gpu_key = reg_open_ascii_key( enum_key, gpu->path ))) continue;
 
-        while (!NtEnumerateKey( pci_key, i++, KeyBasicInformation, key2, sizeof(buffer), &size ))
+        if ((prop_key = reg_open_ascii_key( gpu_key, devpropkey_gpu_luidA )))
         {
-            unsigned int j = 0;
-
-            if (!(device_key = reg_open_key( pci_key, key2->Name, key2->NameLength )))
-                continue;
-
-            while (!NtEnumerateKey( device_key, j++, KeyBasicInformation, key2, sizeof(buffer), &size ))
-            {
-                if (!(gpu_key = reg_open_key( device_key, key2->Name, key2->NameLength )))
-                    continue;
-
-                size = query_reg_ascii_value( gpu_key, "ClassGUID", value, sizeof(buffer) );
-                if (size != sizeof(guid_devclass_displayW)
-                        || wcscmp( (WCHAR *)value->Data, guid_devclass_displayW ))
-                {
-                    NtClose( gpu_key );
-                    continue;
-                }
-
-                if (!(gpu = calloc( 1, sizeof(*gpu) )))
-                {
-                    NtClose( gpu_key );
-                    continue;
-                }
-                gpu->refcount = 1;
-
-                if ((prop_key = reg_open_ascii_key( gpu_key, devpropkey_gpu_luidA )))
-                {
-                    if (query_reg_value( prop_key, NULL, value, sizeof(buffer) ) == sizeof(LUID))
-                        gpu->luid = *(const LUID *)value->Data;
-                    NtClose( prop_key );
-                }
-
-                list_add_tail( &gpus, &gpu->entry );
-                NtClose( gpu_key );
-            }
-
-            NtClose( device_key );
+            if (query_reg_value( prop_key, NULL, value, sizeof(buffer) ) == sizeof(LUID))
+                gpu->luid = *(const LUID *)value->Data;
+            NtClose( prop_key );
         }
 
-        NtClose( pci_key );
+        NtClose( gpu_key );
     }
 
     for (adapter_id = 0;; adapter_id++)
