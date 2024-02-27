@@ -1637,7 +1637,7 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
     this->shutdown_count = this->shutdown_size = 0;
     this->shutdown_events = NULL;
 
-    InitializeCriticalSection(&this->cs);
+    InitializeCriticalSectionEx(&this->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     this->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ThreadScheduler");
 
     list_init(&this->scheduled_chores);
@@ -3525,7 +3525,7 @@ _ReentrantBlockingLock* __thiscall _ReentrantBlockingLock_ctor(_ReentrantBlockin
 {
     TRACE("(%p)\n", this);
 
-    InitializeCriticalSection(&this->cs);
+    InitializeCriticalSectionEx(&this->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     this->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _ReentrantBlockingLock");
     return this;
 }
