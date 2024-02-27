@@ -907,7 +907,6 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
-#ifdef __WINE_PE_BUILD
 __ASM_GLOBAL_FUNC( RtlUserThreadStart,
                    ".seh_endprologue\n\t"
                    "mov r2, r1\n\t"
@@ -918,20 +917,6 @@ __ASM_GLOBAL_FUNC( RtlUserThreadStart,
                    "blx ip\n"
                    "1:\t.long " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
                    ".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", %except" )
-#else
-void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
-{
-    __TRY
-    {
-        pBaseThreadInitThunk( 0, (LPTHREAD_START_ROUTINE)entry, arg );
-    }
-    __EXCEPT(call_unhandled_exception_filter)
-    {
-        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
-    }
-    __ENDTRY
-}
-#endif
 
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
@@ -946,7 +931,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unk2, ULONG_PTR unk3
 /***********************************************************************
  *           process_breakpoint
  */
-#ifdef __WINE_PE_BUILD
 __ASM_GLOBAL_FUNC( process_breakpoint,
                    ".seh_endprologue\n\t"
                    ".seh_handler process_breakpoint_handler, %except\n\t"
@@ -958,25 +942,10 @@ __ASM_GLOBAL_FUNC( process_breakpoint,
                    "str r0, [r2, #0x40]\n\t"
                    "mov r0, #0\n\t"          /* ExceptionContinueExecution */
                    "bx lr" )
-#else
-void WINAPI process_breakpoint(void)
-{
-    __TRY
-    {
-        DbgBreakPoint();
-    }
-    __EXCEPT_ALL
-    {
-        /* do nothing */
-    }
-    __ENDTRY
-}
-#endif
 
 /***********************************************************************
  *		DbgUiRemoteBreakin   (NTDLL.@)
  */
-#ifdef __WINE_PE_BUILD
 __ASM_GLOBAL_FUNC( DbgUiRemoteBreakin,
                    ".seh_endprologue\n\t"
                    ".seh_handler DbgUiRemoteBreakin_handler, %except\n\t"
@@ -990,24 +959,6 @@ __ASM_GLOBAL_FUNC( DbgUiRemoteBreakin,
                    "DbgUiRemoteBreakin_handler:\n\t"
                    "mov sp, r1\n\t"                 /* frame */
                    "b 1b" )
-#else
-void WINAPI DbgUiRemoteBreakin( void *arg )
-{
-    if (NtCurrentTeb()->Peb->BeingDebugged)
-    {
-        __TRY
-        {
-            DbgBreakPoint();
-        }
-        __EXCEPT_ALL
-        {
-            /* do nothing */
-        }
-        __ENDTRY
-    }
-    RtlExitUserThread( STATUS_SUCCESS );
-}
-#endif
 
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
