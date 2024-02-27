@@ -98,6 +98,7 @@ struct display_device
 
 struct gpu
 {
+    LONG refcount;
     struct list entry;
     LUID luid;
     unsigned int adapter_count;
@@ -110,6 +111,7 @@ struct adapter
     struct display_device dev;
     LUID gpu_luid;
     unsigned int id;
+    struct gpu *gpu;
     const WCHAR *config_key;
     unsigned int mode_count;
     DEVMODEW *modes;
@@ -336,6 +338,18 @@ static void release_display_device_init_mutex( HANDLE mutex )
     NtClose( mutex );
 }
 
+static struct gpu *gpu_acquire( struct gpu *gpu )
+{
+    InterlockedIncrement( &gpu->refcount );
+    return gpu;
+}
+
+static void gpu_release( struct gpu *gpu )
+{
+    if (!InterlockedDecrement( &gpu->refcount ))
+        free( gpu );
+}
+
 static struct adapter *adapter_acquire( struct adapter *adapter )
 {
     InterlockedIncrement( &adapter->refcount );
@@ -346,6 +360,7 @@ static void adapter_release( struct adapter *adapter )
 {
     if (!InterlockedDecrement( &adapter->refcount ))
     {
+        gpu_release( adapter->gpu );
         free( adapter->modes );
         free( adapter );
     }
@@ -1477,7 +1492,7 @@ static void clear_display_devices(void)
     {
         gpu = LIST_ENTRY( list_head( &gpus ), struct gpu, entry );
         list_remove( &gpu->entry );
-        free( gpu );
+        gpu_release( gpu );
     }
 }
 
@@ -1521,7 +1536,8 @@ static BOOL update_display_cache_from_registry(void)
 
         if (!read_display_adapter_settings( adapter_id, adapter ))
         {
-            adapter_release( adapter );
+            free( adapter->modes );
+            free( adapter );
             break;
         }
 
@@ -1588,6 +1604,7 @@ static BOOL update_display_cache_from_registry(void)
                     NtClose( gpu_key );
                     continue;
                 }
+                gpu->refcount = 1;
 
                 if ((prop_key = reg_open_ascii_key( gpu_key, devpropkey_gpu_luidA )))
                 {
@@ -1599,7 +1616,10 @@ static BOOL update_display_cache_from_registry(void)
                 LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
                 {
                     if (!memcmp( &adapter->gpu_luid, &gpu->luid, sizeof(LUID) ))
+                    {
+                        adapter->gpu = gpu_acquire( gpu );
                         gpu->adapter_count++;
+                    }
                 }
 
                 list_add_tail( &gpus, &gpu->entry );
