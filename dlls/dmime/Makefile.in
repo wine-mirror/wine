@@ -4,6 +4,7 @@ PARENTSRC = ../dmusic
 
 SOURCES = \
 	audiopath.c \
+	band.c \
 	dmime.idl \
 	dmime_main.c \
 	dmobject.c \

@@ -527,3 +527,17 @@ HRESULT band_send_messages(IDirectMusicBand *iface, IDirectMusicPerformance *per
 
     return hr;
 }
+
+HRESULT band_add_instrument(IDirectMusicBand *iface, DMUS_IO_INSTRUMENT *instrument)
+{
+    struct band *This = impl_from_IDirectMusicBand(iface);
+    struct instrument_entry *entry;
+
+    TRACE("%p, %p\n", iface, instrument);
+
+    if (!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
+    entry->instrument = *instrument;
+    list_add_tail(&This->instruments, &entry->entry);
+
+    return S_OK;
+}
