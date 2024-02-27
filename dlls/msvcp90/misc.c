@@ -264,7 +264,7 @@ DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
 mutex* __thiscall mutex_ctor(mutex *this)
 {
     CRITICAL_SECTION *cs = operator_new(sizeof(*cs));
-    InitializeCriticalSection(cs);
+    InitializeCriticalSectionEx(cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Mutex critical section");
     this->mutex = cs;
     return this;
@@ -347,7 +347,7 @@ void __cdecl _Init_locks__Init_locks_ctor(_Init_locks *this)
     {
         for(i=0; i<_MAX_LOCK; i++)
         {
-            InitializeCriticalSection(&lockit_cs[i]);
+            InitializeCriticalSectionEx(&lockit_cs[i], 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
             lockit_cs[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": _Lockit critical section");
         }
     }
