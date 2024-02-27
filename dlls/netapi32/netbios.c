@@ -103,7 +103,7 @@ static UCHAR nbResizeAdapterTable(UCHAR newSize)
 void NetBIOSInit(void)
 {
     memset(&gNBTable, 0, sizeof(gNBTable));
-    InitializeCriticalSection(&gNBTable.cs);
+    InitializeCriticalSectionEx(&gNBTable.cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     gNBTable.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NetBIOSAdapterTable.cs");
 }
 
@@ -211,7 +211,7 @@ BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *data)
             gNBTable.table[i].impl.ifIndex = ifIndex;
             gNBTable.table[i].impl.data = data;
             gNBTable.table[i].cmdQueue = NBCmdQueueCreate(GetProcessHeap());
-            InitializeCriticalSection(&gNBTable.table[i].cs);
+            InitializeCriticalSectionEx(&gNBTable.table[i].cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
             gNBTable.table[i].cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NetBIOSAdapterTable.NetBIOSAdapter.cs");
             gNBTable.table[i].enabled = TRUE;
             ret = TRUE;

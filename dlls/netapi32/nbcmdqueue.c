@@ -61,7 +61,7 @@ struct NBCmdQueue *NBCmdQueueCreate(HANDLE heap)
     if (queue)
     {
         queue->heap = heap;
-        InitializeCriticalSection(&queue->cs);
+        InitializeCriticalSectionEx(&queue->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
         queue->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": NBCmdQueue.cs");
         queue->head = NULL;
     }
