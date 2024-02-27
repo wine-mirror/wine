@@ -70,11 +70,8 @@ extern HRESULT create_dmtempotrack(REFIID riid, void **ret_iface);
 extern HRESULT create_dmtimesigtrack(REFIID riid, void **ret_iface);
 extern HRESULT create_dmwavetrack(REFIID riid, void **ret_iface);
 
-/* Create a new MIDI file parser. Note the stream might still be modified even
- * when this function fails. */
-extern HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser);
-extern HRESULT midi_parser_next_track(struct midi_parser *parser, IDirectMusicTrack **out_track, MUSIC_TIME *out_length);
-extern void midi_parser_destroy(struct midi_parser *parser);
+/* Parse a MIDI file. Note the stream might still be modified even when this function fails. */
+extern HRESULT parse_midi(IStream *stream, IDirectMusicSegment8 *segment);
 
 extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerformance8*);
 extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*);

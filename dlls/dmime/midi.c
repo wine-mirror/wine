@@ -125,10 +125,10 @@ static HRESULT read_midi_event(IStream *stream, BYTE *last_status, ULONG *bytes_
     return S_OK;
 }
 
-HRESULT midi_parser_next_track(struct midi_parser *parser, IDirectMusicTrack **out_track, MUSIC_TIME *out_length)
+static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment8 *segment)
 {
     WORD i = 0;
-    TRACE("(%p, %p): stub\n", parser, out_length);
+    TRACE("(%p, %p): stub\n", parser, segment);
     for (i = 0;; i++)
     {
         HRESULT hr;
@@ -159,7 +159,13 @@ HRESULT midi_parser_next_track(struct midi_parser *parser, IDirectMusicTrack **o
     return S_FALSE;
 }
 
-HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser)
+static void midi_parser_destroy(struct midi_parser *parser)
+{
+    IStream_Release(parser->stream);
+    free(parser);
+}
+
+static HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser)
 {
     LARGE_INTEGER offset;
     DWORD length;
@@ -202,8 +208,13 @@ HRESULT midi_parser_new(IStream *stream, struct midi_parser **out_parser)
     return hr;
 }
 
-void midi_parser_destroy(struct midi_parser *parser)
+HRESULT parse_midi(IStream *stream, IDirectMusicSegment8 *segment)
 {
-    IStream_Release(parser->stream);
-    free(parser);
+    struct midi_parser *parser;
+    HRESULT hr;
+
+    if (FAILED(hr = midi_parser_new(stream, &parser))) return hr;
+    hr = midi_parser_parse(parser, segment);
+    midi_parser_destroy(parser);
+    return hr;
 }
