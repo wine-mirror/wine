@@ -1528,53 +1528,6 @@ static BOOL update_display_cache_from_registry(void)
 
     clear_display_devices();
 
-    for (adapter_id = 0;; adapter_id++)
-    {
-        if (!(adapter = calloc( 1, sizeof(*adapter) ))) break;
-        adapter->refcount = 1;
-        adapter->id = adapter_id;
-
-        if (!read_display_adapter_settings( adapter_id, adapter ))
-        {
-            free( adapter->modes );
-            free( adapter );
-            break;
-        }
-
-        list_add_tail( &adapters, &adapter->entry );
-        for (monitor_id = 0;; monitor_id++)
-        {
-            if (!(monitor = calloc( 1, sizeof(*monitor) ))) break;
-            if (!read_monitor_settings( adapter, monitor_id, monitor ))
-            {
-                free( monitor );
-                break;
-            }
-
-            monitor->id = monitor_id;
-            monitor->adapter = adapter_acquire( adapter );
-
-            monitor->dev.state_flags |= DISPLAY_DEVICE_ATTACHED;
-            if (adapter->dev.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
-            {
-                if (!IsRectEmpty(&monitor->rc_monitor)) monitor->dev.state_flags |= DISPLAY_DEVICE_ACTIVE;
-
-                LIST_FOR_EACH_ENTRY( monitor2, &monitors, struct monitor, entry )
-                {
-                    if (!(monitor2->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
-                    if (EqualRect( &monitor2->rc_monitor, &monitor->rc_monitor ))
-                    {
-                        monitor->is_clone = TRUE;
-                        break;
-                    }
-                }
-            }
-
-            monitor->handle = UlongToHandle( ++monitor_count );
-            list_add_tail( &monitors, &monitor->entry );
-        }
-    }
-
     if ((pci_key = reg_open_ascii_key( enum_key, "PCI" )))
     {
         unsigned int i = 0;
@@ -1613,15 +1566,6 @@ static BOOL update_display_cache_from_registry(void)
                     NtClose( prop_key );
                 }
 
-                LIST_FOR_EACH_ENTRY(adapter, &adapters, struct adapter, entry)
-                {
-                    if (!memcmp( &adapter->gpu_luid, &gpu->luid, sizeof(LUID) ))
-                    {
-                        adapter->gpu = gpu_acquire( gpu );
-                        gpu->adapter_count++;
-                    }
-                }
-
                 list_add_tail( &gpus, &gpu->entry );
                 NtClose( gpu_key );
             }
@@ -1630,6 +1574,63 @@ static BOOL update_display_cache_from_registry(void)
         }
 
         NtClose( pci_key );
+    }
+
+    for (adapter_id = 0;; adapter_id++)
+    {
+        if (!(adapter = calloc( 1, sizeof(*adapter) ))) break;
+        adapter->refcount = 1;
+        adapter->id = adapter_id;
+
+        if (!read_display_adapter_settings( adapter_id, adapter ))
+        {
+            free( adapter->modes );
+            free( adapter );
+            break;
+        }
+
+        LIST_FOR_EACH_ENTRY(gpu, &gpus, struct gpu, entry)
+        {
+            if (!memcmp( &adapter->gpu_luid, &gpu->luid, sizeof(LUID) ))
+            {
+                adapter->gpu = gpu_acquire( gpu );
+                gpu->adapter_count++;
+                break;
+            }
+        }
+
+        list_add_tail( &adapters, &adapter->entry );
+        for (monitor_id = 0;; monitor_id++)
+        {
+            if (!(monitor = calloc( 1, sizeof(*monitor) ))) break;
+            if (!read_monitor_settings( adapter, monitor_id, monitor ))
+            {
+                free( monitor );
+                break;
+            }
+
+            monitor->id = monitor_id;
+            monitor->adapter = adapter_acquire( adapter );
+
+            monitor->dev.state_flags |= DISPLAY_DEVICE_ATTACHED;
+            if (adapter->dev.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
+            {
+                if (!IsRectEmpty(&monitor->rc_monitor)) monitor->dev.state_flags |= DISPLAY_DEVICE_ACTIVE;
+
+                LIST_FOR_EACH_ENTRY( monitor2, &monitors, struct monitor, entry )
+                {
+                    if (!(monitor2->dev.state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+                    if (EqualRect( &monitor2->rc_monitor, &monitor->rc_monitor ))
+                    {
+                        monitor->is_clone = TRUE;
+                        break;
+                    }
+                }
+            }
+
+            monitor->handle = UlongToHandle( ++monitor_count );
+            list_add_tail( &monitors, &monitor->entry );
+        }
     }
 
     if ((ret = !list_empty( &adapters ) && !list_empty( &monitors )))
