@@ -60,11 +60,13 @@ static BOOL check_win_version(int min_major, int min_minor)
             rtlver.dwMinorVersion >= min_minor);
 }
 #define is_win8_plus() check_win_version(6, 2)
+#define is_win10_plus() check_win_version(10, 0)
 
 static void test_Connect(void)
 {
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     WCHAR user_name[256];
+    WCHAR domain_name[256];
     DWORD len;
     HRESULT hr;
     BSTR bstr;
@@ -98,6 +100,12 @@ static void test_Connect(void)
     ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
 
     hr = ITaskService_get_ConnectedUser(service, &bstr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#lx\n", hr);
+
+    hr = ITaskService_get_ConnectedDomain(service, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
+
+    hr = ITaskService_get_ConnectedDomain(service, &bstr);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#lx\n", hr);
 
     /* Win7 doesn't support UNC \\ prefix, but according to a user
@@ -157,6 +165,19 @@ static void test_Connect(void)
     hr = ITaskService_get_ConnectedUser(service, &bstr);
     ok(hr == S_OK, "get_ConnectedUser error %#lx\n", hr);
     ok(!lstrcmpW(user_name, bstr), "username %s != user name %s\n", wine_dbgstr_w(user_name), wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    len = ARRAY_SIZE(domain_name);
+    if (!GetEnvironmentVariableW(L"USERDOMAIN", domain_name, len))
+    {
+         GetComputerNameExW(ComputerNameDnsHostname, domain_name, &len);
+         if (is_win10_plus())
+             wcsupr(domain_name);
+    }
+
+    hr = ITaskService_get_ConnectedDomain(service, &bstr);
+    ok(hr == S_OK, "get_ConnectedDomain error %#lx\n", hr);
+    ok(!lstrcmpW(domain_name, bstr), "domainname %s != domain name %s\n", wine_dbgstr_w(domain_name), wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     ITaskService_Release(service);
