@@ -989,10 +989,7 @@ static void prepare_devices(void)
                 continue;
             }
 
-            size = query_reg_value( device_key, class_guidW, value, sizeof(buffer) );
-            if (size == sizeof(guid_devclass_displayW) &&
-                !wcscmp( (const WCHAR *)value->Data, guid_devclass_displayW ) &&
-                (prop_key = reg_create_key( device_key, devpropkey_device_ispresentW,
+            if ((prop_key = reg_create_key( device_key, devpropkey_device_ispresentW,
                                             sizeof(devpropkey_device_ispresentW), 0, NULL )))
             {
                 BOOL present = FALSE;
