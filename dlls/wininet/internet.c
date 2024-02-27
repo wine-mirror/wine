@@ -710,6 +710,7 @@ static LONG load_connection_settings( HKEY key, const WCHAR *connection, proxyin
         res = connection_settings_read( settings, &pos, size, &lpwpi->proxyBypass );
     if (!res)
         res = connection_settings_read( settings, &pos, size, &lpwpi->autoconf_url );
+    free( settings );
     if (res)
     {
         FreeProxyInfo( lpwpi );
