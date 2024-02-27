@@ -837,7 +837,9 @@ static void test_submix(IXAudio2 *xa)
     HRESULT hr;
     IXAudio2MasteringVoice *master;
     XAUDIO2_VOICE_DETAILS details;
-    IXAudio2SubmixVoice *sub;
+    IXAudio2SubmixVoice *sub, *sub2;
+    XAUDIO2_SEND_DESCRIPTOR send_desc = { 0 };
+    XAUDIO2_VOICE_SENDS sends = { 1, &send_desc };
 
     IXAudio2_StopEngine(xa);
 
@@ -854,6 +856,31 @@ static void test_submix(IXAudio2 *xa)
 #endif
     ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
     ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+
+    hr = IXAudio2_CreateSubmixVoice(xa, &sub2, 2, 44100, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+
+    send_desc.pOutputVoice = (IXAudio2Voice *)sub2;
+    hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
+    ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+
+    IXAudio2SubmixVoice_DestroyVoice(sub2);
+    /* The voice is not destroyed. */
+    memset(&details, 0xcc, sizeof(details));
+    IXAudio2SubmixVoice_GetVoiceDetails(sub2, &details);
+    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+
+    sends.SendCount = 0;
+    hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
+    ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+
+    IXAudio2SubmixVoice_DestroyVoice(sub2);
+    if (0)
+    {
+        /* Crashes on Windows and thus suggests that now the voice is actually destroyed. */
+        IXAudio2SubmixVoice_GetVoiceDetails(sub2, &details);
+    }
 
     IXAudio2SubmixVoice_DestroyVoice(sub);
     IXAudio2MasteringVoice_DestroyVoice(master);
