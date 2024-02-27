@@ -235,6 +235,8 @@ the folder?"
 
 	IDS_NEWFOLDER		"New Folder"
 
+        IDS_NEW_MENU_FOLDER         "New &Folder"
+
 	IDS_CPANEL_TITLE            "Wine Control Panel"
 	IDS_CPANEL_NAME             "Name"
 	IDS_CPANEL_DESCRIPTION      "Description"

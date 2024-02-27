@@ -92,8 +92,8 @@ msgstr "지원 정보"
 #: dlls/mshtml/mshtml.rc:47 dlls/mshtml/mshtml.rc:57 dlls/msvfw32/msvfw32.rc:36
 #: dlls/oledlg/oledlg.rc:62 dlls/oledlg/oledlg.rc:94
 #: dlls/serialui/serialui.rc:41 dlls/setupapi/setupapi.rc:59
-#: dlls/shell32/shell32.rc:275 dlls/shell32/shell32.rc:299
-#: dlls/shell32/shell32.rc:321 dlls/shell32/shell32.rc:340
+#: dlls/shell32/shell32.rc:277 dlls/shell32/shell32.rc:301
+#: dlls/shell32/shell32.rc:323 dlls/shell32/shell32.rc:342
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
@@ -197,9 +197,9 @@ msgstr "설치(&I)"
 #: dlls/mshtml/mshtml.rc:48 dlls/mshtml/mshtml.rc:58 dlls/msvfw32/msvfw32.rc:37
 #: dlls/oledlg/oledlg.rc:63 dlls/oledlg/oledlg.rc:95
 #: dlls/serialui/serialui.rc:42 dlls/setupapi/setupapi.rc:42
-#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:276
-#: dlls/shell32/shell32.rc:300 dlls/shell32/shell32.rc:311
-#: dlls/shell32/shell32.rc:341 dlls/shlwapi/shlwapi.rc:45
+#: dlls/setupapi/setupapi.rc:60 dlls/shell32/shell32.rc:278
+#: dlls/shell32/shell32.rc:302 dlls/shell32/shell32.rc:313
+#: dlls/shell32/shell32.rc:343 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
@@ -272,7 +272,7 @@ msgid "Not specified"
 msgstr "지정하지 않음"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
-#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:240
+#: dlls/shell32/shell32.rc:140 dlls/shell32/shell32.rc:242
 #: programs/regedit/regedit.rc:150 programs/winefile/winefile.rc:106
 msgid "Name"
 msgstr "이름"
@@ -500,12 +500,12 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "없음"
 
-#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:308
+#: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:310
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:90 dlls/user32/user32.rc:78
 msgid "&Yes"
 msgstr "예(&Y)"
 
-#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:310
+#: dlls/comctl32/comctl32.rc:53 dlls/shell32/shell32.rc:312
 #: dlls/shlwapi/shlwapi.rc:47 dlls/user32/user32.rc:91 dlls/user32/user32.rc:79
 msgid "&No"
 msgstr "아니요(&N)"
@@ -561,7 +561,7 @@ msgid "Dri&ves:"
 msgstr "드라이브(&V):"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
-#: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
+#: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
 msgstr "읽기 전용(&R)"
@@ -2245,8 +2245,8 @@ msgid "Notice Text="
 msgstr "공지 사항="
 
 #: dlls/cryptui/cryptui.rc:185 dlls/cryptui/cryptui.rc:240
-#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:347
-#: dlls/shell32/shell32.rc:376
+#: dlls/inetcpl.cpl/inetcpl.rc:46 dlls/shell32/shell32.rc:349
+#: dlls/shell32/shell32.rc:378
 msgid "General"
 msgstr "일반"
 
@@ -2738,7 +2738,7 @@ msgstr "확장 키 사용 (속성)"
 msgid "Friendly name"
 msgstr "애칭"
 
-#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:241
+#: dlls/cryptui/cryptui.rc:65 dlls/shell32/shell32.rc:243
 #: programs/ipconfig/ipconfig.rc:45
 msgid "Description"
 msgstr "설명"
@@ -9927,7 +9927,7 @@ msgstr "링크로 붙여넣기"
 msgid "New"
 msgstr "새 작업"
 
-#: dlls/shell32/shell32.rc:69
+#: dlls/shell32/shell32.rc:69 dlls/shell32/shell32.rc:239
 msgid "New &Folder"
 msgstr "새 폴더(&F)"
 
@@ -9968,108 +9968,108 @@ msgstr "끝내기(&X)"
 msgid "&About Control Panel"
 msgstr "제어판 정보(&A)"
 
-#: dlls/shell32/shell32.rc:272 dlls/shell32/shell32.rc:287
+#: dlls/shell32/shell32.rc:274 dlls/shell32/shell32.rc:289
 msgid "Browse for Folder"
 msgstr "폴더 탐색"
 
-#: dlls/shell32/shell32.rc:292
+#: dlls/shell32/shell32.rc:294
 msgid "Folder:"
 msgstr "폴더:"
 
-#: dlls/shell32/shell32.rc:298
+#: dlls/shell32/shell32.rc:300
 msgid "&Make New Folder"
 msgstr "새 폴더 만들기(&M)"
 
-#: dlls/shell32/shell32.rc:305
+#: dlls/shell32/shell32.rc:307
 msgid "Message"
 msgstr "메시지"
 
-#: dlls/shell32/shell32.rc:309
+#: dlls/shell32/shell32.rc:311
 msgid "Yes to &all"
 msgstr "모두 예(&A)"
 
-#: dlls/shell32/shell32.rc:318
+#: dlls/shell32/shell32.rc:320
 msgid "About %s"
 msgstr "%s 정보"
 
-#: dlls/shell32/shell32.rc:322
+#: dlls/shell32/shell32.rc:324
 msgid "Wine &license"
 msgstr "Wine 라이선스(&L)"
 
-#: dlls/shell32/shell32.rc:327
+#: dlls/shell32/shell32.rc:329
 msgid "Running on %s"
 msgstr "%s 실행중"
 
-#: dlls/shell32/shell32.rc:328
+#: dlls/shell32/shell32.rc:330
 msgid "Wine was brought to you by:"
 msgstr "Wine 기여자 목록:"
 
-#: dlls/shell32/shell32.rc:333
+#: dlls/shell32/shell32.rc:335
 msgid "Run"
 msgstr "실행"
 
-#: dlls/shell32/shell32.rc:337
+#: dlls/shell32/shell32.rc:339
 msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
 "프로그램, 폴더, 문서 또는 인터넷 리소스의 이름을 입력하면 Wine이 열어줍니다."
 
-#: dlls/shell32/shell32.rc:338
+#: dlls/shell32/shell32.rc:340
 msgid "&Open:"
 msgstr "열기(&O):"
 
-#: dlls/shell32/shell32.rc:342 programs/progman/progman.rc:182
+#: dlls/shell32/shell32.rc:344 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
 #: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "찾아보기(&B)..."
 
-#: dlls/shell32/shell32.rc:354 dlls/shell32/shell32.rc:383
+#: dlls/shell32/shell32.rc:356 dlls/shell32/shell32.rc:385
 msgid "File type:"
 msgstr "파일 형식:"
 
-#: dlls/shell32/shell32.rc:358 dlls/shell32/shell32.rc:391
+#: dlls/shell32/shell32.rc:360 dlls/shell32/shell32.rc:393
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "위치:"
 
-#: dlls/shell32/shell32.rc:360 dlls/shell32/shell32.rc:393
+#: dlls/shell32/shell32.rc:362 dlls/shell32/shell32.rc:395
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
 msgstr "크기:"
 
-#: dlls/shell32/shell32.rc:364 dlls/shell32/shell32.rc:397
+#: dlls/shell32/shell32.rc:366 dlls/shell32/shell32.rc:399
 msgid "Creation date:"
 msgstr "만든 날짜:"
 
-#: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
+#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
 msgid "Attributes:"
 msgstr "속성:"
 
-#: dlls/shell32/shell32.rc:370 dlls/shell32/shell32.rc:407
+#: dlls/shell32/shell32.rc:372 dlls/shell32/shell32.rc:409
 #: programs/winefile/winefile.rc:173
 msgid "H&idden"
 msgstr "숨김(&I)"
 
-#: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
+#: dlls/shell32/shell32.rc:373 dlls/shell32/shell32.rc:410
 #: programs/winefile/winefile.rc:174
 msgid "&Archive"
 msgstr "아카이브(&A)"
 
-#: dlls/shell32/shell32.rc:385
+#: dlls/shell32/shell32.rc:387
 msgid "Open with:"
 msgstr "열기:"
 
-#: dlls/shell32/shell32.rc:388
+#: dlls/shell32/shell32.rc:390
 msgid "&Change..."
 msgstr "바꾸기(&C)..."
 
-#: dlls/shell32/shell32.rc:399
+#: dlls/shell32/shell32.rc:401
 msgid "Last modified:"
 msgstr "마지막으로 수정한 날짜:"
 
-#: dlls/shell32/shell32.rc:401
+#: dlls/shell32/shell32.rc:403
 msgid "Last accessed:"
 msgstr "마지막으로 액세스한 날짜:"
 
@@ -10348,7 +10348,7 @@ msgstr ""
 "대상 폴더의 파일이 선택한 폴더의 파일과 같을 경우 교체합니다.\n"
 "폴더를 이동 또는 복사하시겠습니까?"
 
-#: dlls/shell32/shell32.rc:239
+#: dlls/shell32/shell32.rc:241
 msgid "Wine Control Panel"
 msgstr "Wine 제어판"
 
@@ -10364,23 +10364,23 @@ msgstr "찾아보기 대화 상자를 표시할 수 없습니다 (내부 오류)
 msgid "Executable files (*.exe)"
 msgstr "실행 파일 (*.exe)"
 
-#: dlls/shell32/shell32.rc:243
+#: dlls/shell32/shell32.rc:245
 msgid "There is no Windows program configured to open this type of file."
 msgstr "이 유형의 파일을 열도록 구성된 Windows 프로그램이 없습니다."
 
-#: dlls/shell32/shell32.rc:245
+#: dlls/shell32/shell32.rc:247
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "'%1'을(를) 완전히 제거하시겠습니까?"
 
-#: dlls/shell32/shell32.rc:246
+#: dlls/shell32/shell32.rc:248
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "%1 항목을 완전히 제거하시겠습니까?"
 
-#: dlls/shell32/shell32.rc:247
+#: dlls/shell32/shell32.rc:249
 msgid "Confirm deletion"
 msgstr "제거 확인"
 
-#: dlls/shell32/shell32.rc:248
+#: dlls/shell32/shell32.rc:250
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -10390,7 +10390,7 @@ msgstr ""
 "\n"
 "파일을 교체하시겠습니까?"
 
-#: dlls/shell32/shell32.rc:249
+#: dlls/shell32/shell32.rc:251
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -10400,12 +10400,12 @@ msgstr ""
 "\n"
 "폴더를 교체하시겠습니까?"
 
-#: dlls/shell32/shell32.rc:250
+#: dlls/shell32/shell32.rc:252
 msgid "Confirm overwrite"
 msgstr "덮어쓰기 확인"
 
 # 라이선스 문구는 번역하지 않습니다.
-#: dlls/shell32/shell32.rc:267
+#: dlls/shell32/shell32.rc:269
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -10435,7 +10435,7 @@ msgstr ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: dlls/shell32/shell32.rc:255
+#: dlls/shell32/shell32.rc:257
 msgid "Wine License"
 msgstr "Wine 라이선스"
 
