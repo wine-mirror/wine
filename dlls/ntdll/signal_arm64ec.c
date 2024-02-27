@@ -1792,25 +1792,29 @@ __ASM_GLOBAL_FUNC( "#process_breakpoint",
                    "mov w0, #0\n\t"           /* ExceptionContinueExecution */
                    "ret" )
 
+
 /***********************************************************************
  *		DbgUiRemoteBreakin   (NTDLL.@)
  */
-void WINAPI DbgUiRemoteBreakin( void *arg )
+void __attribute__((naked)) DbgUiRemoteBreakin( void *arg )
 {
-    if (NtCurrentTeb()->Peb->BeingDebugged)
-    {
-        __TRY
-        {
-            DbgBreakPoint();
-        }
-        __EXCEPT_ALL
-        {
-            /* do nothing */
-        }
-        __ENDTRY
-    }
-    RtlExitUserThread( STATUS_SUCCESS );
+    asm( ".seh_proc DbgUiRemoteBreakin\n\t"
+         "stp x29, x30, [sp, #-16]!\n\t"
+         ".seh_save_fplr_x 16\n\t"
+         ".seh_endprologue\n\t"
+         ".seh_handler DbgUiRemoteBreakin_handler, @except\n\t"
+         "ldr x0, [x18, #0x60]\n\t"  /* NtCurrentTeb()->Peb */
+         "ldrb w0, [x0, 0x02]\n\t"   /* peb->BeingDebugged */
+         "cbz w0, 1f\n\t"
+         "bl DbgBreakPoint\n"
+         "1:\tmov w0, #0\n\t"
+         "bl RtlExitUserThread\n"
+         "DbgUiRemoteBreakin_handler:\n\t"
+         "mov sp, x1\n\t"            /* frame */
+         "b 1b\n\t"
+         ".seh_endproc" );
 }
+
 
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
