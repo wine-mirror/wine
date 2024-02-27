@@ -1330,11 +1330,13 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
             int_rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
             break;
         case 0x01:  /* single-step */
+            ctx32.i386.EFlags &= ~0x100;
+            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
             int_rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
             break;
         case 0x03:  /* breakpoint */
             int_rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-            int_rec.ExceptionAddress = (void *)(ULONG_PTR)(ctx32.i386.Eip + 1);
+            int_rec.ExceptionAddress = (void *)(ULONG_PTR)(ctx32.i386.Eip - 1);
             int_rec.NumberParameters = 1;
             break;
         case 0x04:  /* overflow */
@@ -1352,6 +1354,9 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
         case 0x0c:  /* stack fault */
             int_rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
             break;
+        case 0x0d:  /* general protection fault */
+            int_rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+            break;
         case 0x29:  /* __fastfail */
             int_rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
             int_rec.ExceptionFlags = EH_NONCONTINUABLE;
@@ -1360,7 +1365,7 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
             first_chance = FALSE;
             break;
         case 0x2d:  /* debug service */
-            ctx32.i386.Eip++;
+            ctx32.i386.Eip += 3;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
             int_rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
             int_rec.ExceptionAddress = (void *)(ULONG_PTR)ctx32.i386.Eip;
@@ -1368,8 +1373,6 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
             int_rec.ExceptionInformation[0] = ctx32.i386.Eax;
             break;
         default:
-            ctx32.i386.Eip -= 2;
-            pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx32.i386 );
             int_rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             int_rec.ExceptionAddress = (void *)(ULONG_PTR)ctx32.i386.Eip;
             int_rec.NumberParameters = 2;
