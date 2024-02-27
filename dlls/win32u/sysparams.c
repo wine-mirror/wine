@@ -153,7 +153,6 @@ struct monitor
     RECT rc_monitor;
     RECT rc_work;
     BOOL is_clone;
-    UINT state_flags;
     struct edid_monitor_info edid_info;
 };
 
@@ -1552,6 +1551,15 @@ static void clear_display_devices(void)
     }
 }
 
+static BOOL is_monitor_active( struct monitor *monitor )
+{
+    struct adapter *adapter;
+    /* services do not have any adapters, only a virtual monitor */
+    if (!(adapter = monitor->adapter)) return TRUE;
+    if (!(adapter->dev.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) return FALSE;
+    return !IsRectEmpty( &monitor->rc_monitor );
+}
+
 static void enum_device_keys( const char *root, const WCHAR *classW, UINT class_size, void (*callback)(const char *) )
 {
     char buffer[1024];
@@ -1682,14 +1690,11 @@ static BOOL update_display_cache_from_registry(void)
             monitor->id = monitor_id;
             monitor->adapter = adapter_acquire( adapter );
 
-            monitor->state_flags |= DISPLAY_DEVICE_ATTACHED;
             if (adapter->dev.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)
             {
-                if (!IsRectEmpty(&monitor->rc_monitor)) monitor->state_flags |= DISPLAY_DEVICE_ACTIVE;
-
                 LIST_FOR_EACH_ENTRY( monitor2, &monitors, struct monitor, entry )
                 {
-                    if (!(monitor2->state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+                    if (!is_monitor_active( monitor2 )) continue;
                     if (EqualRect( &monitor2->rc_monitor, &monitor->rc_monitor ))
                     {
                         monitor->is_clone = TRUE;
@@ -2248,7 +2253,7 @@ RECT get_virtual_screen_rect( UINT dpi )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+        if (!is_monitor_active( monitor )) continue;
         union_rect( &rect, &rect, &monitor->rc_monitor );
     }
 
@@ -2269,8 +2274,7 @@ static BOOL is_window_rect_full_screen( const RECT *rect )
     {
         RECT monrect;
 
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE))
-            continue;
+        if (!is_monitor_active( monitor )) continue;
 
         monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
                                 get_thread_dpi() );
@@ -2357,8 +2361,7 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
     {
         LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
         {
-            if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE))
-                continue;
+            if (!is_monitor_active( monitor )) continue;
             count++;
         }
         unlock_display_devices();
@@ -2541,8 +2544,7 @@ LONG WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAY
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE))
-            continue;
+        if (!is_monitor_active( monitor )) continue;
 
         if (!monitor->adapter)
             continue;
@@ -2727,8 +2729,12 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
         }
         if (info->cb >= offsetof(DISPLAY_DEVICEW, StateFlags) + sizeof(info->StateFlags))
         {
-            if (monitor) info->StateFlags = monitor->state_flags;
-            else info->StateFlags = adapter->dev.state_flags;
+            if (!monitor) info->StateFlags = adapter->dev.state_flags;
+            else
+            {
+                info->StateFlags = DISPLAY_DEVICE_ATTACHED;
+                if (is_monitor_active( monitor )) info->StateFlags |= DISPLAY_DEVICE_ACTIVE;
+            }
         }
         if (info->cb >= offsetof(DISPLAY_DEVICEW, DeviceID) + sizeof(info->DeviceID))
         {
@@ -3329,7 +3335,8 @@ static unsigned int active_monitor_count(void)
 
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
-        if ((monitor->state_flags & DISPLAY_DEVICE_ACTIVE)) count++;
+        if (!is_monitor_active( monitor )) continue;
+        count++;
     }
     return count;
 }
@@ -3414,7 +3421,7 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     {
         RECT monrect;
 
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+        if (!is_monitor_active( monitor )) continue;
 
         monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
                                 get_thread_dpi() );
@@ -3460,7 +3467,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
         if (monitor->handle != handle) continue;
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE)) break;
+        if (!is_monitor_active( monitor )) continue;
 
         /* FIXME: map dpi */
         info->rcMonitor = monitor->rc_monitor;
@@ -3512,7 +3519,7 @@ HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
     {
         RECT intersect, monitor_rect;
 
-        if (!(monitor->state_flags & DISPLAY_DEVICE_ACTIVE)) continue;
+        if (!is_monitor_active( monitor )) continue;
 
         monitor_rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ), system_dpi );
         if (intersect_rect( &intersect, &monitor_rect, &r ))
