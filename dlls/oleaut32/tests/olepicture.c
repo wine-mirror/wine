@@ -1413,13 +1413,10 @@ static void test_load_save_empty_picture(void)
 
     maxsize.QuadPart = 0;
     hr = IPersistStream_GetSizeMax(src_stream, &maxsize);
-    todo_wine
     ok(hr == S_OK, "GetSizeMax error %#lx\n", hr);
-    todo_wine
     ok(maxsize.QuadPart == 8, "expected 8, got %s\n", wine_dbgstr_longlong(maxsize.QuadPart));
 
     hr = IPersistStream_GetSizeMax(src_stream, NULL);
-    todo_wine
     ole_expect(hr, E_INVALIDARG);
 
     hr = IPersistStream_Save(src_stream, dst_stream, TRUE);

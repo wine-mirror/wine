@@ -1836,12 +1836,59 @@ static HRESULT WINAPI OLEPictureImpl_Save(
     return hResult;
 }
 
-static HRESULT WINAPI OLEPictureImpl_GetSizeMax(
-  IPersistStream* iface,ULARGE_INTEGER*pcbSize)
+static HRESULT WINAPI OLEPictureImpl_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *size)
 {
-  OLEPictureImpl *This = impl_from_IPersistStream(iface);
-  FIXME("(%p,%p),stub!\n",This,pcbSize);
-  return E_NOTIMPL;
+    HRESULT hr = E_NOTIMPL;
+    OLEPictureImpl *This = impl_from_IPersistStream(iface);
+    unsigned int datasize = This->datalen;
+
+    FIXME("(%p,%p), partial stub!\n", This, size);
+
+    if (!size)
+        return E_INVALIDARG;
+
+    switch (This->desc.picType) {
+    case PICTYPE_NONE:
+        hr = S_OK;
+        break;
+    case PICTYPE_ICON:
+        FIXME("(%p), PICTYPE_ICON not implemented!\n",This);
+        break;
+    case PICTYPE_BITMAP:
+        if (This->bIsDirty || !This->data) {
+            switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
+            case BITMAP_FORMAT_BMP:
+                FIXME("(%p), PICTYPE_BITMAP (format BMP) not implemented!\n",This);
+                break;
+            case BITMAP_FORMAT_JPEG:
+                FIXME("(%p), PICTYPE_BITMAP (format JPEG) not implemented!\n",This);
+                break;
+            case BITMAP_FORMAT_GIF:
+                FIXME("(%p), PICTYPE_BITMAP (format GIF) not implemented!\n",This);
+                break;
+            case BITMAP_FORMAT_PNG:
+                FIXME("(%p), PICTYPE_BITMAP (format PNG) not implemented!\n",This);
+                break;
+            default:
+                FIXME("(%p), PICTYPE_BITMAP (format UNKNOWN, using BMP?) not implemented!\n",This);
+                break;
+            }
+        }
+        break;
+    case PICTYPE_METAFILE:
+        FIXME("(%p), PICTYPE_METAFILE not implemented!\n",This);
+        break;
+    case PICTYPE_ENHMETAFILE:
+        FIXME("(%p), PICTYPE_ENHMETAFILE not implemented!\n",This);
+        break;
+    default:
+        FIXME("(%p), [unknown type] not implemented!\n",This);
+        break;
+    }
+
+    size->HighPart = 0;
+    size->LowPart = datasize + 8;
+    return hr;
 }
 
 
