@@ -195,6 +195,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     HWND parent = NtUserGetAncestor(data->hwnd, GA_PARENT);
     BOOL visible, xdg_visible;
     RECT clip;
+    WCHAR text[1024];
 
     TRACE("hwnd=%p\n", data->hwnd);
 
@@ -223,7 +224,16 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
         /* If the window is a visible toplevel make it a wayland
          * xdg_toplevel. Otherwise keep it role-less to avoid polluting the
          * compositor with empty xdg_toplevels. */
-        if (visible) wayland_surface_make_toplevel(surface);
+        if (visible)
+        {
+            wayland_surface_make_toplevel(surface);
+            if (surface->xdg_toplevel)
+            {
+                if (!NtUserInternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text)))
+                    text[0] = 0;
+                wayland_surface_set_title(surface, text);
+            }
+        }
     }
 
     wayland_win_data_get_config(data, &surface->window);
@@ -666,6 +676,22 @@ static enum xdg_toplevel_resize_edge hittest_to_resize_edge(WPARAM hittest)
     case WMSZ_BOTTOMLEFT:  return XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_LEFT;
     case WMSZ_BOTTOMRIGHT: return XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM_RIGHT;
     default:               return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
+    }
+}
+
+/*****************************************************************
+ *		WAYLAND_SetWindowText
+ */
+void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text)
+{
+    struct wayland_surface *surface = wayland_surface_lock_hwnd(hwnd);
+
+    TRACE("hwnd=%p text=%s\n", hwnd, wine_dbgstr_w(text));
+
+    if (surface)
+    {
+        if (surface->xdg_toplevel) wayland_surface_set_title(surface, text);
+        pthread_mutex_unlock(&surface->mutex);
     }
 }
 

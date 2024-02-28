@@ -258,6 +258,7 @@ void wayland_surface_coords_to_window(struct wayland_surface *surface,
 struct wayland_client_surface *wayland_surface_get_client(struct wayland_surface *surface);
 BOOL wayland_client_surface_release(struct wayland_client_surface *client);
 void wayland_surface_ensure_contents(struct wayland_surface *surface);
+void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
 
 /**********************************************************************
  *          Wayland SHM buffer
@@ -329,6 +330,7 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset);
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 void WAYLAND_DestroyWindow(HWND hwnd);
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);
+void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text);
 LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
 BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param);

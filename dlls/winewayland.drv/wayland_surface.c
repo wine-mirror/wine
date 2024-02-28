@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -901,4 +902,30 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface)
     }
 
     if (damage) NtGdiDeleteObjectApp(damage);
+}
+
+/**********************************************************************
+ *          wayland_surface_set_title
+ */
+void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR text)
+{
+    DWORD text_len;
+    DWORD utf8_count;
+    char *utf8 = NULL;
+
+    assert(surface->xdg_toplevel);
+
+    TRACE("surface=%p hwnd=%p text='%s'\n",
+          surface, surface->hwnd, wine_dbgstr_w(text));
+
+    text_len = (lstrlenW(text) + 1) * sizeof(WCHAR);
+
+    if (!RtlUnicodeToUTF8N(NULL, 0, &utf8_count, text, text_len) &&
+        (utf8 = malloc(utf8_count)))
+    {
+        RtlUnicodeToUTF8N(utf8, utf8_count, &utf8_count, text, text_len);
+        xdg_toplevel_set_title(surface->xdg_toplevel, utf8);
+    }
+
+    free(utf8);
 }
