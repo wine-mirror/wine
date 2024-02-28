@@ -2778,6 +2778,28 @@ static void test_redirection(void)
     RegCloseKey( root32 );
     RegCloseKey( root64 );
 
+    err = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\WOW6432Node\\test1\\test2", 0, NULL, 0,
+                              KEY_WRITE | KEY_WOW64_32KEY, NULL, &key, NULL );
+    ok(!err, "got %#lx.\n", err);
+    RegCloseKey(key);
+
+    err = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\test1\\test2", 0, NULL, 0, KEY_WRITE | KEY_WOW64_32KEY,
+                              NULL, &key, NULL );
+    ok(!err, "got %#lx.\n", err);
+    RegCloseKey(key);
+
+    err = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software\\test1\\test2", 0, KEY_WRITE | KEY_WOW64_32KEY, &key );
+    ok(!err, "got %#lx.\n", err);
+    RegCloseKey(key);
+
+    if (pRegDeleteTreeA)
+    {
+        err = pRegDeleteTreeA(HKEY_LOCAL_MACHINE, "Software\\WOW6432Node\\test1");
+        ok(!err, "got %#lx.\n", err);
+        err = pRegDeleteTreeA(HKEY_LOCAL_MACHINE, "Software\\test1");
+        ok(err == ERROR_FILE_NOT_FOUND, "got %#lx.\n", err);
+    }
+
     /* Software\Classes is shared/reflected so behavior is different */
 
     err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Classes\\Wine",

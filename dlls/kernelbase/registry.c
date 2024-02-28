@@ -165,7 +165,7 @@ static HANDLE open_wow6432node( HANDLE key )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return key;
+    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED | KEY_WOW64_64KEY, &attr, 0 )) return key;
     return ret;
 }
 
@@ -211,7 +211,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
 static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access )
 {
     BOOL is_wow64_key = (is_win64 && (access & KEY_WOW64_32KEY)) || (is_wow64 && !(access & KEY_WOW64_64KEY));
-    ACCESS_MASK access_64 = access & ~KEY_WOW64_32KEY;
+    ACCESS_MASK access_64 = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
     DWORD i = 0, len = name->Length / sizeof(WCHAR);
     WCHAR *buffer = name->Buffer;
     UNICODE_STRING str;
