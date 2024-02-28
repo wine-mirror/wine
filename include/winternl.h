@@ -3866,14 +3866,6 @@ typedef struct _RTL_PROCESS_MODULE_INFORMATION_EX
 #define THREAD_CREATE_FLAGS_ACCESS_CHECK_IN_TARGET  0x00000020
 #define THREAD_CREATE_FLAGS_INITIAL_THREAD          0x00000080
 
-#define EH_NONCONTINUABLE   0x01
-#define EH_UNWINDING        0x02
-#define EH_EXIT_UNWIND      0x04
-#define EH_STACK_INVALID    0x08
-#define EH_NESTED_CALL      0x10
-#define EH_TARGET_UNWIND    0x20
-#define EH_COLLIDED_UNWIND  0x40
-
 #ifdef __WINESRC__
 
 /* Wine-specific exceptions codes */
