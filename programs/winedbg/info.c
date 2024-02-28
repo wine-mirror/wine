@@ -1095,7 +1095,7 @@ void info_win32_exception(void)
         dbg_printf("0x%08lx", rec->ExceptionCode);
         break;
     }
-    if (rec->ExceptionFlags & EH_STACK_INVALID)
+    if (rec->ExceptionFlags & EXCEPTION_STACK_INVALID)
         dbg_printf(", invalid program stack");
 
     switch (addr.Mode)

@@ -275,7 +275,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
     }
 
     if (first_chance && !is_debug && !DBG_IVAR(BreakOnFirstChance) &&
-	!(rec->ExceptionFlags & EH_STACK_INVALID))
+	!(rec->ExceptionFlags & EXCEPTION_STACK_INVALID))
     {
         /* pass exception to program except for debug exceptions */
         return DBG_EXCEPTION_NOT_HANDLED;
