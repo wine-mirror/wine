@@ -51,6 +51,7 @@
  *          Globals
  */
 
+extern char *process_name;
 extern struct wayland process_wayland;
 
 /**********************************************************************

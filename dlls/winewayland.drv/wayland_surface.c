@@ -253,6 +253,9 @@ void wayland_surface_make_toplevel(struct wayland_surface *surface)
     if (!surface->xdg_toplevel) goto err;
     xdg_toplevel_add_listener(surface->xdg_toplevel, &xdg_toplevel_listener, surface->hwnd);
 
+    if (process_name)
+        xdg_toplevel_set_app_id(surface->xdg_toplevel, process_name);
+
     wl_surface_commit(surface->wl_surface);
     wl_display_flush(process_wayland.wl_display);
 
