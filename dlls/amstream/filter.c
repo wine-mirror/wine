@@ -254,6 +254,8 @@ static ULONG WINAPI filter_Release(IMediaStreamFilter *iface)
         free(filter->streams);
         if (filter->clock)
             IReferenceClock_Release(filter->clock);
+        if (filter->cs.DebugInfo)
+            filter->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&filter->cs);
         free(filter);
     }
