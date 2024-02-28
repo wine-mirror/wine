@@ -1102,7 +1102,7 @@ HRESULT filter_create(IUnknown *outer, void **out)
     object->refcount = 1;
     list_init(&object->free_events);
     list_init(&object->used_events);
-    InitializeCriticalSection(&object->cs);
+    InitializeCriticalSectionEx(&object->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MediaStreamFilter.cs");
 
     TRACE("Created media stream filter %p.\n", object);
