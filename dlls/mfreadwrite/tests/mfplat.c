@@ -909,7 +909,7 @@ static void test_source_reader(const char *filename, bool video)
         hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IMFSourceReader_SetCurrentMediaType(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, mediatype);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         IMFMediaType_Release(mediatype);
 
         if (hr == S_OK)
@@ -922,7 +922,7 @@ static void test_source_reader(const char *filename, bool video)
             ok(IsEqualGUID(&subtype, &MFVideoFormat_RGB32), "Got subtype %s.\n", debugstr_guid(&subtype));
 
             hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_DEFAULT_STRIDE, &stride);
-            todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
             todo_wine ok(stride == 160 * 4, "Got stride %u.\n", stride);
 
             IMFMediaType_Release(mediatype);
@@ -1687,7 +1687,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     static const struct attribute_desc nv12_expect_advanced_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .todo_value = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
         ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
@@ -1721,7 +1721,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     static const struct attribute_desc yuy2_expect_advanced_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2, .todo_value = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
         ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
@@ -1738,7 +1738,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     static const struct attribute_desc rgb32_expect_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .todo_value = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 384, .todo = TRUE),
@@ -1746,14 +1746,23 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
         ATTR_UINT32(MF_MT_SAMPLE_SIZE, 36864, .todo = TRUE),
         {0},
     };
-    static const struct attribute_desc rgb32_expect_advanced_desc[] =
+    static const struct attribute_desc rgb32_expect_advanced_desc_todo1[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .todo_value = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
         ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
         ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo = TRUE),
+    };
+    static const struct attribute_desc rgb32_expect_advanced_desc_todo2[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo_value = TRUE),
     };
     IMFStreamDescriptor *video_stream;
     IMFSourceReaderEx *reader_ex;
@@ -1840,16 +1849,21 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     init_media_type(media_type, nv12_stream_type_desc, 2); /* doesn't need the frame size */
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     if (enable_advanced)
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     else
+    {
+        todo_wine_if(enable_processing) /* Wine enables advanced video processing in all cases */
         ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    }
     IMFMediaType_Release(media_type);
 
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (enable_advanced)
         check_media_type(media_type, nv12_expect_advanced_desc, -1);
-    else
+    else if (!enable_processing)
+        check_media_type(media_type, rgb32_stream_type_desc, -1);
+    else if  (!winetest_platform_is_wine) /* Wine enables advanced video processing in all cases */
         check_media_type(media_type, rgb32_stream_type_desc, -1);
     IMFMediaType_Release(media_type);
 
@@ -1858,7 +1872,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     if (!enable_advanced)
         ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -1912,7 +1926,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     init_media_type(media_type, rgb32_stream_type_desc, 2); /* doesn't need the frame size */
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     if (enable_processing || enable_advanced)
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     else
         ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(media_type);
@@ -1920,7 +1934,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (enable_advanced)
-        check_media_type(media_type, rgb32_expect_advanced_desc, -1);
+        check_media_type(media_type, rgb32_expect_advanced_desc_todo1, -1);
     else if (enable_processing)
         check_media_type(media_type, rgb32_expect_desc, -1);
     else
@@ -1932,7 +1946,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     if (!enable_advanced)
         ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -1954,19 +1968,22 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     init_media_type(media_type, yuy2_stream_type_desc, 2); /* doesn't need the frame size */
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     if (enable_advanced)
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     else
+    {
+        todo_wine_if(enable_processing) /* Wine enables advanced video processing in all cases */
         ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected hr %#lx.\n", hr);
+    }
     IMFMediaType_Release(media_type);
 
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (enable_advanced)
         check_media_type(media_type, yuy2_expect_advanced_desc, -1);
-    else if (enable_processing)
-        check_media_type(media_type, rgb32_expect_desc, -1);
-    else
+    else if (!enable_processing)
         check_media_type(media_type, nv12_stream_type_desc, -1);
+    else if  (!winetest_platform_is_wine) /* Wine enables advanced video processing in all cases */
+        check_media_type(media_type, rgb32_expect_desc, -1);
     IMFMediaType_Release(media_type);
 
     /* convert transform is only exposed with MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING */
@@ -1974,7 +1991,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     if (!enable_advanced)
         ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
@@ -2058,7 +2075,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     init_media_type(media_type, rgb32_stream_type_desc, 2); /* doesn't need the frame size */
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     if (enable_processing || enable_advanced)
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     else
         todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(media_type);
@@ -2066,11 +2083,11 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (enable_advanced)
-        check_media_type(media_type, rgb32_expect_advanced_desc, -1);
-    else if (enable_processing)
-        check_media_type(media_type, rgb32_expect_desc, -1);
-    else
+        check_media_type(media_type, rgb32_expect_advanced_desc_todo2, -1);
+    else if (!enable_processing)
         check_media_type(media_type, h264_stream_type_desc, -1);
+    else if  (!winetest_platform_is_wine) /* Wine enables advanced video processing in all cases */
+        check_media_type(media_type, rgb32_expect_desc, -1);
     IMFMediaType_Release(media_type);
 
     /* the exposed transform is the H264 decoder or the converter with MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING */
@@ -2078,7 +2095,7 @@ static void test_source_reader_transforms(BOOL enable_processing, BOOL enable_ad
     if (!enable_processing && !enable_advanced)
         ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
     else
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
         hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);

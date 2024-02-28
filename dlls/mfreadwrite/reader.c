@@ -76,6 +76,7 @@ struct transform_entry
     struct list entry;
     IMFTransform *transform;
     unsigned int min_buffer_size;
+    GUID category;
 };
 
 struct media_stream
@@ -84,6 +85,7 @@ struct media_stream
     IMFMediaType *current;
     struct list transforms;
     IMFVideoSampleAllocatorEx *allocator;
+    IMFTransform *transform_service;
     DWORD id;
     unsigned int index;
     enum media_stream_state state;
@@ -1767,6 +1769,11 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
     if (flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA)
         return S_OK;
 
+    if (stream->transform_service)
+    {
+        IMFTransform_Release(stream->transform_service);
+        stream->transform_service = NULL;
+    }
     LIST_FOR_EACH_ENTRY_SAFE(entry, next, &stream->transforms, struct transform_entry, entry)
     {
         list_remove(&entry->entry);
@@ -1859,7 +1866,23 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     return hr;
 }
 
-static HRESULT source_reader_create_transform(struct source_reader *reader,
+static BOOL source_reader_allow_video_processor(struct source_reader *reader, BOOL *advanced)
+{
+    UINT32 value;
+
+    *advanced = FALSE;
+    if (!reader->attributes)
+        return FALSE;
+
+    if (SUCCEEDED(IMFAttributes_GetUINT32(reader->attributes, &MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, &value)))
+        *advanced = value;
+    if (SUCCEEDED(IMFAttributes_GetUINT32(reader->attributes, &MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, &value)))
+        return value || *advanced;
+
+    return *advanced;
+}
+
+static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL decoder, BOOL allow_processor,
         IMFMediaType *input_type, IMFMediaType *output_type, struct transform_entry **out)
 {
     MFT_REGISTER_TYPE_INFO in_type, out_type;
@@ -1877,21 +1900,23 @@ static HRESULT source_reader_create_transform(struct source_reader *reader,
         return hr;
 
     if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Video))
-        category = MFT_CATEGORY_VIDEO_DECODER;
+        category = decoder ? MFT_CATEGORY_VIDEO_DECODER : MFT_CATEGORY_VIDEO_PROCESSOR;
     else if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
-        category = MFT_CATEGORY_AUDIO_DECODER;
+        category = decoder ? MFT_CATEGORY_AUDIO_DECODER : MFT_CATEGORY_AUDIO_EFFECT;
     else
         return MF_E_TOPO_CODEC_NOT_FOUND;
 
     if (!(entry = calloc(1, sizeof(*entry))))
         return E_OUTOFMEMORY;
+    list_init(&entry->entry);
+    entry->category = category;
 
     if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
         IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT,
                 &entry->min_buffer_size);
 
     count = 0;
-    if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, &out_type, NULL, &classes, &count)))
+    if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, allow_processor ? NULL : &out_type, NULL, &classes, &count)))
     {
         if (!count)
             return MF_E_TOPO_CODEC_NOT_FOUND;
@@ -1905,9 +1930,19 @@ static HRESULT source_reader_create_transform(struct source_reader *reader,
             if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
-                if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type)))
-                    hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
-                IMFMediaType_Release(media_type);
+                if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                        && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)) && allow_processor
+                        && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
+                {
+                    struct transform_entry *converter;
+
+                    if (SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, media_type, 0))
+                            && SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                            && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type, &converter)))
+                        list_add_tail(&entry->entry, &converter->entry);
+
+                    IMFMediaType_Release(media_type);
+                }
 
                 if (SUCCEEDED(hr))
                 {
@@ -1929,20 +1964,46 @@ static HRESULT source_reader_create_transform(struct source_reader *reader,
 
 static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
 {
+    BOOL enable_advanced, allow_processor;
     struct media_stream *stream = &reader->streams[index];
     IMFMediaType *input_type;
     unsigned int i = 0;
     HRESULT hr;
 
+    allow_processor = source_reader_allow_video_processor(reader, &enable_advanced);
+
     while (SUCCEEDED(hr = source_reader_get_native_media_type(reader, index, i++, &input_type)))
     {
         struct transform_entry *entry;
 
-        if (SUCCEEDED(hr = source_reader_create_transform(reader, input_type, output_type, &entry)))
+        /* first, try to append a single processor, then try again with a decoder and a processor */
+        if ((allow_processor && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, input_type, output_type, &entry)))
+                || SUCCEEDED(hr = source_reader_create_transform(reader, TRUE, allow_processor, input_type, output_type, &entry)))
         {
+            struct list *ptr = list_head(&entry->entry);
+            struct transform_entry *service = ptr ? LIST_ENTRY(ptr, struct transform_entry, entry) : entry;
             IMFMediaTypeHandler *type_handler;
 
-            list_add_tail(&stream->transforms, &entry->entry);
+            if (enable_advanced)
+            {
+                /* when advanced video processing is enabled, converters are exposed as stream transform service */
+                stream->transform_service = service->transform;
+                IMFTransform_AddRef(stream->transform_service);
+            }
+            else
+            {
+                /* when advanced video processing is disabled, only decoders are exposed as stream transform service */
+                if (IsEqualGUID(&entry->category, &MFT_CATEGORY_AUDIO_DECODER)
+                        || IsEqualGUID(&entry->category, &MFT_CATEGORY_VIDEO_DECODER))
+                {
+                    stream->transform_service = entry->transform;
+                    IMFTransform_AddRef(stream->transform_service);
+                }
+            }
+
+            /* move any additional transforms that have been created */
+            list_move_head(&stream->transforms, &entry->entry);
+            list_add_head(&stream->transforms, &entry->entry);
 
             if (SUCCEEDED(source_reader_get_source_type_handler(reader, index, &type_handler)))
             {
@@ -1951,7 +2012,7 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
                 IMFMediaTypeHandler_Release(type_handler);
             }
 
-            if (FAILED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &output_type)))
+            if (FAILED(hr = IMFTransform_GetOutputCurrentType(service->transform, 0, &output_type)))
                 WARN("Failed to get decoder output media type, hr %#lx\n", hr);
             else
             {
@@ -2265,18 +2326,8 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReaderEx *iface, D
 
             if (index >= reader->stream_count)
                 hr = MF_E_INVALIDSTREAMNUMBER;
-            else
-            {
-                struct list *ptr;
-
-                if ((ptr = list_tail(&stream->transforms)))
-                {
-                    struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
-                    obj = (IUnknown *)entry->transform;
-                }
-
-                if (!obj) hr = E_NOINTERFACE;
-            }
+            else if (!(obj = (IUnknown *)stream->transform_service))
+                hr = E_NOINTERFACE;
             break;
     }
 
