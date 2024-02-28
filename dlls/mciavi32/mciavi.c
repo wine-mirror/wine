@@ -83,7 +83,7 @@ static	DWORD	MCIAVI_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     if (!wma)
 	return 0;
 
-    InitializeCriticalSection(&wma->cs);
+    InitializeCriticalSectionEx(&wma->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     wma->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_MCIAVI.cs");
     wma->hStopEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wma->wDevID = modp->wDeviceID;
