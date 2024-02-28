@@ -5147,9 +5147,9 @@ void write_exceptions( FILE *file )
     fprintf( file, "{\n");
     fprintf( file, "    struct __exception_frame *exc_frame = (struct __exception_frame *)frame;\n");
     fprintf( file, "\n");
-    fprintf( file, "    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))\n");
+    fprintf( file, "    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_NESTED_CALL))\n");
     fprintf( file, "    {\n" );
-    fprintf( file, "        if (exc_frame->finally_level && (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))\n");
+    fprintf( file, "        if (exc_frame->finally_level && (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)))\n");
     fprintf( file, "        {\n" );
     fprintf( file, "            exc_frame->abnormal_termination = 1;\n");
     fprintf( file, "            exc_frame->finally( exc_frame );\n");
