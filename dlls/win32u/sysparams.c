@@ -6607,11 +6607,10 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
 NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
 {
     D3DKMT_OPENADAPTERFROMLUID open_adapter_from_luid;
-    static const ULONG max_adapters = 34;
+    struct gpu *gpu, *current_gpus[34];
     D3DKMT_CLOSEADAPTER close_adapter;
     NTSTATUS status = STATUS_SUCCESS;
-    ULONG idx = 0, count;
-    struct gpu *gpu;
+    UINT idx = 0, count = 0;
 
     TRACE( "(%p)\n", desc );
 
@@ -6619,18 +6618,22 @@ NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
 
     if (!desc->pAdapters)
     {
-        desc->NumAdapters = max_adapters;
+        desc->NumAdapters = ARRAY_SIZE(current_gpus);
         return STATUS_SUCCESS;
     }
 
     if (!lock_display_devices()) return STATUS_UNSUCCESSFUL;
-
-    if ((count = list_count( &gpus )) > max_adapters)
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
     {
-        WARN( "Too many adapters (%u), only up to %u can be enumerated.\n",
-              (unsigned int)count, (unsigned int)max_adapters );
-        count = max_adapters;
+        if (count >= ARRAY_SIZE(current_gpus))
+        {
+            WARN( "Too many adapters (%u), only up to %zu can be enumerated.\n",
+                  count, ARRAY_SIZE(current_gpus) );
+            break;
+        }
+        current_gpus[count++] = gpu_acquire( gpu );
     }
+    unlock_display_devices();
 
     if (count > desc->NumAdapters)
     {
@@ -6638,48 +6641,43 @@ NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc )
         goto done;
     }
 
-    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+    for (idx = 0; idx < count; idx++)
     {
-        if (gpu->luid.LowPart || gpu->luid.HighPart)
+        gpu = current_gpus[idx];
+        if (!gpu->luid.LowPart && !gpu->luid.HighPart)
         {
-            open_adapter_from_luid.AdapterLuid = gpu->luid;
-
-            /* give the GDI driver a chance to be notified about new adapter handle */
-            if (NT_SUCCESS( NtGdiDdDDIOpenAdapterFromLuid( &open_adapter_from_luid ) ))
-            {
-                desc->pAdapters[idx].hAdapter = open_adapter_from_luid.hAdapter;
-                desc->pAdapters[idx].AdapterLuid = gpu->luid;
-                desc->pAdapters[idx].NumOfSources = gpu->adapter_count;
-                desc->pAdapters[idx].bPrecisePresentRegionsPreferred = FALSE;
-                idx += 1;
-                continue;
-            }
-            else
-            {
-                ERR( "Failed to open adapter %u from LUID.\n", (unsigned int)idx );
-            }
+            ERR( "Adapter %u does not have a LUID.\n", idx );
+            status = STATUS_UNSUCCESSFUL;
+            break;
         }
-        else
+        open_adapter_from_luid.AdapterLuid = gpu->luid;
+
+        /* give the GDI driver a chance to be notified about new adapter handle */
+        if ((status = NtGdiDdDDIOpenAdapterFromLuid( &open_adapter_from_luid )))
         {
-            ERR( "Adapter %u does not have a LUID.\n", (unsigned int)idx );
+            ERR( "Failed to open adapter %u from LUID, status %#x.\n", idx, (UINT)status );
+            break;
         }
 
-        while (idx--)
+        desc->pAdapters[idx].hAdapter = open_adapter_from_luid.hAdapter;
+        desc->pAdapters[idx].AdapterLuid = gpu->luid;
+        desc->pAdapters[idx].NumOfSources = gpu->adapter_count;
+        desc->pAdapters[idx].bPrecisePresentRegionsPreferred = FALSE;
+    }
+
+    if (idx != count)
+    {
+        while (idx)
         {
-            close_adapter.hAdapter = desc->pAdapters[idx].hAdapter;
+            close_adapter.hAdapter = desc->pAdapters[--idx].hAdapter;
             NtGdiDdDDICloseAdapter( &close_adapter );
         }
 
         memset( desc->pAdapters, 0, desc->NumAdapters * sizeof(D3DKMT_ADAPTERINFO) );
-        status = STATUS_UNSUCCESSFUL;
-        break;
     }
+    desc->NumAdapters = idx;
 
 done:
-    if (status == STATUS_SUCCESS)
-        desc->NumAdapters = idx;
-
-    unlock_display_devices();
-
+    while (count) gpu_release( current_gpus[--count] );
     return status;
 }
