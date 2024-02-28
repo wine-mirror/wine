@@ -30,13 +30,6 @@
 #include "unixlib.h"
 #include "wine/asm.h"
 
-#define DECLARE_CRITICAL_SECTION(cs) \
-    static RTL_CRITICAL_SECTION cs; \
-    static RTL_CRITICAL_SECTION_DEBUG cs##_debug = \
-    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
-      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
-    static RTL_CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
-
 #define MAX_NT_PATH_LENGTH 277
 
 #define NTDLL_TLS_ERRNO 16  /* TLS slot for _errno() */
@@ -79,7 +72,7 @@ static inline BOOL is_valid_frame( ULONG_PTR frame )
 }
 
 extern void WINAPI LdrInitializeThunk(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR);
-extern NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
+extern void WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
 extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC);
 extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
 extern void WINAPI KiUserCallbackDispatcherReturn(void);
@@ -99,7 +92,6 @@ extern void init_user_process_params(void);
 extern void get_resource_lcids( LANGID *user, LANGID *user_neutral, LANGID *system );
 
 /* module handling */
-extern LIST_ENTRY tls_links;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user );
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
@@ -112,9 +104,6 @@ extern const WCHAR system_dir[];
 extern void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *);
 
 extern struct _KUSER_SHARED_DATA *user_shared_data;
-
-extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, va_list args );
-extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, va_list args );
 
 #ifdef _WIN64
 static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
