@@ -113,6 +113,7 @@ struct gpu
     char guid[39];
     LUID luid;
     UINT index;
+    GUID vulkan_uuid;
     UINT adapter_count;
 };
 
@@ -1059,13 +1060,20 @@ static BOOL read_gpu_from_registry( struct gpu *gpu )
         NtClose( subkey );
     }
 
+    if ((subkey = reg_open_ascii_key( hkey, devpropkey_gpu_vulkan_uuidA )))
+    {
+        if (query_reg_value( subkey, NULL, value, sizeof(buffer) ) == sizeof(GUID))
+            gpu->vulkan_uuid = *(const GUID *)value->Data;
+        NtClose( subkey );
+    }
+
     NtClose( hkey );
 
     return TRUE;
 }
 
 static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *pci,
-                                   const GUID *vulkan_uuid, ULONGLONG memory_size )
+                                   ULONGLONG memory_size )
 {
     const WCHAR *desc;
     char buffer[4096], *tmp;
@@ -1158,7 +1166,7 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     if ((subkey = reg_create_ascii_key( hkey, devpropkey_gpu_vulkan_uuidA, 0, NULL )))
     {
         set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_GUID,
-                       &vulkan_uuid, sizeof(vulkan_uuid) );
+                       &gpu->vulkan_uuid, sizeof(gpu->vulkan_uuid) );
         NtClose( subkey );
     }
 
@@ -1266,6 +1274,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     memset( &ctx->gpu, 0, sizeof(ctx->gpu) );
     ctx->gpu.index = ctx->gpu_count;
     lstrcpyW( ctx->gpu.name, gpu->name );
+    ctx->gpu.vulkan_uuid = gpu->vulkan_uuid;
 
     ctx->monitor_count = 0;
     ctx->mode_count = 0;
@@ -1311,7 +1320,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( &ctx->gpu, &pci_id, &gpu->vulkan_uuid, gpu->memory_size ))
+    if (!write_gpu_to_registry( &ctx->gpu, &pci_id, gpu->memory_size ))
         WARN( "Failed to write gpu to registry\n" );
     else
         ctx->gpu_count++;
