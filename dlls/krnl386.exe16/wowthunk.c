@@ -142,7 +142,7 @@ static BOOL fix_selector( CONTEXT *context )
 static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))
     {
         /* unwinding: restore the stack pointer in the TEB, and leave the Win16 mutex */
         STACK32FRAME *frame32 = CONTAINING_RECORD(frame, STACK32FRAME, frame);
