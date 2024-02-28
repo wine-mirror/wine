@@ -678,6 +678,54 @@ static HRESULT source_reader_allocate_stream_sample(MFT_OUTPUT_STREAM_INFO *info
     return hr;
 }
 
+static void media_type_try_copy_attr(IMFMediaType *dst, IMFMediaType *src, const GUID *attr, HRESULT *hr)
+{
+    PROPVARIANT value;
+
+    PropVariantInit(&value);
+    if (SUCCEEDED(*hr) && FAILED(IMFMediaType_GetItem(dst, attr, NULL))
+            && SUCCEEDED(IMFMediaType_GetItem(src, attr, &value)))
+        *hr = IMFMediaType_SetItem(dst, attr, &value);
+    PropVariantClear(&value);
+}
+
+/* update a media type with additional attributes reported by upstream element */
+/* also present in mf/topology_loader.c pipeline */
+static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMediaType *upstream_type)
+{
+    HRESULT hr = S_OK;
+
+    /* propagate common video attributes */
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_SIZE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_RATE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_DEFAULT_STRIDE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_ROTATION, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FIXED_SIZE_SAMPLES, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_PIXEL_ASPECT_RATIO, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, &hr);
+
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_CHROMA_SITING, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_INTERLACE_MODE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_TRANSFER_FUNCTION, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_PRIMARIES, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_YUV_MATRIX, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_LIGHTING, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_NOMINAL_RANGE, &hr);
+
+    /* propagate common audio attributes */
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_NUM_CHANNELS, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_CHANNEL_MASK, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &hr);
+    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &hr);
+
+    return hr;
+}
+
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry);
 static HRESULT source_reader_push_transform_samples(struct source_reader *reader, struct media_stream *stream,
@@ -1756,82 +1804,16 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     return hr;
 }
 
-static HRESULT source_reader_configure_decoder(struct source_reader *reader, DWORD index, const CLSID *clsid,
-        IMFMediaType *input_type, IMFMediaType *output_type)
-{
-    IMFMediaTypeHandler *type_handler;
-    unsigned int block_alignment = 0;
-    IMFTransform *transform = NULL;
-    IMFMediaType *type = NULL;
-    GUID major = { 0 };
-    DWORD flags;
-    HRESULT hr;
-    int i = 0;
-
-    if (FAILED(hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform)))
-    {
-        WARN("Failed to create transform object, hr %#lx.\n", hr);
-        return hr;
-    }
-
-    if (FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
-    {
-        WARN("Failed to set decoder input type, hr %#lx.\n", hr);
-        IMFTransform_Release(transform);
-        return hr;
-    }
-
-    /* Find the relevant output type. */
-    while (IMFTransform_GetOutputAvailableType(transform, 0, i++, &type) == S_OK)
-    {
-        flags = 0;
-
-        if (SUCCEEDED(IMFMediaType_IsEqual(type, output_type, &flags)))
-        {
-            if (flags & MF_MEDIATYPE_EQUAL_FORMAT_TYPES)
-            {
-                if (SUCCEEDED(IMFTransform_SetOutputType(transform, 0, type, 0)))
-                {
-                    if (SUCCEEDED(source_reader_get_source_type_handler(reader, index, &type_handler)))
-                    {
-                        IMFMediaTypeHandler_SetCurrentMediaType(type_handler, input_type);
-                        IMFMediaTypeHandler_Release(type_handler);
-                    }
-
-                    if (FAILED(hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *)reader->streams[index].current)))
-                        WARN("Failed to copy attributes, hr %#lx.\n", hr);
-                    if (SUCCEEDED(IMFMediaType_GetMajorType(type, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
-                        IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment);
-                    IMFMediaType_Release(type);
-
-                    if (reader->streams[index].decoder.transform)
-                        IMFTransform_Release(reader->streams[index].decoder.transform);
-
-                    reader->streams[index].decoder.transform = transform;
-                    reader->streams[index].decoder.min_buffer_size = block_alignment;
-
-                    return S_OK;
-                }
-            }
-        }
-
-        IMFMediaType_Release(type);
-    }
-
-    WARN("Failed to find suitable decoder output type.\n");
-
-    IMFTransform_Release(transform);
-
-    return MF_E_TOPO_CODEC_NOT_FOUND;
-}
-
 static HRESULT source_reader_create_transform(struct source_reader *reader, DWORD index,
         IMFMediaType *input_type, IMFMediaType *output_type)
 {
+    struct media_stream *stream = &reader->streams[index];
+    struct transform_entry *entry = &stream->decoder;
     MFT_REGISTER_TYPE_INFO in_type, out_type;
     GUID *classes, category;
+    IMFTransform *transform;
+    UINT i, count;
     HRESULT hr;
-    UINT count;
 
     if (FAILED(hr = IMFMediaType_GetMajorType(input_type, &in_type.guidMajorType))
             || FAILED(hr = IMFMediaType_GetGUID(input_type, &MF_MT_SUBTYPE, &in_type.guidSubtype)))
@@ -1847,13 +1829,39 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, DWOR
     else
         return MF_E_TOPO_CODEC_NOT_FOUND;
 
+    if (IsEqualGUID(&out_type.guidMajorType, &MFMediaType_Audio))
+        IMFMediaType_GetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT,
+                &entry->min_buffer_size);
+
     count = 0;
     if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, &out_type, NULL, &classes, &count)))
     {
         if (!count)
             return MF_E_TOPO_CODEC_NOT_FOUND;
-        /* TODO: Should we iterate over all of them? */
-        hr = source_reader_configure_decoder(reader, index, &classes[0], input_type, output_type);
+
+        for (i = 0; i < count; i++)
+        {
+            IMFMediaType *media_type;
+
+            if (FAILED(hr = CoCreateInstance(&classes[i], NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform)))
+                break;
+            if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
+                    && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
+            {
+                if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type)))
+                    hr = IMFTransform_SetOutputType(transform, 0, output_type, 0);
+                IMFMediaType_Release(media_type);
+
+                if (SUCCEEDED(hr))
+                {
+                    entry->transform = transform;
+                    return S_OK;
+                }
+            }
+
+            IMFTransform_Release(transform);
+        }
+
         CoTaskMemFree(classes);
     }
 
@@ -1862,6 +1870,7 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, DWOR
 
 static HRESULT source_reader_create_decoder_for_stream(struct source_reader *reader, DWORD index, IMFMediaType *output_type)
 {
+    struct media_stream *stream = &reader->streams[index];
     IMFMediaType *input_type;
     unsigned int i = 0;
     HRESULT hr;
@@ -1870,6 +1879,23 @@ static HRESULT source_reader_create_decoder_for_stream(struct source_reader *rea
     {
         if (SUCCEEDED(hr = source_reader_create_transform(reader, index, input_type, output_type)))
         {
+            IMFMediaTypeHandler *type_handler;
+
+            if (SUCCEEDED(source_reader_get_source_type_handler(reader, index, &type_handler)))
+            {
+                if (FAILED(hr = IMFMediaTypeHandler_SetCurrentMediaType(type_handler, input_type)))
+                    WARN("Failed to set current input media type, hr %#lx\n", hr);
+                IMFMediaTypeHandler_Release(type_handler);
+            }
+
+            if (FAILED(hr = IMFTransform_GetOutputCurrentType(stream->decoder.transform, 0, &output_type)))
+                WARN("Failed to get decoder output media type, hr %#lx\n", hr);
+            else
+            {
+                IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)stream->current);
+                IMFMediaType_Release(output_type);
+            }
+
             IMFMediaType_Release(input_type);
             return S_OK;
         }
