@@ -122,12 +122,6 @@ static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 
-#define HASH_STRING_ALGORITHM_DEFAULT  0
-#define HASH_STRING_ALGORITHM_X65599   1
-#define HASH_STRING_ALGORITHM_INVALID  0xffffffff
-
-NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
-
 /* convert from straight ASCII to Unicode without depending on the current codepage */
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {

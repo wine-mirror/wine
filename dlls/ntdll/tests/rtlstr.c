@@ -30,9 +30,6 @@
 #include "winnls.h"
 #include "guiddef.h"
 
-#define HASH_STRING_ALGORITHM_X65599   1
-#define HASH_STRING_ALGORITHM_INVALID  0xffffffff
-
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING, PCANSI_STRING, BOOLEAN);

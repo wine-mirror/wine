@@ -4331,6 +4331,11 @@ typedef struct _API_SET_VALUE_ENTRY
     ULONG ValueLength;
 } API_SET_VALUE_ENTRY;
 
+
+#define HASH_STRING_ALGORITHM_DEFAULT  0
+#define HASH_STRING_ALGORITHM_X65599   1
+#define HASH_STRING_ALGORITHM_INVALID  0xffffffff
+
 /***********************************************************************
  * Function declarations
  */
