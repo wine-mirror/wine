@@ -363,7 +363,7 @@ void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD cou
     EXCEPTION_RECORD record;
 
     record.ExceptionCode    = code;
-    record.ExceptionFlags   = flags & EH_NONCONTINUABLE;
+    record.ExceptionFlags   = flags & EXCEPTION_NONCONTINUABLE;
     record.ExceptionRecord  = NULL;
     record.ExceptionAddress = RaiseException;
     if (count && args)

@@ -209,7 +209,7 @@ FARPROC WINAPI DECLSPEC_HOTPATCH DelayLoadFailureHook( LPCSTR name, LPCSTR funct
         ERR( "failed to delay load %s.%u\n", name, LOWORD(function) );
     args[0] = (ULONG_PTR)name;
     args[1] = (ULONG_PTR)function;
-    RaiseException( EXCEPTION_WINE_STUB, EH_NONCONTINUABLE, 2, args );
+    RaiseException( EXCEPTION_WINE_STUB, EXCEPTION_NONCONTINUABLE, 2, args );
     return NULL;
 }
 
