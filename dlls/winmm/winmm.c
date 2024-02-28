@@ -1408,7 +1408,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
 	return ret;
     }
 
-    InitializeCriticalSection(&lpMidiStrm->lock);
+    InitializeCriticalSectionEx(&lpMidiStrm->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     lpMidiStrm->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM_MidiStream.lock");
 
     lpMidiStrm->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
