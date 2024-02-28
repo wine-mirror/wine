@@ -1094,7 +1094,7 @@ static void exception_ptr_rethrow(const exception_ptr *ep)
         return;
     }
 
-    RaiseException(ep->rec->ExceptionCode, ep->rec->ExceptionFlags & (~EH_UNWINDING),
+    RaiseException(ep->rec->ExceptionCode, ep->rec->ExceptionFlags & ~EXCEPTION_UNWINDING,
             ep->rec->NumberParameters, ep->rec->ExceptionInformation);
 }
 
@@ -1424,7 +1424,7 @@ void __cdecl __ExceptionPtrCopyException(exception_ptr *ep,
 
     memset(ep->rec, 0, sizeof(EXCEPTION_RECORD));
     ep->rec->ExceptionCode = CXX_EXCEPTION;
-    ep->rec->ExceptionFlags = EH_NONCONTINUABLE;
+    ep->rec->ExceptionFlags = EXCEPTION_NONCONTINUABLE;
     ep->rec->NumberParameters = 3;
     ep->rec->ExceptionInformation[0] = CXX_FRAME_MAGIC_VC6;
     ep->rec->ExceptionInformation[2] = (ULONG_PTR)type;
@@ -1462,7 +1462,7 @@ void __cdecl __ExceptionPtrCopyException(exception_ptr *ep,
 
     memset(ep->rec, 0, sizeof(EXCEPTION_RECORD));
     ep->rec->ExceptionCode = CXX_EXCEPTION;
-    ep->rec->ExceptionFlags = EH_NONCONTINUABLE;
+    ep->rec->ExceptionFlags = EXCEPTION_NONCONTINUABLE;
     ep->rec->NumberParameters = 4;
     ep->rec->ExceptionInformation[0] = CXX_FRAME_MAGIC_VC6;
     ep->rec->ExceptionInformation[2] = (ULONG_PTR)type;
