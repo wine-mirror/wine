@@ -1424,15 +1424,15 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
         }
         else if (ptr[i] < 0x40)  /* save_r19r20_x */
         {
-            printf( "stp r19,r20,[sp,-#%#x]!\n", 8 * (val & 0x1f) );
+            printf( "stp x19,x20,[sp,-#%#x]!\n", 8 * (val & 0x1f) );
         }
         else if (ptr[i] < 0x80) /* save_fplr */
         {
-            printf( "stp r29,lr,[sp,#%#x]\n", 8 * (val & 0x3f) );
+            printf( "stp x29,lr,[sp,#%#x]\n", 8 * (val & 0x3f) );
         }
         else if (ptr[i] < 0xc0)  /* save_fplr_x */
         {
-            printf( "stp r29,lr,[sp,-#%#x]!\n", 8 * (val & 0x3f) + 8 );
+            printf( "stp x29,lr,[sp,-#%#x]!\n", 8 * (val & 0x3f) + 8 );
         }
         else if (ptr[i] < 0xc8)  /* alloc_m */
         {
@@ -1441,27 +1441,27 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
         else if (ptr[i] < 0xcc)  /* save_regp */
         {
             int reg = 19 + ((val >> 6) & 0xf);
-            printf( "stp r%u,r%u,[sp,#%#x]\n", reg, reg + 1, 8 * (val & 0x3f) );
+            printf( "stp x%u,x%u,[sp,#%#x]\n", reg, reg + 1, 8 * (val & 0x3f) );
         }
         else if (ptr[i] < 0xd0)  /* save_regp_x */
         {
             int reg = 19 + ((val >> 6) & 0xf);
-            printf( "stp r%u,r%u,[sp,-#%#x]!\n", reg, reg + 1, 8 * (val & 0x3f) + 8 );
+            printf( "stp x%u,x%u,[sp,-#%#x]!\n", reg, reg + 1, 8 * (val & 0x3f) + 8 );
         }
         else if (ptr[i] < 0xd4)  /* save_reg */
         {
             int reg = 19 + ((val >> 6) & 0xf);
-            printf( "str r%u,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
+            printf( "str x%u,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
         }
         else if (ptr[i] < 0xd6)  /* save_reg_x */
         {
             int reg = 19 + ((val >> 5) & 0xf);
-            printf( "str r%u,[sp,-#%#x]!\n", reg, 8 * (val & 0x1f) + 8 );
+            printf( "str x%u,[sp,-#%#x]!\n", reg, 8 * (val & 0x1f) + 8 );
         }
         else if (ptr[i] < 0xd8)  /* save_lrpair */
         {
             int reg = 19 + 2 * ((val >> 6) & 0x7);
-            printf( "stp r%u,lr,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
+            printf( "stp x%u,lr,[sp,#%#x]\n", reg, 8 * (val & 0x3f) );
         }
         else if (ptr[i] < 0xda)  /* save_fregp */
         {
