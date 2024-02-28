@@ -1141,7 +1141,6 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     }
 
     get_log_fontW(font, graphics, &lfw);
-    GdipDeleteFont(font);
     GdipDeleteGraphics(graphics);
 
     hfont = CreateFontIndirectW(&lfw);
@@ -1150,6 +1149,7 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
         WARN("Failed to create font\n");
         DeleteDC(dc);
         GdipDeletePath(backup);
+        GdipDeleteFont(font);
         return GenericError;
     }
 
@@ -1161,11 +1161,12 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     args.maxY = 0;
     args.scale = emSize / native_height;
     args.ascent = textmetric.tmAscent * args.scale;
-    status = gdip_format_string(graphics, dc, string, length, NULL, &scaled_layout_rect,
+    status = gdip_format_string(graphics, dc, string, length, font, &scaled_layout_rect,
                                 format, TRUE, format_string_callback, &args);
 
     DeleteDC(dc);
     DeleteObject(hfont);
+    GdipDeleteFont(font);
 
     if (status != Ok) /* free backup */
     {
