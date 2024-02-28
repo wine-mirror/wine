@@ -100,7 +100,7 @@ DWORD __cdecl __wine_exception_handler( EXCEPTION_RECORD *record,
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
     EXCEPTION_POINTERS ptrs;
 
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_NESTED_CALL))
         return ExceptionContinueSearch;
 
     ptrs.ExceptionRecord = record;
@@ -125,7 +125,7 @@ DWORD __cdecl __wine_exception_ctx_handler( EXCEPTION_RECORD *record,
     __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
     EXCEPTION_POINTERS ptrs;
 
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_NESTED_CALL))
         return ExceptionContinueSearch;
 
     ptrs.ExceptionRecord = record;
@@ -147,7 +147,7 @@ DWORD __cdecl __wine_exception_handler_page_fault( EXCEPTION_RECORD *record,
                                                    CONTEXT *context,
                                                    EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_NESTED_CALL))
         return ExceptionContinueSearch;
     if (record->ExceptionCode != STATUS_ACCESS_VIOLATION)
         return ExceptionContinueSearch;
@@ -159,7 +159,7 @@ DWORD __cdecl __wine_exception_handler_all( EXCEPTION_RECORD *record,
                                             CONTEXT *context,
                                             EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND | EXCEPTION_NESTED_CALL))
         return ExceptionContinueSearch;
     unwind_frame( record, frame );
 }
@@ -169,7 +169,7 @@ DWORD __cdecl __wine_finally_handler( EXCEPTION_RECORD *record,
                                       CONTEXT *context,
                                       EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))
     {
         __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
         wine_frame->u.finally_func( FALSE );
@@ -182,7 +182,7 @@ DWORD __cdecl __wine_finally_ctx_handler( EXCEPTION_RECORD *record,
                                           CONTEXT *context,
                                           EXCEPTION_REGISTRATION_RECORD **pdispatcher )
 {
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    if (record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))
     {
         __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
         wine_frame->u.finally_func_ctx( FALSE, wine_frame->ctx );
