@@ -564,9 +564,9 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         }
     }
 
-    if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
+    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING|EXCEPTION_EXIT_UNWIND))
     {
-        if (rec->ExceptionFlags & EH_TARGET_UNWIND)
+        if (rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND)
             cxx_local_unwind(orig_frame, dispatch, descr,
                 cxx_is_consolidate(rec) ? rec->ExceptionInformation[3] : trylevel);
         else

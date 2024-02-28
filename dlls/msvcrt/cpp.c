@@ -1024,7 +1024,7 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
     args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
-    RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
+    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, 3, args );
 }
 #else
 void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
@@ -1035,7 +1035,7 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
     RtlPcToFileHeader( (void*)type, (void**)&args[3]);
-    RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 4, args );
+    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, 4, args );
 }
 #endif
 

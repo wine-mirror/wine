@@ -736,12 +736,12 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         TRACE("setting orig_frame to %Ix\n", orig_frame);
     }
 
-    if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
+    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING|EXCEPTION_EXIT_UNWIND))
     {
         int last_level = -1;
-        if ((rec->ExceptionFlags & EH_TARGET_UNWIND) && cxx_is_consolidate(rec))
+        if ((rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND) && cxx_is_consolidate(rec))
             last_level = rec->ExceptionInformation[3];
-        else if ((rec->ExceptionFlags & EH_TARGET_UNWIND) && rec->ExceptionCode == STATUS_LONGJUMP)
+        else if ((rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND) && rec->ExceptionCode == STATUS_LONGJUMP)
             last_level = ip_to_state4(rva_to_ptr(descr->ip_map, dispatch->ImageBase),
                     descr->ip_count, dispatch, dispatch->TargetIp);
 
