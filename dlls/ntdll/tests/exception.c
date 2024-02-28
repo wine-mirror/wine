@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -110,38 +111,6 @@ static void (WINAPI *pRtlGetUnloadEventTraceEx)(ULONG **element_size, ULONG **el
 #endif
 
 #if defined(__x86_64__)
-typedef struct _SETJMP_FLOAT128
-{
-    unsigned __int64 DECLSPEC_ALIGN(16) Part[2];
-} SETJMP_FLOAT128;
-
-typedef struct _JUMP_BUFFER
-{
-    unsigned __int64 Frame;
-    unsigned __int64 Rbx;
-    unsigned __int64 Rsp;
-    unsigned __int64 Rbp;
-    unsigned __int64 Rsi;
-    unsigned __int64 Rdi;
-    unsigned __int64 R12;
-    unsigned __int64 R13;
-    unsigned __int64 R14;
-    unsigned __int64 R15;
-    unsigned __int64 Rip;
-    unsigned long MxCsr;
-    unsigned short FpCsr;
-    unsigned short Spare;
-    SETJMP_FLOAT128  Xmm6;
-    SETJMP_FLOAT128  Xmm7;
-    SETJMP_FLOAT128  Xmm8;
-    SETJMP_FLOAT128  Xmm9;
-    SETJMP_FLOAT128  Xmm10;
-    SETJMP_FLOAT128  Xmm11;
-    SETJMP_FLOAT128  Xmm12;
-    SETJMP_FLOAT128  Xmm13;
-    SETJMP_FLOAT128  Xmm14;
-    SETJMP_FLOAT128  Xmm15;
-} _JUMP_BUFFER;
 
 typedef union _UNWIND_CODE
 {
@@ -173,12 +142,14 @@ typedef struct _UNWIND_INFO
  */
 } UNWIND_INFO;
 
+static BOOL is_arm64ec;
+
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
-static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
 static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
+static NTSTATUS  (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static int       (CDECL *p_setjmp)(_JUMP_BUFFER*);
 #endif
 
@@ -3745,34 +3716,53 @@ static void test_thread_context(void)
     memset( &expect, 0xcc, sizeof(expect) );
     func_ptr( &context, 0, &expect, pRtlCaptureContext );
 
-    ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT),
-        "wrong flags %08lx\n", context.ContextFlags );
-    COMPARE( Rax );
+    if (is_arm64ec)
+    {
+        ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT),
+            "wrong flags %08lx\n", context.ContextFlags );
+        ok( (context.EFlags & ~0xc5) == (expect.EFlags & ~0xc5), "wrong EFlags %lx / %I64x\n",
+            context.EFlags, expect.EFlags );
+        ok( context.SegCs == 0xcccc, "wrong SegCs %x\n", context.SegCs);
+        ok( context.SegDs == 0xcccc, "wrong SegDs %x\n", context.SegDs);
+        ok( context.SegEs == 0xcccc, "wrong SegEs %x\n", context.SegEs);
+        ok( context.SegFs == 0xcccc, "wrong SegFs %x\n", context.SegFs);
+        ok( context.SegGs == 0xcccc, "wrong SegGs %x\n", context.SegGs);
+        ok( context.SegSs == 0xcccc, "wrong SegSs %x\n", context.SegSs);
+    }
+    else
+    {
+        ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_FLOATING_POINT),
+            "wrong flags %08lx\n", context.ContextFlags );
+        COMPARE( Rax );
+        COMPARE( Rcx );
+        COMPARE( Rdx );
+        COMPARE( R8 );
+        COMPARE( R9 );
+        COMPARE( R10 );
+        COMPARE( R11 );
+        COMPARE( EFlags );
+        COMPARE( SegCs );
+        COMPARE( SegDs );
+        COMPARE( SegEs );
+        COMPARE( SegFs );
+        COMPARE( SegGs );
+        COMPARE( SegSs );
+        ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )),
+            "wrong FltSave\n" );
+    }
     COMPARE( Rbx );
-    COMPARE( Rcx );
-    COMPARE( Rdx );
     COMPARE( Rsi );
     COMPARE( Rdi );
-    COMPARE( R8 );
-    COMPARE( R9 );
-    COMPARE( R10 );
-    COMPARE( R11 );
     COMPARE( R12 );
     COMPARE( R13 );
     COMPARE( R14 );
     COMPARE( R15 );
     COMPARE( Rbp );
     COMPARE( Rsp );
-    COMPARE( EFlags );
     COMPARE( MxCsr );
-    COMPARE( SegCs );
-    COMPARE( SegDs );
-    COMPARE( SegEs );
-    COMPARE( SegFs );
-    COMPARE( SegGs );
-    COMPARE( SegSs );
-    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )),
-        "wrong FltSave\n" );
+    COMPARE( FltSave.MxCsr );
+    COMPARE( FltSave.ControlWord );
+    COMPARE( FltSave.StatusWord );
     for (i = 0; i < 16; i++)
         ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
             "wrong xmm%u\n", i );
@@ -3786,15 +3776,32 @@ static void test_thread_context(void)
 
     status = func_ptr( GetCurrentThread(), &context, &expect, pNtGetContextThread );
     ok( status == STATUS_SUCCESS, "NtGetContextThread failed %08lx\n", status );
-    /* other registers are not preserved */
-    COMPARE( Rbx );
-    COMPARE( Rsi );
-    COMPARE( Rdi );
-    COMPARE( R12 );
-    COMPARE( R13 );
-    COMPARE( R14 );
-    COMPARE( R15 );
-    COMPARE( Rbp );
+
+    if (is_arm64ec)
+    {
+        /* Rsp is the stack upon entry to the ARM64 NtGetContextThread syscall */
+        ok( context.Rsp <= expect.Rsp - sizeof(ARM64_NT_CONTEXT) && context.Rsp >= expect.Rsp - 0x1000,
+            "wrong Rsp %p/%p\n", (void *)context.Rsp, (void *)expect.Rsp );
+    }
+    else
+    {
+        /* other registers are not preserved */
+        COMPARE( Rbx );
+        COMPARE( Rsi );
+        COMPARE( Rdi );
+        COMPARE( R12 );
+        COMPARE( R13 );
+        COMPARE( R14 );
+        COMPARE( R15 );
+        COMPARE( Rbp );
+        /* Rsp is the stack upon entry to NtGetContextThread */
+        ok( context.Rsp == expect.Rsp - 8,
+            "wrong Rsp %p/%p\n", (void *)context.Rsp, (void *)expect.Rsp );
+        /* Rip is somewhere close to the NtGetContextThread implementation */
+        ok( (char *)context.Rip >= (char *)pNtGetContextThread - 0x40000 &&
+            (char *)context.Rip <= (char *)pNtGetContextThread + 0x40000,
+            "wrong Rip %p/%p\n", (void *)context.Rip, (void *)pNtGetContextThread );
+    }
     COMPARE( MxCsr );
     COMPARE( SegCs );
     COMPARE( SegDs );
@@ -3812,13 +3819,6 @@ static void test_thread_context(void)
     for (i = 6; i < 16; i++)
         ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
             "wrong xmm%u\n", i );
-    /* Rsp is the stack upon entry to NtGetContextThread */
-    ok( context.Rsp == expect.Rsp - 8,
-        "wrong Rsp %p/%p\n", (void *)context.Rsp, (void *)expect.Rsp );
-    /* Rip is somewhere close to the NtGetContextThread implementation */
-    ok( (char *)context.Rip >= (char *)pNtGetContextThread - 0x40000 &&
-        (char *)context.Rip <= (char *)pNtGetContextThread + 0x40000,
-        "wrong Rip %p/%p\n", (void *)context.Rip, (void *)pNtGetContextThread );
 #undef COMPARE
 }
 
@@ -10116,13 +10116,21 @@ START_TEST(exception)
 
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
     X(__C_specific_handler);
-    X(RtlCaptureContext);
     X(RtlRestoreContext);
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
     X(RtlWow64GetCpuAreaInfo);
+    X(RtlGetNativeSystemInformation);
 #undef X
     p_setjmp = (void *)GetProcAddress( hmsvcrt, "_setjmp" );
+
+    if (pRtlGetNativeSystemInformation)
+    {
+        SYSTEM_CPU_INFORMATION info;
+        ULONG len;
+        if (!pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len ))
+            is_arm64ec = (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+    }
 
     test_exceptions();
     test_rtlraiseexception();

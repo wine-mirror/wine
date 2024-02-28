@@ -1559,12 +1559,75 @@ BOOLEAN WINAPI RtlIsEcCode( const void *ptr )
 }
 
 
+/* capture context information; helper for RtlCaptureContext */
+static void __attribute__((used)) capture_context( CONTEXT *context, UINT cpsr, UINT fpcr, UINT fpsr )
+{
+    RUNTIME_FUNCTION *func;
+    void *handler_data;
+    ULONG_PTR pc, base, frame;
+    CONTEXT unwind_context;
+
+    context->ContextFlags = CONTEXT_AMD64_FULL;
+    context->EFlags = cpsr_to_eflags( cpsr );
+    context->MxCsr = fpcsr_to_mxcsr( fpcr, fpsr );
+    context->FltSave.ControlWord = 0x27f;
+    context->FltSave.StatusWord = 0;
+    context->FltSave.MxCsr = context->MxCsr;
+
+    /* unwind one level to get register values from caller function */
+    unwind_context = *context;
+    pc = context->Rip - 4;
+    func = RtlLookupFunctionEntry( pc, &base, NULL );
+    RtlVirtualUnwind( UNW_FLAG_NHANDLER, base, pc, func, &unwind_context, &handler_data, &frame, NULL );
+    memcpy( &context->Rax, &unwind_context.Rax, offsetof(CONTEXT,FltSave) - offsetof(CONTEXT,Rax) );
+}
+
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI RtlCaptureContext( CONTEXT *context )
+void __attribute__((naked)) RtlCaptureContext( CONTEXT *context )
 {
-    FIXME( "not implemented\n" );
+    asm( ".seh_proc RtlCaptureContext\n\t"
+         ".seh_endprologue\n\t"
+         "stp x8, x0,   [x0, #0x78]\n\t"    /* context->Rax,Rcx */
+         "stp x1, x27,  [x0, #0x88]\n\t"    /* context->Rdx,Rbx */
+         "mov x1, sp\n\t"
+         "stp x1, x29,  [x0, #0x98]\n\t"    /* context->Rsp,Rbp */
+         "stp x25, x26, [x0, #0xa8]\n\t"    /* context->Rsi,Rdi */
+         "stp x2, x3,   [x0, #0xb8]\n\t"    /* context->R8,R9 */
+         "stp x4, x5,   [x0, #0xc8]\n\t"    /* context->R10,R11 */
+         "stp x19, x20, [x0, #0xd8]\n\t"    /* context->R12,R13 */
+         "stp x21, x22, [x0, #0xe8]\n\t"    /* context->R14,R15 */
+         "str x30,      [x0, #0xf8]\n\t"    /* context->Rip */
+         "ubfx x1, x16, #0, #16\n\t"
+         "stp x30, x1,  [x0, #0x120]\n\t"   /* context->FloatRegisters[0] */
+         "ubfx x1, x16, #16, #16\n\t"
+         "stp x6, x1,   [x0, #0x130]\n\t"   /* context->FloatRegisters[1] */
+         "ubfx x1, x16, #32, #16\n\t"
+         "stp x7, x1,   [x0, #0x140]\n\t"   /* context->FloatRegisters[2] */
+         "ubfx x1, x16, #48, #16\n\t"
+         "stp x9, x1,   [x0, #0x150]\n\t"   /* context->FloatRegisters[3] */
+         "ubfx x1, x17, #0, #16\n\t"
+         "stp x10, x1,  [x0, #0x160]\n\t"   /* context->FloatRegisters[4] */
+         "ubfx x1, x17, #16, #16\n\t"
+         "stp x11, x1,  [x0, #0x170]\n\t"   /* context->FloatRegisters[5] */
+         "ubfx x1, x17, #32, #16\n\t"
+         "stp x12, x1,  [x0, #0x180]\n\t"   /* context->FloatRegisters[6] */
+         "ubfx x1, x17, #48, #16\n\t"
+         "stp x15, x1,  [x0, #0x190]\n\t"   /* context->FloatRegisters[7] */
+         "stp q0, q1,   [x0, #0x1a0]\n\t"   /* context->Xmm0,Xmm1 */
+         "stp q2, q3,   [x0, #0x1c0]\n\t"   /* context->Xmm2,Xmm3 */
+         "stp q4, q5,   [x0, #0x1e0]\n\t"   /* context->Xmm4,Xmm5 */
+         "stp q6, q7,   [x0, #0x200]\n\t"   /* context->Xmm6,Xmm7 */
+         "stp q8, q9,   [x0, #0x220]\n\t"   /* context->Xmm8,Xmm9 */
+         "stp q10, q11, [x0, #0x240]\n\t"   /* context->Xmm10,Xmm11 */
+         "stp q12, q13, [x0, #0x260]\n\t"   /* context->Xmm12,Xmm13 */
+         "stp q14, q15, [x0, #0x280]\n\t"   /* context->Xmm14,Xmm15 */
+         "mrs x1, nzcv\n\t"
+         "mrs x2, fpcr\n\t"
+         "mrs x3, fpsr\n\t"
+         "b capture_context\n\t"
+         ".seh_endproc" );
 }
 
 
