@@ -127,7 +127,7 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     EXCEPTION_RECORD record;
 
     record.ExceptionCode    = EXCEPTION_WINE_STUB;
-    record.ExceptionFlags   = EH_NONCONTINUABLE;
+    record.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
     record.ExceptionRecord  = NULL;
     record.ExceptionAddress = __wine_spec_unimplemented_stub;
     record.NumberParameters = 2;
@@ -1410,7 +1410,7 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
             break;
         case 0x29:  /* __fastfail */
             int_rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            int_rec.ExceptionFlags = EH_NONCONTINUABLE;
+            int_rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
             int_rec.NumberParameters = 1;
             int_rec.ExceptionInformation[0] = ctx32.i386.Ecx;
             first_chance = FALSE;
