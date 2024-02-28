@@ -267,7 +267,7 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 EXCEPTION_DISPOSITION WINAPI user_callback_handler( EXCEPTION_RECORD *record, void *frame,
                                                     CONTEXT *context, void *dispatch )
 {
-    if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+    if (!(record->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)))
     {
         ERR( "ignoring exception %lx\n", record->ExceptionCode );
         RtlUnwind( frame, KiUserCallbackDispatcherReturn, record, ULongToPtr(record->ExceptionCode) );
@@ -308,7 +308,7 @@ NTSTATUS WINAPI dispatch_user_callback( void *args, ULONG len, ULONG id )
 EXCEPTION_DISPOSITION WINAPI nested_exception_handler( EXCEPTION_RECORD *rec, void *frame,
                                                        CONTEXT *context, void *dispatch )
 {
-    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)) return ExceptionContinueSearch;
+    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND)) return ExceptionContinueSearch;
     return ExceptionNestedException;
 }
 
@@ -323,7 +323,7 @@ void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
     EXCEPTION_RECORD ExceptionRec;
 
     ExceptionRec.ExceptionCode    = status;
-    ExceptionRec.ExceptionFlags   = EH_NONCONTINUABLE;
+    ExceptionRec.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
     ExceptionRec.ExceptionRecord  = rec;
     ExceptionRec.NumberParameters = 0;
     for (;;) RtlRaiseException( &ExceptionRec );  /* never returns */
@@ -450,7 +450,7 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     EXCEPTION_RECORD record;
 
     record.ExceptionCode    = EXCEPTION_WINE_STUB;
-    record.ExceptionFlags   = EH_NONCONTINUABLE;
+    record.ExceptionFlags   = EXCEPTION_NONCONTINUABLE;
     record.ExceptionRecord  = NULL;
     record.ExceptionAddress = __wine_spec_unimplemented_stub;
     record.NumberParameters = 2;

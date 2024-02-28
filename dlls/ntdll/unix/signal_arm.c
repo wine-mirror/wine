@@ -838,7 +838,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         case 0xfb:  /* __fastfail */
         {
             rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            rec.ExceptionFlags = EH_NONCONTINUABLE;
+            rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
             rec.NumberParameters = 1;
             rec.ExceptionInformation[0] = ctx.R0;
             NtRaiseException( &rec, &ctx, FALSE );
@@ -991,7 +991,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EH_NONCONTINUABLE };
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EXCEPTION_NONCONTINUABLE };
 
     setup_exception( sigcontext, &rec );
 }

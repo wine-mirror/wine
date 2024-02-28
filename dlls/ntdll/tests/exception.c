@@ -106,10 +106,6 @@ typedef struct _RTL_UNLOAD_EVENT_TRACE
 static RTL_UNLOAD_EVENT_TRACE *(WINAPI *pRtlGetUnloadEventTrace)(void);
 static void (WINAPI *pRtlGetUnloadEventTraceEx)(ULONG **element_size, ULONG **element_count, void **event_trace);
 
-#ifndef EH_NESTED_CALL
-#define EH_NESTED_CALL 0x10
-#endif
-
 #if defined(__x86_64__)
 
 typedef union _UNWIND_CODE
@@ -2352,7 +2348,7 @@ static void test___C_specific_handler(void)
     }
 
     memset(&rec, 0, sizeof(rec));
-    rec.ExceptionFlags = 2; /* EH_UNWINDING */
+    rec.ExceptionFlags = 2; /* EXCEPTION_UNWINDING */
     frame = 0x1234;
     memset(&dispatch, 0, sizeof(dispatch));
     dispatch.ImageBase = (ULONG_PTR)GetModuleHandleA(NULL);
@@ -4794,7 +4790,7 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
             (void *)context->Rip, (void *)context->Rsp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
 
     if (rec->ExceptionCode == 0x80000003
-            && !(rec->ExceptionFlags & EH_NESTED_CALL))
+            && !(rec->ExceptionFlags & EXCEPTION_NESTED_CALL))
     {
         ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         ok((void *)context->Rsp == frame, "Got unexpected frame %p.\n", frame);
@@ -4807,8 +4803,8 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
         return ExceptionContinueExecution;
     }
 
-    if (rec->ExceptionCode == 0xdeadbeef && (rec->ExceptionFlags == EH_NESTED_CALL
-            || rec->ExceptionFlags == (EH_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
+    if (rec->ExceptionCode == 0xdeadbeef && (rec->ExceptionFlags == EXCEPTION_NESTED_CALL
+            || rec->ExceptionFlags == (EXCEPTION_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
     {
         ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         got_nested_exception = TRUE;
@@ -4866,7 +4862,7 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
             break;
         case 1:
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == EH_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == EXCEPTION_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)context->Rip == (char *)code_mem + 7, "got %p.\n", rec->ExceptionAddress);
             /* generate exception in unwind handler. */
             RaiseException(0xdeadbeef, 0, 0, 0);
@@ -4889,13 +4885,13 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         case 4:
             /* Collided unwind. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
             break;
         case 5:
-            /* EH_COLLIDED_UNWIND cleared for the following frames. */
+            /* EXCEPTION_COLLIDED_UNWIND cleared for the following frames. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame,
                     (char *)nested_exception_initial_frame + 8);
             break;
@@ -5819,7 +5815,7 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     trace("nested_exception_handler pc %p, sp %p, code %#lx, flags %#lx, ExceptionAddress %p.\n",
           (void *)context->Pc, (void *)context->Sp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
 
-    if (rec->ExceptionCode == 0x80000003 && !(rec->ExceptionFlags & EH_NESTED_CALL))
+    if (rec->ExceptionCode == 0x80000003 && !(rec->ExceptionFlags & EXCEPTION_NESTED_CALL))
     {
         ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         ok((char *)context->Sp == (char *)frame - 8, "Got unexpected frame %p / %p.\n", frame, (void *)context->Sp);
@@ -5833,8 +5829,8 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     }
 
     if (rec->ExceptionCode == 0xdeadbeef &&
-        (rec->ExceptionFlags == EH_NESTED_CALL ||
-         rec->ExceptionFlags == (EH_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
+        (rec->ExceptionFlags == EXCEPTION_NESTED_CALL ||
+         rec->ExceptionFlags == (EXCEPTION_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
     {
         ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         got_nested_exception = TRUE;
@@ -5894,7 +5890,7 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
             break;
         case 1:
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == EH_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == EXCEPTION_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)context->Pc == (char *)code_mem + 0x0b, "got %p.\n", (void *)context->Pc);
             /* generate exception in unwind handler. */
             RaiseException(0xdeadbeef, 0, 0, 0);
@@ -5917,13 +5913,13 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         case 4:
             /* Collided unwind. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
             break;
         case 5:
-            /* EH_COLLIDED_UNWIND cleared for the following frames. */
+            /* EXCEPTION_COLLIDED_UNWIND cleared for the following frames. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)frame == (char *)nested_exception_initial_frame + 8, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
             break;
     }
@@ -6774,7 +6770,7 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     trace("nested_exception_handler pc %p, sp %p, code %#lx, flags %#lx, ExceptionAddress %p.\n",
           (void *)context->Pc, (void *)context->Sp, rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress);
 
-    if (rec->ExceptionCode == 0x80000003 && !(rec->ExceptionFlags & EH_NESTED_CALL))
+    if (rec->ExceptionCode == 0x80000003 && !(rec->ExceptionFlags & EXCEPTION_NESTED_CALL))
     {
         ok(rec->NumberParameters == 1, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         ok((char *)context->Sp == (char *)frame - 0x10, "Got unexpected frame %p / %p.\n", frame, (void *)context->Sp);
@@ -6789,8 +6785,8 @@ static DWORD nested_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRAT
     }
 
     if (rec->ExceptionCode == 0xdeadbeef &&
-        (rec->ExceptionFlags == EH_NESTED_CALL ||
-         rec->ExceptionFlags == (EH_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
+        (rec->ExceptionFlags == EXCEPTION_NESTED_CALL ||
+         rec->ExceptionFlags == (EXCEPTION_NESTED_CALL | EXCEPTION_SOFTWARE_ORIGINATE)))
     {
         ok(!rec->NumberParameters, "Got unexpected rec->NumberParameters %lu.\n", rec->NumberParameters);
         got_nested_exception = TRUE;
@@ -6855,7 +6851,7 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
             break;
         case 1:
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == EH_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == EXCEPTION_UNWINDING, "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)context->Pc == (char *)code_mem + 0x1c, "got %p.\n", (void *)context->Pc);
             /* generate exception in unwind handler. */
             RaiseException(0xdeadbeef, 0, 0, 0);
@@ -6878,13 +6874,13 @@ static DWORD collided_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         case 4:
             /* Collided unwind. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_COLLIDED_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok(frame == nested_exception_initial_frame, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
             break;
         case 5:
-            /* EH_COLLIDED_UNWIND cleared for the following frames. */
+            /* EXCEPTION_COLLIDED_UNWIND cleared for the following frames. */
             ok(rec->ExceptionCode == STATUS_UNWIND, "got %#lx.\n", rec->ExceptionCode);
-            ok(rec->ExceptionFlags == (EH_UNWINDING | EH_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
+            ok(rec->ExceptionFlags == (EXCEPTION_UNWINDING | EXCEPTION_TARGET_UNWIND), "got %#lx.\n", rec->ExceptionFlags);
             ok((char *)frame == (char *)nested_exception_initial_frame + 0x10, "got %p, expected %p.\n", frame, nested_exception_initial_frame);
             break;
     }

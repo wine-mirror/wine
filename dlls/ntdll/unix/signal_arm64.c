@@ -1097,7 +1097,7 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             *(ULONG *)PC_sig( context ) == 0xd43e0060UL) /* brk #0xf003 -> __fastfail */
         {
             rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            rec.ExceptionFlags = EH_NONCONTINUABLE;
+            rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
             rec.NumberParameters = 1;
             rec.ExceptionInformation[0] = ctx.X[0];
             NtRaiseException( &rec, &ctx, FALSE );
@@ -1193,7 +1193,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EH_NONCONTINUABLE };
+    EXCEPTION_RECORD rec = { EXCEPTION_WINE_ASSERTION, EXCEPTION_NONCONTINUABLE };
 
     setup_exception( sigcontext, &rec );
 }
