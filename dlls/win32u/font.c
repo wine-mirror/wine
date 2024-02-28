@@ -4785,11 +4785,9 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pStrokeAndFillPath */
     NULL,                           /* pStrokePath */
     NULL,                           /* pUnrealizePalette */
-    NULL,                           /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                           /* pD3DKMTCloseAdapter */
     NULL,                           /* pD3DKMTOpenAdapterFromLuid */
     NULL,                           /* pD3DKMTQueryVideoMemoryInfo */
-    NULL,                           /* pD3DKMTSetVidPnSourceOwner */
     GDI_PRIORITY_FONT_DRV           /* priority */
 };
 

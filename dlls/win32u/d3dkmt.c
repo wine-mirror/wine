@@ -46,9 +46,18 @@ struct d3dkmt_device
     struct list entry;                  /* List entry */
 };
 
+struct d3dkmt_vidpn_source
+{
+    D3DKMT_VIDPNSOURCEOWNER_TYPE type;      /* VidPN source owner type */
+    D3DDDI_VIDEO_PRESENT_SOURCE_ID id;      /* VidPN present source id */
+    D3DKMT_HANDLE device;                   /* Kernel mode device context */
+    struct list entry;                      /* List entry */
+};
+
 static pthread_mutex_t d3dkmt_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct list d3dkmt_adapters = LIST_INIT( d3dkmt_adapters );
 static struct list d3dkmt_devices = LIST_INIT( d3dkmt_devices );
+static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /* VidPN source information list */
 
 /******************************************************************************
  *           NtGdiDdDDIOpenAdapterFromHdc    (win32u.@)
@@ -187,9 +196,8 @@ NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
 {
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
-    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc;
-    struct d3dkmt_device *device;
+    D3DKMT_SETVIDPNSOURCEOWNER set_owner_desc = {0};
+    struct d3dkmt_device *device, *found = NULL;
 
     TRACE( "(%p)\n", desc );
 
@@ -200,18 +208,19 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
     {
         if (device->handle == desc->hDevice)
         {
-            memset( &set_owner_desc, 0, sizeof(set_owner_desc) );
-            set_owner_desc.hDevice = desc->hDevice;
-            NtGdiDdDDISetVidPnSourceOwner( &set_owner_desc );
             list_remove( &device->entry );
-            free( device );
-            status = STATUS_SUCCESS;
+            found = device;
             break;
         }
     }
     pthread_mutex_unlock( &d3dkmt_lock );
 
-    return status;
+    if (!found) return STATUS_INVALID_PARAMETER;
+
+    set_owner_desc.hDevice = desc->hDevice;
+    NtGdiDdDDISetVidPnSourceOwner( &set_owner_desc );
+    free( found );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -275,18 +284,115 @@ NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
 {
-    TRACE( "(%p)\n", desc );
+    struct d3dkmt_vidpn_source *source, *source2;
+    BOOL found;
+    UINT i;
 
-    if (!get_display_driver()->pD3DKMTSetVidPnSourceOwner) return STATUS_PROCEDURE_NOT_FOUND;
+    TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hDevice || (desc->VidPnSourceCount && (!desc->pType || !desc->pVidPnSourceId)))
         return STATUS_INVALID_PARAMETER;
 
-    /* Store the VidPN source ownership info in the graphics driver because
-     * the graphics driver needs to change ownership sometimes. For example,
-     * when a new window is moved to a VidPN source with an exclusive owner,
-     * such an exclusive owner will be released before showing the new window */
-    return get_display_driver()->pD3DKMTSetVidPnSourceOwner( desc );
+    pthread_mutex_lock( &d3dkmt_lock );
+
+    /* Check parameters */
+    for (i = 0; i < desc->VidPnSourceCount; ++i)
+    {
+        LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->id == desc->pVidPnSourceId[i])
+            {
+                /* Same device */
+                if (source->device == desc->hDevice)
+                {
+                    if ((source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE &&
+                         (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_SHARED ||
+                          desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EMULATED)) ||
+                        (source->type == D3DKMT_VIDPNSOURCEOWNER_EMULATED &&
+                         desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE))
+                    {
+                        pthread_mutex_unlock( &d3dkmt_lock );
+                        return STATUS_INVALID_PARAMETER;
+                    }
+                }
+                /* Different devices */
+                else
+                {
+                    if ((source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE || source->type == D3DKMT_VIDPNSOURCEOWNER_EMULATED) &&
+                        (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE ||
+                         desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EMULATED))
+                    {
+                        pthread_mutex_unlock( &d3dkmt_lock );
+                        return STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE;
+                    }
+                }
+            }
+        }
+
+        /* On Windows, it seems that all video present sources are owned by DMM clients, so any attempt to set
+         * D3DKMT_VIDPNSOURCEOWNER_SHARED come back STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE */
+        if (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_SHARED)
+        {
+            pthread_mutex_unlock( &d3dkmt_lock );
+            return STATUS_GRAPHICS_VIDPN_SOURCE_IN_USE;
+        }
+
+        /* FIXME: D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVEGDI unsupported */
+        if (desc->pType[i] == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVEGDI || desc->pType[i] > D3DKMT_VIDPNSOURCEOWNER_EMULATED)
+        {
+            pthread_mutex_unlock( &d3dkmt_lock );
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
+
+    /* Remove owner */
+    if (!desc->VidPnSourceCount && !desc->pType && !desc->pVidPnSourceId)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE( source, source2, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->device == desc->hDevice)
+            {
+                list_remove( &source->entry );
+                free( source );
+            }
+        }
+
+        pthread_mutex_unlock( &d3dkmt_lock );
+        return STATUS_SUCCESS;
+    }
+
+    /* Add owner */
+    for (i = 0; i < desc->VidPnSourceCount; ++i)
+    {
+        found = FALSE;
+        LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+        {
+            if (source->device == desc->hDevice && source->id == desc->pVidPnSourceId[i])
+            {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (found) source->type = desc->pType[i];
+        else
+        {
+            source = malloc( sizeof(*source) );
+            if (!source)
+            {
+                pthread_mutex_unlock( &d3dkmt_lock );
+                return STATUS_NO_MEMORY;
+            }
+
+            source->id = desc->pVidPnSourceId[i];
+            source->type = desc->pType[i];
+            source->device = desc->hDevice;
+            list_add_tail( &d3dkmt_vidpn_sources, &source->entry );
+        }
+    }
+
+    pthread_mutex_unlock( &d3dkmt_lock );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -294,12 +400,23 @@ NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER 
  */
 NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc )
 {
-    TRACE( "(%p)\n", desc );
+    struct d3dkmt_vidpn_source *source;
 
-    if (!get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership)
-        return STATUS_PROCEDURE_NOT_FOUND;
+    TRACE( "(%p)\n", desc );
 
     if (!desc || !desc->hAdapter) return STATUS_INVALID_PARAMETER;
 
-    return get_display_driver()->pD3DKMTCheckVidPnExclusiveOwnership( desc );
+    pthread_mutex_lock( &d3dkmt_lock );
+
+    LIST_FOR_EACH_ENTRY( source, &d3dkmt_vidpn_sources, struct d3dkmt_vidpn_source, entry )
+    {
+        if (source->id == desc->VidPnSourceId && source->type == D3DKMT_VIDPNSOURCEOWNER_EXCLUSIVE)
+        {
+            pthread_mutex_unlock( &d3dkmt_lock );
+            return STATUS_GRAPHICS_PRESENT_OCCLUDED;
+        }
+    }
+
+    pthread_mutex_unlock( &d3dkmt_lock );
+    return STATUS_SUCCESS;
 }
