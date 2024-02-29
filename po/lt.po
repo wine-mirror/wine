@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-02-20 00:47+0200\n"
+"PO-Revision-Date: 2024-03-01 00:38+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10146,7 +10146,7 @@ msgstr "Valdymo skydelis"
 
 #: dlls/shell32/shell32.rc:161
 msgid "Ne&w"
-msgstr ""
+msgstr "Na&ujas"
 
 #: dlls/shell32/shell32.rc:163
 msgid "E&xplore"
