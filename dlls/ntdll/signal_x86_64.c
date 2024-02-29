@@ -463,7 +463,7 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
 /**************************************************************************
  *              RtlIsEcCode (NTDLL.@)
  */
-BOOLEAN WINAPI RtlIsEcCode( const void *ptr )
+BOOLEAN WINAPI RtlIsEcCode( ULONG_PTR ptr )
 {
     return FALSE;
 }

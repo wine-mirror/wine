@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 

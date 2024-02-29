@@ -1551,10 +1551,10 @@ __ASM_GLOBAL_FUNC( "#KiUserCallbackDispatcher",
 /**************************************************************************
  *              RtlIsEcCode (NTDLL.@)
  */
-BOOLEAN WINAPI RtlIsEcCode( const void *ptr )
+BOOLEAN WINAPI RtlIsEcCode( ULONG_PTR ptr )
 {
     const UINT64 *map = (const UINT64 *)NtCurrentTeb()->Peb->EcCodeBitMap;
-    ULONG_PTR page = (ULONG_PTR)ptr / page_size;
+    ULONG_PTR page = ptr / page_size;
     return (map[page / 64] >> (page & 63)) & 1;
 }
 
@@ -1709,7 +1709,7 @@ void *check_call( void **target, void *exit_thunk, void *dest )
     for (;;)
     {
         if (dest == __wine_unix_call_dispatcher) return dest;
-        if (RtlIsEcCode( dest )) return dest;
+        if (RtlIsEcCode( (ULONG_PTR)dest )) return dest;
         if (code_match( dest, jmp_sequence, sizeof(jmp_sequence) ))
         {
             int *off_ptr = (int *)((char *)dest + sizeof(jmp_sequence));

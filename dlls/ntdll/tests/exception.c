@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "rtlsupportapi.h"
 #include "ddk/wdm.h"
 #include "excpt.h"
 #include "wine/test.h"

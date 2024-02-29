@@ -134,8 +134,8 @@ BOOLEAN CDECL RtlInstallFunctionTableCallback( ULONG_PTR table, ULONG_PTR base, 
 /*************************************************************************
  *              RtlAddGrowableFunctionTable   (NTDLL.@)
  */
-DWORD WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functions, DWORD count,
-                                          DWORD max_count, ULONG_PTR base, ULONG_PTR end )
+NTSTATUS WINAPI RtlAddGrowableFunctionTable( void **table, RUNTIME_FUNCTION *functions, DWORD count,
+                                             DWORD max_count, ULONG_PTR base, ULONG_PTR end )
 {
     struct dynamic_unwind_entry *entry;
 
@@ -249,7 +249,7 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
     if (LdrFindEntryForAddress( (void *)pc, &module )) return NULL;
     *base = (ULONG_PTR)module->DllBase;
 #ifdef __arm64ec__
-    if (RtlIsEcCode( (void *)pc ))
+    if (RtlIsEcCode( pc ))
     {
         IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
         IMAGE_ARM64EC_METADATA *metadata;
@@ -772,12 +772,12 @@ static ARM64_RUNTIME_FUNCTION *find_function_info_arm64( ULONG_PTR pc, ULONG_PTR
 /**********************************************************************
  *              RtlVirtualUnwind   (NTDLL.@)
  */
-PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
-                               ARM64_RUNTIME_FUNCTION *func, ARM64_NT_CONTEXT *context,
-                               PVOID *handler_data, ULONG_PTR *frame_ret,
-                               KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ctx_ptr )
+PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
+                                            ARM64_RUNTIME_FUNCTION *func, ARM64_NT_CONTEXT *context,
+                                            PVOID *handler_data, ULONG_PTR *frame_ret,
+                                            KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ctx_ptr )
 {
-    void *handler;
+    PEXCEPTION_ROUTINE handler;
 
     TRACE( "type %lx pc %I64x sp %I64x\n", type, pc, context->Sp );
 
@@ -1370,12 +1370,12 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 /***********************************************************************
  *            RtlVirtualUnwind  (NTDLL.@)
  */
-PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
-                               RUNTIME_FUNCTION *func, CONTEXT *context,
-                               PVOID *handler_data, ULONG_PTR *frame_ret,
-                               KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
+                                            RUNTIME_FUNCTION *func, CONTEXT *context,
+                                            PVOID *handler_data, ULONG_PTR *frame_ret,
+                                            KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
 {
-    void *handler;
+    PEXCEPTION_ROUTINE handler;
 
     TRACE( "type %lx pc %Ix sp %lx\n", type, pc, context->Sp );
 
@@ -1810,10 +1810,10 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 /**********************************************************************
  *              RtlVirtualUnwind   (NTDLL.@)
  */
-PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
-                               RUNTIME_FUNCTION *function, CONTEXT *context,
-                               PVOID *data, ULONG64 *frame_ret,
-                               KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+PEXCEPTION_ROUTINE WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
+                                            RUNTIME_FUNCTION *function, CONTEXT *context,
+                                            PVOID *data, ULONG64 *frame_ret,
+                                            KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
 {
     union handler_data *handler_data;
     ULONG64 frame, off;
@@ -1822,11 +1822,11 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     BOOL mach_frame = FALSE;
 
 #ifdef __arm64ec__
-    if (RtlIsEcCode( (void *)pc ))
+    if (RtlIsEcCode( pc ))
     {
         DWORD flags = context->ContextFlags & ~CONTEXT_UNWOUND_TO_CALL;
         ARM64_NT_CONTEXT arm_context;
-        void *ret;
+        PEXCEPTION_ROUTINE ret;
 
         context_x64_to_arm( &arm_context, (ARM64EC_NT_CONTEXT *)context );
         ret = RtlVirtualUnwind_arm64( type, base, pc, (ARM64_RUNTIME_FUNCTION *)function,
@@ -1963,7 +1963,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     if (prolog_offset != ~0) return NULL;  /* inside prolog */
 
     *data = &handler_data->handler + 1;
-    return (char *)base + handler_data->handler;
+    return (PEXCEPTION_ROUTINE)((char *)base + handler_data->handler);
 }
 
 
@@ -1978,7 +1978,7 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
     ULONG size;
 
 #ifdef __arm64ec__
-    if (RtlIsEcCode( (void *)pc ))
+    if (RtlIsEcCode( pc ))
         return (RUNTIME_FUNCTION *)RtlLookupFunctionEntry_arm64( pc, base, table );
 #endif
 

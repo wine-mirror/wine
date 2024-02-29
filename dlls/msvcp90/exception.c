@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);

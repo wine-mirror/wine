@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "ntgdi.h"
 #include "ntuser.h"
+#include "rtlsupportapi.h"
 #include "wine/unixlib.h"
 #include "wine/asm.h"
 #include "win32syscalls.h"

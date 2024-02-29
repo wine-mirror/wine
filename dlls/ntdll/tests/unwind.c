@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wine/test.h"
 
 #ifndef __i386__

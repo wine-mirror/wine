@@ -28,7 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wownt16.h"
 #include "wownt32.h"
 #include "wine/winbase16.h"
