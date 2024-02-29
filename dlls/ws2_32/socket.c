@@ -1931,6 +1931,36 @@ int WINAPI getsockopt( SOCKET s, int level, int optname, char *optval, int *optl
             *optlen = 1;
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_NODELAY, optval, optlen );
 
+        case TCP_KEEPALIVE:
+            if (*optlen < sizeof(DWORD) || !optval)
+            {
+                *optlen = 0;
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            *optlen = sizeof(DWORD);
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_KEEPALIVE, optval, optlen );
+
+        case TCP_KEEPCNT:
+            if (*optlen < sizeof(DWORD) || !optval)
+            {
+                *optlen = 0;
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            *optlen = sizeof(DWORD);
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_KEEPCNT, optval, optlen );
+
+        case TCP_KEEPINTVL:
+            if (*optlen < sizeof(DWORD) || !optval)
+            {
+                *optlen = 0;
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            *optlen = sizeof(DWORD);
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_KEEPINTVL, optval, optlen );
+
         default:
             FIXME( "unrecognized TCP option %#x\n", optname );
             SetLastError( WSAENOPROTOOPT );
@@ -3325,6 +3355,12 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
         break; /* case NSPROTO_IPX */
 
     case IPPROTO_TCP:
+        if (optlen < 0)
+        {
+            SetLastError(WSAENOBUFS);
+            return SOCKET_ERROR;
+        }
+
         switch(optname)
         {
         case TCP_NODELAY:
@@ -3335,6 +3371,33 @@ int WINAPI setsockopt( SOCKET s, int level, int optname, const char *optval, int
             }
             value = *optval;
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_NODELAY, (char*)&value, sizeof(value) );
+
+        case TCP_KEEPALIVE:
+            if (optlen < sizeof(DWORD) || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            value = *(DWORD*)optval;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_KEEPALIVE, (char*)&value, sizeof(value) );
+
+        case TCP_KEEPCNT:
+            if (optlen < sizeof(DWORD) || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            value = *(DWORD*)optval;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_KEEPCNT, (char*)&value, sizeof(value) );
+
+        case TCP_KEEPINTVL:
+            if (optlen < sizeof(DWORD) || !optval)
+            {
+                SetLastError( WSAEFAULT );
+                return SOCKET_ERROR;
+            }
+            value = *(DWORD*)optval;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_KEEPINTVL, (char*)&value, sizeof(value) );
 
         default:
             FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);

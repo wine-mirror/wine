@@ -1193,7 +1193,7 @@ static void test_set_getsockopt(void)
         DWORD values[3];
         BOOL accepts_large_value;
         BOOL bool_value;
-        BOOL allow_noprotoopt; /* for old windows or wine todo */
+        BOOL allow_noprotoopt; /* for old windows only, must work on wine */
     }
     test_optsize[] =
     {
@@ -1211,9 +1211,9 @@ static void test_set_getsockopt(void)
         {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_SNDTIMEO, FALSE, {1, 2, 4}, {0}, TRUE},
         {AF_INET, SOCK_STREAM, SOL_SOCKET, SO_OPENTYPE, FALSE, {1, 2, 4}, {0}, TRUE},
         {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_NODELAY, TRUE, {1, 1, 1}, {0}, TRUE},
-        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPALIVE, FALSE, {0, 0, 4}, {0}, TRUE, FALSE, TRUE}, /* wine todo */
-        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPCNT, FALSE, {0, 0, 4}, {0}, FALSE, FALSE, TRUE}, /* win10+, wine todo*/
-        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPINTVL, FALSE, {0, 0, 4}, {0}, TRUE, FALSE, TRUE}, /* win10+, wine todo */
+        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPALIVE, FALSE, {0, 0, 4}, {0}, TRUE},
+        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPCNT, FALSE, {0, 0, 4}, {0}, FALSE, FALSE, TRUE}, /* win10+ */
+        {AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_KEEPINTVL, FALSE, {0, 0, 4}, {0}, TRUE, FALSE, TRUE}, /* win10+ */
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_LOOP, TRUE, {1, 1, 4}, {0}, TRUE, TRUE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_MULTICAST_TTL, TRUE, {1, 1, 4}, {0}, FALSE},
         {AF_INET, SOCK_DGRAM, IPPROTO_IP, IP_PKTINFO, FALSE, {0, 0, 4}, {0}, TRUE, TRUE},
@@ -1460,16 +1460,16 @@ static void test_set_getsockopt(void)
     size = sizeof(DWORD);
     value = 3600;
     err = setsockopt(s, IPPROTO_TCP, TCP_KEEPALIVE, (char*)&value, 4);
-    todo_wine ok(!err, "setsockopt TCP_KEEPALIVE failed\n");
+    ok(!err, "setsockopt TCP_KEEPALIVE failed\n");
     value = 0;
     err = getsockopt(s, IPPROTO_TCP, TCP_KEEPALIVE, (char*)&value, &size);
-    todo_wine ok(!err, "getsockopt TCP_KEEPALIVE failed\n");
-    todo_wine ok(value == 3600, "TCP_KEEPALIVE should be 3600, is %ld\n", value);
+    ok(!err, "getsockopt TCP_KEEPALIVE failed\n");
+    ok(value == 3600, "TCP_KEEPALIVE should be 3600, is %ld\n", value);
 
     /* TCP_KEEPCNT and TCP_KEEPINTVL are supported on win10 and later */
     value = 5;
     err = setsockopt(s, IPPROTO_TCP, TCP_KEEPCNT, (char*)&value, 4);
-    todo_wine ok(!err || broken(WSAGetLastError() == WSAENOPROTOOPT),
+    ok(!err || broken(WSAGetLastError() == WSAENOPROTOOPT),
         "setsockopt TCP_KEEPCNT failed: %d\n", WSAGetLastError());
 
     if (!err)
@@ -1551,7 +1551,7 @@ static void test_set_getsockopt(void)
 
         size = sizeof(save_value);
         err = getsockopt(s2, test_optsize[i].level, test_optsize[i].optname, (char*)&save_value, &size);
-        ok(!err || (test_optsize[i].allow_noprotoopt && WSAGetLastError() == WSAENOPROTOOPT),
+        ok(!err || broken(test_optsize[i].allow_noprotoopt && WSAGetLastError() == WSAENOPROTOOPT),
             "Unexpected getsockopt result %d.\n", err);
 
         if (err)

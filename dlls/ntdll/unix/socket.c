@@ -2507,6 +2507,34 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_SET_TCP_NODELAY:
             return do_setsockopt( handle, io, IPPROTO_TCP, TCP_NODELAY, in_buffer, in_size );
 
+#if defined(TCP_KEEPIDLE)
+        /* TCP_KEEPALIVE on Windows is often called TCP_KEEPIDLE on Unix */
+        case IOCTL_AFD_WINE_GET_TCP_KEEPALIVE:
+            return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPIDLE, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_TCP_KEEPALIVE:
+            return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPIDLE, in_buffer, in_size );
+#elif defined(TCP_KEEPALIVE)
+        /* Mac */
+        case IOCTL_AFD_WINE_GET_TCP_KEEPALIVE:
+            return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPALIVE, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_TCP_KEEPALIVE:
+            return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPALIVE, in_buffer, in_size );
+#endif
+
+        case IOCTL_AFD_WINE_GET_TCP_KEEPINTVL:
+            return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPINTVL, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_TCP_KEEPINTVL:
+            return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPINTVL, in_buffer, in_size );
+
+        case IOCTL_AFD_WINE_GET_TCP_KEEPCNT:
+            return do_getsockopt( handle, io, IPPROTO_TCP, TCP_KEEPCNT, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_TCP_KEEPCNT:
+            return do_setsockopt( handle, io, IPPROTO_TCP, TCP_KEEPCNT, in_buffer, in_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
