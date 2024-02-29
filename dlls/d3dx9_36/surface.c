@@ -1875,6 +1875,59 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
     }
 }
 
+static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, const RECT *rect,
+        const struct volume *size, const struct pixel_format_desc *desc, void **out_memory,
+        uint32_t *out_row_pitch, RECT *out_rect, const struct pixel_format_desc **out_desc)
+{
+    void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+    const struct pixel_format_desc *uncompressed_desc = NULL;
+    uint32_t x, y, tmp_pitch;
+    BYTE *uncompressed_mem;
+
+    switch (desc->format)
+    {
+        case D3DFMT_DXT1:
+            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            fetch_dxt_texel = fetch_2d_texel_rgba_dxt1;
+            break;
+        case D3DFMT_DXT2:
+        case D3DFMT_DXT3:
+            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            fetch_dxt_texel = fetch_2d_texel_rgba_dxt3;
+            break;
+        case D3DFMT_DXT4:
+        case D3DFMT_DXT5:
+            uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
+            fetch_dxt_texel = fetch_2d_texel_rgba_dxt5;
+            break;
+        default:
+            FIXME("Unexpected compressed texture format %u.\n", desc->format);
+            return E_NOTIMPL;
+    }
+
+    if (!(uncompressed_mem = malloc(size->width * size->height * size->depth * uncompressed_desc->bytes_per_pixel)))
+        return E_OUTOFMEMORY;
+
+    TRACE("Decompressing image.\n");
+    tmp_pitch = row_pitch * desc->block_width / desc->block_byte_count;
+    for (y = 0; y < size->height; ++y)
+    {
+        BYTE *ptr = &uncompressed_mem[y * size->width * uncompressed_desc->bytes_per_pixel];
+        for (x = 0; x < size->width; ++x)
+        {
+            fetch_dxt_texel(tmp_pitch, (BYTE *)memory, x + rect->left, y + rect->top, ptr);
+            ptr += uncompressed_desc->bytes_per_pixel;
+        }
+    }
+
+    *out_memory = uncompressed_mem;
+    *out_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
+    SetRect(out_rect, 0, 0, size->width, size->height);
+    *out_desc = uncompressed_desc;
+
+    return S_OK;
+}
+
 static void set_volume_struct(struct volume *volume, uint32_t width, uint32_t height, uint32_t depth)
 {
     volume->width = width;
@@ -1933,54 +1986,20 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
      */
     if (src_desc->type == FORMAT_DXT)
     {
-        void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
-        const struct pixel_format_desc *src_uncompressed_desc;
-        uint32_t x, y, src_uncompressed_row_pitch, tmp_pitch;
-        DWORD *src_uncompressed = NULL;
-        RECT src_uncompressed_rect;
+        const struct pixel_format_desc *uncompressed_desc;
+        uint32_t uncompressed_row_pitch;
+        void *uncompressed_mem = NULL;
+        RECT uncompressed_rect;
 
-        tmp_pitch = src_row_pitch * src_desc->block_width / src_desc->block_byte_count;
-
-        src_uncompressed = malloc(src_size.width * src_size.height * sizeof(DWORD));
-        if (!src_uncompressed)
-            return E_OUTOFMEMORY;
-
-        switch (src_desc->format)
+        hr = d3dx_image_decompress(src_memory, src_row_pitch, src_rect, &src_size, src_desc,
+                &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
+        if (SUCCEEDED(hr))
         {
-            case D3DFMT_DXT1:
-                fetch_dxt_texel = fetch_2d_texel_rgba_dxt1;
-                break;
-            case D3DFMT_DXT2:
-            case D3DFMT_DXT3:
-                fetch_dxt_texel = fetch_2d_texel_rgba_dxt3;
-                break;
-            case D3DFMT_DXT4:
-            case D3DFMT_DXT5:
-                fetch_dxt_texel = fetch_2d_texel_rgba_dxt5;
-                break;
-            default:
-                FIXME("Unexpected compressed texture format %u.\n", src_desc->format);
-                fetch_dxt_texel = NULL;
+            hr = d3dx_load_image_from_memory(dst_memory, dst_row_pitch, dst_desc, dst_palette, dst_rect, dst_rect_aligned,
+                    uncompressed_mem, uncompressed_row_pitch, uncompressed_desc, src_palette, &uncompressed_rect,
+                    filter_flags, color_key);
         }
-
-        TRACE("Uncompressing DXTn surface.\n");
-        for (y = 0; y < src_size.height; ++y)
-        {
-            DWORD *ptr = &src_uncompressed[y * src_size.width];
-            for (x = 0; x < src_size.width; ++x)
-            {
-                fetch_dxt_texel(tmp_pitch, src_memory, x + src_rect->left, y + src_rect->top, ptr);
-                ++ptr;
-            }
-        }
-
-        src_uncompressed_row_pitch = src_size.width * sizeof(DWORD);
-        src_uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
-        SetRect(&src_uncompressed_rect, 0, 0, src_size.width, src_size.height);
-        hr = d3dx_load_image_from_memory(dst_memory, dst_row_pitch, dst_desc, dst_palette, dst_rect, dst_rect_aligned,
-                src_uncompressed, src_uncompressed_row_pitch, src_uncompressed_desc, src_palette, &src_uncompressed_rect,
-                filter_flags, color_key);
-        free(src_uncompressed);
+        free(uncompressed_mem);
         return hr;
     }
 
