@@ -1876,8 +1876,8 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 }
 
 static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, const RECT *rect,
-        const struct volume *size, const struct pixel_format_desc *desc, void **out_memory,
-        uint32_t *out_row_pitch, RECT *out_rect, const struct pixel_format_desc **out_desc)
+        const RECT *unaligned_rect, const struct volume *size, const struct pixel_format_desc *desc,
+        void **out_memory, uint32_t *out_row_pitch, RECT *out_rect, const struct pixel_format_desc **out_desc)
 {
     void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
     const struct pixel_format_desc *uncompressed_desc = NULL;
@@ -1908,6 +1908,9 @@ static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, con
     if (!(uncompressed_mem = malloc(size->width * size->height * size->depth * uncompressed_desc->bytes_per_pixel)))
         return E_OUTOFMEMORY;
 
+    if (unaligned_rect && EqualRect(rect, unaligned_rect))
+        goto exit;
+
     TRACE("Decompressing image.\n");
     tmp_pitch = row_pitch * desc->block_width / desc->block_byte_count;
     for (y = 0; y < size->height; ++y)
@@ -1915,14 +1918,21 @@ static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, con
         BYTE *ptr = &uncompressed_mem[y * size->width * uncompressed_desc->bytes_per_pixel];
         for (x = 0; x < size->width; ++x)
         {
-            fetch_dxt_texel(tmp_pitch, (BYTE *)memory, x + rect->left, y + rect->top, ptr);
+            const POINT pt = { x, y };
+
+            if (!PtInRect(unaligned_rect, pt))
+                fetch_dxt_texel(tmp_pitch, (BYTE *)memory, x + rect->left, y + rect->top, ptr);
             ptr += uncompressed_desc->bytes_per_pixel;
         }
     }
 
+exit:
     *out_memory = uncompressed_mem;
     *out_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
-    SetRect(out_rect, 0, 0, size->width, size->height);
+    if (unaligned_rect)
+        *out_rect = *unaligned_rect;
+    else
+        SetRect(out_rect, 0, 0, size->width, size->height);
     *out_desc = uncompressed_desc;
 
     return S_OK;
@@ -1991,7 +2001,7 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
         void *uncompressed_mem = NULL;
         RECT uncompressed_rect;
 
-        hr = d3dx_image_decompress(src_memory, src_row_pitch, src_rect, &src_size, src_desc,
+        hr = d3dx_image_decompress(src_memory, src_row_pitch, src_rect, NULL, &src_size, src_desc,
                 &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
         if (SUCCEEDED(hr))
         {
@@ -2006,29 +2016,21 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
     /* Same as the above, need to decompress the destination prior to modifying. */
     if (dst_desc->type == FORMAT_DXT)
     {
-        size_t dst_uncompressed_size = dst_size_aligned.width * dst_size_aligned.height * sizeof(DWORD);
-        BOOL dst_misaligned = dst_rect->left != dst_rect_aligned->left
-                || dst_rect->top != dst_rect_aligned->top
-                || dst_rect->right != dst_rect_aligned->right
-                || dst_rect->bottom != dst_rect_aligned->bottom;
-        const struct pixel_format_desc *dst_uncompressed_desc;
-        BYTE *dst_uncompressed, *dst_uncompressed_aligned;
-        uint32_t dst_uncompressed_row_pitch;
-        RECT dst_uncompressed_rect;
+        const struct pixel_format_desc *uncompressed_desc;
+        uint32_t uncompressed_row_pitch;
+        void *uncompressed_mem = NULL;
+        BYTE *uncompressed_mem_offset;
+        RECT uncompressed_rect;
 
-        dst_uncompressed_aligned = malloc(dst_uncompressed_size);
-        if (!dst_uncompressed_aligned)
-            return E_OUTOFMEMORY;
+        hr = d3dx_image_decompress(dst_memory, dst_row_pitch, dst_rect_aligned, dst_rect, &dst_size_aligned, dst_desc,
+                &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
+        if (FAILED(hr))
+            return hr;
 
-        if (dst_misaligned) memset(dst_uncompressed_aligned, 0, dst_uncompressed_size);
-        dst_uncompressed_row_pitch = dst_size_aligned.width * sizeof(DWORD);
-        dst_uncompressed_desc = get_format_info(D3DFMT_A8B8G8R8);
-        dst_uncompressed = dst_uncompressed_aligned + (dst_rect->top - dst_rect_aligned->top) * dst_uncompressed_row_pitch
-                + (dst_rect->left - dst_rect_aligned->left) * sizeof(DWORD);
-
-        SetRect(&dst_uncompressed_rect, 0, 0, dst_size.width, dst_size.height);
-        hr = d3dx_load_image_from_memory(dst_uncompressed, dst_uncompressed_row_pitch, dst_uncompressed_desc, dst_palette,
-                &dst_uncompressed_rect, &dst_uncompressed_rect, src_memory_offset, src_row_pitch, src_desc, src_palette,
+        uncompressed_mem_offset = (BYTE *)uncompressed_mem + (dst_rect->top - dst_rect_aligned->top) * uncompressed_row_pitch
+                + (dst_rect->left - dst_rect_aligned->left) * uncompressed_desc->bytes_per_pixel;
+        hr = d3dx_load_image_from_memory(uncompressed_mem_offset, uncompressed_row_pitch, uncompressed_desc, dst_palette,
+                &uncompressed_rect, &uncompressed_rect, src_memory, src_row_pitch, src_desc, src_palette,
                 src_rect, filter_flags, color_key);
         if (SUCCEEDED(hr))
         {
@@ -2051,10 +2053,10 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
                 default:
                     ERR("Unexpected destination compressed format %u.\n", dst_desc->format);
             }
-            tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, dst_uncompressed_aligned, gl_format,
+            tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, uncompressed_mem, gl_format,
                     dst_memory, dst_row_pitch);
         }
-        free(dst_uncompressed_aligned);
+        free(uncompressed_mem);
         return hr;
     }
 

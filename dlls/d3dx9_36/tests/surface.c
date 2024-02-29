@@ -1651,14 +1651,14 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
             get_surface_decompressed_readback(device, newsurf, &surface_rb);
 
-            check_readback_pixel_4bpp(&surface_rb, 0, 0, 0xff0000ff, TRUE); /* Blue block, top left. */
+            check_readback_pixel_4bpp(&surface_rb, 0, 0, 0xff0000ff, FALSE); /* Blue block, top left. */
             check_readback_pixel_4bpp(&surface_rb, 3, 3, 0xff000000, FALSE); /* Blue block, bottom right. */
-            check_readback_pixel_4bpp(&surface_rb, 7, 0, 0xff00ff00, TRUE); /* Green block, top right. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 0, 0xff00ff00, FALSE); /* Green block, top right. */
             check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff000000, FALSE); /* Green block, bottom left. */
             check_readback_pixel_4bpp(&surface_rb, 3, 4, 0xff000000, FALSE); /* Red block, top right. */
-            check_readback_pixel_4bpp(&surface_rb, 0, 7, 0xffff0000, TRUE); /* Red block, bottom left. */
+            check_readback_pixel_4bpp(&surface_rb, 0, 7, 0xffff0000, FALSE); /* Red block, bottom left. */
             check_readback_pixel_4bpp(&surface_rb, 4, 4, 0xff000000, FALSE); /* Black block, top left. */
-            check_readback_pixel_4bpp(&surface_rb, 7, 7, 0xff000000, TRUE); /* Black block, bottom right. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 7, 0xff000000, FALSE); /* Black block, bottom right. */
 
             release_surface_readback(&surface_rb);
 
