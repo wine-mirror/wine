@@ -211,7 +211,7 @@ static HRESULT STDMETHODCALLTYPE builtin_factory_stub(IUnknown **effect_impl)
     return S_OK;
 }
 
-static const WCHAR * const _2d_affine_transform_description =
+static const WCHAR _2d_affine_transform_description[] =
 L"<?xml version='1.0'?>                                                      \
   <Effect>                                                                   \
     <Property name='DisplayName' type='string' value='2D Affine Transform'/> \
@@ -223,7 +223,7 @@ L"<?xml version='1.0'?>                                                      \
     </Inputs>                                                                \
   </Effect>";
 
-static const WCHAR * const _3d_perspective_transform_description =
+static const WCHAR _3d_perspective_transform_description[] =
 L"<?xml version='1.0'?>                                                           \
   <Effect>                                                                        \
     <Property name='DisplayName' type='string' value='3D Perspective Transform'/> \
@@ -235,7 +235,7 @@ L"<?xml version='1.0'?>                                                         
     </Inputs>                                                                     \
   </Effect>";
 
-static const WCHAR * const composite_description =
+static const WCHAR composite_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
     <Property name='DisplayName' type='string' value='Composite'/>        \
@@ -248,7 +248,7 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
-static const WCHAR * const crop_description =
+static const WCHAR crop_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
     <Property name='DisplayName' type='string' value='Crop'/>             \
@@ -260,7 +260,7 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
-static const WCHAR * const shadow_description =
+static const WCHAR shadow_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
     <Property name='DisplayName' type='string' value='Shadow'/>           \
@@ -272,7 +272,7 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
-static const WCHAR * const grayscale_description =
+static const WCHAR grayscale_description[] =
 L"<?xml version='1.0'?>                                                   \
   <Effect>                                                                \
     <Property name='DisplayName' type='string' value='Grayscale'/>        \
