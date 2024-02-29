@@ -1914,6 +1914,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 {
     const struct pixel_format_desc *srcformatdesc, *destformatdesc;
     struct volume src_size, dst_size, dst_size_aligned;
+    const BYTE *src_memory_offset = src_memory;
     RECT dst_rect_temp, dst_rect_aligned;
     IDirect3DSurface9 *surface;
     D3DSURFACE_DESC surfdesc;
@@ -2000,7 +2001,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lockrect, &surface, TRUE)))
         return hr;
 
-    src_memory = (BYTE *)src_memory + src_rect->top / srcformatdesc->block_height * src_pitch
+    src_memory_offset += src_rect->top / srcformatdesc->block_height * src_pitch
             + src_rect->left / srcformatdesc->block_width * srcformatdesc->block_byte_count;
 
     if (src_format == surfdesc.Format
@@ -2013,7 +2014,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
             && !(dst_rect->top & (destformatdesc->block_height - 1)))
     {
         TRACE("Simple copy.\n");
-        copy_pixels(src_memory, src_pitch, 0, lockrect.pBits, lockrect.Pitch, 0,
+        copy_pixels(src_memory_offset, src_pitch, 0, lockrect.pBits, lockrect.Pitch, 0,
                 &src_size, srcformatdesc);
     }
     else /* Stretching or format conversion. */
@@ -2075,7 +2076,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
                     ++ptr;
                 }
             }
-            src_memory = src_uncompressed;
+            src_memory_offset = (BYTE *)src_uncompressed;
             src_pitch = src_size.width * sizeof(DWORD);
             srcformatdesc = get_format_info(D3DFMT_A8B8G8R8);
         }
@@ -2110,7 +2111,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 
         if ((filter & 0xf) == D3DX_FILTER_NONE)
         {
-            convert_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
+            convert_argb_pixels(src_memory_offset, src_pitch, 0, &src_size, srcformatdesc,
                     dst_mem, dst_pitch, 0, &dst_size, dst_format, color_key, src_palette);
         }
         else /* if ((filter & 0xf) == D3DX_FILTER_POINT) */
@@ -2120,7 +2121,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
 
             /* Always apply a point filter until D3DX_FILTER_LINEAR,
              * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
-            point_filter_argb_pixels(src_memory, src_pitch, 0, &src_size, srcformatdesc,
+            point_filter_argb_pixels(src_memory_offset, src_pitch, 0, &src_size, srcformatdesc,
                     dst_mem, dst_pitch, 0, &dst_size, dst_format, color_key, src_palette);
         }
 
