@@ -606,6 +606,89 @@ void output_exports( DLLSPEC *spec )
 
 
 /*******************************************************************
+ *         output_load_config
+ *
+ * Output the load configuration structure.
+ */
+static void output_load_config(void)
+{
+    if (!is_pe()) return;
+
+    output( "\n/* load_config */\n\n" );
+    output( "\t%s\n", get_asm_rodata_section() );
+    output( "\t.globl %s\n", asm_name( "_load_config_used" ));
+    output( "\t.balign %u\n", get_ptr_size() );
+    output( "%s:\n", asm_name( "_load_config_used" ));
+    output( "\t.long %u\n", get_ptr_size() == 8 ? 0x140 : 0xc0 ); /* Size */
+    output( "\t.long 0\n" );                          /* TimeDateStamp */
+    output( "\t.short 0\n" );                         /* MajorVersion */
+    output( "\t.short 0\n" );                         /* MinorVersion */
+    output( "\t.long 0\n" );                          /* GlobalFlagsClear */
+    output( "\t.long 0\n" );                          /* GlobalFlagsSet */
+    output( "\t.long 0\n" );                          /* CriticalSectionDefaultTimeout */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* DeCommitFreeBlockThreshold */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* DeCommitTotalFreeThreshold */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* LockPrefixTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* MaximumAllocationSize */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* VirtualMemoryThreshold */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* ProcessAffinityMask */
+    output( "\t.long 0\n" );                          /* ProcessHeapFlags */
+    output( "\t.short 0\n" );                         /* CSDVersion */
+    output( "\t.short 0\n" );                         /* DependentLoadFlags */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* EditList */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* SecurityCookie */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* SEHandlerTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* SEHandlerCount */
+    if (target.cpu == CPU_ARM64EC)
+    {
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( "__guard_check_icall_fptr" ));
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( "__guard_dispatch_icall_fptr" ));
+    }
+    else
+    {
+        output( "\t%s 0\n", get_asm_ptr_keyword() );  /* GuardCFCheckFunctionPointer */
+        output( "\t%s 0\n", get_asm_ptr_keyword() );  /* GuardCFDispatchFunctionPointer */
+    }
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardCFFunctionTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardCFFunctionCount */
+    if (target.cpu == CPU_ARM64EC)
+        output( "\t.long %s\n", asm_name( "__guard_flags" ));
+    else
+        output( "\t.long 0\n" );                      /* GuardFlags */
+    output( "\t.short 0\n" );                         /* CodeIntegrity.Flags */
+    output( "\t.short 0\n" );                         /* CodeIntegrity.Catalog */
+    output( "\t.long  0\n" );                         /* CodeIntegrity.CatalogOffset */
+    output( "\t.long  0\n" );                         /* CodeIntegrity.Reserved */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardAddressTakenIatEntryTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardAddressTakenIatEntryCount */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardLongJumpTargetTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardLongJumpTargetCount */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* DynamicValueRelocTable */
+    if (target.cpu == CPU_ARM64EC)
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( "__chpe_metadata" ));
+     else
+        output( "\t%s  0\n", get_asm_ptr_keyword() ); /* CHPEMetadataPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardRFFailureRoutine */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardRFFailureRoutineFunctionPointer */
+    output( "\t.long  0\n" );                         /* DynamicValueRelocTableOffset */
+    output( "\t.short 0\n" );                         /* DynamicValueRelocTableSection */
+    output( "\t.short 0\n" );                         /* Reserved2 */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardRFVerifyStackPointerFunctionPointer */
+    output( "\t.long  0\n" );                         /* HotPatchTableOffset */
+    output( "\t.long  0\n" );                         /* Reserved3 */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* EnclaveConfigurationPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* VolatileMetadataPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardEHContinuationTable */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardEHContinuationCount */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardXFGCheckFunctionPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardXFGDispatchFunctionPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardXFGTableDispatchFunctionPointer */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* CastGuardOsDeterminedFailureMode */
+    output( "\t%s 0\n", get_asm_ptr_keyword() );      /* GuardMemcpyFunctionPointer */
+}
+
+
+/*******************************************************************
  *         output_module
  *
  * Output the module data.
@@ -744,6 +827,7 @@ void output_spec32_file( DLLSPEC *spec )
     output_exports( spec );
     output_imports( spec );
     if (needs_get_pc_thunk) output_get_pc_thunk();
+    output_load_config();
     output_resources( spec );
     output_gnu_stack_note();
     close_output_file();

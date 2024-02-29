@@ -102,26 +102,4 @@ asm( "\t.section .rdata,\"dr\"\n"
      "\t.rva __os_arm64x_helper7\n"
      "\t.rva __os_arm64x_helper8\n" );
 
-asm( "\t.section .rdata,\"dr\"\n"
-     "\t.globl _load_config_used\n"
-     "\t.balign 8\n"
-     "_load_config_used:\n"
-     "\t.word 0x140\n"
-     "\t.fill 0x54, 1, 0\n"
-     "\t.xword 0\n" /* FIXME: __security_cookie */
-     "\t.fill 0x10, 1, 0\n"
-     "\t.xword __guard_check_icall_fptr\n"
-     "\t.xword __guard_dispatch_icall_fptr\n"
-     "\t.xword __guard_fids_table\n"
-     "\t.xword __guard_fids_count\n"
-     "\t.xword __guard_flags\n"
-     "\t.xword 0\n"
-     "\t.xword __guard_iat_table\n"
-     "\t.xword __guard_iat_count\n"
-     "\t.xword __guard_longjmp_table\n"
-     "\t.xword __guard_longjmp_count\n"
-     "\t.xword 0\n"
-     "\t.xword __chpe_metadata\n"
-     "\t.fill 0x78, 1, 0\n" );
-
 #endif /* __arm64ec__ */
