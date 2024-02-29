@@ -313,6 +313,8 @@ typedef struct WS(in6_pktinfo) {
 #define TCP_OFFLOAD_PREFERENCE          11
 #define TCP_CONGESTION_ALGORITHM        12
 #define TCP_DELAY_FIN_ACK               13
+#define TCP_KEEPCNT                     16
+#define TCP_KEEPINTVL                   17
 #else
 /* WS_TCP_NODELAY is defined elsewhere */
 #define WS_TCP_EXPEDITED_1122           2
@@ -327,6 +329,8 @@ typedef struct WS(in6_pktinfo) {
 #define WS_TCP_OFFLOAD_PREFERENCE       11
 #define WS_TCP_CONGESTION_ALGORITHM     12
 #define WS_TCP_DELAY_FIN_ACK            13
+#define WS_TCP_KEEPCNT                  16
+#define WS_TCP_KEEPINTVL                17
 #endif /* USE_WS_PREFIX */
 
 #define PROTECTION_LEVEL_UNRESTRICTED   10
