@@ -1478,25 +1478,94 @@ if (0)
 
 static void test_newmenu(void)
 {
-    IUnknown *unk, *unk2;
+    CMINVOKECOMMANDINFO invoke_info = {.cbSize = sizeof(CMINVOKECOMMANDINFO)};
+    IObjectWithSite *ows;
+    WCHAR path[MAX_PATH];
+    IShellExtInit *init;
+    IContextMenu3 *menu;
+    MENUITEMINFOA info;
+    ITEMIDLIST *pidl;
+    IUnknown *unk;
+    HMENU hmenu;
     HRESULT hr;
+    ULONG ref;
+    int count;
+    BOOL ret;
+
+    hmenu = CreatePopupMenu();
 
     hr = CoCreateInstance(&CLSID_NewMenu, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Failed to create NewMenu object, hr %#lx.\n", hr);
-
-    hr = IUnknown_QueryInterface(unk, &IID_IShellExtInit, (void **)&unk2);
+    hr = IUnknown_QueryInterface(unk, &IID_IShellExtInit, (void **)&init);
     ok(hr == S_OK, "Failed to get IShellExtInit, hr %#lx.\n", hr);
-    IUnknown_Release(unk2);
-
-    hr = IUnknown_QueryInterface(unk, &IID_IContextMenu3, (void **)&unk2);
+    hr = IUnknown_QueryInterface(unk, &IID_IContextMenu3, (void **)&menu);
     ok(hr == S_OK, "Failed to get IContextMenu3, hr %#lx.\n", hr);
-    IUnknown_Release(unk2);
-
-    hr = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void **)&unk2);
+    hr = IUnknown_QueryInterface(unk, &IID_IObjectWithSite, (void **)&ows);
     ok(hr == S_OK, "Failed to get IObjectWithSite, hr %#lx.\n", hr);
-    IUnknown_Release(unk2);
 
-    IUnknown_Release(unk);
+    GetTempPathW(ARRAY_SIZE(path), path);
+    hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IShellExtInit_Initialize(init, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = IShellExtInit_Initialize(init, pidl, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IContextMenu3_QueryContextMenu(menu, hmenu, 0, 1, 1000, CMF_EXPLORE);
+    ok(hr == 0x40, "Got hr %#lx.\n", hr);
+
+    count = GetMenuItemCount(hmenu);
+    ok(count == 1, "Got count %d.\n", count);
+
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_ID | MIIM_FTYPE | MIIM_SUBMENU;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &info);
+    ok(ret == TRUE, "Got error %lu.\n", GetLastError());
+    ok(info.wID == 1, "Got ID %u.\n", info.wID);
+    ok(!info.fType, "Got type %#x.\n", info.fType);
+    ok(!!info.hSubMenu, "Got sub-menu %p.\n", info.hSubMenu);
+
+    invoke_info.lpVerb = (const char *)1234;
+    hr = IContextMenu3_InvokeCommand(menu, &invoke_info);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+    ILFree(pidl);
+    IObjectWithSite_Release(ows);
+    IContextMenu3_Release(menu);
+    IShellExtInit_Release(init);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got refcount %ld.\n", ref);
+
+    /* Test with a virtual folder that can't create new items. */
+
+    hmenu = CreatePopupMenu();
+
+    hr = CoCreateInstance(&CLSID_NewMenu, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Failed to create NewMenu object, hr %#lx.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IShellExtInit, (void **)&init);
+    ok(hr == S_OK, "Failed to get IShellExtInit, hr %#lx.\n", hr);
+    hr = IUnknown_QueryInterface(unk, &IID_IContextMenu3, (void **)&menu);
+    ok(hr == S_OK, "Failed to get IContextMenu3, hr %#lx.\n", hr);
+
+    hr = SHGetKnownFolderIDList(&FOLDERID_ComputerFolder, 0, NULL, &pidl);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IShellExtInit_Initialize(init, pidl, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IContextMenu3_QueryContextMenu(menu, hmenu, 0, 1, 1000, CMF_EXPLORE);
+    ok(hr == 0, "Got hr %#lx.\n", hr);
+
+    count = GetMenuItemCount(hmenu);
+    ok(!count, "Got count %d.\n", count);
+
+    ILFree(pidl);
+    IContextMenu3_Release(menu);
+    IShellExtInit_Release(init);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "Got refcount %ld.\n", ref);
 }
 
 static void test_folder_flags(void)
