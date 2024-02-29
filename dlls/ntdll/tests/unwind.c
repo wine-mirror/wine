@@ -46,6 +46,7 @@ static BOOLEAN   (CDECL  *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static DWORD     (WINAPI *pRtlAddGrowableFunctionTable)(void**, RUNTIME_FUNCTION*, DWORD, DWORD, ULONG_PTR, ULONG_PTR);
 static void      (WINAPI *pRtlGrowFunctionTable)(void*, DWORD);
 static void      (WINAPI *pRtlDeleteGrowableFunctionTable)(void*);
+static NTSTATUS  (WINAPI *pRtlVirtualUnwind2)(ULONG,ULONG_PTR,ULONG_PTR,RUNTIME_FUNCTION*,CONTEXT*,BOOLEAN*,void**,ULONG_PTR*,KNONVOLATILE_CONTEXT_POINTERS*,ULONG_PTR*,ULONG_PTR*,PEXCEPTION_ROUTINE*,ULONG);
 static NTSTATUS  (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE,PVOID*,SIZE_T*,ULONG,ULONG,MEM_EXTENDED_PARAMETER*,ULONG);
 
 #ifdef __arm__
@@ -125,8 +126,10 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
-    void *handler, *data;
+    void *data;
     CONTEXT context;
+    NTSTATUS status;
+    PEXCEPTION_ROUTINE handler;
     RUNTIME_FUNCTION runtime_func;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k;
@@ -163,11 +166,44 @@ static void call_virtual_unwind_arm( int testnum, const struct unwind_test_arm *
         trace( "%u/%u: pc=%p (%02x) fp=%p sp=%p\n", testnum, i,
                (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
 
+        if (test->results[i].handler == -2) orig_pc = context.Lr;
+
+        if (pRtlVirtualUnwind2)
+        {
+            CONTEXT new_context = context;
+
+            handler = (void *)0xdeadbeef;
+            data = (void *)0xdeadbeef;
+            frame = 0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_EHANDLER, (ULONG)code_mem, orig_pc,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, &data, &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+            if (test->results[i].handler > 0)
+            {
+                ok( !status, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( (char *)handler == (char *)code_mem + 0x200,
+                    "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
+                if (handler) ok( *(DWORD *)data == 0x08070605,
+                                 "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
+            }
+            else if (test->results[i].handler < -1)
+            {
+                ok( status == STATUS_BAD_FUNCTION_TABLE, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( handler == (void *)0xdeadbeef, "handler set to %p\n", handler );
+                ok( data == (void *)0xdeadbeef, "handler data set to %p\n", data );
+            }
+            else
+            {
+                ok( !status, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( handler == NULL, "handler %p instead of NULL\n", handler );
+                ok( data == NULL, "handler data set to %p\n", data );
+            }
+        }
+
         data = (void *)0xdeadbeef;
         frame = 0xdeadbeef;
-        if (test->results[i].handler == -2) orig_pc = context.Lr;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG)code_mem, orig_pc,
-                                    test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
+                                    test->unwind_info ? &runtime_func : NULL,
                                     &context, &data, &frame, &ctx_ptr );
         if (test->results[i].handler > 0)
         {
@@ -1558,15 +1594,17 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
-    void *handler, *data;
+    void *data;
 #ifdef __x86_64__
-    ARM64EC_NT_CONTEXT context;
+    ARM64EC_NT_CONTEXT context, new_context;
 #else
-    ARM64_NT_CONTEXT context;
+    ARM64_NT_CONTEXT context, new_context;
 #endif
+    PEXCEPTION_ROUTINE handler;
     ARM64_RUNTIME_FUNCTION runtime_func;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k;
+    NTSTATUS status;
     ULONG64 fake_stack[256];
     ULONG64 frame, orig_pc, orig_fp, unset_reg, sp_offset = 0, regval, *regptr;
     static const UINT nb_regs = ARRAY_SIZE(test->results[i].regs);
@@ -1604,9 +1642,42 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
 
         trace( "pc=%p (%02x) fp=%p sp=%p\n", (void *)orig_pc, *(UINT *)orig_pc, (void *)orig_fp, (void *)context.Sp );
 
+        if (test->results[i].handler == -2) orig_pc = context.Lr;
+
+        if (pRtlVirtualUnwind2)
+        {
+            new_context = context;
+            handler = (void *)0xdeadbeef;
+            data = (void *)0xdeadbeef;
+            frame = 0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_EHANDLER, (ULONG_PTR)code_mem, orig_pc,
+                                         test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
+                                         (CONTEXT *)&new_context, NULL, &data,
+                                         &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+            if (test->results[i].handler > 0)
+            {
+                ok( !status, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( (char *)handler == (char *)code_mem + 0x200,
+                    "wrong handler %p/%p\n", handler, (char *)code_mem + 0x200 );
+                if (handler) ok( *(DWORD *)data == 0x08070605,
+                                 "wrong handler data %lx\n", *(DWORD *)data );
+            }
+            else if (test->results[i].handler < -1)
+            {
+                ok( status == STATUS_BAD_FUNCTION_TABLE, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( handler == (void *)0xdeadbeef, "handler set to %p\n", handler );
+                ok( data == (void *)0xdeadbeef, "handler data set to %p\n", data );
+            }
+            else
+            {
+                ok( !status, "RtlVirtualUnwind2 failed %lx\n", status );
+                ok( handler == NULL, "handler %p instead of NULL\n", handler );
+                ok( data == NULL, "handler data set to %p\n", data );
+            }
+        }
+
         data = (void *)0xdeadbeef;
         frame = 0xdeadbeef;
-        if (test->results[i].handler == -2) orig_pc = context.Lr;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_pc,
                                     test->unwind_info ? (RUNTIME_FUNCTION *)&runtime_func : NULL,
                                     (CONTEXT *)&context, &data, &frame, &ctx_ptr );
@@ -2625,8 +2696,10 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
 {
     static const int code_offset = 1024;
     static const int unwind_offset = 2048;
-    void *handler, *data;
+    void *data;
+    NTSTATUS status;
     CONTEXT context;
+    PEXCEPTION_ROUTINE handler;
     RUNTIME_FUNCTION runtime_func;
     KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
     UINT i, j, k, broken_k;
@@ -2661,8 +2734,31 @@ static void call_virtual_unwind_x86( int testnum, const struct unwind_test_x86 *
         trace( "%u/%u: rip=%p (%02x) rbp=%p rsp=%p\n", testnum, i,
                (void *)orig_rip, *(BYTE *)orig_rip, (void *)orig_rbp, (void *)context.Rsp );
 
-        data = (void *)0xdeadbeef;
         if (!test->unwind_info) fake_stack[0] = 0x1234;
+        expected_handler = test->results[i].handler ? (char *)code_mem + 0x200 : NULL;
+        broken_handler = test->broken_results && test->broken_results[i].handler ? (char *)code_mem + 0x200 : NULL;
+
+        if (pRtlVirtualUnwind2)
+        {
+            CONTEXT new_context = context;
+
+            handler = (void *)0xdeadbeef;
+            data = (void *)0xdeadbeef;
+            status = pRtlVirtualUnwind2( UNW_FLAG_EHANDLER, (ULONG_PTR)code_mem, orig_rip,
+                                         test->unwind_info ? &runtime_func : NULL, &new_context,
+                                         NULL, &data, &frame, &ctx_ptr, NULL, NULL, &handler, 0 );
+            ok( !status, "RtlVirtualUnwind2 failed %lx\n", status );
+
+            ok( handler == expected_handler || broken( test->broken_results && handler == broken_handler ),
+                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, expected_handler );
+            if (handler)
+                ok( *(DWORD *)data == 0x08070605, "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
+            else
+                ok( data == (test->unwind_info ? (void *)0xdeadbeef : NULL),
+                    "%u/%u: handler data set to %p\n", testnum, i, data );
+        }
+
+        data = (void *)0xdeadbeef;
         handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
                                     test->unwind_info ? &runtime_func : NULL,
                                     &context, &data, &frame, &ctx_ptr );
@@ -3329,6 +3425,7 @@ START_TEST(unwind)
     X(RtlInstallFunctionTableCallback);
     X(RtlLookupFunctionEntry);
     X(RtlLookupFunctionTable);
+    X(RtlVirtualUnwind2);
 #undef X
 
 #ifdef __arm__

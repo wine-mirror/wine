@@ -155,10 +155,10 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     if (dispatch->ControlPcIsUnwound) pc -= 4;
 
     dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, &dispatch->ImageBase, dispatch->HistoryTable );
-    dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc, dispatch->FunctionEntry,
-                                                  context, &dispatch->HandlerData,
-                                                  &dispatch->EstablisherFrame, NULL );
-    if (!context->Pc)
+
+    if (RtlVirtualUnwind2( type, dispatch->ImageBase, pc, dispatch->FunctionEntry, context,
+                           NULL, &dispatch->HandlerData, &dispatch->EstablisherFrame,
+                           NULL, NULL, NULL, &dispatch->LanguageHandler, 0 ))
     {
         WARN( "exception data not found for pc %p, lr %p\n", (void *)pc, (void *)context->Lr );
         return STATUS_INVALID_DISPOSITION;
