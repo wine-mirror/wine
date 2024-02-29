@@ -944,16 +944,16 @@ static HRESULT HTMLFormElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid, 
     return S_OK;
 }
 
-static HRESULT HTMLFormElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
+static HRESULT HTMLFormElement_handle_event(DispatchEx *dispex, DOMEvent *event, BOOL *prevent_default)
 {
     HTMLFormElement *This = impl_from_DispatchEx(dispex);
 
-    if(eid == EVENTID_SUBMIT) {
+    if(event->event_id == EVENTID_SUBMIT) {
         *prevent_default = TRUE;
         return IHTMLFormElement_submit(&This->IHTMLFormElement_iface);
     }
 
-    return HTMLElement_handle_event(&This->element.node.event_target.dispex, eid, event, prevent_default);
+    return HTMLElement_handle_event(&This->element.node.event_target.dispex, event, prevent_default);
 }
 
 static const NodeImplVtbl HTMLFormElementImplVtbl = {

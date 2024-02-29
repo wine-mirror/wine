@@ -131,7 +131,7 @@ typedef struct {
     nsISupports *(*get_gecko_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,eventid_t);
     EventTarget *(*get_parent_event_target)(DispatchEx*);
-    HRESULT (*handle_event)(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
+    HRESULT (*handle_event)(DispatchEx*,DOMEvent*,BOOL*);
     ConnectionPointContainer *(*get_cp_container)(DispatchEx*);
     IHTMLEventObj *(*set_current_event)(DispatchEx*,IHTMLEventObj*);
 } event_target_vtbl_t;
@@ -141,7 +141,7 @@ IHTMLEventObj *default_set_current_event(HTMLInnerWindow*,IHTMLEventObj*);
 nsISupports *HTMLElement_get_gecko_target(DispatchEx*);
 void HTMLElement_bind_event(DispatchEx*,eventid_t);
 EventTarget *HTMLElement_get_parent_event_target(DispatchEx*);
-HRESULT HTMLElement_handle_event(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
+HRESULT HTMLElement_handle_event(DispatchEx*,DOMEvent*,BOOL*);
 ConnectionPointContainer *HTMLElement_get_cp_container(DispatchEx*);
 IHTMLEventObj *HTMLElement_set_current_event(DispatchEx*,IHTMLEventObj*);
 

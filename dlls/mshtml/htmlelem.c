@@ -7001,16 +7001,16 @@ void HTMLElement_bind_event(DispatchEx *dispex, eventid_t eid)
     ensure_doc_nsevent_handler(This->node.doc, This->node.nsnode, eid);
 }
 
-HRESULT HTMLElement_handle_event(DispatchEx *dispex, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
+HRESULT HTMLElement_handle_event(DispatchEx *dispex, DOMEvent *event, BOOL *prevent_default)
 {
     HTMLElement *This = impl_from_DispatchEx(dispex);
 
-    switch(eid) {
+    switch(event->event_id) {
     case EVENTID_KEYDOWN: {
         nsIDOMKeyEvent *key_event;
         nsresult nsres;
 
-        nsres = nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
+        nsres = nsIDOMEvent_QueryInterface(event->nsevent, &IID_nsIDOMKeyEvent, (void**)&key_event);
         if(NS_SUCCEEDED(nsres)) {
             UINT32 code = 0;
 
