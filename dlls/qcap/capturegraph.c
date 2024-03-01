@@ -62,7 +62,7 @@ HRESULT capture_graph_create(IUnknown *outer, IUnknown **out)
     object->ICaptureGraphBuilder_iface.lpVtbl = &builder_Vtbl;
     object->ref = 1;
     object->mygraph = NULL;
-    InitializeCriticalSection(&object->csFilter);
+    InitializeCriticalSectionEx(&object->csFilter, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CaptureGraphImpl.csFilter");
 
     TRACE("Created capture graph builder %p.\n", object);

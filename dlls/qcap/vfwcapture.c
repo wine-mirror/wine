@@ -904,7 +904,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 
     object->state = State_Stopped;
     InitializeConditionVariable(&object->state_cv);
-    InitializeCriticalSection(&object->state_cs);
+    InitializeCriticalSectionEx(&object->state_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": vfw_capture.state_cs");
 
     TRACE("Created VFW capture filter %p.\n", object);
