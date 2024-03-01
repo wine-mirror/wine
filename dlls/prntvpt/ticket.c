@@ -85,7 +85,14 @@ static const struct
     int paper;
 } psk_media[] =
 {
+    { L"psk:NorthAmericaLetter", DMPAPER_LETTER },
+    { L"psk:NorthAmericaLegal", DMPAPER_LEGAL },
+    { L"psk:NorthAmericaExecutive", DMPAPER_EXECUTIVE },
+    { L"psk:ISOA3", DMPAPER_A3 },
     { L"psk:ISOA4", DMPAPER_A4 },
+    { L"psk:ISOA5", DMPAPER_A5 },
+    { L"psk:JISB4", DMPAPER_B4 },
+    { L"psk:JISB5", DMPAPER_B5 },
 };
 
 static int media_to_paper(const WCHAR *name)
@@ -109,7 +116,7 @@ static const WCHAR *paper_to_media(int paper)
             return psk_media[i].name;
 
     FIXME("%d\n", paper);
-    return psk_media[0].name;
+    return NULL;
 }
 
 static BOOL is_valid_node_name(const WCHAR *name)
@@ -816,12 +823,52 @@ static HRESULT write_int_value(IXMLDOMElement *root, int value)
     if (hr != S_OK) return hr;
 
     hr = add_attribute(child, L"xsi:type", L"xsd:integer");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
+    IXMLDOMElement_Release(child);
+    return hr;
+}
+
+static HRESULT write_string_value(IXMLDOMElement *root, const WCHAR *value)
+{
+    HRESULT hr;
+    IXMLDOMElement *child;
+    VARIANT var;
+
+    hr = create_element(root, L"psf:Value", &child);
     if (hr != S_OK) return hr;
 
-    V_VT(&var) = VT_I4;
-    V_I4(&var) = value;
-    hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    hr = add_attribute(child, L"xsi:type", L"xsd:string");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = (BSTR)value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
+    IXMLDOMElement_Release(child);
+    return hr;
+}
 
+static HRESULT write_qname_value(IXMLDOMElement *root, const WCHAR *value)
+{
+    HRESULT hr;
+    IXMLDOMElement *child;
+    VARIANT var;
+
+    hr = create_element(root, L"psf:Value", &child);
+    if (hr != S_OK) return hr;
+
+    hr = add_attribute(child, L"xsi:type", L"xsd:QName");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = (BSTR)value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
     IXMLDOMElement_Release(child);
     return hr;
 }
@@ -889,15 +936,29 @@ static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IX
     return add_attribute(*child, L"name", name);
 }
 
+static HRESULT create_Property(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:Property", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
 static HRESULT write_PageMediaSize(IXMLDOMElement *root, const struct ticket *ticket)
 {
     IXMLDOMElement *feature, *option = NULL, *property;
+    const WCHAR *media;
     HRESULT hr;
+
+    media = paper_to_media(ticket->page.media.paper);
+    if (!media) return E_FAIL;
 
     hr = create_Feature(root, L"psk:PageMediaSize", &feature);
     if (hr != S_OK) return hr;
 
-    hr = create_Option(feature, paper_to_media(ticket->page.media.paper), &option);
+    hr = create_Option(feature, media, &option);
     if (hr != S_OK) goto fail;
 
     hr = create_ScoredProperty(option, L"psk:MediaSizeWidth", &property);
@@ -1333,36 +1394,106 @@ HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base
 
 static HRESULT write_PageMediaSize_caps(const WCHAR *device, IXMLDOMElement *root)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
     int count, i;
     POINT *pt;
-    IXMLDOMElement *feature = NULL;
-
-    FIXME("stub\n");
+    WORD *papers = NULL;
+    WCHAR *paper_names = NULL;
+    IXMLDOMElement *feature = NULL, *property;
 
     count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, NULL, NULL);
     if (count <= 0)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    pt = calloc(count, sizeof(*pt));
-    if (!pt) return E_OUTOFMEMORY;
-
-    count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, (LPWSTR)pt, NULL);
-    if (count <= 0)
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERS, NULL, NULL) != count)
     {
-        hr = HRESULT_FROM_WIN32(GetLastError());
+        FIXME("Count of DC_PAPERS doesn't match count of DC_PAPERSIZE\n");
+        return E_FAIL;
+    }
+
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERNAMES, NULL, NULL) != count)
+    {
+        FIXME("Count of DC_PAPERNAMES doesn't match count of DC_PAPERSIZE\n");
+        return E_FAIL;
+    }
+
+    hr = E_OUTOFMEMORY;
+    pt = calloc(count, sizeof(*pt));
+    if (!pt) goto fail;
+    papers = calloc(count, sizeof(*papers));
+    if (!papers) goto fail;
+    paper_names = calloc(count, sizeof(WCHAR) * 64);
+    if (!paper_names) goto fail;
+
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, (LPWSTR)pt, NULL) != count)
+    {
+        hr = E_FAIL;
+        goto fail;
+    }
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERS, (LPWSTR)papers, NULL) != count)
+    {
+        hr = E_FAIL;
+        goto fail;
+    }
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERNAMES, (LPWSTR)paper_names, NULL) != count)
+    {
+        hr = E_FAIL;
         goto fail;
     }
 
     hr = create_Feature(root, L"psk:PageMediaSize", &feature);
     if (hr != S_OK) goto fail;
 
+    hr = create_Property(feature, L"psk:SelectionType", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_qname_value(property, L"psk:PickOne");
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
+    hr = create_Property(feature, L"psk:DisplayName", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_string_value(property, L"PageSize");
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
     for (i = 0; i < count; i++)
     {
+        const WCHAR *media;
+        IXMLDOMElement *option;
+
+        media = paper_to_media(papers[i]);
+        if (!media) continue;
+
+        hr = create_Option(feature, media, &option);
+        if (hr != S_OK) goto fail;
+
+        hr = create_Property(option, L"psk:DisplayName", &property);
+        if (hr == S_OK)
+        {
+            write_string_value(property, paper_names + i * 64);
+            IXMLDOMElement_Release(property);
+        }
+
+        hr = create_ScoredProperty(option, L"psk:MediaSizeWidth", &property);
+        if (hr == S_OK)
+        {
+            write_int_value(property, pt[i].x * 100);
+            IXMLDOMElement_Release(property);
+        }
+        hr = create_ScoredProperty(option, L"psk:MediaSizeHeight", &property);
+        if (hr == S_OK)
+        {
+            write_int_value(property, pt[i].y * 100);
+            IXMLDOMElement_Release(property);
+        }
+
+        IXMLDOMElement_Release(option);
     }
 
 fail:
     if (feature) IXMLDOMElement_Release(feature);
+    free(paper_names);
+    free(papers);
     free(pt);
     return hr;
 }
