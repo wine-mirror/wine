@@ -1794,9 +1794,33 @@ void __attribute__((naked)) __chkstk_arm64ec(void)
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI RtlRaiseException( struct _EXCEPTION_RECORD * rec)
+void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
 {
-    FIXME( "not implemented\n" );
+    asm( ".seh_proc RtlRaiseException\n\t"
+         "sub sp, sp, #0x4d0\n\t"     /* sizeof(context) */
+         ".seh_stackalloc 0x4d0\n\t"
+         "stp x29, x30, [sp, #-0x20]!\n\t"
+         ".seh_save_fplr_x 0x20\n\t"
+         "str x0, [sp, #0x10]\n\t"
+         ".seh_save_any_reg x0, 0x10\n\t"
+         ".seh_endprologue\n\t"
+         "add x0, sp, #0x20\n\t"
+         "bl RtlCaptureContext\n\t"
+         "add x1, sp, #0x20\n\t"       /* context pointer */
+         "ldr x0, [sp, #0x10]\n\t"     /* rec */
+         "ldr x2, [x1, #0xf8]\n\t"     /* context->Rip */
+         "str x2, [x0, #0x10]\n\t"     /* rec->ExceptionAddress */
+         "ldr w2, [x1, #0x30]\n\t"     /* context->ContextFlags */
+         "orr w2, w2, #0x20000000\n\t" /* CONTEXT_UNWOUND_TO_CALL */
+         "str w2, [x1, #0x30]\n\t"
+         "ldr x3, [x18, #0x60]\n\t"    /* peb */
+         "ldrb w2, [x3, #2]\n\t"       /* peb->BeingDebugged */
+         "cbnz w2, 1f\n\t"
+         "bl dispatch_exception\n"
+         "1:\tmov w2, #1\n\t"
+         "bl NtRaiseException\n\t"
+         "b RtlRaiseStatus\n\t" /* does not return */
+         ".seh_endproc" );
 }
 
 
