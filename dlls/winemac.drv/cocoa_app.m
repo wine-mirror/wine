@@ -2075,6 +2075,8 @@ static NSString* WineLocalizedString(unsigned int stringID)
             CFSTR("com.apple.inputmethod.AssistiveControl"),
             /* The popup for accented characters when you hold down a key. */
             CFSTR("com.apple.PressAndHold"),
+            /* Emoji list on MacBooks with the Touch Bar. */
+            CFSTR("com.apple.inputmethod.EmojiFunctionRowItem"),
         };
 
         CFStringRef sourceID = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
