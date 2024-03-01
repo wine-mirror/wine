@@ -884,6 +884,9 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                     "str r1, [r0, #12]\n\t"    /* rec->ExceptionAddress */
                     "add r1, sp, #0x1a8\n\t"
                     "str r1, [sp, #0x38]\n\t"  /* context->Sp */
+                    "ldr r1, [sp]\n\t"         /* context->ContextFlags */
+                    "orr r1, r1, #0x20000000\n\t" /* CONTEXT_UNWOUND_TO_CALL */
+                    "str r1, [sp]\n\t"
                     "mov r1, sp\n\t"
                     "mrc p15, 0, r3, c13, c0, 2\n\t" /* NtCurrentTeb() */
                     "ldr r3, [r3, #0x30]\n\t"  /* peb */
@@ -907,13 +910,16 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
  *           RtlUserThreadStart (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( RtlUserThreadStart,
+                    "push {r4, lr}\n\t"
+                   ".seh_save_regs {r4, lr}\n\t"
                    ".seh_endprologue\n\t"
                    "mov r2, r1\n\t"
                    "mov r1, r0\n\t"
                    "mov r0, #0\n\t"
                    "ldr ip, 1f\n\t"
                    "ldr ip, [ip]\n\t"
-                   "blx ip\n"
+                   "blx ip\n\t"
+                   "nop\n"
                    "1:\t.long " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
                    ".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", %except" )
 
