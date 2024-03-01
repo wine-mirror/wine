@@ -268,12 +268,11 @@ BOOL pe_map_file(HANDLE file, struct image_file_map* fmap)
         memcpy(&fmap->u.pe.opt.header32, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header32));
         break;
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        if (sizeof(void*) == 4) return FALSE;
         fmap->addr_size = 64;
         memcpy(&fmap->u.pe.opt.header64, &nthdr->OptionalHeader, sizeof(fmap->u.pe.opt.header64));
         break;
     default:
-        return FALSE;
+        goto error;
     }
 
     fmap->u.pe.builtin = !memcmp((const IMAGE_DOS_HEADER*)mapping + 1, builtin_signature, sizeof(builtin_signature));

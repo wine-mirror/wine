@@ -1575,9 +1575,7 @@ static void test_load_modules_path(void)
         ok(ret, "SymInitialize failed: %lu\n", GetLastError());
         make_path(filename, topdir, NULL, L"bar.dll");
         base = SymLoadModuleExW(dummy, NULL, filename, NULL, 0x4000, 0x6666, NULL, 0);
-        todo_wine_if(sizeof(void*) == 4)
         ok(base == 0x4000, "SymLoadModuleExW failed: %lu\n", GetLastError());
-        if (base == 0x4000 && sizeof(void*) != 4) { /* temp */
         im.SizeOfStruct = sizeof(im);
         ret = SymGetModuleInfoW64(dummy, base, &im);
         ok(ret, "SymGetModuleInfow64 failed: %lu\n", GetLastError());
@@ -1610,7 +1608,6 @@ static void test_load_modules_path(void)
         }
         todo_wine
         ok(IsEqualGUID(&im.PdbSig70, &guid1), "Unexpected PDB GUID\n");
-        } /* temp */
         ret = SymCleanup(dummy);
         ok(ret, "SymCleanup failed: %lu\n", GetLastError());
         for (ptr = test->test_files; *ptr; ptr++)
@@ -1638,7 +1635,6 @@ static void test_load_modules_path(void)
         ok(ret, "Couldn't create directory %ls\n", filename);
     }
     ret = RemoveDirectoryW(topdir);
-    todo_wine /* bug in Wine not closing all mappings */
     ok(ret, "Couldn't remove directory\n");
 }
 
