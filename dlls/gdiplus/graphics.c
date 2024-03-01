@@ -2296,7 +2296,7 @@ void get_log_fontW(const GpFont *font, GpGraphics *graphics, LOGFONTW *lf)
     lstrcpyW(lf->lfFaceName, font->family->FamilyName);
 }
 
-static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
+void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
                            GDIPCONST GpStringFormat *format, HFONT *hfont,
                            LOGFONTW *lfw_return, GDIPCONST GpMatrix *matrix)
 {

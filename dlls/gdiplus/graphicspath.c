@@ -1001,6 +1001,9 @@ static GpStatus format_string_callback(struct gdip_format_string_info* info)
 {
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     struct format_string_args *args = info->user_data;
+    struct gdip_font_link_section *section = LIST_ENTRY(list_head(&info->font_link_info.sections), struct gdip_font_link_section, entry);
+    HFONT hfont = NULL, oldhfont = NULL;
+    int section_start = -1;
     GpPath *path = args->path;
     GpStatus status = Ok;
     float x = info->rect->X + (info->bounds->X - info->rect->X) * args->scale;
@@ -1019,6 +1022,22 @@ static GpStatus format_string_callback(struct gdip_format_string_info* info)
         TTPOLYGONHEADER *ph = NULL, *origph;
         char *start;
         DWORD len, ofs = 0;
+
+        while (i >= section->end)
+            section = LIST_ENTRY(list_next(&info->font_link_info.sections, &section->entry), struct gdip_font_link_section, entry);
+
+        if (section_start != section->start)
+        {
+            if (hfont)
+            {
+                SelectObject(info->hdc, oldhfont);
+                DeleteObject(hfont);
+            }
+            get_font_hfont(info->graphics, section->font, NULL, &hfont, NULL, NULL);
+            oldhfont = SelectObject(info->hdc, hfont);
+            section_start = section->start;
+        }
+
         len = GetGlyphOutlineW(info->hdc, info->string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
         if (len == GDI_ERROR)
         {
@@ -1083,6 +1102,12 @@ static GpStatus format_string_callback(struct gdip_format_string_info* info)
         free(origph);
         if (status != Ok)
             break;
+    }
+
+    if (hfont)
+    {
+        SelectObject(info->hdc, oldhfont);
+        DeleteObject(hfont);
     }
 
     return status;

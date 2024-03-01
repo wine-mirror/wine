@@ -127,6 +127,10 @@ extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y);
 
+extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
+                           GDIPCONST GpStringFormat *format, HFONT *hfont,
+                           LOGFONTW *lfw_return, GDIPCONST GpMatrix *matrix);
+
 extern void free_installed_fonts(void);
 
 extern BOOL lengthen_path(GpPath *path, INT len);
