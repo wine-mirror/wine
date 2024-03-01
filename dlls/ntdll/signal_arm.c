@@ -163,7 +163,6 @@ EXCEPTION_DISPOSITION WINAPI unwind_exception_handler( EXCEPTION_RECORD *record,
 /**********************************************************************
  *           unwind_handler_wrapper
  */
-#ifdef __WINE_PE_BUILD
 extern DWORD WINAPI unwind_handler_wrapper( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch );
 __ASM_GLOBAL_FUNC( unwind_handler_wrapper,
                    "push {r1,lr}\n\t"
@@ -176,25 +175,6 @@ __ASM_GLOBAL_FUNC( unwind_handler_wrapper,
                    "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
                    "blx ip\n\t"
                    "pop {r1,pc}\n\t" )
-#else
-static DWORD unwind_handler_wrapper( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
-{
-    struct
-    {
-        DISPATCHER_CONTEXT *dispatch;
-        ULONG lr;
-        EXCEPTION_REGISTRATION_RECORD frame;
-    } frame;
-    DWORD res;
-
-    frame.frame.Handler = (PEXCEPTION_HANDLER)unwind_exception_handler;
-    frame.dispatch = dispatch;
-    __wine_push_frame( &frame.frame );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    __wine_pop_frame( &frame.frame );
-    return res;
-}
-#endif
 
 
 /**********************************************************************
@@ -257,7 +237,6 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
 /***********************************************************************
  *		call_handler_wrapper
  */
-#ifdef __WINE_PE_BUILD
 extern DWORD WINAPI call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
 __ASM_GLOBAL_FUNC( call_handler_wrapper,
                    "push {r4,lr}\n\t"
@@ -270,19 +249,6 @@ __ASM_GLOBAL_FUNC( call_handler_wrapper,
                    "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
                    "blx ip\n\t"
                    "pop {r4,pc}\n\t" )
-#else
-static DWORD call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
-{
-    EXCEPTION_REGISTRATION_RECORD frame;
-    DWORD res;
-
-    frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
-    __wine_push_frame( &frame );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
-    __wine_pop_frame( &frame );
-    return res;
-}
-#endif
 
 
 /**********************************************************************
@@ -431,17 +397,8 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
-                   __ASM_SEH(".seh_custom 0xee,0x02\n\t")  /* MSFT_OP_CONTEXT */
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_EHABI(".save {sp}\n\t") /* Restore Sp last */
-                   __ASM_EHABI(".pad #-(0x80 + 0x0c + 0x0c)\n\t") /* Move back across D0-D15, Cpsr, Fpscr, Padding, Pc, Lr and Sp */
-                   __ASM_EHABI(".vsave {d8-d15}\n\t")
-                   __ASM_EHABI(".pad #0x40\n\t") /* Skip past D0-D7 */
-                   __ASM_EHABI(".pad #0x0c\n\t") /* Skip past Cpsr, Fpscr and Padding */
-                   __ASM_EHABI(".save {lr, pc}\n\t")
-                   __ASM_EHABI(".pad #0x08\n\t") /* Skip past R12 and Sp - Sp is restored last */
-                   __ASM_EHABI(".save {r4-r11}\n\t")
-                   __ASM_EHABI(".pad #0x14\n\t") /* Skip past ContextFlags and R0-R3 */
+                   ".seh_custom 0xee,0x02\n\t"  /* MSFT_OP_CONTEXT */
+                   ".seh_endprologue\n\t"
                    "add r0, sp, #0x1a0\n\t"     /* rec (context + 1) */
                    "mov r1, sp\n\t"             /* context */
                    "bl " __ASM_NAME("dispatch_exception") "\n\t"
@@ -452,19 +409,10 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
  *		KiUserApcDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
-                   __ASM_SEH(".seh_custom 0xee,0x02\n\t")  /* MSFT_OP_CONTEXT */
+                   ".seh_custom 0xee,0x02\n\t"  /* MSFT_OP_CONTEXT */
                    "nop\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x18\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_EHABI(".save {sp}\n\t") /* Restore Sp last */
-                   __ASM_EHABI(".pad #-(0x80 + 0x0c + 0x0c)\n\t") /* Move back across D0-D15, Cpsr, Fpscr, Padding, Pc, Lr and Sp */
-                   __ASM_EHABI(".vsave {d8-d15}\n\t")
-                   __ASM_EHABI(".pad #0x40\n\t") /* Skip past D0-D7 */
-                   __ASM_EHABI(".pad #0x0c\n\t") /* Skip past Cpsr, Fpscr and Padding */
-                   __ASM_EHABI(".save {lr, pc}\n\t")
-                   __ASM_EHABI(".pad #0x08\n\t") /* Skip past R12 and Sp - Sp is restored last */
-                   __ASM_EHABI(".save {r4-r11}\n\t")
-                   __ASM_EHABI(".pad #0x2c\n\t") /* Skip past args, ContextFlags and R0-R3 */
+                   ".seh_stackalloc 0x18\n\t"
+                   ".seh_endprologue\n\t"
                    "ldr r0, [sp, #0x04]\n\t"      /* arg1 */
                    "ldr r1, [sp, #0x08]\n\t"      /* arg2 */
                    "ldr r2, [sp, #0x0c]\n\t"      /* arg3 */
@@ -480,28 +428,21 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
  *		KiUserCallbackDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
-                   __ASM_SEH(".seh_custom 0xee,0x01\n\t")  /* MSFT_OP_MACHINE_FRAME */
+                   ".seh_custom 0xee,0x01\n\t"  /* MSFT_OP_MACHINE_FRAME */
                    "nop\n\t"
-                   __ASM_SEH(".seh_save_regs {lr}\n\t")
+                   ".seh_save_regs {lr}\n\t"
                    "nop\n\t"
-                   __ASM_SEH(".seh_stackalloc 0xc\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_EHABI(".save {sp, pc}\n\t")
-                   __ASM_EHABI(".save {lr}\n\t")
-                   __ASM_EHABI(".pad #0x0c\n\t")
+                   ".seh_stackalloc 0xc\n\t"
+                   ".seh_endprologue\n\t"
                    "ldr r0, [sp]\n\t"               /* args */
                    "ldr r1, [sp, #0x04]\n\t"        /* len */
                    "ldr r2, [sp, #0x08]\n\t"        /* id */
-#ifdef __WINE_PE_BUILD
                    "mrc p15, 0, r3, c13, c0, 2\n\t" /* NtCurrentTeb() */
                    "ldr r3, [r3, 0x30]\n\t"         /* peb */
                    "ldr r3, [r3, 0x2c]\n\t"         /* peb->KernelCallbackTable */
                    "ldr ip, [r3, r2, lsl #2]\n\t"
                    "blx ip\n\t"
                    ".seh_handler " __ASM_NAME("user_callback_handler") ", %except\n\t"
-#else
-                   "bl " __ASM_NAME("dispatch_user_callback") "\n\t"
-#endif
                    ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
                    __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
                    "mov r2, r0\n\t"  /* status */
@@ -531,52 +472,18 @@ extern void * WINAPI call_consolidate_callback( CONTEXT *context,
                                                 EXCEPTION_RECORD *rec );
 __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    "push {r0-r2,lr}\n\t"
-                   __ASM_SEH(".seh_nop\n\t")
+                   ".seh_nop\n\t"
                    "sub sp, sp, #0x1a0\n\t"
-                   __ASM_SEH(".seh_nop\n\t")
+                   ".seh_nop\n\t"
                    "mov r1, r0\n\t"
-                   __ASM_SEH(".seh_nop\n\t")
+                   ".seh_nop\n\t"
                    "mov r0, sp\n\t"
-                   __ASM_SEH(".seh_nop\n\t")
+                   ".seh_nop\n\t"
                    "mov r2, #0x1a0\n\t"
-                   __ASM_SEH(".seh_nop_w\n\t")
+                   ".seh_nop_w\n\t"
                    "bl " __ASM_NAME("memcpy") "\n\t"
-                   __ASM_SEH(".seh_custom 0xee,0x02\n\t")  /* MSFT_OP_CONTEXT */
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_def_cfa 13, 0\n\t")
-                   __ASM_CFI(".cfi_escape 0x0f,0x04,0x7d,0xb8,0x00,0x06\n\t") /* DW_CFA_def_cfa_expression: DW_OP_breg13 + 56, DW_OP_deref */
-                   __ASM_CFI(".cfi_escape 0x10,0x04,0x02,0x7d,0x14\n\t") /* DW_CFA_expression: R4 DW_OP_breg13 + 20 */
-                   __ASM_CFI(".cfi_escape 0x10,0x05,0x02,0x7d,0x18\n\t") /* DW_CFA_expression: R5 DW_OP_breg13 + 24 */
-                   __ASM_CFI(".cfi_escape 0x10,0x06,0x02,0x7d,0x1c\n\t") /* DW_CFA_expression: R6 DW_OP_breg13 + 28 */
-                   __ASM_CFI(".cfi_escape 0x10,0x07,0x02,0x7d,0x20\n\t") /* DW_CFA_expression: R7 DW_OP_breg13 + 32 */
-                   __ASM_CFI(".cfi_escape 0x10,0x08,0x02,0x7d,0x24\n\t") /* DW_CFA_expression: R8 DW_OP_breg13 + 36 */
-                   __ASM_CFI(".cfi_escape 0x10,0x09,0x02,0x7d,0x28\n\t") /* DW_CFA_expression: R9 DW_OP_breg13 + 40 */
-                   __ASM_CFI(".cfi_escape 0x10,0x0a,0x02,0x7d,0x2c\n\t") /* DW_CFA_expression: R10 DW_OP_breg13 + 44 */
-                   __ASM_CFI(".cfi_escape 0x10,0x0b,0x02,0x7d,0x30\n\t") /* DW_CFA_expression: R11 DW_OP_breg13 + 48 */
-                   __ASM_CFI(".cfi_escape 0x10,0x0e,0x03,0x7d,0xc0,0x00\n\t") /* DW_CFA_expression: LR DW_OP_breg13 + 64 (PC) */
-                   /* Libunwind doesn't support the registers D8-D15 like this */
-#if 0
-                   __ASM_CFI(".cfi_escape 0x10,0x88,0x02,0x03,0x7d,0x90,0x01\n\t") /* DW_CFA_expression: D8 DW_OP_breg13 + 144 */
-                   __ASM_CFI(".cfi_escape 0x10,0x89,0x02,0x03,0x7d,0x98,0x01\n\t") /* DW_CFA_expression: D9 DW_OP_breg13 + 152 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8a,0x02,0x03,0x7d,0xa0,0x01\n\t") /* DW_CFA_expression: D10 DW_OP_breg13 + 160 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8b,0x02,0x03,0x7d,0xa8,0x01\n\t") /* DW_CFA_expression: D11 DW_OP_breg13 + 168 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8c,0x02,0x03,0x7d,0xb0,0x01\n\t") /* DW_CFA_expression: D12 DW_OP_breg13 + 176 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8d,0x02,0x03,0x7d,0xb8,0x01\n\t") /* DW_CFA_expression: D13 DW_OP_breg13 + 184 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8e,0x02,0x03,0x7d,0xc0,0x01\n\t") /* DW_CFA_expression: D14 DW_OP_breg13 + 192 */
-                   __ASM_CFI(".cfi_escape 0x10,0x8f,0x02,0x03,0x7d,0xc8,0x01\n\t") /* DW_CFA_expression: D15 DW_OP_breg13 + 200 */
-#endif
-                   /* These EHABI opcodes are to be read bottom up - they
-                    * restore relevant registers from the CONTEXT. */
-                   __ASM_EHABI(".save {sp}\n\t") /* Restore Sp last */
-                   __ASM_EHABI(".pad #-(0x80 + 0x0c + 0x0c)\n\t") /* Move back across D0-D15, Cpsr, Fpscr, Padding, Pc, Lr and Sp */
-                   __ASM_EHABI(".vsave {d8-d15}\n\t")
-                   __ASM_EHABI(".pad #0x40\n\t") /* Skip past D0-D7 */
-                   __ASM_EHABI(".pad #0x0c\n\t") /* Skip past Cpsr, Fpscr and Padding */
-                   __ASM_EHABI(".save {lr, pc}\n\t")
-                   __ASM_EHABI(".pad #0x08\n\t") /* Skip past R12 and Sp - Sp is restored last */
-                   __ASM_EHABI(".save {r4-r11}\n\t")
-                   __ASM_EHABI(".pad #0x14\n\t") /* Skip past ContextFlags and R0-R3 */
-
+                   ".seh_custom 0xee,0x02\n\t"  /* MSFT_OP_CONTEXT */
+                   ".seh_endprologue\n\t"
                    "ldrd r1, r2, [sp, #0x1a4]\n\t"
                    "mov r0, r2\n\t"
                    "blx r1\n\t"
@@ -751,21 +658,8 @@ extern LONG __C_ExecuteExceptionFilter(PEXCEPTION_POINTERS ptrs, PVOID frame,
                                        PUCHAR nonvolatile);
 __ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
                    "push {r4-r11,lr}\n\t"
-                   __ASM_EHABI(".save {r4-r11,lr}\n\t")
-                   __ASM_SEH(".seh_save_regs_w {r4-r11,lr}\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-
-                   __ASM_CFI(".cfi_def_cfa 13, 36\n\t")
-                   __ASM_CFI(".cfi_offset r4, -36\n\t")
-                   __ASM_CFI(".cfi_offset r5, -32\n\t")
-                   __ASM_CFI(".cfi_offset r6, -28\n\t")
-                   __ASM_CFI(".cfi_offset r7, -24\n\t")
-                   __ASM_CFI(".cfi_offset r8, -20\n\t")
-                   __ASM_CFI(".cfi_offset r9, -16\n\t")
-                   __ASM_CFI(".cfi_offset r10, -12\n\t")
-                   __ASM_CFI(".cfi_offset r11, -8\n\t")
-                   __ASM_CFI(".cfi_offset lr, -4\n\t")
-
+                   ".seh_save_regs_w {r4-r11,lr}\n\t"
+                   ".seh_endprologue\n\t"
                    "ldm r3, {r4-r11,lr}\n\t"
                    "blx r2\n\t"
                    "pop {r4-r11,pc}\n\t" )
@@ -864,14 +758,10 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
  */
 __ASM_GLOBAL_FUNC( RtlRaiseException,
                     "push {r0, lr}\n\t"
-                    __ASM_EHABI(".save {r0, lr}\n\t")
-                    __ASM_SEH(".seh_save_regs {r0, lr}\n\t")
+                    ".seh_save_regs {r0, lr}\n\t"
                     "sub sp, sp, #0x1a0\n\t"  /* sizeof(CONTEXT) */
-                    __ASM_EHABI(".pad #0x1a0\n\t")
-                    __ASM_SEH(".seh_stackalloc 0x1a0\n\t")
-                    __ASM_SEH(".seh_endprologue\n\t")
-                    __ASM_CFI(".cfi_adjust_cfa_offset 424\n\t")
-                    __ASM_CFI(".cfi_offset lr, -4\n\t")
+                    ".seh_stackalloc 0x1a0\n\t"
+                    ".seh_endprologue\n\t"
                     "mov r0, sp\n\t"  /* context */
                     "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
                     "ldr r0, [sp, #0x1a0]\n\t" /* rec */
