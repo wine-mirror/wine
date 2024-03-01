@@ -404,8 +404,9 @@ BOOL module_load_debug(struct module* module)
         if (!ret) module->module.SymType = SymNone;
         assert(module->module.SymType != SymDeferred);
         module->module.NumSyms = module->ht_symbols.num_elts;
+        return ret;
     }
-    return module->module.SymType != SymNone;
+    return TRUE;
 }
 
 /******************************************************************
@@ -416,7 +417,6 @@ BOOL module_load_debug(struct module* module)
  *   the module itself)
  * - if the module has no debug info and has an ELF container, then return the ELF
  *   container (and also force the ELF container's debug info loading if deferred)
- * - otherwise return the module itself if it has some debug info
  */
 BOOL module_get_debug(struct module_pair* pair)
 {

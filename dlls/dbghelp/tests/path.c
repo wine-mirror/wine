@@ -1884,7 +1884,6 @@ static void test_load_modules_details(void)
              SymFromNameW(dummy, L"foo", sym);
         }
         ret = SymAddSymbol(dummy, base, "winetest_symbol_virtual", base + 4242, 13, 0);
-        todo_wine_if(i == 8 || i == 9 || (i >= 12 && i <= 15)) { /* temp */
         ok(ret, "Failed to add symbol\n");
         memset(sym, 0, sizeof(*sym));
         sym->SizeOfStruct = sizeof(*sym);
@@ -1899,7 +1898,6 @@ static void test_load_modules_details(void)
             ret = SymFromNameW(dummy, sym_name, (void*)sym);
             ok(ret, "Couldn't find symbol %ls\n", sym_name);
         }
-        } /* temp */
         ret = SymCleanup(dummy);
         ok(ret, "SymCleanup failed: %lu\n", GetLastError());
         for (ptr = test->test_files; *ptr; ptr++)
