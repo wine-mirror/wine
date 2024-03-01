@@ -583,7 +583,7 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
     {
         struct imm_thread_data *data = get_imm_thread_data();
 
-        data->ime_process_scan = HIWORD(lparam) & 0x1ff;
+        data->ime_process_scan = HIWORD(lparam);
         data->ime_process_vkey = LOWORD(wparam);
         res = user_driver->pImeProcessKey( params->himc, wparam, lparam, params->state );
         data->ime_process_vkey = data->ime_process_scan = 0;
@@ -597,7 +597,7 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
             res = TRUE;
         }
 
-        TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam) & 0x1ff, (UINT)res );
+        TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam), (UINT)res );
         return res;
     }
     case WINE_IME_TO_ASCII_EX:
