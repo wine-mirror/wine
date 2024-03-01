@@ -83,7 +83,7 @@ static void test_QOSCloseHandle(void)
     SetLastError(0xdeadbeef);
     ret = QOSCloseHandle(h);
     todo_wine ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = QOSCloseHandle((HANDLE)0xdeadbeef);
