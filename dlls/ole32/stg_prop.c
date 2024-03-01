@@ -2513,7 +2513,7 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
 
     (*pps)->IPropertyStorage_iface.lpVtbl = &IPropertyStorage_Vtbl;
     (*pps)->ref = 1;
-    InitializeCriticalSection(&(*pps)->cs);
+    InitializeCriticalSectionEx(&(*pps)->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     (*pps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PropertyStorage_impl.cs");
     (*pps)->stm = stm;
     (*pps)->fmtid = *rfmtid;
