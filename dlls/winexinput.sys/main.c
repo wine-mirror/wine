@@ -785,6 +785,8 @@ static NTSTATUS WINAPI fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         IoSkipCurrentIrpStackLocation(irp);
         status = IoCallDriver(fdo->bus_device, irp);
         IoDetachDevice(fdo->bus_device);
+        if (fdo->cs.DebugInfo)
+            fdo->cs.DebugInfo->Spare[0] = 0;
         RtlDeleteCriticalSection(&fdo->cs);
         HidP_FreeCollectionDescription(&fdo->device_desc);
         free(fdo->report_buf);
@@ -871,7 +873,7 @@ static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_devi
     fdo->bus_device = bus_device;
     wcscpy(fdo->instance_id, instance_id);
 
-    RtlInitializeCriticalSection(&fdo->cs);
+    RtlInitializeCriticalSectionEx(&fdo->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     fdo->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": func_device.cs");
 
     TRACE("device %p, bus_id %s, device_id %s, instance_id %s.\n", device, debugstr_w(bus_id),
