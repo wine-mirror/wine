@@ -713,6 +713,7 @@ msgid "Scr&ipt:"
 msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
+#: dlls/compstui/compstui.rc:33
 msgid "Color"
 msgstr "สี"
 
@@ -1338,6 +1339,38 @@ msgstr ""
 #, fuzzy
 msgid "Default"
 msgstr "เครื่องพิมพ์ปกติ; "
+
+#: dlls/compstui/compstui.rc:35
+msgid "&Copy count"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:36
+#, fuzzy
+msgid "Print on Both Sides"
+msgstr "เครื่องพิมพ์ปิด; "
+
+#: dlls/compstui/compstui.rc:32
+#, fuzzy
+#| msgid "Color"
+msgid "C&olor"
+msgstr "สี"
+
+#: dlls/compstui/compstui.rc:34
+msgid "Bla&ck && White"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:37
+#, fuzzy
+msgid "&None"
+msgstr "ไม่มีเลย"
+
+#: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
+msgid "Flip on Shor&t Edge"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
+msgid "Flip on Long E&dge"
+msgstr ""
 
 #: dlls/credui/credui.rc:45
 #, fuzzy

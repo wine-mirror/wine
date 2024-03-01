@@ -705,6 +705,7 @@ msgid "Scr&ipt:"
 msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
+#: dlls/compstui/compstui.rc:33
 msgid "Color"
 msgstr ""
 
@@ -1315,6 +1316,34 @@ msgstr ""
 
 #: dlls/compstui/compstui.rc:31
 msgid "Default"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:35
+msgid "&Copy count"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:36
+msgid "Print on Both Sides"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:32
+msgid "C&olor"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:34
+msgid "Bla&ck && White"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:37
+msgid "&None"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
+msgid "Flip on Shor&t Edge"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
+msgid "Flip on Long E&dge"
 msgstr ""
 
 #: dlls/credui/credui.rc:45

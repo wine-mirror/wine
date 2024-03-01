@@ -748,6 +748,7 @@ msgid "Scr&ipt:"
 msgstr "Pí&smo:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
+#: dlls/compstui/compstui.rc:33
 msgid "Color"
 msgstr "Farby"
 
@@ -1376,6 +1377,45 @@ msgstr "Voľby"
 #| msgid "Defaults"
 msgid "Default"
 msgstr "Predvolené"
+
+#: dlls/compstui/compstui.rc:35
+#, fuzzy
+msgid "&Copy count"
+msgstr ""
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Copy\n"
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Kopírovať"
+
+#: dlls/compstui/compstui.rc:36
+#, fuzzy
+msgid "Print on Both Sides"
+msgstr "Tlačiareň v stave offline; "
+
+#: dlls/compstui/compstui.rc:32
+#, fuzzy
+#| msgid "Color"
+msgid "C&olor"
+msgstr "Farby"
+
+#: dlls/compstui/compstui.rc:34
+msgid "Bla&ck && White"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:37
+#, fuzzy
+#| msgctxt "hotkey"
+#| msgid "None"
+msgid "&None"
+msgstr "Žiadne"
+
+#: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
+msgid "Flip on Shor&t Edge"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
+msgid "Flip on Long E&dge"
+msgstr ""
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
