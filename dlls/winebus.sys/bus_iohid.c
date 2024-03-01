@@ -281,16 +281,21 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     usage_page = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsagePageKey)));
     usage = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsageKey)));
 
-    if (usage_page == HID_USAGE_PAGE_GENERIC && (usage == HID_USAGE_GENERIC_MOUSE || usage == HID_USAGE_GENERIC_KEYBOARD))
-    {
-        TRACE("Ignoring mouse / keyboard device\n");
-        return;
-    }
-
     desc.vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
     desc.pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
     desc.version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     desc.uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
+
+    if (usage_page != HID_USAGE_PAGE_GENERIC ||
+        !(usage == HID_USAGE_GENERIC_JOYSTICK || usage == HID_USAGE_GENERIC_GAMEPAD))
+    {
+        /* winebus isn't currently meant to handle anything but these, and
+         * opening keyboards, mice, or the Touch Bar on older MacBooks triggers
+         * a permissions dialog for input monitoring.
+         */
+        ERR("Ignoring HID device %p (vid %04x, pid %04x): not a joystick or gamepad\n", IOHIDDevice, desc.vid, desc.pid);
+        return;
+    }
 
     if (IOHIDDeviceOpen(IOHIDDevice, 0) != kIOReturnSuccess)
     {
