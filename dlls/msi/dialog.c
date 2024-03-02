@@ -3107,14 +3107,12 @@ static LONGLONG vcl_get_cost( msi_dialog *dialog )
         if (ERROR_SUCCESS == (MSI_GetFeatureCost(dialog->package, feature,
                 MSICOSTTREE_SELFONLY, INSTALLSTATE_LOCAL, &each_cost)))
         {
-            /* each_cost is in 512-byte units */
-            total_cost += each_cost * 512;
+            total_cost += each_cost;
         }
         if (ERROR_SUCCESS == (MSI_GetFeatureCost(dialog->package, feature,
                 MSICOSTTREE_SELFONLY, INSTALLSTATE_ABSENT, &each_cost)))
         {
-            /* each_cost is in 512-byte units */
-            total_cost -= each_cost * 512;
+            total_cost -= each_cost;
         }
     }
     return total_cost;
@@ -3131,7 +3129,7 @@ static void dialog_vcl_add_drives( msi_dialog *dialog, struct control *control )
     DWORD size, flags;
     int i = 0;
 
-    cost = vcl_get_cost(dialog);
+    cost = vcl_get_cost(dialog) * 512;
     StrFormatByteSizeW(cost, cost_text, MAX_PATH);
 
     size = GetLogicalDriveStringsW( 0, NULL );
