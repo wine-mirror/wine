@@ -434,7 +434,7 @@ static void test_spvoice(void)
     DWORD start, duration;
     ISpeechVoice *speech_voice;
     ISpeechObjectTokens *speech_tokens;
-    LONG count;
+    LONG count, volume_long;
     BSTR req = NULL, opt = NULL;
     UINT info_count;
     ITypeInfo *typeinfo;
@@ -716,6 +716,13 @@ static void test_spvoice(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(count == 1, "got %ld.\n", count);
     ISpeechObjectTokens_Release(speech_tokens);
+
+    volume_long = 0xdeadbeef;
+    hr = ISpeechVoice_put_Volume(speech_voice, 80);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = ISpeechVoice_get_Volume(speech_voice, &volume_long);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(volume_long == 80, "got %ld.\n", volume_long);
 
     hr = ISpeechVoice_Speak(speech_voice, NULL, SVSFPurgeBeforeSpeak, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);

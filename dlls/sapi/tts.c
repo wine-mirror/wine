@@ -291,16 +291,25 @@ static HRESULT WINAPI speech_voice_put_Rate(ISpeechVoice *iface, LONG rate)
 
 static HRESULT WINAPI speech_voice_get_Volume(ISpeechVoice *iface, LONG *volume)
 {
-    FIXME("(%p, %p): stub.\n", iface, volume);
+    struct speech_voice *This = impl_from_ISpeechVoice(iface);
+    USHORT res = 0;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, volume);
+
+    if (!volume) return E_POINTER;
+    hr = ISpVoice_GetVolume(&This->ISpVoice_iface, &res);
+    *volume = res;
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_put_Volume(ISpeechVoice *iface, LONG volume)
 {
-    FIXME("(%p, %ld): stub.\n", iface, volume);
+    struct speech_voice *This = impl_from_ISpeechVoice(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %ld).\n", iface, volume);
+
+    return ISpVoice_SetVolume(&This->ISpVoice_iface, (USHORT)volume);
 }
 
 static HRESULT WINAPI speech_voice_put_AllowAudioOutputFormatChangesOnNextSet(ISpeechVoice *iface,
