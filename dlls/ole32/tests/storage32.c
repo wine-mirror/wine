@@ -3361,7 +3361,6 @@ struct lock_test
     DWORD sharing;
     const int *locked_bytes;
     const int *fail_ranges;
-    BOOL todo;
 };
 
 static const int priority_locked_bytes[] = { 0x158, 0x181, 0x193, -1 };
@@ -3383,21 +3382,21 @@ static const int pr_fail_ranges[] = { 0x180,0x181, 0x1bb,0x1cf, -1 };
 static const int roex_fail_ranges[] = { 0x0,-1 };
 
 static const struct lock_test lock_tests[] = {
-    { STGM_PRIORITY, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, priority_locked_bytes, pr_fail_ranges, FALSE },
-    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0, FALSE },
-    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0, FALSE },
-    { STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, 0, FALSE },
-    { STGM_CREATE|STGM_READWRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, 0, FALSE },
-    { STGM_CREATE|STGM_WRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, wodw_locked_bytes, 0, FALSE },
-    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
-    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
-    { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges, FALSE },
-    { STGM_READWRITE|STGM_TRANSACTED|STGM_NOSNAPSHOT, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nosn_locked_bytes, rwdw_fail_ranges, FALSE },
-    { STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, rwdw_fail_ranges, FALSE },
-    { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges, FALSE },
-    { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, FALSE },
-    { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, FALSE },
-    { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, FALSE },
+    { STGM_PRIORITY, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, priority_locked_bytes, pr_fail_ranges },
+    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0 },
+    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0 },
+    { STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, 0 },
+    { STGM_CREATE|STGM_READWRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, 0 },
+    { STGM_CREATE|STGM_WRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, wodw_locked_bytes, 0 },
+    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges },
+    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges },
+    { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges },
+    { STGM_READWRITE|STGM_TRANSACTED|STGM_NOSNAPSHOT, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nosn_locked_bytes, rwdw_fail_ranges },
+    { STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, rwdw_fail_ranges },
+    { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges },
+    { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges },
 };
 
 static BOOL can_open(LPCWSTR filename, DWORD access, DWORD sharing)
@@ -3414,58 +3413,28 @@ static BOOL can_open(LPCWSTR filename, DWORD access, DWORD sharing)
 }
 
 static void check_sharing(LPCWSTR filename, const struct lock_test *current,
-    DWORD access, DWORD sharing, const char *desc, DWORD *open_mode, BOOL *any_failure)
+    DWORD access, DWORD sharing, const char *desc, DWORD *open_mode)
 {
     if (can_open(filename, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE))
     {
         *open_mode = access;
-        if (!current->todo || (current->sharing & sharing))
-            ok(current->sharing & sharing ||
-                broken(!(current->sharing & sharing) && access == GENERIC_WRITE && (current->stg_mode & 0xf) != STGM_READ) /* win2k */,
-                "file with mode %lx should not be openable with %s permission\n", current->stg_mode, desc);
-        else
-        {
-            todo_wine ok(current->sharing & sharing ||
-                broken(!(current->sharing & sharing) && access == GENERIC_WRITE && (current->stg_mode & 0xf) != STGM_READ) /* win2k */,
-                "file with mode %lx should not be openable with %s permission\n", current->stg_mode, desc);
-            *any_failure = TRUE;
-        }
+        ok(current->sharing & sharing ||
+            broken(!(current->sharing & sharing) && access == GENERIC_WRITE && (current->stg_mode & 0xf) != STGM_READ) /* win2k */,
+            "file with mode %lx should not be openable with %s permission\n", current->stg_mode, desc);
     }
     else
     {
-        if (!current->todo || !(current->sharing & sharing))
-            ok(!(current->sharing & sharing), "file with mode %lx should be openable with %s permission\n", current->stg_mode, desc);
-        else
-        {
-            todo_wine ok(!(current->sharing & sharing), "file with mode %lx should be openable with %s permission\n", current->stg_mode, desc);
-            *any_failure = TRUE;
-        }
+        ok(!(current->sharing & sharing), "file with mode %lx should be openable with %s permission\n", current->stg_mode, desc);
     }
 }
 
 static void check_access(LPCWSTR filename, const struct lock_test *current,
-    DWORD access, DWORD sharing, const char *desc, DWORD open_mode, BOOL *any_failure)
+    DWORD access, DWORD sharing, const char *desc, DWORD open_mode)
 {
     if (can_open(filename, open_mode, (FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE) & ~sharing))
-    {
-        if (!current->todo || !(current->access & access))
-            ok(!(current->access & access), "file with mode %lx should not be openable without %s sharing\n", current->stg_mode, desc);
-        else
-        {
-            todo_wine ok(!(current->access & access), "file with mode %lx should not be openable without %s sharing\n", current->stg_mode, desc);
-            *any_failure = TRUE;
-        }
-    }
+        ok(!(current->access & access), "file with mode %lx should not be openable without %s sharing\n", current->stg_mode, desc);
     else
-    {
-        if (!current->todo || (current->access & access))
-            ok(current->access & access, "file with mode %lx should be openable without %s sharing\n", current->stg_mode, desc);
-        else
-        {
-            todo_wine ok(current->access & access, "file with mode %lx should be openable without %s sharing\n", current->stg_mode, desc);
-            *any_failure = TRUE;
-        }
-    }
+        ok(current->access & access, "file with mode %lx should be openable without %s sharing\n", current->stg_mode, desc);
 }
 
 static void test_locking(void)
@@ -3478,7 +3447,6 @@ static void test_locking(void)
     for (i = 0; i < ARRAY_SIZE(lock_tests); i++)
     {
         const struct lock_test *current = &lock_tests[i];
-        BOOL any_failure = FALSE;
         DWORD open_mode = 0;
 
         if (current->create)
@@ -3503,9 +3471,9 @@ static void test_locking(void)
             }
         }
 
-        check_sharing(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", &open_mode, &any_failure);
-        check_sharing(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", &open_mode, &any_failure);
-        check_sharing(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", &open_mode, &any_failure);
+        check_sharing(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", &open_mode);
+        check_sharing(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", &open_mode);
+        check_sharing(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", &open_mode);
 
         if (open_mode != 0)
         {
@@ -3514,9 +3482,9 @@ static void test_locking(void)
             OVERLAPPED ol;
             const int* next_lock = current->locked_bytes;
 
-            check_access(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", open_mode, &any_failure);
-            check_access(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", open_mode, &any_failure);
-            check_access(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", open_mode, &any_failure);
+            check_access(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", open_mode);
+            check_access(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", open_mode);
+            check_access(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", open_mode);
 
             hfile = CreateFileW(filename, open_mode, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             ok(hfile != INVALID_HANDLE_VALUE, "couldn't open file with mode %lx\n", current->stg_mode);
@@ -3544,15 +3512,8 @@ static void test_locking(void)
                 else
                     expect_locked = FALSE;
 
-                if (!current->todo || locked == expect_locked)
-                    ok(locked == expect_locked, "byte %lx of file with mode %lx is %slocked but should %sbe\n",
-                       ol.Offset, current->stg_mode, locked?"":"not ", expect_locked?"":"not ");
-                else
-                {
-                    any_failure = TRUE;
-                    todo_wine ok(locked == expect_locked, "byte %lx of file with mode %lx is %slocked but should %sbe\n",
-                              ol.Offset, current->stg_mode, locked?"":"not ", expect_locked?"":"not ");
-                }
+                ok(locked == expect_locked, "byte %lx of file with mode %lx is %slocked but should %sbe\n",
+                   ol.Offset, current->stg_mode, locked?"":"not ", expect_locked?"":"not ");
             }
 
             CloseHandle(hfile);
@@ -3603,24 +3564,14 @@ static void test_locking(void)
                     next_range += 2;
                 }
 
-                if (!current->todo || failed == expect_failed)
-                    ok(failed == expect_failed, "open with byte %lx locked, mode %lx %s but should %s\n",
-                       ol.Offset, current->stg_mode, failed?"failed":"succeeded", expect_failed?"fail":"succeed");
-                else
-                {
-                    any_failure = TRUE;
-                    todo_wine ok(failed == expect_failed, "open with byte %lx locked, mode %lx %s but should %s\n",
-                                 ol.Offset, current->stg_mode, failed?"failed":"succeeded", expect_failed?"fail":"succeed");
-                }
+                ok(failed == expect_failed, "open with byte %lx locked, mode %lx %s but should %s\n",
+                   ol.Offset, current->stg_mode, failed?"failed":"succeeded", expect_failed?"fail":"succeed");
             }
 
             CloseHandle(hfile);
         }
 
         DeleteFileW(filename);
-
-        if (current->todo && !any_failure)
-            todo_wine ok(1, "tests succeeded for mode %lx\n", current->stg_mode);
     }
 }
 
