@@ -235,16 +235,34 @@ static HRESULT WINAPI speech_voice_get_Status(ISpeechVoice *iface, ISpeechVoiceS
 
 static HRESULT WINAPI speech_voice_get_Voice(ISpeechVoice *iface, ISpeechObjectToken **voice)
 {
-    FIXME("(%p, %p): stub.\n", iface, voice);
+    struct speech_voice *This = impl_from_ISpeechVoice(iface);
+    ISpObjectToken *token;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, voice);
+
+    if (!voice) return E_POINTER;
+    if (FAILED(hr = ISpVoice_GetVoice(&This->ISpVoice_iface, &token)))
+        return hr;
+    hr = ISpObjectToken_QueryInterface(token, &IID_ISpeechObjectToken, (void **)voice);
+    ISpObjectToken_Release(token);
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_putref_Voice(ISpeechVoice *iface, ISpeechObjectToken *voice)
 {
-    FIXME("(%p, %p): stub.\n", iface, voice);
+    struct speech_voice *This = impl_from_ISpeechVoice(iface);
+    ISpObjectToken *token;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, voice);
+
+    if (!voice) return E_INVALIDARG;
+    if (FAILED(hr = ISpeechObjectToken_QueryInterface(voice, &IID_ISpObjectToken, (void **)&token)))
+        return hr;
+    hr = ISpVoice_SetVoice(&This->ISpVoice_iface, token);
+    ISpObjectToken_Release(token);
+    return hr;
 }
 
 static HRESULT WINAPI speech_voice_get_AudioOutput(ISpeechVoice *iface, ISpeechObjectToken **output)

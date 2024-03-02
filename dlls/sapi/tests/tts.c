@@ -424,7 +424,7 @@ static void test_spvoice(void)
     IUnknown *dummy;
     ISpMMSysAudio *audio_out;
     ISpObjectTokenCategory *token_cat;
-    ISpObjectToken *token;
+    ISpObjectToken *token, *token2;
     WCHAR *token_id = NULL, *default_token_id = NULL;
     ISpDataKey *attrs_key;
     LONG rate;
@@ -435,6 +435,7 @@ static void test_spvoice(void)
     ISpeechVoice *speech_voice;
     ISpeechObjectTokens *speech_tokens;
     LONG count, volume_long;
+    ISpeechObjectToken *speech_token;
     BSTR req = NULL, opt = NULL;
     UINT info_count;
     ITypeInfo *typeinfo;
@@ -723,6 +724,25 @@ static void test_spvoice(void)
     hr = ISpeechVoice_get_Volume(speech_voice, &volume_long);
     ok(hr == S_OK, "got %#lx.\n", hr);
     ok(volume_long == 80, "got %ld.\n", volume_long);
+
+    hr = ISpObjectToken_QueryInterface(token, &IID_ISpeechObjectToken, (void **)&speech_token);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = ISpeechVoice_putref_Voice(speech_voice, speech_token);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ISpeechObjectToken_Release(speech_token);
+
+    speech_token = (ISpeechObjectToken *)0xdeadbeef;
+    hr = ISpeechVoice_get_Voice(speech_voice, &speech_token);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(speech_token && speech_token != (ISpeechObjectToken *)0xdeadbeef, "got %p.\n", speech_token);
+    hr = ISpeechObjectToken_QueryInterface(speech_token, &IID_ISpObjectToken, (void **)&token2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    token_id = NULL;
+    hr = ISpObjectToken_GetId(token2, &token_id);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!wcscmp(token_id, test_token_id), "got %s.\n", wine_dbgstr_w(token_id));
+    CoTaskMemFree(token_id);
+    ISpObjectToken_Release(token2);
 
     hr = ISpeechVoice_Speak(speech_voice, NULL, SVSFPurgeBeforeSpeak, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
