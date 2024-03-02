@@ -2070,7 +2070,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
 
         if (msi_get_file_attributes( package, file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
         {
-            comp->Cost += file->FileSize;
+            comp->cost += cost_from_size( file->FileSize );
             continue;
         }
         file_size = msi_get_disk_file_size( package, file->TargetPath );
@@ -2082,7 +2082,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
             {
                 if (msi_compare_file_versions( file_version, file->Version ) < 0)
                 {
-                    comp->Cost += file->FileSize - file_size;
+                    comp->cost += cost_from_size( file->FileSize - file_size );
                 }
                 free( file_version );
                 continue;
@@ -2091,7 +2091,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
             {
                 if (msi_compare_font_versions( font_version, file->Version ) < 0)
                 {
-                    comp->Cost += file->FileSize - file_size;
+                    comp->cost += cost_from_size( file->FileSize - file_size );
                 }
                 free( font_version );
                 continue;
@@ -2099,7 +2099,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
         }
         if (file_size != file->FileSize)
         {
-            comp->Cost += file->FileSize - file_size;
+            comp->cost += cost_from_size( file->FileSize - file_size );
         }
     }
 
@@ -2217,7 +2217,7 @@ static ULONGLONG get_volume_space_required( MSIPACKAGE *package )
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (comp->Action == INSTALLSTATE_LOCAL) ret += comp->Cost;
+        if (comp->Action == INSTALLSTATE_LOCAL) ret += comp->cost;
     }
     return ret;
 }
@@ -2292,10 +2292,10 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                     msi_set_property( package->db, L"PrimaryVolumeSpaceAvailable", buf, -1 );
                 }
                 required = get_volume_space_required( package );
-                swprintf( buf, ARRAY_SIZE(buf), L"%lu", required / 512 );
+                swprintf( buf, ARRAY_SIZE(buf), L"%lu", required );
                 msi_set_property( package->db, L"PrimaryVolumeSpaceRequired", buf, -1 );
 
-                swprintf( buf, ARRAY_SIZE(buf), L"%lu", (free.QuadPart - required) / 512 );
+                swprintf( buf, ARRAY_SIZE(buf), L"%lu", (free.QuadPart / 512) - required );
                 msi_set_property( package->db, L"PrimaryVolumeSpaceRemaining", buf, -1 );
                 msi_set_property( package->db, L"PrimaryVolumePath", primary_folder, 2 );
             }
