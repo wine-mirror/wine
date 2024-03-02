@@ -1549,6 +1549,15 @@ typedef struct VkPipelineShaderStageCreateInfo32
     PTR32 pSpecializationInfo;
 } VkPipelineShaderStageCreateInfo32;
 
+typedef struct VkComputePipelineIndirectBufferInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+    VkDeviceAddress DECLSPEC_ALIGN(8) pipelineDeviceAddressCaptureReplay;
+} VkComputePipelineIndirectBufferInfoNV32;
+
 typedef struct VkPipelineCreateFlags2CreateInfoKHR32
 {
     VkStructureType sType;
@@ -3312,6 +3321,13 @@ typedef struct VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32
     VkBool32 memoryMapRangePlaced;
     VkBool32 memoryUnmapReserve;
 } VkPhysicalDeviceMapMemoryPlacedFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceRawAccessChainsFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 shaderRawAccessChains;
+} VkPhysicalDeviceRawAccessChainsFeaturesNV32;
 
 typedef struct VkDeviceCreateInfo32
 {
@@ -10862,6 +10878,19 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_INDIRECT_BUFFER_INFO_NV:
+        {
+            VkComputePipelineIndirectBufferInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkComputePipelineIndirectBufferInfoNV32 *in_ext = (const VkComputePipelineIndirectBufferInfoNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_INDIRECT_BUFFER_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->deviceAddress = in_ext->deviceAddress;
+            out_ext->size = in_ext->size;
+            out_ext->pipelineDeviceAddressCaptureReplay = in_ext->pipelineDeviceAddressCaptureReplay;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR:
         {
             VkPipelineCreateFlags2CreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13662,6 +13691,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV:
+        {
+            VkPhysicalDeviceRawAccessChainsFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRawAccessChainsFeaturesNV *in_ext = (const VkPhysicalDeviceRawAccessChainsFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -15941,6 +15981,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
             out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
             out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV:
+        {
+            VkPhysicalDeviceRawAccessChainsFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRawAccessChainsFeaturesNV32 *in_ext = (const VkPhysicalDeviceRawAccessChainsFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23354,6 +23405,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV:
+        {
+            VkPhysicalDeviceRawAccessChainsFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRawAccessChainsFeaturesNV32 *in_ext = (const VkPhysicalDeviceRawAccessChainsFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -25192,6 +25254,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_ext->memoryMapPlaced = in_ext->memoryMapPlaced;
             out_ext->memoryMapRangePlaced = in_ext->memoryMapRangePlaced;
             out_ext->memoryUnmapReserve = in_ext->memoryUnmapReserve;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV:
+        {
+            VkPhysicalDeviceRawAccessChainsFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV);
+            const VkPhysicalDeviceRawAccessChainsFeaturesNV *in_ext = (const VkPhysicalDeviceRawAccessChainsFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
+            out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
             out_header = (void *)out_ext;
             break;
         }
@@ -46627,6 +46698,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_optical_flow",
     "VK_NV_per_stage_descriptor_set",
     "VK_NV_present_barrier",
+    "VK_NV_raw_access_chains",
     "VK_NV_ray_tracing",
     "VK_NV_ray_tracing_invocation_reorder",
     "VK_NV_ray_tracing_motion_blur",
