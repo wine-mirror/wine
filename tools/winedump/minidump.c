@@ -53,6 +53,19 @@ enum FileSig get_kind_mdmp(void)
     return SIG_UNKNOWN;
 }
 
+static void dump_system_time(const SYSTEMTIME *t, const char *pfx)
+{
+    printf("%swYear: %u\n", pfx, t->wYear);
+    printf("%swMonth: %u\n", pfx, t->wYear);
+    printf("%swMonth: %u\n", pfx, t->wMonth);
+    printf("%swDayOfWeek: %u\n", pfx, t->wDayOfWeek);
+    printf("%swDay: %u\n", pfx, t->wDay);
+    printf("%swHour: %u\n", pfx, t->wHour);
+    printf("%swMinute: %u\n", pfx, t->wMinute);
+    printf("%swSecond: %u\n", pfx, t->wSecond);
+    printf("%swMilliseconds: %u\n", pfx, t->wMilliseconds);
+}
+
 void mdmp_dump(void)
 {
     const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
@@ -242,6 +255,9 @@ void mdmp_dump(void)
                     case  5: str = "Pentium"; break;
                     case  6: str = "Pentium Pro/II or AMD Athlon"; break;
                     case 15: str = "Pentium 4 or AMD Athlon64"; break;
+                    case 23: str = "AMD Zen 1 or 2"; break;
+                    case 25: str = "AMD Zen 3 or 4"; break;
+                    case 26: str = "AMD Zen 5"; break;
                     default: str = "???"; break;
                     }
                     strcat(tmp, str);
@@ -386,19 +402,54 @@ void mdmp_dump(void)
         case MiscInfoStream:
             if (globals_dump_sect("info"))
             {
-                const MINIDUMP_MISC_INFO *mmi = stream;
+                const MINIDUMP_MISC_INFO_5 *mmi = stream;
 
-                printf("Misc Information\n");
+                printf("Stream [%u]: Misc Information:\n", idx);
                 printf("  Size: %u\n", mmi->SizeOfInfo);
                 printf("  Flags: %#x\n", mmi->Flags1);
-                if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID)
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO) && mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID)
                     printf("  ProcessId: %u\n", mmi->ProcessId);
-                if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_TIMES)
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO) && mmi->Flags1 & MINIDUMP_MISC1_PROCESS_TIMES)
                 {
                     printf("  ProcessCreateTime: %s\n", get_time_str(mmi->ProcessCreateTime));
                     printf("  ProcessUserTime: %u\n", mmi->ProcessUserTime);
                     printf("  ProcessKernelTime: %u\n", mmi->ProcessKernelTime);
                 }
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_2) && mmi->Flags1 & MINIDUMP_MISC1_PROCESSOR_POWER_INFO)
+                {
+                    printf("  ProcessorMaxMhz: %u\n", mmi->ProcessorMaxMhz);
+                    printf("  ProcessorCurrentMhz: %u\n", mmi->ProcessorCurrentMhz);
+                    printf("  ProcessorMhzLimit: %u\n", mmi->ProcessorMhzLimit);
+                    printf("  ProcessorMaxIdleState: %u\n", mmi->ProcessorMaxIdleState);
+                    printf("  ProcessorCurrentIdleState: %u\n", mmi->ProcessorCurrentIdleState);
+                }
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_3) && mmi->Flags1 & MINIDUMP_MISC3_PROCESS_INTEGRITY)
+                    printf("  ProcessIntegrityLevel: %u\n", mmi->ProcessIntegrityLevel);
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_3) && mmi->Flags1 & MINIDUMP_MISC3_PROCESS_EXECUTE_FLAGS)
+                    printf("  ProcessExecuteFlags: %u\n", mmi->ProcessExecuteFlags);
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_3) && mmi->Flags1 & MINIDUMP_MISC3_PROTECTED_PROCESS)
+                    printf("  ProtectedProcess: %u\n", mmi->ProtectedProcess);
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_3) && mmi->Flags1 & MINIDUMP_MISC3_TIMEZONE)
+                {
+                    printf("  TimeZoneId: %u\n", mmi->TimeZoneId);
+                    printf("  TimeZone:\n");
+                    printf("    Bias: %d\n", (INT)mmi->TimeZone.Bias);
+                    printf("    StandardName: %s\n", get_unicode_str(mmi->TimeZone.StandardName, -1));
+                    printf("    StandardDate:\n");
+                    dump_system_time(&mmi->TimeZone.StandardDate, "      ");
+                    printf("    StandardBias: %d\n", (INT)mmi->TimeZone.StandardBias);
+                    printf("    DaylightName: %s\n", get_unicode_str(mmi->TimeZone.DaylightName, -1));
+                    printf("    DaylightDate:\n");
+                    dump_system_time(&mmi->TimeZone.DaylightDate, "      ");
+                    printf("    DaylightBias: %d\n", (INT)mmi->TimeZone.DaylightBias);
+                }
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_4) && mmi->Flags1 & MINIDUMP_MISC4_BUILDSTRING)
+                {
+                    printf("  BuildString: %s\n", get_unicode_str(mmi->BuildString, -1));
+                    printf("  DbgBldStr: %s\n", get_unicode_str(mmi->DbgBldStr, -1));
+                }
+                if (mmi->SizeOfInfo >= sizeof(MINIDUMP_MISC_INFO_5) && (mmi->Flags1 & MINIDUMP_MISC5_PROCESS_COOKIE))
+                    printf("  ProcessCookie: %#x\n", mmi->ProcessCookie);
             }
             break;
         case ExceptionStream:
@@ -510,6 +561,252 @@ void mdmp_dump(void)
                     printf("    ModuleName: %s\n", get_mdmp_str(mod->ModuleNameRva));
 
                     ptr += uml->SizeOfEntry;
+                }
+            }
+            break;
+        case MemoryInfoListStream:
+            if (globals_dump_sect("memory"))
+            {
+                const MINIDUMP_MEMORY_INFO_LIST *mil = stream;
+                const MINIDUMP_MEMORY_INFO *mi;
+
+                printf("Memory info list:\n");
+                printf("  SizeOfHeader: %u\n", (UINT)mil->SizeOfHeader);
+                printf("  SizeOfEntry: %u\n", (UINT)mil->SizeOfEntry);
+                printf("  NumberOfEntries: %s\n", get_uint64_str(mil->NumberOfEntries));
+                mi = (const MINIDUMP_MEMORY_INFO *)((BYTE *)mil + mil->SizeOfHeader);
+                dump_mdmp_data(&dir->Location, "    ");
+                for (i = 0; i < mil->NumberOfEntries; ++i, ++mi)
+                {
+                    printf("  Memory info [%u]:\n", i);
+                    printf("    BaseAddress: %s\n", get_hexint64_str(mi->BaseAddress));
+                    printf("    AllocationBase: %s\n", get_hexint64_str(mi->AllocationBase));
+                    printf("    AllocationProtect: %#x\n", mi->AllocationProtect);
+                    /* __alignment1 */
+                    printf("    RegionSize: %s\n", get_hexint64_str(mi->RegionSize));
+                    printf("    State: %x\n", mi->State);
+                    printf("    Protect: %x\n", mi->Protect);
+                    printf("    Type: %x\n", mi->Type);
+                    /* __alignment2 */
+                }
+            }
+            break;
+        case SystemMemoryInfoStream:
+            if (globals_dump_sect("system"))
+            {
+                const MINIDUMP_SYSTEM_MEMORY_INFO_1 *smi = stream;
+
+                printf("Stream [%u]: System memory info:\n", idx);
+                printf("  Revision: %u\n", smi->Revision);
+                printf("  Flags: %#x\n", smi->Flags);
+                printf("  Basic info:\n");
+                printf("    TimerResolution: %u\n", (UINT)smi->BasicInfo.TimerResolution);
+                printf("    PageSize: %u\n", (UINT)smi->BasicInfo.PageSize);
+                printf("    NumberOfPhysicalPages: %u\n", (UINT)smi->BasicInfo.NumberOfPhysicalPages);
+                printf("    LowestPhysicalPageNumber: %u\n", (UINT)smi->BasicInfo.LowestPhysicalPageNumber);
+                printf("    HighestPhysicalPageNumber: %u\n", (UINT)smi->BasicInfo.HighestPhysicalPageNumber);
+                printf("    AllocationGranularity: %u\n", (UINT)smi->BasicInfo.AllocationGranularity);
+                printf("    MinimumUserModeAddress: %s\n", get_hexint64_str(smi->BasicInfo.MinimumUserModeAddress));
+                printf("    MaximumUserModeAddress: %s\n", get_hexint64_str(smi->BasicInfo.MaximumUserModeAddress));
+                printf("    ActiveProcessorsAffinityMask: %s\n", get_hexint64_str(smi->BasicInfo.ActiveProcessorsAffinityMask));
+                printf("    NumberOfProcessors: %u\n", (UINT)smi->BasicInfo.NumberOfProcessors);
+                printf("  File cache info:\n");
+                printf("    CurrentSize: %s\n", get_hexint64_str(smi->FileCacheInfo.CurrentSize));
+                printf("    PeakSize: %s\n", get_hexint64_str(smi->FileCacheInfo.PeakSize));
+                printf("    PageFaultCount: %u\n", (UINT)smi->FileCacheInfo.PageFaultCount);
+                printf("    MinimumWorkingSet: %s\n", get_hexint64_str(smi->FileCacheInfo.MinimumWorkingSet));
+                printf("    MaximumWorkingSet: %s\n", get_hexint64_str(smi->FileCacheInfo.MaximumWorkingSet));
+                printf("    CurrentSizeIncludingTransitionInPages: %s\n", get_hexint64_str(smi->FileCacheInfo.CurrentSizeIncludingTransitionInPages));
+                printf("    PeakSizeIncludingTransitionInPages: %s\n", get_hexint64_str(smi->FileCacheInfo.PeakSizeIncludingTransitionInPages));
+                if (smi->Flags & MINIDUMP_SYSMEMINFO1_FILECACHE_TRANSITIONREPURPOSECOUNT_FLAGS)
+                    printf("    TransitionRePurposeCount: %u\n", (UINT)smi->FileCacheInfo.TransitionRePurposeCount);
+                printf("    Flags: %u\n", (UINT)smi->FileCacheInfo.Flags);
+                if (smi->Flags & MINIDUMP_SYSMEMINFO1_BASICPERF)
+                {
+                    printf("  Basic perf:\n");
+                    printf("    AvailablePages: %s\n", get_uint64_str(smi->BasicPerfInfo.AvailablePages));
+                    printf("    CommittedPages: %s\n", get_uint64_str(smi->BasicPerfInfo.CommittedPages));
+                    printf("    CommitLimit: %s\n", get_uint64_str(smi->BasicPerfInfo.CommitLimit));
+                    printf("    PeakCommitment: %s\n", get_uint64_str(smi->BasicPerfInfo.PeakCommitment));
+                }
+                printf("  Perf:\n");
+                printf("    IdleProcessTime: %s\n", get_uint64_str(smi->PerfInfo.IdleProcessTime));
+                printf("    IoReadTransferCount: %s\n", get_uint64_str(smi->PerfInfo.IoReadTransferCount));
+                printf("    IoWriteTransferCount: %s\n", get_uint64_str(smi->PerfInfo.IoWriteTransferCount));
+                printf("    IoOtherTransferCount: %s\n", get_uint64_str(smi->PerfInfo.IoOtherTransferCount));
+                printf("    IoReadOperationCount: %u\n", (UINT)smi->PerfInfo.IoReadOperationCount);
+                printf("    IoWriteOperationCount: %u\n", (UINT)smi->PerfInfo.IoWriteOperationCount);
+                printf("    IoOtherOperationCount: %u\n", (UINT)smi->PerfInfo.IoOtherOperationCount);
+                printf("    AvailablePages: %u\n", (UINT)smi->PerfInfo.AvailablePages);
+                printf("    CommittedPages: %u\n", (UINT)smi->PerfInfo.CommittedPages);
+                printf("    CommitLimit: %u\n", (UINT)smi->PerfInfo.CommitLimit);
+                printf("    PeakCommitment: %u\n", (UINT)smi->PerfInfo.PeakCommitment);
+                printf("    PageFaultCount: %u\n", (UINT)smi->PerfInfo.PageFaultCount);
+                printf("    CopyOnWriteCount: %u\n", (UINT)smi->PerfInfo.CopyOnWriteCount);
+                printf("    TransitionCount: %u\n", (UINT)smi->PerfInfo.TransitionCount);
+                printf("    CacheTransitionCount: %u\n", (UINT)smi->PerfInfo.CacheTransitionCount);
+                printf("    DemandZeroCount: %u\n", (UINT)smi->PerfInfo.DemandZeroCount);
+                printf("    PageReadCount: %u\n", (UINT)smi->PerfInfo.PageReadCount);
+                printf("    PageReadIoCount: %u\n", (UINT)smi->PerfInfo.PageReadIoCount);
+                printf("    CacheReadCount: %u\n", (UINT)smi->PerfInfo.CacheReadCount);
+                printf("    CacheIoCount: %u\n", (UINT)smi->PerfInfo.CacheIoCount);
+                printf("    DirtyPagesWriteCount: %u\n", (UINT)smi->PerfInfo.DirtyPagesWriteCount);
+                printf("    DirtyWriteIoCount: %u\n", (UINT)smi->PerfInfo.DirtyWriteIoCount);
+                printf("    MappedPagesWriteCount: %u\n", (UINT)smi->PerfInfo.MappedPagesWriteCount);
+                printf("    MappedWriteIoCount: %u\n", (UINT)smi->PerfInfo.MappedWriteIoCount);
+                printf("    PagedPoolPages: %u\n", (UINT)smi->PerfInfo.PagedPoolPages);
+                printf("    NonPagedPoolPages: %u\n", (UINT)smi->PerfInfo.NonPagedPoolPages);
+                printf("    PagedPoolAllocs: %u\n", (UINT)smi->PerfInfo.PagedPoolAllocs);
+                printf("    PagedPoolFrees: %u\n", (UINT)smi->PerfInfo.PagedPoolFrees);
+                printf("    NonPagedPoolAllocs: %u\n", (UINT)smi->PerfInfo.NonPagedPoolAllocs);
+                printf("    NonPagedPoolFrees: %u\n", (UINT)smi->PerfInfo.NonPagedPoolFrees);
+                printf("    FreeSystemPtes: %u\n", (UINT)smi->PerfInfo.FreeSystemPtes);
+                printf("    ResidentSystemCodePage: %u\n", (UINT)smi->PerfInfo.ResidentSystemCodePage);
+                printf("    TotalSystemDriverPages: %u\n", (UINT)smi->PerfInfo.TotalSystemDriverPages);
+                printf("    TotalSystemCodePages: %u\n", (UINT)smi->PerfInfo.TotalSystemCodePages);
+                printf("    NonPagedPoolLookasideHits: %u\n", (UINT)smi->PerfInfo.NonPagedPoolLookasideHits);
+                printf("    PagedPoolLookasideHits: %u\n", (UINT)smi->PerfInfo.PagedPoolLookasideHits);
+                printf("    AvailablePagedPoolPages: %u\n", (UINT)smi->PerfInfo.AvailablePagedPoolPages);
+                printf("    ResidentSystemCachePage: %u\n", (UINT)smi->PerfInfo.ResidentSystemCachePage);
+                printf("    ResidentPagedPoolPage: %u\n", (UINT)smi->PerfInfo.ResidentPagedPoolPage);
+                printf("    ResidentSystemDriverPage: %u\n", (UINT)smi->PerfInfo.ResidentSystemDriverPage);
+                printf("    CcFastReadNoWait: %u\n", (UINT)smi->PerfInfo.CcFastReadNoWait);
+                printf("    CcFastReadWait: %u\n", (UINT)smi->PerfInfo.CcFastReadWait);
+                printf("    CcFastReadResourceMiss: %u\n", (UINT)smi->PerfInfo.CcFastReadResourceMiss);
+                printf("    CcFastReadNotPossible: %u\n", (UINT)smi->PerfInfo.CcFastReadNotPossible);
+                printf("    CcFastMdlReadNoWait: %u\n", (UINT)smi->PerfInfo.CcFastMdlReadNoWait);
+                printf("    CcFastMdlReadWait: %u\n", (UINT)smi->PerfInfo.CcFastMdlReadWait);
+                printf("    CcFastMdlReadResourceMiss: %u\n", (UINT)smi->PerfInfo.CcFastMdlReadResourceMiss);
+                printf("    CcFastMdlReadNotPossible: %u\n", (UINT)smi->PerfInfo.CcFastMdlReadNotPossible);
+                printf("    CcMapDataNoWait: %u\n", (UINT)smi->PerfInfo.CcMapDataNoWait);
+                printf("    CcMapDataWait: %u\n", (UINT)smi->PerfInfo.CcMapDataWait);
+                printf("    CcMapDataNoWaitMiss: %u\n", (UINT)smi->PerfInfo.CcMapDataNoWaitMiss);
+                printf("    CcMapDataWaitMiss: %u\n", (UINT)smi->PerfInfo.CcMapDataWaitMiss);
+                printf("    CcPinMappedDataCount: %u\n", (UINT)smi->PerfInfo.CcPinMappedDataCount);
+                printf("    CcPinReadNoWait: %u\n", (UINT)smi->PerfInfo.CcPinReadNoWait);
+                printf("    CcPinReadWait: %u\n", (UINT)smi->PerfInfo.CcPinReadWait);
+                printf("    CcPinReadNoWaitMiss: %u\n", (UINT)smi->PerfInfo.CcPinReadNoWaitMiss);
+                printf("    CcPinReadWaitMiss: %u\n", (UINT)smi->PerfInfo.CcPinReadWaitMiss);
+                printf("    CcCopyReadNoWait: %u\n", (UINT)smi->PerfInfo.CcCopyReadNoWait);
+                printf("    CcCopyReadWait: %u\n", (UINT)smi->PerfInfo.CcCopyReadWait);
+                printf("    CcCopyReadNoWaitMiss: %u\n", (UINT)smi->PerfInfo.CcCopyReadNoWaitMiss);
+                printf("    CcCopyReadWaitMiss: %u\n", (UINT)smi->PerfInfo.CcCopyReadWaitMiss);
+                printf("    CcMdlReadNoWait: %u\n", (UINT)smi->PerfInfo.CcMdlReadNoWait);
+                printf("    CcMdlReadWait: %u\n", (UINT)smi->PerfInfo.CcMdlReadWait);
+                printf("    CcMdlReadNoWaitMiss: %u\n", (UINT)smi->PerfInfo.CcMdlReadNoWaitMiss);
+                printf("    CcMdlReadWaitMiss: %u\n", (UINT)smi->PerfInfo.CcMdlReadWaitMiss);
+                printf("    CcReadAheadIos: %u\n", (UINT)smi->PerfInfo.CcReadAheadIos);
+                printf("    CcLazyWriteIos: %u\n", (UINT)smi->PerfInfo.CcLazyWriteIos);
+                printf("    CcLazyWritePages: %u\n", (UINT)smi->PerfInfo.CcLazyWritePages);
+                printf("    CcDataFlushes: %u\n", (UINT)smi->PerfInfo.CcDataFlushes);
+                printf("    CcDataPages: %u\n", (UINT)smi->PerfInfo.CcDataPages);
+                printf("    ContextSwitches: %u\n", (UINT)smi->PerfInfo.ContextSwitches);
+                printf("    FirstLevelTbFills: %u\n", (UINT)smi->PerfInfo.FirstLevelTbFills);
+                printf("    SecondLevelTbFills: %u\n", (UINT)smi->PerfInfo.SecondLevelTbFills);
+                printf("    SystemCalls: %u\n", (UINT)smi->PerfInfo.SystemCalls);
+
+                if (smi->Flags & MINIDUMP_SYSMEMINFO1_PERF_CCTOTALDIRTYPAGES_CCDIRTYPAGETHRESHOLD)
+                {
+                    printf("    CcTotalDirtyPages: %s\n", get_uint64_str(smi->PerfInfo.CcTotalDirtyPages));
+                    printf("    CcDirtyPageThreshold: %s\n", get_uint64_str(smi->PerfInfo.CcDirtyPageThreshold));
+                }
+                if (smi->Flags & MINIDUMP_SYSMEMINFO1_PERF_RESIDENTAVAILABLEPAGES_SHAREDCOMMITPAGES)
+                {
+                    printf("    ResidentAvailablePages: %s\n", get_uint64_str(smi->PerfInfo.ResidentAvailablePages));
+                    printf("    SharedCommittedPages: %s\n", get_uint64_str(smi->PerfInfo.SharedCommittedPages));
+                }
+            }
+            break;
+        case ProcessVmCountersStream:
+            if (globals_dump_sect("system"))
+            {
+                const MINIDUMP_PROCESS_VM_COUNTERS_2 *pvm = stream;
+
+                /* usage MINIDUMP_PROCESS_VM_COUNTERS to be asserted */
+                /* Note: contrary to other structures, _1 isn't a subset of _2... */
+                printf("Stream [%u]: Process VM counters:\n", idx);
+                printf("  Revision: %u\n", pvm->Revision);
+                if (pvm->Revision >= 2)
+                    printf("  Flags: %#x\n", pvm->Flags);
+                printf("  PageFaultCount: %u\n", (UINT)pvm->PageFaultCount);
+                printf("  PeakWorkingSetSize: %s\n", get_hexint64_str(pvm->PeakWorkingSetSize));
+                printf("  WorkingSetSize: %s\n", get_hexint64_str(pvm->WorkingSetSize));
+                printf("  QuotaPeakPagedPoolUsage: %s\n", get_hexint64_str(pvm->QuotaPeakPagedPoolUsage));
+                printf("  QuotaPagedPoolUsage: %s\n", get_hexint64_str(pvm->QuotaPagedPoolUsage));
+                printf("  QuotaPeakNonPagedPoolUsage: %s\n", get_hexint64_str(pvm->QuotaPeakNonPagedPoolUsage));
+                printf("  QuotaNonPagedPoolUsage: %s\n", get_hexint64_str(pvm->QuotaNonPagedPoolUsage));
+                printf("  PagefileUsage: %s\n", get_hexint64_str(pvm->PagefileUsage));
+                printf("  PeakPagefileUsage: %s\n", get_hexint64_str(pvm->PeakPagefileUsage));
+                if (pvm->Revision == 1)
+                    printf("  PrivateUsage: %s\n", get_hexint64_str(((const MINIDUMP_PROCESS_VM_COUNTERS_1 *)stream)->PrivateUsage));
+                else
+                {
+                    if (pvm->Flags & MINIDUMP_PROCESS_VM_COUNTERS_VIRTUALSIZE)
+                    {
+                        printf("  PeakVirtualSize: %s\n", get_hexint64_str(pvm->PeakVirtualSize));
+                        printf("  VirtualSize: %s\n", get_hexint64_str(pvm->VirtualSize));
+                    }
+                    if (pvm->Flags & MINIDUMP_PROCESS_VM_COUNTERS_EX)
+                        printf("  PrivateUsage: %s\n", get_hexint64_str(pvm->PrivateUsage));
+                    if (pvm->Flags & MINIDUMP_PROCESS_VM_COUNTERS_EX2)
+                    {
+                        printf("  PrivateWorkingSetSize: %s\n", get_hexint64_str(pvm->PrivateWorkingSetSize));
+                        printf("  SharedCommitUsage: %s\n", get_hexint64_str(pvm->SharedCommitUsage));
+                    }
+
+                    if (pvm->Flags & MINIDUMP_PROCESS_VM_COUNTERS_JOB)
+                    {
+                        printf("  JobSharedCommitUsage: %s\n", get_hexint64_str(pvm->JobSharedCommitUsage));
+                        printf("  JobPrivateCommitUsage: %s\n", get_hexint64_str(pvm->JobPrivateCommitUsage));
+                        printf("  JobPeakPrivateCommitUsage: %s\n", get_hexint64_str(pvm->JobPeakPrivateCommitUsage));
+                        printf("  JobPrivateCommitLimit: %s\n", get_hexint64_str(pvm->JobPrivateCommitLimit));
+                        printf("  JobTotalCommitLimit: %s\n", get_hexint64_str(pvm->JobTotalCommitLimit));
+                    }
+                }
+            }
+            break;
+        case TokenStream:
+            if (globals_dump_sect("token"))
+            {
+                const MINIDUMP_TOKEN_INFO_LIST *til = stream;
+                const MINIDUMP_TOKEN_INFO_HEADER *ti;
+
+                printf("Stream [%u]: Token info list:\n", idx);
+                printf("  TokenListSize: %u\n", til->TokenListSize);
+                printf("  TokenListEntries: %u\n", til->TokenListEntries);
+                printf("  ListHeaderSize: %u\n", til->ListHeaderSize);
+                printf("  ElementHeaderSize: %u\n", til->ElementHeaderSize);
+
+                ti = (const MINIDUMP_TOKEN_INFO_HEADER *)(til + 1);
+                if (til->ListHeaderSize >= sizeof(*ti))
+                {
+                    for (i = 0; i < til->TokenListEntries; ++i)
+                    {
+                        printf("  Token #%u:\n", i);
+                        printf("    TokenSize: %u\n", ti->TokenSize);
+                        printf("    TokenId: %u\n", ti->TokenId);
+                        printf("    TokenHandle:: %s\n", get_hexint64_str(ti->TokenHandle));
+                        if (globals_dump_sect("content"))
+                            dump_data((const BYTE *)ti + til->ListHeaderSize, ti->TokenSize - til->ListHeaderSize, "      ");
+                        ti = (const MINIDUMP_TOKEN_INFO_HEADER *)((const BYTE *)ti + ti->TokenSize);
+                    }
+                }
+                else printf("  ### bad token entry\n");
+            }
+            break;
+        case ThreadNamesStream:
+            if (globals_dump_sect("thread"))
+            {
+                const MINIDUMP_THREAD_NAME_LIST *tnl = stream;
+                const MINIDUMP_THREAD_NAME *tn = tnl->ThreadNames;
+
+                printf("Stream [%u]: Thread name list:\n", idx);
+                printf("  NumberOfThreadNames: %u\n", (UINT)tnl->NumberOfThreadNames);
+                for (i = 0; i < tnl->NumberOfThreadNames; i++, tn++)
+                {
+                    printf("  Thread #%u\n", i);
+                    printf("    ThreadId: %#x\n", (UINT)tn->ThreadId);
+                    printf("    ThreadName: %s\n", get_mdmp_str(tn->RvaOfThreadName));
                 }
             }
             break;
