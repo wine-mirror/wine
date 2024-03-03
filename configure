@@ -7890,6 +7890,12 @@ then :
   printf "%s\n" "#define HAVE_ARPA_NAMESER_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "asm/termbits.h" "ac_cv_header_asm_termbits_h" "$ac_includes_default"
+if test "x$ac_cv_header_asm_termbits_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ASM_TERMBITS_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "asm/types.h" "ac_cv_header_asm_types_h" "$ac_includes_default"
 if test "x$ac_cv_header_asm_types_h" = xyes
 then :

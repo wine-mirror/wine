@@ -368,6 +368,7 @@ AC_CHECK_HEADERS(\
 	OpenCL/opencl.h \
 	arpa/inet.h \
 	arpa/nameser.h \
+	asm/termbits.h \
 	asm/types.h \
 	asm/user.h \
 	elf.h \
