@@ -5604,6 +5604,304 @@ static void test_SHBindToFolderIDListParent(void)
     ok(pidl_last == NULL, "got %p\n", pidl_last);
 }
 
+static void test_copy_paste(void)
+{
+    CMINVOKECOMMANDINFO invoke_info = {.cbSize = sizeof(invoke_info)};
+    WCHAR cwd[MAX_PATH], temp_path[MAX_PATH], path[MAX_PATH];
+    ITEMIDLIST *pidl, *src_pidl, *dst_pidl, *pidls[2];
+    IShellFolder *tmp_folder, *dst_folder;
+    IContextMenu *src_menu, *dst_menu;
+    const DROPFILES *dropfiles;
+    const WCHAR *filenameW;
+    IDataObject *data_obj;
+    const CIDA *cida;
+    STGMEDIUM medium;
+    FORMATETC format;
+    DWORD *effect;
+    HRESULT hr;
+    BOOL ret;
+
+    format.dwAspect = DVASPECT_CONTENT;
+    format.ptd = NULL;
+    format.tymed = TYMED_HGLOBAL;
+    format.lindex = -1;
+
+    GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    SetCurrentDirectoryW(temp_path);
+
+    ret = CreateDirectoryW(L"testcopy_src", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    ret = CreateDirectoryW(L"testcopy_dst", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    hr = SHParseDisplayName(temp_path, NULL, &pidl, 0, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = SHBindToObject(NULL, pidl, NULL, &IID_IShellFolder, (void **)&tmp_folder);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ILFree(pidl);
+
+    hr = IShellFolder_ParseDisplayName(tmp_folder, NULL, NULL, (WCHAR *)L"testcopy_src", NULL, &src_pidl, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IShellFolder_ParseDisplayName(tmp_folder, NULL, NULL, (WCHAR *)L"testcopy_dst", NULL, &dst_pidl, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IShellFolder_BindToObject(tmp_folder, dst_pidl, NULL, &IID_IShellFolder, (void **)&dst_folder);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IShellFolder_GetUIObjectOf(tmp_folder, NULL, 1, (const ITEMIDLIST **)&src_pidl,
+            &IID_IContextMenu, NULL, (void **)&src_menu);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    /* Cut. */
+
+    invoke_info.lpVerb = "cut";
+    hr = IContextMenu_InvokeCommand(src_menu, &invoke_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    trace("%p ole %p shell %p\n", data_obj->lpVtbl->SetData, GetModuleHandleW(L"ole32"), GetModuleHandleW(L"shell32"));
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+    format.cfFormat = CF_HDROP;
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+    format.cfFormat = RegisterClipboardFormatA(CFSTR_FILENAMEA);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_FILENAMEW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        effect = GlobalLock(medium.hGlobal);
+        ok(*effect == DROPEFFECT_MOVE, "Got effect %#lx.\n", *effect);
+        GlobalUnlock(medium.hGlobal);
+        ReleaseStgMedium(&medium);
+    }
+
+    IDataObject_Release(data_obj);
+
+    ret = GetFileAttributesW(L"testcopy_src");
+    ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
+
+    hr = IShellFolder_GetUIObjectOf(tmp_folder, NULL, 1, (const ITEMIDLIST **)&dst_pidl,
+            &IID_IContextMenu, NULL, (void **)&dst_menu);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = MoveFileExW(L"testcopy_dst/testcopy_src", L"testcopy_src", 0);
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+
+    /* Copy. */
+
+    invoke_info.lpVerb = "copy";
+    hr = IContextMenu_InvokeCommand(src_menu, &invoke_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        effect = GlobalLock(medium.hGlobal);
+        ok(*effect == (DROPEFFECT_COPY | DROPEFFECT_LINK), "Got effect %#lx.\n", *effect);
+        GlobalUnlock(medium.hGlobal);
+        ReleaseStgMedium(&medium);
+    }
+
+    IDataObject_Release(data_obj);
+
+    ret = GetFileAttributesW(L"testcopy_src");
+    ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
+
+    hr = IShellFolder_GetUIObjectOf(tmp_folder, NULL, 1, (const ITEMIDLIST **)&dst_pidl,
+            &IID_IContextMenu, NULL, (void **)&dst_menu);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = GetFileAttributesW(L"testcopy_src");
+    ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
+
+    ret = RemoveDirectoryW(L"testcopy_dst/testcopy_src");
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+
+    /* Manually change the drop effect back to "cut". */
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW);
+    medium.tymed = TYMED_HGLOBAL;
+    medium.hGlobal = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+    effect = GlobalLock(medium.hGlobal);
+    *effect = DROPEFFECT_MOVE;
+    GlobalUnlock(medium.hGlobal);
+    hr = IDataObject_SetData(data_obj, &format, &medium, TRUE);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IDataObject_Release(data_obj);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = MoveFileExW(L"testcopy_dst/testcopy_src", L"testcopy_src", 0);
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+
+    /* Paste into a background menu. */
+
+    IContextMenu_Release(dst_menu);
+
+    invoke_info.lpVerb = "copy";
+    hr = IContextMenu_InvokeCommand(src_menu, &invoke_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IShellFolder_CreateViewObject(dst_folder, NULL, &IID_IContextMenu, (void **)&dst_menu);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = GetFileAttributesW(L"testcopy_src");
+    ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
+
+    ret = RemoveDirectoryW(L"testcopy_dst/testcopy_src");
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+
+    /* Paste into a selection comprising multiple directories. In this case the
+     * first directory is used, and the second is just ignored.
+     * This same behaviour can of course be observed when using the UI. */
+
+    IContextMenu_Release(dst_menu);
+
+    ret = CreateDirectoryW(L"testcopy_dst2", NULL);
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    hr = IShellFolder_ParseDisplayName(tmp_folder, NULL, NULL, (WCHAR *)L"testcopy_dst2", NULL, &pidls[0], NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    pidls[1] = dst_pidl;
+
+    hr = IShellFolder_GetUIObjectOf(tmp_folder, NULL, 2, (const ITEMIDLIST **)pidls,
+            &IID_IContextMenu, NULL, (void **)&dst_menu);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ret = RemoveDirectoryW(L"testcopy_dst2/testcopy_src");
+    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ret = GetFileAttributesW(L"testcopy_dst/testcopy_src");
+    ok(ret == INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
+
+    /* Cut multiple files, and test the clipboard contents. */
+
+    invoke_info.lpVerb = "cut";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    cida = GlobalLock(medium.hGlobal);
+    ok(cida->cidl == 2, "Got count %u.\n", cida->cidl);
+    GlobalUnlock(medium.hGlobal);
+    ReleaseStgMedium(&medium);
+
+    format.cfFormat = CF_HDROP;
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    dropfiles = GlobalLock(medium.hGlobal);
+    ok(dropfiles->pFiles == sizeof(DROPFILES), "Got offset %lu.\n", dropfiles->pFiles);
+    ok(dropfiles->fWide == TRUE, "Got wide %u.\n", dropfiles->fWide);
+    filenameW = (const WCHAR *)((const char *)dropfiles + dropfiles->pFiles);
+    swprintf(path, ARRAY_SIZE(path), L"%stestcopy_dst2", temp_path);
+    ok(!wcscmp(filenameW, path), "Got path %s.\n", debugstr_w(filenameW));
+    filenameW += wcslen(filenameW) + 1;
+    swprintf(path, ARRAY_SIZE(path), L"%stestcopy_dst", temp_path);
+    ok(!wcscmp(filenameW, path), "Got path %s.\n", debugstr_w(filenameW));
+    filenameW += wcslen(filenameW) + 1;
+    ok(!filenameW[0], "Got path %s.\n", debugstr_w(filenameW));
+    GlobalUnlock(medium.hGlobal);
+    ReleaseStgMedium(&medium);
+
+    format.cfFormat = RegisterClipboardFormatA(CFSTR_FILENAMEA);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ReleaseStgMedium(&medium);
+
+    format.cfFormat = RegisterClipboardFormatW(CFSTR_FILENAMEW);
+    hr = IDataObject_GetData(data_obj, &format, &medium);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    filenameW = GlobalLock(medium.hGlobal);
+    swprintf(path, ARRAY_SIZE(path), L"%stestcopy_dst2", temp_path);
+    ok(!wcscmp(filenameW, path), "Got path %s.\n", debugstr_w(filenameW));
+    GlobalUnlock(medium.hGlobal);
+    ReleaseStgMedium(&medium);
+
+    IDataObject_Release(data_obj);
+
+    ILFree(pidls[0]);
+
+    /* Paste with nothing in the clipboard. */
+
+    hr = OleSetClipboard(NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    invoke_info.lpVerb = "paste";
+    hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
+    todo_wine ok(hr == S_OK || hr == S_FALSE /* win10 < 1809 */, "Got hr %#lx.\n", hr);
+
+    ret = RemoveDirectoryW(L"testcopy_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"testcopy_dst");
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ret = RemoveDirectoryW(L"testcopy_dst2");
+    ok(ret, "Got error %lu.\n", GetLastError());
+
+    IContextMenu_Release(src_menu);
+    IContextMenu_Release(dst_menu);
+    ILFree(src_pidl);
+    ILFree(dst_pidl);
+    IShellFolder_Release(dst_folder);
+    IShellFolder_Release(tmp_folder);
+    SetCurrentDirectoryW(cwd);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5651,6 +5949,7 @@ START_TEST(shlfolder)
     test_SHLimitInputEdit();
     test_SHGetSetFolderCustomSettings();
     test_SHOpenFolderAndSelectItems();
+    test_copy_paste();
 
     OleUninitialize();
 }
