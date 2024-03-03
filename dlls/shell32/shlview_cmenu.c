@@ -1341,30 +1341,6 @@ static HRESULT DoPaste(ContextMenu *This)
 
 	  IDataObject_Release(pda);
 	}
-#if 0
-	HGLOBAL  hMem;
-
-	OpenClipboard(NULL);
-	hMem = GetClipboardData(CF_HDROP);
-
-	if(hMem)
-	{
-          char * pDropFiles = GlobalLock(hMem);
-	  if(pDropFiles)
-	  {
-	    int len, offset = sizeof(DROPFILESTRUCT);
-
-	    while( pDropFiles[offset] != 0)
-	    {
-	      len = strlen(pDropFiles + offset);
-	      TRACE("%s\n", pDropFiles + offset);
-	      offset += len+1;
-	    }
-	  }
-	  GlobalUnlock(hMem);
-	}
-	CloseClipboard();
-#endif
 	return hr;
 }
 
