@@ -414,10 +414,10 @@ static void test_INetworkListManager( void )
     ok( hr == S_OK, "got %08lx\n", hr );
     while ((hr = IEnumNetworks_Next( network_iter, 1, &network, NULL )) == S_OK)
     {
-        connected = -1;
+        connected = 1;
         hr = INetwork_get_IsConnected( network, &connected );
         ok( hr == S_OK, "got %08lx\n", hr );
-        ok( connected == 0, "got %d\n", connected );
+        ok( connected == 0 || broken(connected == -1) /* win11 */, "got %d\n", connected );
         INetwork_Release( network );
     }
     IEnumNetworks_Release( network_iter );
