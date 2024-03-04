@@ -807,6 +807,7 @@ static void android_surface_destroy( struct window_surface *window_surface )
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
     release_ioctl_window( surface->window );
     free( surface->bits );
+    pthread_mutex_destroy( &surface->mutex );
     free( surface );
 }
 
@@ -901,7 +902,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 {
     struct android_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
-    pthread_mutexattr_t attr;
 
     surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
@@ -911,10 +911,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
 
-    pthread_mutexattr_init( &attr );
-    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
-    pthread_mutex_init( &surface->mutex, &attr );
-    pthread_mutexattr_destroy( &attr );
+    pthread_mutex_init( &surface->mutex, NULL );
 
     surface->header.funcs = &android_surface_funcs;
     surface->header.rect  = *rect;
