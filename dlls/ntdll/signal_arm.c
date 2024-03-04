@@ -69,6 +69,18 @@ static void dump_scope_table( ULONG base, const SCOPE_TABLE *table )
                base + table->ScopeRecord[i].JumpTarget );
 }
 
+/* undocumented, copied from the corresponding ARM64 structure */
+typedef union _DISPATCHER_CONTEXT_NONVOLREG_ARM
+{
+    BYTE  Buffer[8 * sizeof(DWORD) + 8 * sizeof(double)];
+    struct
+    {
+        DWORD  GpNvRegs[8];
+        double FpNvRegs[8];
+    } DUMMYSTRUCTNAME;
+} DISPATCHER_CONTEXT_NONVOLREG_ARM;
+
+
 /*******************************************************************
  *         syscalls
  */
@@ -116,12 +128,17 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
  */
 static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
+    DISPATCHER_CONTEXT_NONVOLREG_ARM *nonvol_regs;
     DWORD pc = context->Pc;
 
     dispatch->ScopeIndex = 0;
     dispatch->ControlPc  = pc;
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
     if (dispatch->ControlPcIsUnwound) pc -= 2;
+
+    nonvol_regs = (DISPATCHER_CONTEXT_NONVOLREG_ARM *)dispatch->NonVolatileRegisters;
+    memcpy( nonvol_regs->GpNvRegs, &context->R4, sizeof(nonvol_regs->GpNvRegs) );
+    memcpy( nonvol_regs->FpNvRegs, &context->D[8], sizeof(nonvol_regs->FpNvRegs) );
 
     dispatch->FunctionEntry = RtlLookupFunctionEntry( pc, (DWORD_PTR *)&dispatch->ImageBase,
                                                       dispatch->HistoryTable );
@@ -297,17 +314,17 @@ static DWORD call_teb_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCH
 NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 {
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+    DISPATCHER_CONTEXT_NONVOLREG_ARM nonvol_regs;
     UNWIND_HISTORY_TABLE table;
     DISPATCHER_CONTEXT dispatch;
-    CONTEXT context, prev_context;
+    CONTEXT context;
     NTSTATUS status;
 
     context = *orig_context;
     dispatch.TargetPc      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;
-    prev_context = context;
-    dispatch.NonVolatileRegisters = (BYTE *)&prev_context.R4;
+    dispatch.NonVolatileRegisters = nonvol_regs.Buffer;
 
     for (;;)
     {
@@ -387,7 +404,6 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
         }
 
         if (context.Sp == (DWORD)NtCurrentTeb()->Tib.StackBase) break;
-        prev_context = context;
     }
     return STATUS_UNHANDLED_EXCEPTION;
 }
@@ -541,6 +557,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                          PVOID retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
 {
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+    DISPATCHER_CONTEXT_NONVOLREG_ARM nonvol_regs;
     EXCEPTION_RECORD record;
     DISPATCHER_CONTEXT dispatch;
     CONTEXT new_context;
@@ -572,7 +589,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     dispatch.TargetPc         = (ULONG_PTR)target_ip;
     dispatch.ContextRecord    = context;
     dispatch.HistoryTable     = table;
-    dispatch.NonVolatileRegisters = (BYTE *)&context->R4;
+    dispatch.NonVolatileRegisters = nonvol_regs.Buffer;
 
     for (;;)
     {

@@ -6037,8 +6037,20 @@ static DWORD WINAPI rtlraiseexception_teb_handler( EXCEPTION_RECORD *rec,
 }
 
 static DWORD WINAPI rtlraiseexception_handler( EXCEPTION_RECORD *rec, void *frame,
-                                               CONTEXT *context, void *dispatcher )
+                                               CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
+    ULONG *nonvol_regs = (void *)dispatcher->NonVolatileRegisters;
+    int i;
+
+    for (i = 0; i < 8; i++)
+        ok( nonvol_regs[i] == ((ULONG *)&context->R4)[i],
+            "wrong non volatile reg r%u %lx / %lx\n", i + 4,
+            nonvol_regs[i], ((ULONG *)&context->R4)[i] );
+    for (i = 0; i < 8; i++)
+        ok( ((ULONGLONG *)(nonvol_regs + 8))[i] == context->D[i + 8],
+            "wrong non volatile reg d%u %I64x / %I64x\n", i + 8,
+            ((ULONGLONG *)(nonvol_regs + 8))[i], context->D[i + 8] );
+
     rtlraiseexception_handler_called = 1;
     rtlraiseexception_handler_(rec, frame, context, dispatcher, FALSE);
     return ExceptionContinueSearch;
