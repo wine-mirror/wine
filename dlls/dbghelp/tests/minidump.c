@@ -496,7 +496,6 @@ static void test_current_process(void)
             /* native embeds some elements in code segment from ntdll */
             ok(walker.num_text < 5, "unexpected code segments %u %u\n", walker.num_text, num_available_modules);
 
-        todo_wine_if(RtlImageNtHeader(GetModuleHandleW(NULL))->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
         ok(walker.num_unwind_info == 0, "unexpected unwind info %u\n", walker.num_unwind_info);
         minidump_check_nostream(data, ExceptionStream);
 
