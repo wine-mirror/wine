@@ -420,7 +420,7 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
     impl->axes[1] = DIJOFS_Y;
     impl->axes[2] = DIJOFS_Z;
 
-    InitializeCriticalSection( &impl->cs );
+    InitializeCriticalSectionEx( &impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": effect.cs" );
 
     *out = &impl->IWineForceFeedbackEffectImpl_iface;
