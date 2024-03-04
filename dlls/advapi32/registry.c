@@ -70,6 +70,9 @@ LSTATUS WINAPI RegOverridePredefKey( HKEY hkey, HKEY override )
  */
 LSTATUS WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
 {
+    if (!phkResult)
+        return ERROR_INVALID_PARAMETER;
+
     return RegCreateKeyExW( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
                             MAXIMUM_ALLOWED, NULL, phkResult, NULL );
 }
@@ -82,6 +85,9 @@ LSTATUS WINAPI RegCreateKeyW( HKEY hkey, LPCWSTR lpSubKey, PHKEY phkResult )
  */
 LSTATUS WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
 {
+    if (!phkResult)
+        return ERROR_INVALID_PARAMETER;
+
     return RegCreateKeyExA( hkey, lpSubKey, 0, NULL, REG_OPTION_NON_VOLATILE,
                             MAXIMUM_ALLOWED, NULL, phkResult, NULL );
 }
