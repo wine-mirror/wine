@@ -1243,7 +1243,7 @@ static HRESULT media_sink_create(IMFByteStream *bytestream, const char *format, 
     media_sink->async_callback.lpVtbl = &media_sink_callback_vtbl;
     media_sink->refcount = 1;
     media_sink->state = STATE_OPENED;
-    InitializeCriticalSection(&media_sink->cs);
+    InitializeCriticalSectionEx(&media_sink->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     media_sink->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     IMFByteStream_AddRef((media_sink->bytestream = bytestream));
     list_init(&media_sink->stream_sinks);

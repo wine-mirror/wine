@@ -1663,7 +1663,7 @@ static HRESULT parser_create(enum wg_parser_type type, BOOL output_compressed, s
         return E_OUTOFMEMORY;
     }
 
-    InitializeCriticalSection(&object->streaming_cs);
+    InitializeCriticalSectionEx(&object->streaming_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->streaming_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": parser.streaming_cs");
 
     InitializeConditionVariable(&object->flushing_cv);
@@ -2145,7 +2145,7 @@ static struct parser_source *create_pin(struct parser *filter,
             GST_ChangeCurrent, GST_ChangeRate);
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
-    InitializeCriticalSection(&pin->flushing_cs);
+    InitializeCriticalSectionEx(&pin->flushing_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     pin->flushing_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": pin.flushing_cs");
     InitializeConditionVariable(&pin->eos_cv);
 

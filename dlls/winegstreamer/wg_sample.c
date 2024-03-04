@@ -283,7 +283,7 @@ HRESULT wg_sample_queue_create(struct wg_sample_queue **out)
     if (!(queue = calloc(1, sizeof(*queue))))
         return E_OUTOFMEMORY;
 
-    InitializeCriticalSection(&queue->cs);
+    InitializeCriticalSectionEx(&queue->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     queue->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     list_init(&queue->samples);
 
