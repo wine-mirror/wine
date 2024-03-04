@@ -1279,6 +1279,19 @@ static void test_reg_create_key(void)
     PACL key_acl;
     SECURITY_DESCRIPTOR *sd;
 
+    /* NULL return key check */
+    ret = RegCreateKeyA(hkey_main, "Subkey1", NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %ld.\n", ret);
+
+    ret = RegCreateKeyW(hkey_main, L"Subkey1", NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %ld.\n", ret);
+
+    ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, NULL, NULL);
+    ok(ret == ERROR_BADKEY, "Got unexpected ret %ld.\n", ret);
+
+    ret = RegCreateKeyExW(hkey_main, L"Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, NULL, NULL);
+    ok(ret == ERROR_BADKEY, "Got unexpected ret %ld.\n", ret);
+
     ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
     ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
     /* should succeed: all versions of Windows ignore the access rights
