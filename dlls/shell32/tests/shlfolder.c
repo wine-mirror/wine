@@ -5706,10 +5706,12 @@ static void test_copy_paste(void)
 
     invoke_info.lpVerb = "paste";
     hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = MoveFileExW(L"testcopy_dst/testcopy_src", L"testcopy_src", 0);
     todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ALREADY_EXISTS)
+        RemoveDirectoryW(L"testcopy_dst/testcopy_src");
 
     /* Copy. */
 
@@ -5747,13 +5749,13 @@ static void test_copy_paste(void)
 
     invoke_info.lpVerb = "paste";
     hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = GetFileAttributesW(L"testcopy_src");
     ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
 
     ret = RemoveDirectoryW(L"testcopy_dst/testcopy_src");
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     /* Manually change the drop effect back to "cut". */
 
@@ -5773,10 +5775,12 @@ static void test_copy_paste(void)
 
     invoke_info.lpVerb = "paste";
     hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = MoveFileExW(L"testcopy_dst/testcopy_src", L"testcopy_src", 0);
     todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    if (!ret && GetLastError() == ERROR_ALREADY_EXISTS)
+        RemoveDirectoryW(L"testcopy_dst/testcopy_src");
 
     /* Paste into a background menu. */
 
@@ -5818,10 +5822,10 @@ static void test_copy_paste(void)
 
     invoke_info.lpVerb = "paste";
     hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = RemoveDirectoryW(L"testcopy_dst2/testcopy_src");
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
     ret = GetFileAttributesW(L"testcopy_dst/testcopy_src");
     ok(ret == INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
 
@@ -5884,7 +5888,7 @@ static void test_copy_paste(void)
 
     invoke_info.lpVerb = "paste";
     hr = IContextMenu_InvokeCommand(dst_menu, &invoke_info);
-    todo_wine ok(hr == S_OK || hr == S_FALSE /* win10 < 1809 */, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == S_FALSE /* win10 < 1809 */, "Got hr %#lx.\n", hr);
 
     ret = RemoveDirectoryW(L"testcopy_src");
     ok(ret, "Got error %lu.\n", GetLastError());

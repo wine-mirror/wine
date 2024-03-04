@@ -157,6 +157,35 @@ static ULONG WINAPI ContextMenu_Release(IContextMenu3 *iface)
     return ref;
 }
 
+static BOOL can_paste(const ITEMIDLIST *dst_pidl)
+{
+    IDataObject *data;
+    FORMATETC format;
+
+    if (!(_ILIsFolder(dst_pidl) || _ILIsDrive(dst_pidl)))
+        return FALSE;
+
+    if (FAILED(OleGetClipboard(&data)))
+        return FALSE;
+
+    InitFormatEtc(format, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), TYMED_HGLOBAL);
+    if (SUCCEEDED(IDataObject_QueryGetData(data, &format)))
+    {
+        IDataObject_Release(data);
+        return TRUE;
+    }
+
+    InitFormatEtc(format, CF_HDROP, TYMED_HGLOBAL);
+    if (SUCCEEDED(IDataObject_QueryGetData(data, &format)))
+    {
+        IDataObject_Release(data);
+        return TRUE;
+    }
+
+    IDataObject_Release(data);
+    return FALSE;
+}
+
 static UINT max_menu_id(HMENU hmenu, UINT offset, UINT last)
 {
     int i;
@@ -252,6 +281,11 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
             EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME - FCIDM_BASE + idCmdFirst, enable);
         }
 
+        /* It's legal to paste into more than one pidl at once. In that case
+         * the first is used and the rest are ignored. */
+        if (!can_paste(This->apidl[0]))
+            RemoveMenu(hmenu, FCIDM_SHVIEW_INSERT - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND);
+
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
     }
     return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
@@ -311,7 +345,8 @@ static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
     }
 }
 
-static HRESULT paste_pidls(ContextMenu *menu, const ITEMIDLIST *src_parent, ITEMIDLIST **pidls, unsigned int count)
+static HRESULT paste_pidls(IShellFolder *dst_folder,
+        const ITEMIDLIST *src_parent, ITEMIDLIST **pidls, unsigned int count)
 {
     IShellFolder *src_folder;
     HRESULT hr = S_OK;
@@ -326,7 +361,7 @@ static HRESULT paste_pidls(ContextMenu *menu, const ITEMIDLIST *src_parent, ITEM
     {
         ISFHelper *psfhlpdst = NULL, *psfhlpsrc = NULL;
 
-        hr = IShellFolder_QueryInterface(menu->parent, &IID_ISFHelper, (void **)&psfhlpdst);
+        hr = IShellFolder_QueryInterface(dst_folder, &IID_ISFHelper, (void **)&psfhlpdst);
         if (SUCCEEDED(hr))
             hr = IShellFolder_QueryInterface(src_folder, &IID_ISFHelper, (void **)&psfhlpsrc);
 
@@ -357,12 +392,28 @@ static HRESULT get_data_format(IDataObject *data, UINT cf, STGMEDIUM *medium)
 
 static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
 {
+    IShellFolder *dst_folder;
     IDataObject *data;
     HRESULT hr;
     STGMEDIUM medium;
 
     if (FAILED(hr = OleGetClipboard(&data)))
         return hr;
+
+    if (menu->cidl)
+    {
+        if (FAILED(hr = IShellFolder_BindToObject(menu->parent, menu->apidl[0],
+                NULL, &IID_IShellFolder, (void **)&dst_folder)))
+        {
+            WARN("Failed to get destination folder, hr %#lx.\n", hr);
+            return hr;
+        }
+    }
+    else
+    {
+        dst_folder = menu->parent;
+        IShellFolder_AddRef(dst_folder);
+    }
 
     if (SUCCEEDED(get_data_format(data, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), &medium)))
     {
@@ -375,7 +426,7 @@ static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
             pidls = _ILCopyCidaToaPidl(&pidl, cida);
             if (pidls)
             {
-                hr = paste_pidls(menu, pidl, pidls, cida->cidl);
+                hr = paste_pidls(dst_folder, pidl, pidls, cida->cidl);
                 _ILFreeaPidl(pidls, cida->cidl);
                 SHFree(pidl);
             }
@@ -400,7 +451,7 @@ static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
         ITEMIDLIST *dst_pidl;
         int ret;
 
-        if (FAILED(hr = IShellFolder_QueryInterface(menu->parent, &IID_IPersistFolder2, (void **)&dst_persist)))
+        if (FAILED(hr = IShellFolder_QueryInterface(dst_folder, &IID_IPersistFolder2, (void **)&dst_persist)))
         {
             WARN("Failed to get IPersistFolder2, hr %#lx.\n", hr);
             IDataObject_Release(data);
@@ -928,6 +979,9 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
             TRACE("Verb FCIDM_SHVIEW_CUT\n");
             DoCopyOrCut(This, lpcmi->hwnd, TRUE);
             break;
+        case FCIDM_SHVIEW_INSERT:
+            do_paste(This, lpcmi->hwnd);
+            break;
         case FCIDM_SHVIEW_PROPERTIES:
             TRACE("Verb FCIDM_SHVIEW_PROPERTIES\n");
             DoOpenProperties(This, lpcmi->hwnd);
@@ -946,6 +1000,8 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
             DoCopyOrCut(This, lpcmi->hwnd, FALSE);
         else if (strcmp(lpcmi->lpVerb,"cut")==0)
             DoCopyOrCut(This, lpcmi->hwnd, TRUE);
+        else if (!strcmp(lpcmi->lpVerb, "paste"))
+            do_paste(This, lpcmi->hwnd);
         else if (strcmp(lpcmi->lpVerb,"properties")==0)
             DoOpenProperties(This, lpcmi->hwnd);
         else {
@@ -987,6 +1043,9 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
             break;
         case FCIDM_SHVIEW_DELETE:
             cmdW = L"delete";
+            break;
+        case FCIDM_SHVIEW_INSERT:
+            cmdW = L"paste";
             break;
         case FCIDM_SHVIEW_PROPERTIES:
             cmdW = L"properties";
