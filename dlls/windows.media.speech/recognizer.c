@@ -1126,7 +1126,7 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     if (FAILED(hr = recognizer_factory_create_audio_capture(session)))
         goto error;
 
-    InitializeCriticalSection(&session->cs);
+    InitializeCriticalSectionEx(&session->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": recognition_session.cs");
 
     /* Init ISpeechRecognizer */

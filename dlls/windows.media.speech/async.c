@@ -366,7 +366,7 @@ HRESULT async_action_create( IInspectable *invoker, async_action_callback callba
 
     if (invoker) IInspectable_AddRef((impl->invoker = invoker));
 
-    InitializeCriticalSection(&impl->cs);
+    InitializeCriticalSectionEx(&impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_action.cs");
 
     /* AddRef to keep the obj alive in the callback. */
@@ -745,7 +745,7 @@ HRESULT async_operation_inspectable_create( const GUID *iid,
 
     if (invoker) IInspectable_AddRef((impl->invoker = invoker));
 
-    InitializeCriticalSection(&impl->cs);
+    InitializeCriticalSectionEx(&impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_operation.cs");
 
     /* AddRef to keep the obj alive in the callback. */
