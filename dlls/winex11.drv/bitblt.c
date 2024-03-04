@@ -1992,6 +1992,8 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
         XDestroyImage( surface->image );
     }
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
+
+    pthread_mutex_destroy( &surface->mutex );
     free( surface );
 }
 
@@ -2027,7 +2029,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
     if (format->bits_per_pixel > 8) set_color_info( vis, &surface->info, use_alpha );
 
-    init_recursive_mutex( &surface->mutex );
+    pthread_mutex_init( &surface->mutex, NULL );
 
     surface->header.funcs = &x11drv_surface_funcs;
     surface->header.rect  = *rect;
