@@ -311,50 +311,39 @@ static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
     }
 }
 
-static HRESULT paste_pidls(ContextMenu *menu, ITEMIDLIST **pidls, unsigned int count)
+static HRESULT paste_pidls(ContextMenu *menu, const ITEMIDLIST *src_parent, ITEMIDLIST **pidls, unsigned int count)
 {
-    IShellFolder *desktop_folder;
+    IShellFolder *src_folder;
     HRESULT hr = S_OK;
 
-    if (FAILED(hr = SHGetDesktopFolder(&desktop_folder)))
+    if (FAILED(hr = SHBindToObject(NULL, src_parent, NULL, &IID_IShellFolder, (void **)&src_folder)))
+    {
+        ERR("Failed to get folder from source PIDL, hr %#lx.\n", hr);
         return hr;
+    }
 
     for (unsigned int i = 0; SUCCEEDED(hr) && i < count; i++)
     {
-        IShellFolder *folder = NULL;
-        ITEMIDLIST *pidl_dir;
-        ITEMIDLIST *pidl_item;
+        ISFHelper *psfhlpdst = NULL, *psfhlpsrc = NULL;
 
-        pidl_dir = ILClone(pidls[i]);
-        ILRemoveLastID(pidl_dir);
-        pidl_item = ILFindLastID(pidls[i]);
-        hr = IShellFolder_BindToObject(desktop_folder, pidl_dir, NULL, &IID_IShellFolder, (void **)&folder);
+        hr = IShellFolder_QueryInterface(menu->parent, &IID_ISFHelper, (void **)&psfhlpdst);
+        if (SUCCEEDED(hr))
+            hr = IShellFolder_QueryInterface(src_folder, &IID_ISFHelper, (void **)&psfhlpsrc);
 
-        if (folder)
+        if (psfhlpdst && psfhlpsrc)
         {
-            ISFHelper *psfhlpdst = NULL, *psfhlpsrc = NULL;
-
-            hr = IShellFolder_QueryInterface(menu->parent, &IID_ISFHelper, (void **)&psfhlpdst);
-            if (SUCCEEDED(hr))
-                hr = IShellFolder_QueryInterface(folder, &IID_ISFHelper, (void **)&psfhlpsrc);
-
-            if (psfhlpdst && psfhlpsrc)
-            {
-                hr = ISFHelper_CopyItems(psfhlpdst, folder, 1, (LPCITEMIDLIST*)&pidl_item);
-                /* FIXME handle move
-                ISFHelper_DeleteItems(psfhlpsrc, 1, &pidl_item);
-                */
-            }
-            if (psfhlpdst)
-                ISFHelper_Release(psfhlpdst);
-            if (psfhlpsrc)
-                ISFHelper_Release(psfhlpsrc);
-            IShellFolder_Release(folder);
+            hr = ISFHelper_CopyItems(psfhlpdst, src_folder, 1, (LPCITEMIDLIST *)&pidls[i]);
+            /* FIXME handle move
+            ISFHelper_DeleteItems(psfhlpsrc, 1, &pidl_item);
+            */
         }
-        ILFree(pidl_dir);
+        if (psfhlpdst)
+            ISFHelper_Release(psfhlpdst);
+        if (psfhlpsrc)
+            ISFHelper_Release(psfhlpsrc);
     }
 
-    IShellFolder_Release(desktop_folder);
+    IShellFolder_Release(src_folder);
     return hr;
 }
 
@@ -386,7 +375,7 @@ static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
             pidls = _ILCopyCidaToaPidl(&pidl, cida);
             if (pidls)
             {
-                hr = paste_pidls(menu, pidls, cida->cidl);
+                hr = paste_pidls(menu, pidl, pidls, cida->cidl);
                 _ILFreeaPidl(pidls, cida->cidl);
                 SHFree(pidl);
             }

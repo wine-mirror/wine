@@ -5797,7 +5797,7 @@ static void test_copy_paste(void)
     ok(ret != INVALID_FILE_ATTRIBUTES, "Got %#x.\n", ret);
 
     ret = RemoveDirectoryW(L"testcopy_dst/testcopy_src");
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     /* Paste into a selection comprising multiple directories. In this case the
      * first directory is used, and the second is just ignored.
