@@ -1474,7 +1474,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     ret->bindinfo.cbSize = sizeof(BINDINFO);
 
-    InitializeCriticalSection(&ret->section);
+    InitializeCriticalSectionEx(&ret->section, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     ret->section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": Binding.section");
 
     hres = get_callback(pbc, &ret->callback);

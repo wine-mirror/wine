@@ -1468,7 +1468,7 @@ HRESULT create_binding_protocol(BindProtocol **protocol)
     ret->notif_hwnd = get_notif_hwnd();
     ret->protocol_handler = &ret->default_protocol_handler.IInternetProtocol_iface;
     ret->protocol_sink_handler = &ret->default_protocol_handler.IInternetProtocolSink_iface;
-    InitializeCriticalSection(&ret->section);
+    InitializeCriticalSectionEx(&ret->section, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     ret->section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BindProtocol.section");
 
     URLMON_LockModule();
