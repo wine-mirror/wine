@@ -366,7 +366,7 @@ static HRESULT get_data_format(IDataObject *data, UINT cf, STGMEDIUM *medium)
     return IDataObject_GetData(data, &format, medium);
 }
 
-static HRESULT do_paste(ContextMenu *menu)
+static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
 {
     IDataObject *data;
     HRESULT hr;
@@ -404,31 +404,49 @@ static HRESULT do_paste(ContextMenu *menu)
     }
     else if (SUCCEEDED(get_data_format(data, CF_HDROP, &medium)))
     {
-        WCHAR path[MAX_PATH];
-        ITEMIDLIST **pidls;
-        UINT count;
+        const DROPFILES *dropfiles = GlobalLock(medium.hGlobal);
+        IPersistFolder2 *dst_persist;
+        SHFILEOPSTRUCTW op = {0};
+        WCHAR dst_path[MAX_PATH];
+        ITEMIDLIST *dst_pidl;
+        int ret;
 
-        count = DragQueryFileW(medium.hGlobal, -1, NULL, 0);
-        pidls = SHAlloc(count * sizeof(ITEMIDLIST*));
-        if (pidls)
+        if (FAILED(hr = IShellFolder_QueryInterface(menu->parent, &IID_IPersistFolder2, (void **)&dst_persist)))
         {
-            for (unsigned int i = 0; i < count; i++)
-            {
-                DragQueryFileW(medium.hGlobal, i, path, ARRAY_SIZE(path));
-                if (!(pidls[i] = ILCreateFromPathW(path)))
-                {
-                    hr = E_FAIL;
-                    break;
-                }
-            }
-            if (SUCCEEDED(hr))
-                hr = paste_pidls(menu, pidls, count);
-            _ILFreeaPidl(pidls, count);
+            WARN("Failed to get IPersistFolder2, hr %#lx.\n", hr);
+            IDataObject_Release(data);
+            return hr;
         }
-        else
+
+        hr = IPersistFolder2_GetCurFolder(dst_persist, &dst_pidl);
+        IPersistFolder2_Release(dst_persist);
+        if (FAILED(hr))
         {
-            hr = HRESULT_FROM_WIN32(GetLastError());
+            ERR("Failed to get dst folder pidl, hr %#lx.\n", hr);
+            IDataObject_Release(data);
+            return hr;
         }
+
+        if (!SHGetPathFromIDListW(dst_pidl, dst_path))
+        {
+            ERR("Failed to get path, hr %#lx.\n", hr);
+            ILFree(dst_pidl);
+            IDataObject_Release(data);
+            return E_FAIL;
+        }
+
+        op.hwnd = hwnd;
+        op.wFunc = FO_COPY;
+        op.pFrom = (const WCHAR *)((const char *)dropfiles + dropfiles->pFiles);
+        op.pTo = dst_path;
+        op.fFlags = FOF_ALLOWUNDO;
+        if ((ret = SHFileOperationW(&op)))
+        {
+            WARN("Failed to copy, ret %d.\n", ret);
+            hr = E_FAIL;
+        }
+
+        GlobalUnlock(medium.hGlobal);
         ReleaseStgMedium(&medium);
     }
     else
@@ -1371,7 +1389,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
         }
         else if (!strcmp(lpcmi->lpVerb, "paste"))
         {
-            do_paste(This);
+            do_paste(This, lpcmi->hwnd);
         }
         else
         {
@@ -1391,7 +1409,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
                 break;
 
             case FCIDM_SHVIEW_INSERT:
-                do_paste(This);
+                do_paste(This, lpcmi->hwnd);
                 break;
 
             case FCIDM_SHVIEW_PROPERTIES:
