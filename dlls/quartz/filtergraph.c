@@ -5704,9 +5704,9 @@ static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL 
         return hr;
     }
 
-    InitializeCriticalSection(&object->cs);
+    InitializeCriticalSectionEx(&object->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": filter_graph.cs");
-    InitializeCriticalSection(&object->event_cs);
+    InitializeCriticalSectionEx(&object->event_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->event_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": filter_graph.event_cs");
 
     object->defaultclock = TRUE;

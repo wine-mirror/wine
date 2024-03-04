@@ -341,7 +341,7 @@ HRESULT system_clock_create(IUnknown *outer, IUnknown **out)
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     list_init(&object->sinks);
-    InitializeCriticalSection(&object->cs);
+    InitializeCriticalSectionEx(&object->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.cs");
 
     TRACE("Created system clock %p.\n", object);
