@@ -1498,6 +1498,73 @@ fail:
     return hr;
 }
 
+static inline int pixels_to_mm_x1000(int pixels, int dpi)
+{
+    return MulDiv(pixels, 25400, dpi);
+}
+
+static HRESULT write_PageImageableSize_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr;
+    HDC hdc;
+    int res_x, res_y, phys_width, phys_height, width, height, offset_x, offset_y;
+    IXMLDOMElement *page, *area, *property;
+
+    hdc = CreateDCW(NULL, device, NULL, NULL);
+    if (!hdc) HRESULT_FROM_WIN32(GetLastError());
+
+    res_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    res_y = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    phys_width = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALWIDTH), res_x);
+    phys_height = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALHEIGHT), res_y);
+    width = pixels_to_mm_x1000(GetDeviceCaps(hdc, HORZRES), res_x);
+    height = pixels_to_mm_x1000(GetDeviceCaps(hdc, VERTRES), res_y);
+
+    offset_x = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALOFFSETX), res_x);
+    offset_y = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALOFFSETY), res_y);
+    DeleteDC(hdc);
+
+    hr = create_Property(root, L"psk:PageImageableSize", &page);
+    if (hr != S_OK) return hr;
+
+    hr = create_Property(page, L"psk:ImageableSizeWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, phys_width);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(page, L"psk:ImageableSizeHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, phys_height);
+    IXMLDOMElement_Release(property);
+
+    hr = create_Property(page, L"psk:ImageableArea", &area);
+    if (hr != S_OK) goto fail;
+
+    hr = create_Property(area, L"psk:OriginWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, offset_x);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(area, L"psk:OriginHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, offset_y);
+    IXMLDOMElement_Release(property);
+
+    hr = create_Property(area, L"psk:ExtentWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, width);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(area, L"psk:ExtentHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, height);
+    IXMLDOMElement_Release(property);
+
+    IXMLDOMElement_Release(area);
+
+fail:
+    IXMLDOMElement_Release(page);
+    return hr;
+}
+
 static HRESULT write_PageOutputColor_caps(const WCHAR *device, IXMLDOMElement *root)
 {
     HRESULT hr = S_OK;
@@ -1687,6 +1754,8 @@ static HRESULT write_print_capabilities(const WCHAR *device, IStream *stream)
     if (hr != S_OK) goto fail;
 
     hr = write_PageMediaSize_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageImageableSize_caps(device, root);
     if (hr != S_OK) goto fail;
     hr = write_PageOutputColor_caps(device, root);
     if (hr != S_OK) goto fail;
