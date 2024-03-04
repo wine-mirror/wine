@@ -358,20 +358,24 @@ static HRESULT paste_pidls(ContextMenu *menu, ITEMIDLIST **pidls, unsigned int c
     return hr;
 }
 
+static HRESULT get_data_format(IDataObject *data, UINT cf, STGMEDIUM *medium)
+{
+    FORMATETC format;
+
+    InitFormatEtc(format, cf, TYMED_HGLOBAL);
+    return IDataObject_GetData(data, &format, medium);
+}
+
 static HRESULT do_paste(ContextMenu *menu)
 {
     IDataObject *data;
     HRESULT hr;
     STGMEDIUM medium;
-    FORMATETC formatetc;
-    HRESULT format_hr;
 
     if (FAILED(hr = OleGetClipboard(&data)))
         return hr;
 
-    InitFormatEtc(formatetc, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), TYMED_HGLOBAL);
-    format_hr = IDataObject_GetData(data, &formatetc, &medium);
-    if (SUCCEEDED(format_hr))
+    if (SUCCEEDED(get_data_format(data, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), &medium)))
     {
         CIDA *cida = GlobalLock(medium.hGlobal);
         ITEMIDLIST **pidls;
@@ -398,45 +402,39 @@ static HRESULT do_paste(ContextMenu *menu)
         }
         ReleaseStgMedium(&medium);
     }
+    else if (SUCCEEDED(get_data_format(data, CF_HDROP, &medium)))
+    {
+        WCHAR path[MAX_PATH];
+        ITEMIDLIST **pidls;
+        UINT count;
+
+        count = DragQueryFileW(medium.hGlobal, -1, NULL, 0);
+        pidls = SHAlloc(count * sizeof(ITEMIDLIST*));
+        if (pidls)
+        {
+            for (unsigned int i = 0; i < count; i++)
+            {
+                DragQueryFileW(medium.hGlobal, i, path, ARRAY_SIZE(path));
+                if (!(pidls[i] = ILCreateFromPathW(path)))
+                {
+                    hr = E_FAIL;
+                    break;
+                }
+            }
+            if (SUCCEEDED(hr))
+                hr = paste_pidls(menu, pidls, count);
+            _ILFreeaPidl(pidls, count);
+        }
+        else
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+        }
+        ReleaseStgMedium(&medium);
+    }
     else
     {
-        InitFormatEtc(formatetc, CF_HDROP, TYMED_HGLOBAL);
-        format_hr = IDataObject_GetData(data, &formatetc, &medium);
-        if (SUCCEEDED(format_hr))
-        {
-            WCHAR path[MAX_PATH];
-            ITEMIDLIST **pidls;
-            UINT count;
-
-            count = DragQueryFileW(medium.hGlobal, -1, NULL, 0);
-            pidls = SHAlloc(count * sizeof(ITEMIDLIST*));
-            if (pidls)
-            {
-                for (unsigned int i = 0; i < count; i++)
-                {
-                    DragQueryFileW(medium.hGlobal, i, path, ARRAY_SIZE(path));
-                    if (!(pidls[i] = ILCreateFromPathW(path)))
-                    {
-                        hr = E_FAIL;
-                        break;
-                    }
-                }
-                if (SUCCEEDED(hr))
-                    hr = paste_pidls(menu, pidls, count);
-                _ILFreeaPidl(pidls, count);
-            }
-            else
-            {
-                hr = HRESULT_FROM_WIN32(GetLastError());
-            }
-            ReleaseStgMedium(&medium);
-        }
-    }
-
-    if (FAILED(format_hr))
-    {
         ERR("Cannot paste any clipboard formats.\n");
-        hr = format_hr;
+        hr = E_FAIL;
     }
 
     IDataObject_Release(data);
