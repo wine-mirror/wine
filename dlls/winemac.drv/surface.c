@@ -246,22 +246,13 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     struct macdrv_window_surface *old_mac_surface = get_mac_surface(old_surface);
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD *colors;
-    pthread_mutexattr_t attr;
     int err;
     DWORD window_background;
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
 
-    err = pthread_mutexattr_init(&attr);
-    if (!err)
-    {
-        err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-        if (!err)
-            err = pthread_mutex_init(&surface->mutex, &attr);
-        pthread_mutexattr_destroy(&attr);
-    }
-    if (err)
+    if ((err = pthread_mutex_init(&surface->mutex, NULL)))
     {
         free(surface);
         return NULL;
