@@ -507,7 +507,6 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     struct wayland_window_surface *wws;
     int width = rect->right - rect->left;
     int height = rect->bottom - rect->top;
-    pthread_mutexattr_t mutexattr;
 
     TRACE("hwnd %p rect %s\n", hwnd, wine_dbgstr_rect(rect));
 
@@ -522,10 +521,7 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     wws->info.bmiHeader.biPlanes = 1;
     wws->info.bmiHeader.biSizeImage = width * height * 4;
 
-    pthread_mutexattr_init(&mutexattr);
-    pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&wws->mutex, &mutexattr);
-    pthread_mutexattr_destroy(&mutexattr);
+    pthread_mutex_init(&wws->mutex, NULL);
 
     wws->header.funcs = &wayland_window_surface_funcs;
     wws->header.rect = *rect;
