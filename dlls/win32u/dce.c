@@ -179,6 +179,7 @@ static void offscreen_window_surface_flush( struct window_surface *base )
 static void offscreen_window_surface_destroy( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    pthread_mutex_destroy( &impl->mutex );
     free( impl );
 }
 
@@ -198,7 +199,6 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     struct offscreen_window_surface *impl;
     SIZE_T size;
     RECT surface_rect = *visible_rect;
-    pthread_mutexattr_t attr;
 
     TRACE( "visible_rect %s, surface %p.\n", wine_dbgstr_rect( visible_rect ), surface );
 
@@ -224,10 +224,7 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     impl->header.ref = 1;
     impl->header.rect = surface_rect;
 
-    pthread_mutexattr_init( &attr );
-    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
-    pthread_mutex_init( &impl->mutex, &attr );
-    pthread_mutexattr_destroy( &attr );
+    pthread_mutex_init( &impl->mutex, NULL );
 
     reset_bounds( &impl->bounds );
 
