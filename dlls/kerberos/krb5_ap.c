@@ -477,7 +477,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 {
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
                                    ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
-                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE;
+                                   ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION | ISC_REQ_DELEGATE | ISC_REQ_ALLOCATE_MEMORY;
     char *target = NULL;
     NTSTATUS status;
     ULONG exptime;
@@ -512,17 +512,41 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
             params.input_token_length = input->pBuffers[idx].cbBuffer;
         }
 
-        if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1)
+        {
+            free( target );
+            return SEC_E_INVALID_TOKEN;
+        }
+        if (context_req & ISC_REQ_ALLOCATE_MEMORY)
+        {
+            output->pBuffers[idx].pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, KERBEROS_MAX_BUF );
+            if (!output->pBuffers[idx].pvBuffer)
+            {
+                free( target );
+                return STATUS_NO_MEMORY;
+            }
+            output->pBuffers[idx].cbBuffer = KERBEROS_MAX_BUF;
+        }
         params.output_token = output->pBuffers[idx].pvBuffer;
         params.output_token_length = &output->pBuffers[idx].cbBuffer;
 
         status = KRB5_CALL( initialize_context, &params );
         if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
-            *new_context = create_context_handle( context_handle, new_context_handle );
-        if (!status)
         {
-            *mapped_context = TRUE;
-            expiry_to_timestamp( exptime, expiry );
+            *new_context = create_context_handle( context_handle, new_context_handle );
+            if (context_attr && (context_req & ISC_REQ_ALLOCATE_MEMORY))
+                *context_attr |= ISC_RET_ALLOCATED_MEMORY;
+
+            if (status == SEC_E_OK)
+            {
+                *mapped_context = TRUE;
+                expiry_to_timestamp( exptime, expiry );
+            }
+        }
+        else
+        {
+            if (context_req & ISC_REQ_ALLOCATE_MEMORY)
+                RtlFreeHeap( GetProcessHeap(), 0, output->pBuffers[idx].pvBuffer );
         }
     }
     /* FIXME: initialize context_data */
