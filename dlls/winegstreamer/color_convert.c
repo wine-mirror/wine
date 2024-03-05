@@ -97,25 +97,15 @@ static inline struct color_convert *impl_from_IUnknown(IUnknown *iface)
 
 static HRESULT try_create_wg_transform(struct color_convert *impl)
 {
-    struct wg_format input_format, output_format;
     struct wg_transform_attrs attrs = {0};
 
     if (impl->wg_transform)
+    {
         wg_transform_destroy(impl->wg_transform);
-    impl->wg_transform = 0;
+        impl->wg_transform = 0;
+    }
 
-    mf_media_type_to_wg_format(impl->input_type, &input_format);
-    if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-
-    mf_media_type_to_wg_format(impl->output_type, &output_format);
-    if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-
-    if (!(impl->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
-        return E_FAIL;
-
-    return S_OK;
+    return wg_transform_create_mf(impl->input_type, impl->output_type, &attrs, &impl->wg_transform);
 }
 
 static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID iid, void **out)

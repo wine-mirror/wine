@@ -245,32 +245,18 @@ static HRESULT try_create_wg_transform(struct video_decoder *decoder)
      * transform to be able to queue its input buffers. We need to use a buffer list
      * to match its expectations.
      */
-    struct wg_format input_format;
-    struct wg_format output_format;
     UINT32 low_latency;
 
     if (decoder->wg_transform)
+    {
         wg_transform_destroy(decoder->wg_transform);
-    decoder->wg_transform = 0;
-
-    mf_media_type_to_wg_format(decoder->input_type, &input_format);
-    if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-
-    mf_media_type_to_wg_format(decoder->output_type, &output_format);
-    if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
+        decoder->wg_transform = 0;
+    }
 
     if (SUCCEEDED(IMFAttributes_GetUINT32(decoder->attributes, &MF_LOW_LATENCY, &low_latency)))
         decoder->wg_transform_attrs.low_latency = !!low_latency;
 
-    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &decoder->wg_transform_attrs)))
-    {
-        ERR("Failed to create transform with input major_type %u.\n", input_format.major_type);
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return wg_transform_create_mf(decoder->input_type, decoder->output_type, &decoder->wg_transform_attrs, &decoder->wg_transform);
 }
 
 static HRESULT create_output_media_type(struct video_decoder *decoder, const GUID *subtype,

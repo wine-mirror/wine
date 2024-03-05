@@ -31,6 +31,7 @@
 #include "dmoreg.h"
 #include "gst_guids.h"
 #include "wmcodecdsp.h"
+#include "mferror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 WINE_DECLARE_DEBUG_CHANNEL(mfplat);
@@ -355,6 +356,23 @@ wg_transform_t wg_transform_create(const struct wg_format *input_format,
 
     TRACE("Returning transform %#I64x.\n", params.transform);
     return params.transform;
+}
+
+HRESULT wg_transform_create_mf(IMFMediaType *input_type, IMFMediaType *output_type,
+        const struct wg_transform_attrs *attrs, wg_transform_t *transform)
+{
+    struct wg_format input_format, output_format;
+
+    mf_media_type_to_wg_format(input_type, &input_format);
+    if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
+        return MF_E_INVALIDMEDIATYPE;
+    mf_media_type_to_wg_format(output_type, &output_format);
+    if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (!(*transform = wg_transform_create(&input_format, &output_format, attrs)))
+        return E_FAIL;
+    return S_OK;
 }
 
 HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_type, const AM_MEDIA_TYPE *output_type,

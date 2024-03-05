@@ -73,25 +73,15 @@ static struct aac_decoder *impl_from_IMFTransform(IMFTransform *iface)
 
 static HRESULT try_create_wg_transform(struct aac_decoder *decoder)
 {
-    struct wg_format input_format, output_format;
     struct wg_transform_attrs attrs = {0};
 
     if (decoder->wg_transform)
+    {
         wg_transform_destroy(decoder->wg_transform);
-    decoder->wg_transform = 0;
+        decoder->wg_transform = 0;
+    }
 
-    mf_media_type_to_wg_format(decoder->input_type, &input_format);
-    if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-
-    mf_media_type_to_wg_format(decoder->output_type, &output_format);
-    if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-
-    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
-        return E_FAIL;
-
-    return S_OK;
+    return wg_transform_create_mf(decoder->input_type, decoder->output_type, &attrs, &decoder->wg_transform);
 }
 
 static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
