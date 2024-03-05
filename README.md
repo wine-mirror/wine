@@ -46,7 +46,7 @@ To compile and run Wine, you must have one of the following:
 - FreeBSD 12.4 or later
 - Solaris x86 9 or later
 - NetBSD-current
-- Mac OS X 10.8 or later
+- Mac OS X 10.12 or later
 
 As Wine requires kernel-level thread support to run, only the operating
 systems mentioned above are supported.  Other operating systems which

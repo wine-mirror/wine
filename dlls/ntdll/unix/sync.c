@@ -130,7 +130,71 @@ static inline int futex_wake_one( const LONG *addr )
     return syscall( __NR_futex, addr, FUTEX_WAKE_PRIVATE, 1, NULL, 0, 0 );
 }
 
-#endif /* __linux__ */
+#elif defined(__APPLE__)
+
+#define USE_FUTEX
+
+#include <AvailabilityMacros.h>
+
+#ifdef MAC_OS_VERSION_14_4
+#include <os/os_sync_wait_on_address.h>
+#endif
+
+#define UL_COMPARE_AND_WAIT 1
+
+extern int __ulock_wait( uint32_t operation, void *addr, uint64_t value, uint32_t timeout );
+
+extern int __ulock_wake( uint32_t operation, void *addr, uint64_t wake_value );
+
+static inline int futex_wait( const LONG *addr, int val, struct timespec *timeout )
+{
+#ifdef MAC_OS_VERSION_14_4
+    if (__builtin_available( macOS 14.4, * ))
+    {
+        /* 18446744073 seconds could overflow a uint64_t in nanoseconds */
+        if (timeout && timeout->tv_sec < 18446744073)
+        {
+            uint64_t ns_timeout = (timeout->tv_sec * 1000000000) + timeout->tv_nsec;
+
+            if (!ns_timeout)
+            {
+                errno = ETIMEDOUT;
+                return -1;
+            }
+            return os_sync_wait_on_address_with_timeout( (void *)addr, (uint64_t)val, 4, OS_SYNC_WAIT_ON_ADDRESS_NONE,
+                                                         OS_CLOCK_MACH_ABSOLUTE_TIME, ns_timeout );
+        }
+
+        return os_sync_wait_on_address( (void *)addr, (uint64_t)val, 4, OS_SYNC_WAIT_ON_ADDRESS_NONE );
+    }
+#endif
+
+    /* 4294 seconds could overflow a uint32_t in microseconds */
+    if (timeout && timeout->tv_sec < 4294)
+    {
+        uint32_t us_timeout = ((uint32_t)timeout->tv_sec * 1000000) + ((uint32_t)timeout->tv_nsec / 1000);
+
+        if (!us_timeout)
+        {
+            errno = ETIMEDOUT;
+            return -1;
+        }
+        return __ulock_wait( UL_COMPARE_AND_WAIT, (void *)addr, (uint64_t)val, us_timeout );
+    }
+
+    return __ulock_wait( UL_COMPARE_AND_WAIT, (void *)addr, (uint64_t)val, 0 );
+}
+
+static inline int futex_wake_one( const LONG *addr )
+{
+#ifdef MAC_OS_VERSION_14_4
+    if (__builtin_available( macOS 14.4, * ))
+        return os_sync_wake_by_address_any( (void *)addr, 4, OS_SYNC_WAKE_BY_ADDRESS_NONE );
+#endif
+    return __ulock_wake( UL_COMPARE_AND_WAIT, (void *)addr, 0 );
+}
+
+#endif /* __APPLE__ */
 
 /* create a struct security_descriptor and contained information in one contiguous piece of memory */
 unsigned int alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
