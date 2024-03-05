@@ -344,11 +344,49 @@ static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(IDataObject *iface, LP
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnSetData(IDataObject *iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium, BOOL fRelease)
+static HRESULT WINAPI IDataObject_fnSetData(IDataObject *iface,
+        FORMATETC *format, STGMEDIUM *medium, BOOL release)
 {
-	IDataObjectImpl *This = impl_from_IDataObject(iface);
-	FIXME("(%p)->()\n", This);
-	return E_NOTIMPL;
+    IDataObjectImpl *obj = impl_from_IDataObject(iface);
+    struct data *new_array;
+
+    TRACE("iface %p, format %p, medium %p, release %d.\n", iface, format, medium, release);
+
+    if (!release)
+        return E_INVALIDARG;
+
+    if (format->tymed != TYMED_HGLOBAL)
+    {
+        FIXME("Unhandled format tymed %#lx.\n", format->tymed);
+        return E_NOTIMPL;
+    }
+
+    if (medium->tymed != TYMED_HGLOBAL)
+    {
+        FIXME("Unhandled medium tymed %#lx.\n", format->tymed);
+        return E_NOTIMPL;
+    }
+
+    if (medium->pUnkForRelease)
+        FIXME("Ignoring IUnknown %p.\n", medium->pUnkForRelease);
+
+    for (size_t i = 0; i < obj->data_count; ++i)
+    {
+        if (obj->data[i].cf == format->cfFormat)
+        {
+            GlobalFree(obj->data[i].global);
+            obj->data[i].global = medium->hGlobal;
+            return S_OK;
+        }
+    }
+
+    if (!(new_array = realloc(obj->data, (obj->data_count + 1) * sizeof(*obj->data))))
+        return E_OUTOFMEMORY;
+    obj->data = new_array;
+    obj->data[obj->data_count].cf = format->cfFormat;
+    obj->data[obj->data_count].global = medium->hGlobal;
+    ++obj->data_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI IDataObject_fnEnumFormatEtc(IDataObject *iface, DWORD direction, IEnumFORMATETC **out)

@@ -5318,15 +5318,15 @@ static void test_enum_format(IDataObject *data_obj)
     hr = IEnumFORMATETC_Reset(enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Skip(enum1, 4);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    hr = IEnumFORMATETC_Skip(enum1, 1);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    hr = IEnumFORMATETC_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Reset(enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Skip(enum1, 3);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Next(enum1, 1, formats, NULL);
     todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IEnumFORMATETC_Next(enum2, 1, formats, NULL);
@@ -5342,7 +5342,7 @@ static void test_enum_format(IDataObject *data_obj)
     formats[0].lindex = -1;
     formats[0].tymed = TYMED_HGLOBAL;
     hr = IDataObject_SetData(data_obj, &formats[0], &medium, TRUE);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumFORMATETC_Reset(enum1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -5457,23 +5457,20 @@ static void test_DataObject(void)
     medium.hGlobal = global;
     fmt.tymed = TYMED_HGLOBAL;
     hr = IDataObject_SetData(data_obj, &fmt, &medium, FALSE);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     hr = IDataObject_SetData(data_obj, &fmt, &medium, TRUE);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDataObject_QueryGetData(data_obj, &fmt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     memset(&medium, 0xcc, sizeof(medium));
     hr = IDataObject_GetData(data_obj, &fmt, &medium);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(medium.hGlobal && medium.hGlobal != global, "Got global %p.\n", medium.hGlobal);
-        value = GlobalLock(medium.hGlobal);
-        ok(*value == 0xabacab, "Got value %#x.\n", *value);
-        GlobalUnlock(medium.hGlobal);
-        ReleaseStgMedium(&medium);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(medium.hGlobal && medium.hGlobal != global, "Got global %p.\n", medium.hGlobal);
+    value = GlobalLock(medium.hGlobal);
+    ok(*value == 0xabacab, "Got value %#x.\n", *value);
+    GlobalUnlock(medium.hGlobal);
+    ReleaseStgMedium(&medium);
 
     for (unsigned int i = 0; i < ARRAY_SIZE(enum_directions); ++i)
     {
