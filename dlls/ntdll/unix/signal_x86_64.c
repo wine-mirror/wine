@@ -2152,7 +2152,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         ULONG64 saved_compaction = 0;
         struct xcontext *context;
 
-        context = (struct xcontext *)(((ULONG_PTR)RSP_sig(ucontext) - sizeof(*context)) & ~15);
+        context = (struct xcontext *)(((ULONG_PTR)RSP_sig(ucontext) - 128 /* red zone */ - sizeof(*context)) & ~15);
         if ((char *)context < (char *)ntdll_get_thread_data()->kernel_stack)
         {
             ERR_(seh)( "kernel stack overflow.\n" );
