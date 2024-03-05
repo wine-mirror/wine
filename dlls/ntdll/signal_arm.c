@@ -255,58 +255,18 @@ static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT 
 
 
 /***********************************************************************
- *		call_handler_wrapper
+ *		call_seh_handler
  */
-extern DWORD WINAPI call_handler_wrapper( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
-__ASM_GLOBAL_FUNC( call_handler_wrapper,
+DWORD WINAPI call_seh_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
+                               CONTEXT *context, void *dispatch, PEXCEPTION_ROUTINE handler );
+__ASM_GLOBAL_FUNC( call_seh_handler,
                    "push {r4,lr}\n\t"
                    ".seh_save_regs {r4,lr}\n\t"
                    ".seh_endprologue\n\t"
-                   ".seh_handler " __ASM_NAME("nested_exception_handler") ", %except\n\t"
-                   "mov r3, r2\n\t" /* dispatch */
-                   "mov r2, r1\n\t" /* context */
-                   "ldr r1, [r3, #0x0c]\n\t"  /* dispatch->EstablisherFrame */
-                   "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
+                   ".seh_handler nested_exception_handler, %except\n\t"
+                   "ldr ip, [sp, #8]\n\t"  /* handler */
                    "blx ip\n\t"
                    "pop {r4,pc}\n\t" )
-
-
-/**********************************************************************
- *           call_handler
- *
- * Call a single exception handler.
- */
-static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
-{
-    DWORD res;
-
-    TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
-           dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = call_handler_wrapper( rec, context, dispatch );
-    TRACE( "handler at %p returned %lu\n", dispatch->LanguageHandler, res );
-
-    rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
-    return res;
-}
-
-
-/**********************************************************************
- *           call_teb_handler
- *
- * Call a single exception handler from the TEB chain.
- * FIXME: Handle nested exceptions.
- */
-static DWORD call_teb_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
-                                  EXCEPTION_REGISTRATION_RECORD *teb_frame )
-{
-    DWORD res;
-
-    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
-           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, dispatch );
-    res = teb_frame->Handler( rec, teb_frame, context, (EXCEPTION_REGISTRATION_RECORD**)dispatch );
-    TRACE( "handler at %p returned %lu\n", teb_frame->Handler, res );
-    return res;
-}
 
 
 /**********************************************************************
@@ -323,6 +283,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
     CONTEXT context;
     NTSTATUS status;
     ULONG_PTR frame;
+    DWORD res;
 
     context = *orig_context;
     dispatch.TargetPc      = 0;
@@ -348,7 +309,14 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 
         if (dispatch.LanguageHandler)
         {
-            switch (call_handler( rec, orig_context, &dispatch ))
+            TRACE( "calling handler %p (rec=%p, frame=%lx context=%p, dispatch=%p)\n",
+                   dispatch.LanguageHandler, rec, dispatch.EstablisherFrame, orig_context, &dispatch );
+            res = call_seh_handler( rec, dispatch.EstablisherFrame, orig_context,
+                                    &dispatch, dispatch.LanguageHandler );
+            rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
+            TRACE( "handler at %p returned %lu\n", dispatch.LanguageHandler, res );
+
+            switch (res)
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
@@ -371,10 +339,13 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
         /* hack: call wine handlers registered in the tib list */
         else while (is_valid_frame( (ULONG_PTR)teb_frame ) && (DWORD)teb_frame < context.Sp)
         {
-            TRACE( "found wine frame %p rsp %lx handler %p\n",
-                    teb_frame, context.Sp, teb_frame->Handler );
-            dispatch.EstablisherFrame = (DWORD)teb_frame;
-            switch (call_teb_handler( rec, orig_context, &dispatch, teb_frame ))
+            TRACE( "calling TEB handler %p (rec=%p frame=%p context=%p dispatch=%p) sp=%lx\n",
+                   teb_frame->Handler, rec, teb_frame, orig_context, &dispatch, context.Sp );
+            res = call_seh_handler( rec, (ULONG_PTR)teb_frame, orig_context,
+                                    &dispatch, (PEXCEPTION_ROUTINE)teb_frame->Handler );
+            TRACE( "TEB handler at %p returned %lu\n", teb_frame->Handler, res );
+
+            switch (res)
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
