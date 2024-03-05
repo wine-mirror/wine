@@ -3757,6 +3757,15 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADE
 }
 
 /***********************************************************************
+ *      MFInitMediaTypeFromMFVideoFormat (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromMFVideoFormat(IMFMediaType *media_type, const MFVIDEOFORMAT *format, UINT32 size)
+{
+    FIXME("%p, %p, %u\n", media_type, format, size);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *      MFInitMediaTypeFromVideoInfoHeader2 (mfplat.@)
  */
 HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, const VIDEOINFOHEADER2 *vih, UINT32 size,

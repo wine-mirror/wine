@@ -120,7 +120,7 @@
 @ stdcall MFInitAMMediaTypeFromMFMediaType(ptr int128 ptr)
 @ stdcall MFInitAttributesFromBlob(ptr ptr long)
 @ stdcall MFInitMediaTypeFromAMMediaType(ptr ptr)
-@ stub MFInitMediaTypeFromMFVideoFormat
+@ stdcall MFInitMediaTypeFromMFVideoFormat(ptr ptr long)
 @ stub MFInitMediaTypeFromMPEG1VideoInfo
 @ stub MFInitMediaTypeFromMPEG2VideoInfo
 @ stdcall MFInitMediaTypeFromVideoInfoHeader2(ptr ptr long ptr)
