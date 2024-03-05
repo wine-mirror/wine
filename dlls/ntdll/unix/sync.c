@@ -103,8 +103,9 @@ static inline ULONGLONG monotonic_counter(void)
     return ticks_from_time_t( now.tv_sec ) + now.tv_usec * 10 - server_start_time;
 }
 
-
 #ifdef __linux__
+
+#define USE_FUTEX
 
 #include <linux/futex.h>
 
@@ -129,8 +130,7 @@ static inline int futex_wake( const LONG *addr, int val )
     return syscall( __NR_futex, addr, FUTEX_WAKE_PRIVATE, val, NULL, 0, 0 );
 }
 
-#endif
-
+#endif /* __linux__ */
 
 /* create a struct security_descriptor and contained information in one contiguous piece of memory */
 unsigned int alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
@@ -2409,7 +2409,7 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
 
 union tid_alert_entry
 {
-#ifdef __linux__
+#ifdef USE_FUTEX
     LONG futex;
 #elif defined(HAVE_KQUEUE)
     int kq;
@@ -2450,7 +2450,7 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 
     entry = &tid_alert_blocks[block_idx][idx % TID_ALERT_BLOCK_SIZE];
 
-#ifdef __linux__
+#ifdef USE_FUTEX
     return entry;
 #elif defined(HAVE_KQUEUE)
     if (!entry->kq)
@@ -2509,7 +2509,7 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 
     if (!entry) return STATUS_INVALID_CID;
 
-#ifdef __linux__
+#ifdef USE_FUTEX
     {
         LONG *futex = &entry->futex;
         if (!InterlockedExchange( futex, 1 ))
@@ -2537,7 +2537,7 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 }
 
 
-#if defined(__linux__) || defined(HAVE_KQUEUE)
+#if defined(USE_FUTEX) || defined(HAVE_KQUEUE)
 static LONGLONG get_absolute_timeout( const LARGE_INTEGER *timeout )
 {
     LARGE_INTEGER now;
@@ -2571,7 +2571,7 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 
     if (!entry) return STATUS_INVALID_CID;
 
-#ifdef __linux__
+#ifdef USE_FUTEX
     {
         LONG *futex = &entry->futex;
         ULONGLONG end;
