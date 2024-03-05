@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -29,14 +30,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
 
-static CRITICAL_SECTION table_cs;
+static CRITICAL_SECTION table_list_cs;
 static CRITICAL_SECTION_DEBUG table_debug =
 {
-    0, 0, &table_cs,
+    0, 0, &table_list_cs,
     { &table_debug.ProcessLocksList, &table_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": table_cs") }
+      0, 0, { (DWORD_PTR)(__FILE__ ": table_list_cs") }
 };
-static CRITICAL_SECTION table_cs = { &table_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION table_list_cs = { &table_debug, -1, 0, 0, 0, 0 };
 
 HRESULT get_column_index( const struct table *table, const WCHAR *name, UINT *column )
 {
@@ -337,31 +338,49 @@ void free_columns( struct column *columns, UINT num_cols )
 void free_table( struct table *table )
 {
     if (!table) return;
+    assert( table->flags & TABLE_FLAG_DYNAMIC );
 
-    EnterCriticalSection( &table_cs );
+    TRACE("destroying %p\n", table);
+
     clear_table( table );
-    if (table->flags & TABLE_FLAG_DYNAMIC)
-    {
-        TRACE("destroying %p\n", table);
-        free( (WCHAR *)table->name );
-        free_columns( (struct column *)table->columns, table->num_cols );
-        free( table->data );
-        list_remove( &table->entry );
-        free( table );
-    }
-    LeaveCriticalSection( &table_cs );
+    free( (WCHAR *)table->name );
+    free_columns( (struct column *)table->columns, table->num_cols );
+    free( table->data );
+
+    table->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection( &table->cs );
+    free( table );
 }
 
 void release_table( struct table *table )
 {
-    if (!InterlockedDecrement( &table->refs )) free_table( table );
-    LeaveCriticalSection( &table_cs );
+    if (!--table->refs)
+    {
+        clear_table( table );
+        if (table->flags & TABLE_FLAG_DYNAMIC)
+        {
+            EnterCriticalSection( &table_list_cs );
+            list_remove( &table->entry );
+            table->removed = TRUE;
+            LeaveCriticalSection( &table_list_cs );
+
+            LeaveCriticalSection( &table->cs );
+            free_table( table );
+            return;
+        }
+    }
+    LeaveCriticalSection( &table->cs );
 }
 
 struct table *grab_table( struct table *table )
 {
-    EnterCriticalSection( &table_cs );
-    InterlockedIncrement( &table->refs );
+    EnterCriticalSection( &table->cs );
+    if (table->removed)
+    {
+        LeaveCriticalSection( &table->cs );
+        return NULL;
+    }
+    table->refs++;
     return table;
 }
 
@@ -398,7 +417,10 @@ struct table *create_table( const WCHAR *name, UINT num_cols, const struct colum
     table->fill               = fill;
     table->flags              = TABLE_FLAG_DYNAMIC;
     table->refs               = 0;
+    table->removed            = FALSE;
     list_init( &table->entry );
+    InitializeCriticalSectionEx( &table->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+    table->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": table.cs");
     return table;
 }
 
@@ -408,18 +430,18 @@ BOOL add_table( enum wbm_namespace ns, struct table *table )
 
     if (ns == WBEMPROX_NAMESPACE_LAST) return FALSE;
 
-    EnterCriticalSection( &table_cs );
+    EnterCriticalSection( &table_list_cs );
     LIST_FOR_EACH_ENTRY( iter, table_list[ns], struct table, entry )
     {
         if (!wcsicmp( iter->name, table->name ))
         {
             TRACE("table %s already exists\n", debugstr_w(table->name));
-            LeaveCriticalSection( &table_cs );
+            LeaveCriticalSection( &table_list_cs );
             return FALSE;
         }
     }
     list_add_tail( table_list[ns], &table->entry );
-    LeaveCriticalSection( &table_cs );
+    LeaveCriticalSection( &table_list_cs );
 
     TRACE("added %p\n", table);
     return TRUE;
