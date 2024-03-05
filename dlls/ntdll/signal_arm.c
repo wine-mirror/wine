@@ -180,78 +180,20 @@ EXCEPTION_DISPOSITION WINAPI unwind_exception_handler( EXCEPTION_RECORD *record,
     return ExceptionCollidedUnwind;
 }
 
-/**********************************************************************
- *           unwind_handler_wrapper
- */
-extern DWORD WINAPI unwind_handler_wrapper( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch );
-__ASM_GLOBAL_FUNC( unwind_handler_wrapper,
-                   "push {r1,lr}\n\t"
-                   ".seh_save_regs {r1,lr}\n\t"
-                   ".seh_endprologue\n\t"
-                   ".seh_handler " __ASM_NAME("unwind_exception_handler") ", %except, %unwind\n\t"
-                   "mov r3, r1\n\t"           /* dispatch */
-                   "ldr r1, [r3, #0x0c]\n\t"  /* dispatch->EstablisherFrame */
-                   "ldr r2, [r3, #0x14]\n\t"  /* dispatch->ContextRecord */
-                   "ldr ip, [r3, #0x18]\n\t"  /* dispatch->LanguageHandler */
-                   "blx ip\n\t"
-                   "pop {r1,pc}\n\t" )
-
 
 /**********************************************************************
  *           call_unwind_handler
- *
- * Call a single unwind handler.
  */
-static DWORD call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
-{
-    DWORD res;
-
-    TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
-         dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = unwind_handler_wrapper( rec, dispatch );
-    TRACE( "handler %p returned %lx\n", dispatch->LanguageHandler, res );
-
-    switch (res)
-    {
-    case ExceptionContinueSearch:
-    case ExceptionCollidedUnwind:
-        break;
-    default:
-        raise_status( STATUS_INVALID_DISPOSITION, rec );
-        break;
-    }
-
-    return res;
-}
-
-
-/**********************************************************************
- *           call_teb_unwind_handler
- *
- * Call a single unwind handler from the TEB chain.
- */
-static DWORD call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
-                                     EXCEPTION_REGISTRATION_RECORD *teb_frame )
-{
-    DWORD res;
-
-    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
-           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, dispatch );
-    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, (EXCEPTION_REGISTRATION_RECORD**)dispatch );
-    TRACE( "handler at %p returned %lu\n", teb_frame->Handler, res );
-
-    switch (res)
-    {
-    case ExceptionContinueSearch:
-    case ExceptionCollidedUnwind:
-        break;
-    default:
-        raise_status( STATUS_INVALID_DISPOSITION, rec );
-        break;
-    }
-
-    return res;
-}
+DWORD WINAPI call_unwind_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
+                                  CONTEXT *context, void *dispatch, PEXCEPTION_ROUTINE handler );
+__ASM_GLOBAL_FUNC( call_unwind_handler,
+                   "push {r3,lr}\n\t"
+                   ".seh_save_regs {r3,lr}\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler unwind_exception_handler, %except\n\t"
+                   "ldr ip, [sp, #8]\n\t"  /* handler */
+                   "blx ip\n\t"
+                   "pop {r3,pc}\n\t" )
 
 
 /***********************************************************************
@@ -528,7 +470,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     CONTEXT new_context;
     NTSTATUS status;
     ULONG_PTR frame;
-    DWORD i;
+    DWORD i, res;
 
     RtlCaptureContext( context );
     new_context = *context;
@@ -581,8 +523,20 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
             }
             if (dispatch.EstablisherFrame == (DWORD)end_frame) rec->ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
-            if (call_unwind_handler( rec, &dispatch ) == ExceptionCollidedUnwind)
+
+            TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
+                   dispatch.LanguageHandler, rec, dispatch.EstablisherFrame,
+                   dispatch.ContextRecord, &dispatch );
+            res = call_unwind_handler( rec, dispatch.EstablisherFrame, dispatch.ContextRecord,
+                                       &dispatch, dispatch.LanguageHandler );
+            TRACE( "handler %p returned %lx\n", dispatch.LanguageHandler, res );
+
+            switch (res)
             {
+            case ExceptionContinueSearch:
+                rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+                break;
+            case ExceptionCollidedUnwind:
                 new_context = *context;
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
@@ -590,21 +544,30 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                                   NULL );
                 rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
                 goto unwind_done;
+            default:
+                raise_status( STATUS_INVALID_DISPOSITION, rec );
+                break;
             }
-            rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
         }
         else  /* hack: call builtin handlers registered in the tib list */
         {
-            DWORD backup_frame = dispatch.EstablisherFrame;
             while (is_valid_frame( (ULONG_PTR)teb_frame ) &&
                    (DWORD)teb_frame < new_context.Sp &&
                    (DWORD)teb_frame < (DWORD)end_frame)
             {
-                TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
-                dispatch.EstablisherFrame = (DWORD)teb_frame;
-                if (call_teb_unwind_handler( rec, &dispatch, teb_frame ) == ExceptionCollidedUnwind)
+                TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
+                       teb_frame->Handler, rec, teb_frame, dispatch.ContextRecord, &dispatch );
+                res = call_unwind_handler( rec, (ULONG_PTR)teb_frame, dispatch.ContextRecord, &dispatch,
+                                           (PEXCEPTION_ROUTINE)teb_frame->Handler );
+                TRACE( "handler at %p returned %lu\n", teb_frame->Handler, res );
+                teb_frame = __wine_pop_frame( teb_frame );
+
+                switch (res)
                 {
-                    teb_frame = __wine_pop_frame( teb_frame );
+                case ExceptionContinueSearch:
+                    rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+                    break;
+                case ExceptionCollidedUnwind:
                     new_context = *context;
                     RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                       dispatch.ControlPc, dispatch.FunctionEntry,
@@ -612,11 +575,12 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                                       &frame, NULL );
                     rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
                     goto unwind_done;
+                default:
+                    raise_status( STATUS_INVALID_DISPOSITION, rec );
+                    break;
                 }
-                teb_frame = __wine_pop_frame( teb_frame );
             }
             if ((DWORD)teb_frame == (DWORD)end_frame && (DWORD)end_frame < new_context.Sp) break;
-            dispatch.EstablisherFrame = backup_frame;
         }
 
         if (dispatch.EstablisherFrame == (DWORD)end_frame) break;
