@@ -1492,6 +1492,45 @@ static void test_live_modules(void)
     }
 }
 
+#define test_function_table_main_module(b) _test_function_table_entry(__LINE__, NULL, #b, (DWORD64)(DWORD_PTR)&(b))
+#define test_function_table_module(a, b)   _test_function_table_entry(__LINE__, a,    #b, (DWORD64)(DWORD_PTR)GetProcAddress(GetModuleHandleA(a), (b)))
+static void *_test_function_table_entry(unsigned lineno, const char *modulename, const char *name, DWORD64 addr)
+{
+    DWORD64 base_module = (DWORD64)(DWORD_PTR)GetModuleHandleA(modulename);
+
+    if (RtlImageNtHeader(GetModuleHandleW(NULL))->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+    {
+        IMAGE_AMD64_RUNTIME_FUNCTION_ENTRY *func;
+
+        func = SymFunctionTableAccess64(GetCurrentProcess(), addr);
+        ok_(__FILE__, lineno)(func != NULL, "Couldn't find function table for %s\n", name);
+        if (func)
+        {
+            ok_(__FILE__, lineno)(func->BeginAddress == addr - base_module, "Unexpected start of function\n");
+            ok_(__FILE__, lineno)(func->BeginAddress < func->EndAddress, "Unexpected end of function\n");
+            ok_(__FILE__, lineno)((func->UnwindData & 1) == 0, "Unexpected chained runtime function\n");
+        }
+
+        return func;
+    }
+    return NULL;
+}
+
+static void test_function_tables(void)
+{
+    void *ptr1, *ptr2;
+
+    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+    ptr1 = test_function_table_main_module(test_live_modules);
+    ptr2 = test_function_table_main_module(test_function_tables);
+    todo_wine_if(ptr1)
+    ok(ptr1 == ptr2, "Expecting unique storage area\n");
+    ptr2 = test_function_table_module("kernel32.dll", "CreateFileMappingA");
+    todo_wine_if(ptr1)
+    ok(ptr1 == ptr2, "Expecting unique storage area\n");
+    SymCleanup(GetCurrentProcess());
+}
+
 START_TEST(dbghelp)
 {
     BOOL ret;
@@ -1523,4 +1562,5 @@ START_TEST(dbghelp)
         test_loaded_modules();
         test_live_modules();
     }
+    test_function_tables();
 }
