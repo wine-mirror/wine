@@ -1026,31 +1026,25 @@ static const IPropertyBagVtbl property_bag_vtbl =
 
 HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
 {
-    static const struct wg_format output_format =
+    static const WAVEFORMATEX output_format =
     {
-        .major_type = WG_MAJOR_TYPE_AUDIO,
-        .u.audio =
-        {
-            .format = WG_AUDIO_FORMAT_F32LE,
-            .channel_mask = 1,
-            .channels = 1,
-            .rate = 44100,
-        },
+        .wFormatTag = WAVE_FORMAT_IEEE_FLOAT, .wBitsPerSample = 32, .nSamplesPerSec = 44100, .nChannels = 1,
     };
-    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_AUDIO_WMA};
-    struct wg_transform_attrs attrs = {0};
-    wg_transform_t transform;
+    static const WMAUDIO2WAVEFORMAT input_format =
+    {
+        .wfx = {.wFormatTag = WAVE_FORMAT_WMAUDIO2, .nSamplesPerSec = 44100, .nChannels = 1,
+                .cbSize = sizeof(input_format) - sizeof(WAVEFORMATEX)},
+    };
     struct wma_decoder *decoder;
     HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    if (FAILED(hr = check_audio_transform_support(&input_format.wfx, &output_format)))
     {
-        ERR_(winediag)("GStreamer doesn't support WMA decoding, please install appropriate plugins\n");
-        return E_FAIL;
+        ERR_(winediag)("GStreamer doesn't support WMA decoding, please install appropriate plugins.\n");
+        return hr;
     }
-    wg_transform_destroy(transform);
 
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;

@@ -32,6 +32,7 @@
 #include "gst_guids.h"
 #include "wmcodecdsp.h"
 #include "mferror.h"
+#include "mfapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 WINE_DECLARE_DEBUG_CHANNEL(mfplat);
@@ -633,6 +634,31 @@ HRESULT wg_muxer_finalize(wg_muxer_t muxer)
     }
 
     return S_OK;
+}
+
+HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMATEX *output)
+{
+    IMFMediaType *input_type, *output_type;
+    struct wg_transform_attrs attrs = {0};
+    wg_transform_t transform;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateMediaType(&input_type)))
+        return hr;
+    if (FAILED(hr = MFCreateMediaType(&output_type)))
+    {
+        IMFMediaType_Release(input_type);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = MFInitMediaTypeFromWaveFormatEx(input_type, input, sizeof(*input) + input->cbSize))
+            && SUCCEEDED(hr = MFInitMediaTypeFromWaveFormatEx(output_type, output, sizeof(*output) + output->cbSize))
+            && SUCCEEDED(hr = wg_transform_create_mf(input_type, output_type, &attrs, &transform)))
+        wg_transform_destroy(transform);
+
+    IMFMediaType_Release(output_type);
+    IMFMediaType_Release(input_type);
+    return hr;
 }
 
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))

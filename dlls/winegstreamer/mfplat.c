@@ -22,13 +22,14 @@
 #include "ks.h"
 #include "ksmedia.h"
 #include "wmcodecdsp.h"
-#include "initguid.h"
 #include "d3d9types.h"
 #include "mfapi.h"
 #include "mmreg.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
+
+#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 

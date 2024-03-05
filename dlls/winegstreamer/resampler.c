@@ -908,41 +908,24 @@ static const IWMResamplerPropsVtbl resampler_props_vtbl =
 
 HRESULT resampler_create(IUnknown *outer, IUnknown **out)
 {
-    static const struct wg_format input_format =
+    static const WAVEFORMATEX output_format =
     {
-        .major_type = WG_MAJOR_TYPE_AUDIO,
-        .u.audio =
-        {
-            .format = WG_AUDIO_FORMAT_S16LE,
-            .channel_mask = 1,
-            .channels = 1,
-            .rate = 44100,
-        },
+        .wFormatTag = WAVE_FORMAT_IEEE_FLOAT, .wBitsPerSample = 32, .nSamplesPerSec = 44100, .nChannels = 1,
     };
-    static const struct wg_format output_format =
+    static const WAVEFORMATEX input_format =
     {
-        .major_type = WG_MAJOR_TYPE_AUDIO,
-        .u.audio =
-        {
-            .format = WG_AUDIO_FORMAT_F32LE,
-            .channel_mask = 1,
-            .channels = 1,
-            .rate = 44100,
-        },
+        .wFormatTag = WAVE_FORMAT_PCM, .wBitsPerSample = 16, .nSamplesPerSec = 44100, .nChannels = 1,
     };
-    struct wg_transform_attrs attrs = {0};
-    wg_transform_t transform;
     struct resampler *impl;
     HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    if (FAILED(hr = check_audio_transform_support(&input_format, &output_format)))
     {
         ERR_(winediag)("GStreamer doesn't support audio resampling, please install appropriate plugins.\n");
-        return E_FAIL;
+        return hr;
     }
-    wg_transform_destroy(transform);
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;

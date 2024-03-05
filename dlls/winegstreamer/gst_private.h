@@ -95,6 +95,8 @@ HRESULT wg_transform_flush(wg_transform_t transform);
 void wg_transform_notify_qos(wg_transform_t transform,
         bool underflow, double proportion, int64_t diff, uint64_t timestamp);
 
+HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMATEX *output);
+
 HRESULT wg_muxer_create(const char *format, wg_muxer_t *muxer);
 void wg_muxer_destroy(wg_muxer_t muxer);
 HRESULT wg_muxer_add_stream(wg_muxer_t muxer, UINT32 stream_id, const struct wg_format *format);
