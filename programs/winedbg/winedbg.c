@@ -786,7 +786,7 @@ int main(int argc, char** argv)
     }
     if (!argc) ds = start_ok;
     else if ((ds = dbg_active_attach(argc, argv)) == start_error_parse &&
-             (ds = minidump_reload(argc, argv)) == start_error_parse)
+             (ds = minidump_start(argc, argv)) == start_error_parse)
         ds = dbg_active_launch(argc, argv);
     switch (ds)
     {

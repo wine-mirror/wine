@@ -307,7 +307,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         const char *str;
         char tmp[128];
 
-        dbg_printf("WineDbg starting on minidump on pid %04lx\n", pid);
+        dbg_printf("WineDbg starting minidump on pid %04lx\n", pid);
         switch (msi->ProcessorArchitecture)
         {
         case PROCESSOR_ARCHITECTURE_UNKNOWN:
@@ -564,23 +564,23 @@ static void cleanup(struct tgt_process_minidump_data* data)
 
 static struct be_process_io be_process_minidump_io;
 
-enum dbg_start minidump_reload(int argc, char* argv[])
+enum dbg_start minidump_reload(const char* filename)
 {
     struct tgt_process_minidump_data*   data;
     enum dbg_start                      ret = start_error_parse;
 
-    /* try the form <myself> minidump-file */
-    if (argc != 1) return start_error_parse;
-    
-    WINE_TRACE("Processing Minidump file %s\n", argv[0]);
-
+    if (dbg_curr_process)
+    {
+        dbg_printf("Already attached to a process. Use 'detach' or 'kill' before loading a minidump file'\n");
+        return start_error_init;
+    }
     data = malloc(sizeof(struct tgt_process_minidump_data));
     if (!data) return start_error_init;
     data->mapping = NULL;
     data->hMap    = NULL;
     data->hFile   = INVALID_HANDLE_VALUE;
 
-    if ((data->hFile = CreateFileA(argv[0], GENERIC_READ, FILE_SHARE_READ, NULL, 
+    if ((data->hFile = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
         ((data->hMap = CreateFileMappingA(data->hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((data->mapping = MapViewOfFile(data->hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
@@ -594,13 +594,23 @@ enum dbg_start minidump_reload(int argc, char* argv[])
         }
         __EXCEPT_PAGE_FAULT
         {
-            dbg_printf("Unexpected fault while reading minidump %s\n", argv[0]);
+            dbg_printf("Unexpected fault while reading minidump %s\n", filename);
             dbg_curr_pid = 0;
         }
         __ENDTRY;
     }
     if (ret != start_ok) cleanup(data);
     return ret;
+}
+
+enum dbg_start minidump_start(int argc, char* argv[])
+{
+    /* try the form <myself> minidump-file */
+    if (argc != 1) return start_error_parse;
+
+    WINE_TRACE("Processing Minidump file %s\n", argv[0]);
+
+    return minidump_reload(argv[0]);
 }
 
 static BOOL tgt_process_minidump_close_process(struct dbg_process* pcs, BOOL kill)

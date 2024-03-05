@@ -138,18 +138,26 @@ Exits the debugger.
 Attach to a Wine process (\fIN\fR is its Windows ID, numeric or hexadecimal).
 IDs can be obtained using the \fBinfo\ process\fR command.  Note the
 \fBinfo\ process\fR command returns hexadecimal values
-.IP 
+.IP \fBattach\ \fIfile.mdmp\fR
+Reload the state of a debuggee from the minidump \fIfile.mdmp\fR.
+See the \fBminidump\fR command to save such a file.
 .IP \fBdetach\fR
-Detach from a Wine-process.
-.IP \fBthread\ \fIN\fR
-Change the current thread to \fIN\fR (its Windows TID, numeric or hexadecimal).
-.IP
+Detach the current Wine-process. The process is no longer debugged by WineDbg,
+but is still running (for a live target).
+.IP \fBkill\fR
+Kills the current Wine-process. The process is no longer debugged by WineDbg,
+and is also terminated (for a live target).
+.IP \fBminidump\fR\ \fIfile.mdmp\fR
+Saves the debugging context of the debuggee into a minidump file called
+\fIfile.mdmp\fR.
 .IP \fBrun\fR
 Re-run the same process with the same arguments.
 Note: all breakpoints of precedent process are no longer available.
 .IP \fBrun\ \fIarg1\ arg2...\fR
 Re-run the same process with arguments \fIarg1\ arg2...\fR.
 Note: all breakpoints of precedent process are no longer available.
+.IP \fBthread\ \fIN\fR
+Change the current thread to \fIN\fR (its Windows TID, numeric or hexadecimal).
 .PP
 \fIHelp commands\fR
 .IP \fBhelp\fR
@@ -354,12 +362,6 @@ use the struct or union keyword (even if your program uses a typedef).
 When specifying an identifier, if several symbols with
 this name exist, the debugger will prompt for the symbol you want to
 use. Pick up the one you want from its number.
-.PP
-\fIMisc.\fR
-.PP
-.BI "minidump " file.mdmp
-saves the debugging context of the debuggee into a minidump file called 
-\fIfile.mdmp\fR.
 .PP
 \fIInformation on Wine internals\fR
 .IP \fBinfo\ class\fR
