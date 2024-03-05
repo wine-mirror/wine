@@ -5478,10 +5478,7 @@ static void test_DataObject(void)
     for (unsigned int i = 0; i < ARRAY_SIZE(enum_directions); ++i)
     {
         hr = IDataObject_EnumFormatEtc(data_obj, enum_directions[i], &enum_format);
-        todo_wine_if (enum_directions[i] == DATADIR_SET)
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        if (hr != S_OK)
-            continue;
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         memset(&fmt, 0xcc, sizeof(fmt));
         hr = IEnumFORMATETC_Next(enum_format, 1, &fmt, NULL);

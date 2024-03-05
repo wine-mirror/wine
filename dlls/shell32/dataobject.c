@@ -368,21 +368,15 @@ static HRESULT WINAPI IDataObject_fnSetData(IDataObject *iface, LPFORMATETC pfor
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnEnumFormatEtc(IDataObject *iface, DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
+static HRESULT WINAPI IDataObject_fnEnumFormatEtc(IDataObject *iface, DWORD direction, IEnumFORMATETC **out)
 {
-	IDataObjectImpl *This = impl_from_IDataObject(iface);
+    IDataObjectImpl *obj = impl_from_IDataObject(iface);
 
-	TRACE("(%p)->()\n", This);
-	*ppenumFormatEtc=NULL;
+    TRACE("iface %p, direction %#lx, out %p.\n", iface, direction, out);
 
-	/* only get data */
-	if (DATADIR_GET == dwDirection)
-	{
-	  *ppenumFormatEtc = IEnumFORMATETC_Constructor(MAX_FORMATS, This->pFormatEtc);
-	  return (*ppenumFormatEtc) ? S_OK : E_FAIL;
-	}
-
-	return E_NOTIMPL;
+    if (!(*out = IEnumFORMATETC_Constructor(MAX_FORMATS, obj->pFormatEtc)))
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI IDataObject_fnDAdvise(IDataObject *iface, FORMATETC *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
