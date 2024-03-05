@@ -340,7 +340,7 @@
 @ stdcall -syscall NtQueueApcThread(long ptr long long long)
 @ stdcall -syscall NtQueueApcThreadEx(long long ptr long long long)
 @ stdcall -syscall NtRaiseException(ptr ptr long)
-@ stdcall -syscall NtRaiseHardError(long long ptr ptr long ptr)
+@ stdcall -syscall NtRaiseHardError(long long long ptr long ptr)
 @ stdcall -syscall NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stdcall -syscall NtReadFileScatter(long long ptr ptr ptr ptr long ptr ptr)
 # @ stub NtReadRequestData
@@ -1389,7 +1389,7 @@
 @ stdcall -private -syscall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall -private -syscall ZwQueueApcThreadEx(long long ptr long long long) NtQueueApcThreadEx
 @ stdcall -private -syscall ZwRaiseException(ptr ptr long) NtRaiseException
-@ stdcall -private -syscall ZwRaiseHardError(long long ptr ptr long ptr) NtRaiseHardError
+@ stdcall -private -syscall ZwRaiseHardError(long long long ptr long ptr) NtRaiseHardError
 @ stdcall -private -syscall ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
 @ stdcall -private -syscall ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 # @ stub ZwReadRequestData

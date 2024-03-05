@@ -4073,10 +4073,10 @@ NTSTATUS WINAPI NtDisplayString( UNICODE_STRING *string )
  *              NtRaiseHardError  (NTDLL.@)
  */
 NTSTATUS WINAPI NtRaiseHardError( NTSTATUS status, ULONG count,
-                                  UNICODE_STRING *params_mask, void **params,
+                                  ULONG params_mask, void **params,
                                   HARDERROR_RESPONSE_OPTION option, HARDERROR_RESPONSE *response )
 {
-    FIXME( "%08x stub\n", (int)status );
+    FIXME( "%#08x %u %#x %p %u %p: stub\n", (int)status, (int)count, (int)params_mask, params, option, response );
     return STATUS_NOT_IMPLEMENTED;
 }
 
