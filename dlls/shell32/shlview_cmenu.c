@@ -345,43 +345,6 @@ static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
     }
 }
 
-static HRESULT paste_pidls(IShellFolder *dst_folder,
-        const ITEMIDLIST *src_parent, ITEMIDLIST **pidls, unsigned int count)
-{
-    IShellFolder *src_folder;
-    HRESULT hr = S_OK;
-
-    if (FAILED(hr = SHBindToObject(NULL, src_parent, NULL, &IID_IShellFolder, (void **)&src_folder)))
-    {
-        ERR("Failed to get folder from source PIDL, hr %#lx.\n", hr);
-        return hr;
-    }
-
-    for (unsigned int i = 0; SUCCEEDED(hr) && i < count; i++)
-    {
-        ISFHelper *psfhlpdst = NULL, *psfhlpsrc = NULL;
-
-        hr = IShellFolder_QueryInterface(dst_folder, &IID_ISFHelper, (void **)&psfhlpdst);
-        if (SUCCEEDED(hr))
-            hr = IShellFolder_QueryInterface(src_folder, &IID_ISFHelper, (void **)&psfhlpsrc);
-
-        if (psfhlpdst && psfhlpsrc)
-        {
-            hr = ISFHelper_CopyItems(psfhlpdst, src_folder, 1, (LPCITEMIDLIST *)&pidls[i]);
-            /* FIXME handle move
-            ISFHelper_DeleteItems(psfhlpsrc, 1, &pidl_item);
-            */
-        }
-        if (psfhlpdst)
-            ISFHelper_Release(psfhlpdst);
-        if (psfhlpsrc)
-            ISFHelper_Release(psfhlpsrc);
-    }
-
-    IShellFolder_Release(src_folder);
-    return hr;
-}
-
 static HRESULT get_data_format(IDataObject *data, UINT cf, STGMEDIUM *medium)
 {
     FORMATETC format;
@@ -390,15 +353,57 @@ static HRESULT get_data_format(IDataObject *data, UINT cf, STGMEDIUM *medium)
     return IDataObject_GetData(data, &format, medium);
 }
 
+static WCHAR *build_source_paths(ITEMIDLIST *root_pidl, ITEMIDLIST **pidls, unsigned int count)
+{
+    WCHAR root_path[MAX_PATH], pidl_path[MAX_PATH];
+    size_t size = 1, pos = 0, root_len;
+    WCHAR *paths;
+
+    if (!SHGetPathFromIDListW(root_pidl, root_path))
+    {
+        ERR("Failed to get source root path.\n");
+        return NULL;
+    }
+    root_len = wcslen(root_path);
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        if (!_ILIsValue(pidls[i]) && !_ILIsFolder(pidls[i]))
+            ERR("Unexpected child pidl type.\n");
+
+        _ILSimpleGetTextW(pidls[i], pidl_path, ARRAY_SIZE(pidl_path));
+        size += root_len + 1 + wcslen(pidl_path) + 1;
+    }
+
+    paths = malloc(size * sizeof(WCHAR));
+
+    for (unsigned int i = 0; i < count; ++i)
+    {
+        if (!_ILIsValue(pidls[i]) && !_ILIsFolder(pidls[i]))
+            ERR("Unexpected child pidl type.\n");
+
+        memcpy(paths + pos, root_path, root_len * sizeof(WCHAR));
+        pos += root_len;
+        paths[pos++] = '\\';
+        _ILSimpleGetTextW(pidls[i], paths + pos, size - pos);
+        pos += wcslen(paths + pos) + 1;
+    }
+    paths[pos++] = 0;
+
+    return paths;
+}
+
 static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
 {
+    IPersistFolder2 *dst_persist;
     IShellFolder *dst_folder;
+    WCHAR dst_path[MAX_PATH];
+    SHFILEOPSTRUCTW op = {0};
+    ITEMIDLIST *dst_pidl;
     IDataObject *data;
     HRESULT hr;
     STGMEDIUM medium;
-
-    if (FAILED(hr = OleGetClipboard(&data)))
-        return hr;
+    int ret;
 
     if (menu->cidl)
     {
@@ -415,71 +420,66 @@ static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
         IShellFolder_AddRef(dst_folder);
     }
 
+    if (FAILED(hr = IShellFolder_QueryInterface(dst_folder, &IID_IPersistFolder2, (void **)&dst_persist)))
+    {
+        WARN("Failed to get IPersistFolder2, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    hr = IPersistFolder2_GetCurFolder(dst_persist, &dst_pidl);
+    IPersistFolder2_Release(dst_persist);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get dst folder pidl, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (!SHGetPathFromIDListW(dst_pidl, dst_path))
+    {
+        ERR("Failed to get path, hr %#lx.\n", hr);
+        ILFree(dst_pidl);
+        return E_FAIL;
+    }
+    ILFree(dst_pidl);
+
+    op.hwnd = hwnd;
+    op.wFunc = FO_COPY;
+    op.pTo = dst_path;
+    op.fFlags = FOF_ALLOWUNDO;
+
+    if (FAILED(hr = OleGetClipboard(&data)))
+        return hr;
+
     if (SUCCEEDED(get_data_format(data, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), &medium)))
     {
-        CIDA *cida = GlobalLock(medium.hGlobal);
-        ITEMIDLIST **pidls;
-        ITEMIDLIST *pidl;
+        const CIDA *cida = GlobalLock(medium.hGlobal);
+        ITEMIDLIST **pidls, *root_pidl;
+        WCHAR *src_paths;
 
-        if (cida)
+        pidls = _ILCopyCidaToaPidl(&root_pidl, cida);
+
+        if ((src_paths = build_source_paths(root_pidl, pidls, cida->cidl)))
         {
-            pidls = _ILCopyCidaToaPidl(&pidl, cida);
-            if (pidls)
+            op.pFrom = src_paths;
+            if ((ret = SHFileOperationW(&op)))
             {
-                hr = paste_pidls(dst_folder, pidl, pidls, cida->cidl);
-                _ILFreeaPidl(pidls, cida->cidl);
-                SHFree(pidl);
+                WARN("Failed to copy, ret %d.\n", ret);
+                hr = E_FAIL;
             }
-            else
-            {
-                hr = HRESULT_FROM_WIN32(GetLastError());
-            }
-            GlobalUnlock(medium.hGlobal);
         }
-        else
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-        }
+
+        free(src_paths);
+        _ILFreeaPidl(pidls, cida->cidl);
+        ILFree(root_pidl);
+
+        GlobalUnlock(medium.hGlobal);
         ReleaseStgMedium(&medium);
     }
     else if (SUCCEEDED(get_data_format(data, CF_HDROP, &medium)))
     {
         const DROPFILES *dropfiles = GlobalLock(medium.hGlobal);
-        IPersistFolder2 *dst_persist;
-        SHFILEOPSTRUCTW op = {0};
-        WCHAR dst_path[MAX_PATH];
-        ITEMIDLIST *dst_pidl;
-        int ret;
 
-        if (FAILED(hr = IShellFolder_QueryInterface(dst_folder, &IID_IPersistFolder2, (void **)&dst_persist)))
-        {
-            WARN("Failed to get IPersistFolder2, hr %#lx.\n", hr);
-            IDataObject_Release(data);
-            return hr;
-        }
-
-        hr = IPersistFolder2_GetCurFolder(dst_persist, &dst_pidl);
-        IPersistFolder2_Release(dst_persist);
-        if (FAILED(hr))
-        {
-            ERR("Failed to get dst folder pidl, hr %#lx.\n", hr);
-            IDataObject_Release(data);
-            return hr;
-        }
-
-        if (!SHGetPathFromIDListW(dst_pidl, dst_path))
-        {
-            ERR("Failed to get path, hr %#lx.\n", hr);
-            ILFree(dst_pidl);
-            IDataObject_Release(data);
-            return E_FAIL;
-        }
-
-        op.hwnd = hwnd;
-        op.wFunc = FO_COPY;
         op.pFrom = (const WCHAR *)((const char *)dropfiles + dropfiles->pFiles);
-        op.pTo = dst_path;
-        op.fFlags = FOF_ALLOWUNDO;
         if ((ret = SHFileOperationW(&op)))
         {
             WARN("Failed to copy, ret %d.\n", ret);
