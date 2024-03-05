@@ -35,6 +35,7 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "ntdll_misc.h"
+#include "ddk/ntddk.h"
 #include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
@@ -4104,7 +4105,40 @@ static void load_global_options(void)
     }
 }
 
+static BOOL needs_elevation(void)
+{
+    ACTIVATION_CONTEXT_RUN_LEVEL_INFORMATION run_level;
 
+    if (!RtlQueryInformationActivationContext( 0, NULL, NULL, RunlevelInformationInActivationContext,
+                                               &run_level, sizeof(run_level), NULL ))
+    {
+        TRACE( "image requested run level %#x\n", run_level.RunLevel );
+        if (run_level.RunLevel == ACTCTX_RUN_LEVEL_HIGHEST_AVAILABLE
+                || run_level.RunLevel == ACTCTX_RUN_LEVEL_REQUIRE_ADMIN)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static void elevate_token(void)
+{
+    PROCESS_ACCESS_TOKEN token;
+    TOKEN_ELEVATION_TYPE type;
+    TOKEN_LINKED_TOKEN linked;
+
+    NtQueryInformationToken( GetCurrentThreadEffectiveToken(),
+                             TokenElevationType, &type, sizeof(type), NULL );
+
+    if (type == TokenElevationTypeFull) return;
+
+    NtQueryInformationToken( GetCurrentThreadEffectiveToken(),
+                             TokenLinkedToken, &linked, sizeof(linked), NULL );
+
+    token.Thread = NULL;
+    token.Token = linked.LinkedToken;
+    NtSetInformationProcess( GetCurrentProcess(), ProcessAccessToken, &token, sizeof(token) );
+    NtClose( linked.LinkedToken );
+}
 
 #ifdef _WIN64
 
@@ -4290,6 +4324,8 @@ void loader_init( CONTEXT *context, void **entry )
 
         actctx_init();
         locale_init();
+        if (needs_elevation())
+            elevate_token();
         get_env_var( L"WINESYSTEMDLLPATH", 0, &system_dll_path );
         if (wm->ldr.Flags & LDR_COR_ILONLY)
             status = fixup_imports_ilonly( wm, NULL, entry );
