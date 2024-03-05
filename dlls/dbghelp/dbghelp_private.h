@@ -781,7 +781,10 @@ extern struct module*
 extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
 extern const char*  pe_map_directory(struct module* module, int dirno, DWORD* size);
+extern BOOL         pe_unmap_directory(struct module* module, int dirno, const char*);
 extern DWORD        pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info);
+extern const BYTE*  pe_lock_region_from_rva(struct module *module, DWORD rva, DWORD size, DWORD *length);
+extern BOOL         pe_unlock_region(struct module *module, const BYTE* region);
 
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source);

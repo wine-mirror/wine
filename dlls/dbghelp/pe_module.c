@@ -341,6 +341,52 @@ const char* pe_map_directory(struct module* module, int dirno, DWORD* size)
                            nth->OptionalHeader.DataDirectory[dirno].VirtualAddress, NULL);
 }
 
+BOOL pe_unmap_directory(struct module* module, int dirno, const char *dir)
+{
+    if (module->type != DMT_PE || !module->format_info[DFI_PE]) return FALSE;
+    if (dirno >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES) return FALSE;
+    pe_unmap_full(&module->format_info[DFI_PE]->u.pe_info->fmap);
+    return TRUE;
+}
+
+/* Locks a region from a mapped PE file, from its RVA, and for at least 'size' bytes.
+ * Region must fit entirely inside a PE section.
+ * 'length', upon success, gets the size from RVA until end of PE section.
+ */
+const BYTE* pe_lock_region_from_rva(struct module *module, DWORD rva, DWORD size, DWORD *length)
+{
+    IMAGE_NT_HEADERS*     nth;
+    void*                 mapping;
+    IMAGE_SECTION_HEADER *section;
+    const BYTE           *ret;
+
+    if (module->type != DMT_PE || !module->format_info[DFI_PE]) return NULL;
+    if (!(mapping = pe_map_full(&module->format_info[DFI_PE]->u.pe_info->fmap, &nth)))
+        return NULL;
+    section = NULL;
+    ret = RtlImageRvaToVa(nth, mapping, rva, &section);
+    if (ret)
+    {
+        if (rva + size <= section->VirtualAddress + section->SizeOfRawData)
+        {
+            if (length)
+                *length = section->VirtualAddress + section->SizeOfRawData - rva;
+            return ret;
+        }
+        if (rva + size <= section->VirtualAddress + section->Misc.VirtualSize)
+            FIXME("Not able to lock regions not present on file\n");
+    }
+    pe_unmap_full(&module->format_info[DFI_PE]->u.pe_info->fmap);
+    return NULL;
+}
+
+BOOL pe_unlock_region(struct module *module, const BYTE* region)
+{
+    if (module->type != DMT_PE || !module->format_info[DFI_PE] || !region) return FALSE;
+    pe_unmap_full(&module->format_info[DFI_PE]->u.pe_info->fmap);
+    return TRUE;
+}
+
 static void pe_module_remove(struct process* pcs, struct module_format* modfmt)
 {
     image_unmap_file(&modfmt->u.pe_info->fmap);

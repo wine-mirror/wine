@@ -729,31 +729,46 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
 static void*    x86_64_find_runtime_function(struct module* module, DWORD64 addr)
 {
 #ifdef __x86_64__
-    RUNTIME_FUNCTION*   rtf;
-    ULONG               size;
-    int                 min, max;
+    RUNTIME_FUNCTION       *func = NULL;
+    const RUNTIME_FUNCTION *rtf;
+    ULONG                   size;
 
-    rtf = (RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
-    if (rtf) for (min = 0, max = size / sizeof(*rtf); min <= max; )
+    rtf = (const RUNTIME_FUNCTION*)pe_map_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size);
+    if (rtf)
     {
-        int pos = (min + max) / 2;
-        if (addr < module->module.BaseOfImage + rtf[pos].BeginAddress) max = pos - 1;
-        else if (addr >= module->module.BaseOfImage + rtf[pos].EndAddress) min = pos + 1;
-        else
+        int   lo, hi;
+
+        for (lo = 0, hi = size / sizeof(*rtf); lo <= hi; )
         {
-            rtf += pos;
-            while (rtf->UnwindData & 1)  /* follow chained entry */
+            int pos = (lo + hi) / 2;
+            if (addr < module->module.BaseOfImage + rtf[pos].BeginAddress) hi = pos - 1;
+            else if (addr >= module->module.BaseOfImage + rtf[pos].EndAddress) lo = pos + 1;
+            else if ((func = fetch_buffer(module->process, sizeof(*func))))
             {
-                FIXME("RunTime_Function outside IMAGE_DIRECTORY_ENTRY_EXCEPTION unimplemented yet!\n");
-                return NULL;
-                /* we need to read into the other process */
-                /* rtf = (RUNTIME_FUNCTION*)(module->module.BaseOfImage + (rtf->UnwindData & ~1)); */
+                *func = rtf[pos];
+                while (func && (func->UnwindData & 1))
+                {
+                    const BYTE *next = pe_lock_region_from_rva(module, func->UnwindData & ~1, sizeof(*func), NULL);
+                    if (next)
+                    {
+                        *func = *(const RUNTIME_FUNCTION *)next;
+                        pe_unlock_region(module, next);
+                    }
+                    else
+                    {
+                        WARN("Couldn't find chained RUNTIME_FUNCTION\n");
+                        func = NULL;
+                    }
+                }
+                break;
             }
-            return rtf;
         }
+        pe_unmap_directory(module, IMAGE_DIRECTORY_ENTRY_EXCEPTION, (const char*)rtf);
     }
-#endif
+    return func;
+#else
     return NULL;
+#endif
 }
 
 static unsigned x86_64_map_dwarf_register(unsigned regno, const struct module* module, BOOL eh_frame)

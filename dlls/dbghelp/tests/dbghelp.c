@@ -1523,10 +1523,8 @@ static void test_function_tables(void)
     SymInitialize(GetCurrentProcess(), NULL, TRUE);
     ptr1 = test_function_table_main_module(test_live_modules);
     ptr2 = test_function_table_main_module(test_function_tables);
-    todo_wine_if(ptr1)
     ok(ptr1 == ptr2, "Expecting unique storage area\n");
     ptr2 = test_function_table_module("kernel32.dll", "CreateFileMappingA");
-    todo_wine_if(ptr1)
     ok(ptr1 == ptr2, "Expecting unique storage area\n");
     SymCleanup(GetCurrentProcess());
 }
