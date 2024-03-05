@@ -357,6 +357,21 @@ wg_transform_t wg_transform_create(const struct wg_format *input_format,
     return params.transform;
 }
 
+HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_type, const AM_MEDIA_TYPE *output_type,
+        const struct wg_transform_attrs *attrs, wg_transform_t *transform)
+{
+    struct wg_format input_format, output_format;
+
+    if (!amt_to_wg_format(input_type, &input_format))
+        return E_FAIL;
+    if (!amt_to_wg_format(output_type, &output_format))
+        return E_FAIL;
+
+    if (!(*transform = wg_transform_create(&input_format, &output_format, attrs)))
+        return E_FAIL;
+    return S_OK;
+}
+
 void wg_transform_destroy(wg_transform_t transform)
 {
     TRACE("transform %#I64x.\n", transform);

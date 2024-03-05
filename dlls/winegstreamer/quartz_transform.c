@@ -98,26 +98,19 @@ static HRESULT transform_query_interface(struct strmbase_filter *iface, REFIID i
 static HRESULT transform_init_stream(struct strmbase_filter *iface)
 {
     struct transform *filter = impl_from_strmbase_filter(iface);
-    struct wg_format input_format, output_format;
     struct wg_transform_attrs attrs = {0};
     HRESULT hr;
 
     if (filter->source.pin.peer)
     {
-        if (!amt_to_wg_format(&filter->sink.pin.mt, &input_format))
-            return E_FAIL;
-
-        if (!amt_to_wg_format(&filter->source.pin.mt, &output_format))
-            return E_FAIL;
-
         if (FAILED(hr = wg_sample_queue_create(&filter->sample_queue)))
             return hr;
 
-        filter->transform = wg_transform_create(&input_format, &output_format, &attrs);
-        if (!filter->transform)
+        if (FAILED(hr = wg_transform_create_quartz(&filter->sink.pin.mt, &filter->source.pin.mt,
+                &attrs, &filter->transform)))
         {
             wg_sample_queue_destroy(filter->sample_queue);
-            return E_FAIL;
+            return hr;
         }
 
         hr = IMemAllocator_Commit(filter->source.pAllocator);

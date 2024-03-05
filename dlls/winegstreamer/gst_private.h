@@ -83,6 +83,8 @@ void wg_parser_stream_seek(wg_parser_stream_t stream, double rate,
 
 wg_transform_t wg_transform_create(const struct wg_format *input_format,
         const struct wg_format *output_format, const struct wg_transform_attrs *attrs);
+HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_MEDIA_TYPE *output_format,
+        const struct wg_transform_attrs *attrs, wg_transform_t *transform);
 void wg_transform_destroy(wg_transform_t transform);
 bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format);
 bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input);
