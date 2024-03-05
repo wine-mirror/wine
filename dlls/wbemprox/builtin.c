@@ -4364,9 +4364,9 @@ static struct table wmi_builtin_classes[] =
 
 static const struct
 {
-    const WCHAR *name;
-    struct table *classes;
-    unsigned int table_count;
+    const WCHAR  *name;
+    struct table *tables;
+    unsigned int  table_count;
 }
 builtin_namespaces[WBEMPROX_NAMESPACE_LAST] =
 {
@@ -4385,7 +4385,12 @@ void init_table_list( void )
     {
         list_init( &tables[ns] );
         for (i = 0; i < builtin_namespaces[ns].table_count; i++)
-            list_add_tail( &tables[ns], &builtin_namespaces[ns].classes[i].entry );
+        {
+            struct table *table = &builtin_namespaces[ns].tables[i];
+            InitializeCriticalSectionEx( &table->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+            table->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": table.cs" );
+            list_add_tail( &tables[ns], &table->entry );
+        }
         table_list[ns] = &tables[ns];
     }
 }

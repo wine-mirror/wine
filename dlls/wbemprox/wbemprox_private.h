@@ -121,6 +121,8 @@ struct table
     UINT flags;
     struct list entry;
     LONG refs;
+    CRITICAL_SECTION cs;
+    BOOL removed;
 };
 
 struct property
