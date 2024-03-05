@@ -1047,9 +1047,11 @@ typedef struct
     int          mask;         /* setting mask (see below) */
     int          priority;     /* priority class */
     affinity_t   affinity;     /* affinity mask */
+    obj_handle_t token;        /* primary token */
 @END
 #define SET_PROCESS_INFO_PRIORITY 0x01
 #define SET_PROCESS_INFO_AFFINITY 0x02
+#define SET_PROCESS_INFO_TOKEN    0x04
 
 
 /* Retrieve information about a thread */

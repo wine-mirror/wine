@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
 #include "wow64_private.h"
 #include "wine/asm.h"
 #include "wine/exception.h"
@@ -834,6 +835,18 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
     case ProcessPowerThrottlingState:   /* PROCESS_POWER_THROTTLING_STATE */
     case ProcessLeapSecondInformation:   /* PROCESS_LEAP_SECOND_INFO */
         return NtSetInformationProcess( handle, class, ptr, len );
+
+    case ProcessAccessToken: /* PROCESS_ACCESS_TOKEN */
+        if (len == sizeof(PROCESS_ACCESS_TOKEN32))
+        {
+            PROCESS_ACCESS_TOKEN32 *stack = ptr;
+            PROCESS_ACCESS_TOKEN info;
+
+            info.Thread = ULongToHandle( stack->Thread );
+            info.Token = ULongToHandle( stack->Token );
+            return NtSetInformationProcess( handle, class, &info, sizeof(info) );
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
 
     case ProcessAffinityMask:   /* ULONG_PTR */
         if (len == sizeof(ULONG))

@@ -1626,6 +1626,16 @@ DECL_HANDLER(set_process_info)
     {
         if (req->mask & SET_PROCESS_INFO_PRIORITY) process->priority = req->priority;
         if (req->mask & SET_PROCESS_INFO_AFFINITY) set_process_affinity( process, req->affinity );
+        if (req->mask & SET_PROCESS_INFO_TOKEN)
+        {
+            struct token *token;
+
+            if ((token = get_token_obj( current->process, req->token, TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY )))
+            {
+                release_object( process->token );
+                process->token = token;
+            }
+        }
         release_object( process );
     }
 }

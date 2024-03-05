@@ -1114,6 +1114,8 @@ struct set_process_info_request
     int          mask;
     int          priority;
     affinity_t   affinity;
+    obj_handle_t token;
+    char __pad_36[4];
 };
 struct set_process_info_reply
 {
@@ -1121,6 +1123,7 @@ struct set_process_info_reply
 };
 #define SET_PROCESS_INFO_PRIORITY 0x01
 #define SET_PROCESS_INFO_AFFINITY 0x02
+#define SET_PROCESS_INFO_TOKEN    0x04
 
 
 
@@ -6502,7 +6505,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 795
+#define SERVER_PROTOCOL_VERSION 796
 
 /* ### protocol_version end ### */
 

@@ -1568,6 +1568,7 @@ static void dump_set_process_info_request( const struct set_process_info_request
     fprintf( stderr, ", mask=%d", req->mask );
     fprintf( stderr, ", priority=%d", req->priority );
     dump_uint64( ", affinity=", &req->affinity );
+    fprintf( stderr, ", token=%04x", req->token );
 }
 
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )

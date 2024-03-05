@@ -722,4 +722,10 @@ typedef struct DECLSPEC_ALIGN(8)
     };
 } MEM_EXTENDED_PARAMETER32;
 
+typedef struct
+{
+    ULONG Token;
+    ULONG Thread;
+} PROCESS_ACCESS_TOKEN32;
+
 #endif /* __WOW64_STRUCT32_H */
