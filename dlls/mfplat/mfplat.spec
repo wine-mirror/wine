@@ -59,7 +59,7 @@
 @ stub MFCreateMediaBufferWrapper
 @ stdcall MFCreateMediaEvent(long ptr long ptr ptr)
 @ stdcall MFCreateMediaType(ptr)
-@ stub MFCreateMediaTypeFromRepresentation
+@ stdcall MFCreateMediaTypeFromRepresentation(int128 ptr ptr)
 @ stdcall MFCreateMemoryBuffer(long ptr)
 @ stub MFCreateMemoryStream
 @ stdcall MFCreatePathFromURL(wstr ptr)

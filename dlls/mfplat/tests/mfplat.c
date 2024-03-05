@@ -8524,6 +8524,56 @@ static void test_IMFMediaType_GetRepresentation(void)
     IMFMediaType_Release(media_type);
 }
 
+static void test_MFCreateMediaTypeFromRepresentation(void)
+{
+    IMFMediaType *media_type;
+    AM_MEDIA_TYPE amt = {0};
+    WAVEFORMATEX wfx = {0};
+    HRESULT hr;
+    GUID guid;
+
+    hr = MFCreateMediaTypeFromRepresentation(GUID_NULL, &amt, &media_type);
+    ok(hr == MF_E_UNSUPPORTED_REPRESENTATION, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, NULL, &media_type);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &amt, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &amt, &media_type);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        memset(&guid, 0xcd, sizeof(guid));
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&guid, &GUID_NULL), "got %s.\n", debugstr_guid(&guid));
+        memset(&guid, 0xcd, sizeof(guid));
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&guid, &GUID_NULL), "got %s.\n", debugstr_guid(&guid));
+        IMFMediaType_Release(media_type);
+    }
+
+    amt.formattype = FORMAT_WaveFormatEx;
+    amt.majortype = MFMediaType_Audio;
+    amt.subtype = MFAudioFormat_PCM;
+    amt.pbFormat = (BYTE *)&wfx;
+    amt.cbFormat = sizeof(wfx);
+    hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, &amt, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(&guid, 0xcd, sizeof(guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "got %s.\n", debugstr_guid(&guid));
+    memset(&guid, 0xcd, sizeof(guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &MFAudioFormat_PCM), "got %s.\n", debugstr_guid(&guid));
+    IMFMediaType_Release(media_type);
+}
+
 static void test_MFCreateDXSurfaceBuffer(void)
 {
     IDirect3DSurface9 *backbuffer = NULL, *surface;
@@ -11798,6 +11848,7 @@ START_TEST(mfplat)
     test_MFCreateAMMediaTypeFromMFMediaType();
     test_MFInitMediaTypeFromMFVideoFormat();
     test_IMFMediaType_GetRepresentation();
+    test_MFCreateMediaTypeFromRepresentation();
     test_MFCreateDXSurfaceBuffer();
     test_MFCreateTrackedSample();
     test_MFFrameRateToAverageTimePerFrame();

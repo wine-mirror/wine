@@ -4334,3 +4334,29 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
 
     return hr;
 }
+
+/***********************************************************************
+ *      MFCreateMediaTypeFromRepresentation (mfplat.@)
+ */
+HRESULT WINAPI MFCreateMediaTypeFromRepresentation(GUID guid_representation, void *representation,
+        IMFMediaType **media_type)
+{
+    HRESULT hr;
+
+    TRACE("%s, %p, %p\n", debugstr_guid(&guid_representation), representation, media_type);
+
+    if (!IsEqualGUID(&guid_representation, &AM_MEDIA_TYPE_REPRESENTATION))
+        return MF_E_UNSUPPORTED_REPRESENTATION;
+    if (!representation || !media_type)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = MFCreateMediaType(media_type)))
+        return hr;
+    if (FAILED(hr = MFInitMediaTypeFromAMMediaType(*media_type, representation)))
+    {
+        IMFMediaType_Release(*media_type);
+        *media_type = NULL;
+    }
+
+    return hr;
+}
