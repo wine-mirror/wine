@@ -1349,7 +1349,6 @@ static void check_video_info_header_(int line, VIDEOINFOHEADER *info, const VIDE
             expected->rcTarget.left, expected->rcTarget.top, expected->rcTarget.right, expected->rcTarget.bottom);
     check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitRate);
     check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitErrorRate);
-    todo_wine_if(expected->AvgTimePerFrame)
     check_member_(__FILE__, line, *info, *expected, "%I64d", AvgTimePerFrame);
     check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biSize);
     check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biWidth);

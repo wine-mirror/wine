@@ -470,6 +470,8 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     info->rcSource.bottom = height;
     info->rcTarget.right  = width;
     info->rcTarget.bottom = height;
+    info->AvgTimePerFrame = MulDiv(10000000, decoder->input_format.u.video_wmv.fps_d,
+            decoder->input_format.u.video_wmv.fps_n);
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     info->bmiHeader.biWidth  = width;
     info->bmiHeader.biHeight = height;
