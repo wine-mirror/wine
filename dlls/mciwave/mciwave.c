@@ -631,12 +631,8 @@ static DWORD WAVE_mciStop(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
     case MCI_MODE_PAUSE:
     case MCI_MODE_PLAY:
     case MCI_MODE_RECORD:
-	{
-	    int oldStat = wmw->dwStatus;
-	    wmw->dwStatus = MCI_MODE_NOT_READY;
-	    if (oldStat == MCI_MODE_PAUSE)
-		dwRet = (wmw->fInput) ? waveInReset(wmw->hWave) : waveOutReset(wmw->hWave);
-	}
+        wmw->dwStatus = MCI_MODE_NOT_READY;
+        dwRet = (wmw->fInput) ? waveInReset(wmw->hWave) : waveOutReset(wmw->hWave);
 	while (wmw->dwStatus != MCI_MODE_STOP)
 	    Sleep(10);
 	break;
