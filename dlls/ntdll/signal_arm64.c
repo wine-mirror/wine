@@ -184,15 +184,18 @@ EXCEPTION_DISPOSITION WINAPI unwind_exception_handler( EXCEPTION_RECORD *record,
     DISPATCHER_CONTEXT *orig_dispatch = ((DISPATCHER_CONTEXT **)frame)[-2];
 
     /* copy the original dispatcher into the current one, except for the TargetPc */
-    dispatch->ControlPc        = orig_dispatch->ControlPc;
-    dispatch->ImageBase        = orig_dispatch->ImageBase;
-    dispatch->FunctionEntry    = orig_dispatch->FunctionEntry;
-    dispatch->EstablisherFrame = orig_dispatch->EstablisherFrame;
-    dispatch->ContextRecord    = orig_dispatch->ContextRecord;
-    dispatch->LanguageHandler  = orig_dispatch->LanguageHandler;
-    dispatch->HandlerData      = orig_dispatch->HandlerData;
-    dispatch->HistoryTable     = orig_dispatch->HistoryTable;
-    dispatch->ScopeIndex       = orig_dispatch->ScopeIndex;
+    dispatch->ControlPc          = orig_dispatch->ControlPc;
+    dispatch->ImageBase          = orig_dispatch->ImageBase;
+    dispatch->FunctionEntry      = orig_dispatch->FunctionEntry;
+    dispatch->EstablisherFrame   = orig_dispatch->EstablisherFrame;
+    dispatch->LanguageHandler    = orig_dispatch->LanguageHandler;
+    dispatch->HandlerData        = orig_dispatch->HandlerData;
+    dispatch->HistoryTable       = orig_dispatch->HistoryTable;
+    dispatch->ScopeIndex         = orig_dispatch->ScopeIndex;
+    dispatch->ControlPcIsUnwound = orig_dispatch->ControlPcIsUnwound;
+    *dispatch->ContextRecord     = *orig_dispatch->ContextRecord;
+    memcpy( dispatch->NonVolatileRegisters, orig_dispatch->NonVolatileRegisters,
+            sizeof(DISPATCHER_CONTEXT_NONVOLREG_ARM64) );
     TRACE( "detected collided unwind\n" );
     return ExceptionCollidedUnwind;
 }
@@ -345,6 +348,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context;
     NTSTATUS status;
+    ULONG_PTR frame;
 
     context = *orig_context;
     dispatch.TargetPc      = 0;
@@ -381,16 +385,11 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
                 TRACE( "nested exception\n" );
                 break;
-            case ExceptionCollidedUnwind: {
-                ULONG64 frame;
-
-                context = *dispatch.ContextRecord;
-                dispatch.ContextRecord = &context;
+            case ExceptionCollidedUnwind:
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
                                   &context, &dispatch.HandlerData, &frame, NULL );
                 goto unwind_done;
-            }
             default:
                 return STATUS_INVALID_DISPOSITION;
             }
@@ -412,17 +411,12 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
                 rec->ExceptionFlags |= EXCEPTION_NESTED_CALL;
                 TRACE( "nested exception\n" );
                 break;
-            case ExceptionCollidedUnwind: {
-                ULONG64 frame;
-
-                context = *dispatch.ContextRecord;
-                dispatch.ContextRecord = &context;
+            case ExceptionCollidedUnwind:
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
                                   &context, &dispatch.HandlerData, &frame, NULL );
                 teb_frame = teb_frame->Prev;
                 goto unwind_done;
-            }
             default:
                 return STATUS_INVALID_DISPOSITION;
             }
@@ -638,6 +632,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     DISPATCHER_CONTEXT dispatch;
     CONTEXT new_context;
     NTSTATUS status;
+    ULONG_PTR frame;
     DWORD i;
 
     RtlCaptureContext( context );
@@ -693,10 +688,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
             if (dispatch.EstablisherFrame == (ULONG64)end_frame) rec->ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
             if (call_unwind_handler( rec, &dispatch ) == ExceptionCollidedUnwind)
             {
-                ULONG64 frame;
-
-                *context = new_context = *dispatch.ContextRecord;
-                dispatch.ContextRecord = context;
+                new_context = *context;
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
                                   &new_context, &dispatch.HandlerData, &frame,
@@ -717,12 +709,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 dispatch.EstablisherFrame = (ULONG64)teb_frame;
                 if (call_teb_unwind_handler( rec, &dispatch, teb_frame ) == ExceptionCollidedUnwind)
                 {
-                    ULONG64 frame;
-
                     teb_frame = __wine_pop_frame( teb_frame );
-
-                    *context = new_context = *dispatch.ContextRecord;
-                    dispatch.ContextRecord = context;
+                    new_context = *context;
                     RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                       dispatch.ControlPc, dispatch.FunctionEntry,
                                       &new_context, &dispatch.HandlerData,
