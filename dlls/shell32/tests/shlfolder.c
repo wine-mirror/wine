@@ -5409,9 +5409,9 @@ static void test_DataObject(void)
 
     fmt.tymed = TYMED_ISTREAM;
     hr = IDataObject_QueryGetData(data_obj, &fmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IDataObject_GetData(data_obj, &fmt, &medium);
-    todo_wine ok(hr == DV_E_FORMATETC, "Got hr %#lx.\n", hr);
+    ok(hr == DV_E_FORMATETC, "Got hr %#lx.\n", hr);
 
     fmt.tymed = TYMED_HGLOBAL | TYMED_ISTREAM;
     hr = IDataObject_GetData(data_obj, &fmt, &medium);
@@ -5444,9 +5444,9 @@ static void test_DataObject(void)
     fmt.cfFormat = RegisterClipboardFormatW(L"bogus_format");
 
     hr = IDataObject_QueryGetData(data_obj, &fmt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IDataObject_GetData(data_obj, &fmt, &medium);
-    todo_wine ok(hr == DV_E_FORMATETC, "Got hr %#lx.\n", hr);
+    ok(hr == DV_E_FORMATETC, "Got hr %#lx.\n", hr);
 
     global = GlobalAlloc(GMEM_MOVEABLE, sizeof(*value));
     value = GlobalLock(global);

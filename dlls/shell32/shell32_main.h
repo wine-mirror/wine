@@ -139,10 +139,10 @@ HRESULT WINAPI CustomDestinationList_Constructor(IUnknown *outer, REFIID riid, v
     DROPEFFECT_MOVE))
 
 
-HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
-HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
-HGLOBAL RenderFILENAMEA (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
-HGLOBAL RenderFILENAMEW (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl);
+HGLOBAL RenderHDROP(const ITEMIDLIST *root_pidl, const ITEMIDLIST **pidls, unsigned int count);
+HGLOBAL RenderSHELLIDLIST(const ITEMIDLIST *root_pidl, const ITEMIDLIST **pidls, unsigned int count);
+HGLOBAL RenderFILENAMEA(const ITEMIDLIST *root_pidl, const ITEMIDLIST **pidls, unsigned int count);
+HGLOBAL RenderFILENAMEW(const ITEMIDLIST *root_pidl, const ITEMIDLIST **pidls, unsigned int count);
 
 /* Change Notification */
 void InitChangeNotifications(void);

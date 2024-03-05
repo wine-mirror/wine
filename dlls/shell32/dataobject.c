@@ -187,30 +187,19 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
     return &ef->IEnumFORMATETC_iface;
 }
 
-
-/***********************************************************************
-*   IDataObject implementation
-*/
-
-/* number of supported formats */
-#define MAX_FORMATS 4
+struct data
+{
+    UINT cf;
+    HGLOBAL global;
+};
 
 typedef struct
 {
-	/* IUnknown fields */
-	IDataObject IDataObject_iface;
-	LONG        ref;
+    IDataObject IDataObject_iface;
+    LONG ref;
 
-	/* IDataObject fields */
-	LPITEMIDLIST	pidl;
-	LPITEMIDLIST *	apidl;
-	UINT		cidl;
-
-	FORMATETC	pFormatEtc[MAX_FORMATS];
-	UINT		cfShellIDList;
-	UINT		cfFileNameA;
-	UINT		cfFileNameW;
-
+    struct data *data;
+    size_t data_count;
 } IDataObjectImpl;
 
 static inline IDataObjectImpl *impl_from_IDataObject(IDataObject *iface)
@@ -262,66 +251,62 @@ static ULONG WINAPI IDataObject_fnAddRef(IDataObject *iface)
 */
 static ULONG WINAPI IDataObject_fnRelease(IDataObject *iface)
 {
-	IDataObjectImpl *This = impl_from_IDataObject(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+    IDataObjectImpl *obj = impl_from_IDataObject(iface);
+    ULONG refcount = InterlockedDecrement(&obj->ref);
 
-	TRACE("(%p)->(%lu)\n", This, refCount + 1);
+    TRACE("%p decreasing refcount to %lu.\n", obj, refcount);
 
-	if (!refCount)
-	{
-	  TRACE(" destroying IDataObject(%p)\n",This);
-	  _ILFreeaPidl(This->apidl, This->cidl);
-          ILFree(This->pidl);
-	  free(This);
-	}
-	return refCount;
+    if (!refcount)
+    {
+        for (size_t i = 0; i < obj->data_count; ++i)
+            GlobalFree(obj->data[i].global);
+        free(obj->data);
+        free(obj);
+    }
+    return refcount;
 }
 
 /**************************************************************************
 * IDataObject_fnGetData
 */
-static HRESULT WINAPI IDataObject_fnGetData(IDataObject *iface, LPFORMATETC pformatetcIn, STGMEDIUM *pmedium)
+static HRESULT WINAPI IDataObject_fnGetData(IDataObject *iface, FORMATETC *format, STGMEDIUM *medium)
 {
-	IDataObjectImpl *This = impl_from_IDataObject(iface);
+    IDataObjectImpl *obj = impl_from_IDataObject(iface);
 
-	char	szTemp[256];
+    TRACE("iface %p, format %p, medium %p.\n", iface, format, medium);
 
-	szTemp[0]=0;
-	GetClipboardFormatNameA (pformatetcIn->cfFormat, szTemp, 256);
-	TRACE("(%p)->(%p %p format=%s)\n", This, pformatetcIn, pmedium, szTemp);
+    if (!(format->tymed & TYMED_HGLOBAL))
+    {
+        FIXME("Unrecognized tymed %#lx, returning DV_E_FORMATETC.\n", format->tymed);
+        return DV_E_FORMATETC;
+    }
 
-	if (pformatetcIn->cfFormat == This->cfShellIDList)
-	{
-	  if (This->cidl < 1) return(E_UNEXPECTED);
-	  pmedium->hGlobal = RenderSHELLIDLIST(This->pidl, This->apidl, This->cidl);
-	}
-	else if	(pformatetcIn->cfFormat == CF_HDROP)
-	{
-	  if (This->cidl < 1) return(E_UNEXPECTED);
-	  pmedium->hGlobal = RenderHDROP(This->pidl, This->apidl, This->cidl);
-	}
-	else if	(pformatetcIn->cfFormat == This->cfFileNameA)
-	{
-	  if (This->cidl < 1) return(E_UNEXPECTED);
-	  pmedium->hGlobal = RenderFILENAMEA(This->pidl, This->apidl, This->cidl);
-	}
-	else if	(pformatetcIn->cfFormat == This->cfFileNameW)
-	{
-	  if (This->cidl < 1) return(E_UNEXPECTED);
-	  pmedium->hGlobal = RenderFILENAMEW(This->pidl, This->apidl, This->cidl);
-	}
-	else
-	{
-	  FIXME("-- expected clipformat not implemented\n");
-	  return (E_INVALIDARG);
-	}
-	if (pmedium->hGlobal)
-	{
-	  pmedium->tymed = TYMED_HGLOBAL;
-	  pmedium->pUnkForRelease = NULL;
-	  return S_OK;
-	}
-	return E_OUTOFMEMORY;
+    for (size_t i = 0; i < obj->data_count; ++i)
+    {
+        if (obj->data[i].cf == format->cfFormat)
+        {
+            HGLOBAL src_global = obj->data[i].global;
+            size_t size = GlobalSize(src_global);
+            HGLOBAL dst_global;
+            const void *src;
+            void *dst;
+
+            if (!(dst_global = GlobalAlloc(GMEM_MOVEABLE, size)))
+                return E_OUTOFMEMORY;
+            src = GlobalLock(src_global);
+            dst = GlobalLock(dst_global);
+            memcpy(dst, src, size);
+            GlobalUnlock(src_global);
+            GlobalUnlock(dst_global);
+
+            medium->tymed = TYMED_HGLOBAL;
+            medium->pUnkForRelease = NULL;
+            medium->hGlobal = dst_global;
+            return S_OK;
+        }
+    }
+
+    return DV_E_FORMATETC;
 }
 
 static HRESULT WINAPI IDataObject_fnGetDataHere(IDataObject *iface, LPFORMATETC pformatetc, STGMEDIUM *pmedium)
@@ -331,27 +316,25 @@ static HRESULT WINAPI IDataObject_fnGetDataHere(IDataObject *iface, LPFORMATETC 
 	return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDataObject_fnQueryGetData(IDataObject *iface, LPFORMATETC pformatetc)
+static HRESULT WINAPI IDataObject_fnQueryGetData(IDataObject *iface, FORMATETC *format)
 {
-	IDataObjectImpl *This = impl_from_IDataObject(iface);
-	UINT i;
+    IDataObjectImpl *obj = impl_from_IDataObject(iface);
 
-	TRACE("(%p)->(fmt=0x%08x tym=0x%08lx)\n", This, pformatetc->cfFormat, pformatetc->tymed);
+    TRACE("iface %p, format %p.\n", iface, format);
 
-	if(!(DVASPECT_CONTENT & pformatetc->dwAspect))
-	  return DV_E_DVASPECT;
+    if (!(format->tymed & TYMED_HGLOBAL))
+    {
+        FIXME("Unrecognized tymed %#lx, returning S_FALSE.\n", format->tymed);
+        return S_FALSE;
+    }
 
-	/* check our formats table what we have */
-	for (i=0; i<MAX_FORMATS; i++)
-	{
-	  if ((This->pFormatEtc[i].cfFormat == pformatetc->cfFormat)
-	   && (This->pFormatEtc[i].tymed & pformatetc->tymed))
-	  {
-	    return S_OK;
-	  }
-	}
+    for (size_t i = 0; i < obj->data_count; ++i)
+    {
+        if (obj->data[i].cf == format->cfFormat)
+            return S_OK;
+    }
 
-	return DV_E_TYMED;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDataObject_fnGetCanonicalFormatEtc(IDataObject *iface, LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
@@ -371,11 +354,21 @@ static HRESULT WINAPI IDataObject_fnSetData(IDataObject *iface, LPFORMATETC pfor
 static HRESULT WINAPI IDataObject_fnEnumFormatEtc(IDataObject *iface, DWORD direction, IEnumFORMATETC **out)
 {
     IDataObjectImpl *obj = impl_from_IDataObject(iface);
+    FORMATETC *formats;
 
     TRACE("iface %p, direction %#lx, out %p.\n", iface, direction, out);
 
-    if (!(*out = IEnumFORMATETC_Constructor(MAX_FORMATS, obj->pFormatEtc)))
+    if (!(formats = calloc(obj->data_count, sizeof(*formats))))
         return E_OUTOFMEMORY;
+    for (size_t i = 0; i < obj->data_count; ++i)
+        InitFormatEtc(formats[i], obj->data[i].cf, TYMED_HGLOBAL);
+
+    if (!(*out = IEnumFORMATETC_Constructor(obj->data_count, formats)))
+    {
+        free(formats);
+        return E_OUTOFMEMORY;
+    }
+    free(formats);
     return S_OK;
 }
 
@@ -417,30 +410,27 @@ static const IDataObjectVtbl dtovt =
 /**************************************************************************
 *  IDataObject_Constructor
 */
-IDataObject* IDataObject_Constructor(HWND hwndOwner,
-               LPCITEMIDLIST pMyPidl, LPCITEMIDLIST * apidl, UINT cidl)
+IDataObject *IDataObject_Constructor(HWND hwnd, const ITEMIDLIST *root_pidl,
+        const ITEMIDLIST **pidls, UINT pidl_count)
 {
-    IDataObjectImpl* dto;
+    IDataObjectImpl *obj;
 
-    dto = calloc(1, sizeof(*dto));
+    if (!(obj = calloc(1, sizeof(*obj))))
+        return NULL;
 
-    if (dto)
-    {
-        dto->ref = 1;
-        dto->IDataObject_iface.lpVtbl = &dtovt;
-        dto->pidl = ILClone(pMyPidl);
-        dto->apidl = _ILCopyaPidl(apidl, cidl);
-        dto->cidl = cidl;
+    obj->ref = 1;
+    obj->IDataObject_iface.lpVtbl = &dtovt;
+    obj->data = calloc(4, sizeof(*obj->data));
+    obj->data[0].cf = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    obj->data[0].global = RenderSHELLIDLIST(root_pidl, pidls, pidl_count);
+    obj->data[1].cf = CF_HDROP;
+    obj->data[1].global = RenderHDROP(root_pidl, pidls, pidl_count);
+    obj->data[2].cf = RegisterClipboardFormatA(CFSTR_FILENAMEA);
+    obj->data[2].global = RenderFILENAMEA(root_pidl, pidls, pidl_count);
+    obj->data[3].cf = RegisterClipboardFormatW(CFSTR_FILENAMEW);
+    obj->data[3].global = RenderFILENAMEW(root_pidl, pidls, pidl_count);
+    obj->data_count = 4;
 
-        dto->cfShellIDList = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
-        dto->cfFileNameA = RegisterClipboardFormatA(CFSTR_FILENAMEA);
-        dto->cfFileNameW = RegisterClipboardFormatW(CFSTR_FILENAMEW);
-        InitFormatEtc(dto->pFormatEtc[0], dto->cfShellIDList, TYMED_HGLOBAL);
-        InitFormatEtc(dto->pFormatEtc[1], CF_HDROP, TYMED_HGLOBAL);
-        InitFormatEtc(dto->pFormatEtc[2], dto->cfFileNameA, TYMED_HGLOBAL);
-        InitFormatEtc(dto->pFormatEtc[3], dto->cfFileNameW, TYMED_HGLOBAL);
-    }
-
-    TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
-    return &dto->IDataObject_iface;
+    TRACE("Created data object %p.\n", obj);
+    return &obj->IDataObject_iface;
 }
