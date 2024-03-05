@@ -327,19 +327,32 @@ static void DoDelete(ContextMenu *This)
     }
 }
 
-/**************************************************************************
- * DoCopyOrCut
- *
- * copies the currently selected items into the clipboard
- */
-static void DoCopyOrCut(ContextMenu *This, HWND hwnd, BOOL cut)
+static void do_copy(ContextMenu *This, HWND hwnd, DWORD drop_effect)
 {
     IDataObject *dataobject;
 
-    TRACE("(%p)->(wnd=%p, cut=%d)\n", This, hwnd, cut);
-
     if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->parent, hwnd, This->cidl, (LPCITEMIDLIST*)This->apidl, &IID_IDataObject, 0, (void**)&dataobject)))
     {
+        FORMATETC format;
+        STGMEDIUM medium;
+        DWORD *effect_ptr;
+        HRESULT hr;
+
+        InitFormatEtc(format, RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW), TYMED_HGLOBAL);
+        medium.tymed = TYMED_HGLOBAL;
+        medium.pUnkForRelease = NULL;
+        if (!(medium.hGlobal = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD))))
+        {
+            IDataObject_Release(dataobject);
+            return;
+        }
+        effect_ptr = GlobalLock(medium.hGlobal);
+        *effect_ptr = drop_effect;
+        GlobalUnlock(medium.hGlobal);
+
+        if (FAILED(hr = IDataObject_SetData(dataobject, &format, &medium, TRUE)))
+            ERR("Failed to set data, hr %#lx.\n", hr);
+
         OleSetClipboard(dataobject);
         IDataObject_Release(dataobject);
     }
@@ -973,11 +986,11 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
             break;
         case FCIDM_SHVIEW_COPY:
             TRACE("Verb FCIDM_SHVIEW_COPY\n");
-            DoCopyOrCut(This, lpcmi->hwnd, FALSE);
+            do_copy(This, lpcmi->hwnd, DROPEFFECT_COPY | DROPEFFECT_LINK);
             break;
         case FCIDM_SHVIEW_CUT:
             TRACE("Verb FCIDM_SHVIEW_CUT\n");
-            DoCopyOrCut(This, lpcmi->hwnd, TRUE);
+            do_copy(This, lpcmi->hwnd, DROPEFFECT_MOVE);
             break;
         case FCIDM_SHVIEW_INSERT:
             do_paste(This, lpcmi->hwnd);
@@ -997,9 +1010,9 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
         if (strcmp(lpcmi->lpVerb,"delete")==0)
             DoDelete(This);
         else if (strcmp(lpcmi->lpVerb,"copy")==0)
-            DoCopyOrCut(This, lpcmi->hwnd, FALSE);
+            do_copy(This, lpcmi->hwnd, DROPEFFECT_COPY | DROPEFFECT_LINK);
         else if (strcmp(lpcmi->lpVerb,"cut")==0)
-            DoCopyOrCut(This, lpcmi->hwnd, TRUE);
+            do_copy(This, lpcmi->hwnd, DROPEFFECT_MOVE);
         else if (!strcmp(lpcmi->lpVerb, "paste"))
             do_paste(This, lpcmi->hwnd);
         else if (strcmp(lpcmi->lpVerb,"properties")==0)
