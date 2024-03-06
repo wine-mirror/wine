@@ -1879,9 +1879,7 @@ static void test_implicit_mta(void)
        "IDirectSound_Initialize() failed: %08lx\n", hr);
     if (hr == DS_OK) {
         check_apttype(&test_apt_data);
-        todo_wine
         ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
-        todo_wine
         ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
            "got apt type qualifier %d.\n", test_apt_data.qualifier);
     }
@@ -1896,9 +1894,7 @@ static void test_implicit_mta(void)
        "DirectSoundCreate() failed: %08lx\n", hr);
     if (hr == DS_OK) {
         check_apttype(&test_apt_data);
-        todo_wine
         ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
-        todo_wine
         ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
            "got apt type qualifier %d.\n", test_apt_data.qualifier);
         IDirectSound_Release(dso);
