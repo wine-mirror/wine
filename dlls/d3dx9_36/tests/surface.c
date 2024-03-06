@@ -23,6 +23,7 @@
 #include "wine/test.h"
 #include "d3dx9tex.h"
 #include "resources.h"
+#include <stdint.h>
 
 #define check_release(obj, exp) _check_release(__LINE__, obj, exp)
 static inline void _check_release(unsigned int line, IUnknown *obj, int exp)
@@ -278,6 +279,87 @@ static const BYTE dds_dxt5_8_8[] =
     0x7f,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x1f,0xf8,0xe0,0xff,0x05,0x05,0x50,0x50,
     0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x00,0x00,0x05,0x05,0x50,0x50,
 };
+
+/*
+ * 8x8 dxt5 image data, four 4x4 blocks:
+ * +-----+-----+
+ * |Blue |Green|
+ * |     |     |
+ * +-----+-----+
+ * |Red  |Black|
+ * |     |     |
+ * +-----+-----+
+ */
+static const BYTE dxt5_8_8[] =
+{
+    0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1f,0x00,0x1f,0x00,0x00,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xe0,0x07,0xe0,0x07,0x00,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf8,0x00,0xf8,0x00,0x00,0x00,0x00,
+    0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+struct surface_readback
+{
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT locked_rect;
+};
+
+static uint32_t get_readback_color(struct surface_readback *rb, uint32_t x, uint32_t y)
+{
+    return rb->locked_rect.pBits
+            ? ((uint32_t *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(uint32_t) + x] : 0xdeadbeef;
+}
+
+static void release_surface_readback(struct surface_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->surface)
+        return;
+    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface9_UnlockRect(rb->surface)))
+        trace("Can't unlock the offscreen surface, hr %#lx.\n", hr);
+    IDirect3DSurface9_Release(rb->surface);
+}
+
+static void get_surface_decompressed_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *compressed_surface,
+        struct surface_readback *rb)
+{
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    hr = IDirect3DSurface9_GetDesc(compressed_surface, &desc);
+    if (FAILED(hr))
+    {
+        trace("Failed to get compressed surface description, hr %#lx.\n", hr);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM,
+            &rb->surface, NULL);
+    if (FAILED(hr))
+    {
+        trace("Can't create the decompressed surface, hr %#lx.\n", hr);
+        return;
+    }
+
+    hr = D3DXLoadSurfaceFromSurface(rb->surface, NULL, NULL, compressed_surface, NULL, NULL, D3DX_FILTER_NONE, 0);
+    if (FAILED(hr))
+    {
+        trace("Can't load the decompressed surface, hr %#lx.\n", hr);
+        IDirect3DSurface9_Release(rb->surface);
+        rb->surface = NULL;
+        return;
+    }
+
+    hr = IDirect3DSurface9_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        trace("Can't lock the offscreen surface, hr %#lx.\n", hr);
+        IDirect3DSurface9_Release(rb->surface);
+        rb->surface = NULL;
+    }
+}
 
 static HRESULT create_file(const char *filename, const unsigned char *data, const unsigned int size)
 {
@@ -830,6 +912,14 @@ static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_RECT *lo
 {
    DWORD color = ((DWORD*)lockrect->pBits)[x + y * lockrect->Pitch / 4];
    ok_(__FILE__, line)(color == expected_color, "Got color 0x%08lx, expected 0x%08lx\n", color, expected_color);
+}
+
+#define check_readback_pixel_4bpp(rb, x, y, color, todo) _check_readback_pixel_4bpp(__LINE__, rb, x, y, color, todo)
+static inline void _check_readback_pixel_4bpp(unsigned int line, struct surface_readback *rb, uint32_t x,
+        uint32_t y, uint32_t expected_color, BOOL todo)
+{
+   uint32_t color = get_readback_color(rb, x, y);
+   todo_wine_if(todo) ok_(__FILE__, line)(color == expected_color, "Got color 0x%08x, expected 0x%08x.\n", color, expected_color);
 }
 
 static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
@@ -1450,6 +1540,8 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             skip("Failed to create DXT5 texture, hr %#lx.\n", hr);
         else
         {
+            struct surface_readback surface_rb;
+
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
             ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
@@ -1518,6 +1610,57 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5_8_8[128],
                     D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_POINT, 0);
             ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            check_release((IUnknown *)newsurf, 1);
+            check_release((IUnknown *)tex, 0);
+
+            /* Misalignment tests but check the resulting image. */
+            hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            SetRect(&rect, 0, 0, 8, 8);
+            hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, NULL, dxt5_8_8,
+                    D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_NONE, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            get_surface_decompressed_readback(device, newsurf, &surface_rb);
+
+            check_readback_pixel_4bpp(&surface_rb, 0, 0, 0xff0000ff, FALSE); /* Blue block, top left. */
+            check_readback_pixel_4bpp(&surface_rb, 3, 3, 0xff0000ff, FALSE); /* Blue block, bottom right. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 0, 0xff00ff00, FALSE); /* Green block, top right. */
+            check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff00ff00, FALSE); /* Green block, bottom left. */
+            check_readback_pixel_4bpp(&surface_rb, 3, 4, 0xffff0000, FALSE); /* Red block, top right. */
+            check_readback_pixel_4bpp(&surface_rb, 0, 7, 0xffff0000, FALSE); /* Red block, bottom left. */
+            check_readback_pixel_4bpp(&surface_rb, 4, 4, 0xff000000, FALSE); /* Black block, top left. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 7, 0xff000000, FALSE); /* Black block, bottom right. */
+
+            release_surface_readback(&surface_rb);
+
+            /*
+             * Load our surface into a destination rectangle that overlaps
+             * multiple blocks. Original data in the blocks should be
+             * preserved.
+             */
+            SetRect(&rect, 4, 4, 8, 8);
+            SetRect(&destrect, 2, 2, 6, 6);
+            hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &destrect, dxt5_8_8,
+                    D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_NONE, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            get_surface_decompressed_readback(device, newsurf, &surface_rb);
+
+            check_readback_pixel_4bpp(&surface_rb, 0, 0, 0xff0000ff, TRUE); /* Blue block, top left. */
+            check_readback_pixel_4bpp(&surface_rb, 3, 3, 0xff000000, TRUE); /* Blue block, bottom right. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 0, 0xff00ff00, TRUE); /* Green block, top right. */
+            check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff000000, TRUE); /* Green block, bottom left. */
+            check_readback_pixel_4bpp(&surface_rb, 3, 4, 0xff000000, TRUE); /* Red block, top right. */
+            check_readback_pixel_4bpp(&surface_rb, 0, 7, 0xffff0000, TRUE); /* Red block, bottom left. */
+            check_readback_pixel_4bpp(&surface_rb, 4, 4, 0xff000000, TRUE); /* Black block, top left. */
+            check_readback_pixel_4bpp(&surface_rb, 7, 7, 0xff000000, TRUE); /* Black block, bottom right. */
+
+            release_surface_readback(&surface_rb);
 
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
