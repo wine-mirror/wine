@@ -3758,6 +3758,13 @@ void virtual_free_teb( TEB *teb )
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
     }
+#ifdef __aarch64__
+    if (teb->ChpeV2CpuAreaInfo)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), (void **)&teb->ChpeV2CpuAreaInfo, &size, MEM_RELEASE );
+    }
+#endif
     if (thread_data->kernel_stack)
     {
         size = 0;
