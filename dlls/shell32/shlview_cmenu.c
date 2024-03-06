@@ -409,6 +409,7 @@ static WCHAR *build_source_paths(ITEMIDLIST *root_pidl, ITEMIDLIST **pidls, unsi
 static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
 {
     IPersistFolder2 *dst_persist;
+    const DWORD *drop_effect;
     IShellFolder *dst_folder;
     WCHAR dst_path[MAX_PATH];
     SHFILEOPSTRUCTW op = {0};
@@ -456,12 +457,26 @@ static HRESULT do_paste(ContextMenu *menu, HWND hwnd)
     ILFree(dst_pidl);
 
     op.hwnd = hwnd;
-    op.wFunc = FO_COPY;
     op.pTo = dst_path;
     op.fFlags = FOF_ALLOWUNDO;
 
     if (FAILED(hr = OleGetClipboard(&data)))
         return hr;
+
+    if (FAILED(hr = get_data_format(data, RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW), &medium)))
+    {
+        ERR("Failed to get drop effect.\n");
+        IDataObject_Release(data);
+        return hr;
+    }
+    drop_effect = GlobalLock(medium.hGlobal);
+    if (*drop_effect & DROPEFFECT_COPY)
+        op.wFunc = FO_COPY;
+    else if (*drop_effect & DROPEFFECT_MOVE)
+        op.wFunc = FO_MOVE;
+    else
+        FIXME("Unhandled drop effect %#lx.\n", *drop_effect);
+    GlobalUnlock(medium.hGlobal);
 
     if (SUCCEEDED(get_data_format(data, RegisterClipboardFormatW(CFSTR_SHELLIDLISTW), &medium)))
     {

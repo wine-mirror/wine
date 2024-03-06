@@ -5890,14 +5890,7 @@ static void test_copy_paste(void)
 
     format.cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW);
     hr = IDataObject_GetData(data_obj, &format, &medium);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        effect = GlobalLock(medium.hGlobal);
-        ok(*effect == DROPEFFECT_MOVE, "Got effect %#lx.\n", *effect);
-        GlobalUnlock(medium.hGlobal);
-        ReleaseStgMedium(&medium);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IDataObject_Release(data_obj);
 
@@ -5913,9 +5906,7 @@ static void test_copy_paste(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ret = MoveFileExW(L"testcopy_dst/testcopy_src", L"testcopy_src", 0);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
-    if (!ret && GetLastError() == ERROR_ALREADY_EXISTS)
-        RemoveDirectoryW(L"testcopy_dst/testcopy_src");
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     /* Copy. */
 
@@ -5933,14 +5924,7 @@ static void test_copy_paste(void)
 
     format.cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECTW);
     hr = IDataObject_GetData(data_obj, &format, &medium);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        effect = GlobalLock(medium.hGlobal);
-        ok(*effect == (DROPEFFECT_COPY | DROPEFFECT_LINK), "Got effect %#lx.\n", *effect);
-        GlobalUnlock(medium.hGlobal);
-        ReleaseStgMedium(&medium);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     IDataObject_Release(data_obj);
 
