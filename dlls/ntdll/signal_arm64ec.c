@@ -1674,19 +1674,28 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 /*******************************************************************
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
-NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+static NTSTATUS __attribute__((used)) dispatch_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *arm_ctx )
 {
-    FIXME( "not implemented\n" );
-    return STATUS_INVALID_DISPOSITION;
+    ARM64EC_NT_CONTEXT context;
+
+    context_arm_to_x64( &context, arm_ctx );
+    return dispatch_exception( rec, &context.AMD64_Context );
 }
+__ASM_GLOBAL_FUNC( "#KiUserExceptionDispatcher",
+                   ".seh_context\n\t"
+                   ".seh_endprologue\n\t"
+                   "add x0, sp, #0x390\n\t"       /* rec (context + 1) */
+                   "mov x1, sp\n\t"               /* context */
+                   "bl dispatch_exception_arm64ec\n\t"
+                   "brk #1" )
 
 
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI dispatch_apc( void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*),
-                          ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                          BOOLEAN alertable, ARM64_NT_CONTEXT *arm_ctx )
+static void __attribute__((used)) dispatch_apc( void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*),
+                                                ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                                BOOLEAN alertable, ARM64_NT_CONTEXT *arm_ctx )
 {
     ARM64EC_NT_CONTEXT context;
 
