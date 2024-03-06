@@ -539,6 +539,7 @@ bool is_valid_feature_level(D3D_FEATURE_LEVEL feature_level)
 {
     static const D3D_FEATURE_LEVEL valid_feature_levels[] =
     {
+        D3D_FEATURE_LEVEL_12_2,
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -548,6 +549,7 @@ bool is_valid_feature_level(D3D_FEATURE_LEVEL feature_level)
         D3D_FEATURE_LEVEL_9_3,
         D3D_FEATURE_LEVEL_9_2,
         D3D_FEATURE_LEVEL_9_1,
+        D3D_FEATURE_LEVEL_1_0_CORE,
     };
     unsigned int i;
 
@@ -630,6 +632,11 @@ HRESULT return_interface(void *iface, REFIID iface_iid,
     return hr;
 }
 
+const char *debug_cpu_handle(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+    return vkd3d_dbg_sprintf("{%#"PRIxPTR"}", (uintptr_t)handle.ptr);
+}
+
 const char *debug_d3d12_box(const D3D12_BOX *box)
 {
     if (!box)
@@ -671,6 +678,11 @@ const char *debug_d3d12_shader_component_mapping(unsigned int mapping)
             debug_d3d12_shader_component(D3D12_DECODE_SHADER_4_COMPONENT_MAPPING(3, mapping)));
 }
 
+const char *debug_gpu_handle(D3D12_GPU_DESCRIPTOR_HANDLE handle)
+{
+    return vkd3d_dbg_sprintf("{%#"PRIx64"}", handle.ptr);
+}
+
 const char *debug_vk_extent_3d(VkExtent3D extent)
 {
     return vkd3d_dbg_sprintf("(%u, %u, %u)",
@@ -681,7 +693,7 @@ const char *debug_vk_extent_3d(VkExtent3D extent)
 
 const char *debug_vk_queue_flags(VkQueueFlags flags)
 {
-    char buffer[120];
+    char buffer[159];
 
     buffer[0] = '\0';
 #define FLAG_TO_STR(f) if (flags & f) { strcat(buffer, " | "#f); flags &= ~f; }
@@ -689,6 +701,10 @@ const char *debug_vk_queue_flags(VkQueueFlags flags)
     FLAG_TO_STR(VK_QUEUE_COMPUTE_BIT)
     FLAG_TO_STR(VK_QUEUE_TRANSFER_BIT)
     FLAG_TO_STR(VK_QUEUE_SPARSE_BINDING_BIT)
+    FLAG_TO_STR(VK_QUEUE_PROTECTED_BIT)
+#undef FLAG_TO_STR
+#define FLAG_TO_STR(f, n) if (flags & f) { strcat(buffer, " | "#n); flags &= ~f; }
+    FLAG_TO_STR(0x20, VK_QUEUE_VIDEO_DECODE_BIT_KHR)
 #undef FLAG_TO_STR
     if (flags)
         FIXME("Unrecognized flag(s) %#x.\n", flags);
@@ -727,10 +743,8 @@ const char *debug_vk_memory_property_flags(VkMemoryPropertyFlags flags)
     FLAG_TO_STR(VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
     FLAG_TO_STR(VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
     FLAG_TO_STR(VK_MEMORY_PROPERTY_PROTECTED_BIT)
-#undef FLAG_TO_STR
-#define FLAG_TO_STR(f, n) if (flags & f) { strcat(buffer, " | "#n); flags &= ~f; }
-    FLAG_TO_STR(0x40, VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
-    FLAG_TO_STR(0x80, VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
+    FLAG_TO_STR(VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
 #undef FLAG_TO_STR
     if (flags)
         FIXME("Unrecognized flag(s) %#x.\n", flags);

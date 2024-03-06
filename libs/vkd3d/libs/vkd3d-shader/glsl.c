@@ -91,7 +91,7 @@ static void vkd3d_glsl_handle_instruction(struct vkd3d_glsl_generator *generator
 }
 
 int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *generator,
-        struct vkd3d_shader_parser *parser, struct vkd3d_shader_code *out)
+        struct vsir_program *program, struct vkd3d_shader_code *out)
 {
     unsigned int i;
     void *code;
@@ -100,10 +100,10 @@ int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *generator,
     vkd3d_string_buffer_printf(&generator->buffer, "void main()\n{\n");
 
     generator->location.column = 0;
-    for (i = 0; i < parser->instructions.count; ++i)
+    for (i = 0; i < program->instructions.count; ++i)
     {
         generator->location.line = i + 1;
-        vkd3d_glsl_handle_instruction(generator, &parser->instructions.elements[i]);
+        vkd3d_glsl_handle_instruction(generator, &program->instructions.elements[i]);
     }
 
     if (generator->failed)

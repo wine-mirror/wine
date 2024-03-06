@@ -52,7 +52,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_root_signature_QueryInterface(ID3D12RootS
 static ULONG STDMETHODCALLTYPE d3d12_root_signature_AddRef(ID3D12RootSignature *iface)
 {
     struct d3d12_root_signature *root_signature = impl_from_ID3D12RootSignature(iface);
-    ULONG refcount = InterlockedIncrement(&root_signature->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&root_signature->refcount);
 
     TRACE("%p increasing refcount to %u.\n", root_signature, refcount);
 
@@ -110,7 +110,7 @@ static void d3d12_root_signature_cleanup(struct d3d12_root_signature *root_signa
 static ULONG STDMETHODCALLTYPE d3d12_root_signature_Release(ID3D12RootSignature *iface)
 {
     struct d3d12_root_signature *root_signature = impl_from_ID3D12RootSignature(iface);
-    ULONG refcount = InterlockedDecrement(&root_signature->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&root_signature->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", root_signature, refcount);
 
@@ -515,7 +515,7 @@ static HRESULT d3d12_root_signature_init_push_constants(struct d3d12_root_signat
         assert(p->ShaderVisibility <= D3D12_SHADER_VISIBILITY_PIXEL);
         push_constants[p->ShaderVisibility].stageFlags = use_vk_heaps ? VK_SHADER_STAGE_ALL
                 : stage_flags_from_visibility(p->ShaderVisibility);
-        push_constants[p->ShaderVisibility].size += p->u.Constants.Num32BitValues * sizeof(uint32_t);
+        push_constants[p->ShaderVisibility].size += align(p->u.Constants.Num32BitValues, 4) * sizeof(uint32_t);
     }
     if (push_constants[D3D12_SHADER_VISIBILITY_ALL].size)
     {
@@ -564,7 +564,7 @@ static HRESULT d3d12_root_signature_init_push_constants(struct d3d12_root_signat
 
         idx = push_constant_count == 1 ? 0 : p->ShaderVisibility;
         offset = push_constants_offset[idx];
-        push_constants_offset[idx] += p->u.Constants.Num32BitValues * sizeof(uint32_t);
+        push_constants_offset[idx] += align(p->u.Constants.Num32BitValues, 4) * sizeof(uint32_t);
 
         root_signature->parameters[i].parameter_type = p->ParameterType;
         root_constant->stage_flags = push_constant_count == 1
@@ -848,7 +848,20 @@ static void vkd3d_descriptor_heap_binding_from_descriptor_range(const struct d3d
     const struct vkd3d_device_descriptor_limits *descriptor_limits = &root_signature->device->vk_info.descriptor_limits;
     unsigned int descriptor_set_size;
 
-    switch (range->type)
+    if (root_signature->device->vk_info.EXT_mutable_descriptor_type)
+    {
+        if (range->type == VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER)
+        {
+            binding->set = VKD3D_SET_INDEX_SAMPLER;
+            descriptor_set_size = descriptor_limits->sampler_max_descriptors;
+        }
+        else
+        {
+            binding->set = 0;
+            descriptor_set_size = descriptor_limits->sampled_image_max_descriptors;
+        }
+    }
+    else switch (range->type)
     {
         case VKD3D_SHADER_DESCRIPTOR_TYPE_SRV:
             binding->set = is_buffer ? VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER : VKD3D_SET_INDEX_SAMPLED_IMAGE;
@@ -1368,8 +1381,14 @@ static unsigned int d3d12_root_signature_copy_descriptor_set_layouts(const struc
 
     if (device->use_vk_heaps)
     {
+        VkDescriptorSetLayout mutable_layout = device->vk_descriptor_heap_layouts[0].vk_set_layout;
+
         for (set = 0; set < ARRAY_SIZE(device->vk_descriptor_heap_layouts); ++set)
-            vk_set_layouts[i++] = device->vk_descriptor_heap_layouts[set].vk_set_layout;
+        {
+            VkDescriptorSetLayout vk_set_layout = device->vk_descriptor_heap_layouts[set].vk_set_layout;
+            /* All layouts must be valid, so if null, just set it to the mutable one. */
+            vk_set_layouts[i++] = vk_set_layout ? vk_set_layout : mutable_layout;
+        }
     }
 
     return i;
@@ -1691,7 +1710,7 @@ HRESULT vkd3d_render_pass_cache_find(struct vkd3d_render_pass_cache *cache,
     HRESULT hr = S_OK;
     unsigned int i;
 
-    vkd3d_mutex_lock(&device->mutex);
+    vkd3d_mutex_lock(&device->pipeline_cache_mutex);
 
     for (i = 0; i < cache->render_pass_count; ++i)
     {
@@ -1708,7 +1727,7 @@ HRESULT vkd3d_render_pass_cache_find(struct vkd3d_render_pass_cache *cache,
     if (!found)
         hr = vkd3d_render_pass_cache_create_pass_locked(cache, device, key, vk_render_pass);
 
-    vkd3d_mutex_unlock(&device->mutex);
+    vkd3d_mutex_unlock(&device->pipeline_cache_mutex);
 
     return hr;
 }
@@ -1965,7 +1984,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_pipeline_state_QueryInterface(ID3D12Pipel
 static ULONG STDMETHODCALLTYPE d3d12_pipeline_state_AddRef(ID3D12PipelineState *iface)
 {
     struct d3d12_pipeline_state *state = impl_from_ID3D12PipelineState(iface);
-    ULONG refcount = InterlockedIncrement(&state->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&state->refcount);
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
@@ -2008,7 +2027,7 @@ static void d3d12_pipeline_uav_counter_state_cleanup(struct d3d12_pipeline_uav_c
 static ULONG STDMETHODCALLTYPE d3d12_pipeline_state_Release(ID3D12PipelineState *iface)
 {
     struct d3d12_pipeline_state *state = impl_from_ID3D12PipelineState(iface);
-    ULONG refcount = InterlockedDecrement(&state->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&state->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
@@ -2129,6 +2148,18 @@ static inline unsigned int typed_uav_compile_option(const struct d3d12_device *d
             : VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV_READ_FORMAT_R32;
 }
 
+static unsigned int feature_flags_compile_option(const struct d3d12_device *device)
+{
+    unsigned int flags = 0;
+
+    if (device->feature_options1.Int64ShaderOps)
+        flags |= VKD3D_SHADER_COMPILE_OPTION_FEATURE_INT64;
+    if (device->feature_options.DoublePrecisionFloatShaderOps)
+        flags |= VKD3D_SHADER_COMPILE_OPTION_FEATURE_FLOAT64;
+
+    return flags;
+}
+
 static HRESULT create_shader_stage(struct d3d12_device *device,
         struct VkPipelineShaderStageCreateInfo *stage_desc, enum VkShaderStageFlagBits stage,
         const D3D12_SHADER_BYTECODE *code, const struct vkd3d_shader_interface_info *shader_interface)
@@ -2142,9 +2173,10 @@ static HRESULT create_shader_stage(struct d3d12_device *device,
 
     const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_10},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_11},
         {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
         {VKD3D_SHADER_COMPILE_OPTION_WRITE_TESS_GEOM_POINT_SIZE, 0},
+        {VKD3D_SHADER_COMPILE_OPTION_FEATURE, feature_flags_compile_option(device)},
     };
 
     stage_desc->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -2196,7 +2228,7 @@ static int vkd3d_scan_dxbc(const struct d3d12_device *device, const D3D12_SHADER
 
     const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_10},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_11},
         {VKD3D_SHADER_COMPILE_OPTION_TYPED_UAV, typed_uav_compile_option(device)},
     };
 
@@ -2240,7 +2272,7 @@ static HRESULT vkd3d_create_compute_pipeline(struct d3d12_device *device,
     VK_CALL(vkDestroyShaderModule(device->vk_device, pipeline_info.stage.module, NULL));
     if (vr < 0)
     {
-        WARN("Failed to create Vulkan compute pipeline, hr %#x.\n", hr);
+        WARN("Failed to create Vulkan compute pipeline, hr %s.\n", debugstr_hresult(hr));
         return hresult_from_vk_result(vr);
     }
 
@@ -2368,7 +2400,7 @@ static HRESULT d3d12_pipeline_state_find_and_init_uav_counters(struct d3d12_pipe
     }
 
     if (FAILED(hr = d3d12_pipeline_state_init_uav_counters(state, device, root_signature, &shader_info, stage_flags)))
-        WARN("Failed to create descriptor set layout for UAV counters, hr %#x.\n", hr);
+        WARN("Failed to create descriptor set layout for UAV counters, hr %s.\n", debugstr_hresult(hr));
 
     vkd3d_shader_free_scan_descriptor_info(&shader_info);
 
@@ -2442,7 +2474,7 @@ static HRESULT d3d12_pipeline_state_init_compute(struct d3d12_pipeline_state *st
     if (FAILED(hr = vkd3d_create_compute_pipeline(device, &desc->cs, &shader_interface,
             vk_pipeline_layout, &state->u.compute.vk_pipeline)))
     {
-        WARN("Failed to create Vulkan compute pipeline, hr %#x.\n", hr);
+        WARN("Failed to create Vulkan compute pipeline, hr %s.\n", debugstr_hresult(hr));
         d3d12_pipeline_uav_counter_state_cleanup(&state->uav_counters, device);
         return hr;
     }
@@ -3615,7 +3647,7 @@ static VkPipeline d3d12_pipeline_state_find_compiled_pipeline(const struct d3d12
 
     *vk_render_pass = VK_NULL_HANDLE;
 
-    vkd3d_mutex_lock(&device->mutex);
+    vkd3d_mutex_lock(&device->pipeline_cache_mutex);
 
     LIST_FOR_EACH_ENTRY(current, &graphics->compiled_pipelines, struct vkd3d_compiled_pipeline, entry)
     {
@@ -3627,7 +3659,7 @@ static VkPipeline d3d12_pipeline_state_find_compiled_pipeline(const struct d3d12
         }
     }
 
-    vkd3d_mutex_unlock(&device->mutex);
+    vkd3d_mutex_unlock(&device->pipeline_cache_mutex);
 
     return vk_pipeline;
 }
@@ -3646,7 +3678,7 @@ static bool d3d12_pipeline_state_put_pipeline_to_cache(struct d3d12_pipeline_sta
     compiled_pipeline->vk_pipeline = vk_pipeline;
     compiled_pipeline->vk_render_pass = vk_render_pass;
 
-    vkd3d_mutex_lock(&device->mutex);
+    vkd3d_mutex_lock(&device->pipeline_cache_mutex);
 
     LIST_FOR_EACH_ENTRY(current, &graphics->compiled_pipelines, struct vkd3d_compiled_pipeline, entry)
     {
@@ -3661,7 +3693,7 @@ static bool d3d12_pipeline_state_put_pipeline_to_cache(struct d3d12_pipeline_sta
     if (compiled_pipeline)
         list_add_tail(&graphics->compiled_pipelines, &compiled_pipeline->entry);
 
-    vkd3d_mutex_unlock(&device->mutex);
+    vkd3d_mutex_unlock(&device->pipeline_cache_mutex);
     return compiled_pipeline;
 }
 
@@ -3855,7 +3887,7 @@ static int compile_hlsl_cs(const struct vkd3d_shader_code *hlsl, struct vkd3d_sh
 
     static const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_10},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_11},
     };
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
@@ -3996,14 +4028,14 @@ HRESULT vkd3d_uav_clear_state_init(struct vkd3d_uav_clear_state *state, struct d
         if (FAILED(hr = vkd3d_create_descriptor_set_layout(device, 0,
                 1, false, &set_binding, set_layouts[i].set_layout)))
         {
-            ERR("Failed to create descriptor set layout %u, hr %#x.\n", i, hr);
+            ERR("Failed to create descriptor set layout %u, hr %s.\n", i, debugstr_hresult(hr));
             goto fail;
         }
 
         if (FAILED(hr = vkd3d_create_pipeline_layout(device, 1, set_layouts[i].set_layout,
                 1, &push_constant_range, set_layouts[i].pipeline_layout)))
         {
-            ERR("Failed to create pipeline layout %u, hr %#x.\n", i, hr);
+            ERR("Failed to create pipeline layout %u, hr %s.\n", i, debugstr_hresult(hr));
             goto fail;
         }
     }
@@ -4041,7 +4073,7 @@ HRESULT vkd3d_uav_clear_state_init(struct vkd3d_uav_clear_state *state, struct d
         vkd3d_shader_free_shader_code(&dxbc);
         if (FAILED(hr))
         {
-            ERR("Failed to create compute pipeline %u, hr %#x.\n", i, hr);
+            ERR("Failed to create compute pipeline %u, hr %s.\n", i, debugstr_hresult(hr));
             goto fail;
         }
     }

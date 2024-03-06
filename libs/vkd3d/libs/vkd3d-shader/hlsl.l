@@ -89,6 +89,7 @@ else                    {return KW_ELSE;                }
 extern                  {return KW_EXTERN;              }
 false                   {return KW_FALSE;               }
 for                     {return KW_FOR;                 }
+fxgroup                 {return KW_FXGROUP;             }
 GeometryShader          {return KW_GEOMETRYSHADER;      }
 groupshared             {return KW_GROUPSHARED;         }
 if                      {return KW_IF;                  }
@@ -105,6 +106,13 @@ packoffset              {return KW_PACKOFFSET;          }
 pass                    {return KW_PASS;                }
 PixelShader             {return KW_PIXELSHADER;         }
 precise                 {return KW_PRECISE;             }
+RasterizerOrderedBuffer           {return KW_RASTERIZERORDEREDBUFFER;            }
+RasterizerOrderedStructuredBuffer {return KW_RASTERIZERORDEREDSTRUCTUREDBUFFER;  }
+RasterizerOrderedTexture1D        {return KW_RASTERIZERORDEREDTEXTURE1D;         }
+RasterizerOrderedTexture1DArray   {return KW_RASTERIZERORDEREDTEXTURE1DARRAY;    }
+RasterizerOrderedTexture2D        {return KW_RASTERIZERORDEREDTEXTURE2D;         }
+RasterizerOrderedTexture2DArray   {return KW_RASTERIZERORDEREDTEXTURE2DARRAY;    }
+RasterizerOrderedTexture3D        {return KW_RASTERIZERORDEREDTEXTURE3D;         }
 RasterizerState         {return KW_RASTERIZERSTATE;     }
 register                {return KW_REGISTER;            }
 RenderTargetView        {return KW_RENDERTARGETVIEW;    }

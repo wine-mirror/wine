@@ -89,6 +89,10 @@ const char *debugstr_w(const WCHAR *wstr, size_t wchar_size);
 #define TRACE_ON() (vkd3d_dbg_get_level() == VKD3D_DBG_LEVEL_TRACE)
 #endif
 
+#ifndef WARN_ON
+#define WARN_ON() (vkd3d_dbg_get_level() >= VKD3D_DBG_LEVEL_WARN)
+#endif
+
 #define FIXME_ONCE VKD3D_DBG_LOG_ONCE(FIXME, WARN)
 
 #define VKD3D_DEBUG_ENV_NAME(name) const char *const vkd3d_dbg_env_name = name
@@ -102,6 +106,29 @@ static inline const char *debugstr_guid(const GUID *guid)
             (unsigned long)guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
             guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
             guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
+static inline const char *debugstr_hresult(HRESULT hr)
+{
+    switch (hr)
+    {
+#define TO_STR(u) case u: return #u;
+        TO_STR(S_OK)
+        TO_STR(S_FALSE)
+        TO_STR(E_NOTIMPL)
+        TO_STR(E_NOINTERFACE)
+        TO_STR(E_POINTER)
+        TO_STR(E_ABORT)
+        TO_STR(E_FAIL)
+        TO_STR(E_OUTOFMEMORY)
+        TO_STR(E_INVALIDARG)
+        TO_STR(DXGI_ERROR_NOT_FOUND)
+        TO_STR(DXGI_ERROR_MORE_DATA)
+        TO_STR(DXGI_ERROR_UNSUPPORTED)
+#undef TO_STR
+        default:
+            return vkd3d_dbg_sprintf("%#x", (int)hr);
+    }
 }
 
 unsigned int vkd3d_env_var_as_uint(const char *name, unsigned int default_value);

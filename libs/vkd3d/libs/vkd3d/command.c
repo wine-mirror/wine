@@ -313,7 +313,7 @@ static void vkd3d_wait_for_gpu_fence(struct vkd3d_fence_worker *worker,
 
     TRACE("Signaling fence %p value %#"PRIx64".\n", waiting_fence->fence, waiting_fence->value);
     if (FAILED(hr = d3d12_fence_signal(waiting_fence->fence, waiting_fence->value, waiting_fence->u.vk_fence, false)))
-        ERR("Failed to signal D3D12 fence, hr %#x.\n", hr);
+        ERR("Failed to signal d3d12 fence, hr %s.\n", debugstr_hresult(hr));
 
     d3d12_fence_decref(waiting_fence->fence);
 
@@ -926,7 +926,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_QueryInterface(ID3D12Fence1 *iface,
 static ULONG STDMETHODCALLTYPE d3d12_fence_AddRef(ID3D12Fence1 *iface)
 {
     struct d3d12_fence *fence = impl_from_ID3D12Fence1(iface);
-    ULONG refcount = InterlockedIncrement(&fence->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&fence->refcount);
 
     TRACE("%p increasing refcount to %u.\n", fence, refcount);
 
@@ -935,13 +935,13 @@ static ULONG STDMETHODCALLTYPE d3d12_fence_AddRef(ID3D12Fence1 *iface)
 
 static void d3d12_fence_incref(struct d3d12_fence *fence)
 {
-    InterlockedIncrement(&fence->internal_refcount);
+    vkd3d_atomic_increment_u32(&fence->internal_refcount);
 }
 
 static ULONG STDMETHODCALLTYPE d3d12_fence_Release(ID3D12Fence1 *iface)
 {
     struct d3d12_fence *fence = impl_from_ID3D12Fence1(iface);
-    ULONG refcount = InterlockedDecrement(&fence->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&fence->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", fence, refcount);
 
@@ -953,24 +953,24 @@ static ULONG STDMETHODCALLTYPE d3d12_fence_Release(ID3D12Fence1 *iface)
 
 static void d3d12_fence_decref(struct d3d12_fence *fence)
 {
-    ULONG internal_refcount = InterlockedDecrement(&fence->internal_refcount);
+    struct d3d12_device *device;
 
-    if (!internal_refcount)
-    {
-        struct d3d12_device *device = fence->device;
+    if (vkd3d_atomic_decrement_u32(&fence->internal_refcount))
+        return;
 
-        vkd3d_private_store_destroy(&fence->private_store);
+    device = fence->device;
 
-        d3d12_fence_destroy_vk_objects(fence);
+    vkd3d_private_store_destroy(&fence->private_store);
 
-        vkd3d_free(fence->events);
-        vkd3d_free(fence->semaphores);
-        vkd3d_mutex_destroy(&fence->mutex);
-        vkd3d_cond_destroy(&fence->null_event_cond);
-        vkd3d_free(fence);
+    d3d12_fence_destroy_vk_objects(fence);
 
-        d3d12_device_release(device);
-    }
+    vkd3d_free(fence->events);
+    vkd3d_free(fence->semaphores);
+    vkd3d_mutex_destroy(&fence->mutex);
+    vkd3d_cond_destroy(&fence->null_event_cond);
+    vkd3d_free(fence);
+
+    d3d12_device_release(device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_fence_GetPrivateData(ID3D12Fence1 *iface,
@@ -1635,7 +1635,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_allocator_QueryInterface(ID3D12Co
 static ULONG STDMETHODCALLTYPE d3d12_command_allocator_AddRef(ID3D12CommandAllocator *iface)
 {
     struct d3d12_command_allocator *allocator = impl_from_ID3D12CommandAllocator(iface);
-    ULONG refcount = InterlockedIncrement(&allocator->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&allocator->refcount);
 
     TRACE("%p increasing refcount to %u.\n", allocator, refcount);
 
@@ -1645,7 +1645,7 @@ static ULONG STDMETHODCALLTYPE d3d12_command_allocator_AddRef(ID3D12CommandAlloc
 static ULONG STDMETHODCALLTYPE d3d12_command_allocator_Release(ID3D12CommandAllocator *iface)
 {
     struct d3d12_command_allocator *allocator = impl_from_ID3D12CommandAllocator(iface);
-    ULONG refcount = InterlockedDecrement(&allocator->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&allocator->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", allocator, refcount);
 
@@ -1921,12 +1921,12 @@ HRESULT d3d12_command_allocator_create(struct d3d12_device *device,
 
 static void d3d12_command_signature_incref(struct d3d12_command_signature *signature)
 {
-    vkd3d_atomic_increment(&signature->internal_refcount);
+    vkd3d_atomic_increment_u32(&signature->internal_refcount);
 }
 
 static void d3d12_command_signature_decref(struct d3d12_command_signature *signature)
 {
-    unsigned int refcount = vkd3d_atomic_decrement(&signature->internal_refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&signature->internal_refcount);
 
     if (!refcount)
     {
@@ -2320,7 +2320,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_list_QueryInterface(ID3D12Graphic
 static ULONG STDMETHODCALLTYPE d3d12_command_list_AddRef(ID3D12GraphicsCommandList5 *iface)
 {
     struct d3d12_command_list *list = impl_from_ID3D12GraphicsCommandList5(iface);
-    ULONG refcount = InterlockedIncrement(&list->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&list->refcount);
 
     TRACE("%p increasing refcount to %u.\n", list, refcount);
 
@@ -2335,7 +2335,7 @@ static void vkd3d_pipeline_bindings_cleanup(struct vkd3d_pipeline_bindings *bind
 static ULONG STDMETHODCALLTYPE d3d12_command_list_Release(ID3D12GraphicsCommandList5 *iface)
 {
     struct d3d12_command_list *list = impl_from_ID3D12GraphicsCommandList5(iface);
-    ULONG refcount = InterlockedDecrement(&list->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&list->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", list, refcount);
 
@@ -2644,6 +2644,8 @@ static bool d3d12_command_list_update_compute_pipeline(struct d3d12_command_list
 {
     const struct vkd3d_vk_device_procs *vk_procs = &list->device->vk_procs;
 
+    vkd3d_cond_signal(&list->device->worker_cond);
+
     if (list->current_pipeline != VK_NULL_HANDLE)
         return true;
 
@@ -2664,6 +2666,8 @@ static bool d3d12_command_list_update_graphics_pipeline(struct d3d12_command_lis
     const struct vkd3d_vk_device_procs *vk_procs = &list->device->vk_procs;
     VkRenderPass vk_render_pass;
     VkPipeline vk_pipeline;
+
+    vkd3d_cond_signal(&list->device->worker_cond);
 
     if (list->current_pipeline != VK_NULL_HANDLE)
         return true;
@@ -3266,7 +3270,8 @@ static void d3d12_command_list_bind_descriptor_heap(struct d3d12_command_list *l
     {
         VkDescriptorSet vk_descriptor_set = heap->vk_descriptor_sets[set].vk_set;
 
-        if (!vk_descriptor_set)
+        /* Null vk_set_layout means set 0 uses mutable descriptors, and this set is unused. */
+        if (!vk_descriptor_set || !list->device->vk_descriptor_heap_layouts[set].vk_set_layout)
             continue;
 
         VK_CALL(vkCmdBindDescriptorSets(list->vk_command_buffer, bindings->vk_bind_point, rs->vk_pipeline_layout,
@@ -3503,7 +3508,7 @@ static void vk_image_subresource_layers_from_d3d12(VkImageSubresourceLayers *sub
 }
 
 static void vk_extent_3d_from_d3d12_miplevel(VkExtent3D *extent,
-        const D3D12_RESOURCE_DESC *resource_desc, unsigned int miplevel_idx)
+        const D3D12_RESOURCE_DESC1 *resource_desc, unsigned int miplevel_idx)
 {
     extent->width = d3d12_resource_desc_get_width(resource_desc, miplevel_idx);
     extent->height = d3d12_resource_desc_get_height(resource_desc, miplevel_idx);
@@ -3512,7 +3517,7 @@ static void vk_extent_3d_from_d3d12_miplevel(VkExtent3D *extent,
 
 static void vk_buffer_image_copy_from_d3d12(VkBufferImageCopy *copy,
         const D3D12_PLACED_SUBRESOURCE_FOOTPRINT *footprint, unsigned int sub_resource_idx,
-        const D3D12_RESOURCE_DESC *image_desc, const struct vkd3d_format *format,
+        const D3D12_RESOURCE_DESC1 *image_desc, const struct vkd3d_format *format,
         const D3D12_BOX *src_box, unsigned int dst_x, unsigned int dst_y, unsigned int dst_z)
 {
     copy->bufferOffset = footprint->Offset;
@@ -3553,7 +3558,7 @@ static void vk_buffer_image_copy_from_d3d12(VkBufferImageCopy *copy,
 
 static void vk_image_buffer_copy_from_d3d12(VkBufferImageCopy *copy,
         const D3D12_PLACED_SUBRESOURCE_FOOTPRINT *footprint, unsigned int sub_resource_idx,
-        const D3D12_RESOURCE_DESC *image_desc, const struct vkd3d_format *format,
+        const D3D12_RESOURCE_DESC1 *image_desc, const struct vkd3d_format *format,
         const D3D12_BOX *src_box, unsigned int dst_x, unsigned int dst_y, unsigned int dst_z)
 {
     VkDeviceSize row_count = footprint->Footprint.Height / format->block_height;
@@ -3583,7 +3588,7 @@ static void vk_image_buffer_copy_from_d3d12(VkBufferImageCopy *copy,
 
 static void vk_image_copy_from_d3d12(VkImageCopy *image_copy,
         unsigned int src_sub_resource_idx, unsigned int dst_sub_resource_idx,
-        const D3D12_RESOURCE_DESC *src_desc, const D3D12_RESOURCE_DESC *dst_desc,
+        const D3D12_RESOURCE_DESC1 *src_desc, const D3D12_RESOURCE_DESC1 *dst_desc,
         const struct vkd3d_format *src_format, const struct vkd3d_format *dst_format,
         const D3D12_BOX *src_box, unsigned int dst_x, unsigned int dst_y, unsigned int dst_z)
 {
@@ -3616,7 +3621,7 @@ static HRESULT d3d12_command_list_allocate_transfer_buffer(struct d3d12_command_
     const struct vkd3d_vk_device_procs *vk_procs = &list->device->vk_procs;
     struct d3d12_device *device = list->device;
     D3D12_HEAP_PROPERTIES heap_properties;
-    D3D12_RESOURCE_DESC buffer_desc;
+    D3D12_RESOURCE_DESC1 buffer_desc;
     HRESULT hr;
 
     memset(&heap_properties, 0, sizeof(heap_properties));
@@ -3666,8 +3671,8 @@ static void d3d12_command_list_copy_incompatible_texture_region(struct d3d12_com
         unsigned int src_sub_resource_idx, const struct vkd3d_format *src_format, unsigned int layer_count)
 {
     const struct vkd3d_vk_device_procs *vk_procs = &list->device->vk_procs;
-    const D3D12_RESOURCE_DESC *dst_desc = &dst_resource->desc;
-    const D3D12_RESOURCE_DESC *src_desc = &src_resource->desc;
+    const D3D12_RESOURCE_DESC1 *dst_desc = &dst_resource->desc;
+    const D3D12_RESOURCE_DESC1 *src_desc = &src_resource->desc;
     unsigned int dst_miplevel_idx, src_miplevel_idx;
     struct vkd3d_buffer transfer_buffer;
     VkBufferImageCopy buffer_image_copy;
@@ -3701,7 +3706,7 @@ static void d3d12_command_list_copy_incompatible_texture_region(struct d3d12_com
             buffer_image_copy.imageExtent.height * buffer_image_copy.imageExtent.depth * layer_count;
     if (FAILED(hr = d3d12_command_list_allocate_transfer_buffer(list, buffer_size, &transfer_buffer)))
     {
-        ERR("Failed to allocate transfer buffer, hr %#x.\n", hr);
+        ERR("Failed to allocate transfer buffer, hr %s.\n", debugstr_hresult(hr));
         return;
     }
 
@@ -4494,8 +4499,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_SetComputeRootDescriptorTable(I
 {
     struct d3d12_command_list *list = impl_from_ID3D12GraphicsCommandList5(iface);
 
-    TRACE("iface %p, root_parameter_index %u, base_descriptor %#"PRIx64".\n",
-            iface, root_parameter_index, base_descriptor.ptr);
+    TRACE("iface %p, root_parameter_index %u, base_descriptor %s.\n",
+            iface, root_parameter_index, debug_gpu_handle(base_descriptor));
 
     d3d12_command_list_set_descriptor_table(list, VKD3D_PIPELINE_BIND_POINT_COMPUTE,
             root_parameter_index, base_descriptor);
@@ -4506,8 +4511,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_SetGraphicsRootDescriptorTable(
 {
     struct d3d12_command_list *list = impl_from_ID3D12GraphicsCommandList5(iface);
 
-    TRACE("iface %p, root_parameter_index %u, base_descriptor %#"PRIx64".\n",
-            iface, root_parameter_index, base_descriptor.ptr);
+    TRACE("iface %p, root_parameter_index %u, base_descriptor %s.\n",
+            iface, root_parameter_index, debug_gpu_handle(base_descriptor));
 
     d3d12_command_list_set_descriptor_table(list, VKD3D_PIPELINE_BIND_POINT_GRAPHICS,
             root_parameter_index, base_descriptor);
@@ -5127,8 +5132,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearDepthStencilView(ID3D12Gra
     struct VkAttachmentDescription attachment_desc;
     struct VkAttachmentReference ds_reference;
 
-    TRACE("iface %p, dsv %#lx, flags %#x, depth %.8e, stencil 0x%02x, rect_count %u, rects %p.\n",
-            iface, dsv.ptr, flags, depth, stencil, rect_count, rects);
+    TRACE("iface %p, dsv %s, flags %#x, depth %.8e, stencil 0x%02x, rect_count %u, rects %p.\n",
+            iface, debug_cpu_handle(dsv), flags, depth, stencil, rect_count, rects);
 
     d3d12_command_list_track_resource_usage(list, dsv_desc->resource);
 
@@ -5175,8 +5180,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearRenderTargetView(ID3D12Gra
     struct VkAttachmentReference color_reference;
     VkClearValue clear_value;
 
-    TRACE("iface %p, rtv %#lx, color %p, rect_count %u, rects %p.\n",
-            iface, rtv.ptr, color, rect_count, rects);
+    TRACE("iface %p, rtv %s, color %p, rect_count %u, rects %p.\n",
+            iface, debug_cpu_handle(rtv), color, rect_count, rects);
 
     d3d12_command_list_track_resource_usage(list, rtv_desc->resource);
 
@@ -5427,8 +5432,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearUnorderedAccessViewUint(ID
     struct d3d12_resource *resource_impl;
     VkClearColorValue colour;
 
-    TRACE("iface %p, gpu_handle %#"PRIx64", cpu_handle %lx, resource %p, values %p, rect_count %u, rects %p.\n",
-            iface, gpu_handle.ptr, cpu_handle.ptr, resource, values, rect_count, rects);
+    TRACE("iface %p, gpu_handle %s, cpu_handle %s, resource %p, values %p, rect_count %u, rects %p.\n",
+            iface, debug_gpu_handle(gpu_handle), debug_cpu_handle(cpu_handle), resource, values, rect_count, rects);
 
     resource_impl = unsafe_impl_from_ID3D12Resource(resource);
     if (!(descriptor = d3d12_desc_from_cpu_handle(cpu_handle)->s.u.view))
@@ -5491,8 +5496,8 @@ static void STDMETHODCALLTYPE d3d12_command_list_ClearUnorderedAccessViewFloat(I
     VkClearColorValue colour;
     struct vkd3d_view *view;
 
-    TRACE("iface %p, gpu_handle %#"PRIx64", cpu_handle %lx, resource %p, values %p, rect_count %u, rects %p.\n",
-            iface, gpu_handle.ptr, cpu_handle.ptr, resource, values, rect_count, rects);
+    TRACE("iface %p, gpu_handle %s, cpu_handle %s, resource %p, values %p, rect_count %u, rects %p.\n",
+            iface, debug_gpu_handle(gpu_handle), debug_cpu_handle(cpu_handle), resource, values, rect_count, rects);
 
     resource_impl = unsafe_impl_from_ID3D12Resource(resource);
     if (!(view = d3d12_desc_from_cpu_handle(cpu_handle)->s.u.view))
@@ -5958,15 +5963,15 @@ static void STDMETHODCALLTYPE d3d12_command_list_EndRenderPass(ID3D12GraphicsCom
 static void STDMETHODCALLTYPE d3d12_command_list_InitializeMetaCommand(ID3D12GraphicsCommandList5 *iface,
         ID3D12MetaCommand *meta_command, const void *parameters_data, SIZE_T data_size_in_bytes)
 {
-    FIXME("iface %p, meta_command %p, parameters_data %p, data_size_in_bytes %lu stub!\n", iface,
-            meta_command, parameters_data, data_size_in_bytes);
+    FIXME("iface %p, meta_command %p, parameters_data %p, data_size_in_bytes %"PRIuPTR" stub!\n", iface,
+            meta_command, parameters_data, (uintptr_t)data_size_in_bytes);
 }
 
 static void STDMETHODCALLTYPE d3d12_command_list_ExecuteMetaCommand(ID3D12GraphicsCommandList5 *iface,
         ID3D12MetaCommand *meta_command, const void *parameters_data, SIZE_T data_size_in_bytes)
 {
-    FIXME("iface %p, meta_command %p, parameters_data %p, data_size_in_bytes %lu stub!\n", iface,
-            meta_command, parameters_data, data_size_in_bytes);
+    FIXME("iface %p, meta_command %p, parameters_data %p, data_size_in_bytes %"PRIuPTR" stub!\n", iface,
+            meta_command, parameters_data, (uintptr_t)data_size_in_bytes);
 }
 
 static void STDMETHODCALLTYPE d3d12_command_list_BuildRaytracingAccelerationStructure(ID3D12GraphicsCommandList5 *iface,
@@ -6225,7 +6230,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_queue_QueryInterface(ID3D12Comman
 static ULONG STDMETHODCALLTYPE d3d12_command_queue_AddRef(ID3D12CommandQueue *iface)
 {
     struct d3d12_command_queue *command_queue = impl_from_ID3D12CommandQueue(iface);
-    ULONG refcount = InterlockedIncrement(&command_queue->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&command_queue->refcount);
 
     TRACE("%p increasing refcount to %u.\n", command_queue, refcount);
 
@@ -6267,7 +6272,7 @@ static void d3d12_command_queue_op_array_destroy(struct d3d12_command_queue_op_a
 static ULONG STDMETHODCALLTYPE d3d12_command_queue_Release(ID3D12CommandQueue *iface)
 {
     struct d3d12_command_queue *command_queue = impl_from_ID3D12CommandQueue(iface);
-    ULONG refcount = InterlockedDecrement(&command_queue->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&command_queue->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", command_queue, refcount);
 
@@ -6508,7 +6513,7 @@ static void STDMETHODCALLTYPE d3d12_command_queue_CopyTileMappings(ID3D12Command
     if (!(op = d3d12_command_queue_op_array_require_space(&command_queue->op_queue)))
     {
         ERR("Failed to add op.\n");
-        return;
+        goto unlock_mutex;
     }
     op->opcode = VKD3D_CS_OP_COPY_MAPPINGS;
     op->u.copy_mappings.dst_resource = dst_resource_impl;
@@ -6520,6 +6525,7 @@ static void STDMETHODCALLTYPE d3d12_command_queue_CopyTileMappings(ID3D12Command
 
     d3d12_command_queue_submit_locked(command_queue);
 
+unlock_mutex:
     vkd3d_mutex_unlock(&command_queue->op_mutex);
 }
 
@@ -6558,7 +6564,7 @@ static void d3d12_command_queue_submit_locked(struct d3d12_command_queue *queue)
     if (queue->op_queue.count == 1 && !queue->is_flushing)
     {
         if (FAILED(hr = d3d12_command_queue_flush_ops_locked(queue, &flushed_any)))
-            ERR("Cannot flush queue, hr %#x.\n", hr);
+            ERR("Failed to flush queue, hr %s.\n", debugstr_hresult(hr));
     }
 }
 
@@ -7436,7 +7442,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_command_signature_QueryInterface(ID3D12Co
 static ULONG STDMETHODCALLTYPE d3d12_command_signature_AddRef(ID3D12CommandSignature *iface)
 {
     struct d3d12_command_signature *signature = impl_from_ID3D12CommandSignature(iface);
-    ULONG refcount = InterlockedIncrement(&signature->refcount);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&signature->refcount);
 
     TRACE("%p increasing refcount to %u.\n", signature, refcount);
 
@@ -7446,7 +7452,7 @@ static ULONG STDMETHODCALLTYPE d3d12_command_signature_AddRef(ID3D12CommandSigna
 static ULONG STDMETHODCALLTYPE d3d12_command_signature_Release(ID3D12CommandSignature *iface)
 {
     struct d3d12_command_signature *signature = impl_from_ID3D12CommandSignature(iface);
-    ULONG refcount = InterlockedDecrement(&signature->refcount);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&signature->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", signature, refcount);
 
