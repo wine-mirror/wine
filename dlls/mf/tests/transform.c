@@ -442,8 +442,8 @@ void init_media_type(IMFMediaType *mediatype, const struct attribute_desc *desc,
     }
 }
 
-static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
-        const GUID *subtype, const LONG width, const LONG height)
+static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type, const GUID *subtype,
+        const LONG width, const LONG height, const REFERENCE_TIME time_per_frame)
 {
     UINT32 image_size = 0, extra_bytes = subtype_to_extra_bytes(subtype);
     VIDEOINFOHEADER *header = (VIDEOINFOHEADER *)(media_type + 1);
@@ -460,6 +460,7 @@ static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
     header->rcTarget.left = 0;
     header->rcTarget.right = width;
     header->rcTarget.bottom = height;
+    header->AvgTimePerFrame = time_per_frame;
     header->bmiHeader.biSize = sizeof(header->bmiHeader);
     header->bmiHeader.biWidth = width;
     header->bmiHeader.biHeight = height;
@@ -1348,6 +1349,7 @@ static void check_video_info_header_(int line, VIDEOINFOHEADER *info, const VIDE
             expected->rcTarget.left, expected->rcTarget.top, expected->rcTarget.right, expected->rcTarget.bottom);
     check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitRate);
     check_member_(__FILE__, line, *info, *expected, "%lu",   dwBitErrorRate);
+    todo_wine_if(expected->AvgTimePerFrame)
     check_member_(__FILE__, line, *info, *expected, "%I64d", AvgTimePerFrame);
     check_member_(__FILE__, line, *info, *expected, "%lu",   bmiHeader.biSize);
     check_member_(__FILE__, line, *info, *expected, "%ld",   bmiHeader.biWidth);
@@ -1475,11 +1477,11 @@ static void check_dmo_get_output_size_info_video_(int line, IMediaObject *dmo,
     hr = IMediaObject_SetOutputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok_(__FILE__, line)(hr == S_OK, "Failed to clear output type, hr %#lx.\n", hr);
 
-    init_dmo_media_type_video(type, input_subtype, width, height);
+    init_dmo_media_type_video(type, input_subtype, width, height, 0);
     hr = IMediaObject_SetInputType(dmo, 0, type, 0);
     ok_(__FILE__, line)(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(type, output_subtype, width, height);
+    init_dmo_media_type_video(type, output_subtype, width, height, 0);
     hr = IMediaObject_SetOutputType(dmo, 0, type, 0);
     todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11)
             || IsEqualGUID(output_subtype, &MEDIASUBTYPE_IYUV))
@@ -6110,7 +6112,7 @@ static void test_wmv_decoder_dmo_input_type(void)
 
     good_input_type = (void *)buffer_good_input;
     bad_input_type = (void *)buffer_bad_input;
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     memset(bad_input_type, 0, sizeof(buffer_bad_input));
     header = (void *)(good_input_type + 1);
 
@@ -6216,7 +6218,7 @@ static void test_wmv_decoder_dmo_input_type(void)
 
         winetest_push_context("type %lu", i);
 
-        init_dmo_media_type_video(good_input_type, subtype, width, height);
+        init_dmo_media_type_video(good_input_type, subtype, width, height, 0);
         hr = IMediaObject_SetInputType(dmo, 0, good_input_type, 0);
         ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_CLEAR);
@@ -6229,7 +6231,7 @@ static void test_wmv_decoder_dmo_input_type(void)
         winetest_pop_context();
     }
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     header->dwBitRate = 0xdeadbeef;
     header->dwBitErrorRate = 0xdeadbeef;
     header->AvgTimePerFrame = 0xdeadbeef;
@@ -6241,31 +6243,31 @@ static void test_wmv_decoder_dmo_input_type(void)
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     good_input_type->majortype = MFMediaType_Default;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, &MEDIASUBTYPE_None, width, height);
+    init_dmo_media_type_video(good_input_type, &MEDIASUBTYPE_None, width, height, 0);
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     good_input_type->formattype = FORMAT_None;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     good_input_type->cbFormat = 1;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     good_input_type->pbFormat = NULL;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     header->bmiHeader.biSize = 0;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     todo_wine
@@ -6279,7 +6281,7 @@ static void test_wmv_decoder_dmo_input_type(void)
     todo_wine
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     header->bmiHeader.biWidth = 0;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     todo_wine
@@ -6296,7 +6298,7 @@ static void test_wmv_decoder_dmo_input_type(void)
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     header->bmiHeader.biHeight = 0;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     todo_wine
@@ -6312,7 +6314,7 @@ static void test_wmv_decoder_dmo_input_type(void)
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
-    init_dmo_media_type_video(good_input_type, input_subtype, width, height);
+    init_dmo_media_type_video(good_input_type, input_subtype, width, height, 0);
     header->bmiHeader.biCompression = 0;
     hr = IMediaObject_SetInputType(dmo, 0, good_input_type, DMO_SET_TYPEF_TEST_ONLY);
     todo_wine
@@ -6339,6 +6341,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     char buffer_good_output[2048], buffer_bad_output[2048], buffer_input[2048];
     DMO_MEDIA_TYPE *good_output_type, *bad_output_type, *input_type, type;
     const GUID* input_subtype = &MEDIASUBTYPE_WMV1;
+    REFERENCE_TIME time_per_frame = 10000000;
     LONG width = 16, height = 16;
     DWORD count, i, ret;
     IMediaObject *dmo;
@@ -6367,7 +6370,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     input_type = (void *)buffer_input;
     good_output_type = (void *)buffer_good_output;
     bad_output_type = (void *)buffer_bad_output;
-    init_dmo_media_type_video(input_type, input_subtype, width, height);
+    init_dmo_media_type_video(input_type, input_subtype, width, height, time_per_frame);
     memset(bad_output_type, 0, sizeof(buffer_bad_output));
 
     /* Test GetOutputType. */
@@ -6403,7 +6406,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     while (SUCCEEDED(hr = IMediaObject_GetOutputType(dmo, 0, ++i, &type)))
     {
         winetest_push_context("type %lu", i);
-        init_dmo_media_type_video(good_output_type, wmv_decoder_output_subtypes[i], width, height);
+        init_dmo_media_type_video(good_output_type, wmv_decoder_output_subtypes[i], width, height, time_per_frame);
         check_dmo_media_type(&type, good_output_type);
         MoFreeMediaType(&type);
         winetest_pop_context();
@@ -6412,7 +6415,7 @@ static void test_wmv_decoder_dmo_output_type(void)
     ok(i == count, "%lu types.\n", i);
 
     /* Test SetOutputType. */
-    init_dmo_media_type_video(good_output_type, &MEDIASUBTYPE_RGB24, width, height);
+    init_dmo_media_type_video(good_output_type, &MEDIASUBTYPE_RGB24, width, height, time_per_frame);
     hr = IMediaObject_SetInputType(dmo, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(dmo, 1, NULL, 0);
@@ -6632,10 +6635,10 @@ static void test_wmv_decoder_media_object(void)
     memcpy(input_media_buffer->data, wmv_data, wmv_data_length);
     input_media_buffer->length = wmv_data_length;
 
-    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height, 0);
     hr = IMediaObject_SetInputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height);
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height, 0);
     hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
@@ -6703,12 +6706,10 @@ static void test_wmv_decoder_media_object(void)
     ok(output_media_buffer->length == 0, "Unexpected length %#lx.\n", output_media_buffer->length);
 
     /* Test ProcessOutput with setting framerate. */
-    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
-    ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 100000;
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height, 100000);
     hr = IMediaObject_SetInputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height);
-    ((VIDEOINFOHEADER *)type->pbFormat)->AvgTimePerFrame = 200000;
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height, 200000);
     hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
