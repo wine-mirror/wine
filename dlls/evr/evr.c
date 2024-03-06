@@ -388,8 +388,8 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, I
 
                 if (IsEqualGUID(subtype, &MFVideoFormat_YUY2))
                 {
-                    width = (3 * width + 3) & ~3;
-                    MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
+                    width = (width + 1) & ~1;
+                    MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 2, lines);
                 }
                 else if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
                 {
