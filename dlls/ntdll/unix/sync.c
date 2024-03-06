@@ -125,9 +125,9 @@ static inline int futex_wait( const LONG *addr, int val, struct timespec *timeou
     return syscall( __NR_futex, addr, FUTEX_WAIT_PRIVATE, val, timeout, 0, 0 );
 }
 
-static inline int futex_wake( const LONG *addr, int val )
+static inline int futex_wake_one( const LONG *addr )
 {
-    return syscall( __NR_futex, addr, FUTEX_WAKE_PRIVATE, val, NULL, 0, 0 );
+    return syscall( __NR_futex, addr, FUTEX_WAKE_PRIVATE, 1, NULL, 0, 0 );
 }
 
 #endif /* __linux__ */
@@ -2513,7 +2513,7 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
     {
         LONG *futex = &entry->futex;
         if (!InterlockedExchange( futex, 1 ))
-            futex_wake( futex, 1 );
+            futex_wake_one( futex );
         return STATUS_SUCCESS;
     }
 #elif defined(HAVE_KQUEUE)
