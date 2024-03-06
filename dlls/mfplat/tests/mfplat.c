@@ -7143,8 +7143,10 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     WAVEFORMATEXTENSIBLE *wave_format_ext;
     VIDEOINFOHEADER *video_info;
     WAVEFORMATEX *wave_format;
-    IMFMediaType *media_type;
+    IMFMediaType *media_type, *other_type;
     AM_MEDIA_TYPE am_type;
+    MFVideoArea *area;
+    UINT32 value32;
     HRESULT hr;
 
     hr = MFCreateMediaType(&media_type);
@@ -7712,6 +7714,49 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(video_info->bmiHeader.biSizeImage == 246 * 456 * 4, "got %lu\n", video_info->bmiHeader.biSizeImage);
     CoTaskMemFree(am_type.pbFormat);
     IMFMediaType_DeleteAllItems(media_type);
+
+    /* aperture is lost with VIDEOINFOHEADER(2), preserved with MFVIDEOFORMAT */
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_NV12);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)1920 << 32 | 1088);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&other_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_VideoInfo, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitMediaTypeFromAMMediaType(other_type, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetAllocatedBlob(other_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE **)&area, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(other_type);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_VideoInfo2, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitMediaTypeFromAMMediaType(other_type, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetAllocatedBlob(other_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE **)&area, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(other_type);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitMediaTypeFromAMMediaType(other_type, &am_type);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetAllocatedBlob(other_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE **)&area, &value32);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK) CoTaskMemFree(area);
+    IMFMediaType_DeleteAllItems(other_type);
+    CoTaskMemFree(am_type.pbFormat);
+
+    IMFMediaType_Release(other_type);
 
     IMFMediaType_Release(media_type);
 }
