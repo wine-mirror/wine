@@ -1200,13 +1200,6 @@ static HRESULT WINAPI RecycleBin_DeleteItems(ISFHelper * iface, UINT cidl,
     return erase_items(GetActiveWindow(),apidl,cidl,TRUE);
 }
 
-static HRESULT WINAPI RecycleBin_CopyItems(ISFHelper * iface,
-                                           IShellFolder * pSFFrom,
-                                           UINT cidl, LPCITEMIDLIST * apidl)
-{
-    return E_NOTIMPL;
-}
-
 static const ISFHelperVtbl sfhelperVtbl =
 {
     RecycleBin_ISFHelper_QueryInterface,
@@ -1215,7 +1208,6 @@ static const ISFHelperVtbl sfhelperVtbl =
     RecycleBin_GetUniqueName,
     RecycleBin_AddFolder,
     RecycleBin_DeleteItems,
-    RecycleBin_CopyItems
 };
 
 HRESULT WINAPI SHQueryRecycleBinA(LPCSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo)
