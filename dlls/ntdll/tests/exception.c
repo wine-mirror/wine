@@ -3275,8 +3275,40 @@ static DWORD WINAPI rtlraiseexception_teb_handler( EXCEPTION_RECORD *rec,
 }
 
 static DWORD WINAPI rtlraiseexception_handler( EXCEPTION_RECORD *rec, void *frame,
-                                               CONTEXT *context, void *dispatcher )
+                                               CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
+    if (is_arm64ec)
+    {
+        ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)context;
+        DISPATCHER_CONTEXT_NONVOLREG_ARM64 *nonvol_regs;
+        int i;
+
+        nonvol_regs = (void *)((DISPATCHER_CONTEXT_ARM64 *)dispatcher)->NonVolatileRegisters;
+        ok( nonvol_regs->GpNvRegs[0] == ec_ctx->X19,
+            "wrong non volatile reg x19 %I64x / %I64x\n", nonvol_regs->GpNvRegs[0], ec_ctx->X19 );
+        ok( nonvol_regs->GpNvRegs[1] == ec_ctx->X20,
+            "wrong non volatile reg x20 %I64x / %I64x\n", nonvol_regs->GpNvRegs[1], ec_ctx->X20 );
+        ok( nonvol_regs->GpNvRegs[2] == ec_ctx->X21,
+            "wrong non volatile reg x21 %I64x / %I64x\n", nonvol_regs->GpNvRegs[2], ec_ctx->X21 );
+        ok( nonvol_regs->GpNvRegs[3] == ec_ctx->X22,
+            "wrong non volatile reg x22 %I64x / %I64x\n", nonvol_regs->GpNvRegs[3], ec_ctx->X22 );
+        ok( nonvol_regs->GpNvRegs[4] == 0, "wrong non volatile reg x23 %I64x\n", nonvol_regs->GpNvRegs[4] );
+        ok( nonvol_regs->GpNvRegs[5] == 0, "wrong non volatile reg x24 %I64x\n", nonvol_regs->GpNvRegs[5] );
+        ok( nonvol_regs->GpNvRegs[6] == ec_ctx->X25,
+            "wrong non volatile reg x25 %I64x / %I64x\n", nonvol_regs->GpNvRegs[6], ec_ctx->X25 );
+        ok( nonvol_regs->GpNvRegs[7] == ec_ctx->X26,
+            "wrong non volatile reg x26 %I64x / %I64x\n", nonvol_regs->GpNvRegs[7], ec_ctx->X26 );
+        ok( nonvol_regs->GpNvRegs[8] == ec_ctx->X27,
+            "wrong non volatile reg x27 %I64x / %I64x\n", nonvol_regs->GpNvRegs[8], ec_ctx->X27 );
+        ok( nonvol_regs->GpNvRegs[9] == 0, "wrong non volatile reg x28 %I64x\n", nonvol_regs->GpNvRegs[9] );
+        ok( nonvol_regs->GpNvRegs[10] > ec_ctx->Fp, /* previous frame */
+            "wrong non volatile reg x29 %I64x / %I64x\n", nonvol_regs->GpNvRegs[10], ec_ctx->Fp );
+
+        for (i = 0; i < NONVOL_FP_NUMREG_ARM64; i++)
+            ok( nonvol_regs->FpNvRegs[i] == ec_ctx->V[i + 8].D[0],
+                "wrong non volatile reg d%u %g / %g\n", i + 8,
+                nonvol_regs->FpNvRegs[i] , ec_ctx->V[i + 8].D[0] );
+    }
     rtlraiseexception_handler_called = 1;
     rtlraiseexception_handler_(rec, frame, context, dispatcher, FALSE);
     return ExceptionContinueSearch;
