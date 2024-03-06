@@ -1881,6 +1881,57 @@ static void test_AcquireResources(void)
     IDirectSound_Release(dsound);
 }
 
+static void test_implicit_mta(void)
+{
+    HRESULT hr;
+    IDirectSound8 *dso;
+    struct apt_data test_apt_data;
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    /* test DirectSound8 object */
+    hr = CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IDirectSound8, (void**)&dso);
+    ok(hr == S_OK, "CoCreateInstance(CLSID_DirectSound8) failed: %08lx\n", hr);
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    hr = IDirectSound8_Initialize(dso, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+       "IDirectSound8_Initialize() failed: %08lx\n", hr);
+    if (hr == DS_OK) {
+        check_apttype(&test_apt_data);
+        todo_wine
+        ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
+        todo_wine
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+    }
+    IDirectSound8_Release(dso);
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    /* test DirectSoundCreate8 */
+    hr = DirectSoundCreate8(NULL, &dso, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+       "DirectSoundCreate8() failed: %08lx\n", hr);
+    if (hr == DS_OK) {
+        check_apttype(&test_apt_data);
+        todo_wine
+        ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
+        todo_wine
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+        IDirectSound8_Release(dso);
+    }
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+}
+
 START_TEST(dsound8)
 {
     DWORD cookie;
@@ -1888,6 +1939,8 @@ START_TEST(dsound8)
 
     CoInitialize(NULL);
 
+    /* Run implicit MTA tests before test COM so that a MTA won't be created before this test is run. */
+    test_implicit_mta();
     test_COM();
     IDirectSound8_tests();
     dsound8_tests();

@@ -20,6 +20,7 @@
 
 #include "wingdi.h"
 #include "mmreg.h"
+#include "combaseapi.h" /* APTTYPE, APTTYPEQUALIFIER */
 
 static const unsigned int formats[][4]={
     { 8000,  8, 1, 0 },
@@ -74,6 +75,13 @@ static const unsigned int formats[][4]={
 
 static const unsigned int format_tags[] = {WAVE_FORMAT_PCM, WAVE_FORMAT_IEEE_FLOAT};
 
+#define APTTYPE_UNITIALIZED APTTYPE_CURRENT
+struct apt_data
+{
+    APTTYPE type;
+    APTTYPEQUALIFIER qualifier;
+};
+
 /* The time slice determines how often we will service the buffer */
 #define TIME_SLICE     31
 #define BUFFER_LEN    400
@@ -90,3 +98,4 @@ extern void test_buffer8(LPDIRECTSOUND8,LPDIRECTSOUNDBUFFER*,
 extern const char * getDSBCAPS(DWORD xmask);
 extern int align(int length, int align);
 extern const char * format_string(const WAVEFORMATEX* wfx);
+extern void check_apttype(struct apt_data *);

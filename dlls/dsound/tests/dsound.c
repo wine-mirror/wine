@@ -41,6 +41,40 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static DWORD WINAPI test_apt_thread(void *param)
+{
+    HRESULT hr;
+    struct apt_data *test_apt_data = (struct apt_data *)param;
+
+    hr = CoGetApartmentType(&test_apt_data->type, &test_apt_data->qualifier);
+    if (hr == CO_E_NOTINITIALIZED)
+    {
+        test_apt_data->type = APTTYPE_UNITIALIZED;
+        test_apt_data->qualifier = 0;
+    }
+
+    return 0;
+}
+
+void check_apttype(struct apt_data *test_apt_data)
+{
+    HANDLE thread;
+    MSG msg;
+
+    memset(test_apt_data, 0xde, sizeof(*test_apt_data));
+
+    thread = CreateThread(NULL, 0, test_apt_thread, test_apt_data, 0, NULL);
+    while (MsgWaitForMultipleObjects(1, &thread, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+    {
+        while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    CloseHandle(thread);
+}
+
 static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
                               LPCGUID lpGuid)
 {
@@ -1823,10 +1857,63 @@ static void test_hw_buffers(void)
     IDirectSound_Release(ds);
 }
 
+static void test_implicit_mta(void)
+{
+    HRESULT hr;
+    IDirectSound *dso;
+    struct apt_data test_apt_data;
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    /* test DirectSound object */
+    hr = CoCreateInstance(&CLSID_DirectSound, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IDirectSound, (void**)&dso);
+    ok(hr == S_OK, "CoCreateInstance(CLSID_DirectSound) failed: %08lx\n", hr);
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    hr = IDirectSound_Initialize(dso, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+       "IDirectSound_Initialize() failed: %08lx\n", hr);
+    if (hr == DS_OK) {
+        check_apttype(&test_apt_data);
+        todo_wine
+        ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
+        todo_wine
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+    }
+    IDirectSound_Release(dso);
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+
+    /* test DirectSoundCreate */
+    hr = DirectSoundCreate(NULL, &dso, NULL);
+    ok(hr == DS_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+       "DirectSoundCreate() failed: %08lx\n", hr);
+    if (hr == DS_OK) {
+        check_apttype(&test_apt_data);
+        todo_wine
+        ok(test_apt_data.type == APTTYPE_MTA, "got apt type %d.\n", test_apt_data.type);
+        todo_wine
+        ok(test_apt_data.qualifier == APTTYPEQUALIFIER_IMPLICIT_MTA,
+           "got apt type qualifier %d.\n", test_apt_data.qualifier);
+        IDirectSound_Release(dso);
+    }
+
+    check_apttype(&test_apt_data);
+    ok(test_apt_data.type == APTTYPE_UNITIALIZED, "got apt type %d.\n", test_apt_data.type);
+}
+
 START_TEST(dsound)
 {
     CoInitialize(NULL);
 
+    /* Run implicit MTA tests before IDirectSound_test so that a MTA won't be created before this test is run. */
+    test_implicit_mta();
     IDirectSound_tests();
     dsound_tests();
     test_hw_buffers();
