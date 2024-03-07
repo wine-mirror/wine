@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <setjmp.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -35,36 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-/* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
-struct MSVCRT_JUMP_BUFFER
-{
-    ULONG64 Frame;
-    ULONG64 Rbx;
-    ULONG64 Rsp;
-    ULONG64 Rbp;
-    ULONG64 Rsi;
-    ULONG64 Rdi;
-    ULONG64 R12;
-    ULONG64 R13;
-    ULONG64 R14;
-    ULONG64 R15;
-    ULONG64 Rip;
-    ULONG  MxCsr;
-    USHORT FpCsr;
-    USHORT Spare;
-    M128A   Xmm6;
-    M128A   Xmm7;
-    M128A   Xmm8;
-    M128A   Xmm9;
-    M128A   Xmm10;
-    M128A   Xmm11;
-    M128A   Xmm12;
-    M128A   Xmm13;
-    M128A   Xmm14;
-    M128A   Xmm15;
-};
 
 
 /*******************************************************************
@@ -726,7 +697,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 
     if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
     {
-        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
+        struct _JUMP_BUFFER *jmp = (struct _JUMP_BUFFER *)rec->ExceptionInformation[0];
         context->Rbx   = jmp->Rbx;
         context->Rsp   = jmp->Rsp;
         context->Rbp   = jmp->Rbp;
@@ -737,19 +708,10 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
         context->R14   = jmp->R14;
         context->R15   = jmp->R15;
         context->Rip   = jmp->Rip;
-        context->Xmm6  = jmp->Xmm6;
-        context->Xmm7  = jmp->Xmm7;
-        context->Xmm8  = jmp->Xmm8;
-        context->Xmm9  = jmp->Xmm9;
-        context->Xmm10 = jmp->Xmm10;
-        context->Xmm11 = jmp->Xmm11;
-        context->Xmm12 = jmp->Xmm12;
-        context->Xmm13 = jmp->Xmm13;
-        context->Xmm14 = jmp->Xmm14;
-        context->Xmm15 = jmp->Xmm15;
         context->MxCsr = jmp->MxCsr;
         context->FltSave.MxCsr = jmp->MxCsr;
         context->FltSave.ControlWord = jmp->FpCsr;
+        memcpy( &context->Xmm6, &jmp->Xmm6, 10 * sizeof(M128A) );
     }
     else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
     {

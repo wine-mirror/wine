@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -37,30 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-/* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
-struct MSVCRT_JUMP_BUFFER
-{
-    unsigned __int64 Frame;
-    unsigned __int64 Reserved;
-    unsigned __int64 X19;
-    unsigned __int64 X20;
-    unsigned __int64 X21;
-    unsigned __int64 X22;
-    unsigned __int64 X23;
-    unsigned __int64 X24;
-    unsigned __int64 X25;
-    unsigned __int64 X26;
-    unsigned __int64 X27;
-    unsigned __int64 X28;
-    unsigned __int64 Fp;
-    unsigned __int64 Lr;
-    unsigned __int64 Sp;
-    ULONG Fpcr;
-    ULONG Fpsr;
-    double D[8];
-};
 
 
 static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
@@ -486,7 +463,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 
     if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
     {
-        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
+        struct _JUMP_BUFFER *jmp = (struct _JUMP_BUFFER *)rec->ExceptionInformation[0];
         int i;
 
         context->X19  = jmp->X19;

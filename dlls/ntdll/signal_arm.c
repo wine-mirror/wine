@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <setjmp.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -35,25 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-/* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
-struct MSVCRT_JUMP_BUFFER
-{
-    unsigned long Frame;
-    unsigned long R4;
-    unsigned long R5;
-    unsigned long R6;
-    unsigned long R7;
-    unsigned long R8;
-    unsigned long R9;
-    unsigned long R10;
-    unsigned long R11;
-    unsigned long Sp;
-    unsigned long Pc;
-    unsigned long Fpscr;
-    unsigned long long D[8];
-};
 
 
 static void dump_scope_table( ULONG base, const SCOPE_TABLE *table )
@@ -424,17 +406,13 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 
     if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
     {
-        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
-        int i;
+        struct _JUMP_BUFFER *jmp = (struct _JUMP_BUFFER *)rec->ExceptionInformation[0];
 
-        for (i = 4; i <= 11; i++)
-            (&context->R4)[i-4] = (&jmp->R4)[i-4];
+        memcpy( &context->R4, &jmp->R4, 8 * sizeof(DWORD) );
+        memcpy( &context->D[8], &jmp->D[0], 8 * sizeof(ULONGLONG) );
         context->Lr      = jmp->Pc;
         context->Sp      = jmp->Sp;
         context->Fpscr   = jmp->Fpscr;
-
-        for (i = 0; i < 8; i++)
-            context->D[8+i] = jmp->D[i];
     }
     else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
     {
