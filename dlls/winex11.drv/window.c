@@ -1798,15 +1798,16 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
  */
 void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BOOL use_alpha )
 {
+    BOOL same_visual = (data->vis.visualid == vis->visualid);
     Window client_window = data->client_window;
     Window whole_window = data->whole_window;
 
-    if (!data->use_alpha == !use_alpha) return;
+    if (!data->use_alpha == !use_alpha && same_visual) return;
     if (data->surface) window_surface_release( data->surface );
     data->surface = NULL;
     data->use_alpha = use_alpha;
 
-    if (data->vis.visualid == vis->visualid) return;
+    if (same_visual) return;
     data->client_window = 0;
     destroy_whole_window( data, client_window != 0 /* don't destroy whole_window until reparented */ );
     data->vis = *vis;
