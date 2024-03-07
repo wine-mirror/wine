@@ -26,11 +26,50 @@
 
 #include "vulkan_private.h"
 #include "wine/vulkan_driver.h"
+#include "wine/rbtree.h"
 #include "ntgdi.h"
 #include "ntuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
+static int window_surface_compare(const void *key, const struct rb_entry *entry)
+{
+    const struct wine_surface *surface = RB_ENTRY_VALUE(entry, struct wine_surface, window_entry);
+    HWND key_hwnd = (HWND)key;
+
+    if (key_hwnd < surface->hwnd) return -1;
+    if (key_hwnd > surface->hwnd) return 1;
+    return 0;
+}
+
+static pthread_mutex_t window_surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct rb_tree window_surfaces = {.compare = window_surface_compare};
+
+static void window_surfaces_insert(struct wine_surface *surface)
+{
+    struct wine_surface *previous;
+    struct rb_entry *ptr;
+
+    pthread_mutex_lock(&window_surfaces_lock);
+
+    if (!(ptr = rb_get(&window_surfaces, surface->hwnd)))
+        rb_put(&window_surfaces, surface->hwnd, &surface->window_entry);
+    else
+    {
+        previous = RB_ENTRY_VALUE(ptr, struct wine_surface, window_entry);
+        rb_replace(&window_surfaces, &previous->window_entry, &surface->window_entry);
+        previous->hwnd = 0; /* make sure previous surface becomes invalid */
+    }
+
+    pthread_mutex_unlock(&window_surfaces_lock);
+}
+
+static void window_surfaces_remove(struct wine_surface *surface)
+{
+    pthread_mutex_lock(&window_surfaces_lock);
+    if (surface->hwnd) rb_remove(&window_surfaces, &surface->window_entry);
+    pthread_mutex_unlock(&window_surfaces_lock);
+}
 
 static BOOL is_wow64(void)
 {
@@ -1542,6 +1581,7 @@ VkResult wine_vkCreateWin32SurfaceKHR(VkInstance handle, const VkWin32SurfaceCre
 
     object->host_surface = vk_funcs->p_wine_get_host_surface(object->driver_surface);
     if (dummy) NtUserDestroyWindow(dummy);
+    window_surfaces_insert(object);
 
     *surface = wine_surface_to_handle(object);
     add_handle_mapping(instance, *surface, object->host_surface, &object->wrapper_entry);
@@ -1559,6 +1599,7 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
 
     instance->funcs.p_vkDestroySurfaceKHR(instance->host_instance, object->driver_surface, NULL);
     remove_handle_mapping(instance, &object->wrapper_entry);
+    window_surfaces_remove(object);
 
     free(object);
 }

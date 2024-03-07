@@ -27,6 +27,7 @@
 
 #include "vulkan_loader.h"
 #include "vulkan_thunks.h"
+#include "wine/rbtree.h"
 
 #include "wine/rbtree.h"
 
@@ -236,6 +237,7 @@ struct wine_surface
     VkSurfaceKHR driver_surface;
     HWND hwnd;
 
+    struct rb_entry window_entry;
     struct wrapper_entry wrapper_entry;
 };
 
