@@ -714,6 +714,24 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     return 0;
 }
 
+
+/***********************************************************************
+ *           _setjmp (NTDLL.@)
+ *           _setjmpex (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( NTDLL__setjmpex,
+                   ".seh_endprologue\n\t"
+                   "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
+                   "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
+                   "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
+                   "vmrs r2, fpscr\n\t"
+                   "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
+                   "add r0, r0, #0x30\n\t"
+                   "vstm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
+                   "mov r0, #0\n\t"
+                   "bx lr" )
+
+
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */

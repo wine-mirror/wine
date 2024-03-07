@@ -826,6 +826,32 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     return 0;
 }
 
+
+/***********************************************************************
+ *           _setjmpex (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( NTDLL__setjmpex,
+                   ".seh_endprologue\n\t"
+                   "str x1,       [x0]\n\t"        /* jmp_buf->Frame */
+                   "stp x19, x20, [x0, #0x10]\n\t" /* jmp_buf->X19, X20 */
+                   "stp x21, x22, [x0, #0x20]\n\t" /* jmp_buf->X21, X22 */
+                   "stp x23, x24, [x0, #0x30]\n\t" /* jmp_buf->X23, X24 */
+                   "stp x25, x26, [x0, #0x40]\n\t" /* jmp_buf->X25, X26 */
+                   "stp x27, x28, [x0, #0x50]\n\t" /* jmp_buf->X27, X28 */
+                   "stp x29, x30, [x0, #0x60]\n\t" /* jmp_buf->Fp,  Lr  */
+                   "mov x2,  sp\n\t"
+                   "str x2,       [x0, #0x70]\n\t" /* jmp_buf->Sp */
+                   "mrs x2,  fpcr\n\t"
+                   "mrs x3,  fpsr\n\t"
+                   "stp w2, w3,   [x0, #0x78]\n\t" /* jmp_buf->Fpcr,Fpsr */
+                   "stp d8,  d9,  [x0, #0x80]\n\t" /* jmp_buf->D[0-1] */
+                   "stp d10, d11, [x0, #0x90]\n\t" /* jmp_buf->D[2-3] */
+                   "stp d12, d13, [x0, #0xa0]\n\t" /* jmp_buf->D[4-5] */
+                   "stp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
+                   "mov x0, #0\n\t"
+                   "ret" )
+
+
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
