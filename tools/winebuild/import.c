@@ -62,6 +62,7 @@ static const char *stdc_names[] =
     "isxdigit",
     "labs",
     "log",
+    "longjmp",
     "mbstowcs",
     "memchr",
     "memcmp",

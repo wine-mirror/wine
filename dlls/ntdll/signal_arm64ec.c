@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <setjmp.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -2016,6 +2017,25 @@ void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
          "bl NtRaiseException\n\t"
          "b RtlRaiseStatus\n\t" /* does not return */
          ".seh_endproc" );
+}
+
+
+/*******************************************************************
+ *		longjmp (NTDLL.@)
+ */
+void __cdecl NTDLL_longjmp( _JUMP_BUFFER *buf, int retval )
+{
+    EXCEPTION_RECORD rec;
+
+    if (!retval) retval = 1;
+
+    rec.ExceptionCode = STATUS_LONGJUMP;
+    rec.ExceptionFlags = 0;
+    rec.ExceptionRecord = NULL;
+    rec.ExceptionAddress = NULL;
+    rec.NumberParameters = 1;
+    rec.ExceptionInformation[0] = (DWORD_PTR)buf;
+    RtlUnwind( (void *)buf->Frame, (void *)buf->Rip, &rec, IntToPtr(retval) );
 }
 
 

@@ -1630,6 +1630,7 @@
 @ cdecl isxdigit(long)
 @ cdecl labs(long) abs
 @ cdecl log(double)
+@ cdecl -arch=!i386 longjmp(ptr long) NTDLL_longjmp
 @ cdecl mbstowcs(ptr str long)
 @ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)

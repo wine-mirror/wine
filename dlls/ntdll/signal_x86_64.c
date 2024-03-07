@@ -1058,6 +1058,55 @@ __ASM_GLOBAL_FUNC( NTDLL__setjmpex,
                    "retq" )
 
 
+void __cdecl DECLSPEC_NORETURN longjmp_regs( _JUMP_BUFFER *buf, int retval );
+__ASM_GLOBAL_FUNC( longjmp_regs,
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "movq %rdx,%rax\n\t"            /* retval */
+                   "movq 0x8(%rcx),%rbx\n\t"       /* jmp_buf->Rbx */
+                   "movq 0x18(%rcx),%rbp\n\t"      /* jmp_buf->Rbp */
+                   "movq 0x20(%rcx),%rsi\n\t"      /* jmp_buf->Rsi */
+                   "movq 0x28(%rcx),%rdi\n\t"      /* jmp_buf->Rdi */
+                   "movq 0x30(%rcx),%r12\n\t"      /* jmp_buf->R12 */
+                   "movq 0x38(%rcx),%r13\n\t"      /* jmp_buf->R13 */
+                   "movq 0x40(%rcx),%r14\n\t"      /* jmp_buf->R14 */
+                   "movq 0x48(%rcx),%r15\n\t"      /* jmp_buf->R15 */
+                   "movq 0x50(%rcx),%rdx\n\t"      /* jmp_buf->Rip */
+                   "ldmxcsr 0x58(%rcx)\n\t"        /* jmp_buf->MxCsr */
+                   "fnclex\n\t"
+                   "fldcw 0x5c(%rcx)\n\t"          /* jmp_buf->FpCsr */
+                   "movdqa 0x60(%rcx),%xmm6\n\t"   /* jmp_buf->Xmm6 */
+                   "movdqa 0x70(%rcx),%xmm7\n\t"   /* jmp_buf->Xmm7 */
+                   "movdqa 0x80(%rcx),%xmm8\n\t"   /* jmp_buf->Xmm8 */
+                   "movdqa 0x90(%rcx),%xmm9\n\t"   /* jmp_buf->Xmm9 */
+                   "movdqa 0xa0(%rcx),%xmm10\n\t"  /* jmp_buf->Xmm10 */
+                   "movdqa 0xb0(%rcx),%xmm11\n\t"  /* jmp_buf->Xmm11 */
+                   "movdqa 0xc0(%rcx),%xmm12\n\t"  /* jmp_buf->Xmm12 */
+                   "movdqa 0xd0(%rcx),%xmm13\n\t"  /* jmp_buf->Xmm13 */
+                   "movdqa 0xe0(%rcx),%xmm14\n\t"  /* jmp_buf->Xmm14 */
+                   "movdqa 0xf0(%rcx),%xmm15\n\t"  /* jmp_buf->Xmm15 */
+                   "movq 0x10(%rcx),%rsp\n\t"      /* jmp_buf->Rsp */
+                   "jmp *%rdx" )
+
+/*******************************************************************
+ *		longjmp (MSVCRT.@)
+ */
+void __cdecl NTDLL_longjmp( _JUMP_BUFFER *buf, int retval )
+{
+    EXCEPTION_RECORD rec;
+
+    if (!retval) retval = 1;
+    if (!buf->Frame) longjmp_regs( buf, retval );
+
+    rec.ExceptionCode = STATUS_LONGJUMP;
+    rec.ExceptionFlags = 0;
+    rec.ExceptionRecord = NULL;
+    rec.ExceptionAddress = NULL;
+    rec.NumberParameters = 1;
+    rec.ExceptionInformation[0] = (DWORD_PTR)buf;
+    RtlUnwind( (void *)buf->Frame, (void *)buf->Rip, &rec, IntToPtr(retval) );
+}
+
+
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */
