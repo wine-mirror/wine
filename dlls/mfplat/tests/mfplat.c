@@ -6998,6 +6998,7 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     HEAACWAVEFORMAT aacformat;
     IMFMediaType *mediatype;
     unsigned int i, size;
+    WAVEFORMATEX *wfx;
     UINT32 value;
     HRESULT hr;
 
@@ -7087,6 +7088,15 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(size == aacformat.wfInfo.wfx.cbSize, "Unexpected size %u.\n", size);
     ok(!memcmp(buff, (WAVEFORMATEX *)&aacformat + 1, size), "Unexpected user data.\n");
 
+    /* check that we get an HEAACWAVEFORMAT by default */
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&wfx, &size, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(wfx->wFormatTag == WAVE_FORMAT_MPEG_HEAAC, "got wFormatTag %#x\n", wfx->wFormatTag);
+    ok(wfx->cbSize == sizeof(HEAACWAVEFORMAT) - sizeof(WAVEFORMATEX), "got cbSize %u\n", wfx->cbSize);
+    ok(!memcmp(wfx + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
+    CoTaskMemFree(wfx);
+
+    /* MFWaveFormatExConvertFlag_ForceExtensible can force a WAVEFORMATEXTENSIBLE */
     hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format, &size, MFWaveFormatExConvertFlag_ForceExtensible);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "got wFormatTag %#x\n", format->Format.wFormatTag);
@@ -7098,6 +7108,62 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
     CoTaskMemFree(format);
 
+    /* adding more channels has no immediate effect */
+    hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, 6);
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, 63);
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&wfx, &size, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(wfx->wFormatTag == WAVE_FORMAT_MPEG_HEAAC, "got wFormatTag %#x\n", wfx->wFormatTag);
+    ok(wfx->cbSize == sizeof(HEAACWAVEFORMAT) - sizeof(WAVEFORMATEX), "got cbSize %u\n", wfx->cbSize);
+    ok(!memcmp(wfx + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
+    CoTaskMemFree(wfx);
+
+    /* but adding MF_MT_AUDIO_SAMPLES_PER_BLOCK as well forces the WAVEFORMATEXTENSIBLE format */
+    hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, 4);
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format, &size, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "got wFormatTag %#x\n", format->Format.wFormatTag);
+    todo_wine
+    ok(format->Format.cbSize == aacformat.wfInfo.wfx.cbSize + sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
+            "got cbSize %u\n", format->Format.cbSize);
+    todo_wine
+    ok(IsEqualGUID(&format->SubFormat, &MFAudioFormat_AAC), "got SubFormat %s\n", debugstr_guid(&format->SubFormat));
+    todo_wine
+    ok(format->dwChannelMask == 63, "got dwChannelMask %#lx\n", format->dwChannelMask);
+    todo_wine
+    ok(format->Samples.wSamplesPerBlock == 4, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
+    todo_wine
+    ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
+
+    /* test initializing media type from an WAVE_FORMAT_EXTENSIBLE AAC format */
+    IMFMediaType_DeleteAllItems(mediatype);
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)format, sizeof(WAVEFORMATEX) + format->Format.cbSize);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CoTaskMemFree(format);
+
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, &value);
+    todo_wine
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Failed to get attribute, hr %#lx.\n", hr);
+    todo_wine
+    ok(value == 0xdeadbeef, "Unexpected AAC_AUDIO_PROFILE_LEVEL_INDICATION %u.\n", value);
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, &value);
+    todo_wine
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Failed to get attribute, hr %#lx.\n", hr);
+    todo_wine
+    ok(value == 0xdeadbeef, "Unexpected AAC_PAYLOAD_TYPE %u.\n", value);
+
+    hr = IMFMediaType_GetBlob(mediatype, &MF_MT_USER_DATA, buff, sizeof(buff), &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(size == aacformat.wfInfo.wfx.cbSize, "Unexpected size %u.\n", size);
+    ok(!memcmp(buff, (WAVEFORMATEX *)&aacformat + 1, size), "Unexpected user data.\n");
+
+
     /* test with invalid format size */
     aacformat.wfInfo.wfx.cbSize = 1;
     hr = IMFMediaType_SetBlob(mediatype, &MF_MT_USER_DATA, buff, aacformat.wfInfo.wfx.cbSize);
@@ -7108,8 +7174,9 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(format->Format.cbSize == aacformat.wfInfo.wfx.cbSize + sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
             "got cbSize %u\n", format->Format.cbSize);
     ok(IsEqualGUID(&format->SubFormat, &MFAudioFormat_AAC), "got SubFormat %s\n", debugstr_guid(&format->SubFormat));
-    ok(format->dwChannelMask == 3, "got dwChannelMask %#lx\n", format->dwChannelMask);
-    ok(format->Samples.wSamplesPerBlock == 0, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
+    ok(format->dwChannelMask == 63, "got dwChannelMask %#lx\n", format->dwChannelMask);
+    todo_wine
+    ok(format->Samples.wSamplesPerBlock == 4, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
     ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
     CoTaskMemFree(format);
 
