@@ -7120,16 +7120,43 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
 {
     MFVIDEOFORMAT *video_format;
     IMFMediaType *media_type;
-    UINT32 size;
+    UINT32 size, expect_size;
+    PALETTEENTRY palette[64];
+    BYTE codec_data[32];
     HRESULT hr;
+
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
 
+    expect_size = sizeof(*video_format);
     hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!video_format, "Unexpected format.\n");
-    ok(video_format->dwSize == size && size == sizeof(*video_format), "Unexpected size %u.\n", size);
+    ok(size == expect_size, "Unexpected size %u.\n", size);
+    ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
+    CoTaskMemFree(video_format);
+
+    memset(palette, 0xa5, sizeof(palette));
+    expect_size = offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[ARRAY_SIZE(palette) + 1]);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!video_format, "Unexpected format.\n");
+    todo_wine ok(size == expect_size, "Unexpected size %u.\n", size);
+    ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
+    CoTaskMemFree(video_format);
+
+    memset(codec_data, 0xcd, sizeof(codec_data));
+    expect_size += sizeof(codec_data);
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, codec_data, sizeof(codec_data));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!video_format, "Unexpected format.\n");
+    todo_wine ok(size == expect_size, "Unexpected size %u.\n", size);
+    ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
     CoTaskMemFree(video_format);
 
     IMFMediaType_Release(media_type);
