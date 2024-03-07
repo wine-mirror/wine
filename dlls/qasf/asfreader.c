@@ -1038,7 +1038,7 @@ HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_WMAsfReader, &filter_ops);
     object->IFileSourceFilter_iface.lpVtbl = &file_source_vtbl;
 
-    InitializeCriticalSection(&object->status_cs);
+    InitializeCriticalSectionEx(&object->status_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->status_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": status_cs");
 
     TRACE("Created WM ASF reader %p.\n", object);
