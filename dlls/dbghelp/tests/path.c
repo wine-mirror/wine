@@ -1639,7 +1639,7 @@ static BOOL has_mismatch(const char *str, char ch, unsigned *val)
 {
     if (str && *str == ch)
     {
-        if (val && (ch == 'D' || ch == 'P' || ch == '!'))
+        if (val && (ch == 'F' || ch == 'P' || ch == '!'))
             *val = char2index(str[1]);
         return TRUE;
     }
@@ -1671,7 +1671,9 @@ static void test_load_modules_details(void)
         const char  *test_files; /* various test_files to be created */
         /* output parameters */
         SYM_TYPE     sym_type;
-        const char   *mismatch_in; /* 'PN'=PDB, 'DN'=DBG, NULL (N index of expected found file) */
+        const char   *mismatch_in; /* format if CN, where
+                                      C={'F' for full match of PDB, 'P' for partial match of PDB, '!' found pdb without info}
+                                      N index of expected file */
     }
     module_details_tests[] =
     {
@@ -1686,10 +1688,10 @@ static void test_load_modules_details(void)
         {0,                  0,                     L"bar.dll", L"foo_bar", -1, "0", SymPdb,      "!0"},
         {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar", -1, "0", SymDeferred},
 
-        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar",  0, "0", SymNone},
+        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar",  0, "0", SymNone,     "F0"},
         {SLMFLAG_NO_SYMBOLS, SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  0, "0", SymDeferred},
 
-/*10*/  {0,                  0,                     L"bar.dll", L"foo_bar",  0, "0", SymPdb},
+/*10*/  {0,                  0,                     L"bar.dll", L"foo_bar",  0, "0", SymPdb,      "F0"},
         {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  0, "0", SymDeferred},
 
         {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar",  1, "0", SymNone,     "P0"},
@@ -1697,6 +1699,9 @@ static void test_load_modules_details(void)
 
         {0,                  0,                     L"bar.dll", L"foo_bar",  1, "0", SymNone,     "P0"},
 /*15*/  {0,                  SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar",  1, "0", SymDeferred},
+
+        {SLMFLAG_NO_SYMBOLS, 0,                     L"bar.dll", L"foo_bar", -1, "",  SymNone},
+        {SLMFLAG_NO_SYMBOLS, SYMOPT_DEFERRED_LOADS, L"bar.dll", L"foo_bar", -1, "",  SymDeferred},
 
         /* FIXME add lookup path, exact symbol, .DBG files */
     };
@@ -1721,7 +1726,6 @@ static void test_load_modules_details(void)
     struct debug_directory_blob* blob_refs[2];
 
     old_options = SymGetOptions();
-    im.SizeOfStruct = sizeof(im);
 
     len = GetTempPathW(ARRAY_SIZE(topdir), topdir);
     ok(len && len < ARRAY_SIZE(topdir), "Unexpected length\n");
@@ -1731,7 +1735,7 @@ static void test_load_modules_details(void)
 
     init_headers64(&h.nt_header64, 12324, 3242, 0);
     blob_refs[0] = make_pdb_ds_blob(12324, &guid1, 0x0030cafe, "bar.pdb");
-    blob_refs[1] = make_pdb_ds_blob(12324, &guid1, 0x0030caff, "bar.pdb"); /* shall generate a mismatch */
+    blob_refs[1] = make_pdb_ds_blob(12325, &guid1, 0x0030caff, "bar.pdb"); /* shall generate a mismatch */
 
     for (i = 0; i < ARRAY_SIZE(module_details_tests); i++)
     {
@@ -1775,6 +1779,8 @@ static void test_load_modules_details(void)
                                 test->in_image_name, test->in_module_name,
                                 0x4000, 0x6666, NULL, test->flags);
         ok(base == 0x4000, "SymLoadModuleExW failed: %lu\n", GetLastError());
+        memset(&im, 0xA5, sizeof(im));
+        im.SizeOfStruct = sizeof(im);
         ret = SymGetModuleInfoW64(dummy, base, &im);
         ok(ret, "SymGetModuleInfow64 failed: %lu\n", GetLastError());
         if (test->in_image_name)
@@ -1797,52 +1803,73 @@ static void test_load_modules_details(void)
         }
         else
             loaded_img_name = test->in_image_name;
-        todo_wine_if(test->options & SYMOPT_DEFERRED_LOADS)
+        todo_wine_if(i == 3 || i == 5 || i == 7 || i == 9 || i == 11 || i == 13 || i == 15 || i == 17)
         ok(!wcsicmp(im.LoadedImageName, (test->options & SYMOPT_DEFERRED_LOADS) ? L"" : loaded_img_name),
            "Unexpected loaded image name '%ls' (%ls)\n", im.LoadedImageName, loaded_img_name);
-        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8)
+        todo_wine_if(i == 3 || i == 4 || i == 6 || i == 8 || i == 16)
         ok(im.SymType == test->sym_type, "Unexpected module type %u\n", im.SymType);
-        todo_wine_if(i == 8 || i == 10)
-        ok(!im.TypeInfo, "No type info present\n");
         if (test->mismatch_in)
         {
             unsigned val;
             if (has_mismatch(test->mismatch_in, '!', &val))
             {
+                ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
                 make_path(filename, topdir, NULL, L"bar.pdb");
                 todo_wine
                 ok(!wcscmp(filename, im.LoadedPdbName), "Unexpected value '%ls\n", im.LoadedPdbName);
-                todo_wine
-                ok(im.PdbUnmatched, "Unexpected value\n");
                 todo_wine
                 ok(im.PdbUnmatched, "Unexpected value\n");
                 ok(!im.DbgUnmatched, "Unexpected value\n");
                 todo_wine
                 ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
                    wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
+                ok(im.PdbSig == 0, "Unexpected value\n");
                 todo_wine
                 ok(im.PdbAge == test_files[val].age_or_timestamp, "Unexpected value\n");
             }
             else if (has_mismatch(test->mismatch_in, 'P', &val))
             {
                 ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
+                ok(!im.LoadedPdbName[0], "Unexpected value\n");
                 ok(!im.PdbUnmatched, "Unexpected value\n");
                 ok(!im.DbgUnmatched, "Unexpected value\n");
                 ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
                    wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
+                ok(im.PdbSig == 0, "Unexpected value\n");
                 ok(im.PdbAge == test_files[val].age_or_timestamp + 1, "Unexpected value\n");
             }
-            else if (has_mismatch(test->mismatch_in, 'D', &val))
+            else if (has_mismatch(test->mismatch_in, 'F', &val))
             {
                 ok(val < ARRAY_SIZE(test_files), "Incorrect index\n");
+                if (test->flags & SLMFLAG_NO_SYMBOLS)
+                    todo_wine_if(i == 8)
+                    ok(!im.LoadedPdbName[0], "Unexpected value\n");
+                else
+                {
+                    make_path(filename, topdir, NULL, L"bar.pdb");
+                    ok(!wcscmp(im.LoadedPdbName, filename), "Unexpected value\n");
+                }
                 ok(!im.PdbUnmatched, "Unexpected value\n");
                 ok(!im.DbgUnmatched, "Unexpected value\n");
+                ok(IsEqualGUID(&im.PdbSig70, test_files[val].guid), "Unexpected value %s %s\n",
+                   wine_dbgstr_guid(&im.PdbSig70), wine_dbgstr_guid(test_files[val].guid));
+                todo_wine_if(i == 10)
+                ok(im.PdbSig == 0, "Unexpected value\n");
+                ok(im.PdbAge == test_files[val].age_or_timestamp, "Unexpected value\n");
             }
+            ok(im.TimeDateStamp == 12324, "Unexpected value\n");
         }
         else
         {
+            ok(!im.LoadedPdbName[0], "Unexpected value3 %ls\n", im.LoadedPdbName);
             ok(!im.PdbUnmatched, "Unexpected value\n");
             ok(!im.DbgUnmatched, "Unexpected value\n");
+            ok(IsEqualGUID(&im.PdbSig70, &null_guid), "Unexpected value %s\n", wine_dbgstr_guid(&im.PdbSig70));
+            ok(im.PdbSig == 0, "Unexpected value\n");
+            ok(!im.PdbAge, "Unexpected value\n");
+            /* native returns either 0 or the actual timestamp depending on test case */
+            todo_wine_if(i == 4 || i == 5 || i == 7 || i == 9 || i == 11 || i == 13 || (i >= 15 && i <= 17))
+            ok(!im.TimeDateStamp || broken(im.TimeDateStamp == 12324), "Unexpected value\n");
         }
         ok(im.ImageSize == 0x6666, "Unexpected image size\n");
         memset(&md, 0, sizeof(md));
