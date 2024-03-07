@@ -2402,7 +2402,7 @@ static void shellwindows_init(void)
     CoInitialize(NULL);
 
     shellwindows.IShellWindows_iface.lpVtbl = &shellwindowsvtbl;
-    InitializeCriticalSection(&shellwindows.cs);
+    InitializeCriticalSectionEx(&shellwindows.cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     shellwindows.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": shellwindows.cs");
 
     hr = CoRegisterClassObject(&CLSID_ShellWindows,
