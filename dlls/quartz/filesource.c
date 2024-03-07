@@ -381,6 +381,8 @@ static DWORD CALLBACK io_thread(void *arg)
     DWORD size;
     BOOL ret;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_qz_async_reader_io");
+
     for (;;)
     {
         ret = GetQueuedCompletionStatus(filter->port, &size, &key, &ovl, INFINITE);

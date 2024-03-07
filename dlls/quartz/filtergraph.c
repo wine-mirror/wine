@@ -1033,6 +1033,8 @@ static DWORD WINAPI message_thread_run(void *ctx)
 {
     MSG msg;
 
+    SetThreadDescription(GetCurrentThread(), L"wine_qz_graph_worker");
+
     /* Make sure we have a message queue. */
     PeekMessageW(&msg, NULL, 0, 0, PM_NOREMOVE);
     SetEvent(message_thread_ret);
