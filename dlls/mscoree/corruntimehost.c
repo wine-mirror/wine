@@ -814,8 +814,12 @@ static ULONG WINAPI CLRRuntimeHost_Release(ICLRRuntimeHost* iface)
 
 static HRESULT WINAPI CLRRuntimeHost_Start(ICLRRuntimeHost* iface)
 {
-    FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
+    MonoDomain *dummy;
+
+    TRACE("%p\n", This);
+
+    return RuntimeHost_GetDefaultDomain(This, NULL, &dummy);
 }
 
 static HRESULT WINAPI CLRRuntimeHost_Stop(ICLRRuntimeHost* iface)
