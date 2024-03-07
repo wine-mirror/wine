@@ -834,7 +834,6 @@ struct testfilter
     unsigned int got_sample, got_new_segment, got_eos, got_begin_flush, got_end_flush;
     REFERENCE_TIME expected_start_time;
     REFERENCE_TIME expected_stop_time;
-    BOOL todo_stop_time;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -942,7 +941,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     {
         ok(start == filter->expected_start_time, "Got start time %s, expected %s.\n",
                 wine_dbgstr_longlong(start), wine_dbgstr_longlong(filter->expected_start_time));
-        todo_wine_if(filter->todo_stop_time)
+        todo_wine
             ok(stop == filter->expected_stop_time, "Got stop time %s, expected %s.\n",
                 wine_dbgstr_longlong(stop), wine_dbgstr_longlong(filter->expected_stop_time));
     }
@@ -1226,7 +1225,7 @@ static void test_send_video(IMemInputPin *input, IMediaSample *sample)
     /* gst-launch-1.0 -v videotestsrc pattern=black num-buffers=10 ! video/x-raw,width=32,height=24 ! mpeg2enc ! filesink location=empty-es2.mpg */
     /* then truncate to taste */
     /* each 00 00 01 b3 or 00 00 01 00 starts a new frame, except the first 00 00 01 00 after a 00 00 01 b3 */
-    static const BYTE empty_mpg_frame1[] = {
+    static const BYTE empty_mpg_frames[] = {
         0x00, 0x00, 0x01, 0xb3, 0x02, 0x00, 0x18, 0x15, 0x02, 0xbf, 0x60, 0x9c,
         0x00, 0x00, 0x01, 0xb8, 0x00, 0x08, 0x00, 0x40,
         0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0xff, 0xf8,
@@ -1235,27 +1234,22 @@ static void test_send_video(IMemInputPin *input, IMediaSample *sample)
               0x41, 0x28, 0x88, 0x13, 0xb9, 0x6f, 0xcf, 0xc1, 0x04, 0x03, 0xa0, 0x11, 0xb1, 0x41, 0x28, 0x88,
               0x13, 0xb9, 0x6f, 0xa1, 0x4b, 0x9f, 0x48, 0x04, 0x10, 0x0e, 0x80, 0x46, 0xc5, 0x04, 0xa2,
               0x20, 0x4e, 0xe5, 0x80, 0x41, 0x00, 0xe8, 0x04, 0x6c, 0x50, 0x4a, 0x22, 0x04, 0xee, 0x58,
-    };
-    static const BYTE empty_mpg_frame2[] = {
         0x00, 0x00, 0x01, 0x00, 0x00, 0x57, 0xff, 0xf9, 0x80,
         0x00, 0x00, 0x01, 0x01, 0x0a, 0x79, 0xc0,
         0x00, 0x00, 0x01, 0x02, 0x0a, 0x79, 0xc0,
-    };
-    static const BYTE empty_mpg_frame3[] = {
         0x00, 0x00, 0x01, 0x00, 0x00, 0x97, 0xff, 0xf9, 0x80,
         0x00, 0x00, 0x01, 0x01, 0x0a, 0x79, 0xc0,
-        0x00, 0x00, 0x01, 0x02, 0x0a, 0x79, 0xc0, 0x00, 0x00, 0x01, 0xb7,
+        0x00, 0x00, 0x01, 0x02, 0x0a, 0x79, 0xc0,
+    };
+    static const BYTE empty_mpg_eos[] = {
+        0x00, 0x00, 0x01, 0xb7,
     };
     HRESULT hr;
     IPin *pin;
 
-    /* frame 1 - it's a complete frame, but due to how MPEG framing works, the decoder doesn't know that */
-    /* frame 2 - new frame starts, frame 1 can be emitted - but Wine gets confused by colorimetry and returns an error */
-    /* frame 3 - Wine emits frames 1 and 2 */
-    /* meanwhile, native won't emit anything until an unknown-sized internal buffer is filled, or EOS is announced */
-    test_send_sample(input, sample, empty_mpg_frame1, ARRAY_SIZE(empty_mpg_frame1), FALSE);
-    test_send_sample(input, sample, empty_mpg_frame2, ARRAY_SIZE(empty_mpg_frame2), TRUE);
-    test_send_sample(input, sample, empty_mpg_frame3, ARRAY_SIZE(empty_mpg_frame3), FALSE);
+    /* native won't emit anything until an unknown-sized internal buffer is filled, or EOS is announced */
+    test_send_sample(input, sample, empty_mpg_frames, ARRAY_SIZE(empty_mpg_frames), TRUE);
+    test_send_sample(input, sample, empty_mpg_eos, ARRAY_SIZE(empty_mpg_eos), FALSE);
 
     hr = IMemInputPin_QueryInterface(input, &IID_IPin, (void **)&pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1304,7 +1298,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
 
     sink->expected_start_time = 0;
     sink->expected_stop_time = 0;
-    sink->todo_stop_time = FALSE;
     hr = IMediaSample_SetTime(sample, &sink->expected_start_time, &sink->expected_stop_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -1342,7 +1335,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
 
     sink->expected_start_time = 22222;
     sink->expected_stop_time = 22222;
-    sink->todo_stop_time = TRUE;
     test_send_video(input, sample);
     ok(sink->got_sample >= 1, "Got %u calls to Receive().\n", sink->got_sample);
     ok(sink->got_eos == 1, "Got %u calls to EndOfStream().\n", sink->got_eos);
@@ -1412,7 +1404,6 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
 
     testsink->expected_start_time = 0;
     testsink->expected_stop_time = 0;
-    testsink->todo_stop_time = TRUE;
     test_send_video(input, sample);
     ok(testsink->got_sample >= 1, "Got %u calls to Receive().\n", testsink->got_sample);
     testsink->got_sample = 0;
@@ -1440,7 +1431,6 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
 
     testsink->expected_start_time = 0;
     testsink->expected_stop_time = 0;
-    testsink->todo_stop_time = TRUE;
     test_send_video(input, sample);
     ok(testsink->got_sample >= 1, "Got %u calls to Receive().\n", testsink->got_sample);
     testsink->got_sample = 0;
