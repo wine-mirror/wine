@@ -667,7 +667,7 @@ static DWORD scmdatabase_create(struct scmdatabase **db)
     list_init(&(*db)->processes);
     list_init(&(*db)->services);
 
-    InitializeCriticalSection(&(*db)->cs);
+    InitializeCriticalSectionEx(&(*db)->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     (*db)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": scmdatabase");
 
     err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
