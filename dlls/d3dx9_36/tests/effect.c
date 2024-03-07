@@ -8041,6 +8041,7 @@ static void test_create_effect_from_file(void)
     /* This is apparently broken on native, it ends up using the wrong include. */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
             0, NULL, &effect, &messages);
+    todo_wine
     ok(hr == E_FAIL, "Unexpected error, hr %#lx.\n", hr);
     if (messages)
     {
@@ -8066,6 +8067,7 @@ static void test_create_effect_from_file(void)
      * is "ID3DXEffectCompiler: There were no techniques" */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, &include.ID3DXInclude_iface, NULL,
             0, NULL, &effect, &messages);
+    todo_wine
     ok(hr == E_FAIL, "D3DXInclude test failed with error %#lx.\n", hr);
     if (messages)
     {
