@@ -355,7 +355,7 @@ static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_oper
     if ((impl->invoker = invoker)) IUnknown_AddRef( impl->invoker );
     if ((impl->param = param)) IUnknown_AddRef( impl->param );
 
-    InitializeCriticalSection( &impl->cs );
+    InitializeCriticalSectionEx( &impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": async_info.cs" );
 
     *out = &impl->IWineAsyncInfoImpl_iface;
