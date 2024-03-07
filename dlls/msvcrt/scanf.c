@@ -710,7 +710,7 @@ int CDECL __stdio_common_vfscanf(unsigned __int64 options,
                                        _locale_t locale,
                                        va_list valist)
 {
-    if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
+    if (options & ~(_CRT_INTERNAL_SCANF_SECURECRT | _CRT_INTERNAL_SCANF_LEGACY_WIDE_SPECIFIERS))
         FIXME("options %#I64x not handled\n", options);
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return vfscanf_s_l(file, format, locale, valist);
