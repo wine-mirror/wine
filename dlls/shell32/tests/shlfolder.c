@@ -5457,7 +5457,7 @@ static void test_DataObject(void)
     medium.hGlobal = global;
     fmt.tymed = TYMED_HGLOBAL;
     hr = IDataObject_SetData(data_obj, &fmt, &medium, FALSE);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG || hr == E_NOTIMPL /* win 8+ */, "Got hr %#lx.\n", hr);
     hr = IDataObject_SetData(data_obj, &fmt, &medium, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
