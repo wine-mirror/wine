@@ -588,7 +588,7 @@ static void effect_init(struct effect *effect, IUnknown *outer, const struct eff
     effect->IMediaParams_iface.lpVtbl = &effect_media_params_vtbl;
     effect->IMediaParamInfo_iface.lpVtbl = &effect_media_param_info_vtbl;
 
-    InitializeCriticalSection(&effect->cs);
+    InitializeCriticalSectionEx(&effect->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     effect->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": effect.cs");
 
     effect->ops = ops;
