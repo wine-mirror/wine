@@ -232,7 +232,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionEx( RTL_CRITICAL_SECTION *crit, ULON
      * is done, then debug info should be managed through Rtlp[Allocate|Free]DebugInfo
      * so (e.g.) MakeCriticalSectionGlobal() doesn't free it using HeapFree().
      */
-    if (flags & RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO)
+    if (!(flags & RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO))
         crit->DebugInfo = no_debug_info_marker;
     else
     {
@@ -288,7 +288,11 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
             crit->DebugInfo = NULL;
         }
     }
-    else NtClose( crit->LockSemaphore );
+    else
+    {
+        NtClose( crit->LockSemaphore );
+        crit->DebugInfo = NULL;
+    }
     crit->LockSemaphore = 0;
     return STATUS_SUCCESS;
 }

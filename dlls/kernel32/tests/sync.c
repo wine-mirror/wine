@@ -2741,7 +2741,7 @@ static void test_crit_section(void)
        to override that. */
     memset(&cs, 0, sizeof(cs));
     InitializeCriticalSection(&cs);
-    todo_wine ok(cs.DebugInfo == (void *)(ULONG_PTR)-1 || broken(!!cs.DebugInfo) /* before Win8 */,
+    ok(cs.DebugInfo == (void *)(ULONG_PTR)-1 || broken(!!cs.DebugInfo) /* before Win8 */,
             "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
     ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
@@ -2755,7 +2755,7 @@ static void test_crit_section(void)
     memset(&cs, 0, sizeof(cs));
     ret = pInitializeCriticalSectionEx(&cs, 0, 0);
     ok(ret, "Failed to initialize critical section.\n");
-    todo_wine ok(cs.DebugInfo == (void *)(ULONG_PTR)-1  || broken(!!cs.DebugInfo) /* before Win8 */,
+    ok(cs.DebugInfo == (void *)(ULONG_PTR)-1  || broken(!!cs.DebugInfo) /* before Win8 */,
             "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
     ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
@@ -2765,12 +2765,12 @@ static void test_crit_section(void)
     ok(ret, "Failed to initialize critical section.\n");
     ok(cs.DebugInfo == (void *)(ULONG_PTR)-1, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
-    todo_wine ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
+    ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
 
     memset(&cs, 0, sizeof(cs));
     ret = pInitializeCriticalSectionEx(&cs, 0, 0);
     ok(ret, "Failed to initialize critical section.\n");
-    todo_wine ok(cs.DebugInfo == (void *)(ULONG_PTR)-1 || broken(!!cs.DebugInfo) /* before Win8 */,
+    ok(cs.DebugInfo == (void *)(ULONG_PTR)-1 || broken(!!cs.DebugInfo) /* before Win8 */,
             "Unexpected debug info pointer %p.\n", cs.DebugInfo);
     DeleteCriticalSection(&cs);
     ok(cs.DebugInfo == NULL, "Unexpected debug info pointer %p.\n", cs.DebugInfo);
