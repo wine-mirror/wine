@@ -1790,7 +1790,7 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
         }
         SERVER_END_REQ;
     }
-    if (!ret)
+    if (!ret && count)
     {
         ret = context_from_server( context, &server_contexts[0], machine );
         if (!ret && count > 1) ret = context_from_server( context, &server_contexts[1], machine );
