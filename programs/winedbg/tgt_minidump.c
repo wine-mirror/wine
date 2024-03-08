@@ -496,7 +496,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                                  mm->SizeOfImage);
             else
                 SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
-                                 mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
+                                 mm->SizeOfImage, NULL, 0);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, NULL, &stream, NULL))
@@ -518,7 +518,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                                  mm->SizeOfImage);
             else
                 SymLoadModuleExW(hProc, NULL, nameW, NULL, get_addr64(mm->BaseOfImage),
-                                 mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
+                                 mm->SizeOfImage, NULL, 0);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, NULL, &stream, NULL))
