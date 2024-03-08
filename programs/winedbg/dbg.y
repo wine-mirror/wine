@@ -630,6 +630,7 @@ void	parser_handle(const char* filename, HANDLE input)
        }
        __ENDTRY;
        lexeme_flush();
+       expr_free_all();
     } while (!ret_ok);
 
     dbg_parser = prev;
