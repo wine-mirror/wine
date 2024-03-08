@@ -846,7 +846,6 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 #endif
 
     wine_server_send_fd( socketfd[1] );
-    close( socketfd[1] );
 
     /* create the process on the server side */
 
@@ -875,6 +874,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         process_info = wine_server_ptr_handle( reply->info );
     }
     SERVER_END_REQ;
+    close( socketfd[1] );
     free( objattr );
     free( handles );
     free( jobs );
