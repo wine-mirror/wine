@@ -13112,7 +13112,6 @@ static void test_ReleaseCapture(void)
     ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());
     flush_events(TRUE);
     do_release_capture = FALSE;
-    todo_wine
     ok(wm_mousemove_count < 10, "Got too many WM_MOUSEMOVE.\n");
 
     /* Test that ReleaseCapture() should send a WM_MOUSEMOVE if a window is captured */
@@ -13128,7 +13127,6 @@ static void test_ReleaseCapture(void)
     ret = ReleaseCapture();
     ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());
     flush_events(TRUE);
-    todo_wine
     ok(wm_mousemove_count == 0, "Got WM_MOUSEMOVE.\n");
 
     ret = SetCursorPos(pt.x, pt.y);
