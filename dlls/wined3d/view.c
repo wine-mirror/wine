@@ -465,16 +465,6 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
         *width = texture->resource.width;
         *height = texture->resource.height;
     }
-    else if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
-    {
-        const struct wined3d_swapchain_desc *desc = &context->swapchain->state.desc;
-
-        /* The drawable size of a backbuffer / aux buffer offscreen target is
-         * the size of the current context's drawable, which is the size of
-         * the back buffer of the swapchain the active context belongs to. */
-        *width = desc->backbuffer_width;
-        *height = desc->backbuffer_height;
-    }
     else
     {
         unsigned int level_idx = view->sub_resource_idx % texture->level_count;

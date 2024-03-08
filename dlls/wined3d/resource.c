@@ -436,16 +436,14 @@ BOOL wined3d_resource_is_offscreen(struct wined3d_resource *resource)
     if (resource == &swapchain->front_buffer->resource)
         return FALSE;
 
-    /* If the swapchain is rendered to an FBO, the backbuffer is
-     * offscreen, otherwise onscreen */
-    return wined3d_settings.offscreen_rendering_mode == ORM_FBO;
+    return TRUE;
 }
 
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
 {
     const struct wined3d_d3d_info *d3d_info = &resource->device->adapter->d3d_info;
 
-    if (!wined3d_resource_is_offscreen(resource) || wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    if (!wined3d_resource_is_offscreen(resource))
     {
         resource->draw_binding = WINED3D_LOCATION_DRAWABLE;
     }

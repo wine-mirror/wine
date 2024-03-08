@@ -7691,12 +7691,6 @@ static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wine
      /* We only support YUV conversions. */
     if (!is_complex_fixup(src_format->color_fixup))
     {
-        if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
-        {
-            WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
-            return TRUE;
-        }
-
         TRACE("[FAILED]\n");
         return FALSE;
     }
@@ -7733,7 +7727,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
     struct wined3d_color_key alpha_test_key;
     struct wined3d_blitter *next;
     unsigned int src_level;
-    RECT s, d;
+    RECT d;
 
     TRACE("blitter %p, op %#x, context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, "
             "src_rect %s, dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_rect %s, "
@@ -7793,25 +7787,6 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         src_texture = staging_texture;
         src_texture_gl = wined3d_texture_gl(src_texture);
         src_sub_resource_idx = 0;
-    }
-    else if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && (src_texture->sub_resources[src_sub_resource_idx].locations
-            & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DRAWABLE)) == WINED3D_LOCATION_DRAWABLE
-            && !wined3d_resource_is_offscreen(&src_texture->resource))
-    {
-
-        /* Without FBO blits transferring from the drawable to the texture is
-         * expensive, because we have to flip the data in sysmem. Since we can
-         * flip in the blitter, we don't actually need that flip anyway. So we
-         * use the surface's texture as scratch texture, and flip the source
-         * rectangle instead. */
-        texture2d_load_fb_texture(src_texture_gl, src_sub_resource_idx, FALSE, context);
-
-        s = *src_rect;
-        src_level = src_sub_resource_idx % src_texture->level_count;
-        s.top = wined3d_texture_get_level_height(src_texture, src_level) - s.top;
-        s.bottom = wined3d_texture_get_level_height(src_texture, src_level) - s.bottom;
-        src_rect = &s;
     }
     else
     {

@@ -456,9 +456,6 @@ static inline int wined3d_uint64_compare(uint64_t x, uint64_t y)
     return (x > y) - (x < y);
 }
 
-#define ORM_BACKBUFFER  0
-#define ORM_FBO         1
-
 #define PCI_VENDOR_NONE 0xffff /* e.g. 0x8086 for Intel and 0x10de for Nvidia */
 #define PCI_DEVICE_NONE 0xffff /* e.g. 0x14f for a Geforce6200 */
 
@@ -478,7 +475,6 @@ struct wined3d_settings
 {
     unsigned int cs_multithreaded;
     unsigned int max_gl_version;
-    int offscreen_rendering_mode;
     unsigned short pci_vendor_id;
     unsigned short pci_device_id;
     /* Memory tracking and object counting. */

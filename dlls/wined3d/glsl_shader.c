@@ -8019,8 +8019,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         shader_glsl_append_imm_vec(buffer, &wined3d_srgb_const[1].x, 4, gl_info);
         shader_addline(buffer, ";\n");
     }
-    if ((reg_maps->usesdsy && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-            || (reg_maps->vpos && !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]))
+    if (reg_maps->vpos && !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
     {
         ++extra_constants_needed;
         shader_addline(buffer, "uniform vec4 ycorrection;\n");
@@ -13418,8 +13417,7 @@ static BOOL glsl_blitter_supported(enum wined3d_blit_op blit_op, const struct wi
         return FALSE;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && !((dst_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_FBO_ATTACHABLE)
+    if (!((dst_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_FBO_ATTACHABLE)
             || (dst_resource->bind_flags & WINED3D_BIND_RENDER_TARGET)))
     {
         TRACE("Destination texture is not FBO attachable.\n");
@@ -13449,7 +13447,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
     struct wined3d_blitter *next;
     unsigned int src_level;
     GLint location;
-    RECT s, d;
+    RECT d;
 
     TRACE("blitter %p, op %#x, context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, "
             "src_rect %s, dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_rect %s, "
@@ -13509,25 +13507,6 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         src_texture = staging_texture;
         src_texture_gl = wined3d_texture_gl(src_texture);
         src_sub_resource_idx = 0;
-    }
-    else if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && (src_texture->sub_resources[src_sub_resource_idx].locations
-            & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DRAWABLE)) == WINED3D_LOCATION_DRAWABLE
-            && !wined3d_resource_is_offscreen(&src_texture->resource))
-    {
-
-        /* Without FBO blits transferring from the drawable to the texture is
-         * expensive, because we have to flip the data in sysmem. Since we can
-         * flip in the blitter, we don't actually need that flip anyway. So we
-         * use the surface's texture as scratch texture, and flip the source
-         * rectangle instead. */
-        texture2d_load_fb_texture(src_texture_gl, src_sub_resource_idx, FALSE, context);
-
-        s = *src_rect;
-        src_level = src_sub_resource_idx % src_texture->level_count;
-        s.top = wined3d_texture_get_level_height(src_texture, src_level) - s.top;
-        s.bottom = wined3d_texture_get_level_height(src_texture, src_level) - s.bottom;
-        src_rect = &s;
     }
     else
     {

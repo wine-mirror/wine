@@ -1042,8 +1042,6 @@ struct wined3d_blt_info
 
 void texture2d_get_blt_info(const struct wined3d_texture_gl *texture_gl, unsigned int sub_resource_idx,
         const RECT *rect, struct wined3d_blt_info *info);
-void texture2d_load_fb_texture(struct wined3d_texture_gl *texture_gl, unsigned int sub_resource_idx,
-        BOOL srgb, struct wined3d_context *context);
 void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_context *context, DWORD src_location, DWORD dst_location);
 

@@ -375,15 +375,12 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
     context_gl = wined3d_context_gl(context);
     gl_info = context_gl->gl_info;
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        if (resource->format->depth_size || resource->format->stencil_size)
-            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
-                    NULL, 0, resource, sub_resource_idx, src_location);
-        else
-            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
-                    resource, sub_resource_idx, NULL, 0, src_location);
-    }
+    if (resource->format->depth_size || resource->format->stencil_size)
+        wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
+                NULL, 0, resource, sub_resource_idx, src_location);
+    else
+        wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
+                resource, sub_resource_idx, NULL, 0, src_location);
 
     /* Select the correct read buffer, and give some debug output. There is no
      * need to keep track of the current read buffer or reset it, every part
@@ -405,8 +402,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
         src_is_upside_down = FALSE;
     }
     checkGLcall("glReadBuffer");
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        wined3d_context_gl_check_fbo_status(context_gl, GL_READ_FRAMEBUFFER);
+    wined3d_context_gl_check_fbo_status(context_gl, GL_READ_FRAMEBUFFER);
 
     if (data.buffer_object)
     {
@@ -476,58 +472,6 @@ error:
         wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(data.buffer_object));
         checkGLcall("glBindBuffer");
     }
-
-    if (restore_texture)
-        context_restore(context, restore_texture, restore_idx);
-}
-
-/* Read the framebuffer contents into a texture. Note that this function
- * doesn't do any kind of flipping. Using this on an onscreen surface will
- * result in a flipped D3D texture.
- *
- * Context activation is done by the caller. This function may temporarily
- * switch to a different context and restore the original one before return. */
-void texture2d_load_fb_texture(struct wined3d_texture_gl *texture_gl,
-        unsigned int sub_resource_idx, BOOL srgb, struct wined3d_context *context)
-{
-    struct wined3d_texture *restore_texture;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context_gl *context_gl;
-    struct wined3d_resource *resource;
-    unsigned int restore_idx, level;
-    struct wined3d_device *device;
-    GLenum target;
-
-    resource = &texture_gl->t.resource;
-    device = resource->device;
-    restore_texture = context->current_rt.texture;
-    restore_idx = context->current_rt.sub_resource_idx;
-    if (restore_texture != &texture_gl->t || restore_idx != sub_resource_idx)
-        context = context_acquire(device, &texture_gl->t, sub_resource_idx);
-    else
-        restore_texture = NULL;
-    context_gl = wined3d_context_gl(context);
-
-    gl_info = context_gl->gl_info;
-    device_invalidate_state(device, STATE_FRAMEBUFFER);
-
-    wined3d_texture_gl_prepare_texture(texture_gl, context_gl, srgb);
-    wined3d_texture_gl_bind_and_dirtify(texture_gl, context_gl, srgb);
-
-    TRACE("Reading back offscreen render target %p, %u.\n", texture_gl, sub_resource_idx);
-
-    if (wined3d_resource_is_offscreen(resource))
-        gl_info->gl_ops.gl.p_glReadBuffer(wined3d_context_gl_get_offscreen_gl_buffer(context_gl));
-    else
-        gl_info->gl_ops.gl.p_glReadBuffer(wined3d_texture_get_gl_buffer(&texture_gl->t));
-    checkGLcall("glReadBuffer");
-
-    level = sub_resource_idx % texture_gl->t.level_count;
-    target = wined3d_texture_gl_get_sub_resource_target(texture_gl, sub_resource_idx);
-    gl_info->gl_ops.gl.p_glCopyTexSubImage2D(target, level, 0, 0, 0, 0,
-            wined3d_texture_get_level_width(&texture_gl->t, level),
-            wined3d_texture_get_level_height(&texture_gl->t, level));
-    checkGLcall("glCopyTexSubImage2D");
 
     if (restore_texture)
         context_restore(context, restore_texture, restore_idx);
@@ -1467,8 +1411,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     dst_swapchain = dst_texture->swapchain;
 
     if (src_swapchain && dst_swapchain && src_swapchain != dst_swapchain
-            && (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            || src_texture == src_swapchain->front_buffer))
+            && src_texture == src_swapchain->front_buffer)
     {
         /* TODO: We could support cross-swapchain blits by first downloading
          * the source to a texture. */

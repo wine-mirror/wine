@@ -287,9 +287,6 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
     const struct wined3d_format *dst_format = dst_resource->format;
     bool src_ds, dst_ds;
 
-    if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
-        return false;
-
     if ((src_resource->format_attrs | dst_resource->format_attrs) & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
         return false;
 
@@ -3037,8 +3034,7 @@ static BOOL wined3d_texture_load_drawable(struct wined3d_texture *texture,
         return FALSE;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
-            && wined3d_resource_is_offscreen(&texture->resource))
+    if (wined3d_resource_is_offscreen(&texture->resource))
     {
         ERR("Trying to load offscreen texture into WINED3D_LOCATION_DRAWABLE.\n");
         return FALSE;
@@ -3112,16 +3108,6 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
 
     depth = texture_gl->t.resource.bind_flags & WINED3D_BIND_DEPTH_STENCIL;
     sub_resource = &texture_gl->t.sub_resources[sub_resource_idx];
-
-    if (!depth && wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && wined3d_resource_is_offscreen(&texture_gl->t.resource)
-            && (sub_resource->locations & WINED3D_LOCATION_DRAWABLE))
-    {
-        texture2d_load_fb_texture(texture_gl, sub_resource_idx, srgb, &context_gl->c);
-
-        return TRUE;
-    }
-
     level = sub_resource_idx % texture_gl->t.level_count;
     wined3d_texture_get_level_box(&texture_gl->t, level, &src_box);
 
@@ -3269,7 +3255,7 @@ static BOOL wined3d_texture_gl_prepare_location(struct wined3d_texture *texture,
             return TRUE;
 
         case WINED3D_LOCATION_DRAWABLE:
-            if (!texture->swapchain && wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER)
+            if (!texture->swapchain)
                 ERR("Texture %p does not have a drawable.\n", texture);
             return TRUE;
 
@@ -3291,12 +3277,6 @@ static bool use_ffp_clear(const struct wined3d_texture *texture, unsigned int lo
 {
     if (location == WINED3D_LOCATION_DRAWABLE)
         return true;
-
-    /* If we are not using FBOs (and not rendering to the drawable), always
-     * upload. The upload should always succeed in this case; we cannot have
-     * ARB_texture_multisample without ARB_framebuffer_object. */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return false;
 
     if (location == WINED3D_LOCATION_TEXTURE_RGB
             && !(texture->resource.format_caps & WINED3D_FORMAT_CAP_FBO_ATTACHABLE))
@@ -5859,9 +5839,7 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
             {
                 if (dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
                 {
-                    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
-                        WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
-                    else if (context->device->shader_backend == &none_shader_backend)
+                    if (context->device->shader_backend == &none_shader_backend)
                         WARN("Claiming fixup support because of no shader backend.\n");
                     return true;
                 }
@@ -6173,8 +6151,7 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
 
             if (blitter_use_cpu_clear(view)
                     || (!(view->resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
-                    && (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-                    || !(view->format_caps & WINED3D_FORMAT_CAP_FBO_ATTACHABLE))))
+                    && !(view->format_caps & WINED3D_FORMAT_CAP_FBO_ATTACHABLE)))
             {
                 next_flags |= WINED3DCLEAR_TARGET;
                 flags &= ~WINED3DCLEAR_TARGET;
@@ -6522,9 +6499,6 @@ static const struct wined3d_blitter_ops fbo_blitter_ops =
 void wined3d_fbo_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_blitter *blitter;
-
-    if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
-        return;
 
     if (!(blitter = malloc(sizeof(*blitter))))
         return;

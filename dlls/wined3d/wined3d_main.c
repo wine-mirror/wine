@@ -117,7 +117,6 @@ struct wined3d_settings wined3d_settings =
 {
     .cs_multithreaded = WINED3D_CSMT_ENABLE,
     .max_gl_version = MAKEDWORD_VERSION(4, 4),
-    .offscreen_rendering_mode = ORM_FBO,
     .pci_vendor_id = PCI_VENDOR_NONE,
     .pci_device_id = PCI_DEVICE_NONE,
     .multisample_textures = TRUE,

@@ -633,8 +633,6 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, struct w
     GLuint tex, fbo;
     GLenum status;
 
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return FALSE;
-
     memset(data, 0xcc, sizeof(data));
 
     gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
@@ -735,8 +733,6 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
         "MOV result.color, {1.0, 0.0, 0.0, 0.0};\n"
         "END\n";
 
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return FALSE;
     if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return FALSE;
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
@@ -823,8 +819,6 @@ static BOOL match_broken_viewport_subpixel_bits(const struct wined3d_gl_info *gl
 {
     if (!gl_info->supported[ARB_VIEWPORT_ARRAY])
         return FALSE;
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return FALSE;
     return !wined3d_caps_gl_ctx_test_viewport_subpixel_bits(ctx);
 }
 
@@ -839,8 +833,6 @@ static BOOL match_no_independent_bit_depths(const struct wined3d_gl_info *gl_inf
      * restrictions. The EXT extension explicitly calls out an error in the
      * relevant case. */
     if (!gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
-        return TRUE;
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
         return TRUE;
 
     gl_info->gl_ops.gl.p_glGenTextures(2, tex);
@@ -2905,7 +2897,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
         gl_info->limits.general_combiners = gl_max;
         TRACE("Max general combiners: %d.\n", gl_max);
     }
-    if (gl_info->supported[ARB_DRAW_BUFFERS] && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    if (gl_info->supported[ARB_DRAW_BUFFERS])
     {
         gl_info->gl_ops.gl.p_glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
         gl_info->limits.buffers = min(WINED3D_MAX_RENDER_TARGETS, gl_max);
@@ -3760,11 +3752,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter_gl *adapter_gl,
                     = gl_info->gl_ops.ext.p_glGetFramebufferAttachmentParameterivEXT;
             gl_info->fbo_ops.glGenerateMipmap = gl_info->gl_ops.ext.p_glGenerateMipmapEXT;
         }
-        else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        {
-            WARN_(d3d_perf)("Framebuffer objects not supported, falling back to backbuffer offscreen rendering mode.\n");
-            wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
-        }
 
         if (gl_info->supported[ARB_GEOMETRY_SHADER4])
         {
@@ -4443,100 +4430,11 @@ static void adapter_gl_get_wined3d_caps(const struct wined3d_adapter *adapter, s
     }
 }
 
-static BOOL wined3d_check_pixel_format_color(const struct wined3d_pixel_format *cfg,
-        const struct wined3d_format *format)
-{
-    /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
-        return FALSE;
-
-    /* Probably a RGBA_float or color index mode. */
-    if (cfg->iPixelType != WGL_TYPE_RGBA_ARB)
-        return FALSE;
-
-    if (cfg->redSize < format->red_size
-            || cfg->greenSize < format->green_size
-            || cfg->blueSize < format->blue_size
-            || cfg->alphaSize < format->alpha_size)
-        return FALSE;
-
-    return TRUE;
-}
-
-static BOOL wined3d_check_pixel_format_depth(const struct wined3d_pixel_format *cfg,
-        const struct wined3d_format *format)
-{
-    BOOL lockable = FALSE;
-
-    /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
-        return FALSE;
-
-    if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))
-        lockable = TRUE;
-
-    /* On some modern cards like the Geforce8/9, GLX doesn't offer some
-     * depth/stencil formats which D3D9 reports. We can safely report
-     * "compatible" formats (e.g. D24 can be used for D16) as long as we
-     * aren't dealing with a lockable format. This also helps D3D <= 7 as they
-     * expect D16 which isn't offered without this on Geforce8 cards. */
-    if (!(cfg->depthSize == format->depth_size || (!lockable && cfg->depthSize > format->depth_size)))
-        return FALSE;
-
-    /* Some cards like Intel i915 ones only offer D24S8 but lots of games also
-     * need a format without stencil. We can allow a mismatch if the format
-     * doesn't have any stencil bits. If it does have stencil bits the size
-     * must match, or stencil wrapping would break. */
-    if (format->stencil_size && cfg->stencilSize != format->stencil_size)
-        return FALSE;
-
-    return TRUE;
-}
-
 static BOOL adapter_gl_check_format(const struct wined3d_adapter *adapter,
         const struct wined3d_format *adapter_format, const struct wined3d_format *rt_format,
         const struct wined3d_format *ds_format)
 {
-    const struct wined3d_adapter_gl *adapter_gl = wined3d_adapter_gl_const(adapter);
-    unsigned int i;
-
-    if (wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER)
-        return TRUE;
-
-    if (adapter_format && rt_format)
-    {
-        /* In backbuffer mode the front and backbuffer share the same WGL
-         * pixelformat. The format must match in RGB, alpha is allowed to be
-         * different. (Only the backbuffer can have alpha.) */
-        if (adapter_format->red_size != rt_format->red_size
-                || adapter_format->green_size != rt_format->green_size
-                || adapter_format->blue_size != rt_format->blue_size)
-        {
-            TRACE("Render target format %s doesn't match with adapter format %s.\n",
-                    debug_d3dformat(rt_format->id), debug_d3dformat(adapter_format->id));
-            return FALSE;
-        }
-    }
-
-    for (i = 0; i < adapter_gl->pixel_format_count; ++i)
-    {
-        const struct wined3d_pixel_format *cfg = &adapter_gl->pixel_formats[i];
-
-        /* Check if there is a WGL pixel format matching the requirements, the format should also be window
-         * drawable (not offscreen; e.g. Nvidia offers R5G6B5 for pbuffers even when X is running at 24bit) */
-        if (adapter_format && rt_format && !cfg->windowDrawable)
-            continue;
-
-        if ((!adapter_format || wined3d_check_pixel_format_color(cfg, adapter_format))
-                && (!rt_format || wined3d_check_pixel_format_color(cfg, rt_format))
-                && (!ds_format || wined3d_check_pixel_format_depth(cfg, ds_format)))
-        {
-            TRACE("Pixel format %d is compatible.\n", cfg->iPixelFormat);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
+    return TRUE;
 }
 
 static HRESULT adapter_gl_init_3d(struct wined3d_device *device)
@@ -5204,9 +5102,6 @@ static float wined3d_adapter_find_fill_offset(struct wined3d_caps_gl_ctx *ctx)
     unsigned int upper = ARRAY_SIZE(test_array), lower = 0, test;
     float value;
 
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        goto end;
-
     while (upper != lower)
     {
         test = (upper + lower) / 2;
@@ -5231,7 +5126,6 @@ static float wined3d_adapter_find_fill_offset(struct wined3d_caps_gl_ctx *ctx)
 
     FIXME("Did not find a way to get the filling convention we want.\n");
 
-end:
     /* This value was used unconditionally before the dynamic test function was
      * introduced. */
     return -1.0f / 64.0f;
