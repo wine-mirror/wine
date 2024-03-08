@@ -349,6 +349,8 @@ static void desktop_destroy( struct object *obj )
     struct desktop *desktop = (struct desktop *)obj;
     struct winstation *winstation = desktop->winstation;
 
+    list_remove( &desktop->entry );
+
     if (desktop == winstation->input_desktop)
     {
         struct desktop *other, *found = NULL;
@@ -363,7 +365,6 @@ static void desktop_destroy( struct object *obj )
     if (desktop->msg_window) free_window_handle( desktop->msg_window );
     if (desktop->global_hooks) release_object( desktop->global_hooks );
     if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
-    list_remove( &desktop->entry );
     release_object( desktop->winstation );
 }
 
