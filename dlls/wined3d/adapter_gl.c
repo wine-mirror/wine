@@ -3783,6 +3783,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter_gl *adapter_gl,
         gl_info->fbo_ops.glBlitFramebuffer = gl_info->gl_ops.ext.p_glBlitFramebuffer;
         gl_info->fbo_ops.glGenerateMipmap = gl_info->gl_ops.ext.p_glGenerateMipmap;
         gl_info->fbo_ops.glFramebufferTexture = gl_info->gl_ops.ext.p_glFramebufferTexture;
+
+        gl_info->supported[EXT_FRAMEBUFFER_OBJECT] = TRUE;
     }
     else
     {
@@ -5299,6 +5301,16 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
     LUID primary_luid, *luid = NULL;
     unsigned int i;
 
+    static const struct
+    {
+        enum wined3d_gl_extension extension;
+        const char *string;
+    }
+    required_extensions[] =
+    {
+        {EXT_FRAMEBUFFER_OBJECT, "EXT_framebuffer_object"},
+    };
+
     TRACE("adapter_gl %p, ordinal %u, wined3d_creation_flags %#x.\n",
             adapter_gl, ordinal, wined3d_creation_flags);
 
@@ -5355,6 +5367,16 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         ERR("Failed to initialize GL caps for adapter %p.\n", adapter_gl);
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
         return FALSE;
+    }
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(required_extensions); ++i)
+    {
+        if (!gl_info->supported[required_extensions[i].extension])
+        {
+            ERR("Required extension %s is not supported.\n", required_extensions[i].string);
+            wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
+            return FALSE;
+        }
     }
 
     gl_info->filling_convention_offset = wined3d_adapter_find_fill_offset(&caps_gl_ctx);
