@@ -1622,7 +1622,7 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
     UInt32 modifierKeyState;
     OptionBits options;
     UInt32 deadKeyState, savedDeadKeyState;
-    UniCharCount len;
+    UniCharCount len = 0;
     BOOL dead = FALSE;
 
     TRACE_(key)("virtKey 0x%04x scanCode 0x%04x lpKeyState %p bufW %p bufW_size %d flags 0x%08x hkl %p\n",
@@ -1758,7 +1758,7 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
             &savedDeadKeyState, bufW_size, &len, bufW);
         if (status != noErr)
         {
-            ERR_(key)("Couldn't translate keycode 0x%04x, status %d\n", keyc, status);
+            ERR_(key)("Couldn't translate dead keycode 0x%04x, status %d\n", keyc, status);
             goto done;
         }
 
@@ -1768,8 +1768,7 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
     if (len > 0)
         len = strip_apple_private_chars(bufW, len);
 
-    if (dead && len > 0) ret = -1;
-    else ret = len;
+    ret = dead ? -len : len;
 
     /* Control-Return produces line feed instead of carriage return. */
     if (ret > 0 && (lpKeyState[VK_CONTROL] & 0x80) && virtKey == VK_RETURN)
@@ -1783,10 +1782,10 @@ INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 done:
     /* Null-terminate the buffer, if there's room.  MSDN clearly states that the
        caller must not assume this is done, but some programs (e.g. Audiosurf) do. */
-    if (1 <= ret && ret < bufW_size)
-        bufW[ret] = 0;
+    if (len < bufW_size)
+        bufW[len] = 0;
 
-    TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, abs(ret)));
+    TRACE_(key)("returning %d / %s\n", ret, debugstr_wn(bufW, len));
     return ret;
 }
 
