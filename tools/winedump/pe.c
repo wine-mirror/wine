@@ -1911,6 +1911,15 @@ static void dump_hybrid_metadata(void)
         printf( "  ExtraRFETableSize                      %#x\n", (int)data->ExtraRFETableSize );
         printf( "  __os_arm64x_dispatch_fptr              %#x\n", (int)data->__os_arm64x_dispatch_fptr );
         printf( "  AuxiliaryIATCopy                       %#x\n", (int)data->AuxiliaryIATCopy );
+        printf( "  __os_arm64x_helper0                    %#x\n", (int)data->__os_arm64x_helper0 );
+        printf( "  __os_arm64x_helper1                    %#x\n", (int)data->__os_arm64x_helper1 );
+        printf( "  __os_arm64x_helper2                    %#x\n", (int)data->__os_arm64x_helper2 );
+        printf( "  __os_arm64x_helper3                    %#x\n", (int)data->__os_arm64x_helper3 );
+        printf( "  __os_arm64x_helper4                    %#x\n", (int)data->__os_arm64x_helper4 );
+        printf( "  __os_arm64x_helper5                    %#x\n", (int)data->__os_arm64x_helper5 );
+        printf( "  __os_arm64x_helper6                    %#x\n", (int)data->__os_arm64x_helper6 );
+        printf( "  __os_arm64x_helper7                    %#x\n", (int)data->__os_arm64x_helper7 );
+        printf( "  __os_arm64x_helper8                    %#x\n", (int)data->__os_arm64x_helper8 );
 
         if (data->CodeMap)
         {
