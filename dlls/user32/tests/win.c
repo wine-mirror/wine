@@ -13061,6 +13061,82 @@ static void test_shell_tray(void)
     DestroyWindow(hwnd);
 }
 
+static int wm_mousemove_count;
+static BOOL do_release_capture;
+
+static LRESULT WINAPI test_ReleaseCapture_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (msg == WM_MOUSEMOVE)
+    {
+        wm_mousemove_count++;
+        if (wm_mousemove_count >= 100)
+            return 1;
+
+        if (do_release_capture)
+            ReleaseCapture();
+        return 0;
+    }
+    return DefWindowProcA(hwnd, msg, wp, lp);
+}
+
+static void test_ReleaseCapture(void)
+{
+    WNDCLASSA cls = {0};
+    ATOM atom;
+    HWND hwnd;
+    POINT pt;
+    BOOL ret;
+
+    cls.lpfnWndProc = test_ReleaseCapture_proc;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(BLACK_BRUSH);
+    cls.lpszClassName = "test_ReleaseCapture_class";
+    atom = RegisterClassA(&cls);
+    ok(!!atom, "RegisterClassA failed, error %#lx.\n", GetLastError());
+
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, cls.lpszClassName, "", WS_POPUP | WS_VISIBLE, 100, 100,
+                           100, 100, NULL, NULL, 0, NULL);
+    ok(!!hwnd, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    ret = SetForegroundWindow(hwnd);
+    ok(ret, "SetForegroundWindow failed, error %#lx.\n", GetLastError());
+    GetCursorPos(&pt);
+    ret = SetCursorPos(150, 150);
+    ok(ret, "SetCursorPos failed, error %#lx.\n", GetLastError());
+    flush_events(TRUE);
+
+    /* Test a Wine bug that WM_MOUSEMOVE is post too many times when calling ReleaseCapture() during
+     * handling WM_MOUSEMOVE and the cursor is on the window */
+    do_release_capture = TRUE;
+    ret = ReleaseCapture();
+    ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());
+    flush_events(TRUE);
+    do_release_capture = FALSE;
+    todo_wine
+    ok(wm_mousemove_count < 10, "Got too many WM_MOUSEMOVE.\n");
+
+    /* Test that ReleaseCapture() should send a WM_MOUSEMOVE if a window is captured */
+    SetCapture(hwnd);
+    wm_mousemove_count = 0;
+    ret = ReleaseCapture();
+    ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());
+    flush_events(TRUE);
+    ok(wm_mousemove_count == 1, "Got no WM_MOUSEMOVE.\n");
+
+    /* Test that ReleaseCapture() shouldn't send WM_MOUSEMOVE if no window is captured */
+    wm_mousemove_count = 0;
+    ret = ReleaseCapture();
+    ok(ret, "ReleaseCapture failed, error %#lx.\n", GetLastError());
+    flush_events(TRUE);
+    todo_wine
+    ok(wm_mousemove_count == 0, "Got WM_MOUSEMOVE.\n");
+
+    ret = SetCursorPos(pt.x, pt.y);
+    ok(ret, "SetCursorPos failed, error %#lx.\n", GetLastError());
+    DestroyWindow(hwnd);
+    UnregisterClassA(cls.lpszClassName, GetModuleHandleA(0));
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -13243,6 +13319,7 @@ START_TEST(win)
     test_cancel_mode();
     test_DragDetect();
     test_WM_NCCALCSIZE();
+    test_ReleaseCapture();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
