@@ -107,8 +107,62 @@ struct x11_d3dkmt_adapter
     struct list entry;                      /* List entry */
 };
 
-static VkInstance d3dkmt_vk_instance;       /* Vulkan instance for D3DKMT functions */
 static struct list x11_d3dkmt_adapters = LIST_INIT( x11_d3dkmt_adapters );
+
+static VkInstance d3dkmt_vk_instance; /* Vulkan instance for D3DKMT functions */
+static PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
+static PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
+static PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
+static const struct vulkan_funcs *vulkan_funcs;
+
+static void d3dkmt_init_vulkan(void)
+{
+    static const char *extensions[] =
+    {
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+        VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+    };
+    VkInstanceCreateInfo create_info =
+    {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .enabledExtensionCount = ARRAY_SIZE( extensions ),
+        .ppEnabledExtensionNames = extensions,
+    };
+    VkResult vr;
+
+    if (!(vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION )))
+    {
+        WARN( "Failed to open the Vulkan driver\n" );
+        return;
+    }
+
+    if ((vr = vulkan_funcs->p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
+    {
+        WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
+        vulkan_funcs = NULL;
+        return;
+    }
+
+#define LOAD_VK_FUNC( f )                                                                      \
+    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( d3dkmt_vk_instance, #f )))     \
+    {                                                                                          \
+        WARN( "Failed to load " #f ".\n" );                                                    \
+        vulkan_funcs->p_vkDestroyInstance( d3dkmt_vk_instance, NULL );                         \
+        vulkan_funcs = NULL;                                                                   \
+        return;                                                                                \
+    }
+    LOAD_VK_FUNC( vkEnumeratePhysicalDevices )
+    LOAD_VK_FUNC( vkGetPhysicalDeviceProperties2KHR )
+    LOAD_VK_FUNC( vkGetPhysicalDeviceMemoryProperties2KHR )
+#undef LOAD_VK_FUNC
+}
+
+static BOOL d3dkmt_use_vulkan(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once( &once, d3dkmt_init_vulkan );
+    return !!vulkan_funcs;
+}
 
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
@@ -819,10 +873,9 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 
 NTSTATUS X11DRV_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
-    const struct vulkan_funcs *vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
     struct x11_d3dkmt_adapter *adapter;
 
-    if (!vulkan_funcs)
+    if (!d3dkmt_use_vulkan())
         return STATUS_UNSUCCESSFUL;
 
     pthread_mutex_lock(&d3dkmt_mutex);
@@ -834,12 +887,6 @@ NTSTATUS X11DRV_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
             free(adapter);
             break;
         }
-    }
-
-    if (list_empty(&x11_d3dkmt_adapters))
-    {
-        vulkan_funcs->p_vkDestroyInstance(d3dkmt_vk_instance, NULL);
-        d3dkmt_vk_instance = NULL;
     }
     pthread_mutex_unlock(&d3dkmt_mutex);
     return STATUS_SUCCESS;
@@ -977,20 +1024,11 @@ static BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
 
 NTSTATUS X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
 {
-    static const char *extensions[] =
-    {
-        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-        VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
-    };
-    const struct vulkan_funcs *vulkan_funcs;
-    PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
-    PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
     VkPhysicalDevice *vk_physical_devices = NULL;
     VkPhysicalDeviceProperties2 properties2;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     UINT device_count, device_idx = 0;
     struct x11_d3dkmt_adapter *adapter;
-    VkInstanceCreateInfo create_info;
     VkPhysicalDeviceIDProperties id;
     VkResult vr;
     GUID uuid;
@@ -1003,39 +1041,13 @@ NTSTATUS X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
     }
 
     /* Find the Vulkan device with corresponding UUID */
-    if (!(vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION )))
+    if (!d3dkmt_use_vulkan())
     {
         WARN("Vulkan is unavailable.\n");
         return STATUS_UNSUCCESSFUL;
     }
 
     pthread_mutex_lock(&d3dkmt_mutex);
-
-    if (!d3dkmt_vk_instance)
-    {
-        memset(&create_info, 0, sizeof(create_info));
-        create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
-        create_info.ppEnabledExtensionNames = extensions;
-
-        vr = vulkan_funcs->p_vkCreateInstance(&create_info, NULL, &d3dkmt_vk_instance);
-        if (vr != VK_SUCCESS)
-        {
-            WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
-            goto done;
-        }
-    }
-
-#define LOAD_VK_FUNC(f)                                                                  \
-    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(d3dkmt_vk_instance, #f))) \
-    {                                                                                    \
-        WARN("Failed to load " #f ".\n");                                                \
-        goto done;                                                                       \
-    }
-
-    LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
-    LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)
-#undef LOAD_VK_FUNC
 
     vr = pvkEnumeratePhysicalDevices(d3dkmt_vk_instance, &device_count, NULL);
     if (vr != VK_SUCCESS || !device_count)
@@ -1079,11 +1091,6 @@ NTSTATUS X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
     }
 
 done:
-    if (d3dkmt_vk_instance && list_empty(&x11_d3dkmt_adapters))
-    {
-        vulkan_funcs->p_vkDestroyInstance(d3dkmt_vk_instance, NULL);
-        d3dkmt_vk_instance = NULL;
-    }
     pthread_mutex_unlock(&d3dkmt_mutex);
     free(vk_physical_devices);
     return status;
@@ -1091,8 +1098,6 @@ done:
 
 NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
 {
-    const struct vulkan_funcs *vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
-    PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budget;
     VkPhysicalDeviceMemoryProperties2 properties2;
     NTSTATUS status = STATUS_INVALID_PARAMETER;
@@ -1104,7 +1109,7 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
     desc->CurrentReservation = 0;
     desc->AvailableForReservation = 0;
 
-    if (!vulkan_funcs)
+    if (!d3dkmt_use_vulkan())
     {
         WARN("Vulkan is unavailable.\n");
         return STATUS_UNSUCCESSFUL;
@@ -1115,13 +1120,6 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
     {
         if (adapter->handle != desc->hAdapter)
             continue;
-
-        if (!(pvkGetPhysicalDeviceMemoryProperties2KHR = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(d3dkmt_vk_instance, "vkGetPhysicalDeviceMemoryProperties2KHR")))
-        {
-            WARN("Failed to load vkGetPhysicalDeviceMemoryProperties2KHR.\n");
-            status = STATUS_UNSUCCESSFUL;
-            goto done;
-        }
 
         memset(&budget, 0, sizeof(budget));
         budget.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
@@ -1143,7 +1141,6 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
         status = STATUS_SUCCESS;
         break;
     }
-done:
     pthread_mutex_unlock(&d3dkmt_mutex);
     return status;
 }
