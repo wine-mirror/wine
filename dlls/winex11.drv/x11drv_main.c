@@ -871,6 +871,15 @@ BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
     return FALSE;  /* let user32 handle it */
 }
 
+/* d3dkmt_lock must be held */
+static struct x11_d3dkmt_adapter *find_adapter_from_handle( D3DKMT_HANDLE handle )
+{
+    struct x11_d3dkmt_adapter *adapter;
+    LIST_FOR_EACH_ENTRY( adapter, &x11_d3dkmt_adapters, struct x11_d3dkmt_adapter, entry )
+        if (adapter->handle == handle) return adapter;
+    return NULL;
+}
+
 NTSTATUS X11DRV_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 {
     struct x11_d3dkmt_adapter *adapter;
@@ -879,16 +888,11 @@ NTSTATUS X11DRV_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
         return STATUS_UNSUCCESSFUL;
 
     pthread_mutex_lock(&d3dkmt_mutex);
-    LIST_FOR_EACH_ENTRY(adapter, &x11_d3dkmt_adapters, struct x11_d3dkmt_adapter, entry)
-    {
-        if (adapter->handle == desc->hAdapter)
-        {
-            list_remove(&adapter->entry);
-            free(adapter);
-            break;
-        }
-    }
+    if ((adapter = find_adapter_from_handle( desc->hAdapter )))
+        list_remove( &adapter->entry );
     pthread_mutex_unlock(&d3dkmt_mutex);
+
+    free(adapter);
     return STATUS_SUCCESS;
 }
 
@@ -1096,7 +1100,6 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
 {
     VkPhysicalDeviceMemoryBudgetPropertiesEXT budget;
     VkPhysicalDeviceMemoryProperties2 properties2;
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
     struct x11_d3dkmt_adapter *adapter;
     unsigned int i;
 
@@ -1112,11 +1115,8 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
     }
 
     pthread_mutex_lock(&d3dkmt_mutex);
-    LIST_FOR_EACH_ENTRY(adapter, &x11_d3dkmt_adapters, struct x11_d3dkmt_adapter, entry)
+    if ((adapter = find_adapter_from_handle(desc->hAdapter)))
     {
-        if (adapter->handle != desc->hAdapter)
-            continue;
-
         memset(&budget, 0, sizeof(budget));
         budget.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
         properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
@@ -1134,11 +1134,10 @@ NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
             }
         }
         desc->AvailableForReservation = desc->Budget / 2;
-        status = STATUS_SUCCESS;
-        break;
     }
     pthread_mutex_unlock(&d3dkmt_mutex);
-    return status;
+
+    return adapter ? STATUS_SUCCESS : STATUS_INVALID_PARAMETER;
 }
 
 NTSTATUS x11drv_client_func( enum x11drv_client_funcs id, const void *params, ULONG size )
