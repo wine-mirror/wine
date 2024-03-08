@@ -4044,6 +4044,15 @@ typedef struct _IMAGE_ARM64EC_METADATA
     ULONG  ExtraRFETableSize;
     ULONG  __os_arm64x_dispatch_fptr;
     ULONG  AuxiliaryIATCopy;
+    ULONG  __os_arm64x_helper0;
+    ULONG  __os_arm64x_helper1;
+    ULONG  __os_arm64x_helper2;
+    ULONG  __os_arm64x_helper3;
+    ULONG  __os_arm64x_helper4;
+    ULONG  __os_arm64x_helper5;
+    ULONG  __os_arm64x_helper6;
+    ULONG  __os_arm64x_helper7;
+    ULONG  __os_arm64x_helper8;
 } IMAGE_ARM64EC_METADATA;
 
 typedef struct _IMAGE_ARM64EC_REDIRECTION_ENTRY

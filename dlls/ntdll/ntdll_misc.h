@@ -170,6 +170,15 @@ extern void *__os_arm64x_dispatch_fptr;
 extern void *__os_arm64x_dispatch_ret;
 extern void *__os_arm64x_get_x64_information;
 extern void *__os_arm64x_set_x64_information;
+extern void *__os_arm64x_helper0;
+extern void *__os_arm64x_helper1;
+extern void *__os_arm64x_helper2;
+extern void *__os_arm64x_helper3;
+extern void *__os_arm64x_helper4;
+extern void *__os_arm64x_helper5;
+extern void *__os_arm64x_helper6;
+extern void *__os_arm64x_helper7;
+extern void *__os_arm64x_helper8;
 
 #endif
 
