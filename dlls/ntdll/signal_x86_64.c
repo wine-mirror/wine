@@ -88,7 +88,6 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
         }
         if (status != STATUS_UNSUCCESSFUL) return status;
     }
-    else WARN( "exception data not found for pc %p\n", (void *)context->Rip );
 
     return RtlVirtualUnwind2( type, dispatch->ImageBase, context->Rip, dispatch->FunctionEntry,
                               context, NULL, &dispatch->HandlerData, &dispatch->EstablisherFrame,
