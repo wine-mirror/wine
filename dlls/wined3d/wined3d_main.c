@@ -375,9 +375,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             ERR_(winediag)("The GLSL shader backend has been disabled. You get to keep all the pieces if it breaks.\n");
             TRACE("Use of GL Shading Language disabled.\n");
         }
-        if (!get_config_key(hkey, appkey, env, "OffscreenRenderingMode", buffer, size)
-                && !strcmp(buffer,"backbuffer"))
-            wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
         if (!get_config_key_dword(hkey, appkey, env, "VideoPciDeviceID", &tmpvalue))
         {
             int pci_device_id = tmpvalue;
