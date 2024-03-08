@@ -434,7 +434,7 @@
 @ cdecl -arch=win64 localtime(ptr) _localtime64
 @ cdecl log(double)
 @ cdecl log10(double)
-@ cdecl longjmp(ptr long) MSVCRT_longjmp
+@ cdecl longjmp(ptr long)
 @ cdecl malloc(long)
 @ cdecl mblen(ptr long)
 @ cdecl mbstowcs(ptr str long)

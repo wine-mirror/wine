@@ -20,9 +20,11 @@
 
 #if defined(__x86_64__) && !defined(__arm64ec__)
 
-#include <setjmp.h>
 #include <stdarg.h>
 #include <fpieee.h>
+#define longjmp ms_longjmp  /* avoid prototype mismatch */
+#include <setjmp.h>
+#undef longjmp
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -700,7 +702,8 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
 /*******************************************************************
  *		longjmp (MSVCRT.@)
  */
-void __cdecl MSVCRT_longjmp( _JUMP_BUFFER *jmp, int retval )
+#ifndef __WINE_PE_BUILD
+void __cdecl longjmp( _JUMP_BUFFER *jmp, int retval )
 {
     EXCEPTION_RECORD rec;
 
@@ -717,6 +720,7 @@ void __cdecl MSVCRT_longjmp( _JUMP_BUFFER *jmp, int retval )
     }
     __wine_longjmp( (__wine_jmp_buf *)jmp, retval );
 }
+#endif
 
 /*******************************************************************
  *		_local_unwind (MSVCRT.@)

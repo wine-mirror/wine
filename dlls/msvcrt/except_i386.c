@@ -27,9 +27,11 @@
 
 #ifdef __i386__
 
-#include <setjmp.h>
 #include <stdarg.h>
 #include <fpieee.h>
+#define longjmp ms_longjmp  /* avoid prototype mismatch */
+#include <setjmp.h>
+#undef longjmp
 
 #include "windef.h"
 #include "winbase.h"
@@ -1074,7 +1076,7 @@ int WINAPIV __regs__setjmp3(_JUMP_BUFFER *jmp, int nb_args, ...)
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-void CDECL MSVCRT_longjmp(_JUMP_BUFFER *jmp, int retval)
+void __cdecl longjmp(_JUMP_BUFFER *jmp, int retval)
 {
     unsigned long cur_frame = 0;
 

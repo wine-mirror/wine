@@ -704,7 +704,7 @@
 @ cdecl _locking(long long long)
 @ cdecl _logb(double) logb
 @ cdecl -arch=!i386 _logbf(float) logbf
-@ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
+@ cdecl -arch=i386 _longjmpex(ptr long) longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
@@ -1392,7 +1392,7 @@
 @ cdecl log10(double)
 @ cdecl -arch=!i386 log10f(float)
 @ cdecl -arch=!i386 logf(float)
-@ cdecl longjmp(ptr long) MSVCRT_longjmp
+@ cdecl longjmp(ptr long)
 @ cdecl malloc(long)
 @ cdecl mblen(ptr long)
 @ cdecl mbrlen(ptr long ptr)
