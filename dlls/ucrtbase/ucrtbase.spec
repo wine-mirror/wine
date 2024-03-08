@@ -94,8 +94,8 @@
 @ cdecl __fpecode()
 @ cdecl __initialize_lconv_for_unsigned_char() __lconv_init
 @ cdecl __intrinsic_abnormal_termination()
-@ cdecl -norelay __intrinsic_setjmp(ptr) MSVCRT__setjmp
-@ cdecl -arch=!i386 -norelay __intrinsic_setjmpex(ptr ptr) __wine_setjmpex
+@ cdecl -norelay __intrinsic_setjmp(ptr) _setjmp
+@ cdecl -arch=!i386 -norelay __intrinsic_setjmpex(ptr ptr) _setjmpex
 @ cdecl __isascii(long)
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
@@ -1898,7 +1898,7 @@
 @ cdecl _set_se_translator(ptr)
 @ cdecl _set_thread_local_invalid_parameter_handler(ptr)
 @ cdecl _seterrormode(long)
-@ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -arch=i386 -norelay _setjmp3(ptr long)
 @ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
@@ -2487,7 +2487,7 @@
 @ cdecl set_terminate(ptr)
 @ cdecl set_unexpected(ptr)
 @ cdecl setbuf(ptr ptr)
-@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
+@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr ptr) _setjmp
 @ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long)
 @ cdecl signal(long long)

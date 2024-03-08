@@ -268,7 +268,7 @@
 @ cdecl _scalb(double long)
 @ cdecl _searchenv(str str ptr)
 @ cdecl _seterrormode(long)
-@ cdecl -norelay _setjmp(ptr) MSVCRT__setjmp
+@ cdecl -norelay _setjmp(ptr)
 @ cdecl _setmode(long long)
 @ stub _setsystime(ptr long)
 @ cdecl _sleep(long)

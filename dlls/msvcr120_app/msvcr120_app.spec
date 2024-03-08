@@ -2013,7 +2013,7 @@
 @ varargs scanf(str) msvcr120.scanf
 @ varargs scanf_s(str) msvcr120.scanf_s
 @ cdecl setbuf(ptr ptr) msvcr120.setbuf
-@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) msvcr120.setjmp
+@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr ptr) msvcr120.setjmp
 @ cdecl setlocale(long str) msvcr120.setlocale
 @ cdecl setvbuf(ptr str long long) msvcr120.setvbuf
 @ cdecl signal(long long) msvcr120.signal

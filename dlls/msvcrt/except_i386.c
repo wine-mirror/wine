@@ -1024,8 +1024,9 @@ typedef void (__stdcall *MSVCRT_unwind_function)(const _JUMP_BUFFER *);
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp)
-int CDECL __regs_MSVCRT__setjmp(_JUMP_BUFFER *jmp)
+#undef _setjmp
+DEFINE_SETJMP_ENTRYPOINT( _setjmp )
+int CDECL __regs__setjmp(_JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
     if (jmp->Registration == ~0UL)
@@ -1041,8 +1042,8 @@ int CDECL __regs_MSVCRT__setjmp(_JUMP_BUFFER *jmp)
 /*******************************************************************
  *		_setjmp3 (MSVCRT.@)
  */
-DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 )
-int WINAPIV __regs_MSVCRT__setjmp3(_JUMP_BUFFER *jmp, int nb_args, ...)
+DEFINE_SETJMP_ENTRYPOINT( _setjmp3 )
+int WINAPIV __regs__setjmp3(_JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;
     jmp->UnwindFunc = 0;

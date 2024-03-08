@@ -1653,9 +1653,9 @@
 @ cdecl _set_printf_count_output(long)
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _seterrormode(long)
-@ cdecl -norelay _setjmp(ptr) MSVCRT__setjmp
-@ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ cdecl -arch=!i386 -norelay _setjmpex(ptr ptr) __wine_setjmpex
+@ cdecl -norelay _setjmp(ptr)
+@ cdecl -arch=i386 -norelay _setjmp3(ptr long)
+@ cdecl -arch=!i386 -norelay _setjmpex(ptr ptr)
 @ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
@@ -2349,7 +2349,7 @@
 @ varargs scanf(str)
 @ varargs scanf_s(str)
 @ cdecl setbuf(ptr ptr)
-@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
+@ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr ptr) _setjmp
 @ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long)
 @ cdecl signal(long long)

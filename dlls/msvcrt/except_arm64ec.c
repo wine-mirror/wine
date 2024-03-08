@@ -106,15 +106,6 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
 
 
 /*******************************************************************
- *		_setjmp (MSVCRT.@)
- */
-int __attribute__((naked)) MSVCRT__setjmp( jmp_buf buf )
-{
-    asm( "b " __ASM_NAME("__wine_setjmpex") );
-}
-
-
-/*******************************************************************
  *		longjmp (MSVCRT.@)
  */
 void __cdecl MSVCRT_longjmp( _JUMP_BUFFER *jmp, int retval )

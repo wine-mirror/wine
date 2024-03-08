@@ -516,8 +516,8 @@
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _set_security_error_handler(ptr)
 @ cdecl _seterrormode(long)
-@ cdecl -norelay _setjmp(ptr) MSVCRT__setjmp
-@ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
+@ cdecl -norelay _setjmp(ptr)
+@ cdecl -arch=i386 -norelay _setjmp3(ptr long)
 @ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
