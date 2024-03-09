@@ -874,15 +874,15 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 
     /* Now try to match key codes for certain common punctuation characters to
        the most common OEM vkeys (e.g. '.' to VK_OEM_PERIOD). */
-    for (i = 0; i < ARRAY_SIZE(symbol_vkeys); i++)
+    for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
     {
-        vkey = symbol_vkeys[i].vkey;
-
-        if (vkey_used[vkey])
-            continue;
-
-        for (combo = 0; combo < ARRAY_SIZE(modifier_combos); combo++)
+        for (i = 0; i < ARRAY_SIZE(symbol_vkeys); i++)
         {
+            vkey = symbol_vkeys[i].vkey;
+
+            if (vkey_used[vkey])
+                continue;
+
             for (keyc = 0; keyc < ARRAY_SIZE(map); keyc++)
             {
                 if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
@@ -898,9 +898,6 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
                     break;
                 }
             }
-
-            if (vkey_used[vkey])
-                break;
         }
     }
 
