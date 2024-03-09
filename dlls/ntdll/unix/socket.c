@@ -371,7 +371,6 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     }
 }
 
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 static WSACMSGHDR *fill_control_message( int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len )
 {
     ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
@@ -513,14 +512,6 @@ error:
     control->len = 0;
     return 0;
 }
-#else
-static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
-{
-    ERR( "Message control headers cannot be properly supported on this system.\n" );
-    control->len = 0;
-    return 0;
-}
-#endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
 struct cmsghdr_32
 {
@@ -721,9 +712,7 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
 
 static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *size )
 {
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     char control_buffer[512];
-#endif
     union unix_sockaddr unix_addr;
     struct msghdr hdr;
     NTSTATUS status;
@@ -737,10 +726,9 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     }
     hdr.msg_iov = async->iov;
     hdr.msg_iovlen = async->count;
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     hdr.msg_control = control_buffer;
     hdr.msg_controllen = sizeof(control_buffer);
-#endif
+
     while ((ret = virtual_locked_recvmsg( fd, &hdr, async->unix_flags )) < 0 && errno == EINTR);
 
     if (ret < 0)

@@ -872,35 +872,30 @@ void wine_server_send_fd( int fd )
     struct send_fd data;
     struct msghdr msghdr;
     struct iovec vec;
-    int ret;
-
-#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    msghdr.msg_accrights    = (void *)&fd;
-    msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     char cmsg_buffer[256];
     struct cmsghdr *cmsg;
-    msghdr.msg_control    = cmsg_buffer;
-    msghdr.msg_controllen = sizeof(cmsg_buffer);
-    msghdr.msg_flags      = 0;
-    cmsg = CMSG_FIRSTHDR( &msghdr );
-    cmsg->cmsg_len   = CMSG_LEN( sizeof(fd) );
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type  = SCM_RIGHTS;
-    *(int *)CMSG_DATA(cmsg) = fd;
-    msghdr.msg_controllen = cmsg->cmsg_len;
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+    int ret;
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
+    msghdr.msg_control = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
+    msghdr.msg_flags   = 0;
 
     vec.iov_base = (void *)&data;
     vec.iov_len  = sizeof(data);
 
     data.tid = GetCurrentThreadId();
     data.fd  = fd;
+
+    cmsg = CMSG_FIRSTHDR( &msghdr );
+    cmsg->cmsg_len   = CMSG_LEN( sizeof(fd) );
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type  = SCM_RIGHTS;
+    *(int *)CMSG_DATA(cmsg) = fd;
+    msghdr.msg_controllen = cmsg->cmsg_len;
 
     for (;;)
     {
@@ -922,22 +917,17 @@ static int receive_fd( obj_handle_t *handle )
 {
     struct iovec vec;
     struct msghdr msghdr;
-    int ret, fd = -1;
-
-#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    msghdr.msg_accrights    = (void *)&fd;
-    msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
     char cmsg_buffer[256];
-    msghdr.msg_control    = cmsg_buffer;
-    msghdr.msg_controllen = sizeof(cmsg_buffer);
-    msghdr.msg_flags      = 0;
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+    int ret, fd = -1;
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
+    msghdr.msg_control = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
+    msghdr.msg_flags   = 0;
+
     vec.iov_base = (void *)handle;
     vec.iov_len  = sizeof(*handle);
 
@@ -945,7 +935,6 @@ static int receive_fd( obj_handle_t *handle )
     {
         if ((ret = recvmsg( fd_socket, &msghdr, MSG_CMSG_CLOEXEC )) > 0)
         {
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
             struct cmsghdr *cmsg;
             for (cmsg = CMSG_FIRSTHDR( &msghdr ); cmsg; cmsg = CMSG_NXTHDR( &msghdr, cmsg ))
             {
@@ -959,7 +948,6 @@ static int receive_fd( obj_handle_t *handle )
                 }
 #endif
             }
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
             if (fd != -1) fcntl( fd, F_SETFD, FD_CLOEXEC ); /* in case MSG_CMSG_CLOEXEC is not supported */
             return fd;
         }
