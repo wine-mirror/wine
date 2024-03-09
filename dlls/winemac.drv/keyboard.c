@@ -398,6 +398,27 @@ static const struct {
     { VK_VOLUME_UP | 0x100,     "Volume Up" },
 };
 
+
+static const struct {
+    WCHAR       wchar;
+    const char *name;
+} dead_key_names[] = {
+    { '^',                      "CIRCUMFLEX ACCENT" },
+    { '`',                      "GRAVE ACCENT" },
+    { 0x00B4,                   "ACUTE ACCENT" },
+    { '~',                      "TILDE" },
+    { 0x00A8,                   "DIAERESIS" },
+    { 0x00B8,                   "CEDILLA" },
+    { 0x02D8,                   "BREVE" },
+    { 0x02D9,                   "DOT ABOVE" },
+    { 0x00AF,                   "MACRON" },
+    { 0x02DA,                   "RING ABOVE" },
+    { 0x02DB,                   "OGONEK" },
+    { 0x02DC,                   "SMALL TILDE" },
+    { 0x02DD,                   "DOUBLE ACUTE ACCENT" },
+};
+
+
 static Boolean char_matches_string(WCHAR wchar, UniChar *string, CollatorRef collatorRef)
 {
     Boolean equivalent;
@@ -1385,6 +1406,20 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
             if (!len)
                 break;
+
+            if (status == noErr && deadKeyState)
+            {
+                for (i = 0; i < ARRAY_SIZE(dead_key_names); i++)
+                {
+                    if (dead_key_names[i].wchar == buffer[0])
+                    {
+                        len = min(strlen(dead_key_names[i].name) + 1, size);
+                        ascii_to_unicode(buffer, dead_key_names[i].name, len);
+                        if (len) buffer[--len] = 0;
+                        break;
+                    }
+                }
+            }
 
             if (status == noErr && len == 1 && buffer[0] >= 'a' && buffer[0] <= 'z')
                 buffer[0] += 'A' - 'a';
