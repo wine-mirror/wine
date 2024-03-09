@@ -16356,7 +16356,7 @@ CPPFLAGS=$ac_save_CPPFLAGS
 
         if test "x$with_wayland" != "x"
         then
-            if test -z "$ac_cv_lib_soname_EGL" -o -z "$HAVE_LIBWAYLAND_EGL"
+            if test -z "$ac_cv_lib_soname_EGL" -o "$ac_cv_lib_wayland_egl_wl_egl_window_create" != yes
 then :
   case "x$with_opengl" in
   x)   as_fn_append wine_notices "|EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL" ;;

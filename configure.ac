@@ -1392,7 +1392,7 @@ then
                   [WAYLAND_EGL_LIBS=""],[$WAYLAND_EGL_LIBS])])])
         if test "x$with_wayland" != "x"
         then
-            WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL" -o -z "$HAVE_LIBWAYLAND_EGL"],
+            WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL" -o "$ac_cv_lib_wayland_egl_wl_egl_window_create" != yes],
                 [EGL ${notice_platform}development files not found, the Wayland driver won't support OpenGL])
         fi
     fi
