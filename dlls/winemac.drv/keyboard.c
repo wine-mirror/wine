@@ -689,6 +689,10 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         { '`', VK_OEM_3 },
         { '[', VK_OEM_4 },
         { '~', VK_OEM_3 },
+        { 0x00DF, VK_OEM_4 }, /* 0x00DF is ESZETT */
+        { 0x00FC, VK_OEM_1 }, /* 0x00FC is German U Umlaut */
+        { 0x00F6, VK_OEM_3 }, /* 0x00F6 is German O Umlaut */
+        { 0x00E4, VK_OEM_7 }, /* 0x00B4 is German A Umlaut */
         { '?', VK_OEM_2 },
         { ']', VK_OEM_6 },
         { '/', VK_OEM_2 },
@@ -711,6 +715,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         { '^', VK_OEM_6 },
         { '*', VK_OEM_2 },
         { '{', VK_OEM_6 },
+        { 0x00B4, VK_OEM_6 },
         { '~', VK_OEM_1 },
         { '?', VK_OEM_PLUS },
         { '?', VK_OEM_4 },
@@ -720,6 +725,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
         { ']', VK_OEM_4 },
         { '\'', VK_OEM_3 },
         { 0x00A7, VK_OEM_7 },
+        { '<', VK_OEM_102 },
     };
     int i;
 
