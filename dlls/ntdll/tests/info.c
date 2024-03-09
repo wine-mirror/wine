@@ -2677,6 +2677,59 @@ static void test_query_process_debug_flags(int argc, char **argv)
     }
 }
 
+static void test_query_process_quota_limits(void)
+{
+    QUOTA_LIMITS qlimits;
+    NTSTATUS status;
+    HANDLE process;
+    ULONG ret_len;
+
+    status = NtQueryInformationProcess(NULL, ProcessQuotaLimits, NULL, sizeof(qlimits), NULL);
+    ok(status == STATUS_INVALID_HANDLE, "NtQueryInformationProcess failed, status %#lx.\n", status);
+
+    status = NtQueryInformationProcess(NULL, ProcessQuotaLimits, &qlimits, sizeof(qlimits), NULL);
+    ok(status == STATUS_INVALID_HANDLE, "NtQueryInformationProcess failed, status %#lx.\n", status);
+
+    process = GetCurrentProcess();
+    status = NtQueryInformationProcess( process, ProcessQuotaLimits, &qlimits, 2, &ret_len);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationProcess failed, status %#lx.\n", status);
+
+    memset(&qlimits, 0, sizeof(qlimits));
+    status = NtQueryInformationProcess( process, ProcessQuotaLimits, &qlimits, sizeof(qlimits), &ret_len);
+    ok(status == STATUS_SUCCESS, "NtQueryInformationProcess failed, status %#lx.\n", status);
+    ok(sizeof(qlimits) == ret_len, "len set to %lx\n", ret_len);
+    ok(qlimits.MinimumWorkingSetSize == 204800,"Expected MinimumWorkingSetSize = 204800, got %s\n",
+        wine_dbgstr_longlong(qlimits.MinimumWorkingSetSize));
+    ok(qlimits.MaximumWorkingSetSize == 1413120,"Expected MaximumWorkingSetSize = 1413120, got %s\n",
+        wine_dbgstr_longlong(qlimits.MaximumWorkingSetSize));
+    ok(qlimits.PagefileLimit == ~0,"Expected PagefileLimit = ~0, got %s\n",
+        wine_dbgstr_longlong(qlimits.PagefileLimit));
+    ok(qlimits.TimeLimit.QuadPart == ~0,"Expected TimeLimit = ~0, got %s\n",
+        wine_dbgstr_longlong(qlimits.TimeLimit.QuadPart));
+
+    if (winetest_debug > 1)
+    {
+        trace("Quota Limits:\n");
+        trace("PagedPoolLimit: %s\n", wine_dbgstr_longlong(qlimits.PagedPoolLimit));
+        trace("NonPagedPoolLimit: %s\n", wine_dbgstr_longlong(qlimits.NonPagedPoolLimit));
+    }
+
+    memset(&qlimits, 0, sizeof(qlimits));
+    status = NtQueryInformationProcess( process, ProcessQuotaLimits, &qlimits, sizeof(qlimits) * 2, &ret_len);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationProcess failed, status %#lx.\n", status);
+    ok(sizeof(qlimits) == ret_len, "len set to %lx\n", ret_len);
+
+    memset(&qlimits, 0, sizeof(qlimits));
+    status = NtQueryInformationProcess( process, ProcessQuotaLimits, &qlimits, sizeof(qlimits) - 1, &ret_len);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationProcess failed, status %#lx.\n", status);
+    ok(sizeof(qlimits) == ret_len, "len set to %lx\n", ret_len);
+
+    memset(&qlimits, 0, sizeof(qlimits));
+    status = NtQueryInformationProcess( process, ProcessQuotaLimits, &qlimits, sizeof(qlimits) + 1, &ret_len);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationProcess failed, status %#lx.\n", status);
+    ok(sizeof(qlimits) == ret_len, "len set to %lx\n", ret_len);
+}
+
 static void test_readvirtualmemory(void)
 {
     HANDLE process;
@@ -3886,6 +3939,7 @@ START_TEST(info)
     test_query_process_debug_object_handle(argc, argv);
     test_query_process_debug_flags(argc, argv);
     test_query_process_image_info();
+    test_query_process_quota_limits();
     test_mapprotection();
     test_threadstack();
 
