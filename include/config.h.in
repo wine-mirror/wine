@@ -414,9 +414,6 @@
 /* Define to 1 if `ips_total' is a member of `struct ip_stats'. */
 #undef HAVE_STRUCT_IP_STATS_IPS_TOTAL
 
-/* Define to 1 if `msg_accrights' is a member of `struct msghdr'. */
-#undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-
 /* Define to 1 if `mt_blkno' is a member of `struct mtget'. */
 #undef HAVE_STRUCT_MTGET_MT_BLKNO
 

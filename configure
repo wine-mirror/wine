@@ -21014,19 +21014,6 @@ printf "%s\n" "#define HAVE_LINUX_GETHOSTBYNAME_R_6 1" >>confdefs.h
 
    fi
 
-ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
-#include <sys/socket.h>
-#ifdef HAVE_SYS_UN_H
-# include <sys/un.h>
-#endif
-"
-if test "x$ac_cv_member_struct_msghdr_msg_accrights" = xyes
-then :
-
-printf "%s\n" "#define HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS 1" >>confdefs.h
-
-
-fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr_un" "sun_len" "ac_cv_member_struct_sockaddr_un_sun_len" "#include <sys/types.h>
 #include <sys/socket.h>
 #ifdef HAVE_SYS_UN_H
