@@ -257,12 +257,7 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, &effect, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
-    if (FAILED(hr))
-    {
-        skip("Failed to compile effect, skipping test.\n");
-        return;
-    }
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
     ok(hr == E_NOINTERFACE, "QueryInterface failed, got %lx, expected %lx (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
@@ -8041,15 +8036,12 @@ static void test_create_effect_from_file(void)
     /* This is apparently broken on native, it ends up using the wrong include. */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
             0, NULL, &effect, &messages);
-    todo_wine
     ok(hr == E_FAIL, "Unexpected error, hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
         ID3DXBuffer_Release(messages);
     }
-    if (effect)
-        effect->lpVtbl->Release(effect);
 
     delete_file("effect1.fx");
     delete_file("effect2.fx");
@@ -8067,7 +8059,6 @@ static void test_create_effect_from_file(void)
      * is "ID3DXEffectCompiler: There were no techniques" */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, &include.ID3DXInclude_iface, NULL,
             0, NULL, &effect, &messages);
-    todo_wine
     ok(hr == E_FAIL, "D3DXInclude test failed with error %#lx.\n", hr);
     if (messages)
     {
