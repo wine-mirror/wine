@@ -9875,6 +9875,36 @@ static void test_effect_fx_4_1_blend_state(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_effect_compiler(void)
+{
+    static char empty_effect[] = "technique10 {};";
+    D3D10_EFFECT_DESC desc;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    ID3D10Blob *blob;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = D3D10CompileEffectFromMemory(empty_effect, sizeof(empty_effect), NULL, NULL, NULL, 0, 0,
+            &blob, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = create_effect(ID3D10Blob_GetBufferPointer(blob), 0, device, NULL, &effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D10Effect_GetDesc(effect, &desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
+    ID3D10Effect_Release(effect);
+
+    ID3D10Device_Release(device);
+    ID3D10Blob_Release(blob);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -9903,4 +9933,5 @@ START_TEST(effect)
     test_effect_value_expression();
     test_effect_fx_4_1();
     test_effect_fx_4_1_blend_state();
+    test_effect_compiler();
 }
