@@ -601,6 +601,20 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
         return S_OK;
     }
 
+    /* Unlike other effect profiles fx_4_x is using DXBC container. */
+    if (!strcmp(profile, "fx_4_0") || !strcmp(profile, "fx_4_1"))
+    {
+        struct vkd3d_shader_dxbc_section_desc section = { .tag = TAG_FX10, .data = byte_code };
+        struct vkd3d_shader_code dxbc;
+
+        ret = vkd3d_shader_serialize_dxbc(1, &section, &dxbc, NULL);
+        vkd3d_shader_free_shader_code(&byte_code);
+        if (ret)
+            return hresult_from_vkd3d_result(ret);
+
+        byte_code = dxbc;
+    }
+
     if (SUCCEEDED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
         memcpy(ID3D10Blob_GetBufferPointer(*shader_blob), byte_code.code, byte_code.size);
 
