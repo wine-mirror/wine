@@ -535,6 +535,17 @@ NTSTATUS WINAPI wow64_NtListenPort( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtMakePermanentObject
+ */
+NTSTATUS WINAPI wow64_NtMakePermanentObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtMakePermanentObject( handle );
+}
+
+
+/**********************************************************************
  *           wow64_NtMakeTemporaryObject
  */
 NTSTATUS WINAPI wow64_NtMakeTemporaryObject( UINT *args )

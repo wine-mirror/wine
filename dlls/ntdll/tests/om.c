@@ -3163,6 +3163,7 @@ static void test_object_permanence(void)
         ULONG initial_attr;
         ACCESS_MASK access;
         BOOLEAN make_temporary;
+        BOOLEAN make_permanent;
         NTSTATUS make_temp_status;
     } tests[] = {
         {
@@ -3184,6 +3185,20 @@ static void test_object_permanence(void)
             .make_temporary   = TRUE,
             .make_temp_status = STATUS_ACCESS_DENIED,
         },
+        {
+            .name = "NtMakePermanentObject() succeeds even if already permanent",
+            .initial_attr     = OBJ_PERMANENT,
+            .access           = EVENT_ALL_ACCESS & ~DELETE,
+            .make_permanent   = TRUE,
+        },
+        {
+            .name = "NtMakePermanentObject() reverses effect of NtMakeTemporaryObject()",
+            .initial_attr     = OBJ_PERMANENT,
+            .access           = GENERIC_ALL,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_SUCCESS,
+            .make_permanent   = TRUE,
+        },
 
         {
             .name = "temporary object disappears",
@@ -3203,6 +3218,20 @@ static void test_object_permanence(void)
             .access           = EVENT_ALL_ACCESS & ~DELETE,
             .make_temporary   = TRUE,
             .make_temp_status = STATUS_ACCESS_DENIED,
+        },
+        {
+            .name = "NtMakePermanentObject() makes an object persist",
+            .initial_attr     = 0,
+            .access           = EVENT_ALL_ACCESS & ~DELETE,
+            .make_permanent   = TRUE,
+        },
+        {
+            .name = "NtMakePermanentObject() is not annulled by calling NtMakeTemporaryObject() on an already temporary object",
+            .initial_attr     = 0,
+            .access           = GENERIC_ALL,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_SUCCESS,
+            .make_permanent   = TRUE,
         },
     };
     const struct object_permanence_test *test;
@@ -3316,6 +3345,14 @@ static void test_object_permanence(void)
             NtClose( handle2 );
         }
         winetest_pop_context();
+
+        if (test->make_permanent)
+        {
+            status = NtMakePermanentObject( handle );
+            todo_wine_if(status == STATUS_SUCCESS || status == STATUS_PRIVILEGE_NOT_HELD)
+            ok( status == make_perma_status, "NtMakePermanentObject returned %08lx expected (%08lx)\n", status, make_perma_status );
+            if (!NT_ERROR(status)) is_permanent = TRUE;
+        }
 
         if (winetest_debug > 1)
             trace( "NOTE: about to close earlier handle (%p) which should be the last", handle );

@@ -1273,6 +1273,26 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject( HANDLE handle, UNICODE_STRING *target
 
 
 /**************************************************************************
+ *		NtMakePermanentObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtMakePermanentObject( HANDLE handle )
+{
+    unsigned int ret;
+
+    TRACE("%p\n", handle);
+
+    SERVER_START_REQ( set_object_permanence )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->permanent = 1;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
  *		NtMakeTemporaryObject (NTDLL.@)
  */
 NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE handle )

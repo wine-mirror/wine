@@ -611,6 +611,11 @@ NTSTATUS SYSCALL_API NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *s
     SYSCALL_FUNC( NtLockVirtualMemory );
 }
 
+NTSTATUS SYSCALL_API NtMakePermanentObject( HANDLE handle )
+{
+    SYSCALL_FUNC( NtMakePermanentObject );
+}
+
 NTSTATUS SYSCALL_API NtMakeTemporaryObject( HANDLE handle )
 {
     SYSCALL_FUNC( NtMakeTemporaryObject );

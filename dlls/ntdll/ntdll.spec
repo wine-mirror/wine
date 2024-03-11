@@ -253,7 +253,7 @@
 # @ stub NtLockProductActivationKeys
 # @ stub NtLockRegistryKey
 @ stdcall -syscall NtLockVirtualMemory(long ptr ptr long)
-# @ stub NtMakePermanentObject
+@ stdcall -syscall NtMakePermanentObject(long)
 @ stdcall -syscall NtMakeTemporaryObject(long)
 # @ stub NtMapUserPhysicalPages
 # @ stub NtMapUserPhysicalPagesScatter
@@ -1302,7 +1302,7 @@
 # @ stub ZwLockProductActivationKeys
 # @ stub ZwLockRegistryKey
 @ stdcall -private -syscall ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
-# @ stub ZwMakePermanentObject
+@ stdcall -private -syscall ZwMakePermanentObject(long) NtMakePermanentObject
 @ stdcall -private -syscall ZwMakeTemporaryObject(long) NtMakeTemporaryObject
 # @ stub ZwMapUserPhysicalPages
 # @ stub ZwMapUserPhysicalPagesScatter
