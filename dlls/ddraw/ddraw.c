@@ -3868,7 +3868,10 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
      * never have POW2 unset in d3d7 on windows. */
     if (ddraw->d3dversion != 1)
     {
-        static CHAR reference_description[] = "RGB Direct3D emulation";
+        /* Tomb Raider 3 overwrites the reference device description buffer
+         * with its own custom string. Reserve some extra space in the array
+         * to avoid a buffer overrun. */
+        static CHAR reference_description[64] = "RGB Direct3D emulation";
 
         TRACE("Enumerating WineD3D D3DDevice interface.\n");
         hal_desc = device_desc1;
