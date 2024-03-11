@@ -37,6 +37,7 @@ namespace Windows.UI.ViewManagement
     typedef enum HandPreference HandPreference;
     typedef enum UIColorType UIColorType;
     typedef enum UIElementType UIElementType;
+    typedef enum UserInteractionMode UserInteractionMode;
 
     interface IUISettings;
     interface IUISettings2;
@@ -44,6 +45,9 @@ namespace Windows.UI.ViewManagement
     interface IUISettings4;
     interface IUISettings5;
     interface IUISettings6;
+
+    interface IUIViewSettings;
+    interface IUIViewSettingsStatics;
 
     interface IInputPane;
     interface IInputPane2;
@@ -53,6 +57,7 @@ namespace Windows.UI.ViewManagement
     interface IInputPaneStatics2;
 
     runtimeclass UISettings;
+    runtimeclass UIViewSettings;
     runtimeclass InputPane;
     runtimeclass InputPaneVisibilityEventArgs;
 
@@ -134,6 +139,15 @@ namespace Windows.UI.ViewManagement
     };
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UserInteractionMode
+    {
+        Mouse = 0,
+        Touch = 1,
+    };
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         exclusiveto(Windows.UI.ViewManagement.UISettings),
         uuid(85361600-1c63-4627-bcb1-3a89e0bc9c55)
@@ -179,6 +193,26 @@ namespace Windows.UI.ViewManagement
         [eventadd] HRESULT ColorValuesChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *> *handler,
                                               [out, retval] EventRegistrationToken *cookie);
         [eventremove] HRESULT ColorValuesChanged([in] EventRegistrationToken cookie);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.UIViewSettings),
+        uuid(c63657f6-8850-470d-88f8-455e16ea2c26)
+    ]
+    interface IUIViewSettings : IInspectable
+    {
+        [propget] HRESULT UserInteractionMode([out, retval] Windows.UI.ViewManagement.UserInteractionMode *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.UIViewSettings),
+        uuid(595c97a5-f8f6-41cf-b0fb-aacdb81fd5f6)
+    ]
+    interface IUIViewSettingsStatics : IInspectable
+    {
+        HRESULT GetForCurrentView([out, retval] Windows.UI.ViewManagement.UIViewSettings **current);
     }
 
     [
@@ -259,6 +293,16 @@ namespace Windows.UI.ViewManagement
         [default] interface Windows.UI.ViewManagement.IUISettings;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings2;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings3;
+    }
+
+    [
+        static(Windows.UI.ViewManagement.IUIViewSettingsStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UIViewSettings
+    {
+        [default] interface Windows.UI.ViewManagement.IUIViewSettings;
     }
 
     [
