@@ -5,4 +5,5 @@ SOURCES = \
 	classes.idl \
 	inputpane.c \
 	main.c \
-	uisettings.c
+	uisettings.c \
+	uiviewsettings.c

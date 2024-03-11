@@ -37,6 +37,7 @@
 #include "windows.ui.viewmanagement.h"
 
 extern IActivationFactory *uisettings_factory;
+extern IActivationFactory *uiviewsettings_factory;
 extern IActivationFactory *inputpane_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
