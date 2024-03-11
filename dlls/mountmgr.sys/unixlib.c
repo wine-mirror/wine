@@ -127,7 +127,7 @@ static void detect_devices( const char **paths, char *names, ULONG size )
 
         for (;;)
         {
-            int len = sprintf( unix_path, *paths, i++ );
+            int len = snprintf( unix_path, sizeof(unix_path), *paths, i++ );
             if (len + 2 > size) break;
             if (access( unix_path, F_OK ) != 0) break;
             strcpy( names, unix_path );
