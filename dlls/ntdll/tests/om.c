@@ -3156,6 +3156,131 @@ static void test_null_in_object_name(void)
         skip("Limited access to \\Registry\\Machine\\Software key, skipping the tests\n");
 }
 
+static void test_object_permanence(void)
+{
+    static const struct object_permanence_test {
+        const char *name;
+        ULONG initial_attr;
+    } tests[] = {
+        {
+            .name = "permanent object persists",
+            .initial_attr     = OBJ_PERMANENT,
+        },
+        {
+            .name = "temporary object disappears",
+            .initial_attr     = 0,
+        },
+    };
+    const struct object_permanence_test *test;
+    HANDLE process_token = NULL, thread_token = NULL;
+    SECURITY_QUALITY_OF_SERVICE token_qos = {
+        .Length = sizeof(token_qos),
+        .ImpersonationLevel = SecurityDelegation,
+        .ContextTrackingMode = SECURITY_STATIC_TRACKING,
+        .EffectiveOnly = FALSE,
+    };
+    OBJECT_ATTRIBUTES token_attr = {
+        .Length = sizeof(token_attr),
+        .SecurityQualityOfService = &token_qos,
+    };
+    TOKEN_PRIVILEGES new_privs = {
+        .PrivilegeCount = 1,
+        .Privileges = {
+            {
+                .Luid = { .LowPart = SE_CREATE_PERMANENT_PRIVILEGE },
+                .Attributes = SE_PRIVILEGE_ENABLED,
+            },
+        },
+    };
+    NTSTATUS status;
+    BOOL creatpermapriv = FALSE;
+
+    status = NtOpenProcessToken( GetCurrentProcess(), TOKEN_DUPLICATE, &process_token );
+    ok( status == STATUS_SUCCESS, "NtOpenProcessToken returned %08lx\n", status );
+
+    status = NtDuplicateToken( process_token, TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES,
+                               &token_attr, FALSE, TokenImpersonation, &thread_token );
+    ok( status == STATUS_SUCCESS, "NtDuplicateToken returned %08lx\n", status );
+    NtClose( process_token );
+
+    status = NtAdjustPrivilegesToken( thread_token, FALSE, &new_privs, sizeof(new_privs), NULL, NULL );
+    ok( status == STATUS_SUCCESS || status == STATUS_NOT_ALL_ASSIGNED, "NtAdjustPrivilegesToken returned %08lx\n", status );
+    creatpermapriv = (status == STATUS_SUCCESS);
+
+    status = NtSetInformationThread( GetCurrentThread(), ThreadImpersonationToken, &thread_token, sizeof(thread_token) );
+    ok( status == STATUS_SUCCESS, "NtSetInformationThread returned %08lx\n", status );
+    NtClose( thread_token );
+
+    if (!creatpermapriv) skip( "no privileges, tests may be limited\n" );
+
+    for (test = &tests[0]; test != &tests[ARRAY_SIZE(tests)]; test++)
+    {
+        NTSTATUS make_perma_status = creatpermapriv ? STATUS_SUCCESS : STATUS_PRIVILEGE_NOT_HELD;
+        HANDLE handle;
+        OBJECT_BASIC_INFORMATION obi;
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING name;
+        BOOL is_permanent;
+        ULONG len = 0;
+
+        winetest_push_context( "test#%Iu", test - &tests[0] );
+        trace( "(%s)\n", test->name );
+
+        RtlInitUnicodeString( &name, L"\\BaseNamedObjects\\test_object_permanence" );
+        InitializeObjectAttributes( &attr, &name, test->initial_attr, 0, NULL );
+        status = NtCreateEvent( &handle, GENERIC_ALL, &attr, NotificationEvent, FALSE );
+        if (test->initial_attr & OBJ_PERMANENT)
+        {
+            todo_wine_if(status == STATUS_SUCCESS || status == STATUS_PRIVILEGE_NOT_HELD)
+            ok( status == make_perma_status, "NtCreateEvent returned %08lx (expected %08lx)\n", status, make_perma_status );
+        }
+        else
+        {
+            ok( status == STATUS_SUCCESS, "NtCreateEvent returned %08lx\n", status );
+        }
+        if (NT_ERROR(status))
+        {
+            winetest_pop_context();
+            continue;
+        }
+        is_permanent = (test->initial_attr & OBJ_PERMANENT) != 0;
+
+        status = NtQueryObject( handle, ObjectBasicInformation, &obi, sizeof(obi), &len );
+        ok( status == STATUS_SUCCESS, "NtQueryObject returned %08lx\n", status );
+        todo_wine_if(test->initial_attr != 0)
+        ok( obi.Attributes == test->initial_attr, "expected attr %08lx, got %08lx\n", test->initial_attr, obi.Attributes );
+
+        if (winetest_debug > 1)
+            trace( "NOTE: about to close earlier handle (%p) which should be the last", handle );
+        NtClose( handle );
+
+        winetest_push_context( "first handle closed" );
+        status = NtOpenEvent( &handle, GENERIC_ALL, &attr );
+        ok( status == (is_permanent ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND), "NtOpenEvent returned %08lx\n", status );
+        if (!NT_ERROR(status))
+        {
+            ULONG expect_attr = obi.Attributes;
+            OBJECT_BASIC_INFORMATION obi_new;
+
+            status = NtQueryObject( handle, ObjectBasicInformation, &obi_new, sizeof(obi_new), &len );
+            ok( status == STATUS_SUCCESS, "NtQueryObject returned %08lx\n", status );
+            todo_wine_if(expect_attr != 0)
+            ok( obi_new.Attributes == expect_attr, "expected attr %08lx, got %08lx\n", expect_attr, obi_new.Attributes );
+
+            /* ensure object is deleted */
+            NtMakeTemporaryObject( handle );
+            NtClose( handle );
+        }
+        winetest_pop_context();
+
+        winetest_pop_context();
+    }
+
+    thread_token = NULL;
+    status = NtSetInformationThread( GetCurrentThread(), ThreadImpersonationToken, &thread_token, sizeof(thread_token) );
+    ok( status == STATUS_SUCCESS, "NtSetInformationThread returned %08lx\n", status );
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -3219,4 +3344,5 @@ START_TEST(om)
     test_globalroot();
     test_object_identity();
     test_query_directory();
+    test_object_permanence();
 }
