@@ -452,6 +452,29 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
 
 
 /*************************************************************************
+ *		RtlWalkFrameChain (NTDLL.@)
+ */
+ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
+{
+    CONTEXT context;
+    ULONG *frame;
+    ULONG i, skip = flags >> 8, pos = 0;
+
+    RtlCaptureContext( &context );
+
+    for (i = 0; i < count; i++)
+    {
+        if (!is_valid_frame( context.Ebp )) break;
+        if (i >= skip) buffer[pos++] = (void *)context.Eip;
+        frame = (ULONG *)context.Ebp;
+        context.Ebp = frame[0];
+        context.Eip = frame[1];
+    }
+    return pos;
+}
+
+
+/*************************************************************************
  *		RtlCaptureStackBackTrace (NTDLL.@)
  */
 USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
