@@ -721,6 +721,7 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     unsigned short i = 0;
     IMFStreamSink *sink;
     IUnknown *object;
+    TOPOID topoid;
     HRESULT hr = E_FAIL;
 
     FIXME("iface %p, input_topology %p, ret_topology %p, current_topology %p stub!\n",
@@ -763,7 +764,8 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
             return hr;
     }
 
-    if (FAILED(hr = MFCreateTopology(&output_topology)))
+    IMFTopology_GetTopologyID(input_topology, &topoid);
+    if (FAILED(hr = create_topology(topoid, &output_topology)))
         return hr;
 
     IMFTopology_CopyAllItems(input_topology, (IMFAttributes *)output_topology);
