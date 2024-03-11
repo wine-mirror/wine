@@ -1893,12 +1893,95 @@ int __attribute__((naked)) NTDLL__setjmpex( _JUMP_BUFFER *buf, void *frame )
 }
 
 
+/**********************************************************************
+ *           call_consolidate_callback
+ *
+ * Wrapper function to call a consolidate callback from a fake frame.
+ * If the callback executes RtlUnwindEx (like for example done in C++ handlers),
+ * we have to skip all frames which were already processed. To do that we
+ * trick the unwinding functions into thinking the call came from somewhere
+ * else.
+ */
+static void __attribute__((naked,noreturn)) consolidate_callback( CONTEXT *context,
+                                                                  void *(CALLBACK *callback)(EXCEPTION_RECORD *),
+                                                                  EXCEPTION_RECORD *rec )
+{
+    asm( ".seh_proc consolidate_callback\n\t"
+         "stp x29, x30, [sp, #-16]!\n\t"
+         ".seh_save_fplr_x 16\n\t"
+         "sub sp, sp, #0x4d0\n\t"
+         ".seh_stackalloc 0x4d0\n\t"
+         ".seh_endprologue\n\t"
+         "mov x4, sp\n\t"
+         /* copy the context onto the stack */
+         "mov x5, #0x4d0/16\n"      /* sizeof(CONTEXT) */
+         "1:\tldp x6, x7, [x0], #16\n\t"
+         "stp x6, x7, [x4], #16\n\t"
+         "subs x5, x5, #1\n\t"
+         "b.ne 1b\n\t"
+         "mov x0, x2\n\t"           /* rec */
+         "b invoke_callback\n\t"
+         ".seh_endproc\n\t"
+         ".seh_proc invoke_callback\n"
+         "invoke_callback:\n\t"
+         ".seh_ec_context\n\t"
+         ".seh_endprologue\n\t"
+         "mov x11, x1\n\t"          /* callback */
+         "adr x10, $iexit_thunk$cdecl$i8$i8\n\t"
+         "adrp x16, __os_arm64x_dispatch_icall\n\t"
+         "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_icall]\n\t"
+         "blr x16\n\t"
+         "blr x11\n\t"
+         "str x0, [sp, #0xf8]\n\t"  /* context->Rip */
+         "mov x0, sp\n\t"           /* context */
+         "mov w1, #0\n\t"
+         "bl \"#NtContinue\"\n\t"
+         ".seh_endproc" );
+}
+
+
 /*******************************************************************
  *              RtlRestoreContext (NTDLL.@)
  */
 void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 {
-    FIXME( "not implemented\n" );
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+
+    if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
+    {
+        struct _JUMP_BUFFER *jmp = (struct _JUMP_BUFFER *)rec->ExceptionInformation[0];
+
+        context->Rbx   = jmp->Rbx;
+        context->Rsp   = jmp->Rsp;
+        context->Rbp   = jmp->Rbp;
+        context->Rsi   = jmp->Rsi;
+        context->Rdi   = jmp->Rdi;
+        context->R12   = jmp->R12;
+        context->R13   = jmp->R13;
+        context->R14   = jmp->R14;
+        context->R15   = jmp->R15;
+        context->Rip   = jmp->Rip;
+        context->MxCsr = jmp->MxCsr;
+        context->FltSave.MxCsr = jmp->MxCsr;
+        context->FltSave.ControlWord = jmp->FpCsr;
+        memcpy( &context->Xmm6, &jmp->Xmm6, 10 * sizeof(M128A) );
+    }
+    else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
+    {
+        void * (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
+        TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
+        consolidate_callback( context, consolidate, rec );
+    }
+
+    /* hack: remove no longer accessible TEB frames */
+    while ((ULONG64)teb_frame < context->Rsp)
+    {
+        TRACE( "removing TEB frame: %p\n", teb_frame );
+        teb_frame = __wine_pop_frame( teb_frame );
+    }
+
+    TRACE( "returning to %p stack %p\n", (void *)context->Rip, (void *)context->Rsp );
+    NtContinue( context, FALSE );
 }
 
 
