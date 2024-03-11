@@ -571,6 +571,38 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 }
 
 
+/*************************************************************************
+ *		RtlWalkFrameChain (NTDLL.@)
+ */
+ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
+{
+    UNWIND_HISTORY_TABLE table;
+    RUNTIME_FUNCTION *func;
+    PEXCEPTION_ROUTINE handler;
+    ULONG_PTR pc, frame, base;
+    CONTEXT context;
+    void *data;
+    ULONG i, skip = flags >> 8, num_entries = 0;
+
+    RtlCaptureContext( &context );
+
+    for (i = 0; i < count; i++)
+    {
+        pc = context.Pc;
+        if (context.ContextFlags & CONTEXT_UNWOUND_TO_CALL) pc -= 2;
+        func = RtlLookupFunctionEntry( pc, &base, &table );
+        if (RtlVirtualUnwind2( UNW_FLAG_NHANDLER, base, pc, func, &context, NULL,
+                               &data, &frame, NULL, NULL, NULL, &handler, 0 ))
+            break;
+        if (!context.Pc) break;
+        if (!frame || !is_valid_frame( frame )) break;
+        if (context.Sp == (ULONG_PTR)NtCurrentTeb()->Tib.StackBase) break;
+        if (i >= skip) buffer[num_entries++] = (void *)context.Pc;
+    }
+    return num_entries;
+}
+
+
 extern LONG __C_ExecuteExceptionFilter(PEXCEPTION_POINTERS ptrs, PVOID frame,
                                        PEXCEPTION_FILTER filter,
                                        PUCHAR nonvolatile);
