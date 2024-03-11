@@ -3761,8 +3761,95 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADE
  */
 HRESULT WINAPI MFInitMediaTypeFromMFVideoFormat(IMFMediaType *media_type, const MFVIDEOFORMAT *format, UINT32 size)
 {
-    FIXME("%p, %p, %u\n", media_type, format, size);
-    return E_NOTIMPL;
+    UINT32 stride, sample_size, palette_size, user_data_size, value;
+    struct uncompressed_video_format *video_format;
+    const void *user_data;
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p, %u\n", media_type, format, size);
+
+    if (!format || size < sizeof(*format) || format->dwSize != size)
+        return E_INVALIDARG;
+    if (size < offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[format->surfaceInfo.PaletteEntries + 1]))
+        return E_INVALIDARG;
+
+    mediatype_set_guid(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video, &hr);
+    if (!IsEqualGUID(&format->guidFormat, &GUID_NULL))
+        mediatype_set_guid(media_type, &MF_MT_SUBTYPE, &format->guidFormat, &hr);
+    if ((video_format = mf_get_video_format(&format->guidFormat)))
+    {
+        mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+        mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+    }
+
+    if (format->videoInfo.dwWidth && format->videoInfo.dwHeight)
+    {
+        mediatype_set_uint64(media_type, &MF_MT_FRAME_SIZE, format->videoInfo.dwWidth, format->videoInfo.dwHeight, &hr);
+
+        if (video_format && (stride = mf_get_stride_for_format(video_format, format->videoInfo.dwWidth)))
+        {
+            if (!video_format->yuv && (format->videoInfo.VideoFlags & MFVideoFlag_BottomUpLinearRep))
+                stride = -stride;
+            mediatype_set_uint32(media_type, &MF_MT_DEFAULT_STRIDE, stride, &hr);
+        }
+
+        if (SUCCEEDED(MFCalculateImageSize(&format->guidFormat, format->videoInfo.dwWidth, format->videoInfo.dwHeight, &sample_size)))
+            mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, sample_size, &hr);
+    }
+
+    if (format->videoInfo.PixelAspectRatio.Denominator)
+        mediatype_set_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, format->videoInfo.PixelAspectRatio.Numerator,
+                format->videoInfo.PixelAspectRatio.Denominator, &hr);
+    if (format->videoInfo.SourceChromaSubsampling)
+        mediatype_set_uint32(media_type, &MF_MT_VIDEO_CHROMA_SITING, format->videoInfo.SourceChromaSubsampling, &hr);
+    if (format->videoInfo.InterlaceMode)
+        mediatype_set_uint32(media_type, &MF_MT_INTERLACE_MODE, format->videoInfo.InterlaceMode, &hr);
+    if (format->videoInfo.TransferFunction)
+        mediatype_set_uint32(media_type, &MF_MT_TRANSFER_FUNCTION, format->videoInfo.TransferFunction, &hr);
+    if (format->videoInfo.ColorPrimaries)
+        mediatype_set_uint32(media_type, &MF_MT_VIDEO_PRIMARIES, format->videoInfo.ColorPrimaries, &hr);
+    if (format->videoInfo.TransferMatrix)
+        mediatype_set_uint32(media_type, &MF_MT_YUV_MATRIX, format->videoInfo.TransferMatrix, &hr);
+    if (format->videoInfo.SourceLighting)
+        mediatype_set_uint32(media_type, &MF_MT_VIDEO_LIGHTING, format->videoInfo.SourceLighting, &hr);
+    if (format->videoInfo.FramesPerSecond.Denominator)
+        mediatype_set_uint64(media_type, &MF_MT_FRAME_RATE, format->videoInfo.FramesPerSecond.Numerator,
+                format->videoInfo.FramesPerSecond.Denominator, &hr);
+    if (format->videoInfo.NominalRange)
+        mediatype_set_uint32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, format->videoInfo.NominalRange, &hr);
+    if (format->videoInfo.GeometricAperture.Area.cx && format->videoInfo.GeometricAperture.Area.cy)
+        mediatype_set_blob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&format->videoInfo.GeometricAperture,
+                sizeof(format->videoInfo.GeometricAperture), &hr);
+    if (format->videoInfo.MinimumDisplayAperture.Area.cx && format->videoInfo.MinimumDisplayAperture.Area.cy)
+        mediatype_set_blob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&format->videoInfo.MinimumDisplayAperture,
+                sizeof(format->videoInfo.MinimumDisplayAperture), &hr);
+    if (format->videoInfo.PanScanAperture.Area.cx && format->videoInfo.PanScanAperture.Area.cy)
+        mediatype_set_blob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&format->videoInfo.PanScanAperture,
+                sizeof(format->videoInfo.PanScanAperture), &hr);
+    if ((value = !!(format->videoInfo.VideoFlags & MFVideoFlag_PanScanEnabled)))
+        mediatype_set_uint32(media_type, &MF_MT_PAN_SCAN_ENABLED, value, &hr);
+    if ((value = format->videoInfo.VideoFlags & MFVideoFlag_PAD_TO_Mask))
+        mediatype_set_uint32(media_type, &MF_MT_PAD_CONTROL_FLAGS, value, &hr);
+    if ((value = format->videoInfo.VideoFlags & MFVideoFlag_SrcContentHintMask))
+        mediatype_set_uint32(media_type, &MF_MT_SOURCE_CONTENT_HINT, value >> 2, &hr);
+    if ((value = format->videoInfo.VideoFlags & (MFVideoFlag_AnalogProtected | MFVideoFlag_DigitallyProtected)))
+        mediatype_set_uint32(media_type, &MF_MT_DRM_FLAGS, value >> 5, &hr);
+
+    if (format->compressedInfo.AvgBitrate)
+        mediatype_set_uint32(media_type, &MF_MT_AVG_BITRATE, format->compressedInfo.AvgBitrate, &hr);
+    if (format->compressedInfo.AvgBitErrorRate)
+        mediatype_set_uint32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, format->compressedInfo.AvgBitErrorRate, &hr);
+    if (format->compressedInfo.MaxKeyFrameSpacing)
+        mediatype_set_uint32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, format->compressedInfo.MaxKeyFrameSpacing, &hr);
+
+    if ((palette_size = format->surfaceInfo.PaletteEntries * sizeof(*format->surfaceInfo.Palette)))
+        mediatype_set_blob(media_type, &MF_MT_PALETTE, (BYTE *)format->surfaceInfo.Palette, palette_size, &hr);
+
+    user_data = &format->surfaceInfo.Palette[format->surfaceInfo.PaletteEntries + 1];
+    if ((user_data_size = (BYTE *)format + format->dwSize - (BYTE *)user_data))
+        mediatype_set_blob(media_type, &MF_MT_USER_DATA, user_data, user_data_size, &hr);
+
+    return hr;
 }
 
 /***********************************************************************
