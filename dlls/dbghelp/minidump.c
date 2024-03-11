@@ -119,7 +119,6 @@ static void fetch_thread_stack(struct dump_context* dc, const void* teb_addr,
  * fetches some information about thread of id 'tid'
  */
 static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
-                              const MINIDUMP_EXCEPTION_INFORMATION* except,
                               MINIDUMP_THREAD* mdThd, CONTEXT* ctx)
 {
     DWORD                       tid = dc->threads[thd_idx].tid;
@@ -144,44 +143,22 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
         FIXME("Couldn't open thread %lu (%lu)\n", tid, GetLastError());
         return FALSE;
     }
-    
+
     if (NtQueryInformationThread(hThread, ThreadBasicInformation,
                                  &tbi, sizeof(tbi), NULL) == STATUS_SUCCESS)
     {
         mdThd->Teb = (ULONG_PTR)tbi.TebBaseAddress;
         if (tbi.ExitStatus == STILL_ACTIVE)
         {
-            if (tid != GetCurrentThreadId() &&
-                (mdThd->SuspendCount = SuspendThread(hThread)) != (DWORD)-1)
-            {
-                ctx->ContextFlags = CONTEXT_FULL;
-                if (!GetThreadContext(hThread, ctx))
-                    memset(ctx, 0, sizeof(*ctx));
-
-                fetch_thread_stack(dc, tbi.TebBaseAddress, ctx, &mdThd->Stack);
-                ResumeThread(hThread);
-            }
-            else if (tid == GetCurrentThreadId() && except)
-            {
-                CONTEXT lctx, *pctx;
-                mdThd->SuspendCount = 1;
-                if (except->ClientPointers)
-                {
-                    EXCEPTION_POINTERS      ep;
-
-                    ReadProcessMemory(dc->process->handle, except->ExceptionPointers,
-                                      &ep, sizeof(ep), NULL);
-                    ReadProcessMemory(dc->process->handle, ep.ContextRecord,
-                                      &lctx, sizeof(lctx), NULL);
-                    pctx = &lctx;
-                }
-                else pctx = except->ExceptionPointers->ContextRecord;
-
-                *ctx = *pctx;
-                fetch_thread_stack(dc, tbi.TebBaseAddress, pctx, &mdThd->Stack);
-            }
-            else mdThd->SuspendCount = 0;
+            mdThd->SuspendCount = SuspendThread(hThread);
+            ctx->ContextFlags = CONTEXT_ALL;
+            if (!GetThreadContext(hThread, ctx))
+                memset(ctx, 0, sizeof(*ctx));
+            fetch_thread_stack(dc, tbi.TebBaseAddress, ctx, &mdThd->Stack);
+            ResumeThread(hThread);
         }
+        else
+            mdThd->SuspendCount = (DWORD)-1;
     }
     CloseHandle(hThread);
     return TRUE;
@@ -733,7 +710,7 @@ static  unsigned        dump_threads(struct dump_context* dc)
 
     for (i = 0; i < dc->num_threads; i++)
     {
-        fetch_thread_info(dc, i, dc->except_param, &mdThd, &ctx);
+        fetch_thread_info(dc, i, &mdThd, &ctx);
 
         flags_out = ThreadWriteThread | ThreadWriteStack | ThreadWriteContext |
             ThreadWriteInstructionWindow;

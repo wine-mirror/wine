@@ -192,7 +192,7 @@ static unsigned minidump_get_number_of_threads(void *data)
     return thread_list->NumberOfThreads;
 }
 
-static void minidump_check_threads(void *data, unsigned todo_flags)
+static void minidump_check_threads(void *data)
 {
     MINIDUMP_THREAD_LIST *thread_list;
     ULONG stream_size;
@@ -208,17 +208,12 @@ static void minidump_check_threads(void *data, unsigned todo_flags)
         const MINIDUMP_THREAD *thread = &thread_list->Threads[i];
         const CONTEXT *ctx;
 
-        todo_wine_if(todo_flags & 4)
         ok(thread->SuspendCount == 0, "Unexpected value\n");
-        todo_wine_if(todo_flags & 1)
         ok(thread->Stack.StartOfMemoryRange, "Unexpected value %I64x\n", thread->Stack.StartOfMemoryRange);
-        todo_wine_if(todo_flags & 1)
         ok(thread->Stack.Memory.DataSize, "Unexpected value %x\n", thread->Stack.Memory.DataSize);
         ok(thread->Teb, "Unexpected value\n");
-        todo_wine_if(todo_flags & 8)
         ok(thread->ThreadContext.DataSize >= sizeof(CONTEXT), "Unexpected value\n");
         ctx = RVA_TO_ADDR(data, thread->ThreadContext.Rva);
-        todo_wine_if(todo_flags & 2)
         ok((ctx->ContextFlags & CONTEXT_ALL) == CONTEXT_ALL, "Unexpected value\n");
     }
 }
@@ -463,7 +458,7 @@ static void test_current_process(void)
         num_threads = minidump_get_number_of_threads(data);
         ok(num_threads > 0, "Unexpected number of threads\n");
 
-        minidump_check_threads(data, 2);
+        minidump_check_threads(data);
         md = minidump_get_memory_description(data, (DWORD_PTR)&i);
         ok(md.kind == MD_STACK, "Couldn't find automatic variable\n");
 
@@ -807,7 +802,7 @@ static void test_exception(void)
         ok(except_info->ThreadContext.Rva, "Unexpected value\n");
         mctx = RVA_TO_ADDR(data, except_info->ThreadContext.Rva);
         ok(!memcmp(mctx, &ctx, sizeof(ctx)), "Unexpected value\n");
-        minidump_check_threads(data, 2);
+        minidump_check_threads(data);
         minidump_close_for_read(data);
         DeleteFileA("foo.mdmp");
         winetest_pop_context();
