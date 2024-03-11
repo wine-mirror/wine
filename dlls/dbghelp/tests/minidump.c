@@ -463,13 +463,11 @@ static void test_current_process(void)
         num_threads = minidump_get_number_of_threads(data);
         ok(num_threads > 0, "Unexpected number of threads\n");
 
-        minidump_check_threads(data, 11);
+        minidump_check_threads(data, 2);
         md = minidump_get_memory_description(data, (DWORD_PTR)&i);
-        todo_wine
         ok(md.kind == MD_STACK, "Couldn't find automatic variable\n");
 
         md2 = minidump_get_memory_description(data, (DWORD_PTR)NtCurrentTeb()->Tib.StackBase - sizeof(void*));
-        todo_wine
         ok(md2.kind == MD_STACK, "Couldn't find stack bottom\n");
         ok(md.id == md2.id, "Should be on same stack\n");
 
@@ -486,7 +484,6 @@ static void test_current_process(void)
         minidump_walk_memory(data, &walker);
 
         ok(walker.num_unknown == 0, "unexpected unknown memory locations\n");
-        todo_wine
         ok(walker.num_thread_stack == num_threads, "Unexpected number of stacks\n");
 
         if (sizeof(void*) > 4 && (process_tests[i].dump_type & MiniDumpWithModuleHeaders))
@@ -810,8 +807,9 @@ static void test_exception(void)
         ok(except_info->ThreadContext.Rva, "Unexpected value\n");
         mctx = RVA_TO_ADDR(data, except_info->ThreadContext.Rva);
         ok(!memcmp(mctx, &ctx, sizeof(ctx)), "Unexpected value\n");
-        minidump_check_threads(data, exception_tests[i].with_child ? 2 : (sizeof(void*) == 4 ? 7 : 6));
+        minidump_check_threads(data, 2);
         minidump_close_for_read(data);
+        DeleteFileA("foo.mdmp");
         winetest_pop_context();
         if (exception_tests[i].with_child)
         {

@@ -61,15 +61,19 @@ static BOOL fetch_process_info(struct dump_context* dc)
         {
             if (HandleToUlong(spi->UniqueProcessId) == dc->pid)
             {
-                dc->num_threads = spi->dwThreadCount;
+                dc->num_threads = 0;
                 dc->threads = HeapAlloc(GetProcessHeap(), 0,
-                                        dc->num_threads * sizeof(dc->threads[0]));
-                if (!dc->threads) goto failed;
-                for (i = 0; i < dc->num_threads; i++)
+                                        spi->dwThreadCount * sizeof(dc->threads[0]));
+                if (!dc->threads) break;
+                for (i = 0; i < spi->dwThreadCount; i++)
                 {
-                    dc->threads[i].tid        = HandleToULong(spi->ti[i].ClientId.UniqueThread);
-                    dc->threads[i].prio_class = spi->ti[i].dwBasePriority; /* FIXME */
-                    dc->threads[i].curr_prio  = spi->ti[i].dwCurrentPriority;
+                    /* don't include current thread */
+                    if (HandleToULong(spi->ti[i].ClientId.UniqueThread) == GetCurrentThreadId())
+                        continue;
+                    dc->threads[dc->num_threads].tid        = HandleToULong(spi->ti[i].ClientId.UniqueThread);
+                    dc->threads[dc->num_threads].prio_class = spi->ti[i].dwBasePriority; /* FIXME */
+                    dc->threads[dc->num_threads].curr_prio  = spi->ti[i].dwCurrentPriority;
+                    dc->num_threads++;
                 }
                 HeapFree(GetProcessHeap(), 0, pcs_buffer);
                 return TRUE;
@@ -78,7 +82,6 @@ static BOOL fetch_process_info(struct dump_context* dc)
             spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->NextEntryOffset);
         }
     }
-failed:
     HeapFree(GetProcessHeap(), 0, pcs_buffer);
     return FALSE;
 }
@@ -397,22 +400,21 @@ static void append(struct dump_context* dc, const void* data, unsigned size)
  *
  * Write in File the exception information from pcs
  */
-static  unsigned        dump_exception_info(struct dump_context* dc,
-                                            const MINIDUMP_EXCEPTION_INFORMATION* except)
+static  unsigned        dump_exception_info(struct dump_context* dc)
 {
     MINIDUMP_EXCEPTION_STREAM   mdExcpt;
     EXCEPTION_RECORD            rec, *prec;
     CONTEXT                     ctx, *pctx;
     DWORD                       i;
 
-    mdExcpt.ThreadId = except->ThreadId;
+    mdExcpt.ThreadId = dc->except_param->ThreadId;
     mdExcpt.__alignment = 0;
-    if (except->ClientPointers)
+    if (dc->except_param->ClientPointers)
     {
         EXCEPTION_POINTERS      ep;
 
         ReadProcessMemory(dc->process->handle,
-                          except->ExceptionPointers, &ep, sizeof(ep), NULL);
+                          dc->except_param->ExceptionPointers, &ep, sizeof(ep), NULL);
         ReadProcessMemory(dc->process->handle,
                           ep.ExceptionRecord, &rec, sizeof(rec), NULL);
         ReadProcessMemory(dc->process->handle,
@@ -422,8 +424,8 @@ static  unsigned        dump_exception_info(struct dump_context* dc,
     }
     else
     {
-        prec = except->ExceptionPointers->ExceptionRecord;
-        pctx = except->ExceptionPointers->ContextRecord;
+        prec = dc->except_param->ExceptionPointers->ExceptionRecord;
+        pctx = dc->except_param->ExceptionPointers->ContextRecord;
     }
     mdExcpt.ExceptionRecord.ExceptionCode = prec->ExceptionCode;
     mdExcpt.ExceptionRecord.ExceptionFlags = prec->ExceptionFlags;
@@ -715,8 +717,7 @@ static  unsigned        dump_system_info(struct dump_context* dc)
  *
  * Dumps into File the information about running threads
  */
-static  unsigned        dump_threads(struct dump_context* dc,
-                                     const MINIDUMP_EXCEPTION_INFORMATION* except)
+static  unsigned        dump_threads(struct dump_context* dc)
 {
     MINIDUMP_THREAD             mdThd;
     MINIDUMP_THREAD_LIST        mdThdList;
@@ -732,7 +733,7 @@ static  unsigned        dump_threads(struct dump_context* dc,
 
     for (i = 0; i < dc->num_threads; i++)
     {
-        fetch_thread_info(dc, i, except, &mdThd, &ctx);
+        fetch_thread_info(dc, i, dc->except_param, &mdThd, &ctx);
 
         flags_out = ThreadWriteThread | ThreadWriteStack | ThreadWriteContext |
             ThreadWriteInstructionWindow;
@@ -906,6 +907,126 @@ static unsigned         dump_misc_info(struct dump_context* dc)
     return sizeof(mmi);
 }
 
+static DWORD CALLBACK write_minidump(void *_args)
+{
+    struct dump_context *dc = _args;
+    static const MINIDUMP_DIRECTORY emptyDir = {UnusedStream, {0, 0}};
+    MINIDUMP_HEADER     mdHead;
+    MINIDUMP_DIRECTORY  mdDir;
+    DWORD               i, nStreams, idx_stream;
+
+    if (!fetch_process_info(dc)) return FALSE;
+    fetch_modules_info(dc);
+
+    /* 1) init */
+    nStreams = 6 + (dc->except_param ? 1 : 0) +
+        (dc->user_stream ? dc->user_stream->UserStreamCount : 0);
+
+    /* pad the directory size to a multiple of 4 for alignment purposes */
+    nStreams = (nStreams + 3) & ~3;
+
+    /* 2) write header */
+    mdHead.Signature = MINIDUMP_SIGNATURE;
+    mdHead.Version = MINIDUMP_VERSION;  /* NOTE: native puts in an 'implementation specific' value in the high order word of this member */
+    mdHead.NumberOfStreams = nStreams;
+    mdHead.CheckSum = 0;                /* native sets a 0 checksum in its files */
+    mdHead.StreamDirectoryRva = sizeof(mdHead);
+    mdHead.TimeDateStamp = time(NULL);
+    mdHead.Flags = dc->type;
+    append(dc, &mdHead, sizeof(mdHead));
+
+    /* 3) write stream directories */
+    dc->rva += nStreams * sizeof(mdDir);
+    idx_stream = 0;
+
+    /* 3.1) write data stream directories */
+
+    /* must be first in minidump */
+    mdDir.StreamType = SystemInfoStream;
+    mdDir.Location.Rva = dc->rva;
+    mdDir.Location.DataSize = dump_system_info(dc);
+    writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = ThreadListStream;
+    mdDir.Location.Rva = dc->rva;
+    mdDir.Location.DataSize = dump_threads(dc);
+    writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = ModuleListStream;
+    mdDir.Location.Rva = dc->rva;
+    mdDir.Location.DataSize = dump_modules(dc, FALSE);
+    writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = 0xfff0; /* FIXME: this is part of MS reserved streams */
+    mdDir.Location.Rva = dc->rva;
+    mdDir.Location.DataSize = dump_modules(dc, TRUE);
+    writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+
+    if (!(dc->type & MiniDumpWithFullMemory))
+    {
+        mdDir.StreamType = MemoryListStream;
+        mdDir.Location.Rva = dc->rva;
+        mdDir.Location.DataSize = dump_memory_info(dc);
+        writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                &mdDir, sizeof(mdDir));
+    }
+
+    mdDir.StreamType = MiscInfoStream;
+    mdDir.Location.Rva = dc->rva;
+    mdDir.Location.DataSize = dump_misc_info(dc);
+    writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+            &mdDir, sizeof(mdDir));
+
+    /* 3.2) write exception information (if any) */
+    if (dc->except_param)
+    {
+        mdDir.StreamType = ExceptionStream;
+        mdDir.Location.Rva = dc->rva;
+        mdDir.Location.DataSize = dump_exception_info(dc);
+        writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                &mdDir, sizeof(mdDir));
+    }
+
+    /* 3.3) write user defined streams (if any) */
+    if (dc->user_stream)
+    {
+        for (i = 0; i < dc->user_stream->UserStreamCount; i++)
+        {
+            mdDir.StreamType = dc->user_stream->UserStreamArray[i].Type;
+            mdDir.Location.DataSize = dc->user_stream->UserStreamArray[i].BufferSize;
+            mdDir.Location.Rva = dc->rva;
+            writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                    &mdDir, sizeof(mdDir));
+            append(dc, dc->user_stream->UserStreamArray[i].Buffer,
+                   dc->user_stream->UserStreamArray[i].BufferSize);
+        }
+    }
+
+    /* 3.4) write full memory (if requested) */
+    if (dc->type & MiniDumpWithFullMemory)
+    {
+        fetch_memory64_info(dc);
+
+        mdDir.StreamType = Memory64ListStream;
+        mdDir.Location.Rva = dc->rva;
+        mdDir.Location.DataSize = dump_memory64_info(dc);
+        writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                &mdDir, sizeof(mdDir));
+    }
+
+    /* fill the remaining directory entries with 0's (unused stream types) */
+    /* NOTE: this should always come last in the dump! */
+    for (i = idx_stream; i < nStreams; i++)
+        writeat(dc, mdHead.StreamDirectoryRva + i * sizeof(emptyDir), &emptyDir, sizeof(emptyDir));
+
+    return TRUE;
+}
+
 /******************************************************************
  *		MiniDumpWriteDump (DEBUGHLP.@)
  *
@@ -916,12 +1037,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
                               PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
                               PMINIDUMP_CALLBACK_INFORMATION CallbackParam)
 {
-    static const MINIDUMP_DIRECTORY emptyDir = {UnusedStream, {0, 0}};
-    MINIDUMP_HEADER     mdHead;
-    MINIDUMP_DIRECTORY  mdDir;
-    DWORD               i, nStreams, idx_stream;
     struct dump_context dc;
     BOOL                sym_initialized = FALSE;
+    BOOL                ret = FALSE;
 
     if (!(dc.process = process_find_by_handle(hProcess)))
     {
@@ -932,6 +1050,15 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
         }
         dc.process = process_find_by_handle(hProcess);
     }
+
+    if (DumpType & MiniDumpWithDataSegs)
+        FIXME("NIY MiniDumpWithDataSegs\n");
+    if (DumpType & MiniDumpWithHandleData)
+        FIXME("NIY MiniDumpWithHandleData\n");
+    if (DumpType & MiniDumpFilterMemory)
+        FIXME("NIY MiniDumpFilterMemory\n");
+    if (DumpType & MiniDumpScanMemory)
+        FIXME("NIY MiniDumpScanMemory\n");
 
     dc.hFile = hFile;
     dc.pid = pid;
@@ -949,124 +1076,25 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     dc.num_mem64 = 0;
     dc.alloc_mem64 = 0;
     dc.rva = 0;
+    dc.except_param = ExceptionParam;
+    dc.user_stream = UserStreamParam;
 
-    if (!fetch_process_info(&dc)) return FALSE;
-    fetch_modules_info(&dc);
-
-    /* 1) init */
-    nStreams = 6 + (ExceptionParam ? 1 : 0) +
-        (UserStreamParam ? UserStreamParam->UserStreamCount : 0);
-
-    /* pad the directory size to a multiple of 4 for alignment purposes */
-    nStreams = (nStreams + 3) & ~3;
-
-    if (DumpType & MiniDumpWithDataSegs)
-        FIXME("NIY MiniDumpWithDataSegs\n");
-    if (DumpType & MiniDumpWithHandleData)
-        FIXME("NIY MiniDumpWithHandleData\n");
-    if (DumpType & MiniDumpFilterMemory)
-        FIXME("NIY MiniDumpFilterMemory\n");
-    if (DumpType & MiniDumpScanMemory)
-        FIXME("NIY MiniDumpScanMemory\n");
-
-    /* 2) write header */
-    mdHead.Signature = MINIDUMP_SIGNATURE;
-    mdHead.Version = MINIDUMP_VERSION;  /* NOTE: native puts in an 'implementation specific' value in the high order word of this member */
-    mdHead.NumberOfStreams = nStreams;
-    mdHead.CheckSum = 0;                /* native sets a 0 checksum in its files */
-    mdHead.StreamDirectoryRva = sizeof(mdHead);
-    mdHead.TimeDateStamp = time(NULL);
-    mdHead.Flags = DumpType;
-    append(&dc, &mdHead, sizeof(mdHead));
-
-    /* 3) write stream directories */
-    dc.rva += nStreams * sizeof(mdDir);
-    idx_stream = 0;
-
-    /* 3.1) write data stream directories */
-
-    /* must be first in minidump */
-    mdDir.StreamType = SystemInfoStream;
-    mdDir.Location.Rva = dc.rva;
-    mdDir.Location.DataSize = dump_system_info(&dc);
-    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-            &mdDir, sizeof(mdDir));
-
-    mdDir.StreamType = ThreadListStream;
-    mdDir.Location.Rva = dc.rva;
-    mdDir.Location.DataSize = dump_threads(&dc, ExceptionParam);
-    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir), 
-            &mdDir, sizeof(mdDir));
-
-    mdDir.StreamType = ModuleListStream;
-    mdDir.Location.Rva = dc.rva;
-    mdDir.Location.DataSize = dump_modules(&dc, FALSE);
-    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-            &mdDir, sizeof(mdDir));
-
-    mdDir.StreamType = 0xfff0; /* FIXME: this is part of MS reserved streams */
-    mdDir.Location.Rva = dc.rva;
-    mdDir.Location.DataSize = dump_modules(&dc, TRUE);
-    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-            &mdDir, sizeof(mdDir));
-
-
-    if (!(DumpType & MiniDumpWithFullMemory))
+    /* have a dedicated thread for fetching info on self */
+    if (dc.pid != GetCurrentProcessId())
+        ret = write_minidump(&dc);
+    else
     {
-        mdDir.StreamType = MemoryListStream;
-        mdDir.Location.Rva = dc.rva;
-        mdDir.Location.DataSize = dump_memory_info(&dc);
-        writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-                &mdDir, sizeof(mdDir));
-    }
-
-    mdDir.StreamType = MiscInfoStream;
-    mdDir.Location.Rva = dc.rva;
-    mdDir.Location.DataSize = dump_misc_info(&dc);
-    writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-            &mdDir, sizeof(mdDir));
-
-    /* 3.2) write exception information (if any) */
-    if (ExceptionParam)
-    {
-        mdDir.StreamType = ExceptionStream;
-        mdDir.Location.Rva = dc.rva;
-        mdDir.Location.DataSize = dump_exception_info(&dc, ExceptionParam);
-        writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-                &mdDir, sizeof(mdDir));
-    }
-
-    /* 3.3) write user defined streams (if any) */
-    if (UserStreamParam)
-    {
-        for (i = 0; i < UserStreamParam->UserStreamCount; i++)
+        DWORD  exit_code;
+        HANDLE h = CreateThread(NULL, 0, write_minidump, &dc, 0, NULL);
+        if (h)
         {
-            mdDir.StreamType = UserStreamParam->UserStreamArray[i].Type;
-            mdDir.Location.DataSize = UserStreamParam->UserStreamArray[i].BufferSize;
-            mdDir.Location.Rva = dc.rva;
-            writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-                    &mdDir, sizeof(mdDir));
-            append(&dc, UserStreamParam->UserStreamArray[i].Buffer, 
-                   UserStreamParam->UserStreamArray[i].BufferSize);
+            if (WaitForSingleObject(h, INFINITE) == WAIT_OBJECT_0 && GetExitCodeThread(h, &exit_code))
+                ret = exit_code;
+            else
+                TerminateThread(h, 0);
+            CloseHandle(h);
         }
     }
-
-    /* 3.4) write full memory (if requested) */
-    if (DumpType & MiniDumpWithFullMemory)
-    {
-        fetch_memory64_info(&dc);
-
-        mdDir.StreamType = Memory64ListStream;
-        mdDir.Location.Rva = dc.rva;
-        mdDir.Location.DataSize = dump_memory64_info(&dc);
-        writeat(&dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
-                &mdDir, sizeof(mdDir));
-    }
-
-    /* fill the remaining directory entries with 0's (unused stream types) */
-    /* NOTE: this should always come last in the dump! */
-    for (i = idx_stream; i < nStreams; i++)
-        writeat(&dc, mdHead.StreamDirectoryRva + i * sizeof(emptyDir), &emptyDir, sizeof(emptyDir));
 
     if (sym_initialized)
         SymCleanup(hProcess);
@@ -1076,7 +1104,7 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     HeapFree(GetProcessHeap(), 0, dc.modules);
     HeapFree(GetProcessHeap(), 0, dc.threads);
 
-    return TRUE;
+    return ret;
 }
 
 /******************************************************************

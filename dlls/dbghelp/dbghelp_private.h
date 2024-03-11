@@ -618,7 +618,9 @@ struct dump_context
     struct dump_module*                 modules;
     unsigned                            num_modules;
     unsigned                            alloc_modules;
-    /* exception information */
+    /* outter information */
+    MINIDUMP_EXCEPTION_INFORMATION     *except_param;
+    MINIDUMP_USER_STREAM_INFORMATION   *user_stream;
     /* output information */
     MINIDUMP_TYPE                       type;
     HANDLE                              hFile;
