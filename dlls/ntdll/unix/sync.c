@@ -1281,9 +1281,10 @@ NTSTATUS WINAPI NtMakeTemporaryObject( HANDLE handle )
 
     TRACE("%p\n", handle);
 
-    SERVER_START_REQ( make_temporary )
+    SERVER_START_REQ( set_object_permanence )
     {
         req->handle = wine_server_obj_handle( handle );
+        req->permanent = 0;
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;

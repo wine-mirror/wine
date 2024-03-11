@@ -885,13 +885,18 @@ DECL_HANDLER(get_system_handles)
     }
 }
 
-DECL_HANDLER(make_temporary)
+DECL_HANDLER(set_object_permanence)
 {
     struct object *obj;
 
     if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
 
-    if (obj->is_permanent)
+    if (req->permanent && !obj->is_permanent)
+    {
+        grab_object( obj );
+        make_object_permanent( obj );
+    }
+    else if (!req->permanent && obj->is_permanent)
     {
         make_object_temporary( obj );
         release_object( obj );

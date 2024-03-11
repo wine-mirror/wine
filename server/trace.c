@@ -1697,9 +1697,10 @@ static void dump_compare_objects_request( const struct compare_objects_request *
     fprintf( stderr, ", second=%04x", req->second );
 }
 
-static void dump_make_temporary_request( const struct make_temporary_request *req )
+static void dump_set_object_permanence_request( const struct set_object_permanence_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", permanent=%d", req->permanent );
 }
 
 static void dump_open_process_request( const struct open_process_request *req )
@@ -4621,7 +4622,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
     (dump_func)dump_compare_objects_request,
-    (dump_func)dump_make_temporary_request,
+    (dump_func)dump_set_object_permanence_request,
     (dump_func)dump_open_process_request,
     (dump_func)dump_open_thread_request,
     (dump_func)dump_select_request,
@@ -5197,7 +5198,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_handle_info",
     "dup_handle",
     "compare_objects",
-    "make_temporary",
+    "set_object_permanence",
     "open_process",
     "open_thread",
     "select",

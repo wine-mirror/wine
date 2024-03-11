@@ -1175,9 +1175,10 @@ typedef struct
 @END
 
 
-/* Make an object temporary */
-@REQ(make_temporary)
+/* Make an object permanent or temporary */
+@REQ(set_object_permanence)
     obj_handle_t handle;       /* handle to the object */
+    int          permanent;    /* 1 to make permanent, 0 to make temporary */
 @END
 
 
