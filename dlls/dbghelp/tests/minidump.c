@@ -73,7 +73,7 @@ static void _minidump_close_for_read(unsigned line, MINIDUMP_HEADER *data)
 }
 
 static BOOL minidump_write(HANDLE proc, const WCHAR *filename, MINIDUMP_TYPE type, BOOL windows_can_fail,
-                           MINIDUMP_CALLBACK_INFORMATION *cbi)
+                           MINIDUMP_EXCEPTION_INFORMATION *mei, MINIDUMP_CALLBACK_INFORMATION *cbi)
 {
     HANDLE              file;
     BOOL                ret, ret2;
@@ -83,7 +83,7 @@ static BOOL minidump_write(HANDLE proc, const WCHAR *filename, MINIDUMP_TYPE typ
 
     ok(file != INVALID_HANDLE_VALUE, "Failed to create minidump %ls\n", filename);
 
-    ret = MiniDumpWriteDump(proc, GetProcessId(proc), file, type, NULL, NULL, cbi);
+    ret = MiniDumpWriteDump(proc, GetProcessId(proc), file, type, mei, NULL, cbi);
     /* using new features that are not supported on old dbghelp versions */
     ok(ret || broken(windows_can_fail), "Couldn't write minidump content\n");
 
@@ -134,7 +134,7 @@ static void test_minidump_contents(void)
         winetest_push_context("streams_table[%d]", i);
 
         /* too old for dbghelp in Win7 & 8 */
-        if (minidump_write(GetCurrentProcess(), L"foo.mdmp", streams_table[i].type, i >= 6, NULL))
+        if (minidump_write(GetCurrentProcess(), L"foo.mdmp", streams_table[i].type, i >= 6, NULL, NULL))
         {
             hdr = minidump_open_for_read("foo.mdmp");
             /* native keeps (likely padding) some unused streams at the end of directory, but lists them here */
@@ -192,29 +192,33 @@ static unsigned minidump_get_number_of_threads(void *data)
     return thread_list->NumberOfThreads;
 }
 
-static void minidump_check_threads(void *data)
+static void minidump_check_threads(void *data, unsigned todo_flags)
 {
     MINIDUMP_THREAD_LIST *thread_list;
+    ULONG stream_size;
     int i;
     BOOL ret;
 
-    ret = MiniDumpReadDumpStream(data, ThreadListStream, NULL, (void**)&thread_list, NULL);
+    ret = MiniDumpReadDumpStream(data, ThreadListStream, NULL, (void**)&thread_list, &stream_size);
     ok(ret && thread_list, "Couldn't find thread-list stream\n");
+    ok(stream_size == sizeof(thread_list->NumberOfThreads) + thread_list->NumberOfThreads * sizeof(thread_list->Threads[0]),
+       "Unexpected size\n");
     for (i = 0; i < thread_list->NumberOfThreads; i++)
     {
         const MINIDUMP_THREAD *thread = &thread_list->Threads[i];
         const CONTEXT *ctx;
 
+        todo_wine_if(todo_flags & 4)
         ok(thread->SuspendCount == 0, "Unexpected value\n");
-        todo_wine
-        ok(thread->Stack.StartOfMemoryRange, "Unexpected value\n");
-        todo_wine
-        ok(thread->Stack.Memory.DataSize, "Unexpected value\n");
+        todo_wine_if(todo_flags & 1)
+        ok(thread->Stack.StartOfMemoryRange, "Unexpected value %I64x\n", thread->Stack.StartOfMemoryRange);
+        todo_wine_if(todo_flags & 1)
+        ok(thread->Stack.Memory.DataSize, "Unexpected value %x\n", thread->Stack.Memory.DataSize);
         ok(thread->Teb, "Unexpected value\n");
-        todo_wine
+        todo_wine_if(todo_flags & 8)
         ok(thread->ThreadContext.DataSize >= sizeof(CONTEXT), "Unexpected value\n");
         ctx = RVA_TO_ADDR(data, thread->ThreadContext.Rva);
-        todo_wine
+        todo_wine_if(todo_flags & 2)
         ok((ctx->ContextFlags & CONTEXT_ALL) == CONTEXT_ALL, "Unexpected value\n");
     }
 }
@@ -452,14 +456,14 @@ static void test_current_process(void)
     for (i = 0; i < ARRAY_SIZE(process_tests); i++)
     {
         winetest_push_context("process_tests[%d]", i);
-        minidump_write(GetCurrentProcess(), L"foo.mdmp", process_tests[i].dump_type, FALSE, NULL);
+        minidump_write(GetCurrentProcess(), L"foo.mdmp", process_tests[i].dump_type, FALSE, NULL, NULL);
 
         data = minidump_open_for_read("foo.mdmp");
 
         num_threads = minidump_get_number_of_threads(data);
         ok(num_threads > 0, "Unexpected number of threads\n");
 
-        minidump_check_threads(data);
+        minidump_check_threads(data, 11);
         md = minidump_get_memory_description(data, (DWORD_PTR)&i);
         todo_wine
         ok(md.kind == MD_STACK, "Couldn't find automatic variable\n");
@@ -664,7 +668,7 @@ static void test_callback(void)
         memset(&cb_info, 0, sizeof(cb_info));
         cb_info.module_flags = callback_tests[i].module_flags;
         cb_info.thread_flags = callback_tests[i].thread_flags;
-        minidump_write(GetCurrentProcess(), L"foo.mdmp", callback_tests[i].dump_type, FALSE, &cbi);
+        minidump_write(GetCurrentProcess(), L"foo.mdmp", callback_tests[i].dump_type, FALSE, NULL, &cbi);
 
         todo_wine
         ok(cb_info.mask_types == mask_types ||
@@ -684,9 +688,185 @@ static void test_callback(void)
     }
 }
 
+static void test_exception(void)
+{
+    static const struct
+    {
+        unsigned exception_code;
+        unsigned exception_flags;
+        unsigned num_args;
+        BOOL     with_child;
+    }
+    exception_tests[] =
+    {
+        { 0x1234,                       0, 0, FALSE },
+        { 0x1234,                       0, 0, TRUE },
+        { 0x1234,                       0, 5, FALSE },
+        { 0x1234,                       0, 5, TRUE },
+        { EXCEPTION_BREAKPOINT,         0, 1, TRUE },
+        { EXCEPTION_ACCESS_VIOLATION,   0, 2, TRUE },
+    };
+    ULONG_PTR args[EXCEPTION_MAXIMUM_PARAMETERS];
+    MINIDUMP_EXCEPTION_STREAM *except_info;
+    ULONG size;
+    void *data;
+    BOOL ret;
+    int i, j;
+
+    for (i = 0; i < ARRAY_SIZE(args); i++) args[i] = 0x666000 + i;
+    for (i = 0; i < ARRAY_SIZE(exception_tests); i++)
+    {
+        PROCESS_INFORMATION pi;
+        MINIDUMP_EXCEPTION_INFORMATION mei;
+        EXCEPTION_POINTERS ep;
+        DEBUG_EVENT ev;
+        /* for local access */
+        EXCEPTION_RECORD er;
+        CONTEXT ctx;
+        CONTEXT *mctx;
+
+        winetest_push_context("test_exceptions[%d]", i);
+
+        if (exception_tests[i].with_child)
+        {
+            BOOL first_exception = TRUE;
+            STARTUPINFOA si;
+            char buffer[MAX_PATH];
+            char **argv;
+
+            winetest_get_mainargs(&argv);
+            snprintf(buffer, ARRAY_SIZE(buffer), "%s minidump exception %x;%x;%u",
+                     argv[0], exception_tests[i].exception_code, exception_tests[i].exception_flags,
+                     exception_tests[i].num_args);
+            memset(&si, 0, sizeof(si));
+            si.cb = sizeof(si);
+            ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+            ok(ret, "CreateProcess failed, last error %#lx.\n", GetLastError());
+
+            while ((ret = WaitForDebugEvent(&ev, 2000)))
+            {
+                if (!first_exception && ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) break;
+                if (first_exception && ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
+                    ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+                    first_exception = FALSE;
+                ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+            };
+            ok(ret, "Couldn't get debug event\n");
+            ok(ev.dwThreadId == pi.dwThreadId, "Unexpected value\n");
+            mei.ThreadId = ev.dwThreadId;
+            mei.ExceptionPointers = &ep;
+            mei.ClientPointers = FALSE;
+            ep.ExceptionRecord = &ev.u.Exception.ExceptionRecord;
+            ep.ContextRecord = &ctx;
+            ctx.ContextFlags = CONTEXT_FULL;
+            ret = GetThreadContext(pi.hThread, &ctx);
+            ok(ret, "Couldn't get thread context\n");
+            CloseHandle(pi.hThread);
+        }
+        else
+        {
+            mei.ThreadId = GetCurrentThreadId();
+            mei.ExceptionPointers = &ep;
+            mei.ClientPointers = FALSE;
+            ep.ExceptionRecord = &er;
+            ep.ContextRecord = &ctx;
+            memset(&ctx, 0xA5, sizeof(ctx));
+            ctx.ContextFlags = CONTEXT_FULL;
+            er.ExceptionCode = exception_tests[i].exception_code;
+            er.ExceptionFlags = exception_tests[i].exception_flags;
+            er.ExceptionAddress = (void *)(DWORD_PTR)0xdeadbeef;
+            er.NumberParameters = exception_tests[i].num_args;
+            for (j = 0; j < exception_tests[i].num_args; j++)
+                er.ExceptionInformation[j] = args[j];
+            pi.hProcess = GetCurrentProcess();
+        }
+        minidump_write(pi.hProcess, L"foo.mdmp", MiniDumpNormal, FALSE, &mei, NULL);
+
+        data = minidump_open_for_read("foo.mdmp");
+        ret = MiniDumpReadDumpStream(data, ExceptionStream, NULL, (void *)&except_info, &size);
+        ok(ret, "Couldn't find exception stream\n");
+        ok(except_info->ThreadId == mei.ThreadId, "Unexpected value\n");
+        ok(except_info->ExceptionRecord.ExceptionCode == exception_tests[i].exception_code, "Unexpected value %x %x\n", except_info->ExceptionRecord.ExceptionCode, exception_tests[i].exception_code);
+        /* windows 11 starts adding EXCEPTION_SOFTWARE_ORIGINATE flag */
+        ok((except_info->ExceptionRecord.ExceptionFlags & ~EXCEPTION_SOFTWARE_ORIGINATE) == exception_tests[i].exception_flags, "Unexpected value\n");
+        /* yes native does a signed conversion to DWORD64 when running on 32bit... */
+        ok(except_info->ExceptionRecord.ExceptionAddress == (DWORD_PTR)ep.ExceptionRecord->ExceptionAddress
+           || broken(except_info->ExceptionRecord.ExceptionAddress == (LONG_PTR)ep.ExceptionRecord->ExceptionAddress), "Unexpected value\n");
+        if (except_info->ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+        {
+            /* number of parameters depend on machine, wow64... */
+            ok(except_info->ExceptionRecord.NumberParameters, "Unexpected value %x\n", except_info->ExceptionRecord.NumberParameters);
+        }
+        else if (except_info->ExceptionRecord.ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+        {
+            ok(except_info->ExceptionRecord.NumberParameters == exception_tests[i].num_args, "Unexpected value\n");
+        }
+        else
+        {
+            ok(except_info->ExceptionRecord.NumberParameters == exception_tests[i].num_args, "Unexpected value\n");
+            for (j = 0; j < exception_tests[i].num_args; j++)
+                ok(except_info->ExceptionRecord.ExceptionInformation[j] == args[j], "Unexpected value\n");
+        }
+        ok(except_info->ThreadContext.Rva, "Unexpected value\n");
+        mctx = RVA_TO_ADDR(data, except_info->ThreadContext.Rva);
+        ok(!memcmp(mctx, &ctx, sizeof(ctx)), "Unexpected value\n");
+        minidump_check_threads(data, exception_tests[i].with_child ? 2 : (sizeof(void*) == 4 ? 7 : 6));
+        minidump_close_for_read(data);
+        winetest_pop_context();
+        if (exception_tests[i].with_child)
+        {
+            TerminateProcess(pi.hProcess, 0);
+            CloseHandle(pi.hProcess);
+        }
+    }
+}
+
+static void generate_child_exception(const char *arg)
+{
+    DWORD code, flags;
+    unsigned num_args;
+
+    if (sscanf(arg, "%lx;%lx;%u", &code, &flags, &num_args) == 3)
+    {
+        switch (code)
+        {
+        case EXCEPTION_BREAKPOINT:
+            DbgBreakPoint();
+            break;
+        case EXCEPTION_ACCESS_VIOLATION:
+            {
+                /* volatile to silence gcc warning */
+                char * volatile crashme = (char *)(DWORD_PTR)0x12;
+                *crashme = 2;
+            }
+            break;
+        default:
+            {
+                DWORD_PTR my_args[EXCEPTION_MAXIMUM_PARAMETERS];
+                int i;
+
+                for (i = 0; i < ARRAY_SIZE(my_args); i++)
+                    my_args[i] = 0x666000 + i;
+                RaiseException(code, flags, num_args, my_args);
+            }
+            break;
+        }
+    }
+}
+
 START_TEST(minidump)
 {
+    int argc;
+    char **argv;
+    argc = winetest_get_mainargs(&argv);
+    if (argc == 4 && !strcmp(argv[2], "exception"))
+    {
+        generate_child_exception(argv[3]);
+        return;
+    }
+
     test_minidump_contents();
     test_current_process();
     test_callback();
+    test_exception();
 }
