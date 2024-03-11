@@ -72,7 +72,8 @@ static void _minidump_close_for_read(unsigned line, MINIDUMP_HEADER *data)
     ok_(__FILE__, line)(ret, "Couldn't unmap file\n");
 }
 
-static BOOL minidump_write(HANDLE proc, const WCHAR *filename, MINIDUMP_TYPE type, BOOL windows_can_fail)
+static BOOL minidump_write(HANDLE proc, const WCHAR *filename, MINIDUMP_TYPE type, BOOL windows_can_fail,
+                           MINIDUMP_CALLBACK_INFORMATION *cbi)
 {
     HANDLE              file;
     BOOL                ret, ret2;
@@ -82,7 +83,7 @@ static BOOL minidump_write(HANDLE proc, const WCHAR *filename, MINIDUMP_TYPE typ
 
     ok(file != INVALID_HANDLE_VALUE, "Failed to create minidump %ls\n", filename);
 
-    ret = MiniDumpWriteDump(proc, GetProcessId(proc), file, type, NULL, NULL, NULL);
+    ret = MiniDumpWriteDump(proc, GetProcessId(proc), file, type, NULL, NULL, cbi);
     /* using new features that are not supported on old dbghelp versions */
     ok(ret || broken(windows_can_fail), "Couldn't write minidump content\n");
 
@@ -131,7 +132,9 @@ static void test_minidump_contents(void)
     for (i = 0; i < ARRAY_SIZE(streams_table); i++)
     {
         winetest_push_context("streams_table[%d]", i);
-        if (minidump_write(GetCurrentProcess(), L"foo.mdmp", streams_table[i].type, i >= 6))
+
+        /* too old for dbghelp in Win7 & 8 */
+        if (minidump_write(GetCurrentProcess(), L"foo.mdmp", streams_table[i].type, i >= 6, NULL))
         {
             hdr = minidump_open_for_read("foo.mdmp");
             /* native keeps (likely padding) some unused streams at the end of directory, but lists them here */
@@ -154,6 +157,7 @@ static void test_minidump_contents(void)
             ret = DeleteFileA("foo.mdmp");
             ok(ret, "Couldn't delete file\n");
         }
+        else win_skip("Skipping not supported feature (too old dbghelp version)\n");
         winetest_pop_context();
     }
 }
@@ -448,7 +452,7 @@ static void test_current_process(void)
     for (i = 0; i < ARRAY_SIZE(process_tests); i++)
     {
         winetest_push_context("process_tests[%d]", i);
-        minidump_write(GetCurrentProcess(), L"foo.mdmp", process_tests[i].dump_type, FALSE);
+        minidump_write(GetCurrentProcess(), L"foo.mdmp", process_tests[i].dump_type, FALSE, NULL);
 
         data = minidump_open_for_read("foo.mdmp");
 
@@ -508,8 +512,181 @@ static void test_current_process(void)
     }
 }
 
+struct cb_info
+{
+    /* input */
+    unsigned module_flags;
+    unsigned thread_flags;
+    /* output */
+    DWORD64 mask_types;
+    unsigned num_modules;
+    unsigned num_threads;
+    unsigned num_include_modules;
+    unsigned num_include_threads;
+};
+
+static BOOL CALLBACK test_callback_cb(void *pmt, MINIDUMP_CALLBACK_INPUT *input, MINIDUMP_CALLBACK_OUTPUT *output)
+{
+    struct cb_info *cb = pmt;
+
+    ok(input->CallbackType < sizeof(cb->mask_types) * 8, "Too small mask\n");
+    cb->mask_types |= (DWORD64)1u << input->CallbackType;
+
+    if (input->CallbackType == WriteKernelMinidumpCallback || input->CallbackType == IoStartCallback)
+    {
+        ok(input->ProcessId == 0, "Unexpected pid %lu %lu\n", input->ProcessId, input->CallbackType);
+        ok(input->ProcessHandle == NULL, "Unexpected process handle %p %lu\n", input->ProcessHandle, input->CallbackType);
+    }
+    else if (input->CallbackType == IsProcessSnapshotCallback || input->CallbackType == VmStartCallback)
+    {
+        ok(input->ProcessId == 0, "Unexpected pid %lu %lu\n", input->ProcessId, input->CallbackType);
+        ok(input->ProcessHandle == GetCurrentProcess(), "Unexpected process handle %p %lu\n", input->ProcessHandle, input->CallbackType);
+    }
+    else
+    {
+        ok(input->ProcessId == GetCurrentProcessId(), "Unexpected pid %lu %lu\n", input->ProcessId, input->CallbackType);
+        ok(input->ProcessHandle == GetCurrentProcess(), "Unexpected process handle %p %lu\n", input->ProcessHandle, input->CallbackType);
+    }
+
+    switch (input->CallbackType)
+    {
+    case ModuleCallback:
+        ok(output->ModuleWriteFlags == cb->module_flags, "Unexpected module flags %lx\n", output->ModuleWriteFlags);
+        cb->num_modules++;
+        break;
+    case IncludeModuleCallback:
+        ok(output->ModuleWriteFlags == cb->module_flags, "Unexpected module flags %lx\n", output->ModuleWriteFlags);
+        cb->num_include_modules++;
+        break;
+    case ThreadCallback:
+    case ThreadExCallback:
+        ok(output->ThreadWriteFlags == cb->thread_flags, "Unexpected thread flags %lx\n", output->ThreadWriteFlags);
+        cb->num_threads++;
+        break;
+    case IncludeThreadCallback:
+        ok(output->ThreadWriteFlags == cb->thread_flags, "Unexpected thread flags %lx\n", output->ThreadWriteFlags);
+        cb->num_include_threads++;
+        break;
+    case MemoryCallback:
+    case RemoveMemoryCallback:
+        ok(output->MemoryBase == 0, "Unexpected memory info\n");
+        ok(output->MemorySize == 0, "Unexpected memory info\n");
+        break;
+    case CancelCallback:
+        ok(!output->Cancel, "Unexpected value\n");
+        ok(!output->CheckCancel, "Unexpected value\n");
+        break;
+    case WriteKernelMinidumpCallback:
+        ok(output->Handle == NULL, "Unexpected value\n");
+        break;
+        /* case KernelMinidumpStatusCallback: */
+        /* case IncludeVmRegionCallback: */
+    case IoStartCallback:
+        ok(output->Status == E_NOTIMPL, "Unexpected value %lx\n", output->Status);
+        /* TODO check the output->Vm* fields */
+        break;
+        /* case IoWriteAllCallback:
+         * case IoFinishCallback:
+         */
+    case ReadMemoryFailureCallback:
+        /* TODO check the rest */
+        break;
+    case SecondaryFlagsCallback:
+        ok(input->SecondaryFlags == 0x00, "Unexpected value %lx\n", input->SecondaryFlags);
+        ok(input->SecondaryFlags == output->SecondaryFlags, "Unexpected value %lx\n", output->SecondaryFlags);
+        break;
+    case IsProcessSnapshotCallback:
+        break;
+    case VmStartCallback:
+        break;
+        /*
+    case VmQueryCallback:
+    case VmPreReadCallback:
+    case VmPostReadCallback:
+        */
+    default:
+        ok(0, "Unexpected callback type %lu\n", input->CallbackType);
+        break;
+    }
+    return TRUE;
+}
+
+static void test_callback(void)
+{
+    static const struct
+    {
+        MINIDUMP_TYPE dump_type;
+        unsigned module_flags;
+        unsigned thread_flags;
+    }
+    callback_tests[] =
+    {
+        {
+            MiniDumpNormal /* = 0 */,
+            ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord,
+            ThreadWriteThread | ThreadWriteStack | ThreadWriteContext | ThreadWriteInstructionWindow,
+        },
+        {
+            MiniDumpWithCodeSegs,
+            ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord | ModuleWriteCodeSegs,
+            ThreadWriteThread | ThreadWriteStack | ThreadWriteContext | ThreadWriteInstructionWindow,
+        },
+        {
+            MiniDumpWithDataSegs,
+            ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord | ModuleWriteDataSeg,
+            ThreadWriteThread | ThreadWriteStack | ThreadWriteContext | ThreadWriteInstructionWindow,
+        },
+        {
+            MiniDumpWithThreadInfo,
+            ModuleWriteModule | ModuleWriteMiscRecord | ModuleWriteCvRecord,
+            ThreadWriteThread | ThreadWriteStack | ThreadWriteContext | ThreadWriteInstructionWindow | ThreadWriteThreadInfo,
+        },
+    };
+#define X(a) ((stream_mask_t)1u << (a))
+    static const stream_mask_t mask_types =
+        X(ModuleCallback) | X(ThreadCallback) | /* ThreadExCallback */ X(IncludeThreadCallback) |
+        X(IncludeModuleCallback) | X(MemoryCallback) |  X(CancelCallback) | X(WriteKernelMinidumpCallback) |
+        /* KernelMinidumpStatusCallback) */ X(RemoveMemoryCallback) | /* IncludeVmRegionCallback */ X(IoStartCallback) |
+        /* IoWriteAllCallback IoFinishCallback ReadMemoryFailureCallback */ X(SecondaryFlagsCallback) |
+        X(IsProcessSnapshotCallback) | X(VmStartCallback) /* VmQueryCallback VmPreReadCallback */
+        /* VmPostReadCallback */;
+    static const stream_mask_t mask_types_too_old_dbghelp = X(IsProcessSnapshotCallback) | X(VmStartCallback);
+#undef X
+    struct cb_info cb_info;
+    MINIDUMP_CALLBACK_INFORMATION cbi = {.CallbackRoutine = test_callback_cb, .CallbackParam = &cb_info};
+    BOOL ret;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(callback_tests); i++)
+    {
+        winetest_push_context("callback_tests[%d]", i);
+
+        memset(&cb_info, 0, sizeof(cb_info));
+        cb_info.module_flags = callback_tests[i].module_flags;
+        cb_info.thread_flags = callback_tests[i].thread_flags;
+        minidump_write(GetCurrentProcess(), L"foo.mdmp", callback_tests[i].dump_type, FALSE, &cbi);
+
+        todo_wine
+        ok(cb_info.mask_types == mask_types ||
+           broken(cb_info.mask_types == (mask_types & ~mask_types_too_old_dbghelp)),
+                  "Unexpected mask for callback types %I64x (%I64x)\n", cb_info.mask_types, mask_types);
+        ok(cb_info.num_modules > 5, "Unexpected number of modules\n");
+        /* native reports several threads... */
+        ok(cb_info.num_threads >= 1, "Unexpected number of threads\n");
+        todo_wine
+        ok(cb_info.num_modules == cb_info.num_include_modules, "Unexpected number of include modules\n");
+        todo_wine
+        ok(cb_info.num_threads == cb_info.num_include_threads, "Unexpected number of include threads\n");
+
+        ret = DeleteFileA("foo.mdmp");
+        ok(ret, "Couldn't delete file\n");
+        winetest_pop_context();
+    }
+}
+
 START_TEST(minidump)
 {
     test_minidump_contents();
     test_current_process();
+    test_callback();
 }
