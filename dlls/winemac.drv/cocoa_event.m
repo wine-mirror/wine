@@ -189,7 +189,7 @@ static const OSType WineHotKeySignature = 'Wine';
         } while (rc < 0 && errno == EINTR);
 
         if (rc < 0 && errno != EAGAIN)
-            ERR(@"%@: got error writing to event queue signaling pipe: %s\n", self, strerror(errno));
+            ERR("%@: got error writing to event queue signaling pipe: %s\n", self, strerror(errno));
     }
 
     - (void) postEventObject:(MacDrvEvent*)event
@@ -258,9 +258,9 @@ static const OSType WineHotKeySignature = 'Wine';
         if (rc == 0 || (rc < 0 && errno != EAGAIN))
         {
             if (rc == 0)
-                ERR(@"%@: event queue signaling pipe unexpectedly closed\n", self);
+                ERR("%@: event queue signaling pipe unexpectedly closed\n", self);
             else
-                ERR(@"%@: got error reading from event queue signaling pipe: %s\n", self, strerror(errno));
+                ERR("%@: got error reading from event queue signaling pipe: %s\n", self, strerror(errno));
             return nil;
         }
 
@@ -437,7 +437,7 @@ static const OSType WineHotKeySignature = 'Wine';
             status = InstallApplicationEventHandler(HotKeyHandler, 1, &eventType, self, &handler);
             if (status != noErr)
             {
-                ERR(@"InstallApplicationEventHandler() failed: %d\n", status);
+                ERR("InstallApplicationEventHandler() failed: %d\n", status);
                 handler = NULL;
                 return MACDRV_HOTKEY_FAILURE;
             }
@@ -461,7 +461,7 @@ static const OSType WineHotKeySignature = 'Wine';
             return MACDRV_HOTKEY_ALREADY_REGISTERED;
         if (status != noErr)
         {
-            ERR(@"RegisterEventHotKey() failed: %d\n", status);
+            ERR("RegisterEventHotKey() failed: %d\n", status);
             return MACDRV_HOTKEY_FAILURE;
         }
 

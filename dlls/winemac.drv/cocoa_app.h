@@ -151,5 +151,5 @@ enum {
 
 void OnMainThreadAsync(dispatch_block_t block);
 
-void LogError(const char* func, NSString* format, ...);
-void LogErrorv(const char* func, NSString* format, va_list args);
+void LogError(const char* func, const char* format, ...);
+void LogErrorv(const char* func, const char* format, va_list args);

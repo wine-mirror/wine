@@ -2388,7 +2388,7 @@ void OnMainThreadAsync(dispatch_block_t block)
 /***********************************************************************
  *              LogError
  */
-void LogError(const char* func, NSString* format, ...)
+void LogError(const char* func, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -2399,11 +2399,11 @@ void LogError(const char* func, NSString* format, ...)
 /***********************************************************************
  *              LogErrorv
  */
-void LogErrorv(const char* func, NSString* format, va_list args)
+void LogErrorv(const char* func, const char* format, va_list args)
 {
 @autoreleasepool
 {
-    NSString* message = [[NSString alloc] initWithFormat:format arguments:args];
+    NSString* message = [[NSString alloc] initWithFormat:[NSString stringWithUTF8String:format] arguments:args];
     fprintf(stderr, "err:%s:%s", func, [message UTF8String]);
     [message release];
 }

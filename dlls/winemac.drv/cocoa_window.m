@@ -1443,7 +1443,7 @@ static inline BOOL stage_manager_enabled(void)
                         reordered = TRUE;
                     }
                     else
-                        ERR(@"shouldn't happen: %@ thinks %@ is a latent child, but it doesn't agree\n", self, child);
+                        ERR("shouldn't happen: %@ thinks %@ is a latent child, but it doesn't agree\n", self, child);
                     [indexesToRemove addIndex:i];
                 }
             }
