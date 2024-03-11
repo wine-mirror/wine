@@ -1929,7 +1929,7 @@ struct shader_none_priv
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
 static void shader_none_precompile(void *shader_priv, struct wined3d_shader *shader) {}
-static void shader_none_select_compute(void *shader_priv, struct wined3d_context *context,
+static void shader_none_apply_compute_state(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state) {}
 static void shader_none_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count) {}
 static void shader_none_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count) {}
@@ -2035,7 +2035,7 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_handle_instruction,
     shader_none_precompile,
     shader_none_apply_draw_state,
-    shader_none_select_compute,
+    shader_none_apply_compute_state,
     shader_none_disable,
     shader_none_update_float_vertex_constants,
     shader_none_update_float_pixel_constants,

@@ -10766,7 +10766,7 @@ static void shader_glsl_apply_draw_state(void *shader_priv, struct wined3d_conte
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_select_compute(void *shader_priv, struct wined3d_context *context,
+static void shader_glsl_apply_compute_state(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
@@ -11548,7 +11548,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_handle_instruction,
     shader_glsl_precompile,
     shader_glsl_apply_draw_state,
-    shader_glsl_select_compute,
+    shader_glsl_apply_compute_state,
     shader_glsl_disable,
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,

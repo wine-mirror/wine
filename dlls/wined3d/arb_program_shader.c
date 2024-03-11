@@ -4753,7 +4753,7 @@ static void shader_arb_apply_draw_state(void *shader_priv, struct wined3d_contex
         shader_arb_load_constants_internal(priv, context_gl, state, use_ps(state), use_vs(state), FALSE);
 }
 
-static void shader_arb_select_compute(void *shader_priv, struct wined3d_context *context,
+static void shader_arb_apply_compute_state(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
     ERR("Compute pipeline not supported by the ARB shader backend.\n");
@@ -5709,7 +5709,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_handle_instruction,
     shader_arb_precompile,
     shader_arb_apply_draw_state,
-    shader_arb_select_compute,
+    shader_arb_apply_compute_state,
     shader_arb_disable,
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,

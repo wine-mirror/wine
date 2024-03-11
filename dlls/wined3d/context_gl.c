@@ -4445,7 +4445,7 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
 
     if (context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE))
     {
-        device->shader_backend->shader_select_compute(device->shader_priv, &context_gl->c, state);
+        device->shader_backend->shader_apply_compute_state(device->shader_priv, &context_gl->c, state);
         context_gl->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
     }
 

@@ -876,7 +876,7 @@ fail:
     context_vk->graphics.vk_pipeline_layout = VK_NULL_HANDLE;
 }
 
-static void shader_spirv_select_compute(void *shader_priv,
+static void shader_spirv_apply_compute_state(void *shader_priv,
         struct wined3d_context *context, const struct wined3d_state *state)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
@@ -1122,7 +1122,7 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
     .shader_handle_instruction = shader_spirv_handle_instruction,
     .shader_precompile = shader_spirv_precompile,
     .shader_apply_draw_state = shader_spirv_apply_draw_state,
-    .shader_select_compute = shader_spirv_select_compute,
+    .shader_apply_compute_state = shader_spirv_apply_compute_state,
     .shader_disable = shader_spirv_disable,
     .shader_update_float_vertex_constants = shader_spirv_update_float_vertex_constants,
     .shader_update_float_pixel_constants = shader_spirv_update_float_pixel_constants,

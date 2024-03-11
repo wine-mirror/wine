@@ -3870,7 +3870,7 @@ VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk
 
     if (context_vk->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE))
     {
-        device_vk->d.shader_backend->shader_select_compute(device_vk->d.shader_priv, &context_vk->c, state);
+        device_vk->d.shader_backend->shader_apply_compute_state(device_vk->d.shader_priv, &context_vk->c, state);
         if (!context_vk->compute.vk_pipeline)
         {
             ERR("No compute pipeline set.\n");
