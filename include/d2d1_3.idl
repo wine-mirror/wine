@@ -505,6 +505,9 @@ interface ID2D1DeviceContext4 : ID2D1DeviceContext3
     );
 }
 
+interface ID2D1DeviceContext5;
+interface ID2D1DeviceContext6;
+
 [
     object,
     uuid(a44472e1-8dfb-4e60-8492-6e2861c9ca8b),
@@ -526,6 +529,62 @@ interface ID2D1Device2 : ID2D1Device1
 
 [
     object,
+    uuid(852f2087-802c-4037-ab60-ff2e7ee6fc01),
+    local,
+]
+interface ID2D1Device3 : ID2D1Device2
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext3 **context
+    );
+}
+
+[
+    object,
+    uuid(d7bdb159-5683-4a46-bc9c-72dc720b858b),
+    local,
+]
+interface ID2D1Device4 : ID2D1Device3
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext4 **context
+    );
+    void SetMaximumColorGlyphCacheMemory(
+        UINT64 size
+    );
+    UINT64 GetMaximumColorGlyphCacheMemory(void);
+}
+
+[
+    object,
+    uuid(d55ba0a4-6405-4694-aef5-08ee1a4358b4),
+    local,
+]
+interface ID2D1Device5 : ID2D1Device4
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext5 **context
+    );
+}
+
+[
+    object,
+    uuid(7bfef914-2d75-4bad-be87-e18ddb077b6d),
+    local,
+]
+interface ID2D1Device6 : ID2D1Device5
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext6 **context
+    );
+}
+
+[
+    object,
     uuid(0869759f-4f00-413f-b03e-2bda45404d0f),
     local,
 ]
@@ -534,6 +593,58 @@ interface ID2D1Factory3 : ID2D1Factory2
     HRESULT CreateDevice(
         [in] IDXGIDevice *dxgi_device,
         [out] ID2D1Device2 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(bd4ec2d2-0662-4bee-ba8e-6f29f032e096),
+    local,
+]
+interface ID2D1Factory4 : ID2D1Factory3
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device3 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(c4349994-838e-4b0f-8cab-44997d9eeacc),
+    local,
+]
+interface ID2D1Factory5 : ID2D1Factory4
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device4 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(f9976f46-f642-44c1-97ca-da32ea2a2635),
+    local,
+]
+interface ID2D1Factory6 : ID2D1Factory5
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device5 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(bdc2bdd3-b96c-4de6-bdf7-99d4745454de),
+    local,
+]
+interface ID2D1Factory7 : ID2D1Factory6
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device6 **d2d_device
     );
 }
 
