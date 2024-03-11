@@ -3992,7 +3992,7 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
 
 static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
 {
-    UINT32 num_channels, value;
+    UINT32 num_channels;
     HRESULT hr;
 
     if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
@@ -4003,7 +4003,7 @@ static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 us
     if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx)
             || IsEqualGUID(&am_type->formattype, &GUID_NULL))
     {
-        WAVEFORMATEX *format;
+        UINT32 flags = 0;
 
         if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, &num_channels)))
             num_channels = 0;
@@ -4012,59 +4012,11 @@ static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 us
                 || SUCCEEDED(IMFMediaType_GetItem(media_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, NULL))
                 || SUCCEEDED(IMFMediaType_GetItem(media_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, NULL))
                 || num_channels > 2)
-        {
-            WAVEFORMATEXTENSIBLE *format_ext;
+            flags = MFWaveFormatExConvertFlag_ForceExtensible;
 
-            am_type->cbFormat = sizeof(*format_ext) + user_size;
-            if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
-                return E_OUTOFMEMORY;
-            format_ext = (WAVEFORMATEXTENSIBLE *)am_type->pbFormat;
-            memset(format_ext, 0, sizeof(*format_ext));
-
-            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
-                format_ext->dwChannelMask = value;
-            else if (num_channels < ARRAY_SIZE(default_channel_mask))
-                format_ext->dwChannelMask = default_channel_mask[num_channels];
-
-            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
-                format_ext->Samples.wValidBitsPerSample = value;
-            if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &value)))
-                format_ext->Samples.wSamplesPerBlock = value;
-            format_ext->SubFormat = am_type->subtype;
-
-            format = &format_ext->Format;
-            format->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-            format->cbSize = sizeof(*format_ext) - sizeof(*format) + user_size;
-
-            if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
-                    (BYTE *)(format_ext + 1), user_size, NULL)))
-                return hr;
-        }
-        else
-        {
-            am_type->cbFormat = sizeof(*format) + user_size;
-            if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
-                return E_OUTOFMEMORY;
-            format = (WAVEFORMATEX *)am_type->pbFormat;
-            memset(format, 0, sizeof(*format));
-
-            format->wFormatTag = am_type->subtype.Data1;
-            format->cbSize = user_size;
-
-            if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
-                    (BYTE *)(format + 1), user_size, NULL)))
-                return hr;
-        }
-
-        format->nChannels = num_channels;
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &value)))
-            format->nSamplesPerSec = value;
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value)))
-            format->nAvgBytesPerSec = value;
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value)))
-            format->nBlockAlign = value;
-        if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
-            format->wBitsPerSample = value;
+        if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(media_type, (WAVEFORMATEX **)&am_type->pbFormat,
+                (UINT32 *)&am_type->cbFormat, flags)))
+            return hr;
 
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
         am_type->formattype = FORMAT_WaveFormatEx;
