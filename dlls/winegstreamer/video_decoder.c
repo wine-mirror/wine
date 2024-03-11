@@ -852,14 +852,17 @@ static HRESULT output_sample(struct video_decoder *decoder, IMFSample **out, IMF
     return S_OK;
 }
 
-static HRESULT handle_stream_type_change(struct video_decoder *decoder, const struct wg_format *format)
+static HRESULT handle_stream_type_change(struct video_decoder *decoder)
 {
     UINT64 frame_size, frame_rate;
+    struct wg_format format;
     HRESULT hr;
 
     if (decoder->stream_type)
         IMFMediaType_Release(decoder->stream_type);
-    if (!(decoder->stream_type = mf_media_type_from_wg_format(format)))
+    if (!(wg_transform_get_output_format(decoder->wg_transform, &format)))
+        return E_FAIL;
+    if (!(decoder->stream_type = mf_media_type_from_wg_format(&format)))
         return E_OUTOFMEMORY;
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_RATE, &frame_rate))
@@ -879,7 +882,6 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct video_decoder *decoder = impl_from_IMFTransform(iface);
-    struct wg_format wg_format;
     UINT32 sample_size;
     LONGLONG duration;
     IMFSample *sample;
@@ -929,7 +931,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     }
 
     if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample,
-            sample_size, &wg_format, &samples->dwStatus)))
+            sample_size, &samples->dwStatus)))
     {
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
 
@@ -948,7 +950,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     {
         samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
         *status |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
-        hr = handle_stream_type_change(decoder, &wg_format);
+        hr = handle_stream_type_change(decoder);
     }
 
     if (decoder->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)

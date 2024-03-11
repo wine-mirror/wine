@@ -88,6 +88,7 @@ HRESULT wg_transform_create_mf(IMFMediaType *input_type, IMFMediaType *output_ty
 HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_MEDIA_TYPE *output_format,
         const struct wg_transform_attrs *attrs, wg_transform_t *transform);
 void wg_transform_destroy(wg_transform_t transform);
+bool wg_transform_get_output_format(wg_transform_t transform, struct wg_format *format);
 bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format);
 bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input);
 HRESULT wg_transform_drain(wg_transform_t transform);
@@ -146,9 +147,15 @@ HRESULT wg_transform_push_quartz(wg_transform_t transform, struct wg_sample *sam
 HRESULT wg_transform_push_dmo(wg_transform_t transform, IMediaBuffer *media_buffer,
         DWORD flags, REFERENCE_TIME time_stamp, REFERENCE_TIME time_length, struct wg_sample_queue *queue);
 HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD sample_size, struct wg_format *format, DWORD *flags);
+        DWORD sample_size, DWORD *flags);
 HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *sample);
 HRESULT wg_transform_read_dmo(wg_transform_t transform, DMO_OUTPUT_DATA_BUFFER *buffer);
+
+/* These unixlib entry points should not be used directly, they assume samples
+ * to be queued and zero-copy support, use the helpers below instead.
+ */
+HRESULT wg_transform_push_data(wg_transform_t transform, struct wg_sample *sample);
+HRESULT wg_transform_read_data(wg_transform_t transform, struct wg_sample *sample);
 
 HRESULT gstreamer_byte_stream_handler_create(REFIID riid, void **obj);
 

@@ -616,6 +616,48 @@ out:
     return status;
 }
 
+NTSTATUS wg_transform_get_output_format(void *args)
+{
+    struct wg_transform_get_output_format_params *params = args;
+    struct wg_transform *transform = get_transform(params->transform);
+    struct wg_format *format = params->format;
+    GstVideoInfo video_info;
+    GstCaps *output_caps;
+
+    if (transform->output_sample)
+        output_caps = gst_sample_get_caps(transform->output_sample);
+    else
+        output_caps = transform->output_caps;
+
+    GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, output_caps);
+
+    wg_format_from_caps(format, output_caps);
+
+    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO
+            && gst_video_info_from_caps(&video_info, output_caps))
+    {
+        gsize plane_align = transform->attrs.output_plane_align;
+        GstVideoAlignment align = {0};
+
+        /* set the desired output buffer alignment on the dest video info */
+        align_video_info_planes(plane_align, &video_info, &align);
+
+        GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
+                align.padding_top, align.padding_right, align.padding_bottom);
+
+        format->u.video.padding.left = align.padding_left;
+        format->u.video.width += format->u.video.padding.left;
+        format->u.video.padding.right = align.padding_right;
+        format->u.video.width += format->u.video.padding.right;
+        format->u.video.padding.top = align.padding_top;
+        format->u.video.height += format->u.video.padding.top;
+        format->u.video.padding.bottom = align.padding_bottom;
+        format->u.video.height += format->u.video.padding.bottom;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS wg_transform_set_output_format(void *args)
 {
     struct wg_transform_set_output_format_params *params = args;
@@ -927,7 +969,6 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_transform *transform = get_transform(params->transform);
     GstVideoInfo src_video_info, dst_video_info;
     struct wg_sample *sample = params->sample;
-    struct wg_format *format = params->format;
     GstVideoAlignment align = {0};
     GstBuffer *output_buffer;
     GstCaps *output_caps;
@@ -961,29 +1002,6 @@ NTSTATUS wg_transform_read_data(void *args)
     if (GST_MINI_OBJECT_FLAG_IS_SET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED))
     {
         GST_MINI_OBJECT_FLAG_UNSET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
-
-        GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, output_caps);
-
-        if (format)
-        {
-            wg_format_from_caps(format, output_caps);
-
-            if (format->major_type == WG_MAJOR_TYPE_VIDEO)
-            {
-                GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
-                        align.padding_top, align.padding_right, align.padding_bottom);
-
-                format->u.video.padding.left = align.padding_left;
-                format->u.video.width += format->u.video.padding.left;
-                format->u.video.padding.right = align.padding_right;
-                format->u.video.width += format->u.video.padding.right;
-                format->u.video.padding.top = align.padding_top;
-                format->u.video.height += format->u.video.padding.top;
-                format->u.video.padding.bottom = align.padding_bottom;
-                format->u.video.height += format->u.video.padding.bottom;
-            }
-        }
-
         params->result = MF_E_TRANSFORM_STREAM_CHANGE;
         GST_INFO("Format changed detected, returning no output");
         wg_allocator_release_sample(transform->allocator, sample, false);

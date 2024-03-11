@@ -582,7 +582,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return hr;
 
     if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, samples->pSample,
-            info.cbSize, NULL, &samples->dwStatus)))
+            info.cbSize, &samples->dwStatus)))
         wg_sample_queue_flush(impl->wg_sample_queue, false);
 
     return hr;

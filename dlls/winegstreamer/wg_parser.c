@@ -1889,6 +1889,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
     X(wg_transform_create),
     X(wg_transform_destroy),
+    X(wg_transform_get_output_format),
     X(wg_transform_set_output_format),
 
     X(wg_transform_push_data),
@@ -2074,6 +2075,21 @@ NTSTATUS wow64_wg_transform_create(void *args)
     return ret;
 }
 
+NTSTATUS wow64_wg_transform_get_output_format(void *args)
+{
+    struct
+    {
+        wg_transform_t transform;
+        PTR32 format;
+    } *params32 = args;
+    struct wg_transform_get_output_format_params params =
+    {
+        .transform = params32->transform,
+        .format = ULongToPtr(params32->format),
+    };
+    return wg_transform_get_output_format(&params);
+}
+
 NTSTATUS wow64_wg_transform_set_output_format(void *args)
 {
     struct
@@ -2115,14 +2131,12 @@ NTSTATUS wow64_wg_transform_read_data(void *args)
     {
         wg_transform_t transform;
         PTR32 sample;
-        PTR32 format;
         HRESULT result;
     } *params32 = args;
     struct wg_transform_read_data_params params =
     {
         .transform = params32->transform,
         .sample = ULongToPtr(params32->sample),
-        .format = ULongToPtr(params32->format),
     };
     NTSTATUS ret;
 
@@ -2240,6 +2254,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 
     X64(wg_transform_create),
     X(wg_transform_destroy),
+    X64(wg_transform_get_output_format),
     X64(wg_transform_set_output_format),
 
     X64(wg_transform_push_data),

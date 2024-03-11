@@ -415,18 +415,16 @@ HRESULT wg_transform_push_data(wg_transform_t transform, struct wg_sample *sampl
     return params.result;
 }
 
-HRESULT wg_transform_read_data(wg_transform_t transform, struct wg_sample *sample,
-        struct wg_format *format)
+HRESULT wg_transform_read_data(wg_transform_t transform, struct wg_sample *sample)
 {
     struct wg_transform_read_data_params params =
     {
         .transform = transform,
         .sample = sample,
-        .format = format,
     };
     NTSTATUS status;
 
-    TRACE("transform %#I64x, sample %p, format %p.\n", transform, sample, format);
+    TRACE("transform %#I64x, sample %p.\n", transform, sample);
 
     if ((status = WINE_UNIX_CALL(unix_wg_transform_read_data, &params)))
         return HRESULT_FROM_NT(status);
@@ -448,6 +446,19 @@ bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input)
 
     *accepts_input = params.accepts_input;
     return true;
+}
+
+bool wg_transform_get_output_format(wg_transform_t transform, struct wg_format *format)
+{
+    struct wg_transform_get_output_format_params params =
+    {
+        .transform = transform,
+        .format = format,
+    };
+
+    TRACE("transform %#I64x, format %p.\n", transform, format);
+
+    return !WINE_UNIX_CALL(unix_wg_transform_get_output_format, &params);
 }
 
 bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format)

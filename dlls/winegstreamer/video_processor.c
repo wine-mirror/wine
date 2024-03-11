@@ -693,8 +693,7 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         IMFSample_AddRef(output_sample);
     }
 
-    if (FAILED(hr = wg_transform_read_mf(impl->wg_transform, output_sample, info.cbSize,
-            NULL, &samples->dwStatus)))
+    if (FAILED(hr = wg_transform_read_mf(impl->wg_transform, output_sample, info.cbSize, &samples->dwStatus)))
         goto done;
     wg_sample_queue_flush(impl->wg_sample_queue, false);
 

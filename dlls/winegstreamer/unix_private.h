@@ -56,6 +56,7 @@ extern GstCaps *wg_format_to_caps(const struct wg_format *format);
 
 extern NTSTATUS wg_transform_create(void *args);
 extern NTSTATUS wg_transform_destroy(void *args);
+extern NTSTATUS wg_transform_get_output_format(void *args);
 extern NTSTATUS wg_transform_set_output_format(void *args);
 extern NTSTATUS wg_transform_push_data(void *args);
 extern NTSTATUS wg_transform_read_data(void *args);
