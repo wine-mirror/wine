@@ -3161,14 +3161,48 @@ static void test_object_permanence(void)
     static const struct object_permanence_test {
         const char *name;
         ULONG initial_attr;
+        ACCESS_MASK access;
+        BOOLEAN make_temporary;
+        NTSTATUS make_temp_status;
     } tests[] = {
         {
             .name = "permanent object persists",
             .initial_attr     = OBJ_PERMANENT,
+            .access           = GENERIC_ALL,
         },
+        {
+            .name = "NtMakeTemporaryObject() succeeds",
+            .initial_attr     = OBJ_PERMANENT,
+            .access           = GENERIC_ALL,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_SUCCESS,
+        },
+        {
+            .name = "NtMakeTemporaryObject() fails w/o DELETE access",
+            .initial_attr     = OBJ_PERMANENT,
+            .access           = EVENT_ALL_ACCESS & ~DELETE,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_ACCESS_DENIED,
+        },
+
         {
             .name = "temporary object disappears",
             .initial_attr     = 0,
+            .access           = GENERIC_ALL,
+        },
+        {
+            .name = "NtMakeTemporaryObject() succeeds even if already temporary",
+            .initial_attr     = 0,
+            .access           = GENERIC_ALL,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_SUCCESS,
+        },
+        {
+            .name = "NtMakeTemporaryObject() fails w/o DELETE access even if already temporary",
+            .initial_attr     = 0,
+            .access           = EVENT_ALL_ACCESS & ~DELETE,
+            .make_temporary   = TRUE,
+            .make_temp_status = STATUS_ACCESS_DENIED,
         },
     };
     const struct object_permanence_test *test;
@@ -3216,7 +3250,7 @@ static void test_object_permanence(void)
     for (test = &tests[0]; test != &tests[ARRAY_SIZE(tests)]; test++)
     {
         NTSTATUS make_perma_status = creatpermapriv ? STATUS_SUCCESS : STATUS_PRIVILEGE_NOT_HELD;
-        HANDLE handle;
+        HANDLE handle, handle2;
         OBJECT_BASIC_INFORMATION obi;
         OBJECT_ATTRIBUTES attr;
         UNICODE_STRING name;
@@ -3228,7 +3262,7 @@ static void test_object_permanence(void)
 
         RtlInitUnicodeString( &name, L"\\BaseNamedObjects\\test_object_permanence" );
         InitializeObjectAttributes( &attr, &name, test->initial_attr, 0, NULL );
-        status = NtCreateEvent( &handle, GENERIC_ALL, &attr, NotificationEvent, FALSE );
+        status = NtCreateEvent( &handle, test->access, &attr, NotificationEvent, FALSE );
         if (test->initial_attr & OBJ_PERMANENT)
         {
             todo_wine_if(status == STATUS_SUCCESS || status == STATUS_PRIVILEGE_NOT_HELD)
@@ -3250,6 +3284,39 @@ static void test_object_permanence(void)
         todo_wine_if(test->initial_attr != 0)
         ok( obi.Attributes == test->initial_attr, "expected attr %08lx, got %08lx\n", test->initial_attr, obi.Attributes );
 
+        if (test->make_temporary)
+        {
+            if (test->make_temp_status == STATUS_ACCESS_DENIED)
+                ok( !(obi.GrantedAccess & DELETE), "expected no DELETE access in %08lx\n", obi.GrantedAccess );
+            if (test->make_temp_status == STATUS_SUCCESS)
+                ok( !!(obi.GrantedAccess & DELETE), "expected DELETE access in %08lx\n", obi.GrantedAccess );
+
+            status = NtMakeTemporaryObject( handle );
+            todo_wine_if(test->make_temp_status == STATUS_ACCESS_DENIED)
+            ok( status == test->make_temp_status, "NtMakeTemporaryObject returned %08lx\n", status );
+            if (!NT_ERROR(status)) is_permanent = FALSE;
+        }
+
+        if (winetest_debug > 1)
+            trace( "NOTE: object still has unclosed handle (%p) and shouldn't be deleted", handle );
+
+        winetest_push_context( "first handle (%p) still open", handle );
+        status = NtOpenEvent( &handle2, GENERIC_ALL, &attr );
+        ok( status == STATUS_SUCCESS, "NtOpenEvent returned %08lx\n", status );
+        if (!NT_ERROR(status))
+        {
+            ULONG expect_attr = (obi.Attributes & ~OBJ_PERMANENT) | (is_permanent ? OBJ_PERMANENT : 0);
+            OBJECT_BASIC_INFORMATION obi2;
+
+            status = NtQueryObject( handle2, ObjectBasicInformation, &obi2, sizeof(obi2), &len );
+            ok( status == STATUS_SUCCESS, "NtQueryObject returned %08lx\n", status );
+            todo_wine_if(expect_attr != 0)
+            ok( obi2.Attributes == expect_attr, "expected attr %08lx, got %08lx\n", expect_attr, obi2.Attributes );
+
+            NtClose( handle2 );
+        }
+        winetest_pop_context();
+
         if (winetest_debug > 1)
             trace( "NOTE: about to close earlier handle (%p) which should be the last", handle );
         NtClose( handle );
@@ -3259,7 +3326,7 @@ static void test_object_permanence(void)
         ok( status == (is_permanent ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND), "NtOpenEvent returned %08lx\n", status );
         if (!NT_ERROR(status))
         {
-            ULONG expect_attr = obi.Attributes;
+            ULONG expect_attr = (obi.Attributes & ~OBJ_PERMANENT) | (is_permanent ? OBJ_PERMANENT : 0);
             OBJECT_BASIC_INFORMATION obi_new;
 
             status = NtQueryObject( handle, ObjectBasicInformation, &obi_new, sizeof(obi_new), &len );
