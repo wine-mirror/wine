@@ -28,6 +28,7 @@ NTSYSAPI void   WINAPI RtlRaiseException(EXCEPTION_RECORD*);
 NTSYSAPI void    CDECL RtlRestoreContext(CONTEXT*,EXCEPTION_RECORD*);
 NTSYSAPI void   WINAPI RtlUnwind(void*,void*,EXCEPTION_RECORD*,void*);
 NTSYSAPI void*  WINAPI RtlPcToFileHeader(void*,void**);
+NTSYSAPI ULONG  WINAPI RtlWalkFrameChain(void**,ULONG,ULONG);
 
 #ifndef __i386__
 
