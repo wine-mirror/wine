@@ -4283,19 +4283,32 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
             FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
             return E_NOTIMPL;
         }
-
-        if (!am_type->bTemporalCompression && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
-            mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
-        if (am_type->bFixedSizeSamples && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
-            mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
-        if (am_type->lSampleSize && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_SAMPLE_SIZE, NULL)))
-            mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, am_type->lSampleSize, &hr);
+    }
+    else if (IsEqualGUID(&am_type->majortype, &MEDIATYPE_Audio))
+    {
+        if (am_type->cbFormat && !am_type->pbFormat)
+            hr = E_INVALIDARG;
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx)
+                && am_type->cbFormat >= sizeof(WAVEFORMATEX))
+            hr = MFInitMediaTypeFromWaveFormatEx(media_type, (WAVEFORMATEX *)am_type->pbFormat, am_type->cbFormat);
+        else
+        {
+            FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
+            return E_NOTIMPL;
+        }
     }
     else
     {
         FIXME("Unsupported major type %s.\n", debugstr_guid(&am_type->majortype));
         return E_NOTIMPL;
     }
+
+    if (!am_type->bTemporalCompression && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, NULL)))
+        mediatype_set_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+    if (am_type->bFixedSizeSamples && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_FIXED_SIZE_SAMPLES, NULL)))
+        mediatype_set_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1, &hr);
+    if (am_type->lSampleSize && FAILED(IMFMediaType_GetItem(media_type, &MF_MT_SAMPLE_SIZE, NULL)))
+        mediatype_set_uint32(media_type, &MF_MT_SAMPLE_SIZE, am_type->lSampleSize, &hr);
 
     return hr;
 }
