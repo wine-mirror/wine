@@ -474,36 +474,6 @@ ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
 }
 
 
-/*************************************************************************
- *		RtlCaptureStackBackTrace (NTDLL.@)
- */
-USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
-{
-    CONTEXT context;
-    ULONG i;
-    ULONG *frame;
-
-    RtlCaptureContext( &context );
-    if (hash) *hash = 0;
-    frame = (ULONG *)context.Ebp;
-
-    while (skip--)
-    {
-        if (!is_valid_frame( (ULONG_PTR)frame )) return 0;
-        frame = (ULONG *)*frame;
-    }
-
-    for (i = 0; i < count; i++)
-    {
-        if (!is_valid_frame( (ULONG_PTR)frame )) break;
-        buffer[i] = (void *)frame[1];
-        if (hash) *hash += frame[1];
-        frame = (ULONG *)*frame;
-    }
-    return i;
-}
-
-
 /***********************************************************************
  *           RtlUserThreadStart (NTDLL.@)
  */

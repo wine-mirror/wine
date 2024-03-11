@@ -2040,16 +2040,6 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
 }
 
 
-/*************************************************************************
- *		RtlCaptureStackBackTrace (NTDLL.@)
- */
-USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
-{
-    FIXME( "not implemented\n" );
-    return 0;
-}
-
-
 static int code_match( BYTE *code, const BYTE *seq, size_t len )
 {
     for ( ; len; len--, code++, seq++) if (*seq && *code != *seq) return 0;

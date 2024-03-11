@@ -10287,6 +10287,30 @@ static void test_set_live_context(void)
 }
 #endif
 
+static void test_backtrace(void)
+{
+    void *buffer[1024];
+    WCHAR *p, name[MAX_PATH];
+    void *module;
+    ULONG hash, hash_expect;
+    int i, count = RtlCaptureStackBackTrace( 0, 1024, buffer, &hash );
+
+    ok( count > 1, "got %u entries\n", count );
+    for (i = hash_expect = 0; i < count; i++) hash_expect += (ULONG_PTR)buffer[i];
+    ok( hash == hash_expect, "hash mismatch %lx / %lx\n", hash, hash_expect );
+    RtlPcToFileHeader( buffer[0], &module );
+    ok( module == GetModuleHandleA(0), "wrong module %p/%p for %p\n",
+        module, GetModuleHandleA(0), buffer[0]);
+
+    if (count && !buffer[count - 1]) count--;  /* win11 32-bit */
+    RtlPcToFileHeader( buffer[count - 1], &module );
+    GetModuleFileNameW( module, name, sizeof(name) );
+    if ((p = wcsrchr( name, '\\' ))) p++;
+    else p = name;
+    ok( !wcsicmp( p, L"ntdll.dll" ), "wrong module %p %s for frame %u %p\n",
+        module, debugstr_w(name), count - 1, buffer[count - 1] );
+}
+
 START_TEST(exception)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -10562,5 +10586,6 @@ START_TEST(exception)
     test_suspend_thread();
     test_suspend_process();
     test_unload_trace();
+    test_backtrace();
     VirtualFree(code_mem, 0, MEM_RELEASE);
 }

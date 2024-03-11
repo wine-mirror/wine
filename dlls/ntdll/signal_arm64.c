@@ -849,15 +849,6 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "bl " __ASM_NAME("NtRaiseException") "\n\t"
                    "bl " __ASM_NAME("RtlRaiseStatus") /* does not return */ );
 
-/*************************************************************************
- *             RtlCaptureStackBackTrace (NTDLL.@)
- */
-USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, ULONG *hash )
-{
-    FIXME( "(%ld, %ld, %p, %p) stub!\n", skip, count, buffer, hash );
-    return 0;
-}
-
 
 /***********************************************************************
  *           _setjmpex (NTDLL.@)
