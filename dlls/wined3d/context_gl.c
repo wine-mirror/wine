@@ -4443,11 +4443,7 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
     }
     memset(context_gl->c.dirty_compute_states, 0, sizeof(*context_gl->c.dirty_compute_states));
 
-    if (context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_COMPUTE))
-    {
-        device->shader_backend->shader_apply_compute_state(device->shader_priv, &context_gl->c, state);
-        context_gl->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
-    }
+    device->shader_backend->shader_apply_compute_state(device->shader_priv, &context_gl->c, state);
 
     if (context_gl->c.update_compute_shader_resource_bindings)
     {
@@ -4478,6 +4474,7 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
 
     context_gl->c.last_was_blit = FALSE;
     context_gl->c.last_was_ffp_blit = FALSE;
+    context_gl->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
 }
 
 void wined3d_context_gl_end_transform_feedback(struct wined3d_context_gl *context_gl)
