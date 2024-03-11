@@ -318,13 +318,13 @@ static HKEY open_hkcu_key( const char *name )
             return 0;
 
         sid = ((TOKEN_USER *)sid_data)->User.Sid;
-        len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
-                       (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
-                                                sid->IdentifierAuthority.Value[4] ),
-                                      MAKEWORD( sid->IdentifierAuthority.Value[3],
-                                                sid->IdentifierAuthority.Value[2] )));
+        len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
+                        (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
+                                                 sid->IdentifierAuthority.Value[4] ),
+                                       MAKEWORD( sid->IdentifierAuthority.Value[3],
+                                                 sid->IdentifierAuthority.Value[2] )));
         for (i = 0; i < sid->SubAuthorityCount; i++)
-            len += sprintf( buffer + len, "-%u", (int)sid->SubAuthority[i] );
+            len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
 
         ascii_to_unicode( bufferW, buffer, len );
         hkcu = reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
@@ -491,9 +491,9 @@ static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
             /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
             if (major > 4 || (major == 4 && minor >= 4))
             {
-                char *str = malloc( 3 + strlen( rest ) + 1 );
+                char *str = NULL;
 
-                sprintf( str, "4.3%s", rest );
+                asprintf( &str, "4.3%s", rest );
                 if (InterlockedCompareExchangePointer( (void **)&ptr->u.context->version_string, str, NULL ))
                     free( str );
                 return ptr->u.context->version_string;
@@ -536,7 +536,7 @@ static char *build_extension_list( TEB *teb )
         capacity = max( capacity, len + strlen( extension ) + 2 );
         if (!(tmp = realloc( available_extensions, capacity ))) break;
         available_extensions = tmp;
-        len += sprintf( available_extensions + len, "%s ", extension );
+        len += snprintf( available_extensions + len, capacity - len, "%s ", extension );
     }
     if (len) available_extensions[len - 1] = 0;
 
