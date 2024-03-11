@@ -3321,7 +3321,6 @@ static void test_object_permanence(void)
                 ok( !!(obi.GrantedAccess & DELETE), "expected DELETE access in %08lx\n", obi.GrantedAccess );
 
             status = NtMakeTemporaryObject( handle );
-            todo_wine_if(test->make_temp_status == STATUS_ACCESS_DENIED)
             ok( status == test->make_temp_status, "NtMakeTemporaryObject returned %08lx\n", status );
             if (!NT_ERROR(status)) is_permanent = FALSE;
         }

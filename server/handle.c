@@ -887,9 +887,10 @@ DECL_HANDLER(get_system_handles)
 
 DECL_HANDLER(set_object_permanence)
 {
+    const unsigned int access = req->permanent ? 0 : DELETE;
     struct object *obj;
 
-    if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
+    if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
 
     if (req->permanent && !obj->is_permanent)
     {
