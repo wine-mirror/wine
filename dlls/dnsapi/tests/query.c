@@ -167,6 +167,11 @@ static void test_DnsQuery(void)
         skip("query timed out\n");
         return;
     }
+    if (status == DNS_INFO_NO_RECORDS)
+    {
+        skip("no CNAME records\n");
+        return;
+    }
     ok(status == ERROR_SUCCESS, "got %ld\n", status);
     if (status == ERROR_SUCCESS && winetest_debug > 1)
     {
