@@ -847,7 +847,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     }
 
     context->Rax = (ULONG64)retval;
-    context->Rip = (ULONG64)target_ip;
+    if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE) context->Rip = (ULONG64)target_ip;
     RtlRestoreContext(context, rec);
 }
 

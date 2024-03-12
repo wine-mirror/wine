@@ -2182,12 +2182,45 @@ static void test_KiUserCallbackDispatcher(void)
 
 #elif defined(__x86_64__)
 
-static int consolidate_dummy_called;
+static LONG consolidate_dummy_called;
 static PVOID CALLBACK test_consolidate_dummy(EXCEPTION_RECORD *rec)
 {
     CONTEXT *ctx = (CONTEXT *)rec->ExceptionInformation[1];
-    consolidate_dummy_called = 1;
-    ok(ctx->Rip == 0xdeadbeef, "test_consolidate_dummy failed for Rip, expected: 0xdeadbeef, got: %Ix\n", ctx->Rip);
+
+    switch (InterlockedIncrement(&consolidate_dummy_called))
+    {
+    case 1:  /* RtlRestoreContext */
+        ok(ctx->Rip == 0xdeadbeef, "RtlRestoreContext wrong Rip, expected: 0xdeadbeef, got: %Ix\n", ctx->Rip);
+        ok( rec->ExceptionInformation[10] == -1, "wrong info %Ix\n", rec->ExceptionInformation[10] );
+        break;
+    case 2: /* RtlUnwindEx */
+        ok(ctx->Rip != 0xdeadbeef, "RtlUnwindEx wrong Rip, got: %Ix\n", ctx->Rip );
+        if (is_arm64ec)
+        {
+            DISPATCHER_CONTEXT_NONVOLREG_ARM64 *regs = (void *)rec->ExceptionInformation[10];
+            _JUMP_BUFFER *buf = (void *)rec->ExceptionInformation[3];
+            ARM64EC_NT_CONTEXT *ec_ctx = (ARM64EC_NT_CONTEXT *)ctx;
+            int i;
+
+            ok( rec->ExceptionInformation[10] != -1, "wrong info %Ix\n", rec->ExceptionInformation[10] );
+            ok( regs->GpNvRegs[0] == buf->R12, "wrong reg X19, %Ix / %Ix\n", regs->GpNvRegs[0], buf->R12 );
+            ok( regs->GpNvRegs[1] == buf->R13, "wrong reg X20, %Ix / %Ix\n", regs->GpNvRegs[1], buf->R13 );
+            ok( regs->GpNvRegs[2] == buf->R14, "wrong reg X21, %Ix / %Ix\n", regs->GpNvRegs[2], buf->R14 );
+            ok( regs->GpNvRegs[3] == buf->R15, "wrong reg X22, %Ix / %Ix\n", regs->GpNvRegs[3], buf->R15 );
+            ok( regs->GpNvRegs[4] == 0,        "wrong reg X23, %Ix / 0\n",   regs->GpNvRegs[4] );
+            ok( regs->GpNvRegs[5] == 0,        "wrong reg X24, %Ix / 0\n",   regs->GpNvRegs[5] );
+            ok( regs->GpNvRegs[6] == buf->Rsi, "wrong reg X25, %Ix / %Ix\n", regs->GpNvRegs[6], buf->Rsi );
+            ok( regs->GpNvRegs[7] == buf->Rdi, "wrong reg X26, %Ix / %Ix\n", regs->GpNvRegs[7], buf->Rdi );
+            ok( regs->GpNvRegs[8] == buf->Rbx, "wrong reg X27, %Ix / %Ix\n", regs->GpNvRegs[8], buf->Rbx );
+            ok( regs->GpNvRegs[9] == 0,        "wrong reg X28, %Ix / 0\n",   regs->GpNvRegs[9] );
+            ok( regs->GpNvRegs[10] == buf->Rbp,"wrong reg X29, %Ix / %Ix\n", regs->GpNvRegs[10], buf->Rbp );
+            for (i = 0; i < 8; i++)
+                ok(regs->FpNvRegs[i] == ec_ctx->V[i + 8].D[0], "wrong reg D%u, expected: %g, got: %g\n",
+                   i + 8, regs->FpNvRegs[i], ec_ctx->V[i + 8].D[0] );
+        }
+        else ok( rec->ExceptionInformation[10] == -1, "wrong info %Ix\n", rec->ExceptionInformation[10] );
+        break;
+    }
     return (PVOID)rec->ExceptionInformation[2];
 }
 
@@ -2312,13 +2345,39 @@ static void test_restore_context(void)
         rec.ExceptionInformation[0] = (DWORD64)test_consolidate_dummy;
         rec.ExceptionInformation[1] = (DWORD64)&ctx;
         rec.ExceptionInformation[2] = ctx.Rip;
+        rec.ExceptionInformation[10] = -1;
         ctx.Rip = 0xdeadbeef;
 
         pRtlRestoreContext(&ctx, &rec);
         ok(0, "shouldn't be reached\n");
     }
     else if (pass == 3)
-        ok(consolidate_dummy_called, "test_consolidate_dummy not called\n");
+        ok(consolidate_dummy_called == 1, "test_consolidate_dummy not called\n");
+    else
+        ok(0, "unexpected pass %ld\n", pass);
+
+    /* test with consolidate through RtlUnwindEx */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    pRtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass);
+    if (pass == 2)
+    {
+        rec.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+        rec.NumberParameters = 4;
+        rec.ExceptionInformation[0] = (DWORD64)test_consolidate_dummy;
+        rec.ExceptionInformation[1] = (DWORD64)&ctx;
+        rec.ExceptionInformation[2] = ctx.Rip;
+        rec.ExceptionInformation[3] = (DWORD64)&buf;
+        rec.ExceptionInformation[10] = -1;  /* otherwise it doesn't get set */
+        ctx.Rip = 0xdeadbeef;
+        /* uses consolidate callback Rip instead of bogus 0xdeadbeef */
+        setjmp((_JBTYPE *)&buf);
+        pRtlUnwindEx((void*)buf.Frame, (void*)0xdeadbeef, &rec, NULL, &ctx, NULL);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 3)
+        ok(consolidate_dummy_called == 2, "test_consolidate_dummy not called\n");
     else
         ok(0, "unexpected pass %ld\n", pass);
 }
@@ -2348,7 +2407,7 @@ static void test___C_specific_handler(void)
     }
 
     memset(&rec, 0, sizeof(rec));
-    rec.ExceptionFlags = 2; /* EXCEPTION_UNWINDING */
+    rec.ExceptionFlags = EXCEPTION_UNWINDING;
     frame = 0x1234;
     memset(&dispatch, 0, sizeof(dispatch));
     dispatch.ImageBase = (ULONG_PTR)GetModuleHandleA(NULL);
