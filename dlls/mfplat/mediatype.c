@@ -2980,7 +2980,7 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
 {
     UINT32 value, extra_size = 0, user_size;
     WAVEFORMATEX *format;
-    GUID major, subtype;
+    GUID major, subtype, basetype = MFAudioFormat_Base;
     void *user_data;
     HRESULT hr;
 
@@ -3001,6 +3001,19 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
             return hr;
         user_size = 0;
     }
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)) && value > 2
+            && SUCCEEDED(IMFMediaType_GetItem(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, NULL)))
+    {
+        if (SUCCEEDED(IMFMediaType_GetItem(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, NULL)))
+            flags = MFWaveFormatExConvertFlag_ForceExtensible;
+        if (SUCCEEDED(IMFMediaType_GetItem(mediatype, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, NULL)))
+            flags = MFWaveFormatExConvertFlag_ForceExtensible;
+    }
+
+    basetype.Data1 = subtype.Data1;
+    if (subtype.Data1 >> 16 || !IsEqualGUID(&subtype, &basetype))
+        flags = MFWaveFormatExConvertFlag_ForceExtensible;
 
     if (flags == MFWaveFormatExConvertFlag_ForceExtensible)
         extra_size = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(*format);
@@ -3034,6 +3047,8 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
         user_data = format_ext + 1;
 
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
+            format_ext->Samples.wValidBitsPerSample = value;
+        if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_BLOCK, &value)))
             format_ext->Samples.wSamplesPerBlock = value;
 
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
@@ -3080,6 +3095,8 @@ static void mediatype_set_blob(IMFMediaType *mediatype, const GUID *attr, const 
 HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size)
 {
     const WAVEFORMATEXTENSIBLE *wfex = (const WAVEFORMATEXTENSIBLE *)format;
+    const void *user_data;
+    int user_data_size;
     GUID subtype;
     HRESULT hr;
 
@@ -3104,6 +3121,9 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
 
         if (format->wBitsPerSample && wfex->Samples.wValidBitsPerSample)
             mediatype_set_uint32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, wfex->Samples.wValidBitsPerSample, &hr);
+
+        user_data_size = format->cbSize - sizeof(WAVEFORMATEXTENSIBLE) + sizeof(WAVEFORMATEX);
+        user_data = wfex + 1;
     }
     else
     {
@@ -3111,6 +3131,8 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
         subtype.Data1 = format->wFormatTag;
 
         mediatype_set_uint32(mediatype, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, &hr);
+        user_data_size = format->cbSize;
+        user_data = format + 1;
     }
     mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &subtype, &hr);
 
@@ -3144,8 +3166,8 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
         mediatype_set_uint32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, info->wPayloadType, &hr);
     }
 
-    if (format->cbSize && format->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
-        mediatype_set_blob(mediatype, &MF_MT_USER_DATA, (const UINT8 *)(format + 1), format->cbSize, &hr);
+    if (user_data_size > 0)
+        mediatype_set_blob(mediatype, &MF_MT_USER_DATA, user_data, user_data_size, &hr);
 
     return hr;
 }

@@ -7135,18 +7135,12 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
     hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format, &size, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(format->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "got wFormatTag %#x\n", format->Format.wFormatTag);
-    todo_wine
     ok(format->Format.cbSize == aacformat.wfInfo.wfx.cbSize + sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX),
             "got cbSize %u\n", format->Format.cbSize);
-    todo_wine
     ok(IsEqualGUID(&format->SubFormat, &MFAudioFormat_AAC), "got SubFormat %s\n", debugstr_guid(&format->SubFormat));
-    todo_wine
     ok(format->dwChannelMask == 63, "got dwChannelMask %#lx\n", format->dwChannelMask);
-    todo_wine
     ok(format->Samples.wSamplesPerBlock == 4, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
-    todo_wine
     ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
 
     /* test initializing media type from an WAVE_FORMAT_EXTENSIBLE AAC format */

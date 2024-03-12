@@ -292,6 +292,7 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
         wfx.SubFormat = MFAudioFormat_Base;
         wfx.SubFormat.Data1 = wfx.Format.wFormatTag;
         wfx.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfx.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
         wfx.dwChannelMask = default_channel_mask[wfx.Format.nChannels];
     }
 
