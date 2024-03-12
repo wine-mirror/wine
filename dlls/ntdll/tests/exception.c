@@ -86,6 +86,7 @@ static BOOL      (WINAPI *pWaitForDebugEventEx)(DEBUG_EVENT *, DWORD);
 static VOID      (WINAPI *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, CONTEXT*, UNWIND_HISTORY_TABLE*);
 static BOOLEAN   (CDECL  *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL  *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
+static VOID      (CDECL  *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 #endif
 
 static void *pKiUserApcDispatcher;
@@ -142,7 +143,6 @@ typedef struct _UNWIND_INFO
 static BOOL is_arm64ec;
 
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
-static VOID      (CDECL *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
@@ -7324,6 +7324,192 @@ static void test_rtlraiseexception(void)
     run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
 }
 
+
+static LONG consolidate_dummy_called;
+static LONG pass;
+
+static const DWORD call_rtlunwind[] =
+{
+    0xa88150f3, /* stp x19, x20, [x7], #0x10 */
+    0xa88158f5, /* stp x21, x22, [x7], #0x10 */
+    0xa88160f7, /* stp x23, x24, [x7], #0x10 */
+    0xa88168f9, /* stp x25, x26, [x7], #0x10 */
+    0xa88170fb, /* stp x27, x28, [x7], #0x10 */
+    0xf80084fd, /* str x29,      [x7], #0x8 */
+    0x6c8124e8, /* stp d8,  d9,  [x7], #0x10 */
+    0x6c812cea, /* stp d10, d11, [x7], #0x10 */
+    0x6c8134ec, /* stp d12, d13, [x7], #0x10 */
+    0x6c813cee, /* stp d14, d15, [x7], #0x10 */
+    0xd61f00c0, /* br x6 */
+};
+
+static PVOID CALLBACK test_consolidate_dummy(EXCEPTION_RECORD *rec)
+{
+    CONTEXT *ctx = (CONTEXT *)rec->ExceptionInformation[1];
+    DWORD64 *saved_regs = (DWORD64 *)rec->ExceptionInformation[3];
+    DISPATCHER_CONTEXT_NONVOLREG_ARM64 *regs;
+    int i;
+
+    switch (InterlockedIncrement(&consolidate_dummy_called))
+    {
+    case 1:  /* RtlRestoreContext */
+        ok(ctx->Pc == 0xdeadbeef, "RtlRestoreContext wrong Pc, expected: 0xdeadbeef, got: %Ix\n", ctx->Pc);
+        ok( rec->ExceptionInformation[10] == -1, "wrong info %Ix\n", rec->ExceptionInformation[10] );
+        break;
+    case 2: /* RtlUnwindEx */
+        ok(ctx->Pc != 0xdeadbeef, "RtlUnwindEx wrong Pc, got: %Ix\n", ctx->Pc );
+        ok( rec->ExceptionInformation[10] != -1, "wrong info %Ix\n", rec->ExceptionInformation[10] );
+        regs = (DISPATCHER_CONTEXT_NONVOLREG_ARM64 *)rec->ExceptionInformation[10];
+        for (i = 0; i < 11; i++)
+            ok( saved_regs[i] == regs->GpNvRegs[i], "wrong reg X%u, expected: %Ix, got: %Ix\n",
+                19 + i, saved_regs[i], regs->GpNvRegs[i] );
+        for (i = 0; i < 8; i++)
+            ok( saved_regs[i + 11] == *(DWORD64 *)&regs->FpNvRegs[i],
+                "wrong reg D%u, expected: %Ix, got: %Ix\n",
+                i + 8, saved_regs[i + 11], *(DWORD64 *)&regs->FpNvRegs[i] );
+        break;
+    }
+    return (PVOID)rec->ExceptionInformation[2];
+}
+
+static void test_restore_context(void)
+{
+    EXCEPTION_RECORD rec;
+    _JUMP_BUFFER buf;
+    CONTEXT ctx;
+    int i;
+
+    if (!pRtlUnwindEx || !pRtlRestoreContext || !pRtlCaptureContext)
+    {
+        skip("RtlUnwindEx/RtlCaptureContext/RtlRestoreContext not found\n");
+        return;
+    }
+
+    /* test simple case of capture and restore context */
+    pass = 0;
+    InterlockedIncrement(&pass); /* interlocked to prevent compiler from moving after capture */
+    pRtlCaptureContext(&ctx);
+    if (InterlockedIncrement(&pass) == 2) /* interlocked to prevent compiler from moving before capture */
+    {
+        pRtlRestoreContext(&ctx, NULL);
+        ok(0, "shouldn't be reached\n");
+    }
+    else
+        ok(pass < 4, "unexpected pass %ld\n", pass);
+
+    /* test with jmp using RtlRestoreContext */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass); /* only called once */
+    setjmp((_JBTYPE *)&buf);
+    InterlockedIncrement(&pass);
+    if (pass == 3)
+    {
+        rec.ExceptionCode = STATUS_LONGJUMP;
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (DWORD64)&buf;
+        /* uses buf.Pc instead of ctx.Pc */
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 4)
+    {
+        ok(buf.X19 == ctx.X19, "longjmp failed for X19, expected: %Ix, got: %Ix\n", buf.X19, ctx.X19);
+        ok(buf.X20 == ctx.X20, "longjmp failed for X20, expected: %Ix, got: %Ix\n", buf.X20, ctx.X20);
+        ok(buf.X21 == ctx.X21, "longjmp failed for X21, expected: %Ix, got: %Ix\n", buf.X21, ctx.X21);
+        ok(buf.X22 == ctx.X22, "longjmp failed for X22, expected: %Ix, got: %Ix\n", buf.X22, ctx.X22);
+        ok(buf.X23 == ctx.X23, "longjmp failed for X23, expected: %Ix, got: %Ix\n", buf.X23, ctx.X23);
+        ok(buf.X24 == ctx.X24, "longjmp failed for X24, expected: %Ix, got: %Ix\n", buf.X24, ctx.X24);
+        ok(buf.X25 == ctx.X25, "longjmp failed for X25, expected: %Ix, got: %Ix\n", buf.X25, ctx.X25);
+        ok(buf.X26 == ctx.X26, "longjmp failed for X26, expected: %Ix, got: %Ix\n", buf.X26, ctx.X26);
+        ok(buf.X27 == ctx.X27, "longjmp failed for X27, expected: %Ix, got: %Ix\n", buf.X27, ctx.X27);
+        ok(buf.X28 == ctx.X28, "longjmp failed for X28, expected: %Ix, got: %Ix\n", buf.X28, ctx.X28);
+        ok(buf.Fp  == ctx.Fp,  "longjmp failed for Fp, expected: %Ix, got: %Ix\n",  buf.Fp,  ctx.Fp);
+        for (i = 0; i < 8; i++)
+            ok(buf.D[i] == ctx.V[i + 8].D[0], "longjmp failed for D%u, expected: %g, got: %g\n",
+               i + 8, buf.D[i], ctx.V[i + 8].D[0]);
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else
+        ok(pass == 5, "unexpected pass %ld\n", pass);
+
+    /* test with jmp through RtlUnwindEx */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    pRtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass); /* only called once */
+    setjmp((_JBTYPE *)&buf);
+    InterlockedIncrement(&pass);
+    if (pass == 3)
+    {
+        rec.ExceptionCode = STATUS_LONGJUMP;
+        rec.NumberParameters = 1;
+        rec.ExceptionInformation[0] = (DWORD64)&buf;
+
+        /* uses buf.Pc instead of bogus 0xdeadbeef */
+        pRtlUnwindEx((void*)buf.Sp, (void*)0xdeadbeef, &rec, NULL, &ctx, NULL);
+        ok(0, "shouldn't be reached\n");
+    }
+    else
+        ok(pass == 4, "unexpected pass %ld\n", pass);
+
+
+    /* test with consolidate */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass);
+    if (pass == 2)
+    {
+        rec.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+        rec.NumberParameters = 3;
+        rec.ExceptionInformation[0] = (DWORD64)test_consolidate_dummy;
+        rec.ExceptionInformation[1] = (DWORD64)&ctx;
+        rec.ExceptionInformation[2] = ctx.Pc;
+        rec.ExceptionInformation[10] = -1;
+        ctx.Pc = 0xdeadbeef;
+
+        pRtlRestoreContext(&ctx, &rec);
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 3)
+        ok(consolidate_dummy_called == 1, "test_consolidate_dummy not called\n");
+    else
+        ok(0, "unexpected pass %ld\n", pass);
+
+    /* test with consolidate through RtlUnwindEx */
+    pass = 0;
+    InterlockedIncrement(&pass);
+    pRtlCaptureContext(&ctx);
+    InterlockedIncrement(&pass);
+    setjmp((_JBTYPE *)&buf);
+    if (pass == 2)
+    {
+        void (*func)(DWORD64,DWORD64,EXCEPTION_RECORD*,DWORD64,CONTEXT*,void*,void*,void*) = code_mem;
+        DWORD64 nonvol_regs[19];
+
+        rec.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+        rec.NumberParameters = 4;
+        rec.ExceptionInformation[0] = (DWORD64)test_consolidate_dummy;
+        rec.ExceptionInformation[1] = (DWORD64)&ctx;
+        rec.ExceptionInformation[2] = ctx.Pc;
+        rec.ExceptionInformation[3] = (DWORD64)nonvol_regs;
+        rec.ExceptionInformation[10] = -1;  /* otherwise it doesn't get set */
+        ctx.Pc = 0xdeadbeef;
+        /* uses consolidate callback Pc instead of bogus 0xdeadbeef */
+        memcpy( code_mem, call_rtlunwind, sizeof(call_rtlunwind) );
+        FlushInstructionCache( GetCurrentProcess(), code_mem, sizeof(call_rtlunwind) );
+        func( buf.Frame, 0xdeadbeef, &rec, 0, &ctx, NULL, pRtlUnwindEx, nonvol_regs );
+        ok(0, "shouldn't be reached\n");
+    }
+    else if (pass == 3)
+        ok(consolidate_dummy_called == 2, "test_consolidate_dummy not called\n");
+    else
+        ok(0, "unexpected pass %ld\n", pass);
+}
+
 #endif  /* __aarch64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -10428,6 +10614,7 @@ START_TEST(exception)
     X(KiUserCallbackDispatcher);
     X(KiUserExceptionDispatcher);
 #ifndef __i386__
+    X(RtlRestoreContext);
     X(RtlUnwindEx);
     X(RtlAddFunctionTable);
     X(RtlDeleteFunctionTable);
@@ -10559,7 +10746,6 @@ START_TEST(exception)
 
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
     X(__C_specific_handler);
-    X(RtlRestoreContext);
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
     X(RtlWow64GetCpuAreaInfo);
@@ -10599,6 +10785,7 @@ START_TEST(exception)
     test_continue();
     test_nested_exception();
     test_collided_unwind();
+    test_restore_context();
 
 #elif defined(__arm__)
 
