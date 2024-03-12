@@ -3247,17 +3247,20 @@ static UINT32 media_type_get_uint32(IMFMediaType *media_type, REFGUID guid)
  */
 HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size)
 {
-    UINT32 palette_size = 0;
+    UINT32 palette_size = 0, user_data_size = 0;
     MFVIDEOFORMAT *format;
     INT32 stride;
     GUID guid;
 
     TRACE("%p, %p, %p.\n", media_type, video_format, size);
 
-    *size = sizeof(*format);
-
     if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_PALETTE, &palette_size)))
-        *size += palette_size;
+        *size = offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[palette_size / sizeof(MFPaletteEntry) + 1]);
+    else
+        *size = sizeof(*format);
+
+    if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &user_data_size)))
+        *size += user_data_size;
 
     if (!(format = CoTaskMemAlloc(*size)))
         return E_OUTOFMEMORY;
@@ -3314,6 +3317,11 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
     {
         format->surfaceInfo.PaletteEntries = palette_size / sizeof(*format->surfaceInfo.Palette);
         IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (UINT8 *)format->surfaceInfo.Palette, palette_size, NULL);
+    }
+
+    if (user_data_size)
+    {
+        IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (UINT8 *)format + *size - user_data_size, user_data_size, NULL);
     }
 
     return S_OK;

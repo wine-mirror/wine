@@ -7144,7 +7144,7 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
     hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!video_format, "Unexpected format.\n");
-    todo_wine ok(size == expect_size, "Unexpected size %u.\n", size);
+    ok(size == expect_size, "Unexpected size %u.\n", size);
     ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
     CoTaskMemFree(video_format);
 
@@ -7155,7 +7155,7 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
     hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!video_format, "Unexpected format.\n");
-    todo_wine ok(size == expect_size, "Unexpected size %u.\n", size);
+    ok(size == expect_size, "Unexpected size %u.\n", size);
     ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
     CoTaskMemFree(video_format);
 
