@@ -3902,7 +3902,6 @@ static void test_PASSWORDCHAR(void)
     hwEdit = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
 
     r = SendMessageA(hwEdit, EM_SETPASSWORDCHAR, passwdChar, 0);
-    todo_wine
     ok(r == 1, "Expected: 1, got: %ld\n", r);
 
     r = get_edit_style(hwEdit);
@@ -3918,19 +3917,15 @@ static void test_PASSWORDCHAR(void)
     ok(r == ES_MULTILINE, "Wrong style expected ES_PASSWORD got: 0x%lx\n", r);
 
     r = SendMessageA(hwEdit, EM_SETPASSWORDCHAR, passwdChar, 0);
-    todo_wine
     ok(r == 1, "Expected: 1, got: %ld\n", r);
 
     r = get_edit_style(hwEdit);
-    todo_wine
     ok(r == (ES_MULTILINE | ES_PASSWORD), "Wrong style expected ES_MULTILINE|ES_PASSWORD got: 0x%lx\n", r);
 
     r = SendMessageA(hwEdit, EM_GETPASSWORDCHAR, 0, 0);
-    todo_wine
     ok(r == passwdChar, "Expected: 0, got: %ld\n", r);
 
     r = SendMessageA(hwEdit, EM_SETPASSWORDCHAR, 0, 0);
-    todo_wine
     ok(r == 1, "Expected: 1, got: %ld\n", r);
 
     r = get_edit_style(hwEdit);
