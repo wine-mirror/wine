@@ -387,10 +387,17 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
 		tabdef.pTabStops = es->tabs;
 		tabdef.iTabOrigin = 0;
 
-		hr = ScriptStringAnalyse(udc, &es->text[index], line_def->net_length,
-                                         (1.5*line_def->net_length+16), -1,
-                                         SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1,
-                                         NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+		if (es->style & ES_PASSWORD)
+			hr = ScriptStringAnalyse(udc, &es->password_char, line_def->net_length,
+                                                  (1.5*line_def->net_length+16), -1,
+                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB|SSA_PASSWORD, -1,
+                                                  NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+		else
+			hr = ScriptStringAnalyse(udc, &es->text[index], line_def->net_length,
+                                                  (1.5*line_def->net_length+16), -1,
+                                                  SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1,
+                                                  NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+
 		if (FAILED(hr))
 		{
 			WARN("ScriptStringAnalyse failed (%lx)\n",hr);
@@ -2960,15 +2967,12 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
  *	EM_SETPASSWORDCHAR
  *
  */
-static void EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
+static BOOL EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
 {
 	LONG style;
 
-	if (es->style & ES_MULTILINE)
-		return;
-
 	if (es->password_char == c)
-		return;
+		return TRUE;
 
         style = GetWindowLongW( es->hwndSelf, GWL_STYLE );
 	es->password_char = c;
@@ -2981,6 +2985,7 @@ static void EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
 	}
 	EDIT_InvalidateUniscribeData(es);
 	EDIT_UpdateText(es, NULL, TRUE);
+	return TRUE;
 }
 
 
@@ -4744,7 +4749,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		    MultiByteToWideChar(CP_ACP, 0, &charA, 1, &charW, 1);
 		}
 
-		EDIT_EM_SetPasswordChar(es, charW);
+		result = EDIT_EM_SetPasswordChar(es, charW);
 		break;
 	}
 
