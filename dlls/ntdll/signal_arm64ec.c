@@ -1752,7 +1752,7 @@ __ASM_GLOBAL_FUNC( "#KiUserExceptionDispatcher",
                    ".seh_endprologue\n\t"
                    "add x0, sp, #0x390\n\t"       /* rec (context + 1) */
                    "mov x1, sp\n\t"               /* context */
-                   "bl dispatch_exception_arm64ec\n\t"
+                   "bl \"#dispatch_exception_arm64ec\"\n\t"
                    "brk #1" )
 
 
@@ -1778,7 +1778,7 @@ __ASM_GLOBAL_FUNC( "#KiUserApcDispatcher",
                    "ldp x2, x3, [sp, #0x10]\n\t"  /* arg2, arg3 */
                    "ldr w4, [sp, #0x20]\n\t"      /* alertable */
                    "add x5, sp, #0x30\n\t"        /* context */
-                   "bl " __ASM_NAME("dispatch_apc") "\n\t"
+                   "bl \"#dispatch_apc\"\n\t"
                    "brk #1" )
 
 
@@ -1804,8 +1804,8 @@ __ASM_GLOBAL_FUNC( "#KiUserCallbackDispatcher",
                    "mov x2, x0\n\t"               /* status */
                    "mov x1, #0\n\t"               /* ret_len */
                    "mov x0, x1\n\t"               /* ret_ptr */
-                   "bl " __ASM_NAME("NtCallbackReturn") "\n\t"
-                   "bl " __ASM_NAME("RtlRaiseStatus") "\n\t"
+                   "bl \"#NtCallbackReturn\"\n\t"
+                   "bl \"#RtlRaiseStatus\"\n\t"
                    "brk #1" )
 
 
@@ -1853,7 +1853,7 @@ static void __attribute__((used)) capture_context( CONTEXT *context, UINT cpsr, 
  */
 void __attribute__((naked)) RtlCaptureContext( CONTEXT *context )
 {
-    asm( ".seh_proc RtlCaptureContext\n\t"
+    asm( ".seh_proc \"#RtlCaptureContext\"\n\t"
          ".seh_endprologue\n\t"
          "stp x8, x0,   [x0, #0x78]\n\t"    /* context->Rax,Rcx */
          "stp x1, x27,  [x0, #0x88]\n\t"    /* context->Rdx,Rbx */
@@ -1892,7 +1892,7 @@ void __attribute__((naked)) RtlCaptureContext( CONTEXT *context )
          "mrs x1, nzcv\n\t"
          "mrs x2, fpcr\n\t"
          "mrs x3, fpsr\n\t"
-         "b capture_context\n\t"
+         "b \"#capture_context\"\n\t"
          ".seh_endproc" );
 }
 
@@ -1938,7 +1938,7 @@ static int __attribute__((used)) do_setjmpex( _JUMP_BUFFER *buf, UINT fpcr, UINT
  */
 int __attribute__((naked)) NTDLL__setjmpex( _JUMP_BUFFER *buf, void *frame )
 {
-    asm( ".seh_proc NTDLL__setjmpex\n\t"
+    asm( ".seh_proc \"#NTDLL__setjmpex\"\n\t"
          ".seh_endprologue\n\t"
          "stp x1, x27,  [x0]\n\t"          /* jmp_buf->Frame,Rbx */
          "mov x1, sp\n\t"
@@ -1953,7 +1953,7 @@ int __attribute__((naked)) NTDLL__setjmpex( _JUMP_BUFFER *buf, void *frame )
          "stp d14, d15, [x0, #0xe0]\n\t"   /* jmp_buf->Xmm14,Xmm15 */
          "mrs x1, fpcr\n\t"
          "mrs x2, fpsr\n\t"
-         "b do_setjmpex\n\t"
+         "b \"#do_setjmpex\"\n\t"
          ".seh_endproc" );
 }
 
@@ -2306,7 +2306,7 @@ static void __attribute__((naked)) arm64x_check_call(void)
          "add x0, sp, #0x58\n\t"  /* x9 = &target */
          "mov x1, x10\n\t"        /* x10 = exit_thunk */
          "mov x2, x11\n\t"        /* x11 = dest */
-         "bl " __ASM_NAME("check_call") "\n\t"
+         "bl \"#check_call\"\n\t"
          "mov x11, x0\n\t"
          "ldp x0, x1,   [sp, #0x10]\n\t"
          "ldp x2, x3,   [sp, #0x20]\n\t"
@@ -2384,7 +2384,7 @@ LONG __attribute__((naked)) __C_ExecuteExceptionFilter( EXCEPTION_POINTERS *ptrs
  */
 void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
 {
-    asm( ".seh_proc RtlRaiseException\n\t"
+    asm( ".seh_proc \"#RtlRaiseException\"\n\t"
          "sub sp, sp, #0x4d0\n\t"     /* sizeof(context) */
          ".seh_stackalloc 0x4d0\n\t"
          "stp x29, x30, [sp, #-0x20]!\n\t"
@@ -2393,7 +2393,7 @@ void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
          ".seh_save_any_reg x0, 0x10\n\t"
          ".seh_endprologue\n\t"
          "add x0, sp, #0x20\n\t"
-         "bl RtlCaptureContext\n\t"
+         "bl \"#RtlCaptureContext\"\n\t"
          "add x1, sp, #0x20\n\t"       /* context pointer */
          "ldr x0, [sp, #0x10]\n\t"     /* rec */
          "ldr x2, [x1, #0xf8]\n\t"     /* context->Rip */
@@ -2404,10 +2404,10 @@ void __attribute((naked)) RtlRaiseException( EXCEPTION_RECORD *rec )
          "ldr x3, [x18, #0x60]\n\t"    /* peb */
          "ldrb w2, [x3, #2]\n\t"       /* peb->BeingDebugged */
          "cbnz w2, 1f\n\t"
-         "bl dispatch_exception\n"
+         "bl \"#dispatch_exception\"\n"
          "1:\tmov w2, #1\n\t"
-         "bl NtRaiseException\n\t"
-         "b RtlRaiseStatus\n\t" /* does not return */
+         "bl \"#NtRaiseException\"\n\t"
+         "b \"#RtlRaiseStatus\"\n\t" /* does not return */
          ".seh_endproc" );
 }
 
@@ -2436,7 +2436,7 @@ void __cdecl NTDLL_longjmp( _JUMP_BUFFER *buf, int retval )
  */
 void __attribute__((naked)) RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
 {
-    asm( ".seh_proc RtlUserThreadStart\n\t"
+    asm( ".seh_proc \"#RtlUserThreadStart\"\n\t"
          "stp x29, x30, [sp, #-16]!\n\t"
          ".seh_save_fplr_x 16\n\t"
          ".seh_endprologue\n\t"
@@ -2500,7 +2500,7 @@ __ASM_GLOBAL_FUNC( "#process_breakpoint",
  */
 void __attribute__((naked)) DbgUiRemoteBreakin( void *arg )
 {
-    asm( ".seh_proc DbgUiRemoteBreakin\n\t"
+    asm( ".seh_proc \"#DbgUiRemoteBreakin\"\n\t"
          "stp x29, x30, [sp, #-16]!\n\t"
          ".seh_save_fplr_x 16\n\t"
          ".seh_endprologue\n\t"
@@ -2508,9 +2508,9 @@ void __attribute__((naked)) DbgUiRemoteBreakin( void *arg )
          "ldr x0, [x18, #0x60]\n\t"  /* NtCurrentTeb()->Peb */
          "ldrb w0, [x0, 0x02]\n\t"   /* peb->BeingDebugged */
          "cbz w0, 1f\n\t"
-         "bl DbgBreakPoint\n"
+         "bl \"#DbgBreakPoint\"\n"
          "1:\tmov w0, #0\n\t"
-         "bl RtlExitUserThread\n"
+         "bl \"#RtlExitUserThread\"\n"
          "DbgUiRemoteBreakin_handler:\n\t"
          "mov sp, x1\n\t"            /* frame */
          "b 1b\n\t"
@@ -2523,7 +2523,7 @@ void __attribute__((naked)) DbgUiRemoteBreakin( void *arg )
  */
 void __attribute__((naked)) DbgBreakPoint(void)
 {
-    asm( ".seh_proc DbgBreakPoint\n\t"
+    asm( ".seh_proc \"#DbgBreakPoint\"\n\t"
          ".seh_endprologue\n\t"
          "brk #0xf000\n\t"
          "ret\n\t"
@@ -2536,7 +2536,7 @@ void __attribute__((naked)) DbgBreakPoint(void)
  */
 void __attribute__((naked)) DbgUserBreakPoint(void)
 {
-    asm( ".seh_proc DbgUserBreakPoint\n\t"
+    asm( ".seh_proc \"#DbgUserBreakPoint\"\n\t"
          ".seh_endprologue\n\t"
          "brk #0xf000\n\t"
          "ret\n\t"
