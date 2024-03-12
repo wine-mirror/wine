@@ -4270,13 +4270,17 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
     {
         const GUID *subtype = get_mf_subtype_for_am_subtype(&am_type->subtype);
 
-        if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo))
+        if (am_type->cbFormat && !am_type->pbFormat)
+            hr = E_INVALIDARG;
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
+                && am_type->cbFormat >= sizeof(VIDEOINFOHEADER))
             hr = MFInitMediaTypeFromVideoInfoHeader(media_type, (VIDEOINFOHEADER *)am_type->pbFormat, am_type->cbFormat, subtype);
-        else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2)
+                && am_type->cbFormat >= sizeof(VIDEOINFOHEADER2))
             hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, (VIDEOINFOHEADER2 *)am_type->pbFormat, am_type->cbFormat, subtype);
         else
         {
-            FIXME("Unsupported format type %s.\n", debugstr_guid(&am_type->formattype));
+            FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
             return E_NOTIMPL;
         }
 
