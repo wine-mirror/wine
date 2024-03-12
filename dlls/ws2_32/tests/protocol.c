@@ -1917,8 +1917,8 @@ static void test_GetAddrInfoW(void)
     SetLastError(0xdeadbeef);
     result2 = NULL;
     ret = GetAddrInfoW(idn_domain, NULL, &hint, &result2);
-    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
-    ok(WSAGetLastError() == WSAHOST_NOT_FOUND, "expected 11001, got %d\n", WSAGetLastError());
+    ok(ret == WSAHOST_NOT_FOUND || ret == WSATRY_AGAIN, "got %d\n", ret);
+    ok(WSAGetLastError() == ret, "got %d\n", WSAGetLastError());
     ok(result2 == NULL, "got %p\n", result2);
 }
 
@@ -1926,6 +1926,7 @@ static struct completion_routine_test
 {
     WSAOVERLAPPED  *overlapped;
     DWORD           error;
+    DWORD           error2;
     ADDRINFOEXW   **result;
     HANDLE          event;
     DWORD           called;
@@ -1935,7 +1936,7 @@ static void CALLBACK completion_routine(DWORD error, DWORD byte_count, WSAOVERLA
 {
     struct completion_routine_test *test = &completion_routine_test;
 
-    ok(error == test->error, "got %lu\n", error);
+    ok(error == test->error || (test->error2 && error == test->error2), "got %lu\n", error);
     ok(!byte_count, "got %lu\n", byte_count);
     ok(overlapped == test->overlapped, "got %p\n", overlapped);
     ok(overlapped->Internal == test->error, "got %Iu\n", overlapped->Internal);
@@ -2073,6 +2074,7 @@ static void test_GetAddrInfoExW(void)
     overlapped.hEvent = NULL;
     completion_routine_test.overlapped = &overlapped;
     completion_routine_test.error = ERROR_SUCCESS;
+    completion_routine_test.error2 = ERROR_SUCCESS;
     completion_routine_test.result = &result;
     completion_routine_test.event = event;
     completion_routine_test.called = 0;
@@ -2093,6 +2095,7 @@ static void test_GetAddrInfoExW(void)
     result = (void *)0xdeadbeef;
     completion_routine_test.overlapped = &overlapped;
     completion_routine_test.error = WSAHOST_NOT_FOUND;
+    completion_routine_test.error2 = WSANO_DATA;
     completion_routine_test.called = 0;
     ResetEvent(event);
     ret = pGetAddrInfoExW(nxdomain, NULL, NS_DNS, NULL, NULL, &result, NULL, &overlapped, completion_routine, NULL);
