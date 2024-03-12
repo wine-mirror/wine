@@ -10304,7 +10304,7 @@ static void test_backtrace(void)
 
     if (count && !buffer[count - 1]) count--;  /* win11 32-bit */
     RtlPcToFileHeader( buffer[count - 1], &module );
-    GetModuleFileNameW( module, name, sizeof(name) );
+    GetModuleFileNameW( module, name, ARRAY_SIZE(name) );
     if ((p = wcsrchr( name, '\\' ))) p++;
     else p = name;
     ok( !wcsicmp( p, L"ntdll.dll" ), "wrong module %p %s for frame %u %p\n",
