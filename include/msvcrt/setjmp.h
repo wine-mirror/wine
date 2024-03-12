@@ -164,10 +164,11 @@ _ACRTIMP void __cdecl longjmp(jmp_buf,int);
 _ACRTIMP int __cdecl __attribute__((__nothrow__,__returns_twice__)) _setjmp(jmp_buf);
 # endif
 # define setjmp(buf) _setjmp((buf))
-#else  /* __i386__ */
-# if defined(_setjmpex) || !__has_builtin(_setjmpex)
+#elif !defined(_setjmpex) && __has_builtin(_setjmpex)
+_ACRTIMP int __cdecl __attribute__((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf);
+# define setjmp(buf) _setjmpex(buf)
+#else
 _ACRTIMP int __cdecl __attribute__((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
-# endif
 # if __has_builtin(__builtin_sponentry)
 #  define setjmp(buf) _setjmpex((buf), __builtin_sponentry())
 # elif __has_builtin(__builtin_frame_address)
