@@ -360,22 +360,18 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
 
 
 /**********************************************************************
- *           call_consolidate_callback
+ *           consolidate_callback
  *
  * Wrapper function to call a consolidate callback from a fake frame.
  * If the callback executes RtlUnwindEx (like for example done in C++ handlers),
  * we have to skip all frames which were already processed. To do that we
  * trick the unwinding functions into thinking the call came from somewhere
- * else. All CFI instructions are either DW_CFA_def_cfa_expression or
- * DW_CFA_expression, and the expressions have the following format:
- *
- * DW_OP_breg13; sleb128 <OFFSET>       | Load SP + struct member offset
- * [DW_OP_deref]                        | Dereference, only for CFA
+ * else.
  */
-extern void * WINAPI call_consolidate_callback( CONTEXT *context,
-                                                void *(CALLBACK *callback)(EXCEPTION_RECORD *),
-                                                EXCEPTION_RECORD *rec );
-__ASM_GLOBAL_FUNC( call_consolidate_callback,
+void WINAPI DECLSPEC_NORETURN consolidate_callback( CONTEXT *context,
+                                                    void *(CALLBACK *callback)(EXCEPTION_RECORD *),
+                                                    EXCEPTION_RECORD *rec );
+__ASM_GLOBAL_FUNC( consolidate_callback,
                    "push {r0-r2,lr}\n\t"
                    ".seh_nop\n\t"
                    "sub sp, sp, #0x1a0\n\t"
@@ -386,14 +382,16 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    ".seh_nop\n\t"
                    "mov r2, #0x1a0\n\t"
                    ".seh_nop_w\n\t"
-                   "bl " __ASM_NAME("memcpy") "\n\t"
+                   "bl memcpy\n\t"
                    ".seh_custom 0xee,0x02\n\t"  /* MSFT_OP_CONTEXT */
                    ".seh_endprologue\n\t"
                    "ldrd r1, r2, [sp, #0x1a4]\n\t"
                    "mov r0, r2\n\t"
                    "blx r1\n\t"
-                   "add sp, sp, #0x1ac\n\t"
-                   "pop {pc}\n\t")
+                   "str r0, [sp, #0x40]\n\t" /* context->Pc */
+                   "mov r0, sp\n\t"
+                   "mov r1, #1\n\t"
+                   "b NtContinue" )
 
 
 
@@ -410,7 +408,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 
         memcpy( &context->R4, &jmp->R4, 8 * sizeof(DWORD) );
         memcpy( &context->D[8], &jmp->D[0], 8 * sizeof(ULONGLONG) );
-        context->Lr      = jmp->Pc;
+        context->Pc      = jmp->Pc;
         context->Sp      = jmp->Sp;
         context->Fpscr   = jmp->Fpscr;
     }
@@ -418,9 +416,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     {
         PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
         TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
-        rec->ExceptionInformation[10] = (ULONG_PTR)&context->R4;
-
-        context->Pc = (DWORD)call_consolidate_callback( context, consolidate, rec );
+        consolidate_callback( context, consolidate, rec );
     }
 
     /* hack: remove no longer accessible TEB frames */
@@ -565,8 +561,12 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         *context = new_context;
     }
 
-    context->R0     = (DWORD)retval;
-    context->Pc     = (DWORD)target_ip;
+    if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE)
+        context->Pc = (DWORD)target_ip;
+    else if (rec->ExceptionInformation[10] == -1)
+        rec->ExceptionInformation[10] = (ULONG_PTR)&nonvol_regs;
+
+    context->R0 = (DWORD)retval;
     RtlRestoreContext(context, rec);
 }
 
