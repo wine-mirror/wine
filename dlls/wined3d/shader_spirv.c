@@ -169,16 +169,15 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
         {
             struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
 
-            if (ps)
+            if (shader->reg_maps.shader_version.major < 4 && ps)
             {
                 struct shader_spirv_graphics_program_vk *vs_program = shader->backend_data;
                 struct shader_spirv_graphics_program_vk *ps_program = ps->backend_data;
 
                 if (ps_program->signature_info.input.element_count > ARRAY_SIZE(args->u.vs.varying_map))
                     ERR("Unexpected inter-stage varying count %u.\n", ps_program->signature_info.input.element_count);
-                if (shader->reg_maps.shader_version.major < 4)
-                    vkd3d_shader_build_varying_map(&vs_program->signature_info.output,
-                            &ps_program->signature_info.input, &args->u.vs.varying_count, args->u.vs.varying_map);
+                vkd3d_shader_build_varying_map(&vs_program->signature_info.output,
+                        &ps_program->signature_info.input, &args->u.vs.varying_count, args->u.vs.varying_map);
             }
             break;
         }
