@@ -511,22 +511,15 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
  */
 static void wine_vk_device_free(struct wine_device *device)
 {
-    struct wine_queue *queue;
+    unsigned int i;
 
     if (!device)
         return;
 
-    if (device->queues)
+    for (i = 0; i < device->queue_count; i++)
     {
-        unsigned int i;
-        for (i = 0; i < device->queue_count; i++)
-        {
-            queue = &device->queues[i];
-            if (queue && queue->host_queue)
-                remove_handle_mapping(device->phys_dev->instance, &queue->wrapper_entry);
-        }
-        free(device->queues);
-        device->queues = NULL;
+        struct wine_queue *queue = device->queues + i;
+        if (queue->host_queue) remove_handle_mapping(device->phys_dev->instance, &queue->wrapper_entry);
     }
 
     if (device->host_device && device->funcs.p_vkDestroyDevice)
@@ -817,7 +810,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     struct wine_queue *next_queue;
     struct conversion_context ctx;
     struct wine_device *object;
-    unsigned int i;
+    unsigned int queue_count, i;
     VkResult res;
 
     if (allocator)
@@ -834,7 +827,11 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
         TRACE("Driver version: %#x.\n", properties.driverVersion);
     }
 
-    if (!(object = calloc(1, sizeof(*object))))
+    /* We need to cache all queues within the device as each requires wrapping since queues are dispatchable objects. */
+    for (queue_count = 0, i = 0; i < create_info->queueCreateInfoCount; i++)
+        queue_count += create_info->pQueueCreateInfos[i].queueCount;
+
+    if (!(object = calloc(1, offsetof(struct wine_device, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     object->phys_dev = phys_dev;
@@ -862,20 +859,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     ALL_VK_DEVICE_FUNCS()
 #undef USE_VK_FUNC
 
-    /* We need to cache all queues within the device as each requires wrapping since queues are
-     * dispatchable objects.
-     */
-    for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
-    {
-        object->queue_count += create_info_host.pQueueCreateInfos[i].queueCount;
-    }
-
-    if (!(object->queues = calloc(object->queue_count, sizeof(*object->queues))))
-    {
-        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-        goto fail;
-    }
-
     next_queue = object->queues;
     queue_handles = device_handle->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
@@ -889,6 +872,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
         wine_vk_device_get_queues(object, family_index, queue_count, flags, next_queue, &queue_handles);
         next_queue += queue_count;
     }
+    object->queue_count = next_queue - object->queues;
 
     device_handle->quirks = instance->quirks;
     device_handle->base.unix_handle = (uintptr_t)object;

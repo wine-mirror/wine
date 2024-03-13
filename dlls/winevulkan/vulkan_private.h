@@ -55,6 +55,25 @@ static inline struct wine_cmd_buffer *wine_cmd_buffer_from_handle(VkCommandBuffe
     return (struct wine_cmd_buffer *)(uintptr_t)handle->base.unix_handle;
 }
 
+struct wine_queue
+{
+    struct wine_device *device; /* parent */
+
+    VkQueue handle; /* client queue */
+    VkQueue host_queue;
+
+    uint32_t family_index;
+    uint32_t queue_index;
+    VkDeviceQueueCreateFlags flags;
+
+    struct wrapper_entry wrapper_entry;
+};
+
+static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
+{
+    return (struct wine_queue *)(uintptr_t)handle->base.unix_handle;
+}
+
 struct wine_device
 {
     struct vulkan_device_funcs funcs;
@@ -63,11 +82,13 @@ struct wine_device
     VkDevice handle; /* client device */
     VkDevice host_device;
 
-    struct wine_queue *queues;
-    uint32_t queue_count;
-
     struct wrapper_entry wrapper_entry;
+
+    uint32_t queue_count;
+    struct wine_queue queues[];
 };
+
+C_ASSERT(sizeof(struct wine_device) == offsetof(struct wine_device, queues[0]));
 
 static inline struct wine_device *wine_device_from_handle(VkDevice handle)
 {
@@ -141,25 +162,6 @@ struct wine_phys_dev
 static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
 {
     return (struct wine_phys_dev *)(uintptr_t)handle->base.unix_handle;
-}
-
-struct wine_queue
-{
-    struct wine_device *device; /* parent */
-
-    VkQueue handle; /* client queue */
-    VkQueue host_queue;
-
-    uint32_t family_index;
-    uint32_t queue_index;
-    VkDeviceQueueCreateFlags flags;
-
-    struct wrapper_entry wrapper_entry;
-};
-
-static inline struct wine_queue *wine_queue_from_handle(VkQueue handle)
-{
-    return (struct wine_queue *)(uintptr_t)handle->base.unix_handle;
 }
 
 struct wine_cmd_pool
