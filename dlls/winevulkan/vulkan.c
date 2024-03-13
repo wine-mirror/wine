@@ -684,17 +684,11 @@ static void wine_vk_instance_free(struct wine_instance *instance)
 {
     unsigned int i;
 
-    if (!instance)
-        return;
-
     for (i = 0; i < instance->phys_dev_count; i++)
         wine_phys_dev_cleanup(&instance->phys_devs[i]);
 
-    if (instance->host_instance)
-    {
-        vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
-        remove_handle_mapping(instance, &instance->wrapper_entry);
-    }
+    vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
+    remove_handle_mapping(instance, &instance->wrapper_entry);
 
     pthread_rwlock_destroy(&instance->wrapper_lock);
     free(instance->utils_messengers);
@@ -846,8 +840,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         ERR("Failed to allocate memory for instance\n");
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
-    rb_init(&object->wrappers, wrapper_entry_compare);
-    pthread_rwlock_init(&object->wrapper_lock, NULL);
 
     init_conversion_context(&ctx);
     res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, object);
@@ -857,9 +849,13 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
-        wine_vk_instance_free(object);
+        free(object->utils_messengers);
+        free(object);
         return res;
     }
+
+    rb_init(&object->wrappers, wrapper_entry_compare);
+    pthread_rwlock_init(&object->wrapper_lock, NULL);
 
     object->handle = client_instance;
     add_handle_mapping_ptr(object, object->handle, object->host_instance, &object->wrapper_entry);
@@ -929,6 +925,8 @@ void wine_vkDestroyInstance(VkInstance handle, const VkAllocationCallbacks *allo
 
     if (allocator)
         FIXME("Support allocation allocators\n");
+    if (!instance)
+        return;
 
     wine_vk_instance_free(instance);
 }
