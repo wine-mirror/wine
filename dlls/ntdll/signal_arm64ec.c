@@ -1758,10 +1758,10 @@ static void __attribute__((used)) dispatch_apc( void (CALLBACK *func)(ULONG_PTR,
     NtContinue( &context.AMD64_Context, alertable );
 }
 __ASM_GLOBAL_FUNC( "#KiUserApcDispatcher",
-                   __ASM_SEH(".seh_context\n\t")
+                   ".seh_context\n\t"
                    "nop\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x30\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_stackalloc 0x30\n\t"
+                   ".seh_endprologue\n\t"
                    "ldp x0, x1, [sp]\n\t"         /* func, arg1 */
                    "ldp x2, x3, [sp, #0x10]\n\t"  /* arg2, arg3 */
                    "ldr w4, [sp, #0x20]\n\t"      /* alertable */

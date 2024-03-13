@@ -646,10 +646,10 @@ void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
 extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args );
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "stp x29, x30, [SP,#-16]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
+                   ".seh_save_fplr_x 16\n\t"
                    "mov x29, SP\n\t"
-                   __ASM_SEH(".seh_set_fp\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
                    "ldr x8, [x2, #-32]\n\t"
                    "mov x9, x0\n\t"
                    "cbz w1, 2f\n\t"

@@ -305,8 +305,8 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
  *		KiUserExceptionDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
-                   __ASM_SEH(".seh_context\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_context\n\t"
+                   ".seh_endprologue\n\t"
                    "adr x16, " __ASM_NAME("pWow64PrepareForException") "\n\t"
                    "ldr x16, [x16]\n\t"
                    "cbz x16, 1f\n\t"
@@ -323,10 +323,10 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
  *		KiUserApcDispatcher (NTDLL.@)
  */
 __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
-                   __ASM_SEH(".seh_context\n\t")
+                   ".seh_context\n\t"
                    "nop\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x30\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_stackalloc 0x30\n\t"
+                   ".seh_endprologue\n\t"
                    "ldp x16, x0, [sp]\n\t"        /* func, arg1 */
                    "ldp x1, x2, [sp, #0x10]\n\t"  /* arg2, arg3 */
                    "add x3, sp, #0x30\n\t"        /* context (FIXME) */
@@ -660,13 +660,10 @@ __ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
  */
 __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "sub sp, sp, #0x3b0\n\t" /* 0x390 (context) + 0x20 */
+                   ".seh_stackalloc 0x3b0\n\t"
                    "stp x29, x30, [sp]\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x3b0\n\t")
-                   __ASM_SEH(".seh_save_fplr 0\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_def_cfa x29, 944\n\t")
-                   __ASM_CFI(".cfi_offset x30, -936\n\t")
-                   __ASM_CFI(".cfi_offset x29, -944\n\t")
+                   ".seh_save_fplr 0\n\t"
+                   ".seh_endprologue\n\t"
                    "mov x29, sp\n\t"
                    "str x0,  [sp, #0x10]\n\t"
                    "add x0,  sp, #0x20\n\t"
@@ -741,15 +738,15 @@ void __cdecl NTDLL_longjmp( _JUMP_BUFFER *buf, int retval )
  */
 __ASM_GLOBAL_FUNC( RtlUserThreadStart,
                    "stp x29, x30, [sp, #-16]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_save_fplr_x 16\n\t"
+                   ".seh_endprologue\n\t"
                    "adr x8, " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
                    "ldr x8, [x8]\n\t"
                    "mov x2, x1\n\t"
                    "mov x1, x0\n\t"
                    "mov x0, #0\n\t"
                    "blr x8\n\t"
-                   __ASM_SEH(".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", @except") )
+                   ".seh_handler call_unhandled_exception_handler, @except" )
 
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
