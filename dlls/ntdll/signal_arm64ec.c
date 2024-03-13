@@ -1542,6 +1542,59 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT_ARM64EC *dispatch
 }
 
 
+/**********************************************************************
+ *           unwind_exception_handler
+ *
+ * Handler for exceptions happening while calling an unwind handler.
+ */
+EXCEPTION_DISPOSITION WINAPI unwind_exception_handler( EXCEPTION_RECORD *record, void *frame,
+                                                       CONTEXT *context, DISPATCHER_CONTEXT_ARM64EC *dispatch )
+{
+    DISPATCHER_CONTEXT_ARM64EC *orig_dispatch = ((DISPATCHER_CONTEXT_ARM64EC **)frame)[-2];
+
+    /* copy the original dispatcher into the current one, except for the TargetPc */
+    dispatch->ControlPc          = orig_dispatch->ControlPc;
+    dispatch->ImageBase          = orig_dispatch->ImageBase;
+    dispatch->FunctionEntry      = orig_dispatch->FunctionEntry;
+    dispatch->EstablisherFrame   = orig_dispatch->EstablisherFrame;
+    dispatch->LanguageHandler    = orig_dispatch->LanguageHandler;
+    dispatch->HandlerData        = orig_dispatch->HandlerData;
+    dispatch->HistoryTable       = orig_dispatch->HistoryTable;
+    dispatch->ScopeIndex         = orig_dispatch->ScopeIndex;
+    dispatch->ControlPcIsUnwound = orig_dispatch->ControlPcIsUnwound;
+    *dispatch->ContextRecord     = *orig_dispatch->ContextRecord;
+    memcpy( dispatch->NonVolatileRegisters, orig_dispatch->NonVolatileRegisters,
+            sizeof(DISPATCHER_CONTEXT_NONVOLREG_ARM64) );
+    TRACE( "detected collided unwind\n" );
+    return ExceptionCollidedUnwind;
+}
+
+
+/**********************************************************************
+ *           call_unwind_handler
+ */
+static DWORD __attribute__((naked)) call_unwind_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
+                                                         CONTEXT *context, void *dispatch,
+                                                         PEXCEPTION_ROUTINE handler )
+{
+    asm( ".seh_proc call_unwind_handler\n\t"
+         "stp x29, x30, [sp, #-32]!\n\t"
+         ".seh_save_fplr_x 32\n\t"
+         ".seh_endprologue\n\t"
+         ".seh_handler unwind_exception_handler, @except\n\t"
+         "str x3, [sp, #16]\n\t"    /* frame[-2] = dispatch */
+         "mov x11, x4\n\t" /* handler */
+         "adr x10, $iexit_thunk$cdecl$i8$i8i8i8i8\n\t"
+         "adrp x16, __os_arm64x_dispatch_icall\n\t"
+         "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_icall]\n\t"
+         "blr x16\n\t"
+         "blr x11\n\t"
+         "ldp x29, x30, [sp], #32\n\t"
+         "ret\n\t"
+         ".seh_endproc" );
+}
+
+
 /***********************************************************************
  *		call_seh_handler
  */
@@ -1991,7 +2044,142 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
 void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec,
                          PVOID retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
 {
-    FIXME( "not implemented\n" );
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+    DISPATCHER_CONTEXT_NONVOLREG_ARM64 nonvol_regs;
+    EXCEPTION_RECORD record;
+    DISPATCHER_CONTEXT_ARM64EC dispatch;
+    ARM64EC_NT_CONTEXT new_context;
+    NTSTATUS status;
+    ULONG_PTR frame;
+    DWORD i, res;
+    BOOL is_target_ec = RtlIsEcCode( (ULONG_PTR)target_ip );
+
+    RtlCaptureContext( context );
+    new_context.AMD64_Context = *context;
+
+    /* build an exception record, if we do not have one */
+    if (!rec)
+    {
+        record.ExceptionCode    = STATUS_UNWIND;
+        record.ExceptionFlags   = 0;
+        record.ExceptionRecord  = NULL;
+        record.ExceptionAddress = (void *)context->Rip;
+        record.NumberParameters = 0;
+        rec = &record;
+    }
+
+    rec->ExceptionFlags |= EXCEPTION_UNWINDING | (end_frame ? 0 : EXCEPTION_EXIT_UNWIND);
+
+    TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
+    for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
+        TRACE( " info[%ld]=%016I64x\n", i, rec->ExceptionInformation[i] );
+    TRACE_CONTEXT( context );
+
+    dispatch.TargetIp         = (ULONG64)target_ip;
+    dispatch.ContextRecord    = context;
+    dispatch.HistoryTable     = table;
+    dispatch.NonVolatileRegisters = nonvol_regs.Buffer;
+
+    for (;;)
+    {
+        status = virtual_unwind( UNW_FLAG_UHANDLER, &dispatch, &new_context );
+        if (status != STATUS_SUCCESS) raise_status( status, rec );
+
+    unwind_done:
+        if (!dispatch.EstablisherFrame) break;
+
+        if (!is_valid_arm64ec_frame( dispatch.EstablisherFrame ))
+        {
+            ERR( "invalid frame %I64x (%p-%p)\n", dispatch.EstablisherFrame,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            rec->ExceptionFlags |= EXCEPTION_STACK_INVALID;
+            break;
+        }
+
+        if (dispatch.LanguageHandler)
+        {
+            if (end_frame && (dispatch.EstablisherFrame > (ULONG64)end_frame))
+            {
+                ERR( "invalid end frame %I64x/%p\n", dispatch.EstablisherFrame, end_frame );
+                raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
+            }
+            if (dispatch.EstablisherFrame == (ULONG64)end_frame) rec->ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
+
+            TRACE( "calling handler %p (rec=%p, frame=%I64x context=%p, dispatch=%p)\n",
+                   dispatch.LanguageHandler, rec, dispatch.EstablisherFrame,
+                   dispatch.ContextRecord, &dispatch );
+            res = call_unwind_handler( rec, dispatch.EstablisherFrame, dispatch.ContextRecord,
+                                       &dispatch, dispatch.LanguageHandler );
+            TRACE( "handler %p returned %lx\n", dispatch.LanguageHandler, res );
+
+            switch (res)
+            {
+            case ExceptionContinueSearch:
+                rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+                break;
+            case ExceptionCollidedUnwind:
+                new_context.AMD64_Context = *context;
+                RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase, dispatch.ControlPc,
+                                  dispatch.FunctionEntry, &new_context.AMD64_Context,
+                                  &dispatch.HandlerData, &frame, NULL );
+                rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
+                goto unwind_done;
+            default:
+                raise_status( STATUS_INVALID_DISPOSITION, rec );
+                break;
+            }
+        }
+        else  /* hack: call builtin handlers registered in the tib list */
+        {
+            while (is_valid_arm64ec_frame( (ULONG_PTR)teb_frame ) &&
+                   (ULONG64)teb_frame < new_context.Sp &&
+                   (ULONG64)teb_frame < (ULONG64)end_frame)
+            {
+                TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
+                       teb_frame->Handler, rec, teb_frame, dispatch.ContextRecord, &dispatch );
+                res = call_unwind_handler( rec, (ULONG_PTR)teb_frame, dispatch.ContextRecord, &dispatch,
+                                           (PEXCEPTION_ROUTINE)teb_frame->Handler );
+                TRACE( "handler at %p returned %lu\n", teb_frame->Handler, res );
+                teb_frame = __wine_pop_frame( teb_frame );
+
+                switch (res)
+                {
+                case ExceptionContinueSearch:
+                    rec->ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
+                    break;
+                case ExceptionCollidedUnwind:
+                    new_context.AMD64_Context = *context;
+                    RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase, dispatch.ControlPc,
+                                      dispatch.FunctionEntry, &new_context.AMD64_Context,
+                                      &dispatch.HandlerData, &frame, NULL );
+                    rec->ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
+                    goto unwind_done;
+                default:
+                    raise_status( STATUS_INVALID_DISPOSITION, rec );
+                    break;
+                }
+            }
+            if ((ULONG64)teb_frame == (ULONG64)end_frame && (ULONG64)end_frame < new_context.Sp) break;
+        }
+
+        if (dispatch.EstablisherFrame == (ULONG64)end_frame)
+        {
+            if (is_target_ec) break;
+            if (!RtlIsEcCode( dispatch.ControlPc )) break;
+            /* we just crossed into x64 code, unwind one more frame */
+        }
+        *context = new_context.AMD64_Context;
+    }
+
+    if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE)
+        context->Rip = (ULONG64)target_ip;
+    else if (rec->ExceptionInformation[10] == -1)
+        rec->ExceptionInformation[10] = (ULONG_PTR)&nonvol_regs;
+
+    if (is_target_ec) context->Rcx = (ULONG64)retval;
+    else context->Rax = (ULONG64)retval;
+    RtlRestoreContext( context, rec );
 }
 
 
