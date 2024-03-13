@@ -4147,10 +4147,11 @@ static void elevate_token(void)
 
     NtQueryInformationToken( GetCurrentThreadEffectiveToken(),
                              TokenLinkedToken, &linked, sizeof(linked), NULL );
+    NtDuplicateToken( linked.LinkedToken, 0, NULL, FALSE, TokenPrimary, &token.Token );
 
     token.Thread = NULL;
-    token.Token = linked.LinkedToken;
     NtSetInformationProcess( GetCurrentProcess(), ProcessAccessToken, &token, sizeof(token) );
+    NtClose( token.Token );
     NtClose( linked.LinkedToken );
 }
 
