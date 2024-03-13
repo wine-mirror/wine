@@ -2204,6 +2204,12 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
     ULONG_PTR pc = dispatch->ControlPc;
     unsigned int i;
 
+#ifdef __arm64ec__
+    if (RtlIsEcCode( pc ))
+        return __C_specific_handler_arm64( rec, frame, (ARM64_NT_CONTEXT *)context,
+                                           (DISPATCHER_CONTEXT_ARM64 *)dispatch );
+#endif
+
     TRACE( "%p %p %p %p pc %Ix\n", rec, frame, context, dispatch, pc );
     if (TRACE_ON(unwind)) DUMP_SCOPE_TABLE( base, table );
 
