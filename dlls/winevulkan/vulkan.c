@@ -217,29 +217,21 @@ static VkBool32 debug_report_callback_conversion(VkDebugReportFlagsEXT flags, Vk
     return VK_FALSE;
 }
 
-static void wine_vk_physical_device_free(struct wine_phys_dev *phys_dev)
+static void wine_phys_dev_cleanup(struct wine_phys_dev *phys_dev)
 {
-    if (!phys_dev)
-        return;
-
     remove_handle_mapping(phys_dev->instance, &phys_dev->wrapper_entry);
     free(phys_dev->extensions);
-    free(phys_dev);
 }
 
-static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance *instance,
-        VkPhysicalDevice host_handle, VkPhysicalDevice client_handle)
+static VkResult wine_vk_physical_device_init(struct wine_phys_dev *object, VkPhysicalDevice host_handle,
+        VkPhysicalDevice client_handle, struct wine_instance *instance)
 {
     BOOL have_memory_placed = FALSE, have_map_memory2 = FALSE;
-    struct wine_phys_dev *object;
     uint32_t num_host_properties, num_properties = 0;
     VkExtensionProperties *host_properties = NULL;
     BOOL have_external_memory_host = FALSE;
     VkResult res;
     unsigned int i, j;
-
-    if (!(object = calloc(1, sizeof(*object))))
-        return NULL;
 
     object->instance = instance;
     object->handle = client_handle;
@@ -363,12 +355,12 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
     }
 
     free(host_properties);
-    return object;
+    return VK_SUCCESS;
 
 err:
-    wine_vk_physical_device_free(object);
+    wine_phys_dev_cleanup(object);
     free(host_properties);
-    return NULL;
+    return res;
 }
 
 static void wine_vk_free_command_buffers(struct wine_device *device,
@@ -643,7 +635,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 }
 
 /* Helper function which stores wrapped physical devices in the instance object. */
-static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *instance)
+static VkResult wine_vk_instance_init_physical_devices(struct wine_instance *instance)
 {
     VkPhysicalDevice *host_handles;
     uint32_t phys_dev_count;
@@ -676,32 +668,23 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
         return res;
     }
 
-    instance->phys_devs = calloc(phys_dev_count, sizeof(*instance->phys_devs));
-    if (!instance->phys_devs)
-    {
-        free(host_handles);
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-    }
-
     /* Wrap each host physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < phys_dev_count; i++)
     {
-        struct wine_phys_dev *phys_dev = wine_vk_physical_device_alloc(instance, host_handles[i],
-                                                                       &instance->handle->phys_devs[i]);
-        if (!phys_dev)
-        {
-            ERR("Unable to allocate memory for physical device!\n");
-            free(host_handles);
-            return VK_ERROR_OUT_OF_HOST_MEMORY;
-        }
-
-        instance->phys_devs[i] = phys_dev;
-        instance->phys_dev_count = i + 1;
+        struct wine_phys_dev *phys_dev = instance->phys_devs + i;
+        res = wine_vk_physical_device_init(phys_dev, host_handles[i], &instance->handle->phys_devs[i], instance);
+        if (res != VK_SUCCESS)
+            goto err;
     }
     instance->phys_dev_count = phys_dev_count;
 
     free(host_handles);
     return VK_SUCCESS;
+
+err:
+    while (i) wine_phys_dev_cleanup(&instance->phys_devs[--i]);
+    free(host_handles);
+    return res;
 }
 
 static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
@@ -711,7 +694,7 @@ static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_i
 
     for (i = 0; i < instance->phys_dev_count; ++i)
     {
-        struct wine_phys_dev *current = instance->phys_devs[i];
+        struct wine_phys_dev *current = instance->phys_devs + i;
         if (current->host_physical_device == host_handle) return current;
     }
 
@@ -724,19 +707,13 @@ static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_i
  */
 static void wine_vk_instance_free(struct wine_instance *instance)
 {
+    unsigned int i;
+
     if (!instance)
         return;
 
-    if (instance->phys_devs)
-    {
-        unsigned int i;
-
-        for (i = 0; i < instance->phys_dev_count; i++)
-        {
-            wine_vk_physical_device_free(instance->phys_devs[i]);
-        }
-        free(instance->phys_devs);
-    }
+    for (i = 0; i < instance->phys_dev_count; i++)
+        wine_phys_dev_cleanup(&instance->phys_devs[i]);
 
     if (instance->host_instance)
     {
@@ -891,7 +868,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
-    if (!(object = calloc(1, sizeof(*object))))
+    if (!(object = calloc(1, offsetof(struct wine_instance, phys_devs[client_instance->phys_dev_count]))))
     {
         ERR("Failed to allocate memory for instance\n");
         return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -928,7 +905,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
      * the host physical devices and present those to the application.
      * Cleanup happens as part of wine_vkDestroyInstance.
      */
-    res = wine_vk_instance_load_physical_devices(object);
+    res = wine_vk_instance_init_physical_devices(object);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to load physical devices, res=%d\n", res);
@@ -1102,7 +1079,7 @@ VkResult wine_vkEnumeratePhysicalDevices(VkInstance handle, uint32_t *count, VkP
     *count = min(*count, instance->phys_dev_count);
     for (i = 0; i < *count; i++)
     {
-        devices[i] = instance->phys_devs[i]->handle;
+        devices[i] = instance->phys_devs[i].handle;
     }
 
     TRACE("Returning %u devices.\n", *count);

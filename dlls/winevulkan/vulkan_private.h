@@ -109,39 +109,6 @@ struct wine_debug_report_callback
     struct wrapper_entry wrapper_entry;
 };
 
-struct wine_instance
-{
-    struct vulkan_instance_funcs funcs;
-
-    VkInstance handle; /* client instance */
-    VkInstance host_instance;
-
-    /* We cache devices as we need to wrap them as they are
-     * dispatchable objects.
-     */
-    struct wine_phys_dev **phys_devs;
-    uint32_t phys_dev_count;
-
-    VkBool32 enable_win32_surface;
-    VkBool32 enable_wrapper_list;
-    struct rb_tree wrappers;
-    pthread_rwlock_t wrapper_lock;
-
-    struct wine_debug_utils_messenger *utils_messengers;
-    uint32_t utils_messenger_count;
-
-    struct wine_debug_report_callback default_callback;
-
-    unsigned int quirks;
-
-    struct wrapper_entry wrapper_entry;
-};
-
-static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
-{
-    return (struct wine_instance *)(uintptr_t)handle->base.unix_handle;
-}
-
 struct wine_phys_dev
 {
     struct wine_instance *instance; /* parent */
@@ -162,6 +129,41 @@ struct wine_phys_dev
 static inline struct wine_phys_dev *wine_phys_dev_from_handle(VkPhysicalDevice handle)
 {
     return (struct wine_phys_dev *)(uintptr_t)handle->base.unix_handle;
+}
+
+struct wine_debug_report_callback;
+
+struct wine_instance
+{
+    struct vulkan_instance_funcs funcs;
+
+    VkInstance handle; /* client instance */
+    VkInstance host_instance;
+
+    VkBool32 enable_win32_surface;
+    VkBool32 enable_wrapper_list;
+    struct rb_tree wrappers;
+    pthread_rwlock_t wrapper_lock;
+
+    struct wine_debug_utils_messenger *utils_messengers;
+    uint32_t utils_messenger_count;
+
+    struct wine_debug_report_callback default_callback;
+
+    unsigned int quirks;
+
+    struct wrapper_entry wrapper_entry;
+
+    /* We cache devices as we need to wrap them as they are dispatchable objects. */
+    uint32_t phys_dev_count;
+    struct wine_phys_dev phys_devs[];
+};
+
+C_ASSERT(sizeof(struct wine_instance) == offsetof(struct wine_instance, phys_devs[0]));
+
+static inline struct wine_instance *wine_instance_from_handle(VkInstance handle)
+{
+    return (struct wine_instance *)(uintptr_t)handle->base.unix_handle;
 }
 
 struct wine_cmd_pool
