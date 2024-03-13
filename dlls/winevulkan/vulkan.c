@@ -228,7 +228,7 @@ static void wine_vk_physical_device_free(struct wine_phys_dev *phys_dev)
 }
 
 static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance *instance,
-        VkPhysicalDevice phys_dev, VkPhysicalDevice handle)
+        VkPhysicalDevice host_handle, VkPhysicalDevice client_handle)
 {
     BOOL have_memory_placed = FALSE, have_map_memory2 = FALSE;
     struct wine_phys_dev *object;
@@ -242,15 +242,15 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
         return NULL;
 
     object->instance = instance;
-    object->handle = handle;
-    object->host_physical_device = phys_dev;
+    object->handle = client_handle;
+    object->host_physical_device = host_handle;
 
-    handle->base.unix_handle = (uintptr_t)object;
-    add_handle_mapping_ptr(instance, handle, phys_dev, &object->wrapper_entry);
+    client_handle->base.unix_handle = (uintptr_t)object;
+    add_handle_mapping_ptr(instance, client_handle, host_handle, &object->wrapper_entry);
 
-    instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(phys_dev, &object->memory_properties);
+    instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(host_handle, &object->memory_properties);
 
-    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(host_handle,
             NULL, &num_host_properties, NULL);
     if (res != VK_SUCCESS)
     {
@@ -265,7 +265,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
         goto err;
     }
 
-    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
+    res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(host_handle,
             NULL, &num_host_properties, host_properties);
     if (res != VK_SUCCESS)
     {
@@ -325,7 +325,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
             .pNext = &map_placed_feature,
         };
 
-        instance->funcs.p_vkGetPhysicalDeviceFeatures2KHR(phys_dev, &features);
+        instance->funcs.p_vkGetPhysicalDeviceFeatures2KHR(host_handle, &features);
         if (map_placed_feature.memoryMapPlaced && map_placed_feature.memoryUnmapReserve)
         {
             VkPhysicalDeviceMapMemoryPlacedPropertiesEXT map_placed_props =
@@ -338,7 +338,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
                 .pNext = &map_placed_props,
             };
 
-            instance->funcs.p_vkGetPhysicalDeviceProperties2(phys_dev, &props);
+            instance->funcs.p_vkGetPhysicalDeviceProperties2(host_handle, &props);
             object->map_placed_align = map_placed_props.minPlacedMemoryMapAlignment;
             TRACE( "Using placed map with alignment %u\n", object->map_placed_align );
         }
@@ -355,7 +355,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
             .pNext = &host_mem_props,
         };
-        instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(phys_dev, &props);
+        instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(host_handle, &props);
         object->external_memory_align = host_mem_props.minImportedHostPointerAlignment;
         if (object->external_memory_align)
             TRACE("Using VK_EXT_external_memory_host for memory mapping with alignment: %u\n",
@@ -645,7 +645,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
 /* Helper function which stores wrapped physical devices in the instance object. */
 static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *instance)
 {
-    VkPhysicalDevice *tmp_phys_devs;
+    VkPhysicalDevice *host_handles;
     uint32_t phys_dev_count;
     unsigned int i;
     VkResult res;
@@ -666,32 +666,32 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
     }
     instance->handle->phys_dev_count = phys_dev_count;
 
-    if (!(tmp_phys_devs = calloc(phys_dev_count, sizeof(*tmp_phys_devs))))
+    if (!(host_handles = calloc(phys_dev_count, sizeof(*host_handles))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->host_instance, &phys_dev_count, tmp_phys_devs);
+    res = instance->funcs.p_vkEnumeratePhysicalDevices(instance->host_instance, &phys_dev_count, host_handles);
     if (res != VK_SUCCESS)
     {
-        free(tmp_phys_devs);
+        free(host_handles);
         return res;
     }
 
     instance->phys_devs = calloc(phys_dev_count, sizeof(*instance->phys_devs));
     if (!instance->phys_devs)
     {
-        free(tmp_phys_devs);
+        free(host_handles);
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
     /* Wrap each host physical device handle into a dispatchable object for the ICD loader. */
     for (i = 0; i < phys_dev_count; i++)
     {
-        struct wine_phys_dev *phys_dev = wine_vk_physical_device_alloc(instance, tmp_phys_devs[i],
+        struct wine_phys_dev *phys_dev = wine_vk_physical_device_alloc(instance, host_handles[i],
                                                                        &instance->handle->phys_devs[i]);
         if (!phys_dev)
         {
             ERR("Unable to allocate memory for physical device!\n");
-            free(tmp_phys_devs);
+            free(host_handles);
             return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
 
@@ -700,22 +700,22 @@ static VkResult wine_vk_instance_load_physical_devices(struct wine_instance *ins
     }
     instance->phys_dev_count = phys_dev_count;
 
-    free(tmp_phys_devs);
+    free(host_handles);
     return VK_SUCCESS;
 }
 
 static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_instance *instance,
-        VkPhysicalDevice physical_device)
+        VkPhysicalDevice host_handle)
 {
     unsigned int i;
 
     for (i = 0; i < instance->phys_dev_count; ++i)
     {
         struct wine_phys_dev *current = instance->phys_devs[i];
-        if (current->host_physical_device == physical_device) return current;
+        if (current->host_physical_device == host_handle) return current;
     }
 
-    ERR("Unrecognized physical device %p.\n", physical_device);
+    ERR("Unrecognized physical device %p.\n", host_handle);
     return NULL;
 }
 
@@ -1221,8 +1221,8 @@ static VkResult wine_vk_enumerate_physical_device_groups(struct wine_instance *i
         VkPhysicalDeviceGroupProperties *current = &properties[i];
         for (j = 0; j < current->physicalDeviceCount; ++j)
         {
-            VkPhysicalDevice dev = current->physicalDevices[j];
-            struct wine_phys_dev *phys_dev = wine_vk_instance_wrap_physical_device(instance, dev);
+            VkPhysicalDevice host_handle = current->physicalDevices[j];
+            struct wine_phys_dev *phys_dev = wine_vk_instance_wrap_physical_device(instance, host_handle);
             if (!phys_dev)
                 return VK_ERROR_INITIALIZATION_FAILED;
             current->physicalDevices[j] = phys_dev->handle;
