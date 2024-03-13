@@ -673,27 +673,6 @@ static struct wine_phys_dev *wine_vk_instance_wrap_physical_device(struct wine_i
     return NULL;
 }
 
-/* Helper function used for freeing an instance structure. This function supports full
- * and partial object cleanups and can thus be used for vkCreateInstance failures.
- */
-static void wine_vk_instance_free(struct wine_instance *instance)
-{
-    unsigned int i;
-
-    vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
-    for (i = 0; i < instance->phys_dev_count; i++)
-    {
-        remove_handle_mapping(instance, &instance->phys_devs[i].wrapper_entry);
-        wine_phys_dev_cleanup(&instance->phys_devs[i]);
-    }
-    remove_handle_mapping(instance, &instance->wrapper_entry);
-
-    pthread_rwlock_destroy(&instance->wrapper_lock);
-    free(instance->utils_messengers);
-
-    free(instance);
-}
-
 VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo *allocate_info,
                                        VkCommandBuffer *buffers )
 {
@@ -858,9 +837,6 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         return res;
     }
 
-    rb_init(&object->wrappers, wrapper_entry_compare);
-    pthread_rwlock_init(&object->wrapper_lock, NULL);
-
     object->handle = client_instance;
 
     /* Load all instance functions we are aware of. Note the loader takes care
@@ -881,7 +857,9 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if (res != VK_SUCCESS)
     {
         ERR("Failed to load physical devices, res=%d\n", res);
-        wine_vk_instance_free(object);
+        vk_funcs->p_vkDestroyInstance(object->host_instance, NULL /* allocator */);
+        free(object->utils_messengers);
+        free(object);
         return res;
     }
 
@@ -900,6 +878,10 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     client_instance->base.unix_handle = (uintptr_t)object;
 
     TRACE("Created instance %p, host_instance %p.\n", object, object->host_instance);
+
+    rb_init(&object->wrappers, wrapper_entry_compare);
+    pthread_rwlock_init(&object->wrapper_lock, NULL);
+
     for (i = 0; i < object->phys_dev_count; i++)
     {
         struct wine_phys_dev *phys_dev = &object->phys_devs[i];
@@ -932,13 +914,24 @@ void wine_vkDestroyDevice(VkDevice handle, const VkAllocationCallbacks *allocato
 void wine_vkDestroyInstance(VkInstance handle, const VkAllocationCallbacks *allocator)
 {
     struct wine_instance *instance = wine_instance_from_handle(handle);
+    unsigned int i;
 
     if (allocator)
         FIXME("Support allocation allocators\n");
     if (!instance)
         return;
 
-    wine_vk_instance_free(instance);
+    vk_funcs->p_vkDestroyInstance(instance->host_instance, NULL /* allocator */);
+    for (i = 0; i < instance->phys_dev_count; i++)
+    {
+        remove_handle_mapping(instance, &instance->phys_devs[i].wrapper_entry);
+        wine_phys_dev_cleanup(&instance->phys_devs[i]);
+    }
+    remove_handle_mapping(instance, &instance->wrapper_entry);
+
+    pthread_rwlock_destroy(&instance->wrapper_lock);
+    free(instance->utils_messengers);
+    free(instance);
 }
 
 VkResult wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_dev_handle, const char *layer_name,
