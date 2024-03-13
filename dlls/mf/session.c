@@ -3334,7 +3334,10 @@ static void transform_node_deliver_samples(struct media_session *session, struct
         stream = &topo_node->u.transform.inputs[input];
 
         if (SUCCEEDED(transform_stream_pop_sample(stream, &sample)))
+        {
             session_deliver_sample_to_node(session, topo_node->node, input, sample);
+            IMFSample_Release(sample);
+        }
         else if (FAILED(hr = IMFTopologyNode_GetInput(topo_node->node, input, &up_node, &output)))
             WARN("Failed to get node %p/%lu input, hr %#lx\n", topo_node->node, input, hr);
         else
