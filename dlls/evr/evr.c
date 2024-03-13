@@ -409,7 +409,6 @@ static HRESULT evr_copy_sample_buffer(struct evr *filter, const GUID *subtype, I
                     /* All other formats are 32-bit, single plane. */
                     MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width * 4, lines);
                 }
-                MFCopyImage(locked_rect.pBits, locked_rect.Pitch, src, src_stride, width, lines);
                 IDirect3DSurface9_UnlockRect(surface);
             }
 
