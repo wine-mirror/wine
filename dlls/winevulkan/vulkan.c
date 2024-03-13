@@ -501,31 +501,6 @@ static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_de
     return VK_SUCCESS;
 }
 
-/* Helper function used for freeing a device structure. This function supports full
- * and partial object cleanups and can thus be used for vkCreateDevice failures.
- */
-static void wine_vk_device_free(struct wine_device *device)
-{
-    unsigned int i;
-
-    if (!device)
-        return;
-
-    for (i = 0; i < device->queue_count; i++)
-    {
-        struct wine_queue *queue = device->queues + i;
-        if (queue->host_queue) remove_handle_mapping(device->phys_dev->instance, &queue->wrapper_entry);
-    }
-
-    if (device->host_device && device->funcs.p_vkDestroyDevice)
-    {
-        remove_handle_mapping(device->phys_dev->instance, &device->wrapper_entry);
-        device->funcs.p_vkDestroyDevice(device->host_device, NULL /* pAllocator */);
-    }
-
-    free(device);
-}
-
 NTSTATUS init_vulkan(void *args)
 {
     vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
@@ -825,7 +800,9 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     if (res != VK_SUCCESS)
     {
         WARN("Failed to create device, res=%d.\n", res);
-        goto fail;
+        remove_handle_mapping(object->phys_dev->instance, &object->wrapper_entry);
+        free(object);
+        return res;
     }
 
     /* Just load all function pointers we are aware off. The loader takes care of filtering.
@@ -848,10 +825,6 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 
     TRACE("Created device %p, host_device %p.\n", object, object->host_device);
     return VK_SUCCESS;
-
-fail:
-    wine_vk_device_free(object);
-    return res;
 }
 
 VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -935,11 +908,19 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 void wine_vkDestroyDevice(VkDevice handle, const VkAllocationCallbacks *allocator)
 {
     struct wine_device *device = wine_device_from_handle(handle);
+    unsigned int i;
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
+    if (!device)
+        return;
 
-    wine_vk_device_free(device);
+    for (i = 0; i < device->queue_count; i++)
+        remove_handle_mapping(device->phys_dev->instance, &device->queues[i].wrapper_entry);
+    remove_handle_mapping(device->phys_dev->instance, &device->wrapper_entry);
+    device->funcs.p_vkDestroyDevice(device->host_device, NULL /* pAllocator */);
+
+    free(device);
 }
 
 void wine_vkDestroyInstance(VkInstance handle, const VkAllocationCallbacks *allocator)
