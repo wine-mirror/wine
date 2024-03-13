@@ -2215,19 +2215,6 @@ ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
 }
 
 
-/*******************************************************************
- *		__C_specific_handler (NTDLL.@)
- */
-EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
-                                                   void *frame,
-                                                   CONTEXT *context,
-                                                   struct _DISPATCHER_CONTEXT *dispatch )
-{
-    FIXME( "not implemented\n" );
-    return ExceptionContinueSearch;
-}
-
-
 static int code_match( BYTE *code, const BYTE *seq, size_t len )
 {
     for ( ; len; len--, code++, seq++) if (*seq && *code != *seq) return 0;

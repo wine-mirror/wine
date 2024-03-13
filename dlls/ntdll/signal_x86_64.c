@@ -46,20 +46,6 @@ ALL_SYSCALLS64
 #undef SYSCALL_ENTRY
 
 
-static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
-{
-    unsigned int i;
-
-    TRACE( "scope table at %p\n", table );
-    for (i = 0; i < table->Count; i++)
-        TRACE( "  %u: %p-%p handler %p target %p\n", i,
-               (char *)base + table->ScopeRecord[i].BeginAddress,
-               (char *)base + table->ScopeRecord[i].EndAddress,
-               (char *)base + table->ScopeRecord[i].HandlerAddress,
-               (char *)base + table->ScopeRecord[i].JumpTarget );
-}
-
-
 /***********************************************************************
  *           virtual_unwind
  */
@@ -849,82 +835,6 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     context->Rax = (ULONG64)retval;
     if (rec->ExceptionCode != STATUS_UNWIND_CONSOLIDATE) context->Rip = (ULONG64)target_ip;
     RtlRestoreContext(context, rec);
-}
-
-
-/*******************************************************************
- *		__C_specific_handler (NTDLL.@)
- */
-EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
-                                                   void *frame,
-                                                   CONTEXT *context,
-                                                   struct _DISPATCHER_CONTEXT *dispatch )
-{
-    SCOPE_TABLE *table = dispatch->HandlerData;
-    ULONG i;
-
-    TRACE( "%p %p %p %p\n", rec, frame, context, dispatch );
-    if (TRACE_ON(seh)) dump_scope_table( dispatch->ImageBase, table );
-
-    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))
-    {
-        for (i = dispatch->ScopeIndex; i < table->Count; i++)
-        {
-            if (dispatch->ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-                dispatch->ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-            {
-                PTERMINATION_HANDLER handler;
-
-                if (table->ScopeRecord[i].JumpTarget) continue;
-
-                if (rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND &&
-                    dispatch->TargetIp >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-                    dispatch->TargetIp < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-                {
-                    break;
-                }
-
-                handler = (PTERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
-                dispatch->ScopeIndex = i+1;
-
-                TRACE( "calling __finally %p frame %p\n", handler, frame );
-                handler( TRUE, frame );
-            }
-        }
-        return ExceptionContinueSearch;
-    }
-
-    for (i = dispatch->ScopeIndex; i < table->Count; i++)
-    {
-        if (dispatch->ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-            dispatch->ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-        {
-            if (!table->ScopeRecord[i].JumpTarget) continue;
-            if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
-            {
-                EXCEPTION_POINTERS ptrs;
-                PEXCEPTION_FILTER filter;
-
-                filter = (PEXCEPTION_FILTER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
-                ptrs.ExceptionRecord = rec;
-                ptrs.ContextRecord = context;
-                TRACE( "calling filter %p ptrs %p frame %p\n", filter, &ptrs, frame );
-                switch (filter( &ptrs, frame ))
-                {
-                case EXCEPTION_EXECUTE_HANDLER:
-                    break;
-                case EXCEPTION_CONTINUE_SEARCH:
-                    continue;
-                case EXCEPTION_CONTINUE_EXECUTION:
-                    return ExceptionContinueExecution;
-                }
-            }
-            TRACE( "unwinding to target %p\n", (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
-            RtlUnwindEx( frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
-        }
-    }
-    return ExceptionContinueSearch;
 }
 
 

@@ -40,19 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 
-static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
-{
-    unsigned int i;
-
-    TRACE( "scope table at %p\n", table );
-    for (i = 0; i < table->Count; i++)
-        TRACE( "  %u: %I64x-%I64x handler %I64x target %I64x\n", i,
-               base + table->ScopeRecord[i].BeginAddress,
-               base + table->ScopeRecord[i].EndAddress,
-               base + table->ScopeRecord[i].HandlerAddress,
-               base + table->ScopeRecord[i].JumpTarget );
-}
-
 /*******************************************************************
  *         syscalls
  */
@@ -635,49 +622,30 @@ ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
 }
 
 
-extern LONG __C_ExecuteExceptionFilter(PEXCEPTION_POINTERS ptrs, PVOID frame,
-                                       PEXCEPTION_FILTER filter,
-                                       PUCHAR nonvolatile);
+/***********************************************************************
+ *		__C_ExecuteExceptionFilter
+ */
 __ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
                    "stp x29, x30, [sp, #-96]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 96\n\t")
+                   ".seh_save_fplr_x 96\n\t"
                    "stp x19, x20, [sp, #16]\n\t"
-                   __ASM_SEH(".seh_save_regp x19, 16\n\t")
+                   ".seh_save_regp x19, 16\n\t"
                    "stp x21, x22, [sp, #32]\n\t"
-                   __ASM_SEH(".seh_save_regp x21, 32\n\t")
+                   ".seh_save_regp x21, 32\n\t"
                    "stp x23, x24, [sp, #48]\n\t"
-                   __ASM_SEH(".seh_save_regp x23, 48\n\t")
+                   ".seh_save_regp x23, 48\n\t"
                    "stp x25, x26, [sp, #64]\n\t"
-                   __ASM_SEH(".seh_save_regp x25, 64\n\t")
+                   ".seh_save_regp x25, 64\n\t"
                    "stp x27, x28, [sp, #80]\n\t"
-                   __ASM_SEH(".seh_save_regp x27, 80\n\t")
-                   "mov x29, sp\n\t"
-                   __ASM_SEH(".seh_set_fp\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-
-                   __ASM_CFI(".cfi_def_cfa x29, 96\n\t")
-                   __ASM_CFI(".cfi_offset x29, -96\n\t")
-                   __ASM_CFI(".cfi_offset x30, -88\n\t")
-                   __ASM_CFI(".cfi_offset x19, -80\n\t")
-                   __ASM_CFI(".cfi_offset x20, -72\n\t")
-                   __ASM_CFI(".cfi_offset x21, -64\n\t")
-                   __ASM_CFI(".cfi_offset x22, -56\n\t")
-                   __ASM_CFI(".cfi_offset x23, -48\n\t")
-                   __ASM_CFI(".cfi_offset x24, -40\n\t")
-                   __ASM_CFI(".cfi_offset x25, -32\n\t")
-                   __ASM_CFI(".cfi_offset x26, -24\n\t")
-                   __ASM_CFI(".cfi_offset x27, -16\n\t")
-                   __ASM_CFI(".cfi_offset x28, -8\n\t")
-
-                   "ldp x19, x20, [x3, #0]\n\t"
+                   ".seh_save_regp x27, 80\n\t"
+                   ".seh_endprologue\n\t"
+                   "ldp x19, x20, [x3, #0]\n\t" /* nonvolatile regs */
                    "ldp x21, x22, [x3, #16]\n\t"
                    "ldp x23, x24, [x3, #32]\n\t"
                    "ldp x25, x26, [x3, #48]\n\t"
                    "ldp x27, x28, [x3, #64]\n\t"
-                   /* Overwrite the frame parameter with Fp from the
-                    * nonvolatile regs */
-                   "ldr x1, [x3, #80]\n\t"
-                   "blr x2\n\t"
+                   "ldr x1, [x3, #80]\n\t"      /* x29 = frame */
+                   "blr x2\n\t"                 /* filter */
                    "ldp x19, x20, [sp, #16]\n\t"
                    "ldp x21, x22, [sp, #32]\n\t"
                    "ldp x23, x24, [sp, #48]\n\t"
@@ -685,94 +653,6 @@ __ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
                    "ldp x27, x28, [sp, #80]\n\t"
                    "ldp x29, x30, [sp], #96\n\t"
                    "ret")
-
-extern void __C_ExecuteTerminationHandler(BOOL abnormal, PVOID frame,
-                                          PTERMINATION_HANDLER handler,
-                                          PUCHAR nonvolatile);
-/* This is, implementation wise, identical to __C_ExecuteExceptionFilter. */
-__ASM_GLOBAL_FUNC( __C_ExecuteTerminationHandler,
-                   "b " __ASM_NAME("__C_ExecuteExceptionFilter") "\n\t");
-
-/*******************************************************************
- *		__C_specific_handler (NTDLL.@)
- */
-EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
-                                                   void *frame,
-                                                   CONTEXT *context,
-                                                   struct _DISPATCHER_CONTEXT *dispatch )
-{
-    SCOPE_TABLE *table = dispatch->HandlerData;
-    ULONG i;
-    DWORD64 ControlPc = dispatch->ControlPc;
-
-    TRACE( "%p %p %p %p\n", rec, frame, context, dispatch );
-    if (TRACE_ON(seh)) dump_scope_table( dispatch->ImageBase, table );
-
-    if (dispatch->ControlPcIsUnwound)
-        ControlPc -= 4;
-
-    if (rec->ExceptionFlags & (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND))
-    {
-        for (i = dispatch->ScopeIndex; i < table->Count; i++)
-        {
-            if (ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-                ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-            {
-                PTERMINATION_HANDLER handler;
-
-                if (table->ScopeRecord[i].JumpTarget) continue;
-
-                if (rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND &&
-                    dispatch->TargetPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-                    dispatch->TargetPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-                {
-                    break;
-                }
-
-                handler = (PTERMINATION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
-                dispatch->ScopeIndex = i+1;
-
-                TRACE( "calling __finally %p frame %p\n", handler, frame );
-                __C_ExecuteTerminationHandler( TRUE, frame, handler,
-                                               dispatch->NonVolatileRegisters );
-            }
-        }
-        return ExceptionContinueSearch;
-    }
-
-    for (i = dispatch->ScopeIndex; i < table->Count; i++)
-    {
-        if (ControlPc >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
-            ControlPc < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
-        {
-            if (!table->ScopeRecord[i].JumpTarget) continue;
-            if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
-            {
-                EXCEPTION_POINTERS ptrs;
-                PEXCEPTION_FILTER filter;
-
-                filter = (PEXCEPTION_FILTER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
-                ptrs.ExceptionRecord = rec;
-                ptrs.ContextRecord = context;
-                TRACE( "calling filter %p ptrs %p frame %p\n", filter, &ptrs, frame );
-                switch (__C_ExecuteExceptionFilter( &ptrs, frame, filter,
-                                                    dispatch->NonVolatileRegisters ))
-                {
-                case EXCEPTION_EXECUTE_HANDLER:
-                    break;
-                case EXCEPTION_CONTINUE_SEARCH:
-                    continue;
-                case EXCEPTION_CONTINUE_EXECUTION:
-                    return ExceptionContinueExecution;
-                }
-            }
-            TRACE( "unwinding to target %I64x\n", dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
-            RtlUnwindEx( frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
-        }
-    }
-    return ExceptionContinueSearch;
-}
 
 
 /***********************************************************************
