@@ -45,7 +45,7 @@ struct input_stream
     IMFMediaType *media_type;
     MFVideoNormalizedRect rect;
     unsigned int zorder;
-    SIZE frame_size;
+    MFVideoArea aperture;
     IMFSample *sample;
     unsigned int sample_requested : 1;
 };
@@ -102,7 +102,6 @@ struct video_mixer
         COLORREF rgba;
         DXVA2_AYUVSample16 ayuv;
     } bkgnd_color;
-    MFVideoArea aperture;
     LONGLONG lower_bound;
     LONGLONG upper_bound;
     CRITICAL_SECTION cs;
@@ -763,7 +762,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
     if (count && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
-        UINT32 fixed_samples, interlace_mode;
+        UINT32 fixed_samples, interlace_mode, width = video_desc->SampleWidth, height = video_desc->SampleHeight;
         MFVideoArea aperture;
         UINT64 par;
 
@@ -775,12 +774,18 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
         memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
         memset(&aperture, 0, sizeof(aperture));
-        if (FAILED(IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture,
+        if (SUCCEEDED(IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture,
                 sizeof(aperture), NULL)))
         {
-            aperture.Area.cx = video_desc->SampleWidth;
-            aperture.Area.cy = video_desc->SampleHeight;
+            width = aperture.OffsetX.value + aperture.Area.cx;
+            height = aperture.OffsetX.value + aperture.Area.cy;
         }
+        else
+        {
+            aperture.Area.cx = width;
+            aperture.Area.cy = height;
+        }
+
         interlace_mode = video_mixer_get_interlace_mode_from_video_desc(video_desc);
         mf_get_attribute_uint64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &par, (UINT64)1 << 32 | 1);
         mf_get_attribute_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &fixed_samples, 1);
@@ -795,7 +800,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
             MFCreateMediaType(&rt_media_type);
             IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)rt_media_type);
             IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
-            IMFMediaType_SetUINT64(rt_media_type, &MF_MT_FRAME_SIZE, (UINT64)aperture.Area.cx << 32 | aperture.Area.cy);
+            IMFMediaType_SetUINT64(rt_media_type, &MF_MT_FRAME_SIZE, (UINT64)width << 32 | height);
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_GEOMETRIC_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
             IMFMediaType_SetUINT32(rt_media_type, &MF_MT_INTERLACE_MODE, interlace_mode);
@@ -884,8 +889,15 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                             if (mixer->inputs[0].media_type)
                                 IMFMediaType_Release(mixer->inputs[0].media_type);
                             mixer->inputs[0].media_type = media_type;
-                            mixer->inputs[0].frame_size.cx = video_desc.SampleWidth;
-                            mixer->inputs[0].frame_size.cy = video_desc.SampleHeight;
+
+                            if (FAILED(IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE,
+                                    (BYTE *)&mixer->inputs[0].aperture, sizeof(mixer->inputs[0].aperture), NULL)))
+                            {
+                                memset(&mixer->inputs[0].aperture, 0, sizeof(mixer->inputs[0].aperture));
+                                mixer->inputs[0].aperture.Area.cx = video_desc.SampleWidth;
+                                mixer->inputs[0].aperture.Area.cy = video_desc.SampleHeight;
+                            }
+
                             IMFMediaType_AddRef(mixer->inputs[0].media_type);
                         }
                         CoTaskMemFree(guids);
@@ -962,11 +974,6 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
             if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &mixer->output.rt_formats[i].device,
                     &video_desc, rt_format, MAX_MIXER_INPUT_SUBSTREAMS, &mixer->processor)))
             {
-                if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&mixer->aperture,
-                        sizeof(mixer->aperture), NULL)))
-                {
-                    memset(&mixer->aperture, 0, sizeof(mixer->aperture));
-                }
                 if (mixer->output.media_type)
                     IMFMediaType_Release(mixer->output.media_type);
                 mixer->output.media_type = type;
@@ -1297,9 +1304,9 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
     DXVA2_VideoProcessBltParams params = { 0 };
     MFVideoNormalizedRect zoom_rect;
     struct input_stream *stream;
+    MFVideoArea aperture;
     HRESULT hr = S_OK;
     unsigned int i;
-    RECT dst;
 
     if (FAILED(IMFAttributes_GetBlob(mixer->attributes, &VIDEO_ZOOM_RECT, (UINT8 *)&zoom_rect,
             sizeof(zoom_rect), NULL)))
@@ -1308,8 +1315,11 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
         zoom_rect.right = zoom_rect.bottom = 1.0f;
     }
 
-    SetRect(&dst, 0, 0, mixer->aperture.Area.cx, mixer->aperture.Area.cy);
-    OffsetRect(&dst, mixer->aperture.OffsetX.value, mixer->aperture.OffsetY.value);
+    if (FAILED(IMFMediaType_GetBlob(mixer->output.media_type, &MF_MT_GEOMETRIC_APERTURE,
+            (UINT8 *)&aperture, sizeof(aperture), NULL)))
+        aperture = mixer->inputs[0].aperture;
+    SetRect(&params.TargetRect, 0, 0, aperture.Area.cx, aperture.Area.cy);
+    OffsetRect(&params.TargetRect, aperture.OffsetX.value, aperture.OffsetY.value);
 
     for (i = 0; i < mixer->input_count; ++i)
     {
@@ -1326,8 +1336,9 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
         /* Full input frame corrected to full destination rectangle. */
 
-        video_mixer_scale_rect(&sample->SrcRect, stream->frame_size.cx, stream->frame_size.cy, &zoom_rect);
-        CopyRect(&sample->DstRect, &dst);
+        video_mixer_scale_rect(&sample->SrcRect, stream->aperture.Area.cx, stream->aperture.Area.cy, &zoom_rect);
+        OffsetRect(&sample->SrcRect, stream->aperture.OffsetX.value, stream->aperture.OffsetY.value);
+        CopyRect(&sample->DstRect, &params.TargetRect);
         video_mixer_correct_aspect_ratio(&sample->SrcRect, &sample->DstRect);
 
         if (video_mixer_rect_needs_scaling(&stream->rect))
@@ -1340,9 +1351,6 @@ static void video_mixer_render(struct video_mixer *mixer, IDirect3DSurface9 *rt)
 
     if (SUCCEEDED(hr))
     {
-        SetRect(&params.TargetRect, 0, 0, mixer->aperture.Area.cx, mixer->aperture.Area.cy);
-        OffsetRect(&params.TargetRect, mixer->aperture.OffsetX.value, mixer->aperture.OffsetY.value);
-
         params.BackgroundColor = mixer->bkgnd_color.ayuv;
         params.Alpha = DXVA2_Fixed32OpaqueAlpha();
 

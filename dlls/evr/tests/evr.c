@@ -3692,8 +3692,8 @@ static void test_mixer_video_aperture(void)
     IMFSample_Release(sample);
 
     SetRect(&rect, 0, 0, expect_header_crop.biWidth, expect_header_crop.biHeight);
-    diff = check_presenter_output_(__LINE__, presenter, &expect_header_crop, L"rgb32frame-crop.bmp", &rect, TRUE);
-    todo_wine ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
+    diff = check_presenter_output(presenter, &expect_header_crop, L"rgb32frame-crop.bmp", &rect);
+    ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
 
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

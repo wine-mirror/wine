@@ -361,7 +361,6 @@ static HRESULT video_presenter_configure_output_type(struct video_presenter *pre
 static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
 {
     IMFMediaType *media_type, *candidate_type;
-    MFVideoArea aperture = {{ 0 }};
     unsigned int idx = 0;
     RECT rect;
     HRESULT hr;
@@ -374,18 +373,23 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
 
     video_presenter_get_native_video_size(presenter);
 
-    rect = presenter->dst_rect;
-    if (rect.left == 0 && rect.right == 0 && rect.bottom == 0 && rect.top == 0)
-    {
-        rect.right = presenter->native_size.cx;
-        rect.bottom = presenter->native_size.cy;
-    }
-
-    aperture.Area.cx = rect.right - rect.left;
-    aperture.Area.cy = rect.bottom - rect.top;
-
     while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(presenter->mixer, 0, idx++, &candidate_type)))
     {
+        MFVideoArea aperture = {{ 0 }};
+
+        rect = presenter->dst_rect;
+        if (!IsRectEmpty(&rect))
+        {
+            aperture.Area.cx = rect.right - rect.left;
+            aperture.Area.cy = rect.bottom - rect.top;
+        }
+        else if (FAILED(IMFMediaType_GetBlob(candidate_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture,
+                sizeof(aperture), NULL)))
+        {
+            aperture.Area.cx = presenter->native_size.cx;
+            aperture.Area.cy = presenter->native_size.cy;
+        }
+
         /* FIXME: check that d3d device supports this format */
 
         if (FAILED(hr = IMFMediaType_CopyAllItems(candidate_type, (IMFAttributes *)media_type)))
