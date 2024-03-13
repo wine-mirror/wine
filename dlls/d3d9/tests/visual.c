@@ -3366,7 +3366,7 @@ static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
         for (y = 0; y < 128; ++y)
         {
             if(i)
-            { /* Set up black texture with 2x2 texel white spot in the middle */
+            {
                 DWORD *ptr = (DWORD *)(((BYTE *)locked_rect.pBits) + (y * locked_rect.Pitch));
                 for (x = 0; x < 128; ++x)
                 {
