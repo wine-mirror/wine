@@ -126,6 +126,9 @@ static HRESULT WINAPI WshNetwork2_get_UserName(IWshNetwork2 *iface, BSTR *user_n
 
     TRACE("%p, %p.\n", iface, user_name);
 
+    if (!user_name)
+        return E_POINTER;
+
     GetUserNameW(NULL, &len);
     *user_name = SysAllocStringLen(NULL, len-1);
     if (!*user_name)
