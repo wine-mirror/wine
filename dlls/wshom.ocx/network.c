@@ -69,8 +69,9 @@ static HRESULT WINAPI WshNetwork2_GetTypeInfoCount(IWshNetwork2 *iface, UINT *pc
 
 static HRESULT WINAPI WshNetwork2_GetTypeInfo(IWshNetwork2 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    FIXME("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    TRACE("%p, %u, %lx, %p.\n", iface, iTInfo, lcid, ppTInfo);
+
+    return get_typeinfo(IWshNetwork2_tid, ppTInfo);
 }
 
 static HRESULT WINAPI WshNetwork2_GetIDsOfNames(IWshNetwork2 *iface, REFIID riid, LPOLESTR *rgszNames,
