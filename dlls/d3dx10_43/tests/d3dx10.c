@@ -4375,11 +4375,10 @@ static void test_create_effect_from_memory(void)
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromMemory(test_fx_source, strlen(test_fx_source) + 1, NULL, NULL, NULL, "fx_4_0",
             0x0, 0x0, device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
-    todo_wine ok(!!effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    if (hr == S_OK)
-        effect->lpVtbl->Release(effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(!!effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
@@ -4465,21 +4464,19 @@ static void test_create_effect_from_file(void)
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromFileW(path, NULL, NULL, "fx_4_0", 0x0, 0x0,
             device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
-    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    if (hr == S_OK)
-        effect->lpVtbl->Release(effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
 
     errors = (ID3D10Blob *)0xdeadbeef;
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromFileA(get_str_a(path), NULL, NULL, "fx_4_0", 0x0, 0x0,
             device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
-    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    if (hr == S_OK)
-        effect->lpVtbl->Release(effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
 
     delete_file(test_file_name);
 
@@ -4584,21 +4581,19 @@ static void test_create_effect_from_resource(void)
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromResourceW(resource_module, test_resource_name, NULL, NULL, NULL, "fx_4_0",
             0, 0, device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
-    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    if (hr == S_OK)
-        effect->lpVtbl->Release(effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
 
     errors = (ID3D10Blob *)0xdeadbeef;
     effect = (ID3D10Effect *)0xdeadbeef;
     hr = D3DX10CreateEffectFromResourceA(resource_module, get_str_a(test_resource_name), NULL, NULL, NULL, "fx_4_0",
             0, 0, device, NULL, NULL, &effect, &errors, NULL);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine ok(!errors, "Got unexpected errors %p.\n", errors);
-    todo_wine ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
-    if (hr == S_OK)
-        effect->lpVtbl->Release(effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!errors, "Got unexpected errors %p.\n", errors);
+    ok(effect && effect != (ID3D10Effect *)0xdeadbeef, "Got unexpected effect %p.\n", effect);
+    effect->lpVtbl->Release(effect);
 
     delete_resource_module(test_resource_name, resource_module);
 
