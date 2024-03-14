@@ -3853,7 +3853,7 @@ static void test_thread_context(void)
     {
         ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT),
             "wrong flags %08lx\n", context.ContextFlags );
-        ok( (context.EFlags & ~0xc5) == (expect.EFlags & ~0xc5), "wrong EFlags %lx / %I64x\n",
+        ok( (context.EFlags & ~0xd5) == (expect.EFlags & ~0xd5), "wrong EFlags %lx / %I64x\n",
             context.EFlags, expect.EFlags );
         ok( context.SegCs == 0xcccc, "wrong SegCs %x\n", context.SegCs);
         ok( context.SegDs == 0xcccc, "wrong SegDs %x\n", context.SegDs);
@@ -4845,7 +4845,8 @@ static void test_KiUserApcDispatcher(void)
     pNtQueueApcThread( GetCurrentThread(), apc_func, 0x1234, 0x5678, 0xdeadbeef );
     SleepEx( 0, TRUE );
     ok( apc_called, "APC was not called\n" );
-    ok( hook_called, "hook was not called\n" );
+    /* hooking is bypassed on arm64ec */
+    ok( is_arm64ec ? !hook_called : hook_called, "hook was not called\n" );
 
     VirtualProtect( pKiUserApcDispatcher, sizeof(saved_KiUserApcDispatcher), old_protect, &old_protect );
 }
@@ -5143,6 +5144,8 @@ static void test_syscall_clobbered_regs(void)
     struct regs regs;
     CONTEXT context;
     NTSTATUS status;
+
+    if (is_arm64ec) return;  /* arm64ec register handling is different */
 
     pNtCancelTimer = (void *)GetProcAddress(hntdll, "NtCancelTimer");
     ok(!!pNtCancelTimer, "NtCancelTimer not found.\n");
@@ -8339,10 +8342,13 @@ static void subtest_fastfail(unsigned int code)
             if (de.u.Exception.ExceptionRecord.ExceptionCode == STATUS_STACK_BUFFER_OVERRUN)
             {
                 ok(!de.u.Exception.dwFirstChance, "must be a second chance exception\n");
-                ok(de.u.Exception.ExceptionRecord.NumberParameters == 1, "expected exactly one parameter, got %lu\n",
+                ok(de.u.Exception.ExceptionRecord.NumberParameters == 1 || broken(is_arm64ec),
+                   "expected exactly one parameter, got %lu\n",
                    de.u.Exception.ExceptionRecord.NumberParameters);
-                ok(de.u.Exception.ExceptionRecord.ExceptionInformation[0] == code, "expected %u for code, got %Iu\n",
-                   code, de.u.Exception.ExceptionRecord.ExceptionInformation[0]);
+                if (de.u.Exception.ExceptionRecord.NumberParameters >= 1)
+                    ok(de.u.Exception.ExceptionRecord.ExceptionInformation[0] == code,
+                       "expected %u for code, got %Iu\n",
+                       code, de.u.Exception.ExceptionRecord.ExceptionInformation[0]);
                 had_ff = TRUE;
             }
 
@@ -10760,7 +10766,7 @@ static void test_set_live_context(void)
 static void test_backtrace(void)
 {
     void *buffer[1024];
-    WCHAR *p, name[MAX_PATH];
+    WCHAR name[MAX_PATH];
     void *module;
     ULONG hash, hash_expect;
     int i, count = RtlCaptureStackBackTrace( 0, 1024, buffer, &hash );
@@ -10769,16 +10775,20 @@ static void test_backtrace(void)
     for (i = hash_expect = 0; i < count; i++) hash_expect += (ULONG_PTR)buffer[i];
     ok( hash == hash_expect, "hash mismatch %lx / %lx\n", hash, hash_expect );
     RtlPcToFileHeader( buffer[0], &module );
-    ok( module == GetModuleHandleA(0), "wrong module %p/%p for %p\n",
-        module, GetModuleHandleA(0), buffer[0]);
+    if (is_arm64ec && module == hntdll)  /* Windows arm64ec has an extra frame for the entry thunk */
+    {
+        ok( count > 1, "wrong count %u\n", count );
+        RtlPcToFileHeader( buffer[1], &module );
+    }
+    GetModuleFileNameW( module, name, ARRAY_SIZE(name) );
+    ok( module == GetModuleHandleA(0), "wrong module %p %s / %p for %p\n",
+        module, debugstr_w(name), GetModuleHandleA(0), buffer[0]);
 
     if (count && !buffer[count - 1]) count--;  /* win11 32-bit */
     if (count <= 1) return;
     RtlPcToFileHeader( buffer[count - 1], &module );
     GetModuleFileNameW( module, name, ARRAY_SIZE(name) );
-    if ((p = wcsrchr( name, '\\' ))) p++;
-    else p = name;
-    ok( !wcsicmp( p, L"ntdll.dll" ), "wrong module %p %s for frame %u %p\n",
+    ok( module == hntdll, "wrong module %p %s for frame %u %p\n",
         module, debugstr_w(name), count - 1, buffer[count - 1] );
 }
 
