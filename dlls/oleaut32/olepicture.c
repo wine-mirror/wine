@@ -1882,7 +1882,8 @@ static HRESULT WINAPI OLEPictureImpl_GetSizeMax(IPersistStream *iface, ULARGE_IN
                 FIXME("(%p), PICTYPE_BITMAP (format UNKNOWN, using BMP?) not implemented!\n",This);
                 break;
             }
-        }
+        } else hr = S_OK;
+
         break;
     case PICTYPE_METAFILE:
         FIXME("(%p), PICTYPE_METAFILE not implemented!\n",This);
