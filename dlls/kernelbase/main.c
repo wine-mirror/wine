@@ -55,15 +55,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 
-/*************************************************************
- *            DllMainCRTStartup
- */
-BOOL WINAPI DllMainCRTStartup( HANDLE inst, DWORD reason, LPVOID reserved )
-{
-    return DllMain( inst, reason, reserved );
-}
-
-
 /***********************************************************************
  *           MulDiv   (kernelbase.@)
  */
