@@ -763,106 +763,18 @@ HIMAGELIST WINAPI
 ImageList_Create (INT cx, INT cy, UINT flags,
 		  INT cInitial, INT cGrow)
 {
-    HIMAGELIST himl;
-    INT      nCount;
-    HBITMAP  hbmTemp;
-    UINT     ilc = (flags & 0xFE);
-    static const WORD aBitBlend25[] =
-        {0xAA, 0x00, 0x55, 0x00, 0xAA, 0x00, 0x55, 0x00};
-
-    static const WORD aBitBlend50[] =
-        {0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA};
+    IImageList2 *himl;
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    if (cx < 0 || cy < 0) return NULL;
-    if (!((flags&ILC_COLORDDB) == ILC_COLORDDB) && (cx == 0 || cy == 0)) return NULL;
-
     /* Create the IImageList interface for the image list */
-    if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **)&himl)))
+    if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList2, (void **)&himl)))
         return NULL;
 
-    cGrow = (WORD)((max( cGrow, 1 ) + 3) & ~3);
+    if (IImageList2_Initialize(himl, cx, cy, flags, cInitial, cGrow) == S_OK)
+        return (HIMAGELIST)himl;
 
-    if (cGrow > 256)
-    {
-        /* Windows doesn't limit the size here, but X11 doesn't let us allocate such huge bitmaps */
-        WARN( "grow %d too large, limiting to 256\n", cGrow );
-        cGrow = 256;
-    }
-
-    himl->cx        = cx;
-    himl->cy        = cy;
-    himl->flags     = flags;
-    himl->cMaxImage = cInitial + 1;
-    himl->cInitial  = cInitial;
-    himl->cGrow     = cGrow;
-    himl->clrFg     = CLR_DEFAULT;
-    himl->clrBk     = CLR_NONE;
-    himl->color_table_set = FALSE;
-
-    /* initialize overlay mask indices */
-    for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
-        himl->nOvlIdx[nCount] = -1;
-
-    /* Create Image & Mask DCs */
-    himl->hdcImage = CreateCompatibleDC (0);
-    if (!himl->hdcImage)
-        goto cleanup;
-    if (himl->flags & ILC_MASK){
-        himl->hdcMask = CreateCompatibleDC(0);
-        if (!himl->hdcMask)
-            goto cleanup;
-    }
-
-    /* Default to ILC_COLOR4 if none of the ILC_COLOR* flags are specified */
-    if (ilc == ILC_COLOR)
-    {
-        ilc = ILC_COLOR4;
-        himl->flags |= ILC_COLOR4;
-    }
-
-    if (ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32)
-        himl->uBitsPixel = ilc;
-    else
-        himl->uBitsPixel = (UINT)GetDeviceCaps (himl->hdcImage, BITSPIXEL);
-
-    if (himl->cMaxImage > 0) {
-        himl->hbmImage = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage);
-	SelectObject(himl->hdcImage, himl->hbmImage);
-    } else
-        himl->hbmImage = 0;
-
-    if ((himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
-        SIZE sz;
-
-        imagelist_get_bitmap_size(himl, himl->cMaxImage, &sz);
-        himl->hbmMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
-        if (himl->hbmMask == 0) {
-            ERR("Error creating mask bitmap!\n");
-            goto cleanup;
-        }
-        SelectObject(himl->hdcMask, himl->hbmMask);
-    }
-    else
-        himl->hbmMask = 0;
-
-    himl->item_flags = Alloc( himl->cMaxImage * sizeof(*himl->item_flags) );
-
-    /* create blending brushes */
-    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend25);
-    himl->hbrBlend25 = CreatePatternBrush (hbmTemp);
-    DeleteObject (hbmTemp);
-
-    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend50);
-    himl->hbrBlend50 = CreatePatternBrush (hbmTemp);
-    DeleteObject (hbmTemp);
-
-    TRACE("created imagelist %p\n", himl);
-    return himl;
-
-cleanup:
-    ImageList_Destroy(himl);
+    IImageList2_Release(himl);
     return NULL;
 }
 
@@ -3721,8 +3633,99 @@ static HRESULT WINAPI ImageListImpl_GetStatistics(IImageList2 *iface, IMAGELISTS
 
 static HRESULT WINAPI ImageListImpl_Initialize(IImageList2 *iface, INT cx, INT cy, UINT flags, INT initial, INT grow)
 {
-    FIXME("(%p)->(%d %d %d %d %d): stub\n", iface, cx, cy, flags, initial, grow);
-    return E_NOTIMPL;
+    HIMAGELIST himl = impl_from_IImageList2(iface);
+    INT      nCount;
+    HBITMAP  hbmTemp;
+    UINT     ilc = (flags & 0xFE);
+    static const WORD aBitBlend25[] =
+        {0xAA, 0x00, 0x55, 0x00, 0xAA, 0x00, 0x55, 0x00};
+    static const WORD aBitBlend50[] =
+        {0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA};
+
+    TRACE("(%p)->(%d %d %d %d %d)\n", iface, cx, cy, flags, initial, grow);
+
+    if (cx < 0 || cy < 0) return E_INVALIDARG;
+    if (!((flags&ILC_COLORDDB) == ILC_COLORDDB) && (cx == 0 || cy == 0)) return E_INVALIDARG;
+
+    grow = (WORD)((max( grow, 1 ) + 3) & ~3);
+
+    if (grow > 256)
+    {
+        /* Windows doesn't limit the size here, but X11 doesn't let us allocate such huge bitmaps */
+        WARN( "grow %d too large, limiting to 256\n", grow );
+        grow = 256;
+    }
+
+    himl->cx        = cx;
+    himl->cy        = cy;
+    himl->flags     = flags;
+    himl->cMaxImage = initial + 1;
+    himl->cInitial  = initial;
+    himl->cGrow     = grow;
+    himl->clrFg     = CLR_DEFAULT;
+    himl->clrBk     = CLR_NONE;
+    himl->color_table_set = FALSE;
+
+    /* initialize overlay mask indices */
+    for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
+        himl->nOvlIdx[nCount] = -1;
+
+    /* Create Image & Mask DCs */
+    himl->hdcImage = CreateCompatibleDC (0);
+    if (!himl->hdcImage)
+        return E_FAIL;
+    if (himl->flags & ILC_MASK){
+        himl->hdcMask = CreateCompatibleDC(0);
+        if (!himl->hdcMask)
+            return E_FAIL;
+    }
+
+    /* Default to ILC_COLOR4 if none of the ILC_COLOR* flags are specified */
+    if (ilc == ILC_COLOR)
+    {
+        ilc = ILC_COLOR4;
+        himl->flags |= ILC_COLOR4;
+    }
+
+    if (ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32)
+        himl->uBitsPixel = ilc;
+    else
+        himl->uBitsPixel = (UINT)GetDeviceCaps (himl->hdcImage, BITSPIXEL);
+
+    if (himl->cMaxImage > 0) {
+        himl->hbmImage = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage);
+	SelectObject(himl->hdcImage, himl->hbmImage);
+    } else
+        himl->hbmImage = 0;
+
+    if ((himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
+        SIZE sz;
+
+        imagelist_get_bitmap_size(himl, himl->cMaxImage, &sz);
+        himl->hbmMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
+        if (himl->hbmMask == 0) {
+            ERR("Error creating mask bitmap!\n");
+            return E_FAIL;
+        }
+        SelectObject(himl->hdcMask, himl->hbmMask);
+    }
+    else
+        himl->hbmMask = 0;
+
+    himl->item_flags = Alloc( himl->cMaxImage * sizeof(*himl->item_flags) );
+
+    /* create blending brushes */
+    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend25);
+    himl->hbrBlend25 = CreatePatternBrush (hbmTemp);
+    DeleteObject (hbmTemp);
+
+    hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend50);
+    himl->hbrBlend50 = CreatePatternBrush (hbmTemp);
+    DeleteObject (hbmTemp);
+
+    TRACE("created imagelist %p\n", himl);
+    return S_OK;
+
 }
 
 static HRESULT WINAPI ImageListImpl_Replace2(IImageList2 *iface, INT i, HBITMAP image, HBITMAP mask, IUnknown *unk, DWORD flags)

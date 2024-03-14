@@ -1745,9 +1745,7 @@ static void test_iimagelist(void)
     }
 
     hr = IImageList2_Initialize(imagelist, BMP_CX, BMP_CX, ILC_COLOR24, 1, 1);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
-    if (hr != S_OK) return;
 
     check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 0, 2, 1, ILC_COLOR24, "IImageList2 0");
 
