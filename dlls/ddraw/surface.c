@@ -6519,15 +6519,17 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
 
 fail:
     if (draw_texture)
+    {
         wined3d_texture_decref(draw_texture);
 
-    parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
-    if (texture->version == 7)
-        IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
-    else if (texture->version == 4)
-        IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
-    else
-        IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
+        parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
+        if (texture->version == 7)
+            IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
+        else if (texture->version == 4)
+            IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
+        else
+            IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
+    }
     return hr;
 }
 
