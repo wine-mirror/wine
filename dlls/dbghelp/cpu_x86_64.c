@@ -279,6 +279,7 @@ static int get_opcode_size(UNWIND_CODE op)
         return 2 + (op.OpInfo != 0);
     case UWOP_SAVE_NONVOL:
     case UWOP_SAVE_XMM128:
+    case UWOP_EPILOG:
         return 2;
     case UWOP_SAVE_NONVOL_FAR:
     case UWOP_SAVE_XMM128_FAR:
@@ -586,6 +587,9 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
                 if (!sw_read_mem(csw, context->Rsp + 24, &context->Rsp, sizeof(DWORD64))) return FALSE;
                 mach_frame = TRUE;
                 break;
+            case UWOP_EPILOG:
+                if (info->Version == 2)
+                    break; /* nothing to do */
             default:
                 FIXME("unknown code %u\n", info->UnwindCode[i].UnwindOp);
                 break;
