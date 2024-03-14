@@ -1022,15 +1022,49 @@ static BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
     return FALSE;
 }
 
+static VkPhysicalDevice get_vulkan_physical_device( const GUID *uuid )
+{
+    VkPhysicalDevice *devices, device;
+    UINT device_count, i;
+    VkResult vr;
+
+    if ((vr = pvkEnumeratePhysicalDevices( d3dkmt_vk_instance, &device_count, NULL )))
+    {
+        WARN( "vkEnumeratePhysicalDevices returned %d\n", vr );
+        return VK_NULL_HANDLE;
+    }
+
+    if (!device_count || !(devices = malloc( device_count * sizeof(*devices) )))
+        return VK_NULL_HANDLE;
+
+    if ((vr = pvkEnumeratePhysicalDevices( d3dkmt_vk_instance, &device_count, devices )))
+    {
+        WARN( "vkEnumeratePhysicalDevices returned %d\n", vr );
+        free( devices );
+        return VK_NULL_HANDLE;
+    }
+
+    for (i = 0, device = VK_NULL_HANDLE; i < device_count; ++i)
+    {
+        VkPhysicalDeviceIDProperties id = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
+        VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
+
+        pvkGetPhysicalDeviceProperties2KHR( devices[i], &properties2 );
+        if (IsEqualGUID( uuid, id.deviceUUID ))
+        {
+            device = devices[i];
+            break;
+        }
+    }
+
+    free( devices );
+    return device;
+}
+
 NTSTATUS X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
 {
-    VkPhysicalDevice *vk_physical_devices = NULL;
-    VkPhysicalDeviceProperties2 properties2;
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-    UINT device_count, device_idx = 0;
+    VkPhysicalDevice device;
     struct x11_d3dkmt_adapter *adapter;
-    VkPhysicalDeviceIDProperties id;
-    VkResult vr;
     GUID uuid;
 
     if (!get_vulkan_uuid_from_luid(&desc->AdapterLuid, &uuid))
@@ -1047,53 +1081,15 @@ NTSTATUS X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
         return STATUS_UNSUCCESSFUL;
     }
 
+    if (!(device = get_vulkan_physical_device( &uuid ))) return STATUS_UNSUCCESSFUL;
+    if (!(adapter = malloc( sizeof(*adapter) ))) return STATUS_NO_MEMORY;
+    adapter->handle = desc->hAdapter;
+    adapter->vk_device = device;
+
     pthread_mutex_lock(&d3dkmt_mutex);
-
-    vr = pvkEnumeratePhysicalDevices(d3dkmt_vk_instance, &device_count, NULL);
-    if (vr != VK_SUCCESS || !device_count)
-    {
-        WARN("No Vulkan device found, vr %d, device_count %d.\n", vr, device_count);
-        goto done;
-    }
-
-    if (!(vk_physical_devices = calloc(device_count, sizeof(*vk_physical_devices))))
-        goto done;
-
-    vr = pvkEnumeratePhysicalDevices(d3dkmt_vk_instance, &device_count, vk_physical_devices);
-    if (vr != VK_SUCCESS)
-    {
-        WARN("vkEnumeratePhysicalDevices failed, vr %d.\n", vr);
-        goto done;
-    }
-
-    for (device_idx = 0; device_idx < device_count; ++device_idx)
-    {
-        memset(&id, 0, sizeof(id));
-        id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
-        properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-        properties2.pNext = &id;
-
-        pvkGetPhysicalDeviceProperties2KHR(vk_physical_devices[device_idx], &properties2);
-        if (!IsEqualGUID(&uuid, id.deviceUUID))
-            continue;
-
-        if (!(adapter = malloc(sizeof(*adapter))))
-        {
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-
-        adapter->handle = desc->hAdapter;
-        adapter->vk_device = vk_physical_devices[device_idx];
-        list_add_head(&x11_d3dkmt_adapters, &adapter->entry);
-        status = STATUS_SUCCESS;
-        break;
-    }
-
-done:
+    list_add_head(&x11_d3dkmt_adapters, &adapter->entry);
     pthread_mutex_unlock(&d3dkmt_mutex);
-    free(vk_physical_devices);
-    return status;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
