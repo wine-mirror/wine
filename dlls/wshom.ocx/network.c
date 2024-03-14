@@ -258,7 +258,7 @@ static IWshNetwork2 WshNetwork2 = { &WshNetwork2Vtbl };
 
 HRESULT WINAPI WshNetworkFactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
-    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+    TRACE("%p, %s, %p.\n", outer, debugstr_guid(riid), ppv);
 
     return IWshNetwork2_QueryInterface(&WshNetwork2, riid, ppv);
 }
