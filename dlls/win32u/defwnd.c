@@ -1462,8 +1462,8 @@ static void draw_close_button( HWND hwnd, HDC hdc, BOOL down, BOOL grayed )
     {
         /* Windows does not use SM_CXSMSIZE and SM_CYSMSIZE
          * it uses 11x11 for  the close button in tool window */
-        const int bmp_height = 11;
-        const int bmp_width = 11;
+        int bmp_height = muldiv( 11, get_dpi_for_window( hwnd ), 96 );
+        int bmp_width = bmp_height;
         int caption_height = get_system_metrics( SM_CYSMCAPTION );
 
         rect.top = rect.top + (caption_height - 1 - bmp_height) / 2;
