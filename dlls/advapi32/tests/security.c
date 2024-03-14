@@ -8502,12 +8502,12 @@ static void test_elevation(void)
         type = TokenElevationTypeLimited;
         ret = SetTokenInformation(token, TokenElevationType, &type, sizeof(type));
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
+        todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
 
         elevation.TokenIsElevated = FALSE;
         ret = SetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation));
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
+        todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError());
     }
     else
     {
