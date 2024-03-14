@@ -710,6 +710,9 @@ static void test_wshnetwork(void)
     hr = IDispatch_QueryInterface(disp, &IID_IWshNetwork2, (void**)&nw2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    hr = IWshNetwork2_get_UserName(nw2, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
     str = NULL;
     hr = IWshNetwork2_get_UserName(nw2, &str);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
