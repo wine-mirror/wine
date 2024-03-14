@@ -693,7 +693,7 @@ static void test_wshnetwork(void)
 {
     IDispatch *disp;
     IWshNetwork2 *nw2;
-    BSTR str,username;
+    BSTR str, name;
     HRESULT hr;
     DWORD len = 0;
     BOOL ret;
@@ -717,13 +717,32 @@ static void test_wshnetwork(void)
     CHECK_BSTR_LENGTH(str);
     GetUserNameW(NULL, &len);
     ok(len > 0, "Unexpected len %ld.\n", len);
-    username = SysAllocStringLen(NULL, len-1);
-    ret = GetUserNameW(username, &len);
+    name = SysAllocStringLen(NULL, len-1);
+    ret = GetUserNameW(name, &len);
     ok(ret == TRUE, "GetUserNameW returned %d.\n", ret);
-    ok(!wcscmp(str,username), "user names do not match %s %s.\n", debugstr_w(str), debugstr_w(username));
-    SysFreeString(username);
+    ok(!wcscmp(str, name), "User names do not match %s, %s.\n", debugstr_w(str), debugstr_w(name));
+    SysFreeString(name);
     SysFreeString(str);
 
+    hr = IWshNetwork2_get_ComputerName(nw2, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IWshNetwork2_get_ComputerName(nw2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(str && str[0] != 0, "Got empty string.\n");
+    CHECK_BSTR_LENGTH(str);
+    len = 0;
+    GetComputerNameW(NULL, &len);
+    ok(len > 0, "Unexpected length %ld.\n", len);
+    name = SysAllocStringLen(NULL, len - 1);
+    ret = GetComputerNameW(name, &len);
+    ok(ret, "GetComputerName() failed %ld.\n", GetLastError());
+    ok(!wcscmp(str, name), "Computer names do not match %s, %s.\n", debugstr_w(str), debugstr_w(name));
+    SysFreeString(name);
+    SysFreeString(str);
+
+    IWshNetwork2_Release(nw2);
     IDispatch_Release(disp);
 }
 
