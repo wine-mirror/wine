@@ -66,6 +66,7 @@ static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG
 static void      (WINAPI *pRtlSetExtendedFeaturesMask)(CONTEXT_EX *context_ex, ULONG64 feature_mask);
 static ULONG64   (WINAPI *pRtlGetExtendedFeaturesMask)(CONTEXT_EX *context_ex);
 static void *    (WINAPI *pRtlPcToFileHeader)(PVOID pc, PVOID *address);
+static void      (WINAPI *pRtlGetCallersAddress)(void**,void**);
 static NTSTATUS  (WINAPI *pNtRaiseException)(EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
@@ -10784,6 +10785,18 @@ static void test_backtrace(void)
     ok( module == GetModuleHandleA(0), "wrong module %p %s / %p for %p\n",
         module, debugstr_w(name), GetModuleHandleA(0), buffer[0]);
 
+    if (pRtlGetCallersAddress)
+    {
+        void *caller, *parent;
+
+        caller = parent = (void *)0xdeadbeef;
+        pRtlGetCallersAddress( &caller, &parent );
+        ok( caller == (count > 1 ? buffer[1] : NULL) || broken(is_arm64ec), /* caller is entry thunk */
+            "wrong caller %p / %p\n", caller, buffer[1] );
+        ok( parent == (count > 2 ? buffer[2] : NULL), "wrong parent %p / %p\n", parent, buffer[2] );
+    }
+    else win_skip( "RtlGetCallersAddress not supported\n" );
+
     if (count && !buffer[count - 1]) count--;  /* win11 32-bit */
     if (count <= 1) return;
     RtlPcToFileHeader( buffer[count - 1], &module );
@@ -10844,6 +10857,7 @@ START_TEST(exception)
     X(RtlSetExtendedFeaturesMask);
     X(RtlGetExtendedFeaturesMask);
     X(RtlPcToFileHeader);
+    X(RtlGetCallersAddress);
     X(RtlCopyContext);
     X(RtlCopyExtendedContext);
     X(KiUserApcDispatcher);

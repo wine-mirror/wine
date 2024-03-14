@@ -531,6 +531,20 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, void **buffer, 
 }
 
 
+/*************************************************************************
+ *		RtlGetCallersAddress (NTDLL.@)
+ */
+void WINAPI RtlGetCallersAddress( void **caller, void **parent )
+{
+    void *buffer[2];
+    ULONG count = ARRAY_SIZE(buffer), skip = 2;  /* skip our frame and the parent */
+
+    count = RtlWalkFrameChain( buffer, count + skip, skip << 8 );
+    *caller = count > 0 ? buffer[0] : NULL;
+    *parent = count > 1 ? buffer[1] : NULL;
+}
+
+
 /**********************************************************************
  *              RtlGetEnabledExtendedFeatures   (NTDLL.@)
  */

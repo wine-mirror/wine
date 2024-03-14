@@ -24,6 +24,7 @@
 NTSYSAPI void   WINAPI RtlCaptureContext(CONTEXT*);
 NTSYSAPI void   WINAPI RtlCaptureContext2(CONTEXT*);
 NTSYSAPI USHORT WINAPI RtlCaptureStackBackTrace(ULONG,ULONG,void**,ULONG*);
+NTSYSAPI void   WINAPI RtlGetCallersAddress(void**,void**);
 NTSYSAPI void   WINAPI RtlRaiseException(EXCEPTION_RECORD*);
 NTSYSAPI void    CDECL RtlRestoreContext(CONTEXT*,EXCEPTION_RECORD*);
 NTSYSAPI void   WINAPI RtlUnwind(void*,void*,EXCEPTION_RECORD*,void*);

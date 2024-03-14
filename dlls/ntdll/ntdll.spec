@@ -716,7 +716,7 @@
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
 @ stdcall RtlGetActiveActivationContext(ptr)
-@ stub RtlGetCallersAddress
+@ stdcall RtlGetCallersAddress(ptr ptr)
 @ stdcall RtlGetCompressionWorkSpaceSize(long ptr ptr)
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetCurrentDirectory_U(long ptr)
