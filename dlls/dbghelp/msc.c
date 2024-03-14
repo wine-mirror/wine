@@ -3787,8 +3787,8 @@ static BOOL pdb_process_internal(const struct process *pcs,
                                               symbols.module_size + symbols.sectcontrib_size +
                                               symbols.segmap_size + symbols.srcmodule_size +
                                               symbols.pdbimport_size + symbols.unknown2_size);
-        if (PDB_SIDX_FPO < num_sub_streams)
-            pdb_file->fpoext_stream = sub_streams[PDB_SIDX_FPO];
+        if (PDB_SIDX_FPOEXT < num_sub_streams)
+            pdb_file->fpoext_stream = sub_streams[PDB_SIDX_FPOEXT];
 
         files_image = pdb_read_strings(pdb_file);
 
