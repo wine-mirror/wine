@@ -1074,7 +1074,6 @@ static void test_compile_effect(void)
     /* Compilation fails due to 10.1 feature incompatibility with fx_4_0 profile. */
     hr = D3D10CompileEffectFromMemory(bs_source2, strlen(bs_source2), NULL, NULL, NULL,
             0, 0, &blob, NULL);
-    todo_wine
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 }
 
