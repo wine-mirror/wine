@@ -38,6 +38,7 @@
 
 static void *code_mem;
 static HMODULE hntdll;
+static BOOL is_arm64ec;
 
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
@@ -139,8 +140,6 @@ typedef struct _UNWIND_INFO
  *  OPTIONAL ULONG ExceptionData[];
  */
 } UNWIND_INFO;
-
-static BOOL is_arm64ec;
 
 static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, ULONG64, CONTEXT*, DISPATCHER_CONTEXT*);
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
@@ -7746,17 +7745,29 @@ static void test_debug_registers(void)
         status = pNtSetContextThread(GetCurrentThread(), &ctx);
         ok(status == STATUS_SUCCESS, "NtSetContextThread failed with %08lx\n", status);
 
-        memset(&ctx, 0, sizeof(ctx));
+        memset(&ctx, 0xcc, sizeof(ctx));
         ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
 
         status = pNtGetContextThread(GetCurrentThread(), &ctx);
         ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %08lx\n", status);
-        ok(ctx.Dr0 == tests[i].dr0, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr0, (DWORD_PTR)ctx.Dr0);
-        ok(ctx.Dr1 == tests[i].dr1, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr1, (DWORD_PTR)ctx.Dr1);
-        ok(ctx.Dr2 == tests[i].dr2, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr2, (DWORD_PTR)ctx.Dr2);
-        ok(ctx.Dr3 == tests[i].dr3, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr3, (DWORD_PTR)ctx.Dr3);
-        ok((ctx.Dr6 &  0xf00f) == tests[i].dr6, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr6, (DWORD_PTR)ctx.Dr6);
-        ok((ctx.Dr7 & ~0xdc00) == tests[i].dr7, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr7, (DWORD_PTR)ctx.Dr7);
+        if (is_arm64ec)  /* setting debug registers is silently ignored */
+        {
+            ok(!ctx.Dr0, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr0);
+            ok(!ctx.Dr1, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr1);
+            ok(!ctx.Dr2, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr2);
+            ok(!ctx.Dr3, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr3);
+            ok(!ctx.Dr6, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr6);
+            ok(!ctx.Dr7, "test %d: expected 0, got %Ix\n", i, (DWORD_PTR)ctx.Dr7);
+        }
+        else
+        {
+            ok(ctx.Dr0 == tests[i].dr0, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr0, (DWORD_PTR)ctx.Dr0);
+            ok(ctx.Dr1 == tests[i].dr1, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr1, (DWORD_PTR)ctx.Dr1);
+            ok(ctx.Dr2 == tests[i].dr2, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr2, (DWORD_PTR)ctx.Dr2);
+            ok(ctx.Dr3 == tests[i].dr3, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr3, (DWORD_PTR)ctx.Dr3);
+            ok((ctx.Dr6 &  0xf00f) == tests[i].dr6, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr6, (DWORD_PTR)ctx.Dr6);
+            ok((ctx.Dr7 & ~0xdc00) == tests[i].dr7, "test %d: expected %Ix, got %Ix\n", i, tests[i].dr7, (DWORD_PTR)ctx.Dr7);
+        }
     }
 
     memset(&ctx, 0, sizeof(ctx));
@@ -7824,30 +7835,52 @@ static void test_debug_registers_wow64(void)
     ok(bret, "SetThreadContext failed\n");
 
     if (bret) {
-        ZeroMemory(&ctx, sizeof(ctx));
+        memset(&ctx, 0xcc, sizeof(ctx));
         ctx.ContextFlags = CONTEXT_ALL;
         bret = GetThreadContext(pi.hThread, &ctx);
         ok(bret, "GetThreadContext failed\n");
         if (bret)
         {
-            ok(ctx.Dr0 == 0x12340000, "expected 0x12340000, got %Ix\n", ctx.Dr0);
-            ok(ctx.Dr1 == 0x12340001, "expected 0x12340001, got %Ix\n", ctx.Dr1);
-            ok(ctx.Dr2 == 0x12340002, "expected 0x12340002, got %Ix\n", ctx.Dr2);
-            ok(ctx.Dr3 == 0x12340003, "expected 0x12340003, got %Ix\n", ctx.Dr3);
-            ok(ctx.Dr7 == 0x155, "expected 0x155, got %Ix\n", ctx.Dr7);
+            if (is_arm64ec)
+            {
+                ok(!ctx.Dr0, "expected 0, got %Ix\n", ctx.Dr0);
+                ok(!ctx.Dr1, "expected 0, got %Ix\n", ctx.Dr1);
+                ok(!ctx.Dr2, "expected 0, got %Ix\n", ctx.Dr2);
+                ok(!ctx.Dr3, "expected 0, got %Ix\n", ctx.Dr3);
+                ok(!ctx.Dr7, "expected 0, got %Ix\n", ctx.Dr7);
+            }
+            else
+            {
+                ok(ctx.Dr0 == 0x12340000, "expected 0x12340000, got %Ix\n", ctx.Dr0);
+                ok(ctx.Dr1 == 0x12340001, "expected 0x12340001, got %Ix\n", ctx.Dr1);
+                ok(ctx.Dr2 == 0x12340002, "expected 0x12340002, got %Ix\n", ctx.Dr2);
+                ok(ctx.Dr3 == 0x12340003, "expected 0x12340003, got %Ix\n", ctx.Dr3);
+                ok(ctx.Dr7 == 0x155, "expected 0x155, got %Ix\n", ctx.Dr7);
+            }
         }
 
-        ZeroMemory(&wow64_ctx, sizeof(wow64_ctx));
+        memset(&wow64_ctx, 0xcc, sizeof(wow64_ctx));
         wow64_ctx.ContextFlags = WOW64_CONTEXT_ALL;
         ret = pRtlWow64GetThreadContext(pi.hThread, &wow64_ctx);
         ok(ret == STATUS_SUCCESS, "Wow64GetThreadContext failed with %lx\n", ret);
         if (ret == STATUS_SUCCESS)
         {
-            ok(wow64_ctx.Dr0 == 0x12340000, "expected 0x12340000, got %lx\n", wow64_ctx.Dr0);
-            ok(wow64_ctx.Dr1 == 0x12340001, "expected 0x12340001, got %lx\n", wow64_ctx.Dr1);
-            ok(wow64_ctx.Dr2 == 0x12340002, "expected 0x12340002, got %lx\n", wow64_ctx.Dr2);
-            ok(wow64_ctx.Dr3 == 0x12340003, "expected 0x12340003, got %lx\n", wow64_ctx.Dr3);
-            ok(wow64_ctx.Dr7 == 0x155, "expected 0x155, got %lx\n", wow64_ctx.Dr7);
+            if (is_arm64ec)
+            {
+                ok(!wow64_ctx.Dr0, "expected 0, got %lx\n", wow64_ctx.Dr0);
+                ok(!wow64_ctx.Dr1, "expected 0, got %lx\n", wow64_ctx.Dr1);
+                ok(!wow64_ctx.Dr2, "expected 0, got %lx\n", wow64_ctx.Dr2);
+                ok(!wow64_ctx.Dr3, "expected 0, got %lx\n", wow64_ctx.Dr3);
+                ok(!wow64_ctx.Dr7, "expected 0, got %lx\n", wow64_ctx.Dr7);
+            }
+            else
+            {
+                ok(wow64_ctx.Dr0 == 0x12340000, "expected 0x12340000, got %lx\n", wow64_ctx.Dr0);
+                ok(wow64_ctx.Dr1 == 0x12340001, "expected 0x12340001, got %lx\n", wow64_ctx.Dr1);
+                ok(wow64_ctx.Dr2 == 0x12340002, "expected 0x12340002, got %lx\n", wow64_ctx.Dr2);
+                ok(wow64_ctx.Dr3 == 0x12340003, "expected 0x12340003, got %lx\n", wow64_ctx.Dr3);
+                ok(wow64_ctx.Dr7 == 0x155, "expected 0x155, got %lx\n", wow64_ctx.Dr7);
+            }
         }
     }
 
@@ -7859,7 +7892,7 @@ static void test_debug_registers_wow64(void)
     ret = pRtlWow64SetThreadContext(pi.hThread, &wow64_ctx);
     ok(ret == STATUS_SUCCESS, "Wow64SetThreadContext failed with %lx\n", ret);
 
-    ZeroMemory(&wow64_ctx, sizeof(wow64_ctx));
+    memset(&wow64_ctx, 0xcc, sizeof(wow64_ctx));
     wow64_ctx.ContextFlags = WOW64_CONTEXT_ALL;
     ret = pRtlWow64GetThreadContext(pi.hThread, &wow64_ctx);
     ok(ret == STATUS_SUCCESS, "Wow64GetThreadContext failed with %lx\n", ret);
@@ -7872,17 +7905,28 @@ static void test_debug_registers_wow64(void)
         ok(wow64_ctx.Dr7 == 0x101, "expected 0x101, got %lx\n", wow64_ctx.Dr7);
     }
 
-    ZeroMemory(&ctx, sizeof(ctx));
+    memset(&ctx, 0xcc, sizeof(ctx));
     ctx.ContextFlags = CONTEXT_ALL;
     bret = GetThreadContext(pi.hThread, &ctx);
     ok(bret, "GetThreadContext failed\n");
     if (bret)
     {
-        ok(ctx.Dr0 == 0x56780000, "expected 0x56780000, got %Ix\n", ctx.Dr0);
-        ok(ctx.Dr1 == 0x56780001, "expected 0x56780001, got %Ix\n", ctx.Dr1);
-        ok(ctx.Dr2 == 0x56780002, "expected 0x56780002, got %Ix\n", ctx.Dr2);
-        ok(ctx.Dr3 == 0x56780003, "expected 0x56780003, got %Ix\n", ctx.Dr3);
-        ok(ctx.Dr7 == 0x101, "expected 0x101, got %Ix\n", ctx.Dr7);
+        if (is_arm64ec)
+        {
+            ok(!ctx.Dr0, "expected 0, got %Ix\n", ctx.Dr0);
+            ok(!ctx.Dr1, "expected 0, got %Ix\n", ctx.Dr1);
+            ok(!ctx.Dr2, "expected 0, got %Ix\n", ctx.Dr2);
+            ok(!ctx.Dr3, "expected 0, got %Ix\n", ctx.Dr3);
+            ok(!ctx.Dr7, "expected 0, got %Ix\n", ctx.Dr7);
+        }
+        else
+        {
+            ok(ctx.Dr0 == 0x56780000, "expected 0x56780000, got %Ix\n", ctx.Dr0);
+            ok(ctx.Dr1 == 0x56780001, "expected 0x56780001, got %Ix\n", ctx.Dr1);
+            ok(ctx.Dr2 == 0x56780002, "expected 0x56780002, got %Ix\n", ctx.Dr2);
+            ok(ctx.Dr3 == 0x56780003, "expected 0x56780003, got %Ix\n", ctx.Dr3);
+            ok(ctx.Dr7 == 0x101, "expected 0x101, got %Ix\n", ctx.Dr7);
+        }
     }
 
     ResumeThread(pi.hThread);
