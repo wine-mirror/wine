@@ -6681,3 +6681,24 @@ done:
     while (count) gpu_release( current_gpus[--count] );
     return status;
 }
+
+/* Find the Vulkan device UUID corresponding to a LUID */
+BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
+{
+    BOOL found = FALSE;
+    struct gpu *gpu;
+
+    if (!lock_display_devices()) return FALSE;
+
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+    {
+        if ((found = !memcmp( &gpu->luid, luid, sizeof(*luid) )))
+        {
+            *uuid = gpu->vulkan_uuid;
+            break;
+        }
+    }
+
+    unlock_display_devices();
+    return found;
+}

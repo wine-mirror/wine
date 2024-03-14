@@ -707,9 +707,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_StrokeAndFillPath,           /* pStrokeAndFillPath */
     dibdrv_StrokePath,                  /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pD3DKMTCloseAdapter */
-    NULL,                               /* pD3DKMTOpenAdapterFromLuid */
-    NULL,                               /* pD3DKMTQueryVideoMemoryInfo */
     GDI_PRIORITY_DIB_DRV                /* priority */
 };
 
@@ -1266,8 +1263,5 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pD3DKMTCloseAdapter */
-    NULL,                               /* pD3DKMTOpenAdapterFromLuid */
-    NULL,                               /* pD3DKMTQueryVideoMemoryInfo */
     GDI_PRIORITY_DIB_DRV + 10           /* priority */
 };

@@ -2118,8 +2118,5 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pD3DKMTCloseAdapter */
-    NULL,                               /* pD3DKMTOpenAdapterFromLuid */
-    NULL,                               /* pD3DKMTQueryVideoMemoryInfo */
     GDI_PRIORITY_PATH_DRV               /* priority */
 };
