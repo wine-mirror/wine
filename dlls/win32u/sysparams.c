@@ -4665,13 +4665,10 @@ static union sysparam_all_entry * const default_entries[] =
 static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
                              WCHAR *buffer, DWORD size )
 {
-    WCHAR nameW[128];
     char buf[2048];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buf;
 
-    asciiz_to_unicode( nameW, name );
-
-    if (appkey && query_reg_ascii_value( appkey, "Name", info, sizeof(buf) ))
+    if (appkey && query_reg_ascii_value( appkey, name, info, sizeof(buf) ))
     {
         size = min( info->DataLength, size - sizeof(WCHAR) );
         memcpy( buffer, info->Data, size );
@@ -4679,7 +4676,7 @@ static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
         return 0;
     }
 
-    if (defkey && query_reg_ascii_value( defkey, "Name", info, sizeof(buf) ))
+    if (defkey && query_reg_ascii_value( defkey, name, info, sizeof(buf) ))
     {
         size = min( info->DataLength, size - sizeof(WCHAR) );
         memcpy( buffer, info->Data, size );
