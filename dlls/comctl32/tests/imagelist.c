@@ -1672,6 +1672,8 @@ static void test_iimagelist(void)
     HIMAGELIST himl;
     HRESULT hr;
     ULONG ret;
+    HBITMAP hbm;
+    int ret2;
 
     if (!pHIMAGELIST_QueryInterface)
     {
@@ -1741,7 +1743,50 @@ static void test_iimagelist(void)
         win_skip("IImageList2 is not supported.\n");
         return;
     }
-    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+    hr = IImageList2_Initialize(imagelist, BMP_CX, BMP_CX, ILC_COLOR24, 1, 1);
+    todo_wine
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (hr != S_OK) return;
+
+    check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 0, 2, 1, ILC_COLOR24, "IImageList2 0");
+
+    hr = IImageList2_Remove(imagelist, 0);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    hr = IImageList2_Remove(imagelist, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hbm = CreateBitmap(BMP_CX, BMP_CX, 1, 1, NULL);
+
+    ret2 = -1;
+    hr = IImageList2_Add(imagelist, hbm, 0, &ret2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(ret2 == 0, "got %d\n", ret2);
+
+    check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 1, 2, 4, ILC_COLOR24, "IImageList2 1");
+
+    ret2 = -1;
+    hr = IImageList2_Add(imagelist, hbm, 0, &ret2);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(ret2 == 1, "got %d\n", ret2);
+
+    check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 2, 7, 4, ILC_COLOR24, "IImageList2 2");
+
+    hr = IImageList2_Remove(imagelist, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 1, 7, 4, ILC_COLOR24, "IImageList2 1");
+
+    hr = IImageList2_Remove(imagelist, -1);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    check_iml_data((HIMAGELIST)imagelist, BMP_CX, BMP_CX, 0, 4, 1, ILC_COLOR24, "IImageList2 0");
+
+    hr = IImageList2_Remove(imagelist, 0);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+
+    DeleteObject(hbm);
+
     IImageList2_Release(imagelist);
 }
 
