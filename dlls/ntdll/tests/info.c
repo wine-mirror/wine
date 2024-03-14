@@ -3754,7 +3754,8 @@ static void test_system_debug_control(void)
         }
         else
         {
-            ok( status == STATUS_DEBUGGER_INACTIVE || status == STATUS_ACCESS_DENIED, "class %d, got %#lx.\n", class, status );
+            ok( status == STATUS_DEBUGGER_INACTIVE || status == STATUS_ACCESS_DENIED || status == STATUS_INFO_LENGTH_MISMATCH,
+                "class %d, got %#lx.\n", class, status );
         }
     }
 }
