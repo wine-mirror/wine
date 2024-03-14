@@ -656,8 +656,8 @@ static void test_unwind(void)
     NtCurrentTeb()->Tib.ExceptionList = frame1->Prev;
 }
 
-static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                      CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+static DWORD prot_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                                 CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     const struct exception *except = *(const struct exception **)(frame + 1);
     unsigned int i, parameter_count, entry = except - exceptions;
@@ -719,10 +719,7 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     }
 
 skip_params:
-    /* don't handle exception if it's not the address we expected */
-    if (context->Eip != (DWORD_PTR)code_mem + except->offset) return ExceptionContinueSearch;
-
-    context->Eip += except->length;
+    context->Eip = (DWORD_PTR)code_mem + except->offset + except->length;
     return ExceptionContinueExecution;
 }
 
@@ -738,7 +735,7 @@ static void test_prot_fault(void)
             continue;
         }
         got_exception = 0;
-        run_exception_test(handler, &exceptions[i], &exceptions[i].code,
+        run_exception_test(prot_fault_handler, &exceptions[i], &exceptions[i].code,
                            sizeof(exceptions[i].code), 0);
         if (!i && !got_exception)
         {
@@ -2658,8 +2655,8 @@ static void run_exception_test(void *handler, const void* context,
     run_exception_test_flags(handler, context, code, code_size, access, UNW_FLAG_EHANDLER);
 }
 
-static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
-                      CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+static DWORD WINAPI prot_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                        CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
 {
     const struct exception *except = *(const struct exception **)(dispatcher->HandlerData);
     unsigned int i, parameter_count, entry = except - exceptions;
@@ -2677,6 +2674,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
         "Unexpected exception address %p/%p\n", rec->ExceptionAddress, (char*)context->Rip );
 
 #ifndef __arm64ec__
+    if (!is_arm64ec)
     {
         USHORT ds, es, fs, gs, ss;
         __asm__ volatile( "movw %%ds,%0" : "=g" (ds) );
@@ -2744,10 +2742,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
 skip_params:
     winetest_pop_context();
 
-    /* don't handle exception if it's not the address we expected */
-    if (context->Rip != (DWORD_PTR)code_mem + except->offset) return ExceptionContinueSearch;
-
-    context->Rip += except->length;
+    context->Rip = (DWORD_PTR)code_mem + except->offset + except->length;
     return ExceptionContinueExecution;
 }
 
@@ -3016,11 +3011,13 @@ static void test_exceptions(void)
     got_exception = 0;
     run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code), 0);
     ok(got_exception == 1, "got %d exceptions, expected 1\n", got_exception);
+    if (is_arm64ec) __asm__ volatile( "cld" ); /* needed on Windows */
 
     /* test int3 handling */
     run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
 
 #ifndef __arm64ec__
+    if (!is_arm64ec)
     {
         USHORT ds, es, fs, gs, ss;
         /* test segment registers */
@@ -3177,7 +3174,7 @@ static void test_prot_fault(void)
     for (i = 0; i < ARRAY_SIZE(exceptions); i++)
     {
         got_exception = 0;
-        run_exception_test(handler, &exceptions[i], &exceptions[i].code,
+        run_exception_test(prot_fault_handler, &exceptions[i], &exceptions[i].code,
                            sizeof(exceptions[i].code), 0);
         ok( got_exception == (exceptions[i].status != 0),
             "%u: bad exception count %d\n", i, got_exception );
@@ -4243,7 +4240,8 @@ static void test_wow64_context(void)
     context.ContextFlags = CONTEXT_ALL;
     ret = pNtGetContextThread( pi.hThread, &context );
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    ok( context.ContextFlags == CONTEXT_ALL, "got context flags %#lx\n", context.ContextFlags );
+    ok( context.ContextFlags == is_arm64ec ? CONTEXT_FULL : CONTEXT_ALL,
+        "got context flags %#lx\n", context.ContextFlags );
     ok( !context.Rsi, "rsi is not zero %Ix\n", context.Rsi );
     ok( !context.Rdi, "rdi is not zero %Ix\n", context.Rdi );
     ok( !context.Rbp, "rbp is not zero %Ix\n", context.Rbp );
@@ -4257,12 +4255,14 @@ static void test_wow64_context(void)
     ok( !context.R15, "r15 is not zero %Ix\n", context.R15 );
     ok( context.MxCsr == 0x1f80, "wrong mxcsr %08lx\n", context.MxCsr );
     ok( context.FltSave.ControlWord == 0x27f, "wrong control %08x\n", context.FltSave.ControlWord );
-    ok( context.SegDs == ctx.SegDs, "wrong ds %04x / %04lx\n", context.SegDs, ctx.SegDs  );
-    ok( context.SegEs == ctx.SegEs, "wrong es %04x / %04lx\n", context.SegEs, ctx.SegEs  );
-    ok( context.SegFs == ctx.SegFs, "wrong fs %04x / %04lx\n", context.SegFs, ctx.SegFs  );
-    ok( context.SegGs == ctx.SegGs, "wrong gs %04x / %04lx\n", context.SegGs, ctx.SegGs  );
-    ok( context.SegSs == ctx.SegSs, "wrong ss %04x / %04lx\n", context.SegSs, ctx.SegSs  );
-
+    if (LOWORD(context.ContextFlags) & CONTEXT_SEGMENTS)
+    {
+        ok( context.SegDs == ctx.SegDs, "wrong ds %04x / %04lx\n", context.SegDs, ctx.SegDs );
+        ok( context.SegEs == ctx.SegEs, "wrong es %04x / %04lx\n", context.SegEs, ctx.SegEs );
+        ok( context.SegFs == ctx.SegFs, "wrong fs %04x / %04lx\n", context.SegFs, ctx.SegFs );
+        ok( context.SegGs == ctx.SegGs, "wrong gs %04x / %04lx\n", context.SegGs, ctx.SegGs );
+        ok( context.SegSs == ctx.SegSs, "wrong ss %04x / %04lx\n", context.SegSs, ctx.SegSs );
+    }
     cs32 = ctx.SegCs;
     cs64 = context.SegCs;
     if (cs32 == cs64)
@@ -4381,11 +4381,14 @@ static void test_wow64_context(void)
             trace( "in 64-bit mode %04x\n", context.SegCs );
             ok( ctx.Eip != context.Rip, "cs64: eip %08lx / %p\n", ctx.Eip, (void *)context.Rip);
             ok( ctx.SegCs == cs32, "cs64: wrong cs %04lx / %04x\n", ctx.SegCs, cs32 );
-            ok( ctx.SegDs == context.SegDs, "cs64: wrong ds %04lx / %04x\n", ctx.SegDs, context.SegDs );
-            ok( ctx.SegEs == context.SegEs, "cs64: wrong es %04lx / %04x\n", ctx.SegEs, context.SegEs );
-            ok( ctx.SegFs == context.SegFs, "cs64: wrong fs %04lx / %04x\n", ctx.SegFs, context.SegFs );
-            ok( ctx.SegGs == context.SegGs, "cs64: wrong gs %04lx / %04x\n", ctx.SegGs, context.SegGs );
-            ok( ctx.SegSs == context.SegSs, "cs64: wrong ss %04lx / %04x\n", ctx.SegSs, context.SegSs );
+            if (!is_arm64ec)
+            {
+                ok( ctx.SegDs == context.SegDs, "cs64: wrong ds %04lx / %04x\n", ctx.SegDs, context.SegDs );
+                ok( ctx.SegEs == context.SegEs, "cs64: wrong es %04lx / %04x\n", ctx.SegEs, context.SegEs );
+                ok( ctx.SegFs == context.SegFs, "cs64: wrong fs %04lx / %04x\n", ctx.SegFs, context.SegFs );
+                ok( ctx.SegGs == context.SegGs, "cs64: wrong gs %04lx / %04x\n", ctx.SegGs, context.SegGs );
+                ok( ctx.SegSs == context.SegSs, "cs64: wrong ss %04lx / %04x\n", ctx.SegSs, context.SegSs );
+            }
             if (teb32.DeallocationStack)
                 ok( ctx.Esp >= teb32.DeallocationStack && ctx.Esp <= teb32.Tib.StackBase,
                     "cs64: esp not inside 32-bit stack %08lx / %08lx-%08lx\n", ctx.Esp,
@@ -4445,6 +4448,7 @@ static void test_wow64_context(void)
                 pRtlWow64SetThreadContext( pi.hThread, &ctx );
             }
             got64 = TRUE;
+            if (is_arm64ec) break; /* no 32-bit %cs on arm64ec */
         }
     }
     if (!got32) skip( "failed to test 32-bit context\n" );
