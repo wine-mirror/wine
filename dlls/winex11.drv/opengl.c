@@ -184,7 +184,7 @@ static char wglExtensions[4096];
 static int glxVersion[2];
 static int glx_opcode;
 
-struct wgl_pixel_format
+struct glx_pixel_format
 {
     GLXFBConfig fbconfig;
     XVisualInfo *visual;
@@ -199,7 +199,7 @@ struct wgl_context
     BOOL has_been_current;
     BOOL sharing;
     BOOL gl3_context;
-    const struct wgl_pixel_format *fmt;
+    const struct glx_pixel_format *fmt;
     int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
     int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
     GLXContext ctx;
@@ -226,7 +226,7 @@ struct gl_drawable
     Window                         window;       /* window if drawable is a GLXWindow */
     Colormap                       colormap;     /* colormap for the client window */
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
-    const struct wgl_pixel_format *format;       /* pixel format for the drawable */
+    const struct glx_pixel_format *format;       /* pixel format for the drawable */
     SIZE                           pixmap_size;  /* pixmap size for GLXPixmap drawables */
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
@@ -236,7 +236,7 @@ struct gl_drawable
 struct wgl_pbuffer
 {
     struct gl_drawable *gl;
-    const struct wgl_pixel_format* fmt;
+    const struct glx_pixel_format* fmt;
     int        width;
     int        height;
     int*       attribList;
@@ -268,7 +268,7 @@ static XContext gl_pbuffer_context;
 
 static struct list context_list = LIST_INIT( context_list );
 static struct list pbuffer_list = LIST_INIT( pbuffer_list );
-static struct wgl_pixel_format *pixel_formats;
+static struct glx_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static BOOL use_render_texture_emulation = TRUE;
 
@@ -1000,7 +1000,7 @@ static BOOL check_fbconfig_bitmap_capability(Display *display, GLXFBConfig fbcon
 
 static void init_pixel_formats( Display *display )
 {
-    struct wgl_pixel_format *list;
+    struct glx_pixel_format *list;
     int size = 0, onscreen_size = 0;
     int fmt_id, nCfgs, i, run, bmp_formats;
     GLXFBConfig* cfgs;
@@ -1119,7 +1119,7 @@ static inline BOOL is_onscreen_pixel_format( int format )
     return format > 0 && format <= nb_onscreen_formats;
 }
 
-static inline int pixel_format_index( const struct wgl_pixel_format *format )
+static inline int pixel_format_index( const struct glx_pixel_format *format )
 {
     return format - pixel_formats + 1;
 }
@@ -1129,7 +1129,7 @@ static inline int pixel_format_index( const struct wgl_pixel_format *format )
  * Wine's main visual and offscreen formats (if they are available).
  * This function converts a WGL format to its corresponding GLX one.
  */
-static const struct wgl_pixel_format *get_pixel_format(Display *display, int iPixelFormat, BOOL AllowOffscreen)
+static const struct glx_pixel_format *get_pixel_format(Display *display, int iPixelFormat, BOOL AllowOffscreen)
 {
     /* Check if the pixelformat is valid. Note that it is legal to pass an invalid
      * iPixelFormat in case of probing the number of pixelformats.
@@ -1308,7 +1308,7 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 /***********************************************************************
  *              create_gl_drawable
  */
-static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel_format *format, BOOL known_child,
+static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel_format *format, BOOL known_child,
                                                BOOL mutable_pf )
 {
     struct gl_drawable *gl, *prev;
@@ -1400,7 +1400,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
 /***********************************************************************
  *              set_win_format
  */
-static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format, BOOL internal )
+static BOOL set_win_format( HWND hwnd, const struct glx_pixel_format *format, BOOL internal )
 {
     struct gl_drawable *old, *gl;
 
@@ -1431,7 +1431,7 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format, BO
 
 static BOOL set_pixel_format( HDC hdc, int format, BOOL internal )
 {
-    const struct wgl_pixel_format *fmt;
+    const struct glx_pixel_format *fmt;
     int value;
     HWND hwnd = NtUserWindowFromDC( hdc );
     int prev;
@@ -1562,7 +1562,7 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd,
   /*XVisualInfo *vis;*/
   int value;
   int rb,gb,bb,ab;
-  const struct wgl_pixel_format *fmt;
+  const struct glx_pixel_format *fmt;
 
   if (!has_opengl()) return 0;
 
@@ -2165,7 +2165,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
                                                        const int *piAttribList )
 {
     struct wgl_pbuffer* object;
-    const struct wgl_pixel_format *fmt;
+    const struct glx_pixel_format *fmt;
     int attribs[256];
     int nAttribs = 0;
 
@@ -2708,7 +2708,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                                                  UINT nAttributes, const int *piAttributes, int *piValues )
 {
     UINT i;
-    const struct wgl_pixel_format *fmt;
+    const struct glx_pixel_format *fmt;
     int hTest;
     int tmp;
     int curGLXAttr = 0;
