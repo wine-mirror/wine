@@ -2994,6 +2994,12 @@ DECL_HANDLER(get_message)
                               WM_WINE_LAST_DRIVER_MSG, req->flags, reply ))
         return;
 
+    if (req->internal) /* check for internal messages only, leave queue flags unchanged */
+    {
+        set_error( STATUS_PENDING );
+        return;
+    }
+
     queue->last_get_msg = current_time;
     if (!filter) filter = QS_ALLINPUT;
 

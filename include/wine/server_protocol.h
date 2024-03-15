@@ -2877,6 +2877,8 @@ struct get_message_request
     unsigned int    hw_id;
     unsigned int    wake_mask;
     unsigned int    changed_mask;
+    unsigned int    internal;
+    char __pad_44[4];
 };
 struct get_message_reply
 {
@@ -6507,7 +6509,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 797
+#define SERVER_PROTOCOL_VERSION 798
 
 /* ### protocol_version end ### */
 

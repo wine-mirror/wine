@@ -791,8 +791,17 @@ BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
 
 static void check_for_events( UINT flags )
 {
+    struct peek_message_filter filter =
+    {
+        .internal = TRUE,
+        .flags = PM_REMOVE,
+    };
+    MSG msg;
+
     if (!user_driver->pProcessEvents( flags ))
         flush_window_surfaces( TRUE );
+
+    peek_message( &msg, &filter );
 }
 
 /**********************************************************************

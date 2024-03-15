@@ -2735,6 +2735,7 @@ static void dump_get_message_request( const struct get_message_request *req )
     fprintf( stderr, ", hw_id=%08x", req->hw_id );
     fprintf( stderr, ", wake_mask=%08x", req->wake_mask );
     fprintf( stderr, ", changed_mask=%08x", req->changed_mask );
+    fprintf( stderr, ", internal=%08x", req->internal );
 }
 
 static void dump_get_message_reply( const struct get_message_reply *req )

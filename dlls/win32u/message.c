@@ -2695,15 +2695,6 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     return ret;
 }
 
-struct peek_message_filter
-{
-    HWND hwnd;
-    UINT first;
-    UINT last;
-    UINT mask;
-    UINT flags;
-};
-
 /***********************************************************************
  *           peek_message
  *
@@ -2711,7 +2702,7 @@ struct peek_message_filter
  * available; -1 on error.
  * All pending sent messages are processed before returning.
  */
-static int peek_message( MSG *msg, const struct peek_message_filter *filter )
+int peek_message( MSG *msg, const struct peek_message_filter *filter )
 {
     LRESULT result;
     HWND hwnd = filter->hwnd;
@@ -2738,6 +2729,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
 
         SERVER_START_REQ( get_message )
         {
+            req->internal  = filter->internal;
             req->flags     = flags;
             req->get_win   = wine_server_user_handle( hwnd );
             req->get_first = first;
@@ -2923,6 +2915,7 @@ static int peek_message( MSG *msg, const struct peek_message_filter *filter )
                         .first = info.msg.message,
                         .last = info.msg.message,
                         .mask = filter->mask,
+                        .internal = filter->internal,
                     };
                     peek_message( msg, &new_filter );
                 }

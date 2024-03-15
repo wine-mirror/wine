@@ -2038,6 +2038,9 @@ static void test_hid_touch_screen(void)
     ret = RegisterRawInputDevices( &rawdevice, 1, sizeof(RAWINPUTDEVICE) );
     ok( ret, "RegisterRawInputDevices failed, error %lu\n", GetLastError() );
 
+    res = GetQueueStatus( QS_RAWINPUT );
+    ok( res == 0, "got res %#lx\n", res );
+
     bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
     bus_wait_hid_input( file, &desc, 5000 );
     bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
@@ -2045,6 +2048,10 @@ static void test_hid_touch_screen(void)
 
     res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
     ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+
+    res = GetQueueStatus( QS_RAWINPUT );
+    ok( LOWORD(res) == QS_RAWINPUT, "got res %#lx\n", res );
+    ok( HIWORD(res) == QS_RAWINPUT, "got res %#lx\n", res );
 
     memset( rawbuffer, 0, sizeof(rawbuffer) );
     rawinput = (RAWINPUT *)rawbuffer;
@@ -2063,6 +2070,10 @@ static void test_hid_touch_screen(void)
     ok( rawinput->data.hid.dwCount == 1, "got dwCount %lu\n", rawinput->data.hid.dwCount );
     ok( !memcmp( rawinput->data.hid.bRawData, touch_multiple.report_buf, desc.caps.InputReportByteLength ),
         "got unexpected report data\n" );
+
+    res = GetQueueStatus( QS_RAWINPUT );
+    ok( LOWORD(res) == 0, "got res %#lx\n", res );
+    ok( HIWORD(res) == 0, "got res %#lx\n", res );
 
     rawdevice.dwFlags = RIDEV_REMOVE;
     rawdevice.hwndTarget = 0;

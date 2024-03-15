@@ -238,6 +238,17 @@ extern void free_dce( struct dce *dce, HWND hwnd );
 extern void invalidate_dce( WND *win, const RECT *extra_rect );
 
 /* message.c */
+struct peek_message_filter
+{
+    HWND hwnd;
+    UINT first;
+    UINT last;
+    UINT mask;
+    UINT flags;
+    BOOL internal;
+};
+
+extern int peek_message( MSG *msg, const struct peek_message_filter *filter );
 extern BOOL set_keyboard_auto_repeat( BOOL enable );
 
 /* systray.c */
