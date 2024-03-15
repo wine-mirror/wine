@@ -10786,7 +10786,7 @@ static void shader_glsl_load_bindless_samplers(struct shader_glsl_priv *priv, st
         string_buffer_sprintf(sampler_name, "%s_sampler%u", prefix, entry->bind_idx);
         name_loc = GL_EXTCALL(glGetUniformLocation(ctx_data->glsl_program->id, sampler_name->buffer));
         if (name_loc == -1)
-            ERR("No uniform location for shader %#x, binding %u, name %s.\n", shader_type, i, sampler_name->buffer);
+            continue;
 
         if ((view = state->shader_resource_view[shader_type][entry->resource_idx]))
         {
