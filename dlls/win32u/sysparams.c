@@ -2248,7 +2248,7 @@ RECT get_virtual_screen_rect( UINT dpi )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
-        if (!is_monitor_active( monitor )) continue;
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
         union_rect( &rect, &rect, &monitor->rc_monitor );
     }
 
@@ -2269,7 +2269,7 @@ static BOOL is_window_rect_full_screen( const RECT *rect )
     {
         RECT monrect;
 
-        if (!is_monitor_active( monitor )) continue;
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
         monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
                                 get_thread_dpi() );
@@ -3558,7 +3558,7 @@ HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
     {
         RECT intersect, monitor_rect;
 
-        if (!is_monitor_active( monitor )) continue;
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
         monitor_rect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ), system_dpi );
         if (intersect_rect( &intersect, &monitor_rect, &r ))
