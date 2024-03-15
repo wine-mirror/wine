@@ -35619,15 +35619,18 @@ static void test_high_resource_count(void)
     D3D11_BUFFER_DESC buffer_desc = {0};
     ID3D11ShaderResourceView *srvs[100];
     ID3D11Texture2D *textures[50], *rt;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
     ID3D11SamplerState *samplers[2];
     ID3D11DeviceContext *context;
     ID3D11RenderTargetView *rtv;
     ID3D11Buffer *buffers[50];
     ID3D11PixelShader *ps;
     ID3D11Device *device;
+    float *data_ptr;
     HRESULT hr;
 
     static const struct vec4 expect = {1274.0f, 637.0f, 1225.0f, 0.0f};
+    static const struct vec4 expect2 = {1274.0f, 637.0f, 1325.0f, 0.0f};
 
     static const DWORD ps_code[] =
     {
@@ -36097,7 +36100,8 @@ static void test_high_resource_count(void)
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 
         buffer_desc.ByteWidth = sizeof(data);
-        buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+        buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+        buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data_desc, &buffers[i]);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -36133,6 +36137,18 @@ static void test_high_resource_count(void)
     draw_quad(&test_context);
 
     check_texture_vec4(rt, &expect, 0);
+
+    /* Discard the data in one of the buffers and draw again. */
+
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffers[1], 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    data_ptr = map_desc.pData;
+    data_ptr[0] = 102.0f;
+    data_ptr[1] = 0.0f;
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffers[1], 0);
+    draw_quad(&test_context);
+
+    todo_wine_if (!damavand) check_texture_vec4(rt, &expect2, 0);
 
     ID3D11Texture2D_Release(rt);
     ID3D11RenderTargetView_Release(rtv);
