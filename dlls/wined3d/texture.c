@@ -5955,7 +5955,7 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
 
     if (target)
     {
-        render_offscreen = context->render_offscreen;
+        render_offscreen = wined3d_resource_is_offscreen(&target->resource);
         wined3d_rendertarget_view_get_drawable_size(rtv, context, &drawable_width, &drawable_height);
     }
     else
