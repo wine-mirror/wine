@@ -2425,6 +2425,8 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
 
             if (msg->wParam == VK_PROCESSKEY) break;
 
+            if (thread_info->key_repeat_msg.hwnd != msg->hwnd)
+                kill_system_timer( thread_info->key_repeat_msg.hwnd, SYSTEM_TIMER_KEY_REPEAT );
             thread_info->key_repeat_msg = *msg;
             if (NtUserSystemParametersInfo( SPI_GETKEYBOARDDELAY, 0, &delay, 0 ))
                 NtUserSetSystemTimer( msg->hwnd, SYSTEM_TIMER_KEY_REPEAT, (delay + 1) * 250 );
