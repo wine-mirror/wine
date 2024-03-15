@@ -36148,7 +36148,7 @@ static void test_high_resource_count(void)
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffers[1], 0);
     draw_quad(&test_context);
 
-    todo_wine_if (!damavand) check_texture_vec4(rt, &expect2, 0);
+    check_texture_vec4(rt, &expect2, 0);
 
     ID3D11Texture2D_Release(rt);
     ID3D11RenderTargetView_Release(rtv);

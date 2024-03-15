@@ -269,7 +269,17 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
 
     view->target = GL_TEXTURE_BUFFER;
     if (!view->name)
+    {
         gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
+    }
+    else if (gl_info->supported[ARB_BINDLESS_TEXTURE])
+    {
+        /* If we already bound this view to a shader, we acquired a handle to
+         * it, and it's now immutable. This means we can't bind a new buffer
+         * storage to it, so recreate the texture. */
+        gl_info->gl_ops.gl.p_glDeleteTextures(1, &view->name);
+        gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
+    }
 
     wined3d_context_gl_bind_texture(context_gl, GL_TEXTURE_BUFFER, view->name);
     if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
