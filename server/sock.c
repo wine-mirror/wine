@@ -813,7 +813,7 @@ static void post_sock_messages( struct sock *sock )
     }
 }
 
-static inline int sock_error( struct sock *sock )
+static inline int sock_error( struct sock *sock, int *poll_event )
 {
     int error = 0;
     socklen_t len = sizeof(error);
@@ -839,8 +839,14 @@ static inline int sock_error( struct sock *sock )
             error = sock->errors[AFD_POLL_BIT_ACCEPT];
         break;
 
-    case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
+        if (error == ENETUNREACH || error == EHOSTUNREACH || error == ECONNRESET)
+        {
+            if (poll_event) *poll_event &= ~POLLERR;
+            return 0;
+        }
+        /* fallthrough */
+    case SOCK_CONNECTED:
         if (error == ECONNRESET || error == EPIPE)
         {
             sock->reset = 1;
@@ -1346,7 +1352,7 @@ static void sock_poll_event( struct fd *fd, int event )
         fprintf(stderr, "socket %p select event: %x\n", sock, event);
 
     if (event & (POLLERR | POLLHUP))
-        error = sock_error( sock );
+        error = sock_error( sock, &event );
 
     switch (sock->state)
     {
@@ -3115,7 +3121,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return;
         }
 
-        error = sock_error( sock );
+        error = sock_error( sock, NULL );
         if (!error)
         {
             for (i = 0; i < ARRAY_SIZE( sock->errors ); ++i)
