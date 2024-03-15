@@ -46,6 +46,7 @@ struct provideclassinfo {
 };
 
 extern void init_classinfo(const GUID *guid, IUnknown *outer, struct provideclassinfo *classinfo);
+HRESULT get_env_var(const WCHAR *name, BSTR *value);
 
 HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 HRESULT WINAPI WshNetworkFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);

@@ -538,15 +538,9 @@ static HRESULT WINAPI WshEnvironment_Invoke(IWshEnvironment *iface, DISPID dispI
     return hr;
 }
 
-static HRESULT WINAPI WshEnvironment_get_Item(IWshEnvironment *iface, BSTR name, BSTR *value)
+HRESULT get_env_var(const WCHAR *name, BSTR *value)
 {
-    WshEnvironment *This = impl_from_IWshEnvironment(iface);
     DWORD len;
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
-
-    if (!value)
-        return E_POINTER;
 
     len = GetEnvironmentVariableW(name, NULL, 0);
     if (len)
@@ -559,6 +553,18 @@ static HRESULT WINAPI WshEnvironment_get_Item(IWshEnvironment *iface, BSTR name,
         *value = SysAllocStringLen(NULL, 0);
 
     return *value ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT WINAPI WshEnvironment_get_Item(IWshEnvironment *iface, BSTR name, BSTR *value)
+{
+    WshEnvironment *This = impl_from_IWshEnvironment(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
+
+    if (!value)
+        return E_POINTER;
+
+    return get_env_var(name, value);
 }
 
 static HRESULT WINAPI WshEnvironment_put_Item(IWshEnvironment *iface, BSTR name, BSTR value)

@@ -114,9 +114,12 @@ static HRESULT WINAPI WshNetwork2_Invoke(IWshNetwork2 *iface, DISPID dispIdMembe
 
 static HRESULT WINAPI WshNetwork2_get_UserDomain(IWshNetwork2 *iface, BSTR *user_domain)
 {
-    FIXME("%p stub\n", user_domain);
+    TRACE("%p, %p.\n", iface, user_domain);
 
-    return E_NOTIMPL;
+    if (!user_domain)
+        return E_POINTER;
+
+    return get_env_var(L"USERDOMAIN", user_domain);
 }
 
 static HRESULT WINAPI WshNetwork2_get_UserName(IWshNetwork2 *iface, BSTR *user_name)
