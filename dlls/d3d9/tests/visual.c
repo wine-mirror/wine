@@ -1667,16 +1667,17 @@ static void color_fill_test(void)
         {D3DPOOL_MANAGED,    0,                     D3DERR_INVALIDCALL},
         {D3DPOOL_SCRATCH,    0,                     D3DERR_INVALIDCALL},
     };
+    enum format_flags
+    {
+        CHECK_FILL_VALUE = 0x1,
+        BLOCKS           = 0x2,
+        FLOAT_VALUES     = 0x4,
+    };
     static const struct
     {
         D3DFORMAT format;
         const char *name;
-        enum
-        {
-            CHECK_FILL_VALUE = 0x1,
-            BLOCKS           = 0x2,
-            FLOAT_VALUES     = 0x4,
-        } flags;
+        enum format_flags flags;
         unsigned int fill_i[4];
         float fill_f[4];
     }
@@ -23249,16 +23250,17 @@ static void test_texture_blending(void)
         DWORD value;
     };
 
+    enum texture_stage_texture
+    {
+        TEXTURE_INVALID,
+        TEXTURE_NONE,
+        TEXTURE_BUMPMAP,
+        TEXTURE_RED,
+    };
+
     struct texture_stage
     {
-        enum
-        {
-            TEXTURE_INVALID,
-            TEXTURE_NONE,
-            TEXTURE_BUMPMAP,
-            TEXTURE_RED,
-        }
-        texture;
+        enum texture_stage_texture texture;
         struct texture_stage_state state[20];
     };
 
