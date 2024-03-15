@@ -2433,7 +2433,9 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
 
         case WM_KEYUP:
         case WM_SYSKEYUP:
-            kill_system_timer( thread_info->key_repeat_msg.hwnd, SYSTEM_TIMER_KEY_REPEAT );
+            /* Only stop repeat if the scan codes match. */
+            if ((thread_info->key_repeat_msg.lParam & 0x01ff0000) == (msg->lParam & 0x01ff0000))
+                kill_system_timer( thread_info->key_repeat_msg.hwnd, SYSTEM_TIMER_KEY_REPEAT );
             break;
         }
     }
