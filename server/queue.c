@@ -2988,6 +2988,12 @@ DECL_HANDLER(get_message)
     }
 
     if (!queue) return;
+
+    /* check for any hardware internal message */
+    if (get_hardware_message( current, req->hw_id, get_win, WM_WINE_FIRST_DRIVER_MSG,
+                              WM_WINE_LAST_DRIVER_MSG, req->flags, reply ))
+        return;
+
     queue->last_get_msg = current_time;
     if (!filter) filter = QS_ALLINPUT;
 
@@ -3026,11 +3032,6 @@ DECL_HANDLER(get_message)
     if ((filter & QS_INPUT) &&
         filter_contains_hw_range( req->get_first, req->get_last ) &&
         get_hardware_message( current, req->hw_id, get_win, req->get_first, req->get_last, req->flags, reply ))
-        return;
-
-    /* check for any internal driver message */
-    if (get_hardware_message( current, req->hw_id, get_win, WM_WINE_FIRST_DRIVER_MSG,
-                              WM_WINE_LAST_DRIVER_MSG, req->flags, reply ))
         return;
 
     /* now check for WM_PAINT */
