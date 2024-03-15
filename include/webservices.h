@@ -1840,6 +1840,8 @@ HRESULT WINAPI WsWriteXmlnsAttribute(WS_XML_WRITER*, const WS_XML_STRING*, const
                                      BOOL, WS_ERROR*);
 HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_ERROR*);
 
+#ifndef FACILITY_WEBSERVICES
+#define FACILITY_WEBSERVICES 61
 #define WS_S_ASYNC                          0x003d0000
 #define WS_S_END                            0x003d0001
 #define WS_E_INVALID_FORMAT                 0x803d0000
@@ -1878,6 +1880,7 @@ HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_
 #define WS_E_OTHER                          0x803d0021
 #define WS_E_SECURITY_TOKEN_EXPIRED         0x803d0022
 #define WS_E_SECURITY_SYSTEM_FAILURE        0x803d0023
+#endif
 
 #define WS_STRING_VALUE(s) { sizeof(s) / sizeof((s)[0]) - 1, (WCHAR *)(s) }
 #define WS_XML_STRING_VALUE(s) { sizeof(s) - 1, (BYTE *)(s) }

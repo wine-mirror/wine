@@ -526,8 +526,6 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
     return disp_call_value_with_caller(ctx, disp, vthis, flags, argc, argv, r, &ctx->jscaller->IServiceProvider_iface);
 }
 
-#define FACILITY_JSCRIPT 10
-
 #define MAKE_JSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_JSCRIPT, code)
 
 #define JS_E_TO_PRIMITIVE            MAKE_JSERROR(IDS_TO_PRIMITIVE)

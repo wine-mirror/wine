@@ -786,10 +786,10 @@ typedef struct _OVERLAPPED* LPWSAOVERLAPPED;
 #define WS_h_errno                 WSAGetLastError()
 #endif
 
-#define WSAHOST_NOT_FOUND          (WSABASEERR + 1001)
-#define WSATRY_AGAIN               (WSABASEERR + 1002)
-#define WSANO_RECOVERY             (WSABASEERR + 1003)
-#define WSANO_DATA                 (WSABASEERR + 1004)
+#define WSAHOST_NOT_FOUND          (WSABASEERR+1001)
+#define WSATRY_AGAIN               (WSABASEERR+1002)
+#define WSANO_RECOVERY             (WSABASEERR+1003)
+#define WSANO_DATA                 (WSABASEERR+1004)
 #define WSANO_ADDRESS              WSANO_DATA
 
 #define WSA_IO_PENDING             (ERROR_IO_PENDING)
