@@ -745,6 +745,14 @@ static void test_wshnetwork(void)
     SysFreeString(name);
     SysFreeString(str);
 
+    str = NULL;
+    hr = IWshNetwork2_get_UserDomain(nw2, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IWshNetwork2_get_UserDomain(nw2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!str, "Unexpected pointer.\n");
+    SysFreeString(str);
+
     IWshNetwork2_Release(nw2);
     IDispatch_Release(disp);
 }
