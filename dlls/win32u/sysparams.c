@@ -3348,15 +3348,15 @@ struct monitor_enum_info
     RECT rect;
 };
 
-static unsigned int active_monitor_count(void)
+static unsigned int active_unique_monitor_count(void)
 {
     struct monitor *monitor;
     unsigned int count = 0;
 
     LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
     {
-        if (!is_monitor_active( monitor )) continue;
-        count++;
+        if (is_monitor_active( monitor ) && !monitor->is_clone)
+            count++;
     }
     return count;
 }
@@ -5941,7 +5941,7 @@ int get_system_metrics( int index )
         return rect.bottom - rect.top;
     case SM_CMONITORS:
         if (!lock_display_devices()) return FALSE;
-        ret = active_monitor_count();
+        ret = active_unique_monitor_count();
         unlock_display_devices();
         return ret;
     case SM_SAMEDISPLAYFORMAT:
