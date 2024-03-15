@@ -3459,8 +3459,10 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     {
         if (!is_monitor_primary( monitor )) continue;
         if (should_enumerate_monitor( monitor, &origin, &limit, &enum_info[count].rect ))
+        {
             enum_info[count++].handle = monitor->handle;
-        break;
+            break;
+        }
     }
 
     /* then non-primary monitors */
