@@ -25,6 +25,7 @@
 
 #include "debugger.h"
 #include "wingdi.h"
+#include "winnt.h"
 #include "winuser.h"
 #include "tlhelp32.h"
 #include "wine/debug.h"
@@ -143,6 +144,70 @@ static BOOL tgt_process_minidump_read(HANDLE hProcess, const void* addr,
             return TRUE;
         }
     }
+    /* The memory isn't present in minidump. Try to fetch read-only area from PE image. */
+    {
+        IMAGEHLP_MODULEW64 im = {.SizeOfStruct = sizeof(im)};
+
+        if (SymGetModuleInfoW64(dbg_curr_process->handle, (DWORD_PTR)addr, &im))
+        {
+            WCHAR *image_name;
+            HANDLE file, map = 0;
+            void *pe_mapping = NULL;
+            BOOL found = FALSE;
+            const IMAGE_NT_HEADERS *nthdr = NULL;
+
+            image_name = im.LoadedImageName[0] ? im.LoadedImageName : im.ImageName;
+            if ((file = CreateFileW(image_name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
+                ((map = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
+                ((pe_mapping = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0)) != NULL) &&
+                (nthdr = RtlImageNtHeader(pe_mapping)) != NULL)
+            {
+                DWORD_PTR rva = (DWORD_PTR)addr - im.BaseOfImage;
+                ptrdiff_t size_hdr = (const BYTE*)(IMAGE_FIRST_SECTION(nthdr) + nthdr->FileHeader.NumberOfSections) - (const BYTE*)pe_mapping;
+
+                /* in the PE header ? */
+                if (rva < size_hdr)
+                {
+                    if (rva + len > size_hdr)
+                        len = size_hdr - rva;
+                    memcpy(buffer, (const BYTE*)pe_mapping + rva, len);
+                    if (rlen) *rlen = len;
+                    found = TRUE;
+                }
+                else /* in read only section ? */
+                {
+                    /* Note: RtlImageRvaToSection checks RVA against raw size, so we won't
+                     * get section when rva falls into the (raw size, virtual size( interval.
+                     */
+                    const IMAGE_SECTION_HEADER *section = RtlImageRvaToSection(nthdr, NULL, rva);
+                    if (section && !(section->Characteristics & IMAGE_SCN_MEM_WRITE))
+                    {
+                        DWORD_PTR offset = rva - section->VirtualAddress;
+                        DWORD nw = len;
+
+                        if (offset + nw > section->SizeOfRawData)
+                            nw = section->SizeOfRawData - offset;
+                        memcpy(buffer, (const char*)pe_mapping + section->PointerToRawData + offset, nw);
+                        if (nw < len) /* fill with O? */
+                        {
+                            if (offset + len > section->Misc.VirtualSize)
+                                len = section->Misc.VirtualSize - offset;
+                            memset((char*)buffer + nw, 0, len - nw);
+                            nw = len;
+                        }
+                        if (rlen) *rlen = nw;
+                        found = TRUE;
+                    }
+                }
+            }
+            if (pe_mapping) UnmapViewOfFile(pe_mapping);
+            if (map) CloseHandle(map);
+            if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
+            if (found) return TRUE;
+        }
+    }
+
     /* FIXME: this is a dirty hack to let the last frame in a bt to work
      * However, we need to check who's to blame, this code or the current 
      * dbghelp!StackWalk implementation
