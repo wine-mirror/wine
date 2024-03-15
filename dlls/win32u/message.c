@@ -2695,6 +2695,15 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     return ret;
 }
 
+struct peek_message_filter
+{
+    HWND hwnd;
+    UINT first;
+    UINT last;
+    UINT mask;
+    UINT flags;
+};
+
 /***********************************************************************
  *           peek_message
  *
@@ -2702,9 +2711,11 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
  * available; -1 on error.
  * All pending sent messages are processed before returning.
  */
-static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
+static int peek_message( MSG *msg, const struct peek_message_filter *filter )
 {
     LRESULT result;
+    HWND hwnd = filter->hwnd;
+    UINT first = filter->first, last = filter->last, flags = filter->flags;
     struct user_thread_info *thread_info = get_user_thread_info();
     INPUT_MESSAGE_SOURCE prev_source = thread_info->client_info.msg_source;
     struct received_message_info info;
@@ -2732,8 +2743,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             req->get_first = first;
             req->get_last  = last;
             req->hw_id     = hw_id;
-            req->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
-            req->changed_mask = changed_mask;
+            req->wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
+            req->changed_mask = filter->mask;
             wine_server_set_reply( req, buffer, buffer_size );
             if (!(res = wine_server_call( req )))
             {
@@ -2758,8 +2769,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             free( buffer );
             if (res == STATUS_PENDING)
             {
-                thread_info->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
-                thread_info->changed_mask = changed_mask;
+                thread_info->wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
+                thread_info->changed_mask = filter->mask;
                 return 0;
             }
             if (res != STATUS_BUFFER_OVERFLOW)
@@ -2904,8 +2915,17 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                     }
                 }
                 else
-                    peek_message( msg, info.msg.hwnd, info.msg.message,
-                                  info.msg.message, flags | PM_REMOVE, changed_mask );
+                {
+                    struct peek_message_filter new_filter =
+                    {
+                        .hwnd = info.msg.hwnd,
+                        .flags = flags | PM_REMOVE,
+                        .first = info.msg.message,
+                        .last = info.msg.message,
+                        .mask = filter->mask,
+                    };
+                    peek_message( msg, &new_filter );
+                }
                 continue;
             }
             if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
@@ -2956,7 +2976,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                                   info.msg.wParam, info.msg.lParam );
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
-        if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
+        if (HIWORD(flags) && !filter->mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
     }
 }
 
@@ -2967,8 +2987,9 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
  */
 static void process_sent_messages(void)
 {
+    struct peek_message_filter filter = {.flags = PM_REMOVE | PM_QS_SENDMESSAGE};
     MSG msg;
-    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
+    peek_message( &msg, &filter );
 }
 
 /***********************************************************************
@@ -3191,13 +3212,14 @@ BOOL WINAPI NtUserWaitMessage(void)
  */
 BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
+    struct peek_message_filter filter = {.hwnd = hwnd, .first = first, .last = last, .flags = flags};
     MSG msg;
     int ret;
 
     user_check_not_lock();
     check_for_driver_events( 0 );
 
-    ret = peek_message( &msg, hwnd, first, last, flags, 0 );
+    ret = peek_message( &msg, &filter );
     if (ret < 0) return FALSE;
 
     if (!ret)
@@ -3205,7 +3227,7 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
         flush_window_surfaces( TRUE );
         ret = wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
         /* if we received driver events, check again for a pending message */
-        if (ret == WAIT_TIMEOUT || peek_message( &msg, hwnd, first, last, flags, 0 ) <= 0) return FALSE;
+        if (ret == WAIT_TIMEOUT || peek_message( &msg, &filter ) <= 0) return FALSE;
     }
 
     check_for_driver_events( msg.message );
@@ -3228,6 +3250,7 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
  */
 BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
+    struct peek_message_filter filter = {.hwnd = hwnd, .first = first, .last = last};
     HANDLE server_queue = get_server_queue_handle();
     unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     int ret;
@@ -3246,7 +3269,9 @@ BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
     }
     else mask = QS_ALLINPUT;
 
-    while (!(ret = peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask )))
+    filter.mask = mask;
+    filter.flags = PM_REMOVE | (mask << 16);
+    while (!(ret = peek_message( msg, &filter )))
     {
         wait_objects( 1, &server_queue, INFINITE, mask & (QS_SENDMESSAGE | QS_SMRESULT), mask, 0 );
     }
