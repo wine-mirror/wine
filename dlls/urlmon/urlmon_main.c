@@ -771,6 +771,16 @@ int WINAPI LogSqmBits(DWORD unk1, DWORD unk2)
 }
 
 /***********************************************************************
+ *           LogSqmIncrement (URLMON.414)
+ *    Undocumented, added in IE8
+ */
+int WINAPI LogSqmIncrement(DWORD unk1, DWORD unk2)
+{
+    FIXME("stub: %ld %ld\n", unk1, unk2);
+    return 0;
+}
+
+/***********************************************************************
  *           LogSqmUXCommandOffsetInternal (URLMON.423)
  *    Undocumented, added in IE8
  */
