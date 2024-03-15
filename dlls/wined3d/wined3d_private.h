@@ -230,7 +230,6 @@ struct wined3d_d3d_info
     uint32_t vs_clipping : 1;
     uint32_t shader_double_precision : 1;
     uint32_t shader_output_interpolation : 1;
-    uint32_t frag_coord_correction : 1;
     uint32_t viewport_array_index_any_shader : 1;
     uint32_t stencil_export : 1;
     uint32_t texture_npot : 1;
@@ -1957,7 +1956,6 @@ struct wined3d_context
     DWORD transform_feedback_active : 1;
     DWORD transform_feedback_paused : 1;
     DWORD fog_coord : 1;
-    DWORD render_offscreen : 1;
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
@@ -1965,7 +1963,7 @@ struct wined3d_context
     DWORD update_primitive_type : 1;
     DWORD update_patch_vertex_count : 1;
     DWORD update_multisample_state : 1;
-    DWORD padding : 2;
+    DWORD padding : 3;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
@@ -4403,12 +4401,6 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
         }
         position_fixup[4 * i + 2] = (center_offset + x) / state->viewports[i].width;
         position_fixup[4 * i + 3] = -(center_offset + y) / state->viewports[i].height;
-
-        if (context->render_offscreen)
-        {
-            position_fixup[4 * i + 1] *= -1.0f;
-            position_fixup[4 * i + 3] *= -1.0f;
-        }
     }
 }
 

@@ -360,8 +360,7 @@ static BOOL is_blend_enabled(struct wined3d_context *context, const struct wined
     /* Disable blending in all cases even without pixel shaders.
      * With blending on we could face a big performance penalty.
      * The d3d9 visual test confirms the behavior. */
-    if (context->render_offscreen
-            && !(state->fb.render_targets[index]->format_caps & WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING))
+    if (!(state->fb.render_targets[index]->format_caps & WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING))
         return FALSE;
 
     return TRUE;
@@ -3675,43 +3674,9 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     }
 }
 
-static void get_viewports(struct wined3d_context *context, const struct wined3d_state *state,
-        unsigned int viewport_count, struct wined3d_viewport *viewports)
-{
-    const struct wined3d_rendertarget_view *depth_stencil = state->fb.depth_stencil;
-    const struct wined3d_rendertarget_view *target = state->fb.render_targets[0];
-    unsigned int width, height, i;
-
-    for (i = 0; i < viewport_count; ++i)
-        viewports[i] = state->viewports[i];
-
-    /* Note: GL uses a lower left origin while DirectX uses upper left. This
-     * is reversed when using offscreen rendering. */
-    if (context->render_offscreen)
-        return;
-
-    if (target)
-    {
-        wined3d_rendertarget_view_get_drawable_size(target, context, &width, &height);
-    }
-    else if (depth_stencil)
-    {
-        height = depth_stencil->height;
-    }
-    else
-    {
-        FIXME("Could not get the height of render targets.\n");
-        return;
-    }
-
-    for (i = 0; i < viewport_count; ++i)
-        viewports[i].y = height - (viewports[i].y + viewports[i].height);
-}
-
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    struct wined3d_viewport vp[WINED3D_MAX_VIEWPORTS];
     float min_z, max_z;
 
     if (gl_info->supported[ARB_VIEWPORT_ARRAY])
@@ -3721,17 +3686,16 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
 
         unsigned int i, reset_count = 0;
 
-        get_viewports(context, state, state->viewport_count, vp);
         for (i = 0; i < state->viewport_count; ++i)
         {
-            wined3d_viewport_get_z_range(&vp[i], &min_z, &max_z);
+            wined3d_viewport_get_z_range(&state->viewports[i], &min_z, &max_z);
             depth_ranges[i * 2] = min_z;
             depth_ranges[i * 2 + 1] = max_z;
 
-            viewports[i * 4]     = vp[i].x;
-            viewports[i * 4 + 1] = vp[i].y;
-            viewports[i * 4 + 2] = vp[i].width;
-            viewports[i * 4 + 3] = vp[i].height;
+            viewports[i * 4]     = state->viewports[i].x;
+            viewports[i * 4 + 1] = state->viewports[i].y;
+            viewports[i * 4 + 2] = state->viewports[i].width;
+            viewports[i * 4 + 3] = state->viewports[i].height;
 
             /* Don't pass fractionals to GL if we earlier decided not to use
              * this functionality for two reasons: First, GL might offer us
@@ -3765,10 +3729,10 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     }
     else
     {
-        get_viewports(context, state, 1, vp);
-        wined3d_viewport_get_z_range(&vp[0], &min_z, &max_z);
+        wined3d_viewport_get_z_range(&state->viewports[0], &min_z, &max_z);
         gl_info->gl_ops.gl.p_glDepthRange(min_z, max_z);
-        gl_info->gl_ops.gl.p_glViewport(vp[0].x, vp[0].y, vp[0].width, vp[0].height);
+        gl_info->gl_ops.gl.p_glViewport(state->viewports[0].x, state->viewports[0].y,
+                state->viewports[0].width, state->viewports[0].height);
     }
     checkGLcall("setting clip space and viewport");
 }
@@ -3780,27 +3744,25 @@ static void viewport_miscpart_cc(struct wined3d_context *context,
     /* See get_projection_matrix() in utils.c for a discussion about those values. */
     float pixel_center_offset = context->d3d_info->wined3d_creation_flags
             & WINED3D_PIXEL_CENTER_INTEGER ? 0.5f : 0.0f;
-    struct wined3d_viewport vp[WINED3D_MAX_VIEWPORTS];
     GLdouble depth_ranges[2 * WINED3D_MAX_VIEWPORTS];
     GLfloat viewports[4 * WINED3D_MAX_VIEWPORTS];
     unsigned int i, reset_count = 0;
     float min_z, max_z;
 
     pixel_center_offset += context->d3d_info->filling_convention_offset / 2.0f;
-    get_viewports(context, state, state->viewport_count, vp);
 
-    GL_EXTCALL(glClipControl(context->render_offscreen ? GL_UPPER_LEFT : GL_LOWER_LEFT, GL_ZERO_TO_ONE));
+    GL_EXTCALL(glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE));
 
     for (i = 0; i < state->viewport_count; ++i)
     {
-        wined3d_viewport_get_z_range(&vp[i], &min_z, &max_z);
+        wined3d_viewport_get_z_range(&state->viewports[i], &min_z, &max_z);
         depth_ranges[i * 2] = min_z;
         depth_ranges[i * 2 + 1] = max_z;
 
-        viewports[i * 4] = vp[i].x + pixel_center_offset;
-        viewports[i * 4 + 1] = vp[i].y + pixel_center_offset;
-        viewports[i * 4 + 2] = vp[i].width;
-        viewports[i * 4 + 3] = vp[i].height;
+        viewports[i * 4] = state->viewports[i].x + pixel_center_offset;
+        viewports[i * 4 + 1] = state->viewports[i].y + pixel_center_offset;
+        viewports[i * 4 + 2] = state->viewports[i].width;
+        viewports[i * 4 + 3] = state->viewports[i].height;
     }
 
     if (context->viewport_count > state->viewport_count)
@@ -3937,20 +3899,11 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
 static void scissorrect(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    unsigned int height = 0;
     const RECT *r;
 
     /* Warning: glScissor uses window coordinates, not viewport coordinates,
      * so our viewport correction does not apply. Warning2: Even in windowed
      * mode the coords are relative to the window, not the screen. */
-
-    if (!context->render_offscreen)
-    {
-        const struct wined3d_rendertarget_view *target = state->fb.render_targets[0];
-        unsigned int width;
-
-        wined3d_rendertarget_view_get_drawable_size(target, context, &width, &height);
-    }
 
     if (gl_info->supported[ARB_VIEWPORT_ARRAY])
     {
@@ -3962,7 +3915,7 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
             r = &state->scissor_rects[i];
 
             sr[i * 4] = r->left;
-            sr[i * 4 + 1] = height ? height - r->top : r->top;
+            sr[i * 4 + 1] = r->top;
             sr[i * 4 + 2] = r->right - r->left;
             sr[i * 4 + 3] = r->bottom - r->top;
         }
@@ -3980,8 +3933,7 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
     else
     {
         r = &state->scissor_rects[0];
-        gl_info->gl_ops.gl.p_glScissor(r->left, height ? height - r->top : r->top,
-                r->right - r->left, r->bottom - r->top);
+        gl_info->gl_ops.gl.p_glScissor(r->left, r->top, r->right - r->left, r->bottom - r->top);
         checkGLcall("glScissor");
     }
 }
@@ -4030,13 +3982,11 @@ static void rasterizer(struct wined3d_context *context, const struct wined3d_sta
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_rasterizer_state *r = state->rasterizer_state;
-    GLenum mode;
 
-    mode = r && r->desc.front_ccw ? GL_CCW : GL_CW;
-    if (context->render_offscreen)
-        mode = (mode == GL_CW) ? GL_CCW : GL_CW;
-
-    gl_info->gl_ops.gl.p_glFrontFace(mode);
+    /* Rendering without ARB_clip_control requires flipping position manually.
+     * This also means that all primitives will be backwards, so we need to
+     * also swap which side is the front face. */
+    gl_info->gl_ops.gl.p_glFrontFace(r && r->desc.front_ccw ? GL_CW : GL_CCW);
     checkGLcall("glFrontFace");
     depthbias(context, state);
     fillmode(r, gl_info);
@@ -4078,9 +4028,8 @@ static void psorigin_w(struct wined3d_context *context, const struct wined3d_sta
 static void psorigin(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    GLint origin = context->render_offscreen ? GL_LOWER_LEFT : GL_UPPER_LEFT;
 
-    GL_EXTCALL(glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, origin));
+    GL_EXTCALL(glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT));
     checkGLcall("glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ...)");
 }
 

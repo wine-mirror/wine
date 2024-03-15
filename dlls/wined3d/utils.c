@@ -5658,7 +5658,7 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
         ERR("Did not expect to enter this codepath without WINED3D_PIXEL_CENTER_INTEGER.\n");
 
     clip_control = d3d_info->clip_control;
-    flip = !clip_control && context->render_offscreen;
+    flip = !clip_control;
     if (!clip_control)
         center_offset = 1.0f + d3d_info->filling_convention_offset;
     else

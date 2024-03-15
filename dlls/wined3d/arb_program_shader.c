@@ -561,8 +561,8 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
         * ycorrection.w: 0.0
         */
         float val[4];
-        val[0] = context_gl->c.render_offscreen ? 0.0f : (float)rt_height;
-        val[1] = context_gl->c.render_offscreen ? 1.0f : -1.0f;
+        val[0] = 0.0f;
+        val[1] = 1.0f;
         val[2] = 1.0f;
         val[3] = 0.0f;
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
