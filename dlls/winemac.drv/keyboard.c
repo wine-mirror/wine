@@ -1310,7 +1310,6 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
     {
         if (thread_data->keyc2scan[keyc] == scan)
         {
-            static const WCHAR dead[] = {' ','d','e','a','d',0};
             const UCKeyboardLayout *uchr;
             UInt32 deadKeyState = 0;
             UniCharCount len;
@@ -1369,12 +1368,6 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
             if (!len)
                 break;
-
-            if (status == noErr && deadKeyState)
-            {
-                lstrcpynW(buffer + len, dead, size - len);
-                len = wcslen(buffer);
-            }
 
             TRACE("lparam 0x%08x -> %s\n", (unsigned int)lparam, debugstr_w(buffer));
             return len;
