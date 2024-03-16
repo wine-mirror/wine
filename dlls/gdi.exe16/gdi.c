@@ -43,6 +43,15 @@ struct saved_visrgn
 
 static struct list saved_regions = LIST_INIT( saved_regions );
 
+struct saved_bitmap
+{
+    struct list entry;
+    HDC         hdc;
+    HBITMAP     hbitmap;
+};
+
+static struct list saved_bitmaps = LIST_INIT( saved_bitmaps );
+
 static HPALETTE16 hPrimaryPalette;
 
 /*
@@ -1175,8 +1184,62 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 {
     if (!lstrcmpiA( driver, "dib" ) || !lstrcmpiA( driver, "dirdib" ))
     {
-        DRIVER_INFO_2W driver_info = { .cVersion = NTGDI_WIN16_DIB };
-        return HDC_16( NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, 0, &driver_info, (void *)initData ));
+        PALETTEENTRY palette[256];
+        BITMAPINFO *info = (BITMAPINFO *)initData;
+        D3DKMT_CREATEDCFROMMEMORY desc =
+        {
+            .Width = info->bmiHeader.biWidth,
+            .Height = info->bmiHeader.biHeight,
+            .Pitch = info->bmiHeader.biWidth * info->bmiHeader.biBitCount / 8,
+        };
+        struct saved_bitmap *bitmap;
+        int color;
+
+        if (info->bmiHeader.biBitCount <= 8)
+        {
+            if (info->bmiHeader.biClrUsed)
+            {
+                for (color = 0; color < info->bmiHeader.biClrUsed; color++)
+                {
+                    palette[color].peBlue = info->bmiColors[color].rgbBlue;
+                    palette[color].peGreen = info->bmiColors[color].rgbGreen;
+                    palette[color].peRed = info->bmiColors[color].rgbRed;
+                }
+            }
+            else
+            {
+                for (color = 0; color < (1 << info->bmiHeader.biBitCount); color++)
+                {
+                    palette[color].peBlue = color;
+                    palette[color].peGreen = color;
+                    palette[color].peRed = color;
+                }
+            }
+            desc.pColorTable = palette;
+            desc.Format = D3DDDIFMT_P8;
+            desc.pMemory = &info->bmiColors[color];
+        }
+        else if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        {
+            desc.Format = D3DDDIFMT_R5G6B5;
+            desc.pMemory = &info->bmiColors[3];
+        }
+        else
+        {
+            desc.Format = info->bmiHeader.biBitCount == 24 ? D3DDDIFMT_R8G8B8 : D3DDDIFMT_X8R8G8B8;
+            desc.pMemory = &info->bmiColors[0];
+        }
+
+        if (NtGdiDdDDICreateDCFromMemory( &desc )) return 0;
+
+        if ((bitmap = HeapAlloc( GetProcessHeap(), 0, sizeof(*bitmap) )))
+        {
+            bitmap->hdc = desc.hDc;
+            bitmap->hbitmap = desc.hBitmap;
+            list_add_tail( &saved_bitmaps, &bitmap->entry );
+        }
+
+        return HDC_16( desc.hDc );
     }
     return HDC_16( CreateDCA( driver, device, output, initData ) );
 }
@@ -1329,8 +1392,10 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
     if (DeleteDC( HDC_32(hdc) ))
     {
-        struct saved_visrgn *saved, *next;
+        struct saved_visrgn *saved;
+        struct saved_bitmap *bitmap;
         struct gdi_thunk* thunk;
+        void *next;
 
         if ((thunk = GDI_FindThunk(hdc))) GDI_DeleteThunk(thunk);
 
@@ -1341,6 +1406,15 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
             DeleteObject( saved->hrgn );
             HeapFree( GetProcessHeap(), 0, saved );
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE( bitmap, next, &saved_bitmaps, struct saved_bitmap, entry )
+        {
+            if (bitmap->hdc != HDC_32(hdc)) continue;
+            list_remove( &bitmap->entry );
+            DeleteObject( bitmap->hbitmap );
+            HeapFree( GetProcessHeap(), 0, bitmap );
+        }
+
         return TRUE;
     }
     return FALSE;

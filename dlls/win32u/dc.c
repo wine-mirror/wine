@@ -765,12 +765,6 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     DC_InitDC( dc );
     release_dc_ptr( dc );
 
-    if (driver_info && driver_info->cVersion == NTGDI_WIN16_DIB &&
-        !create_dib_surface( hdc, pdev ))
-    {
-        NtGdiDeleteObjectApp( hdc );
-        return 0;
-    }
     return hdc;
 }
 
