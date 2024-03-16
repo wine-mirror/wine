@@ -5308,6 +5308,9 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
     }
     required_extensions[] =
     {
+        {ARB_FRAGMENT_SHADER, "ARB_fragment_shader"},
+        {ARB_SHADING_LANGUAGE_100, "ARB_shading_language_100"},
+        {ARB_VERTEX_SHADER, "ARB_vertex_shader"},
         {EXT_FRAMEBUFFER_OBJECT, "EXT_framebuffer_object"},
     };
 
@@ -5377,6 +5380,14 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
             wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
             return FALSE;
         }
+    }
+
+    if (gl_info->glsl_version <= MAKEDWORD_VERSION(1, 20))
+    {
+        ERR("GLSL version %s is too low; 1.20 is required.\n",
+                (const char *)gl_info->gl_ops.gl.p_glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
+        wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
+        return FALSE;
     }
 
     gl_info->filling_convention_offset = wined3d_adapter_find_fill_offset(&caps_gl_ctx);
