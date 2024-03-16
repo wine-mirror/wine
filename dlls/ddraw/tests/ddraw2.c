@@ -462,7 +462,8 @@ static IDirectDraw2 *create_ddraw(void)
     return ddraw2;
 }
 
-static IDirect3DDevice2 *create_device_ex(IDirectDraw2 *ddraw, HWND window, DWORD coop_level, const GUID *device_guid)
+static IDirect3DDevice2 *create_device_ex(IDirectDraw2 *ddraw, HWND window, DWORD coop_level, const GUID *device_guid,
+        IDirectDrawSurface **ret_surface)
 {
     /* Prefer 16 bit depth buffers because Nvidia gives us an unpadded D24 buffer if we ask
      * for 24 bit and handles such buffers incorrectly in DDBLT_DEPTHFILL. AMD only supports
@@ -541,13 +542,17 @@ static IDirect3DDevice2 *create_device_ex(IDirectDraw2 *ddraw, HWND window, DWOR
     }
 
     IDirect3D2_Release(d3d);
-    IDirectDrawSurface_Release(surface);
+    if (ret_surface)
+        *ret_surface = surface;
+    else
+        IDirectDrawSurface_Release(surface);
+
     return device;
 }
 
 static IDirect3DDevice2 *create_device(IDirectDraw2 *ddraw, HWND window, DWORD coop_level)
 {
-    return create_device_ex(ddraw, window, coop_level, &IID_IDirect3DHALDevice);
+    return create_device_ex(ddraw, window, coop_level, &IID_IDirect3DHALDevice, NULL);
 }
 
 static IDirect3DViewport2 *create_viewport(IDirect3DDevice2 *device, UINT x, UINT y, UINT w, UINT h)
@@ -1330,7 +1335,7 @@ static void test_depth_blit(const GUID *device_guid)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw2_Release(ddraw);
@@ -1856,7 +1861,7 @@ static void test_zenable(const GUID *device_guid)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw2_Release(ddraw);
@@ -1971,7 +1976,7 @@ static void test_ck_rgba(const GUID *device_guid)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw2_Release(ddraw);
@@ -5204,7 +5209,7 @@ static void test_rt_caps(const GUID *device_guid)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw2_Release(ddraw);
@@ -15692,7 +15697,7 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
@@ -16442,6 +16447,144 @@ static void run_for_each_device_type(void (*test_func)(const GUID *))
     test_func(&IID_IDirect3DRGBDevice);
 }
 
+static void test_multiple_devices(void)
+{
+    D3DTEXTUREHANDLE texture_handle, texture_handle2;
+    IDirect3DDevice2 *device, *device2, *device3;
+    IDirectDrawSurface *surface, *texture_surf;
+    D3DMATERIALHANDLE mat_handle, mat_handle2;
+    IDirect3DViewport2 *viewport, *viewport2;
+    IDirectDraw2 *ddraw, *ddraw2;
+    IDirect3DMaterial2 *material;
+    DDSURFACEDESC surface_desc;
+    IDirect3DTexture2 *texture;
+    IDirect3D2 *d3d;
+    ULONG refcount;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, &IID_IDirect3DHALDevice, &surface)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3D2_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    ddraw2 = create_ddraw();
+    ok(!!ddraw2, "Failed to create a ddraw object.\n");
+    device3 = create_device(ddraw2, window, DDSCL_NORMAL);
+    ok(!!device3, "got NULL.\n");
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport2 = create_viewport(device2, 0, 0, 640, 480);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetCurrentViewport(device2, viewport);
+    ok(hr == DDERR_INVALIDPARAMS, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetCurrentViewport(device2, viewport2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    material = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(mat_handle == mat_handle2, "got different handles.\n");
+
+    hr = IDirect3DMaterial2_GetHandle(material, device2, &mat_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    todo_wine ok(mat_handle != mat_handle2, "got same handles.\n");
+
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetLightState(device2, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetLightState(device3, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle2);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DViewport2_SetBackground(viewport, mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DViewport2_SetBackground(viewport2, mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device3, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    value = 0xdeadbeef;
+    hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == TRUE, "got %#lx.\n", value);
+    hr = IDirect3DDevice2_GetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!value, "got %#lx.\n", value);
+    hr = IDirect3DDevice2_GetRenderState(device3, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!value, "got %#lx.\n", value);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 256;
+    surface_desc.dwHeight = 256;
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &texture_surf, NULL);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(texture_surf, &IID_IDirect3DTexture2, (void **)&texture);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DTexture2_GetHandle(texture, device, &texture_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DTexture2_GetHandle(texture, device2, &texture_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle == texture_handle2, "got different handles.\n");
+    hr = IDirect3DTexture2_GetHandle(texture, device3, &texture_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle == texture_handle2, "got different handles.\n");
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device2, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device3, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    IDirect3DTexture2_Release(texture);
+    IDirectDrawSurface_Release(texture_surf);
+    IDirect3DMaterial2_Release(material);
+    IDirect3DViewport2_Release(viewport);
+    IDirect3DViewport2_Release(viewport2);
+
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3DDevice2_Release(device2);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3DDevice2_Release(device3);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirectDrawSurface_Release(surface);
+    ok(!refcount, "Surface has %lu references left.\n", refcount);
+
+    IDirectDraw2_Release(ddraw);
+    IDirectDraw_Release(ddraw2);
+    IDirect3D2_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -16567,4 +16710,5 @@ START_TEST(ddraw2)
     run_for_each_device_type(test_texture_wrong_caps);
     test_filling_convention();
     test_enum_devices();
+    test_multiple_devices();
 }

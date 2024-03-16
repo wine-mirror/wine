@@ -498,7 +498,8 @@ static HRESULT WINAPI enum_devtype_cb(char *desc_str, char *name, D3DDEVICEDESC7
     return DDENUMRET_OK;
 }
 
-static IDirect3DDevice7 *create_device_ex(HWND window, DWORD coop_level, const GUID *device_guid)
+static IDirect3DDevice7 *create_device_ex(HWND window, DWORD coop_level, const GUID *device_guid,
+        IDirectDrawSurface7 **ret_surface)
 {
     IDirectDrawSurface7 *surface, *ds;
     IDirect3DDevice7 *device = NULL;
@@ -586,9 +587,16 @@ static IDirect3DDevice7 *create_device_ex(HWND window, DWORD coop_level, const G
 
     hr = IDirect3D7_CreateDevice(d3d7, device_guid, surface, &device);
     IDirect3D7_Release(d3d7);
-    IDirectDrawSurface7_Release(surface);
     if (FAILED(hr))
+    {
+        IDirectDrawSurface7_Release(surface);
         return NULL;
+    }
+
+    if (ret_surface)
+        *ret_surface = surface;
+    else
+        IDirectDrawSurface7_Release(surface);
 
     return device;
 }
@@ -615,7 +623,7 @@ static IDirect3DDevice7 *create_device(HWND window, DWORD coop_level)
 
     IDirect3D7_Release(d3d7);
 
-    return create_device_ex(window, coop_level, device_guid);
+    return create_device_ex(window, coop_level, device_guid, NULL);
 }
 
 static bool init_3d_test_context_guid(struct ddraw_test_context *context, const GUID *device_guid)
@@ -625,7 +633,7 @@ static bool init_3d_test_context_guid(struct ddraw_test_context *context, const 
     memset(context, 0, sizeof(*context));
 
     context->window = create_window();
-    if (!(context->device = create_device_ex(context->window, DDSCL_NORMAL, device_guid)))
+    if (!(context->device = create_device_ex(context->window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a D3D device.\n");
         DestroyWindow(context->window);
@@ -1586,7 +1594,7 @@ static void test_depth_blit(const GUID *device_guid)
     HWND window;
 
     window = create_window();
-    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
@@ -1844,7 +1852,7 @@ static void test_zenable(const GUID *device_guid)
     HRESULT hr;
 
     window = create_window();
-    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
@@ -1948,7 +1956,7 @@ static void test_ck_rgba(const GUID *device_guid)
     HRESULT hr;
 
     window = create_window();
-    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
@@ -19134,7 +19142,7 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     HRESULT hr;
 
     window = create_window();
-    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid)))
+    if (!(device = create_device_ex(window, DDSCL_NORMAL, device_guid, NULL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
@@ -20001,6 +20009,69 @@ static void run_for_each_device_type(void (*test_func)(const GUID *))
     winetest_pop_context();
 }
 
+static void test_multiple_devices(void)
+{
+    IDirect3DDevice7 *device, *device2;
+    IDirectDrawSurface7 *surface;
+    IDirectDraw7 *ddraw;
+    IDirect3D7 *d3d;
+    ULONG refcount;
+    DWORD stateblock;
+    DWORD value;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device_ex(window, DDSCL_NORMAL, &IID_IDirect3DTnLHalDevice, &surface)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3D7_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DDevice7_CreateStateBlock(device, D3DSBT_ALL, &stateblock);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice7_CaptureStateBlock(device2, stateblock);
+    ok(hr == D3DERR_INVALIDSTATEBLOCK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice7_CaptureStateBlock(device, stateblock);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice7_DeleteStateBlock(device, stateblock);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    value = 0xdeadbeef;
+    hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == TRUE, "got %#lx.\n", value);
+    hr = IDirect3DDevice3_GetRenderState(device2, D3DRENDERSTATE_ALPHABLENDENABLE, &value);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!value, "got %#lx.\n", value);
+
+    refcount = IDirect3DDevice3_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3DDevice3_Release(device2);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirectDrawSurface4_Release(surface);
+    ok(!refcount, "Surface has %lu references left.\n", refcount);
+    IDirectDraw4_Release(ddraw);
+    IDirect3D3_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     DDDEVICEIDENTIFIER2 identifier;
@@ -20176,4 +20247,5 @@ START_TEST(ddraw7)
     test_enum_devices();
     run_for_each_device_type(test_user_memory);
     test_flip_3d();
+    test_multiple_devices();
 }

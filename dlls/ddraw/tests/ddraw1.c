@@ -15530,6 +15530,109 @@ static void test_pinned_sysmem(void)
     DestroyWindow(window);
 }
 
+static void test_multiple_devices(void)
+{
+    static D3DMATRIX test_matrix =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 2.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 3.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 4.0f,
+    };
+
+    D3DTEXTUREHANDLE texture_handle, texture_handle2;
+    D3DMATERIALHANDLE mat_handle, mat_handle2;
+    IDirect3DViewport *viewport, *viewport2;
+    IDirect3DDevice *device, *device2;
+    IDirectDrawSurface *texture_surf;
+    D3DMATRIXHANDLE matrix_handle;
+    IDirectDraw *ddraw, *ddraw2;
+    IDirect3DMaterial *material;
+    DDSURFACEDESC surface_desc;
+    IDirect3DTexture *texture;
+    D3DMATRIX matrix;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, &IID_IDirect3DHALDevice)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    ddraw2 = create_ddraw();
+    ok(!!ddraw2, "Failed to create a ddraw object.\n");
+
+    device2 = create_device_ex(ddraw2, window, DDSCL_NORMAL, &IID_IDirect3DHALDevice);
+    ok(!!device2, "got NULL.\n");
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport2 = create_viewport(device2, 0, 0, 640, 480);
+
+    material = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(mat_handle == mat_handle2, "got different handles.\n");
+
+    hr = IDirect3DMaterial_GetHandle(material, device2, &mat_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    todo_wine ok(mat_handle != mat_handle2, "got same handles.\n");
+
+    hr = IDirect3DViewport_SetBackground(viewport, mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DViewport_SetBackground(viewport2, mat_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 256;
+    surface_desc.dwHeight = 256;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &texture_surf, NULL);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(texture_surf, &IID_IDirect3DTexture2, (void **)&texture);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device, &texture_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DTexture_GetHandle(texture, device2, &texture_handle2);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(texture_handle != texture_handle2, "got same handles.\n");
+
+    hr = IDirect3DDevice_CreateMatrix(device, &matrix_handle);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice_SetMatrix(device, matrix_handle, &test_matrix);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+
+    memset(&matrix, 0xcc, sizeof(matrix));
+    hr = IDirect3DDevice_GetMatrix(device2, matrix_handle, &matrix);
+    ok(hr == D3D_OK, "got %#lx.\n", hr);
+    ok(!memcmp(&matrix, &test_matrix, sizeof(matrix)), "matrix does not match.\n");
+
+    IDirect3DTexture_Release(texture);
+    IDirectDrawSurface_Release(texture_surf);
+    IDirect3DMaterial_Release(material);
+    IDirect3DViewport_Release(viewport);
+    IDirect3DViewport_Release(viewport2);
+
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3DDevice_Release(device2);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+
+    IDirectDraw_Release(ddraw);
+    IDirectDraw_Release(ddraw2);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -15650,4 +15753,5 @@ START_TEST(ddraw1)
     test_filling_convention();
     test_enum_devices();
     test_pinned_sysmem();
+    test_multiple_devices();
 }
