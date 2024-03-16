@@ -1523,13 +1523,8 @@ static void BackBuffer3DCreateSurfaceTest(void)
                 "GetSurfaceDesc returned caps %#lx.\n", created_ddsd.ddsCaps.dwCaps);
 
         hr = IDirectDrawSurface_QueryInterface(surf, &IID_IDirect3DHALDevice, (void **)&d3dhal);
-        /* Currently Wine only supports the creation of one Direct3D device
-           for a given DirectDraw instance. It has been created already
-           in D3D1_createObjects() - IID_IDirect3DRGBDevice */
-        todo_wine ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-
-        if (SUCCEEDED(hr))
-            IDirect3DDevice_Release(d3dhal);
+        ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+        IDirect3DDevice_Release(d3dhal);
 
         IDirectDrawSurface_Release(surf);
     }

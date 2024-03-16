@@ -329,7 +329,7 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
          * the device from it before so it doesn't try to save / restore state on the teared down device. */
         if (This->ddraw)
         {
-            This->ddraw->d3ddevice = NULL;
+            list_remove(&This->ddraw_entry);
             This->ddraw = NULL;
         }
 
@@ -6907,7 +6907,7 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     if (version != 1)
         IUnknown_AddRef(device->rt_iface);
 
-    ddraw->d3ddevice = device;
+    list_add_head(&ddraw->d3ddevice_list, &device->ddraw_entry);
 
     wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
             d3d_device_update_depth_stencil(device));
@@ -6953,12 +6953,6 @@ HRESULT d3d_device_create(struct ddraw *ddraw, const GUID *guid, struct ddraw_su
                 "but the current DirectDrawRenderer does not support this.\n");
 
         return DDERR_OUTOFMEMORY;
-    }
-
-    if (ddraw->d3ddevice)
-    {
-        FIXME("Only one Direct3D device per DirectDraw object supported.\n");
-        return DDERR_INVALIDPARAMS;
     }
 
     if (!(object = calloc(1, sizeof(*object))))

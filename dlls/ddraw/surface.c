@@ -2013,6 +2013,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface2_Blt(IDirectDrawSurface2 *
  *****************************************************************************/
 static HRESULT ddraw_surface_attach_surface(struct ddraw_surface *This, struct ddraw_surface *Surf)
 {
+    struct d3d_device *device;
+
     TRACE("surface %p, attachment %p.\n", This, Surf);
 
     if(Surf == This)
@@ -2039,8 +2041,10 @@ static HRESULT ddraw_surface_attach_surface(struct ddraw_surface *This, struct d
     This->next_attached = Surf;
 
     /* Check if the WineD3D depth stencil needs updating */
-    if (This->ddraw->d3ddevice)
-        d3d_device_update_depth_stencil(This->ddraw->d3ddevice);
+    LIST_FOR_EACH_ENTRY(device, &This->ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
+    {
+        d3d_device_update_depth_stencil(device);
+    }
 
     wined3d_mutex_unlock();
 
@@ -4361,7 +4365,7 @@ static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD Ma
     if (surface->draw_texture)
         wined3d_texture_set_lod(surface->draw_texture, MaxLOD);
 
-    if ((device = surface->ddraw->d3ddevice))
+    LIST_FOR_EACH_ENTRY(device, &surface->ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
     {
         wined3d_stateblock_texture_changed(device->state, surface->wined3d_texture);
         if (surface->draw_texture)
@@ -6774,7 +6778,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             swapchain_desc.backbuffer_height = mode.height;
             swapchain_desc.backbuffer_format = mode.format_id;
 
-            if ((device = ddraw->d3ddevice))
+            LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
             {
                 if (device->recording)
                     wined3d_stateblock_decref(device->recording);
@@ -6791,9 +6795,11 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 return hr_ddraw_from_wined3d(hr);
             }
 
-            if (device)
+            LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
+            {
                 wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
                         !!swapchain_desc.enable_auto_depth_stencil);
+            }
         }
     }
 

@@ -87,7 +87,7 @@ static ULONG WINAPI d3d_vertex_buffer7_Release(IDirect3DVertexBuffer7 *iface)
          * they are destroyed. */
         wined3d_mutex_lock();
 
-        if ((device = buffer->ddraw->d3ddevice))
+        LIST_FOR_EACH_ENTRY(device, &buffer->ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
         {
             if (device->stateblock_state->streams[0].buffer == buffer->wined3d_buffer)
                 wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);

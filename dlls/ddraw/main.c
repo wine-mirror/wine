@@ -892,8 +892,8 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
                 WARN("DirectDraw object %p has reference counts {%lu, %lu, %lu, %lu, %lu}.\n",
                         ddraw, ddraw->ref7, ddraw->ref4, ddraw->ref3, ddraw->ref2, ddraw->ref1);
 
-                if (ddraw->d3ddevice)
-                    WARN("DirectDraw object %p has Direct3D device %p attached.\n", ddraw, ddraw->d3ddevice);
+                if (!list_empty(&ddraw->d3ddevice_list))
+                    WARN("DirectDraw object %p has Direct3D device(s) attached.\n", ddraw);
 
                 LIST_FOR_EACH_ENTRY(surface, &ddraw->surface_list, struct ddraw_surface, surface_list_entry)
                 {

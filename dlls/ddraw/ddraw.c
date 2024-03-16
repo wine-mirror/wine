@@ -420,6 +420,7 @@ static void ddraw_destroy_swapchain(struct ddraw *ddraw)
  *****************************************************************************/
 static void ddraw_destroy(struct ddraw *This)
 {
+    struct d3d_device *device;
     IDirectDraw7_SetCooperativeLevel(&This->IDirectDraw7_iface, NULL, DDSCL_NORMAL);
     IDirectDraw7_RestoreDisplayMode(&This->IDirectDraw7_iface);
 
@@ -440,8 +441,10 @@ static void ddraw_destroy(struct ddraw *This)
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wined3d);
 
-    if (This->d3ddevice)
-        This->d3ddevice->ddraw = NULL;
+    LIST_FOR_EACH_ENTRY(device, &This->d3ddevice_list, struct d3d_device, ddraw_entry)
+    {
+        device->ddraw = NULL;
+    }
 
     /* Now free the object */
     free(This);
@@ -793,7 +796,6 @@ static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
 static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         DWORD cooplevel, BOOL restore_mode_on_normal)
 {
-    struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
     struct d3d_device *device;
     RECT clip_rect;
@@ -923,18 +925,29 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     if (cooplevel & DDSCL_MULTITHREADED && !(ddraw->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(ddraw->wined3d_device);
 
-    device = ddraw->d3ddevice;
     if (ddraw->wined3d_swapchain)
     {
-        if (!(ddraw->flags & DDRAW_NO3D) && device)
+        if (!(ddraw->flags & DDRAW_NO3D))
         {
             restore_state = TRUE;
 
-            if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device,
-                    device->state, WINED3D_SBT_ALL, &stateblock)))
+            LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
             {
-                ERR("Failed to create stateblock, hr %#lx.\n", hr);
-                goto done;
+                if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device,
+                        device->state, WINED3D_SBT_ALL, &device->saved_state)))
+                {
+                    struct list *entry;
+
+                    ERR("Failed to create stateblock, hr %#lx.\n", hr);
+                    entry = &device->ddraw_entry;
+                    while ((entry = list_prev(&ddraw->d3ddevice_list, entry)))
+                    {
+                        device = LIST_ENTRY(entry, struct d3d_device, ddraw_entry);
+                        wined3d_stateblock_decref(device->saved_state);
+                        device->saved_state = NULL;
+                    }
+                    goto done;
+                }
             }
         }
 
@@ -946,8 +959,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
 
     if (restore_state)
     {
-        wined3d_stateblock_apply(stateblock, device->state);
-        wined3d_stateblock_decref(stateblock);
+        LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
+        {
+            wined3d_stateblock_apply(device->saved_state, device->state);
+            wined3d_stateblock_decref(device->saved_state);
+            device->saved_state = NULL;
+        }
     }
 
     if (!(cooplevel & DDSCL_EXCLUSIVE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
@@ -5105,5 +5122,6 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
     ddraw->immediate_context = wined3d_device_get_immediate_context(ddraw->wined3d_device);
 
     list_init(&ddraw->surface_list);
+    list_init(&ddraw->d3ddevice_list);
     return DD_OK;
 }
