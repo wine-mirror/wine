@@ -2054,7 +2054,6 @@ extern const struct wined3d_fragment_pipe_ops glsl_fragment_pipe;
 const struct wined3d_fragment_pipe_ops *wined3d_spirv_fragment_pipe_init_vk(void);
 
 extern const struct wined3d_vertex_pipe_ops none_vertex_pipe;
-extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe;
 extern const struct wined3d_vertex_pipe_ops glsl_vertex_pipe;
 
 const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void);
