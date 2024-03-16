@@ -523,7 +523,6 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_PS_BUMP_ENV     0x00000200
 #define WINED3D_SHADER_CONST_PS_FOG          0x00000400
 #define WINED3D_SHADER_CONST_PS_ALPHA_TEST   0x00000800
-#define WINED3D_SHADER_CONST_PS_Y_CORR       0x00001000
 #define WINED3D_SHADER_CONST_PS_NP2_FIXUP    0x00002000
 #define WINED3D_SHADER_CONST_FFP_MODELVIEW   0x00004000
 #define WINED3D_SHADER_CONST_FFP_VERTEXBLEND 0x00008000
@@ -1499,10 +1498,9 @@ struct ps_compile_args
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
-    DWORD y_correction : 1;
     DWORD rt_alpha_swizzle : 8; /* WINED3D_MAX_RENDER_TARGETS, 8 */
     DWORD dual_source_blend : 1;
-    DWORD padding : 17;
+    DWORD padding : 18;
 };
 
 enum fog_src_type

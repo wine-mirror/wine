@@ -3054,8 +3054,6 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
 
-    args->y_correction = 0;
-
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
         struct wined3d_rendertarget_view *rtv = state->fb.render_targets[i];
