@@ -916,6 +916,10 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
                         WARN("Material handle %#x (%p) not unset properly.\n", i + 1, entry->object);
                         break;
 
+                    case DDRAW_HANDLE_SURFACE:
+                        WARN("Texture handle %#x (%p) not unset properly.\n", i + 1, entry->object);
+                        break;
+
                     default:
                         WARN("Handle %#x (%p) has unknown type %#x.\n", i + 1, entry->object, entry->type);
                         break;

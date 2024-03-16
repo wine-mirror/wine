@@ -347,14 +347,12 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
 
                     instr += size;
 
-                    if (!(dst = ddraw_get_object(&device->handle_table,
-                            ci->hDestTexture - 1, DDRAW_HANDLE_SURFACE)))
+                    if (!(dst = ddraw_get_object(NULL, ci->hDestTexture - 1, DDRAW_HANDLE_SURFACE)))
                     {
                         WARN("Invalid destination texture handle %#lx.\n", ci->hDestTexture);
                         continue;
                     }
-                    if (!(src = ddraw_get_object(&device->handle_table,
-                            ci->hSrcTexture - 1, DDRAW_HANDLE_SURFACE)))
+                    if (!(src = ddraw_get_object(NULL, ci->hSrcTexture - 1, DDRAW_HANDLE_SURFACE)))
                     {
                         WARN("Invalid source texture handle %#lx.\n", ci->hSrcTexture);
                         continue;

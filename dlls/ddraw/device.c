@@ -319,14 +319,6 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
                     break;
                 }
 
-                case DDRAW_HANDLE_SURFACE:
-                {
-                    struct ddraw_surface *surf = entry->object;
-                    FIXME("Texture handle %#lx (%p) not unset properly.\n", i + 1, surf);
-                    surf->Handle = 0;
-                    break;
-                }
-
                 default:
                     FIXME("Handle %#lx (%p) has unknown type %#x.\n", i + 1, entry->object, entry->type);
                     break;
@@ -2760,7 +2752,7 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
                 break;
             }
 
-            surf = ddraw_get_object(&device->handle_table, value - 1, DDRAW_HANDLE_SURFACE);
+            surf = ddraw_get_object(NULL, value - 1, DDRAW_HANDLE_SURFACE);
             if (!surf)
             {
                 WARN("Invalid texture handle.\n");
