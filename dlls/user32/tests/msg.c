@@ -2177,6 +2177,7 @@ static const struct message WmTrackPopupMenuMinimizeWindow[] = {
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { HCBT_ACTIVATE, hook|optional }, /* win11 */
     { WM_NCACTIVATE, sent|optional }, /* win11 */
+    { WM_ACTIVATE, sent|optional }, /* win11 */
     { WM_CANCELMODE, sent },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|defwinproc },
