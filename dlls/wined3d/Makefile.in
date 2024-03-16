@@ -7,7 +7,6 @@ SOURCES = \
 	adapter_gl.c \
 	adapter_vk.c \
 	arb_program_shader.c \
-	ati_fragment_shader.c \
 	buffer.c \
 	context.c \
 	context_gl.c \

@@ -2044,7 +2044,6 @@ struct wined3d_vertex_pipe_ops
 
 extern const struct wined3d_state_entry_template misc_state_template_gl[];
 extern const struct wined3d_fragment_pipe_ops none_fragment_pipe;
-extern const struct wined3d_fragment_pipe_ops atifs_fragment_pipeline;
 extern const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline;
 extern const struct wined3d_fragment_pipe_ops glsl_fragment_pipe;
 
@@ -4091,17 +4090,11 @@ void dump_color_fixup_desc(struct color_fixup_desc fixup);
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
         enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3);
-void sampler_texdim(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id);
-void state_alpha_test(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id);
 void state_fogcolor(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 void state_fogdensity(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 void state_fogstartend(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id);
-void state_fog_fragpart(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 void state_nop(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);

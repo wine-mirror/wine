@@ -369,7 +369,6 @@ struct wined3d_gl_info
 void install_gl_compat_wrapper(struct wined3d_gl_info *gl_info, enum wined3d_gl_extension ext);
 void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program);
 void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program);
-void texture_activate_dimensions(struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info);
 GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info, uint32_t bind_flags);
 void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
         const char *file, unsigned int line, const char *name);
