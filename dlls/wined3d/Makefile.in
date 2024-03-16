@@ -18,7 +18,6 @@ SOURCES = \
 	ffp_gl.c \
 	gl_compat.c \
 	glsl_shader.c \
-	nvidia_texture_shader.c \
 	palette.c \
 	query.c \
 	resource.c \
