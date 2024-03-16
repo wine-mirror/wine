@@ -1565,7 +1565,6 @@ struct wined3d_shader_backend_ops
 };
 
 extern const struct wined3d_shader_backend_ops glsl_shader_backend;
-extern const struct wined3d_shader_backend_ops arb_program_shader_backend;
 extern const struct wined3d_shader_backend_ops none_shader_backend;
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void);
