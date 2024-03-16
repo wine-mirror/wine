@@ -815,45 +815,6 @@ static void depth_stencil_2s(struct wined3d_context *context, const struct wined
     gl_info->gl_ops.gl.p_glStencilMask(stencil_write_mask);
 }
 
-void state_fogstartend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    float fogstart, fogend;
-
-    get_fog_start_end(context, state, &fogstart, &fogend);
-
-    gl_info->gl_ops.gl.p_glFogf(GL_FOG_START, fogstart);
-    checkGLcall("glFogf(GL_FOG_START, fogstart)");
-    TRACE("Fog Start == %f\n", fogstart);
-
-    gl_info->gl_ops.gl.p_glFogf(GL_FOG_END, fogend);
-    checkGLcall("glFogf(GL_FOG_END, fogend)");
-    TRACE("Fog End == %f\n", fogend);
-}
-
-void state_fogcolor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    struct wined3d_color color;
-
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_FOGCOLOR]);
-    gl_info->gl_ops.gl.p_glFogfv(GL_FOG_COLOR, &color.r);
-    checkGLcall("glFog GL_FOG_COLOR");
-}
-
-void state_fogdensity(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
-
-    tmpvalue.d = state->render_states[WINED3D_RS_FOGDENSITY];
-    gl_info->gl_ops.gl.p_glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
-    checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
-}
-
 static void state_linepattern(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
