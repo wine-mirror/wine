@@ -303,14 +303,6 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
                 case DDRAW_HANDLE_FREE:
                     break;
 
-                case DDRAW_HANDLE_MATERIAL:
-                {
-                    struct d3d_material *m = entry->object;
-                    FIXME("Material handle %#lx (%p) not unset properly.\n", i + 1, m);
-                    m->Handle = 0;
-                    break;
-                }
-
                 case DDRAW_HANDLE_MATRIX:
                 {
                     /* No FIXME here because this might happen because of sloppy applications. */
@@ -2936,7 +2928,7 @@ static HRESULT WINAPI d3d_device3_SetLightState(IDirect3DDevice3 *iface,
         {
             struct d3d_material *m;
 
-            if (!(m = ddraw_get_object(&device->handle_table, value - 1, DDRAW_HANDLE_MATERIAL)))
+            if (!(m = ddraw_get_object(NULL, value - 1, DDRAW_HANDLE_MATERIAL)))
             {
                 WARN("Invalid material handle.\n");
                 wined3d_mutex_unlock();

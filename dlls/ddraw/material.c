@@ -143,7 +143,7 @@ static ULONG WINAPI d3d_material3_Release(IDirect3DMaterial3 *iface)
         if (material->Handle)
         {
             wined3d_mutex_lock();
-            ddraw_free_handle(&material->ddraw->d3ddevice->handle_table, material->Handle - 1, DDRAW_HANDLE_MATERIAL);
+            ddraw_free_handle(NULL, material->Handle - 1, DDRAW_HANDLE_MATERIAL);
             wined3d_mutex_unlock();
         }
 
@@ -300,7 +300,7 @@ static HRESULT WINAPI d3d_material3_GetHandle(IDirect3DMaterial3 *iface,
     material->active_device = device_impl;
     if (!material->Handle)
     {
-        DWORD h = ddraw_allocate_handle(&device_impl->handle_table, material, DDRAW_HANDLE_MATERIAL);
+        DWORD h = ddraw_allocate_handle(NULL, material, DDRAW_HANDLE_MATERIAL);
         if (h == DDRAW_INVALID_HANDLE)
         {
             ERR("Failed to allocate a material handle.\n");

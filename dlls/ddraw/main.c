@@ -37,6 +37,8 @@ static HINSTANCE instance;
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
 
+static struct ddraw_handle_table global_handle_table;
+
 /* Structure for converting DirectDrawEnumerateA to DirectDrawEnumerateExA */
 struct callback_info
 {
@@ -137,6 +139,9 @@ DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddr
 {
     struct ddraw_handle_entry *entry;
 
+    if (!t)
+        t = &global_handle_table;
+
     if (t->free_entries)
     {
         DWORD idx = t->free_entries - t->entries;
@@ -181,6 +186,9 @@ void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_h
     struct ddraw_handle_entry *entry;
     void *object;
 
+    if (!t)
+        t = &global_handle_table;
+
     if (handle == DDRAW_INVALID_HANDLE || handle >= t->entry_count)
     {
         WARN("Invalid handle %#lx passed.\n", handle);
@@ -205,6 +213,9 @@ void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_h
 void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type)
 {
     struct ddraw_handle_entry *entry;
+
+    if (!t)
+        t = &global_handle_table;
 
     if (handle == DDRAW_INVALID_HANDLE || handle >= t->entry_count)
     {
@@ -815,6 +826,12 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
             return FALSE;
         }
 
+        if (!ddraw_handle_table_init(&global_handle_table, 64))
+        {
+            UnregisterClassA(DDRAW_WINDOW_CLASS_NAME, inst);
+            return FALSE;
+        }
+
         /* On Windows one can force the refresh rate that DirectDraw uses by
          * setting an override value in dxdiag.  This is documented in KB315614
          * (main article), KB230002, and KB217348.  By comparing registry dumps
@@ -866,6 +883,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
         if (WARN_ON(ddraw))
         {
             struct ddraw *ddraw;
+            unsigned int i;
 
             LIST_FOR_EACH_ENTRY(ddraw, &global_ddraw_list, struct ddraw, ddraw_list_entry)
             {
@@ -884,6 +902,26 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
                             surface->ref2, surface->ref1, surface->gamma_count);
                 }
             }
+
+            for (i = 0; i < global_handle_table.entry_count; ++i)
+            {
+                struct ddraw_handle_entry *entry = &global_handle_table.entries[i];
+
+                switch (entry->type)
+                {
+                    case DDRAW_HANDLE_FREE:
+                        break;
+
+                    case DDRAW_HANDLE_MATERIAL:
+                        WARN("Material handle %#x (%p) not unset properly.\n", i + 1, entry->object);
+                        break;
+
+                    default:
+                        WARN("Handle %#x (%p) has unknown type %#x.\n", i + 1, entry->object, entry->type);
+                        break;
+                }
+            }
+            ddraw_handle_table_destroy(&global_handle_table);
         }
 
         if (reserved) break;

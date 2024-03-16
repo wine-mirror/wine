@@ -627,7 +627,7 @@ static HRESULT WINAPI d3d_viewport_SetBackground(IDirect3DViewport3 *iface, D3DM
 
     wined3d_mutex_lock();
 
-    if (!(m = ddraw_get_object(&viewport->ddraw->d3ddevice->handle_table, material - 1, DDRAW_HANDLE_MATERIAL)))
+    if (!(m = ddraw_get_object(NULL, material - 1, DDRAW_HANDLE_MATERIAL)))
     {
         WARN("Invalid material handle %#lx.\n", material);
         wined3d_mutex_unlock();
