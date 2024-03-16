@@ -784,7 +784,6 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl, const struct wined3d_state *state);
 void wined3d_context_gl_wait_command_fence(struct wined3d_context_gl *context_gl, uint64_t id);
 
-void wined3d_arbfp_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device);
 void wined3d_fbo_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info);
 void wined3d_ffp_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info);
 struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device);
