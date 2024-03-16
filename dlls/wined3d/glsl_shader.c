@@ -8517,16 +8517,10 @@ static GLuint shader_glsl_generate_domain_shader(const struct wined3d_context_gl
     switch (args->tessellator_output_primitive)
     {
         case WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CW:
-            if (args->render_offscreen)
-                shader_addline(buffer, ", ccw");
-            else
-                shader_addline(buffer, ", cw");
+            shader_addline(buffer, ", ccw");
             break;
         case WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW:
-            if (args->render_offscreen)
-                shader_addline(buffer, ", cw");
-            else
-                shader_addline(buffer, ", ccw");
+            shader_addline(buffer, ", cw");
             break;
         case WINED3D_TESSELLATOR_OUTPUT_POINT:
             shader_addline(buffer, ", point_mode");

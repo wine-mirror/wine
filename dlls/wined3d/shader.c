@@ -2762,8 +2762,6 @@ void find_ds_compile_args(const struct wined3d_state *state, const struct wined3
             : pixel_shader ? pixel_shader->limits->packed_input : shader->limits->packed_output;
     args->next_shader_type = geometry_shader ? WINED3D_SHADER_TYPE_GEOMETRY : WINED3D_SHADER_TYPE_PIXEL;
 
-    args->render_offscreen = 1;
-
     init_interpolation_compile_args(args->interpolation_mode,
             args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL ? pixel_shader : NULL, context->d3d_info);
 

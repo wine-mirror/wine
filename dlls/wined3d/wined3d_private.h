@@ -1531,8 +1531,7 @@ struct ds_compile_args
     enum wined3d_tessellator_partitioning tessellator_partitioning;
     unsigned int output_count : 16;
     unsigned int next_shader_type : 3;
-    unsigned int render_offscreen : 1;
-    unsigned int padding : 12;
+    unsigned int padding : 13;
     uint32_t interpolation_mode[WINED3D_PACKED_INTERPOLATION_SIZE];
 };
 
