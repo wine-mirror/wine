@@ -2044,7 +2044,6 @@ struct wined3d_vertex_pipe_ops
 
 extern const struct wined3d_state_entry_template misc_state_template_gl[];
 extern const struct wined3d_fragment_pipe_ops none_fragment_pipe;
-extern const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline;
 extern const struct wined3d_fragment_pipe_ops atifs_fragment_pipeline;
 extern const struct wined3d_fragment_pipe_ops arbfp_fragment_pipeline;
 extern const struct wined3d_fragment_pipe_ops nvts_fragment_pipeline;

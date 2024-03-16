@@ -400,11 +400,6 @@ static void blend(struct wined3d_context *context, const struct wined3d_state *s
         gl_info->gl_ops.gl.p_glBlendFunc(src_blend, dst_blend);
         checkGLcall("glBlendFunc");
     }
-
-    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
-     * updating. */
-    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
-        context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
 static void set_color_mask(const struct wined3d_gl_info *gl_info, UINT index, DWORD mask)
@@ -478,11 +473,6 @@ static void blend_db2(struct wined3d_context *context, const struct wined3d_stat
                 || b->desc.rt[i].op_alpha != b->desc.rt[0].op_alpha)
             WARN("Independent blend equations and blend functions are not supported by this GL implementation.\n");
     }
-
-    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
-     * updating. */
-    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
-        context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
 static void blend_dbb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -540,11 +530,6 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
                 gl_blend_op(gl_info, b->desc.rt[i].op_alpha)));
         checkGLcall("glBlendEquationSeparatei");
     }
-
-    /* Colorkey fixup for stage 0 alphaop depends on blend state, so it may need
-     * updating. */
-    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
-        context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
 }
 
 void state_alpha_test(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -636,29 +621,6 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
     enable_mask = state->render_states[WINED3D_RS_CLIPPING] ?
             state->render_states[WINED3D_RS_CLIPPLANEENABLE] : 0;
     wined3d_context_gl_enable_clip_distances(context_gl, enable_mask);
-}
-
-static void state_texfactor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_color color;
-    unsigned int i;
-
-    /* Note the texture color applies to all textures whereas
-     * GL_TEXTURE_ENV_COLOR applies to active only. */
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_TEXTUREFACTOR]);
-
-    /* And now the default texture color as well */
-    for (i = 0; i < context->d3d_info->ffp_fragment_caps.max_blend_stages; ++i)
-    {
-        /* Note the WINED3D_RS value applies to all textures, but GL has one
-         * per texture, so apply it now ready to be used! */
-        wined3d_context_gl_active_texture(context_gl, gl_info, i);
-
-        gl_info->gl_ops.gl.p_glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &color.r);
-        checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-    }
 }
 
 static void renderstate_stencil_twosided(struct wined3d_context *context, GLint face,
@@ -2529,68 +2491,6 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
 }
 
 
-static void tex_colorop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    unsigned int stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    BOOL tex_used = context->fixed_function_usage_map & (1u << stage);
-    unsigned int mapped_stage = context_gl->tex_unit_map[stage];
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-
-    TRACE("Setting color op for stage %d\n", stage);
-
-    /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-    if (use_ps(state)) return;
-
-    if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
-
-    if (mapped_stage != WINED3D_UNMAPPED_STAGE)
-    {
-        if (tex_used && mapped_stage >= gl_info->limits.ffp_textures)
-        {
-            FIXME("Attempt to enable unsupported stage!\n");
-            return;
-        }
-        wined3d_context_gl_active_texture(context_gl, gl_info, mapped_stage);
-    }
-
-    if (stage >= context->lowest_disabled_stage)
-    {
-        TRACE("Stage disabled\n");
-        if (mapped_stage != WINED3D_UNMAPPED_STAGE)
-        {
-            /* Disable everything here */
-            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
-            checkGLcall("glDisable(GL_TEXTURE_2D)");
-            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
-            checkGLcall("glDisable(GL_TEXTURE_3D)");
-            if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-            {
-                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-            }
-            if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-            {
-                gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
-                checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
-            }
-        }
-        /* All done */
-        return;
-    }
-
-    /* The sampler will also activate the correct texture dimensions, so no
-     * need to do it here if the sampler for this stage is dirty. */
-    if (!isStateDirty(context, STATE_SAMPLER(stage)) && tex_used)
-        texture_activate_dimensions(wined3d_state_get_ffp_texture(state, stage), gl_info);
-
-    set_tex_op(gl_info, state, FALSE, stage,
-            state->texture_states[stage][WINED3D_TSS_COLOR_OP],
-            state->texture_states[stage][WINED3D_TSS_COLOR_ARG1],
-            state->texture_states[stage][WINED3D_TSS_COLOR_ARG2],
-            state->texture_states[stage][WINED3D_TSS_COLOR_ARG0]);
-}
-
 void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     unsigned int stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
@@ -3302,182 +3202,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
-static const struct wined3d_state_entry_template ffp_fragmentstate_template[] = {
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(1, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(2, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(3, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(4, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(5, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(6, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        tex_colorop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_ARG1),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_ARG2),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        tex_alphaop         }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG1),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG2),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_ARG0),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_ARG0),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_ALPHA_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_RESULT_ARG),      { STATE_TEXTURESTAGE(7, WINED3D_TSS_COLOR_OP),        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),        { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            apply_pixelshader   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ALPHAFUNC),                 { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ALPHAREF),                  { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           state_alpha_test    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_COLORKEYENABLE),            { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_COLOR_KEY,                                    { STATE_COLOR_KEY,                                    state_nop           }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           { STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),            NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  state_fogcolor      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGDENSITY),                { STATE_RENDER(WINED3D_RS_FOGDENSITY),                state_fogdensity    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGENABLE),                 { STATE_RENDER(WINED3D_RS_FOGENABLE),                 state_fog_fragpart  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGTABLEMODE),              { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),             { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGSTART),                  { STATE_RENDER(WINED3D_RS_FOGSTART),                  state_fogstartend   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FOGEND),                    { STATE_RENDER(WINED3D_RS_FOGSTART),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           state_srgbwrite     }, ARB_FRAMEBUFFER_SRGB            },
-    { STATE_RENDER(WINED3D_RS_SHADEMODE),                 { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode     }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(3),                                   { STATE_SAMPLER(3),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(4),                                   { STATE_SAMPLER(4),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(5),                                   { STATE_SAMPLER(5),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(6),                                   { STATE_SAMPLER(6),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
-    {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
-};
-
-/* Context activation is done by the caller. */
-static void ffp_pipe_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state) {}
-
-static void ffp_pipe_disable(const struct wined3d_context *context) {}
-
-static void *ffp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
-{
-    return shader_priv;
-}
-
-static void ffp_free(struct wined3d_device *device, struct wined3d_context *context) {}
-
-static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
-{
-    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
-
-    memset(caps, 0, sizeof(*caps));
-    caps->PrimitiveMiscCaps = 0;
-    caps->TextureOpCaps = WINED3DTEXOPCAPS_ADD
-            | WINED3DTEXOPCAPS_ADDSIGNED
-            | WINED3DTEXOPCAPS_ADDSIGNED2X
-            | WINED3DTEXOPCAPS_MODULATE
-            | WINED3DTEXOPCAPS_MODULATE2X
-            | WINED3DTEXOPCAPS_MODULATE4X
-            | WINED3DTEXOPCAPS_SELECTARG1
-            | WINED3DTEXOPCAPS_SELECTARG2
-            | WINED3DTEXOPCAPS_DISABLE;
-    caps->srgb_write = !!gl_info->supported[ARB_FRAMEBUFFER_SRGB];
-
-    if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE]
-            || gl_info->supported[EXT_TEXTURE_ENV_COMBINE]
-            || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
-    {
-        caps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA
-                | WINED3DTEXOPCAPS_BLENDTEXTUREALPHA
-                | WINED3DTEXOPCAPS_BLENDFACTORALPHA
-                | WINED3DTEXOPCAPS_BLENDCURRENTALPHA
-                | WINED3DTEXOPCAPS_LERP
-                | WINED3DTEXOPCAPS_SUBTRACT;
-    }
-    if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3]
-            || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
-    {
-        caps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH
-                | WINED3DTEXOPCAPS_MULTIPLYADD
-                | WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR
-                | WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA
-                | WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
-    }
-    if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
-        caps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
-
-    caps->max_blend_stages = gl_info->limits.ffp_textures;
-    caps->max_textures = gl_info->limits.ffp_textures;
-}
-
-static unsigned int ffp_fragment_get_emul_mask(const struct wined3d_adapter *adapter)
-{
-    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
-}
-
-static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
-{
-    /* We only support identity conversions. */
-    return is_identity_fixup(fixup);
-}
-
 static BOOL ffp_none_context_alloc(struct wined3d_context *context)
 {
     return TRUE;
@@ -3486,20 +3210,6 @@ static BOOL ffp_none_context_alloc(struct wined3d_context *context)
 static void ffp_none_context_free(struct wined3d_context *context)
 {
 }
-
-const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
-{
-    .fp_apply_draw_state = ffp_pipe_apply_draw_state,
-    .fp_disable = ffp_pipe_disable,
-    .get_caps = ffp_fragment_get_caps,
-    .get_emul_mask = ffp_fragment_get_emul_mask,
-    .alloc_private = ffp_alloc,
-    .free_private = ffp_free,
-    .allocate_context_data = ffp_none_context_alloc,
-    .free_context_data = ffp_none_context_free,
-    .color_fixup_supported = ffp_color_fixup_supported,
-    .states = ffp_fragmentstate_template,
-};
 
 static void none_pipe_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state) {}
 
