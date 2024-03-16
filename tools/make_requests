@@ -53,6 +53,7 @@ my %formats =
     "generic_map_t" => [  16,  4,  "&dump_generic_map" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
     "hw_input_t"    => [  40,  8,  "&dump_hw_input" ],
+    "obj_locator_t" => [  16,  8,  "&dump_obj_locator" ],
     # varargs-only structures
     "apc_call_t"               => [  64,  8 ],
     "context_t"                => [  1728,  8 ],

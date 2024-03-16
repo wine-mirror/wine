@@ -916,6 +916,12 @@ typedef volatile struct
     object_shm_t         shm;              /* object shared data */
 } shared_object_t;
 
+typedef struct
+{
+    object_id_t          id;               /* object unique id, object data is valid if != 0 */
+    mem_size_t           offset;           /* offset of the object in session shared memory */
+} obj_locator_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -2813,13 +2819,16 @@ enum coords_relative
 @REQ(get_thread_desktop)
     thread_id_t  tid;             /* thread id */
 @REPLY
-    obj_handle_t handle;          /* handle to the desktop */
+    obj_locator_t  locator;       /* locator for the shared session object */
+    obj_handle_t   handle;        /* handle to the desktop */
 @END
 
 
 /* Set the thread current desktop */
 @REQ(set_thread_desktop)
     obj_handle_t handle;          /* handle to the desktop */
+@REPLY
+    obj_locator_t  locator;       /* locator for the shared session object */
 @END
 
 

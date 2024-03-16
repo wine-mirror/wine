@@ -1407,6 +1407,13 @@ void free_shared_object( const volatile void *object_shm )
     list_add_tail( &session.free_objects, &object->entry );
 }
 
+obj_locator_t get_shared_object_locator( const volatile void *object_shm )
+{
+    struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
+    obj_locator_t locator = {.offset = object->offset, .id = object->obj.id};
+    return locator;
+}
+
 struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {

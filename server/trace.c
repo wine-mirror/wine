@@ -467,6 +467,14 @@ static void dump_hw_input( const char *prefix, const hw_input_t *input )
     }
 }
 
+static void dump_obj_locator( const char *prefix, const obj_locator_t *locator )
+{
+    fprintf( stderr, "%s{", prefix );
+    dump_uint64( "id=", &locator->id );
+    dump_uint64( ",offset=", &locator->offset );
+    fprintf( stderr, "}" );
+}
+
 static void dump_luid( const char *prefix, const struct luid *luid )
 {
     fprintf( stderr, "%s%d.%u", prefix, luid->high_part, luid->low_part );
@@ -3426,12 +3434,18 @@ static void dump_get_thread_desktop_request( const struct get_thread_desktop_req
 
 static void dump_get_thread_desktop_reply( const struct get_thread_desktop_reply *req )
 {
-    fprintf( stderr, " handle=%04x", req->handle );
+    dump_obj_locator( " locator=", &req->locator );
+    fprintf( stderr, ", handle=%04x", req->handle );
 }
 
 static void dump_set_thread_desktop_request( const struct set_thread_desktop_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_set_thread_desktop_reply( const struct set_thread_desktop_reply *req )
+{
+    dump_obj_locator( " locator=", &req->locator );
 }
 
 static void dump_enum_desktop_request( const struct enum_desktop_request *req )
@@ -5101,7 +5115,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_get_thread_desktop_reply,
-    NULL,
+    (dump_func)dump_set_thread_desktop_reply,
     (dump_func)dump_enum_desktop_reply,
     (dump_func)dump_set_user_object_info_reply,
     (dump_func)dump_register_hotkey_reply,

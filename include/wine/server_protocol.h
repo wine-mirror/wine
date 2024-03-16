@@ -900,6 +900,12 @@ typedef volatile struct
     object_shm_t         shm;
 } shared_object_t;
 
+typedef struct
+{
+    object_id_t          id;
+    mem_size_t           offset;
+} obj_locator_t;
+
 
 
 
@@ -3895,8 +3901,9 @@ struct get_thread_desktop_request
 struct get_thread_desktop_reply
 {
     struct reply_header __header;
-    obj_handle_t handle;
-    char __pad_12[4];
+    obj_locator_t  locator;
+    obj_handle_t   handle;
+    char __pad_28[4];
 };
 
 
@@ -3909,6 +3916,7 @@ struct set_thread_desktop_request
 struct set_thread_desktop_reply
 {
     struct reply_header __header;
+    obj_locator_t  locator;
 };
 
 
@@ -6552,7 +6560,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 810
+#define SERVER_PROTOCOL_VERSION 811
 
 /* ### protocol_version end ### */
 
