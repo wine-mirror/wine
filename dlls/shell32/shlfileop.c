@@ -1398,6 +1398,7 @@ static int move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const
     INT mismatched = 0;
     const FILE_ENTRY *entryToMove;
     const FILE_ENTRY *fileDest;
+    int ret;
 
     if (!flFrom->dwNumFiles)
         return ERROR_SUCCESS;
@@ -1418,8 +1419,9 @@ static int move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const
         return ERROR_CANCELLED;
     }
 
-    if (!PathFileExistsW(flTo->feFiles[0].szDirectory))
-        return ERROR_CANCELLED;
+    ret = SHCreateDirectoryExW(NULL, flTo->feFiles[0].szDirectory, NULL);
+    if (ret && ret != ERROR_ALREADY_EXISTS)
+        return ret;
 
     if (lpFileOp->fFlags & FOF_MULTIDESTFILES)
         mismatched = flFrom->dwNumFiles - flTo->dwNumFiles;
