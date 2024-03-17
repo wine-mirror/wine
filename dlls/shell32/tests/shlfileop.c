@@ -2165,8 +2165,8 @@ static void test_move(void)
     shfo.pFrom = "test2.txt\0";
     shfo.pTo = "dir1\\dir2\\test2.txt\0";
     retval = SHFileOperationA(&shfo);
-    todo_wine ok(!retval, "got %ld\n", retval);
-    todo_wine ok(DeleteFileA("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
+    ok(!retval, "got %ld\n", retval);
+    ok(DeleteFileA("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
     RemoveDirectoryA("dir1\\dir2");
     RemoveDirectoryA("dir1");
     createTestFile("test2.txt");
