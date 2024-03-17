@@ -1971,12 +1971,18 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
     add_bounds_rect( &window_surface->bounds, &rc );
     if (window_surface->clip_region)
     {
+        HRGN clipped = NtGdiCreateRectRgn( window_surface->rect.left, window_surface->rect.top,
+                                           window_surface->rect.right, window_surface->rect.bottom );
+        NtGdiCombineRgn( clipped, clipped, window_surface->clip_region, RGN_DIFF );
+
         region = NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
-        if (NtGdiCombineRgn( region, region, window_surface->clip_region, RGN_DIFF ) <= NULLREGION)
+        if (NtGdiCombineRgn( region, region, clipped, RGN_DIFF ) <= NULLREGION)
         {
             NtGdiDeleteObjectApp( region );
             region = 0;
         }
+
+        NtGdiDeleteObjectApp( clipped );
     }
     window_surface_unlock( window_surface );
     return region;
