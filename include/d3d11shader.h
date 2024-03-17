@@ -261,4 +261,20 @@ DECLARE_INTERFACE_(ID3D11Module, IUnknown)
 };
 #undef INTERFACE
 
+DEFINE_GUID(IID_ID3D11Linker, 0x59a6cd0e, 0xe10d, 0x4c1f, 0x88, 0xc0, 0x63, 0xab, 0xa1, 0xda, 0xf3, 0x0e);
+
+#define INTERFACE ID3D11Linker
+DECLARE_INTERFACE_(ID3D11Linker, IUnknown)
+{
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* ID3D11Linker methods */
+    STDMETHOD(Link)(THIS_ ID3D11ModuleInstance *instance, LPCSTR instname, LPCSTR targetname, UINT flags, ID3DBlob **shader, ID3DBlob **error) PURE;
+    STDMETHOD(UseLibrary)(THIS_ ID3D11ModuleInstance *libinstance) PURE;
+    STDMETHOD(AddClipPlaneFromCBuffer)(THIS_ UINT bufferslot, UINT bufferentry) PURE;
+};
+#undef INTERFACE
+
 #endif
