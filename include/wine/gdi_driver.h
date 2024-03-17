@@ -212,6 +212,7 @@ struct window_surface;
 struct window_surface_funcs
 {
     void  (*set_clip)( struct window_surface *surface, const RECT *rects, UINT count );
+    void  (*set_shape)( struct window_surface *surface, const RECT *rects, UINT count );
     BOOL  (*flush)( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                     const BITMAPINFO *color_info, const void *color_bits );
     void  (*destroy)( struct window_surface *surface );
@@ -232,6 +233,8 @@ struct window_surface
     COLORREF                           color_key;    /* layered window surface color key, invalid if CLR_INVALID */
     UINT                               alpha_bits;   /* layered window global alpha bits, invalid if -1 */
     UINT                               alpha_mask;   /* layered window per-pixel alpha mask, invalid if 0 */
+    HRGN                               shape_region; /* shape of the window surface, unshaped if 0 */
+    HBITMAP                            shape_bitmap; /* bitmap for the surface shape (1bpp) */
     HBITMAP                            color_bitmap; /* bitmap for the surface colors */
     /* driver-specific fields here */
 };
@@ -245,6 +248,8 @@ W32KAPI void window_surface_unlock( struct window_surface *surface );
 W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORREF color_key, UINT alpha_bits, UINT alpha_mask );
 W32KAPI void window_surface_flush( struct window_surface *surface );
 W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region );
+W32KAPI void window_surface_set_shape( struct window_surface *surface, HRGN shape_region );
+W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORREF color_key, UINT alpha_bits, UINT alpha_mask );
 
 /* display manager interface, used to initialize display device registry data */
 

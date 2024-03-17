@@ -619,6 +619,13 @@ static void android_surface_set_clip( struct window_surface *window_surface, con
 }
 
 /***********************************************************************
+ *           android_surface_set_shape
+ */
+static void android_surface_set_shape( struct window_surface *window_surface, const RECT *rects, UINT count )
+{
+}
+
+/***********************************************************************
  *           android_surface_flush
  */
 static BOOL android_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
@@ -704,6 +711,7 @@ static void android_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs android_surface_funcs =
 {
     android_surface_set_clip,
+    android_surface_set_shape,
     android_surface_flush,
     android_surface_destroy
 };

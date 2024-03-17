@@ -1942,6 +1942,29 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
 }
 
 /***********************************************************************
+ *           x11drv_surface_set_shape
+ */
+static void x11drv_surface_set_shape( struct window_surface *window_surface, const RECT *rects, UINT count )
+{
+#ifdef HAVE_LIBXSHAPE
+    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    XRectangle *xrects;
+
+    TRACE( "surface %p, rects %p, count %u\n", surface, rects, count );
+
+    if (!count)
+        XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
+    else if ((xrects = xrectangles_from_rects( rects, count )))
+    {
+        XShapeCombineRectangles( gdi_display, surface->window, ShapeBounding, 0, 0,
+                                 xrects, count, ShapeSet, YXBanded );
+        free( xrects );
+    }
+    XFlush( gdi_display );
+#endif /* HAVE_LIBXSHAPE */
+}
+
+/***********************************************************************
  *           x11drv_surface_flush
  */
 static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
@@ -2013,6 +2036,7 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
     x11drv_surface_set_clip,
+    x11drv_surface_set_shape,
     x11drv_surface_flush,
     x11drv_surface_destroy
 };

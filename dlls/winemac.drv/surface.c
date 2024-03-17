@@ -75,6 +75,14 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 }
 
 /***********************************************************************
+ *              macdrv_surface_set_shape
+ */
+static void macdrv_surface_set_shape(struct window_surface *window_surface, const RECT *rects, UINT count)
+{
+    /* TODO */
+}
+
+/***********************************************************************
  *              macdrv_surface_flush
  */
 static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
@@ -112,6 +120,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
     macdrv_surface_set_clip,
+    macdrv_surface_set_shape,
     macdrv_surface_flush,
     macdrv_surface_destroy,
 };

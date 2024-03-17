@@ -217,6 +217,14 @@ static void wayland_window_surface_set_clip(struct window_surface *window_surfac
     /* TODO */
 }
 
+/***********************************************************************
+ *           wayland_window_surface_set_shape
+ */
+static void wayland_window_surface_set_shape(struct window_surface *window_surface, const RECT *rects, UINT count)
+{
+    /* TODO */
+}
+
 /**********************************************************************
  *          get_region_data
  */
@@ -430,6 +438,7 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
     wayland_window_surface_set_clip,
+    wayland_window_surface_set_shape,
     wayland_window_surface_flush,
     wayland_window_surface_destroy
 };

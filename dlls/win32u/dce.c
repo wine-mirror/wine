@@ -61,6 +61,11 @@ static void dummy_surface_set_clip( struct window_surface *window_surface, const
     /* nothing to do */
 }
 
+static void dummy_surface_set_shape( struct window_surface *window_surface, const RECT *rects, UINT count )
+{
+    /* nothing to do */
+}
+
 static BOOL dummy_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
                                  const BITMAPINFO *color_info, const void *color_bits )
 {
@@ -76,6 +81,7 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs dummy_surface_funcs =
 {
     dummy_surface_set_clip,
+    dummy_surface_set_shape,
     dummy_surface_flush,
     dummy_surface_destroy
 };
@@ -96,6 +102,10 @@ static void offscreen_window_surface_set_clip( struct window_surface *surface, c
 {
 }
 
+static void offscreen_window_surface_set_shape( struct window_surface *surface, const RECT *rects, UINT count )
+{
+}
+
 static BOOL offscreen_window_surface_flush( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                                             const BITMAPINFO *color_info, const void *color_bits )
 {
@@ -110,6 +120,7 @@ static void offscreen_window_surface_destroy( struct window_surface *surface )
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
     offscreen_window_surface_set_clip,
+    offscreen_window_surface_set_shape,
     offscreen_window_surface_flush,
     offscreen_window_surface_destroy
 };
@@ -322,6 +333,33 @@ W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_
         {
             surface->funcs->set_clip( surface, data->rects, data->numRects );
             GDI_ReleaseObj( clip_region );
+        }
+    }
+
+    window_surface_unlock( surface );
+}
+
+W32KAPI void window_surface_set_shape( struct window_surface *surface, HRGN shape_region )
+{
+    window_surface_lock( surface );
+
+    if (!shape_region && surface->shape_region)
+    {
+        NtGdiDeleteObjectApp( surface->shape_region );
+        surface->shape_region = 0;
+        surface->funcs->set_shape( surface, NULL, 0 );
+    }
+    else if (shape_region && !NtGdiEqualRgn( shape_region, surface->shape_region ))
+    {
+        WINEREGION *data;
+
+        if (!surface->shape_region) surface->shape_region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( surface->shape_region, shape_region, 0, RGN_COPY );
+
+        if ((data = GDI_GetObjPtr( shape_region, NTGDI_OBJ_REGION )))
+        {
+            surface->funcs->set_shape( surface, data->rects, data->numRects );
+            GDI_ReleaseObj( shape_region );
         }
     }
 

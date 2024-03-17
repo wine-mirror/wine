@@ -386,15 +386,18 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
     HRGN hrgn = win_region;
 
     if (!data->whole_window) return;
-    data->shaped = FALSE;
 
     if (IsRectEmpty( &data->window_rect ))  /* set an empty shape */
     {
         static XRectangle empty_rect;
+        data->shaped = FALSE;
         XShapeCombineRectangles( data->display, data->whole_window, ShapeBounding, 0, 0,
                                  &empty_rect, 1, ShapeSet, YXBanded );
         return;
     }
+
+    if (data->surface) return; /* use surface shape instead */
+    data->shaped = FALSE;
 
     if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
     {

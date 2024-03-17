@@ -1764,6 +1764,7 @@ static void update_surface_region( HWND hwnd )
         if (win->dwExStyle & WS_EX_LAYOUTRTL) NtUserMirrorRgn( hwnd, shape );
         NtGdiDeleteObjectApp( region );
     }
+    window_surface_set_shape( win->surface, shape );
 
     if (get_window_region( hwnd, TRUE, &region, &visible )) goto done;
     if (!region) window_surface_set_clip( win->surface, shape );
