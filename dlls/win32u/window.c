@@ -1717,23 +1717,16 @@ static BOOL get_window_info( HWND hwnd, WINDOWINFO *info )
     return TRUE;
 }
 
-/***********************************************************************
- *           update_surface_region
- */
-static void update_surface_region( HWND hwnd )
+static NTSTATUS get_window_region( HWND hwnd, HRGN *region )
 {
     NTSTATUS status;
-    HRGN region = 0;
     RGNDATA *data;
     size_t size = 256;
-    WND *win = get_win_ptr( hwnd );
 
-    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
-    if (!win->surface) goto done;
-
+    *region = 0;
     do
     {
-        if (!(data = malloc( FIELD_OFFSET( RGNDATA, Buffer[size] )))) goto done;
+        if (!(data = malloc( FIELD_OFFSET( RGNDATA, Buffer[size] )))) return STATUS_NO_MEMORY;
 
         SERVER_START_REQ( get_surface_region )
         {
@@ -1748,20 +1741,38 @@ static void update_surface_region( HWND hwnd )
                     data->rdh.iType    = RDH_RECTANGLES;
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
-                    region = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-                    NtGdiOffsetRgn( region, -reply->visible_rect.left, -reply->visible_rect.top );
+                    *region = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
+                    NtGdiOffsetRgn( *region, -reply->visible_rect.left, -reply->visible_rect.top );
                 }
             }
             else size = reply->total_size;
         }
         SERVER_END_REQ;
+
         free( data );
     } while (status == STATUS_BUFFER_OVERFLOW);
 
-    if (status) goto done;
+    return status;
+}
 
-    win->surface->funcs->set_region( win->surface, region );
-    if (region) NtGdiDeleteObjectApp( region );
+/***********************************************************************
+ *           update_surface_region
+ */
+static void update_surface_region( HWND hwnd )
+{
+    WND *win = get_win_ptr( hwnd );
+    HRGN region;
+
+    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
+    if (!win->surface) goto done;
+
+    if (get_window_region( hwnd, &region )) goto done;
+    if (!region) win->surface->funcs->set_region( win->surface, 0 );
+    else
+    {
+        win->surface->funcs->set_region( win->surface, region );
+        NtGdiDeleteObjectApp( region );
+    }
 
 done:
     release_win_ptr( win );
