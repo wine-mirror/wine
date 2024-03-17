@@ -3189,26 +3189,16 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
     dump_varargs_rectangles( ", region=", cur_size );
 }
 
-static void dump_get_surface_region_request( const struct get_surface_region_request *req )
-{
-    fprintf( stderr, " window=%08x", req->window );
-}
-
-static void dump_get_surface_region_reply( const struct get_surface_region_reply *req )
-{
-    dump_rectangle( " visible_rect=", &req->visible_rect );
-    fprintf( stderr, ", total_size=%u", req->total_size );
-    dump_varargs_rectangles( ", region=", cur_size );
-}
-
 static void dump_get_window_region_request( const struct get_window_region_request *req )
 {
     fprintf( stderr, " window=%08x", req->window );
+    fprintf( stderr, ", surface=%d", req->surface );
 }
 
 static void dump_get_window_region_reply( const struct get_window_region_reply *req )
 {
-    fprintf( stderr, " total_size=%u", req->total_size );
+    dump_rectangle( " visible_rect=", &req->visible_rect );
+    fprintf( stderr, ", total_size=%u", req->total_size );
     dump_varargs_rectangles( ", region=", cur_size );
 }
 
@@ -4757,7 +4747,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_window_text_request,
     (dump_func)dump_get_windows_offset_request,
     (dump_func)dump_get_visible_region_request,
-    (dump_func)dump_get_surface_region_request,
     (dump_func)dump_get_window_region_request,
     (dump_func)dump_set_window_region_request,
     (dump_func)dump_get_update_region_request,
@@ -5045,7 +5034,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_get_windows_offset_reply,
     (dump_func)dump_get_visible_region_reply,
-    (dump_func)dump_get_surface_region_reply,
     (dump_func)dump_get_window_region_reply,
     NULL,
     (dump_func)dump_get_update_region_reply,
@@ -5333,7 +5321,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_window_text",
     "get_windows_offset",
     "get_visible_region",
-    "get_surface_region",
     "get_window_region",
     "set_window_region",
     "get_update_region",

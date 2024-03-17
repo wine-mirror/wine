@@ -2592,20 +2592,12 @@ enum coords_relative
 @END
 
 
-/* Get the visible surface region of a window */
-@REQ(get_surface_region)
-    user_handle_t  window;        /* handle to the window */
-@REPLY
-    rectangle_t    visible_rect;  /* window visible rect in screen coords */
-    data_size_t    total_size;    /* total size of the resulting region */
-    VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
-@END
-
-
 /* Get the window region */
 @REQ(get_window_region)
     user_handle_t  window;        /* handle to the window */
+    int            surface;       /* get the visible surface region */
 @REPLY
+    rectangle_t    visible_rect;  /* window visible rect in screen coords */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in window coords) */
 @END

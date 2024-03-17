@@ -2631,30 +2631,28 @@ DECL_HANDLER(get_visible_region)
 }
 
 
-/* get the surface visible region of a window */
-DECL_HANDLER(get_surface_region)
-{
-    struct region *region;
-    struct window *win = get_window( req->window );
-
-    if (!win || !is_visible( win )) return;
-
-    if ((region = get_surface_region( win )))
-    {
-        rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
-        if (data) set_reply_data_ptr( data, reply->total_size );
-    }
-    reply->visible_rect = win->visible_rect;
-}
-
-
-/* get the window region */
+/* get the window regions */
 DECL_HANDLER(get_window_region)
 {
     rectangle_t *data;
+    struct region *region;
     struct window *win = get_window( req->window );
 
     if (!win) return;
+
+    reply->visible_rect = win->visible_rect;
+    if (req->surface)
+    {
+        if (!is_visible( win )) return;
+
+        if ((region = get_surface_region( win )))
+        {
+            rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
+            if (data) set_reply_data_ptr( data, reply->total_size );
+        }
+        return;
+    }
+
     if (!win->win_region) return;
 
     if (win->ex_style & WS_EX_LAYOUTRTL)

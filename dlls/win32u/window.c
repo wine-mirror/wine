@@ -1717,7 +1717,7 @@ static BOOL get_window_info( HWND hwnd, WINDOWINFO *info )
     return TRUE;
 }
 
-static NTSTATUS get_window_region( HWND hwnd, HRGN *region )
+static NTSTATUS get_window_region( HWND hwnd, BOOL surface, HRGN *region, RECT *visible )
 {
     NTSTATUS status;
     RGNDATA *data;
@@ -1728,9 +1728,10 @@ static NTSTATUS get_window_region( HWND hwnd, HRGN *region )
     {
         if (!(data = malloc( FIELD_OFFSET( RGNDATA, Buffer[size] )))) return STATUS_NO_MEMORY;
 
-        SERVER_START_REQ( get_surface_region )
+        SERVER_START_REQ( get_window_region )
         {
             req->window = wine_server_user_handle( hwnd );
+            req->surface = surface;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
             {
@@ -1742,7 +1743,10 @@ static NTSTATUS get_window_region( HWND hwnd, HRGN *region )
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
                     *region = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-                    NtGdiOffsetRgn( *region, -reply->visible_rect.left, -reply->visible_rect.top );
+                    visible->left = reply->visible_rect.left;
+                    visible->top = reply->visible_rect.top;
+                    visible->right = reply->visible_rect.right;
+                    visible->bottom = reply->visible_rect.bottom;
                 }
             }
             else size = reply->total_size;
@@ -1762,14 +1766,16 @@ static void update_surface_region( HWND hwnd )
 {
     WND *win = get_win_ptr( hwnd );
     HRGN region;
+    RECT visible;
 
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
     if (!win->surface) goto done;
 
-    if (get_window_region( hwnd, &region )) goto done;
+    if (get_window_region( hwnd, TRUE, &region, &visible )) goto done;
     if (!region) win->surface->funcs->set_region( win->surface, 0 );
     else
     {
+        NtGdiOffsetRgn( region, -visible.left, -visible.top );
         win->surface->funcs->set_region( win->surface, region );
         NtGdiDeleteObjectApp( region );
     }
@@ -1959,41 +1965,17 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 int WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk )
 {
     NTSTATUS status;
-    HRGN win_rgn = 0;
-    RGNDATA *data;
-    size_t size = 256;
     int ret = ERROR;
+    HRGN win_rgn;
+    RECT visible;
 
-    do
+    if ((status = get_window_region( hwnd, FALSE, &win_rgn, &visible )))
     {
-        if (!(data = malloc( sizeof(*data) + size - 1 )))
-        {
-            RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
-            return ERROR;
-        }
-        SERVER_START_REQ( get_window_region )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            wine_server_set_reply( req, data->Buffer, size );
-            if (!(status = wine_server_call( req )))
-            {
-                size_t reply_size = wine_server_reply_size( reply );
-                if (reply_size)
-                {
-                    data->rdh.dwSize   = sizeof(data->rdh);
-                    data->rdh.iType    = RDH_RECTANGLES;
-                    data->rdh.nCount   = reply_size / sizeof(RECT);
-                    data->rdh.nRgnSize = reply_size;
-                    win_rgn = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-                }
-            }
-            else size = reply->total_size;
-        }
-        SERVER_END_REQ;
-        free( data );
-    } while (status == STATUS_BUFFER_OVERFLOW);
+        set_ntstatus( status );
+        return ERROR;
+    }
 
-    if (set_ntstatus( status ) && win_rgn)
+    if (win_rgn)
     {
         ret = NtGdiCombineRgn( hrgn, win_rgn, 0, RGN_COPY );
         NtGdiDeleteObjectApp( win_rgn );
