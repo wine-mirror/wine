@@ -236,6 +236,7 @@ static void xstate_to_server( context_t *to, const CONTEXT_EX *xctx )
 {
     const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
 
+    if (xs->CompactionMask && !(xs->CompactionMask & 4)) return;
     to->flags |= SERVER_CTX_YMM_REGISTERS;
     if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
 }
@@ -613,8 +614,14 @@ static void xstate_from_server( CONTEXT_EX *xctx, const context_t *from )
     XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
     unsigned int i;
 
-    xs->Mask &= ~4;
-    if (xs->CompactionMask) xs->CompactionMask = 0x8000000000000004;
+    xs->Mask &= ~(ULONG64)4;
+
+    if (xs->CompactionMask)
+    {
+        xs->CompactionMask &= ~(UINT64)3;
+        if (!(xs->CompactionMask & 4)) return;
+    }
+
     for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
     {
         if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
