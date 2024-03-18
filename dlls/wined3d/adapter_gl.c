@@ -5330,6 +5330,13 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         }
     }
 
+    if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+    {
+        ERR("Required extension ARB_texture_non_power_of_two is not supported.\n");
+        wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
+        return FALSE;
+    }
+
     if (gl_info->glsl_version <= MAKEDWORD_VERSION(1, 20))
     {
         ERR("GLSL version %s is too low; 1.20 is required.\n",
