@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
 
 typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);
+extern BOOL WINAPI PathResolveAW(void *path, const void **paths, DWORD flags);
 
 static inline BOOL isSpace(WCHAR c)
 {
@@ -599,6 +600,8 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
     WCHAR *tok;              /* token pointer */
     WCHAR xlpFile[256];      /* result of SearchPath */
     DWORD attribs;           /* file attributes */
+    WCHAR curdir[MAX_PATH];
+    const WCHAR *search_paths[3] = {0};
 
     TRACE("%s\n", debugstr_w(lpFile));
 
@@ -623,18 +626,23 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         return 33;
     }
 
-    if (SearchPathW(lpPath, lpFile, L".exe", ARRAY_SIZE(xlpFile), xlpFile, NULL))
+    if (lpPath && *lpPath)
+    {
+        search_paths[0] = lpPath;
+        search_paths[1] = curdir;
+    }
+    else
+        search_paths[0] = curdir;
+    GetCurrentDirectoryW(MAX_PATH, curdir);
+    lstrcpyW(xlpFile, lpFile);
+    if (PathResolveAW(xlpFile, (const void **)search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
     {
         TRACE("SearchPathW returned non-zero\n");
         lpFile = xlpFile;
-        /* The file was found in the application-supplied default directory (or the system search path) */
+        /* The file was found in lpPath or one of the directories in the system-wide search path */
     }
-    else if (lpPath && SearchPathW(NULL, lpFile, L".exe", ARRAY_SIZE(xlpFile), xlpFile, NULL))
-    {
-        TRACE("SearchPathW returned non-zero\n");
-        lpFile = xlpFile;
-        /* The file was found in one of the directories in the system-wide search path */
-    }
+    else
+        xlpFile[0] = '\0';
 
     attribs = GetFileAttributesW(lpFile);
     if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))

@@ -2063,7 +2063,7 @@ static void test_find_executable(void)
     GetCurrentDirectoryA(MAX_PATH, curdir);
     SetCurrentDirectoryA(tmpdir);
     rc=(INT_PTR)FindExecutableA(basename, NULL, command);
-    todo_wine ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %Id\n", basename, rc);
+    ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %Id\n", basename, rc);
     SetCurrentDirectoryA(curdir);
 
     sprintf(filename, "%s\\test file.sfe", tmpdir);
