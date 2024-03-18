@@ -10760,16 +10760,18 @@ static void shader_glsl_update_graphics_program(struct shader_glsl_priv *priv,
 static void shader_glsl_load_bindless_samplers(struct shader_glsl_priv *priv, struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, enum wined3d_shader_type shader_type)
 {
-    struct wined3d_string_buffer *sampler_name = string_buffer_get(&priv->string_buffers);
     const struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
     const struct glsl_context_data *ctx_data = context_gl->c.shader_backend_data;
     const struct wined3d_shader *shader = state->shader[shader_type];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const char *prefix = shader_glsl_get_prefix(shader_type);
+    struct wined3d_string_buffer *sampler_name;
 
     /* Note that we don't use bindless samplers for FFP shaders. */
     if (!shader)
         return;
+
+    sampler_name = string_buffer_get(&priv->string_buffers);
 
     for (unsigned int i = 0; i < shader->reg_maps.sampler_map.count; ++i)
     {
