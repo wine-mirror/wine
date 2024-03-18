@@ -228,6 +228,20 @@ static unsigned int get_native_context_flags( USHORT native_machine, USHORT wow_
 
 
 /***********************************************************************
+ *           xstate_to_server
+ *
+ * Copy xstate to the server format.
+ */
+static void xstate_to_server( context_t *to, const CONTEXT_EX *xctx )
+{
+    const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
+
+    to->flags |= SERVER_CTX_YMM_REGISTERS;
+    if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+}
+
+
+/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -303,13 +317,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
             memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
         }
         if (flags & CONTEXT_I386_XSTATE)
-        {
-            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
-            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
-
-            to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
-        }
+            xstate_to_server( to, (const CONTEXT_EX *)(from + 1) );
         return STATUS_SUCCESS;
     }
 
@@ -367,13 +375,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
             fpu_to_fpux( (XMM_SAVE_AREA32 *)to->fp.x86_64_regs.fpregs, &from->FloatSave );
         }
         if (flags & CONTEXT_I386_XSTATE)
-        {
-            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
-            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
-
-            to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
-        }
+            xstate_to_server( to, (const CONTEXT_EX *)(from + 1) );
         return STATUS_SUCCESS;
     }
 
@@ -434,13 +436,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
             to->debug.x86_64_regs.dr7 = from->Dr7;
         }
         if (flags & CONTEXT_AMD64_XSTATE)
-        {
-            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
-            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
-
-            to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
-        }
+            xstate_to_server( to, (const CONTEXT_EX *)(from + 1) );
         return STATUS_SUCCESS;
     }
 
@@ -505,13 +501,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
             to->debug.i386_regs.dr7 = from->Dr7;
         }
         if (flags & CONTEXT_AMD64_XSTATE)
-        {
-            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
-            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
-
-            to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
-        }
+            xstate_to_server( to, (const CONTEXT_EX *)(from + 1) );
         return STATUS_SUCCESS;
     }
 
