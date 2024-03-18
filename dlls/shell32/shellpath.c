@@ -694,10 +694,16 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
     if (flags & PRF_VERIFYEXISTS)
     {
         if (PathFindOnPathExA(path, dirs, dwWhich))
+        {
+            if (!PathIsFileSpecA(path)) GetFullPathNameA(path, MAX_PATH, path, NULL);
             return TRUE;
-        if (!is_file_spec && PathFileExistsDefExtA(path, dwWhich))
-            return TRUE;
-        if (!is_file_spec) GetFullPathNameA(path, MAX_PATH, path, NULL);
+        }
+        if (!is_file_spec)
+        {
+            GetFullPathNameA(path, MAX_PATH, path, NULL);
+            if (PathFileExistsDefExtA(path, dwWhich))
+                return TRUE;
+        }
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
@@ -723,10 +729,16 @@ static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
     if (flags & PRF_VERIFYEXISTS)
     {
         if (PathFindOnPathExW(path, dirs, dwWhich))
+        {
+            if (!PathIsFileSpecW(path)) GetFullPathNameW(path, MAX_PATH, path, NULL);
             return TRUE;
-        if (!is_file_spec && PathFileExistsDefExtW(path, dwWhich))
-            return TRUE;
-        if (!is_file_spec) GetFullPathNameW(path, MAX_PATH, path, NULL);
+        }
+        if (!is_file_spec)
+        {
+            GetFullPathNameW(path, MAX_PATH, path, NULL);
+            if (PathFileExistsDefExtW(path, dwWhich))
+                return TRUE;
+        }
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }

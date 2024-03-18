@@ -2963,6 +2963,7 @@ static void test_PathResolve(void)
         /* PRF_VERIFYEXISTS */
         { L"shellpath", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
         { L"shellpath.lnk", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { L"shellpath.lnk.", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
         { L"C:\\shellpath", PRF_VERIFYEXISTS, FALSE, L"C:\\shellpath" },
         /* common extensions are tried even if PRF_TRYPROGRAMEXTENSIONS isn't passed */
         /* directories in dirs parameter are always searched first even if PRF_FIRSTDIRDEF isn't passed */
