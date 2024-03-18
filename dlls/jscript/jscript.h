@@ -526,7 +526,7 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
     return disp_call_value_with_caller(ctx, disp, vthis, flags, argc, argv, r, &ctx->jscaller->IServiceProvider_iface);
 }
 
-#define MAKE_JSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_JSCRIPT, code)
+#define MAKE_JSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_CONTROL, code)
 
 #define JS_E_TO_PRIMITIVE            MAKE_JSERROR(IDS_TO_PRIMITIVE)
 #define JS_E_INVALIDARG              MAKE_JSERROR(IDS_INVALID_CALL_ARG)
@@ -591,7 +591,7 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 
 static inline BOOL is_jscript_error(HRESULT hres)
 {
-    return HRESULT_FACILITY(hres) == FACILITY_JSCRIPT;
+    return HRESULT_FACILITY(hres) == FACILITY_CONTROL;
 }
 
 const char *debugstr_jsval(const jsval_t);
