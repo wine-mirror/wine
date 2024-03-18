@@ -1823,30 +1823,8 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         wcmd = malloc(len * sizeof(WCHAR));
         wcmdLen = len;
     }
-    lstrcpyW(wcmd, wszApplicationName);
-    if (sei_tmp.lpDirectory)
-    {
-        LPCWSTR searchPath[] = {
-            sei_tmp.lpDirectory,
-            NULL
-        };
-        PathFindOnPathW(wcmd, searchPath);
-    }
-    retval = SHELL_quote_and_execute( wcmd, wszParameters, L"",
-                                      wszApplicationName, NULL, &sei_tmp,
-                                      sei, execfunc );
-    if (retval > 32) {
-        free(wszApplicationName);
-        if (wszParameters != parametersBuffer)
-            free(wszParameters);
-        if (wszDir != dirBuffer)
-            free(wszDir);
-        if (wcmd != wcmdBuffer)
-            free(wcmd);
-        return TRUE;
-    }
 
-    /* Else, try to find the executable */
+    /* try to find the executable */
     wcmd[0] = '\0';
     retval = SHELL_FindExecutable(sei_tmp.lpDirectory, lpFile, sei_tmp.lpVerb, wcmd, wcmdLen, wszKeyname, &env, sei_tmp.lpIDList, sei_tmp.lpParameters);
     if (retval > 32)  /* Found */

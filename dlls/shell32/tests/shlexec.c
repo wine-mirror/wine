@@ -2331,9 +2331,7 @@ static void test_exes(void)
         if (CopyFileA(argv0, filename, FALSE))
         {
             rc=shell_execute(NULL, filename, params, NULL);
-            todo_wine {
-                okShell(rc==SE_ERR_NOASSOC, "returned %Iu\n", rc);
-            }
+            okShell(rc==SE_ERR_NOASSOC, "returned %Iu\n", rc);
         }
     }
     else
@@ -2359,7 +2357,7 @@ static void test_exes(void)
     GetCurrentDirectoryA(MAX_PATH, curdir);
     SetCurrentDirectoryA(tmpdir);
     rc = shell_execute(NULL, basename, params, NULL);
-    todo_wine okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
+    okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
     SetCurrentDirectoryA(curdir);
 
     if (!skip_shlexec_tests)
@@ -2956,7 +2954,7 @@ static void test_directory(void)
                         NULL, "test2.exe", params, NULL, NULL);
     okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
-    todo_wine okChildString("argvA0", path);
+    okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
     SetCurrentDirectoryA(curdir);
