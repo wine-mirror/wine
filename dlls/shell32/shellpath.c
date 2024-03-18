@@ -695,7 +695,7 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
     {
         if (PathFindOnPathExA(path, dirs, dwWhich))
             return TRUE;
-        if (PathFileExistsDefExtA(path, dwWhich))
+        if (!is_file_spec && PathFileExistsDefExtA(path, dwWhich))
             return TRUE;
         if (!is_file_spec) GetFullPathNameA(path, MAX_PATH, path, NULL);
         SetLastError(ERROR_FILE_NOT_FOUND);
@@ -724,7 +724,7 @@ static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
     {
         if (PathFindOnPathExW(path, dirs, dwWhich))
             return TRUE;
-        if (PathFileExistsDefExtW(path, dwWhich))
+        if (!is_file_spec && PathFileExistsDefExtW(path, dwWhich))
             return TRUE;
         if (!is_file_spec) GetFullPathNameW(path, MAX_PATH, path, NULL);
         SetLastError(ERROR_FILE_NOT_FOUND);
