@@ -1732,6 +1732,7 @@ static void test_scans(void)
 static void test_getbounds(void)
 {
     GpRegion *region;
+    GpPath *path;
     GpGraphics *graphics;
     GpStatus status;
     GpRectF rectf;
@@ -1806,6 +1807,44 @@ static void test_getbounds(void)
     ok(rectf.Y == 0.0, "Expected Y = 0.0, got %.2f\n", rectf.Y);
     ok(rectf.Width  == 100.0, "Expected width = 0.0, got %.2f\n", rectf.Width);
     ok(rectf.Height == 100.0, "Expected height = 0.0, got %.2f\n", rectf.Height);
+
+    /* coordinates are not rounded */
+    status = GdipResetWorldTransform(graphics);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipResetPageTransform(graphics);
+    ok(status == Ok, "status %08x\n", status);
+    rectf.X = 0.125;
+    rectf.Y = 1.125;
+    rectf.Width = 2.125;
+    rectf.Height = 3.125;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    rectf.X = rectf.Y = 0.0;
+    rectf.Height = rectf.Width = 0.0;
+    status = GdipGetRegionBounds(region, graphics, &rectf);
+    ok(status == Ok, "status %08x\n", status);
+    todo_wine ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
+    todo_wine ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    todo_wine ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
+    todo_wine ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
+
+    /* test path */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipAddPathRectangle(path, 0.125, 1.125, 2.125, 3.125);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipCombineRegionPath(region, path, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    status = GdipDeletePath(path);
+    ok(status == Ok, "status %08x\n", status);
+    rectf.X = rectf.Y = 0.0;
+    rectf.Height = rectf.Width = 0.0;
+    status = GdipGetRegionBounds(region, graphics, &rectf);
+    ok(status == Ok, "status %08x\n", status);
+    todo_wine ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
+    todo_wine ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    todo_wine ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
+    todo_wine ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
