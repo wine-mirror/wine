@@ -2266,6 +2266,8 @@ static void test_exes(void)
 {
     char filename[2 * MAX_PATH + 17];
     char params[1024];
+    char curdir[MAX_PATH];
+    char *basename = strrchr(argv0, '\\') + 1;
     INT_PTR rc;
 
     sprintf(params, "shlexec \"%s\" Exec", child_file);
@@ -2352,6 +2354,13 @@ static void test_exes(void)
     todo_wait rc = shell_execute_ex(SEE_MASK_FLAG_NO_UI,
                                     "notaverb", argv0, NULL, NULL, NULL);
     todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %Iu\n", rc);
+
+    /* Check the correct search path is used */
+    GetCurrentDirectoryA(MAX_PATH, curdir);
+    SetCurrentDirectoryA(tmpdir);
+    rc = shell_execute(NULL, basename, params, NULL);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %Iu\n", rc);
+    SetCurrentDirectoryA(curdir);
 
     if (!skip_shlexec_tests)
     {
