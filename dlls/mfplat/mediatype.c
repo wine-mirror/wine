@@ -3353,15 +3353,45 @@ HRESULT WINAPI MFConvertColorInfoToDXVA(DWORD *dxva_info, const MFVIDEOFORMAT *f
 
 struct frame_rate
 {
-    UINT64 key;
-    UINT64 value;
+    UINT64 time;
+    UINT64 rate;
 };
 
-static int __cdecl frame_rate_compare(const void *a, const void *b)
+static const struct frame_rate known_rates[] =
 {
-    const UINT64 *key = a;
-    const struct frame_rate *known_rate = b;
-    return *key == known_rate->key ? 0 : ( *key < known_rate->key ? 1 : -1 );
+#define KNOWN_RATE(ft,n,d) { ft, ((UINT64)n << 32) | d }
+    KNOWN_RATE(417188, 24000, 1001),
+    KNOWN_RATE(416667,    24,    1),
+    KNOWN_RATE(400000,    25,    1),
+    KNOWN_RATE(333667, 30000, 1001),
+    KNOWN_RATE(333333,    30,    1),
+    KNOWN_RATE(200000,    50,    1),
+    KNOWN_RATE(166833, 60000, 1001),
+    KNOWN_RATE(166667,    60,    1),
+#undef KNOWN_RATE
+};
+
+static const struct frame_rate *known_rate_from_rate(UINT64 rate)
+{
+    UINT i;
+    for (i = 0; i < ARRAY_SIZE(known_rates); i++)
+    {
+        if (rate == known_rates[i].rate)
+            return known_rates + i;
+    }
+    return NULL;
+}
+
+static const struct frame_rate *known_rate_from_time(UINT64 time)
+{
+    UINT i;
+    for (i = 0; i < ARRAY_SIZE(known_rates); i++)
+    {
+        if (time >= known_rates[i].time - 30
+                && time <= known_rates[i].time + 30)
+            return known_rates + i;
+    }
+    return NULL;
 }
 
 /***********************************************************************
@@ -3369,29 +3399,13 @@ static int __cdecl frame_rate_compare(const void *a, const void *b)
  */
 HRESULT WINAPI MFFrameRateToAverageTimePerFrame(UINT32 numerator, UINT32 denominator, UINT64 *avgframetime)
 {
-    static const struct frame_rate known_rates[] =
-    {
-#define KNOWN_RATE(n,d,ft) { ((UINT64)n << 32) | d, ft }
-        KNOWN_RATE(60000, 1001, 166833),
-        KNOWN_RATE(30000, 1001, 333667),
-        KNOWN_RATE(24000, 1001, 417188),
-        KNOWN_RATE(60,       1, 166667),
-        KNOWN_RATE(50,       1, 200000),
-        KNOWN_RATE(30,       1, 333333),
-        KNOWN_RATE(25,       1, 400000),
-        KNOWN_RATE(24,       1, 416667),
-#undef KNOWN_RATE
-    };
     UINT64 rate = ((UINT64)numerator << 32) | denominator;
     const struct frame_rate *entry;
 
     TRACE("%u, %u, %p.\n", numerator, denominator, avgframetime);
 
-    if ((entry = bsearch(&rate, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
-            frame_rate_compare)))
-    {
-        *avgframetime = entry->value;
-    }
+    if ((entry = known_rate_from_rate(rate)))
+        *avgframetime = entry->time;
     else
         *avgframetime = numerator ? denominator * (UINT64)10000000 / numerator : 0;
 
@@ -3417,29 +3431,15 @@ static unsigned int get_gcd(unsigned int a, unsigned int b)
  */
 HRESULT WINAPI MFAverageTimePerFrameToFrameRate(UINT64 avgtime, UINT32 *numerator, UINT32 *denominator)
 {
-    static const struct frame_rate known_rates[] =
-    {
-#define KNOWN_RATE(ft,n,d) { ft, ((UINT64)n << 32) | d }
-        KNOWN_RATE(417188, 24000, 1001),
-        KNOWN_RATE(416667,    24,    1),
-        KNOWN_RATE(400000,    25,    1),
-        KNOWN_RATE(333667, 30000, 1001),
-        KNOWN_RATE(333333,    30,    1),
-        KNOWN_RATE(200000,    50,    1),
-        KNOWN_RATE(166833, 60000, 1001),
-        KNOWN_RATE(166667,    60,    1),
-#undef KNOWN_RATE
-    };
     const struct frame_rate *entry;
     unsigned int gcd;
 
     TRACE("%s, %p, %p.\n", wine_dbgstr_longlong(avgtime), numerator, denominator);
 
-    if ((entry = bsearch(&avgtime, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
-            frame_rate_compare)))
+    if ((entry = known_rate_from_time(avgtime)))
     {
-        *numerator = entry->value >> 32;
-        *denominator = entry->value;
+        *numerator = entry->rate >> 32;
+        *denominator = entry->rate;
     }
     else if (avgtime)
     {
