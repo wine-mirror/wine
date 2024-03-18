@@ -8206,16 +8206,40 @@ static void test_MFAverageTimePerFrameToFrameRate(void)
         unsigned int numerator;
         unsigned int denominator;
         UINT64 avgtime;
+        BOOL todo;
     } frame_rate_tests[] =
     {
+        { 60000, 1001, 166863, TRUE },
         { 60000, 1001, 166833 },
+        { 60000, 1001, 166803, TRUE },
+
+        { 30000, 1001, 333697, TRUE },
         { 30000, 1001, 333667 },
+        { 30000, 1001, 333637, TRUE },
+
+        { 24000, 1001, 417218, TRUE },
         { 24000, 1001, 417188 },
+        { 24000, 1001, 417158, TRUE },
+
+        { 60, 1, 166697, TRUE },
         { 60, 1, 166667 },
+        { 60, 1, 166637, TRUE },
+
+        { 30, 1, 333363, TRUE },
         { 30, 1, 333333 },
+        { 30, 1, 333303, TRUE },
+
+        { 50, 1, 200030, TRUE },
         { 50, 1, 200000 },
+        { 50, 1, 199970, TRUE },
+
+        { 25, 1, 400030, TRUE },
         { 25, 1, 400000 },
+        { 25, 1, 399970, TRUE },
+
+        { 24, 1, 416697, TRUE },
         { 24, 1, 416667 },
+        { 24, 1, 416637, TRUE },
 
         { 1000000, 25641, 256410 },
         { 10000000, 83333, 83333 },
@@ -8240,6 +8264,7 @@ static void test_MFAverageTimePerFrameToFrameRate(void)
         numerator = denominator = 12345;
         hr = MFAverageTimePerFrameToFrameRate(frame_rate_tests[i].avgtime, &numerator, &denominator);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine_if(frame_rate_tests[i].todo)
         ok(numerator == frame_rate_tests[i].numerator && denominator == frame_rate_tests[i].denominator,
                 "%u: unexpected %u/%u, expected %u/%u.\n", i, numerator, denominator, frame_rate_tests[i].numerator,
                 frame_rate_tests[i].denominator);
