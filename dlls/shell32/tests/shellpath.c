@@ -3048,10 +3048,14 @@ static void test_PathResolve(void)
     ok(!lstrcmpiW(path, L"C:\\windows\\regedit.exe") || !lstrcmpiW(path, L"C:\\windows\\system32\\regedit.exe"),
             "unexpected path %s\n", wine_dbgstr_w(path));
 
-    /* show that PathResolve doesn't check current directory */
     if (argv0_basep)
     {
         WCHAR *ext;
+        const WCHAR *search_path[] = {
+            argv0_dir,
+            NULL
+        };
+        /* show that PathResolve doesn't check current directory */
         lstrcpyW(argv0_base, argv0_basep);
         GetCurrentDirectoryW(MAX_PATH, curdir);
         SetCurrentDirectoryW(argv0_dir);
@@ -3065,6 +3069,16 @@ static void test_PathResolve(void)
             ret = pPathResolve(argv0_base, NULL, PRF_VERIFYEXISTS | PRF_TRYPROGRAMEXTENSIONS);
             ok(!ret, "resolving argv0 without extension succeeded unexpectedly, result: %s\n", wine_dbgstr_w(argv0_base));
         }
+
+        /* show that PathResolve will check specified search path, even if it's the current directory */
+        lstrcpyW(argv0_base, argv0_basep);
+        if ((ext = wcsrchr(argv0_base, '.')))
+        {
+            *ext = 0;
+            ret = pPathResolve(argv0_base, search_path, PRF_VERIFYEXISTS | PRF_TRYPROGRAMEXTENSIONS);
+            ok(ret, "resolving argv0 without extension with search path failed unexpectedly, result: %s\n", wine_dbgstr_w(argv0_base));
+        }
+
         SetCurrentDirectoryW(curdir);
     }
     else

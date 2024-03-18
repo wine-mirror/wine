@@ -691,7 +691,7 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
 
     TRACE("(%s,%p,0x%08lx)\n", debugstr_a(path), dirs, flags);
 
-    if (flags & PRF_VERIFYEXISTS && !PathFileExistsA(path))
+    if (flags & PRF_VERIFYEXISTS)
     {
         if (PathFindOnPathExA(path, dirs, dwWhich))
             return TRUE;
@@ -720,7 +720,7 @@ static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
 
     TRACE("(%s,%p,0x%08lx)\n", debugstr_w(path), dirs, flags);
 
-    if (flags & PRF_VERIFYEXISTS && !PathFileExistsW(path))
+    if (flags & PRF_VERIFYEXISTS)
     {
         if (PathFindOnPathExW(path, dirs, dwWhich))
             return TRUE;
