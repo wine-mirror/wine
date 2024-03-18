@@ -1823,10 +1823,10 @@ static void test_getbounds(void)
     rectf.Height = rectf.Width = 0.0;
     status = GdipGetRegionBounds(region, graphics, &rectf);
     ok(status == Ok, "status %08x\n", status);
-    todo_wine ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
-    todo_wine ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
-    todo_wine ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
-    todo_wine ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
+    ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
+    ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
+    ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
 
     /* test path */
     status = GdipCreatePath(FillModeAlternate, &path);
@@ -1841,10 +1841,10 @@ static void test_getbounds(void)
     rectf.Height = rectf.Width = 0.0;
     status = GdipGetRegionBounds(region, graphics, &rectf);
     ok(status == Ok, "status %08x\n", status);
-    todo_wine ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
-    todo_wine ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
-    todo_wine ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
-    todo_wine ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
+    ok(rectf.X == 0.125, "Expected X = 0.0, got %.2f\n", rectf.X);
+    ok(rectf.Y == 1.125, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    ok(rectf.Width  == 2.125, "Expected width = 0.0, got %.2f\n", rectf.Width);
+    ok(rectf.Height == 3.125, "Expected height = 0.0, got %.2f\n", rectf.Height);
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);

@@ -104,6 +104,9 @@ typedef struct packed_point
     short Y;
 } packed_point;
 
+static void get_region_bounding_box(struct region_element *element,
+    REAL *min_x, REAL *min_y, REAL *max_x, REAL *max_y, BOOL *empty, BOOL *infinite);
+
 static inline INT get_element_size(const region_element* element)
 {
     INT needed = sizeof(DWORD); /* DWORD for the type */
@@ -579,9 +582,8 @@ GpStatus WINGDIPAPI GdipDeleteRegion(GpRegion *region)
  */
 GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, GpRectF *rect)
 {
-    HRGN hrgn;
-    RECT r;
-    GpStatus status;
+    REAL min_x, min_y, max_x, max_y;
+    BOOL empty, infinite;
 
     TRACE("(%p, %p, %p)\n", region, graphics, rect);
 
@@ -589,31 +591,29 @@ GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, 
         return InvalidParameter;
 
     /* Contrary to MSDN, native ignores the graphics transform. */
-    status = GdipGetRegionHRgn(region, NULL, &hrgn);
-    if(status != Ok)
-        return status;
+    get_region_bounding_box(&region->node, &min_x, &min_y, &max_x, &max_y, &empty, &infinite);
 
     /* infinite */
-    if(!hrgn){
+    if(infinite){
         rect->X = rect->Y = -(REAL)(1 << 22);
         rect->Width = rect->Height = (REAL)(1 << 23);
         TRACE("%p => infinite\n", region);
         return Ok;
     }
 
-    if(GetRgnBox(hrgn, &r)){
-        rect->X = r.left;
-        rect->Y = r.top;
-        rect->Width  = r.right  - r.left;
-        rect->Height = r.bottom - r.top;
-        TRACE("%p => %s\n", region, debugstr_rectf(rect));
+    if(empty){
+        rect->X = rect->Y = rect->Width = rect->Height = 0.0;
+        TRACE("%p => empty\n", region);
+        return Ok;
     }
-    else
-        status = GenericError;
 
-    DeleteObject(hrgn);
+    rect->X = min_x;
+    rect->Y = min_y;
+    rect->Width  = max_x - min_x;
+    rect->Height = max_y - min_y;
+    TRACE("%p => %s\n", region, debugstr_rectf(rect));
 
-    return status;
+    return Ok;
 }
 
 /*****************************************************************************
