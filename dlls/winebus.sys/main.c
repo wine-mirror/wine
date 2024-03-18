@@ -388,7 +388,7 @@ static DWORD check_bus_option(const WCHAR *option, DWORD default_value)
     return default_value;
 }
 
-static BOOL is_hidraw_enabled(WORD vid, WORD pid)
+static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages)
 {
     char buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[1024])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
@@ -398,6 +398,8 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid)
     DWORD size;
 
     if (check_bus_option(L"DisableHidraw", FALSE)) return FALSE;
+    if (usages->UsagePage != HID_USAGE_PAGE_GENERIC) return TRUE;
+    if (usages->Usage != HID_USAGE_GENERIC_GAMEPAD && usages->Usage != HID_USAGE_GENERIC_JOYSTICK) return TRUE;
 
     if (!check_bus_option(L"Enable SDL", 1) && check_bus_option(L"DisableInput", 0))
         prefer_hidraw = TRUE;
@@ -666,11 +668,15 @@ static DWORD CALLBACK bus_main_thread(void *args)
         {
             struct device_desc desc = event->device_created.desc;
             if (desc.is_hidraw && !desc.usages.UsagePage) desc.usages = get_hidraw_device_usages(event->device);
-            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid))
+            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &desc.usages))
             {
-                WARN("ignoring %shidraw device %04x:%04x\n", desc.is_hidraw ? "" : "non-", desc.vid, desc.pid);
+                WARN("ignoring %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
+                     desc.vid, desc.pid, desc.usages.UsagePage, desc.usages.Usage);
                 break;
             }
+
+            TRACE("creating %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
+                  desc.vid, desc.pid, desc.usages.UsagePage, desc.usages.Usage);
 
             device = bus_create_hid_device(&event->device_created.desc, event->device);
             if (device) IoInvalidateDeviceRelations(bus_pdo, BusRelations);
