@@ -119,19 +119,6 @@ static NTSTATUS unix_device_start(DEVICE_OBJECT *device)
     return winebus_call(device_start, &params);
 }
 
-static NTSTATUS unix_device_get_report_descriptor(DEVICE_OBJECT *device, BYTE *buffer, UINT length, UINT *out_length)
-{
-    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
-    struct device_descriptor_params params =
-    {
-        .device = ext->unix_device,
-        .buffer = buffer,
-        .length = length,
-        .out_length = out_length
-    };
-    return winebus_call(device_get_report_descriptor, &params);
-}
-
 static void unix_device_set_output_report(DEVICE_OBJECT *device, HID_XFER_PACKET *packet, IO_STATUS_BLOCK *io)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
@@ -572,6 +559,66 @@ static void keyboard_device_create(void)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
+static NTSTATUS get_device_descriptors(UINT64 unix_device, BYTE **report_desc, UINT *report_desc_length,
+                                       HIDP_DEVICE_DESC *device_desc)
+{
+    struct device_descriptor_params params =
+    {
+        .device = unix_device,
+        .out_length = report_desc_length,
+    };
+    NTSTATUS status;
+
+    status = winebus_call(device_get_report_descriptor, &params);
+    if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+    {
+        ERR("Failed to get device %#I64x report descriptor, status %#lx\n", unix_device, status);
+        return status;
+    }
+
+    if (!(params.buffer = RtlAllocateHeap(GetProcessHeap(), 0, *report_desc_length)))
+        return STATUS_NO_MEMORY;
+    params.length = *report_desc_length;
+
+    if ((status = winebus_call(device_get_report_descriptor, &params)))
+    {
+        ERR("Failed to get device %#I64x report descriptor, status %#lx\n", unix_device, status);
+        RtlFreeHeap(GetProcessHeap(), 0, params.buffer);
+        return status;
+    }
+
+    params.length = *report_desc_length;
+    status = HidP_GetCollectionDescription(params.buffer, params.length, PagedPool, device_desc);
+    if (status != HIDP_STATUS_SUCCESS)
+    {
+        ERR("Failed to get device %#I64x report descriptor, status %#lx\n", unix_device, status);
+        RtlFreeHeap(GetProcessHeap(), 0, params.buffer);
+        return status;
+    }
+
+    *report_desc = params.buffer;
+    return STATUS_SUCCESS;
+}
+
+static USAGE_AND_PAGE get_hidraw_device_usages(UINT64 unix_device)
+{
+    HIDP_DEVICE_DESC device_desc;
+    USAGE_AND_PAGE usages = {0};
+    UINT report_desc_length;
+    BYTE *report_desc;
+    NTSTATUS status;
+
+    if (!(status = get_device_descriptors(unix_device, &report_desc, &report_desc_length, &device_desc)))
+    {
+        usages.UsagePage = device_desc.CollectionDesc[0].UsagePage;
+        usages.Usage = device_desc.CollectionDesc[0].Usage;
+        HidP_FreeCollectionDescription(&device_desc);
+        RtlFreeHeap(GetProcessHeap(), 0, report_desc);
+    }
+
+    return usages;
+}
+
 static DWORD bus_count;
 static HANDLE bus_thread[16];
 
@@ -617,10 +664,11 @@ static DWORD CALLBACK bus_main_thread(void *args)
             break;
         case BUS_EVENT_TYPE_DEVICE_CREATED:
         {
-            const struct device_desc *desc = &event->device_created.desc;
-            if (!desc->is_hidraw != !is_hidraw_enabled(desc->vid, desc->pid))
+            struct device_desc desc = event->device_created.desc;
+            if (desc.is_hidraw && !desc.usages.UsagePage) desc.usages = get_hidraw_device_usages(event->device);
+            if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid))
             {
-                WARN("ignoring %shidraw device %04x:%04x\n", desc->is_hidraw ? "" : "non-", desc->vid, desc->pid);
+                WARN("ignoring %shidraw device %04x:%04x\n", desc.is_hidraw ? "" : "non-", desc.vid, desc.pid);
                 break;
             }
 
@@ -899,37 +947,24 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             else if (ext->state == DEVICE_STATE_REMOVED) status = STATUS_DELETE_PENDING;
             else if ((status = unix_device_start(device)))
                 ERR("Failed to start device %p, status %#lx\n", device, status);
-            else
+            else if (!(status = get_device_descriptors(ext->unix_device, &ext->report_desc, &ext->report_desc_length,
+                                                       &ext->collection_desc)))
             {
-                status = unix_device_get_report_descriptor(device, NULL, 0, &ext->report_desc_length);
-                if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
-                    ERR("Failed to get device %p report descriptor, status %#lx\n", device, status);
-                else if (!(ext->report_desc = RtlAllocateHeap(GetProcessHeap(), 0, ext->report_desc_length)))
-                    status = STATUS_NO_MEMORY;
-                else if ((status = unix_device_get_report_descriptor(device, ext->report_desc, ext->report_desc_length,
-                                                                     &ext->report_desc_length)))
-                    ERR("Failed to get device %p report descriptor, status %#lx\n", device, status);
-                else if ((status = HidP_GetCollectionDescription(ext->report_desc, ext->report_desc_length,
-                                                                 PagedPool, &ext->collection_desc)) != HIDP_STATUS_SUCCESS)
-                    ERR("Failed to parse device %p report descriptor, status %#lx\n", device, status);
-                else
+                status = STATUS_SUCCESS;
+                reports = ext->collection_desc.ReportIDs;
+                for (i = 0; i < ext->collection_desc.ReportIDsLength; ++i)
                 {
-                    status = STATUS_SUCCESS;
-                    reports = ext->collection_desc.ReportIDs;
-                    for (i = 0; i < ext->collection_desc.ReportIDsLength; ++i)
+                    if (!(size = reports[i].InputLength)) continue;
+                    size = offsetof( struct hid_report, buffer[size] );
+                    if (!(report = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) status = STATUS_NO_MEMORY;
+                    else
                     {
-                        if (!(size = reports[i].InputLength)) continue;
-                        size = offsetof( struct hid_report, buffer[size] );
-                        if (!(report = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, size))) status = STATUS_NO_MEMORY;
-                        else
-                        {
-                            report->length = reports[i].InputLength;
-                            report->buffer[0] = reports[i].ReportID;
-                            ext->last_reports[reports[i].ReportID] = report;
-                        }
+                        report->length = reports[i].InputLength;
+                        report->buffer[0] = reports[i].ReportID;
+                        ext->last_reports[reports[i].ReportID] = report;
                     }
-                    if (!status) ext->state = DEVICE_STATE_STARTED;
                 }
+                if (!status) ext->state = DEVICE_STATE_STARTED;
             }
             RtlLeaveCriticalSection(&ext->cs);
             break;
