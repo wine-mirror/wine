@@ -2009,9 +2009,11 @@ static void test_urls(void)
 
 static void test_find_executable(void)
 {
+    char curdir[MAX_PATH];
     char notepad_path[MAX_PATH];
     char filename[MAX_PATH + 17];
     char command[MAX_PATH];
+    char *basename = strrchr(argv0, '\\') + 1;
     const filename_tests_t* test;
     INT_PTR rc;
 
@@ -2051,6 +2053,18 @@ static void test_find_executable(void)
     rc=(INT_PTR)FindExecutableA(tmpdir, NULL, command);
     ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %Id\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
+
+    /* Search for the current executabe itself */
+    strcpy(command, "your word");
+    rc=(INT_PTR)FindExecutableA(argv0, NULL, command);
+    ok(rc > 32, "FindExecutable(%s) returned %Id\n", argv0, rc);
+
+    /* Make sure FindExecutable uses the correct current directory */
+    GetCurrentDirectoryA(MAX_PATH, curdir);
+    SetCurrentDirectoryA(tmpdir);
+    rc=(INT_PTR)FindExecutableA(basename, NULL, command);
+    todo_wine ok(rc == SE_ERR_FNF, "FindExecutable(%s) returned %Id\n", basename, rc);
+    SetCurrentDirectoryA(curdir);
 
     sprintf(filename, "%s\\test file.sfe", tmpdir);
     rc=(INT_PTR)FindExecutableA(filename, NULL, command);
