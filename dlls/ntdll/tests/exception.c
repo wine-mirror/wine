@@ -9117,11 +9117,12 @@ static const unsigned test_extended_context_spoil_data2[8] = {0x15, 0x25, 0x35, 
 
 static BOOL test_extended_context_modified_state;
 static BOOL xsaveopt_enabled, compaction_enabled;
+static ULONG64 xstate_supported_features;
 
 static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
-    static const ULONG64 expected_compaction_mask = 0x8000000000000004;
+    const ULONG64 expected_compaction_mask = (0x8000000000000000 | xstate_supported_features) & ~(ULONG64)3;
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
     unsigned int *context_ymm_data;
     DWORD expected_min_offset;
@@ -9159,7 +9160,7 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
 
     if (compaction_enabled)
         ok((xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask,
-                "Got compaction mask %#I64x.\n", xs->CompactionMask);
+                "Got compaction mask %#I64x, expected %#I64x.\n", xs->CompactionMask, expected_compaction_mask);
     else
         ok(!xs->CompactionMask, "Got compaction mask %#I64x.\n", xs->CompactionMask);
 
@@ -9454,7 +9455,8 @@ static void test_extended_context(void)
     };
     const struct context_parameters *context_arch;
 
-    const ULONG64 supported_features = 7, supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
+    const ULONG64 supported_features = 0xff;
+    const ULONG64 supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
     ULONG expected_length, expected_length_xstate, context_flags, expected_offset, max_xstate_length;
     ULONG64 enabled_features, expected_compaction;
     DECLSPEC_ALIGN(64) BYTE context_buffer2[4096];
@@ -9494,6 +9496,7 @@ static void test_extended_context(void)
         compaction_enabled = regs[0] & 2;
     }
 #endif
+    xstate_supported_features = enabled_features & supported_features;
 
     /* Test context manipulation functions. */
     length = 0xdeadbeef;
@@ -9964,7 +9967,7 @@ static void test_extended_context(void)
 
         xs->Mask = 0xdeadbeef;
         xs->CompactionMask = 0xdeadbeef;
-        bret = pSetXStateFeaturesMask(context, 7);
+        bret = pSetXStateFeaturesMask(context, xstate_supported_features);
         ok(bret == !!(flags & CONTEXT_NATIVE), "Got unexpected bret %#x.\n", bret);
         context_flags = *(DWORD *)(context_buffer + context_arch[test].flags_offset);
         ok(context_flags == (bret ? flags_fpx : flags),
@@ -9978,8 +9981,8 @@ static void test_extended_context(void)
         mask = 0xdeadbeef;
         bret = pGetXStateFeaturesMask(context, &mask);
         if (flags & CONTEXT_NATIVE)
-            ok(bret && mask == (enabled_features & supported_features),
-                    "Got unexpected bret %#x, mask %s, flags %#lx.\n", bret, wine_dbgstr_longlong(mask), flags);
+            ok(bret && mask == xstate_supported_features,
+                    "Got unexpected bret %#x, mask %s, flags %#lx (enabled_features & supported_features %#I64x).\n", bret, wine_dbgstr_longlong(mask), flags, xstate_supported_features);
         else
             ok(!bret && mask == 0xdeadbeef,
                     "Got unexpected bret %#x, mask %s, flags %#lx.\n", bret, wine_dbgstr_longlong(mask), flags);
@@ -10204,6 +10207,14 @@ static void test_extended_context(void)
             &context, &length);
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     ok(bret, "Got unexpected bret %#x.\n", bret);
+
+    /* clear potentially leftover xstate */
+    pSetXStateFeaturesMask(context, 0);
+    context->ContextFlags = CONTEXT_XSTATE;
+    SetThreadContext(GetCurrentThread(), context);
+
+    context->ContextFlags = CONTEXT_FULL | CONTEXT_XSTATE | CONTEXT_FLOATING_POINT;
+
     pSetXStateFeaturesMask(context, ~(ULONG64)0);
     *(void **)(call_func_code_reset_ymm_state + call_func_offsets.func_addr) = GetThreadContext;
     *(void **)(call_func_code_reset_ymm_state + call_func_offsets.func_param1) = (void *)GetCurrentThread();
@@ -10221,12 +10232,12 @@ static void test_extended_context(void)
     ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#lx.\n",
             context->ContextFlags);
 
-    expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
+    expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | (xstate_supported_features & ~(UINT64)3) : 0;
 
     xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
     ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
     ok((xs->CompactionMask & (supported_features | ((ULONG64)1 << 63))) == expected_compaction,
-            "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
+            "Got unexpected CompactionMask %s (expected %#I64x).\n", wine_dbgstr_longlong(xs->CompactionMask), expected_compaction);
 
     for (i = 4; i < 8; ++i)
         ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
@@ -10235,6 +10246,36 @@ static void test_extended_context(void)
         ok(((ULONG *)&xs->YmmContext)[i] == ((xs->Mask & 4) ? 0 : 0xcccccccc)
                 || broken(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4]),
                 "Got unexpected data %#lx, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+
+    /* Test setting context which has only part of xstate in CompactionMask. */
+    if (compaction_enabled && enabled_features & ((ULONG64)1 << XSTATE_AVX512_KMASK))
+    {
+        *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_addr) = SetThreadContext;
+        *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param1) = (void *)GetCurrentThread();
+        *(void **)(call_func_code_set_ymm0 + call_func_offsets.func_param2) = context;
+        *(void **)(call_func_code_set_ymm0 + call_func_offsets.ymm0_save) = data;
+        memcpy(code_mem, call_func_code_set_ymm0, sizeof(call_func_code_set_ymm0));
+        context->ContextFlags = CONTEXT_XSTATE;
+        xs->CompactionMask = 0x8000000000000000 | ((ULONG64)1 << XSTATE_AVX512_KMASK);
+        xs->Mask = 0;
+        memcpy(data, test_extended_context_data, sizeof(data));
+        bret = func();
+        ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+        /* Setting a context with only part of xstate in CompactionMask doesn't change missing parts. */
+        for (i = 4; i < 8; ++i)
+            ok(data[i] == test_extended_context_data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+
+        memcpy(data, test_extended_context_data, sizeof(data));
+        xs->CompactionMask |= XSTATE_MASK_GSSE;
+        bret = func();
+        ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+        for (i = 4; i < 8; ++i)
+            ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
+    }
+    else
+    {
+        skip("avx512 is not available, skipping test.\n");
+    }
 
     /* Test fault exception context. */
     memset(data, 0xff, sizeof(data));
@@ -10272,9 +10313,10 @@ static void test_extended_context(void)
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     todo_wine_if (!xsaveopt_enabled)
-        ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
+    ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
     ok((xs->CompactionMask & supported_compaction_mask) == expected_compaction,
-            "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
+            "Got unexpected CompactionMask %I64x, expected %I64x.\n", xs->CompactionMask,
+            expected_compaction);
 
     for (i = 0; i < 16 * 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == ((xs->Mask & 4) ? 0 : 0xcccccccc),
@@ -10353,6 +10395,44 @@ static void test_extended_context(void)
         for (i = 0; i < 16 * 4; ++i)
             ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
                     "Got unexpected value %#lx, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+    }
+
+    if (compaction_enabled && enabled_features & ((ULONG64)1 << XSTATE_AVX512_KMASK))
+    {
+        ULONG64 saved_mask;
+        ULONG *d;
+
+        saved_mask = xs->CompactionMask;
+        xs->Mask = XSTATE_MASK_GSSE;
+        xs->CompactionMask = 0x8000000000000000 | xs->Mask;
+        *(ULONG *)&xs->YmmContext = 0x11111111;
+        bret = SetThreadContext(thread, context);
+        ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+
+        xs->Mask = (ULONG64)1 << XSTATE_AVX512_KMASK;
+        xs->CompactionMask = 0x8000000000000000 | xs->Mask;
+        *(ULONG *)&xs->YmmContext = 0x22222222;
+        bret = SetThreadContext(thread, context);
+        ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+
+        xs->CompactionMask = saved_mask;
+        bret = GetThreadContext(thread, context);
+        ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
+
+        todo_wine_if(xs->Mask == XSTATE_MASK_GSSE)
+        ok((xs->Mask & (XSTATE_MASK_GSSE | ((ULONG64)1 << XSTATE_AVX512_KMASK)))
+                == (XSTATE_MASK_GSSE | ((ULONG64)1 << XSTATE_AVX512_KMASK)), "got Mask %#I64x.\n", xs->Mask);
+        d = pLocateXStateFeature(context, XSTATE_AVX, NULL);
+        ok(!!d, "Got NULL.\n");
+        ok(*d == 0x11111111, "got %#lx.\n", *d);
+
+        d = pLocateXStateFeature(context, XSTATE_AVX512_KMASK, NULL);
+        ok(!!d, "Got NULL.\n");
+        todo_wine ok(*d == 0x22222222, "got %#lx.\n", *d);
+    }
+    else
+    {
+        skip("avx512 is not available, skipping test.\n");
     }
 
     bret = ResumeThread(thread);
