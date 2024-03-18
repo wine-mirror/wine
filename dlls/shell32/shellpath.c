@@ -687,7 +687,7 @@ BOOL WINAPI PathFileExistsDefExtW(LPWSTR,DWORD);
 static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
 {
     BOOL is_file_spec = PathIsFileSpecA(path);
-    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xff;
+    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xbf;
 
     TRACE("(%s,%p,0x%08lx)\n", debugstr_a(path), dirs, flags);
 
@@ -716,7 +716,7 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
 static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
 {
     BOOL is_file_spec = PathIsFileSpecW(path);
-    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xff;
+    DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xbf;
 
     TRACE("(%s,%p,0x%08lx)\n", debugstr_w(path), dirs, flags);
 

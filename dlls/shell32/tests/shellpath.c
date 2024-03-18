@@ -2962,6 +2962,7 @@ static void test_PathResolve(void)
 
         /* PRF_VERIFYEXISTS */
         { L"shellpath", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { L"shellpath.lnk", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
         { L"C:\\shellpath", PRF_VERIFYEXISTS, FALSE, L"C:\\shellpath" },
         /* common extensions are tried even if PRF_TRYPROGRAMEXTENSIONS isn't passed */
         /* directories in dirs parameter are always searched first even if PRF_FIRSTDIRDEF isn't passed */
@@ -3071,6 +3072,10 @@ static void test_PathResolve(void)
         }
 
         /* show that PathResolve will check specified search path, even if it's the current directory */
+        lstrcpyW(argv0_base, argv0_basep);
+        ret = pPathResolve(argv0_base, search_path, PRF_VERIFYEXISTS | PRF_TRYPROGRAMEXTENSIONS);
+        ok(ret, "resolving argv0 with search path failed unexpectedly, result: %s\n", wine_dbgstr_w(argv0_base));
+
         lstrcpyW(argv0_base, argv0_basep);
         if ((ext = wcsrchr(argv0_base, '.')))
         {
