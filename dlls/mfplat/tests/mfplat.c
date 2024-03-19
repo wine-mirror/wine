@@ -7137,6 +7137,37 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
     ok(video_format->dwSize == size, "Unexpected size %u.\n", size);
     CoTaskMemFree(video_format);
 
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)123 << 32 | 456);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 123 * 456 * 4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(video_format->videoInfo.dwWidth == 123, "got %lu.\n", video_format->videoInfo.dwWidth);
+    ok(video_format->videoInfo.dwHeight == 456, "got %lu.\n", video_format->videoInfo.dwHeight);
+    ok(video_format->videoInfo.VideoFlags == 0, "got %#I64x.\n", video_format->videoInfo.VideoFlags);
+    CoTaskMemFree(video_format);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 123 * 4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(video_format->videoInfo.VideoFlags == 0, "got %#I64x.\n", video_format->videoInfo.VideoFlags);
+    CoTaskMemFree(video_format);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -123 * 4);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(video_format->videoInfo.VideoFlags == MFVideoFlag_BottomUpLinearRep, "got %#I64x.\n", video_format->videoInfo.VideoFlags);
+    CoTaskMemFree(video_format);
+
+
     memset(palette, 0xa5, sizeof(palette));
     expect_size = offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[ARRAY_SIZE(palette) + 1]);
     hr = IMFMediaType_SetBlob(media_type, &MF_MT_PALETTE, (BYTE *)palette, sizeof(palette));
