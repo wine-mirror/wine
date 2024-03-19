@@ -284,10 +284,6 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
 
         wined3d_device_context_set_rendertarget_views(This->immediate_context, 0, 1, &null_rtv, FALSE);
 
-        wined3d_stateblock_decref(This->state);
-        if (This->recording)
-            wined3d_stateblock_decref(This->recording);
-
         /* Release the wined3d device. This won't destroy it. */
         if (!wined3d_device_decref(This->wined3d_device))
             ERR("The wined3d device (%p) was destroyed unexpectedly.\n", This->wined3d_device);
@@ -325,17 +321,24 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
             IDirect3DDevice3_DeleteViewport(&This->IDirect3DDevice3_iface, &vp->IDirect3DViewport3_iface);
         }
 
+        wined3d_stateblock_decref(This->state);
+        if (This->recording)
+            wined3d_stateblock_decref(This->recording);
+
+        /* Releasing the render target below may release the last reference to the ddraw object. Detach
+         * the device from it before so it doesn't try to save / restore state on the teared down device. */
+        if (This->ddraw)
+        {
+            This->ddraw->d3ddevice = NULL;
+            This->ddraw = NULL;
+        }
+
         TRACE("Releasing render target %p.\n", This->rt_iface);
         rt_iface = This->rt_iface;
         This->rt_iface = NULL;
         if (This->version != 1)
             IUnknown_Release(rt_iface);
         TRACE("Render target release done.\n");
-
-        /* Releasing the render target above may have released the last
-         * reference to the ddraw object. */
-        if (This->ddraw)
-            This->ddraw->d3ddevice = NULL;
 
         /* Now free the structure */
         free(This);
@@ -6776,15 +6779,15 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     return WINED3D_ZB_TRUE;
 }
 
-static void ddraw_reset_viewport_state(struct ddraw *ddraw)
+static void device_reset_viewport_state(struct d3d_device *device)
 {
     struct wined3d_viewport vp;
     RECT rect;
 
-    wined3d_device_context_get_viewports(ddraw->immediate_context, NULL, &vp);
-    wined3d_stateblock_set_viewport(ddraw->state, &vp);
-    wined3d_device_context_get_scissor_rects(ddraw->immediate_context, NULL, &rect);
-    wined3d_stateblock_set_scissor_rect(ddraw->state, &rect);
+    wined3d_device_context_get_viewports(device->immediate_context, NULL, &vp);
+    wined3d_stateblock_set_viewport(device->state, &vp);
+    wined3d_device_context_get_scissor_rects(device->immediate_context, NULL, &rect);
+    wined3d_stateblock_set_scissor_rect(device->state, &rect);
 }
 
 static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, const GUID *guid,
@@ -6838,13 +6841,19 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     device->legacy_projection = ident;
     device->legacy_clipspace = ident;
 
+    if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &device->state)))
+    {
+        ERR("Failed to create the primary stateblock, hr %#lx.\n", hr);
+        ddraw_handle_table_destroy(&device->handle_table);
+        return hr;
+    }
+    device->stateblock_state = wined3d_stateblock_get_state(device->state);
+    device->update_state = device->state;
+
     /* This is for convenience. */
     device->wined3d_device = ddraw->wined3d_device;
     device->immediate_context = ddraw->immediate_context;
     wined3d_device_incref(ddraw->wined3d_device);
-    device->update_state = device->state = ddraw->state;
-    device->stateblock_state = ddraw->stateblock_state;
-    wined3d_stateblock_incref(ddraw->state);
 
     wined3d_streaming_buffer_init(&device->vertex_buffer, WINED3D_BIND_VERTEX_BUFFER);
     wined3d_streaming_buffer_init(&device->index_buffer, WINED3D_BIND_INDEX_BUFFER);
@@ -6865,19 +6874,19 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
 
     ddraw->d3ddevice = device;
 
-    wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_ZENABLE,
+    wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
             d3d_device_update_depth_stencil(device));
     if (version == 1) /* Color keying is initially enabled for version 1 devices. */
-        wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_COLORKEYENABLE, TRUE);
+        wined3d_stateblock_set_render_state(device->state, WINED3D_RS_COLORKEYENABLE, TRUE);
     else if (version == 2)
-        wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_SPECULARENABLE, TRUE);
+        wined3d_stateblock_set_render_state(device->state, WINED3D_RS_SPECULARENABLE, TRUE);
     if (version < 7)
     {
-        wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_NORMALIZENORMALS, TRUE);
+        wined3d_stateblock_set_render_state(device->state, WINED3D_RS_NORMALIZENORMALS, TRUE);
         IDirect3DDevice3_SetRenderState(&device->IDirect3DDevice3_iface,
                 D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATE);
     }
-    ddraw_reset_viewport_state(ddraw);
+    device_reset_viewport_state(device);
     return D3D_OK;
 }
 

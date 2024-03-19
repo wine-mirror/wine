@@ -3346,3 +3346,13 @@ unsigned int CDECL wined3d_stateblock_set_texture_lod(struct wined3d_stateblock 
 
     return old;
 }
+
+void CDECL wined3d_stateblock_texture_changed(struct wined3d_stateblock *stateblock,
+        const struct wined3d_texture *texture)
+{
+    for (unsigned int i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
+    {
+        if (stateblock->stateblock_state.textures[i] == texture)
+            stateblock->changed.textures |= (1u << i);
+    }
+}

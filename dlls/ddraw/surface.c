@@ -4346,7 +4346,7 @@ static HRESULT WINAPI ddraw_surface4_GetUniquenessValue(IDirectDrawSurface4 *ifa
 static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD MaxLOD)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    HRESULT hr;
+    struct d3d_device *device;
 
     TRACE("iface %p, lod %lu.\n", iface, MaxLOD);
 
@@ -4357,12 +4357,18 @@ static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD Ma
         return DDERR_INVALIDOBJECT;
     }
 
-    hr = wined3d_stateblock_set_texture_lod(surface->ddraw->state, surface->wined3d_texture, MaxLOD);
-    if (SUCCEEDED(hr) && surface->draw_texture)
-        hr = wined3d_stateblock_set_texture_lod(surface->ddraw->state, surface->draw_texture, MaxLOD);
-    wined3d_mutex_unlock();
+    wined3d_texture_set_lod(surface->wined3d_texture, MaxLOD);
+    if (surface->draw_texture)
+        wined3d_texture_set_lod(surface->draw_texture, MaxLOD);
 
-    return hr;
+    if ((device = surface->ddraw->d3ddevice))
+    {
+        wined3d_stateblock_texture_changed(device->state, surface->wined3d_texture);
+        if (surface->draw_texture)
+            wined3d_stateblock_texture_changed(device->state, surface->draw_texture);
+    }
+    wined3d_mutex_unlock();
+    return DD_OK;
 }
 
 /*****************************************************************************
@@ -6761,20 +6767,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
         {
             struct wined3d_swapchain_desc swapchain_desc;
+            struct d3d_device *device;
 
             wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
             swapchain_desc.backbuffer_width = mode.width;
             swapchain_desc.backbuffer_height = mode.height;
             swapchain_desc.backbuffer_format = mode.format_id;
 
-            if (ddraw->d3ddevice)
+            if ((device = ddraw->d3ddevice))
             {
-                if (ddraw->d3ddevice->recording)
-                    wined3d_stateblock_decref(ddraw->d3ddevice->recording);
-                ddraw->d3ddevice->recording = NULL;
-                ddraw->d3ddevice->update_state = ddraw->d3ddevice->state;
+                if (device->recording)
+                    wined3d_stateblock_decref(device->recording);
+                device->recording = NULL;
+                device->update_state = device->state;
+                wined3d_stateblock_reset(device->state);
             }
-            wined3d_stateblock_reset(ddraw->state);
 
             if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
                     &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
@@ -6784,8 +6791,9 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 return hr_ddraw_from_wined3d(hr);
             }
 
-            wined3d_stateblock_set_render_state(ddraw->state, WINED3D_RS_ZENABLE,
-                    !!swapchain_desc.enable_auto_depth_stencil);
+            if (device)
+                wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
+                        !!swapchain_desc.enable_auto_depth_stencil);
         }
     }
 

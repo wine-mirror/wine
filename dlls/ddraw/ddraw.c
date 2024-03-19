@@ -437,7 +437,6 @@ static void ddraw_destroy(struct ddraw *This)
 
     if (This->wined3d_swapchain)
         ddraw_destroy_swapchain(This);
-    wined3d_stateblock_decref(This->state);
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wined3d);
 
@@ -797,6 +796,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     struct wined3d_rendertarget_view *rtv = NULL, *dsv = NULL;
     struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
+    struct d3d_device *device;
     RECT clip_rect;
     HRESULT hr;
 
@@ -924,14 +924,15 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     if (cooplevel & DDSCL_MULTITHREADED && !(ddraw->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(ddraw->wined3d_device);
 
+    device = ddraw->d3ddevice;
     if (ddraw->wined3d_swapchain)
     {
-        if (!(ddraw->flags & DDRAW_NO3D))
+        if (!(ddraw->flags & DDRAW_NO3D) && device)
         {
             restore_state = TRUE;
 
             if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device,
-                    ddraw->state, WINED3D_SBT_ALL, &stateblock)))
+                    device->state, WINED3D_SBT_ALL, &stateblock)))
             {
                 ERR("Failed to create stateblock, hr %#lx.\n", hr);
                 goto done;
@@ -968,7 +969,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             wined3d_rendertarget_view_decref(rtv);
         }
 
-        wined3d_stateblock_apply(stateblock, ddraw->state);
+        wined3d_stateblock_apply(stateblock, device->state);
         wined3d_stateblock_decref(stateblock);
     }
 
@@ -5127,15 +5128,5 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
     ddraw->immediate_context = wined3d_device_get_immediate_context(ddraw->wined3d_device);
 
     list_init(&ddraw->surface_list);
-
-    if (FAILED(hr = wined3d_stateblock_create(ddraw->wined3d_device, NULL, WINED3D_SBT_PRIMARY, &ddraw->state)))
-    {
-        ERR("Failed to create the primary stateblock, hr %#lx.\n", hr);
-        wined3d_device_decref(ddraw->wined3d_device);
-        wined3d_decref(ddraw->wined3d);
-        return hr;
-    }
-    ddraw->stateblock_state = wined3d_stateblock_get_state(ddraw->state);
-
     return DD_OK;
 }
