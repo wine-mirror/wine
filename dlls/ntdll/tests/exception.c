@@ -4541,7 +4541,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 
     got_exception = 1;
     dbg_except_continue_handler_rip = (void *)context->Rip;
-    if (NtCurrentTeb()->Peb->BeingDebugged)
+    if (NtCurrentTeb()->Peb->BeingDebugged && !is_arm64ec)
         ++context->Rip;
 
     if (context->Rip >= (ULONG64)code_mem && context->Rip < (ULONG64)code_mem + 0x100)
@@ -4572,6 +4572,27 @@ static void * WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTE
     ok( (void *)(xctx + 1) == (void *)rec, "wrong ptrs %p / %p\n", xctx, rec );
     ok( frame->rip == context->Rip, "wrong rip %Ix / %Ix\n", frame->rip, context->Rip );
     ok( frame->rsp == context->Rsp, "wrong rsp %Ix / %Ix\n", frame->rsp, context->Rsp );
+
+    hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
+    hook_exception_address = rec->ExceptionAddress;
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+    return pKiUserExceptionDispatcher;
+}
+
+static void * WINAPI hook_KiUserExceptionDispatcher_arm64ec(EXCEPTION_RECORD *rec, CONTEXT *context)
+{
+    ARM64_NT_CONTEXT *arm64_context = (ARM64_NT_CONTEXT *)(context + 1);
+
+    trace("rec %p context %p context->Rip %#Ix, context->Rsp %#Ix, ContextFlags %#lx.\n",
+          rec, context, context->Rip, context->Rsp, context->ContextFlags);
+    hook_called = TRUE;
+    ok(rec->ExceptionCode == 0x80000003 || rec->ExceptionCode == 0xceadbeef,
+       "Got unexpected ExceptionCode %#lx.\n", rec->ExceptionCode);
+
+    ok( !((ULONG_PTR)context & 15), "unaligned context %p\n", context );
+    ok( arm64_context->Pc == context->Rip, "wrong rip %Ix / %Ix\n", arm64_context->Pc, context->Rip );
+    ok( arm64_context->Sp == context->Rsp, "wrong rsp %Ix / %Ix\n", arm64_context->Sp, context->Rsp );
 
     hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
     hook_exception_address = rec->ExceptionAddress;
@@ -4628,6 +4649,19 @@ static void test_KiUserExceptionDispatcher(void)
         0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
         0xff, 0xe0,                 /* jmpq *rax */
     };
+    static BYTE hook_trampoline_arm64ec[] =
+    {
+        0x48, 0x8d, 0x54, 0x24, 0x08, /* lea 0x8(%rsp),%rdx */
+        0x48, 0x8d, 0x8a, 0x60, 0x08, 0x00, 0x00,
+ 	                            /* lea 0x860(%rdx),%rcx */
+        0x4c, 0x89, 0x22,           /* mov %r12,(%rdx) */
+        0x48, 0xb8,                 /* movabs hook_KiUserExceptionDispatcher_arm64ec,%rax */
+        0,0,0,0,0,0,0,0,            /* offset 16 */
+        0xff, 0xd0,                 /* callq *rax */
+        0x48, 0x31, 0xc9,           /* xor %rcx, %rcx */
+        0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
+        0xff, 0xe0,                 /* jmpq *rax */
+    };
 
     BYTE patched_KiUserExceptionDispatcher_bytes[12];
     void *bpt_address, *trampoline_ptr;
@@ -4641,9 +4675,13 @@ static void test_KiUserExceptionDispatcher(void)
     *(ULONG64 *)(except_code + 2) = (ULONG64)&test_kiuserexceptiondispatcher_regs;
     *(ULONG64 *)(except_code + 0x2a) = (ULONG64)&test_kiuserexceptiondispatcher_regs.new_rax;
 
+    *(ULONG_PTR *)(hook_trampoline_arm64ec + 17) = (ULONG_PTR)hook_KiUserExceptionDispatcher_arm64ec;
     *(ULONG_PTR *)(hook_trampoline + 16) = (ULONG_PTR)hook_KiUserExceptionDispatcher;
     trampoline_ptr = (char *)code_mem + 1024;
-    memcpy(trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
+    if (is_arm64ec)
+        memcpy(trampoline_ptr, hook_trampoline_arm64ec, sizeof(hook_trampoline_arm64ec));
+    else
+        memcpy(trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             PAGE_EXECUTE_READWRITE, &old_protect);
@@ -4666,7 +4704,9 @@ static void test_KiUserExceptionDispatcher(void)
     got_exception = 0;
     run_exception_test(dbg_except_continue_handler, NULL, except_code, sizeof(except_code), PAGE_EXECUTE_READ);
     ok(got_exception, "Handler was not called.\n");
+    todo_wine_if(is_arm64ec)
     ok(hook_called, "Hook was not called.\n");
+    if (!hook_called) return;
 
     ok(test_kiuserexceptiondispatcher_regs.new_rax == 0xdeadbeef, "Got unexpected rax %#Ix.\n",
             test_kiuserexceptiondispatcher_regs.new_rax);
@@ -4717,7 +4757,7 @@ static void test_KiUserExceptionDispatcher(void)
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
 
-    ok(hook_exception_address == (BYTE *)hook_KiUserExceptionDispatcher_rip + 1
+    ok(hook_exception_address == (BYTE *)hook_KiUserExceptionDispatcher_rip + !is_arm64ec
             || broken(!hook_exception_address) /* 2008 */, "Got unexpected addresses %p, %p.\n",
             hook_KiUserExceptionDispatcher_rip, hook_exception_address);
 
