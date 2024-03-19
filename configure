@@ -22778,6 +22778,7 @@ wine_fn_config_makefile programs/explorer enable_explorer
 wine_fn_config_makefile programs/explorer/tests enable_tests
 wine_fn_config_makefile programs/extrac32 enable_extrac32
 wine_fn_config_makefile programs/fc enable_fc
+wine_fn_config_makefile programs/fc/tests enable_tests
 wine_fn_config_makefile programs/find enable_find
 wine_fn_config_makefile programs/find/tests enable_tests
 wine_fn_config_makefile programs/findstr enable_findstr
