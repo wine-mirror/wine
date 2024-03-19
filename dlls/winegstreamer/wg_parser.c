@@ -412,11 +412,12 @@ static NTSTATUS wg_parser_stream_release_buffer(void *args)
 
     pthread_mutex_lock(&parser->mutex);
 
-    assert(stream->buffer);
-
-    gst_buffer_unmap(stream->buffer, &stream->map_info);
-    gst_buffer_unref(stream->buffer);
-    stream->buffer = NULL;
+    if (stream->buffer)
+    {
+        gst_buffer_unmap(stream->buffer, &stream->map_info);
+        gst_buffer_unref(stream->buffer);
+        stream->buffer = NULL;
+    }
 
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&stream->event_empty_cond);
