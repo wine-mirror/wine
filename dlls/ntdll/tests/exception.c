@@ -10831,11 +10831,11 @@ static void test_backtrace(void)
     ok( count > 0, "got %u entries\n", count );
     for (i = hash_expect = 0; i < count; i++) hash_expect += (ULONG_PTR)buffer[i];
     ok( hash == hash_expect, "hash mismatch %lx / %lx\n", hash, hash_expect );
-    RtlPcToFileHeader( buffer[0], &module );
+    pRtlPcToFileHeader( buffer[0], &module );
     if (is_arm64ec && module == hntdll)  /* Windows arm64ec has an extra frame for the entry thunk */
     {
         ok( count > 1, "wrong count %u\n", count );
-        RtlPcToFileHeader( buffer[1], &module );
+        pRtlPcToFileHeader( buffer[1], &module );
     }
     GetModuleFileNameW( module, name, ARRAY_SIZE(name) );
     ok( module == GetModuleHandleA(0), "wrong module %p %s / %p for %p\n",
@@ -10855,7 +10855,7 @@ static void test_backtrace(void)
 
     if (count && !buffer[count - 1]) count--;  /* win11 32-bit */
     if (count <= 1) return;
-    RtlPcToFileHeader( buffer[count - 1], &module );
+    pRtlPcToFileHeader( buffer[count - 1], &module );
     GetModuleFileNameW( module, name, ARRAY_SIZE(name) );
     ok( module == hntdll, "wrong module %p %s for frame %u %p\n",
         module, debugstr_w(name), count - 1, buffer[count - 1] );
