@@ -89,6 +89,7 @@ static VOID      (WINAPI *pRtlUnwindEx)(VOID*, VOID*, EXCEPTION_RECORD*, VOID*, 
 static BOOLEAN   (CDECL  *pRtlAddFunctionTable)(RUNTIME_FUNCTION*, DWORD, DWORD64);
 static BOOLEAN   (CDECL  *pRtlDeleteFunctionTable)(RUNTIME_FUNCTION*);
 static VOID      (CDECL  *pRtlRestoreContext)(CONTEXT*, EXCEPTION_RECORD*);
+static NTSTATUS  (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 #endif
 
 static void *pKiUserApcDispatcher;
@@ -146,7 +147,6 @@ static EXCEPTION_DISPOSITION (WINAPI *p__C_specific_handler)(EXCEPTION_RECORD*, 
 static NTSTATUS  (WINAPI *pRtlWow64GetThreadContext)(HANDLE, WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64SetThreadContext)(HANDLE, const WOW64_CONTEXT *);
 static NTSTATUS  (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
-static NTSTATUS  (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 #endif
 
 enum debugger_stages
@@ -3011,7 +3011,9 @@ static void test_exceptions(void)
     got_exception = 0;
     run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code), 0);
     ok(got_exception == 1, "got %d exceptions, expected 1\n", got_exception);
+#ifndef __arm64ec__
     if (is_arm64ec) __asm__ volatile( "cld" ); /* needed on Windows */
+#endif
 
     /* test int3 handling */
     run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
@@ -3294,7 +3296,7 @@ static void rtlraiseexception_handler_( EXCEPTION_RECORD *rec, void *frame, CONT
     /* check that pc is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
      */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage && !is_arm64ec)
         ok( context->Rip == (UINT_PTR)addr - 1,
             "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)addr - 1 );
     else
@@ -3386,7 +3388,7 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     /* check that Rip is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
      */
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage)
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && test_stage && !is_arm64ec)
         ok( context->Rip == (UINT_PTR)addr - 1,
             "%d: Rip at %Ix instead of %Ix\n", test_stage, context->Rip, (UINT_PTR)addr - 1 );
     else
@@ -3579,20 +3581,24 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
             else if (counter < 2) /* startup breakpoint */
             {
                 /* breakpoint is inside ntdll */
-                void *ntdll = GetModuleHandleA( "ntdll.dll" );
-                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( ntdll );
+                IMAGE_NT_HEADERS *nt = RtlImageNtHeader( hntdll );
 
-                ok( (char *)ctx.Rip >= (char *)ntdll &&
-                    (char *)ctx.Rip < (char *)ntdll + nt->OptionalHeader.SizeOfImage,
-                    "wrong rip %p ntdll %p-%p\n", (void *)ctx.Rip, ntdll,
-                    (char *)ntdll + nt->OptionalHeader.SizeOfImage );
+                ok( (char *)ctx.Rip >= (char *)hntdll &&
+                    (char *)ctx.Rip < (char *)hntdll + nt->OptionalHeader.SizeOfImage,
+                    "wrong rip %p ntdll %p-%p\n", (void *)ctx.Rip, hntdll,
+                    (char *)hntdll + nt->OptionalHeader.SizeOfImage );
             }
             else
             {
                 if (stage == STAGE_RTLRAISE_NOT_HANDLED)
                 {
-                    ok((char *)ctx.Rip == (char *)code_mem_address + 0x0c, "Rip at %p instead of %p\n",
-                       (char *)ctx.Rip, (char *)code_mem_address + 0x0c);
+                    if (is_arm64ec) /* addr points to RtlRaiseException entry thunk */
+                        ok( ((ULONG *)ctx.Rip)[-1] == 0xd63f0120 /* blr x9 */,
+                            "Rip not in entry thunk %p (ntdll+%Ix)\n",
+                            (char *)ctx.Rip, (char *)ctx.Rip - (char *)hntdll );
+                    else
+                        ok((char *)ctx.Rip == (char *)code_mem_address + 0x0c, "Rip at %p instead of %p\n",
+                           (char *)ctx.Rip, (char *)code_mem_address + 0x0c);
                     /* setting the context from debugger does not affect the context that the
                      * exception handler gets, except on w2008 */
                     ctx.Rip = (UINT_PTR)code_mem_address + 0x0e;
@@ -3604,8 +3610,14 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                 {
                     if (de.u.Exception.dwFirstChance)
                     {
-                        ok((char *)ctx.Rip == (char *)code_mem_address + 0x0c, "Rip at %p instead of %p\n",
-                           (char *)ctx.Rip, (char *)code_mem_address + 0x0c);
+                        if (is_arm64ec)
+                            ok( ((ULONG *)ctx.Rip)[-1] == 0xd63f0120 /* blr x9 */,
+                                "Rip not in entry thunk %p (ntdll+%Ix)\n",
+                                (char *)ctx.Rip, (char *)ctx.Rip - (char *)hntdll );
+                        else
+                            ok((char *)ctx.Rip == (char *)code_mem_address + 0x0c,
+                               "Rip at %p instead of %p\n",
+                               (char *)ctx.Rip, (char *)code_mem_address + 0x0c);
                         /* setting the context from debugger does not affect the context that the
                          * exception handler gets, except on w2008 */
                         ctx.Rip = (UINT_PTR)code_mem_address + 0x0e;
@@ -3617,7 +3629,11 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
                     else
                     {
                         /* debugger gets context after exception handler has played with it */
-                        if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+                        if (is_arm64ec)
+                            ok( ((ULONG *)ctx.Rip)[-1] == 0xd63f0120 /* blr x9 */,
+                                "Rip not in entry thunk %p (ntdll+%Ix)\n",
+                                (char *)ctx.Rip, (char *)ctx.Rip - (char *)hntdll );
+                        else if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
                             ok((char *)ctx.Rip == (char *)code_mem_address + 0xb, "Rip at %p instead of %p\n",
                                (char *)ctx.Rip, (char *)code_mem_address + 0xb);
@@ -4275,7 +4291,7 @@ static void test_wow64_context(void)
     ok( !context.Rbx, "rbx is not zero %Ix\n", context.Rbx );
     ok( ((ULONG_PTR)context.Rsp & ~0xfff) == ((ULONG_PTR)teb.Tib.StackBase & ~0xfff),
         "rsp is not at top of stack %p / %p\n", (void *)context.Rsp, teb.Tib.StackBase );
-    ok( context.EFlags == 0x200, "wrong flags %08lx\n", context.EFlags );
+    ok( context.EFlags == 0x200 || context.EFlags == 0x202, "wrong flags %08lx\n", context.EFlags );
 
     for (i = 0, got32 = got64 = FALSE; i < 10000 && !(got32 && got64); i++)
     {
@@ -10868,6 +10884,17 @@ START_TEST(exception)
     X(RtlUnwindEx);
     X(RtlAddFunctionTable);
     X(RtlDeleteFunctionTable);
+    X(RtlGetNativeSystemInformation);
+#endif
+
+#ifdef __x86_64__
+    if (pRtlGetNativeSystemInformation)
+    {
+        SYSTEM_CPU_INFORMATION info;
+        ULONG len;
+        if (!pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len ))
+            is_arm64ec = (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+    }
 #endif
 #undef X
 
@@ -10999,16 +11026,7 @@ START_TEST(exception)
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
     X(RtlWow64GetCpuAreaInfo);
-    X(RtlGetNativeSystemInformation);
 #undef X
-
-    if (pRtlGetNativeSystemInformation)
-    {
-        SYSTEM_CPU_INFORMATION info;
-        ULONG len;
-        if (!pRtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), &len ))
-            is_arm64ec = (info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
-    }
 
     test_exceptions();
     test_debug_registers();
