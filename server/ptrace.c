@@ -366,7 +366,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
             char procmem[24];
             int fd;
 
-            sprintf( procmem, "/proc/%u/mem", process->unix_pid );
+            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", process->unix_pid );
             if ((fd = open( procmem, O_RDONLY )) != -1)
             {
                 ssize_t ret = pread( fd, dest, size, ptr );
@@ -467,7 +467,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
             char procmem[24];
             int fd;
 
-            sprintf( procmem, "/proc/%u/mem", process->unix_pid );
+            snprintf( procmem, sizeof(procmem), "/proc/%u/mem", process->unix_pid );
             if ((fd = open( procmem, O_WRONLY )) != -1)
             {
                 ssize_t r = pwrite( fd, src, size, ptr );

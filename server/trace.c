@@ -5645,7 +5645,7 @@ static const char *get_status_name( unsigned int status )
         for (i = 0; status_names[i].name; i++)
             if (status_names[i].value == status) return status_names[i].name;
     }
-    sprintf( buffer, "%x", status );
+    snprintf( buffer, sizeof(buffer), "%x", status );
     return buffer;
 }
 

@@ -212,19 +212,19 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
         if (*str > 127)  /* hex escape */
         {
             if (len > 1 && str[1] < 128 && isxdigit((char)str[1]))
-                pos += sprintf( pos, "\\x%04x", *str );
+                pos += snprintf( pos, sizeof(buffer) - (pos - buffer), "\\x%04x", *str );
             else
-                pos += sprintf( pos, "\\x%x", *str );
+                pos += snprintf( pos, sizeof(buffer) - (pos - buffer), "\\x%x", *str );
             continue;
         }
         if (*str < 32)  /* octal or C escape */
         {
             if (escapes[*str] != '.')
-                pos += sprintf( pos, "\\%c", escapes[*str] );
+                pos += snprintf( pos, sizeof(buffer) - (pos - buffer), "\\%c", escapes[*str] );
             else if (len > 1 && str[1] >= '0' && str[1] <= '7')
-                pos += sprintf( pos, "\\%03o", *str );
+                pos += snprintf( pos, sizeof(buffer) - (pos - buffer), "\\%03o", *str );
             else
-                pos += sprintf( pos, "\\%o", *str );
+                pos += snprintf( pos, sizeof(buffer) - (pos - buffer), "\\%o", *str );
             continue;
         }
         if (*str == '\\' || *str == escape[0] || *str == escape[1]) *pos++ = '\\';

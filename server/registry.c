@@ -1831,15 +1831,16 @@ static int load_init_registry_from_file( const char *filename, struct key *key )
 
 static WCHAR *format_user_registry_path( const struct sid *sid, struct unicode_str *path )
 {
-    char buffer[7 + 11 + 11 + 11 * ARRAY_SIZE(sid->sub_auth)], *p = buffer;
+    char buffer[7 + 11 + 11 + 11 * ARRAY_SIZE(sid->sub_auth)];
     unsigned int i;
+    int len;
 
-    p += sprintf( p, "User\\S-%u-%u", sid->revision,
-                  ((unsigned int)sid->id_auth[2] << 24) |
-                  ((unsigned int)sid->id_auth[3] << 16) |
-                  ((unsigned int)sid->id_auth[4] << 8) |
-                  ((unsigned int)sid->id_auth[5]) );
-    for (i = 0; i < sid->sub_count; i++) p += sprintf( p, "-%u", sid->sub_auth[i] );
+    len = snprintf( buffer, sizeof(buffer), "User\\S-%u-%u", sid->revision,
+                    ((unsigned int)sid->id_auth[2] << 24) |
+                    ((unsigned int)sid->id_auth[3] << 16) |
+                    ((unsigned int)sid->id_auth[4] << 8) |
+                    ((unsigned int)sid->id_auth[5]) );
+    for (i = 0; i < sid->sub_count; i++) len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", sid->sub_auth[i] );
     return ascii_to_unicode_str( buffer, path );
 }
 

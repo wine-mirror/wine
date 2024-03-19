@@ -320,7 +320,7 @@ static void create_session( unsigned int id )
         release_object( dir_sessions );
     }
 
-    sprintf( id_strA, "%u", id );
+    snprintf( id_strA, sizeof(id_strA), "%u", id );
     id_strW = ascii_to_unicode_str( id_strA, &id_str );
     dir_id = create_directory( &dir_sessions->obj, &id_str, 0, HASH_SIZE, NULL );
     dir_dosdevices = create_directory( &dir_id->obj, &dir_dosdevices_str, OBJ_PERMANENT, HASH_SIZE, NULL );

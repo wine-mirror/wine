@@ -55,7 +55,7 @@ static int open_proc_as( struct process *process, int flags )
         return -1;
     }
 
-    sprintf( buffer, "/proc/%u/as", process->unix_pid );
+    snprintf( buffer, sizeof(buffer), "/proc/%u/as", process->unix_pid );
     if ((fd = open( buffer, flags )) == -1)
     {
         if (errno == ENOENT)  /* probably got killed */
@@ -75,7 +75,7 @@ static int open_proc_lwpctl( struct thread *thread )
 
     if (thread->unix_pid == -1) return -1;
 
-    sprintf( buffer, "/proc/%u/lwp/%u/lwpctl", thread->unix_pid, thread->unix_tid );
+    snprintf( buffer, sizeof(buffer), "/proc/%u/lwp/%u/lwpctl", thread->unix_pid, thread->unix_tid );
     if ((fd = open( buffer, O_WRONLY )) == -1)
     {
         if (errno == ENOENT)  /* probably got killed */

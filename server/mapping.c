@@ -292,7 +292,7 @@ static int make_temp_file( char name[16] )
     value += (current_time >> 16) + current_time;
     for (i = 0; i < 0x8000 && fd < 0; i++, value += 7777)
     {
-        sprintf( name, "tmpmap-%08x", value );
+        snprintf( name, 16, "tmpmap-%08x", value );
         fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0600 );
     }
     return fd;
