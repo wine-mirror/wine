@@ -22,6 +22,7 @@
 #include "initguid.h"
 #include "objbase.h"
 #include "ocidl.h"
+#include "olectl.h"
 #include "netlistmgr.h"
 #include "wine/test.h"
 
@@ -348,13 +349,13 @@ static void test_INetworkListManager( void )
         "Expected iid to be IID_INetworkListManagerEvents\n" );
 
     hr = IConnectionPoint_Advise( pt, (IUnknown*)&mgr_sink_unk, &cookie);
-    ok( hr == CO_E_FAILEDTOOPENTHREADTOKEN, "Advise failed: %08lx\n", hr );
+    ok( hr == CONNECT_E_CANNOTCONNECT, "Advise failed: %08lx\n", hr );
 
     hr = IConnectionPoint_Advise( pt, (IUnknown*)&mgr_sink, &cookie);
     ok( hr == S_OK, "Advise failed: %08lx\n", hr );
 
     hr = IConnectionPoint_Unadvise( pt, 0xdeadbeef );
-    ok( hr == OLE_E_NOCONNECTION || hr == CO_E_FAILEDTOIMPERSONATE, "Unadvise failed: %08lx\n", hr );
+    ok( hr == OLE_E_NOCONNECTION || hr == CONNECT_E_NOCONNECTION, "Unadvise failed: %08lx\n", hr );
 
     hr = IConnectionPoint_Unadvise( pt, cookie );
     ok( hr == S_OK, "Unadvise failed: %08lx\n", hr );
@@ -365,11 +366,11 @@ static void test_INetworkListManager( void )
     IConnectionPoint_Release( pt2 );
 
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkCostManagerEvents, &pt );
-    ok( hr == S_OK || hr == CO_E_FAILEDTOIMPERSONATE, "got %08lx\n", hr );
+    ok( hr == S_OK || hr == CONNECT_E_NOCONNECTION, "got %08lx\n", hr );
     if (hr == S_OK) IConnectionPoint_Release( pt );
 
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkConnectionEvents, &pt );
-    ok( hr == S_OK || hr == CO_E_FAILEDTOIMPERSONATE, "got %08lx\n", hr );
+    ok( hr == S_OK || hr == CONNECT_E_NOCONNECTION, "got %08lx\n", hr );
     if (hr == S_OK) IConnectionPoint_Release( pt );
 
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkEvents, &pt );

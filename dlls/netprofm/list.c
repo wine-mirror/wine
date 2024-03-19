@@ -194,7 +194,7 @@ static HRESULT WINAPI connection_point_Advise(
     if (FAILED(hr))
     {
         WARN( "iface %s not implemented by sink\n", debugstr_guid(&cp->iid) );
-        return CO_E_FAILEDTOOPENTHREADTOKEN;
+        return CONNECT_E_CANNOTCONNECT;
     }
 
     sink_entry = malloc( sizeof(*sink_entry) );
@@ -234,7 +234,7 @@ static HRESULT WINAPI connection_point_Unadvise(
     }
 
     WARN( "invalid cookie\n" );
-    return OLE_E_NOCONNECTION;
+    return CONNECT_E_NOCONNECTION;
 }
 
 static HRESULT WINAPI connection_point_EnumConnections(
