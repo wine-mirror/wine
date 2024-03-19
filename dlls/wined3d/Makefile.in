@@ -19,6 +19,7 @@ SOURCES = \
 	palette.c \
 	query.c \
 	resource.c \
+	resource.rc \
 	sampler.c \
 	shader.c \
 	shader_sm1.c \
