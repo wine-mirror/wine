@@ -209,9 +209,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
                     struct wined3d_matrix *a, *b, *c;
 
-                    a = ddraw_get_object(&device->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
-                    b = ddraw_get_object(&device->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
-                    c = ddraw_get_object(&device->handle_table, ci->hSrcMatrix2 - 1, DDRAW_HANDLE_MATRIX);
+                    a = ddraw_get_object(NULL, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
+                    b = ddraw_get_object(NULL, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
+                    c = ddraw_get_object(NULL, ci->hSrcMatrix2 - 1, DDRAW_HANDLE_MATRIX);
 
                     if (!a || !b || !c)
                     {
@@ -235,7 +235,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                     D3DSTATE *ci = (D3DSTATE *)instr;
                     D3DMATRIX *m;
 
-                    m = ddraw_get_object(&device->handle_table, ci->dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
+                    m = ddraw_get_object(NULL, ci->dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
                     if (!m)
                     {
                         ERR("Invalid matrix handle %#lx.\n", ci->dwArg[0]);

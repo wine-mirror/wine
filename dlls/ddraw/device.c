@@ -303,14 +303,6 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
                 case DDRAW_HANDLE_FREE:
                     break;
 
-                case DDRAW_HANDLE_MATRIX:
-                {
-                    /* No FIXME here because this might happen because of sloppy applications. */
-                    WARN("Leftover matrix handle %#lx (%p), deleting.\n", i + 1, entry->object);
-                    IDirect3DDevice_DeleteMatrix(&This->IDirect3DDevice_iface, i + 1);
-                    break;
-                }
-
                 case DDRAW_HANDLE_STATEBLOCK:
                 {
                     /* No FIXME here because this might happen because of sloppy applications. */
@@ -1304,7 +1296,6 @@ static HRESULT WINAPI d3d_device1_EnumTextureFormats(IDirect3DDevice *iface,
  *****************************************************************************/
 static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DMatHandle)
 {
-    struct d3d_device *device = impl_from_IDirect3DDevice(iface);
     D3DMATRIX *matrix;
     DWORD h;
 
@@ -1321,7 +1312,7 @@ static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIX
 
     wined3d_mutex_lock();
 
-    h = ddraw_allocate_handle(&device->handle_table, matrix, DDRAW_HANDLE_MATRIX);
+    h = ddraw_allocate_handle(NULL, matrix, DDRAW_HANDLE_MATRIX);
     if (h == DDRAW_INVALID_HANDLE)
     {
         ERR("Failed to allocate a matrix handle.\n");
@@ -1370,7 +1361,7 @@ static HRESULT WINAPI d3d_device1_SetMatrix(IDirect3DDevice *iface,
 
     wined3d_mutex_lock();
 
-    m = ddraw_get_object(&device->handle_table, matrix_handle - 1, DDRAW_HANDLE_MATRIX);
+    m = ddraw_get_object(NULL, matrix_handle - 1, DDRAW_HANDLE_MATRIX);
     if (!m)
     {
         WARN("Invalid matrix handle.\n");
@@ -1419,7 +1410,6 @@ static HRESULT WINAPI d3d_device1_SetMatrix(IDirect3DDevice *iface,
 static HRESULT WINAPI d3d_device1_GetMatrix(IDirect3DDevice *iface,
         D3DMATRIXHANDLE D3DMatHandle, D3DMATRIX *D3DMatrix)
 {
-    struct d3d_device *device = impl_from_IDirect3DDevice(iface);
     D3DMATRIX *m;
 
     TRACE("iface %p, matrix_handle %#lx, matrix %p.\n", iface, D3DMatHandle, D3DMatrix);
@@ -1428,7 +1418,7 @@ static HRESULT WINAPI d3d_device1_GetMatrix(IDirect3DDevice *iface,
 
     wined3d_mutex_lock();
 
-    m = ddraw_get_object(&device->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    m = ddraw_get_object(NULL, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
     if (!m)
     {
         WARN("Invalid matrix handle.\n");
@@ -1460,14 +1450,13 @@ static HRESULT WINAPI d3d_device1_GetMatrix(IDirect3DDevice *iface,
  *****************************************************************************/
 static HRESULT WINAPI d3d_device1_DeleteMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE D3DMatHandle)
 {
-    struct d3d_device *device = impl_from_IDirect3DDevice(iface);
     D3DMATRIX *m;
 
     TRACE("iface %p, matrix_handle %#lx.\n", iface, D3DMatHandle);
 
     wined3d_mutex_lock();
 
-    m = ddraw_free_handle(&device->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    m = ddraw_free_handle(NULL, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
     if (!m)
     {
         WARN("Invalid matrix handle.\n");
