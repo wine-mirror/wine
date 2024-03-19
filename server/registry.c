@@ -137,7 +137,7 @@ static struct key_value *find_value( const struct key *key, const struct unicode
 struct save_branch_info
 {
     struct key  *key;
-    const char  *path;
+    const char  *filename;
 };
 
 #define MAX_SAVE_BRANCH_INFO 3
@@ -1823,7 +1823,7 @@ static int load_init_registry_from_file( const char *filename, struct key *key )
 
     assert( save_branch_count < MAX_SAVE_BRANCH_INFO );
 
-    save_branch_info[save_branch_count].path = filename;
+    save_branch_info[save_branch_count].filename = filename;
     save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
     make_object_permanent( &key->obj );
     return (f != NULL);
@@ -2038,10 +2038,10 @@ static void save_registry( struct key *key, obj_handle_t handle )
 }
 
 /* save a registry branch to a file */
-static int save_branch( struct key *key, const char *path )
+static int save_branch( struct key *key, const char *filename )
 {
     struct stat st;
-    char *p, *tmp = NULL;
+    char tmp[32];
     int fd, count = 0, ret = 0;
     FILE *f;
 
@@ -2050,14 +2050,15 @@ static int save_branch( struct key *key, const char *path )
         if (debug_level > 1) dump_operation( key, NULL, "Not saving clean" );
         return 1;
     }
+    tmp[0] = 0;
 
     /* test the file type */
 
-    if ((fd = open( path, O_WRONLY )) != -1)
+    if ((fd = open( filename, O_WRONLY )) != -1)
     {
         /* if file is not a regular file or has multiple links or is accessed
          * via symbolic links, write directly into it; otherwise use a temp file */
-        if (!lstat( path, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1))
+        if (!lstat( filename, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1))
         {
             ftruncate( fd, 0 );
             goto save;
@@ -2065,15 +2066,11 @@ static int save_branch( struct key *key, const char *path )
         close( fd );
     }
 
-    /* create a temp file in the same directory */
+    /* create a temp file */
 
-    if (!(tmp = malloc( strlen(path) + 20 ))) goto done;
-    strcpy( tmp, path );
-    if ((p = strrchr( tmp, '/' ))) p++;
-    else p = tmp;
     for (;;)
     {
-        sprintf( p, "reg%lx%04x.tmp", (long) getpid(), count++ );
+        snprintf( tmp, sizeof(tmp), "reg%lx%04x.tmp", (long) getpid(), count++ );
         if ((fd = open( tmp, O_CREAT | O_EXCL | O_WRONLY, 0666 )) != -1) break;
         if (errno != EEXIST) goto done;
         close( fd );
@@ -2084,29 +2081,28 @@ static int save_branch( struct key *key, const char *path )
  save:
     if (!(f = fdopen( fd, "w" )))
     {
-        if (tmp) unlink( tmp );
+        if (tmp[0]) unlink( tmp );
         close( fd );
         goto done;
     }
 
     if (debug_level > 1)
     {
-        fprintf( stderr, "%s: ", path );
+        fprintf( stderr, "%s: ", filename );
         dump_operation( key, NULL, "saving" );
     }
 
     save_all_subkeys( key, f );
     ret = !fclose(f);
 
-    if (tmp)
+    if (tmp[0])
     {
         /* if successfully written, rename to final name */
-        if (ret) ret = !rename( tmp, path );
+        if (ret) ret = !rename( tmp, filename );
         if (!ret) unlink( tmp );
     }
 
 done:
-    free( tmp );
     if (ret) make_clean( key );
     return ret;
 }
@@ -2119,7 +2115,7 @@ static void periodic_save( void *arg )
     if (fchdir( config_dir_fd ) == -1) return;
     save_timeout_user = NULL;
     for (i = 0; i < save_branch_count; i++)
-        save_branch( save_branch_info[i].key, save_branch_info[i].path );
+        save_branch( save_branch_info[i].key, save_branch_info[i].filename );
     if (fchdir( server_dir_fd ) == -1) fatal_error( "chdir to server dir: %s\n", strerror( errno ));
     set_periodic_save_timer();
 }
@@ -2139,10 +2135,10 @@ void flush_registry(void)
     if (fchdir( config_dir_fd ) == -1) return;
     for (i = 0; i < save_branch_count; i++)
     {
-        if (!save_branch( save_branch_info[i].key, save_branch_info[i].path ))
+        if (!save_branch( save_branch_info[i].key, save_branch_info[i].filename ))
         {
             fprintf( stderr, "wineserver: could not save registry branch to %s",
-                     save_branch_info[i].path );
+                     save_branch_info[i].filename );
             perror( " " );
         }
     }
