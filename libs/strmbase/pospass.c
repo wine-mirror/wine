@@ -730,7 +730,8 @@ void strmbase_passthrough_init(struct strmbase_passthrough *passthrough, IUnknow
     passthrough->IMediaPosition_iface.lpVtbl = &IMediaPositionPassThru_Vtbl;
     passthrough->IMediaSeeking_iface.lpVtbl = &IMediaSeekingPassThru_Vtbl;
     passthrough->ISeekingPassThru_iface.lpVtbl = &ISeekingPassThru_Vtbl;
-    InitializeCriticalSectionEx(&passthrough->time_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+    if (!InitializeCriticalSectionEx(&passthrough->time_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO))
+        InitializeCriticalSection(&passthrough->time_cs);
     passthrough->time_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_passthrough.time_cs" );
 }
 
