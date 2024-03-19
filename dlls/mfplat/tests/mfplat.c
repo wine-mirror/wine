@@ -7855,6 +7855,562 @@ static void test_MFCreateAMMediaTypeFromMFMediaType(void)
     IMFMediaType_Release(media_type);
 }
 
+static void test_MFInitMediaTypeFromMFVideoFormat(void)
+{
+    static const MFPaletteEntry expect_palette[] = {{{1}},{{2}},{{3}},{{4}},{{5}},{{6}},{{7}},{{8}}};
+    static const BYTE expect_user_data[] = {6,5,4,3,2,1};
+    MFPaletteEntry palette[ARRAY_SIZE(expect_palette)];
+    BYTE user_data[sizeof(expect_user_data)];
+    char buffer[sizeof(MFVIDEOFORMAT) + sizeof(palette) + sizeof(user_data)];
+    MFVIDEOFORMAT format, *format_buf = (MFVIDEOFORMAT *)buffer;
+    IMFMediaType *media_type;
+    MFVideoArea aperture;
+    UINT32 i, value32;
+    UINT64 value64;
+    HRESULT hr;
+    GUID guid;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, NULL, 0);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    memset(&format, 0, sizeof(format));
+    format.dwSize = sizeof(format) - 1;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format) - 1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    format.dwSize = sizeof(format);
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format) - 1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(&guid, 0xcd, sizeof(guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &guid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &MFMediaType_Video), "got %s.\n", debugstr_guid(&guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.guidFormat = MFVideoFormat_H264;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(&guid, 0xcd, sizeof(guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &MFVideoFormat_H264), "got %s.\n", debugstr_guid(&guid));
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.guidFormat = MFVideoFormat_RGB32;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(&guid, 0xcd, sizeof(guid));
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid, &MFVideoFormat_RGB32), "got %s.\n", debugstr_guid(&guid));
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %u.\n", value32);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.dwWidth = -123;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "Unexpected hr %#lx.\n", hr);
+    format.videoInfo.dwWidth = 123;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+    format.videoInfo.dwHeight = -456;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "Unexpected hr %#lx.\n", hr);
+    format.videoInfo.dwHeight = 456;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value64 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value64);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value64 == (((UINT64)123 << 32) | 456), "got %#I64x.\n", value64);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 123 * 4, "got %u.\n", value32);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 123 * 4 * 456, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* MFVideoFlag_BottomUpLinearRep flag inverts the stride */
+    format.videoInfo.VideoFlags = MFVideoFlag_BottomUpLinearRep;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == -123 * 4, "got %u.\n", value32);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 123 * 4 * 456, "got %u.\n", value32);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* MFVideoFlag_BottomUpLinearRep flag only works with RGB formats */
+    format.guidFormat = MFVideoFormat_H264;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.guidFormat = MFVideoFormat_NV12;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 124, "got %u.\n", value32);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 124 * 456 * 3 / 2, "got %u.\n", value32);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.PixelAspectRatio.Numerator = 7;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+    format.videoInfo.PixelAspectRatio.Denominator = 8;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value64 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value64);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value64 == (((UINT64)7 << 32) | 8), "got %#I64x.\n", value64);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_CHROMA_SITING, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.SourceChromaSubsampling = MFVideoChromaSubsampling_MPEG2;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_CHROMA_SITING, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoChromaSubsampling_MPEG2, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.InterlaceMode = MFVideoInterlace_MixedInterlaceOrProgressive;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoInterlace_MixedInterlaceOrProgressive, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_TRANSFER_FUNCTION, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.TransferFunction = MFVideoTransFunc_709;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_TRANSFER_FUNCTION, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoTransFunc_709, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_PRIMARIES, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.ColorPrimaries = MFVideoPrimaries_BT709;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_PRIMARIES, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoPrimaries_BT709, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.TransferMatrix = MFVideoTransferMatrix_BT709;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoTransferMatrix_BT709, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_LIGHTING, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.SourceLighting = MFVideoLighting_bright;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_LIGHTING, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFVideoLighting_bright, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.FramesPerSecond.Numerator = 30000;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &value64);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+    format.videoInfo.FramesPerSecond.Denominator = 1001;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value64 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &value64);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value64 == (((UINT64)30000 << 32) | 1001), "got %#I64x.\n", value64);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.NominalRange = MFNominalRange_Wide;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == MFNominalRange_Wide, "got %u.\n", value32);
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_GEOMETRIC_APERTURE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.GeometricAperture.OffsetX.value = 1;
+    format.videoInfo.GeometricAperture.OffsetX.fract = 2;
+    format.videoInfo.GeometricAperture.OffsetY.value = 3;
+    format.videoInfo.GeometricAperture.OffsetY.fract = 4;
+    format.videoInfo.GeometricAperture.Area.cx = -120;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    format.videoInfo.GeometricAperture.Area.cy = -450;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %u.\n", value32);
+    todo_wine
+    ok(!memcmp(&format.videoInfo.GeometricAperture, &aperture, sizeof(aperture)), "Unexpected aperture.\n");
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.MinimumDisplayAperture.OffsetX.value = 1;
+    format.videoInfo.MinimumDisplayAperture.OffsetX.fract = 2;
+    format.videoInfo.MinimumDisplayAperture.OffsetY.value = 3;
+    format.videoInfo.MinimumDisplayAperture.OffsetY.fract = 4;
+    format.videoInfo.MinimumDisplayAperture.Area.cx = 120;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    format.videoInfo.MinimumDisplayAperture.Area.cy = 450;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %u.\n", value32);
+    todo_wine
+    ok(!memcmp(&format.videoInfo.MinimumDisplayAperture, &aperture, sizeof(aperture)), "Unexpected aperture.\n");
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_PAN_SCAN_APERTURE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.PanScanAperture.OffsetX.value = 1;
+    format.videoInfo.PanScanAperture.OffsetX.fract = 2;
+    format.videoInfo.PanScanAperture.OffsetY.value = 3;
+    format.videoInfo.PanScanAperture.OffsetY.fract = 4;
+    format.videoInfo.PanScanAperture.Area.cx = 120;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    format.videoInfo.PanScanAperture.Area.cy = 450;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&aperture, 0xcd, sizeof(aperture));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(aperture), "got %u.\n", value32);
+    todo_wine
+    ok(!memcmp(&format.videoInfo.PanScanAperture, &aperture, sizeof(aperture)), "Unexpected aperture.\n");
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.VideoFlags |= MFVideoFlag_PanScanEnabled;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAN_SCAN_ENABLED, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAD_CONTROL_FLAGS, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.VideoFlags |= MFVideoFlag_PAD_TO_16x9;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_PAD_CONTROL_FLAGS, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 2, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SOURCE_CONTENT_HINT, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.VideoFlags |= MFVideoFlag_SrcContentHint16x9;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SOURCE_CONTENT_HINT, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 1, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DRM_FLAGS, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.videoInfo.VideoFlags |= MFVideoFlag_DigitallyProtected;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DRM_FLAGS, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 2, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.compressedInfo.AvgBitrate = 123456;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 123456, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.compressedInfo.AvgBitErrorRate = 654321;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == 654321, "got %u.\n", value32);
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    format.compressedInfo.MaxKeyFrameSpacing = -123;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == -123, "got %u.\n", value32);
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_PALETTE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* any subtype works here */
+    format.guidFormat = MFVideoFormat_H264;
+    format.surfaceInfo.Format = MFVideoFormat_H264.Data1;
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, &format, sizeof(format));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_PALETTE, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    *format_buf = format;
+    for (i = 0; i < ARRAY_SIZE(expect_palette); i++)
+        format_buf->surfaceInfo.Palette[i] = expect_palette[i];
+    format_buf->surfaceInfo.PaletteEntries = ARRAY_SIZE(expect_palette);
+
+    /* format sizes needs to include an extra palette entry */
+    format_buf->dwSize = offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[ARRAY_SIZE(expect_palette)]);
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, format_buf, sizeof(format));
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    format_buf->dwSize = offsetof(MFVIDEOFORMAT, surfaceInfo.Palette[ARRAY_SIZE(expect_palette) + 1]);
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, format_buf, format_buf->dwSize);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&palette, 0xcd, sizeof(palette));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (BYTE *)&palette, sizeof(palette), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(expect_palette), "got %u.\n", value32);
+    todo_wine
+    ok(!memcmp(palette, expect_palette, value32), "Unexpected palette.\n");
+    hr = IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &value32);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    memcpy(buffer + format_buf->dwSize, expect_user_data, sizeof(expect_user_data));
+    format_buf->dwSize += sizeof(expect_user_data);
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, format_buf, format_buf->dwSize);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&user_data, 0xcd, sizeof(user_data));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)user_data, sizeof(user_data), &value32);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(value32 == sizeof(expect_user_data), "got %u.\n", value32);
+    todo_wine
+    ok(!memcmp(user_data, expect_user_data, value32), "Unexpected user data.\n");
+    IMFMediaType_DeleteAllItems(media_type);
+
+    IMFMediaType_Release(media_type);
+}
+
 static void test_IMFMediaType_GetRepresentation(void)
 {
     WAVEFORMATEX wfx = {.wFormatTag = WAVE_FORMAT_PCM};
@@ -11198,6 +11754,7 @@ START_TEST(mfplat)
     test_MFCreateMFVideoFormatFromMFMediaType();
     test_MFInitAMMediaTypeFromMFMediaType();
     test_MFCreateAMMediaTypeFromMFMediaType();
+    test_MFInitMediaTypeFromMFVideoFormat();
     test_IMFMediaType_GetRepresentation();
     test_MFCreateDXSurfaceBuffer();
     test_MFCreateTrackedSample();
