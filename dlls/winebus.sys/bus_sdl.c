@@ -990,6 +990,8 @@ static void sdl_add_device(unsigned int index)
     if (controller)
     {
         desc.is_gamepad = TRUE;
+        desc.usages.UsagePage = HID_USAGE_PAGE_GENERIC;
+        desc.usages.Usage = HID_USAGE_GENERIC_GAMEPAD;
         axis_count = 6;
     }
     else
@@ -997,6 +999,8 @@ static void sdl_add_device(unsigned int index)
         int button_count = pSDL_JoystickNumButtons(joystick);
         axis_count = pSDL_JoystickNumAxes(joystick);
         desc.is_gamepad = (axis_count == 6  && button_count >= 14);
+        desc.usages.UsagePage = HID_USAGE_PAGE_GENERIC;
+        desc.usages.Usage = HID_USAGE_GENERIC_JOYSTICK;
     }
 
     for (axis_offset = 0; axis_offset < axis_count; axis_offset += (options.split_controllers ? 6 : axis_count))

@@ -25,6 +25,7 @@
 #include <winbase.h>
 #include <winternl.h>
 #include <ddk/hidclass.h>
+#include <ddk/hidpi.h>
 #include <hidusage.h>
 
 #include "wine/debug.h"
@@ -37,6 +38,7 @@ struct device_desc
     UINT version;
     UINT input;
     UINT uid;
+    USAGE_AND_PAGE usages;
     BOOL is_gamepad;
     BOOL is_hidraw;
 
@@ -148,8 +150,9 @@ enum unix_funcs
 static inline const char *debugstr_device_desc(struct device_desc *desc)
 {
     if (!desc) return "(null)";
-    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, is_gamepad %u, is_hidraw %u}",
-                            desc->vid, desc->pid, desc->version, desc->input, desc->uid, desc->is_gamepad, desc->is_hidraw);
+    return wine_dbg_sprintf("{vid %04x, pid %04x, version %04x, input %d, uid %08x, usage %04x:%04x, is_gamepad %u, is_hidraw %u}",
+                            desc->vid, desc->pid, desc->version, desc->input, desc->uid, desc->usages.UsagePage, desc->usages.Usage,
+                            desc->is_gamepad, desc->is_hidraw);
 }
 
 static inline BOOL is_xbox_gamepad(WORD vid, WORD pid)

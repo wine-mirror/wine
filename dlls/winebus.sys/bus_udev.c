@@ -1332,6 +1332,7 @@ static void udev_add_device(struct udev_device *dev, int fd)
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (!strcmp(subsystem, "input"))
     {
+        const USAGE_AND_PAGE device_usage = *what_am_I(dev, fd);
         static const WCHAR evdev[] = {'e','v','d','e','v',0};
         struct input_id device_id = {0};
         char buffer[MAX_PATH];
@@ -1352,6 +1353,8 @@ static void udev_add_device(struct udev_device *dev, int fd)
 
         if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
             ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
+
+        desc.usages = device_usage;
     }
 #endif
 
