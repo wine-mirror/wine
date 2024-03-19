@@ -477,6 +477,17 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 
 
 /***********************************************************************
+ *		LoadKeyboardLayoutEx (USER32.@)
+ */
+HKL WINAPI LoadKeyboardLayoutEx( HKL layout, const WCHAR *name, UINT flags )
+{
+    FIXME_(keyboard)( "layout %p, name %s, flags %x, semi-stub!\n", layout, debugstr_w( name ), flags );
+
+    if (!layout) return NULL;
+    return LoadKeyboardLayoutW( name, flags );
+}
+
+/***********************************************************************
  *		UnloadKeyboardLayout (USER32.@)
  */
 BOOL WINAPI UnloadKeyboardLayout( HKL layout )
