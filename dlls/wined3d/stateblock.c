@@ -3321,28 +3321,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 unsigned int CDECL wined3d_stateblock_set_texture_lod(struct wined3d_stateblock *stateblock,
         struct wined3d_texture *texture, unsigned int lod)
 {
-    struct wined3d_resource *resource;
-    unsigned int old = texture->lod;
+    unsigned int old;
 
     TRACE("texture %p, lod %u.\n", texture, lod);
 
-    /* The d3d9:texture test shows that SetLOD is ignored on non-managed
-     * textures. The call always returns 0, and GetLOD always returns 0. */
-    resource = &texture->resource;
-    if (!(resource->usage & WINED3DUSAGE_MANAGED))
+    old = wined3d_texture_set_lod(texture, lod);
+
+    if (old != lod)
     {
-        TRACE("Ignoring LOD on texture with resource access %s.\n",
-                wined3d_debug_resource_access(resource->access));
-        return 0;
-    }
-
-    if (lod >= texture->level_count)
-        lod = texture->level_count - 1;
-
-    if (texture->lod != lod)
-    {
-        texture->lod = lod;
-
         for (unsigned int i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
         {
             /* Mark the texture as changed. The next time the appplication

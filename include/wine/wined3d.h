@@ -2883,6 +2883,7 @@ ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc);
 unsigned int __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);
 unsigned int __cdecl wined3d_texture_get_lod(const struct wined3d_texture *texture);
+unsigned int __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, unsigned int lod);
 HRESULT __cdecl wined3d_texture_get_overlay_position(const struct wined3d_texture *texture,
         unsigned int sub_resource_idx, LONG *x, LONG *y);
 void * __cdecl wined3d_texture_get_parent(const struct wined3d_texture *texture);

@@ -1784,6 +1784,30 @@ unsigned int CDECL wined3d_texture_get_lod(const struct wined3d_texture *texture
     return texture->lod;
 }
 
+unsigned int CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, unsigned int lod)
+{
+    struct wined3d_resource *resource;
+    unsigned int old = texture->lod;
+
+    TRACE("texture %p, returning %u.\n", texture, texture->lod);
+
+    /* The d3d9:texture test shows that SetLOD is ignored on non-managed
+     * textures. The call always returns 0, and GetLOD always returns 0. */
+    resource = &texture->resource;
+    if (!(resource->usage & WINED3DUSAGE_MANAGED))
+    {
+        TRACE("Ignoring LOD on texture with resource access %s.\n",
+                wined3d_debug_resource_access(resource->access));
+        return 0;
+    }
+
+    if (lod >= texture->level_count)
+        lod = texture->level_count - 1;
+
+    texture->lod = lod;
+    return old;
+}
+
 UINT CDECL wined3d_texture_get_level_count(const struct wined3d_texture *texture)
 {
     TRACE("texture %p, returning %u.\n", texture, texture->level_count);
