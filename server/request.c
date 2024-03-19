@@ -601,9 +601,8 @@ static void create_dir( const char *name, struct stat *st )
 static char *create_server_dir( int force )
 {
     const char *prefix = getenv( "WINEPREFIX" );
-    char *p, *config_dir;
+    char *p, *config_dir, *base_dir;
     struct stat st, st2;
-    size_t len = sizeof("/server-") + 2 * sizeof(st.st_dev) + 2 * sizeof(st.st_ino) + 2;
 
     /* open the configuration directory */
 
@@ -646,23 +645,19 @@ static char *create_server_dir( int force )
     /* create the base directory if needed */
 
 #ifdef __ANDROID__  /* there's no /tmp dir on Android */
-    len += strlen( config_dir ) + sizeof("/.wineserver");
-    if (!(server_dir = malloc( len ))) fatal_error( "out of memory\n" );
-    strcpy( server_dir, config_dir );
-    strcat( server_dir, "/.wineserver" );
+    if (asprintf( &base_dir, "%s/.wineserver", config_dir ) == -1)
+        fatal_error( "out of memory\n" );
 #else
-    len += sizeof("/tmp/.wine-") + 12;
-    if (!(server_dir = malloc( len ))) fatal_error( "out of memory\n" );
-    sprintf( server_dir, "/tmp/.wine-%u", getuid() );
+    if (asprintf( &base_dir, "/tmp/.wine-%u", getuid() ) == -1)
+        fatal_error( "out of memory\n" );
 #endif
-    create_dir( server_dir, &st2 );
+    create_dir( base_dir, &st2 );
 
     /* now create the server directory */
 
-    strcat( server_dir, "/server-" );
-    p = server_dir + strlen(server_dir);
-
-    sprintf( p, "%llx-%llx", (unsigned long long)st.st_dev, (unsigned long long)st.st_ino );
+    if (asprintf( &server_dir, "%s/server-%llx-%llx", base_dir,
+                  (unsigned long long)st.st_dev, (unsigned long long)st.st_ino ) == -1)
+        fatal_error( "out of memory\n" );
 
     create_dir( server_dir, &st );
 
@@ -675,6 +670,7 @@ static char *create_server_dir( int force )
     if (st.st_dev != st2.st_dev || st.st_ino != st2.st_ino)
         fatal_error( "chdir did not end up in %s\n", server_dir );
 
+    free( base_dir );
     free( config_dir );
     return server_dir;
 }
