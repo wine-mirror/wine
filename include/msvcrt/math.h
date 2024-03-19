@@ -351,7 +351,7 @@ static inline int __signbit(double x)
 #define _FP_EQ  2
 #define _FP_GT  4
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
 # define isgreater(x, y)      __builtin_isgreater(x, y)
 # define isgreaterequal(x, y) __builtin_isgreaterequal(x, y)
 # define isless(x, y)         __builtin_isless(x, y)
