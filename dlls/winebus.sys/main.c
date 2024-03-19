@@ -670,8 +670,10 @@ static DWORD CALLBACK bus_main_thread(void *args)
             if (desc.is_hidraw && !desc.usages.UsagePage) desc.usages = get_hidraw_device_usages(event->device);
             if (!desc.is_hidraw != !is_hidraw_enabled(desc.vid, desc.pid, &desc.usages))
             {
+                struct device_remove_params params = {.device = event->device};
                 WARN("ignoring %shidraw device %04x:%04x with usages %04x:%04x\n", desc.is_hidraw ? "" : "non-",
                      desc.vid, desc.pid, desc.usages.UsagePage, desc.usages.Usage);
+                winebus_call(device_remove, &params);
                 break;
             }
 
