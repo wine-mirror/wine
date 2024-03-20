@@ -700,8 +700,8 @@ static struct fbo_entry *wined3d_context_gl_find_fbo_entry(struct wined3d_contex
                 {
                     rt_texture = wined3d_texture_from_resource(resource);
                     rt_level = render_targets[i].sub_resource_idx % rt_texture->level_count;
-                    width = wined3d_texture_get_level_pow2_width(rt_texture, rt_level);
-                    height = wined3d_texture_get_level_pow2_height(rt_texture, rt_level);
+                    width = wined3d_texture_get_level_width(rt_texture, rt_level);
+                    height = wined3d_texture_get_level_height(rt_texture, rt_level);
                     resource_type = "texture";
                 }
 
@@ -723,8 +723,8 @@ static struct fbo_entry *wined3d_context_gl_find_fbo_entry(struct wined3d_contex
             {
                 ds_texture = wined3d_texture_from_resource(resource);
                 ds_level = depth_stencil->sub_resource_idx % ds_texture->level_count;
-                width = wined3d_texture_get_level_pow2_width(ds_texture, ds_level);
-                height = wined3d_texture_get_level_pow2_height(ds_texture, ds_level);
+                width = wined3d_texture_get_level_width(ds_texture, ds_level);
+                height = wined3d_texture_get_level_height(ds_texture, ds_level);
                 resource_type = "texture";
             }
 

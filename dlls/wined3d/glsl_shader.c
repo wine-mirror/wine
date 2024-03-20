@@ -13321,8 +13321,8 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         case COMPLEX_FIXUP_YUV:
             src_level = src_sub_resource_idx % src_texture->level_count;
             location = GL_EXTCALL(glGetUniformLocation(program->id, "size"));
-            GL_EXTCALL(glUniform2f(location, wined3d_texture_get_level_pow2_width(src_texture, src_level),
-                    wined3d_texture_get_level_pow2_height(src_texture, src_level)));
+            GL_EXTCALL(glUniform2f(location, wined3d_texture_get_level_width(src_texture, src_level),
+                    wined3d_texture_get_level_height(src_texture, src_level)));
             break;
 
         default:

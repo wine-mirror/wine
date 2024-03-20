@@ -180,8 +180,8 @@ void texture2d_get_blt_info(const struct wined3d_texture_gl *texture_gl,
     GLsizei w, h;
 
     level = sub_resource_idx % texture_gl->t.level_count;
-    w = wined3d_texture_get_level_pow2_width(&texture_gl->t, level);
-    h = wined3d_texture_get_level_pow2_height(&texture_gl->t, level);
+    w = wined3d_texture_get_level_width(&texture_gl->t, level);
+    h = wined3d_texture_get_level_height(&texture_gl->t, level);
     target = wined3d_texture_gl_get_sub_resource_target(texture_gl, sub_resource_idx);
 
     switch (target)
@@ -996,8 +996,8 @@ static void wined3d_texture_gl_allocate_mutable_storage(struct wined3d_texture_g
 
         for (level = 0; level < level_count; ++level)
         {
-            width = wined3d_texture_get_level_pow2_width(&texture_gl->t, level);
-            height = wined3d_texture_get_level_pow2_height(&texture_gl->t, level);
+            width = wined3d_texture_get_level_width(&texture_gl->t, level);
+            height = wined3d_texture_get_level_height(&texture_gl->t, level);
             if (texture_gl->t.resource.format_attrs & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
             {
                 height *= format->f.height_scale.numerator;
@@ -1037,10 +1037,10 @@ static void wined3d_texture_gl_allocate_immutable_storage(struct wined3d_texture
         GLenum gl_internal_format, const struct wined3d_gl_info *gl_info)
 {
     unsigned int samples = wined3d_resource_get_sample_count(&texture_gl->t.resource);
-    GLsizei height = wined3d_texture_get_level_pow2_height(&texture_gl->t, 0);
-    GLsizei width = wined3d_texture_get_level_pow2_width(&texture_gl->t, 0);
     GLboolean standard_pattern = texture_gl->t.resource.multisample_type != WINED3D_MULTISAMPLE_NON_MASKABLE
             && texture_gl->t.resource.multisample_quality == WINED3D_STANDARD_MULTISAMPLE_PATTERN;
+    GLsizei height = wined3d_texture_get_level_height(&texture_gl->t, 0);
+    GLsizei width = wined3d_texture_get_level_width(&texture_gl->t, 0);
 
     switch (texture_gl->target)
     {
@@ -1846,17 +1846,17 @@ void wined3d_texture_gl_set_compatible_renderbuffer(struct wined3d_texture_gl *t
         rt_texture = wined3d_texture_from_resource(rt->resource);
         rt_level = rt->sub_resource_idx % rt_texture->level_count;
 
-        width = wined3d_texture_get_level_pow2_width(rt_texture, rt_level);
-        height = wined3d_texture_get_level_pow2_height(rt_texture, rt_level);
+        width = wined3d_texture_get_level_width(rt_texture, rt_level);
+        height = wined3d_texture_get_level_height(rt_texture, rt_level);
     }
     else
     {
-        width = wined3d_texture_get_level_pow2_width(&texture_gl->t, level);
-        height = wined3d_texture_get_level_pow2_height(&texture_gl->t, level);
+        width = wined3d_texture_get_level_width(&texture_gl->t, level);
+        height = wined3d_texture_get_level_height(&texture_gl->t, level);
     }
 
-    src_width = wined3d_texture_get_level_pow2_width(&texture_gl->t, level);
-    src_height = wined3d_texture_get_level_pow2_height(&texture_gl->t, level);
+    src_width = wined3d_texture_get_level_width(&texture_gl->t, level);
+    src_height = wined3d_texture_get_level_height(&texture_gl->t, level);
 
     /* A depth stencil smaller than the render target is not valid */
     if (width > src_width || height > src_height)
@@ -3672,7 +3672,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_device_parent *device_parent = device->device_parent;
     unsigned int sub_count, i, j, size, offset = 0;
-    unsigned int pow2_width, pow2_height;
     const struct wined3d_format *format;
     HRESULT hr;
 
@@ -3710,8 +3709,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         return WINED3DERR_INVALIDCALL;
     }
 
-    pow2_width = desc->width;
-    pow2_height = desc->height;
     if (((desc->width & (desc->width - 1)) || (desc->height & (desc->height - 1)) || (desc->depth & (desc->depth - 1)))
             && !d3d_info->unconditional_npot)
     {
@@ -3729,16 +3726,13 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         }
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
     }
-    texture->pow2_width = pow2_width;
-    texture->pow2_height = pow2_height;
 
-    if ((pow2_width > d3d_info->limits.texture_size || pow2_height > d3d_info->limits.texture_size)
+    if ((desc->width > d3d_info->limits.texture_size || desc->height > d3d_info->limits.texture_size)
             && (desc->bind_flags & WINED3D_BIND_SHADER_RESOURCE))
     {
         /* One of four options:
-         * 1: Do the same as we do with NPOT and scale the texture. (Any
-         *    texture ops would require the texture to be scaled which is
-         *    potentially slow.)
+         * 1: Scale the texture. (Any texture ops would require the texture to
+         *    be scaled which is potentially slow.)
          * 2: Set the texture to the maximum size (bad idea).
          * 3: WARN and return WINED3DERR_NOTAVAILABLE.
          * 4: Create the surface, but allow it to be used only for DirectDraw
@@ -3747,12 +3741,12 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
          *    the render target. */
         if (desc->access & WINED3D_RESOURCE_ACCESS_GPU)
         {
-            WARN("Dimensions (%ux%u) exceed the maximum texture size.\n", pow2_width, pow2_height);
+            WARN("Dimensions (%ux%u) exceed the maximum texture size.\n", desc->width, desc->height);
             return WINED3DERR_NOTAVAILABLE;
         }
 
         /* We should never use this surface in combination with OpenGL. */
-        TRACE("Creating an oversized (%ux%u) surface.\n", pow2_width, pow2_height);
+        TRACE("Creating an oversized (%ux%u) surface.\n", desc->width, desc->height);
     }
 
     for (i = 0; i < layer_count; ++i)
@@ -5809,8 +5803,8 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
         unsigned int ds_level = dsv->sub_resource_idx % depth_stencil->level_count;
 
         render_offscreen = true;
-        drawable_width = wined3d_texture_get_level_pow2_width(depth_stencil, ds_level);
-        drawable_height = wined3d_texture_get_level_pow2_height(depth_stencil, ds_level);
+        drawable_width = wined3d_texture_get_level_width(depth_stencil, ds_level);
+        drawable_height = wined3d_texture_get_level_height(depth_stencil, ds_level);
     }
 
     if (depth_stencil)

@@ -3312,8 +3312,6 @@ struct wined3d_texture
     struct wined3d_resource resource;
     const struct wined3d_texture_ops *texture_ops;
     struct wined3d_swapchain *swapchain;
-    unsigned int pow2_width;
-    unsigned int pow2_height;
     UINT layer_count;
     unsigned int level_count;
     unsigned int download_count;
@@ -3421,18 +3419,6 @@ static inline unsigned int wined3d_texture_get_level_depth(const struct wined3d_
         unsigned int level)
 {
     return max(1, texture->resource.depth >> level);
-}
-
-static inline unsigned int wined3d_texture_get_level_pow2_width(const struct wined3d_texture *texture,
-        unsigned int level)
-{
-    return max(1, texture->pow2_width >> level);
-}
-
-static inline unsigned int wined3d_texture_get_level_pow2_height(const struct wined3d_texture *texture,
-        unsigned int level)
-{
-    return max(1, texture->pow2_height >> level);
 }
 
 static inline void wined3d_texture_get_level_box(const struct wined3d_texture *texture,
