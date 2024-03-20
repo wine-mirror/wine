@@ -31,11 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
 
-#define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
-#define VB_RESETDECLCHANGE    1000    /* Reset the decl changecount after that number of draws */
-#define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
-#define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
-
 #define SB_MIN_SIZE (512 * 1024)    /* Minimum size of an allocated streaming buffer. */
 
 struct wined3d_buffer_ops
@@ -250,200 +245,6 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
     return TRUE;
 }
 
-static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
-        const enum wined3d_buffer_conversion_type conversion_type,
-        const struct wined3d_stream_info_element *attrib, UINT *stride_this_run)
-{
-    const struct wined3d_format *format = attrib->format;
-    BOOL ret = FALSE;
-    unsigned int i;
-    DWORD_PTR data;
-
-    /* Check for some valid situations which cause us pain. One is if the buffer is used for
-     * constant attributes(stride = 0), the other one is if the buffer is used on two streams
-     * with different strides. In the 2nd case we might have to drop conversion entirely,
-     * it is possible that the same bytes are once read as FLOAT2 and once as UBYTE4N.
-     */
-    if (!attrib->stride)
-    {
-        FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else.\n",
-                debug_d3dformat(format->id));
-    }
-    else if (attrib->stride != *stride_this_run && *stride_this_run)
-    {
-        FIXME("Got two concurrent strides, %d and %d.\n", attrib->stride, *stride_this_run);
-    }
-    else
-    {
-        *stride_this_run = attrib->stride;
-        if (buffer->stride != *stride_this_run)
-        {
-            /* We rely that this happens only on the first converted attribute that is found,
-             * if at all. See above check
-             */
-            TRACE("Reconverting because converted attributes occur, and the stride changed.\n");
-            buffer->stride = *stride_this_run;
-            free(buffer->conversion_map);
-            buffer->conversion_map = calloc(buffer->stride, sizeof(*buffer->conversion_map));
-            ret = TRUE;
-        }
-    }
-
-    data = ((DWORD_PTR)attrib->data.addr) % buffer->stride;
-    for (i = 0; i < format->byte_count; ++i)
-    {
-        DWORD_PTR idx = (data + i) % buffer->stride;
-        if (buffer->conversion_map[idx] != conversion_type)
-        {
-            TRACE("Byte %Iu in vertex changed:\n", idx);
-            TRACE("    It was type %#x, is %#x now.\n", buffer->conversion_map[idx], conversion_type);
-            ret = TRUE;
-            buffer->conversion_map[idx] = conversion_type;
-        }
-    }
-
-    return ret;
-}
-
-static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
-        const struct wined3d_state *state, UINT attrib_idx, DWORD fixup_flags, UINT *stride_this_run)
-{
-    const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
-    BOOL ret = FALSE;
-
-    /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
-     * there, on nonexistent attribs the vbo is 0.
-     */
-    if (!(si->use_map & (1u << attrib_idx))
-            || state->streams[attrib->stream_idx].buffer != This)
-        return FALSE;
-
-    /* Look for newly appeared conversion */
-    if (This->conversion_map)
-        ret = buffer_process_converted_attribute(This, CONV_NONE, attrib, stride_this_run);
-
-    return ret;
-}
-
-static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
-        const struct wined3d_state *state, DWORD fixup_flags)
-{
-    UINT stride_this_run = 0;
-    BOOL ret = FALSE;
-
-    /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
-     * Once we have our declaration there is no need to look it up again. Index buffers also never need
-     * conversion, so once the (empty) conversion structure is created don't bother checking again
-     */
-    if (This->flags & WINED3D_BUFFER_HASDESC)
-    {
-        if(This->resource.usage & WINED3DUSAGE_STATICDECL) return FALSE;
-    }
-
-    if (!fixup_flags)
-    {
-        TRACE("No fixup required.\n");
-        if(This->conversion_map)
-        {
-            free(This->conversion_map);
-            This->conversion_map = NULL;
-            This->stride = 0;
-            return TRUE;
-        }
-
-        return FALSE;
-    }
-
-    TRACE("Finding vertex buffer conversion information\n");
-    /* Certain declaration types need some fixups before we can pass them to
-     * opengl. This means D3DCOLOR attributes with fixed function vertex
-     * processing, FLOAT4 POSITIONT with fixed function, and FLOAT16 if
-     * GL_ARB_half_float_vertex is not supported.
-     *
-     * Note for d3d8 and d3d9:
-     * The vertex buffer FVF doesn't help with finding them, we have to use
-     * the decoded vertex declaration and pick the things that concern the
-     * current buffer. A problem with this is that this can change between
-     * draws, so we have to validate the information and reprocess the buffer
-     * if it changes, and avoid false positives for performance reasons.
-     * WineD3D doesn't even know the vertex buffer any more, it is managed
-     * by the client libraries and passed to SetStreamSource and ProcessVertices
-     * as needed.
-     *
-     * We have to distinguish between vertex shaders and fixed function to
-     * pick the way we access the strided vertex information.
-     *
-     * This code sets up a per-byte array with the size of the detected
-     * stride of the arrays in the buffer. For each byte we have a field
-     * that marks the conversion needed on this byte. For example, the
-     * following declaration with fixed function vertex processing:
-     *
-     *      POSITIONT, FLOAT4
-     *      NORMAL, FLOAT3
-     *      DIFFUSE, FLOAT16_4
-     *      SPECULAR, D3DCOLOR
-     *
-     * Will result in
-     * {                 POSITIONT                    }{             NORMAL                }{    DIFFUSE          }{SPECULAR }
-     * [P][P][P][P][P][P][P][P][P][P][P][P][P][P][P][P][0][0][0][0][0][0][0][0][0][0][0][0][F][F][F][F][F][F][F][F][C][C][C][C]
-     *
-     * Where in this example map P means 4 component position conversion, 0
-     * means no conversion, F means FLOAT16_2 conversion and C means D3DCOLOR
-     * conversion (red / blue swizzle).
-     *
-     * If we're doing conversion and the stride changes we have to reconvert
-     * the whole buffer. Note that we do not mind if the semantic changes,
-     * we only care for the conversion type. So if the NORMAL is replaced
-     * with a TEXCOORD, nothing has to be done, or if the DIFFUSE is replaced
-     * with a D3DCOLOR BLENDWEIGHT we can happily dismiss the change. Some
-     * conversion types depend on the semantic as well, for example a FLOAT4
-     * texcoord needs no conversion while a FLOAT4 positiont needs one
-     */
-
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_POSITION,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDWEIGHT,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDINDICES,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_NORMAL,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_DIFFUSE,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_SPECULAR,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD0,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD1,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD2,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD3,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD4,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD5,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD6,
-            fixup_flags, &stride_this_run) || ret;
-    ret = buffer_check_attribute(This, si, state, WINED3D_FFP_TEXCOORD7,
-            fixup_flags, &stride_this_run) || ret;
-
-    if (!stride_this_run && This->conversion_map)
-    {
-        /* Sanity test */
-        if (!ret)
-            ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
-        free(This->conversion_map);
-        This->conversion_map = NULL;
-        This->stride = 0;
-    }
-
-    if (ret) TRACE("Conversion information changed\n");
-
-    return ret;
-}
-
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
     unsigned int refcount = InterlockedIncrement(&buffer->resource.ref);
@@ -451,62 +252,6 @@ ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
     TRACE("%p increasing refcount to %u.\n", buffer, refcount);
 
     return refcount;
-}
-
-static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined3d_context *context)
-{
-    unsigned int i, j, range_idx, start, end, vertex_count;
-    struct wined3d_bo_address src, dst;
-    BYTE *data;
-
-    if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
-    {
-        ERR("Failed to load system memory.\n");
-        return;
-    }
-    buffer->resource.pin_sysmem = 1;
-
-    /* Now for each vertex in the buffer that needs conversion. */
-    vertex_count = buffer->resource.size / buffer->stride;
-
-    if (!(data = malloc(buffer->resource.size)))
-    {
-        ERR("Out of memory.\n");
-        return;
-    }
-
-    for (range_idx = 0; range_idx < buffer->dirty_range_count; ++range_idx)
-    {
-        start = buffer->dirty_ranges[range_idx].offset;
-        end = start + buffer->dirty_ranges[range_idx].size;
-
-        memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
-        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertex_count); ++i)
-        {
-            for (j = 0; j < buffer->stride;)
-            {
-                switch (buffer->conversion_map[j])
-                {
-                    case CONV_NONE:
-                        /* Done already */
-                        j += sizeof(DWORD);
-                        break;
-                    default:
-                        FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
-                        ++j;
-                }
-            }
-        }
-    }
-
-    dst.buffer_object = buffer->buffer_object;
-    dst.addr = NULL;
-    src.buffer_object = NULL;
-    src.addr = data;
-    wined3d_context_copy_bo_address(context, &dst, &src,
-            buffer->dirty_range_count, buffer->dirty_ranges, WINED3D_MAP_WRITE);
-
-    free(data);
 }
 
 BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
@@ -576,6 +321,9 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
             break;
 
         case WINED3D_LOCATION_BUFFER:
+        {
+            uint32_t map_flags = WINED3D_MAP_WRITE;
+
             if (buffer->locations & WINED3D_LOCATION_CLEARED)
             {
                 /* FIXME: Clear the buffer on the GPU if possible. */
@@ -589,21 +337,13 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
             src.buffer_object = NULL;
             src.addr = buffer->resource.heap_memory;
 
-            if (!buffer->conversion_map)
-            {
-                uint32_t map_flags = WINED3D_MAP_WRITE;
+            if (buffer_is_fully_dirty(buffer))
+                map_flags |= WINED3D_MAP_DISCARD;
 
-                if (buffer_is_fully_dirty(buffer))
-                    map_flags |= WINED3D_MAP_DISCARD;
-
-                wined3d_context_copy_bo_address(context, &dst, &src,
-                        buffer->dirty_range_count, buffer->dirty_ranges, map_flags);
-            }
-            else
-            {
-                buffer_conversion_upload(buffer, context);
-            }
+            wined3d_context_copy_bo_address(context, &dst, &src,
+                    buffer->dirty_range_count, buffer->dirty_ranges, map_flags);
             break;
+        }
 
         default:
             ERR("Invalid location %s.\n", wined3d_debug_location(location));
@@ -682,10 +422,6 @@ static void buffer_resource_unload(struct wined3d_resource *resource)
 
         context_release(context);
 
-        free(buffer->conversion_map);
-        buffer->conversion_map = NULL;
-        buffer->stride = 0;
-        buffer->conversion_stride = 0;
         buffer->flags &= ~WINED3D_BUFFER_HASDESC;
     }
 
@@ -711,7 +447,6 @@ static void wined3d_buffer_destroy_object(void *object)
         wined3d_buffer_unload_location(buffer, context, WINED3D_LOCATION_BUFFER);
         context_release(context);
     }
-    free(buffer->conversion_map);
     free(buffer->dirty_ranges);
 }
 
@@ -749,8 +484,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    BOOL decl_changed = FALSE;
-
     TRACE("buffer %p.\n", buffer);
 
     if (buffer->resource.map_count && buffer->map_ptr)
@@ -763,12 +496,8 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         WARN("Loading mapped buffer.\n");
     }
 
-    /* TODO: Make converting independent from VBOs */
     if (!(buffer->flags & WINED3D_BUFFER_USE_BO))
-    {
-        /* Not doing any conversion */
         return;
-    }
 
     if (!wined3d_buffer_prepare_location(buffer, context, WINED3D_LOCATION_BUFFER))
     {
@@ -779,69 +508,10 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     /* Reading the declaration makes only sense if we have valid state information
      * (i.e., if this function is called during draws). */
     if (state)
-    {
-        DWORD fixup_flags = 0;
-
-        decl_changed = buffer_find_decl(buffer, &context->stream_info, state, fixup_flags);
         buffer->flags |= WINED3D_BUFFER_HASDESC;
-    }
 
-    if (!decl_changed && !(buffer->flags & WINED3D_BUFFER_HASDESC && buffer_is_dirty(buffer)))
-    {
-        ++buffer->draw_count;
-        if (buffer->draw_count > VB_RESETDECLCHANGE)
-            buffer->decl_change_count = 0;
-        if (buffer->draw_count > VB_RESETFULLCONVS)
-            buffer->full_conversion_count = 0;
+    if (!(buffer->flags & WINED3D_BUFFER_HASDESC && buffer_is_dirty(buffer)))
         return;
-    }
-
-    /* If applications change the declaration over and over, reconverting all the time is a huge
-     * performance hit. So count the declaration changes and release the VBO if there are too many
-     * of them (and thus stop converting)
-     */
-    if (decl_changed)
-    {
-        ++buffer->decl_change_count;
-        buffer->draw_count = 0;
-
-        if (buffer->decl_change_count > VB_MAXDECLCHANGES
-                || (buffer->conversion_map && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)))
-        {
-            FIXME("Too many declaration changes or converting dynamic buffer, stopping converting.\n");
-            wined3d_buffer_drop_bo(buffer);
-            return;
-        }
-
-        /* The declaration changed, reload the whole buffer. */
-        WARN("Reloading buffer because of a vertex declaration change.\n");
-        buffer_invalidate_bo_range(buffer, 0, 0);
-    }
-    else
-    {
-        /* However, it is perfectly fine to change the declaration every now and then. We don't want a game that
-         * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
-         * decl changes and reset the decl change count after a specific number of them
-         */
-        if (buffer->conversion_map && buffer_is_fully_dirty(buffer))
-        {
-            ++buffer->full_conversion_count;
-            if (buffer->full_conversion_count > VB_MAXFULLCONVERSIONS)
-            {
-                FIXME("Too many full buffer conversions, stopping converting.\n");
-                wined3d_buffer_drop_bo(buffer);
-                return;
-            }
-        }
-        else
-        {
-            ++buffer->draw_count;
-            if (buffer->draw_count > VB_RESETDECLCHANGE)
-                buffer->decl_change_count = 0;
-            if (buffer->draw_count > VB_RESETFULLCONVS)
-                buffer->full_conversion_count = 0;
-        }
-    }
 
     if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
         ERR("Failed to load buffer location.\n");

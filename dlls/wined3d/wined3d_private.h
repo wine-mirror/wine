@@ -3788,13 +3788,6 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
     }
 }
 
-/* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
- * fixed function semantics as D3DCOLOR or FLOAT16 */
-enum wined3d_buffer_conversion_type
-{
-    CONV_NONE,
-};
-
 struct wined3d_buffer
 {
     struct wined3d_resource resource;
@@ -3812,13 +3805,6 @@ struct wined3d_buffer
      * uploaded to BUFFER. */
     struct wined3d_range *dirty_ranges;
     SIZE_T dirty_range_count, dirty_ranges_capacity;
-
-    /* conversion stuff */
-    UINT decl_change_count, full_conversion_count;
-    UINT draw_count;
-    UINT stride;                                            /* 0 if no conversion */
-    enum wined3d_buffer_conversion_type *conversion_map;    /* NULL if no conversion */
-    UINT conversion_stride;                                 /* 0 if no shifted conversion */
 };
 
 static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resource *resource)
