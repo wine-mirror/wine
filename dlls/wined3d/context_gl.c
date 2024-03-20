@@ -4704,28 +4704,6 @@ static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_
     checkGLcall("draw indirect");
 }
 
-static void remove_vbos(struct wined3d_context *context,
-        const struct wined3d_state *state, struct wined3d_stream_info *s)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(s->elements); ++i)
-    {
-        struct wined3d_stream_info_element *e;
-
-        if (!(s->use_map & (1u << i)))
-            continue;
-
-        e = &s->elements[i];
-        if (e->data.buffer_object)
-        {
-            struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
-            e->data.buffer_object = 0;
-            e->data.addr += (ULONG_PTR)wined3d_buffer_load_sysmem(vb, context);
-        }
-    }
-}
-
 static GLenum gl_tfb_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 {
     GLenum gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
@@ -4756,14 +4734,13 @@ static GLenum gl_tfb_primitive_type_from_d3d(enum wined3d_primitive_type primiti
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         const struct wined3d_draw_parameters *parameters)
 {
-    BOOL emulation = FALSE, rasterizer_discard = FALSE;
     const struct wined3d_fb_state *fb = &state->fb;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_rendertarget_view *dsv, *rtv;
-    struct wined3d_stream_info si_emulated;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
+    bool rasterizer_discard = false;
     unsigned int i, idx_size = 0;
     const void *idx_data = NULL;
 
@@ -4870,28 +4847,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
             idx_size = 4;
     }
 
-    if (!use_vs(state))
-    {
-        if (!stream_info->position_transformed && context_gl->untracked_material_count
-                && state->render_states[WINED3D_RS_LIGHTING])
-        {
-            static BOOL warned;
-
-            if (!warned++)
-                FIXME("Using software emulation because not all material properties could be tracked.\n");
-            else
-                WARN_(d3d_perf)("Using software emulation because not all material properties could be tracked.\n");
-            emulation = TRUE;
-        }
-
-        if (emulation)
-        {
-            si_emulated = context->stream_info;
-            remove_vbos(context, state, &si_emulated);
-            stream_info = &si_emulated;
-        }
-    }
-
     if (use_transform_feedback(state))
     {
         const struct wined3d_shader *shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
@@ -4900,7 +4855,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         {
             glEnable(GL_RASTERIZER_DISCARD);
             checkGLcall("enable rasterizer discard");
-            rasterizer_discard = TRUE;
+            rasterizer_discard = true;
         }
 
         if (context->transform_feedback_paused)
@@ -4952,16 +4907,16 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     if (parameters->indirect)
     {
-        if (!context->use_immediate_mode_draw && !emulation)
+        if (!context->use_immediate_mode_draw)
             wined3d_context_gl_draw_indirect(context_gl, state, &parameters->u.indirect, idx_size);
         else
-            FIXME("Indirect draws with immediate mode/emulation are not supported.\n");
+            FIXME("Indirect draws with immediate mode are not supported.\n");
     }
     else
     {
         unsigned int instance_count = parameters->u.direct.instance_count;
 
-        if (context->use_immediate_mode_draw || emulation)
+        if (context->use_immediate_mode_draw)
             draw_primitive_immediate_mode(wined3d_context_gl(context), state, stream_info, idx_data,
                     idx_size, parameters->u.direct.base_vertex_idx,
                     parameters->u.direct.start_idx, parameters->u.direct.index_count, instance_count);
