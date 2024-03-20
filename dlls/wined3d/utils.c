@@ -2235,8 +2235,6 @@ static GLenum wined3d_gl_type_to_enum(enum wined3d_gl_resource_type type)
             return GL_TEXTURE_3D;
         case WINED3D_GL_RES_TYPE_TEX_CUBE:
             return GL_TEXTURE_CUBE_MAP_ARB;
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
-            return GL_TEXTURE_RECTANGLE_ARB;
         case WINED3D_GL_RES_TYPE_BUFFER:
             return GL_TEXTURE_2D; /* TODO: GL_TEXTURE_BUFFER. */
         case WINED3D_GL_RES_TYPE_RB:
@@ -2255,7 +2253,6 @@ static void delete_fbo_attachment(const struct wined3d_gl_info *gl_info,
     {
         case WINED3D_GL_RES_TYPE_TEX_1D:
         case WINED3D_GL_RES_TYPE_TEX_2D:
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
         case WINED3D_GL_RES_TYPE_TEX_3D:
         case WINED3D_GL_RES_TYPE_TEX_CUBE:
             gl_info->gl_ops.gl.p_glDeleteTextures(1, &object);
@@ -2296,7 +2293,6 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_2D:
-        case WINED3D_GL_RES_TYPE_TEX_RECT:
             gl_info->gl_ops.gl.p_glGenTextures(1, object);
             gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(d3d_type), *object);
             gl_info->gl_ops.gl.p_glTexImage2D(wined3d_gl_type_to_enum(d3d_type), 0, internal, 16, 16, 0,
@@ -2658,7 +2654,6 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
 
                     case WINED3D_GL_RES_TYPE_TEX_2D:
                     case WINED3D_GL_RES_TYPE_TEX_3D:
-                    case WINED3D_GL_RES_TYPE_TEX_RECT:
                         /* Rebinding texture to workaround a fglrx bug. */
                         gl_info->gl_ops.gl.p_glBindTexture(wined3d_gl_type_to_enum(type), object);
                         gl_info->gl_ops.gl.p_glGetTexImage(wined3d_gl_type_to_enum(type), 0, GL_BGRA,
@@ -3132,7 +3127,6 @@ static void query_internal_format(struct wined3d_adapter *adapter,
         format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] &= ~WINED3D_FORMAT_CAP_TEXTURE;
         format->f.caps[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3D_FORMAT_CAP_TEXTURE;
         format->f.caps[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3D_FORMAT_CAP_TEXTURE;
-        format->f.caps[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3D_FORMAT_CAP_TEXTURE;
     }
 
     query_view_class(format);
@@ -3222,9 +3216,6 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
 
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
             format->f.caps[WINED3D_GL_RES_TYPE_TEX_CUBE] |= format_texture_info[i].caps | WINED3D_FORMAT_CAP_BLIT;
-
-        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-            format->f.caps[WINED3D_GL_RES_TYPE_TEX_RECT] |= format_texture_info[i].caps | WINED3D_FORMAT_CAP_BLIT;
 
         format->f.caps[WINED3D_GL_RES_TYPE_RB] |= format_texture_info[i].caps | WINED3D_FORMAT_CAP_BLIT;
         format->f.caps[WINED3D_GL_RES_TYPE_RB] &= ~WINED3D_FORMAT_CAP_TEXTURE;

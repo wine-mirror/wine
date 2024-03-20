@@ -3855,18 +3855,8 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             wined3d_texture_dirty_region_add(texture, i, NULL);
     }
 
-    /* Precalculated scaling for 'faked' non power of two texture coords. */
-    if (texture->resource.gl_type == WINED3D_GL_RES_TYPE_TEX_RECT)
-    {
-        texture->pow2_matrix[0] = (float)desc->width;
-        texture->pow2_matrix[5] = (float)desc->height;
-        texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
-    }
-    else
-    {
-        texture->pow2_matrix[0] = 1.0f;
-        texture->pow2_matrix[5] = 1.0f;
-    }
+    texture->pow2_matrix[0] = 1.0f;
+    texture->pow2_matrix[5] = 1.0f;
     texture->pow2_matrix[10] = 1.0f;
     texture->pow2_matrix[15] = 1.0f;
     TRACE("x scale %.8e, y scale %.8e.\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
@@ -4232,9 +4222,6 @@ HRESULT wined3d_texture_gl_init(struct wined3d_texture_gl *texture_gl, struct wi
     if (FAILED(hr = wined3d_texture_init(&texture_gl->t, desc, layer_count, level_count,
             flags, device, parent, parent_ops, &texture_gl[1], &texture_gl_ops)))
         return hr;
-
-    if (texture_gl->t.resource.gl_type == WINED3D_GL_RES_TYPE_TEX_RECT)
-        texture_gl->target = GL_TEXTURE_RECTANGLE_ARB;
 
     if (texture_gl->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY || texture_gl->target == GL_TEXTURE_2D_MULTISAMPLE)
         texture_gl->t.flags &= ~WINED3D_TEXTURE_DOWNLOADABLE;

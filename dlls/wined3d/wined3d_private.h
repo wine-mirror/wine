@@ -1437,10 +1437,9 @@ enum wined3d_gl_resource_type
     WINED3D_GL_RES_TYPE_TEX_2D          = 1,
     WINED3D_GL_RES_TYPE_TEX_3D          = 2,
     WINED3D_GL_RES_TYPE_TEX_CUBE        = 3,
-    WINED3D_GL_RES_TYPE_TEX_RECT        = 4,
-    WINED3D_GL_RES_TYPE_BUFFER          = 5,
-    WINED3D_GL_RES_TYPE_RB              = 6,
-    WINED3D_GL_RES_TYPE_COUNT           = 7,
+    WINED3D_GL_RES_TYPE_BUFFER          = 4,
+    WINED3D_GL_RES_TYPE_RB              = 5,
+    WINED3D_GL_RES_TYPE_COUNT           = 6,
 };
 
 enum wined3d_vertex_processing_mode

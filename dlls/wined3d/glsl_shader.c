@@ -9841,9 +9841,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             case WINED3D_GL_RES_TYPE_TEX_CUBE:
                 sampler_type = "Cube";
                 break;
-            case WINED3D_GL_RES_TYPE_TEX_RECT:
-                sampler_type = "2DRect";
-                break;
             default:
                 FIXME("Unhandled sampler type %#x.\n", settings->op[stage].tex_type);
                 sampler_type = NULL;
@@ -9983,10 +9980,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             case WINED3D_GL_RES_TYPE_TEX_CUBE:
                 texture_function = "textureCube";
                 coord_mask = "xyz";
-                break;
-            case WINED3D_GL_RES_TYPE_TEX_RECT:
-                texture_function = "texture2DRect";
-                coord_mask = "xy";
                 break;
             default:
                 FIXME("Unhandled texture type %#x.\n", settings->op[stage].tex_type);
