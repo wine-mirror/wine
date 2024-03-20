@@ -1501,7 +1501,7 @@ static void clear_display_devices(void)
     while (!list_empty( &monitors ))
     {
         monitor = LIST_ENTRY( list_head( &monitors ), struct monitor, entry );
-        adapter_release( monitor->adapter );
+        if (monitor->adapter) adapter_release( monitor->adapter );
         list_remove( &monitor->entry );
         free( monitor );
     }
