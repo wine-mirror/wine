@@ -162,7 +162,6 @@ void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_inf
 {
     /* We need to deal with frequency data! */
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL generic_attributes = d3d_info->ffp_generic_attributes;
     BOOL use_vshader = use_vs(state);
     unsigned int i;
 
@@ -213,16 +212,7 @@ void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_inf
         }
         else
         {
-            if (!generic_attributes && !element->ffp_valid)
-            {
-                WARN("Skipping unsupported fixed function element of format %s and usage %s.\n",
-                        debug_d3dformat(element->format->id), debug_d3ddeclusage(element->usage));
-                stride_used = FALSE;
-            }
-            else
-            {
-                stride_used = fixed_get_input(element->usage, element->usage_idx, &idx);
-            }
+            stride_used = fixed_get_input(element->usage, element->usage_idx, &idx);
         }
 
         if (stride_used)
@@ -322,17 +312,4 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
         context_invalidate_state(context, STATE_INDEXBUFFER);
 
     context->use_immediate_mode_draw = FALSE;
-
-    if (stream_info->all_vbo)
-        return;
-
-    if (!use_vs(state))
-    {
-        WORD slow_mask = -!d3d_info->ffp_generic_attributes & (1u << WINED3D_FFP_PSIZE);
-        slow_mask |= -(!d3d_info->vertex_bgra && !d3d_info->ffp_generic_attributes)
-                & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR) | (1u << WINED3D_FFP_BLENDWEIGHT));
-
-        if (stream_info->use_map & slow_mask)
-            context->use_immediate_mode_draw = TRUE;
-    }
 }

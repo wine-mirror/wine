@@ -3072,19 +3072,10 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
 
     if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
-        const struct wined3d_d3d_info *d3d_info = &context->device->adapter->d3d_info;
         struct wined3d_device *device = context->device;
         struct wined3d_bo_address addr;
         struct wined3d_bo *bo;
         uint8_t *map_ptr;
-
-        /* We can't use persistent maps if we might need to do vertex attribute
-         * conversion; that will cause the CS thread to invalidate the BO. */
-        if (!d3d_info->vertex_bgra || !d3d_info->ffp_generic_attributes)
-        {
-            TRACE("Not returning a persistent buffer because we might need to do vertex attribute conversion.\n");
-            return false;
-        }
 
         if (resource->pin_sysmem)
         {

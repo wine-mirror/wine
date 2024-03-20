@@ -221,7 +221,6 @@ struct wined3d_d3d_info
     struct wined3d_d3d_limits limits;
     uint32_t wined3d_creation_flags;
     uint32_t emulated_flatshading : 1;
-    uint32_t ffp_generic_attributes : 1;
     uint32_t ffp_alpha_test : 1;
     uint32_t vs_clipping : 1;
     uint32_t shader_double_precision : 1;
@@ -1999,7 +1998,6 @@ struct wined3d_fragment_pipe_ops
 struct wined3d_vertex_caps
 {
     BOOL emulated_flatshading;
-    BOOL ffp_generic_attributes;
     DWORD max_active_lights;
     DWORD max_vertex_blend_matrices;
     DWORD max_vertex_blend_matrix_index;
@@ -3795,7 +3793,6 @@ static inline void wined3d_resource_wait_idle(const struct wined3d_resource *res
 enum wined3d_buffer_conversion_type
 {
     CONV_NONE,
-    CONV_D3DCOLOR,
 };
 
 struct wined3d_buffer

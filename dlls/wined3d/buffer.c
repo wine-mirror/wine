@@ -305,13 +305,10 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
     return ret;
 }
 
-#define WINED3D_BUFFER_FIXUP_D3DCOLOR   0x01
-
 static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
         const struct wined3d_state *state, UINT attrib_idx, DWORD fixup_flags, UINT *stride_this_run)
 {
     const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
-    enum wined3d_format_id format;
     BOOL ret = FALSE;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
@@ -321,11 +318,8 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
             || state->streams[attrib->stream_idx].buffer != This)
         return FALSE;
 
-    format = attrib->format->id;
     /* Look for newly appeared conversion */
-    if (fixup_flags & WINED3D_BUFFER_FIXUP_D3DCOLOR && format == WINED3DFMT_B8G8R8A8_UNORM)
-        ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run);
-    else if (This->conversion_map)
+    if (This->conversion_map)
         ret = buffer_process_converted_attribute(This, CONV_NONE, attrib, stride_this_run);
 
     return ret;
@@ -450,27 +444,6 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
     return ret;
 }
 
-static inline unsigned int fixup_d3dcolor(DWORD *dst_color)
-{
-    DWORD src_color = *dst_color;
-
-    /* Color conversion like in draw_primitive_immediate_mode(). Watch out for
-     * endianness. If we want this to work on big-endian machines as well we
-     * have to consider more things.
-     *
-     * 0xff000000: Alpha mask
-     * 0x00ff0000: Blue mask
-     * 0x0000ff00: Green mask
-     * 0x000000ff: Red mask
-     */
-    *dst_color = 0;
-    *dst_color |= (src_color & 0xff00ff00u);         /* Alpha Green */
-    *dst_color |= (src_color & 0x00ff0000u) >> 16;   /* Red */
-    *dst_color |= (src_color & 0x000000ffu) << 16;   /* Blue */
-
-    return sizeof(*dst_color);
-}
-
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
     unsigned int refcount = InterlockedIncrement(&buffer->resource.ref);
@@ -517,9 +490,6 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
                     case CONV_NONE:
                         /* Done already */
                         j += sizeof(DWORD);
-                        break;
-                    case CONV_D3DCOLOR:
-                        j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
                         break;
                     default:
                         FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
@@ -779,7 +749,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     BOOL decl_changed = FALSE;
 
     TRACE("buffer %p.\n", buffer);
@@ -812,12 +781,6 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     if (state)
     {
         DWORD fixup_flags = 0;
-
-        if (!use_vs(state))
-        {
-            if (!d3d_info->vertex_bgra && !d3d_info->ffp_generic_attributes)
-                fixup_flags |= WINED3D_BUFFER_FIXUP_D3DCOLOR;
-        }
 
         decl_changed = buffer_find_decl(buffer, &context->stream_info, state, fixup_flags);
         buffer->flags |= WINED3D_BUFFER_HASDESC;
