@@ -4883,19 +4883,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
                 WARN_(d3d_perf)("Using software emulation because not all material properties could be tracked.\n");
             emulation = TRUE;
         }
-        else if (context->fog_coord && state->render_states[WINED3D_RS_FOGENABLE])
-        {
-            static BOOL warned;
-
-            /* Either write a pipeline replacement shader or convert the
-             * specular alpha from unsigned byte to a float in the vertex
-             * buffer. */
-            if (!warned++)
-                FIXME("Using software emulation because manual fog coordinates are provided.\n");
-            else
-                WARN_(d3d_perf)("Using software emulation because manual fog coordinates are provided.\n");
-            emulation = TRUE;
-        }
 
         if (emulation)
         {

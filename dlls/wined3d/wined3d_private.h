@@ -1930,7 +1930,6 @@ struct wined3d_context
     DWORD uses_fbo_attached_resources : 1;
     DWORD transform_feedback_active : 1;
     DWORD transform_feedback_paused : 1;
-    DWORD fog_coord : 1;
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
@@ -1938,7 +1937,7 @@ struct wined3d_context
     DWORD update_primitive_type : 1;
     DWORD update_patch_vertex_count : 1;
     DWORD update_multisample_state : 1;
-    DWORD padding : 11;
+    DWORD padding : 12;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
