@@ -220,7 +220,6 @@ struct wined3d_d3d_info
     struct fragment_caps ffp_fragment_caps;
     struct wined3d_d3d_limits limits;
     uint32_t wined3d_creation_flags;
-    uint32_t xyzrhw : 1;
     uint32_t emulated_flatshading : 1;
     uint32_t ffp_generic_attributes : 1;
     uint32_t ffp_alpha_test : 1;
@@ -1999,7 +1998,6 @@ struct wined3d_fragment_pipe_ops
 
 struct wined3d_vertex_caps
 {
-    BOOL xyzrhw;
     BOOL emulated_flatshading;
     BOOL ffp_generic_attributes;
     DWORD max_active_lights;
@@ -3798,7 +3796,6 @@ enum wined3d_buffer_conversion_type
 {
     CONV_NONE,
     CONV_D3DCOLOR,
-    CONV_POSITIONT,
 };
 
 struct wined3d_buffer

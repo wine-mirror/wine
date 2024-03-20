@@ -332,8 +332,7 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
         slow_mask |= -(!d3d_info->vertex_bgra && !d3d_info->ffp_generic_attributes)
                 & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR) | (1u << WINED3D_FFP_BLENDWEIGHT));
 
-        if ((stream_info->position_transformed && !d3d_info->xyzrhw)
-                || (stream_info->use_map & slow_mask))
+        if (stream_info->use_map & slow_mask)
             context->use_immediate_mode_draw = TRUE;
     }
 }

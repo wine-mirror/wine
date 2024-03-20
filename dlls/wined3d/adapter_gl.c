@@ -3867,23 +3867,6 @@ static void WINE_GLAPI position_d3dcolor(const void *data)
             D3DCOLOR_B_A(pos));
 }
 
-static void WINE_GLAPI position_float4(const void *data)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl_get_current()->gl_info;
-    const GLfloat *pos = data;
-
-    if (pos[3] != 0.0f && pos[3] != 1.0f)
-    {
-        float w = 1.0f / pos[3];
-
-        gl_info->gl_ops.gl.p_glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glVertex3fv(pos);
-    }
-}
-
 static void WINE_GLAPI diffuse_d3dcolor(const void *data)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_get_current()->gl_info;
@@ -3962,7 +3945,6 @@ static void WINE_GLAPI generic_float16_4(GLuint idx, const void *data)
 
 static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter_gl *adapter_gl)
 {
-    const struct wined3d_d3d_info *d3d_info = &adapter_gl->a.d3d_info;
     struct wined3d_gl_info *gl_info = &adapter_gl->gl_info;
     struct wined3d_ffp_attrib_ops *ops = &gl_info->ffp_attrib_ops;
     unsigned int i;
@@ -3978,10 +3960,7 @@ static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter_gl *adapt
     }
 
     ops->position[WINED3D_FFP_EMIT_FLOAT3]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex3fv;
-    if (!d3d_info->xyzrhw)
-        ops->position[WINED3D_FFP_EMIT_FLOAT4]    = position_float4;
-    else
-        ops->position[WINED3D_FFP_EMIT_FLOAT4]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex4fv;
+    ops->position[WINED3D_FFP_EMIT_FLOAT4]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex4fv;
     ops->position[WINED3D_FFP_EMIT_D3DCOLOR]  = position_d3dcolor;
     ops->position[WINED3D_FFP_EMIT_SHORT4]    = (wined3d_ffp_attrib_func)gl_info->gl_ops.gl.p_glVertex2sv;
 
@@ -5036,7 +5015,6 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     TRACE("Maximum point size support - max point size %.8e.\n", f[1]);
 
     d3d_info->wined3d_creation_flags = wined3d_creation_flags;
-    d3d_info->xyzrhw = vertex_caps.xyzrhw;
     d3d_info->emulated_flatshading = vertex_caps.emulated_flatshading;
     d3d_info->ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
     d3d_info->ffp_alpha_test = !!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];

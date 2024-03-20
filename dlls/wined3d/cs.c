@@ -3080,7 +3080,7 @@ static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, str
 
         /* We can't use persistent maps if we might need to do vertex attribute
          * conversion; that will cause the CS thread to invalidate the BO. */
-        if (!d3d_info->xyzrhw || !d3d_info->vertex_bgra || !d3d_info->ffp_generic_attributes)
+        if (!d3d_info->vertex_bgra || !d3d_info->ffp_generic_attributes)
         {
             TRACE("Not returning a persistent buffer because we might need to do vertex attribute conversion.\n");
             return false;

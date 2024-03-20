@@ -306,7 +306,6 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *buffer,
 }
 
 #define WINED3D_BUFFER_FIXUP_D3DCOLOR   0x01
-#define WINED3D_BUFFER_FIXUP_XYZRHW     0x02
 
 static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct wined3d_stream_info *si,
         const struct wined3d_state *state, UINT attrib_idx, DWORD fixup_flags, UINT *stride_this_run)
@@ -325,23 +324,9 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
     format = attrib->format->id;
     /* Look for newly appeared conversion */
     if (fixup_flags & WINED3D_BUFFER_FIXUP_D3DCOLOR && format == WINED3DFMT_B8G8R8A8_UNORM)
-    {
         ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run);
-    }
-    else if (fixup_flags & WINED3D_BUFFER_FIXUP_XYZRHW && si->position_transformed)
-    {
-        if (format != WINED3DFMT_R32G32B32A32_FLOAT)
-        {
-            FIXME("Unexpected format %s for transformed position.\n", debug_d3dformat(format));
-            return FALSE;
-        }
-
-        ret = buffer_process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run);
-    }
     else if (This->conversion_map)
-    {
         ret = buffer_process_converted_attribute(This, CONV_NONE, attrib, stride_this_run);
-    }
 
     return ret;
 }
@@ -423,8 +408,6 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This, const struct wined3d_s
 
     ret = buffer_check_attribute(This, si, state, WINED3D_FFP_POSITION,
             fixup_flags, &stride_this_run) || ret;
-    fixup_flags &= ~WINED3D_BUFFER_FIXUP_XYZRHW;
-
     ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDWEIGHT,
             fixup_flags, &stride_this_run) || ret;
     ret = buffer_check_attribute(This, si, state, WINED3D_FFP_BLENDINDICES,
@@ -488,21 +471,6 @@ static inline unsigned int fixup_d3dcolor(DWORD *dst_color)
     return sizeof(*dst_color);
 }
 
-static inline unsigned int fixup_transformed_pos(struct wined3d_vec4 *p)
-{
-    /* rhw conversion like in position_float4(). */
-    if (p->w != 1.0f && p->w != 0.0f)
-    {
-        float w = 1.0f / p->w;
-        p->x *= w;
-        p->y *= w;
-        p->z *= w;
-        p->w = w;
-    }
-
-    return sizeof(*p);
-}
-
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
     unsigned int refcount = InterlockedIncrement(&buffer->resource.ref);
@@ -552,9 +520,6 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
                         break;
                     case CONV_D3DCOLOR:
                         j += fixup_d3dcolor((DWORD *) (data + i * buffer->stride + j));
-                        break;
-                    case CONV_POSITIONT:
-                        j += fixup_transformed_pos((struct wined3d_vec4 *) (data + i * buffer->stride + j));
                         break;
                     default:
                         FIXME("Unimplemented conversion %d in shifted conversion.\n", buffer->conversion_map[j]);
@@ -852,8 +817,6 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
         {
             if (!d3d_info->vertex_bgra && !d3d_info->ffp_generic_attributes)
                 fixup_flags |= WINED3D_BUFFER_FIXUP_D3DCOLOR;
-            if (!d3d_info->xyzrhw)
-                fixup_flags |= WINED3D_BUFFER_FIXUP_XYZRHW;
         }
 
         decl_changed = buffer_find_decl(buffer, &context->stream_info, state, fixup_flags);

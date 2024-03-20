@@ -11682,7 +11682,6 @@ static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_adapter *adapter, 
 {
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
-    caps->xyzrhw = TRUE;
     caps->emulated_flatshading = !needs_legacy_glsl_syntax(gl_info);
     caps->ffp_generic_attributes = TRUE;
     caps->max_active_lights = WINED3D_MAX_ACTIVE_LIGHTS;

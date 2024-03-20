@@ -1134,7 +1134,6 @@ static void spirv_vertex_pipe_vk_vp_disable(const struct wined3d_context *contex
 static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
-    caps->xyzrhw = TRUE;
     caps->ffp_generic_attributes = TRUE;
 }
 

@@ -2325,7 +2325,6 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
 
     d3d_info->wined3d_creation_flags = wined3d_creation_flags;
 
-    d3d_info->xyzrhw = vertex_caps.xyzrhw;
     d3d_info->emulated_flatshading = vertex_caps.emulated_flatshading;
     d3d_info->ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
     d3d_info->ffp_alpha_test = false;
