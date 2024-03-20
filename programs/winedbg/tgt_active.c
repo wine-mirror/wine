@@ -87,6 +87,7 @@ BOOL dbg_attach_debuggee(DWORD pid)
     SetEnvironmentVariableA("DBGHELP_NOLIVE", NULL);
 
     dbg_curr_process->active_debuggee = TRUE;
+    dbg_printf("WineDbg attached to pid %04lx\n", dbg_curr_pid);
     return TRUE;
 }
 
@@ -670,6 +671,7 @@ static BOOL dbg_start_debuggee(LPSTR cmdLine)
         free(dbg_last_cmd_line);
         dbg_last_cmd_line = cmdLine;
     }
+    dbg_printf("WineDbg starting on pid %04lx\n", dbg_curr_pid);
 
     return TRUE;
 }
@@ -755,6 +757,11 @@ static char *dbg_build_command_line( char **argv )
     return ret;
 }
 
+void dbg_set_exec_file(const char *path)
+{
+    free(dbg_executable);
+    dbg_executable = strdup(path);
+}
 
 void	dbg_run_debuggee(struct list_string* ls)
 {

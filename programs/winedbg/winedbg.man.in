@@ -61,6 +61,8 @@ When in \fBdefault\fR mode, the following options are available:
 \fBwinedbg\fR will execute the command \fIstring\fR as if it was keyed on
 winedbg command line, and then will exit. This can be handy for
 getting the pid of running processes (winedbg --command "info proc").
+.IP \fB--exec\ \fIfilename\fR
+Sets the executable name, without starting the executable.
 .IP \fB--file\ \fIfilename\fR
 \fBwinedbg\fR will execute the list of commands contained in file
 filename as if they were keyed on winedbg command line, and then

@@ -474,6 +474,7 @@ struct list_string
     char* string;
     struct list_string* next;
 };
+extern void             dbg_set_exec_file(const char *path);
 extern void             dbg_run_debuggee(struct list_string* ls);
 extern void             dbg_wait_next_exception(DWORD cont, int count, int mode);
 extern enum dbg_start   dbg_active_attach(int argc, char* argv[]);

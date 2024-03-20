@@ -58,7 +58,7 @@ static void parser(const char*);
 %token <string> tPATH tIDENTIFIER tSTRING tINTVAR
 %token <integer> tNUM tFORMAT
 %token <type> tTYPEDEF
-%token tSYMBOLFILE tRUN tATTACH tDETACH tKILL tMAINTENANCE tTYPE tMINIDUMP
+%token tSYMBOLFILE tEXECFILE tRUN tATTACH tDETACH tKILL tMAINTENANCE tTYPE tMINIDUMP
 %token tNOPROCESS tWOW
 
 /* can be prefixed by module name */
@@ -146,6 +146,7 @@ command:
     | tKILL                     { dbg_curr_process->process_io->close_process(dbg_curr_process, TRUE); }
     | tMINIDUMP pathname        { minidump_write($2, (dbg_curr_thread && dbg_curr_thread->in_exception) ? &dbg_curr_thread->excpt_record : NULL);}
     | tECHO tSTRING             { dbg_printf("%s\n", $2); }
+    | tEXECFILE pathname        { dbg_set_exec_file($2); }
     | run_command
     | list_command
     | disassemble_command
