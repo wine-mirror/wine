@@ -72,7 +72,6 @@ static NTSTATUS (WINAPI *pNtOpenThreadToken)(HANDLE,DWORD,BOOLEAN,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,BOOLEAN,TOKEN_TYPE,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateObject)(HANDLE,HANDLE,HANDLE,HANDLE*,ACCESS_MASK,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtCompareObjects)(HANDLE,HANDLE);
-static NTSTATUS (WINAPI *pNtMakeTemporaryObject)(HANDLE);
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -3259,12 +3258,6 @@ static void test_object_permanence(void)
     NTSTATUS status;
     BOOL creatpermapriv = FALSE;
 
-    if (!pNtMakeTemporaryObject)
-    {
-        win_skip( "NtMakeTemporaryObject is not available.\n" );
-        return;
-    }
-
     status = NtOpenProcessToken( GetCurrentProcess(), TOKEN_DUPLICATE, &process_token );
     ok( status == STATUS_SUCCESS, "NtOpenProcessToken returned %08lx\n", status );
 
@@ -3327,7 +3320,7 @@ static void test_object_permanence(void)
             if (test->make_temp_status == STATUS_SUCCESS)
                 ok( !!(obi.GrantedAccess & DELETE), "expected DELETE access in %08lx\n", obi.GrantedAccess );
 
-            status = pNtMakeTemporaryObject( handle );
+            status = NtMakeTemporaryObject( handle );
             todo_wine_if(test->make_temp_status == STATUS_ACCESS_DENIED)
             ok( status == test->make_temp_status, "NtMakeTemporaryObject returned %08lx\n", status );
             if (!NT_ERROR(status)) is_permanent = FALSE;
@@ -3379,7 +3372,7 @@ static void test_object_permanence(void)
             ok( obi_new.Attributes == expect_attr, "expected attr %08lx, got %08lx\n", expect_attr, obi_new.Attributes );
 
             /* ensure object is deleted */
-            pNtMakeTemporaryObject( handle );
+            NtMakeTemporaryObject( handle );
             NtClose( handle );
         }
         winetest_pop_context();
@@ -3436,7 +3429,6 @@ START_TEST(om)
     pNtDuplicateToken       =  (void *)GetProcAddress(hntdll, "NtDuplicateToken");
     pNtDuplicateObject      =  (void *)GetProcAddress(hntdll, "NtDuplicateObject");
     pNtCompareObjects       =  (void *)GetProcAddress(hntdll, "NtCompareObjects");
-    pNtMakeTemporaryObject  =  (void *)GetProcAddress(hntdll, "NtMakeTemporaryObject");
 
     test_null_in_object_name();
     test_case_sensitive();
