@@ -42,5 +42,6 @@ int is_warning_enabled(int warning);
 
 extern char *find_input_file( const char *name, const char *parent );
 extern FILE *open_input_file( const char *path );
+extern void close_all_inputs(void);
 
 #endif

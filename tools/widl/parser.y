@@ -118,7 +118,7 @@ static typelib_t *current_typelib;
 
 int parser_lex( PARSER_STYPE *yylval, PARSER_LTYPE *yylloc );
 void push_import( const char *fname, PARSER_LTYPE *yylloc );
-void pop_import( PARSER_LTYPE *yylloc );
+PARSER_LTYPE pop_import(void);
 
 # define YYLLOC_DEFAULT( cur, rhs, n ) \
         do { if (n) init_location( &(cur), &YYRHSLOC( rhs, 1 ), &YYRHSLOC( rhs, n ) ); \
@@ -515,7 +515,7 @@ cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 
 import_start: tIMPORT aSTRING ';'		{ $$ = $2; push_import( $2, &yylloc ); }
 	;
-import: import_start imp_statements aEOF	{ pop_import( &yylloc ); }
+import: import_start imp_statements aEOF	{ yyloc = pop_import(); }
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'

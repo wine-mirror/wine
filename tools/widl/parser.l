@@ -481,10 +481,11 @@ static void print_imports(void)
     fprintf( stderr, "%s:%d:\n", state->input_name, state->where.first_line );
 }
 
-void pop_import( struct location *where )
+struct location pop_import(void)
 {
     struct list *entry = list_head( &import_stack );
     struct import_state *state;
+    struct location where;
     assert( entry );
 
     state = LIST_ENTRY( entry, struct import_state, entry );
@@ -496,8 +497,9 @@ void pop_import( struct location *where )
     yy_switch_to_buffer( state->buffer );
 
     input_name = state->input_name;
-    *where = state->where;
+    where = state->where;
     free( state );
+    return where;
 }
 
 void push_import( const char *import_name, struct location *where )
@@ -545,6 +547,12 @@ static void switch_to_acf(void)
     acf_name = NULL;
 
     yy_switch_to_buffer( yy_create_buffer( file, YY_BUF_SIZE ) );
+}
+
+void close_all_inputs(void)
+{
+    while (!list_empty( &import_stack )) pop_import();
+    if (yyin) fclose( yyin );
 }
 
 static void reset_location( struct location *where, const char *input_name )

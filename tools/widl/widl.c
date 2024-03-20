@@ -843,10 +843,8 @@ int main(int argc,char *argv[])
 
   init_types();
   ret = parser_parse();
-
-  if(ret) {
-    exit(1);
-  }
+  close_all_inputs();
+  if (ret) exit(1);
 
   /* Everything has been done successfully, don't delete any files.  */
   set_everything(FALSE);
