@@ -222,7 +222,6 @@ struct wined3d_d3d_info
     uint32_t wined3d_creation_flags;
     uint32_t emulated_flatshading : 1;
     uint32_t ffp_alpha_test : 1;
-    uint32_t vs_clipping : 1;
     uint32_t shader_double_precision : 1;
     uint32_t shader_output_interpolation : 1;
     uint32_t viewport_array_index_any_shader : 1;
@@ -1402,7 +1401,6 @@ BOOL shader_get_stream_output_register_info(const struct wined3d_shader *shader,
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
-#define WINED3D_SHADER_CAP_VS_CLIPPING              0x00000001u
 #define WINED3D_SHADER_CAP_SRGB_WRITE               0x00000002u
 #define WINED3D_SHADER_CAP_DOUBLE_PRECISION         0x00000004u
 #define WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION     0x00000008u
@@ -2669,9 +2667,8 @@ struct texture_stage_op
 struct ffp_frag_settings
 {
     struct texture_stage_op op[WINED3D_MAX_FFP_TEXTURES];
-    enum wined3d_ffp_ps_fog_mode fog;
+    unsigned char fog; /* enum wined3d_ffp_ps_fog_mode */
     unsigned char sRGB_write;
-    unsigned char emul_clipplanes;
     unsigned char texcoords_initialized;
     unsigned char color_key_enabled : 1;
     unsigned char pointsprite : 1;

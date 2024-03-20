@@ -537,21 +537,6 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     uint32_t enable_mask;
 
-    if (use_vs(state) && !context->d3d_info->vs_clipping)
-    {
-        static BOOL warned;
-
-        /* The OpenGL spec says that clipping planes are disabled when using
-         * shaders. Direct3D planes aren't, so that is an issue. The MacOS ATI
-         * driver keeps clipping planes activated with shaders in some
-         * conditions I got sick of tracking down. The shader state handler
-         * disables all clip planes because of that - don't do anything here
-         * and keep them disabled. */
-        if (state->render_states[WINED3D_RS_CLIPPLANEENABLE] && !warned++)
-            FIXME("Clipping not supported with vertex shaders.\n");
-        return;
-    }
-
     /* glEnable(GL_CLIP_PLANEx) doesn't apply to (ARB backend) vertex shaders.
      * The enabled / disabled planes are hardcoded into the shader. Update the
      * shader to update the enabled clipplanes. In case of fixed function, we

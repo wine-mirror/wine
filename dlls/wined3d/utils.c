@@ -6491,17 +6491,6 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
         }
     }
     settings->sRGB_write = !d3d_info->srgb_write_control && needs_srgb_write(d3d_info, state, &state->fb);
-    if (d3d_info->vs_clipping || !use_vs(state) || !state->render_states[WINED3D_RS_CLIPPING]
-            || !state->render_states[WINED3D_RS_CLIPPLANEENABLE])
-    {
-        /* No need to emulate clipplanes if GL supports native vertex shader clipping or if
-         * the fixed function vertex pipeline is used(which always supports clipplanes), or
-         * if no clipplane is enabled
-         */
-        settings->emul_clipplanes = 0;
-    } else {
-        settings->emul_clipplanes = 1;
-    }
 
     texture = wined3d_state_get_ffp_texture(state, 0);
     if (state->render_states[WINED3D_RS_COLORKEYENABLE]
