@@ -208,14 +208,6 @@ void texture2d_get_blt_info(const struct wined3d_texture_gl *texture_gl,
             coords[3].z = 0.0f;
             break;
 
-        case GL_TEXTURE_RECTANGLE_ARB:
-            info->bind_target = GL_TEXTURE_RECTANGLE_ARB;
-            coords[0].x = rect->left;  coords[0].y = rect->top;    coords[0].z = 0.0f;
-            coords[1].x = rect->right; coords[1].y = rect->top;    coords[1].z = 0.0f;
-            coords[2].x = rect->left;  coords[2].y = rect->bottom; coords[2].z = 0.0f;
-            coords[3].x = rect->right; coords[3].y = rect->bottom; coords[3].z = 0.0f;
-            break;
-
         case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             info->bind_target = GL_TEXTURE_CUBE_MAP_ARB;
             cube_coords_float(rect, w, h, &f);
@@ -1353,17 +1345,10 @@ GLuint wined3d_texture_gl_prepare_gl_texture(struct wined3d_texture_gl *texture_
     wined3d_context_gl_bind_texture(context_gl, target, gl_tex->name);
 
     /* For a new texture we have to set the texture levels after binding the
-     * texture. Beware that texture rectangles do not support mipmapping, but
-     * set the maxmiplevel if we're relying on the partial
-     * GL_ARB_texture_non_power_of_two emulation with texture rectangles.
-     * (I.e., do not care about cond_np2 here, just look for
-     * GL_TEXTURE_RECTANGLE_ARB.) */
-    if (target != GL_TEXTURE_RECTANGLE_ARB)
-    {
-        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture_gl->t.level_count - 1);
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture_gl->t.level_count - 1);
-        checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
-    }
+     * texture. */
+    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture_gl->t.level_count - 1);
+    gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture_gl->t.level_count - 1);
+    checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
 
     if (target == GL_TEXTURE_CUBE_MAP_ARB)
     {
@@ -6220,11 +6205,6 @@ static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     {
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-    }
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }
 
     if (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture)

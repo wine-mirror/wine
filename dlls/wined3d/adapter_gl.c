@@ -146,7 +146,6 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_multisample",          ARB_TEXTURE_MULTISAMPLE       },
     {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO  },
     {"GL_ARB_texture_query_levels",         ARB_TEXTURE_QUERY_LEVELS      },
-    {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
     {"GL_ARB_texture_rgb10_a2ui",           ARB_TEXTURE_RGB10_A2UI        },
     {"GL_ARB_texture_storage",              ARB_TEXTURE_STORAGE           },
@@ -912,18 +911,9 @@ static void quirk_no_np2(struct wined3d_gl_info *gl_info)
      *  ARB_tex_npot from the list of supported extensions.
      *
      *  Note that WINE_normalized_texrect can't be used in this case because
-     *  internally it uses ARB_tex_npot, triggering the software fallback.
-     *  There is not much we can do here apart from disabling the
-     *  software-emulated extension and re-enable ARB_tex_rect (which was
-     *  previously disabled in wined3d_adapter_init_gl_caps).
-     *
-     *  This fixup removes performance problems on both the FX 5900 and
-     *  FX 5700 (e.g. for framebuffer post-processing effects in the game
-     *  "Max Payne 2"). The behaviour can be verified through a simple test
-     *  app attached in bugreport #14724. */
+     *  internally it uses ARB_tex_npot, triggering the software fallback. */
     TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing.\n");
     gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-    gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
 }
 
 static void quirk_clip_varying(struct wined3d_gl_info *gl_info)
@@ -3533,13 +3523,6 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter_gl *adapter_gl,
             gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
         }
     }
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
-    {
-        /* If we have full NP2 texture support, disable
-         * GL_ARB_texture_rectangle because we will never use it.
-         * This saves a few redundant glDisable calls. */
-        gl_info->supported[ARB_TEXTURE_RECTANGLE] = FALSE;
-    }
     if (gl_info->supported[ATI_FRAGMENT_SHADER])
     {
         /* Disable NV_register_combiners and fragment shader if this is supported.
@@ -5063,8 +5046,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->viewport_array_index_any_shader = !!gl_info->supported[ARB_SHADER_VIEWPORT_LAYER_ARRAY];
     d3d_info->stencil_export = !!gl_info->supported[ARB_SHADER_STENCIL_EXPORT];
     d3d_info->texture_npot = !!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO];
-    d3d_info->texture_npot_conditional = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
-            || gl_info->supported[ARB_TEXTURE_RECTANGLE];
+    d3d_info->texture_npot_conditional = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT];
     d3d_info->normalized_texrect = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT];
     d3d_info->draw_base_vertex_offset = !!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX];
     d3d_info->vertex_bgra = !!gl_info->supported[ARB_VERTEX_ARRAY_BGRA];

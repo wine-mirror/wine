@@ -295,7 +295,6 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
         {GL_TEXTURE_1D,                   GL_TEXTURE_BINDING_1D,                   "1d",          WINED3D_GL_EXT_NONE},
         {GL_TEXTURE_1D_ARRAY,             GL_TEXTURE_BINDING_1D_ARRAY,             "1d-array",    EXT_TEXTURE_ARRAY},
         {GL_TEXTURE_2D,                   GL_TEXTURE_BINDING_2D,                   "2d",          WINED3D_GL_EXT_NONE},
-        {GL_TEXTURE_RECTANGLE_ARB,        GL_TEXTURE_BINDING_RECTANGLE_ARB,        "rectangle",   ARB_TEXTURE_RECTANGLE},
         {GL_TEXTURE_2D_ARRAY,             GL_TEXTURE_BINDING_2D_ARRAY,             "2d-array" ,   EXT_TEXTURE_ARRAY},
         {GL_TEXTURE_CUBE_MAP,             GL_TEXTURE_BINDING_CUBE_MAP,             "cube",        ARB_TEXTURE_CUBE_MAP},
         {GL_TEXTURE_2D_MULTISAMPLE,       GL_TEXTURE_BINDING_2D_MULTISAMPLE,       "2d-ms",       ARB_TEXTURE_MULTISAMPLE},
@@ -1800,9 +1799,6 @@ void wined3d_context_gl_bind_dummy_textures(const struct wined3d_context_gl *con
         gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_1D, textures->tex_1d);
         gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, textures->tex_2d);
 
-        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-            gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textures->tex_rect);
-
         if (gl_info->supported[EXT_TEXTURE3D])
             gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_3D, textures->tex_3d);
 
@@ -2520,9 +2516,6 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl, GLen
                 break;
             case GL_TEXTURE_2D_ARRAY:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D_ARRAY, textures->tex_2d_array);
-                break;
-            case GL_TEXTURE_RECTANGLE_ARB:
-                gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textures->tex_rect);
                 break;
             case GL_TEXTURE_CUBE_MAP:
                 gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_CUBE_MAP, textures->tex_cube);
@@ -3317,8 +3310,6 @@ void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_
         if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
             gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
-        if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-            gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
 
         gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -3337,8 +3328,6 @@ void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
         gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
     gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_3D);
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_RECTANGLE_ARB);
     gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
 
     gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);

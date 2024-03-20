@@ -7802,10 +7802,6 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         shader_addline(buffer, "#extension GL_ARB_sample_shading : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
-    /* The spec says that it doesn't have to be explicitly enabled, but the
-     * nvidia drivers write a warning if we don't do so. */
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-        shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context_gl, buffer, shader, reg_maps, &priv_ctx);
@@ -9672,8 +9668,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         shader_addline(buffer, "#extension GL_ARB_explicit_attrib_location : enable\n");
     if (gl_info->supported[ARB_SHADING_LANGUAGE_420PACK])
         shader_addline(buffer, "#extension GL_ARB_shading_language_420pack : enable\n");
-    if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
-        shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
 
     if (!use_legacy_fragment_output(gl_info))
     {
@@ -12923,7 +12917,6 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     {
         {GL_TEXTURE_2D, "2D", "xy"},
         {GL_TEXTURE_CUBE_MAP, "Cube", "xyz"},
-        {GL_TEXTURE_RECTANGLE_ARB, "2DRect", "xy"},
     };
     static const char vshader_main[] =
         "\n"
