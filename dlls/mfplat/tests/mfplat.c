@@ -10868,7 +10868,9 @@ static void test_MFInitMediaTypeFromVideoInfoHeader2(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &value32);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(value32 == MFVideoInterlace_MixedInterlaceOrProgressive, "Unexpected value %#x.\n", value32);
+    ok(value32 == MFVideoInterlace_MixedInterlaceOrProgressive
+            || broken(value32 == MFVideoInterlace_FieldInterleavedLowerFirst) /* Win7 */,
+            "Unexpected value %#x.\n", value32);
 
     vih.dwPictAspectRatioX = 123;
     hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih, sizeof(vih), &GUID_NULL);
