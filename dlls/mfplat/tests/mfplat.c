@@ -74,6 +74,7 @@ DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB1555, D3DFMT_A1R5G5B5);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_ARGB4444, D3DFMT_A4R4G4B4);
 /* SDK MFVideoFormat_A2R10G10B10 uses D3DFMT_A2B10G10R10, let's name it the other way */
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_A2B10G10R10, D3DFMT_A2R10G10B10);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_RAW_AAC,WAVE_FORMAT_RAW_AAC1);
 
 DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_h264,MAKEFOURCC('h','2','6','4'));
 DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_MP3,WAVE_FORMAT_MPEGLAYER3);
@@ -6991,6 +6992,15 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
         { WAVE_FORMAT_WMASPDIF },
     };
 
+    static const BYTE aac_codec_data[] =
+    {
+        0x12, 0x00,
+        0x34, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x12, 0x08,
+    };
     UINT8 buff[1024];
     WAVEFORMATEXTENSIBLE waveformatext;
     MPEGLAYER3WAVEFORMAT mp3format;
@@ -7179,6 +7189,84 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     ok(format->Samples.wSamplesPerBlock == 4, "got wSamplesPerBlock %u\n", format->Samples.wSamplesPerBlock);
     ok(!memcmp(format + 1, &aacformat.wfInfo.wfx + 1, aacformat.wfInfo.wfx.cbSize), "Unexpected user data.\n");
     CoTaskMemFree(format);
+
+    IMFMediaType_DeleteAllItems(mediatype);
+
+
+    /* check that HEAACWAVEFORMAT extra fields are copied directly from MF_MT_USER_DATA */
+    aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - sizeof(WAVEFORMATEX);
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&aacformat, sizeof(aacformat));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_USER_DATA);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&wfx, &size, 0);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(wfx->wFormatTag == WAVE_FORMAT_MPEG_HEAAC, "got wFormatTag %#x\n", wfx->wFormatTag);
+        ok(wfx->cbSize == 0, "got cbSize %u\n", wfx->cbSize);
+        CoTaskMemFree(wfx);
+    }
+
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_AAC_PAYLOAD_TYPE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(mediatype, &MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&wfx, &size, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(wfx->wFormatTag == WAVE_FORMAT_MPEG_HEAAC, "got wFormatTag %#x\n", wfx->wFormatTag);
+    ok(wfx->cbSize == sizeof(aac_codec_data), "got cbSize %u\n", wfx->cbSize);
+    memcpy(&aacformat, wfx, sizeof(aacformat));
+    ok(aacformat.wfInfo.wPayloadType == 0x12, "got %u\n", aacformat.wfInfo.wPayloadType);
+    ok(aacformat.wfInfo.wAudioProfileLevelIndication == 0x34, "got %u\n", aacformat.wfInfo.wAudioProfileLevelIndication);
+
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, wfx, sizeof(*wfx) + wfx->cbSize);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, &value);
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    ok(value == 0x12, "Unexpected AAC_PAYLOAD_TYPE %u.\n", value);
+    value = 0xdeadbeef;
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, &value);
+    ok(hr == S_OK, "Failed to get attribute, hr %#lx.\n", hr);
+    ok(value == 0x34, "Unexpected AAC_AUDIO_PROFILE_LEVEL_INDICATION %u.\n", value);
+
+    CoTaskMemFree(wfx);
+
+
+    /* check that RAW AAC doesn't have MF_MT_AAC_* attributes */
+    aacformat.wfInfo.wfx.cbSize = sizeof(aacformat) - sizeof(WAVEFORMATEX);
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&aacformat, sizeof(aacformat));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFAudioFormat_RAW_AAC);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_AAC_PAYLOAD_TYPE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(mediatype, &MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&wfx, &size, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(wfx->wFormatTag == WAVE_FORMAT_RAW_AAC1, "got wFormatTag %#x\n", wfx->wFormatTag);
+    ok(wfx->cbSize == sizeof(aac_codec_data), "got cbSize %u\n", wfx->cbSize);
+
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, wfx, sizeof(*wfx) + wfx->cbSize);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_PAYLOAD_TYPE, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Failed to get attribute, hr %#lx.\n", hr);
+    hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Failed to get attribute, hr %#lx.\n", hr);
+
+    CoTaskMemFree(wfx);
+
 
     IMFMediaType_Release(mediatype);
 }
