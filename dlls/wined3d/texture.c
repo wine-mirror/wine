@@ -58,8 +58,7 @@ bool wined3d_texture_validate_sub_resource_idx(const struct wined3d_texture *tex
 
 BOOL wined3d_texture_can_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
 {
-    if (!d3d_info->pbo || texture->resource.format->conv_byte_count || texture->resource.pin_sysmem
-            || (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED))
+    if (!d3d_info->pbo || texture->resource.format->conv_byte_count || texture->resource.pin_sysmem)
         return FALSE;
 
     return TRUE;
@@ -2643,10 +2642,6 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
             return;
         }
 
-        /* NP2 emulation is not allowed on array textures. */
-        if (texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-            ERR("Array texture %p uses NP2 emulation.\n", texture_gl);
-
         WARN_(d3d_perf)("Downloading all miplevel layers to get the data for a single sub-resource.\n");
 
         if (!(temporary_mem = calloc(texture_gl->t.layer_count, sub_resource->size)))
@@ -2654,31 +2649,6 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
             ERR("Out of memory.\n");
             return;
         }
-    }
-
-    if (texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-    {
-        if (format_gl->f.download)
-        {
-            FIXME("Reading back converted texture %p with NP2 emulation is not supported.\n", texture_gl);
-            return;
-        }
-
-        wined3d_texture_get_pitch(&texture_gl->t, level, &dst_row_pitch, &dst_slice_pitch);
-        wined3d_format_calculate_pitch(&format_gl->f, texture_gl->t.resource.device->surface_alignment,
-                wined3d_texture_get_level_pow2_width(&texture_gl->t, level),
-                wined3d_texture_get_level_pow2_height(&texture_gl->t, level),
-                &src_row_pitch, &src_slice_pitch);
-        if (!(temporary_mem = malloc(src_slice_pitch)))
-        {
-            ERR("Out of memory.\n");
-            return;
-        }
-
-        if (bo)
-            ERR("NP2 emulated texture uses PBO unexpectedly.\n");
-        if (texture_gl->t.resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
-            ERR("Unexpected compressed format for NP2 emulated texture.\n");
     }
 
     if (format_gl->f.download)
@@ -2747,71 +2717,6 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
         format_gl->f.download(mem, data->addr, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
                 wined3d_texture_get_level_width(&texture_gl->t, level),
                 wined3d_texture_get_level_height(&texture_gl->t, level), 1);
-    }
-    else if (texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-    {
-        const BYTE *src_data;
-        unsigned int h, y;
-        BYTE *dst_data;
-        /* Some games (e.g. Warhammer 40,000) don't properly handle texture
-         * pitches, preventing us from using the texture pitch to box NPOT
-         * textures. Instead, we repack the texture's CPU copy so that its
-         * pitch equals bpp * width instead of bpp * pow2width.
-         *
-         * Instead of boxing the texture:
-         *
-         * │<── texture width ──>│ pow2 width ──>│
-         * ├─────────────────────┼───────────────┼─
-         * │111111111111111111111│               │ʌ
-         * │222222222222222222222│               ││
-         * │333333333333333333333│    padding    │texture height
-         * │444444444444444444444│               ││
-         * │555555555555555555555│               │v
-         * ├─────────────────────┘               ├─
-         * │                                     │pow2 height
-         * │       padding            padding    ││
-         * │                                     │v
-         * └─────────────────────────────────────┴─
-         *
-         * we're repacking the data to the expected texture width
-         *
-         * │<── texture width ──>│ pow2 width ──>│
-         * ├─────────────────────┴───────────────┼─
-         * │1111111111111111111112222222222222222│ʌ
-         * │2222233333333333333333333344444444444││
-         * │4444444444555555555555555555555      │texture height
-         * │                                     ││
-         * │        padding       padding        │v
-         * │                                     ├─
-         * │                                     │pow2 height
-         * │        padding       padding        ││
-         * │                                     │v
-         * └─────────────────────────────────────┴─
-         *
-         * == is the same as
-         *
-         * │<── texture width ──>│
-         * ├─────────────────────┼─
-         * │111111111111111111111│ʌ
-         * │222222222222222222222││
-         * │333333333333333333333│texture height
-         * │444444444444444444444││
-         * │555555555555555555555│v
-         * └─────────────────────┴─
-         *
-         * This also means that any references to surface memory should work
-         * with the data as if it were a standard texture with a NPOT width
-         * instead of a texture boxed up to be a power-of-two texture. */
-        src_data = mem;
-        dst_data = data->addr;
-        TRACE("Repacking the surface data from pitch %u to pitch %u.\n", src_row_pitch, dst_row_pitch);
-        h = wined3d_texture_get_level_height(&texture_gl->t, level);
-        for (y = 0; y < h; ++y)
-        {
-            memcpy(dst_data, src_data, dst_row_pitch);
-            src_data += src_row_pitch;
-            dst_data += dst_row_pitch;
-        }
     }
     else if (temporary_mem)
     {
@@ -2914,7 +2819,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
 
     if ((src_texture->resource.type == WINED3D_RTYPE_TEXTURE_2D
             && (target == GL_TEXTURE_2D_ARRAY || format_gl->f.conv_byte_count
-            || src_texture->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_COND_NP2_EMULATED)))
+            || (src_texture->flags & WINED3D_TEXTURE_CONVERTED)))
             || target == GL_TEXTURE_1D_ARRAY)
     {
         wined3d_texture_gl_download_data_slow_path(src_texture_gl, src_sub_resource_idx, context_gl, dst_bo_addr);
@@ -3838,25 +3743,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             WARN("Creating a scratch mipmapped/cube/array NPOT texture despite lack of HW support.\n");
         }
         texture->flags |= WINED3D_TEXTURE_COND_NP2;
-
-        if (desc->resource_type != WINED3D_RTYPE_TEXTURE_3D && !d3d_info->texture_npot_conditional)
-        {
-            /* TODO: Add support for non-power-of-two compressed textures. */
-            if (format->attrs & (WINED3D_FORMAT_ATTR_COMPRESSED | WINED3D_FORMAT_ATTR_HEIGHT_SCALE))
-            {
-                FIXME("Compressed or height scaled non-power-of-two (%ux%u) textures are not supported.\n",
-                        desc->width, desc->height);
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
-            /* Find the nearest pow2 match. */
-            pow2_width = pow2_height = 1;
-            while (pow2_width < desc->width)
-                pow2_width <<= 1;
-            while (pow2_height < desc->height)
-                pow2_height <<= 1;
-            texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
-        }
     }
     texture->pow2_width = pow2_width;
     texture->pow2_height = pow2_height;
@@ -3974,12 +3860,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     {
         texture->pow2_matrix[0] = (float)desc->width;
         texture->pow2_matrix[5] = (float)desc->height;
-        texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
-    }
-    else if (texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
-    {
-        texture->pow2_matrix[0] = (((float)desc->width) / ((float)pow2_width));
-        texture->pow2_matrix[5] = (((float)desc->height) / ((float)pow2_height));
         texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
     }
     else
