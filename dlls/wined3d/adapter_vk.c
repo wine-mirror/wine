@@ -2356,9 +2356,7 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->shader_output_interpolation = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION);
     d3d_info->viewport_array_index_any_shader = false; /* VK_EXT_shader_viewport_index_layer */
     d3d_info->stencil_export = vk_info->supported[WINED3D_VK_EXT_SHADER_STENCIL_EXPORT];
-    d3d_info->texture_npot = true;
-    d3d_info->texture_npot_conditional = true;
-    d3d_info->normalized_texrect = false;
+    d3d_info->unconditional_npot = true;
     d3d_info->draw_base_vertex_offset = true;
     d3d_info->vertex_bgra = true;
     d3d_info->texture_swizzle = true;

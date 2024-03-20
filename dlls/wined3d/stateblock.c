@@ -2667,7 +2667,7 @@ static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
     if (texture->flags & WINED3D_TEXTURE_COND_NP2)
     {
         desc->mip_filter = WINED3D_TEXF_NONE;
-        if (d3d_info->normalized_texrect)
+        if (!d3d_info->unconditional_npot)
             desc->min_filter = WINED3D_TEXF_POINT;
     }
 }

@@ -4298,7 +4298,7 @@ static void adapter_gl_get_wined3d_caps(const struct wined3d_adapter *adapter, s
     {
         caps->TextureCaps |= WINED3DPTEXTURECAPS_VOLUMEMAP
                 | WINED3DPTEXTURECAPS_MIPVOLUMEMAP;
-        if (!d3d_info->texture_npot)
+        if (!d3d_info->unconditional_npot)
             caps->TextureCaps |= WINED3DPTEXTURECAPS_VOLUMEMAP_POW2;
 
         caps->VolumeTextureFilterCaps |= WINED3DPTFILTERCAPS_MAGFLINEAR
@@ -4338,7 +4338,7 @@ static void adapter_gl_get_wined3d_caps(const struct wined3d_adapter *adapter, s
     {
         caps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP
                 | WINED3DPTEXTURECAPS_MIPCUBEMAP;
-        if (!d3d_info->texture_npot)
+        if (!d3d_info->unconditional_npot)
             caps->TextureCaps |= WINED3DPTEXTURECAPS_CUBEMAP_POW2;
 
         caps->CubeTextureFilterCaps |= WINED3DPTFILTERCAPS_MAGFLINEAR
@@ -5045,9 +5045,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->shader_output_interpolation = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION);
     d3d_info->viewport_array_index_any_shader = !!gl_info->supported[ARB_SHADER_VIEWPORT_LAYER_ARRAY];
     d3d_info->stencil_export = !!gl_info->supported[ARB_SHADER_STENCIL_EXPORT];
-    d3d_info->texture_npot = !!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO];
-    d3d_info->texture_npot_conditional = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT];
-    d3d_info->normalized_texrect = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT];
+    d3d_info->unconditional_npot = !!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO];
     d3d_info->draw_base_vertex_offset = !!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX];
     d3d_info->vertex_bgra = !!gl_info->supported[ARB_VERTEX_ARRAY_BGRA];
     d3d_info->texture_swizzle = !!gl_info->supported[ARB_TEXTURE_SWIZZLE];

@@ -2437,12 +2437,8 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
                           WINED3DPTEXTURECAPS_PROJECTED          |
                           WINED3DPTEXTURECAPS_PERSPECTIVE;
 
-    if (!d3d_info->texture_npot)
-    {
-        caps->TextureCaps |= WINED3DPTEXTURECAPS_POW2;
-        if (d3d_info->texture_npot_conditional)
-            caps->TextureCaps |= WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
-    }
+    if (!d3d_info->unconditional_npot)
+        caps->TextureCaps |= WINED3DPTEXTURECAPS_POW2 | WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
 
     caps->TextureFilterCaps =  WINED3DPTFILTERCAPS_MAGFLINEAR       |
                                WINED3DPTFILTERCAPS_MAGFPOINT        |
@@ -3323,7 +3319,7 @@ static void wined3d_adapter_no3d_init_d3d_info(struct wined3d_adapter *adapter, 
     struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
 
     d3d_info->wined3d_creation_flags = wined3d_creation_flags;
-    d3d_info->texture_npot = TRUE;
+    d3d_info->unconditional_npot = true;
     d3d_info->feature_level = WINED3D_FEATURE_LEVEL_5;
 }
 

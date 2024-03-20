@@ -3713,7 +3713,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     pow2_width = desc->width;
     pow2_height = desc->height;
     if (((desc->width & (desc->width - 1)) || (desc->height & (desc->height - 1)) || (desc->depth & (desc->depth - 1)))
-            && !d3d_info->texture_npot)
+            && !d3d_info->unconditional_npot)
     {
         /* level_count == 0 returns an error as well. */
         if (level_count != 1 || layer_count != 1 || desc->resource_type == WINED3D_RTYPE_TEXTURE_3D)
