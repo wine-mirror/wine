@@ -793,7 +793,6 @@ static HRESULT WINAPI ddraw1_RestoreDisplayMode(IDirectDraw *iface)
 static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         DWORD cooplevel, BOOL restore_mode_on_normal)
 {
-    struct wined3d_rendertarget_view *rtv = NULL, *dsv = NULL;
     struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
     struct d3d_device *device;
@@ -937,16 +936,6 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
                 ERR("Failed to create stateblock, hr %#lx.\n", hr);
                 goto done;
             }
-
-            rtv = wined3d_device_context_get_rendertarget_view(ddraw->immediate_context, 0);
-            /* Rendering to the wined3d frontbuffer. */
-            if (rtv && !wined3d_rendertarget_view_get_sub_resource_parent(rtv))
-                rtv = NULL;
-            else if (rtv)
-                wined3d_rendertarget_view_incref(rtv);
-
-            if ((dsv = wined3d_device_context_get_depth_stencil_view(ddraw->immediate_context)))
-                wined3d_rendertarget_view_incref(dsv);
         }
 
         ddraw_destroy_swapchain(ddraw);
@@ -957,18 +946,6 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
 
     if (restore_state)
     {
-        if (dsv)
-        {
-            wined3d_device_context_set_depth_stencil_view(ddraw->immediate_context, dsv);
-            wined3d_rendertarget_view_decref(dsv);
-        }
-
-        if (rtv)
-        {
-            wined3d_device_context_set_rendertarget_views(ddraw->immediate_context, 0, 1, &rtv, FALSE);
-            wined3d_rendertarget_view_decref(rtv);
-        }
-
         wined3d_stateblock_apply(stateblock, device->state);
         wined3d_stateblock_decref(stateblock);
     }

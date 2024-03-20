@@ -327,6 +327,7 @@ struct d3d_device
     struct wined3d_device_context *immediate_context;
     struct ddraw *ddraw;
     IUnknown *rt_iface;
+    struct ddraw_surface *target, *target_ds;
 
     struct wined3d_streaming_buffer vertex_buffer, index_buffer;
 

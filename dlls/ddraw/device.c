@@ -336,6 +336,8 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
         TRACE("Releasing render target %p.\n", This->rt_iface);
         rt_iface = This->rt_iface;
         This->rt_iface = NULL;
+        This->target = NULL;
+        This->target_ds = NULL;
         if (This->version != 1)
             IUnknown_Release(rt_iface);
         TRACE("Render target release done.\n");
@@ -1844,6 +1846,7 @@ static HRESULT d3d_device_set_render_target(struct d3d_device *device,
     IUnknown_AddRef(rt_iface);
     IUnknown_Release(device->rt_iface);
     device->rt_iface = rt_iface;
+    device->target = target;
     d3d_device_update_depth_stencil(device);
 
     return D3D_OK;
@@ -1887,6 +1890,8 @@ static HRESULT d3d_device7_SetRenderTarget(IDirect3DDevice7 *iface,
         IDirectDrawSurface7_AddRef(target);
         IUnknown_Release(device->rt_iface);
         device->rt_iface = (IUnknown *)target;
+        device->target = NULL;
+        device->target_ds = NULL;
         wined3d_mutex_unlock();
         return DDERR_INVALIDPIXELFORMAT;
     }
@@ -1946,6 +1951,8 @@ static HRESULT WINAPI d3d_device3_SetRenderTarget(IDirect3DDevice3 *iface,
         IDirectDrawSurface4_AddRef(target);
         IUnknown_Release(device->rt_iface);
         device->rt_iface = (IUnknown *)target;
+        device->target = NULL;
+        device->target_ds = NULL;
         wined3d_mutex_unlock();
         return DDERR_INVALIDPIXELFORMAT;
     }
@@ -1956,6 +1963,8 @@ static HRESULT WINAPI d3d_device3_SetRenderTarget(IDirect3DDevice3 *iface,
         IDirectDrawSurface4_AddRef(target);
         IUnknown_Release(device->rt_iface);
         device->rt_iface = (IUnknown *)target;
+        device->target = NULL;
+        device->target_ds = NULL;
         wined3d_mutex_unlock();
         return D3D_OK;
     }
@@ -1995,6 +2004,8 @@ static HRESULT WINAPI d3d_device2_SetRenderTarget(IDirect3DDevice2 *iface,
         WARN("Surface %p is a depth buffer.\n", target_impl);
         IUnknown_Release(device->rt_iface);
         device->rt_iface = (IUnknown *)target;
+        device->target = NULL;
+        device->target_ds = NULL;
         wined3d_mutex_unlock();
         return DDERR_INVALIDPIXELFORMAT;
     }
@@ -2005,6 +2016,8 @@ static HRESULT WINAPI d3d_device2_SetRenderTarget(IDirect3DDevice2 *iface,
         IDirectDrawSurface_AddRef(target);
         IUnknown_Release(device->rt_iface);
         device->rt_iface = (IUnknown *)target;
+        device->target = NULL;
+        device->target_ds = NULL;
         wined3d_mutex_unlock();
         return D3D_OK;
     }
@@ -3367,16 +3380,36 @@ static HRESULT WINAPI d3d_device2_MultiplyTransform(IDirect3DDevice2 *iface,
  *****************************************************************************/
 static void d3d_device_sync_rendertarget(struct d3d_device *device)
 {
-    struct wined3d_rendertarget_view *rtv;
+    struct wined3d_rendertarget_view *rtv, *dsv;
+
+    rtv = device->target ? ddraw_surface_get_rendertarget_view(device->target) : NULL;
+    if (rtv)
+    {
+        if (FAILED(wined3d_device_context_set_rendertarget_views(device->immediate_context, 0, 1, &rtv, FALSE)))
+            ERR("wined3d_device_context_set_rendertarget_views failed.\n");
+    }
+    else if (!device->target)
+    {
+        /* NULL device->target may appear when the game was setting invalid render target which in some cases
+         * still keeps the invalid render target in the device even while returning an error.
+         *
+         * TODO: make render go nowhere instead of lefover render target (like it seems to work on Windows on HW devices
+         * while may just crash on software devices. */
+        FIXME("Keeping leftover render target.\n");
+    }
+
+    dsv = device->target_ds ? ddraw_surface_get_rendertarget_view(device->target_ds) : NULL;
+    if (FAILED(wined3d_device_context_set_depth_stencil_view(device->immediate_context, dsv)))
+        ERR("wined3d_device_context_set_depth_stencil_view failed.\n");
 
     if (device->hardware_device)
         return;
 
-    if ((rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
+    if (rtv)
         ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(rtv), DDRAW_SURFACE_RW);
 
-    if ((rtv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
-        ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(rtv), DDRAW_SURFACE_RW);
+    if (dsv)
+        ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(dsv), DDRAW_SURFACE_RW);
 }
 
 void d3d_device_sync_surfaces(struct d3d_device *device)
@@ -5171,7 +5204,8 @@ static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    if (!(rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
+    rtv = device->target ? ddraw_surface_get_rendertarget_view(device->target) : NULL;
+    if (!rtv)
     {
         wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
@@ -6756,7 +6790,6 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     IDirectDrawSurface7 *depthStencil = NULL;
     IDirectDrawSurface7 *render_target;
     static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, {0} };
-    struct ddraw_surface *dsi;
 
     if (device->rt_iface && SUCCEEDED(IUnknown_QueryInterface(device->rt_iface,
             &IID_IDirectDrawSurface7, (void **)&render_target)))
@@ -6768,12 +6801,13 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
         wined3d_device_context_set_depth_stencil_view(device->immediate_context, NULL);
+        device->target_ds = NULL;
         return WINED3D_ZB_FALSE;
     }
 
-    dsi = impl_from_IDirectDrawSurface7(depthStencil);
+    device->target_ds = impl_from_IDirectDrawSurface7(depthStencil);
     wined3d_device_context_set_depth_stencil_view(device->immediate_context,
-            ddraw_surface_get_rendertarget_view(dsi));
+            ddraw_surface_get_rendertarget_view(device->target_ds));
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3D_ZB_TRUE;
@@ -6869,6 +6903,7 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     }
 
     device->rt_iface = rt_iface;
+    device->target = target;
     if (version != 1)
         IUnknown_AddRef(device->rt_iface);
 

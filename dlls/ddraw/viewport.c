@@ -405,7 +405,8 @@ static HRESULT WINAPI d3d_viewport_SetViewport(IDirect3DViewport3 *iface, D3DVIE
 
     if (device->version > 1)
     {
-        if (!(rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
+        rtv = device->target ? ddraw_surface_get_rendertarget_view(device->target) : NULL;
+        if (!rtv)
         {
             wined3d_mutex_unlock();
             return DDERR_INVALIDCAPS;
@@ -1034,7 +1035,8 @@ static HRESULT WINAPI d3d_viewport_SetViewport2(IDirect3DViewport3 *iface, D3DVI
 
     if (device->version > 1)
     {
-        if (!(rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
+        rtv = device->target ? ddraw_surface_get_rendertarget_view(device->target) : NULL;
+        if (!rtv)
         {
             wined3d_mutex_unlock();
             return DDERR_INVALIDCAPS;
