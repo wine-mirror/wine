@@ -310,6 +310,4 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
 
     if (prev_all_vbo != stream_info->all_vbo)
         context_invalidate_state(context, STATE_INDEXBUFFER);
-
-    context->use_immediate_mode_draw = FALSE;
 }

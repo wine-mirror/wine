@@ -4609,66 +4609,6 @@ static void wined3d_context_gl_draw_primitive_arrays(struct wined3d_context_gl *
     }
 }
 
-static unsigned int get_stride_idx(const void *idx_data, unsigned int idx_size,
-        unsigned int base_vertex_idx, unsigned int start_idx, unsigned int vertex_idx)
-{
-    if (!idx_data)
-        return start_idx + vertex_idx;
-    if (idx_size == 2)
-        return ((const WORD *)idx_data)[start_idx + vertex_idx] + base_vertex_idx;
-    return ((const DWORD *)idx_data)[start_idx + vertex_idx] + base_vertex_idx;
-}
-
-/* Context activation is done by the caller. */
-static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl, const struct wined3d_state *state,
-        const struct wined3d_stream_info *si, const void *idx_data, unsigned int idx_size,
-        int base_vertex_idx, unsigned int start_idx, unsigned int vertex_count, unsigned int instance_count)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_ffp_attrib_ops *ops;
-    const void *ptr;
-
-    static unsigned int once;
-
-    if (!once++)
-        FIXME_(d3d_perf)("Drawing using immediate mode.\n");
-    else
-        WARN_(d3d_perf)("Drawing using immediate mode.\n");
-
-    if (!idx_size && idx_data)
-        ERR("Non-NULL idx_data with 0 idx_size, this should never happen.\n");
-
-    if (instance_count)
-        FIXME("Instancing not implemented.\n");
-
-    /* Immediate mode drawing can't make use of indices in a VBO - get the
-     * data from the index buffer. */
-    if (idx_size)
-        idx_data = (uint8_t *)wined3d_buffer_load_sysmem(state->index_buffer, &context_gl->c) + state->index_offset;
-
-    ops = &gl_info->ffp_attrib_ops;
-
-    gl_info->gl_ops.gl.p_glBegin(gl_primitive_type_from_d3d(state->primitive_type));
-
-    for (unsigned int vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx)
-    {
-        unsigned int stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
-        unsigned int use_map = si->use_map;
-
-        for (unsigned int element_idx = gl_info->limits.vertex_attribs - 1; use_map;
-                 use_map &= ~(1u << element_idx), --element_idx)
-        {
-            if (!(use_map & 1u << element_idx))
-                continue;
-
-            ptr = si->elements[element_idx].data.addr + si->elements[element_idx].stride * stride_idx;
-            ops->generic[si->elements[element_idx].format->emit_idx](element_idx, ptr);
-        }
-    }
-
-    gl_info->gl_ops.gl.p_glEnd();
-}
-
 static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_gl, const struct wined3d_state *state,
         const struct wined3d_indirect_draw_parameters *parameters, unsigned int idx_size)
 {
@@ -4907,23 +4847,14 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     if (parameters->indirect)
     {
-        if (!context->use_immediate_mode_draw)
-            wined3d_context_gl_draw_indirect(context_gl, state, &parameters->u.indirect, idx_size);
-        else
-            FIXME("Indirect draws with immediate mode are not supported.\n");
+        wined3d_context_gl_draw_indirect(context_gl, state, &parameters->u.indirect, idx_size);
     }
     else
     {
-        unsigned int instance_count = parameters->u.direct.instance_count;
-
-        if (context->use_immediate_mode_draw)
-            draw_primitive_immediate_mode(wined3d_context_gl(context), state, stream_info, idx_data,
-                    idx_size, parameters->u.direct.base_vertex_idx,
-                    parameters->u.direct.start_idx, parameters->u.direct.index_count, instance_count);
-        else
-            wined3d_context_gl_draw_primitive_arrays(context_gl, state, idx_data, idx_size,
-                    parameters->u.direct.base_vertex_idx, parameters->u.direct.start_idx,
-                    parameters->u.direct.index_count, parameters->u.direct.start_instance, instance_count);
+        wined3d_context_gl_draw_primitive_arrays(context_gl, state, idx_data, idx_size,
+                parameters->u.direct.base_vertex_idx, parameters->u.direct.start_idx,
+                parameters->u.direct.index_count, parameters->u.direct.start_instance,
+                parameters->u.direct.instance_count);
     }
 
     if (context->uses_uavs)
@@ -5233,9 +5164,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state)
 {
-    if (context_gl->c.use_immediate_mode_draw)
-        return;
-
     wined3d_context_gl_unload_vertex_data(context_gl);
     wined3d_context_gl_load_numbered_arrays(context_gl, &context_gl->c.stream_info, state);
 }
