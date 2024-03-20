@@ -4303,8 +4303,6 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
 
     wined3d_context_gl_check_fbo_status(context_gl, GL_FRAMEBUFFER);
 
-    /* WINED3D_SHADER_CONST_PS_NP2_FIXUP may be set when binding shader
-     * resources, so constant loading needs to be done after that. */
     device->shader_backend->shader_apply_draw_state(device->shader_priv, context, state);
     context->shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
     context->constant_update_mask = 0;

@@ -58,10 +58,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
         unsigned int size, void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     enum wined3d_gl_resource_type base_type = WINED3D_GL_RES_TYPE_COUNT;
     enum wined3d_gl_resource_type gl_type = WINED3D_GL_RES_TYPE_COUNT;
-    BOOL tex_2d_ok = FALSE;
     unsigned int i;
 
     static const struct
@@ -141,26 +139,12 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
             continue;
         }
-        if (((width & (width - 1)) || (height & (height - 1)))
-                && !d3d_info->texture_npot && !d3d_info->normalized_texrect
-                && gl_type == WINED3D_GL_RES_TYPE_TEX_2D)
-        {
-            TRACE("Skipping 2D texture type to try texture rectangle.\n");
-            tex_2d_ok = TRUE;
-            continue;
-        }
         break;
     }
 
     if (base_type != WINED3D_GL_RES_TYPE_COUNT && i == ARRAY_SIZE(resource_types))
     {
-        if (tex_2d_ok)
-        {
-            /* Non power of 2 texture and rectangle textures or renderbuffers do not work.
-             * Use 2D textures, the texture code will pad to a power of 2 size. */
-            gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
-        }
-        else if (usage & WINED3DUSAGE_SCRATCH)
+        if (usage & WINED3DUSAGE_SCRATCH)
         {
             /* Needed for proper format information. */
             gl_type = base_type;

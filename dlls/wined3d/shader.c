@@ -2938,7 +2938,6 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         args->shadow = 0;
         for (i = 0 ; i < WINED3D_MAX_FRAGMENT_SAMPLERS; ++i)
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
-        args->np2_fixup = 0;
     }
     else
     {
@@ -2961,10 +2960,6 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 
             if (texture->resource.format_caps & WINED3D_FORMAT_CAP_SHADOW)
                 args->shadow |= 1u << i;
-
-            /* Flag samplers that need NP2 texcoord fixup. */
-            if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
-                args->np2_fixup |= (1u << i);
         }
     }
 

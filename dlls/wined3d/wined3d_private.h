@@ -523,7 +523,6 @@ enum wined3d_shader_resource_type
 #define WINED3D_SHADER_CONST_PS_BUMP_ENV     0x00000200
 #define WINED3D_SHADER_CONST_PS_FOG          0x00000400
 #define WINED3D_SHADER_CONST_PS_ALPHA_TEST   0x00000800
-#define WINED3D_SHADER_CONST_PS_NP2_FIXUP    0x00002000
 #define WINED3D_SHADER_CONST_FFP_MODELVIEW   0x00004000
 #define WINED3D_SHADER_CONST_FFP_VERTEXBLEND 0x00008000
 #define WINED3D_SHADER_CONST_FFP_PROJ        0x00010000
@@ -1469,8 +1468,7 @@ enum wined3d_ffp_ps_fog_mode
 #define WINED3D_PSARGS_TEXTYPE_SHIFT 2
 #define WINED3D_PSARGS_TEXTYPE_MASK 0x3u
 
-/* Used for Shader Model 1 pixel shaders to track the bound texture
- * type. 2D and RECT textures are separated through NP2 fixup. */
+/* Used for Shader Model 1 pixel shaders to track the bound texture type. */
 enum wined3d_shader_tex_types
 {
     WINED3D_SHADER_TEX_2D   = 0,
@@ -1487,13 +1485,8 @@ struct ps_compile_args
     DWORD                       tex_types; /* ps 1 - 3, 16 textures */
     WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
     WORD                        srgb_correction;
-    /* Bitmap for NP2 texcoord fixups (16 samplers max currently).
-       D3D9 has a limit of 16 samplers and the fixup is superfluous
-       in D3D10 (unconditional NP2 support mandatory). */
-    WORD                        np2_fixup;
     WORD shadow; /* WINED3D_MAX_FRAGMENT_SAMPLERS, 16 */
     WORD texcoords_initialized; /* WINED3D_MAX_FFP_TEXTURES, 8 */
-    WORD padding_to_dword;
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
@@ -1943,7 +1936,6 @@ struct wined3d_context
     DWORD texShaderBumpMap : 8;         /* WINED3D_MAX_FFP_TEXTURES, 8 */
     DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_FFP_TEXTURES, 8 */
 
-    DWORD lastWasPow2Texture : 8;       /* WINED3D_MAX_FFP_TEXTURES, 8 */
     DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_FFP_TEXTURES, 8 */
     DWORD use_immediate_mode_draw : 1;
     DWORD uses_uavs : 1;
@@ -1958,7 +1950,7 @@ struct wined3d_context
     DWORD update_primitive_type : 1;
     DWORD update_patch_vertex_count : 1;
     DWORD update_multisample_state : 1;
-    DWORD padding : 3;
+    DWORD padding : 11;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
@@ -3300,7 +3292,6 @@ struct wined3d_texture_ops
 };
 
 #define WINED3D_TEXTURE_COND_NP2            0x00000001
-#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x00000004
 #define WINED3D_TEXTURE_IS_SRGB             0x00000008
 #define WINED3D_TEXTURE_RGB_ALLOCATED       0x00000010
 #define WINED3D_TEXTURE_RGB_VALID           0x00000020
@@ -3327,7 +3318,6 @@ struct wined3d_texture
     unsigned int level_count;
     unsigned int download_count;
     unsigned int sysmem_count;
-    float pow2_matrix[16];
     unsigned int lod;
     uint32_t flags;
     DWORD update_map_binding;
@@ -4416,23 +4406,6 @@ void get_pointsize(const struct wined3d_context *context, const struct wined3d_s
         float *out_pointsize, float *out_att);
 void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,
         float *start, float *end);
-
-/* Using additional shader constants (uniforms in GLSL / program environment
- * or local parameters in ARB) is costly:
- * ARB only knows float4 parameters and GLSL compiler are not really smart
- * when it comes to efficiently pack float2 uniforms, so no space is wasted
- * (in fact most compilers map a float2 to a full float4 uniform).
- *
- * For NP2 texcoord fixup we only need 2 floats (width and height) for each
- * 2D texture used in the shader. We therefore pack fixup info for 2 textures
- * into a single shader constant (uniform / program parameter).
- *
- * This structure is shared between the GLSL and the ARB backend.*/
-struct ps_np2fixup_info {
-    unsigned char     idx[WINED3D_MAX_FRAGMENT_SAMPLERS]; /* indices to the real constant */
-    WORD              active; /* bitfield indicating if we can apply the fixup */
-    WORD              num_consts;
-};
 
 struct wined3d_palette
 {
