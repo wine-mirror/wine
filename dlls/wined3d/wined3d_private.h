@@ -197,7 +197,6 @@ struct fragment_caps
     unsigned int TextureOpCaps;
     unsigned int max_blend_stages;
     unsigned int max_textures;
-    bool srgb_write;
     bool color_key;
 };
 
