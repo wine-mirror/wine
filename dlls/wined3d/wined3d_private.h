@@ -197,7 +197,6 @@ struct fragment_caps
     unsigned int TextureOpCaps;
     unsigned int max_blend_stages;
     unsigned int max_textures;
-    bool color_key;
 };
 
 struct wined3d_d3d_limits

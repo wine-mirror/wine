@@ -5225,14 +5225,6 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
 
     wined3d_adapter_gl_init_d3d_info(adapter_gl, wined3d_creation_flags);
 
-    if (!adapter_gl->a.d3d_info.ffp_fragment_caps.color_key)
-    {
-        /* We do not want to deal with re-creating immutable texture storage
-         * for colour-keying emulation. */
-        WARN("Disabling ARB_texture_storage because fragment pipe doesn't support colour-keying.\n");
-        gl_info->supported[ARB_TEXTURE_STORAGE] = FALSE;
-    }
-
     if (!wined3d_driver_info_init(driver_info, caps_gl_ctx.gpu_description, adapter_gl->a.d3d_info.feature_level,
             caps_gl_ctx.vram_bytes, 0))
     {

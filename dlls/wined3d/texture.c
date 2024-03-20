@@ -1658,18 +1658,11 @@ struct wined3d_resource * CDECL wined3d_texture_get_resource(struct wined3d_text
     return &texture->resource;
 }
 
-static BOOL color_key_equal(const struct wined3d_color_key *c1, struct wined3d_color_key *c2)
-{
-    return c1->color_space_low_value == c2->color_space_low_value
-            && c1->color_space_high_value == c2->color_space_high_value;
-}
-
 /* Context activation is done by the caller */
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     DWORD flag;
     UINT i;
 
@@ -1682,26 +1675,6 @@ void wined3d_texture_load(struct wined3d_texture *texture,
         flag = WINED3D_TEXTURE_SRGB_VALID;
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
-
-    if (!d3d_info->ffp_fragment_caps.color_key
-            && (!(texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
-            != !(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-            || (texture->async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY
-            && !color_key_equal(&texture->async.gl_color_key, &texture->async.src_blt_color_key))))
-    {
-        unsigned int i;
-
-        TRACE("Reloading because of color key value change.\n");
-        for (i = 0; i < sub_count; i++)
-        {
-            if (!wined3d_texture_load_location(texture, i, context, texture->resource.map_binding))
-                ERR("Failed to load location %s.\n", wined3d_debug_location(texture->resource.map_binding));
-            else
-                wined3d_texture_invalidate_location(texture, i, ~texture->resource.map_binding);
-        }
-
-        texture->async.gl_color_key = texture->async.src_blt_color_key;
-    }
 
     if (texture->flags & flag)
     {
@@ -2051,7 +2024,6 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
         struct wined3d_context_gl *context_gl, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;
-    const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_resource *resource = &texture_gl->t.resource;
     const struct wined3d_device *device = resource->device;
@@ -2062,16 +2034,6 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
 
     TRACE("texture_gl %p, context_gl %p, srgb %d, format %s.\n",
             texture_gl, context_gl, srgb, debug_d3dformat(format->id));
-
-    if (!d3d_info->ffp_fragment_caps.color_key
-            && !(texture_gl->t.async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
-            != !(texture_gl->t.async.color_key_flags & WINED3D_CKEY_SRC_BLT))
-    {
-        wined3d_texture_force_reload(&texture_gl->t);
-
-        if (texture_gl->t.async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-            texture_gl->t.async.flags |= WINED3D_TEXTURE_ASYNC_COLOR_KEY;
-    }
 
     if (texture_gl->t.flags & alloc_flag)
         return;

@@ -12132,7 +12132,6 @@ static void glsl_fragment_pipe_get_caps(const struct wined3d_adapter *adapter, s
     const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
     memset(caps, 0, sizeof(*caps));
-    caps->color_key = true;
     caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP
             | WINED3DPMISCCAPS_PERSTAGECONSTANT;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE
