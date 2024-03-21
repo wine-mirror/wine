@@ -403,21 +403,24 @@ static void add_desktop_thread( struct desktop *desktop, struct thread *thread )
 }
 
 /* remove a user of the desktop and start the close timeout if necessary */
-static void remove_desktop_thread( struct desktop *desktop, struct thread *thread )
+static void remove_desktop_user( struct desktop *desktop, struct thread *thread )
 {
     struct process *process;
 
+    assert( desktop->users > 0 );
+    desktop->users--;
+
+    /* if we have one remaining user, it has to be the manager of the desktop window */
+    if ((process = get_top_window_owner( desktop )) && desktop->users == process->running_threads && !desktop->close_timeout)
+        desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
+}
+
+/* remove a thread from the list of threads attached to a desktop */
+static void remove_desktop_thread( struct desktop *desktop, struct thread *thread )
+{
     list_remove( &thread->desktop_entry );
 
-    if (!thread->process->is_system)
-    {
-        assert( desktop->users > 0 );
-        desktop->users--;
-
-        /* if we have one remaining user, it has to be the manager of the desktop window */
-        if ((process = get_top_window_owner( desktop )) && desktop->users == process->running_threads && !desktop->close_timeout)
-            desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
-    }
+    if (!thread->process->is_system) remove_desktop_user( desktop, thread );
 
     if (desktop == desktop->winstation->input_desktop)
     {
@@ -546,7 +549,8 @@ void release_thread_desktop( struct thread *thread, int close )
     if (!(desktop = get_desktop_obj( thread->process, handle, 0 ))) clear_error();  /* ignore errors */
     else
     {
-        remove_desktop_thread( desktop, thread );
+        if (close) remove_desktop_thread( desktop, thread );
+        else remove_desktop_user( desktop, thread );
         release_object( desktop );
     }
 
