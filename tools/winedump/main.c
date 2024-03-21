@@ -228,7 +228,9 @@ static const struct my_option option_table[] = {
                                   "                        for NE: export, resource\n"
                                   "                        for PE: import, export, debug, resource, tls, loadcfg, clr, reloc, dynreloc, except, apiset\n"
                                   "                        for PDB: PDB, TPI, DBI, IPI, public, image\n"
-                                  "                                 and suboptions: hash (PDB, TPI, TPI, DBI, public) and line (DBI)"},
+                                  "                                 and suboptions: hash (PDB, TPI, TPI, DBI, public) and line (DBI)\n"
+                                  "                        for minidump: exception, handle, info, memory, module, thread\n"
+                                  "                                 and suboptions: content (memory, module, thread)\n"},
   {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>       Demangle C++ symbol <sym> and exit"},
