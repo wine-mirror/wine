@@ -85,8 +85,6 @@ static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
-static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
-static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -373,30 +371,6 @@ static VkResult macdrv_vkEnumerateInstanceExtensionProperties(const char *layer_
     return res;
 }
 
-static void *macdrv_vkGetDeviceProcAddr(VkDevice device, const char *name)
-{
-    void *proc_addr;
-
-    TRACE("%p, %s\n", device, debugstr_a(name));
-
-    if ((proc_addr = get_vulkan_driver_device_proc_addr(&vulkan_funcs, name)))
-        return proc_addr;
-
-    return pvkGetDeviceProcAddr(device, name);
-}
-
-static void *macdrv_vkGetInstanceProcAddr(VkInstance instance, const char *name)
-{
-    void *proc_addr;
-
-    TRACE("%p, %s\n", instance, debugstr_a(name));
-
-    if ((proc_addr = get_vulkan_driver_instance_proc_addr(&vulkan_funcs, instance, name)))
-        return proc_addr;
-
-    return pvkGetInstanceProcAddr(instance, name);
-}
-
 static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -459,8 +433,8 @@ static const struct vulkan_funcs vulkan_funcs =
     macdrv_vkDestroySurfaceKHR,
     macdrv_vkDestroySwapchainKHR,
     macdrv_vkEnumerateInstanceExtensionProperties,
-    macdrv_vkGetDeviceProcAddr,
-    macdrv_vkGetInstanceProcAddr,
+    NULL,
+    NULL,
     macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     macdrv_vkGetSwapchainImagesKHR,
     macdrv_vkQueuePresentKHR,
@@ -485,8 +459,6 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *d
     LOAD_FUNCPTR(vkDestroySurfaceKHR)
     LOAD_FUNCPTR(vkDestroySwapchainKHR)
     LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties)
-    LOAD_FUNCPTR(vkGetDeviceProcAddr)
-    LOAD_FUNCPTR(vkGetInstanceProcAddr)
     LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
     LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR

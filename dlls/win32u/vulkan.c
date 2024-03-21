@@ -30,6 +30,9 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
+
+#define VK_NO_PROTOTYPES
+#define WINE_VK_HOST
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
@@ -39,6 +42,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 static void *vulkan_handle;
 static struct vulkan_funcs vulkan_funcs;
+
+static void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
+static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
+
+static void *win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
+{
+    void *proc_addr;
+
+    TRACE( "device %p, name %s\n", device, debugstr_a(name) );
+
+    if ((proc_addr = get_vulkan_driver_device_proc_addr( &vulkan_funcs, name ))) return proc_addr;
+    return p_vkGetDeviceProcAddr( device, name );
+}
+
+static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name )
+{
+    void *proc_addr;
+
+    TRACE( "instance %p, name %s\n", instance, debugstr_a(name) );
+
+    if ((proc_addr = get_vulkan_driver_instance_proc_addr( &vulkan_funcs, instance, name ))) return proc_addr;
+    return p_vkGetInstanceProcAddr( instance, name );
+}
 
 static void vulkan_init(void)
 {
@@ -58,6 +84,22 @@ static void vulkan_init(void)
         vulkan_handle = NULL;
         return;
     }
+
+#define LOAD_FUNCPTR( f )                                                                          \
+    if (!(p_##f = dlsym( vulkan_handle, #f )))                                                     \
+    {                                                                                              \
+        ERR( "Failed to find " #f "\n" );                                                          \
+        dlclose( vulkan_handle );                                                                  \
+        vulkan_handle = NULL;                                                                      \
+        return;                                                                                    \
+    }
+
+    LOAD_FUNCPTR( vkGetDeviceProcAddr );
+    LOAD_FUNCPTR( vkGetInstanceProcAddr );
+#undef LOAD_FUNCPTR
+
+    vulkan_funcs.p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr;
+    vulkan_funcs.p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr;
 }
 
 /***********************************************************************

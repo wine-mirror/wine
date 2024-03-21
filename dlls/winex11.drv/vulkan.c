@@ -83,8 +83,6 @@ static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkEnumerateInstanceExtensionProperties)(const char *, uint32_t *, VkExtensionProperties *);
-static void * (*pvkGetDeviceProcAddr)(VkDevice, const char *);
-static void * (*pvkGetInstanceProcAddr)(VkInstance, const char *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 static VkResult (*pvkGetSwapchainImagesKHR)(VkDevice, VkSwapchainKHR, uint32_t *, VkImage *);
 static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
@@ -392,30 +390,6 @@ static VkResult X11DRV_vkEnumerateInstanceExtensionProperties(const char *layer_
     return res;
 }
 
-static void *X11DRV_vkGetDeviceProcAddr(VkDevice device, const char *name)
-{
-    void *proc_addr;
-
-    TRACE("%p, %s\n", device, debugstr_a(name));
-
-    if ((proc_addr = get_vulkan_driver_device_proc_addr( &vulkan_funcs, name )))
-        return proc_addr;
-
-    return pvkGetDeviceProcAddr(device, name);
-}
-
-static void *X11DRV_vkGetInstanceProcAddr(VkInstance instance, const char *name)
-{
-    void *proc_addr;
-
-    TRACE("%p, %s\n", instance, debugstr_a(name));
-
-    if ((proc_addr = get_vulkan_driver_instance_proc_addr( &vulkan_funcs, instance, name )))
-        return proc_addr;
-
-    return pvkGetInstanceProcAddr(instance, name);
-}
-
 static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice phys_dev,
         uint32_t index)
 {
@@ -482,8 +456,8 @@ static const struct vulkan_funcs vulkan_funcs =
     X11DRV_vkDestroySurfaceKHR,
     X11DRV_vkDestroySwapchainKHR,
     X11DRV_vkEnumerateInstanceExtensionProperties,
-    X11DRV_vkGetDeviceProcAddr,
-    X11DRV_vkGetInstanceProcAddr,
+    NULL,
+    NULL,
     X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     X11DRV_vkGetSwapchainImagesKHR,
     X11DRV_vkQueuePresentKHR,
@@ -509,8 +483,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR( vkDestroySurfaceKHR );
     LOAD_FUNCPTR( vkDestroySwapchainKHR );
     LOAD_FUNCPTR( vkEnumerateInstanceExtensionProperties );
-    LOAD_FUNCPTR( vkGetDeviceProcAddr );
-    LOAD_FUNCPTR( vkGetInstanceProcAddr );
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
     LOAD_FUNCPTR( vkGetSwapchainImagesKHR );
     LOAD_FUNCPTR( vkQueuePresentKHR );
