@@ -133,6 +133,29 @@ void dump_unicode_str( const WCHAR *str, int len )
     printf( "\"" );
 }
 
+const char *get_hexint64_str( DWORD64 l )
+{
+    char *buf = dump_want_n(2 + 16 + 1);
+    if (sizeof(l) > sizeof(unsigned long) && l >> 32)
+        sprintf(buf, "%#lx%08lx", (unsigned long)(l >> 32), (unsigned long)l);
+    else
+        sprintf(buf, "%#lx", (unsigned long)l);
+    assert(strlen(buf) <= 18);
+    return buf;
+}
+
+const char *get_uint64_str( DWORD64 l )
+{
+    char *buf = dump_want_n( 32 );
+    char *ptr = buf + 31;
+    *ptr = '\0';
+    for ( ; l; l /= 10)
+        *--ptr = '0' + (l % 10);
+    if (ptr == buf + 31) *--ptr = '0';
+    assert(ptr >= buf);
+    return ptr;
+}
+
 const char* get_symbol_str(const char* symname)
 {
     const char* ret = NULL;

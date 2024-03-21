@@ -53,30 +53,6 @@ enum FileSig get_kind_mdmp(void)
     return SIG_UNKNOWN;
 }
 
-static inline void print_longlong(const char *title, ULONG64 value)
-{
-    printf("%s: 0x", title);
-    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
-        printf("%lx%08lx\n", (unsigned long)(value >> 32), (unsigned long)value);
-    else
-        printf("%lx\n", (unsigned long)value);
-}
-
-static inline void print_longlong_range(const char *title, ULONG64 start, ULONG64 length)
-{
-    ULONG64 value = start;
-    printf("%s: 0x", title);
-    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
-        printf("%lx%08lx-", (unsigned long)(value >> 32), (unsigned long)value);
-    else
-        printf("%lx-", (unsigned long)value);
-    value = start + length;
-    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
-        printf("0x%lx%08lx\n", (unsigned long)(value >> 32), (unsigned long)value);
-    else
-        printf("0x%lx\n", (unsigned long)value);
-}
-
 void mdmp_dump(void)
 {
     const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
@@ -97,7 +73,7 @@ void mdmp_dump(void)
     printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
     printf("CheckSum: %#x (%u)\n", hdr->CheckSum, hdr->CheckSum);
     printf("TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
-    print_longlong("Flags", hdr->Flags);
+    printf("Flags: %s\n", get_hexint64_str(hdr->Flags));
 
     for (idx = 0; idx < hdr->NumberOfStreams; ++idx)
     {
@@ -122,8 +98,8 @@ void mdmp_dump(void)
                 printf("  SuspendCount: %u\n", mt->SuspendCount);
                 printf("  PriorityClass: %u\n", mt->PriorityClass);
                 printf("  Priority: %u\n", mt->Priority);
-                print_longlong("  Teb", mt->Teb);
-                print_longlong_range("  Stack", mt->Stack.StartOfMemoryRange, mt->Stack.Memory.DataSize);
+                printf("  Teb: %s\n", get_hexint64_str(mt->Teb));
+                printf("  Stack: %s +%#x\n", get_hexint64_str(mt->Stack.StartOfMemoryRange), mt->Stack.Memory.DataSize);
                 dump_mdmp_data(&mt->Stack.Memory, "    ");
                 printf("    ThreadContext:\n");
                 dump_mdmp_data(&mt->ThreadContext, "    ");
@@ -144,7 +120,7 @@ void mdmp_dump(void)
             for (i = 0; i < mml->NumberOfModules; i++, mm++)
             {
                 printf("  Module #%d:\n", i);
-                print_longlong("    BaseOfImage", mm->BaseOfImage);
+                printf("    BaseOfImage: %s\n", get_hexint64_str(mm->BaseOfImage));
                 printf("    SizeOfImage: %#x (%u)\n", mm->SizeOfImage, mm->SizeOfImage);
                 printf("    CheckSum: %#x (%u)\n", mm->CheckSum, mm->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mm->TimeDateStamp));
@@ -214,8 +190,8 @@ void mdmp_dump(void)
                 dump_mdmp_data(&mm->CvRecord, "    ");
                 printf("    MiscRecord: <%u>\n", (UINT)mm->MiscRecord.DataSize);
                 dump_mdmp_data(&mm->MiscRecord, "    ");
-                print_longlong("    Reserved0", mm->Reserved0);
-                print_longlong("    Reserved1", mm->Reserved1);
+                printf("    Reserved0: %s\n", get_hexint64_str(mm->Reserved0));
+                printf("    Reserved1: %s\n", get_hexint64_str(mm->Reserved1));
             }
         }
         break;
@@ -228,7 +204,7 @@ void mdmp_dump(void)
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
             {
                 printf("  Memory Range #%d:\n", i);
-                print_longlong_range("    Range", mmd->StartOfMemoryRange, mmd->Memory.DataSize);
+                printf("    Range: %s +%#x\n", get_hexint64_str(mmd->StartOfMemoryRange), mmd->Memory.DataSize);
                 dump_mdmp_data(&mmd->Memory, "    ");
             }
         }
@@ -423,13 +399,12 @@ void mdmp_dump(void)
             printf("  ExceptionRecord:\n");
             printf("  ExceptionCode: %#x\n", mes->ExceptionRecord.ExceptionCode);
             printf("  ExceptionFlags: %#x\n", mes->ExceptionRecord.ExceptionFlags);
-            print_longlong("  ExceptionRecord",  mes->ExceptionRecord.ExceptionRecord);
-            print_longlong("  ExceptionAddress",  mes->ExceptionRecord.ExceptionAddress);
+            printf("  ExceptionRecord: %s\n", get_hexint64_str( mes->ExceptionRecord.ExceptionRecord));
+            printf("  ExceptionAddress: %s\n", get_hexint64_str( mes->ExceptionRecord.ExceptionAddress));
             printf("  ExceptionNumberParameters: %u\n", mes->ExceptionRecord.NumberParameters);
             for (i = 0; i < mes->ExceptionRecord.NumberParameters; i++)
             {
-                printf("    [%d]", i);
-                print_longlong(" ", mes->ExceptionRecord.ExceptionInformation[i]);
+                printf("    [%d] %s\n", i, get_hexint64_str(mes->ExceptionRecord.ExceptionInformation[i]));
             }
             printf("  ThreadContext:\n");
             dump_mdmp_data(&mes->ThreadContext, "    ");
@@ -450,7 +425,7 @@ void mdmp_dump(void)
                 const MINIDUMP_HANDLE_DESCRIPTOR_2 *hd = (void *)ptr;
 
                 printf("  Handle [%u]:\n", i);
-                print_longlong("    Handle", hd->Handle);
+                printf("    Handle: %s\n", get_hexint64_str(hd->Handle));
                 printf("    TypeName: ");
                 dump_mdmp_string(hd->TypeNameRva);
                 printf("\n");
@@ -493,12 +468,12 @@ void mdmp_dump(void)
                 printf("    DumpFlags: %#x\n", ti->DumpFlags);
                 printf("    DumpError: %u\n", ti->DumpError);
                 printf("    ExitStatus: %u\n", ti->ExitStatus);
-                print_longlong("    CreateTime", ti->CreateTime);
-                print_longlong("    ExitTime", ti->ExitTime);
-                print_longlong("    KernelTime", ti->KernelTime);
-                print_longlong("    UserTime", ti->UserTime);
-                print_longlong("    StartAddress", ti->StartAddress);
-                print_longlong("    Affinity", ti->Affinity);
+                printf("    CreateTime: %s\n", get_uint64_str(ti->CreateTime));
+                printf("    ExitTime: %s\n", get_hexint64_str(ti->ExitTime));
+                printf("    KernelTime: %s\n", get_uint64_str(ti->KernelTime));
+                printf("    UserTime: %s\n", get_uint64_str(ti->UserTime));
+                printf("    StartAddress: %s\n", get_hexint64_str(ti->StartAddress));
+                printf("    Affinity: %s\n", get_uint64_str(ti->Affinity));
 
                 ptr += til->SizeOfEntry;
             }
@@ -520,7 +495,7 @@ void mdmp_dump(void)
                 const MINIDUMP_UNLOADED_MODULE *mod = (void *)ptr;
 
                 printf("  Module [%u]:\n", i);
-                print_longlong("    BaseOfImage", mod->BaseOfImage);
+                printf("    BaseOfImage: %s\n", get_hexint64_str(mod->BaseOfImage));
                 printf("    SizeOfImage: %u\n", mod->SizeOfImage);
                 printf("    CheckSum: %#x\n", mod->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mod->TimeDateStamp));
