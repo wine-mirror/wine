@@ -184,7 +184,8 @@ static NTSTATUS get_context_return_value( void *wow_context )
 /**********************************************************************
  *           call_user_exception_dispatcher
  */
-static void call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32_ptr, void *ctx64_ptr )
+static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECORD32 *rec, void *ctx32_ptr,
+                                                                  void *ctx64_ptr )
 {
     switch (current_machine)
     {
@@ -331,40 +332,82 @@ static void call_raise_user_exception_dispatcher( ULONG code )
 
 
 /* based on RtlRaiseException: call NtRaiseException with context setup to return to caller */
-void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
-#ifdef __x86_64__
+void WINAPI raise_exception( EXCEPTION_RECORD32 *rec32, void *ctx32,
+                             BOOL first_chance, EXCEPTION_RECORD *rec );
+#ifdef __aarch64__
 __ASM_GLOBAL_FUNC( raise_exception,
-                   "sub $0x28,%rsp\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
-                   "movq %rcx,(%rsp)\n\t"
-                   "movq %rdx,%rcx\n\t"
-                   "call " __ASM_NAME("RtlCaptureContext") "\n\t"
-                   "leaq 0x30(%rsp),%rax\n\t"   /* orig stack pointer */
-                   "movq %rax,0x98(%rdx)\n\t"   /* context->Rsp */
-                   "movq (%rsp),%rcx\n\t"       /* original first parameter */
-                   "movq 0x28(%rsp),%rax\n\t"   /* return address */
-                   "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
-                   "call " __ASM_NAME("NtRaiseException") )
-#elif defined(__aarch64__)
-__ASM_GLOBAL_FUNC( raise_exception,
-                   "stp x29, x30, [sp, #-32]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 32\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_def_cfa x29, 32\n\t")
-                   __ASM_CFI(".cfi_offset x30, -24\n\t")
-                   __ASM_CFI(".cfi_offset x29, -32\n\t")
-                   "mov x29, sp\n\t"
+                   "sub sp, sp, #0x390\n\t"    /* sizeof(context) */
+                   ".seh_stackalloc 0x390\n\t"
+                   "stp x29, x30, [sp, #-48]!\n\t"
+                   ".seh_save_fplr_x 48\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler raise_exception_handler, @except\n\t"
                    "stp x0, x1, [sp, #16]\n\t"
-                   "mov x0, x1\n\t"
-                   "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
-                   "ldp x0, x1, [sp, #16]\n\t"    /* orig parameters */
-                   "ldp x4, x5, [sp]\n\t"         /* frame pointer, return address */
-                   "stp x4, x5, [x1, #0xf0]\n\t"  /* context->Fp, Lr */
-                   "add x4, sp, #32\n\t"          /* orig stack pointer */
-                   "stp x4, x5, [x1, #0x100]\n\t" /* context->Sp, Pc */
-                   "bl " __ASM_NAME("NtRaiseException") )
+                   "stp x2, x3, [sp, #32]\n\t"
+                   "add x0, sp, #48\n\t"
+                   "bl RtlCaptureContext\n\t"
+                   "add x1, sp, #48\n\t"       /* context */
+                   "adr x2, 1f\n\t"            /* return address */
+                   "str x2, [x1, #0x108]\n\t"  /* context->Pc */
+                   "ldp x2, x0, [sp, #32]\n\t" /* first_chance, rec */
+                   "bl NtRaiseException\n"
+                   "raise_exception_ret:\n\t"
+                   "ldp x0, x1, [sp, #16]\n\t" /* rec32, ctx32 */
+                   "add x2, sp, #48\n\t"       /* context */
+                   "bl call_user_exception_dispatcher\n"
+                   "1:\tnop\n\t"
+                   "ldp x29, x30, [sp], #48\n\t"
+                   "add sp, sp, #0x390\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( raise_exception_handler,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   ".seh_save_fplr_x 16\n\t"
+                   ".seh_endprologue\n\t"
+                   "ldr w4, [x0, #4]\n\t"      /* record->ExceptionFlags */
+                   "tst w4, #6\n\t"            /* EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND */
+                   "b.ne 1f\n\t"
+                   "mov x2, x0\n\t"            /* rec */
+                   "mov x0, x1\n\t"            /* frame */
+                   "adr x1, raise_exception_ret\n\t"
+                   "bl RtlUnwind\n"
+                   "1:\tmov w0, #1\n\t"        /* ExceptionContinueSearch */
+                   "ldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+#else
+__ASM_GLOBAL_FUNC( raise_exception,
+                   "sub $0x4d8,%rsp\n\t"       /* sizeof(context) + alignment */
+                   ".seh_stackalloc 0x4d8\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler raise_exception_handler, @except\n\t"
+                   "movq %rcx,0x4e0(%rsp)\n\t"
+                   "movq %rdx,0x4e8(%rsp)\n\t"
+                   "movq %r8,0x4f0(%rsp)\n\t"
+                   "movq %r9,0x4f8(%rsp)\n\t"
+                   "movq %rsp,%rcx\n\t"
+                   "call RtlCaptureContext\n\t"
+                   "movq %rsp,%rdx\n\t"        /* context */
+                   "leaq 1f(%rip),%rax\n\t"    /* return address */
+                   "movq %rax,0xf8(%rdx)\n\t"  /* context->Rip */
+                   "movq 0x4f8(%rsp),%rcx\n\t" /* rec */
+                   "movq 0x4f0(%rsp),%r8\n\t"  /* first_chance */
+                   "call NtRaiseException\n"
+                   "raise_exception_ret:\n\t"
+                   "mov 0x4e0(%rsp),%rcx\n\t"  /* rec32 */
+                   "mov 0x4e8(%rsp),%rdx\n\t"  /* ctx32 */
+                   "movq %rsp,%r8\n\t"         /* context */
+                   "call call_user_exception_dispatcher\n"
+                   "1:\tnop\n\t"
+                   "add $0x4d8,%rsp\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( raise_exception_handler,
+                   "sub $0x28,%rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   "movq %rcx,%r8\n\t"         /* rec */
+                   "movq %rdx,%rcx\n\t"        /* frame */
+                   "leaq raise_exception_ret(%rip),%rdx\n\t"
+                   "call RtlUnwind\n\t"
+                   "int3" )
 #endif
 
 
@@ -563,20 +606,8 @@ NTSTATUS WINAPI wow64_NtRaiseException( UINT *args )
     void *context32 = get_ptr( &args );
     BOOL first_chance = get_ulong( &args );
 
-    EXCEPTION_RECORD *rec = exception_record_32to64( rec32 );
-    CONTEXT context;
-
     pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, context32 );
-
-    __TRY
-    {
-        raise_exception( rec, &context, first_chance );
-    }
-    __EXCEPT_ALL
-    {
-        call_user_exception_dispatcher( rec32, context32, &context );
-    }
-    __ENDTRY
+    raise_exception( rec32, context32, first_chance, exception_record_32to64( rec32 ));
     return STATUS_SUCCESS;
 }
 
@@ -1357,7 +1388,6 @@ void WINAPI Wow64ProcessPendingCrossProcessItems(void)
 NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
 {
     EXCEPTION_RECORD32 rec32;
-    CONTEXT context;
     BOOL first_chance = TRUE;
     union
     {
@@ -1441,14 +1471,7 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
     }
 
     exception_record_64to32( &rec32, rec );
-    __TRY
-    {
-        raise_exception( rec, &context, first_chance );
-    }
-    __EXCEPT_ALL
-    {
-        call_user_exception_dispatcher( &rec32, &ctx32, NULL );
-    }
-    __ENDTRY
+    raise_exception( &rec32, &ctx32, first_chance, rec );
+
     return STATUS_SUCCESS;
 }
