@@ -999,8 +999,7 @@ __ASM_GLOBAL_FUNC( cpu_simulate_handler,
                    "mov x19, x2\n\t"            /* record */
                    "bl RtlUnwind\n\t"
                    "brk #1" )
-
-#elif defined __WINE_PE_BUILD
+#else
 extern void DECLSPEC_NORETURN cpu_simulate( void (*func)(void) );
 __ASM_GLOBAL_FUNC( cpu_simulate,
                    "subq $0x28, %rsp\n\t"
@@ -1026,28 +1025,6 @@ __ASM_GLOBAL_FUNC( cpu_simulate_handler,
                    "movq %rsi,%r8\n\t"          /* record */
                    "call RtlUnwind\n\t"
                    "int3" )
-#else
-static LONG CALLBACK simulate_filter( EXCEPTION_POINTERS *ptrs )
-{
-    Wow64PassExceptionToGuest( ptrs );
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
-static void cpu_simulate( void (*func)(void) )
-{
-    for (;;)
-    {
-        __TRY
-        {
-            func();
-        }
-        __EXCEPT( simulate_filter )
-        {
-            /* restart simulation loop */
-        }
-        __ENDTRY
-    }
-}
 #endif
 
 
