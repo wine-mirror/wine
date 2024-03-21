@@ -124,7 +124,7 @@
 @ stub NetMessageNameGetInfo
 @ stdcall NetQueryDisplayInformation(wstr long long long long ptr ptr)
 @ stub NetRemoteComputerSupports
-@ stub NetRemoteTOD
+@ stdcall NetRemoteTOD(wstr ptr)
 @ stub NetReplExportDirAdd
 @ stub NetReplExportDirDel
 @ stub NetReplExportDirEnum
