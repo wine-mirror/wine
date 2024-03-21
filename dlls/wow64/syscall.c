@@ -100,7 +100,7 @@ static BOOLEAN  (WINAPI *pBTCpuIsProcessorFeaturePresent)(UINT);
 static void     (WINAPI *pBTCpuProcessInit)(void);
 static NTSTATUS (WINAPI *pBTCpuSetContext)(HANDLE,HANDLE,void *,void *);
 static void     (WINAPI *pBTCpuThreadInit)(void);
-static void     (WINAPI *pBTCpuSimulate)(void);
+static void     (WINAPI *pBTCpuSimulate)(void) __attribute__((used));
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
 void (WINAPI *pBTCpuNotifyFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
@@ -974,41 +974,48 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
  *           cpu_simulate
  */
 #ifdef __aarch64__
-extern void DECLSPEC_NORETURN cpu_simulate( void (*func)(void) );
+extern void DECLSPEC_NORETURN cpu_simulate(void);
 __ASM_GLOBAL_FUNC( cpu_simulate,
-                   "stp x29, x30, [sp, #-32]!\n\t"
-                   ".seh_save_fplr_x 32\n\t"
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   ".seh_save_fplr_x 16\n\t"
                    ".seh_endprologue\n\t"
-                   ".seh_handler cpu_simulate_handler, @except\n\t"
-                   "str x0, [sp, #16]\n"
+                   ".seh_handler cpu_simulate_handler, @except\n"
                    ".Lcpu_simulate_loop:\n\t"
-                   "ldr x0, [sp, #16]\n\t"
-                   "blr x0\n\t"
+                   "adrp x16, pBTCpuSimulate\n\t"
+                   "ldr x16, [x16, :lo12:pBTCpuSimulate]\n\t"
+                   "blr x16\n\t"
                    "b .Lcpu_simulate_loop" )
 __ASM_GLOBAL_FUNC( cpu_simulate_handler,
-                   "stp x29, x30, [sp, #-32]!\n\t"
-                   ".seh_save_fplr_x 32\n\t"
+                   "stp x29, x30, [sp, #-48]!\n\t"
+                   ".seh_save_fplr_x 48\n\t"
+                   "stp x19, x20, [sp, #16]\n\t"
+                   ".seh_save_regp x19, 16\n\t"
                    ".seh_endprologue\n\t"
                    "mov x19, x0\n\t"            /* record */
                    "mov x20, x1\n\t"            /* frame */
-                   "stp x0, x2, [sp, #16]\n\t"  /* record, context */
-                   "add x0, sp, #16\n\t"
+                   "ldr w4, [x0, #4]\n\t"       /* record->ExceptionFlags */
+                   "tst w4, #6\n\t"             /* EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND */
+                   "b.ne 1f\n\t"
+                   "stp x0, x2, [sp, #32]\n\t"  /* record, context */
+                   "add x0, sp, #32\n\t"
                    "bl Wow64PassExceptionToGuest\n\t"
-                   "mov x20, x0\n\t"            /* frame */
+                   "mov x0, x20\n\t"            /* frame */
                    "adr x1, .Lcpu_simulate_loop\n\t" /* target */
-                   "mov x19, x2\n\t"            /* record */
+                   "mov x2, x19\n\t"            /* record */
                    "bl RtlUnwind\n\t"
-                   "brk #1" )
+                   "1:\tmov w0, #1\n\t"         /* ExceptionContinueSearch */
+                   "ldp x19, x20, [sp, #16]\n\t"
+                   "ldp x29, x30, [sp], #48\n\t"
+                   "ret" )
 #else
-extern void DECLSPEC_NORETURN cpu_simulate( void (*func)(void) );
+extern void DECLSPEC_NORETURN cpu_simulate(void);
 __ASM_GLOBAL_FUNC( cpu_simulate,
                    "subq $0x28, %rsp\n\t"
                    ".seh_stackalloc 0x28\n\t"
                    ".seh_endprologue\n\t"
                    ".seh_handler cpu_simulate_handler, @except\n\t"
-                   "movq %rcx,0x20(%rsp)\n"
                    ".Lcpu_simulate_loop:\n\t"
-                   "call *0x20(%rsp)\n\t"
+                   "call *pBTCpuSimulate(%rip)\n\t"
                    "jmp .Lcpu_simulate_loop" )
 __ASM_GLOBAL_FUNC( cpu_simulate_handler,
                    "subq $0x38, %rsp\n\t"
@@ -1098,7 +1105,7 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
             ctx.Eip = pLdrSystemDllInitBlock->pKiUserApcDispatcher;
             frame.wow_context = &stack->context;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
-            cpu_simulate( pBTCpuSimulate );
+            cpu_simulate();
         }
         break;
 
@@ -1124,7 +1131,7 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
             ctx.R3 = arg3;
             frame.wow_context = &stack->context;
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
-            cpu_simulate( pBTCpuSimulate );
+            cpu_simulate();
         }
         break;
     }
@@ -1187,7 +1194,7 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
 
             if (!__wine_setjmpex( &frame.jmpbuf, NULL ))
-                cpu_simulate( pBTCpuSimulate );
+                cpu_simulate();
             else
                 pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &orig_ctx );
         }
@@ -1212,7 +1219,7 @@ NTSTATUS WINAPI Wow64KiUserCallbackDispatcher( ULONG id, void *args, ULONG len,
             pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
 
             if (!__wine_setjmpex( &frame.jmpbuf, NULL ))
-                cpu_simulate( pBTCpuSimulate );
+                cpu_simulate();
             else
                 pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &orig_ctx );
         }
@@ -1236,7 +1243,7 @@ void WINAPI Wow64LdrpInitialize( CONTEXT *context )
 
     RtlRunOnceExecuteOnce( &init_done, process_init, NULL, NULL );
     thread_init();
-    cpu_simulate( pBTCpuSimulate );
+    cpu_simulate();
 }
 
 
