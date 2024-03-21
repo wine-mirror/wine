@@ -17,6 +17,9 @@
       paths:
         - wine-mono-$MONO_VER-x86.msi
   before_script:
+    - |
+      printf '\e[0Ksection_start:%s:wine_test_prepare_env[collapsed=true]\r\e[0K' "$(date +%s)"
+      printf '\e[36;1mPreparing environment for Wine\e[0m\n'
     - export BASEDIR=$PWD
     - export PATH=$BASEDIR/usr/local/bin:$PATH
     - export DISPLAY=:0
@@ -42,6 +45,7 @@
     - pulseaudio --start --exit-idle-time=-1
     - wine wineboot.exe -u
     - wineserver -w
+    - printf '\e[0Ksection_end:%s:wine_test_prepare_env\r\e[0K' "$(date +%s)"
 
 test-linux-64:
   extends: .wine-test
