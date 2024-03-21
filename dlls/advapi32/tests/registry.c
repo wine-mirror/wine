@@ -1575,11 +1575,11 @@ static void delete_dir(const char *path)
 
 static void test_reg_load_key(void)
 {
-    char saved_key[2 * MAX_PATH], *p;
+    char saved_key[2 * MAX_PATH], buf[16], *p;
     UNICODE_STRING key_name;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
-    DWORD ret;
+    DWORD ret, size;
     HKEY key;
 
     if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
@@ -1603,11 +1603,35 @@ static void test_reg_load_key(void)
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
+    ret = RegSetValueExA(key, "test", 0, REG_SZ, (BYTE *)"value", 6);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
     /* try to unload though the key handle is live */
     pRtlInitUnicodeString(&key_name, L"\\REGISTRY\\Machine\\Test");
     InitializeObjectAttributes(&attr, &key_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
     status = pNtUnloadKey(&attr);
     ok(status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %08lx\n", status);
+
+    RegCloseKey(key);
+
+    ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    /* check if modifications are saved */
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", saved_key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    size = sizeof(buf);
+    ret = RegGetValueA(key, NULL, "test", RRF_RT_REG_SZ, NULL, buf, &size);
+    todo_wine ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+    if (ret == ERROR_SUCCESS)
+    {
+        ok(size == 6, "size = %ld\n", size);
+        ok(!strcmp(buf, "value"), "buf = %s\n", buf);
+    }
 
     RegCloseKey(key);
 
