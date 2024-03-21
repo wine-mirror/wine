@@ -303,9 +303,10 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, &dir, &stream, NULL))
     {
-        MINIDUMP_SYSTEM_INFO*   msi = stream;
-        const char *str;
-        char tmp[128];
+        MINIDUMP_SYSTEM_INFO *msi = stream;
+        USHORT                machine = IMAGE_FILE_MACHINE_UNKNOWN;
+        const char           *str;
+        char                  tmp[128];
 
         dbg_printf("WineDbg starting minidump on pid %04lx\n", pid);
         switch (msi->ProcessorArchitecture)
@@ -314,6 +315,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             str = "Unknown";
             break;
         case PROCESSOR_ARCHITECTURE_INTEL:
+            machine = IMAGE_FILE_MACHINE_I386;
             strcpy(tmp, "x86 [");
             switch (msi->ProcessorLevel)
             {
@@ -355,6 +357,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             str = "PowerPC";
             break;
         case PROCESSOR_ARCHITECTURE_AMD64:
+            machine = IMAGE_FILE_MACHINE_AMD64;
             str = "X86_64";
             break;
         case PROCESSOR_ARCHITECTURE_ARM:
@@ -461,6 +464,15 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                 dbg_printf("    [on %s, on top of %s (%s)]\n",
                            code + wes[1], code + wes[2], code + wes[3]);
             }
+        }
+        if (machine == IMAGE_FILE_MACHINE_UNKNOWN
+#ifdef __x86_64__
+                                                  || machine == IMAGE_FILE_MACHINE_I386
+#endif
+            )
+        {
+            dbg_printf("Cannot reload this minidump because of incompatible/unsupported machine %x\n", machine);
+            return FALSE;
         }
     }
 
