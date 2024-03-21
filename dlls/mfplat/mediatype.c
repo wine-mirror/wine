@@ -3864,10 +3864,14 @@ HRESULT WINAPI MFInitMediaTypeFromMFVideoFormat(IMFMediaType *media_type, const 
     if (format->compressedInfo.MaxKeyFrameSpacing)
         mediatype_set_uint32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, format->compressedInfo.MaxKeyFrameSpacing, &hr);
 
-    if ((palette_size = format->surfaceInfo.PaletteEntries * sizeof(*format->surfaceInfo.Palette)))
+    if (!(palette_size = format->surfaceInfo.PaletteEntries * sizeof(*format->surfaceInfo.Palette)))
+        user_data = format + 1;
+    else
+    {
         mediatype_set_blob(media_type, &MF_MT_PALETTE, (BYTE *)format->surfaceInfo.Palette, palette_size, &hr);
+        user_data = &format->surfaceInfo.Palette[format->surfaceInfo.PaletteEntries + 1];
+    }
 
-    user_data = &format->surfaceInfo.Palette[format->surfaceInfo.PaletteEntries + 1];
     if ((user_data_size = (BYTE *)format + format->dwSize - (BYTE *)user_data))
         mediatype_set_blob(media_type, &MF_MT_USER_DATA, user_data, user_data_size, &hr);
 

@@ -8448,6 +8448,20 @@ static void test_MFInitMediaTypeFromMFVideoFormat(void)
     ok(!memcmp(user_data, expect_user_data, value32), "Unexpected user data.\n");
     IMFMediaType_DeleteAllItems(media_type);
 
+    /* check that user data follows MFVIDEOFORMAT struct, which is padded, when no palette is present */
+    format_buf->surfaceInfo.PaletteEntries = 0;
+    memmove(format_buf + 1, expect_user_data, sizeof(expect_user_data));
+    format_buf->dwSize = sizeof(*format_buf) + sizeof(expect_user_data);
+    hr = MFInitMediaTypeFromMFVideoFormat(media_type, format_buf, format_buf->dwSize);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    value32 = 0xdeadbeef;
+    memset(&user_data, 0xcd, sizeof(user_data));
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)user_data, sizeof(user_data), &value32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value32 == sizeof(expect_user_data), "got %u.\n", value32);
+    ok(!memcmp(user_data, expect_user_data, value32), "Unexpected user data.\n");
+    IMFMediaType_DeleteAllItems(media_type);
+
     IMFMediaType_Release(media_type);
 }
 
