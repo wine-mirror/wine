@@ -463,27 +463,62 @@ static const struct column col_sysrestore[] =
 };
 static const struct column col_videocontroller[] =
 {
+    { L"AcceleratorCapabilities",     CIM_UINT16|CIM_FLAG_ARRAY },
     { L"AdapterCompatibility",        CIM_STRING },
     { L"AdapterDACType",              CIM_STRING },
     { L"AdapterRAM",                  CIM_UINT32 },
     { L"Availability",                CIM_UINT16 },
+    { L"CapabilityDescriptions",      CIM_STRING|CIM_FLAG_ARRAY },
     { L"Caption",                     CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"ColorTableEntries",           CIM_UINT32 },
     { L"ConfigManagerErrorCode",      CIM_UINT32 },
+    { L"ConfigManagerUserConfig",     CIM_BOOLEAN },
+    { L"CreationClassName",           CIM_STRING },
     { L"CurrentBitsPerPixel",         CIM_UINT32 },
     { L"CurrentHorizontalResolution", CIM_UINT32 },
+    { L"CurrentNumberOfColors",       CIM_UINT64 },
+    { L"CurrentNumberOfColumns",      CIM_UINT32 },
+    { L"CurrentNumberOfRows",         CIM_UINT32 },
     { L"CurrentRefreshRate",          CIM_UINT32 },
     { L"CurrentScanMode",             CIM_UINT16 },
     { L"CurrentVerticalResolution",   CIM_UINT32 },
     { L"Description",                 CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",                    CIM_STRING|COL_FLAG_KEY },
+    { L"DeviceSpecificPens",          CIM_UINT32 },
+    { L"DitherType",                  CIM_UINT32 },
     { L"DriverDate",                  CIM_DATETIME },
     { L"DriverVersion",               CIM_STRING },
+    { L"ErrorCleared",                CIM_BOOLEAN },
+    { L"ErrorDescription",            CIM_STRING },
+    { L"ICMIntent",                   CIM_UINT32 },
+    { L"ICMMethod",                   CIM_UINT32 },
+    { L"InfFilename",                 CIM_STRING },
+    { L"InfSection",                  CIM_STRING },
     { L"InstalledDisplayDrivers",     CIM_STRING },
+    { L"LastErrorCode",               CIM_UINT32 },
+    { L"MaxMemorySupported",          CIM_UINT32 },
+    { L"MaxNumberControlled",         CIM_UINT32 },
+    { L"MaxRefreshRate",              CIM_UINT32 },
+    { L"MinRefreshRate",              CIM_UINT32 },
+    { L"Monochrome",                  CIM_BOOLEAN },
     { L"Name",                        CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"NumberOfColorPlanes",         CIM_UINT16 },
+    { L"NumberofVideoPages",          CIM_UINT32 },
     { L"PNPDeviceID",                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"PowerManagementCapabilities", CIM_UINT16|CIM_FLAG_ARRAY },
+    { L"PowerManagementSupported",    CIM_BOOLEAN },
+    { L"ProtocolSupported",           CIM_UINT16 },
+    { L"ReservedSystemPaletteEntries", CIM_UINT32 },
+    { L"SpecificationVersion",        CIM_UINT32 },
     { L"Status",                      CIM_STRING },
+    { L"StatusInfo",                  CIM_UINT16 },
+    { L"SystemCreationClassName",     CIM_STRING },
+    { L"SystemName",                  CIM_STRING },
+    { L"SystemPaletteEntries",        CIM_UINT32 },
+    { L"TimeOfLastReset",             CIM_DATETIME },
     { L"VideoArchitecture",           CIM_UINT16 },
     { L"VideoMemoryType",             CIM_UINT16 },
+    { L"VideoMode",                   CIM_UINT16 },
     { L"VideoModeDescription",        CIM_STRING|COL_FLAG_DYNAMIC },
     { L"VideoProcessor",              CIM_STRING|COL_FLAG_DYNAMIC },
 };
@@ -918,27 +953,62 @@ struct record_systemenclosure
 };
 struct record_videocontroller
 {
+    const struct array *accelerator_caps;
     const WCHAR *adapter_compatibility;
     const WCHAR *adapter_dactype;
     UINT32       adapter_ram;
     UINT16       availability;
+    const struct array *capability_desc;
     const WCHAR *caption;
+    UINT32       color_table_entries;
     UINT32       config_errorcode;
+    int          config_userconfig;
+    const WCHAR *creation_class_name;
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
+    UINT64       current_numcolors;
+    UINT32       current_numcolumns;
+    UINT32       current_numrows;
     UINT32       current_refreshrate;
     UINT16       current_scanmode;
     UINT32       current_verticalres;
     const WCHAR *description;
     const WCHAR *device_id;
+    UINT32       device_pens;
+    UINT32       dither_type;
     const WCHAR *driverdate;
     const WCHAR *driverversion;
+    int          error_cleared;
+    const WCHAR *error_desc;
+    UINT32       icm_intent;
+    UINT32       icm_method;
+    const WCHAR *inf_name;
+    const WCHAR *infsection;
     const WCHAR *installeddriver;
+    UINT32       lasterror;
+    UINT32       max_memory;
+    UINT32       max_number;
+    UINT32       max_refresh;
+    UINT32       min_refresh;
+    int          monochrome;
     const WCHAR *name;
+    UINT16       number_planes;
+    UINT32       number_pages;
     const WCHAR *pnpdevice_id;
+    const struct array *power_caps;
+    int          power_supported;
+    UINT16       protocol_supported;
+    UINT32       reserved_entries;
+    UINT32       spec_version;
     const WCHAR *status;
+    UINT16       status_info;
+    const WCHAR *systemclass_name;
+    const WCHAR *system_name;
+    UINT32       system_entries;
+    const WCHAR *time_reset;
     UINT16       videoarchitecture;
     UINT16       videomemorytype;
+    UINT16       videomode;
     const WCHAR *videomodedescription;
     const WCHAR *videoprocessor;
 };
@@ -4192,12 +4262,13 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
     }
 
     rec = (struct record_videocontroller *)table->data;
+    memset( rec, 0, sizeof(*rec) );
     rec->adapter_compatibility = L"(Standard display types)";
     rec->adapter_dactype       = L"Integrated RAMDAC";
     rec->adapter_ram           = vidmem;
     rec->availability          = 3; /* Running or Full Power */
-    rec->config_errorcode      = 0; /* no error */
     rec->caption               = wcsdup( name );
+    rec->config_errorcode      = 0; /* no error */
     rec->current_bitsperpixel  = get_bitsperpixel( &hres, &vres );
     rec->current_horizontalres = hres;
     rec->current_refreshrate   = 0; /* default refresh rate */
