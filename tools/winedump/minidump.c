@@ -31,15 +31,14 @@ static void dump_mdmp_data(const MINIDUMP_LOCATION_DESCRIPTOR* md, const char* p
         dump_data(PRD(md->Rva, md->DataSize), md->DataSize, pfx);
 }
 
-static void dump_mdmp_string(DWORD rva)
+static const char *get_mdmp_str(DWORD rva)
 {
-    const MINIDUMP_STRING*      ms = PRD(rva, sizeof(MINIDUMP_STRING));
+    const MINIDUMP_STRING*      ms;
     if (!rva)
-        printf("<<rva=0>>");
-    else if (ms)
-        dump_unicode_str( ms->Buffer, ms->Length / sizeof(WCHAR) );
-    else
-        printf("<<?>>");
+        return "<<rva=0>>";
+    if ((ms = PRD(rva, sizeof(MINIDUMP_STRING))))
+        return get_unicode_str( ms->Buffer, ms->Length / sizeof(WCHAR) );
+    return "<<?>>";
 }
 
 enum FileSig get_kind_mdmp(void)
@@ -124,9 +123,7 @@ void mdmp_dump(void)
                 printf("    SizeOfImage: %#x (%u)\n", mm->SizeOfImage, mm->SizeOfImage);
                 printf("    CheckSum: %#x (%u)\n", mm->CheckSum, mm->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mm->TimeDateStamp));
-                printf("    ModuleName: ");
-                dump_mdmp_string(mm->ModuleNameRva);
-                printf("\n");
+                printf("    ModuleName: %s\n", get_mdmp_str(mm->ModuleNameRva));
                 printf("    VersionInfo:\n");
                 printf("      dwSignature: %x\n", (UINT)mm->VersionInfo.dwSignature);
                 printf("      dwStrucVersion: %x\n", (UINT)mm->VersionInfo.dwStrucVersion);
@@ -344,9 +341,7 @@ void mdmp_dump(void)
             }
             printf("  Version: Windows %s (%u)\n", str, msi->BuildNumber);
             printf("  PlatformId: %u\n", msi->PlatformId);
-            printf("  CSD: ");
-            dump_mdmp_string(msi->CSDVersionRva);
-            printf("\n");
+            printf("  CSD: %s\n", get_mdmp_str(msi->CSDVersionRva));
             printf("  Reserved1: %u\n", msi->Reserved1);
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
@@ -426,12 +421,8 @@ void mdmp_dump(void)
 
                 printf("  Handle [%u]:\n", i);
                 printf("    Handle: %s\n", get_hexint64_str(hd->Handle));
-                printf("    TypeName: ");
-                dump_mdmp_string(hd->TypeNameRva);
-                printf("\n");
-                printf("    ObjectName: ");
-                dump_mdmp_string(hd->ObjectNameRva);
-                printf("\n");
+                printf("    TypeName: %s\n", get_mdmp_str(hd->TypeNameRva));
+                printf("    ObjectName: %s\n", get_mdmp_str(hd->ObjectNameRva));
                 printf("    Attributes: %#x\n", hd->Attributes);
                 printf("    GrantedAccess: %#x\n", hd->GrantedAccess);
                 printf("    HandleCount: %u\n", hd->HandleCount);
@@ -439,9 +430,7 @@ void mdmp_dump(void)
 
                 if (mhd->SizeOfDescriptor >= sizeof(MINIDUMP_HANDLE_DESCRIPTOR_2))
                 {
-                    printf("    ObjectInfo: ");
-                    dump_mdmp_string(hd->ObjectInfoRva);
-                    printf("\n");
+                    printf("    ObjectInfo: %s\n", get_mdmp_str(hd->ObjectInfoRva));
                     printf("    Reserved0: %#x\n", hd->Reserved0);
                 }
 
@@ -499,9 +488,7 @@ void mdmp_dump(void)
                 printf("    SizeOfImage: %u\n", mod->SizeOfImage);
                 printf("    CheckSum: %#x\n", mod->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mod->TimeDateStamp));
-                printf("    ModuleName: ");
-                dump_mdmp_string(mod->ModuleNameRva);
-                printf("\n");
+                printf("    ModuleName: %s\n", get_mdmp_str(mod->ModuleNameRva));
 
                 ptr += uml->SizeOfEntry;
             }
