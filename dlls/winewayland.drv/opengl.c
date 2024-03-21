@@ -544,63 +544,6 @@ static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
     return TRUE;
 }
 
-static BOOL has_opengl(void);
-
-static int wayland_wglDescribePixelFormat(HDC hdc, int fmt, UINT size,
-                                          PIXELFORMATDESCRIPTOR *pfd)
-{
-    EGLint val;
-    EGLConfig config;
-
-    if (!has_opengl()) return 0;
-    if (!pfd) return num_egl_configs;
-    if (size < sizeof(*pfd)) return 0;
-    if (fmt <= 0 || fmt > num_egl_configs) return 0;
-
-    config = egl_configs[fmt - 1];
-
-    memset(pfd, 0, sizeof(*pfd));
-    pfd->nSize = sizeof(*pfd);
-    pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER |
-                   PFD_SUPPORT_COMPOSITION;
-    pfd->iPixelType = PFD_TYPE_RGBA;
-    pfd->iLayerType = PFD_MAIN_PLANE;
-
-    /* Although the documentation describes cColorBits as excluding alpha, real
-     * drivers tend to return the full pixel size, so do the same. */
-    p_eglGetConfigAttrib(egl_display, config, EGL_BUFFER_SIZE, &val);
-    pfd->cColorBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_RED_SIZE, &val);
-    pfd->cRedBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_GREEN_SIZE, &val);
-    pfd->cGreenBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_BLUE_SIZE, &val);
-    pfd->cBlueBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_ALPHA_SIZE, &val);
-    pfd->cAlphaBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_DEPTH_SIZE, &val);
-    pfd->cDepthBits = val;
-    p_eglGetConfigAttrib(egl_display, config, EGL_STENCIL_SIZE, &val);
-    pfd->cStencilBits = val;
-
-    /* Although we don't get information from EGL about the component shifts
-     * or the native format, the 0xARGB order is the most common. */
-    pfd->cBlueShift = 0;
-    pfd->cGreenShift = pfd->cBlueBits;
-    pfd->cRedShift = pfd->cGreenBits + pfd->cBlueBits;
-    if (pfd->cAlphaBits)
-        pfd->cAlphaShift = pfd->cRedBits + pfd->cGreenBits + pfd->cBlueBits;
-    else
-        pfd->cAlphaShift = 0;
-
-    TRACE("fmt %u color %u %u/%u/%u/%u depth %u stencil %u\n",
-          fmt, pfd->cColorBits, pfd->cRedBits, pfd->cGreenBits, pfd->cBlueBits,
-          pfd->cAlphaBits, pfd->cDepthBits, pfd->cStencilBits);
-
-    return num_egl_configs;
-}
-
 static const char *wayland_wglGetExtensionsStringARB(HDC hdc)
 {
     TRACE("() returning \"%s\"\n", wgl_extensions);
@@ -760,6 +703,68 @@ static BOOL wayland_wglSwapIntervalEXT(int interval)
     pthread_mutex_unlock(&gl_object_mutex);
 
     return ret;
+}
+
+static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt)
+{
+    EGLint value;
+    PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
+
+    memset(pfd, 0, sizeof(*pfd));
+    pfd->nSize = sizeof(*pfd);
+    pfd->nVersion = 1;
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER |
+                   PFD_SUPPORT_COMPOSITION;
+    pfd->iPixelType = PFD_TYPE_RGBA;
+    pfd->iLayerType = PFD_MAIN_PLANE;
+
+#define SET_ATTRIB(field, attrib) \
+    value = 0; \
+    p_eglGetConfigAttrib(egl_display, config, attrib, &value); \
+    pfd->field = value;
+
+    /* Although the documentation describes cColorBits as excluding alpha, real
+     * drivers tend to return the full pixel size, so do the same. */
+    SET_ATTRIB(cColorBits, EGL_BUFFER_SIZE);
+    SET_ATTRIB(cRedBits, EGL_RED_SIZE);
+    SET_ATTRIB(cGreenBits, EGL_GREEN_SIZE);
+    SET_ATTRIB(cBlueBits, EGL_BLUE_SIZE);
+    SET_ATTRIB(cAlphaBits, EGL_ALPHA_SIZE);
+    /* Although we don't get information from EGL about the component shifts
+     * or the native format, the 0xARGB order is the most common. */
+    pfd->cBlueShift = 0;
+    pfd->cGreenShift = pfd->cBlueBits;
+    pfd->cRedShift = pfd->cGreenBits + pfd->cBlueBits;
+    if (pfd->cAlphaBits)
+        pfd->cAlphaShift = pfd->cRedBits + pfd->cGreenBits + pfd->cBlueBits;
+    else
+        pfd->cAlphaShift = 0;
+
+    SET_ATTRIB(cDepthBits, EGL_DEPTH_SIZE);
+    SET_ATTRIB(cStencilBits, EGL_STENCIL_SIZE);
+
+#undef SET_ATTRIB
+}
+
+static BOOL has_opengl(void);
+
+static void wayland_get_pixel_formats(struct wgl_pixel_format *formats,
+                                      UINT max_formats, UINT *num_formats,
+                                      UINT *num_onscreen_formats)
+{
+    UINT i;
+
+    if (!has_opengl())
+    {
+        *num_formats = *num_onscreen_formats = 0;
+        return;
+    }
+    if (formats)
+    {
+        for (i = 0; i < min(max_formats, num_egl_configs); ++i)
+            describe_pixel_format(egl_configs[i], &formats[i]);
+    }
+    *num_formats = *num_onscreen_formats = num_egl_configs;
 }
 
 static BOOL has_extension(const char *list, const char *ext)
@@ -980,12 +985,12 @@ static struct opengl_funcs opengl_funcs =
         .p_wglCopyContext = wayland_wglCopyContext,
         .p_wglCreateContext = wayland_wglCreateContext,
         .p_wglDeleteContext = wayland_wglDeleteContext,
-        .p_wglDescribePixelFormat = wayland_wglDescribePixelFormat,
         .p_wglGetProcAddress = wayland_wglGetProcAddress,
         .p_wglMakeCurrent = wayland_wglMakeCurrent,
         .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
         .p_wglShareLists = wayland_wglShareLists,
         .p_wglSwapBuffers = wayland_wglSwapBuffers,
+        .p_get_pixel_formats = wayland_get_pixel_formats,
     }
 };
 
