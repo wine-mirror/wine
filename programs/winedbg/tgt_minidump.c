@@ -314,17 +314,20 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             str = "Unknown";
             break;
         case PROCESSOR_ARCHITECTURE_INTEL:
-            strcpy(tmp, "Intel ");
+            strcpy(tmp, "x86 [");
             switch (msi->ProcessorLevel)
             {
             case  3: str = "80386"; break;
             case  4: str = "80486"; break;
             case  5: str = "Pentium"; break;
-            case  6: str = "Pentium Pro/II or AMD Athlon"; break;
+            case  6: str = "Pentium Pro/II, III, Core, Atom or AMD Athlon"; break;
             case 15: str = "Pentium 4 or AMD Athlon64"; break;
-            default: str = "???"; break;
+            case 23: str = "AMD Zen 1 or 2"; break;
+            case 25: str = "AMD Zen 3 or 4"; break;
+            case 26: str = "AMD Zen 5"; break;
+            default: sprintf(tmp + strlen(tmp), "Proc-level #%x", msi->ProcessorLevel); str = NULL; break;
             }
-            strcat(tmp, str);
+            if (str) strcat(tmp, str);
             if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
             {
                 if (HIBYTE(msi->ProcessorRevision) == 0xFF)
@@ -339,6 +342,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             else sprintf(tmp + strlen(tmp), " (%d.%d)",
                          HIBYTE(msi->ProcessorRevision),
                          LOBYTE(msi->ProcessorRevision));
+            strcat(tmp, "]");
             str = tmp;
             break;
         case PROCESSOR_ARCHITECTURE_MIPS:
