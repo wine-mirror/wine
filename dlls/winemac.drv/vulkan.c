@@ -42,7 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-#ifdef SONAME_LIBMOLTENVK
+#ifdef SONAME_LIBVULKAN
 
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
@@ -100,9 +100,9 @@ static void *vulkan_handle;
 
 static void wine_vk_init(void)
 {
-    if (!(vulkan_handle = dlopen(SONAME_LIBMOLTENVK, RTLD_NOW)))
+    if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
     {
-        ERR("Failed to load %s\n", SONAME_LIBMOLTENVK);
+        ERR("Failed to load %s\n", SONAME_LIBVULKAN);
         return;
     }
 
@@ -523,7 +523,7 @@ static const struct vulkan_funcs *get_vulkan_driver(UINT version)
     return NULL;
 }
 
-#endif /* SONAME_LIBMOLTENVK */
+#endif /* SONAME_LIBVULKAN */
 
 const struct vulkan_funcs *macdrv_wine_get_vulkan_driver(UINT version)
 {
