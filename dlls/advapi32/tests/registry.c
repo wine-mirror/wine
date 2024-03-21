@@ -1561,29 +1561,6 @@ static void test_reg_save_key(void)
 
 static void test_reg_load_key(void)
 {
-    DWORD ret;
-    HKEY hkHandle;
-
-    if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
-        !set_privileges(SE_BACKUP_NAME, FALSE))
-    {
-        win_skip("Failed to set SE_RESTORE_NAME privileges, skipping tests\n");
-        return;
-    }
-
-    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-
-    set_privileges(SE_RESTORE_NAME, FALSE);
-
-    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-
-    RegCloseKey(hkHandle);
-}
-
-static void test_reg_unload_key(void)
-{
     UNICODE_STRING key_name;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
@@ -1597,7 +1574,10 @@ static void test_reg_unload_key(void)
         return;
     }
 
-    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Test", 0, KEY_READ, &key);
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     /* try to unload though the key handle is live */
@@ -4988,7 +4968,6 @@ START_TEST(registry)
     test_classesroot_mask();
     test_reg_save_key();
     test_reg_load_key();
-    test_reg_unload_key();
     test_reg_load_app_key();
     test_reg_copy_tree();
     test_reg_delete_tree();
