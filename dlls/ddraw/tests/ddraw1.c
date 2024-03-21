@@ -4563,6 +4563,7 @@ static void test_unsupported_formats(void)
 
 static void test_rt_caps(const GUID *device_guid)
 {
+    DWORD fourcc_codes[64], fourcc_code_count;
     PALETTEENTRY palette_entries[256];
     IDirectDrawPalette *palette;
     IDirect3DDevice *device;
@@ -4579,6 +4580,12 @@ static void test_rt_caps(const GUID *device_guid)
     {
         sizeof(DDPIXELFORMAT), DDPF_PALETTEINDEXED8 | DDPF_RGB, 0,
         {8}, {0x00000000}, {0x00000000}, {0x00000000}, {0x00000000},
+    };
+    static const DDPIXELFORMAT fourcc_fmt =
+    {
+        .dwSize = sizeof(DDPIXELFORMAT),
+        .dwFlags = DDPF_FOURCC,
+        .dwFourCC = MAKEFOURCC('Y','U','Y','2'),
     };
 
     static const struct
@@ -4710,6 +4717,12 @@ static void test_rt_caps(const GUID *device_guid)
             DDERR_INVALIDCAPS,
             TRUE /* Nvidia Kepler */,
         },
+        {
+            &fourcc_fmt,
+            DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_OFFSCREENPLAIN,
+            DDERR_INVALIDCAPS,
+            FALSE,
+        },
     };
 
     software_device = is_software_device_type(device_guid);
@@ -4737,6 +4750,10 @@ static void test_rt_caps(const GUID *device_guid)
     hr = IDirectDraw_GetCaps(ddraw, &hal_caps, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
 
+    fourcc_code_count = ARRAY_SIZE(fourcc_codes);
+    hr = IDirectDraw4_GetFourCCCodes(ddraw, &fourcc_code_count, fourcc_codes);
+    ok(hr == DD_OK, "Got unexpected hr %#lx.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         DWORD caps_in, expected_caps;
@@ -4753,6 +4770,21 @@ static void test_rt_caps(const GUID *device_guid)
         surface_desc.ddsCaps.dwCaps = caps_in;
         if (test_data[i].pf)
         {
+            if (test_data[i].pf->dwFlags & DDPF_FOURCC)
+            {
+                unsigned int j;
+
+                for (j = 0; j < fourcc_code_count; ++j)
+                {
+                    if (test_data[i].pf->dwFourCC == fourcc_codes[j])
+                        break;
+                }
+                if (j == fourcc_code_count)
+                {
+                    skip("Fourcc format %#lx is not supported, skipping test.\n", test_data[i].pf->dwFourCC);
+                    continue;
+                }
+            }
             surface_desc.dwFlags |= DDSD_PIXELFORMAT;
             surface_desc.ddpfPixelFormat = *test_data[i].pf;
         }
@@ -4760,6 +4792,11 @@ static void test_rt_caps(const GUID *device_guid)
         {
             surface_desc.dwFlags |= DDSD_ZBUFFERBITDEPTH;
             surface_desc.dwZBufferBitDepth = z_depth;
+        }
+        if (caps_in & DDSCAPS_FLIP)
+        {
+            surface_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
+            surface_desc.dwBackBufferCount = 1;
         }
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
@@ -4783,6 +4820,9 @@ static void test_rt_caps(const GUID *device_guid)
             expected_caps = caps_in | DDSCAPS_SYSTEMMEMORY;
         else
             expected_caps = caps_in | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM;
+
+        if (caps_in & DDSCAPS_FLIP)
+            expected_caps |= DDSCAPS_FRONTBUFFER;
 
         ok(surface_desc.ddsCaps.dwCaps == expected_caps || (test_data[i].pf == &p8_fmt
                 && surface_desc.ddsCaps.dwCaps == (caps_in | DDSCAPS_SYSTEMMEMORY))
