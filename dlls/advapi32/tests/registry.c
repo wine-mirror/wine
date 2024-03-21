@@ -1673,31 +1673,26 @@ static void wait_file_available(char *path)
 static void test_reg_load_app_key(void)
 {
     DWORD ret, size;
-    char temppath[MAX_PATH], hivefilepath[MAX_PATH];
+    char hivefilepath[2 * MAX_PATH], *p;
     const BYTE test_data[] = "Hello World";
     BYTE output[sizeof(test_data)];
     HKEY appkey = NULL;
 
-    GetTempPathA(sizeof(temppath), temppath);
-    GetTempFileNameA(temppath, "key", 0, hivefilepath);
-    DeleteFileA(hivefilepath);
-
-    if (!set_privileges(SE_BACKUP_NAME, TRUE) ||
-        !set_privileges(SE_RESTORE_NAME, FALSE))
+    if (!set_privileges(SE_BACKUP_NAME, TRUE))
     {
         win_skip("Failed to set SE_BACKUP_NAME privileges, skipping tests\n");
         return;
     }
 
+    GetTempPathA(MAX_PATH, hivefilepath);
+    strcat(hivefilepath, "\\wine_reg_test");
+    CreateDirectoryA(hivefilepath, NULL);
+    strcat(hivefilepath, "\\saved_key");
+
     ret = RegSaveKeyA(hkey_main, hivefilepath, NULL);
-    if (ret != ERROR_SUCCESS)
-    {
-        win_skip("Failed to save test key 0x%lx\n", ret);
-        return;
-    }
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     set_privileges(SE_BACKUP_NAME, FALSE);
-    set_privileges(SE_RESTORE_NAME, FALSE);
 
     /* Test simple key load */
     /* Check if the changes are saved */
@@ -1726,8 +1721,10 @@ static void test_reg_load_app_key(void)
     RegCloseKey(appkey);
 
     wait_file_available(hivefilepath);
-    ret = DeleteFileA(hivefilepath);
-    ok(ret, "couldn't delete hive file %ld\n", GetLastError());
+
+    p = strrchr(hivefilepath, '\\');
+    *p = 0;
+    delete_dir(hivefilepath);
 }
 
 /* tests that show that RegConnectRegistry and
