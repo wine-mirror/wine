@@ -1542,25 +1542,40 @@ static BOOL set_privileges(LPCSTR privilege, BOOL set)
     return TRUE;
 }
 
-static void test_reg_save_key(void)
+static void delete_dir(const char *path)
 {
-    DWORD ret;
+    char file[2 * MAX_PATH], *p;
+    WIN32_FIND_DATAA fd;
+    HANDLE hfind;
+    BOOL r;
 
-    if (!set_privileges(SE_BACKUP_NAME, TRUE) ||
-        !set_privileges(SE_RESTORE_NAME, FALSE))
+    strcpy(file, path);
+    p = file + strlen(file);
+    p[0] = '\\';
+    p[1] = '*';
+    p[2] = 0;
+    hfind = FindFirstFileA(file, &fd);
+    if (hfind != INVALID_HANDLE_VALUE)
     {
-        win_skip("Failed to set SE_BACKUP_NAME privileges, skipping tests\n");
-        return;
+        do
+        {
+            if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, ".."))
+                continue;
+
+            strcpy(p + 1, fd.cFileName);
+            r = DeleteFileA(file);
+            ok(r, "DeleteFile failed on %s: %ld\n", debugstr_a(file), GetLastError());
+        } while(FindNextFileA(hfind, &fd));
+        FindClose(hfind);
     }
 
-    ret = RegSaveKeyA(hkey_main, "saved_key", NULL);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-
-    set_privileges(SE_BACKUP_NAME, FALSE);
+    r = RemoveDirectoryA(path);
+    ok(r, "RemoveDirectory failed: %ld\n", GetLastError());
 }
 
 static void test_reg_load_key(void)
 {
+    char saved_key[2 * MAX_PATH], *p;
     UNICODE_STRING key_name;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
@@ -1568,13 +1583,21 @@ static void test_reg_load_key(void)
     HKEY key;
 
     if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
-        !set_privileges(SE_BACKUP_NAME, FALSE))
+        !set_privileges(SE_BACKUP_NAME, TRUE))
     {
         win_skip("Failed to set SE_RESTORE_NAME privileges, skipping tests\n");
         return;
     }
 
-    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    GetTempPathA(MAX_PATH, saved_key);
+    strcat(saved_key, "\\wine_reg_test");
+    CreateDirectoryA(saved_key, NULL);
+    strcat(saved_key, "\\saved_key");
+
+    ret = RegSaveKeyA(hkey_main, saved_key, NULL);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", saved_key);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &key);
@@ -1600,9 +1623,11 @@ static void test_reg_load_key(void)
     ok(ret == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %ld\n", ret);
 
     set_privileges(SE_RESTORE_NAME, FALSE);
+    set_privileges(SE_BACKUP_NAME, FALSE);
 
-    DeleteFileA("saved_key");
-    DeleteFileA("saved_key.LOG");
+    p = strrchr(saved_key, '\\');
+    *p = 0;
+    delete_dir(saved_key);
 }
 
 /* Helper function to wait for a file blocked by the registry to be available */
@@ -4966,7 +4991,6 @@ START_TEST(registry)
     test_classesroot();
     test_classesroot_enum();
     test_classesroot_mask();
-    test_reg_save_key();
     test_reg_load_key();
     test_reg_load_app_key();
     test_reg_copy_tree();
