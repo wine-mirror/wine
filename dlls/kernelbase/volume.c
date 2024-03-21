@@ -400,7 +400,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH DefineDosDeviceW( DWORD flags, const WCHAR *device
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, 0, NULL );
     if (flags & DDD_REMOVE_DEFINITION)
     {
-        if (!set_ntstatus( NtOpenSymbolicLinkObject( &handle, 0, &attr ) ))
+        if (!set_ntstatus( NtOpenSymbolicLinkObject( &handle, DELETE, &attr ) ))
             return FALSE;
 
         status = NtMakeTemporaryObject( handle );
