@@ -27,7 +27,7 @@
 @ stub NetFileClose
 @ stdcall NetFileEnum(wstr wstr wstr long ptr long ptr ptr ptr) netapi32.NetFileEnum
 @ stub NetFileGetInfo
-@ stub NetRemoteTOD
+@ stdcall NetRemoteTOD(wstr ptr) netapi32.NetRemoteTOD
 @ stub NetServerAliasAdd
 @ stub NetServerAliasDel
 @ stub NetServerAliasEnum

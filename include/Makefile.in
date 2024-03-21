@@ -406,6 +406,7 @@ SOURCES = \
 	lmerr.h \
 	lmjoin.h \
 	lmmsg.h \
+	lmremutl.h \
 	lmserver.h \
 	lmshare.h \
 	lmstats.h \
