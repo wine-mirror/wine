@@ -111,8 +111,6 @@ static DWORD encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
     i = 0;
     while (div > 0 && ptr < end)
     {
-        if (i && i % 64 == 0)
-            ptr += stradd(ptr, end, sep, strlen(sep));
         /* first char is the first 6 bits of the first byte*/
         chunk[0] = b64[ ( d[0] >> 2) & 0x3f ];
         /* second char is the last 2 bits of the first byte and the first 4
@@ -127,6 +125,9 @@ static DWORD encodeBase64A(const BYTE *in_buf, int in_len, LPCSTR sep,
         i += 4;
         d += 3;
         div--;
+
+        if (i && i % 64 == 0)
+            ptr += stradd(ptr, end, sep, strlen(sep));
     }
 
     switch(pad_bytes)
@@ -393,11 +394,6 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
     i = 0;
     while (div > 0)
     {
-        if (i && i % 64 == 0)
-        {
-            lstrcpyW(ptr, sep);
-            ptr += lstrlenW(sep);
-        }
         /* first char is the first 6 bits of the first byte*/
         *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
         /* second char is the last 2 bits of the first byte and the first 4
@@ -411,6 +407,12 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
         i += 4;
         d += 3;
         div--;
+
+        if (i && i % 64 == 0)
+        {
+            lstrcpyW(ptr, sep);
+            ptr += lstrlenW(sep);
+        }
     }
 
     switch(pad_bytes)
