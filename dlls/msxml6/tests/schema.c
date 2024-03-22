@@ -25,8 +25,61 @@
 
 #include "ole2.h"
 #include "msxml6.h"
+#include "msxml6did.h"
+#include "dispex.h"
 
 #include "wine/test.h"
+
+#include "initguid.h"
+
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
+static const WCHAR xsd_schema1_uri[] = L"x-schema:test1.xsd";
+static const WCHAR xsd_schema1_xml[] =
+L"<?xml version='1.0'?>"
+"<schema xmlns='http://www.w3.org/2001/XMLSchema'"
+"            targetNamespace='x-schema:test1.xsd'>"
+"   <element name='root'>"
+"       <complexType>"
+"           <sequence maxOccurs='unbounded'>"
+"               <any/>"
+"           </sequence>"
+"       </complexType>"
+"   </element>"
+"</schema>";
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static BSTR alloced_bstrs[256];
+static int alloced_bstrs_count;
+
+static BSTR _bstr_(const WCHAR *str)
+{
+    assert(alloced_bstrs_count < ARRAY_SIZE(alloced_bstrs));
+    alloced_bstrs[alloced_bstrs_count] = SysAllocString(str);
+    return alloced_bstrs[alloced_bstrs_count++];
+}
+
+static void free_bstrs(void)
+{
+    int i;
+    for (i = 0; i < alloced_bstrs_count; i++)
+        SysFreeString(alloced_bstrs[i]);
+    alloced_bstrs_count = 0;
+}
 
 static IXMLDOMDocument2 *create_document(void)
 {
@@ -39,12 +92,12 @@ static IXMLDOMDocument2 *create_document(void)
     return obj;
 }
 
-static IXMLDOMSchemaCollection *create_cache(void)
+static void *create_cache(REFIID riid)
 {
-    IXMLDOMSchemaCollection *obj = NULL;
+    void *obj = NULL;
     HRESULT hr;
 
-    hr = CoCreateInstance(&CLSID_XMLSchemaCache60, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMSchemaCollection, (void **)&obj);
+    hr = CoCreateInstance(&CLSID_XMLSchemaCache60, NULL, CLSCTX_INPROC_SERVER, riid, &obj);
     ok(hr == S_OK, "Failed to create a document object, hr %#lx.\n", hr);
 
     return obj;
@@ -176,7 +229,7 @@ static void test_regex(void)
 
         doc = create_document();
         schema = create_document();
-        cache = create_cache();
+        cache = create_cache(&IID_IXMLDOMSchemaCollection);
 
         hr = validate_regex_document(doc, schema, cache, tests->regex, tests->input);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -190,6 +243,180 @@ static void test_regex(void)
 
         winetest_pop_context();
     }
+}
+
+static void test_get(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    IXMLDOMNode *node;
+    HRESULT hr;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection2);
+
+    hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
+    ok(hr == E_NOTIMPL || hr == E_POINTER /* win8 */, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMSchemaCollection2_get(cache, _bstr_(L"uri"), &node);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    IXMLDOMSchemaCollection2_Release(cache);
+    free_bstrs();
+}
+
+static void test_ifaces(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    IUnknown *unk;
+    HRESULT hr;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection2);
+
+    /* CLSID_XMLSchemaCache60 is returned as an interface (the same as IXMLDOMSchemaCollection2). */
+    hr = IXMLDOMSchemaCollection2_QueryInterface(cache, &CLSID_XMLSchemaCache60, (void**)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(unk == (IUnknown *)cache, "Unexpected pointer %p.\n", unk);
+    IUnknown_Release(unk);
+
+    check_interface(cache, &IID_IXMLDOMSchemaCollection, TRUE);
+    check_interface(cache, &IID_IXMLDOMSchemaCollection2, TRUE);
+    check_interface(cache, &IID_IDispatch, TRUE);
+    check_interface(cache, &IID_IDispatchEx, TRUE);
+
+    IXMLDOMSchemaCollection2_Release(cache);
+}
+
+static void test_remove(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    IXMLDOMDocument2 *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    VARIANT v;
+    LONG len;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection2);
+
+    doc = create_document();
+    ok(doc != NULL, "got %p\n", doc);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(xsd_schema1_xml), &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)doc;
+    hr = IXMLDOMSchemaCollection2_add(cache, _bstr_(xsd_schema1_uri), v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(len == 1, "Unexpected length %ld.\n", len);
+
+    /* ::remove() is a stub for version 6 */
+    hr = IXMLDOMSchemaCollection2_remove(cache, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(L"invaliduri"));
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMSchemaCollection2_remove(cache, _bstr_(xsd_schema1_uri));
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    len = -1;
+    hr = IXMLDOMSchemaCollection2_get_length(cache, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(len == 1, "Unexpected length %ld.\n", len);
+
+    IXMLDOMDocument2_Release(doc);
+    IXMLDOMSchemaCollection2_Release(cache);
+    free_bstrs();
+}
+
+static void test_obj_dispex(IUnknown *obj)
+{
+    DISPID dispid = DISPID_SAX_XMLREADER_GETFEATURE;
+    IDispatchEx *dispex;
+    IUnknown *unk;
+    DWORD props;
+    UINT ticnt;
+    HRESULT hr;
+    BSTR name;
+
+    hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    ticnt = 0;
+    hr = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(ticnt == 1, "ticnt=%u\n", ticnt);
+
+    name = SysAllocString(L"*");
+    hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(name);
+
+    hr = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    props = 0;
+    hr = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &props);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    ok(props == 0, "expected 0 got %ld\n", props);
+
+    hr = IDispatchEx_GetMemberName(dispex, dispid, &name);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) SysFreeString(name);
+
+    hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_SCHEMACOLLECTION_ADD, &dispid);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+    ok(unk == (IUnknown*)0xdeadbeef, "got %p\n", unk);
+
+    name = SysAllocString(L"testprop");
+    hr = IDispatchEx_GetDispID(dispex, name, fdexNameEnsure, &dispid);
+    ok(hr == DISP_E_UNKNOWNNAME, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(name);
+
+    IDispatchEx_Release(dispex);
+}
+
+static void test_dispex(void)
+{
+    IXMLDOMSchemaCollection *cache;
+    IUnknown *unk;
+    HRESULT hr;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+
+    hr = IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+
+    IXMLDOMSchemaCollection_Release(cache);
+}
+
+static void test_validate_on_load(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection2);
+
+    hr = IXMLDOMSchemaCollection2_get_validateOnLoad(cache, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMSchemaCollection2_get_validateOnLoad(cache, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    IXMLDOMSchemaCollection2_Release(cache);
 }
 
 START_TEST(schema)
@@ -210,6 +437,11 @@ START_TEST(schema)
     IUnknown_Release(obj);
 
     test_regex();
+    test_get();
+    test_ifaces();
+    test_remove();
+    test_dispex();
+    test_validate_on_load();
 
     CoUninitialize();
 }
