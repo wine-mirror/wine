@@ -43,6 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+extern GUID CLSID_XMLSchemaCache60;
+
 typedef HRESULT (*ClassFactoryCreateInstanceFunc)(void**);
 typedef HRESULT (*DOMFactoryCreateInstanceFunc)(MSXML_VERSION, void**);
 
