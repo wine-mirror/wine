@@ -26,6 +26,9 @@
 #include "winnt.h"
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pSetThreadDescription)(HANDLE,PCWSTR);
+static const WCHAR *main_thread_name = L"I'm the running thread!";
+
 static unsigned popcount32(ULONG val)
 {
     val -= val >> 1 & 0x55555555;
@@ -102,7 +105,7 @@ typedef DWORD64 stream_mask_t;
      STREAM2MASK(ProcessVmCountersStream))
 /* streams added in Win8 & Win10... */
 #define BASIC_STREAM_BROKEN_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream))
-#define BASIC_STREAM_TODO_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream))
+#define BASIC_STREAM_TODO_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream) | STREAM2MASK(ThreadNamesStream))
 static void test_minidump_contents(void)
 {
     static const struct minidump_streams
@@ -123,6 +126,7 @@ static void test_minidump_contents(void)
         {MiniDumpWithAvxXStateContext,  BASIC_STREAM_MASK, BASIC_STREAM_TODO_MASK}, /* requires win10 at least */
         {MiniDumpWithIptTrace,          BASIC_STREAM_MASK, BASIC_STREAM_TODO_MASK},
     };
+    stream_mask_t expected_mask;
     MINIDUMP_HEADER *hdr;
     void *where;
     ULONG size;
@@ -145,8 +149,10 @@ static void test_minidump_contents(void)
             for (j = 3; j < 25 /* last documented stream */; j++)
             {
                 ret = MiniDumpReadDumpStream(hdr, j, NULL, &where, &size);
+                expected_mask = streams_table[i].streams_mask;
+                if (pSetThreadDescription) expected_mask |= STREAM2MASK(ThreadNamesStream);
                 todo_wine_if(streams_table[i].todo_wine_mask & STREAM2MASK(j))
-                if (streams_table[i].streams_mask & STREAM2MASK(j))
+                if (expected_mask & STREAM2MASK(j))
                     ok((ret && where) || broken(BASIC_STREAM_BROKEN_MASK & STREAM2MASK(j)), "Expecting stream %d to be present\n", j);
                 else
                     ok(!ret, "Not expecting stream %d to be present\n", j);
@@ -216,6 +222,36 @@ static void minidump_check_threads(void *data)
         ctx = RVA_TO_ADDR(data, thread->ThreadContext.Rva);
         ok((ctx->ContextFlags & CONTEXT_ALL) == CONTEXT_ALL, "Unexpected value\n");
     }
+}
+
+static void minidump_check_threads_name(void *data, DWORD tid, const WCHAR* name)
+{
+    MINIDUMP_THREAD_NAME_LIST *thread_name_list;
+    ULONG stream_size;
+    int i;
+    BOOL ret;
+
+    if (!pSetThreadDescription) return;
+
+    ret = MiniDumpReadDumpStream(data, ThreadNamesStream, NULL, (void**)&thread_name_list, &stream_size);
+    todo_wine
+    ok(ret && thread_name_list, "Couldn't find thread-name-list stream\n");
+    if (!ret) return; /* temp */
+    ok(stream_size == sizeof(thread_name_list->NumberOfThreadNames) + thread_name_list->NumberOfThreadNames * sizeof(thread_name_list->ThreadNames[0]),
+       "Unexpected size\n");
+    for (i = 0; i < thread_name_list->NumberOfThreadNames; i++)
+    {
+        const MINIDUMP_THREAD_NAME *thread_name = &thread_name_list->ThreadNames[i];
+        const MINIDUMP_STRING *md_string;
+
+        md_string = RVA_TO_ADDR(data, (ULONG_PTR)thread_name->RvaOfThreadName);
+        if (thread_name->RvaOfThreadName == (ULONG_PTR)thread_name->RvaOfThreadName &&
+            thread_name->ThreadId == tid &&
+            wcslen(name) == md_string->Length / sizeof(WCHAR) &&
+            !memcmp(name, md_string->Buffer, md_string->Length))
+            break;
+    }
+    ok(i < thread_name_list->NumberOfThreadNames, "Couldn't find thread %lx %ls\n", tid, name);
 }
 
 static void minidump_check_module(void *data, const WCHAR *name, DWORD64 base)
@@ -499,6 +535,7 @@ static void test_current_process(void)
         ok(walker.num_unwind_info == 0, "unexpected unwind info %u\n", walker.num_unwind_info);
         minidump_check_nostream(data, ExceptionStream);
 
+        minidump_check_threads_name(data, GetCurrentThreadId(), main_thread_name);
         minidump_close_for_read(data);
 
         ret = DeleteFileA("foo.mdmp");
@@ -856,6 +893,9 @@ START_TEST(minidump)
         generate_child_exception(argv[3]);
         return;
     }
+
+    if ((pSetThreadDescription = (void *)GetProcAddress(GetModuleHandleW(L"kernel32"), "SetThreadDescription")))
+        pSetThreadDescription(GetCurrentThread(), main_thread_name);
 
     test_minidump_contents();
     test_current_process();
