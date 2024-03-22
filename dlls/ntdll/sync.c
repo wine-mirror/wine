@@ -163,29 +163,16 @@ static const char *crit_section_get_name( const RTL_CRITICAL_SECTION *crit )
 
 static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
 {
-    HANDLE ret = crit->LockSemaphore;
-    if (!ret)
-    {
-        HANDLE sem;
-        if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
-        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
-            ret = sem;
-        else
-            NtClose(sem);  /* somebody beat us to it */
-    }
-    return ret;
+    if ((ULONG_PTR)crit->LockSemaphore > 1) return crit->LockSemaphore;
+    return NULL;
 }
 
 static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
 {
     LARGE_INTEGER time = {.QuadPart = timeout * (LONGLONG)-10000000};
+    HANDLE sem = get_semaphore( crit );
 
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ))
-    {
-        HANDLE sem = get_semaphore( crit );
-        return NtWaitForSingleObject( sem, FALSE, &time );
-    }
+    if (sem) return NtWaitForSingleObject( sem, FALSE, &time );
     else
     {
         LONG *lock = (LONG *)&crit->LockSemaphore;
@@ -276,6 +263,8 @@ ULONG WINAPI RtlSetCriticalSectionSpinCount( RTL_CRITICAL_SECTION *crit, ULONG s
  */
 NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
+    HANDLE sem;
+
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
@@ -288,11 +277,9 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
             crit->DebugInfo = NULL;
         }
     }
-    else
-    {
-        NtClose( crit->LockSemaphore );
-        crit->DebugInfo = NULL;
-    }
+    else crit->DebugInfo = NULL;
+
+    if ((sem = get_semaphore( crit ))) NtClose( sem );
     crit->LockSemaphore = 0;
     return STATUS_SUCCESS;
 }
@@ -335,13 +322,9 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     NTSTATUS ret;
+    HANDLE sem = get_semaphore( crit );
 
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ))
-    {
-        HANDLE sem = get_semaphore( crit );
-        ret = NtReleaseSemaphore( sem, 1, NULL );
-    }
+    if (sem) ret = NtReleaseSemaphore( sem, 1, NULL );
     else
     {
         LONG *lock = (LONG *)&crit->LockSemaphore;
