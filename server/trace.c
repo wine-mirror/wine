@@ -119,6 +119,14 @@ static void dump_uint128( const char *prefix, const unsigned __int64 val[2] )
         fprintf( stderr, "%s%x", prefix, (unsigned int)low );
 }
 
+static void dump_uints64( const char *prefix, const unsigned __int64 *ptr, int len )
+{
+    fprintf( stderr, "%s{", prefix );
+    if (len-- > 0) dump_uint64( "", ptr++ );
+    while (len-- > 0) dump_uint64( ",", ptr++ );
+    fputc( '}', stderr );
+}
+
 static void dump_rectangle( const char *prefix, const rectangle_t *rect )
 {
     fprintf( stderr, "%s{%d,%d;%d,%d}", prefix,
@@ -173,10 +181,7 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         break;
     case APC_USER:
         dump_uint64( "APC_USER,func=", &call->user.func );
-        dump_uint64( ",args={", &call->user.args[0] );
-        dump_uint64( ",", &call->user.args[1] );
-        dump_uint64( ",", &call->user.args[2] );
-        fputc( '}', stderr );
+        dump_uints64( ",args=", call->user.args, 3 );
         break;
     case APC_ASYNC_IO:
         dump_uint64( "APC_ASYNC_IO,user=", &call->async_io.user );
@@ -499,15 +504,8 @@ static void dump_varargs_uints( const char *prefix, data_size_t size )
 static void dump_varargs_uints64( const char *prefix, data_size_t size )
 {
     const unsigned __int64 *data = cur_data;
-    data_size_t len = size / sizeof(*data);
 
-    fprintf( stderr,"%s{", prefix );
-    while (len > 0)
-    {
-        dump_uint64( "", data++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
+    dump_uints64( prefix, data, size / sizeof(*data) );
     remove_data( size );
 }
 
@@ -846,7 +844,6 @@ static void dump_varargs_contexts( const char *prefix, data_size_t size )
 static void dump_varargs_debug_event( const char *prefix, data_size_t size )
 {
     debug_event_t event;
-    unsigned int i;
 
     if (!size)
     {
@@ -895,14 +892,9 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
                  event.exception.first, event.exception.exc_code, event.exception.flags );
         dump_uint64( ",record=", &event.exception.record );
         dump_uint64( ",address=", &event.exception.address );
-        fprintf( stderr, ",params={" );
         event.exception.nb_params = min( event.exception.nb_params, EXCEPTION_MAXIMUM_PARAMETERS );
-        for (i = 0; i < event.exception.nb_params; i++)
-        {
-            dump_uint64( "", &event.exception.params[i] );
-            if (i < event.exception.nb_params) fputc( ',', stderr );
-        }
-        fprintf( stderr, "}}" );
+        dump_uints64( ",params=", event.exception.params, event.exception.nb_params );
+        fputc( '}', stderr );
         break;
     case DbgLoadDllStateChange:
         fprintf( stderr, "%s{load_dll,file=%04x", prefix, event.load_dll.handle );
