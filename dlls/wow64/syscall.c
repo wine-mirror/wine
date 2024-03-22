@@ -298,7 +298,7 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
 /**********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-static void call_raise_user_exception_dispatcher( ULONG code )
+static void __attribute__((used)) call_raise_user_exception_dispatcher( ULONG code )
 {
     TEB32 *teb32 = (TEB32 *)((char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset);
 
@@ -927,18 +927,66 @@ static void free_temp_data(void)
 
 
 /**********************************************************************
- *           syscall_filter
+ *           wow64_syscall
  */
-static LONG CALLBACK syscall_filter( EXCEPTION_POINTERS *ptrs )
-{
-    switch (ptrs->ExceptionRecord->ExceptionCode)
-    {
-    case STATUS_INVALID_HANDLE:
-        call_raise_user_exception_dispatcher( ptrs->ExceptionRecord->ExceptionCode );
-        break;
-    }
-    return EXCEPTION_EXECUTE_HANDLER;
-}
+#ifdef __aarch64__
+NTSTATUS wow64_syscall( UINT *args, ULONG_PTR thunk );
+__ASM_GLOBAL_FUNC( wow64_syscall,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   ".seh_save_fplr_x 16\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler wow64_syscall_handler, @except\n"
+                   "blr x1\n\t"
+                   "b 1f\n"
+                   "wow64_syscall_ret:\n\t"
+                   "eor w1, w0, #0xc0000000\n\t"
+                   "cmp w1, #8\n\t"                /* STATUS_INVALID_HANDLE */
+                   "b.ne 1f\n\t"
+                   "bl call_raise_user_exception_dispatcher\n"
+                   "1:\tldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( wow64_syscall_handler,
+                   "stp x29, x30, [sp, #-16]!\n\t"
+                   ".seh_save_fplr_x 16\n\t"
+                   ".seh_endprologue\n\t"
+                   "ldr w4, [x0, #4]\n\t"          /* record->ExceptionFlags */
+                   "tst w4, #6\n\t"                /* EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND */
+                   "b.ne 1f\n\t"
+                   "mov x2, x0\n\t"                /* record */
+                   "mov x0, x1\n\t"                /* frame */
+                   "adr x1, wow64_syscall_ret\n\t" /* target */
+                   "ldr w3, [x2]\n\t"              /* retval = record->ExceptionCode */
+                   "bl RtlUnwind\n\t"
+                   "1:\tmov w0, #1\n\t"            /* ExceptionContinueSearch */
+                   "ldp x29, x30, [sp], #16\n\t"
+                   "ret" )
+#else
+NTSTATUS wow64_syscall( UINT *args, ULONG_PTR thunk );
+__ASM_GLOBAL_FUNC( wow64_syscall,
+                   "subq $0x28, %rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   ".seh_handler wow64_syscall_handler, @except\n\t"
+                   "call *%rdx\n\t"
+                   "jmp 1f\n"
+                   "wow64_syscall_ret:\n\t"
+                   "cmpl $0xc0000008,%eax\n\t"     /* STATUS_INVALID_HANDLE */
+                   "jne 1f\n\t"
+                   "movl %eax,%ecx\n\t"
+                   "call call_raise_user_exception_dispatcher\n"
+                   "1:\taddq $0x28, %rsp\n\t"
+                   "ret" )
+__ASM_GLOBAL_FUNC( wow64_syscall_handler,
+                   "subq $0x28,%rsp\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   "movl (%rcx),%r9d\n\t"          /* retval = rec->ExceptionCode */
+                   "movq %rcx,%r8\n\t"             /* rec */
+                   "movq %rdx,%rcx\n\t"            /* frame */
+                   "leaq wow64_syscall_ret(%rip),%rdx\n\t"
+                   "call RtlUnwind\n\t"
+                   "int3" )
+#endif
 
 
 /**********************************************************************
@@ -950,21 +998,12 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
     UINT id = num & 0xfff;
     const SYSTEM_SERVICE_TABLE *table = &syscall_tables[(num >> 12) & 3];
 
-    if (id >= table->ServiceLimit || !table->ServiceTable[id])
+    if (id >= table->ServiceLimit)
     {
         ERR( "unsupported syscall %04x\n", num );
         return STATUS_INVALID_SYSTEM_SERVICE;
     }
-    __TRY
-    {
-        syscall_thunk thunk = (syscall_thunk)table->ServiceTable[id];
-        status = thunk( args );
-    }
-    __EXCEPT( syscall_filter )
-    {
-        status = GetExceptionCode();
-    }
-    __ENDTRY
+    status = wow64_syscall( args, table->ServiceTable[id] );
     free_temp_data();
     return status;
 }
