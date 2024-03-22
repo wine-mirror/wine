@@ -57,6 +57,8 @@ static const BYTE toEncode4[] =
 static const BYTE toEncode5[] =
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHI";
 
+static const BYTE toEncode6[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
 static const struct BinTests tests[] = {
  { toEncode1, sizeof(toEncode1), "AA==\r\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\r\n", },
@@ -69,6 +71,9 @@ static const struct BinTests tests[] = {
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\r\n" },
  { toEncode5, sizeof(toEncode5),
    "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISQA=\r\n" },
+ { toEncode6, sizeof(toEncode6),
+   "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh\r\n"
+   "YQA=\r\n" },
 };
 
 static const struct BinTests testsNoCR[] = {
@@ -83,6 +88,9 @@ static const struct BinTests testsNoCR[] = {
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\n" },
  { toEncode5, sizeof(toEncode5),
    "YWJjZGVmZ2hpamxrbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5MEFCQ0RFRkdISQA=\n" },
+ { toEncode6, sizeof(toEncode6),
+   "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFh\n"
+   "YQA=\n" },
 };
 
 static WCHAR *strdupAtoW(const char *str)
