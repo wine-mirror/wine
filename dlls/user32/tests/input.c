@@ -376,6 +376,7 @@ static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
 static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static HKL (WINAPI *pLoadKeyboardLayoutEx)(HKL, const WCHAR *, UINT);
 
 /**********************adapted from input.c **********************************/
 
@@ -401,6 +402,7 @@ static void init_function_pointers(void)
     GET_PROC(GetRawInputDeviceList);
     GET_PROC(GetRawInputDeviceInfoW);
     GET_PROC(GetRawInputDeviceInfoA);
+    GET_PROC(LoadKeyboardLayoutEx);
 
     hdll = GetModuleHandleA("kernel32");
     GET_PROC(IsWow64Process);
@@ -3025,13 +3027,28 @@ static void test_get_async_key_state(void)
     ok(0 == GetAsyncKeyState(-1000000), "GetAsyncKeyState did not return 0\n");
 }
 
+static HKL *get_keyboard_layouts( UINT *count )
+{
+    HKL *layouts;
+
+    *count = GetKeyboardLayoutList( 0, NULL );
+    ok_ne( 0, *count, UINT, "%u" );
+    layouts = malloc( *count * sizeof(HKL) );
+    ok_ne( NULL, layouts, void *, "%p" );
+    *count = GetKeyboardLayoutList( *count, layouts );
+    ok_ne( 0, *count, UINT, "%u" );
+
+    return layouts;
+}
+
 static void test_keyboard_layout_name(void)
 {
     WCHAR klid[KL_NAMELENGTH], tmpklid[KL_NAMELENGTH], layout_path[MAX_PATH], value[5];
     HKL layout, tmplayout, *layouts, *layouts_preload;
     DWORD status, value_size, klid_size, type, id;
-    int i, j, len;
+    int i, j;
     HKEY hkey;
+    UINT len;
     BOOL ret;
 
     if (0) /* crashes on native system */
@@ -3054,14 +3071,8 @@ static void test_keyboard_layout_name(void)
         return;
     }
 
-    len = GetKeyboardLayoutList(0, NULL);
-    ok(len > 0, "GetKeyboardLayoutList returned %d\n", len);
-
-    layouts = malloc(len * sizeof(HKL));
+    layouts = get_keyboard_layouts( &len );
     ok(layouts != NULL, "Could not allocate memory\n");
-
-    len = GetKeyboardLayoutList(len, layouts);
-    ok(len > 0, "GetKeyboardLayoutList returned %d\n", len);
 
     layouts_preload = calloc(1, sizeof(HKL));
     ok(layouts_preload != NULL, "Could not allocate memory\n");
@@ -5531,6 +5542,101 @@ static void test_keyboard_ll_hook_blocking(void)
     ok_ret( 1, DestroyWindow( hwnd ) );
 }
 
+static void test_LoadKeyboardLayoutEx(void)
+{
+    static const WCHAR test_layout_name[] = L"00000429";
+    static const HKL test_hkl = (HKL)0x04290429;
+
+    HKL *new_layouts, *layouts, old_hkl, hkl;
+    UINT i, j, len, new_len;
+    WCHAR layout_name[64];
+
+    old_hkl = GetKeyboardLayout( 0 );
+    ok_ne( 0, old_hkl, HKL, "%p" );
+
+    hkl = pLoadKeyboardLayoutEx( NULL, test_layout_name, 0 );
+    ok_eq( 0, hkl, HKL, "%p" );
+
+    layouts = get_keyboard_layouts( &len );
+    for (i = 0; i < len; i++) if (layouts[i] == test_hkl) break;
+    if (i != len)
+    {
+        skip( "Test HKL is already loaded, skipping tests\n" );
+        free( layouts );
+        return;
+    }
+
+    /* LoadKeyboardLayoutEx replaces loaded layouts, but will lose mixed layout / locale */
+    for (i = 0, j = len; i < len; i++)
+    {
+        if (HIWORD(layouts[i]) != LOWORD(layouts[i])) continue;
+        if (j == len) j = i;
+        else break;
+    }
+    if (i == len) i = j;
+    if (i == len)
+    {
+        skip( "Failed to find appropriate layouts, skipping tests\n" );
+        free( layouts );
+        return;
+    }
+
+    trace( "using layouts %p / %p\n", layouts[i], layouts[j] );
+
+    ActivateKeyboardLayout( layouts[i], 0 );
+    ok_eq( layouts[i], GetKeyboardLayout( 0 ), HKL, "%p" );
+    ok_ret( 1, GetKeyboardLayoutNameW( layout_name ) );
+
+    /* LoadKeyboardLayoutEx replaces a currently loaded layout */
+    hkl = pLoadKeyboardLayoutEx( layouts[i], test_layout_name, 0 );
+    todo_wine
+    ok_eq( test_hkl, hkl, HKL, "%p" );
+    new_layouts = get_keyboard_layouts( &new_len );
+    ok_eq( len, new_len, UINT, "%u" );
+    todo_wine
+    ok_eq( test_hkl, new_layouts[i], HKL, "%p" );
+    new_layouts[i] = layouts[i];
+    ok( !memcmp( new_layouts, layouts, len * sizeof(*layouts) ), "keyboard layouts changed\n" );
+    free( new_layouts );
+
+    hkl = pLoadKeyboardLayoutEx( test_hkl, layout_name, 0 );
+    ok_eq( layouts[i], hkl, HKL, "%p" );
+    new_layouts = get_keyboard_layouts( &new_len );
+    ok_eq( len, new_len, UINT, "%u" );
+    ok( !memcmp( new_layouts, layouts, len * sizeof(*layouts) ), "keyboard layouts changed\n" );
+    free( new_layouts );
+
+    if (j == i) skip( "Only one layout found, skipping tests\n" );
+    else
+    {
+        /* it also works if a different layout is active */
+        ActivateKeyboardLayout( layouts[j], 0 );
+        ok_eq( layouts[j], GetKeyboardLayout( 0 ), HKL, "%p" );
+
+        hkl = pLoadKeyboardLayoutEx( layouts[i], test_layout_name, 0 );
+        todo_wine
+        ok_eq( test_hkl, hkl, HKL, "%p" );
+        new_layouts = get_keyboard_layouts( &new_len );
+        ok_eq( len, new_len, UINT, "%u" );
+        todo_wine
+        ok_eq( test_hkl, new_layouts[i], HKL, "%p" );
+        new_layouts[i] = layouts[i];
+        ok( !memcmp( new_layouts, layouts, len * sizeof(*layouts) ), "keyboard layouts changed\n" );
+        free( new_layouts );
+
+        hkl = pLoadKeyboardLayoutEx( test_hkl, layout_name, 0 );
+        ok_eq( layouts[i], hkl, HKL, "%p" );
+        new_layouts = get_keyboard_layouts( &new_len );
+        ok_eq( len, new_len, UINT, "%u" );
+        ok( !memcmp( new_layouts, layouts, len * sizeof(*layouts) ), "keyboard layouts changed\n" );
+        free( new_layouts );
+    }
+
+    free( layouts );
+    ActivateKeyboardLayout( old_hkl, 0 );
+    ok_eq( old_hkl, GetKeyboardLayout( 0 ), HKL, "%p" );
+}
+
 /* run the tests in a separate desktop to avoid interaction with other
  * tests, current desktop state, or user actions. */
 static void test_input_desktop( char **argv )
@@ -5554,6 +5660,8 @@ static void test_input_desktop( char **argv )
     test_RegisterRawInputDevices();
     test_GetRawInputData();
     test_GetRawInputBuffer();
+
+    test_LoadKeyboardLayoutEx();
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
