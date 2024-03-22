@@ -175,9 +175,12 @@ static void copy_context_64to32( I386_CONTEXT *ctx32, DWORD flags, AMD64_CONTEXT
 extern void WINAPI syscall_32to64(void);
 __ASM_GLOBAL_FUNC( syscall_32to64,
                    /* cf. BTCpuSimulate prolog */
-                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   ".seh_pushreg %rbp\n\t"
+                   ".seh_pushreg %rbx\n\t"
+                   ".seh_pushreg %rsi\n\t"
+                   ".seh_pushreg %rdi\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
                    "xchgq %r14,%rsp\n\t"
                    "movl %edi,0x9c(%r13)\n\t"   /* context->Edi */
                    "movl %esi,0xa0(%r13)\n\t"   /* context->Esi */
@@ -238,9 +241,12 @@ __ASM_GLOBAL_FUNC( syscall_32to64,
 extern void WINAPI unix_call_32to64(void);
 __ASM_GLOBAL_FUNC( unix_call_32to64,
                    /* cf. BTCpuSimulate prolog */
-                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   ".seh_pushreg %rbp\n\t"
+                   ".seh_pushreg %rbx\n\t"
+                   ".seh_pushreg %rsi\n\t"
+                   ".seh_pushreg %rdi\n\t"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
                    "xchgq %r14,%rsp\n\t"
                    "movl %edi,0x9c(%r13)\n\t"   /* context->Edi */
                    "movl %esi,0xa0(%r13)\n\t"   /* context->Esi */
@@ -269,14 +275,21 @@ __ASM_GLOBAL_FUNC( unix_call_32to64,
  *           BTCpuSimulate  (wow64cpu.@)
  */
 __ASM_GLOBAL_FUNC( BTCpuSimulate,
-                    "subq $0x28,%rsp\n"
-                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
-                    "movq %gs:0x30,%r12\n\t"
-                    "movq 0x1488(%r12),%rcx\n\t" /* NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED] */
-                    "leaq 4(%rcx),%r13\n"        /* cpu->Context */
-                    "jmp syscall_32to64_return\n" )
+                   "pushq %rbp\n\t"
+                   ".seh_pushreg %rbp\n\t"
+                   "pushq %rbx\n\t"
+                   ".seh_pushreg %rbx\n\t"
+                   "pushq %rsi\n\t"
+                   ".seh_pushreg %rsi\n\t"
+                   "pushq %rdi\n\t"
+                   ".seh_pushreg %rdi\n\t"
+                   "subq $0x28,%rsp\n"
+                   ".seh_stackalloc 0x28\n\t"
+                   ".seh_endprologue\n\t"
+                   "movq %gs:0x30,%r12\n\t"
+                   "movq 0x1488(%r12),%rcx\n\t" /* NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED] */
+                   "leaq 4(%rcx),%r13\n"        /* cpu->Context */
+                   "jmp syscall_32to64_return\n" )
 
 
 /**********************************************************************
