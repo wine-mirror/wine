@@ -1710,26 +1710,38 @@ static void process_monitor_event(struct udev_monitor *monitor)
 {
     struct base_device *impl;
     struct udev_device *dev;
-    const char *action;
+    const char *action, *devnode, *syspath;
 
     dev = udev_monitor_receive_device(monitor);
     if (!dev)
     {
-        FIXME("Failed to get device that has changed\n");
+        ERR("Failed to get device that has changed\n");
         return;
     }
 
     action = udev_device_get_action(dev);
-    TRACE("Received action %s for udev device %s\n", debugstr_a(action),
-          debugstr_a(udev_device_get_devnode(dev)));
+    syspath = udev_device_get_syspath(dev);
+    devnode = udev_device_get_devnode(dev);
+    TRACE("Received action %s for udev device %s (%p) devnode %s\n",
+          debugstr_a(action), debugstr_a(syspath), dev, debugstr_a(devnode));
 
-    if (!action)
-        WARN("No action received\n");
+    if (!syspath)
+        ERR("udev device %p does not have syspath!\n", dev);
+    else if (!action)
+        ERR("event for udev device %s does not have any action!\n", syspath);
+    else if (!devnode)
+    {
+        /* Pretty normal case, not all devices have associated
+         * devnodes. For example root input devices do not, but
+         * related/child mouse and event devices do.
+         */
+        TRACE("udev device %s does not have devnode, ignoring\n", syspath);
+    }
     else if (strcmp(action, "remove"))
         udev_add_device(dev, -1);
     else
     {
-        impl = find_device_from_devnode(udev_device_get_devnode(dev));
+        impl = find_device_from_devnode(devnode);
         if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
         else WARN("failed to find device for udev device %p\n", dev);
     }
