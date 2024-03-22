@@ -3953,6 +3953,7 @@ static void test_SendInput_mouse_messages(void)
         if (broken(!ret)) /* broken on Win7 probably because of the separate desktop */
         {
             win_skip("Skipping broken SetLayeredWindowAttributes tests\n");
+            winetest_pop_context();
             DestroyWindow( other );
             break;
         }
