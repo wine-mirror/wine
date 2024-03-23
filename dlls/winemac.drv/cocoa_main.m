@@ -18,11 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#import "config.h"
+#import "macdrv.h"
+
 #import <AppKit/AppKit.h>
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 
-#include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"

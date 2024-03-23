@@ -18,14 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
+#import "config.h"
+#import "macdrv.h"
 
 #import <AppKit/AppKit.h>
 #define NO_CFPLUGIN
 #import <IOKit/graphics/IOGraphicsLib.h>
 #import <Metal/Metal.h>
 #include <dlfcn.h>
-#include "macdrv_cocoa.h"
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
 

@@ -217,6 +217,8 @@ extern bool macdrv_using_input_method(void);
 extern void macdrv_set_mouse_capture_window(WineWindow *window);
 extern void macdrv_set_cocoa_retina_mode(bool new_mode);
 
+extern void LogError(const char* func, const char* format, ...);
+extern void LogErrorv(const char* func, const char* format, va_list args);
 
 /* cursor */
 extern void macdrv_set_cursor(CFStringRef name, CFArrayRef frames);
@@ -226,10 +228,6 @@ extern int macdrv_clip_cursor(CGRect rect);
 
 
 /* display */
-
-/* Used DISPLAY_DEVICE.StateFlags for adapters */
-#define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP      0x00000001
-#define DISPLAY_DEVICE_PRIMARY_DEVICE           0x00000004
 
 /* Represent a physical GPU in the PCI slots */
 struct macdrv_gpu

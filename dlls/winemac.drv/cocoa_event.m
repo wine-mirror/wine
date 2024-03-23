@@ -18,11 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#import "config.h"
+#import "macdrv.h"
+
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
 
-#include "macdrv_cocoa.h"
 #import "cocoa_event.h"
 #import "cocoa_app.h"
 #import "cocoa_window.h"
