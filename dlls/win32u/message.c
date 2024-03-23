@@ -473,7 +473,10 @@ static inline void *get_buffer_space( void **buffer, size_t size, size_t *buffer
 {
     if (*buffer_size < size)
     {
-        *buffer = malloc( size );
+        void *new;
+
+        if (!(new = realloc( *buffer, size ))) return NULL;
+        *buffer = new;
         *buffer_size = size;
     }
     return *buffer;
