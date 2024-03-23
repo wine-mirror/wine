@@ -21,9 +21,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(connectivity);
 
+static EventRegistrationToken dummy_cookie = {.value = 0xdeadbeef};
+
 struct network_information_statics
 {
     IActivationFactory IActivationFactory_iface;
+    INetworkInformationStatics INetworkInformationStatics_iface;
     LONG ref;
 };
 
@@ -44,6 +47,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_INetworkInformationStatics ))
+    {
+        *out = &impl->INetworkInformationStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -106,9 +116,83 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( network_information_statics, INetworkInformationStatics, struct network_information_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI network_information_statics_GetConnectionProfiles( INetworkInformationStatics *iface, IVectorView_ConnectionProfile **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_GetInternetConnectionProfile( INetworkInformationStatics *iface, IConnectionProfile **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_GetLanIdentifiers( INetworkInformationStatics *iface, IVectorView_LanIdentifier **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_GetHostNames( INetworkInformationStatics *iface, IVectorView_HostName **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_GetProxyConfigurationAsync( INetworkInformationStatics *iface, IUriRuntimeClass *uri, IAsyncOperation_ProxyConfiguration **value )
+{
+    FIXME( "iface %p, uri %p, value %p stub!\n", iface, uri, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_GetSortedEndpointPairs( INetworkInformationStatics *iface, IIterable_EndpointPair *endpoint,
+                                                                          HostNameSortOptions options, IVectorView_EndpointPair **value )
+{
+    FIXME( "iface %p, endpoint %p, options %d, value %p stub!\n", iface, endpoint, options, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_information_statics_add_NetworkStatusChanged( INetworkInformationStatics *iface, INetworkStatusChangedEventHandler *handler,
+                                                                            EventRegistrationToken *cookie )
+{
+    FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
+    *cookie = dummy_cookie;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_information_statics_remove_NetworkStatusChanged( INetworkInformationStatics *iface, EventRegistrationToken cookie )
+{
+    FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
+    return S_OK;
+}
+
+static const struct INetworkInformationStaticsVtbl network_information_statics_vtbl =
+{
+    network_information_statics_QueryInterface,
+    network_information_statics_AddRef,
+    network_information_statics_Release,
+    /* IInspectable methods */
+    network_information_statics_GetIids,
+    network_information_statics_GetRuntimeClassName,
+    network_information_statics_GetTrustLevel,
+    /* INetworkInformationStatics methods */
+    network_information_statics_GetConnectionProfiles,
+    network_information_statics_GetInternetConnectionProfile,
+    network_information_statics_GetLanIdentifiers,
+    network_information_statics_GetHostNames,
+    network_information_statics_GetProxyConfigurationAsync,
+    network_information_statics_GetSortedEndpointPairs,
+    network_information_statics_add_NetworkStatusChanged,
+    network_information_statics_remove_NetworkStatusChanged,
+};
+
 static struct network_information_statics network_information_statics =
 {
     {&factory_vtbl},
+    {&network_information_statics_vtbl},
     1,
 };
 
