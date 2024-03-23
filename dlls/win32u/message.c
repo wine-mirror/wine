@@ -469,9 +469,13 @@ static inline void push_string( struct packed_message *data, LPCWSTR str )
 }
 
 /* make sure that there is space for 'size' bytes in buffer, growing it if needed */
-static inline void *get_buffer_space( void **buffer, size_t size, size_t prev_size )
+static inline void *get_buffer_space( void **buffer, size_t size, size_t *buffer_size )
 {
-    if (prev_size < size) *buffer = malloc( size );
+    if (*buffer_size < size)
+    {
+        *buffer = malloc( size );
+        *buffer_size = size;
+    }
     return *buffer;
 }
 
@@ -522,7 +526,7 @@ BOOL set_keyboard_auto_repeat( BOOL enable )
  * Unpack a message received from another process.
  */
 static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                            void **buffer, size_t size )
+                            void **buffer, size_t size, size_t *buffer_size )
 {
     size_t minsize = 0;
     union packed_structs *ps = *buffer;
@@ -585,7 +589,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
-        if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), size )) return FALSE;
+        if (!get_buffer_space( buffer, (*wparam * sizeof(WCHAR)), buffer_size )) return FALSE;
         break;
     case WM_WININICHANGE:
         if (!*lparam) return TRUE;
@@ -726,17 +730,17 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         minsize = sizeof(SCROLLINFO);
         break;
     case SBM_GETSCROLLINFO:
-        if (!get_buffer_space( buffer, sizeof(SCROLLINFO), size )) return FALSE;
+        if (!get_buffer_space( buffer, sizeof(SCROLLINFO), buffer_size )) return FALSE;
         break;
     case SBM_GETSCROLLBARINFO:
-        if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO), size )) return FALSE;
+        if (!get_buffer_space( buffer, sizeof(SCROLLBARINFO), buffer_size )) return FALSE;
         break;
     case EM_GETSEL:
     case SBM_GETRANGE:
     case CB_GETEDITSEL:
         if (*wparam || *lparam)
         {
-            if (!get_buffer_space( buffer, 2 * sizeof(DWORD), size )) return FALSE;
+            if (!get_buffer_space( buffer, 2 * sizeof(DWORD), buffer_size )) return FALSE;
             if (*wparam) *wparam = (WPARAM)*buffer;
             if (*lparam) *lparam = (LPARAM)((DWORD *)*buffer + 1);
         }
@@ -744,7 +748,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case EM_GETRECT:
     case LB_GETITEMRECT:
     case CB_GETDROPPEDCONTROLRECT:
-        if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
+        if (!get_buffer_space( buffer, sizeof(RECT), buffer_size )) return FALSE;
         break;
     case EM_SETRECT:
     case EM_SETRECTNP:
@@ -755,7 +759,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         WORD *len_ptr, len;
         if (size < sizeof(WORD)) return FALSE;
         len = *(WORD *)*buffer;
-        if (!get_buffer_space( buffer, (len + 1) * sizeof(WCHAR), size )) return FALSE;
+        if (!get_buffer_space( buffer, (len + 1) * sizeof(WCHAR), buffer_size )) return FALSE;
         len_ptr = *buffer;
         len_ptr[0] = len_ptr[1] = len;
         *lparam = (LPARAM)(len_ptr + 1);
@@ -780,26 +784,24 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         break;
     case CB_GETLBTEXT:
     {
-        size_t prev_size = size;
         if (combobox_has_strings( hwnd ))
             size = (send_message( hwnd, CB_GETLBTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
         else
             size = sizeof(ULONG_PTR);
-        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
+        if (!get_buffer_space( buffer, size, buffer_size )) return FALSE;
         break;
     }
     case LB_GETTEXT:
     {
-        size_t prev_size = size;
         if (listbox_has_strings( hwnd ))
             size = (send_message( hwnd, LB_GETTEXTLEN, *wparam, 0 ) + 1) * sizeof(WCHAR);
         else
             size = sizeof(ULONG_PTR);
-        if (!get_buffer_space( buffer, size, prev_size )) return FALSE;
+        if (!get_buffer_space( buffer, size, buffer_size )) return FALSE;
         break;
     }
     case LB_GETSELITEMS:
-        if (!get_buffer_space( buffer, *wparam * sizeof(UINT), size )) return FALSE;
+        if (!get_buffer_space( buffer, *wparam * sizeof(UINT), buffer_size )) return FALSE;
         break;
     case WM_NEXTMENU:
     {
@@ -814,7 +816,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     case WM_SIZING:
     case WM_MOVING:
         minsize = sizeof(RECT);
-        if (!get_buffer_space( buffer, sizeof(RECT), size )) return FALSE;
+        if (!get_buffer_space( buffer, sizeof(RECT), buffer_size )) return FALSE;
         break;
     case WM_MDICREATE:
     {
@@ -880,7 +882,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
     }
     case WM_MDIGETACTIVE:
         if (!*lparam) return TRUE;
-        if (!get_buffer_space( buffer, sizeof(BOOL), size )) return FALSE;
+        if (!get_buffer_space( buffer, sizeof(BOOL), buffer_size )) return FALSE;
         break;
     case WM_DEVICECHANGE:
         if (!(*wparam & 0x8000)) return TRUE;
@@ -2788,7 +2790,7 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
         case MSG_NOTIFY:
             info.flags = ISMEX_NOTIFY;
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
-                                 &info.msg.lParam, &buffer, size ))
+                                 &info.msg.lParam, &buffer, size, &buffer_size ))
                 continue;
             break;
         case MSG_CALLBACK:
@@ -2866,7 +2868,7 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
-                                 &info.msg.lParam, &buffer, size ))
+                                 &info.msg.lParam, &buffer, size, &buffer_size ))
             {
                 /* ignore it */
                 reply_message( &info, 0, &info.msg );
