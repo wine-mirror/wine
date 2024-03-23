@@ -34,6 +34,7 @@
 
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
 
+WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 @interface NSWindow (PrivatePreventsActivation)
 

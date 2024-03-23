@@ -36,6 +36,8 @@
 #define NSBitmapImageFileTypeTIFF       NSTIFFFileType
 #endif
 
+WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
+
 static int owned_change_count = -1;
 static int change_count = -1;
 
