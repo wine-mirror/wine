@@ -4495,7 +4495,6 @@ HRESULT d2d_d3d_create_render_target(struct d2d_device *device, IDXGISurface *su
         {
             WARN("Failed to create target bitmap, hr %#lx.\n", hr);
             IUnknown_Release(&object->IUnknown_iface);
-            free(object);
             return hr;
         }
 
