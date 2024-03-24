@@ -2669,7 +2669,7 @@ static struct emf *emf_create( HDC hdc, const RECT *rect, const WCHAR *descripti
     size = sizeof(ENHMETAHEADER) + aligned_size(length);
 
     if (!(emf->emh = HeapAlloc( GetProcessHeap(), 0, size )) ||
-        !(emf->handles = HeapAlloc( GetProcessHeap(), 0,
+        !(emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                 HANDLE_LIST_INC * sizeof(emf->handles[0]) )))
     {
         HeapFree( GetProcessHeap(), 0, emf->emh );
