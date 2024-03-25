@@ -3378,6 +3378,46 @@ static void create_d3d_sample(IDirect3DDeviceManager9 *manager, const GUID *subt
     IDirect3DSurface9_Release(surface);
 }
 
+#define check_presenter_output(a, b, c, d) check_presenter_output_(__LINE__, a, b, c, d)
+static DWORD check_presenter_output_(int line, IMFVideoPresenter *presenter, const BITMAPINFOHEADER *expect_header,
+        const WCHAR *resource, const RECT *rect)
+{
+    BITMAPINFOHEADER header = {.biSize = sizeof(BITMAPINFOHEADER)};
+    IMFVideoDisplayControl *display_control;
+    DWORD diff, data_size;
+    LONGLONG timestamp;
+    BYTE *data;
+    HRESULT hr;
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
+    if (hr == MF_E_INVALIDREQUEST)
+    {
+        Sleep(500);
+        hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
+    }
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFVideoDisplayControl_Release(display_control);
+
+    ok_(__FILE__, line)(header.biSize == expect_header->biSize, "Unexpected biSize %#lx\n", header.biSize);
+    ok_(__FILE__, line)(header.biWidth == expect_header->biWidth, "Unexpected biWidth %#lx\n", header.biWidth);
+    ok_(__FILE__, line)(header.biHeight == expect_header->biHeight, "Unexpected biHeight %#lx\n", header.biHeight);
+    ok_(__FILE__, line)(header.biPlanes == expect_header->biPlanes, "Unexpected biPlanes %#x\n", header.biPlanes);
+    ok_(__FILE__, line)(header.biBitCount == expect_header->biBitCount, "Unexpected biBitCount %#x\n", header.biBitCount);
+    ok_(__FILE__, line)(header.biCompression == expect_header->biCompression, "Unexpected biCompression %#lx\n", header.biCompression);
+    ok_(__FILE__, line)(header.biSizeImage == expect_header->biSizeImage, "Unexpected biSizeImage %#lx\n", header.biSizeImage);
+    ok_(__FILE__, line)(header.biXPelsPerMeter == expect_header->biXPelsPerMeter, "Unexpected biXPelsPerMeter %#lx\n", header.biXPelsPerMeter);
+    ok_(__FILE__, line)(header.biYPelsPerMeter == expect_header->biYPelsPerMeter, "Unexpected biYPelsPerMeter %#lx\n", header.biYPelsPerMeter);
+    ok_(__FILE__, line)(header.biClrUsed == expect_header->biClrUsed, "Unexpected biClrUsed %#lx\n", header.biClrUsed);
+    ok_(__FILE__, line)(header.biClrImportant == expect_header->biClrImportant, "Unexpected biClrImportant %#lx\n", header.biClrImportant);
+
+    diff = check_rgb32_data(resource, data, header.biSizeImage, rect);
+    CoTaskMemFree(data);
+
+    return diff;
+}
+
 static void test_presenter_orientation(const GUID *subtype)
 {
     IMFTopologyServiceLookupClient *lookup_client;
@@ -3389,19 +3429,15 @@ static void test_presenter_orientation(const GUID *subtype)
         .biCompression = BI_RGB,
         .biSizeImage = 96 * 96 * 4,
     };
-    BITMAPINFOHEADER header = {.biSize = sizeof(BITMAPINFOHEADER)};
-    IMFVideoDisplayControl *display_control;
     IDirect3DDeviceManager9 *manager;
     IMFVideoPresenter *presenter;
     IMFMediaType *video_type;
-    DWORD diff, data_size;
     struct test_host host;
     IMFTransform *mixer;
-    LONGLONG timestamp;
     IMFSample *sample;
     HWND window;
-    BYTE *data;
     HRESULT hr;
+    DWORD diff;
     RECT rect;
 
     window = create_window();
@@ -3456,33 +3492,9 @@ static void test_presenter_orientation(const GUID *subtype)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFSample_Release(sample);
 
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
-    if (hr == MF_E_INVALIDREQUEST)
-    {
-        Sleep(500);
-        hr = IMFVideoDisplayControl_GetCurrentImage(display_control, &header, &data, &data_size, &timestamp);
-    }
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IMFVideoDisplayControl_Release(display_control);
-
-    ok(header.biSize == expect_header.biSize, "Unexpected biSize %#lx\n", header.biSize);
-    ok(header.biWidth == expect_header.biWidth, "Unexpected biWidth %#lx\n", header.biWidth);
-    ok(header.biHeight == expect_header.biHeight, "Unexpected biHeight %#lx\n", header.biHeight);
-    ok(header.biPlanes == expect_header.biPlanes, "Unexpected biPlanes %#x\n", header.biPlanes);
-    ok(header.biBitCount == expect_header.biBitCount, "Unexpected biBitCount %#x\n", header.biBitCount);
-    ok(header.biCompression == expect_header.biCompression, "Unexpected biCompression %#lx\n", header.biCompression);
-    ok(header.biSizeImage == expect_header.biSizeImage, "Unexpected biSizeImage %#lx\n", header.biSizeImage);
-    ok(header.biXPelsPerMeter == expect_header.biXPelsPerMeter, "Unexpected biXPelsPerMeter %#lx\n", header.biXPelsPerMeter);
-    ok(header.biYPelsPerMeter == expect_header.biYPelsPerMeter, "Unexpected biYPelsPerMeter %#lx\n", header.biYPelsPerMeter);
-    ok(header.biClrUsed == expect_header.biClrUsed, "Unexpected biClrUsed %#lx\n", header.biClrUsed);
-    ok(header.biClrImportant == expect_header.biClrImportant, "Unexpected biClrImportant %#lx\n", header.biClrImportant);
-
-    SetRect(&rect, 0, 0, header.biWidth, header.biHeight);
-    diff = check_rgb32_data(L"rgb32frame-flip.bmp", data, header.biSizeImage, &rect);
+    SetRect(&rect, 0, 0, expect_header.biWidth, expect_header.biHeight);
+    diff = check_presenter_output(presenter, &expect_header, L"rgb32frame-flip.bmp", &rect);
     ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
-    CoTaskMemFree(data);
 
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
