@@ -39,10 +39,13 @@ DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #include "mferror.h"
 #include "mfreadwrite.h"
 #include "propvarutil.h"
+#include "initguid.h"
 #include "d3d9.h"
 #include "dxva2api.h"
 
 #include "wine/test.h"
+
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_TEST,MAKEFOURCC('T','E','S','T'));
 
 struct attribute_desc
 {
@@ -2255,6 +2258,526 @@ skip_tests:
     winetest_pop_context();
 }
 
+struct test_decoder
+{
+    IMFTransform IMFTransform_iface;
+    LONG refcount;
+
+    IMFMediaType *input_type;
+    IMFMediaType *output_type;
+
+    MFVIDEOFORMAT output_format;
+    HRESULT next_output;
+};
+
+static struct test_decoder *test_decoder_from_IMFTransform(IMFTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_decoder, IMFTransform_iface);
+}
+
+static HRESULT WINAPI test_decoder_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+            IsEqualGUID(iid, &IID_IMFTransform))
+    {
+        IMFTransform_AddRef(&decoder->IMFTransform_iface);
+        *out = &decoder->IMFTransform_iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_decoder_AddRef(IMFTransform *iface)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    ULONG refcount = InterlockedIncrement(&decoder->refcount);
+    return refcount;
+}
+
+static ULONG WINAPI test_decoder_Release(IMFTransform *iface)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    ULONG refcount = InterlockedDecrement(&decoder->refcount);
+
+    if (!refcount)
+    {
+        if (decoder->input_type)
+            IMFMediaType_Release(decoder->input_type);
+        if (decoder->output_type)
+            IMFMediaType_Release(decoder->output_type);
+        free(decoder);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI test_decoder_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
+        DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
+{
+    *inputs = *outputs = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_decoder_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
+        DWORD output_size, DWORD *outputs)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    UINT64 frame_size;
+    GUID subtype;
+
+    if (!decoder->output_type || FAILED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_SIZE, &frame_size)))
+        frame_size = (UINT64)96 << 32 | 96;
+    if (!decoder->output_type || FAILED(IMFMediaType_GetGUID(decoder->output_type, &MF_MT_SUBTYPE, &subtype)))
+        subtype = MFVideoFormat_YUY2;
+
+    memset(info, 0, sizeof(*info));
+    return MFCalculateImageSize(&MFVideoFormat_RGB32, (UINT32)frame_size, frame_size >> 32, (UINT32 *)&info->cbSize);
+}
+
+static HRESULT WINAPI test_decoder_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_DeleteInputStream(IMFTransform *iface, DWORD id)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static void test_decoder_set_output_format(IMFTransform *iface, const MFVIDEOFORMAT *output_format)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    decoder->output_format = *output_format;
+}
+
+static HRESULT WINAPI test_decoder_GetOutputAvailableType(IMFTransform *iface, DWORD id,
+        DWORD index, IMFMediaType **type)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    const GUID subtypes[] =
+    {
+        MFVideoFormat_NV12,
+        MFVideoFormat_YUY2,
+    };
+    MFVIDEOFORMAT format =
+    {
+        .dwSize = sizeof(format),
+        .videoInfo =
+        {
+            .dwWidth = 96,
+            .dwHeight = 96,
+        },
+    };
+    HRESULT hr;
+
+    *type = NULL;
+    if (index >= ARRAY_SIZE(subtypes))
+        return MF_E_NO_MORE_TYPES;
+
+    if (decoder->output_format.dwSize)
+        format = decoder->output_format;
+    format.guidFormat = subtypes[index];
+
+    hr = MFCreateMediaType(type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitMediaTypeFromMFVideoFormat(*type, &format, sizeof(format));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    return hr;
+}
+
+static HRESULT WINAPI test_decoder_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+    if (decoder->input_type)
+        IMFMediaType_Release(decoder->input_type);
+    if ((decoder->input_type = type))
+        IMFMediaType_AddRef(decoder->input_type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_decoder_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+    if (decoder->output_type)
+        IMFMediaType_Release(decoder->output_type);
+    if ((decoder->output_type = type))
+        IMFMediaType_AddRef(decoder->output_type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_decoder_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    if (!(*type = decoder->input_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_decoder_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    if (!(*type = decoder->output_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_decoder_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_decoder_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
+{
+    switch (message)
+    {
+    case MFT_MESSAGE_COMMAND_FLUSH:
+    case MFT_MESSAGE_NOTIFY_BEGIN_STREAMING:
+    case MFT_MESSAGE_NOTIFY_END_STREAMING:
+    case MFT_MESSAGE_NOTIFY_END_OF_STREAM:
+    case MFT_MESSAGE_NOTIFY_START_OF_STREAM:
+        return S_OK;
+
+    default:
+        ok(0, "Unexpected call.\n");
+        return E_NOTIMPL;
+    }
+}
+
+static HRESULT WINAPI test_decoder_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+{
+    return S_OK;
+}
+
+static void test_decoder_set_next_output(IMFTransform *iface, HRESULT hr)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    decoder->next_output = hr;
+}
+
+static HRESULT WINAPI test_decoder_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *data, DWORD *status)
+{
+    struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+
+    if (decoder->next_output == MF_E_TRANSFORM_STREAM_CHANGE)
+    {
+        data[0].dwStatus = MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
+        decoder->next_output = S_OK;
+        return MF_E_TRANSFORM_STREAM_CHANGE;
+    }
+
+    if (decoder->next_output == S_OK)
+    {
+        decoder->next_output = MF_E_TRANSFORM_NEED_MORE_INPUT;
+        return S_OK;
+    }
+
+    return decoder->next_output;
+}
+
+static const IMFTransformVtbl test_decoder_vtbl =
+{
+    test_decoder_QueryInterface,
+    test_decoder_AddRef,
+    test_decoder_Release,
+    test_decoder_GetStreamLimits,
+    test_decoder_GetStreamCount,
+    test_decoder_GetStreamIDs,
+    test_decoder_GetInputStreamInfo,
+    test_decoder_GetOutputStreamInfo,
+    test_decoder_GetAttributes,
+    test_decoder_GetInputStreamAttributes,
+    test_decoder_GetOutputStreamAttributes,
+    test_decoder_DeleteInputStream,
+    test_decoder_AddInputStreams,
+    test_decoder_GetInputAvailableType,
+    test_decoder_GetOutputAvailableType,
+    test_decoder_SetInputType,
+    test_decoder_SetOutputType,
+    test_decoder_GetInputCurrentType,
+    test_decoder_GetOutputCurrentType,
+    test_decoder_GetInputStatus,
+    test_decoder_GetOutputStatus,
+    test_decoder_SetOutputBounds,
+    test_decoder_ProcessEvent,
+    test_decoder_ProcessMessage,
+    test_decoder_ProcessInput,
+    test_decoder_ProcessOutput,
+};
+
+static HRESULT WINAPI test_mft_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IClassFactory) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_mft_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_mft_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI test_mft_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **obj)
+{
+    struct test_decoder *decoder;
+
+    if (!(decoder = calloc(1, sizeof(*decoder))))
+        return E_OUTOFMEMORY;
+    decoder->IMFTransform_iface.lpVtbl = &test_decoder_vtbl;
+    decoder->refcount = 1;
+
+    *obj = &decoder->IMFTransform_iface;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_mft_factory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl test_mft_factory_vtbl =
+{
+    test_mft_factory_QueryInterface,
+    test_mft_factory_AddRef,
+    test_mft_factory_Release,
+    test_mft_factory_CreateInstance,
+    test_mft_factory_LockServer,
+};
+
+static void test_source_reader_transform_stream_change(void)
+{
+    static const struct attribute_desc test_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_TEST),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        {0},
+    };
+    static const struct attribute_desc yuy2_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        {0},
+    };
+    static const struct attribute_desc yuy2_expect_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 96 * 2, .todo = TRUE),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 96 * 96 * 2, .todo = TRUE),
+        {0},
+    };
+    static const struct attribute_desc yuy2_expect_new_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2, .todo_value = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 128 * 2, .todo_value = TRUE),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 128 * 128 * 2, .todo_value = TRUE),
+        {0},
+    };
+    const MFT_REGISTER_TYPE_INFO output_info[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+    };
+    const MFT_REGISTER_TYPE_INFO input_info[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_TEST},
+    };
+    MFVIDEOFORMAT output_format = {.dwSize = sizeof(output_format)};
+    IClassFactory factory = {.lpVtbl = &test_mft_factory_vtbl};
+    IMFStreamDescriptor *video_stream;
+    IMFSourceReaderEx *reader_ex;
+    IMFTransform *test_decoder;
+    IMFMediaType *media_type;
+    IMFSourceReader *reader;
+    IMFMediaSource *source;
+    LONGLONG timestamp;
+    DWORD index, flags;
+    IMFSample *sample;
+    GUID category;
+    HRESULT hr;
+
+
+    hr = MFTRegisterLocal(&factory, &MFT_CATEGORY_VIDEO_DECODER, L"Test Decoder", 0,
+            ARRAY_SIZE(input_info), input_info, ARRAY_SIZE(output_info), output_info);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* test source reader with a custom source */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, test_stream_type_desc, -1);
+    hr = MFCreateStreamDescriptor(0, 1, &media_type, &video_stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    source = create_test_source(&video_stream, 1);
+    ok(!!source, "Failed to create test source.\n");
+    IMFStreamDescriptor_Release(video_stream);
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaSource_Release(source);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+
+    hr = IMFSourceReader_GetNativeMediaType(reader, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, test_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, test_stream_type_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, yuy2_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, yuy2_expect_desc, -1);
+    IMFMediaType_Release(media_type);
+
+
+
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, &category, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, NULL, &test_decoder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(test_decoder->lpVtbl == &test_decoder_vtbl, "got unexpected transform\n");
+    IMFSourceReaderEx_Release(reader_ex);
+
+    fail_request_sample = FALSE;
+
+    test_decoder_set_next_output(test_decoder, MF_E_TRANSFORM_STREAM_CHANGE);
+
+    output_format.videoInfo.dwHeight = 128;
+    output_format.videoInfo.dwWidth = 128;
+    test_decoder_set_output_format(test_decoder, &output_format);
+
+    sample = (void *)0xdeadbeef;
+    index = flags = timestamp = 0xdeadbeef;
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, &index, &flags, &timestamp, &sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(index == 0, "got %lu.\n", index);
+    ok(flags == MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED, "got %lu.\n", flags);
+    ok(timestamp == 0, "got %I64d.\n", timestamp);
+    ok(sample != (void *)0xdeadbeef, "got %p.\n", sample);
+    IMFSample_Release(sample);
+
+    hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, yuy2_expect_new_desc, -1);
+    IMFMediaType_Release(media_type);
+
+    fail_request_sample = TRUE;
+
+    IMFTransform_Release(test_decoder);
+
+    IMFSourceReader_Release(reader);
+
+    hr = MFTUnregisterLocal(&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -2272,6 +2795,7 @@ START_TEST(mfplat)
     test_source_reader_transforms(FALSE, FALSE);
     test_source_reader_transforms(TRUE, FALSE);
     test_source_reader_transforms(FALSE, TRUE);
+    test_source_reader_transform_stream_change();
     test_reader_d3d9();
     test_sink_writer_create();
     test_sink_writer_mp4();
