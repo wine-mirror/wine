@@ -500,11 +500,11 @@ warnings:
 
 typedecl:
 	  enumdef
-	| tENUM aIDENTIFIER                     { $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
+	| tENUM typename                        { $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
 	| structdef
-	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
+	| tSTRUCT typename                      { $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
 	| uniondef
-	| tUNION aIDENTIFIER                    { $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
+	| tUNION typename                       { $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
 	| attributes enumdef                    { $$ = $2; $$->attrs = check_enum_attrs($1); }
 	| attributes structdef                  { $$ = $2; $$->attrs = check_struct_attrs($1); }
 	| attributes uniondef                   { $$ = $2; $$->attrs = check_union_attrs($1); }
@@ -1338,17 +1338,17 @@ structdef: tSTRUCT m_typename '{' fields '}'	{ $$ = type_new_struct($2, current_
 	;
 
 unqualified_type:
-	  tVOID					{ $$ = type_new_void(); }
-	| base_type				{ $$ = $1; }
-	| enumdef				{ $$ = $1; }
-	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
-	| structdef				{ $$ = $1; }
-	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
-	| uniondef				{ $$ = $1; }
-	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
-	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
-	| aKNOWNTYPE				{ $$ = find_type_or_error(current_namespace, $1); }
-	;
+          tVOID                                 { $$ = type_new_void(); }
+        | base_type                             { $$ = $1; }
+        | enumdef                               { $$ = $1; }
+        | tENUM typename                        { $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
+        | structdef                             { $$ = $1; }
+        | tSTRUCT typename                      { $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
+        | uniondef                              { $$ = $1; }
+        | tUNION typename                       { $$ = type_new_nonencapsulated_union($2, current_namespace, FALSE, NULL); }
+        | tSAFEARRAY '(' type ')'               { $$ = make_safearray($3); }
+        | aKNOWNTYPE                            { $$ = find_type_or_error(current_namespace, $1); }
+        ;
 
 type:
 	  unqualified_type
