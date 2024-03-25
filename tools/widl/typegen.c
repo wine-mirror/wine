@@ -5055,7 +5055,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, &arg->declspec, NAME_DEFAULT, TRUE, TRUE );
+        write_type_left( file, &arg->declspec, NAME_DEFAULT, false, TRUE );
         if (needs_space_after( arg->declspec.type )) fputc( ' ', file );
         if (is_array( arg->declspec.type ) && !type_array_is_decl_as_ptr( arg->declspec.type )) fputc( '*', file );
 
@@ -5071,7 +5071,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (add_retval && !is_void( retval->declspec.type ))
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, &retval->declspec, NAME_DEFAULT, TRUE, TRUE );
+        write_type_left( file, &retval->declspec, NAME_DEFAULT, false, TRUE );
         if (needs_space_after( retval->declspec.type )) fputc( ' ', file );
         if (!is_array( retval->declspec.type ) && !is_ptr( retval->declspec.type ) &&
             type_memsize( retval->declspec.type ) != pointer_size)
@@ -5122,9 +5122,9 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         {
             decl_spec_t ds = {.type = (type_t *)eval->cont_type};
             print_file(file, 1, "%s", "");
-            write_type_left(file, &ds, NAME_DEFAULT, TRUE, TRUE);
+            write_type_left(file, &ds, NAME_DEFAULT, false, TRUE);
             fprintf(file, " *%s = (", var_name);
-            write_type_left(file, &ds, NAME_DEFAULT, TRUE, TRUE);
+            write_type_left(file, &ds, NAME_DEFAULT, false, TRUE);
             fprintf(file, " *)(pStubMsg->StackTop - %u);\n", eval->baseoff);
         }
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */

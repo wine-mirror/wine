@@ -22,6 +22,7 @@
 #define __WIDL_WIDLTYPES_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <assert.h>
 #include "ndrtypes.h"
 #include "wine/list.h"
@@ -541,7 +542,8 @@ struct _var_t {
 
   struct location where;
 
-  unsigned int declonly : 1;
+  /* Should we define the UDT in this var, when writing a header? */
+  unsigned int is_defined : 1;
 
   /* parser-internal */
   struct list entry;
@@ -622,7 +624,9 @@ struct _statement_t {
         typelib_t *lib;
         typeref_list_t *type_list;
     } u;
-    unsigned int declonly : 1; /* for STMT_TYPE and STMT_TYPEDEF */
+    /* For STMT_TYPE and STMT_TYPEDEF, should we define the UDT in this
+     * statement, when writing a header? */
+    unsigned int is_defined : 1;
 };
 
 struct _warning_t {

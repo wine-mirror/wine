@@ -87,7 +87,7 @@ static statement_t *make_statement_pragma(const char *str);
 static statement_t *make_statement_cppquote(const char *str);
 static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
-static statement_t *make_statement_typedef(var_list_t *names, int declonly);
+static statement_t *make_statement_typedef(var_list_t *names, bool is_defined);
 static statement_t *make_statement_import(const char *str);
 static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params);
 static statement_t *make_statement_delegate(type_t *ret, var_list_t *args);
@@ -1359,7 +1359,7 @@ type:
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 						{ $1 = append_attribs($1, $3);
 						  reg_typedefs( @$, $4, $5, check_typedef_attrs( $1 ) );
-						  $$ = make_statement_typedef($5, !$4->type->defined);
+						  $$ = make_statement_typedef($5, $4->type->defined);
 						}
 	;
 
@@ -1719,7 +1719,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
   v->declspec.type = decl->type;
   v->declspec.qualifier = decl->qualifier;
   v->attrs = attrs;
-  v->declonly = !type->defined;
+  v->is_defined = type->defined;
 
   if (is_attr(type->attrs, ATTR_CALLCONV) && !is_func(type))
     error_loc("calling convention applied to non-function type\n");
@@ -1922,7 +1922,7 @@ var_t *make_var(char *name)
   v->attrs = NULL;
   v->eval = NULL;
   init_location( &v->where, NULL, NULL );
-  v->declonly = FALSE;
+  v->is_defined = 1;
   return v;
 }
 
@@ -2756,7 +2756,7 @@ static statement_list_t *append_parameterized_type_stmts(statement_list_t *stmts
         {
         case STMT_TYPE:
             stmt->u.type = type_parameterized_type_specialize_define(stmt->u.type);
-            stmt->declonly = FALSE;
+            stmt->is_defined = 1;
             list_remove(&stmt->entry);
             stmts = append_statement(stmts, stmt);
             break;
@@ -2833,7 +2833,7 @@ static statement_t *make_statement_type_decl(type_t *type)
 {
     statement_t *stmt = make_statement(STMT_TYPE);
     stmt->u.type = type;
-    stmt->declonly = !type->defined;
+    stmt->is_defined = type->defined;
     return stmt;
 }
 
@@ -2904,7 +2904,7 @@ static statement_t *make_statement_module(type_t *type)
     return stmt;
 }
 
-static statement_t *make_statement_typedef(declarator_list_t *decls, int declonly)
+static statement_t *make_statement_typedef(declarator_list_t *decls, bool is_defined)
 {
     declarator_t *decl, *next;
     statement_t *stmt;
@@ -2913,7 +2913,7 @@ static statement_t *make_statement_typedef(declarator_list_t *decls, int declonl
 
     stmt = make_statement(STMT_TYPEDEF);
     stmt->u.type_list = NULL;
-    stmt->declonly = declonly;
+    stmt->is_defined = is_defined;
 
     LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
     {
