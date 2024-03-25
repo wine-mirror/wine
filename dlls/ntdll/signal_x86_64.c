@@ -127,75 +127,36 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "fxsave 0x100(%rcx)\n\t"         /* context->FltSave */
                    "ret" );
 
+
 /***********************************************************************
- *		exception_handler_call_wrapper
+ *		call_seh_handler
  */
 #ifdef __WINE_PE_BUILD
-DWORD WINAPI exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
-                                      CONTEXT *context, DISPATCHER_CONTEXT *dispatch );
-
-C_ASSERT( offsetof(DISPATCHER_CONTEXT, LanguageHandler) == 0x30 );
-
-__ASM_GLOBAL_FUNC( exception_handler_call_wrapper,
+DWORD WINAPI call_seh_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
+                               CONTEXT *context, void *dispatch, PEXCEPTION_ROUTINE handler );
+__ASM_GLOBAL_FUNC( call_seh_handler,
                    "subq $0x28, %rsp\n\t"
                    ".seh_stackalloc 0x28\n\t"
                    ".seh_endprologue\n\t"
-                   "callq *0x30(%r9)\n\t"       /* dispatch->LanguageHandler */
+                   ".seh_handler nested_exception_handler, @except\n\t"
+                   "callq *0x50(%rsp)\n\t"      /* handler */
                    "nop\n\t"                    /* avoid epilogue so handler is called */
                    "addq $0x28, %rsp\n\t"
-                   "ret\n\t"
-                   ".seh_handler " __ASM_NAME("nested_exception_handler") ", @except\n\t" )
+                   "ret" )
 #else
-static DWORD exception_handler_call_wrapper( EXCEPTION_RECORD *rec, void *frame,
-                                             CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
+static DWORD call_seh_handler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
+                               CONTEXT *context, void *dispatch, PEXCEPTION_ROUTINE handler )
 {
     EXCEPTION_REGISTRATION_RECORD wrapper_frame;
     DWORD res;
 
     wrapper_frame.Handler = (PEXCEPTION_HANDLER)nested_exception_handler;
     __wine_push_frame( &wrapper_frame );
-    res = dispatch->LanguageHandler( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
+    res = handler( rec, (void *)frame, context, dispatch );
     __wine_pop_frame( &wrapper_frame );
     return res;
 }
 #endif
-
-/**********************************************************************
- *           call_handler
- *
- * Call a single exception handler.
- */
-static DWORD call_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
-{
-    DWORD res;
-
-    TRACE( "calling handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
-           dispatch->LanguageHandler, rec, (void *)dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
-    res = exception_handler_call_wrapper( rec, (void *)dispatch->EstablisherFrame, context, dispatch );
-    TRACE( "handler at %p returned %lu\n", dispatch->LanguageHandler, res );
-
-    rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
-    return res;
-}
-
-
-/**********************************************************************
- *           call_teb_handler
- *
- * Call a single exception handler from the TEB chain.
- * FIXME: Handle nested exceptions.
- */
-static DWORD call_teb_handler( EXCEPTION_RECORD *rec, CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
-                                  EXCEPTION_REGISTRATION_RECORD *teb_frame )
-{
-    DWORD res;
-
-    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatch=%p)\n",
-           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, dispatch );
-    res = teb_frame->Handler( rec, teb_frame, context, (EXCEPTION_REGISTRATION_RECORD**)dispatch );
-    TRACE( "handler at %p returned %lu\n", teb_frame->Handler, res );
-    return res;
-}
 
 
 /**********************************************************************
@@ -211,6 +172,7 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
     CONTEXT context;
     NTSTATUS status;
     ULONG_PTR frame;
+    DWORD res;
 
     context = *orig_context;
     context.ContextFlags &= ~0x40; /* Clear xstate flag. */
@@ -236,7 +198,14 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 
         if (dispatch.LanguageHandler)
         {
-            switch (call_handler( rec, orig_context, &dispatch ))
+            TRACE( "calling handler %p (rec=%p, frame=%I64x context=%p, dispatch=%p)\n",
+                   dispatch.LanguageHandler, rec, dispatch.EstablisherFrame, orig_context, &dispatch );
+            res = call_seh_handler( rec, dispatch.EstablisherFrame, orig_context,
+                                    &dispatch, dispatch.LanguageHandler );
+            rec->ExceptionFlags &= EXCEPTION_NONCONTINUABLE;
+            TRACE( "handler at %p returned %lu\n", dispatch.LanguageHandler, res );
+
+            switch (res)
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
@@ -258,10 +227,13 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
         /* hack: call wine handlers registered in the tib list */
         else while (is_valid_frame( (ULONG_PTR)teb_frame ) && (ULONG64)teb_frame < context.Rsp)
         {
-            TRACE( "found wine frame %p rsp %p handler %p\n",
-                   teb_frame, (void *)context.Rsp, teb_frame->Handler );
-            dispatch.EstablisherFrame = (ULONG64)teb_frame;
-            switch (call_teb_handler( rec, orig_context, &dispatch, teb_frame ))
+            TRACE( "calling TEB handler %p (rec=%p frame=%p context=%p dispatch=%p) sp=%I64x\n",
+                   teb_frame->Handler, rec, teb_frame, orig_context, &dispatch, context.Rsp );
+            res = call_seh_handler( rec, (ULONG_PTR)teb_frame, orig_context,
+                                    &dispatch, (PEXCEPTION_ROUTINE)teb_frame->Handler );
+            TRACE( "TEB handler at %p returned %lu\n", teb_frame->Handler, res );
+
+            switch (res)
             {
             case ExceptionContinueExecution:
                 if (rec->ExceptionFlags & EXCEPTION_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
