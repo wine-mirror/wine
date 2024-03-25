@@ -33,12 +33,23 @@
 
 static void test_IApiInformationStatics(void)
 {
+    static const struct
+    {
+        const WCHAR *name;
+        unsigned int max_major;
+    }
+    present_contracts[] =
+    {
+        { L"Windows.Foundation.UniversalApiContract", 10, },
+    };
+
     static const WCHAR *class_name = L"Windows.Foundation.Metadata.ApiInformation";
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IApiInformationStatics *statics = NULL;
     IActivationFactory *factory = NULL;
     HSTRING str, str2;
+    unsigned int i, j;
     BOOLEAN ret;
     HRESULT hr;
 
@@ -423,6 +434,21 @@ static void test_IApiInformationStatics(void)
     ok(ret == FALSE, "IsApiContractPresentByMajorAndMinor returned TRUE.\n");
 
     WindowsDeleteString(str);
+
+    /* Test API contracts presence. */
+    for (i = 0; i < ARRAY_SIZE(present_contracts); ++i)
+    {
+        hr = WindowsCreateString(present_contracts[i].name, wcslen(present_contracts[i].name), &str);
+        ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+        for (j = 0; j <= present_contracts[i].max_major; ++j)
+        {
+            ret = FALSE;
+            hr = IApiInformationStatics_IsApiContractPresentByMajor(statics, str, i, &ret);
+            ok(hr == S_OK, "IsApiContractPresentByMajor failed, hr %#lx, i %u, major %u.\n", hr, i, j);
+            ok(ret == TRUE, "IsApiContractPresentByMajor returned FALSE, i %u, major %u.\n", i, j);
+        }
+        WindowsDeleteString(str);
+    }
 
     IApiInformationStatics_Release(statics);
     IAgileObject_Release(agile_object);
