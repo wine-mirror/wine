@@ -20,14 +20,18 @@
 
 #include "windef.h"
 
-/* Generated from running the mf:transform tests on Windows */
+/* Generated from running the evr:evr tests on Windows */
 /* @makedep: rgb32frame.bmp */
 rgb32frame.bmp RCDATA rgb32frame.bmp
 
-/* Generated from running the mf:transform tests on Windows */
+/* Generated from running the evr:evr tests on Windows */
 /* @makedep: rgb32frame-flip.bmp */
 rgb32frame-flip.bmp RCDATA rgb32frame-flip.bmp
 
-/* Generated from running the mf:transform tests on Windows */
+/* Generated from running the evr:evr tests on Windows */
+/* @makedep: rgb32frame-crop.bmp */
+rgb32frame-crop.bmp RCDATA rgb32frame-crop.bmp
+
+/* Generated from running the evr:evr tests on Windows */
 /* @makedep: nv12frame.bmp */
 nv12frame.bmp RCDATA nv12frame.bmp

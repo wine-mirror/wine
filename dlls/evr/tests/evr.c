@@ -41,7 +41,7 @@ static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *lengt
 
 static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
 {
-    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD x, y, size, diff = 0, width = rect->right, height = rect->bottom;
 
     /* skip BMP header from the dump */
     size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
@@ -66,7 +66,7 @@ static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, co
 
 static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
 {
-    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD width = rect->right, height = rect->bottom;
     static const char magic[2] = "BM";
     struct
     {
@@ -3378,9 +3378,9 @@ static void create_d3d_sample(IDirect3DDeviceManager9 *manager, const GUID *subt
     IDirect3DSurface9_Release(surface);
 }
 
-#define check_presenter_output(a, b, c, d) check_presenter_output_(__LINE__, a, b, c, d)
+#define check_presenter_output(a, b, c, d) check_presenter_output_(__LINE__, a, b, c, d, FALSE)
 static DWORD check_presenter_output_(int line, IMFVideoPresenter *presenter, const BITMAPINFOHEADER *expect_header,
-        const WCHAR *resource, const RECT *rect)
+        const WCHAR *resource, const RECT *rect, BOOL todo)
 {
     BITMAPINFOHEADER header = {.biSize = sizeof(BITMAPINFOHEADER)};
     IMFVideoDisplayControl *display_control;
@@ -3401,11 +3401,14 @@ static DWORD check_presenter_output_(int line, IMFVideoPresenter *presenter, con
     IMFVideoDisplayControl_Release(display_control);
 
     ok_(__FILE__, line)(header.biSize == expect_header->biSize, "Unexpected biSize %#lx\n", header.biSize);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(header.biWidth == expect_header->biWidth, "Unexpected biWidth %#lx\n", header.biWidth);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(header.biHeight == expect_header->biHeight, "Unexpected biHeight %#lx\n", header.biHeight);
     ok_(__FILE__, line)(header.biPlanes == expect_header->biPlanes, "Unexpected biPlanes %#x\n", header.biPlanes);
     ok_(__FILE__, line)(header.biBitCount == expect_header->biBitCount, "Unexpected biBitCount %#x\n", header.biBitCount);
     ok_(__FILE__, line)(header.biCompression == expect_header->biCompression, "Unexpected biCompression %#lx\n", header.biCompression);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(header.biSizeImage == expect_header->biSizeImage, "Unexpected biSizeImage %#lx\n", header.biSizeImage);
     ok_(__FILE__, line)(header.biXPelsPerMeter == expect_header->biXPelsPerMeter, "Unexpected biXPelsPerMeter %#lx\n", header.biXPelsPerMeter);
     ok_(__FILE__, line)(header.biYPelsPerMeter == expect_header->biYPelsPerMeter, "Unexpected biYPelsPerMeter %#lx\n", header.biYPelsPerMeter);
@@ -3500,6 +3503,202 @@ static void test_presenter_orientation(const GUID *subtype)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
 skip_tests:
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+
+    IMFTransform_Release(mixer);
+    IMFVideoPresenter_Release(presenter);
+
+    DestroyWindow(window);
+}
+
+static void test_mixer_video_aperture(void)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    static const BITMAPINFOHEADER expect_header_crop =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 34, .biHeight = 56,
+        .biPlanes = 1, .biBitCount = 32,
+        .biCompression = BI_RGB,
+        .biSizeImage = 34 * 56 * 4,
+    };
+    static const BITMAPINFOHEADER expect_header =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 96, .biHeight = 96,
+        .biPlanes = 1, .biBitCount = 32,
+        .biCompression = BI_RGB,
+        .biSizeImage = 96 * 96 * 4,
+    };
+    const MFVideoArea aperture = {.Area = {.cx = 34, .cy = 56}};
+    IDirect3DDeviceManager9 *manager;
+    IMFVideoPresenter *presenter;
+    IMFMediaType *video_type;
+    struct test_host host;
+    IMFTransform *mixer;
+    IMFSample *sample;
+    HWND window;
+    HRESULT hr;
+    DWORD diff;
+    RECT rect;
+
+    window = create_window();
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#lx.\n", hr);
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    init_test_host(&host, mixer, presenter);
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFTopologyServiceLookupClient_Release(lookup_client);
+
+    /* Configure device and media types. */
+
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDirect3DDeviceManager9_Release(manager);
+
+
+    /* MF_MT_MINIMUM_DISPLAY_APERTURE / MF_MT_PAN_SCAN_APERTURE have no effect */
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(video_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    create_d3d_sample(manager, &MFVideoFormat_RGB32, &sample);
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    SetRect(&rect, 0, 0, expect_header.biWidth, expect_header.biHeight);
+    diff = check_presenter_output(presenter, &expect_header, L"rgb32frame-flip.bmp", &rect);
+    ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+
+    /* MF_MT_PAN_SCAN_APERTURE has an effect only when enabled */
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(video_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_PAN_SCAN_ENABLED, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    create_d3d_sample(manager, &MFVideoFormat_RGB32, &sample);
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    SetRect(&rect, 0, 0, expect_header_crop.biWidth, expect_header_crop.biHeight);
+    diff = check_presenter_output_(__LINE__, presenter, &expect_header_crop, L"rgb32frame-crop.bmp", &rect, TRUE);
+    todo_wine ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+
+    /* MF_MT_GEOMETRIC_APERTURE has an effect */
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetBlob(video_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    video_type = create_video_type(&MFVideoFormat_RGB32);
+    hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)expect_header.biWidth << 32 | expect_header.biHeight);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(video_type);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    create_d3d_sample(manager, &MFVideoFormat_RGB32, &sample);
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    SetRect(&rect, 0, 0, expect_header_crop.biWidth, expect_header_crop.biHeight);
+    diff = check_presenter_output_(__LINE__, presenter, &expect_header_crop, L"rgb32frame-crop.bmp", &rect, TRUE);
+    todo_wine ok(diff <= 5, "Unexpected %lu%% diff\n", diff);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_ENDSTREAMING, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFTopologyServiceLookupClient_ReleaseServicePointers(lookup_client);
@@ -3715,6 +3914,7 @@ START_TEST(evr)
     test_presenter_media_type();
     test_presenter_orientation(&MFVideoFormat_NV12);
     test_presenter_orientation(&MFVideoFormat_RGB32);
+    test_mixer_video_aperture();
     test_presenter_shutdown();
     test_mixer_output_rectangle();
     test_mixer_zorder();
