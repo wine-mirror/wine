@@ -515,7 +515,7 @@ cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 
 import_start: tIMPORT aSTRING ';'		{ $$ = $2; push_import( $2, &yylloc ); }
 	;
-import: import_start imp_statements aEOF	{ yyloc = pop_import(); }
+import: import_start imp_statements aEOF	{ yylloc = pop_import(); }
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
