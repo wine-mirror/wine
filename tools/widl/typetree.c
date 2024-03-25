@@ -530,15 +530,17 @@ type_t *type_new_void(void)
     return void_type;
 }
 
-static void define_type(type_t *type)
+static void define_type(type_t *type, const struct location *where)
 {
     if (type->defined)
         error_loc("type %s already defined at %s:%d\n", type->name, type->where.input_name, type->where.first_line );
 
     type->defined = TRUE;
+    type->where = *where;
 }
 
-type_t *type_new_enum(const char *name, struct namespace *namespace, int defined, var_list_t *enums)
+type_t *type_new_enum(const char *name, struct namespace *namespace,
+        int defined, var_list_t *enums, const struct location *where)
 {
     type_t *t = NULL;
 
@@ -558,13 +560,14 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
     {
         t->details.enumeration = xmalloc(sizeof(*t->details.enumeration));
         t->details.enumeration->enums = enums;
-        define_type(t);
+        define_type(t, where);
     }
 
     return t;
 }
 
-type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields)
+type_t *type_new_struct(char *name, struct namespace *namespace,
+        int defined, var_list_t *fields, const struct location *where)
 {
     type_t *t = NULL;
 
@@ -584,13 +587,14 @@ type_t *type_new_struct(char *name, struct namespace *namespace, int defined, va
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
-        define_type(t);
+        define_type(t, where);
     }
 
     return t;
 }
 
-type_t *type_new_nonencapsulated_union(const char *name, struct namespace *namespace, int defined, var_list_t *fields)
+type_t *type_new_nonencapsulated_union(const char *name, struct namespace *namespace,
+        int defined, var_list_t *fields, const struct location *where)
 {
     type_t *t = NULL;
 
@@ -610,13 +614,14 @@ type_t *type_new_nonencapsulated_union(const char *name, struct namespace *names
     {
         t->details.structure = xmalloc(sizeof(*t->details.structure));
         t->details.structure->fields = fields;
-        define_type(t);
+        define_type(t, where);
     }
 
     return t;
 }
 
-type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
+type_t *type_new_encapsulated_union(char *name, var_t *switch_field,
+        var_t *union_field, var_list_t *cases, const struct location *where)
 {
     type_t *t = NULL;
 
@@ -634,12 +639,12 @@ type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *unio
 
     if (!union_field)
         union_field = make_var(xstrdup("tagged_union"));
-    union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), NULL, TRUE, cases);
+    union_field->declspec.type = type_new_nonencapsulated_union(gen_name(), NULL, TRUE, cases, where);
 
     t->details.structure = xmalloc(sizeof(*t->details.structure));
     t->details.structure->fields = append_var(NULL, switch_field);
     t->details.structure->fields = append_var(t->details.structure->fields, union_field);
-    define_type(t);
+    define_type(t, where);
 
     return t;
 }
@@ -727,7 +732,8 @@ type_t *type_interface_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires)
+type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit,
+        statement_list_t *stmts, typeref_list_t *requires, const struct location *where)
 {
     if (iface == inherit)
         error_loc("interface %s can't inherit from itself\n",
@@ -741,7 +747,7 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = requires;
-    define_type(iface);
+    define_type(iface, where);
     compute_method_indexes(iface);
     return iface;
 }
@@ -755,7 +761,8 @@ type_t *type_dispinterface_declare(char *name)
     return type;
 }
 
-type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t *props, var_list_t *methods)
+type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs,
+        var_list_t *props, var_list_t *methods, const struct location *where)
 {
     iface->attrs = check_dispiface_attrs(iface->name, attrs);
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
@@ -767,12 +774,13 @@ type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t 
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = NULL;
-    define_type(iface);
+    define_type(iface, where);
     compute_method_indexes(iface);
     return iface;
 }
 
-type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *attrs, type_t *iface)
+type_t *type_dispinterface_define_from_iface(type_t *dispiface,
+        attr_list_t *attrs, type_t *iface, const struct location *where)
 {
     dispiface->attrs = check_dispiface_attrs(dispiface->name, attrs);
     dispiface->details.iface = xmalloc(sizeof(*dispiface->details.iface));
@@ -784,7 +792,7 @@ type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *att
     dispiface->details.iface->disp_inherit = iface;
     dispiface->details.iface->async_iface = NULL;
     dispiface->details.iface->requires = NULL;
-    define_type(dispiface);
+    define_type(dispiface, where);
     compute_method_indexes(dispiface);
     return dispiface;
 }
@@ -798,12 +806,13 @@ type_t *type_module_declare(char *name)
     return type;
 }
 
-type_t *type_module_define(type_t* module, attr_list_t *attrs, statement_list_t *stmts)
+type_t *type_module_define(type_t* module, attr_list_t *attrs,
+        statement_list_t *stmts, const struct location *where)
 {
     module->attrs = check_module_attrs(module->name, attrs);
     module->details.module = xmalloc(sizeof(*module->details.module));
     module->details.module->stmts = stmts;
-    define_type(module);
+    define_type(module, where);
     return module;
 }
 
@@ -816,11 +825,12 @@ type_t *type_coclass_declare(char *name)
     return type;
 }
 
-type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, typeref_list_t *ifaces)
+type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs,
+        typeref_list_t *ifaces, const struct location *where)
 {
     coclass->attrs = check_coclass_attrs(coclass->name, attrs);
     coclass->details.coclass.ifaces = ifaces;
-    define_type(coclass);
+    define_type(coclass, where);
     return coclass;
 }
 
@@ -833,14 +843,15 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, typeref_list_t *ifaces)
+type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs,
+        typeref_list_t *ifaces, const struct location *where)
 {
     typeref_t *ref, *required, *tmp;
     typeref_list_t *requires;
 
     runtimeclass->attrs = check_runtimeclass_attrs(runtimeclass->name, attrs);
     runtimeclass->details.runtimeclass.ifaces = ifaces;
-    define_type(runtimeclass);
+    define_type(runtimeclass, where);
     if (!type_runtimeclass_get_default_iface(runtimeclass, FALSE) &&
         !get_attrp(runtimeclass->attrs, ATTR_STATIC))
         error_loc("runtimeclass %s must have a default interface or static factory\n", runtimeclass->name);
@@ -878,10 +889,10 @@ type_t *type_apicontract_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
+type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs, const struct location *where)
 {
     apicontract->attrs = check_apicontract_attrs(apicontract->name, attrs);
-    define_type(apicontract);
+    define_type(apicontract, where);
     return apicontract;
 }
 
@@ -906,7 +917,8 @@ type_t *type_delegate_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs, statement_list_t *stmts)
+type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs,
+        statement_list_t *stmts, const struct location *where)
 {
     type_t *iface;
 
@@ -927,7 +939,7 @@ type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs, statement_lis
     compute_method_indexes(iface);
 
     delegate->details.delegate.iface = iface;
-    define_type(delegate);
+    define_type(delegate, where);
     compute_delegate_iface_names(delegate, NULL, NULL);
 
     return delegate;
@@ -944,7 +956,8 @@ type_t *type_parameterized_interface_declare(char *name, struct namespace *names
     return type;
 }
 
-type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires)
+type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit,
+        statement_list_t *stmts, typeref_list_t *requires, const struct location *where)
 {
     type_t *iface;
 
@@ -967,7 +980,7 @@ type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, ty
 
     iface->name = type->name;
 
-    define_type(type);
+    define_type(type, where);
     return type;
 }
 
@@ -982,7 +995,8 @@ type_t *type_parameterized_delegate_declare(char *name, struct namespace *namesp
     return type;
 }
 
-type_t *type_parameterized_delegate_define(type_t *type, attr_list_t *attrs, statement_list_t *stmts)
+type_t *type_parameterized_delegate_define(type_t *type, attr_list_t *attrs,
+        statement_list_t *stmts, const struct location *where)
 {
     type_t *iface, *delegate;
 
@@ -1006,7 +1020,7 @@ type_t *type_parameterized_delegate_define(type_t *type, attr_list_t *attrs, sta
     delegate->name = type->name;
     compute_delegate_iface_names(delegate, type, type->details.parameterized.params);
 
-    define_type(type);
+    define_type(type, where);
     return type;
 }
 
