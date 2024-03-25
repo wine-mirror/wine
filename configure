@@ -19167,7 +19167,7 @@ printf "%s\n" "$ac_cv_lib_soname_MoltenVK" >&6; }
 
 printf "%s\n" "#define SONAME_LIBMOLTENVK \"$ac_cv_lib_soname_MoltenVK\"" >>confdefs.h
 
-       printf "%s\n" "#define SONAME_LIBVULKAN $ac_cv_lib_soname_MoltenVK" >>confdefs.h
+       printf "%s\n" "#define SONAME_LIBVULKAN \"$ac_cv_lib_soname_MoltenVK\"" >>confdefs.h
 
 fi
     fi
