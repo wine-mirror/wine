@@ -20108,6 +20108,11 @@ msgstr "Error: Invalid query\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Error: Invalid key name\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+msgid "Supply a command\n"
+msgstr "פקודה שגויה.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&חדש...\tCtrl+N"

@@ -20633,6 +20633,12 @@ msgstr "Errore: nome della chiave non valido\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Errore: nome della chiave non valido\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Comando non corretto.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nuovo...\tCtrl+N"

@@ -20544,6 +20544,12 @@ msgstr "Hiba: Érvénytelen kulcsnév\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Hiba: Érvénytelen kulcsnév\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Rossz parancs.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"

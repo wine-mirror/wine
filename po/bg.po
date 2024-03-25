@@ -19255,6 +19255,10 @@ msgstr "Невалидни знаци в пътя.\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Невалидни знаци в пътя.\n"
 
+#: programs/wmic/wmic.rc:32
+msgid "Supply a command\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 #, fuzzy
 msgid "&New...\tCtrl+N"

@@ -18814,6 +18814,10 @@ msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπά
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
+#: programs/wmic/wmic.rc:32
+msgid "Supply a command\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr ""

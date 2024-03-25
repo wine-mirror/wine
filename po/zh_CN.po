@@ -19075,6 +19075,12 @@ msgstr "错误: 无效查询\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "错误: PATH 语法无效\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "错误指令。\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)...\tCtrl+N"

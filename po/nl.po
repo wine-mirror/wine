@@ -19435,6 +19435,12 @@ msgstr "Fout: Foutieve zoekopdracht\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Fout: Foutieve formulering voor PATH\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Verkeerd commando.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nieuw...\tCtrl+N"

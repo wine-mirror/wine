@@ -20567,6 +20567,12 @@ msgstr "Napaka: neveljavno ime ključa\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Napaka: neveljavno ime ključa\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Slab ukaz.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nova ...\tCtrl+N"

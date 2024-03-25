@@ -20618,6 +20618,12 @@ msgstr "خطأ : استعلام غير سلبم\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "خطأ : اسم المفتاح غير سليم\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "أمر غير سليم.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&جديد...\tCtrl+N"

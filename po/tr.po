@@ -19464,6 +19464,12 @@ msgstr "Hata: Geçersiz sorgu\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Hata: PATH için geçersiz sözdizimi\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Yanlış komut.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"

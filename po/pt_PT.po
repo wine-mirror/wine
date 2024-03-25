@@ -20257,6 +20257,12 @@ msgstr "Erro: Consulta inválida\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Erro: Sintaxe para PATH é inválida\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Mau comando.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Novo...\tCtrl+N"

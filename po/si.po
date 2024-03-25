@@ -19254,6 +19254,12 @@ msgstr "දෝෂය: අවලංගු විමසුම\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "දෝෂය: PATH එකේ වාග් රීති වලංගු නැහැ\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "හොඳ නැති විධානය.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "අලුත්... (&N)\tCtrl+N"

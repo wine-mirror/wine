@@ -19854,6 +19854,12 @@ msgstr "Error: nombre de clave inválido\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Error: nombre de clave inválido\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Comando inválido.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nuevo...\tCtrl+N"

@@ -28,4 +28,5 @@ STRINGTABLE
     STRING_ALIAS_NOT_FOUND, "Error: Alias not found\n"
     STRING_INVALID_QUERY, "Error: Invalid query\n"
     STRING_INVALID_PATH, "Error: Invalid syntax for PATH\n"
+    STRING_USAGE, "Supply a command\n"
 }

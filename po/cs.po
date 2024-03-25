@@ -20009,6 +20009,12 @@ msgstr "Chyba: chybný dotaz\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Chyba: Neplatná syntaxe pro PATH\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Špatný příkaz.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nový...\tCtrl+N"

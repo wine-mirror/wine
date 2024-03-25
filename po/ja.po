@@ -19338,6 +19338,12 @@ msgstr "エラー: クエリが無効です\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "エラー: PATH の構文が無効です\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "コマンドが不正です。\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"

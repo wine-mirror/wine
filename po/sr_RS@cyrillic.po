@@ -19885,6 +19885,10 @@ msgstr "Неисправна синтакса.\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Неисправна синтакса.\n"
 
+#: programs/wmic/wmic.rc:32
+msgid "Supply a command\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 #, fuzzy
 msgid "&New...\tCtrl+N"

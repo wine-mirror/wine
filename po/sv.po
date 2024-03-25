@@ -20213,6 +20213,12 @@ msgstr "Fel: Ogiltig fråga\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Fel: Ogiltig syntax för PATH\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Felaktigt kommando.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"

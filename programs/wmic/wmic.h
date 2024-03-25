@@ -22,3 +22,4 @@
 #define STRING_ALIAS_NOT_FOUND          102
 #define STRING_INVALID_QUERY            103
 #define STRING_INVALID_PATH             104
+#define STRING_USAGE                    105

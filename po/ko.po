@@ -19273,6 +19273,12 @@ msgstr "오류: 잘못된 질의입니다\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "오류: 잘못된 구문입니다\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "잘못된 명령.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"

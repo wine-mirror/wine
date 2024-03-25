@@ -19979,6 +19979,12 @@ msgstr "Error: Neispravan upit\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Greška: Neispravan naziv ključa\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Loša naredba.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Novo...\tCtrl+N"

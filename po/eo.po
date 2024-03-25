@@ -19526,6 +19526,10 @@ msgstr "Nevalida menda sintakso.\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Nevalida nomo de kunuzata aparato.\n"
 
+#: programs/wmic/wmic.rc:32
+msgid "Supply a command\n"
+msgstr ""
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Nova...\tStir+N"

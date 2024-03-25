@@ -20548,6 +20548,12 @@ msgstr "Fejl: Ugyldigt nøgle navn\n"
 msgid "Error: Invalid syntax for PATH\n"
 msgstr "Fejl: Ugyldigt nøgle navn\n"
 
+#: programs/wmic/wmic.rc:32
+#, fuzzy
+#| msgid "Bad command.\n"
+msgid "Supply a command\n"
+msgstr "Forkert kommando.\n"
+
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"
