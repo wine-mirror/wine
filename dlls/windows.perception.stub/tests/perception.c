@@ -32,19 +32,21 @@
 #include "windows.perception.spatial.surfaces.h"
 #define WIDL_using_Windows_Graphics_Holographic
 #include "windows.graphics.holographic.h"
+#include "holographicspaceinterop.h"
 
 #include "wine/test.h"
 
-#define check_interface( obj, iid ) check_interface_( __LINE__, obj, iid )
-static void check_interface_( unsigned int line, void *obj, const IID *iid )
+#define check_interface( obj, iid, can_be_broken ) check_interface_( __LINE__, obj, iid, can_be_broken )
+static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL can_be_broken )
 {
     IUnknown *iface = obj;
     IUnknown *unk;
     HRESULT hr;
 
     hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
-    ok_(__FILE__, line)( hr == S_OK, "got hr %#lx.\n", hr );
-    IUnknown_Release( unk );
+    ok_(__FILE__, line)( hr == S_OK || broken( can_be_broken && hr == E_NOINTERFACE ), "got hr %#lx.\n", hr );
+    if (SUCCEEDED(hr))
+        IUnknown_Release( unk );
 }
 
 static void test_ObserverStatics(void)
@@ -69,10 +71,10 @@ static void test_ObserverStatics(void)
         return;
     }
 
-    check_interface( factory, &IID_IUnknown );
-    check_interface( factory, &IID_IInspectable );
-    check_interface( factory, &IID_IAgileObject );
-    check_interface( factory, &IID_ISpatialSurfaceObserverStatics );
+    check_interface( factory, &IID_IUnknown, FALSE );
+    check_interface( factory, &IID_IInspectable, FALSE );
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_ISpatialSurfaceObserverStatics, FALSE );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialSurfaceObserverStatics2, (void **)&observer_statics2 );
     if (hr == E_NOINTERFACE) /* win1607 */
@@ -118,9 +120,10 @@ static void test_HolographicSpaceStatics(void)
         return;
     }
 
-    check_interface( factory, &IID_IUnknown );
-    check_interface( factory, &IID_IInspectable );
-    check_interface( factory, &IID_IAgileObject );
+    check_interface( factory, &IID_IUnknown, FALSE );
+    check_interface( factory, &IID_IInspectable, FALSE );
+    check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_IHolographicSpaceInterop, TRUE /* broken on Testbot Win1607 */ );
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IHolographicSpaceStatics2, (void **)&holographicspace_statics2 );
     if (hr == E_NOINTERFACE) /* win1607 */

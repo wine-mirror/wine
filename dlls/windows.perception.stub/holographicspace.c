@@ -27,6 +27,7 @@ struct holographicspace
     IActivationFactory IActivationFactory_iface;
     IHolographicSpaceStatics2 IHolographicSpaceStatics2_iface;
     IHolographicSpaceStatics3 IHolographicSpaceStatics3_iface;
+    IHolographicSpaceInterop IHolographicSpaceInterop_iface;
     LONG ref;
 };
 
@@ -61,6 +62,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IHolographicSpaceStatics3 ))
     {
         *out = &impl->IHolographicSpaceStatics3_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IHolographicSpaceInterop ))
+    {
+        *out = &impl->IHolographicSpaceInterop_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -193,11 +201,36 @@ static const struct IHolographicSpaceStatics3Vtbl holographicspace_statics3_vtbl
     holographicspace_statics3_get_IsConfigured,
 };
 
+DEFINE_IINSPECTABLE( holographicspace_interop, IHolographicSpaceInterop, struct holographicspace, IActivationFactory_iface )
+
+static HRESULT WINAPI holographicspace_interop_CreateForWindow( IHolographicSpaceInterop *iface,
+                                                                HWND window, REFIID iid, void **holographic_space )
+{
+    FIXME( "iface %p, window %p, iid %s, holographic_space %p.\n", iface, window, debugstr_guid( iid ), holographic_space );
+
+    *holographic_space = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IHolographicSpaceInteropVtbl holographicspace_interop_vtbl =
+{
+    holographicspace_interop_QueryInterface,
+    holographicspace_interop_AddRef,
+    holographicspace_interop_Release,
+    /* IInspectable methods */
+    holographicspace_interop_GetIids,
+    holographicspace_interop_GetRuntimeClassName,
+    holographicspace_interop_GetTrustLevel,
+    /* IHolographicSpaceInterop methods */
+    holographicspace_interop_CreateForWindow,
+};
+
 static struct holographicspace holographicspace_statics =
 {
     {&factory_vtbl},
     {&holographicspace_statics2_vtbl},
     {&holographicspace_statics3_vtbl},
+    {&holographicspace_interop_vtbl},
     1,
 };
 

@@ -36,6 +36,7 @@
 #include "windows.perception.spatial.surfaces.h"
 #define WIDL_using_Windows_Graphics_Holographic
 #include "windows.graphics.holographic.h"
+#include "holographicspaceinterop.h"
 
 extern IActivationFactory *observer_factory;
 extern IActivationFactory *holographicspace_factory;
