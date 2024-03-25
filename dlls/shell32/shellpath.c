@@ -3263,8 +3263,7 @@ static HRESULT create_extra_folders(void)
     ret = RegCreateKeyW( HKEY_CURRENT_USER, L"Environment", &hkey );
     if (ret) return HRESULT_FROM_WIN32( ret );
 
-    /* FIXME: should be under AppData, but we don't want spaces in the temp path */
-    hr = SHGetFolderPathAndSubDirW( 0, CSIDL_PROFILE | CSIDL_FLAG_CREATE, NULL,
+    hr = SHGetFolderPathAndSubDirW( 0, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, NULL,
                                     SHGFP_TYPE_DEFAULT, L"Temp", path );
     if (SUCCEEDED(hr))
     {
