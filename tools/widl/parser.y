@@ -1359,7 +1359,7 @@ type:
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 						{ $1 = append_attribs($1, $3);
 						  reg_typedefs( @$, $4, $5, check_typedef_attrs( $1 ) );
-						  $$ = make_statement_typedef($5, $4->type->defined);
+						  $$ = make_statement_typedef($5, $4->type->defined && !$4->type->defined_in_import);
 						}
 	;
 
@@ -1719,7 +1719,7 @@ static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator
   v->declspec.type = decl->type;
   v->declspec.qualifier = decl->qualifier;
   v->attrs = attrs;
-  v->is_defined = type->defined;
+  v->is_defined = type->defined && !type->defined_in_import;
 
   if (is_attr(type->attrs, ATTR_CALLCONV) && !is_func(type))
     error_loc("calling convention applied to non-function type\n");
@@ -2833,7 +2833,7 @@ static statement_t *make_statement_type_decl(type_t *type)
 {
     statement_t *stmt = make_statement(STMT_TYPE);
     stmt->u.type = type;
-    stmt->is_defined = type->defined;
+    stmt->is_defined = type->defined && !type->defined_in_import;
     return stmt;
 }
 

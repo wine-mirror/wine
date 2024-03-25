@@ -523,6 +523,7 @@ struct _type_t {
   struct location where;
   unsigned int ignore : 1;
   unsigned int defined : 1;
+  unsigned int defined_in_import : 1;
   unsigned int written : 1;
   unsigned int user_types_registered : 1;
   unsigned int tfswrite : 1;   /* if the type needs to be written to the TFS */

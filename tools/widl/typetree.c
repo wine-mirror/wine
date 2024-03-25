@@ -536,6 +536,7 @@ static void define_type(type_t *type, const struct location *where)
         error_loc("type %s already defined at %s:%d\n", type->name, type->where.input_name, type->where.first_line );
 
     type->defined = TRUE;
+    type->defined_in_import = parse_only;
     type->where = *where;
 }
 
@@ -935,6 +936,7 @@ type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs,
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = NULL;
+    define_type(iface, where);
     iface->defined = TRUE;
     compute_method_indexes(iface);
 
