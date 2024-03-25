@@ -1068,7 +1068,12 @@ static HRESULT WINAPI spvoice_SpeakStream(ISpVoice *iface, IStream *stream, DWOR
 
 static HRESULT WINAPI spvoice_GetStatus(ISpVoice *iface, SPVOICESTATUS *status, WCHAR **bookmark)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, status, bookmark);
+    static unsigned int once;
+
+    if (!once++)
+        FIXME("(%p, %p, %p): stub.\n", iface, status, bookmark);
+    else
+        WARN("(%p, %p, %p): stub.\n", iface, status, bookmark);
 
     return E_NOTIMPL;
 }
