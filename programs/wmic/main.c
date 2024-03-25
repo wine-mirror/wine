@@ -28,12 +28,14 @@
 #include "initguid.h"
 #include "objidl.h"
 #include "wbemcli.h"
+#include "shellapi.h"
 #include "wmic.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmic);
 
+#define MAX_STRING    4096
 static const struct
 {
     const WCHAR *alias;
@@ -333,14 +335,12 @@ done:
     return ret;
 }
 
-int __cdecl wmain(int argc, WCHAR *argv[])
+static int process_args( int argc, WCHAR *argv[] )
 {
     const WCHAR *class, *value;
     int i;
 
-    setlocale( LC_ALL, "" );
-
-    for (i = 1; i < argc && argv[i][0] == '/'; i++)
+    for (i = 0; i < argc && argv[i][0] == '/'; i++)
         WINE_FIXME( "command line switch %s not supported\n", debugstr_w(argv[i]) );
 
     if (i >= argc)
@@ -390,4 +390,44 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 not_supported:
     output_error( STRING_CMDLINE_NOT_SUPPORTED );
     return 1;
+}
+
+int __cdecl wmain(int argc, WCHAR *argv[])
+{
+    WCHAR cmd[MAX_STRING];
+    int ret = 0;
+
+    setlocale( LC_ALL, "" );
+
+    if (argc == 1)
+    {
+        fputws( L"wmic:root\\cli>", stdout );
+
+        while (fgetws(cmd, sizeof(cmd), stdin) != NULL)
+        {
+            cmd[wcslen(cmd)-1] = 0; /* remove trailing '\n' */
+
+            WINE_TRACE("command: %s\n", debugstr_w(cmd));
+            if (!wcsicmp( strip_spaces(cmd), L"exit" ) || !wcsicmp( strip_spaces(cmd), L"quit" ))
+                return 0;
+
+            if (!cmd[0])
+                output_error( STRING_USAGE );
+            else
+            {
+                int _argc;
+                WCHAR **_argv;
+
+                _argv = CommandLineToArgvW( strip_spaces(cmd), &_argc );
+                ret = process_args( _argc, _argv );
+                LocalFree(_argv);
+
+                output_newline();
+            }
+            fputws( L"wmic:root\\cli>", stdout );
+        }
+        return ret;
+    }
+
+    return process_args( argc - 1, &argv[1] );
 }

@@ -1,5 +1,5 @@
 MODULE    = wmic.exe
-IMPORTS   = oleaut32 ole32 user32
+IMPORTS   = oleaut32 ole32 user32 shell32
 
 EXTRADLLFLAGS = -mconsole -municode
 
