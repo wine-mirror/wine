@@ -4090,6 +4090,8 @@ static void test_h264_decoder(void)
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
             ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+            ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16, .todo = TRUE),
+            ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16, .todo = TRUE),
         },
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -4104,6 +4106,8 @@ static void test_h264_decoder(void)
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
             ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+            ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16, .todo = TRUE),
+            ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16, .todo = TRUE),
         },
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -4118,6 +4122,8 @@ static void test_h264_decoder(void)
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
             ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+            ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16, .todo = TRUE),
+            ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16, .todo = TRUE),
         },
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -4132,6 +4138,8 @@ static void test_h264_decoder(void)
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
             ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+            ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16, .todo = TRUE),
+            ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16, .todo = TRUE),
         },
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -4146,6 +4154,8 @@ static void test_h264_decoder(void)
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
             ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
             ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+            ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16, .todo = TRUE),
+            ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16, .todo = TRUE),
         },
     };
     const MFT_OUTPUT_STREAM_INFO initial_output_info =
