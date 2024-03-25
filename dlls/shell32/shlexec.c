@@ -1797,15 +1797,27 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     if (*sei_tmp.lpDirectory)
     {
+        LPWSTR buf;
         len = ExpandEnvironmentStringsW(sei_tmp.lpDirectory, NULL, 0);
         if (len > 0)
         {
-            LPWSTR buf;
             len++;
             buf = malloc(len * sizeof(WCHAR));
             ExpandEnvironmentStringsW(sei_tmp.lpDirectory, buf, len);
             if (wszDir != dirBuffer)
                 free(wszDir);
+            wszDir = buf;
+            sei_tmp.lpDirectory = wszDir;
+        }
+
+        len = GetFullPathNameW(sei_tmp.lpDirectory, 0, NULL, NULL);
+        if (len > 0)
+        {
+            len++;
+            buf = malloc(len * sizeof(WCHAR));
+            GetFullPathNameW(sei_tmp.lpDirectory, len, buf, NULL);
+            if (wszDir != dirBuffer)
+                    free(wszDir);
             wszDir = buf;
             sei_tmp.lpDirectory = wszDir;
         }
