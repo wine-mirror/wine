@@ -3318,6 +3318,66 @@ done:
     DestroyWindow(window);
 }
 
+static void create_d3d_sample(IDirect3DDeviceManager9 *manager, const GUID *subtype, IMFSample **sample)
+{
+    static const BITMAPINFOHEADER expect_header =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 96, .biHeight = 96,
+        .biPlanes = 1, .biBitCount = 32,
+        .biCompression = BI_RGB,
+        .biSizeImage = 96 * 96 * 4,
+    };
+    DWORD data_size, frame_data_len;
+    D3DLOCKED_RECT d3d_rect = {0};
+    IDirect3DSurface9 *surface;
+    const BYTE *frame_data;
+    LONG stride;
+    HRESULT hr;
+
+    if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
+    {
+        load_resource(L"nv12frame.bmp", &frame_data, &frame_data_len);
+        /* skip BMP header and RGB data from the dump */
+        data_size = *(DWORD *)(frame_data + 2);
+        frame_data_len = frame_data_len - data_size;
+        frame_data = frame_data + data_size;
+        ok(frame_data_len == 13824, "got length %lu\n", frame_data_len);
+    }
+    else
+    {
+        load_resource(L"rgb32frame.bmp", &frame_data, &frame_data_len);
+        /* skip BMP header from the dump */
+        data_size = *(DWORD *)(frame_data + 2 + 2 * sizeof(DWORD));
+        frame_data_len -= data_size;
+        frame_data += data_size;
+        ok(frame_data_len == 36864, "got length %lu\n", frame_data_len);
+    }
+
+    surface = create_surface(manager, subtype->Data1, expect_header.biWidth, expect_header.biHeight);
+    ok(!!surface, "Failed to create input surface.\n");
+    hr = IDirect3DSurface9_LockRect(surface, &d3d_rect, NULL, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (IsEqualGUID(subtype, &MFVideoFormat_RGB32))
+        memcpy(d3d_rect.pBits, frame_data, frame_data_len);
+    else if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
+    {
+        hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, expect_header.biWidth, &stride);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        frame_data += stride * expect_header.biHeight;
+        d3d_rect.pBits = (BYTE *)d3d_rect.pBits + d3d_rect.Pitch * expect_header.biHeight;
+        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight / 2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDirect3DSurface9_Release(surface);
+}
+
 static void test_presenter_orientation(const GUID *subtype)
 {
     IMFTopologyServiceLookupClient *lookup_client;
@@ -3331,18 +3391,14 @@ static void test_presenter_orientation(const GUID *subtype)
     };
     BITMAPINFOHEADER header = {.biSize = sizeof(BITMAPINFOHEADER)};
     IMFVideoDisplayControl *display_control;
-    DWORD diff, data_size, frame_data_len;
     IDirect3DDeviceManager9 *manager;
-    D3DLOCKED_RECT d3d_rect = {0};
     IMFVideoPresenter *presenter;
-    IDirect3DSurface9 *surface;
     IMFMediaType *video_type;
-    const BYTE *frame_data;
+    DWORD diff, data_size;
     struct test_host host;
     IMFTransform *mixer;
     LONGLONG timestamp;
     IMFSample *sample;
-    LONG stride;
     HWND window;
     BYTE *data;
     HRESULT hr;
@@ -3393,48 +3449,7 @@ static void test_presenter_orientation(const GUID *subtype)
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
-    {
-        load_resource(L"nv12frame.bmp", &frame_data, &frame_data_len);
-        /* skip BMP header and RGB data from the dump */
-        data_size = *(DWORD *)(frame_data + 2);
-        frame_data_len = frame_data_len - data_size;
-        frame_data = frame_data + data_size;
-        ok(frame_data_len == 13824, "got length %lu\n", frame_data_len);
-    }
-    else
-    {
-        load_resource(L"rgb32frame.bmp", &frame_data, &frame_data_len);
-        /* skip BMP header from the dump */
-        data_size = *(DWORD *)(frame_data + 2 + 2 * sizeof(DWORD));
-        frame_data_len -= data_size;
-        frame_data += data_size;
-        ok(frame_data_len == 36864, "got length %lu\n", frame_data_len);
-    }
-
-    surface = create_surface(manager, subtype->Data1, expect_header.biWidth, expect_header.biHeight);
-    ok(!!surface, "Failed to create input surface.\n");
-    hr = IDirect3DSurface9_LockRect(surface, &d3d_rect, NULL, 0);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (IsEqualGUID(subtype, &MFVideoFormat_RGB32))
-        memcpy(d3d_rect.pBits, frame_data, frame_data_len);
-    else if (IsEqualGUID(subtype, &MFVideoFormat_NV12))
-    {
-        hr = MFGetStrideForBitmapInfoHeader(subtype->Data1, expect_header.biWidth, &stride);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        frame_data += stride * expect_header.biHeight;
-        d3d_rect.pBits = (BYTE *)d3d_rect.pBits + d3d_rect.Pitch * expect_header.biHeight;
-        hr = MFCopyImage(d3d_rect.pBits, d3d_rect.Pitch, frame_data, stride, expect_header.biWidth, expect_header.biHeight / 2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    }
-    hr = IDirect3DSurface9_UnlockRect(surface);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    IDirect3DSurface9_Release(surface);
-
+    create_d3d_sample(manager, subtype, &sample);
     hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
