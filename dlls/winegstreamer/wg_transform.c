@@ -468,7 +468,7 @@ NTSTATUS wg_transform_create(void *args)
             if ((element = find_element(GST_ELEMENT_FACTORY_TYPE_PARSER, src_caps, parsed_caps))
                     && !append_element(transform->container, element, &first, &last))
                 goto out;
-            else
+            else if (!element)
             {
                 gst_caps_unref(parsed_caps);
                 parsed_caps = gst_caps_ref(src_caps);
