@@ -241,19 +241,23 @@ struct key_asymmetric_decrypt_params
     struct key  *key;
     UCHAR       *input;
     unsigned     input_len;
+    void        *padding;
     UCHAR       *output;
     ULONG        output_len;
     ULONG       *ret_len;
+    ULONG        flags;
 };
 
 struct key_asymmetric_encrypt_params
 {
     struct key  *key;
     UCHAR       *input;
-    unsigned    input_len;
+    unsigned     input_len;
+    void        *padding;
     UCHAR       *output;
-    ULONG       output_len;
+    ULONG        output_len;
     ULONG       *ret_len;
+    ULONG        flags;
 };
 
 struct key_asymmetric_duplicate_params

@@ -732,7 +732,7 @@ static NTSTATUS get_rsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR
     {
         *ret_size = sizeof(ULONG);
         if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
-        if (buf) *(ULONG *)buf = BCRYPT_SUPPORTED_PAD_PKCS1_SIG;
+        if (buf) *(ULONG *)buf = BCRYPT_SUPPORTED_PAD_PKCS1_SIG | BCRYPT_SUPPORTED_PAD_OAEP;
         return STATUS_SUCCESS;
     }
 
@@ -2254,7 +2254,7 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     }
     else
     {
-        if (flags & BCRYPT_PAD_NONE || flags & BCRYPT_PAD_OAEP)
+        if (flags & BCRYPT_PAD_NONE)
         {
             FIXME( "flags %#lx not implemented\n", flags );
             return STATUS_NOT_IMPLEMENTED;
@@ -2263,10 +2263,12 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
 
         asymmetric_params.input = input;
         asymmetric_params.input_len = input_len;
+        asymmetric_params.padding = padding;
         asymmetric_params.key = key;
         asymmetric_params.output = output;
         asymmetric_params.output_len = output_len;
         asymmetric_params.ret_len = ret_len;
+        asymmetric_params.flags = flags;
         ret = UNIX_CALL(key_asymmetric_encrypt, &asymmetric_params);
     }
 
@@ -2299,7 +2301,7 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     }
     else
     {
-        if (flags & BCRYPT_PAD_NONE || flags & BCRYPT_PAD_OAEP)
+        if (flags & BCRYPT_PAD_NONE)
         {
             FIXME( "flags %#lx not implemented\n", flags );
             return STATUS_NOT_IMPLEMENTED;
@@ -2309,9 +2311,11 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         params.key = key;
         params.input = input;
         params.input_len = input_len;
+        params.padding = padding;
         params.output = output;
         params.output_len = output_len;
         params.ret_len = ret_len;
+        params.flags = flags;
         ret = UNIX_CALL(key_asymmetric_decrypt, &params);
     }
 

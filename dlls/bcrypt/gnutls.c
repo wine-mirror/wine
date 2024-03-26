@@ -162,6 +162,9 @@ static int (*pgnutls_privkey_import_dh_raw)(gnutls_privkey_t, const gnutls_dh_pa
                                             const gnutls_datum_t *);
 static int (*pgnutls_pubkey_import_dh_raw)(gnutls_pubkey_t, const gnutls_dh_params_t, const gnutls_datum_t *);
 
+/* Not present in gnutls version < 3.8.4 */
+static int (*pgnutls_x509_spki_set_rsa_oaep_params)(gnutls_x509_spki_t, gnutls_digest_algorithm_t, gnutls_datum_t *);
+
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(gnutls_cipher_decrypt2);
@@ -301,6 +304,12 @@ static int compat_gnutls_x509_spki_init(gnutls_x509_spki_t *spki)
 
 static void compat_gnutls_x509_spki_deinit(gnutls_x509_spki_t spki)
 {
+}
+
+static int compat_gnutls_x509_spki_set_rsa_oaep_params(gnutls_x509_spki_t spki, gnutls_digest_algorithm_t dig,
+                                                       gnutls_datum_t *label)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
 static void compat_gnutls_x509_spki_set_rsa_pss_params(gnutls_x509_spki_t spki, gnutls_digest_algorithm_t dig,
@@ -444,6 +453,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_pubkey_verify_hash2)
     LOAD_FUNCPTR_OPT(gnutls_x509_spki_deinit)
     LOAD_FUNCPTR_OPT(gnutls_x509_spki_init)
+    LOAD_FUNCPTR_OPT(gnutls_x509_spki_set_rsa_oaep_params)
     LOAD_FUNCPTR_OPT(gnutls_x509_spki_set_rsa_pss_params)
 
 #undef LOAD_FUNCPTR_OPT
@@ -2617,12 +2627,55 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS privkey_set_rsa_oaep_params( gnutls_privkey_t key, gnutls_digest_algorithm_t dig, gnutls_datum_t *label )
+{
+    gnutls_x509_spki_t spki;
+    int ret;
+
+    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label );
+    ret = pgnutls_privkey_set_spki( key, spki, 0 );
+    pgnutls_x509_spki_deinit( spki );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_decrypt( void *args )
 {
     const struct key_asymmetric_decrypt_params *params = args;
     gnutls_datum_t e, d = { 0 };
     NTSTATUS status = STATUS_SUCCESS;
     int ret;
+
+    if (params->key->alg_id == ALG_ID_RSA && params->flags & BCRYPT_PAD_OAEP)
+    {
+        BCRYPT_OAEP_PADDING_INFO *pad = params->padding;
+        gnutls_digest_algorithm_t dig;
+        gnutls_datum_t label;
+
+        if (!pad || !pad->pszAlgId)
+        {
+            WARN( "padding info not found\n" );
+            return STATUS_INVALID_PARAMETER;
+        }
+        if ((dig = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
+        {
+            FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        label.data = pad->pbLabel;
+        label.size = pad->cbLabel;
+        if ((status = privkey_set_rsa_oaep_params( key_data(params->key)->a.privkey, dig, &label ))) return status;
+    }
 
     e.data = params->input;
     e.size = params->input_len;
@@ -2634,10 +2687,31 @@ static NTSTATUS key_asymmetric_decrypt( void *args )
 
     *params->ret_len = d.size;
     if (params->output_len >= d.size) memcpy( params->output, d.data, *params->ret_len );
-    else status = STATUS_BUFFER_TOO_SMALL;
+    else if (params->output) status = STATUS_BUFFER_TOO_SMALL;
 
     free( d.data );
     return status;
+}
+
+static NTSTATUS pubkey_set_rsa_oaep_params( gnutls_pubkey_t key, gnutls_digest_algorithm_t dig, gnutls_datum_t *label )
+{
+    gnutls_x509_spki_t spki;
+    int ret;
+
+    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    pgnutls_x509_spki_set_rsa_oaep_params( spki, dig, label );
+    ret = pgnutls_pubkey_set_spki( key, spki, 0 );
+    pgnutls_x509_spki_deinit( spki );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS key_asymmetric_encrypt( void *args )
@@ -2648,6 +2722,28 @@ static NTSTATUS key_asymmetric_encrypt( void *args )
     int ret;
 
     if (!key_data(params->key)->a.pubkey) return STATUS_INVALID_HANDLE;
+
+    if (params->key->alg_id == ALG_ID_RSA && params->flags & BCRYPT_PAD_OAEP)
+    {
+        BCRYPT_OAEP_PADDING_INFO *pad = params->padding;
+        gnutls_digest_algorithm_t dig;
+        gnutls_datum_t label;
+
+        if (!pad || !pad->pszAlgId || !pad->pbLabel)
+        {
+            WARN( "padding info not found\n" );
+            return STATUS_INVALID_PARAMETER;
+        }
+        if ((dig = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
+        {
+            FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        label.data = pad->pbLabel;
+        label.size = pad->cbLabel;
+        if ((status = pubkey_set_rsa_oaep_params( key_data(params->key)->a.pubkey, dig, &label ))) return status;
+    }
 
     d.data = params->input;
     d.size = params->input_len;
@@ -2751,12 +2847,19 @@ struct key32
 
 union padding
 {
+    BCRYPT_OAEP_PADDING_INFO oaep;
     BCRYPT_PKCS1_PADDING_INFO pkcs1;
     BCRYPT_PSS_PADDING_INFO pss;
 };
 
 union padding32
 {
+    struct
+    {
+        PTR32 pszAlgId;
+        PTR32 pbLabel;
+        ULONG cbLabel;
+    } oaep;
     struct
     {
         PTR32 pszAlgId;
@@ -2774,13 +2877,21 @@ static union padding *get_padding( union padding32 *padding32, union padding *pa
 
     switch (flags)
     {
+    case BCRYPT_PAD_OAEP:
+        padding->oaep.pszAlgId = ULongToPtr( padding32->oaep.pszAlgId );
+        padding->oaep.pbLabel = ULongToPtr( padding32->oaep.pbLabel );
+        padding->oaep.cbLabel = padding32->oaep.cbLabel;
+        return padding;
+
     case BCRYPT_PAD_PKCS1:
         padding->pkcs1.pszAlgId = ULongToPtr( padding32->pkcs1.pszAlgId );
         return padding;
+
     case BCRYPT_PAD_PSS:
         padding->pss.pszAlgId = ULongToPtr( padding32->pss.pszAlgId );
         padding->pss.cbSalt = padding32->pss.cbSalt;
         return padding;
+
     default:
         break;
     }
@@ -2965,22 +3076,27 @@ static NTSTATUS wow64_key_asymmetric_decrypt( void *args )
         PTR32 key;
         PTR32 input;
         ULONG input_len;
+        PTR32 padding;
         PTR32 output;
         ULONG output_len;
         PTR32 ret_len;
+        ULONG flags;
     } const *params32 = args;
 
     NTSTATUS ret;
     struct key key;
+    union padding padding;
     struct key32 *key32 = ULongToPtr( params32->key );
     struct key_asymmetric_decrypt_params params =
     {
         get_asymmetric_key( key32, &key ),
         ULongToPtr(params32->input),
         params32->input_len,
+        get_padding( ULongToPtr(params32->padding), &padding, params32->flags ),
         ULongToPtr(params32->output),
         params32->output_len,
-        ULongToPtr(params32->ret_len)
+        ULongToPtr(params32->ret_len),
+        params32->flags
     };
 
     ret = key_asymmetric_decrypt( &params );
@@ -2995,22 +3111,27 @@ static NTSTATUS wow64_key_asymmetric_encrypt( void *args )
         PTR32 key;
         PTR32 input;
         ULONG input_len;
+        PTR32 padding;
         PTR32 output;
         ULONG output_len;
         PTR32 ret_len;
+        ULONG flags;
     } const *params32 = args;
 
     NTSTATUS ret;
     struct key key;
+    union padding padding;
     struct key32 *key32 = ULongToPtr( params32->key );
     struct key_asymmetric_encrypt_params params =
     {
         get_asymmetric_key( key32, &key ),
         ULongToPtr(params32->input),
         params32->input_len,
+        get_padding( ULongToPtr(params32->padding), &padding, params32->flags ),
         ULongToPtr(params32->output),
         params32->output_len,
-        ULongToPtr(params32->ret_len)
+        ULongToPtr(params32->ret_len),
+        params32->flags
     };
 
     ret = key_asymmetric_encrypt( &params );
