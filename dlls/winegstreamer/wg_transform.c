@@ -332,6 +332,59 @@ static bool wg_format_video_is_flipped(const struct wg_format *format)
     return format->major_type == WG_MAJOR_TYPE_VIDEO && (format->u.video.height < 0);
 }
 
+static GstCaps *transform_get_parsed_caps(struct wg_format *format, const char *media_type)
+{
+    GstCaps *parsed_caps;
+
+    if (!(parsed_caps = gst_caps_new_empty_simple(media_type)))
+        return NULL;
+
+    switch (format->major_type)
+    {
+        case WG_MAJOR_TYPE_AUDIO_MPEG1:
+            gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 1,
+                    "layer", G_TYPE_INT, format->u.audio_mpeg1.layer, NULL);
+            break;
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
+            gst_caps_set_simple(parsed_caps, "framed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 4, NULL);
+            break;
+        case WG_MAJOR_TYPE_AUDIO_WMA:
+            gst_caps_set_simple(parsed_caps, "wmaversion", G_TYPE_INT, format->u.audio_wma.version, NULL);
+            break;
+        case WG_MAJOR_TYPE_VIDEO_H264:
+            gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, NULL);
+            break;
+        case WG_MAJOR_TYPE_VIDEO_MPEG1:
+            gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 1, NULL);
+            break;
+        case WG_MAJOR_TYPE_VIDEO_WMV:
+            switch (format->u.video_wmv.format)
+            {
+                case WG_WMV_VIDEO_FORMAT_WMV1:
+                    gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 1, NULL);
+                    break;
+                case WG_WMV_VIDEO_FORMAT_WMV2:
+                    gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 2, NULL);
+                    break;
+                case WG_WMV_VIDEO_FORMAT_WMV3:
+                case WG_WMV_VIDEO_FORMAT_WMVA:
+                case WG_WMV_VIDEO_FORMAT_WVC1:
+                    gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 3, NULL);
+                    break;
+                default:
+                    GST_WARNING("Unknown WMV format %u.", format->u.video_wmv.format);
+                    break;
+            }
+            break;
+        case WG_MAJOR_TYPE_AUDIO:
+        case WG_MAJOR_TYPE_VIDEO:
+        case WG_MAJOR_TYPE_UNKNOWN:
+            break;
+    }
+
+    return parsed_caps;
+}
+
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
@@ -391,7 +444,7 @@ NTSTATUS wg_transform_create(void *args)
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
     media_type = gst_structure_get_name(gst_caps_get_structure(src_caps, 0));
-    if (!(parsed_caps = gst_caps_new_empty_simple(media_type)))
+    if (!(parsed_caps = transform_get_parsed_caps(&input_format, media_type)))
         goto out;
 
     /* Since we append conversion elements, we don't want to filter decoders
