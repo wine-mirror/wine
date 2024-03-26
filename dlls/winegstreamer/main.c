@@ -33,6 +33,8 @@
 #include "wmcodecdsp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DECLARE_DEBUG_CHANNEL(mfplat);
+WINE_DECLARE_DEBUG_CHANNEL(wmvcore);
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 DEFINE_GUID(MEDIASUBTYPE_VC1S,MAKEFOURCC('V','C','1','S'),0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
@@ -810,9 +812,15 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 
 static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ctx)
 {
+    struct wg_init_gstreamer_params params =
+    {
+        .trace_on = TRACE_ON(mfplat) || TRACE_ON(quartz) || TRACE_ON(wmvcore),
+        .warn_on = WARN_ON(mfplat) || WARN_ON(quartz) || WARN_ON(wmvcore),
+        .err_on = ERR_ON(mfplat) || ERR_ON(quartz) || ERR_ON(wmvcore),
+    };
     HINSTANCE handle;
 
-    if (WINE_UNIX_CALL(unix_wg_init_gstreamer, NULL))
+    if (WINE_UNIX_CALL(unix_wg_init_gstreamer, &params))
         return FALSE;
 
     /* Unloading glib is a bad idea.. it installs atexit handlers,

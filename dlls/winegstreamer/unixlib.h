@@ -218,6 +218,13 @@ typedef UINT64 wg_parser_stream_t;
 typedef UINT64 wg_transform_t;
 typedef UINT64 wg_muxer_t;
 
+struct wg_init_gstreamer_params
+{
+    UINT8 trace_on;
+    UINT8 warn_on;
+    UINT8 err_on;
+};
+
 struct wg_parser_create_params
 {
     wg_parser_t parser;
