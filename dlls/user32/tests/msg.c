@@ -2175,11 +2175,7 @@ static const struct message WmTrackPopupMenuMinimizeWindow[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
-    { HCBT_ACTIVATE, hook|optional }, /* win11 */
-    { WM_NCACTIVATE, sent|optional }, /* win11 */
-    { WM_ACTIVATE, sent|optional }, /* win11 */
-    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|optional, 0, 0 }, /* win11 */
-    { WM_CANCELMODE, sent|optional }, /* not always sent on win11 */
+    { WM_CANCELMODE, sent },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|defwinproc },
     { EVENT_SYSTEM_MENUPOPUPEND, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
