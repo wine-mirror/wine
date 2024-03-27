@@ -1817,7 +1817,7 @@ interface IEnumTfUIElements : IUnknown
     HRESULT Next(
         [in] ULONG count,
         [out, size_is(count), length_is(fetched)] ITfUIElement **element,
-        [out] ULONG fetched);
+        [out] ULONG *fetched);
 
     HRESULT Reset();
 
