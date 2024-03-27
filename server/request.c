@@ -662,17 +662,7 @@ static char *create_server_dir( int force )
     strcat( server_dir, "/server-" );
     p = server_dir + strlen(server_dir);
 
-    if (st.st_dev != (unsigned long)st.st_dev)
-        p += sprintf( p, "%lx%08lx-", (unsigned long)((unsigned long long)st.st_dev >> 32),
-                      (unsigned long)st.st_dev );
-    else
-        p += sprintf( p, "%lx-", (unsigned long)st.st_dev );
-
-    if (st.st_ino != (unsigned long)st.st_ino)
-        sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)st.st_ino >> 32),
-                 (unsigned long)st.st_ino );
-    else
-        sprintf( p, "%lx", (unsigned long)st.st_ino );
+    sprintf( p, "%llx-%llx", (unsigned long long)st.st_dev, (unsigned long long)st.st_ino );
 
     create_dir( server_dir, &st );
 
