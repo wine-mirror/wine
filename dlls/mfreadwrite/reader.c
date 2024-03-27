@@ -1926,7 +1926,8 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
 {
     MFT_REGISTER_TYPE_INFO in_type, out_type;
     struct transform_entry *entry;
-    GUID *classes, category;
+    IMFActivate **activates;
+    GUID category;
     IMFTransform *transform;
     UINT i, count;
     HRESULT hr;
@@ -1960,7 +1961,7 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
     }
 
     count = 0;
-    if (SUCCEEDED(hr = MFTEnum(category, 0, &in_type, allow_processor ? NULL : &out_type, NULL, &classes, &count)))
+    if (SUCCEEDED(hr = MFTEnumEx(category, 0, &in_type, allow_processor ? NULL : &out_type, &activates, &count)))
     {
         if (!count)
         {
@@ -1972,8 +1973,8 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
         {
             IMFMediaType *media_type;
 
-            if (FAILED(hr = CoCreateInstance(&classes[i], NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform)))
-                break;
+            if (FAILED(IMFActivate_ActivateObject(activates[i], &IID_IMFTransform, (void **)&transform)))
+                continue;
             if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
@@ -1995,17 +1996,20 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                 {
                     entry->transform = transform;
                     *out = entry;
-                    return S_OK;
+                    break;
                 }
             }
 
             IMFTransform_Release(transform);
         }
 
-        CoTaskMemFree(classes);
+        for (i = 0; i < count; ++i)
+            IMFActivate_Release(activates[i]);
+        CoTaskMemFree(activates);
     }
 
-    free(entry);
+    if (FAILED(hr))
+        free(entry);
     return hr;
 }
 
