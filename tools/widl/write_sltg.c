@@ -39,16 +39,10 @@
 
 static const GUID sltg_library_guid = { 0x204ff,0,0,{ 0xc0,0,0,0,0,0,0,0x46 } };
 
-struct sltg_index
+struct sltg_data
 {
     int size, allocated;
-    char *names;
-};
-
-struct sltg_name_table
-{
-    int size, allocated;
-    char *names;
+    char *data;
 };
 
 struct sltg_library
@@ -74,8 +68,8 @@ struct sltg_block
 struct sltg_typelib
 {
     typelib_t *typelib;
-    struct sltg_index index;
-    struct sltg_name_table name_table;
+    struct sltg_data index;
+    struct sltg_data name_table;
     struct sltg_library library;
     struct sltg_block *blocks;
     int block_count;
@@ -83,7 +77,14 @@ struct sltg_typelib
     short typeinfo_count;
 };
 
-static int add_index(struct sltg_index *index, const char *name)
+static void init_sltg_data(struct sltg_data *data)
+{
+    data->size = 0;
+    data->allocated = 0;
+    data->data = NULL;
+}
+
+static int add_index(struct sltg_data *index, const char *name)
 {
     int name_offset = index->size;
     int new_size = index->size + strlen(name) + 1;
@@ -91,27 +92,25 @@ static int add_index(struct sltg_index *index, const char *name)
     if (new_size > index->allocated)
     {
         index->allocated = index->allocated ? max(index->allocated * 2, new_size) : new_size;
-        index->names = xrealloc(index->names, index->allocated);
+        index->data = xrealloc(index->data, index->allocated);
     }
 
-    strcpy(index->names + index->size, name);
+    strcpy(index->data + index->size, name);
     index->size = new_size;
 
     return name_offset;
 }
 
-static void init_index(struct sltg_index *index)
+static void init_index(struct sltg_data *index)
 {
     static const char compobj[] = { 1,'C','o','m','p','O','b','j',0 };
 
-    index->size = 0;
-    index->allocated = 0;
-    index->names = NULL;
+    init_sltg_data(index);
 
     add_index(index, compobj);
 }
 
-static int add_name(struct sltg_name_table *name_table, const char *name)
+static int add_name(struct sltg_data *name_table, const char *name)
 {
     int name_offset = name_table->size;
     int new_size = name_table->size + strlen(name) + 1 + 8;
@@ -121,22 +120,20 @@ static int add_name(struct sltg_name_table *name_table, const char *name)
     if (new_size > name_table->allocated)
     {
         name_table->allocated = name_table->allocated ? max(name_table->allocated * 2, new_size) : new_size;
-        name_table->names = xrealloc(name_table->names, name_table->allocated);
+        name_table->data = xrealloc(name_table->data, name_table->allocated);
     }
 
-    memset(name_table->names + name_table->size, 0xff, 8);
-    strcpy(name_table->names + name_table->size + 8, name);
+    memset(name_table->data + name_table->size, 0xff, 8);
+    strcpy(name_table->data + name_table->size + 8, name);
     name_table->size = new_size;
-    name_table->names[name_table->size - 1] = 0; /* clear alignment */
+    name_table->data[name_table->size - 1] = 0; /* clear alignment */
 
     return name_offset;
 }
 
-static void init_name_table(struct sltg_name_table *name_table)
+static void init_name_table(struct sltg_data *name_table)
 {
-    name_table->size = 0;
-    name_table->allocated = 0;
-    name_table->names = NULL;
+    init_sltg_data(name_table);
 }
 
 static void init_library(struct sltg_typelib *sltg)
@@ -418,7 +415,7 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
     entry.next = 0;
     put_data(&entry, sizeof(entry));
 
-    put_data(sltg->index.names, sltg->index.size);
+    put_data(sltg->index.data, sltg->index.size);
     memset(pad, 0, 9);
     put_data(pad, 9);
 
@@ -458,7 +455,7 @@ static void sltg_write_nametable(struct sltg_typelib *typelib)
     memset(pad, 0xff, 0x200);
     put_data(pad, 0x200);
     put_data(&typelib->name_table.size, sizeof(typelib->name_table.size));
-    put_data(typelib->name_table.names, typelib->name_table.size);
+    put_data(typelib->name_table.data, typelib->name_table.size);
 }
 
 static void sltg_write_remainder(void)
