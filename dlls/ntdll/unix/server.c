@@ -1232,23 +1232,11 @@ int server_pipe( int fd[2] )
 static const char *init_server_dir( dev_t dev, ino_t ino )
 {
     char *dir = NULL;
-    int p;
-    char tmp[2 * sizeof(dev) + 2 * sizeof(ino) + 2];
-
-    if (dev != (unsigned long)dev)
-        p = snprintf( tmp, sizeof(tmp), "%lx%08lx-", (unsigned long)((unsigned long long)dev >> 32), (unsigned long)dev );
-    else
-        p = snprintf( tmp, sizeof(tmp), "%lx-", (unsigned long)dev );
-
-    if (ino != (unsigned long)ino)
-        snprintf( tmp + p, sizeof(tmp) - p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
-    else
-        snprintf( tmp + p, sizeof(tmp) - p, "%lx", (unsigned long)ino );
 
 #ifdef __ANDROID__  /* there's no /tmp dir on Android */
-    asprintf( &dir, "%s/.wineserver/server-%s", config_dir, tmp );
+    asprintf( &dir, "%s/.wineserver/server-%llx-%llx", config_dir, (unsigned long long)dev, (unsigned long long)ino );
 #else
-    asprintf( &dir, "/tmp/.wine-%u/server-%s", getuid(), tmp );
+    asprintf( &dir, "/tmp/.wine-%u/server-%llx-%llx", getuid(), (unsigned long long)dev, (unsigned long long)ino );
 #endif
     return dir;
 }
