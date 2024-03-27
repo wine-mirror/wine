@@ -63,8 +63,6 @@ static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name
 {
     TRACE( "instance %p, name %s\n", instance, debugstr_a(name) );
 
-    if (!strcmp( name, "vkCreateInstance" )) return vulkan_funcs.p_vkCreateInstance;
-
     if (!instance) return p_vkGetInstanceProcAddr( instance, name );
 
     if (!strcmp( name, "vkCreateWin32SurfaceKHR" )) return vulkan_funcs.p_vkCreateWin32SurfaceKHR;

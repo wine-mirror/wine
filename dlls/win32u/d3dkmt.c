@@ -78,6 +78,7 @@ static void d3dkmt_init_vulkan(void)
         .enabledExtensionCount = ARRAY_SIZE( extensions ),
         .ppEnabledExtensionNames = extensions,
     };
+    PFN_vkCreateInstance p_vkCreateInstance;
     VkResult vr;
 
     if (!(vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION )))
@@ -86,7 +87,8 @@ static void d3dkmt_init_vulkan(void)
         return;
     }
 
-    if ((vr = vulkan_funcs->p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
+    p_vkCreateInstance = vulkan_funcs->p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
+    if ((vr = p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
     {
         WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
         vulkan_funcs = NULL;

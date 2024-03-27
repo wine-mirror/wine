@@ -648,6 +648,7 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
     VkPhysicalDevice *vk_physical_devices = NULL;
     VkPhysicalDeviceProperties2 properties2;
     VkPhysicalDeviceMemoryProperties mem_properties;
+    PFN_vkCreateInstance pvkCreateInstance;
     VkInstanceCreateInfo create_info;
     VkPhysicalDeviceIDProperties id;
     VkInstance vk_instance = NULL;
@@ -664,18 +665,20 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
     create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
     create_info.ppEnabledExtensionNames = extensions;
 
-    vr = vulkan_funcs->p_vkCreateInstance( &create_info, NULL, &vk_instance );
-    if (vr != VK_SUCCESS)
-    {
-        WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
-        goto done;
-    }
-
 #define LOAD_VK_FUNC(f)                                                             \
     if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, #f ))) \
     {                                                                               \
         WARN("Failed to load " #f ".\n");                                           \
         goto done;                                                                  \
+    }
+
+    LOAD_VK_FUNC( vkCreateInstance )
+
+    vr = pvkCreateInstance( &create_info, NULL, &vk_instance );
+    if (vr != VK_SUCCESS)
+    {
+        WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
+        goto done;
     }
 
     LOAD_VK_FUNC(vkEnumeratePhysicalDevices)

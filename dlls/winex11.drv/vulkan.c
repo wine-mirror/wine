@@ -76,7 +76,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR
     Window window;
 } VkXlibSurfaceCreateInfoKHR;
 
-static VkResult (*pvkCreateInstance)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *);
 static VkResult (*pvkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static void (*pvkDestroyInstance)(VkInstance, const VkAllocationCallbacks *);
@@ -91,54 +90,6 @@ static const struct vulkan_funcs vulkan_funcs;
 static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
     return (struct wine_vk_surface *)(uintptr_t)handle;
-}
-
-/* Helper function for converting between win32 and X11 compatible VkInstanceCreateInfo.
- * Caller is responsible for allocation and cleanup of 'dst'.
- */
-static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
-        VkInstanceCreateInfo *dst)
-{
-    unsigned int i;
-    const char **enabled_extensions = NULL;
-
-    dst->sType = src->sType;
-    dst->flags = src->flags;
-    dst->pApplicationInfo = src->pApplicationInfo;
-    dst->pNext = src->pNext;
-    dst->enabledLayerCount = 0;
-    dst->ppEnabledLayerNames = NULL;
-    dst->enabledExtensionCount = 0;
-    dst->ppEnabledExtensionNames = NULL;
-
-    if (src->enabledExtensionCount > 0)
-    {
-        enabled_extensions = calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
-        if (!enabled_extensions)
-        {
-            ERR("Failed to allocate memory for enabled extensions\n");
-            return VK_ERROR_OUT_OF_HOST_MEMORY;
-        }
-
-        for (i = 0; i < src->enabledExtensionCount; i++)
-        {
-            /* Substitute extension with X11 ones else copy. Long-term, when we
-             * support more extensions, we should store these in a list.
-             */
-            if (!strcmp(src->ppEnabledExtensionNames[i], "VK_KHR_win32_surface"))
-            {
-                enabled_extensions[i] = "VK_KHR_xlib_surface";
-            }
-            else
-            {
-                enabled_extensions[i] = src->ppEnabledExtensionNames[i];
-            }
-        }
-        dst->ppEnabledExtensionNames = enabled_extensions;
-        dst->enabledExtensionCount = src->enabledExtensionCount;
-    }
-
-    return VK_SUCCESS;
 }
 
 static struct wine_vk_surface *wine_vk_surface_grab(struct wine_vk_surface *surface)
@@ -196,33 +147,6 @@ void vulkan_thread_detach(void)
         wine_vk_surface_destroy(surface->hwnd);
     }
     pthread_mutex_unlock(&vulkan_mutex);
-}
-
-static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
-        const VkAllocationCallbacks *allocator, VkInstance *instance)
-{
-    VkInstanceCreateInfo create_info_host;
-    VkResult res;
-    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
-
-    /* Perform a second pass on converting VkInstanceCreateInfo. Winevulkan
-     * performed a first pass in which it handles everything except for WSI
-     * functionality such as VK_KHR_win32_surface. Handle this now.
-     */
-    res = wine_vk_instance_convert_create_info(create_info, &create_info_host);
-    if (res != VK_SUCCESS)
-    {
-        ERR("Failed to convert instance create info, res=%d\n", res);
-        return res;
-    }
-
-    res = pvkCreateInstance(&create_info_host, NULL /* allocator */, instance);
-
-    free((void *)create_info_host.ppEnabledExtensionNames);
-    return res;
 }
 
 static VkResult X11DRV_vkCreateSwapchainKHR(VkDevice device,
@@ -412,7 +336,6 @@ static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
 
 static const struct vulkan_funcs vulkan_funcs =
 {
-    X11DRV_vkCreateInstance,
     X11DRV_vkCreateSwapchainKHR,
     X11DRV_vkCreateWin32SurfaceKHR,
     X11DRV_vkDestroyInstance,
@@ -439,7 +362,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     init_recursive_mutex( &vulkan_mutex );
 
 #define LOAD_FUNCPTR( f ) if (!(p##f = dlsym( vulkan_handle, #f ))) return STATUS_PROCEDURE_NOT_FOUND;
-    LOAD_FUNCPTR( vkCreateInstance );
     LOAD_FUNCPTR( vkCreateSwapchainKHR );
     LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
     LOAD_FUNCPTR( vkDestroyInstance );
