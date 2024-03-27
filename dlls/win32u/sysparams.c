@@ -1294,11 +1294,11 @@ static BOOL write_adapter_to_registry( const struct adapter *adapter, HKEY *adap
     return TRUE;
 }
 
-static void add_adapter( const struct gdi_adapter *adapter, void *param )
+static void add_adapter( const char *name, UINT state_flags, void *param )
 {
     struct device_manager_ctx *ctx = param;
 
-    TRACE( "\n" );
+    TRACE( "name %s, state_flags %#x\n", name, state_flags );
 
     if (ctx->adapter_key)
     {
@@ -1309,11 +1309,11 @@ static void add_adapter( const struct gdi_adapter *adapter, void *param )
     memset( &ctx->adapter, 0, sizeof(ctx->adapter) );
     ctx->adapter.gpu = &ctx->gpu;
     ctx->adapter.id = ctx->adapter_count;
-    ctx->adapter.state_flags = adapter->state_flags;
+    ctx->adapter.state_flags = state_flags;
 
-    /* Wine specific config key where adapter settings will be held, symlinked with the logically indexed config key */
-    sprintf( ctx->adapter.path, "%s\\%s\\Video\\%s\\Adapters\\%04x", config_keyA,
-             control_keyA + strlen( "\\Registry\\Machine" ), ctx->gpu.guid, ctx->gpu.adapter_count );
+    /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
+    sprintf( ctx->adapter.path, "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
+             control_keyA + strlen( "\\Registry\\Machine" ), ctx->gpu.guid, name );
 
     if (!write_adapter_to_registry( &ctx->adapter, &ctx->adapter_key ))
         WARN( "Failed to write adapter to registry\n" );
@@ -1444,12 +1444,9 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
 
     if (!ctx->gpu.adapter_count)
     {
-        static const struct gdi_adapter default_adapter =
-        {
-            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        };
-        TRACE( "adding default fake adapter\n" );
-        add_adapter( &default_adapter, ctx );
+        static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
+        TRACE( "adding default fake source\n" );
+        add_adapter( "Default", source_flags, ctx );
     }
 
     nopos_mode = *mode;
@@ -1755,11 +1752,8 @@ static BOOL default_update_display_devices( const struct gdi_device_manager *man
         { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
     };
+    static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
     static const struct gdi_gpu gpu;
-    static const struct gdi_adapter adapter =
-    {
-        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-    };
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {{0}};
     UINT i;
@@ -1767,7 +1761,7 @@ static BOOL default_update_display_devices( const struct gdi_device_manager *man
     if (!force) return TRUE;
 
     manager->add_gpu( &gpu, ctx );
-    manager->add_adapter( &adapter, ctx );
+    manager->add_adapter( "Default", source_flags, ctx );
 
     if (!read_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, &mode ))
     {
@@ -1831,10 +1825,10 @@ static void desktop_add_gpu( const struct gdi_gpu *gpu, void *param )
 {
 }
 
-static void desktop_add_adapter( const struct gdi_adapter *adapter, void *param )
+static void desktop_add_adapter( const char *name, UINT state_flags, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    ctx->is_primary = !!(adapter->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
+    ctx->is_primary = !!(state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE);
 }
 
 static void desktop_add_monitor( const struct gdi_monitor *monitor, void *param )
@@ -1863,11 +1857,8 @@ static const struct gdi_device_manager desktop_device_manager =
 
 static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ctx *ctx )
 {
+    static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
     static const struct gdi_gpu gpu;
-    static const struct gdi_adapter adapter =
-    {
-        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-    };
     struct gdi_monitor monitor = {0};
     static struct screen_size
     {
@@ -1932,7 +1923,7 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     }
 
     add_gpu( &gpu, ctx );
-    add_adapter( &adapter, ctx );
+    add_adapter( "Default", source_flags, ctx );
     if (!read_adapter_mode( ctx->adapter_key, ENUM_CURRENT_SETTINGS, &current ))
     {
         current = mode;

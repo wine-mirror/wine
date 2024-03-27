@@ -761,6 +761,12 @@ void init_user_driver(void);
 
 /* X11 display device handler. Used to initialize display device registry data */
 
+struct x11drv_adapter
+{
+    ULONG_PTR id;
+    DWORD state_flags;
+};
+
 /* Required functions for display device registry initialization */
 struct x11drv_display_device_handler
 {
@@ -779,7 +785,7 @@ struct x11drv_display_device_handler
      * The first adapter has to be primary if GPU is primary.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_adapters)(ULONG_PTR gpu_id, struct gdi_adapter **adapters, int *count);
+    BOOL (*get_adapters)(ULONG_PTR gpu_id, struct x11drv_adapter **adapters, int *count);
 
     /* get_monitors will be called to get a list of monitors in EnumDisplayDevices context under an adapter.
      * The first monitor has to be primary if adapter is primary.
@@ -791,7 +797,7 @@ struct x11drv_display_device_handler
     void (*free_gpus)(struct gdi_gpu *gpus);
 
     /* free_adapters will be called to free an adapter list from get_adapters */
-    void (*free_adapters)(struct gdi_adapter *adapters);
+    void (*free_adapters)(struct x11drv_adapter *adapters);
 
     /* free_monitors will be called to free a monitor list from get_monitors */
     void (*free_monitors)(struct gdi_monitor *monitors, int count);

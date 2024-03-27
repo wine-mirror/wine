@@ -1178,12 +1178,10 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
         for (adapter = adapters; adapter < adapters + adapter_count; adapter++)
         {
             DEVMODEW current_mode = { .dmSize = sizeof(current_mode) };
-            struct gdi_adapter gdi_adapter =
-            {
-                .id = adapter->id,
-                .state_flags = adapter->state_flags,
-            };
-            device_manager->add_adapter( &gdi_adapter, param );
+            char buffer[32];
+
+            sprintf( buffer, "%04x", adapter->id );
+            device_manager->add_adapter( buffer, adapter->state_flags, param );
 
             if (macdrv_get_monitors(adapter->id, &monitors, &monitor_count)) break;
             TRACE("adapter: %#x, monitor count: %d\n", adapter->id, monitor_count);

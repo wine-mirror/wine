@@ -397,7 +397,7 @@ RECT get_host_primary_monitor_rect(void)
 {
     INT gpu_count, adapter_count, monitor_count;
     struct gdi_gpu *gpus = NULL;
-    struct gdi_adapter *adapters = NULL;
+    struct x11drv_adapter *adapters = NULL;
     struct gdi_monitor *monitors = NULL;
     RECT rect = {0};
 
@@ -515,7 +515,7 @@ static const char *debugstr_devmodew( const DEVMODEW *devmode )
 
 BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
-    struct gdi_adapter *adapters;
+    struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
     struct gdi_gpu *gpus;
     INT gpu_count, adapter_count, monitor_count;
@@ -548,7 +548,8 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             x11drv_settings_id settings_id;
             BOOL is_primary = adapters[adapter].state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE;
 
-            device_manager->add_adapter( &adapters[adapter], param );
+            sprintf( buffer, "%04lx", adapters[adapter].id );
+            device_manager->add_adapter( buffer, adapters[adapter].state_flags, param );
 
             if (!host_handler.get_monitors( adapters[adapter].id, &monitors, &monitor_count )) break;
             TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);

@@ -213,9 +213,9 @@ static void xinerama_free_gpus( struct gdi_gpu *gpus )
     free( gpus );
 }
 
-static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_adapters, int *count )
+static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
 {
-    struct gdi_adapter *adapters = NULL;
+    struct x11drv_adapter *adapters = NULL;
     INT index = 0;
     INT i, j;
     INT primary_index;
@@ -268,7 +268,7 @@ static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_ad
     /* Primary adapter has to be first */
     if (primary_index)
     {
-        struct gdi_adapter tmp;
+        struct x11drv_adapter tmp;
         tmp = adapters[primary_index];
         adapters[primary_index] = adapters[0];
         adapters[0] = tmp;
@@ -280,7 +280,7 @@ static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_ad
     return TRUE;
 }
 
-static void xinerama_free_adapters( struct gdi_adapter *adapters )
+static void xinerama_free_adapters( struct x11drv_adapter *adapters )
 {
     free( adapters );
 }

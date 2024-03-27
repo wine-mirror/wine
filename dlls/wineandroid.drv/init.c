@@ -273,11 +273,8 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
 {
     if (force || force_display_devices_refresh)
     {
+        static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
         static const struct gdi_gpu gpu;
-        static const struct gdi_adapter adapter =
-        {
-            .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        };
         struct gdi_monitor gdi_monitor =
         {
             .rc_monitor = virtual_screen_rect,
@@ -290,7 +287,7 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
             .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
         };
         device_manager->add_gpu( &gpu, param );
-        device_manager->add_adapter( &adapter, param );
+        device_manager->add_adapter( "Default", source_flags, param );
         device_manager->add_monitor( &gdi_monitor, param );
         device_manager->add_mode( &mode, TRUE, param );
         force_display_devices_refresh = FALSE;

@@ -863,9 +863,9 @@ static void xrandr14_free_gpus( struct gdi_gpu *gpus )
     free( gpus );
 }
 
-static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_adapters, int *count )
+static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new_adapters, int *count )
 {
-    struct gdi_adapter *adapters = NULL;
+    struct x11drv_adapter *adapters = NULL;
     XRRScreenResources *screen_resources = NULL;
     XRRProviderInfo *provider_info = NULL;
     XRRCrtcInfo *enum_crtc_info, *crtc_info = NULL;
@@ -999,7 +999,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_ad
     /* Make primary adapter the first */
     if (primary_adapter)
     {
-        struct gdi_adapter tmp = adapters[0];
+        struct x11drv_adapter tmp = adapters[0];
         adapters[0] = adapters[primary_adapter];
         adapters[primary_adapter] = tmp;
     }
@@ -1024,7 +1024,7 @@ done:
     return ret;
 }
 
-static void xrandr14_free_adapters( struct gdi_adapter *adapters )
+static void xrandr14_free_adapters( struct x11drv_adapter *adapters )
 {
     free( adapters );
 }
@@ -1219,7 +1219,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     struct current_mode *tmp_modes, *new_current_modes = NULL;
     INT gpu_count, adapter_count, new_current_mode_count = 0;
     INT gpu_idx, adapter_idx, display_idx;
-    struct gdi_adapter *adapters;
+    struct x11drv_adapter *adapters;
     struct gdi_gpu *gpus;
     WCHAR *end;
 

@@ -249,12 +249,6 @@ struct gdi_gpu
     ULONGLONG memory_size;
 };
 
-struct gdi_adapter
-{
-    ULONG_PTR id;
-    DWORD state_flags;
-};
-
 struct gdi_monitor
 {
     RECT rc_monitor;      /* RcMonitor in MONITORINFO struct */
@@ -266,7 +260,7 @@ struct gdi_monitor
 struct gdi_device_manager
 {
     void (*add_gpu)( const struct gdi_gpu *gpu, void *param );
-    void (*add_adapter)( const struct gdi_adapter *adapter, void *param );
+    void (*add_adapter)( const char *name, UINT state_flags, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_mode)( const DEVMODEW *mode, BOOL current, void *param );
 };
