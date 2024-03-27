@@ -89,6 +89,8 @@ static int add_index(struct sltg_data *index, const char *name)
     int name_offset = index->size;
     int new_size = index->size + strlen(name) + 1;
 
+    chat("add_index: name_offset %d, \"%s\"\n", name_offset, name);
+
     if (new_size > index->allocated)
     {
         index->allocated = index->allocated ? max(index->allocated * 2, new_size) : new_size;
@@ -114,6 +116,8 @@ static int add_name(struct sltg_data *name_table, const char *name)
 {
     int name_offset = name_table->size;
     int new_size = name_table->size + strlen(name) + 1 + 8;
+
+    chat("add_name: %s\n", name);
 
     new_size = (new_size + 1) & ~1; /* align */
 
@@ -195,6 +199,8 @@ static void init_library(struct sltg_typelib *sltg)
 
 static void add_block(struct sltg_typelib *sltg, void *data, int length, const char *name)
 {
+    chat("add_block: %p,%d,\"%s\"\n", data, length, name);
+
     sltg->blocks = xrealloc(sltg->blocks, sizeof(sltg->blocks[0]) * (sltg->block_count + 1));
     sltg->blocks[sltg->block_count].length = length;
     sltg->blocks[sltg->block_count].data = data;
@@ -404,6 +410,8 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
         entry.length = sltg->blocks[i].length;
         entry.index_string = sltg->blocks[i].index_string;
         entry.next = header.first_blk + i;
+        chat("sltg_write_header: writing block entry %d: length %#x, index_string %#x, next %#x\n",
+             i, entry.length, entry.index_string, entry.next);
         put_data(&entry, sizeof(entry));
     }
 
@@ -413,8 +421,11 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
                    12 /* name table header */ + 0x200 /* name table hash */ + sltg->name_table.size;
     entry.index_string = sltg->blocks[sltg->block_count - 1].index_string;
     entry.next = 0;
+    chat("sltg_write_header: writing library block entry %d: length %#x, index_string %#x, next %#x\n",
+         i, entry.length, entry.index_string, entry.next);
     put_data(&entry, sizeof(entry));
 
+    chat("sltg_write_header: writing index: %d bytes\n", sltg->index.size);
     put_data(sltg->index.data, sltg->index.size);
     memset(pad, 0, 9);
     put_data(pad, 9);
@@ -427,9 +438,12 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
     }
 
     /* library block */
+    chat("library_block_start = %#x\n", (int)output_buffer_pos);
     *library_block_start = output_buffer_pos;
+    chat("sltg_write_header: writing library block %d: %d bytes\n", i, sltg->blocks[i].length);
     put_data(sltg->blocks[sltg->block_count - 1].data, sltg->blocks[sltg->block_count - 1].length);
 
+    chat("sltg_write_header: writing pad 0x40 bytes\n");
     memset(pad, 0xff, 0x40);
     put_data(pad, 0x40);
 }
@@ -443,6 +457,8 @@ static void sltg_write_helpstrings(struct sltg_typelib *typelib)
 {
     static const char dummy[6];
 
+    chat("sltg_write_helpstrings: writing dummy 6 bytes\n");
+
     put_data(dummy, sizeof(dummy));
 }
 
@@ -450,6 +466,8 @@ static void sltg_write_nametable(struct sltg_typelib *typelib)
 {
     static const short dummy[6] = { 0xffff,1,2,0xff00,0xffff,0xffff };
     char pad[0x200];
+
+    chat("sltg_write_nametable: writing 12+0x200+%d bytes\n", typelib->name_table.size);
 
     put_data(dummy, sizeof(dummy));
     memset(pad, 0xff, 0x200);
@@ -490,11 +508,13 @@ static void save_all_changes(struct sltg_typelib *typelib)
     sltg_write_typeinfo(typelib);
 
     name_table_offset = (int *)(output_buffer + output_buffer_pos);
+    chat("name_table_offset = %#x\n", (int)output_buffer_pos);
     put_data(&library_block_start, sizeof(library_block_start));
 
     sltg_write_helpstrings(typelib);
 
     *name_table_offset = output_buffer_pos - library_block_start;
+    chat("*name_table_offset = %#x\n", *name_table_offset);
 
     sltg_write_nametable(typelib);
     sltg_write_remainder();
