@@ -2512,6 +2512,9 @@ static HRESULT WINAPI src_reader_GetTransformForStream(IMFSourceReaderEx *iface,
 
     TRACE("%p, %#lx, %#lx, %p, %p.\n", iface, stream_index, transform_index, category, transform);
 
+    if (!transform)
+        return E_POINTER;
+
     EnterCriticalSection(&reader->cs);
 
     if (stream_index == MF_SOURCE_READER_FIRST_VIDEO_STREAM)
@@ -2525,7 +2528,8 @@ static HRESULT WINAPI src_reader_GetTransformForStream(IMFSourceReaderEx *iface,
         hr = MF_E_INVALIDINDEX;
     else
     {
-        *category = entry->category;
+        if (category)
+            *category = entry->category;
         *transform = entry->transform;
         IMFTransform_AddRef(*transform);
         hr = S_OK;
