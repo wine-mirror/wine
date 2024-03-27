@@ -2944,7 +2944,10 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
         elem_type = type_pointer_get_ref_type(type);
 
     if (type_get_type(elem_type) == TYPE_POINTER && is_array(type))
-        return write_array_tfs(file, attrs, type, name, typestring_offset);
+    {
+        write_array_tfs(file, attrs, type, name, typestring_offset);
+        return start_offset;
+    }
 
     if (type_get_type(elem_type) != TYPE_BASIC)
     {
@@ -3730,19 +3733,7 @@ static unsigned int write_type_tfs(FILE *file, const attr_list_t *attrs,
         else
             ref_context = context;
 
-        if (is_string_type(attrs, ref))
-        {
-            if (context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
-                write_pointer_tfs(file, attrs, type, *typeformat_offset + 4, context, typeformat_offset);
-
-            offset = write_type_tfs(file, attrs, ref, name, ref_context, typeformat_offset);
-            if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
-                return 0;
-            return offset;
-        }
-
-        offset = write_type_tfs( file, attrs, type_pointer_get_ref_type(type), name,
-                                 ref_context, typeformat_offset);
+        offset = write_type_tfs( file, attrs, ref, name, ref_context, typeformat_offset);
         if (context == TYPE_CONTEXT_CONTAINER_NO_POINTERS)
             return 0;
         return write_pointer_tfs(file, attrs, type, offset, context, typeformat_offset);

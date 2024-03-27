@@ -249,12 +249,8 @@ static void (__cdecl *test_I_RpcBindingInqLocalClientPID)(unsigned int protseq, 
 /* type check statements generated in header file */
 fnprintf *p_printf = printf;
 
-static BOOL is_interp;
-
 static void set_interp_interface(void)
 {
-    is_interp = TRUE;
-
 #define X(name) name = interp_##name;
     SERVER_FUNCTIONS
 #undef X
@@ -262,8 +258,6 @@ static void set_interp_interface(void)
 
 static void set_mixed_interface(void)
 {
-    is_interp = FALSE;
-
 #define X(name) name = mixed_##name;
     SERVER_FUNCTIONS
 #undef X
@@ -1396,11 +1390,9 @@ basic_tests(void)
 
   check_null(NULL);
 
-  if (!is_interp || sizeof(void*) != 8) { /* broken in widl for win64 */
   str = get_filename();
   ok(!strcmp(str, __FILE__), "get_filename() returned %s instead of %s\n", str, __FILE__);
   midl_user_free(str);
-  }
 
   x = echo_ranged_int(0,0,0);
   ok(x == 0, "echo_ranged_int() returned %d instead of 0\n", x);
@@ -1678,7 +1670,6 @@ pointer_tests(void)
       ok(!strcmp(name.name, "Jeremy Wh"), "name didn't unmarshall properly, expected \"Jeremy Wh\", but got \"%s\"\n", name.name);
       free(name.name);
 
-      if (!is_interp) { /* broken in widl */
       n = -1;
       names = NULL;
       get_names(&n, &names);
@@ -1698,13 +1689,10 @@ pointer_tests(void)
       MIDL_user_free(namesw[0]);
       MIDL_user_free(namesw[1]);
       MIDL_user_free(namesw);
-      }
   }
 
-  if (!is_interp) { /* broken in widl */
   pa2 = a;
   ok(sum_pcarr2(4, &pa2) == 10, "RPC sum_pcarr2\n");
-  }
 
   s123 = get_s123();
   ok(s123->f1 == 1 && s123->f2 == 2 && s123->f3 == 3, "RPC get_s123\n");
