@@ -24,4 +24,4 @@
     threading(both),
     uuid(b5f8fb3b-393f-4f7c-84cb-504924c2705a) /* ITfMSAAControl */
 ]
-coclass PSFactoryBuffer { interface IFactoryBuffer; }
+coclass PSFactoryBuffer { interface IPSFactoryBuffer; }

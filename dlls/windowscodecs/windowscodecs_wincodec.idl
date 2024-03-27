@@ -25,7 +25,7 @@
     threading(both),
     uuid(00000301-a8f2-4877-ba0a-fd2b6645fb94)  /* IWICFormatConverter */
 ]
-coclass PSFactoryBuffer { interface IFactoryBuffer; }
+coclass PSFactoryBuffer { interface IPSFactoryBuffer; }
 
 [
     helpstring("WIC Imaging Factory"),

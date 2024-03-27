@@ -27,4 +27,4 @@ cpp_quote("#include \"oleacc.h\"")
     threading(both),
     uuid(01c20f2b-3dd2-400f-949f-ad00bdab1d41)  /* IAccessibleHyperLink */
 ]
-coclass PSFactoryBuffer { interface IFactoryBuffer; }
+coclass PSFactoryBuffer { interface IPSFactoryBuffer; }

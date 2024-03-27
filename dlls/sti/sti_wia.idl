@@ -25,7 +25,7 @@
     threading(both),
     uuid(4db1ad10-3391-11d2-9a33-00c04fa36145)  /* IWiaItem */
 ]
-coclass PSFactoryBuffer { interface IFactoryBuffer; }
+coclass PSFactoryBuffer { interface IPSFactoryBuffer; }
 
 [
     threading(both),
