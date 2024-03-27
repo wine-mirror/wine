@@ -2757,12 +2757,12 @@ static void test_source_reader_transform_stream_change(void)
     static const struct attribute_desc yuy2_expect_new_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2, .todo_value = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 128, 128),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
-        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 128 * 2, .todo_value = TRUE),
-        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 128 * 128 * 2, .todo_value = TRUE),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 128 * 2),
+        ATTR_UINT32(MF_MT_SAMPLE_SIZE, 128 * 128 * 2),
         {0},
     };
     const MFT_REGISTER_TYPE_INFO output_info[] =

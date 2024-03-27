@@ -767,6 +767,53 @@ static HRESULT source_reader_push_transform_samples(struct source_reader *reader
     return hr;
 }
 
+/* update the transform output type while keeping subtype which matches the old output type */
+static HRESULT transform_entry_update_output_type(struct transform_entry *entry, IMFMediaType *old_output_type)
+{
+    IMFMediaType *new_output_type;
+    GUID subtype, desired;
+    UINT i = 0;
+    HRESULT hr;
+
+    IMFMediaType_GetGUID(old_output_type, &MF_MT_SUBTYPE, &desired);
+
+    /* find an available output type matching the desired subtype */
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(entry->transform, 0, i++, &new_output_type)))
+    {
+        IMFMediaType_GetGUID(new_output_type, &MF_MT_SUBTYPE, &subtype);
+        if (IsEqualGUID(&subtype, &desired) && SUCCEEDED(hr = IMFTransform_SetOutputType(entry->transform, 0, new_output_type, 0)))
+        {
+            entry->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
+            IMFMediaType_Release(new_output_type);
+            return S_OK;
+        }
+        IMFMediaType_Release(new_output_type);
+    }
+
+    return hr;
+}
+
+/* update the transform input type while keeping an output type which matches the current output subtype */
+static HRESULT transform_entry_update_input_type(struct transform_entry *entry, IMFMediaType *input_type)
+{
+    IMFMediaType *old_output_type, *new_output_type;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &old_output_type)))
+        return hr;
+    if (FAILED(hr = IMFTransform_SetInputType(entry->transform, 0, input_type, 0)))
+        return hr;
+
+    /* check if transform output type is still valid or if we need to update it as well */
+    if (FAILED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &new_output_type)))
+        hr = transform_entry_update_output_type(entry, old_output_type);
+    else
+        IMFMediaType_Release(new_output_type);
+
+    IMFMediaType_Release(old_output_type);
+    return hr;
+}
+
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
@@ -786,7 +833,7 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
     while (SUCCEEDED(hr))
     {
         MFT_OUTPUT_DATA_BUFFER out_buffer = {0};
-        IMFMediaType *output_type, *media_type;
+        IMFMediaType *media_type;
 
         if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
                 && FAILED(hr = source_reader_allocate_stream_sample(&stream_info, &out_buffer.pSample)))
@@ -794,23 +841,15 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
 
         if (SUCCEEDED(hr = IMFTransform_ProcessOutput(entry->transform, 0, 1, &out_buffer, &status)))
         {
+            /* propagate upstream type to the transform input type */
             if ((entry->pending_flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
-                    && SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &output_type)))
+                    && SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &media_type)))
             {
                 if (!next)
-                    hr = IMFMediaType_CopyAllItems(output_type, (IMFAttributes *)stream->current);
-                else if (SUCCEEDED(hr = IMFTransform_SetInputType(next->transform, 0, output_type, 0)))
-                {
-                    /* check if transform output type is still valid or if we need to reset it as well */
-                    if (FAILED(hr = IMFTransform_GetOutputCurrentType(next->transform, 0, &media_type))
-                            && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(next->transform, 0, 0, &output_type)))
-                    {
-                        next->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
-                        hr = IMFTransform_SetOutputType(entry->transform, 0, media_type, 0);
-                        IMFMediaType_Release(media_type);
-                    }
-                }
-                IMFMediaType_Release(output_type);
+                    hr = IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)stream->current);
+                else
+                    hr = transform_entry_update_input_type(next, media_type);
+                IMFMediaType_Release(media_type);
             }
 
             if (FAILED(hr))
@@ -823,16 +862,15 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
             entry->pending_flags = 0;
         }
 
-        if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(entry->transform, 0, 0, &output_type)))
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE && SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(entry->transform, 0, &media_type)))
         {
-            hr = IMFTransform_SetOutputType(entry->transform, 0, output_type, 0);
-            IMFMediaType_Release(output_type);
+            hr = transform_entry_update_output_type(entry, media_type);
+            IMFMediaType_Release(media_type);
 
             if (SUCCEEDED(hr))
             {
                 hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info);
                 stream_info.cbSize = max(stream_info.cbSize, entry->min_buffer_size);
-                entry->pending_flags |= MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED;
             }
         }
 
