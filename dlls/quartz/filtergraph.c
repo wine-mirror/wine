@@ -1516,6 +1516,9 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
     TRACE("graph %p, filename %s, filter_name %s, ret_filter %p.\n",
             graph, debugstr_w(filename), debugstr_w(filter_name), ret_filter);
 
+    if (!*filename)
+        return VFW_E_NOT_FOUND;
+
     if (!get_media_type(filename, NULL, NULL, &clsid))
         clsid = CLSID_AsyncReader;
     TRACE("Using source filter %s.\n", debugstr_guid(&clsid));
