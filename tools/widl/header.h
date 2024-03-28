@@ -34,6 +34,7 @@ extern int needs_space_after(type_t *t);
 extern int is_object(const type_t *iface);
 extern int is_local(const attr_list_t *list);
 extern int count_methods(const type_t *iface);
+extern const statement_t * get_callas_source(const type_t *iface, const var_t *def);
 extern int need_stub(const type_t *iface);
 extern int need_proxy(const type_t *iface);
 extern int need_inline_stubs(const type_t *iface);

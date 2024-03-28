@@ -464,7 +464,7 @@ int count_methods(const type_t *iface)
     return count;
 }
 
-static const statement_t * get_callas_source(const type_t * iface, const var_t * def)
+const statement_t *get_callas_source(const type_t *iface, const var_t *def)
 {
   const statement_t * source;
   STATEMENTS_FOR_EACH_FUNC( source, type_iface_get_stmts(iface)) {

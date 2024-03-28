@@ -1598,7 +1598,11 @@ static void write_iface_procformatstring(type_t *iface, FILE *file, int indent, 
     STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
     {
         var_t *func = stmt->u.var;
-        if (is_local(func->attrs)) continue;
+        if (is_local(func->attrs))
+        {
+            if (!get_callas_source(iface, func)) count++;
+            continue;
+        }
         write_procformatstring_func( file, indent, iface, func, offset, count++ );
     }
 }
