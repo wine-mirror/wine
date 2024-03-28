@@ -5367,6 +5367,19 @@ static void test_add_source_filter(void)
     else
         skip("Not enough permission to register media types.\n");
 
+    /* Test some failure cases. */
+
+    filter = (IBaseFilter *)0xdeadbeef;
+    hr = IFilterGraph2_AddSourceFilter(graph, L"", NULL, &filter);
+    /* the BURIKO visual novel engine requires this exact error code */
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    ok(filter == (IBaseFilter *)0xdeadbeef, "Got %p.\n", filter);
+
+    filter = (IBaseFilter *)0xdeadbeef;
+    hr = IFilterGraph2_AddSourceFilter(graph, L"doesnt_exist.mp3", NULL, &filter);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Got hr %#lx.\n", hr);
+    ok(filter == (IBaseFilter *)0xdeadbeef, "Got %p.\n", filter);
+
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
