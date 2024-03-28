@@ -1638,7 +1638,7 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 
   if (!bind)
   {
-    ERR("no binding\n");
+    WARN("no binding\n");
     return RPC_S_INVALID_BINDING;
   }
 

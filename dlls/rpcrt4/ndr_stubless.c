@@ -346,9 +346,9 @@ static handle_t client_get_handle(const MIDL_STUB_MESSAGE *pStubMsg,
                 {
                     ERR("null context handle isn't allowed\n");
                     RpcRaiseException(RPC_X_SS_IN_NULL_CONTEXT);
-                    return NULL;
                 }
                 /* FIXME: should we store this structure in stubMsg.pContext? */
+                return NULL;
             }
         default:
             ERR("bad explicit binding handle type (0x%02x)\n", pProcHeader->handle_type);
@@ -745,10 +745,7 @@ static LONG_PTR do_ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORM
 
         /* we only need a handle if this isn't an object method */
         if (!(proc_header->Oi_flags & Oi_OBJECT_PROC))
-        {
             hbinding = client_get_handle(stub_msg, proc_header, handle_format);
-            if (!hbinding) return 0;
-        }
 
         stub_msg->BufferLength = 0;
 
