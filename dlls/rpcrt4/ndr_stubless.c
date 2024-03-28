@@ -947,6 +947,7 @@ LONG_PTR CDECL ndr_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         {
             /* 7. FREE */
             TRACE( "FREE\n" );
+            stubMsg.StackTop = (unsigned char *)stack_top;
             client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
                            number_of_params, (unsigned char *)&RetVal);
             RetVal = NdrProxyErrorHandler(GetExceptionCode());
