@@ -1542,6 +1542,7 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface,
     if (FAILED(hr))
     {
         WARN("Failed to load file, hr %#lx.\n", hr);
+        IBaseFilter_Release(filter);
         return hr;
     }
 
