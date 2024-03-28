@@ -1558,7 +1558,6 @@ static void test_GdipPrivateAddMemoryFont(void)
         {
             stat = GdipGetFontCollectionFamilyCount(fonts, &count);
             ok(stat == Ok, "GdipGetFontCollectionFamilyCount failed, error %d\n", stat);
-            todo_wine
             ok(count == 1, "Expected count 1, got %d\n", count);
         }
         else if (i == 1 && stat == FileNotFound)

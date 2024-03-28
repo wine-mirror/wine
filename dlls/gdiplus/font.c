@@ -1385,12 +1385,13 @@ static WCHAR *copy_name_table_string( const tt_name_record *name, const BYTE *da
 
 static WCHAR *load_ttf_name_id( const BYTE *mem, DWORD_PTR size, DWORD id )
 {
+    static const WORD platform_id_table[] = {TT_PLATFORM_MICROSOFT, TT_PLATFORM_MACINTOSH, TT_PLATFORM_APPLE_UNICODE};
     LANGID lang = GetSystemDefaultLangID();
     const tt_header *header;
     const tt_name_table *name_table;
-    const tt_name_record *name_record;
+    const tt_name_record *name_record_table, *name_record;
     DWORD pos, ofs = 0, count;
-    int i, res, best_lang = 0, best_index = -1;
+    int i, j, res, best_lang = 0, best_index = -1;
 
     if (sizeof(tt_header) > size)
         return NULL;
@@ -1421,26 +1422,33 @@ static WCHAR *load_ttf_name_id( const BYTE *mem, DWORD_PTR size, DWORD id )
     if (pos > size)
         return NULL;
     name_table = (const tt_name_table*)&mem[ofs];
+    name_record_table = (const tt_name_record *)&mem[pos];
     count =  GET_BE_WORD(name_table->count);
     if (GET_BE_WORD(name_table->string_offset) >= size - ofs) return NULL;
     ofs += GET_BE_WORD(name_table->string_offset);
-    for (i=0; i<count; i++)
+    for (i = 0; i < ARRAY_SIZE(platform_id_table); i++)
     {
-        name_record = (const tt_name_record*)&mem[pos];
-        pos += sizeof(*name_record);
-        if (pos > size)
-            return NULL;
-
-        if (GET_BE_WORD(name_record->name_id) != id) continue;
-        if (GET_BE_WORD(name_record->offset) >= size - ofs) return NULL;
-        if (GET_BE_WORD(name_record->length) > size - ofs - GET_BE_WORD(name_record->offset)) return NULL;
-
-        res = match_name_table_language( name_record, lang );
-        if (res > best_lang)
+        for (j = 0; j < count; j++)
         {
-            best_lang = res;
-            best_index = i;
+            name_record = name_record_table + j;
+            if ((const BYTE *)name_record - mem > size)
+                return NULL;
+
+            if (GET_BE_WORD(name_record->platform_id) != platform_id_table[i]) continue;
+            if (GET_BE_WORD(name_record->name_id) != id) continue;
+            if (GET_BE_WORD(name_record->offset) >= size - ofs) return NULL;
+            if (GET_BE_WORD(name_record->length) > size - ofs - GET_BE_WORD(name_record->offset)) return NULL;
+
+            res = match_name_table_language(name_record, lang);
+            if (res > best_lang)
+            {
+                best_lang = res;
+                best_index = j;
+            }
         }
+
+        if (best_index != -1)
+            break;
     }
 
     if (best_lang)
