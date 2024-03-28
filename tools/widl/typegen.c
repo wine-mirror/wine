@@ -1357,7 +1357,7 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
     return (get_stub_mode() != MODE_Os);
 }
 
-static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
+static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
                                     const var_t *func, unsigned int *offset,
                                     unsigned short num_proc )
 {
@@ -1365,6 +1365,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
     var_list_t *args = type_function_get_args( func->declspec.type );
     unsigned char explicit_fc, implicit_fc;
     unsigned char handle_flags;
+    var_t *retval = type_function_get_retval( func->declspec.type );
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
     unsigned char oi_flags = Oi_HAS_RPCFLAGS | Oi_USE_NEW_INIT_ROUTINES;
     unsigned int rpc_flags = get_rpc_flags( func->attrs );
@@ -1393,7 +1394,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
         param_num++;
         nb_args++;
     }
-    if (!is_void( type_function_get_rettype( func->declspec.type )))
+    if (!is_void( retval->declspec.type ))
     {
         stack_size += pointer_size;
         nb_args++;
@@ -1445,6 +1446,7 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
 
     if (get_stub_mode() == MODE_Oif)
     {
+        unsigned int stack_offset = is_object(iface) ? pointer_size : 0;
         unsigned char oi2_flags = get_func_oi2_flags( func );
         unsigned char ext_flags = 0;
         unsigned int size;
@@ -1487,6 +1489,43 @@ static void write_proc_func_header( FILE *file, int indent, const type_t *iface,
             print_file( file, indent, "NdrFcShort(0x%x),\n", fpu_mask );  /* floating point mask */
             *offset += 2;
         }
+
+        /* emit argument data */
+        if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+        {
+            print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
+            *offset += write_new_procformatstring_type(file, indent, var, FALSE, &stack_offset);
+        }
+
+        /* emit return value data */
+        if (!is_void( retval->declspec.type ))
+        {
+            print_file( file, 0, "/* %u (return value) */\n", *offset );
+            *offset += write_new_procformatstring_type(file, indent, retval, TRUE, &stack_offset);
+        }
+    }
+    else  /* old style */
+    {
+        /* emit argument data */
+        if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+        {
+            print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
+            *offset += write_old_procformatstring_type(file, indent, var, FALSE, TRUE);
+        }
+
+        /* emit return value data */
+        if (is_void(retval->declspec.type))
+        {
+            print_file(file, 0, "/* %u (void) */\n", *offset);
+            print_file(file, indent, "0x5b,\t/* FC_END */\n");
+            print_file(file, indent, "0x5c,\t/* FC_PAD */\n");
+            *offset += 2;
+        }
+        else
+        {
+            print_file( file, 0, "/* %u (return value) */\n", *offset );
+            *offset += write_old_procformatstring_type(file, indent, retval, TRUE, TRUE);
+        }
     }
 }
 
@@ -1494,12 +1533,13 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
                                          const var_t *func, unsigned int *offset,
                                          unsigned short num_proc )
 {
-    unsigned int stack_offset = is_object( iface ) ? pointer_size : 0;
-    int is_interpreted = is_interpreted_func( iface, func );
-    int is_new_style = is_interpreted && (get_stub_mode() == MODE_Oif);
-    var_t *retval = type_function_get_retval( func->declspec.type );
+    var_t *retval;
 
-    if (is_interpreted) write_proc_func_header( file, indent, iface, func, offset, num_proc );
+    if (is_interpreted_func( iface, func ))
+    {
+        write_proc_func_interp( file, indent, iface, func, offset, num_proc );
+        return;
+    }
 
     /* emit argument data */
     if (type_function_get_args(func->declspec.type))
@@ -1508,31 +1548,23 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
         LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         {
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            if (is_new_style)
-                *offset += write_new_procformatstring_type(file, indent, var, FALSE, &stack_offset);
-            else
-                *offset += write_old_procformatstring_type(file, indent, var, FALSE, is_interpreted);
+            *offset += write_old_procformatstring_type(file, indent, var, FALSE, FALSE);
         }
     }
 
     /* emit return value data */
+    retval = type_function_get_retval( func->declspec.type );
     if (is_void(retval->declspec.type))
     {
-        if (!is_new_style)
-        {
-            print_file(file, 0, "/* %u (void) */\n", *offset);
-            print_file(file, indent, "0x5b,\t/* FC_END */\n");
-            print_file(file, indent, "0x5c,\t/* FC_PAD */\n");
-            *offset += 2;
-        }
+        print_file(file, 0, "/* %u (void) */\n", *offset);
+        print_file(file, indent, "0x5b,\t/* FC_END */\n");
+        print_file(file, indent, "0x5c,\t/* FC_PAD */\n");
+        *offset += 2;
     }
     else
     {
         print_file( file, 0, "/* %u (return value) */\n", *offset );
-        if (is_new_style)
-            *offset += write_new_procformatstring_type(file, indent, retval, TRUE, &stack_offset);
-        else
-            *offset += write_old_procformatstring_type(file, indent, retval, TRUE, is_interpreted);
+        *offset += write_old_procformatstring_type(file, indent, retval, TRUE, FALSE);
     }
 }
 
