@@ -1044,11 +1044,7 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
     case TGT_BASIC:
         *flags |= IsBasetype;
         fc = get_basic_fc_signed( var->declspec.type );
-        if (fc == FC_BIND_PRIMITIVE)
-        {
-            buffer_size = 4;  /* actually 0 but avoids setting MustSize */
-            fc = FC_LONG;
-        }
+        if (fc == FC_BIND_PRIMITIVE) buffer_size = 4;  /* actually 0 but avoids setting MustSize */
         break;
     case TGT_ENUM:
         *flags |= IsBasetype;
@@ -1420,6 +1416,7 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
             print_file( file, indent, "NdrFcShort(0x%hx),\t/* stack offset = %hu */\n",
                         handle_stack_offset, handle_stack_offset );
             *offset += 4;
+            nb_args--;
             break;
         case FC_BIND_GENERIC:
             handle_flags = type_memsize( handle_var->declspec.type );
@@ -1493,6 +1490,11 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
         /* emit argument data */
         if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
         {
+            if (explicit_fc == FC_BIND_PRIMITIVE && var == handle_var)
+            {
+                stack_offset += pointer_size;
+                continue;
+            }
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
             *offset += write_new_procformatstring_type(file, indent, var, FALSE, &stack_offset);
         }
