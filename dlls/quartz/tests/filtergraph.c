@@ -817,6 +817,7 @@ static void test_render_with_multithread(void)
 struct testpin
 {
     IPin IPin_iface;
+    IMemInputPin IMemInputPin_iface;
     LONG ref;
     PIN_DIRECTION dir;
     struct testfilter *filter;
@@ -836,6 +837,10 @@ struct testpin
     HRESULT Connect_hr;
     HRESULT EnumMediaTypes_hr;
     HRESULT QueryInternalConnections_hr;
+
+    BYTE input[64];
+    ULONG input_size;
+    HANDLE on_input_full;
 };
 
 struct testfilter
@@ -870,7 +875,6 @@ struct testfilter
     IReferenceClock IReferenceClock_iface;
 
     IFileSourceFilter IFileSourceFilter_iface;
-    WCHAR filename[MAX_PATH];
 };
 
 static inline struct testpin *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
@@ -955,6 +959,11 @@ static inline struct testpin *impl_from_IPin(IPin *iface)
     return CONTAINING_RECORD(iface, struct testpin, IPin_iface);
 }
 
+static inline struct testpin *impl_from_IMemInputPin(IMemInputPin *iface)
+{
+    return CONTAINING_RECORD(iface, struct testpin, IMemInputPin_iface);
+}
+
 static HRESULT WINAPI testpin_QueryInterface(IPin *iface, REFIID iid, void **out)
 {
     struct testpin *pin = impl_from_IPin(iface);
@@ -964,6 +973,12 @@ static HRESULT WINAPI testpin_QueryInterface(IPin *iface, REFIID iid, void **out
     {
         *out = &pin->IPin_iface;
         IPin_AddRef(*out);
+        return S_OK;
+    }
+    if (pin->IMemInputPin_iface.lpVtbl && IsEqualGUID(iid, &IID_IMemInputPin))
+    {
+        *out = &pin->IMemInputPin_iface;
+        IMemInputPin_AddRef(*out);
         return S_OK;
     }
 
@@ -1045,7 +1060,7 @@ static HRESULT WINAPI testpin_QueryId(IPin *iface, WCHAR **id)
 {
     struct testpin *pin = impl_from_IPin(iface);
     if (winetest_debug > 1) trace("%p->QueryId()\n", iface);
-    *id = CoTaskMemAlloc(11);
+    *id = CoTaskMemAlloc(sizeof(WCHAR)*11);
     wcscpy(*id, pin->id);
     return S_OK;
 }
@@ -1169,6 +1184,8 @@ static void testpin_init(struct testpin *pin, const IPinVtbl *vtbl, PIN_DIRECTIO
     pin->Connect_hr = S_OK;
     pin->EnumMediaTypes_hr = S_OK;
     pin->QueryInternalConnections_hr = E_NOTIMPL;
+    wsprintfW(pin->name, L"name%.4x", 0xFFFF&(intptr_t)pin);
+    wsprintfW(pin->id, L"id%.4x", 0xFFFF&(intptr_t)pin);
 }
 
 static void testsink_init(struct testpin *pin)
@@ -1476,8 +1493,20 @@ static HRESULT WINAPI testfilter_EnumPins(IBaseFilter *iface, IEnumPins **out)
 
 static HRESULT WINAPI testfilter_FindPin(IBaseFilter *iface, const WCHAR *id, IPin **pin)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IBaseFilter(iface);
+    int i;
+    if (winetest_debug > 1) trace("%p->FindPin(%ls)\n", filter, id);
+
+    for (i = 0; i < filter->pin_count; ++i)
+    {
+        if (!wcscmp(id, filter->pins[i].id))
+        {
+            *pin = &filter->pins[i].IPin_iface;
+            IPin_AddRef(*pin);
+            return S_OK;
+        }
+    }
+    return VFW_E_NOT_FOUND;
 }
 
 static HRESULT WINAPI testfilter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *info)
@@ -1970,11 +1999,7 @@ static ULONG WINAPI testfilesource_Release(IFileSourceFilter *iface)
 static HRESULT WINAPI testfilesource_Load(IFileSourceFilter *iface,
         const WCHAR *filename, const AM_MEDIA_TYPE *mt)
 {
-    struct testfilter *filter = impl_from_IFileSourceFilter(iface);
-    if (winetest_debug > 1) trace("%p->Load()\n", iface);
-
-    wcscpy(filter->filename, filename);
-
+    if (winetest_debug > 1) trace("%p->Load(%ls)\n", iface, filename);
     return S_OK;
 }
 
@@ -4193,6 +4218,182 @@ static void test_ec_complete(void)
     ok(filter3.ref == 1, "Got outstanding refcount %ld.\n", filter3.ref);
 }
 
+static HRESULT WINAPI mpegtestsink_ReceiveConnection(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
+{
+    struct testpin *pin = impl_from_IPin(iface);
+    if (winetest_debug > 1) trace("%p->ReceiveConnection(%p)\n", pin, peer);
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    if (!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1Payload))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_MPEGVideo))
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
+    pin->peer = peer;
+    IPin_AddRef(peer);
+    return S_OK;
+}
+
+static HRESULT WINAPI mpegtestpin_EndOfStream(IPin *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI mpegtestpin_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    return S_OK;
+}
+
+static const IPinVtbl mpegtestsink_vtbl =
+{
+    testpin_QueryInterface,
+    testpin_AddRef,
+    testpin_Release,
+    no_Connect,
+    mpegtestsink_ReceiveConnection,
+    testpin_Disconnect,
+    testpin_ConnectedTo,
+    testpin_ConnectionMediaType,
+    testpin_QueryPinInfo,
+    testpin_QueryDirection,
+    testpin_QueryId,
+    testpin_QueryAccept,
+    testpin_EnumMediaTypes,
+    testpin_QueryInternalConnections,
+    mpegtestpin_EndOfStream,
+    testpin_BeginFlush,
+    testpin_EndFlush,
+    mpegtestpin_NewSegment
+};
+
+static HRESULT WINAPI meminput_QueryInterface(IMemInputPin *iface, REFIID iid, void **out)
+{
+    struct testpin *pin = impl_from_IMemInputPin(iface);
+    if (winetest_debug > 1) trace("%p->QueryInterface(%s)\n", pin, wine_dbgstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI meminput_AddRef(IMemInputPin *iface)
+{
+    struct testpin *pin = impl_from_IMemInputPin(iface);
+    return InterlockedIncrement(&pin->ref);
+}
+
+static ULONG WINAPI meminput_Release(IMemInputPin *iface)
+{
+    struct testpin *pin = impl_from_IMemInputPin(iface);
+    return InterlockedDecrement(&pin->ref);
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_GetAllocator(IMemInputPin *iface, IMemAllocator **allocator)
+{
+    return VFW_E_NO_ALLOCATOR;
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_NotifyAllocator(IMemInputPin *iface, IMemAllocator *allocator, BOOL readonly)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_GetAllocatorRequirements(IMemInputPin *iface, ALLOCATOR_PROPERTIES *props)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_Receive(IMemInputPin *iface, IMediaSample *sample)
+{
+    struct testpin *pin = impl_from_IMemInputPin(iface);
+    size_t new_bytes;
+    HRESULT hr;
+    BYTE *ptr;
+    long len;
+
+    len = IMediaSample_GetActualDataLength(sample);
+    hr = IMediaSample_GetPointer(sample, &ptr);
+
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(len > 0, "Got %ld.\n", len);
+
+    new_bytes = min(sizeof(pin->input) - pin->input_size, len);
+    if (new_bytes)
+    {
+        memcpy(pin->input + pin->input_size, ptr, new_bytes);
+        pin->input_size += new_bytes;
+        if (pin->input_size == sizeof(pin->input))
+            SetEvent(pin->on_input_full);
+    }
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_ReceiveMultiple(IMemInputPin *iface, IMediaSample **samples, LONG n_samples, LONG *n_samples_processed)
+{
+    *n_samples_processed = 1;
+    return IMemInputPin_Receive(iface, samples[0]);
+}
+
+static HRESULT STDMETHODCALLTYPE meminput_ReceiveCanBlock(IMemInputPin *iface) { return S_OK; }
+
+static const IMemInputPinVtbl mpegtestsink_meminput_vtbl =
+{
+    meminput_QueryInterface,
+    meminput_AddRef,
+    meminput_Release,
+
+    meminput_GetAllocator,
+    meminput_NotifyAllocator,
+    meminput_GetAllocatorRequirements,
+    meminput_Receive,
+    meminput_ReceiveMultiple,
+    meminput_ReceiveCanBlock
+};
+
+static void test_renderfile_compressed(void)
+{
+    WCHAR *filename = load_resource(L"test.mpg");
+    struct testpin sink_pin;
+    struct testfilter sink;
+    IMediaControl *control;
+    IFilterGraph2 *graph;
+    HRESULT hr;
+    DWORD ret;
+
+    graph = create_graph();
+    testpin_init(&sink_pin, &mpegtestsink_vtbl, PINDIR_INPUT);
+    sink_pin.IMemInputPin_iface.lpVtbl = &mpegtestsink_meminput_vtbl;
+    testfilter_init(&sink, &sink_pin, 1);
+
+    hr = IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, L"sink");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
+    ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "Got hr %#lx.\n", hr);
+
+    ok(sink_pin.peer != NULL, "Expected connection.\n");
+
+    sink_pin.on_input_full = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaControl_Pause(control);
+    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+
+    ret = WaitForSingleObject(sink_pin.on_input_full, 1000);
+    ok(ret == WAIT_OBJECT_0, "Got %#lx.\n", ret);
+
+    ok(sink_pin.input[0] == 0x00, "Expected MPEG sequence header.\n");
+    ok(sink_pin.input[1] == 0x00, "Expected MPEG sequence header.\n");
+    ok(sink_pin.input[2] == 0x01, "Expected MPEG sequence header.\n");
+    ok(sink_pin.input[3] == 0xB3, "Expected MPEG sequence header.\n");
+
+    IMediaControl_Stop(control);
+    IFilterGraph2_Release(graph);
+    DeleteFileW(filename);
+}
+
 static void test_renderfile_failure(void)
 {
     static const char bogus_data[20] = {0xde, 0xad, 0xbe, 0xef};
@@ -5751,6 +5952,7 @@ START_TEST(filtergraph)
     test_sync_source();
     test_filter_state();
     test_ec_complete();
+    test_renderfile_compressed();
     test_renderfile_failure();
     test_graph_seeking();
     test_default_sync_source();
