@@ -254,6 +254,8 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
     } /* for (lNext < lPos) */
   } /* if (This->lCurrentFrame != lPos) */
 
+  This->lCurrentFrame = lPos;
+
   return (This->hic == NULL ? This->lpInFormat : This->lpOutFormat);
 }
 
