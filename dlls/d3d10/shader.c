@@ -26,8 +26,7 @@ HRESULT WINAPI D3D10CompileShader(const char *data, SIZE_T data_size, const char
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *entrypoint,
         const char *profile, UINT flags, ID3D10Blob **shader, ID3D10Blob **error_messages)
 {
-    /* Forward to d3dcompiler */
-    return D3DCompile(data, data_size, filename, defines, include,
+    return D3DCompileFromMemory(data, data_size, filename, defines, include,
             entrypoint, profile, flags, 0, shader, error_messages);
 }
 
@@ -37,5 +36,5 @@ HRESULT WINAPI D3D10DisassembleShader(const void *data, SIZE_T data_size,
     TRACE("data %p, data_size %#Ix, color_code %#x, comments %p, disassembly %p.\n",
             data, data_size, color_code, comments, disassembly);
 
-    return D3DDisassemble(data, data_size, color_code ? D3D_DISASM_ENABLE_COLOR_CODE : 0, comments, disassembly);
+    return D3DDisassembleCode(data, data_size, color_code ? D3D_DISASM_ENABLE_COLOR_CODE : 0, comments, disassembly);
 }

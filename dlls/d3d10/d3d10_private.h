@@ -315,4 +315,12 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *effect, const void *data, SIZE_T
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         unsigned int flags, D3D_FEATURE_LEVEL feature_level, ID3D10Device **device);
 
+/* d3dcompiler_39 function prototypes */
+HRESULT WINAPI D3DCompileFromMemory(const void *data, SIZE_T data_size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
+        const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages);
+
+HRESULT WINAPI D3DDisassembleCode(const void *data, SIZE_T data_size,
+        UINT flags, const char *comments, ID3DBlob **disassembly);
+
 #endif /* __WINE_D3D10_PRIVATE_H */
