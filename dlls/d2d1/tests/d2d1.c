@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <math.h>
 #include <float.h>
+#include "d3dcompiler.h"
 #include "d2d1_3.h"
 #include "d2d1effectauthor.h"
 #include "d3d11.h"
@@ -247,38 +248,17 @@ L"<?xml version='1.0'?>                                                       \
     </Effect>                                                                 \
 ";
 
-static const DWORD test_vs[] =
-{
-#if 0
-    void main(float4 pos : Position, out float4 output : SV_Position)
-    {
-        output = pos;
-    }
-#endif
-    0x43425844, 0xa84b398b, 0xc4047d32, 0xc19c67bb, 0x4644285e, 0x00000001, 0x000000d8, 0x00000003,
-    0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-    0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x69736f50, 0x6e6f6974, 0xababab00,
-    0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
-    0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x52444853, 0x0000003c, 0x00010040,
-    0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
-    0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
-};
+static const char test_vs_code[] =
+    "void main(float4 pos : Position, out float4 output : SV_Position)\n"
+    "{\n"
+    "    output = pos;\n"
+    "}";
 
-static const DWORD test_ps[] =
-{
-#if 0
-    float4 main() : SV_Target
-    {
-        return float4(0.1, 0.2, 0.3, 0.4);
-    }
-#endif
-    0x43425844, 0xf34300ae, 0x22fc6d56, 0x5cca66fa, 0x86ae3266, 0x00000001, 0x000000b0, 0x00000003,
-    0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
-    0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
-    0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
-    0x03000065, 0x001020f2, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x3dcccccd,
-    0x3e4ccccd, 0x3e99999a, 0x3ecccccd, 0x0100003e,
-};
+static const char test_ps_code[] =
+    "float4 main() : SV_Target\n"
+    "{\n"
+    "    return float4(0.1, 0.2, 0.3, 0.4);\n"
+    "}";
 
 static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
@@ -11525,6 +11505,7 @@ static void test_effect_context(BOOL d3d11)
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
     ID2D1Device *device;
+    ID3D10Blob *vs, *ps;
     ULONG refcount;
     BOOL loaded;
     HRESULT hr;
@@ -11539,6 +11520,14 @@ static void test_effect_context(BOOL d3d11)
         release_test_context(&ctx);
         return;
     }
+
+    hr = D3DCompile(test_vs_code, sizeof(test_vs_code) - 1, "test_vs", NULL, NULL,
+            "main", "vs_4_0", 0, 0, &vs, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DCompile(test_ps_code, sizeof(test_ps_code) - 1, "test_ps", NULL, NULL,
+            "main", "ps_4_0", 0, 0, &ps, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     binding.propertyName = L"Context";
     binding.setFunction = NULL;
@@ -11562,26 +11551,26 @@ static void test_effect_context(BOOL d3d11)
     ok(!loaded, "Unexpected shader loaded state.\n");
 
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
-            &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
+            &GUID_TestVertexShader, ID3D10Blob_GetBufferPointer(ps), ID3D10Blob_GetBufferSize(ps));
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
-            &GUID_TestVertexShader, (const BYTE *)test_vs, sizeof(test_vs));
+            &GUID_TestVertexShader, ID3D10Blob_GetBufferPointer(vs), ID3D10Blob_GetBufferSize(vs));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
     ok(loaded, "Unexpected shader loaded state.\n");
 
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
-            &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
+            &GUID_TestVertexShader, ID3D10Blob_GetBufferPointer(ps), ID3D10Blob_GetBufferSize(ps));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1EffectContext_LoadVertexShader(effect_context,
-            &GUID_TestVertexShader, (const BYTE *)test_vs, sizeof(test_vs));
+            &GUID_TestVertexShader, ID3D10Blob_GetBufferPointer(vs), ID3D10Blob_GetBufferSize(vs));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1EffectContext_LoadPixelShader(effect_context,
-            &GUID_TestPixelShader, (const BYTE *)test_vs, sizeof(test_vs));
+            &GUID_TestPixelShader, ID3D10Blob_GetBufferPointer(vs), ID3D10Blob_GetBufferSize(vs));
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1EffectContext_LoadPixelShader(effect_context,
-            &GUID_TestPixelShader, (const BYTE *)test_ps, sizeof(test_ps));
+            &GUID_TestPixelShader, ID3D10Blob_GetBufferPointer(ps), ID3D10Blob_GetBufferSize(ps));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
     ok(loaded, "Unexpected shader loaded state.\n");
@@ -11642,6 +11631,10 @@ static void test_effect_context(BOOL d3d11)
 
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Blob_Release(vs);
+    ID3D10Blob_Release(ps);
+
     release_test_context(&ctx);
 }
 
