@@ -9877,7 +9877,15 @@ static void test_effect_fx_4_1_blend_state(void)
 
 static void test_effect_compiler(void)
 {
-    static char empty_effect[] = "technique10 {};";
+    static char empty_effect[] =
+        "technique10 {};";
+    static char empty_buffer[] =
+        "cbuffer cb1 { float4 m1; }\n"
+        "cbuffer cb2 { }\n"
+        "technique10 {};";
+
+    D3D10_EFFECT_VARIABLE_DESC var_desc;
+    ID3D10EffectConstantBuffer *cb;
     D3D10_EFFECT_DESC desc;
     ID3D10Device *device;
     ID3D10Effect *effect;
@@ -9899,10 +9907,56 @@ static void test_effect_compiler(void)
     hr = ID3D10Effect_GetDesc(effect, &desc);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
+    todo_wine
+    ok(desc.ConstantBuffers == 1, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
+
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(!strcmp(var_desc.Name, "$Globals"), "Unexpected variable name %s.\n", var_desc.Name);
+
     ID3D10Effect_Release(effect);
+    ID3D10Blob_Release(blob);
+
+    /* Empty user buffers. */
+    hr = D3D10CompileEffectFromMemory(empty_buffer, sizeof(empty_buffer), NULL, NULL, NULL, 0, 0,
+            &blob, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = create_effect(ID3D10Blob_GetBufferPointer(blob), 0, device, NULL, &effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ID3D10Effect_GetDesc(effect, &desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(desc.Techniques == 1, "Unexpected technique count %u.\n", desc.Techniques);
+    todo_wine
+    ok(desc.ConstantBuffers == 3, "Unexpected buffer count %u.\n", desc.ConstantBuffers);
+
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 0);
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!strcmp(var_desc.Name, "$Globals"), "Unexpected variable name %s.\n", var_desc.Name);
+
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(!strcmp(var_desc.Name, "cb1"), "Unexpected variable name %s.\n", var_desc.Name);
+
+    cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 2);
+    hr = cb->lpVtbl->GetDesc(cb, &var_desc);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(!strcmp(var_desc.Name, "cb2"), "Unexpected variable name %s.\n", var_desc.Name);
+
+    ID3D10Effect_Release(effect);
+    ID3D10Blob_Release(blob);
 
     ID3D10Device_Release(device);
-    ID3D10Blob_Release(blob);
 }
 
 START_TEST(effect)
