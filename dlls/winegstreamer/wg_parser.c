@@ -1244,6 +1244,15 @@ static gboolean src_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_add_scheduling_mode(query, GST_PAD_MODE_PULL);
             return TRUE;
 
+        case GST_QUERY_URI:
+            if (parser->uri)
+            {
+                GST_LOG_OBJECT(pad, "Responding with %" GST_PTR_FORMAT, query);
+                gst_query_set_uri(query, parser->uri);
+                return TRUE;
+            }
+            return FALSE;
+
         default:
             GST_WARNING("Unhandled query type %s.", GST_QUERY_TYPE_NAME(query));
             return FALSE;
