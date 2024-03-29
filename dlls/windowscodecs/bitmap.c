@@ -30,6 +30,9 @@
 #include "wine/asm.h"
 #include "wine/debug.h"
 
+#include "initguid.h"
+DEFINE_GUID(IID_CMetaBitmapRenderTarget, 0x0ccd7824,0xdc16,0x4d09,0xbc,0xa8,0x6b,0x09,0xc4,0xef,0x55,0x35);
+
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 /* WARNING: .NET Media Integration Layer (MIL) directly dereferences
@@ -253,7 +256,10 @@ static HRESULT WINAPI BitmapImpl_QueryInterface(IWICBitmap *iface, REFIID iid,
     }
     else
     {
-        FIXME("unknown interface %s\n", debugstr_guid(iid));
+        if (IsEqualIID(&IID_CMetaBitmapRenderTarget, iid))
+            WARN("Ignoring interface %s\n", debugstr_guid(iid));
+        else
+            FIXME("unknown interface %s\n", debugstr_guid(iid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }

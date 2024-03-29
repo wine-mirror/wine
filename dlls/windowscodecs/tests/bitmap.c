@@ -30,6 +30,9 @@
 #include "wincodec.h"
 #include "wine/test.h"
 
+#include "initguid.h"
+DEFINE_GUID(IID_CMetaBitmapRenderTarget, 0x0ccd7824,0xdc16,0x4d09,0xbc,0xa8,0x6b,0x09,0xc4,0xef,0x55,0x35);
+
 extern IID IID_IMILBitmap;
 extern IID IID_IMILBitmapSource;
 extern IID IID_IMILBitmapLock;
@@ -1464,6 +1467,12 @@ static void test_IMILBitmap(void)
     IWICBitmapScaler_Release(scaler);
     mil_source->lpVtbl->Release(mil_source);
     mil_bitmap->lpVtbl->Release(mil_bitmap);
+
+    mil_unknown = (void *)0xdeadbeef;
+    hr = IWICBitmap_QueryInterface(bitmap, &IID_CMetaBitmapRenderTarget, (void **)&mil_unknown);
+    ok(hr == E_NOINTERFACE, "got %#lx\n", hr);
+    ok(!mil_unknown, "got %p\n", mil_unknown);
+
     IWICBitmap_Release(bitmap);
 }
 
