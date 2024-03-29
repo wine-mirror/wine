@@ -43,11 +43,21 @@ static void set_rect_empty(RectF *rc)
     rc->Height = 0.0;
 }
 
+#define load_resource(a, b, c) _load_resource(__LINE__, a, b, c)
+static void _load_resource(int line, const WCHAR *filename, BYTE **data, DWORD *size)
+{
+    HRSRC resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
+    ok_(__FILE__, line)(!!resource, "FindResourceW failed, error %lu\n", GetLastError());
+    *data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    ok_(__FILE__, line)(!!*data, "LockResource failed, error %lu\n", GetLastError());
+    *size = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok_(__FILE__, line)(*size > 0, "SizeofResource failed, error %lu\n", GetLastError());
+}
+
 static void create_testfontfile(const WCHAR *filename, int resource, WCHAR pathW[MAX_PATH])
 {
-    DWORD written;
+    DWORD written, length;
     HANDLE file;
-    HRSRC res;
     void *ptr;
 
     GetTempPathW(MAX_PATH, pathW);
@@ -56,11 +66,9 @@ static void create_testfontfile(const WCHAR *filename, int resource, WCHAR pathW
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %ld\n", wine_dbgstr_w(pathW), GetLastError());
 
-    res = FindResourceA(GetModuleHandleA(NULL), MAKEINTRESOURCEA(resource), (LPCSTR)RT_RCDATA);
-    ok(res != 0, "couldn't find resource\n");
-    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
-    WriteFile(file, ptr, SizeofResource(GetModuleHandleA(NULL), res), &written, NULL);
-    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "couldn't write resource\n");
+    load_resource(MAKEINTRESOURCEW(resource), (BYTE **)&ptr, &length);
+    WriteFile(file, ptr, length, &written, NULL);
+    ok(written == length, "couldn't write resource\n");
     CloseHandle(file);
 }
 
@@ -1524,6 +1532,47 @@ static void test_CloneFont(void)
     GdipDeleteFontFamily(family);
 }
 
+static void test_GdipPrivateAddMemoryFont(void)
+{
+    static const WORD resource_ids[] =
+    {
+        3, /* A font that has an invalid full name on Mac platform and a valid full name on Microsoft platform */
+        4, /* A font that has an invalid full name on Unicode platform and a valid full name on Mac platform */
+    };
+    GpFontCollection *fonts;
+    GpStatus stat;
+    int count, i;
+    void *buffer;
+    DWORD size;
+
+    for (i = 0; i < ARRAY_SIZE(resource_ids); i++)
+    {
+        winetest_push_context("test %d", i);
+
+        stat = GdipNewPrivateFontCollection(&fonts);
+        ok(stat == Ok, "GdipNewPrivateFontCollection failed, error %d\n", stat);
+
+        load_resource(MAKEINTRESOURCEW(resource_ids[i]), (BYTE **)&buffer, &size);
+        stat = GdipPrivateAddMemoryFont(fonts, buffer, size);
+        if (stat == Ok)
+        {
+            stat = GdipGetFontCollectionFamilyCount(fonts, &count);
+            ok(stat == Ok, "GdipGetFontCollectionFamilyCount failed, error %d\n", stat);
+            todo_wine
+            ok(count == 1, "Expected count 1, got %d\n", count);
+        }
+        else if (i == 1 && stat == FileNotFound)
+            win_skip("Fonts without Microsoft platform names are unsupported on win7.\n");
+        else
+            ok(0, "GdipPrivateAddMemoryFont failed, error %d\n", stat);
+
+        stat = GdipDeletePrivateFontCollection(&fonts);
+        ok(stat == Ok, "GdipDeletePrivateFontCollection failed, error %d\n", stat);
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(font)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1558,6 +1607,7 @@ START_TEST(font)
     test_heightgivendpi();
     test_GdipGetFontCollectionFamilyList();
     test_GdipGetFontCollectionFamilyCount();
+    test_GdipPrivateAddMemoryFont();
 
     GdiplusShutdown(gdiplusToken);
 }
