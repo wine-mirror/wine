@@ -51,8 +51,6 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static pthread_mutex_t vulkan_mutex;
 
-static XContext vulkan_hwnd_context;
-
 #define VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR 1000004000
 
 static struct list surface_list = LIST_INIT( surface_list );
@@ -91,13 +89,7 @@ static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
     return (struct wine_vk_surface *)(uintptr_t)handle;
 }
 
-static struct wine_vk_surface *wine_vk_surface_grab(struct wine_vk_surface *surface)
-{
-    InterlockedIncrement(&surface->ref);
-    return surface;
-}
-
-static void wine_vk_surface_release(struct wine_vk_surface *surface)
+static void wine_vk_surface_release( struct wine_vk_surface *surface )
 {
     if (InterlockedDecrement(&surface->ref))
         return;
@@ -115,18 +107,18 @@ static void wine_vk_surface_release(struct wine_vk_surface *surface)
     free(surface);
 }
 
-void wine_vk_surface_destroy(HWND hwnd)
+void destroy_vk_surface( HWND hwnd )
 {
-    struct wine_vk_surface *surface;
-    pthread_mutex_lock(&vulkan_mutex);
-    if (!XFindContext(gdi_display, (XID)hwnd, vulkan_hwnd_context, (char **)&surface))
+    struct wine_vk_surface *surface, *next;
+
+    pthread_mutex_lock( &vulkan_mutex );
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, &surface_list, struct wine_vk_surface, entry )
     {
+        if (surface->hwnd != hwnd) continue;
         surface->hwnd_thread_id = 0;
         surface->hwnd = NULL;
-        wine_vk_surface_release(surface);
     }
-    XDeleteContext(gdi_display, (XID)hwnd, vulkan_hwnd_context);
-    pthread_mutex_unlock(&vulkan_mutex);
+    pthread_mutex_unlock( &vulkan_mutex );
 }
 
 void vulkan_thread_detach(void)
@@ -143,7 +135,6 @@ void vulkan_thread_detach(void)
         TRACE("Detaching surface %p, hwnd %p.\n", surface, surface->hwnd);
         XReparentWindow(gdi_display, surface->window, get_dummy_parent(), 0, 0);
         XSync(gdi_display, False);
-        wine_vk_surface_destroy(surface->hwnd);
     }
     pthread_mutex_unlock(&vulkan_mutex);
 }
@@ -220,9 +211,6 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     }
 
     pthread_mutex_lock(&vulkan_mutex);
-    wine_vk_surface_destroy( x11_surface->hwnd );
-    XSaveContext( gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context,
-                  (char *)wine_vk_surface_grab( x11_surface ) );
     list_add_tail(&surface_list, &x11_surface->entry);
     pthread_mutex_unlock(&vulkan_mutex);
 
@@ -359,7 +347,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     LOAD_FUNCPTR( vkQueuePresentKHR );
 #undef LOAD_FUNCPTR
 
-    vulkan_hwnd_context = XUniqueContext();
     *driver_funcs = vulkan_funcs;
     return STATUS_SUCCESS;
 }
@@ -372,7 +359,7 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *
     return STATUS_NOT_IMPLEMENTED;
 }
 
-void wine_vk_surface_destroy(HWND hwnd)
+void destroy_vk_surface( HWND hwnd )
 {
 }
 
