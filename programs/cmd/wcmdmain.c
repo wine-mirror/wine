@@ -614,25 +614,19 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
     /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
     /* override if existing env var called that name              */
     if (WCMD_is_magic_envvar(thisVar, L"ERRORLEVEL")) {
-      wsprintfW(thisVarContents, L"%d", errorlevel);
-      len = lstrlenW(thisVarContents);
+      len = wsprintfW(thisVarContents, L"%d", errorlevel);
     } else if (WCMD_is_magic_envvar(thisVar, L"DATE")) {
-      GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
-                    NULL, thisVarContents, MAXSTRING);
-      len = lstrlenW(thisVarContents);
+      len = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
+                           NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
     } else if (WCMD_is_magic_envvar(thisVar, L"TIME")) {
-      GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
-                        NULL, thisVarContents, MAXSTRING);
-      len = lstrlenW(thisVarContents);
+      len = GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
+                           NULL, thisVarContents, ARRAY_SIZE(thisVarContents));
     } else if (WCMD_is_magic_envvar(thisVar, L"CD")) {
-      GetCurrentDirectoryW(MAXSTRING, thisVarContents);
-      len = lstrlenW(thisVarContents);
+      len = GetCurrentDirectoryW(ARRAY_SIZE(thisVarContents), thisVarContents);
     } else if (WCMD_is_magic_envvar(thisVar, L"RANDOM")) {
-      wsprintfW(thisVarContents, L"%d", rand() % 32768);
-      len = lstrlenW(thisVarContents);
+      len = wsprintfW(thisVarContents, L"%d", rand() % 32768);
     } else {
-
-      len = ExpandEnvironmentStringsW(thisVar, thisVarContents, ARRAY_SIZE(thisVarContents));
+      if ((len = ExpandEnvironmentStringsW(thisVar, thisVarContents, ARRAY_SIZE(thisVarContents)))) len--;
     }
 
     if (len == 0)
@@ -704,9 +698,9 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
 
       /* Check bounds */
       if (substrposition >= 0) {
-        startCopy = &thisVarContents[min(substrposition, len)];
+        startCopy = &thisVarContents[min(substrposition, len - 1)];
       } else {
-        startCopy = &thisVarContents[max(0, len+substrposition-1)];
+        startCopy = &thisVarContents[max(0, len + substrposition)];
       }
 
       if (commapos == NULL) {
@@ -714,12 +708,12 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
         WCMD_strsubstW(start, endOfVar + 1, startCopy, -1);
       } else if (substrlength < 0) {
 
-        int copybytes = (len+substrlength-1)-(startCopy-thisVarContents);
-        if (copybytes > len) copybytes = len;
+        int copybytes = len + substrlength - (startCopy - thisVarContents);
+        if (copybytes >= len) copybytes = len - 1;
         else if (copybytes < 0) copybytes = 0;
         WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
       } else {
-        substrlength = min(substrlength, len - (startCopy- thisVarContents + 1));
+        substrlength = min(substrlength, len - (startCopy - thisVarContents));
         WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
       }
 
