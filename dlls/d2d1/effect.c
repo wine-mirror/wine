@@ -813,7 +813,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadPixelShader(ID2D1EffectC
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (ID2D1EffectContext_IsShaderLoaded(iface, shader_id))
+    if (d2d_device_is_shader_loaded(effect_context->device_context->device, shader_id))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreatePixelShader(effect_context->device_context->d3d_device,
@@ -839,7 +839,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (ID2D1EffectContext_IsShaderLoaded(iface, shader_id))
+    if (d2d_device_is_shader_loaded(effect_context->device_context->device, shader_id))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreateVertexShader(effect_context->device_context->d3d_device,
@@ -865,7 +865,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1Effec
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (ID2D1EffectContext_IsShaderLoaded(iface, shader_id))
+    if (d2d_device_is_shader_loaded(effect_context->device_context->device, shader_id))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreateComputeShader(effect_context->device_context->d3d_device,
