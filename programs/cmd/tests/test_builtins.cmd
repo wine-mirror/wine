@@ -622,7 +622,13 @@ echo %WINE_VAR:~2,-1%
 echo %WINE_VAR:~2,-3%
 echo '%WINE_VAR:~-2,-4%'
 echo %WINE_VAR:~-3,-2%
+echo %WINE_VAR:~4,4%
 set WINE_VAR=
+mkdir dummydir
+cd dummydir
+echo %CD:~-6,6%
+cd ..
+rmdir dummydir
 
 echo ------------ Testing variable substitution ------------
 echo --- in FOR variables

@@ -532,6 +532,8 @@ ert@or_broken@qwerty
 e@or_broken@qwerty
 ''@or_broken@'qwerty'
 r@or_broken@qwerty
+ty
+@todo_wine@mmydir
 ------------ Testing variable substitution ------------
 --- in FOR variables
 "A B"
