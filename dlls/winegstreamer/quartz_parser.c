@@ -2358,9 +2358,32 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
     return S_FALSE;
 }
 
+static HRESULT mpeg_splitter_sink_get_media_type(struct strmbase_pin *pin,
+        unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    static const GUID* const subtypes[] = {
+        &MEDIASUBTYPE_MPEG1System,
+        &MEDIASUBTYPE_MPEG1VideoCD,
+        &MEDIASUBTYPE_MPEG1Video,
+        &MEDIASUBTYPE_MPEG1Audio,
+    };
+    if (index >= ARRAY_SIZE(subtypes))
+        return S_FALSE;
+
+    memset(mt, 0, sizeof(*mt));
+    mt->majortype = MEDIATYPE_Stream;
+    mt->subtype = *subtypes[index];
+    mt->bFixedSizeSamples = TRUE;
+    mt->bTemporalCompression = TRUE;
+    mt->lSampleSize = 1;
+
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
     .base.pin_query_accept = mpeg_splitter_sink_query_accept,
+    .base.pin_get_media_type = mpeg_splitter_sink_get_media_type,
     .sink_connect = parser_sink_connect,
     .sink_disconnect = parser_sink_disconnect,
 };
