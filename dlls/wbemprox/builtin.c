@@ -81,6 +81,7 @@ static const struct column col_bios[] =
     { L"SMBIOSBIOSVersion",              CIM_STRING|COL_FLAG_DYNAMIC },
     { L"SMBIOSMajorVersion",             CIM_UINT16 },
     { L"SMBIOSMinorVersion",             CIM_UINT16 },
+    { L"Status",                         CIM_STRING },
     { L"SystemBiosMajorVersion",         CIM_UINT8 },
     { L"SystemBiosMinorVersion",         CIM_UINT8 },
     { L"Version",                        CIM_STRING|COL_FLAG_KEY },
@@ -572,6 +573,7 @@ struct record_bios
     const WCHAR *smbiosbiosversion;
     UINT16       smbiosmajorversion;
     UINT16       smbiosminorversion;
+    const WCHAR *status;
     UINT8        systembiosmajorversion;
     UINT8        systembiosminorversion;
     const WCHAR *version;
@@ -1547,6 +1549,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     rec->smbiosbiosversion      = get_bios_smbiosbiosversion( buf, len );
     rec->smbiosmajorversion     = get_bios_smbiosmajorversion( buf, len );
     rec->smbiosminorversion     = get_bios_smbiosminorversion( buf, len );
+    rec->status                 = L"OK";
     rec->systembiosmajorversion = get_bios_system_bios_major_release( buf, len );
     rec->systembiosminorversion = get_bios_system_bios_minor_release( buf, len );
     rec->version                = L"WINE   - 1";

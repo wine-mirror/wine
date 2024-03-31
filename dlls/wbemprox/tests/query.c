@@ -483,6 +483,7 @@ static void test_Win32_Bios( IWbemServices *services )
     check_property( obj, L"SMBIOSBIOSVersion", VT_BSTR, CIM_STRING );
     check_property( obj, L"SMBIOSMajorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"SMBIOSMinorVersion", VT_I4, CIM_UINT16 );
+    check_property( obj, L"Status", VT_BSTR, CIM_STRING );
     check_property( obj, L"Version", VT_BSTR, CIM_STRING );
 
     IWbemClassObject_Release( obj );
