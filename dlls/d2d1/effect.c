@@ -361,25 +361,25 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
 {
     static const UINT32 sizes[] =
     {
-        0,                   /* D2D1_PROPERTY_TYPE_UNKNOWN */
-        0,                   /* D2D1_PROPERTY_TYPE_STRING */
-        sizeof(BOOL),        /* D2D1_PROPERTY_TYPE_BOOL */
-        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_UINT32 */
-        sizeof(INT32),       /* D2D1_PROPERTY_TYPE_INT32 */
-        sizeof(float),       /* D2D1_PROPERTY_TYPE_FLOAT */
-        2 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR2 */
-        3 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR3 */
-        4 * sizeof(float),   /* D2D1_PROPERTY_TYPE_VECTOR4 */
-        0,                   /* FIXME: D2D1_PROPERTY_TYPE_BLOB */
-        sizeof(void *),      /* D2D1_PROPERTY_TYPE_IUNKNOWN */
-        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ENUM */
-        sizeof(UINT32),      /* D2D1_PROPERTY_TYPE_ARRAY */
-        sizeof(CLSID),       /* D2D1_PROPERTY_TYPE_CLSID */
-        6 * sizeof(float),   /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
-        12 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
-        16 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
-        20 * sizeof(float),  /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
-        sizeof(void *),      /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+        [D2D1_PROPERTY_TYPE_UNKNOWN]       = 0,
+        [D2D1_PROPERTY_TYPE_STRING]        = 0,
+        [D2D1_PROPERTY_TYPE_BOOL]          = sizeof(BOOL),
+        [D2D1_PROPERTY_TYPE_UINT32]        = sizeof(UINT32),
+        [D2D1_PROPERTY_TYPE_INT32]         = sizeof(INT32),
+        [D2D1_PROPERTY_TYPE_FLOAT]         = sizeof(float),
+        [D2D1_PROPERTY_TYPE_VECTOR2]       = sizeof(D2D_VECTOR_2F),
+        [D2D1_PROPERTY_TYPE_VECTOR3]       = sizeof(D2D_VECTOR_3F),
+        [D2D1_PROPERTY_TYPE_VECTOR4]       = sizeof(D2D_VECTOR_4F),
+        [D2D1_PROPERTY_TYPE_BLOB]          = 0 /* FIXME */,
+        [D2D1_PROPERTY_TYPE_IUNKNOWN]      = sizeof(IUnknown *),
+        [D2D1_PROPERTY_TYPE_ENUM]          = sizeof(UINT32),
+        [D2D1_PROPERTY_TYPE_ARRAY]         = sizeof(UINT32),
+        [D2D1_PROPERTY_TYPE_CLSID]         = sizeof(CLSID),
+        [D2D1_PROPERTY_TYPE_MATRIX_3X2]    = sizeof(D2D_MATRIX_3X2_F),
+        [D2D1_PROPERTY_TYPE_MATRIX_4X3]    = sizeof(D2D_MATRIX_4X3_F),
+        [D2D1_PROPERTY_TYPE_MATRIX_4X4]    = sizeof(D2D_MATRIX_4X4_F),
+        [D2D1_PROPERTY_TYPE_MATRIX_5X4]    = sizeof(D2D_MATRIX_5X4_F),
+        [D2D1_PROPERTY_TYPE_COLOR_CONTEXT] = sizeof(ID2D1ColorContext *),
     };
     struct d2d_effect_property *p;
     HRESULT hr;

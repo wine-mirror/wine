@@ -677,25 +677,25 @@ static HRESULT parse_effect_get_property_type(IXmlReader *reader, D2D1_PROPERTY_
 {
     static const WCHAR *types[] =
     {
-        L"",             /* D2D1_PROPERTY_TYPE_UNKNOWN */
-        L"string",       /* D2D1_PROPERTY_TYPE_STRING */
-        L"bool",         /* D2D1_PROPERTY_TYPE_BOOL */
-        L"uint32",       /* D2D1_PROPERTY_TYPE_UINT32 */
-        L"int32",        /* D2D1_PROPERTY_TYPE_INT32 */
-        L"float",        /* D2D1_PROPERTY_TYPE_FLOAT */
-        L"vector2",      /* D2D1_PROPERTY_TYPE_VECTOR2 */
-        L"vector3",      /* D2D1_PROPERTY_TYPE_VECTOR3 */
-        L"vector4",      /* D2D1_PROPERTY_TYPE_VECTOR4 */
-        L"blob",         /* D2D1_PROPERTY_TYPE_BLOB */
-        L"iunknown",     /* D2D1_PROPERTY_TYPE_IUNKNOWN */
-        L"enum",         /* D2D1_PROPERTY_TYPE_ENUM */
-        L"array",        /* D2D1_PROPERTY_TYPE_ARRAY */
-        L"clsid",        /* D2D1_PROPERTY_TYPE_CLSID */
-        L"matrix3x2",    /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
-        L"matrix4x3",    /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
-        L"matrix4x4",    /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
-        L"matrix5x4",    /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
-        L"colorcontext", /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+        [D2D1_PROPERTY_TYPE_UNKNOWN]       = L"",
+        [D2D1_PROPERTY_TYPE_STRING]        = L"string",
+        [D2D1_PROPERTY_TYPE_BOOL]          = L"bool",
+        [D2D1_PROPERTY_TYPE_UINT32]        = L"uint32",
+        [D2D1_PROPERTY_TYPE_INT32]         = L"int32",
+        [D2D1_PROPERTY_TYPE_FLOAT]         = L"float",
+        [D2D1_PROPERTY_TYPE_VECTOR2]       = L"vector2",
+        [D2D1_PROPERTY_TYPE_VECTOR3]       = L"vector3",
+        [D2D1_PROPERTY_TYPE_VECTOR4]       = L"vector4",
+        [D2D1_PROPERTY_TYPE_BLOB]          = L"blob",
+        [D2D1_PROPERTY_TYPE_IUNKNOWN]      = L"iunknown",
+        [D2D1_PROPERTY_TYPE_ENUM]          = L"enum",
+        [D2D1_PROPERTY_TYPE_ARRAY]         = L"array",
+        [D2D1_PROPERTY_TYPE_CLSID]         = L"clsid",
+        [D2D1_PROPERTY_TYPE_MATRIX_3X2]    = L"matrix3x2",
+        [D2D1_PROPERTY_TYPE_MATRIX_4X3]    = L"matrix4x3",
+        [D2D1_PROPERTY_TYPE_MATRIX_4X4]    = L"matrix4x4",
+        [D2D1_PROPERTY_TYPE_MATRIX_5X4]    = L"matrix5x4",
+        [D2D1_PROPERTY_TYPE_COLOR_CONTEXT] = L"colorcontext",
     };
     unsigned int i;
     WCHAR *value;
