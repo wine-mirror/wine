@@ -2380,11 +2380,29 @@ static HRESULT mpeg_splitter_sink_get_media_type(struct strmbase_pin *pin,
     return S_OK;
 }
 
+static HRESULT mpeg_splitter_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
+{
+    struct parser *filter = impl_from_strmbase_sink(iface);
+    HRESULT hr = parser_sink_connect(iface, peer, pmt);
+
+    /* Seek the reader to the end. RE:D Cherish! depends on this. */
+    if (SUCCEEDED(hr)
+            && IsEqualGUID(&pmt->subtype, &MEDIASUBTYPE_MPEG1System)
+            && IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream))
+    {
+        LONGLONG file_size, unused;
+        IAsyncReader_Length(filter->reader, &file_size, &unused);
+        IAsyncReader_SyncRead(filter->reader, file_size, 0, NULL);
+    }
+
+    return hr;
+}
+
 static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
     .base.pin_query_accept = mpeg_splitter_sink_query_accept,
     .base.pin_get_media_type = mpeg_splitter_sink_get_media_type,
-    .sink_connect = parser_sink_connect,
+    .sink_connect = mpeg_splitter_sink_connect,
     .sink_disconnect = parser_sink_disconnect,
 };
 

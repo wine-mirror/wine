@@ -2183,7 +2183,7 @@ static void test_video_read_position(void)
 
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(testsource.read_position == total, "Got 0x%s, expected 0x%s.\n", wine_dbgstr_longlong(testsource.read_position), wine_dbgstr_longlong(total));
+    ok(testsource.read_position == total, "Got 0x%s, expected 0x%s.\n", wine_dbgstr_longlong(testsource.read_position), wine_dbgstr_longlong(total));
 
     IAsyncReader_Release(testsource.reader);
     IPin_Release(sink);
