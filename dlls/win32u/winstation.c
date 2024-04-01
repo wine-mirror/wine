@@ -566,7 +566,7 @@ static HANDLE get_winstations_dir_handle(void)
     NTSTATUS status;
     HANDLE dir;
 
-    sprintf( bufferA, "\\Sessions\\%u\\Windows\\WindowStations", (int)NtCurrentTeb()->Peb->SessionId );
+    snprintf( bufferA, sizeof(bufferA), "\\Sessions\\%u\\Windows\\WindowStations", (int)NtCurrentTeb()->Peb->SessionId );
     str.Buffer = buffer;
     str.MaximumLength = asciiz_to_unicode( buffer, bufferA );
     str.Length = str.MaximumLength - sizeof(WCHAR);

@@ -1373,7 +1373,7 @@ static void add_face_to_cache( struct gdi_font_face *face )
         WCHAR nameW[10];
         char name[10];
 
-        sprintf( name, "%d", face->size.y_ppem );
+        snprintf( name, sizeof(name), "%d", face->size.y_ppem );
         hkey_face = reg_create_key( hkey_family, nameW,
                                     asciiz_to_unicode( nameW, name ) - sizeof(WCHAR),
                                     REG_OPTION_VOLATILE, NULL );
@@ -1411,7 +1411,7 @@ static void remove_face_from_cache( struct gdi_font_face *face )
     {
         WCHAR nameW[10];
         char name[10];
-        sprintf( name, "%d", face->size.y_ppem );
+        snprintf( name, sizeof(name), "%d", face->size.y_ppem );
         if ((hkey = reg_open_key( hkey_family, nameW,
                                   asciiz_to_unicode( nameW, name ) - sizeof(WCHAR) )))
         {
@@ -3143,7 +3143,7 @@ static void update_codepage( UINT screen_dpi )
         RtlInitCodePageTable( NtCurrentTeb()->Peb->OemCodePageData, &oem_cp );
     else
         oem_cp = utf8_cp;
-    sprintf( cpbuf, "%u,%u", ansi_cp.CodePage, oem_cp.CodePage );
+    snprintf( cpbuf, sizeof(cpbuf), "%u,%u", ansi_cp.CodePage, oem_cp.CodePage );
     asciiz_to_unicode( cpbufW, cpbuf );
 
     if (query_reg_ascii_value( wine_fonts_key, "Codepages", info, sizeof(value_buffer) ))
@@ -6767,11 +6767,11 @@ static HKEY open_hkcu(void)
         return 0;
 
     sid = ((TOKEN_USER *)sid_data)->User.Sid;
-    len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", (int)sid->Revision,
+    len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", (int)sid->Revision,
             (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
                            MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += sprintf( buffer + len, "-%u", (int)sid->SubAuthority[i] );
+        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
     ascii_to_unicode( bufferW, buffer, len + 1 );
 
     return reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
