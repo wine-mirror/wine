@@ -1621,6 +1621,41 @@ static int write_base_type(FILE *file, const type_t *type, unsigned int *typestr
     return 1;
 }
 
+static unsigned char get_correlation_type( const type_t *correlation_var )
+{
+    unsigned char fc;
+
+    switch (type_get_type(correlation_var))
+    {
+    case TYPE_BASIC:
+        fc = get_basic_fc(correlation_var);
+        switch (fc)
+        {
+        case FC_SMALL:
+        case FC_USMALL:
+        case FC_SHORT:
+        case FC_USHORT:
+        case FC_LONG:
+        case FC_ULONG:
+            return fc;
+        case FC_CHAR:
+            return FC_SMALL;
+        case FC_BYTE:
+            return FC_USMALL;
+        case FC_WCHAR:
+            return FC_SHORT;
+        }
+        break;
+    case TYPE_ENUM:
+        return (get_enum_fc(correlation_var) == FC_ENUM32) ? FC_LONG : FC_SHORT;
+    case TYPE_POINTER:
+        return (pointer_size == 8) ? FC_HYPER : FC_LONG;
+    default:
+        break;
+    }
+    return 0;
+}
+
 /* write conformance / variance descriptor */
 static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
                                            unsigned int baseoff, const type_t *type,
@@ -1714,7 +1749,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
     if (subexpr->type == EXPR_IDENTIFIER)
     {
         const type_t *correlation_variable = NULL;
-        unsigned char param_type = 0;
+        unsigned char param_type;
         unsigned int offset = 0;
         const var_t *var;
         struct expr_loc expr_loc;
@@ -1760,51 +1795,8 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
 
         offset -= baseoff;
 
-        if (type_get_type(correlation_variable) == TYPE_BASIC)
-        {
-            switch (get_basic_fc(correlation_variable))
-            {
-            case FC_CHAR:
-            case FC_SMALL:
-                param_type = FC_SMALL;
-                break;
-            case FC_BYTE:
-            case FC_USMALL:
-                param_type = FC_USMALL;
-                break;
-            case FC_WCHAR:
-            case FC_SHORT:
-                param_type = FC_SHORT;
-                break;
-            case FC_USHORT:
-                param_type = FC_USHORT;
-                break;
-            case FC_LONG:
-                param_type = FC_LONG;
-                break;
-            case FC_ULONG:
-                param_type = FC_ULONG;
-                break;
-            default:
-                error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
-                      get_basic_fc(correlation_variable));
-            }
-        }
-        else if (type_get_type(correlation_variable) == TYPE_ENUM)
-        {
-            if (get_enum_fc(correlation_variable) == FC_ENUM32)
-                param_type = FC_LONG;
-            else
-                param_type = FC_SHORT;
-        }
-        else if (type_get_type(correlation_variable) == TYPE_POINTER)
-        {
-            if (pointer_size == 8)
-                param_type = FC_HYPER;
-            else
-                param_type = FC_LONG;
-        }
-        else
+        param_type = get_correlation_type( correlation_variable );
+        if (!param_type)
         {
             error("write_conf_or_var_desc: non-arithmetic type used as correlation variable %s\n",
                   subexpr->u.sval);
@@ -2505,13 +2497,20 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
         {
             short reloff;
             unsigned int absoff = ft->typestring_offset;
+            unsigned char fc;
+            const expr_t *switch_is = get_attrp(f->attrs, ATTR_SWITCHIS);
+            struct expr_loc expr_loc = { .v = f };
+
+            fc = get_correlation_type( expr_resolve_type( &expr_loc, current_structure, switch_is ));
+            if (!fc) fc = FC_LONG;
+
             if (is_attr(ft->attrs, ATTR_SWITCHTYPE))
                 absoff += 8; /* we already have a corr descr, skip it */
             print_file(file, 0, "/* %d */\n", *tfsoff);
             print_file(file, 2, "0x%x,\t/* FC_NON_ENCAPSULATED_UNION */\n", FC_NON_ENCAPSULATED_UNION);
-            print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", FC_LONG);
-            *tfsoff += 2 + write_conf_or_var_desc(file, current_structure, offset, ft,
-                                                  get_attrp(f->attrs, ATTR_SWITCHIS), 0);
+            print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
+
+            *tfsoff += 2 + write_conf_or_var_desc(file, current_structure, offset, ft, switch_is, 0);
             reloff = absoff - *tfsoff;
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                        (unsigned short)reloff, reloff, absoff);
