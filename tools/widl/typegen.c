@@ -1342,7 +1342,7 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
     unsigned char oi_flags = Oi_HAS_RPCFLAGS | Oi_USE_NEW_INIT_ROUTINES;
     unsigned char oi2_flags = get_func_oi2_flags( func );
-    unsigned char ext_flags = 0;
+    unsigned char ext_flags = 0x01; /* HasNewCorrDesc */
     unsigned int rpc_flags = get_rpc_flags( func->attrs );
     unsigned int nb_args = 0;
     unsigned int stack_size = 0;
@@ -1621,6 +1621,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
 {
     unsigned char operator_type = 0;
     unsigned char conftype = FC_NORMAL_CONFORMANCE;
+    unsigned short robust_flags = 0;
     const char *conftype_string = "field";
     const expr_t *subexpr;
     const type_t *iface = NULL;
@@ -1629,7 +1630,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
     if (!expr)
     {
         print_file(file, 2, "NdrFcLong(0xffffffff),\t/* -1 */\n");
-        return 4;
+        goto done;
     }
 
     if (expr->is_const)
@@ -1643,8 +1644,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
                    FC_CONSTANT_CONFORMANCE, expr->cval);
         print_file(file, 2, "0x%x,\n", expr->cval >> 16);
         print_file(file, 2, "NdrFcShort(0x%hx),\n", (unsigned short)expr->cval);
-
-        return 4;
+        goto done;
     }
 
     if (!cont_type)  /* top-level conformance */
@@ -1854,7 +1854,10 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
         print_file(file, 2, "0x0,\n" );
         print_file(file, 2, "NdrFcShort(0x0),\n" );
     }
-    return 4;
+done:
+    if (!interpreted_mode) return 4;
+    print_file(file, 2, "NdrFcShort(0x%hx),\n", robust_flags);
+    return 6;
 }
 
 /* return size and start offset of a data field based on current offset */
@@ -2495,15 +2498,15 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
             unsigned int absoff = ft->typestring_offset;
             if (is_attr(ft->attrs, ATTR_SWITCHTYPE))
                 absoff += 8; /* we already have a corr descr, skip it */
-            reloff = absoff - (*tfsoff + 6);
             print_file(file, 0, "/* %d */\n", *tfsoff);
             print_file(file, 2, "0x%x,\t/* FC_NON_ENCAPSULATED_UNION */\n", FC_NON_ENCAPSULATED_UNION);
             print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", FC_LONG);
-            write_conf_or_var_desc(file, current_structure, offset, ft,
-                                   get_attrp(f->attrs, ATTR_SWITCHIS));
+            *tfsoff += 2 + write_conf_or_var_desc(file, current_structure, offset, ft,
+                                                  get_attrp(f->attrs, ATTR_SWITCHIS));
+            reloff = absoff - *tfsoff;
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                        (unsigned short)reloff, reloff, absoff);
-            *tfsoff += 8;
+            *tfsoff += 2;
         }
         offset += size;
     }

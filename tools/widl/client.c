@@ -106,6 +106,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
     if (has_full_pointer)
         write_full_pointer_free(client, indent, func);
 
+    if (interpreted_mode) print_client("NdrCorrelationFree(&__frame->_StubMsg);\n");
     print_client("NdrFreeBuffer(&__frame->_StubMsg);\n");
 
     if (explicit_fc == FC_BIND_GENERIC)
@@ -134,6 +135,7 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         write_type_decl(client, &retval->declspec, retval->name);
         fprintf(client, ";\n");
     }
+    if (interpreted_mode) print_client("ULONG _NdrCorrCache[256];\n");
     print_client("RPC_MESSAGE _RpcMessage;\n");
 
     if (handle_var)
@@ -213,6 +215,8 @@ static void write_function_stub( const type_t *iface, const var_t *func,
         }
         break;
     }
+    if (interpreted_mode)
+        print_client( "NdrCorrelationInitialize(&__frame->_StubMsg, _NdrCorrCache, sizeof(_NdrCorrCache), 0);\n" );
 
     write_remoting_arguments(client, indent, func, "", PASS_IN, PHASE_BUFFERSIZE);
 

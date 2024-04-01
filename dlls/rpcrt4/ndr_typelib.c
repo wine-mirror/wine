@@ -640,7 +640,9 @@ static size_t write_array_tfs(ITypeInfo *typeinfo, unsigned char *str,
     {
         WRITE_SHORT(str, *len, size);
         WRITE_INT(str, *len, 0xffffffff); /* conformance */
+        WRITE_SHORT(str, *len, 0);
         WRITE_INT(str, *len, 0xffffffff); /* variance */
+        WRITE_SHORT(str, *len, 0);
     }
     else
     {
@@ -1099,18 +1101,18 @@ static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
 
     WRITE_SHORT(proc, *proclen, 0); /* constant_client_buffer_size */
     WRITE_SHORT(proc, *proclen, 0); /* constant_server_buffer_size */
-#ifdef __x86_64__
     WRITE_CHAR (proc, *proclen, 0x47);  /* HasExtensions | HasReturn | ClientMustSize | ServerMustSize */
-#else
-    WRITE_CHAR (proc, *proclen, 0x07);  /* HasReturn | ClientMustSize | ServerMustSize */
-#endif
     WRITE_CHAR (proc, *proclen, desc->cParams + 1); /* incl. return value */
 #ifdef __x86_64__
     WRITE_CHAR (proc, *proclen, 10); /* extension size */
-    WRITE_CHAR (proc, *proclen, 0);  /* INTERPRETER_OPT_FLAGS2 */
+#else
+    WRITE_CHAR (proc, *proclen, 8);  /* extension size */
+#endif
+    WRITE_CHAR (proc, *proclen, 1);  /* HasNewCorrDesc */
     WRITE_SHORT(proc, *proclen, 0);  /* ClientCorrHint */
     WRITE_SHORT(proc, *proclen, 0);  /* ServerCorrHint */
     WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
+#ifdef __x86_64__
     for (param_idx = 0; param_idx < desc->cParams && param_idx < 3; param_idx++)
     {
         basetype = get_basetype(typeinfo, &desc->lprgelemdescParam[param_idx].tdesc);

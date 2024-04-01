@@ -69,6 +69,8 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     print_server("static void __finally_%s_%s(", iface->name, get_name(func));
     fprintf(server," struct __frame_%s_%s *__frame )\n{\n", iface->name, get_name(func));
 
+    if (interpreted_mode) print_server("NdrCorrelationFree(&__frame->_StubMsg);\n");
+
     indent++;
     write_remoting_arguments(server, indent, func, "__frame->", PASS_OUT, PHASE_FREE);
 
@@ -87,6 +89,7 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     fprintf(server, "{\n");
     indent++;
     print_server("struct __frame_%s_%s __f, * const __frame = &__f;\n", iface->name, get_name(func));
+    if (interpreted_mode) print_server("ULONG _NdrCorrCache[256];\n");
     if (has_out_arg_or_return(func)) print_server("RPC_STATUS _Status;\n");
     fprintf(server, "\n");
 
@@ -113,6 +116,8 @@ static void write_function_stub(const type_t *iface, const var_t *func, unsigned
     print_server("RpcTryExcept\n");
     print_server("{\n");
     indent++;
+    if (interpreted_mode)
+        print_server("NdrCorrelationInitialize(&__frame->_StubMsg, _NdrCorrCache, sizeof(_NdrCorrCache), 0);\n" );
 
     if (has_full_pointer)
         write_full_pointer_init(server, indent, func, TRUE);
