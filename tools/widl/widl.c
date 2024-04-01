@@ -109,9 +109,9 @@ int do_dlldata = 0;
 static int no_preprocess = 0;
 int old_names = 0;
 int winrt_mode = 0;
+int interpreted_mode = 0;
 int use_abi_namespace = 0;
 static int stdinc = 1;
-static enum stub_mode stub_mode = MODE_Os;
 
 char *input_name;
 char *idl_name;
@@ -198,13 +198,6 @@ static const struct long_option long_options[] = {
 };
 
 static void rm_tempfile(void);
-
-enum stub_mode get_stub_mode(void)
-{
-    /* old-style interpreted stubs are not supported on 64-bit */
-    if (stub_mode == MODE_Oi && pointer_size == 8) return MODE_Oif;
-    return stub_mode;
-}
 
 static char *make_token(const char *name)
 {
@@ -595,11 +588,11 @@ static void option_callback( int optc, char *optarg )
       output_name = xstrdup(optarg);
       break;
     case 'O':
-      if (!strcmp( optarg, "s" )) stub_mode = MODE_Os;
-      else if (!strcmp( optarg, "i" )) stub_mode = MODE_Oi;
-      else if (!strcmp( optarg, "ic" )) stub_mode = MODE_Oif;
-      else if (!strcmp( optarg, "if" )) stub_mode = MODE_Oif;
-      else if (!strcmp( optarg, "icf" )) stub_mode = MODE_Oif;
+      if (!strcmp( optarg, "s" )) interpreted_mode = 0;
+      else if (!strcmp( optarg, "i" )) interpreted_mode = 1;
+      else if (!strcmp( optarg, "ic" )) interpreted_mode = 1;
+      else if (!strcmp( optarg, "if" )) interpreted_mode = 1;
+      else if (!strcmp( optarg, "icf" )) interpreted_mode = 1;
       else error( "Invalid argument '-O%s'\n", optarg );
       break;
     case 'p':

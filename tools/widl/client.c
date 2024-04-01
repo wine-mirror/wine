@@ -285,7 +285,6 @@ static void write_function_stub( const type_t *iface, const var_t *func,
 static void write_serialize_function(FILE *file, const type_t *type, const type_t *iface,
                                      const char *func_name, const char *ret_type)
 {
-    enum stub_mode mode = get_stub_mode();
     static int emitted_pickling_info;
 
     if (iface && !type->typestring_offset)
@@ -296,7 +295,7 @@ static void write_serialize_function(FILE *file, const type_t *type, const type_
         return;
     }
 
-    if (!emitted_pickling_info && iface && mode != MODE_Os)
+    if (!emitted_pickling_info && iface && interpreted_mode)
     {
         fprintf(file, "static const MIDL_TYPE_PICKLING_INFO __MIDL_TypePicklingInfo =\n");
         fprintf(file, "{\n");
@@ -318,9 +317,9 @@ static void write_serialize_function(FILE *file, const type_t *type, const type_
 
     fprintf(file, "{\n");
     fprintf(file, "    %sNdrMesType%s%s(\n", ret_type ? "return " : "", func_name,
-            mode != MODE_Os ? "2" : "");
+            interpreted_mode ? "2" : "");
     fprintf(file, "        IDL_handle,\n");
-    if (mode != MODE_Os)
+    if (interpreted_mode)
         fprintf(file, "        (MIDL_TYPE_PICKLING_INFO*)&__MIDL_TypePicklingInfo,\n");
     fprintf(file, "        &%s_StubDesc,\n", iface->name);
     fprintf(file, "        (PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%u],\n",
@@ -418,7 +417,7 @@ static void write_stubdescriptor(type_t *iface, int expr_eval_routines)
     print_client("0,\n");
     print_client("__MIDL_TypeFormatString.Format,\n");
     print_client("1, /* -error bounds_check flag */\n");
-    print_client("0x%x, /* Ndr library version */\n", get_stub_mode() == MODE_Oif ? 0x50002 : 0x10001);
+    print_client("0x%x, /* Ndr library version */\n", interpreted_mode ? 0x50002 : 0x10001);
     print_client("0,\n");
     print_client("0x50200ca, /* MIDL Version 5.2.202 */\n");
     print_client("0,\n");

@@ -61,7 +61,7 @@ static void write_stubdesc(int expr_eval_routines)
   print_proxy( "{0}, 0, 0, %s, 0,\n", expr_eval_routines ? "ExprEvalRoutines" : "0");
   print_proxy( "__MIDL_TypeFormatString.Format,\n");
   print_proxy( "1, /* -error bounds_check flag */\n");
-  print_proxy( "0x%x, /* Ndr library version */\n", get_stub_mode() == MODE_Oif ? 0x50002 : 0x10001);
+  print_proxy( "0x%x, /* Ndr library version */\n", interpreted_mode ? 0x50002 : 0x10001);
   print_proxy( "0,\n");
   print_proxy( "0x50200ca, /* MIDL Version 5.2.202 */\n");
   print_proxy( "0,\n");
@@ -193,7 +193,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   indent = 0;
   if (is_interpreted_func( iface, func ))
   {
-      if (get_stub_mode() == MODE_Oif && !is_callas( func->attrs )) return;
+      if (!is_callas( func->attrs )) return;
       write_type_decl_left(proxy, &retval->declspec);
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE, NAME_DEFAULT);
@@ -519,7 +519,6 @@ static int write_proxy_methods(type_t *iface, int skip)
       if (skip || (is_local(func->attrs) && !get_callas_source(iface, func)))
           print_proxy( "0,  /* %s::%s */\n", iface->name, get_name(func));
       else if (is_interpreted_func( iface, func ) &&
-               get_stub_mode() == MODE_Oif &&
                !is_local( func->attrs ) &&
                type_iface_get_inherit(iface))
           print_proxy( "(void *)-1,  /* %s::%s */\n", iface->name, get_name(func));
@@ -556,7 +555,7 @@ static int write_stub_methods(type_t *iface, int skip)
       if (i) fprintf(proxy,",\n");
       if (skip || missing) print_proxy("STUB_FORWARDING_FUNCTION");
       else if (is_interpreted_func( iface, func ))
-          print_proxy( "(PRPC_STUB_FUNCTION)%s", get_stub_mode() == MODE_Oif ? "NdrStubCall2" : "NdrStubCall" );
+          print_proxy( "(PRPC_STUB_FUNCTION)%s", interpreted_mode ? "NdrStubCall2" : "NdrStubCall" );
       else print_proxy( "%s_%s_Stub", iface->name, fname);
       i++;
     }
@@ -641,7 +640,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
   print_proxy( "};\n\n" );
 
   /* proxy info */
-  if (get_stub_mode() == MODE_Oif)
+  if (interpreted_mode)
   {
       print_proxy( "static const MIDL_STUBLESS_PROXY_INFO %s_ProxyInfo =\n", iface->name );
       print_proxy( "{\n" );
@@ -658,13 +657,13 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset)
 
   /* proxy vtable */
   print_proxy( "static %sCINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n",
-               (get_stub_mode() != MODE_Os || need_delegation_indirect(iface)) ? "" : "const ",
+               (interpreted_mode || need_delegation_indirect(iface)) ? "" : "const ",
                count, iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n");
   indent++;
-  if (get_stub_mode() == MODE_Oif) print_proxy( "&%s_ProxyInfo,\n", iface->name );
+  if (interpreted_mode) print_proxy( "&%s_ProxyInfo,\n", iface->name );
   print_proxy( "&IID_%s,\n", iface->name);
   indent--;
   print_proxy( "},\n");
@@ -785,7 +784,7 @@ int need_inline_stubs(const type_t *iface)
 {
     const statement_t *stmt;
 
-    if (get_stub_mode() == MODE_Os) return 1;
+    if (!interpreted_mode) return 1;
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
@@ -801,7 +800,7 @@ static int need_proxy_and_inline_stubs(const type_t *iface)
     const statement_t *stmt;
 
     if (!need_proxy( iface )) return 0;
-    if (get_stub_mode() == MODE_Os) return 1;
+    if (!interpreted_mode) return 1;
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
@@ -895,10 +894,10 @@ static void write_proxy_routines(const statement_list_t *stmts)
   const type_t * delegate_to;
 
   print_proxy( "#ifndef __REDQ_RPCPROXY_H_VERSION__\n");
-  print_proxy( "#define __REQUIRED_RPCPROXY_H_VERSION__ %u\n", get_stub_mode() == MODE_Oif ? 475 : 440);
+  print_proxy( "#define __REQUIRED_RPCPROXY_H_VERSION__ %u\n", interpreted_mode ? 475 : 440);
   print_proxy( "#endif\n");
   print_proxy( "\n");
-  if (get_stub_mode() == MODE_Oif) print_proxy( "#define USE_STUBLESS_PROXY\n");
+  if (interpreted_mode) print_proxy( "#define USE_STUBLESS_PROXY\n");
   print_proxy( "#include \"rpcproxy.h\"\n");
   print_proxy( "#ifndef __RPCPROXY_H_VERSION__\n");
   print_proxy( "#error This code needs a newer version of rpcproxy.h\n");
@@ -1002,7 +1001,7 @@ static void write_proxy_routines(const statement_list_t *stmts)
   fprintf(proxy, "}\n");
   fprintf(proxy, "\n");
 
-  table_version = get_stub_mode() == MODE_Oif ? 2 : 1;
+  table_version = interpreted_mode ? 2 : 1;
   for (i = 0; i < count; i++)
   {
       if (type_iface_get_async_iface(interfaces[i]) != interfaces[i]) continue;

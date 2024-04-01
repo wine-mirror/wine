@@ -1242,7 +1242,7 @@ static unsigned int write_new_procformatstring_type(FILE *file, int indent, cons
 }
 
 static unsigned int write_old_procformatstring_type(FILE *file, int indent, const var_t *var,
-                                                    int is_return, int is_interpreted)
+                                                    int is_return)
 {
     unsigned int size;
 
@@ -1281,7 +1281,7 @@ static unsigned int write_old_procformatstring_type(FILE *file, int indent, cons
     {
         unsigned short offset = var->typestring_offset;
 
-        if (!is_interpreted && is_array(var->declspec.type)
+        if (is_array(var->declspec.type)
                 && type_array_is_decl_as_ptr(var->declspec.type)
                 && type_array_get_ptr_tfsoff(var->declspec.type))
             offset = var->declspec.type->typestring_offset;
@@ -1306,8 +1306,6 @@ static unsigned int write_old_procformatstring_type(FILE *file, int indent, cons
 int is_interpreted_func( const type_t *iface, const var_t *func )
 {
     const char *str;
-    const var_t *var;
-    const var_list_t *args = type_function_get_args( func->declspec.type );
     const type_t *ret_type = type_function_get_rettype( func->declspec.type );
 
     if (type_get_type( ret_type ) == TYPE_BASIC)
@@ -1327,30 +1325,9 @@ int is_interpreted_func( const type_t *iface, const var_t *func )
             break;
         }
     }
-    if (get_stub_mode() != MODE_Oif && args)
-    {
-        LIST_FOR_EACH_ENTRY( var, args, const var_t, entry )
-            switch (type_get_type( var->declspec.type ))
-            {
-            case TYPE_BASIC:
-                switch (type_basic_get_type( var->declspec.type ))
-                {
-                /* floating point arguments are not supported in Oi mode */
-                case TYPE_BASIC_FLOAT:  return 0;
-                case TYPE_BASIC_DOUBLE: return 0;
-                default: break;
-                }
-                break;
-            /* unions passed by value are not supported in Oi mode */
-            case TYPE_UNION: return 0;
-            case TYPE_ENCAPSULATED_UNION: return 0;
-            default: break;
-            }
-    }
-
     if ((str = get_attrp( func->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
     if ((str = get_attrp( iface->attrs, ATTR_OPTIMIZE ))) return !strcmp( str, "i" );
-    return (get_stub_mode() != MODE_Os);
+    return interpreted_mode;
 }
 
 static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
@@ -1364,18 +1341,22 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
     var_t *retval = type_function_get_retval( func->declspec.type );
     const var_t *handle_var = get_func_handle_var( iface, func, &explicit_fc, &implicit_fc );
     unsigned char oi_flags = Oi_HAS_RPCFLAGS | Oi_USE_NEW_INIT_ROUTINES;
+    unsigned char oi2_flags = get_func_oi2_flags( func );
+    unsigned char ext_flags = 0;
     unsigned int rpc_flags = get_rpc_flags( func->attrs );
     unsigned int nb_args = 0;
     unsigned int stack_size = 0;
+    unsigned int stack_offset = 0;
     unsigned short param_num = 0;
     unsigned short handle_stack_offset = 0;
     unsigned short handle_param_num = 0;
+    unsigned int size;
 
     if (is_full_pointer_function( func )) oi_flags |= Oi_FULL_PTR_USED;
     if (is_object( iface ))
     {
-        oi_flags |= Oi_OBJECT_PROC;
-        if (get_stub_mode() == MODE_Oif) oi_flags |= Oi_OBJ_USE_V2_INTERPRETER;
+        oi_flags |= Oi_OBJECT_PROC | Oi_OBJ_USE_V2_INTERPRETER;
+        stack_offset = pointer_size;
         stack_size += pointer_size;
     }
 
@@ -1441,93 +1422,62 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
         }
     }
 
-    if (get_stub_mode() == MODE_Oif)
+    if (is_attr( func->attrs, ATTR_NOTIFY )) ext_flags |= 0x08;  /* HasNotify */
+    if (is_attr( func->attrs, ATTR_NOTIFYFLAG )) ext_flags |= 0x10;  /* HasNotify2 */
+    if (iface == type_iface_get_async_iface(iface)) oi2_flags |= 0x20;
+
+    size = get_function_buffer_size( func, PASS_IN );
+    print_file( file, indent, "NdrFcShort(0x%x),\t/* client buffer = %u */\n", size, size );
+    size = get_function_buffer_size( func, PASS_OUT );
+    print_file( file, indent, "NdrFcShort(0x%x),\t/* server buffer = %u */\n", size, size );
+    print_file( file, indent, "0x%02x,\n", oi2_flags );
+    print_file( file, indent, "0x%02x,\t/* %u params */\n", nb_args, nb_args );
+    print_file( file, indent, "0x%02x,\n", pointer_size == 8 ? 10 : 8 );
+    print_file( file, indent, "0x%02x,\n", ext_flags );
+    print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
+    print_file( file, indent, "NdrFcShort(0x0),\n" );  /* client corr hint */
+    print_file( file, indent, "NdrFcShort(0x0),\n" );  /* FIXME: notify index */
+    *offset += 14;
+    if (pointer_size == 8)
     {
-        unsigned int stack_offset = is_object(iface) ? pointer_size : 0;
-        unsigned char oi2_flags = get_func_oi2_flags( func );
-        unsigned char ext_flags = 0;
-        unsigned int size;
+        unsigned short pos = 0, fpu_mask = 0;
 
-        if (is_attr( func->attrs, ATTR_NOTIFY )) ext_flags |= 0x08;  /* HasNotify */
-        if (is_attr( func->attrs, ATTR_NOTIFYFLAG )) ext_flags |= 0x10;  /* HasNotify2 */
-        if (iface == type_iface_get_async_iface(iface)) oi2_flags |= 0x20;
-
-        size = get_function_buffer_size( func, PASS_IN );
-        print_file( file, indent, "NdrFcShort(0x%x),\t/* client buffer = %u */\n", size, size );
-        size = get_function_buffer_size( func, PASS_OUT );
-        print_file( file, indent, "NdrFcShort(0x%x),\t/* server buffer = %u */\n", size, size );
-        print_file( file, indent, "0x%02x,\n", oi2_flags );
-        print_file( file, indent, "0x%02x,\t/* %u params */\n", nb_args, nb_args );
-        print_file( file, indent, "0x%02x,\n", pointer_size == 8 ? 10 : 8 );
-        print_file( file, indent, "0x%02x,\n", ext_flags );
-        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
-        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* client corr hint */
-        print_file( file, indent, "NdrFcShort(0x0),\n" );  /* FIXME: notify index */
-        *offset += 14;
-        if (pointer_size == 8)
+        if (is_object( iface )) pos += 2;
+        if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
         {
-            unsigned short pos = 0, fpu_mask = 0;
-
-            if (is_object( iface )) pos += 2;
-            if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+            if (type_get_type( var->declspec.type ) == TYPE_BASIC)
             {
-                if (type_get_type( var->declspec.type ) == TYPE_BASIC)
+                switch (type_basic_get_type( var->declspec.type ))
                 {
-                    switch (type_basic_get_type( var->declspec.type ))
-                    {
-                    case TYPE_BASIC_FLOAT:  fpu_mask |= 1 << pos; break;
-                    case TYPE_BASIC_DOUBLE: fpu_mask |= 2 << pos; break;
-                    default: break;
-                    }
+                case TYPE_BASIC_FLOAT:  fpu_mask |= 1 << pos; break;
+                case TYPE_BASIC_DOUBLE: fpu_mask |= 2 << pos; break;
+                default: break;
                 }
-                pos += 2;
-                if (pos >= 16) break;
             }
-            print_file( file, indent, "NdrFcShort(0x%x),\n", fpu_mask );  /* floating point mask */
-            *offset += 2;
+            pos += 2;
+            if (pos >= 16) break;
         }
-
-        /* emit argument data */
-        if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
-        {
-            if (explicit_fc == FC_BIND_PRIMITIVE && var == handle_var)
-            {
-                stack_offset += pointer_size;
-                continue;
-            }
-            print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            *offset += write_new_procformatstring_type(file, indent, var, FALSE, &stack_offset);
-        }
-
-        /* emit return value data */
-        if (!is_void( retval->declspec.type ))
-        {
-            print_file( file, 0, "/* %u (return value) */\n", *offset );
-            *offset += write_new_procformatstring_type(file, indent, retval, TRUE, &stack_offset);
-        }
+        print_file( file, indent, "NdrFcShort(0x%x),\n", fpu_mask );  /* floating point mask */
+        *offset += 2;
     }
-    else  /* old style */
-    {
-        /* emit argument data */
-        if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
-        {
-            print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            *offset += write_old_procformatstring_type(file, indent, var, FALSE, TRUE);
-        }
 
-        /* emit return value data */
-        if (is_void(retval->declspec.type))
+    /* emit argument data */
+    if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+    {
+        if (explicit_fc == FC_BIND_PRIMITIVE && var == handle_var)
         {
-            print_file(file, 0, "/* %u (void) */\n", *offset);
-            print_file(file, indent, "0x5b,\t/* FC_END */\n");
-            print_file(file, indent, "0x5c,\t/* FC_PAD */\n");
-            *offset += 2;
+            stack_offset += pointer_size;
+            continue;
         }
-        else
-        {
-            print_file( file, 0, "/* %u (return value) */\n", *offset );
-            *offset += write_old_procformatstring_type(file, indent, retval, TRUE, TRUE);
-        }
+        print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
+        *offset += write_new_procformatstring_type(file, indent, var, FALSE, &stack_offset);
+    }
+
+    /* emit return value data */
+    if (!is_void( retval->declspec.type ))
+    {
+        print_file( file, 0, "/* %u (return value) */\n", *offset );
+        *offset += write_new_procformatstring_type(file, indent, retval, TRUE, &stack_offset);
     }
 }
 
@@ -1550,7 +1500,7 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
         LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), const var_t, entry )
         {
             print_file( file, 0, "/* %u (parameter %s) */\n", *offset, var->name );
-            *offset += write_old_procformatstring_type(file, indent, var, FALSE, FALSE);
+            *offset += write_old_procformatstring_type(file, indent, var, FALSE);
         }
     }
 
@@ -1566,7 +1516,7 @@ static void write_procformatstring_func( FILE *file, int indent, const type_t *i
     else
     {
         print_file( file, 0, "/* %u (return value) */\n", *offset );
-        *offset += write_old_procformatstring_type(file, indent, retval, TRUE, FALSE);
+        *offset += write_old_procformatstring_type(file, indent, retval, TRUE);
     }
 }
 
@@ -2228,7 +2178,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
         if (out_attr && !in_attr && pointer_type == FC_RP)
             flags |= FC_ALLOCED_ON_STACK;
     }
-    else if (get_stub_mode() == MODE_Oif)
+    else
     {
         if (context == TYPE_CONTEXT_TOPLEVELPARAM && is_ptr(type) && pointer_type == FC_RP)
         {
@@ -2312,7 +2262,7 @@ static unsigned int write_simple_pointer(FILE *file, const attr_list_t *attrs,
         if (out_attr && !in_attr && pointer_fc == FC_RP)
             flags |= FC_ALLOCED_ON_STACK;
     }
-    else if (get_stub_mode() == MODE_Oif)
+    else
     {
         if (context == TYPE_CONTEXT_TOPLEVELPARAM && fc == FC_ENUM16 && pointer_fc == FC_RP)
             flags |= FC_ALLOCED_ON_STACK;
@@ -5091,7 +5041,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
 
     len = fprintf( file, "    %s%s( ",
                    has_ret ? "_RetVal = " : "",
-                   get_stub_mode() == MODE_Oif ? "NdrClientCall2" : "NdrClientCall" );
+                   interpreted_mode ? "NdrClientCall2" : "NdrClientCall" );
     fprintf( file, "&%s_StubDesc,", prefix );
     fprintf( file, "\n%*s&__MIDL_ProcFormatString.Format[%u]", len, "", proc_offset );
     if (needs_params)
