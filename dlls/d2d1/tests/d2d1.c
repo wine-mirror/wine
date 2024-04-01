@@ -357,10 +357,12 @@ struct expected_geometry_figure
 struct effect_impl
 {
     ID2D1EffectImpl ID2D1EffectImpl_iface;
+    ID2D1DrawTransform ID2D1DrawTransform_iface;
     LONG refcount;
     UINT integer;
     ID2D1EffectContext *effect_context;
     ID2D1TransformGraph *transform_graph;
+    ID2D1DrawInfo *draw_info;
 };
 
 static void queue_d3d1x_test(void (*test)(BOOL d3d11), BOOL d3d11)
@@ -11094,13 +11096,28 @@ static inline struct effect_impl *impl_from_ID2D1EffectImpl(ID2D1EffectImpl *ifa
     return CONTAINING_RECORD(iface, struct effect_impl, ID2D1EffectImpl_iface);
 }
 
+static inline struct effect_impl *impl_from_ID2D1DrawTransform(ID2D1DrawTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct effect_impl, ID2D1DrawTransform_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
 {
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+
     if (IsEqualGUID(iid, &IID_ID2D1EffectImpl)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
         ID2D1EffectImpl_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_ID2D1DrawTransform)
+            || IsEqualGUID(iid, &IID_ID2D1Transform)
+            || IsEqualGUID(iid, &IID_ID2D1TransformNode))
+    {
+        ID2D1EffectImpl_AddRef(iface);
+        *out = &effect_impl->ID2D1DrawTransform_iface;
         return S_OK;
     }
 
@@ -11124,6 +11141,8 @@ static ULONG STDMETHODCALLTYPE effect_impl_Release(ID2D1EffectImpl *iface)
     {
         if (effect_impl->effect_context)
             ID2D1EffectContext_Release(effect_impl->effect_context);
+        if (effect_impl->draw_info)
+            ID2D1DrawInfo_Release(effect_impl->draw_info);
         free(effect_impl);
     }
 
@@ -14247,6 +14266,224 @@ static void test_dc_target_is_supported(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static HRESULT STDMETHODCALLTYPE ps_effect_impl_Initialize(ID2D1EffectImpl *iface,
+        ID2D1EffectContext *context, ID2D1TransformGraph *graph)
+{
+    static const char ps_code[] =
+        "float4 main() : sv_target\n"
+        "{\n"
+        "    return float4(0.1, 0.2, 0.3, 0.4);\n"
+        "}";
+
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+    ID3D10Blob *blob;
+    HRESULT hr;
+
+    effect_impl->effect_context = context;
+    ID2D1EffectContext_AddRef(effect_impl->effect_context);
+
+    hr = D3DCompile(ps_code, strlen(ps_code), "test_ps", NULL, NULL, "main",
+            "ps_4_0", 0, 0, &blob, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (SUCCEEDED(hr = ID2D1EffectContext_LoadPixelShader(context, &GUID_TestPixelShader,
+           ID3D10Blob_GetBufferPointer(blob), ID3D10Blob_GetBufferSize(blob))))
+    {
+        hr = ID2D1TransformGraph_SetSingleTransformNode(graph,
+            (ID2D1TransformNode *)&effect_impl->ID2D1DrawTransform_iface);
+    }
+
+    ID3D10Blob_Release(blob);
+    return hr;
+}
+
+static const ID2D1EffectImplVtbl ps_effect_impl_vtbl =
+{
+    effect_impl_QueryInterface,
+    effect_impl_AddRef,
+    effect_impl_Release,
+    ps_effect_impl_Initialize,
+    effect_impl_PrepareForRender,
+    effect_impl_SetGraph,
+};
+
+static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_QueryInterface(
+        ID2D1DrawTransform *iface, REFIID iid, void **out)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1DrawTransform(iface);
+    return ID2D1EffectImpl_QueryInterface(&effect_impl->ID2D1EffectImpl_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE effect_impl_draw_transform_AddRef(ID2D1DrawTransform *iface)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1DrawTransform(iface);
+    return ID2D1EffectImpl_AddRef(&effect_impl->ID2D1EffectImpl_iface);
+}
+
+static ULONG STDMETHODCALLTYPE effect_impl_draw_transform_Release(ID2D1DrawTransform *iface)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1DrawTransform(iface);
+    return ID2D1EffectImpl_Release(&effect_impl->ID2D1EffectImpl_iface);
+}
+
+static UINT32 STDMETHODCALLTYPE effect_impl_draw_transform_GetInputCount(ID2D1DrawTransform *iface)
+{
+    return 1;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_MapOutputRectToInputRects(
+        ID2D1DrawTransform *iface, const D2D1_RECT_L *output_rect, D2D1_RECT_L *input_rects,
+        UINT32 input_rect_count)
+{
+    if (input_rect_count != 1)
+        return E_INVALIDARG;
+
+    input_rects[0] = *output_rect;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_MapInputRectsToOutputRect(
+        ID2D1DrawTransform *iface, const D2D1_RECT_L *input_rects, const D2D1_RECT_L *input_opaque_rects,
+        UINT32 input_rect_count, D2D1_RECT_L *output_rect, D2D1_RECT_L *output_opaque_rect)
+{
+    if (input_rect_count != 1)
+        return E_INVALIDARG;
+
+    *output_rect = input_rects[0];
+    memset(output_opaque_rect, 0, sizeof(*output_opaque_rect));
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_MapInvalidRect(
+        ID2D1DrawTransform *iface, UINT32 index, D2D1_RECT_L input_rect, D2D1_RECT_L *output_rect)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_SetDrawInfo(ID2D1DrawTransform *iface,
+        ID2D1DrawInfo *info)
+{
+    return ID2D1DrawInfo_SetPixelShader(info, &GUID_TestPixelShader, 0);
+}
+
+static const ID2D1DrawTransformVtbl ps_effect_draw_transform_vtbl =
+{
+    effect_impl_draw_transform_QueryInterface,
+    effect_impl_draw_transform_AddRef,
+    effect_impl_draw_transform_Release,
+    effect_impl_draw_transform_GetInputCount,
+    effect_impl_draw_transform_MapOutputRectToInputRects,
+    effect_impl_draw_transform_MapInputRectsToOutputRect,
+    effect_impl_draw_transform_MapInvalidRect,
+    effect_impl_draw_transform_SetDrawInfo,
+};
+
+static HRESULT STDMETHODCALLTYPE ps_effect_impl_create(IUnknown **effect_impl)
+{
+    struct effect_impl *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1EffectImpl_iface.lpVtbl = &ps_effect_impl_vtbl;
+    object->ID2D1DrawTransform_iface.lpVtbl = &ps_effect_draw_transform_vtbl;
+    object->refcount = 1;
+
+    *effect_impl = (IUnknown *)&object->ID2D1EffectImpl_iface;
+    return S_OK;
+}
+
+static void test_effect_custom_pixel_shader(BOOL d3d11)
+{
+    static const WCHAR *description =
+        L"<?xml version='1.0'?>                                                       \
+            <Effect>                                                                  \
+                <Property name='DisplayName' type='string' value='PSEffect'/>         \
+                <Property name='Author'      type='string' value='The Wine Project'/> \
+                <Property name='Category'    type='string' value='Test'/>             \
+                <Property name='Description' type='string' value='Test effect.'/>     \
+                <Inputs>                                                              \
+                    <Input name='Source'/>                                            \
+                </Inputs>                                                             \
+            </Effect>                                                                 \
+        ";
+
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    DWORD colour, expected_colour;
+    struct d2d1_test_context ctx;
+    struct resource_readback rb;
+    ID2D1DeviceContext *context;
+    D2D1_SIZE_U input_size;
+    ID2D1Factory1 *factory;
+    ID2D1Bitmap1 *bitmap;
+    ID2D1Effect *effect;
+    ID2D1Image *output;
+    DWORD pixel;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    context = ctx.context;
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, description, NULL,
+            0, ps_effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_TestEffect, &effect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+    {
+        release_test_context(&ctx);
+        return;
+    }
+
+    set_size_u(&input_size, 1, 1);
+    pixel = 0xabcd00ff;
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+    bitmap_desc.colorContext = NULL;
+    hr = ID2D1DeviceContext_CreateBitmap(context, input_size, &pixel, sizeof(pixel),
+            &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1Effect_SetInput(effect, 0, (ID2D1Image *)bitmap, FALSE);
+    ID2D1Effect_GetOutput(effect, &output);
+
+    ID2D1DeviceContext_BeginDraw(context);
+    ID2D1DeviceContext_Clear(context, 0);
+    ID2D1DeviceContext_DrawImage(context, output, NULL, NULL, 0, 0);
+    hr = ID2D1DeviceContext_EndDraw(context, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    get_surface_readback(&ctx, &rb);
+    colour = get_readback_colour(&rb, 0, 0);
+    expected_colour = 0x661a334c;
+    todo_wine ok(compare_colour(colour, expected_colour, 1),
+            "Got unexpected colour %#lx, expected %#lx.\n", colour, expected_colour);
+    release_resource_readback(&rb);
+
+    ID2D1Image_Release(output);
+    ID2D1Bitmap1_Release(bitmap);
+
+    ID2D1Effect_Release(effect);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -14336,6 +14573,7 @@ START_TEST(d2d1)
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
     queue_test(test_bitmap_create);
+    queue_test(test_effect_custom_pixel_shader);
 
     run_queued_tests();
 }
