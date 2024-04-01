@@ -2329,6 +2329,8 @@ void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void
     RtlUnwindEx( frame, target_ip, rec, retval, &context, NULL );
 }
 
+__ASM_GLOBAL_IMPORT(RtlUnwind)
+
 
 /*******************************************************************
  *		_local_unwind (NTDLL.@)
