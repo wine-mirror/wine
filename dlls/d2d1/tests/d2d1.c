@@ -34,6 +34,28 @@ DEFINE_GUID(CLSID_TestEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,
 DEFINE_GUID(GUID_TestVertexShader, 0x5bcdcfae,0x1e92,0x4dc1,0x94,0xfa,0x3b,0x01,0xca,0x54,0x59,0x20);
 DEFINE_GUID(GUID_TestPixelShader,  0x53015748,0xfc13,0x4168,0xbd,0x13,0x0f,0xcf,0x15,0x29,0x7f,0x01);
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static const WCHAR *effect_xml_a =
 L"<?xml version='1.0'?>                                                       \
     <Effect>                                                                  \
@@ -14365,6 +14387,15 @@ static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_MapInvalidRect(
 static HRESULT STDMETHODCALLTYPE effect_impl_draw_transform_SetDrawInfo(ID2D1DrawTransform *iface,
         ID2D1DrawInfo *info)
 {
+    ULONG refcount;
+
+    check_interface(info, &IID_IUnknown, TRUE);
+    check_interface(info, &IID_ID2D1RenderInfo, TRUE);
+    check_interface(info, &IID_ID2D1EffectContext, FALSE);
+
+    refcount = get_refcount(info);
+    ok(refcount == 1, "Unexpected refcount %lu.\n", refcount);
+
     return ID2D1DrawInfo_SetPixelShader(info, &GUID_TestPixelShader, 0);
 }
 
