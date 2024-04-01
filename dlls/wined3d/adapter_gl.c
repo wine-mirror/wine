@@ -1987,58 +1987,6 @@ static enum wined3d_pci_device wined3d_guess_card(enum wined3d_feature_level fea
     return wined3d_gpu_from_feature_level(card_vendor, feature_level);
 }
 
-static const struct wined3d_vertex_pipe_ops *select_vertex_implementation(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_backend_ops *shader_backend_ops)
-{
-    if (shader_backend_ops == &glsl_shader_backend && gl_info->supported[ARB_VERTEX_SHADER])
-        return &glsl_vertex_pipe;
-    return &ffp_vertex_pipe;
-}
-
-static const struct wined3d_fragment_pipe_ops *select_fragment_implementation(const struct wined3d_gl_info *gl_info,
-        const struct wined3d_shader_backend_ops *shader_backend_ops)
-{
-    if (shader_backend_ops == &glsl_shader_backend && gl_info->supported[ARB_FRAGMENT_SHADER])
-        return &glsl_fragment_pipe;
-    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
-        return &arbfp_fragment_pipeline;
-    if (gl_info->supported[ATI_FRAGMENT_SHADER])
-        return &atifs_fragment_pipeline;
-    if (gl_info->supported[NV_REGISTER_COMBINERS] && gl_info->supported[NV_TEXTURE_SHADER2])
-        return &nvts_fragment_pipeline;
-    if (gl_info->supported[NV_REGISTER_COMBINERS])
-        return &nvrc_fragment_pipeline;
-    return &ffp_fragment_pipeline;
-}
-
-static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info)
-{
-    BOOL glsl = wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_AUTO
-            || wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_GLSL;
-    BOOL arb = wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_AUTO
-            || wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_ARB;
-
-    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && !glsl)
-    {
-        ERR_(winediag)("Ignoring the shader backend registry key. "
-                "GLSL is the only shader backend available on core profile contexts. "
-                "You need to explicitly set GL version to use legacy contexts.\n");
-        glsl = TRUE;
-    }
-
-    glsl = glsl && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 20);
-
-    if (glsl && gl_info->supported[ARB_VERTEX_SHADER] && gl_info->supported[ARB_FRAGMENT_SHADER])
-        return &glsl_shader_backend;
-    if (arb && gl_info->supported[ARB_VERTEX_PROGRAM] && gl_info->supported[ARB_FRAGMENT_PROGRAM])
-        return &arb_program_shader_backend;
-    if (glsl && (gl_info->supported[ARB_VERTEX_SHADER] || gl_info->supported[ARB_FRAGMENT_SHADER]))
-        return &glsl_shader_backend;
-    if (arb && (gl_info->supported[ARB_VERTEX_PROGRAM] || gl_info->supported[ARB_FRAGMENT_PROGRAM]))
-        return &arb_program_shader_backend;
-    return &none_shader_backend;
-}
-
 static void parse_extension_string(struct wined3d_gl_info *gl_info, const char *extensions,
         const struct wined3d_extension_map *map, UINT entry_count)
 {
@@ -3755,9 +3703,9 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter_gl *adapter_gl,
 
     checkGLcall("extension detection");
 
-    adapter->shader_backend = select_shader_backend(gl_info);
-    adapter->vertex_pipe = select_vertex_implementation(gl_info, adapter->shader_backend);
-    adapter->fragment_pipe = select_fragment_implementation(gl_info, adapter->shader_backend);
+    adapter->shader_backend = &glsl_shader_backend;
+    adapter->vertex_pipe = &glsl_vertex_pipe;
+    adapter->fragment_pipe = &glsl_fragment_pipe;
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {

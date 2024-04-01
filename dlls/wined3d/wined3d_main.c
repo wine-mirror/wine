@@ -358,22 +358,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 ERR_(winediag)("Using the GLSL shader backend.\n");
                 wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_GLSL;
             }
-            else if (!stricmp(buffer, "arb"))
-            {
-                ERR_(winediag)("Using the ARB shader backend.\n");
-                wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_ARB;
-            }
-            else if (!stricmp(buffer, "none"))
-            {
-                ERR_(winediag)("Disabling shader backends.\n");
-                wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_NONE;
-            }
-        }
-        if (wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_ARB
-                || wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_NONE)
-        {
-            ERR_(winediag)("The GLSL shader backend has been disabled. You get to keep all the pieces if it breaks.\n");
-            TRACE("Use of GL Shading Language disabled.\n");
         }
         if (!get_config_key_dword(hkey, appkey, env, "VideoPciDeviceID", &tmpvalue))
         {
