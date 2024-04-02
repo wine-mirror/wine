@@ -873,6 +873,21 @@ static struct topo_node *session_get_topo_node(const struct media_session *sessi
     return NULL;
 }
 
+static struct topo_node *session_get_topo_node_output(const struct media_session *session,
+        const struct topo_node *up_node, DWORD output, DWORD *input)
+{
+    struct topo_node *down_node = NULL;
+    IMFTopologyNode *node;
+
+    if (SUCCEEDED(IMFTopologyNode_GetOutput(up_node->node, output, &node, input)))
+    {
+        down_node = session_get_topo_node(session, node);
+        IMFTopologyNode_Release(node);
+    }
+
+    return down_node;
+}
+
 static void session_command_complete(struct media_session *session)
 {
     struct session_op *op;
@@ -3133,23 +3148,19 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
 }
 
 static HRESULT transform_get_external_output_sample(const struct media_session *session, struct topo_node *transform,
-        unsigned int output_index, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
+        DWORD output, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
 {
-    IMFTopologyNode *downstream_node;
     IMFMediaBuffer *buffer = NULL;
     struct topo_node *topo_node;
     unsigned int buffer_size;
-    DWORD downstream_input;
+    DWORD input;
     HRESULT hr;
 
-    if (FAILED(IMFTopologyNode_GetOutput(transform->node, output_index, &downstream_node, &downstream_input)))
+    if (!(topo_node = session_get_topo_node_output(session, transform, output, &input)))
     {
-        WARN("Failed to get connected node for output %u.\n", output_index);
+        WARN("Failed to node %p/%lu output.\n", transform, output);
         return MF_E_UNEXPECTED;
     }
-
-    topo_node = session_get_topo_node(session, downstream_node);
-    IMFTopologyNode_Release(downstream_node);
 
     if (topo_node->type == MF_TOPOLOGY_OUTPUT_NODE && topo_node->u.sink.allocator)
     {
@@ -3157,7 +3168,7 @@ static HRESULT transform_get_external_output_sample(const struct media_session *
     }
     else
     {
-        buffer_size = max(stream_info->cbSize, transform->u.transform.outputs[output_index].min_buffer_size);
+        buffer_size = max(stream_info->cbSize, transform->u.transform.outputs[output].min_buffer_size);
 
         hr = MFCreateAlignedMemoryBuffer(buffer_size, stream_info->cbAlignment, &buffer);
         if (SUCCEEDED(hr))
@@ -3293,13 +3304,14 @@ static HRESULT transform_node_push_sample(const struct media_session *session, s
     return hr;
 }
 
-static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
+static void session_deliver_sample_to_node(struct media_session *session, struct topo_node *topo_node, unsigned int input,
         IMFSample *sample);
 
 static void transform_node_deliver_samples(struct media_session *session, struct topo_node *topo_node)
 {
-    IMFTopologyNode *up_node = topo_node->node, *down_node;
+    IMFTopologyNode *up_node = topo_node->node;
     BOOL drained = transform_node_is_drained(topo_node);
+    struct topo_node *down_node;
     DWORD output, input;
     IMFSample *sample;
     HRESULT hr = S_OK;
@@ -3309,9 +3321,9 @@ static void transform_node_deliver_samples(struct media_session *session, struct
     {
         struct transform_stream *stream = &topo_node->u.transform.outputs[output];
 
-        if (FAILED(hr = IMFTopologyNode_GetOutput(up_node, output, &down_node, &input)))
+        if (!(down_node = session_get_topo_node_output(session, topo_node, output, &input)))
         {
-            WARN("Failed to node %p/%lu output, hr %#lx.\n", up_node, output, hr);
+            WARN("Failed to node %p/%lu output\n", topo_node, output);
             continue;
         }
 
@@ -3336,8 +3348,6 @@ static void transform_node_deliver_samples(struct media_session *session, struct
             session_deliver_sample_to_node(session, down_node, input, NULL);
             stream->requests--;
         }
-
-        IMFTopologyNode_Release(down_node);
     }
 
     if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && transform_node_has_requests(topo_node))
@@ -3349,7 +3359,7 @@ static void transform_node_deliver_samples(struct media_session *session, struct
 
         if (SUCCEEDED(transform_stream_pop_sample(stream, &sample)))
         {
-            session_deliver_sample_to_node(session, topo_node->node, input, sample);
+            session_deliver_sample_to_node(session, topo_node, input, sample);
             IMFSample_Release(sample);
         }
         else if (FAILED(hr = IMFTopologyNode_GetInput(topo_node->node, input, &up_node, &output)))
@@ -3363,16 +3373,13 @@ static void transform_node_deliver_samples(struct media_session *session, struct
     }
 }
 
-static void session_deliver_sample_to_node(struct media_session *session, IMFTopologyNode *node, unsigned int input,
+static void session_deliver_sample_to_node(struct media_session *session, struct topo_node *topo_node, unsigned int input,
         IMFSample *sample)
 {
-    struct topo_node *topo_node;
     HRESULT hr;
 
     if (session->quality_manager)
-        IMFQualityManager_NotifyProcessInput(session->quality_manager, node, input, sample);
-
-    topo_node = session_get_topo_node(session, node);
+        IMFQualityManager_NotifyProcessInput(session->quality_manager, topo_node->node, input, sample);
 
     switch (topo_node->type)
     {
@@ -3408,9 +3415,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
 
 static void session_deliver_pending_samples(struct media_session *session, IMFTopologyNode *node)
 {
-    struct topo_node *topo_node;
-
-    topo_node = session_get_topo_node(session, node);
+    struct topo_node *topo_node = session_get_topo_node(session, node);
 
     switch (topo_node->type)
     {
@@ -3426,8 +3431,7 @@ static void session_deliver_pending_samples(struct media_session *session, IMFTo
 
 static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *node, DWORD output)
 {
-    IMFTopologyNode *down_node;
-    struct topo_node *topo_node;
+    struct topo_node *topo_node, *down_node;
     HRESULT hr = S_OK;
     IMFSample *sample;
     DWORD input;
@@ -3444,9 +3448,9 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
         {
             struct transform_stream *stream = &topo_node->u.transform.outputs[output];
 
-            if (FAILED(hr = IMFTopologyNode_GetOutput(node, output, &down_node, &input)))
+            if (!(down_node = session_get_topo_node_output(session, topo_node, output, &input)))
             {
-                WARN("Failed to node %p/%lu output, hr %#lx.\n", node, output, hr);
+                WARN("Failed to node %p/%lu output\n", topo_node, output);
                 break;
             }
 
@@ -3465,8 +3469,6 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
                 stream->requests++;
                 transform_node_deliver_samples(session, topo_node);
             }
-
-            IMFTopologyNode_Release(down_node);
             break;
         }
         case MF_TOPOLOGY_TEE_NODE:
@@ -3512,9 +3514,7 @@ static void session_request_sample(struct media_session *session, IMFStreamSink 
 static void session_deliver_sample(struct media_session *session, IMFMediaStream *stream, const PROPVARIANT *value)
 {
     struct topo_node *source_node = NULL, *node;
-    IMFTopologyNode *downstream_node;
-    DWORD downstream_input;
-    HRESULT hr;
+    DWORD input;
 
     if (value && (value->vt != VT_UNKNOWN || !value->punkVal))
     {
@@ -3537,14 +3537,13 @@ static void session_deliver_sample(struct media_session *session, IMFMediaStream
     if (!value)
         source_node->flags |= TOPO_NODE_END_OF_STREAM;
 
-    if (FAILED(hr = IMFTopologyNode_GetOutput(source_node->node, 0, &downstream_node, &downstream_input)))
+    if (!(node = session_get_topo_node_output(session, source_node, 0, &input)))
     {
-        WARN("Failed to get downstream node connection, hr %#lx.\n", hr);
+        WARN("Failed to node %p/%u output.\n", source_node, 0);
         return;
     }
 
-    session_deliver_sample_to_node(session, downstream_node, downstream_input, value ? (IMFSample *)value->punkVal : NULL);
-    IMFTopologyNode_Release(downstream_node);
+    session_deliver_sample_to_node(session, node, input, value ? (IMFSample *)value->punkVal : NULL);
 }
 
 static void session_sink_invalidated(struct media_session *session, IMFMediaEvent *event, IMFStreamSink *sink)
