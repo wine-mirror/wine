@@ -524,7 +524,7 @@ static GstCaps *wg_format_to_caps_audio_mpeg4(const struct wg_format *format)
 
     gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 4, NULL);
 
-    switch (format->u.audio_mpeg4.payload_type)
+    switch (format->u.audio.payload_type)
     {
         case 0: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "raw", NULL); break;
         case 1: gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "adts", NULL); break;
@@ -534,10 +534,10 @@ static GstCaps *wg_format_to_caps_audio_mpeg4(const struct wg_format *format)
 
     /* FIXME: Use gst_codec_utils_aac_caps_set_level_and_profile from GStreamer pbutils library */
 
-    if (format->u.audio_mpeg4.codec_data_len)
+    if (format->u.audio.codec_data_len)
     {
-        buffer = gst_buffer_new_and_alloc(format->u.audio_mpeg4.codec_data_len);
-        gst_buffer_fill(buffer, 0, format->u.audio_mpeg4.codec_data, format->u.audio_mpeg4.codec_data_len);
+        buffer = gst_buffer_new_and_alloc(format->u.audio.codec_data_len);
+        gst_buffer_fill(buffer, 0, format->u.audio.codec_data, format->u.audio.codec_data_len);
         gst_caps_set_simple(caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
         gst_buffer_unref(buffer);
     }
