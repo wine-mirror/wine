@@ -885,7 +885,7 @@ static unsigned int format_date( WCHAR *bufferW, LONGLONG time )
 {
     int cleaps, years, yearday, months, days;
     unsigned int day, month, year;
-    char buffer[32];
+    char buffer[33];
 
     days = time / TICKSPERSEC / SECSPERDAY;
 
