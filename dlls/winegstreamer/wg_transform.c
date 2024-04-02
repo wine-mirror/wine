@@ -349,7 +349,7 @@ static GstCaps *transform_get_parsed_caps(struct wg_format *format, const char *
             gst_caps_set_simple(parsed_caps, "framed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 4, NULL);
             break;
         case WG_MAJOR_TYPE_AUDIO_WMA:
-            gst_caps_set_simple(parsed_caps, "wmaversion", G_TYPE_INT, format->u.audio_wma.version, NULL);
+            gst_caps_set_simple(parsed_caps, "wmaversion", G_TYPE_INT, format->u.audio.version, NULL);
             break;
         case WG_MAJOR_TYPE_VIDEO_H264:
             gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, NULL);

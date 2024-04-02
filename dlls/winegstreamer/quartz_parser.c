@@ -288,7 +288,7 @@ static bool amt_from_wg_format_audio_wma(AM_MEDIA_TYPE *mt, const struct wg_form
     mt->majortype = MEDIATYPE_Audio;
     mt->formattype = FORMAT_WaveFormatEx;
 
-    switch (format->u.audio_wma.version)
+    switch (format->u.audio.version)
     {
         case 1:
             subtype = &MEDIASUBTYPE_MSAUDIO1;
@@ -322,21 +322,21 @@ static bool amt_from_wg_format_audio_wma(AM_MEDIA_TYPE *mt, const struct wg_form
 
     mt->subtype = *subtype;
     mt->bFixedSizeSamples = TRUE;
-    mt->lSampleSize = format->u.audio_wma.block_align;
+    mt->lSampleSize = format->u.audio.block_align;
     mt->cbFormat = size;
     mt->pbFormat = (BYTE *)wave_format;
     wave_format->wFormatTag = fmt_tag;
-    wave_format->nChannels = format->u.audio_wma.channels;
-    wave_format->nSamplesPerSec = format->u.audio_wma.rate;
-    wave_format->nAvgBytesPerSec = format->u.audio_wma.bitrate / 8;
-    wave_format->nBlockAlign = format->u.audio_wma.block_align;
-    wave_format->wBitsPerSample = format->u.audio_wma.depth;
+    wave_format->nChannels = format->u.audio.channels;
+    wave_format->nSamplesPerSec = format->u.audio.rate;
+    wave_format->nAvgBytesPerSec = format->u.audio.bitrate / 8;
+    wave_format->nBlockAlign = format->u.audio.block_align;
+    wave_format->wBitsPerSample = format->u.audio.depth;
     wave_format->cbSize = codec_data_len;
 
-    if (format->u.audio_wma.codec_data_len == codec_data_len)
-        memcpy(wave_format+1, format->u.audio_wma.codec_data, format->u.audio_wma.codec_data_len);
+    if (format->u.audio.codec_data_len == codec_data_len)
+        memcpy(wave_format+1, format->u.audio.codec_data, format->u.audio.codec_data_len);
     else
-        FIXME("Unexpected codec_data length; got %u, expected %lu\n", format->u.audio_wma.codec_data_len, codec_data_len);
+        FIXME("Unexpected codec_data length; got %u, expected %lu\n", format->u.audio.codec_data_len, codec_data_len);
     return true;
 }
 
@@ -454,7 +454,7 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             /* Estimated max size of a compressed audio frame.
              * There's no way to no way to know the real upper bound,
              * so let's just use one second of decompressed size and hope it works. */
-            return format->u.audio_wma.rate * format->u.audio_wma.channels * format->u.audio_wma.depth / 8;
+            return format->u.audio.rate * format->u.audio.channels * format->u.audio.depth / 8;
 
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_VIDEO_H264:
@@ -878,33 +878,33 @@ static bool amt_to_wg_format_audio_wma(const AM_MEDIA_TYPE *mt, struct wg_format
     }
 
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MSAUDIO1))
-        format->u.audio_wma.version = 1;
+        format->u.audio.version = 1;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMAUDIO2))
-        format->u.audio_wma.version = 2;
+        format->u.audio.version = 2;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMAUDIO3))
-        format->u.audio_wma.version = 3;
+        format->u.audio.version = 3;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMAUDIO_LOSSLESS))
-        format->u.audio_wma.version = 4;
+        format->u.audio.version = 4;
     else
         assert(false);
     format->major_type = WG_MAJOR_TYPE_AUDIO_WMA;
-    format->u.audio_wma.bitrate = audio_format->nAvgBytesPerSec * 8;
-    format->u.audio_wma.rate = audio_format->nSamplesPerSec;
-    format->u.audio_wma.depth = audio_format->wBitsPerSample;
-    format->u.audio_wma.channels = audio_format->nChannels;
-    format->u.audio_wma.block_align = audio_format->nBlockAlign;
+    format->u.audio.bitrate = audio_format->nAvgBytesPerSec * 8;
+    format->u.audio.rate = audio_format->nSamplesPerSec;
+    format->u.audio.depth = audio_format->wBitsPerSample;
+    format->u.audio.channels = audio_format->nChannels;
+    format->u.audio.block_align = audio_format->nBlockAlign;
 
-    format->u.audio_wma.codec_data_len = 0;
-    if (format->u.audio_wma.version == 1)
-        format->u.audio_wma.codec_data_len = 4;
-    if (format->u.audio_wma.version == 2)
-        format->u.audio_wma.codec_data_len = 10;
-    if (format->u.audio_wma.version == 3)
-        format->u.audio_wma.codec_data_len = 18;
-    if (format->u.audio_wma.version == 4)
-        format->u.audio_wma.codec_data_len = 18;
-    if (mt->cbFormat >= sizeof(WAVEFORMATEX) + format->u.audio_wma.codec_data_len)
-        memcpy(format->u.audio_wma.codec_data, audio_format+1, format->u.audio_wma.codec_data_len);
+    format->u.audio.codec_data_len = 0;
+    if (format->u.audio.version == 1)
+        format->u.audio.codec_data_len = 4;
+    if (format->u.audio.version == 2)
+        format->u.audio.codec_data_len = 10;
+    if (format->u.audio.version == 3)
+        format->u.audio.codec_data_len = 18;
+    if (format->u.audio.version == 4)
+        format->u.audio.codec_data_len = 18;
+    if (mt->cbFormat >= sizeof(WAVEFORMATEX) + format->u.audio.codec_data_len)
+        memcpy(format->u.audio.codec_data, audio_format+1, format->u.audio.codec_data_len);
     else
         FIXME("Too small format block, can't copy codec data\n");
 

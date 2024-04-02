@@ -99,7 +99,9 @@ struct wg_format
          *
          * Uncompressed(PCM): channels, channel_mask, rate.
          * MPEG1: channels, rate, layer.
-         * MPEG4: payload_type, codec_data_len, codec_data. */
+         * MPEG4: payload_type, codec_data_len, codec_data.
+         * WMA: channels, rate, bitrate, depth, block_align, version, layer,
+         *         payload_type, codec_data_len, codec_data */
         struct
         {
             wg_audio_format format;
@@ -107,22 +109,15 @@ struct wg_format
             uint32_t channels;
             uint32_t channel_mask; /* In WinMM format. */
             uint32_t rate;
+            uint32_t bitrate;
+            uint32_t depth;
+            uint32_t block_align;
+            uint32_t version;
             uint32_t layer;
             uint32_t payload_type;
             uint32_t codec_data_len;
             unsigned char codec_data[64];
         } audio;
-        struct
-        {
-            uint32_t version;
-            uint32_t bitrate;
-            uint32_t rate;
-            uint32_t depth;
-            uint32_t channels;
-            uint32_t block_align;
-            uint32_t codec_data_len;
-            unsigned char codec_data[64];
-        } audio_wma;
 
         struct
         {

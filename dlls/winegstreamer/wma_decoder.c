@@ -317,19 +317,19 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
         goto done;
 
     if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS,
-            decoder->input_format.u.audio_wma.channels)))
+            decoder->input_format.u.audio.channels)))
         goto done;
 
     if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND,
-            decoder->input_format.u.audio_wma.rate)))
+            decoder->input_format.u.audio.rate)))
         goto done;
 
-    block_alignment = sample_size * decoder->input_format.u.audio_wma.channels / 8;
+    block_alignment = sample_size * decoder->input_format.u.audio.channels / 8;
     if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT,
             block_alignment)))
         goto done;
     if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND,
-            decoder->input_format.u.audio_wma.rate * block_alignment)))
+            decoder->input_format.u.audio.rate * block_alignment)))
         goto done;
 
     if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1)))
@@ -446,7 +446,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
 
-    decoder->input_format.u.audio_wma.depth = sample_size;
+    decoder->input_format.u.audio.depth = sample_size;
 
     mf_media_type_to_wg_format(type, &decoder->output_format);
     decoder->output_buf_size = 1024 * block_alignment * channel_count;
@@ -682,13 +682,13 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     memset(type->pbFormat, 0, type->cbFormat);
 
     wfx = (WAVEFORMATEX *)type->pbFormat;
-    if (decoder->input_format.u.audio_wma.depth == 32)
+    if (decoder->input_format.u.audio.depth == 32)
         wfx->wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     else
         wfx->wFormatTag = WAVE_FORMAT_PCM;
-    wfx->nChannels = decoder->input_format.u.audio_wma.channels;
-    wfx->nSamplesPerSec = decoder->input_format.u.audio_wma.rate;
-    wfx->wBitsPerSample = decoder->input_format.u.audio_wma.depth;
+    wfx->nChannels = decoder->input_format.u.audio.channels;
+    wfx->nSamplesPerSec = decoder->input_format.u.audio.rate;
+    wfx->wBitsPerSample = decoder->input_format.u.audio.depth;
     wfx->nAvgBytesPerSec = wfx->nChannels * wfx->nSamplesPerSec * wfx->wBitsPerSample / 8;
     wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample / 8;
 

@@ -779,14 +779,14 @@ static void mf_media_type_to_wg_format_audio_wma(IMFMediaType *type, const GUID 
     }
 
     format->major_type = WG_MAJOR_TYPE_AUDIO_WMA;
-    format->u.audio_wma.version = version;
-    format->u.audio_wma.bitrate = bytes_per_second * 8;
-    format->u.audio_wma.rate = rate;
-    format->u.audio_wma.depth = depth;
-    format->u.audio_wma.channels = channels;
-    format->u.audio_wma.block_align = block_align;
-    format->u.audio_wma.codec_data_len = codec_data_len;
-    memcpy(format->u.audio_wma.codec_data, codec_data, codec_data_len);
+    format->u.audio.version = version;
+    format->u.audio.bitrate = bytes_per_second * 8;
+    format->u.audio.rate = rate;
+    format->u.audio.depth = depth;
+    format->u.audio.channels = channels;
+    format->u.audio.block_align = block_align;
+    format->u.audio.codec_data_len = codec_data_len;
+    memcpy(format->u.audio.codec_data, codec_data, codec_data_len);
 }
 
 static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_format *format)
