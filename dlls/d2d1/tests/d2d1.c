@@ -12728,24 +12728,18 @@ static void test_transform_graph(BOOL d3d11)
 
     /* Add nodes */
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Remove nodes */
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)blend_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Connect nodes which are both un-added */
@@ -12757,7 +12751,6 @@ static void test_transform_graph(BOOL d3d11)
 
     /* Connect added node to un-added node */
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
@@ -12767,7 +12760,6 @@ static void test_transform_graph(BOOL d3d11)
     /* Connect un-added node to added node */
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
@@ -12777,10 +12769,8 @@ static void test_transform_graph(BOOL d3d11)
     /* Connect nodes */
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     count = ID2D1BlendTransform_GetInputCount(blend_transform);
     for (i = 0; i < count; ++i)

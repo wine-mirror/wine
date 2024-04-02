@@ -722,12 +722,20 @@ struct d2d_transform
     UINT32 input_count;
 };
 
+struct d2d_transform_node
+{
+    struct list entry;
+    ID2D1TransformNode *object;
+};
+
 struct d2d_transform_graph
 {
     ID2D1TransformGraph ID2D1TransformGraph_iface;
     LONG refcount;
 
     UINT32 input_count;
+
+    struct list nodes;
 };
 
 struct d2d_effect
