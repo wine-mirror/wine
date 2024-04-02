@@ -758,7 +758,7 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
     static const struct wg_format input_format =
     {
         .major_type = WG_MAJOR_TYPE_AUDIO_MPEG1,
-        .u.audio_mpeg1 =
+        .u.audio =
         {
             .layer = 2,
             .channels = 1,
@@ -1036,7 +1036,7 @@ HRESULT mpeg_layer3_decoder_create(IUnknown *outer, IUnknown **out)
     static const struct wg_format input_format =
     {
         .major_type = WG_MAJOR_TYPE_AUDIO_MPEG1,
-        .u.audio_mpeg1 =
+        .u.audio =
         {
             .layer = 3,
             .channels = 1,

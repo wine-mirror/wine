@@ -196,9 +196,9 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
     }
 
     format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
-    format->u.audio_mpeg1.layer = layer;
-    format->u.audio_mpeg1.channels = channels;
-    format->u.audio_mpeg1.rate = rate;
+    format->u.audio.layer = layer;
+    format->u.audio.channels = channels;
+    format->u.audio.rate = rate;
 }
 
 static void wg_format_from_caps_audio_wma(struct wg_format *format, const GstCaps *caps)
@@ -506,9 +506,9 @@ static GstCaps *wg_format_to_caps_audio_mpeg1(const struct wg_format *format)
         return NULL;
 
     gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 1, NULL);
-    gst_caps_set_simple(caps, "layer", G_TYPE_INT, format->u.audio_mpeg1.layer, NULL);
-    gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.audio_mpeg1.rate, NULL);
-    gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.audio_mpeg1.channels, NULL);
+    gst_caps_set_simple(caps, "layer", G_TYPE_INT, format->u.audio.layer, NULL);
+    gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.audio.rate, NULL);
+    gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.audio.channels, NULL);
     gst_caps_set_simple(caps, "parsed", G_TYPE_BOOLEAN, TRUE, NULL);
 
     return caps;

@@ -343,7 +343,7 @@ static GstCaps *transform_get_parsed_caps(struct wg_format *format, const char *
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
             gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 1,
-                    "layer", G_TYPE_INT, format->u.audio_mpeg1.layer, NULL);
+                    "layer", G_TYPE_INT, format->u.audio.layer, NULL);
             break;
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
             gst_caps_set_simple(parsed_caps, "framed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 4, NULL);
