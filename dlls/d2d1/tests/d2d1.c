@@ -11523,7 +11523,6 @@ static void test_effect_register(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     count = ID2D1TransformGraph_GetInputCount(graph);
-    todo_wine
     ok(count == 3, "Unexpected input count %u.\n", count);
 
     integer = 0;
@@ -11549,7 +11548,6 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect, L"Graph", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&graph, sizeof(graph));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     count = ID2D1TransformGraph_GetInputCount(graph);
-    todo_wine
     ok(count == 4, "Unexpected input count %u.\n", count);
 
     ID2D1Effect_Release(effect);
@@ -12720,7 +12718,6 @@ static void test_transform_graph(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     count = ID2D1TransformGraph_GetInputCount(graph);
-    todo_wine
     ok(count == 1, "Unexpected input count %u.\n", count);
 
     /* Create transforms */

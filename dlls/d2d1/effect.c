@@ -66,9 +66,11 @@ static ULONG STDMETHODCALLTYPE d2d_transform_graph_Release(ID2D1TransformGraph *
 
 static UINT32 STDMETHODCALLTYPE d2d_transform_graph_GetInputCount(ID2D1TransformGraph *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return graph->input_count;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetSingleTransformNode(ID2D1TransformGraph *iface,
@@ -144,10 +146,20 @@ static const ID2D1TransformGraphVtbl d2d_transform_graph_vtbl =
     d2d_transform_graph_SetPassthroughGraph,
 };
 
-static void d2d_transform_graph_init(struct d2d_transform_graph *graph)
+static HRESULT d2d_transform_graph_create(UINT32 input_count, struct d2d_transform_graph **graph)
 {
-    graph->ID2D1TransformGraph_iface.lpVtbl = &d2d_transform_graph_vtbl;
-    graph->refcount = 1;
+    struct d2d_transform_graph *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1TransformGraph_iface.lpVtbl = &d2d_transform_graph_vtbl;
+    object->refcount = 1;
+    object->input_count = input_count;
+
+    *graph = object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
@@ -1273,12 +1285,11 @@ static HRESULT d2d_effect_set_input_count(struct d2d_effect *effect, UINT32 coun
         ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
         effect->graph = NULL;
 
-        if (!(effect->graph = calloc(1, sizeof(*effect->graph))))
-            return E_OUTOFMEMORY;
-        d2d_transform_graph_init(effect->graph);
-
-        if (FAILED(hr = ID2D1EffectImpl_SetGraph(effect->impl, &effect->graph->ID2D1TransformGraph_iface)))
-            WARN("Failed to set a new transform graph, hr %#lx.\n", hr);
+        if (SUCCEEDED(hr = d2d_transform_graph_create(count, &effect->graph)))
+        {
+            if (FAILED(hr = ID2D1EffectImpl_SetGraph(effect->impl, &effect->graph->ID2D1TransformGraph_iface)))
+                WARN("Failed to set a new transform graph, hr %#lx.\n", hr);
+        }
     }
 
     return hr;
@@ -1626,7 +1637,6 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
 {
     struct d2d_effect_context *effect_context;
     const struct d2d_effect_registration *reg;
-    struct d2d_transform_graph *graph;
     struct d2d_effect *object;
     UINT32 input_count;
     WCHAR clsidW[39];
@@ -1642,16 +1652,8 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
         return E_OUTOFMEMORY;
     d2d_effect_context_init(effect_context, context);
 
-    if (!(graph = calloc(1, sizeof(*graph))))
-    {
-        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
-        return E_OUTOFMEMORY;
-    }
-    d2d_transform_graph_init(graph);
-
     if (!(object = calloc(1, sizeof(*object))))
     {
-        ID2D1TransformGraph_Release(&graph->ID2D1TransformGraph_iface);
         ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
         return E_OUTOFMEMORY;
     }
@@ -1660,7 +1662,6 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     object->ID2D1Image_iface.lpVtbl = &d2d_effect_image_vtbl;
     object->refcount = 1;
     object->effect_context = effect_context;
-    object->graph = graph;
 
     /* Create properties */
     d2d_effect_duplicate_properties(&object->properties, &reg->properties);
@@ -1675,6 +1676,12 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     d2d_effect_get_value(object, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY, (BYTE *)&input_count, sizeof(input_count));
     d2d_effect_set_input_count(object, input_count);
 
+    if (FAILED(hr = d2d_transform_graph_create(input_count, &object->graph)))
+    {
+        ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+        return hr;
+    }
+
     if (FAILED(hr = reg->factory((IUnknown **)&object->impl)))
     {
         WARN("Failed to create implementation object, hr %#lx.\n", hr);
@@ -1683,7 +1690,7 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     }
 
     if (FAILED(hr = ID2D1EffectImpl_Initialize(object->impl, &effect_context->ID2D1EffectContext_iface,
-            &graph->ID2D1TransformGraph_iface)))
+            &object->graph->ID2D1TransformGraph_iface)))
     {
         WARN("Failed to initialize effect, hr %#lx.\n", hr);
         ID2D1Effect_Release(&object->ID2D1Effect_iface);

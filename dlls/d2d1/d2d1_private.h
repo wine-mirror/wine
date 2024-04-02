@@ -712,6 +712,8 @@ struct d2d_transform_graph
 {
     ID2D1TransformGraph ID2D1TransformGraph_iface;
     LONG refcount;
+
+    UINT32 input_count;
 };
 
 struct d2d_effect
