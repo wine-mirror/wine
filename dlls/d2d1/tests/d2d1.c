@@ -267,6 +267,9 @@ L"<?xml version='1.0'?>                                                       \
             <Input name='Source2'/>                                           \
             <Input name='Source3'/>                                           \
         </Inputs>                                                             \
+        <Property name='Graph' type='iunknown'>                               \
+            <Property name='DisplayName' type='string' value='Graph'/>        \
+        </Property>                                                           \
     </Effect>                                                                 \
 ";
 
@@ -11284,10 +11287,12 @@ static void test_effect_register(BOOL d3d11)
     ID2D1DeviceContext *device_context;
     ID2D1EffectContext *effect_context;
     struct d2d1_test_context ctx;
+    ID2D1TransformGraph *graph;
     unsigned int i, integer;
     ID2D1Factory1 *factory;
     WCHAR display_name[64];
     ID2D1Effect *effect;
+    UINT32 count;
     HRESULT hr;
 
     const struct xml_test
@@ -11318,6 +11323,11 @@ static void test_effect_register(BOOL d3d11)
         {L"Integer",  effect_impl_set_integer, NULL},
         {L"Integer",  NULL,                    NULL},
         {L"DeadBeef", effect_impl_set_integer, effect_impl_get_integer},
+    };
+
+    static const D2D1_PROPERTY_BINDING bindings2[] =
+    {
+        {L"Graph", NULL, effect_impl_get_graph},
     };
 
     const struct binding_test
@@ -11502,12 +11512,19 @@ static void test_effect_register(BOOL d3d11)
 
     /* Variable input count. */
     hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
-            effect_variable_input_count, NULL, 0, effect_impl_create);
+            effect_variable_input_count, bindings2, ARRAY_SIZE(bindings2), effect_impl_create);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     integer = ID2D1Effect_GetInputCount(effect);
     ok(integer == 3, "Unexpected input count %u.\n", integer);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Graph", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&graph, sizeof(graph));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    count = ID2D1TransformGraph_GetInputCount(graph);
+    todo_wine
+    ok(count == 3, "Unexpected input count %u.\n", count);
 
     integer = 0;
     hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MIN_INPUTS, D2D1_PROPERTY_TYPE_UINT32,
@@ -11528,6 +11545,12 @@ static void test_effect_register(BOOL d3d11)
             (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(integer == 3, "Unexpected data %u.\n", integer);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Graph", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&graph, sizeof(graph));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    count = ID2D1TransformGraph_GetInputCount(graph);
+    todo_wine
+    ok(count == 4, "Unexpected input count %u.\n", count);
 
     ID2D1Effect_Release(effect);
 
@@ -12695,6 +12718,10 @@ static void test_transform_graph(BOOL d3d11)
     hr = ID2D1Effect_GetValueByName(effect, L"Context",
             D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    count = ID2D1TransformGraph_GetInputCount(graph);
+    todo_wine
+    ok(count == 1, "Unexpected input count %u.\n", count);
 
     /* Create transforms */
     hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, point, &offset_transform);
