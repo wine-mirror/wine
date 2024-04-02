@@ -716,7 +716,10 @@ struct d2d_transform
     union
     {
         D2D1_POINT_2L offset;
+        D2D1_BLEND_DESCRIPTION blend_desc;
     };
+
+    UINT32 input_count;
 };
 
 struct d2d_transform_graph

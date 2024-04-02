@@ -25,6 +25,11 @@ static inline struct d2d_transform *impl_from_ID2D1OffsetTransform(ID2D1OffsetTr
     return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
 }
 
+static inline struct d2d_transform *impl_from_ID2D1BlendTransform(ID2D1BlendTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_offset_transform_QueryInterface(ID2D1OffsetTransform *iface,
         REFIID iid, void **out)
 {
@@ -117,6 +122,127 @@ static HRESULT d2d_offset_transform_create(D2D1_POINT_2L offset, ID2D1OffsetTran
     object->offset = offset;
 
     *transform = (ID2D1OffsetTransform *)&object->ID2D1TransformNode_iface;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_blend_transform_QueryInterface(ID2D1BlendTransform *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1BlendTransform)
+            || IsEqualGUID(iid, &IID_ID2D1ConcreteTransform)
+            || IsEqualGUID(iid, &IID_ID2D1TransformNode)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        ID2D1BlendTransform_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_blend_transform_AddRef(ID2D1BlendTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BlendTransform(iface);
+    ULONG refcount = InterlockedIncrement(&transform->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_blend_transform_Release(ID2D1BlendTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BlendTransform(iface);
+    ULONG refcount = InterlockedDecrement(&transform->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(transform);
+
+    return refcount;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_blend_transform_GetInputCount(ID2D1BlendTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BlendTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return transform->input_count;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_blend_transform_SetOutputBuffer(ID2D1BlendTransform *iface,
+        D2D1_BUFFER_PRECISION precision, D2D1_CHANNEL_DEPTH depth)
+{
+    FIXME("iface %p, precision %u, depth %u stub.\n", iface, precision, depth);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_blend_transform_SetCached(ID2D1BlendTransform *iface,
+        BOOL is_cached)
+{
+    FIXME("iface %p, is_cached %d stub.\n", iface, is_cached);
+}
+
+static void STDMETHODCALLTYPE d2d_blend_transform_SetDescription(ID2D1BlendTransform *iface,
+        const D2D1_BLEND_DESCRIPTION *description)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BlendTransform(iface);
+
+    TRACE("iface %p, description %p.\n", iface, description);
+
+    transform->blend_desc = *description;
+}
+
+static void STDMETHODCALLTYPE d2d_blend_transform_GetDescription(ID2D1BlendTransform *iface,
+        D2D1_BLEND_DESCRIPTION *description)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BlendTransform(iface);
+
+    TRACE("iface %p, description %p.\n", iface, description);
+
+    *description = transform->blend_desc;
+}
+
+static const ID2D1BlendTransformVtbl d2d_blend_transform_vtbl =
+{
+    d2d_blend_transform_QueryInterface,
+    d2d_blend_transform_AddRef,
+    d2d_blend_transform_Release,
+    d2d_blend_transform_GetInputCount,
+    d2d_blend_transform_SetOutputBuffer,
+    d2d_blend_transform_SetCached,
+    d2d_blend_transform_SetDescription,
+    d2d_blend_transform_GetDescription,
+};
+
+static HRESULT d2d_blend_transform_create(UINT32 input_count, const D2D1_BLEND_DESCRIPTION *blend_desc,
+        ID2D1BlendTransform **transform)
+{
+    struct d2d_transform *object;
+
+    *transform = NULL;
+
+    if (!input_count)
+        return E_INVALIDARG;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1TransformNode_iface.lpVtbl = (ID2D1TransformNodeVtbl *)&d2d_blend_transform_vtbl;
+    object->refcount = 1;
+    object->input_count = input_count;
+    object->blend_desc = *blend_desc;
+
+    *transform = (ID2D1BlendTransform *)&object->ID2D1TransformNode_iface;
 
     return S_OK;
 }
@@ -887,9 +1013,9 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateTransformNodeFromEffec
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBlendTransform(ID2D1EffectContext *iface,
         UINT32 num_inputs, const D2D1_BLEND_DESCRIPTION *description, ID2D1BlendTransform **transform)
 {
-    FIXME("iface %p, num_inputs %u, description %p, transform %p stub!\n", iface, num_inputs, description, transform);
+    TRACE("iface %p, num_inputs %u, description %p, transform %p,\n", iface, num_inputs, description, transform);
 
-    return E_NOTIMPL;
+    return d2d_blend_transform_create(num_inputs, description, transform);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBorderTransform(ID2D1EffectContext *iface,

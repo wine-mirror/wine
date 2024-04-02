@@ -12724,71 +12724,81 @@ static void test_transform_graph(BOOL d3d11)
     hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, point, &offset_transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 2, &blend_desc, &blend_transform);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (!offset_transform || !blend_transform)
-        goto done;
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Add nodes */
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Remove nodes */
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_RemoveNode(graph, (ID2D1TransformNode *)blend_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Connect nodes which are both un-added */
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect added node to un-added node */
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect un-added node to added node */
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
+    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect nodes */
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     count = ID2D1BlendTransform_GetInputCount(blend_transform);
     for (i = 0; i < count; ++i)
     {
         hr = ID2D1TransformGraph_ConnectNode(graph,
                 (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, i);
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     /* Connect node to out-of-bounds index */
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, count);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
-done:
-    if (blend_transform)
-        ID2D1BlendTransform_Release(blend_transform);
-    if (offset_transform)
-        ID2D1OffsetTransform_Release(offset_transform);
+    ID2D1BlendTransform_Release(blend_transform);
+    ID2D1OffsetTransform_Release(offset_transform);
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -12932,12 +12942,12 @@ static void test_blend_transform(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Create transform */
+    transform = (void *)0xdeadbeef;
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 0, &expected, &transform);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!transform, "Unexpected pointer %p.\n", transform);
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 1, &expected, &transform);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto done;
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1BlendTransform_Release(transform);
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 4, &expected, &transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -12952,10 +12962,13 @@ static void test_blend_transform(BOOL d3d11)
 
     /* Set output buffer */
     hr = ID2D1BlendTransform_SetOutputBuffer(transform, 0xdeadbeef, D2D1_CHANNEL_DEPTH_DEFAULT);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1BlendTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, 0xdeadbeef);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1BlendTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, D2D1_CHANNEL_DEPTH_DEFAULT);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Set description */
@@ -12973,9 +12986,7 @@ static void test_blend_transform(BOOL d3d11)
     ID2D1BlendTransform_GetDescription(transform, &blend_desc);
     check_blend_desc(&blend_desc, &expected);
 
-done:
-    if (transform)
-        ID2D1BlendTransform_Release(transform);
+    ID2D1BlendTransform_Release(transform);
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
