@@ -364,11 +364,33 @@ static UINT32 STDMETHODCALLTYPE d2d_transform_graph_GetInputCount(ID2D1Transform
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetSingleTransformNode(ID2D1TransformGraph *iface,
-        ID2D1TransformNode *node)
+        ID2D1TransformNode *object)
 {
-    FIXME("iface %p, node %p stub!\n", iface, node);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
+    struct d2d_transform_node *node;
+    unsigned int i, input_count;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, object %p.\n", iface, object);
+
+    d2d_transform_graph_clear(graph);
+    if (FAILED(hr = d2d_transform_graph_add_node(graph, object)))
+        return hr;
+
+    node = d2d_transform_graph_get_node(graph, object);
+    graph->output = node;
+
+    input_count = ID2D1TransformNode_GetInputCount(object);
+    if (graph->input_count != input_count)
+        return E_INVALIDARG;
+
+    for (i = 0; i < graph->input_count; ++i)
+    {
+        graph->inputs[i].node = node;
+        graph->inputs[i].index = i;
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_AddNode(ID2D1TransformGraph *iface,

@@ -12731,6 +12731,18 @@ static void test_transform_graph(BOOL d3d11)
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_SetOutputNode(graph, (ID2D1TransformNode *)offset_transform);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
+
+    /* Single input effect, single input node. */
+    hr = ID2D1TransformGraph_SetSingleTransformNode(graph, (ID2D1TransformNode *)offset_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Single input effect, two-input node. */
+    hr = ID2D1TransformGraph_SetSingleTransformNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ID2D1TransformGraph_Clear(graph);
+
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
@@ -14507,13 +14519,7 @@ static void test_effect_custom_pixel_shader(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_TestEffect, &effect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        release_test_context(&ctx);
-        return;
-    }
 
     set_size_u(&input_size, 1, 1);
     pixel = 0xabcd00ff;
