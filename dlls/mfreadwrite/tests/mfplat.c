@@ -3086,11 +3086,11 @@ static void test_source_reader_transforms_d3d9(void)
     hr = IMFTransform_GetAttributes(video_processor, &attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value);
+    todo_wine /* Wine exposes MF_SA_D3D_AWARE on the video processor, as Win7 */
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
-    value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_AWARE, &value);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(value == 1, "got %u.\n", value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 1, "got %u.\n", value);
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, &value);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     IMFAttributes_Release(attributes);

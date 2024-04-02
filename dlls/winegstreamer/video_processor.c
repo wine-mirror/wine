@@ -83,6 +83,9 @@ struct video_processor
 
     wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
+
+    IUnknown *device_manager;
+    IMFVideoSampleAllocatorEx *allocator;
 };
 
 static HRESULT try_create_wg_transform(struct video_processor *impl)
@@ -106,6 +109,46 @@ static HRESULT try_create_wg_transform(struct video_processor *impl)
         return E_FAIL;
 
     return S_OK;
+}
+
+static HRESULT video_processor_init_allocator(struct video_processor *processor)
+{
+    IMFVideoSampleAllocatorEx *allocator;
+    UINT32 count;
+    HRESULT hr;
+
+    if (processor->allocator)
+        return S_OK;
+
+    if (FAILED(hr = MFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&allocator)))
+        return hr;
+    if (FAILED(IMFAttributes_GetUINT32(processor->attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, &count)))
+        count = 2;
+    if (FAILED(hr = IMFVideoSampleAllocatorEx_SetDirectXManager(allocator, processor->device_manager))
+            || FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocator, count, max(count + 2, 10),
+            processor->output_attributes, processor->output_type)))
+    {
+        IMFVideoSampleAllocatorEx_Release(allocator);
+        return hr;
+    }
+
+    processor->allocator = allocator;
+    return S_OK;
+}
+
+static HRESULT video_processor_uninit_allocator(struct video_processor *processor)
+{
+    HRESULT hr;
+
+    if (!processor->allocator)
+        return S_OK;
+
+    if (SUCCEEDED(hr = IMFVideoSampleAllocatorEx_UninitializeSampleAllocator(processor->allocator)))
+        hr = IMFVideoSampleAllocatorEx_SetDirectXManager(processor->allocator, NULL);
+    IMFVideoSampleAllocatorEx_Release(processor->allocator);
+    processor->allocator = NULL;
+
+    return hr;
 }
 
 static struct video_processor *impl_from_IMFTransform(IMFTransform *iface)
@@ -151,6 +194,9 @@ static ULONG WINAPI video_processor_Release(IMFTransform *iface)
 
     if (!refcount)
     {
+        video_processor_uninit_allocator(impl);
+        if (impl->device_manager)
+            IUnknown_Release(impl->device_manager);
         if (impl->wg_transform)
             wg_transform_destroy(impl->wg_transform);
         if (impl->input_type)
@@ -223,7 +269,7 @@ static HRESULT WINAPI video_processor_GetAttributes(IMFTransform *iface, IMFAttr
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
 
-    FIXME("iface %p, attributes %p semi-stub!\n", iface, attributes);
+    TRACE("iface %p, attributes %p\n", iface, attributes);
 
     if (!attributes)
         return E_POINTER;
@@ -242,7 +288,7 @@ static HRESULT WINAPI video_processor_GetOutputStreamAttributes(IMFTransform *if
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
 
-    FIXME("iface %p, id %#lx, attributes %p semi-stub!\n", iface, id, attributes);
+    TRACE("iface %p, id %#lx, attributes %p\n", iface, id, attributes);
 
     if (!attributes)
         return E_POINTER;
@@ -438,6 +484,9 @@ static HRESULT WINAPI video_processor_SetOutputType(IMFTransform *iface, DWORD i
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
 
+    if (FAILED(hr = video_processor_uninit_allocator(impl)))
+        return hr;
+
     if (impl->output_type)
         IMFMediaType_Release(impl->output_type);
     IMFMediaType_AddRef((impl->output_type = type));
@@ -538,8 +587,33 @@ static HRESULT WINAPI video_processor_ProcessEvent(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI video_processor_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("iface %p, message %#x, param %#Ix stub!\n", iface, message, param);
-    return S_OK;
+    struct video_processor *processor = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, message %#x, param %Ix.\n", iface, message, param);
+
+    switch (message)
+    {
+    case MFT_MESSAGE_SET_D3D_MANAGER:
+        if (FAILED(hr = video_processor_uninit_allocator(processor)))
+            return hr;
+
+        if (processor->device_manager)
+        {
+            processor->output_info.dwFlags &= ~MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
+            IUnknown_Release(processor->device_manager);
+        }
+        if ((processor->device_manager = (IUnknown *)param))
+        {
+            IUnknown_AddRef(processor->device_manager);
+            processor->output_info.dwFlags |= MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
+        }
+        return S_OK;
+
+    default:
+        FIXME("Ignoring message %#x.\n", message);
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI video_processor_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
@@ -559,6 +633,7 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
     MFT_OUTPUT_STREAM_INFO info;
+    IMFSample *output_sample;
     HRESULT hr;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
@@ -570,16 +645,36 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
     samples->dwStatus = 0;
-    if (!samples->pSample)
-        return E_INVALIDARG;
-
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
         return hr;
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, samples->pSample,
-            info.cbSize, NULL, &samples->dwStatus)))
-        wg_sample_queue_flush(impl->wg_sample_queue, false);
+    if (impl->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    {
+        if (FAILED(hr = video_processor_init_allocator(impl)))
+            return hr;
+        if (FAILED(hr = IMFVideoSampleAllocatorEx_AllocateSample(impl->allocator, &output_sample)))
+            return hr;
+    }
+    else
+    {
+        if (!(output_sample = samples->pSample))
+            return E_INVALIDARG;
+        IMFSample_AddRef(output_sample);
+    }
 
+    if (FAILED(hr = wg_transform_read_mf(impl->wg_transform, output_sample, info.cbSize,
+            NULL, &samples->dwStatus)))
+        goto done;
+    wg_sample_queue_flush(impl->wg_sample_queue, false);
+
+    if (impl->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    {
+        samples->pSample = output_sample;
+        IMFSample_AddRef(output_sample);
+    }
+
+done:
+    IMFSample_Release(output_sample);
     return hr;
 }
 
@@ -653,6 +748,11 @@ HRESULT video_processor_create(REFIID riid, void **ret)
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = MFCreateAttributes(&impl->attributes, 0)))
+        goto failed;
+    if (FAILED(hr = IMFAttributes_SetUINT32(impl->attributes, &MF_SA_D3D11_AWARE, TRUE)))
+        goto failed;
+    /* native only has MF_SA_D3D_AWARE on Win7, but it is useful to have in mfreadwrite */
+    if (FAILED(hr = IMFAttributes_SetUINT32(impl->attributes, &MF_SA_D3D_AWARE, TRUE)))
         goto failed;
     if (FAILED(hr = MFCreateAttributes(&impl->output_attributes, 0)))
         goto failed;

@@ -7343,7 +7343,7 @@ static void test_video_processor(void)
     static const struct attribute_desc expect_transform_attributes[] =
     {
         ATTR_UINT32(MFT_SUPPORT_3DVIDEO, 1, .todo = TRUE),
-        ATTR_UINT32(MF_SA_D3D11_AWARE, 1, .todo = TRUE),
+        ATTR_UINT32(MF_SA_D3D11_AWARE, 1),
         /* ATTR_UINT32(MF_SA_D3D_AWARE, 1), only on W7 */
         {0},
     };
@@ -8062,9 +8062,10 @@ static void test_video_processor(void)
         }
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
-        winetest_pop_context();
 
 skip_test:
+        winetest_pop_context();
+
         hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
         ok(hr == S_OK, "got %#lx\n", hr);
         hr = IMFTransform_SetOutputType(transform, 0, NULL, 0);
@@ -9089,7 +9090,7 @@ static void test_video_processor_with_dxgi_manager(void)
         win_skip("missing video processor sample allocator support.\n");
         goto failed;
     }
-    todo_wine ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
+    ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
 
     hr = MFCreateMediaType(&type);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -9120,7 +9121,7 @@ static void test_video_processor_with_dxgi_manager(void)
     status = 0;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "got %#lx\n", hr);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "got %#lx\n", hr);
 
     load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
     /* skip BMP header and RGB data from the dump */
@@ -9152,18 +9153,17 @@ static void test_video_processor_with_dxgi_manager(void)
 
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
     ok(hr == S_OK, "got %#lx\n", hr);
-    todo_wine ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
+    ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
 
 
     status = 0;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     ok(!output.pEvents, "got events\n");
-    todo_wine ok(!!output.pSample, "got no sample\n");
+    ok(!!output.pSample, "got no sample\n");
     ok(output.dwStatus == 0, "got %#lx\n", output.dwStatus);
     ok(status == 0, "got %#lx\n", status);
-    if (!output.pSample) goto skip_tests;
 
     hr = IMFTransform_GetAttributes(transform, &attribs);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -9220,6 +9220,7 @@ static void test_video_processor_with_dxgi_manager(void)
     IMFSample_Release(output.pSample);
 
     ret = check_mf_sample_collection(output_samples, &output_sample_desc_rgb32, L"rgb32frame.bmp");
+    todo_wine /* FIXME: video process vertically flips the frame... */
     ok(ret <= 5, "got %lu%% diff\n", ret);
 
     for (i = 0; i < 9; i++)
@@ -9254,14 +9255,17 @@ static void test_video_processor_with_dxgi_manager(void)
     status = 0;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    /* FIXME: Wine sample release happens entirely asynchronously */
+    flaky_wine_if(hr == MF_E_SAMPLEALLOCATOR_EMPTY)
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(!output.pEvents, "got events\n");
+    flaky_wine_if(hr == MF_E_SAMPLEALLOCATOR_EMPTY)
     ok(!!output.pSample, "got no sample\n");
     ok(output.dwStatus == 0, "got %#lx\n", output.dwStatus);
     ok(status == 0, "got %#lx\n", status);
-    IMFSample_Release(output.pSample);
+    if (output.pSample)
+        IMFSample_Release(output.pSample);
 
-skip_tests:
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
