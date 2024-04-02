@@ -332,7 +332,7 @@ static char *find_cache_dir(void)
 {
     FSRef ref;
     OSErr err;
-    static char cached_path[MAX_PATH];
+    static char cached_path[PATH_MAX];
     static const char *wine = "/Wine", *fonts = "/Fonts";
 
     if(*cached_path) return cached_path;
@@ -1439,7 +1439,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 {
     DIR *dir;
     struct dirent *dent;
-    char path[MAX_PATH];
+    char path[PATH_MAX];
 
     TRACE("Loading fonts from %s\n", debugstr_a(dirname));
 
