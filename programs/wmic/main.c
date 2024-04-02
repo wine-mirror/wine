@@ -405,22 +405,25 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
         while (fgetws(cmd, sizeof(cmd), stdin) != NULL)
         {
-            cmd[wcslen(cmd)-1] = 0; /* remove trailing '\n' */
+            const WCHAR *stripped;
 
-            WINE_TRACE("command: %s\n", debugstr_w(cmd));
-            if (!wcsicmp( strip_spaces(cmd), L"exit" ) || !wcsicmp( strip_spaces(cmd), L"quit" ))
+            cmd[wcslen(cmd) - 1] = 0; /* remove trailing '\n' */
+            stripped = strip_spaces( cmd );
+
+            WINE_TRACE("command: %s\n", debugstr_w(stripped));
+            if (!wcsicmp( stripped, L"exit" ) || !wcsicmp( stripped, L"quit" ))
                 return 0;
 
-            if (!cmd[0])
+            if (!stripped[0])
                 output_error( STRING_USAGE );
             else
             {
-                int _argc;
-                WCHAR **_argv;
+                int new_argc;
+                WCHAR **new_argv;
 
-                _argv = CommandLineToArgvW( strip_spaces(cmd), &_argc );
-                ret = process_args( _argc, _argv );
-                LocalFree(_argv);
+                new_argv = CommandLineToArgvW( stripped, &new_argc );
+                ret = process_args( new_argc, new_argv );
+                LocalFree( new_argv );
 
                 output_newline();
             }
@@ -429,5 +432,5 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         return ret;
     }
 
-    return process_args( argc - 1, &argv[1] );
+    return process_args( argc - 1, argv + 1 );
 }
