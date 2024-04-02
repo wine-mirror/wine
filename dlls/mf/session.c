@@ -856,14 +856,18 @@ static void session_clear_presentation(struct media_session *session)
     }
 }
 
-static struct topo_node *session_get_node_by_id(const struct media_session *session, TOPOID id)
+static struct topo_node *session_get_topo_node(const struct media_session *session, IMFTopologyNode *node)
 {
-    struct topo_node *node;
+    struct topo_node *topo_node;
+    TOPOID id;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    if (FAILED(IMFTopologyNode_GetTopoNodeID(node, &id)))
+        return NULL;
+
+    LIST_FOR_EACH_ENTRY(topo_node, &session->presentation.nodes, struct topo_node, entry)
     {
-        if (node->node_id == id)
-            return node;
+        if (topo_node->node_id == id)
+            return topo_node;
     }
 
     return NULL;
@@ -3136,7 +3140,6 @@ static HRESULT transform_get_external_output_sample(const struct media_session *
     struct topo_node *topo_node;
     unsigned int buffer_size;
     DWORD downstream_input;
-    TOPOID node_id;
     HRESULT hr;
 
     if (FAILED(IMFTopologyNode_GetOutput(transform->node, output_index, &downstream_node, &downstream_input)))
@@ -3145,10 +3148,8 @@ static HRESULT transform_get_external_output_sample(const struct media_session *
         return MF_E_UNEXPECTED;
     }
 
-    IMFTopologyNode_GetTopoNodeID(downstream_node, &node_id);
+    topo_node = session_get_topo_node(session, downstream_node);
     IMFTopologyNode_Release(downstream_node);
-
-    topo_node = session_get_node_by_id(session, node_id);
 
     if (topo_node->type == MF_TOPOLOGY_OUTPUT_NODE && topo_node->u.sink.allocator)
     {
@@ -3366,19 +3367,14 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
         IMFSample *sample)
 {
     struct topo_node *topo_node;
-    MF_TOPOLOGY_TYPE node_type;
-    TOPOID node_id;
     HRESULT hr;
 
     if (session->quality_manager)
         IMFQualityManager_NotifyProcessInput(session->quality_manager, node, input, sample);
 
-    IMFTopologyNode_GetNodeType(node, &node_type);
-    IMFTopologyNode_GetTopoNodeID(node, &node_id);
+    topo_node = session_get_topo_node(session, node);
 
-    topo_node = session_get_node_by_id(session, node_id);
-
-    switch (node_type)
+    switch (topo_node->type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
             if (topo_node->u.sink.requests)
@@ -3403,7 +3399,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
             transform_node_deliver_samples(session, topo_node);
             break;
         case MF_TOPOLOGY_TEE_NODE:
-            FIXME("Unhandled downstream node type %d.\n", node_type);
+            FIXME("Unhandled downstream node type %d.\n", topo_node->type);
             break;
         default:
             ;
@@ -3413,22 +3409,17 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
 static void session_deliver_pending_samples(struct media_session *session, IMFTopologyNode *node)
 {
     struct topo_node *topo_node;
-    MF_TOPOLOGY_TYPE node_type;
-    TOPOID node_id;
 
-    IMFTopologyNode_GetNodeType(node, &node_type);
-    IMFTopologyNode_GetTopoNodeID(node, &node_id);
+    topo_node = session_get_topo_node(session, node);
 
-    topo_node = session_get_node_by_id(session, node_id);
-
-    switch (node_type)
+    switch (topo_node->type)
     {
         case MF_TOPOLOGY_TRANSFORM_NODE:
             transform_node_pull_samples(session, topo_node);
             transform_node_deliver_samples(session, topo_node);
             break;
         default:
-            FIXME("Unexpected node type %u.\n", node_type);
+            FIXME("Unexpected node type %u.\n", topo_node->type);
     }
 }
 
@@ -3437,18 +3428,13 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
 {
     IMFTopologyNode *down_node;
     struct topo_node *topo_node;
-    MF_TOPOLOGY_TYPE node_type;
     HRESULT hr = S_OK;
     IMFSample *sample;
-    TOPOID node_id;
     DWORD input;
 
-    IMFTopologyNode_GetNodeType(node, &node_type);
-    IMFTopologyNode_GetTopoNodeID(node, &node_id);
+    topo_node = session_get_topo_node(session, node);
 
-    topo_node = session_get_node_by_id(session, node_id);
-
-    switch (node_type)
+    switch (topo_node->type)
     {
         case MF_TOPOLOGY_SOURCESTREAM_NODE:
             if (FAILED(hr = IMFMediaStream_RequestSample(topo_node->object.source_stream, NULL)))
@@ -3484,7 +3470,7 @@ static HRESULT session_request_sample_from_node(struct media_session *session, I
             break;
         }
         case MF_TOPOLOGY_TEE_NODE:
-            FIXME("Unhandled upstream node type %d.\n", node_type);
+            FIXME("Unhandled upstream node type %d.\n", topo_node->type);
         default:
             hr = E_UNEXPECTED;
     }
