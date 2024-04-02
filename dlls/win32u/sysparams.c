@@ -2798,7 +2798,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 static const char *_CDS_flags( DWORD fields )
 {
     BOOL first = TRUE;
-    CHAR buf[128];
+    CHAR buf[130];
     CHAR *p = buf;
 
     _X_FIELD(CDS, UPDATEREGISTRY)
