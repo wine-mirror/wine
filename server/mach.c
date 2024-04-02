@@ -152,24 +152,23 @@ void init_thread_context( struct thread *thread )
 {
 }
 
-/* CX HACK 21217 */
-static int is_apple_silicon( void )
+static int is_rosetta( void )
 {
-    static int apple_silicon_status, did_check = 0;
+    static int rosetta_status, did_check = 0;
     if (!did_check)
     {
         /* returns 0 for native process or on error, 1 for translated */
         int ret = 0;
         size_t size = sizeof(ret);
         if (sysctlbyname( "sysctl.proc_translated", &ret, &size, NULL, 0 ) == -1)
-            apple_silicon_status = 0;
+            rosetta_status = 0;
         else
-            apple_silicon_status = ret;
+            rosetta_status = ret;
 
         did_check = 1;
     }
 
-    return apple_silicon_status;
+    return rosetta_status;
 }
 
 /* retrieve the thread x86 registers */
@@ -223,10 +222,9 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
         }
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
     }
-    else if (is_apple_silicon())
+    else if (is_rosetta())
     {
-        /* CX HACK 21217: Fake debug registers on Apple Silicon */
-        fprintf( stderr, "%04x: thread_get_state failed on Apple Silicon - faking zero debug registers\n", thread->id );
+        /* getting debug registers of a translated process is not supported cross-process, return all zeroes */
         memset( &context->debug, 0, sizeof(context->debug) );
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
     }
@@ -255,6 +253,14 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         return;
     }
 
+    if (is_rosetta())
+    {
+        /* Setting debug registers of a translated process is not supported cross-process
+         * (and even in-process, setting debug registers never has the desired effect).
+         */
+        set_error( STATUS_UNSUCCESSFUL );
+        return;
+    }
 
 #ifdef __x86_64__
     if (thread->process->machine == IMAGE_FILE_MACHINE_AMD64)

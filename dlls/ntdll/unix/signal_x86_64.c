@@ -1809,6 +1809,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (!self)
     {
         ret = set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_AMD64 );
+#ifdef __APPLE__
+        if ((flags & CONTEXT_DEBUG_REGISTERS) && (ret == STATUS_UNSUCCESSFUL))
+            WARN_(seh)( "Setting debug registers is not supported under Rosetta\n" );
+#endif
         if (ret || !self) return ret;
         if (flags & CONTEXT_DEBUG_REGISTERS)
         {
