@@ -3016,9 +3016,9 @@ static void test_PathResolve(void)
         return;
     }
 
-    ret = GetModuleFileNameW(NULL, argv0_dir, sizeof(argv0_dir));
-    ok(ret != 0 && ret < sizeof(argv0_dir), "GetModuleFileName failed\n");
-    if (ret != 0 && ret < sizeof(argv0_dir))
+    ret = GetModuleFileNameW(NULL, argv0_dir, ARRAY_SIZE(argv0_dir));
+    ok(ret != 0 && ret < ARRAY_SIZE(argv0_dir), "GetModuleFileName failed\n");
+    if (ret != 0 && ret < ARRAY_SIZE(argv0_dir))
     {
         argv0_basep = wcsrchr(argv0_dir, '\\');
         *argv0_basep = 0;
