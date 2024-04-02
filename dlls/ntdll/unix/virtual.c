@@ -3002,6 +3002,8 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->esync_apc_fd = -1;
+    thread_data->msync_apc_addr = NULL;
+    thread_data->msync_apc_idx = 0;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;

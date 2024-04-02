@@ -3830,3 +3830,57 @@ enum esync_type
 /* Retrieve the fd to wait on for user APCs. */
 @REQ(get_esync_apc_fd)
 @END
+
+enum msync_type
+{
+    MSYNC_SEMAPHORE = 1,
+    MSYNC_AUTO_EVENT,
+    MSYNC_MANUAL_EVENT,
+    MSYNC_MUTEX,
+    MSYNC_AUTO_SERVER,
+    MSYNC_MANUAL_SERVER,
+    MSYNC_QUEUE,
+};
+
+/* Create a new mach-based synchronization object */
+@REQ(create_msync)
+    unsigned int access;        /* wanted access rights */
+    int low;                    /* initial value of low word */
+    int high;                   /* initial value of high word */
+    int type;                   /* type of msync object */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;        /* handle to the object */
+    int type;                   /* type of msync object */
+    unsigned int shm_idx;       /* this object's index into the shm section */
+@END
+
+/* Open an msync object */
+@REQ(open_msync)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
+    int          type;          /* type of msync object */
+    VARARG(name,unicode_str);   /* object name */
+@REPLY
+    obj_handle_t handle;        /* handle to the event */
+    int          type;          /* type of msync object */
+    unsigned int shm_idx;       /* this object's index into the shm section */
+@END
+
+/* Retrieve the shm index for an object. */
+@REQ(get_msync_idx)
+    obj_handle_t handle;        /* handle to the object */
+@REPLY
+    int          type;
+    unsigned int shm_idx;
+@END
+
+@REQ(msync_msgwait)
+    int          in_msgwait;    /* are we in a message wait? */
+@END
+
+@REQ(get_msync_apc_idx)
+@REPLY
+    unsigned int shm_idx;
+@END

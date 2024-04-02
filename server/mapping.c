@@ -68,6 +68,7 @@ static const struct object_ops ranges_ops =
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* get_esync_fd */
+    NULL,                      /* get_msync_idx */
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
@@ -106,6 +107,7 @@ static const struct object_ops shared_map_ops =
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
     NULL,                      /* get_esync_fd */
+    NULL,                      /* get_msync_idx */
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
@@ -181,6 +183,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
     NULL,                        /* get_esync_fd */
+    NULL,                        /* get_msync_idx */
     NULL,                        /* satisfied */
     no_signal,                   /* signal */
     mapping_get_fd,              /* get_fd */

@@ -256,6 +256,7 @@ static const struct object_ops sock_ops =
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
     NULL,                         /* get_esync_fd */
+    NULL,                         /* get_msync_idx */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
@@ -3167,6 +3168,7 @@ static const struct object_ops ifchange_ops =
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     NULL,                    /* get_esync_fd */
+    NULL,                    /* get_msync_idx */
     no_satisfied,            /* satisfied */
     no_signal,               /* signal */
     ifchange_get_fd,         /* get_fd */
@@ -3389,6 +3391,7 @@ static const struct object_ops socket_device_ops =
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
     NULL,                       /* get_esync_fd */
+    NULL,                       /* get_msync_idx */
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */

@@ -5584,6 +5584,92 @@ struct get_esync_apc_fd_reply
     struct reply_header __header;
 };
 
+enum msync_type
+{
+    MSYNC_SEMAPHORE = 1,
+    MSYNC_AUTO_EVENT,
+    MSYNC_MANUAL_EVENT,
+    MSYNC_MUTEX,
+    MSYNC_AUTO_SERVER,
+    MSYNC_MANUAL_SERVER,
+    MSYNC_QUEUE,
+};
+
+
+struct create_msync_request
+{
+    struct request_header __header;
+    unsigned int access;
+    int low;
+    int high;
+    int type;
+    /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
+};
+struct create_msync_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    int type;
+    unsigned int shm_idx;
+    char __pad_20[4];
+};
+
+
+struct open_msync_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    int          type;
+    /* VARARG(name,unicode_str); */
+    char __pad_28[4];
+};
+struct open_msync_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    int          type;
+    unsigned int shm_idx;
+    char __pad_20[4];
+};
+
+
+struct get_msync_idx_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_msync_idx_reply
+{
+    struct reply_header __header;
+    int          type;
+    unsigned int shm_idx;
+};
+
+struct msync_msgwait_request
+{
+    struct request_header __header;
+    int          in_msgwait;
+};
+struct msync_msgwait_reply
+{
+    struct reply_header __header;
+};
+
+struct get_msync_apc_idx_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_msync_apc_idx_reply
+{
+    struct reply_header __header;
+    unsigned int shm_idx;
+    char __pad_12[4];
+};
+
 
 enum request
 {
@@ -5871,6 +5957,11 @@ enum request
     REQ_get_esync_write_fd,
     REQ_esync_msgwait,
     REQ_get_esync_apc_fd,
+    REQ_create_msync,
+    REQ_open_msync,
+    REQ_get_msync_idx,
+    REQ_msync_msgwait,
+    REQ_get_msync_apc_idx,
     REQ_NB_REQUESTS
 };
 
@@ -6162,6 +6253,11 @@ union generic_request
     struct get_esync_write_fd_request get_esync_write_fd_request;
     struct esync_msgwait_request esync_msgwait_request;
     struct get_esync_apc_fd_request get_esync_apc_fd_request;
+    struct create_msync_request create_msync_request;
+    struct open_msync_request open_msync_request;
+    struct get_msync_idx_request get_msync_idx_request;
+    struct msync_msgwait_request msync_msgwait_request;
+    struct get_msync_apc_idx_request get_msync_apc_idx_request;
 };
 union generic_reply
 {
@@ -6451,11 +6547,16 @@ union generic_reply
     struct get_esync_write_fd_reply get_esync_write_fd_reply;
     struct esync_msgwait_reply esync_msgwait_reply;
     struct get_esync_apc_fd_reply get_esync_apc_fd_reply;
+    struct create_msync_reply create_msync_reply;
+    struct open_msync_reply open_msync_reply;
+    struct get_msync_idx_reply get_msync_idx_reply;
+    struct msync_msgwait_reply msync_msgwait_reply;
+    struct get_msync_apc_idx_reply get_msync_apc_idx_reply;
 };
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 755
+#define SERVER_PROTOCOL_VERSION 762
 
 /* ### protocol_version end ### */
 

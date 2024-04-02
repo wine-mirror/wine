@@ -80,6 +80,7 @@
 #include "wine/debug.h"
 #include "unix_private.h"
 #include "esync.h"
+#include "msync.h"
 #include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(server);
@@ -1795,6 +1796,9 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     /* always remove the cached fd; if the server request fails we'll just
      * retrieve it again */
     fd = remove_fd_from_cache( handle );
+
+    if (do_msync())
+        msync_close( handle );
 
     if (do_esync())
         esync_close( handle );

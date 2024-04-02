@@ -81,6 +81,7 @@ static const struct object_ops hook_table_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* get_esync_fd */
+    NULL,                         /* get_msync_idx */
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */

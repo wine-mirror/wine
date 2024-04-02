@@ -403,6 +403,11 @@ DECL_HANDLER(get_esync_read_fd);
 DECL_HANDLER(get_esync_write_fd);
 DECL_HANDLER(esync_msgwait);
 DECL_HANDLER(get_esync_apc_fd);
+DECL_HANDLER(create_msync);
+DECL_HANDLER(open_msync);
+DECL_HANDLER(get_msync_idx);
+DECL_HANDLER(msync_msgwait);
+DECL_HANDLER(get_msync_apc_idx);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -693,6 +698,11 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_esync_write_fd,
     (req_handler)req_esync_msgwait,
     (req_handler)req_get_esync_apc_fd,
+    (req_handler)req_create_msync,
+    (req_handler)req_open_msync,
+    (req_handler)req_get_msync_idx,
+    (req_handler)req_msync_msgwait,
+    (req_handler)req_get_msync_apc_idx,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2314,6 +2324,34 @@ C_ASSERT( sizeof(struct get_esync_write_fd_reply) == 8 );
 C_ASSERT( FIELD_OFFSET(struct esync_msgwait_request, in_msgwait) == 12 );
 C_ASSERT( sizeof(struct esync_msgwait_request) == 16 );
 C_ASSERT( sizeof(struct get_esync_apc_fd_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_request, access) == 12 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_request, low) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_request, high) == 20 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_request, type) == 24 );
+C_ASSERT( sizeof(struct create_msync_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_reply, handle) == 8 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_reply, type) == 12 );
+C_ASSERT( FIELD_OFFSET(struct create_msync_reply, shm_idx) == 16 );
+C_ASSERT( sizeof(struct create_msync_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_request, access) == 12 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_request, attributes) == 16 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_request, rootdir) == 20 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_request, type) == 24 );
+C_ASSERT( sizeof(struct open_msync_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_reply, handle) == 8 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_reply, type) == 12 );
+C_ASSERT( FIELD_OFFSET(struct open_msync_reply, shm_idx) == 16 );
+C_ASSERT( sizeof(struct open_msync_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_msync_idx_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_msync_idx_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_msync_idx_reply, type) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_msync_idx_reply, shm_idx) == 12 );
+C_ASSERT( sizeof(struct get_msync_idx_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct msync_msgwait_request, in_msgwait) == 12 );
+C_ASSERT( sizeof(struct msync_msgwait_request) == 16 );
+C_ASSERT( sizeof(struct get_msync_apc_idx_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_msync_apc_idx_reply, shm_idx) == 8 );
+C_ASSERT( sizeof(struct get_msync_apc_idx_reply) == 16 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

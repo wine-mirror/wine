@@ -64,6 +64,7 @@
 #include "user.h"
 #include "security.h"
 #include "esync.h"
+#include "msync.h"
 
 /* process object */
 
@@ -97,6 +98,7 @@ static void process_poll_event( struct fd *fd, int event );
 static struct list *process_get_kernel_obj_list( struct object *obj );
 static void process_destroy( struct object *obj );
 static struct esync_fd *process_get_esync_fd( struct object *obj, enum esync_type *type );
+static unsigned int process_get_msync_idx( struct object *obj, enum msync_type *type );
 static void terminate_process( struct process *process, struct thread *skip, int exit_code );
 
 static const struct object_ops process_ops =
@@ -108,6 +110,7 @@ static const struct object_ops process_ops =
     remove_queue,                /* remove_queue */
     process_signaled,            /* signaled */
     process_get_esync_fd,        /* get_esync_fd */
+    process_get_msync_idx,       /* get_msync_idx */
     no_satisfied,                /* satisfied */
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
@@ -160,6 +163,7 @@ static const struct object_ops startup_info_ops =
     remove_queue,                  /* remove_queue */
     startup_info_signaled,         /* signaled */
     NULL,                          /* get_esync_fd */
+    NULL,                          /* get_msync_idx */
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
@@ -222,6 +226,7 @@ static const struct object_ops job_ops =
     remove_queue,                  /* remove_queue */
     job_signaled,                  /* signaled */
     NULL,                          /* get_esync_fd */
+    NULL,                          /* get_msync_idx */
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
@@ -843,6 +848,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->rawinput_kbd    = NULL;
     memset( &process->image_info, 0, sizeof(process->image_info) );
     process->esync_fd        = NULL;
+    process->msync_idx       = 0;
     list_init( &process->kernel_object );
     list_init( &process->thread_list );
     list_init( &process->locks );
@@ -901,6 +907,9 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     if (!token_assign_label( process->token, &high_label_sid ))
         goto error;
 
+    if (do_msync())
+        process->msync_idx = msync_alloc_shm( 0, 0 );
+
     if (do_esync())
         process->esync_fd = esync_create_fd( 0, 0 );
 
@@ -951,6 +960,7 @@ static void process_destroy( struct object *obj )
     free( process->dir_cache );
     free( process->image );
     if (do_esync()) esync_close_fd( process->esync_fd );
+    if (do_msync()) msync_destroy_semaphore( process->msync_idx );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -973,6 +983,13 @@ static struct esync_fd *process_get_esync_fd( struct object *obj, enum esync_typ
     struct process *process = (struct process *)obj;
     *type = ESYNC_MANUAL_SERVER;
     return process->esync_fd;
+}
+
+static unsigned int process_get_msync_idx( struct object *obj, enum msync_type *type )
+{
+    struct process *process = (struct process *)obj;
+    *type = MSYNC_MANUAL_SERVER;
+    return process->msync_idx;
 }
 
 static unsigned int process_map_access( struct object *obj, unsigned int access )
