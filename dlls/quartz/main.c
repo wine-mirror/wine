@@ -260,13 +260,13 @@ const char * qzdebugstr_guid( const GUID * id )
     return debugstr_guid(id);
 }
 
-int WINAPI AmpFactorToDB(int ampfactor)
+LONG WINAPI AmpFactorToDB(LONG ampfactor)
 {
     FIXME("(%d) Stub!\n", ampfactor);
     return 0;
 }
 
-int WINAPI DBToAmpFactor(int db)
+LONG WINAPI DBToAmpFactor(LONG db)
 {
     FIXME("(%d) Stub!\n", db);
     /* Avoid divide by zero (probably during range computation) in Windows Media Player 6.4 */
@@ -283,8 +283,7 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, LPSTR buffer, DWORD maxlen)
     DWORD res;
     WCHAR errorW[MAX_ERROR_TEXT_LEN];
 
-    TRACE("hr %#lx, buffer %p, maxlen %lu.\n", hr, buffer, maxlen);
-
+    TRACE("(%x,%p,%d)\n", hr, buffer, maxlen);
     if (!buffer)
         return 0;
 
@@ -306,7 +305,7 @@ DWORD WINAPI AMGetErrorTextW(HRESULT hr, LPWSTR buffer, DWORD maxlen)
     unsigned int len;
     WCHAR error[MAX_ERROR_TEXT_LEN];
 
-    TRACE("hr %#lx, buffer %p, maxlen %lu.\n", hr, buffer, maxlen);
+    FIXME("(%x,%p,%d) stub\n", hr, buffer, maxlen);
 
     if (!buffer) return 0;
     swprintf(error, ARRAY_SIZE(error), L"Error: 0x%lx", hr);

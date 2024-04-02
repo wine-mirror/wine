@@ -2,13 +2,19 @@ MODULE = windows.gaming.input.dll
 IMPORTS = combase uuid user32 dinput8 setupapi hid
 
 C_SRCS = \
+	async.c \
+	condition_effect.c \
+	constant_effect.c \
 	controller.c \
 	event_handlers.c \
+	force_feedback.c \
 	gamepad.c \
 	main.c \
 	manager.c \
+	periodic_effect.c \
 	provider.c \
 	racing_wheel.c \
+	ramp_effect.c \
 	vector.c
 
 IDL_SRCS = \

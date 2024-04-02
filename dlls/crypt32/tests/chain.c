@@ -4958,6 +4958,13 @@ static const ChainPolicyCheck msRootPolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
 
+static const ChainPolicyCheck msRootPolicyCheck_approot[] = {
+ { { ARRAY_SIZE(chain32), chain32 },
+   { 0, CERT_E_UNTRUSTEDROOT, 0, 2, NULL }, NULL, TODO_ELEMENTS },
+ { { ARRAY_SIZE(chain33), chain33 },
+   { 0, 0, 0, 0, NULL }, NULL, 0 },
+};
+
 static const char *num_to_str(WORD num)
 {
     static char buf[6];
@@ -5295,8 +5302,16 @@ static void check_ssl_policy(void)
 
 static void check_msroot_policy(void)
 {
+    CERT_CHAIN_POLICY_PARA para;
+
     CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_MICROSOFT_ROOT, NULL,
      msRootPolicyCheck, &may2020, NULL);
+
+    para.cbSize = sizeof(para);
+    para.pvExtraPolicyPara = NULL;
+    para.dwFlags = MICROSOFT_ROOT_CERT_CHAIN_POLICY_CHECK_APPLICATION_ROOT_FLAG;
+    CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_MICROSOFT_ROOT, NULL,
+     msRootPolicyCheck_approot, &may2020, &para);
 }
 
 static void testVerifyCertChainPolicy(void)

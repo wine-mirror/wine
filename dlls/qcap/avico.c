@@ -142,7 +142,7 @@ static HRESULT avi_compressor_init_stream(struct strmbase_filter *iface)
 
     if (filter->source.pAllocator && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
     {
-        ERR("Failed to commit allocator, hr %#lx.\n", hr);
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
         return hr;
     }
 
@@ -216,7 +216,7 @@ static HRESULT WINAPI AVICompressorPropertyBag_Load(IPersistPropertyBag *iface, 
     V_VT(&v) = VT_BSTR;
     hres = IPropertyBag_Read(pPropBag, L"FccHandler", &v, NULL);
     if(FAILED(hres)) {
-        ERR("Failed to read FccHandler value, hr %#lx.\n", hres);
+        WARN("Could not read FccHandler: %08x\n", hres);
         return hres;
     }
 
@@ -309,7 +309,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     BOOL is_preroll;
     BOOL sync_point;
     BYTE *ptr, *buf;
-    LRESULT res;
+    DWORD res;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", base, pSample);
@@ -336,7 +336,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
 
     hres = IMediaSample_GetTime(pSample, &start, &stop);
     if(FAILED(hres)) {
-        WARN("Failed to get sample time, hr %#lx.\n", hres);
+        WARN("GetTime failed: %08x\n", hres);
         return hres;
     }
 
@@ -346,18 +346,13 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
 
     hres = IMediaSample_GetPointer(pSample, &ptr);
     if(FAILED(hres)) {
-        ERR("Failed to get input buffer pointer, hr %#lx.\n", hres);
+        WARN("GetPointer failed: %08x\n", hres);
         return hres;
     }
 
-    if (FAILED(hres = IMemAllocator_GetBuffer(This->source.pAllocator, &out_sample, &start, &stop, 0)))
-    {
-        ERR("Failed to get sample, hr %#lx.\n", hres);
+    hres = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &out_sample, &start, &stop, 0);
+    if(FAILED(hres))
         return hres;
-    }
-
-    if (FAILED(hres = IMediaSample_SetTime(out_sample, &start, &stop)))
-        ERR("Failed to set time, hr %#lx.\n", hres);
 
     hres = IMediaSample_GetPointer(out_sample, &buf);
     if(FAILED(hres))
@@ -371,7 +366,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
     res = ICCompress(This->hic, sync_point ? ICCOMPRESS_KEYFRAME : 0, &This->videoinfo->bmiHeader, buf,
             &src_videoinfo->bmiHeader, ptr, 0, &comp_flags, This->frame_cnt, 0, 0, NULL, NULL);
     if(res != ICERR_OK) {
-        ERR("Failed to compress frame, error %Id.\n", res);
+        WARN("ICCompress failed: %d\n", res);
         IMediaSample_Release(out_sample);
         return E_FAIL;
     }
@@ -388,7 +383,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(struct strmbase_sink *base, IMedia
 
     hres = IMemInputPin_Receive(meminput, out_sample);
     if(FAILED(hres))
-        WARN("Failed to deliver sample, hr %#lx.\n", hres);
+        WARN("Deliver failed: %08x\n", hres);
 
     IMediaSample_Release(out_sample);
     This->frame_cnt++;
@@ -480,10 +475,7 @@ HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out)
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
-    wcscpy(object->sink.pin.name, L"Input");
-
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
-    wcscpy(object->source.pin.name, L"Output");
 
     TRACE("Created AVI compressor %p.\n", object);
     *out = &object->filter.IUnknown_inner;

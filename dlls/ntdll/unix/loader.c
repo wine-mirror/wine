@@ -1544,6 +1544,44 @@ NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, vo
     return ((unixlib_entry_t*)(UINT_PTR)handle)[code]( args );
 }
 
+#if defined(__APPLE__) && defined(__x86_64__)
+static void* non_native_support_lib;
+static void (*register_non_native_code_region) (void*, void*);
+static bool (*supports_non_native_code_regions) (void);
+static void init_non_native_support(void)
+{
+    register_non_native_code_region = NULL;
+    register_non_native_code_region = NULL;
+    non_native_support_lib = dlopen("@rpath/libd3dshared.dylib", RTLD_LOCAL);
+    if (non_native_support_lib)
+    {
+        register_non_native_code_region = dlsym(non_native_support_lib, "register_non_native_code_region");
+        supports_non_native_code_regions = dlsym(non_native_support_lib, "supports_non_native_code_regions");
+    }
+}
+
+static void CDECL pe_module_loaded(void* start, void* end)
+{
+    if ((supports_non_native_code_regions && supports_non_native_code_regions()))
+    {
+        TRACE("Marking non_native_code_region: %p, %p", start, end);
+        register_non_native_code_region(start, end);
+    }
+}
+static BOOL CDECL gs_patching_needed(void)
+{
+    return (supports_non_native_code_regions && supports_non_native_code_regions() == false);
+}
+#elif defined(__x86_64__)
+static void CDECL pe_module_loaded(void* start, void* end)
+{
+
+}
+static BOOL CDECL gs_patching_needed(void)
+{
+    return false;
+}
+#endif
 
 /***********************************************************************
  *           load_so_dll
@@ -2345,6 +2383,10 @@ static struct unix_funcs unix_funcs =
 #ifdef __aarch64__
     NtCurrentTeb,
 #endif
+#if defined(__x86_64__)
+    pe_module_loaded,
+    gs_patching_needed,
+#endif
 };
 
 
@@ -2459,6 +2501,10 @@ static void start_main_thread(void)
         if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
             dlopen_32on64_opengl32();
 #endif
+    }
+    else
+    {
+        init_non_native_support();
     }
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );

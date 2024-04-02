@@ -25,6 +25,8 @@
 #include "ks.h"
 #include "ksmedia.h"
 
+#include "wine/debug.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
@@ -138,7 +140,7 @@ static ULONG WINAPI mediatype_AddRef(IMFMediaType *iface)
     struct media_type *media_type = impl_from_IMFMediaType(iface);
     ULONG refcount = InterlockedIncrement(&media_type->attributes.ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     return refcount;
 }
@@ -148,7 +150,7 @@ static ULONG WINAPI mediatype_Release(IMFMediaType *iface)
     struct media_type *media_type = impl_from_IMFMediaType(iface);
     ULONG refcount = InterlockedDecrement(&media_type->attributes.ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -976,9 +978,8 @@ static const MFVIDEOFORMAT * WINAPI video_mediatype_GetVideoFormat(IMFVideoMedia
     TRACE("%p.\n", iface);
 
     CoTaskMemFree(media_type->video_format);
-    media_type->video_format = NULL;
     if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(&media_type->IMFMediaType_iface, &media_type->video_format, &size)))
-        WARN("Failed to create format description, hr %#lx.\n", hr);
+        WARN("Failed to create format description, hr %#x.\n", hr);
 
     return media_type->video_format;
 }
@@ -986,7 +987,7 @@ static const MFVIDEOFORMAT * WINAPI video_mediatype_GetVideoFormat(IMFVideoMedia
 static HRESULT WINAPI video_mediatype_GetVideoRepresentation(IMFVideoMediaType *iface, GUID representation,
         void **data, LONG stride)
 {
-    FIXME("%p, %s, %p, %ld.\n", iface, debugstr_guid(&representation), data, stride);
+    FIXME("%p, %s, %p, %d.\n", iface, debugstr_guid(&representation), data, stride);
 
     return E_NOTIMPL;
 }
@@ -1377,11 +1378,10 @@ static const WAVEFORMATEX * WINAPI audio_mediatype_GetAudioFormat(IMFAudioMediaT
     TRACE("%p.\n", iface);
 
     CoTaskMemFree(media_type->audio_format);
-    media_type->audio_format = NULL;
     if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(&media_type->IMFMediaType_iface, &media_type->audio_format,
             &size, MFWaveFormatExConvertFlag_Normal)))
     {
-        WARN("Failed to create wave format description, hr %#lx.\n", hr);
+        WARN("Failed to create wave format description, hr %#x.\n", hr);
     }
 
     return media_type->audio_format;
@@ -1498,7 +1498,7 @@ static ULONG WINAPI stream_descriptor_AddRef(IMFStreamDescriptor *iface)
     struct stream_desc *stream_desc = impl_from_IMFStreamDescriptor(iface);
     ULONG refcount = InterlockedIncrement(&stream_desc->attributes.ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     return refcount;
 }
@@ -1509,7 +1509,7 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
     ULONG refcount = InterlockedDecrement(&stream_desc->attributes.ref);
     unsigned int i;
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -1955,7 +1955,7 @@ static HRESULT WINAPI mediatype_handler_GetMediaTypeByIndex(IMFMediaTypeHandler 
 {
     struct stream_desc *stream_desc = impl_from_IMFMediaTypeHandler(iface);
 
-    TRACE("%p, %lu, %p.\n", iface, index, type);
+    TRACE("%p, %u, %p.\n", iface, index, type);
 
     if (index >= stream_desc->media_types_count)
         return MF_E_NO_MORE_TYPES;
@@ -2046,7 +2046,7 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     unsigned int i;
     HRESULT hr;
 
-    TRACE("%ld, %ld, %p, %p.\n", identifier, count, types, descriptor);
+    TRACE("%d, %d, %p, %p.\n", identifier, count, types, descriptor);
 
     if (!count)
         return E_INVALIDARG;
@@ -2104,7 +2104,7 @@ static ULONG WINAPI presentation_descriptor_AddRef(IMFPresentationDescriptor *if
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
     ULONG refcount = InterlockedIncrement(&presentation_desc->attributes.ref);
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     return refcount;
 }
@@ -2115,7 +2115,7 @@ static ULONG WINAPI presentation_descriptor_Release(IMFPresentationDescriptor *i
     ULONG refcount = InterlockedDecrement(&presentation_desc->attributes.ref);
     unsigned int i;
 
-    TRACE("%p, refcount %lu.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -2433,7 +2433,7 @@ static HRESULT WINAPI presentation_descriptor_GetStreamDescriptorByIndex(IMFPres
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
 
-    TRACE("%p, %lu, %p, %p.\n", iface, index, selected, descriptor);
+    TRACE("%p, %u, %p, %p.\n", iface, index, selected, descriptor);
 
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
@@ -2452,7 +2452,7 @@ static HRESULT WINAPI presentation_descriptor_SelectStream(IMFPresentationDescri
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
 
-    TRACE("%p, %lu.\n", iface, index);
+    TRACE("%p, %u.\n", iface, index);
 
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
@@ -2468,7 +2468,7 @@ static HRESULT WINAPI presentation_descriptor_DeselectStream(IMFPresentationDesc
 {
     struct presentation_desc *presentation_desc = impl_from_IMFPresentationDescriptor(iface);
 
-    TRACE("%p, %lu.\n", iface, index);
+    TRACE("%p, %u.\n", iface, index);
 
     if (index >= presentation_desc->count)
         return E_INVALIDARG;
@@ -2580,7 +2580,7 @@ HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor *
     unsigned int i;
     HRESULT hr;
 
-    TRACE("%lu, %p, %p.\n", count, descriptors, out);
+    TRACE("%u, %p, %p.\n", count, descriptors, out);
 
     if (!count)
         return E_INVALIDARG;
@@ -2685,7 +2685,7 @@ HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD fourcc, DWORD width, LONG *s
     struct uncompressed_video_format *format;
     GUID subtype;
 
-    TRACE("%s, %lu, %p.\n", debugstr_fourcc(fourcc), width, stride);
+    TRACE("%s, %u, %p.\n", debugstr_fourcc(fourcc), width, stride);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
@@ -2752,15 +2752,15 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
     unsigned int stride;
     GUID subtype;
 
-    TRACE("%s, %lu, %lu, %p.\n", debugstr_fourcc(fourcc), width, height, size);
+    TRACE("%s, %u, %u, %p.\n", debugstr_fourcc(fourcc), width, height, size);
 
     memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
     subtype.Data1 = fourcc;
 
-    if ((format = mf_get_video_format(&subtype)))
-        stride = mf_get_stride_for_format(format, width);
-    else
-        stride = 0;
+    if (!(format = mf_get_video_format(&subtype)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    stride = mf_get_stride_for_format(format, width);
 
     switch (fourcc)
     {
@@ -2926,10 +2926,8 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)))
         format->nChannels = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &value)))
-        format->nSamplesPerSec = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value)))
-        format->nAvgBytesPerSec = value;
+    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &format->nSamplesPerSec);
+    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &format->nAvgBytesPerSec);
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value)))
         format->nBlockAlign = value;
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value)))
@@ -2941,8 +2939,7 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
         if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, &value)))
             format_ext->Samples.wSamplesPerBlock = value;
 
-        if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &value)))
-            format_ext->dwChannelMask = value;
+        IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, &format_ext->dwChannelMask);
         memcpy(&format_ext->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM, sizeof(format_ext->SubFormat));
     }
 
@@ -3088,8 +3085,8 @@ HRESULT WINAPI MFCreateAudioMediaType(const WAVEFORMATEX *format, IMFAudioMediaT
     return S_OK;
 }
 
-static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, DWORD *numerator,
-        DWORD *denominator)
+static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, UINT32 *numerator,
+        UINT32 *denominator)
 {
     UINT64 value;
 
@@ -3105,7 +3102,7 @@ static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, DWO
  */
 HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size)
 {
-    UINT32 flags, palette_size = 0, value;
+    UINT32 flags, palette_size = 0, avgrate;
     MFVIDEOFORMAT *format;
     INT32 stride;
     GUID guid;
@@ -3165,12 +3162,11 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
     if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)) && stride < 0)
         format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
 
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &value)))
-        format->compressedInfo.AvgBitrate = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &value)))
-        format->compressedInfo.AvgBitErrorRate = value;
-    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &value)))
-        format->compressedInfo.MaxKeyFrameSpacing = value;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BITRATE, &avgrate)))
+        format->compressedInfo.AvgBitrate = avgrate;
+    if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AVG_BIT_ERROR_RATE, &avgrate)))
+        format->compressedInfo.AvgBitErrorRate = avgrate;
+    IMFMediaType_GetUINT32(media_type, &MF_MT_MAX_KEYFRAME_SPACING, &format->compressedInfo.MaxKeyFrameSpacing);
 
     /* Palette. */
     if (palette_size)
@@ -3217,15 +3213,15 @@ HRESULT WINAPI MFConvertColorInfoToDXVA(DWORD *dxva_info, const MFVIDEOFORMAT *f
 
 struct frame_rate
 {
-    UINT64 key;
-    UINT64 value;
+    UINT64 rate;
+    UINT64 frame_time;
 };
 
 static int __cdecl frame_rate_compare(const void *a, const void *b)
 {
-    const UINT64 *key = a;
+    const UINT64 *rate = a;
     const struct frame_rate *known_rate = b;
-    return *key == known_rate->key ? 0 : ( *key < known_rate->key ? 1 : -1 );
+    return *rate == known_rate->rate ? 0 : ( *rate < known_rate->rate ? 1 : -1 );
 }
 
 /***********************************************************************
@@ -3254,68 +3250,10 @@ HRESULT WINAPI MFFrameRateToAverageTimePerFrame(UINT32 numerator, UINT32 denomin
     if ((entry = bsearch(&rate, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
             frame_rate_compare)))
     {
-        *avgframetime = entry->value;
+        *avgframetime = entry->frame_time;
     }
     else
         *avgframetime = numerator ? denominator * (UINT64)10000000 / numerator : 0;
-
-    return S_OK;
-}
-
-static unsigned int get_gcd(unsigned int a, unsigned int b)
-{
-    unsigned int m;
-
-    while (b)
-    {
-        m = a % b;
-        a = b;
-        b = m;
-    }
-
-    return a;
-}
-
-/***********************************************************************
- *      MFAverageTimePerFrameToFrameRate (mfplat.@)
- */
-HRESULT WINAPI MFAverageTimePerFrameToFrameRate(UINT64 avgtime, UINT32 *numerator, UINT32 *denominator)
-{
-    static const struct frame_rate known_rates[] =
-    {
-#define KNOWN_RATE(ft,n,d) { ft, ((UINT64)n << 32) | d }
-        KNOWN_RATE(417188, 24000, 1001),
-        KNOWN_RATE(416667,    24,    1),
-        KNOWN_RATE(400000,    25,    1),
-        KNOWN_RATE(333667, 30000, 1001),
-        KNOWN_RATE(333333,    30,    1),
-        KNOWN_RATE(200000,    50,    1),
-        KNOWN_RATE(166833, 60000, 1001),
-        KNOWN_RATE(166667,    60,    1),
-#undef KNOWN_RATE
-    };
-    const struct frame_rate *entry;
-    unsigned int gcd;
-
-    TRACE("%s, %p, %p.\n", wine_dbgstr_longlong(avgtime), numerator, denominator);
-
-    if ((entry = bsearch(&avgtime, known_rates, ARRAY_SIZE(known_rates), sizeof(*known_rates),
-            frame_rate_compare)))
-    {
-        *numerator = entry->value >> 32;
-        *denominator = entry->value;
-    }
-    else if (avgtime)
-    {
-        if (avgtime > 100000000) avgtime = 100000000;
-        gcd = get_gcd(10000000, avgtime);
-        *numerator = 10000000 / gcd;
-        *denominator = avgtime / gcd;
-    }
-    else
-    {
-        *numerator = *denominator = 0;
-    }
 
     return S_OK;
 }
@@ -3513,7 +3451,7 @@ HRESULT WINAPI MFInitVideoFormat_RGB(MFVIDEOFORMAT *format, DWORD width, DWORD h
 {
     unsigned int transfer_function;
 
-    TRACE("%p, %lu, %lu, %#lx.\n", format, width, height, d3dformat);
+    TRACE("%p, %u, %u, %#x.\n", format, width, height, d3dformat);
 
     if (!format)
         return E_INVALIDARG;

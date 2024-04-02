@@ -370,6 +370,7 @@
 @ stdcall -import DeleteProcThreadAttributeList(ptr)
 # @ stub DisableThreadProfiling
 @ stdcall DisassociateCurrentThreadFromCallback(ptr) NTDLL.TpDisassociateCallback
+@ stdcall DiscardVirtualMemory(ptr long) kernelbase.DiscardVirtualMemory
 @ stdcall DeleteTimerQueue(long)
 @ stdcall -import DeleteTimerQueueEx(long long)
 @ stdcall -import DeleteTimerQueueTimer(long long long)
@@ -1470,6 +1471,7 @@
 @ stdcall -import SetThreadGroupAffinity(long ptr ptr)
 @ stdcall -import SetThreadIdealProcessor(long long)
 @ stdcall -import SetThreadIdealProcessorEx(long ptr ptr)
+@ stdcall -import SetThreadInformation(long long ptr long)
 @ stdcall -import SetThreadLocale(long)
 @ stdcall -import SetThreadPreferredUILanguages(long ptr ptr)
 @ stdcall -import SetThreadPriority(long long)

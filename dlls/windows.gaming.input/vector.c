@@ -54,7 +54,7 @@ static HRESULT WINAPI iterator_QueryInterface( IIterator_IInspectable *iface, RE
         return S_OK;
     }
 
-    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -189,7 +189,7 @@ static HRESULT WINAPI vector_view_QueryInterface( IVectorView_IInspectable *ifac
         return S_OK;
     }
 
-    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -384,7 +384,7 @@ static HRESULT WINAPI vector_QueryInterface( IVector_IInspectable *iface, REFIID
         return S_OK;
     }
 
-    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }

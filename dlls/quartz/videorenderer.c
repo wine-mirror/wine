@@ -92,7 +92,7 @@ static HRESULT video_renderer_render(struct strmbase_renderer *iface, IMediaSamp
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Failed to get buffer pointer, hr %#lx.\n", hr);
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
         return hr;
     }
 
@@ -277,7 +277,7 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
 {
     struct video_renderer *This = impl_from_IVideoWindow(iface);
 
-    TRACE("window %p, fullscreen %p.\n", This, FullScreenMode);
+    TRACE("(%p/%p)->(%p): %d\n", This, iface, FullScreenMode, This->FullScreenMode);
 
     if (!FullScreenMode)
         return E_POINTER;
@@ -292,7 +292,7 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG f
     struct video_renderer *filter = impl_from_IVideoWindow(iface);
     HWND window = filter->window.hwnd;
 
-    FIXME("filter %p, fullscreen %ld.\n", filter, fullscreen);
+    FIXME("filter %p, fullscreen %d.\n", filter, fullscreen);
 
     if (fullscreen)
     {
@@ -399,7 +399,7 @@ static HRESULT WINAPI overlay_GetPalette(IOverlay *iface, DWORD *count, PALETTEE
 
 static HRESULT WINAPI overlay_SetPalette(IOverlay *iface, DWORD count, PALETTEENTRY *palette)
 {
-    FIXME("iface %p, count %lu, palette %p, stub!\n", iface, count, palette);
+    FIXME("iface %p, count %u, palette %p, stub!\n", iface, count, palette);
     return E_NOTIMPL;
 }
 
@@ -445,7 +445,7 @@ static HRESULT WINAPI overlay_GetVideoPosition(IOverlay *iface, RECT *source, RE
 
 static HRESULT WINAPI overlay_Advise(IOverlay *iface, IOverlayNotify *sink, DWORD flags)
 {
-    FIXME("iface %p, sink %p, flags %#lx, stub!\n", iface, sink, flags);
+    FIXME("iface %p, sink %p, flags %#x, stub!\n", iface, sink, flags);
     return E_NOTIMPL;
 }
 
@@ -481,8 +481,6 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_renderer_init(&object->renderer, outer, &CLSID_VideoRenderer, L"In", &renderer_ops);
-    wcscpy(object->renderer.sink.pin.name, L"Input");
-
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     video_window_init(&object->window, &IVideoWindow_VTable,

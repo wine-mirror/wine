@@ -2264,7 +2264,7 @@ static enum wined3d_feature_level feature_level_from_caps(const struct shader_ca
         return WINED3D_FEATURE_LEVEL_11_1;
 
     if (shader_model >= 4)
-        return WINED3D_FEATURE_LEVEL_10_1;
+        return WINED3D_FEATURE_LEVEL_11_1;
 
     return WINED3D_FEATURE_LEVEL_NONE;
 }

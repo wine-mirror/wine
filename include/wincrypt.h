@@ -21,8 +21,6 @@
 #ifndef __WINE_WINCRYPT_H
 #define __WINE_WINCRYPT_H
 
-#include "wine/winheader_enter.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1088,6 +1086,7 @@ typedef struct _CERT_CHAIN_POLICY_STATUS {
 #define CERT_CHAIN_POLICY_TRUST_TESTROOT_FLAG                    0x00004000
 #define CERT_CHAIN_POLICY_ALLOW_TESTROOT_FLAG                    0x00008000
 #define MICROSOFT_ROOT_CERT_CHAIN_POLICY_ENABLE_TEST_ROOT_FLAG   0x00010000
+#define MICROSOFT_ROOT_CERT_CHAIN_POLICY_CHECK_APPLICATION_ROOT_FLAG 0x00020000
 
 typedef struct _AUTHENTICODE_EXTRA_CERT_CHAIN_POLICY_PARA {
     DWORD             cbSize;
@@ -3353,8 +3352,10 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 #define CERT_NAME_URL_TYPE              7
 #define CERT_NAME_UPN_TYPE              8
 
-#define CERT_NAME_ISSUER_FLAG           0x00000001
-#define CERT_NAME_DISABLE_IE4_UTF8_FLAG 0x00010000
+#define CERT_NAME_ISSUER_FLAG              0x00000001
+#define CERT_NAME_SEARCH_ALL_NAMES_FLAG    0x00000002
+#define CERT_NAME_DISABLE_IE4_UTF8_FLAG    0x00010000
+#define CERT_NAME_STR_ENABLE_PUNYCODE_FLAG 0x00200000
 
 /* CryptFormatObject flags */
 #define CRYPT_FORMAT_STR_MULTI_LINE 0x0001
@@ -4694,7 +4695,5 @@ HRESULT WINAPI FindCertsByIssuer(PCERT_CHAIN pCertChains, DWORD *pcbCertChains,
 #ifdef __cplusplus
 }
 #endif
-
-#include "wine/winheader_exit.h"
 
 #endif

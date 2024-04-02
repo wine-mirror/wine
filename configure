@@ -950,6 +950,9 @@ enable_amstream
 enable_apisetschema
 enable_apphelp
 enable_appwiz_cpl
+enable_atiadlxx
+enable_api_ms_win_core_psm_appnotify_l1_1_0
+enable_api_ms_win_power_base_l1_1_0
 enable_atl
 enable_atl100
 enable_atl110
@@ -1421,6 +1424,7 @@ enable_wimgapi
 enable_win32u
 enable_windows_devices_enumeration
 enable_windows_gaming_input
+enable_windows_gaming_ui_gamebar
 enable_windows_globalization
 enable_windows_media_devices
 enable_windows_media_speech
@@ -9933,6 +9937,41 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     wine_can_build_preloader=yes
     WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-ld_classic" >&5
+printf %s "checking whether the compiler supports -Wl,-ld_classic... " >&6; }
+if test ${ac_cv_cflags__Wl__ld_classic+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-ld_classic"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__ld_classic=yes
+else $as_nop
+  ac_cv_cflags__Wl__ld_classic=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__ld_classic" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__ld_classic" >&6; }
+if test "x$ac_cv_cflags__Wl__ld_classic" = xyes
+then :
+  ld_classic_flags="-Wl,-ld_classic"
+                     ld_classic_flags="-Wl,-ld_classic"
+fi
+    WINELOADER_LDFLAGS="$ld_classic_flags $WINELOADER_LDFLAGS"
+    WINEPRELOADER_LDFLAGS="$ld_classic_flags $WINEPRELOADER_LDFLAGS"
+    UNIXLDFLAGS="$ld_classic_flags $WINEPRELOADER_LDFLAGS"
+    LDDLLFLAGS="$ld_classic_flags $LDDLLFLAGS"
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
 printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
 if test ${ac_cv_cflags__Wl__no_new_main__e__main+y}
@@ -21776,6 +21815,9 @@ wine_fn_config_makefile dlls/apisetschema enable_apisetschema
 wine_fn_config_makefile dlls/apphelp enable_apphelp
 wine_fn_config_makefile dlls/apphelp/tests enable_tests
 wine_fn_config_makefile dlls/appwiz.cpl enable_appwiz_cpl
+wine_fn_config_makefile dlls/atiadlxx enable_atiadlxx
+wine_fn_config_makefile dlls/api-ms-win-core-psm-appnotify-l1-1-0 enable_api_ms_win_core_psm_appnotify_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-power-base-l1-1-0 enable_api_ms_win_power_base_l1_1_0
 wine_fn_config_makefile dlls/atl enable_atl
 wine_fn_config_makefile dlls/atl/tests enable_tests
 wine_fn_config_makefile dlls/atl100 enable_atl100
@@ -22525,6 +22567,8 @@ wine_fn_config_makefile dlls/windebug.dll16 enable_win16
 wine_fn_config_makefile dlls/windows.devices.enumeration enable_windows_devices_enumeration
 wine_fn_config_makefile dlls/windows.gaming.input enable_windows_gaming_input
 wine_fn_config_makefile dlls/windows.gaming.input/tests enable_tests
+wine_fn_config_makefile dlls/windows.gaming.ui.gamebar enable_windows_gaming_ui_gamebar 
+wine_fn_config_makefile dlls/windows.gaming.ui.gamebar/tests enable_tests
 wine_fn_config_makefile dlls/windows.globalization enable_windows_globalization
 wine_fn_config_makefile dlls/windows.globalization/tests enable_tests
 wine_fn_config_makefile dlls/windows.media.devices enable_windows_media_devices

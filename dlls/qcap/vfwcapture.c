@@ -165,9 +165,9 @@ static DWORD WINAPI stream_thread(void *arg)
 
         LeaveCriticalSection(&filter->state_cs);
 
-        if (FAILED(hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &sample, NULL, NULL, 0)))
+        if (FAILED(hr = BaseOutputPinImpl_GetDeliveryBuffer(&filter->source, &sample, NULL, NULL, 0)))
         {
-            ERR("Failed to get sample, hr %#lx.\n", hr);
+            ERR("Failed to get sample, hr %#x.\n", hr);
             break;
         }
 
@@ -186,7 +186,7 @@ static DWORD WINAPI stream_thread(void *arg)
         IMediaSample_Release(sample);
         if (FAILED(hr))
         {
-            ERR("IMemInputPin::Receive() returned %#lx.\n", hr);
+            ERR("IMemInputPin::Receive() returned %#x.\n", hr);
             break;
         }
     }
@@ -199,11 +199,8 @@ static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
-    if (!filter->source.pin.peer)
-        return S_OK;
-
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
-        ERR("Failed to commit allocator, hr %#lx.\n", hr);
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Paused;
@@ -218,9 +215,6 @@ static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
-    if (!filter->source.pin.peer)
-        return S_OK;
-
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Running;
     LeaveCriticalSection(&filter->state_cs);
@@ -231,9 +225,6 @@ static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE
 static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
-
-    if (!filter->source.pin.peer)
-        return S_OK;
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Paused;
@@ -246,9 +237,6 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
-    if (!filter->source.pin.peer)
-        return S_OK;
-
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Stopped;
     LeaveCriticalSection(&filter->state_cs);
@@ -260,18 +248,14 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 
     hr = IMemAllocator_Decommit(filter->source.pAllocator);
     if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
-        ERR("Failed to decommit allocator, hr %#lx.\n", hr);
+        ERR("Failed to decommit allocator, hr %#x.\n", hr);
 
     return S_OK;
 }
 
 static HRESULT vfw_capture_wait_state(struct strmbase_filter *iface, DWORD timeout)
 {
-    struct vfw_capture *filter = impl_from_strmbase_filter(iface);
-
-    if (filter->source.pin.peer && filter->filter.state == State_Paused)
-        return VFW_S_CANT_CUE;
-    return S_OK;
+    return iface->state == State_Paused ? VFW_S_CANT_CUE : S_OK;
 }
 
 static const struct strmbase_filter_ops filter_ops =
@@ -332,7 +316,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     if (This->source.pin.peer)
     {
         hr = IPin_QueryAccept(This->source.pin.peer, pmt);
-        TRACE("QueryAccept() returned %#lx.\n", hr);
+        TRACE("Would accept: %d\n", hr);
         if (hr == S_FALSE)
             return VFW_E_INVALIDMEDIATYPE;
     }
@@ -346,7 +330,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
         if (SUCCEEDED(hr))
             TRACE("Reconnection completed, with new media format..\n");
     }
-    TRACE("Returning %#lx.\n", hr);
+    TRACE("Returning: %d\n", hr);
     return hr;
 }
 
@@ -481,7 +465,7 @@ static HRESULT WINAPI AMVideoProcAmp_GetRange(IAMVideoProcAmp *iface, LONG prope
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
     struct get_prop_range_params params = { filter->device, property, min, max, step, default_value, flags };
 
-    TRACE("filter %p, property %#lx, min %p, max %p, step %p, default_value %p, flags %p.\n",
+    TRACE("filter %p, property %#x, min %p, max %p, step %p, default_value %p, flags %p.\n",
             filter, property, min, max, step, default_value, flags);
 
     return V4L_CALL( get_prop_range, &params );
@@ -493,7 +477,7 @@ static HRESULT WINAPI AMVideoProcAmp_Set(IAMVideoProcAmp *iface, LONG property,
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
     struct set_prop_params params = { filter->device, property, value, flags };
 
-    TRACE("filter %p, property %#lx, value %ld, flags %#lx.\n", filter, property, value, flags);
+    TRACE("filter %p, property %#x, value %d, flags %#x.\n", filter, property, value, flags);
 
     return V4L_CALL( set_prop, &params );
 }
@@ -504,7 +488,7 @@ static HRESULT WINAPI AMVideoProcAmp_Get(IAMVideoProcAmp *iface, LONG property,
     struct vfw_capture *filter = impl_from_IAMVideoProcAmp(iface);
     struct get_prop_params params = { filter->device, property, value, flags };
 
-    TRACE("filter %p, property %#lx, value %p, flags %p.\n", filter, property, value, flags);
+    TRACE("filter %p, property %#x, value %p, flags %p.\n", filter, property, value, flags);
 
     return V4L_CALL( get_prop, &params );
 }
@@ -815,7 +799,7 @@ static HRESULT WINAPI video_control_SetMode(IAMVideoControl *iface, IPin *pin, L
 {
     struct vfw_capture *filter = impl_from_IAMVideoControl(iface);
 
-    FIXME("filter %p, pin %p, mode %ld, stub.\n", filter, pin, mode);
+    FIXME("filter %p, pin %p, mode %d: stub.\n", filter, pin, mode);
 
     return E_NOTIMPL;
 }
@@ -844,7 +828,7 @@ static HRESULT WINAPI video_control_GetMaxAvailableFrameRate(IAMVideoControl *if
 {
     struct vfw_capture *filter = impl_from_IAMVideoControl(iface);
 
-    FIXME("filter %p, pin %p, index %ld, dimensions (%ldx%ld), frame rate %p, stub.\n",
+    FIXME("filter %p, pin %p, index %d, dimensions (%dx%d), frame rate %p: stub.\n",
             filter, pin, index, dimensions.cx, dimensions.cy, frame_rate);
 
     return E_NOTIMPL;
@@ -855,7 +839,7 @@ static HRESULT WINAPI video_control_GetFrameRateList(IAMVideoControl *iface, IPi
 {
     struct vfw_capture *filter = impl_from_IAMVideoControl(iface);
 
-    FIXME("filter %p, pin %p, index %ld, dimensions (%ldx%ld), list size %p, frame rate %p, stub.\n",
+    FIXME("filter %p, pin %p, index %d, dimensions (%dx%d), list size %p, frame rate: %p: stub.\n",
             filter, pin, index, dimensions.cx, dimensions.cy, list_size, frame_rate);
 
     return E_NOTIMPL;

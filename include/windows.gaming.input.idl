@@ -448,6 +448,19 @@ namespace Windows.Gaming.Input {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.Gamepad),
+        uuid(3c1689bd-5915-4245-b0c0-c89fae0308ff)
+    ]
+    interface IGamepad2 : IInspectable
+        requires Windows.Gaming.Input.IGamepad,
+                 Windows.Gaming.Input.IGameController
+    {
+        HRESULT GetButtonLabel([in] Windows.Gaming.Input.GamepadButtons button,
+                               [out, retval] Windows.Gaming.Input.GameControllerButtonLabel *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
         exclusiveto(Windows.Gaming.Input.RacingWheel),
         uuid(f546656f-e106-4c82-a90f-554012904b85)
     ]

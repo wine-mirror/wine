@@ -97,7 +97,7 @@ static ULONG WINAPI enum_media_types_AddRef(IEnumMediaTypes *iface)
 {
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedIncrement(&enummt->refcount);
-    TRACE("%p increasing refcount to %lu.\n", enummt, refcount);
+    TRACE("%p increasing refcount to %u.\n", enummt, refcount);
     return refcount;
 }
 
@@ -106,7 +106,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
     ULONG refcount = InterlockedDecrement(&enummt->refcount);
 
-    TRACE("%p decreasing refcount to %lu.\n", enummt, refcount);
+    TRACE("%p decreasing refcount to %u.\n", enummt, refcount);
     if (!refcount)
     {
         IPin_Release(&enummt->pin->IPin_iface);
@@ -123,7 +123,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
     unsigned int i;
     HRESULT hr;
 
-    TRACE("enummt %p, count %lu, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
+    TRACE("enummt %p, count %u, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
 
     if (!enummt->pin->ops->pin_get_media_type)
     {
@@ -169,7 +169,7 @@ static HRESULT WINAPI enum_media_types_Skip(IEnumMediaTypes *iface, ULONG count)
 {
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
 
-    TRACE("enummt %p, count %lu.\n", enummt, count);
+    TRACE("enummt %p, count %u.\n", enummt, count);
 
     enummt->index += count;
 
@@ -383,10 +383,10 @@ static HRESULT WINAPI pin_QueryId(IPin *iface, WCHAR **id)
 
     TRACE("pin %p %s:%s, id %p.\n", pin, debugstr_w(pin->filter->name), debugstr_w(pin->name), id);
 
-    if (!(*id = CoTaskMemAlloc((lstrlenW(pin->id) + 1) * sizeof(WCHAR))))
+    if (!(*id = CoTaskMemAlloc((lstrlenW(pin->name) + 1) * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*id, pin->id);
+    lstrcpyW(*id, pin->name);
 
     return S_OK;
 }
@@ -677,6 +677,31 @@ static const IPinVtbl source_vtbl =
     source_NewSegment,
 };
 
+HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
+        IMediaSample **ppSample, REFERENCE_TIME *tStart, REFERENCE_TIME *tStop, DWORD dwFlags)
+{
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p, %p, %x)\n", This, ppSample, tStart, tStop, dwFlags);
+
+    if (!This->pin.peer)
+        hr = VFW_E_NOT_CONNECTED;
+    else
+    {
+        hr = IMemAllocator_GetBuffer(This->pAllocator, ppSample, tStart, tStop, dwFlags);
+
+        if (SUCCEEDED(hr))
+            hr = IMediaSample_SetTime(*ppSample, tStart, tStop);
+    }
+
+    return hr;
+}
+
+HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *This, IMemAllocator **pMemAlloc)
+{
+    return CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)pMemAlloc);
+}
+
 HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *This,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
@@ -685,8 +710,8 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *This,
     hr = IMemInputPin_GetAllocator(pPin, pAlloc);
 
     if (hr == VFW_E_NO_ALLOCATOR)
-        hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL,
-                CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (void **)pAlloc);
+        /* Input pin provides no allocator, use standard memory allocator */
+        hr = BaseOutputPinImpl_InitAllocator(This, pAlloc);
 
     if (SUCCEEDED(hr))
     {
@@ -758,7 +783,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
         FreeMediaType(&This->pin.mt);
     }
 
-    TRACE("Returning %#lx.\n", hr);
+    TRACE(" -- %x\n", hr);
     return hr;
 }
 
@@ -770,7 +795,6 @@ void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *f
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_OUTPUT;
     lstrcpyW(pin->pin.name, name);
-    lstrcpyW(pin->pin.id, name);
     pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
 }
@@ -1173,7 +1197,6 @@ void strmbase_sink_init(struct strmbase_sink *pin, struct strmbase_filter *filte
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_INPUT;
     lstrcpyW(pin->pin.name, name);
-    lstrcpyW(pin->pin.id, name);
     pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
     pin->pAllocator = pin->preferred_allocator = allocator;

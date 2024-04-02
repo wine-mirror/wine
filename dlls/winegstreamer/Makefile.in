@@ -1,19 +1,22 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winegstreamer.dll
 UNIXLIB   = winegstreamer.so
 IMPORTLIB = winegstreamer
-IMPORTS   = strmbase ole32 msdmo
+IMPORTS   = strmbase ole32
 DELAYIMPORTS = mfplat
 EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
+	aac_decoder.c \
 	audioconvert.c \
+	colorconvert.c \
+	decode_transform.c \
 	h264_decoder.c \
 	main.c \
 	media_source.c \
 	mfplat.c \
 	quartz_parser.c \
-	wg_format.c \
 	wg_parser.c \
 	wg_transform.c \
 	wm_asyncreader.c \

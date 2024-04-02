@@ -135,7 +135,7 @@ static ULONG WINAPI BaseMemAllocator_AddRef(IMemAllocator * iface)
     BaseMemAllocator *This = impl_from_IMemAllocator(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p increasing refcount to %lu.\n", This, ref);
+    TRACE("(%p)->() AddRef from %d\n", iface, ref - 1);
 
     return ref;
 }
@@ -145,7 +145,7 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
     BaseMemAllocator *This = impl_from_IMemAllocator(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p decreasing refcount to %lu.\n", This, ref);
+    TRACE("(%p)->() Release from %d\n", iface, ref + 1);
 
     if (!ref)
     {
@@ -166,7 +166,7 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
 
     TRACE("(%p)->(%p, %p)\n", This, pRequest, pActual);
 
-    TRACE("Requested %ld buffers, size %ld, alignment %ld, prefix %ld.\n",
+    TRACE("Requested %d buffers, size %d, alignment %d, prefix %d.\n",
             pRequest->cBuffers, pRequest->cbBuffer, pRequest->cbAlign, pRequest->cbPrefix);
 
     EnterCriticalSection(This->pCritSect);
@@ -236,7 +236,7 @@ static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)
         {
             if (!(This->hSemWaiting = CreateSemaphoreW(NULL, This->props.cBuffers, This->props.cBuffers, NULL)))
             {
-                ERR("Failed to create semaphore, error %lu.\n", GetLastError());
+                ERR("Couldn't create semaphore (error was %u)\n", GetLastError());
                 hr = HRESULT_FROM_WIN32(GetLastError());
             }
             else
@@ -245,7 +245,7 @@ static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)
                 if (SUCCEEDED(hr))
                     This->bCommitted = TRUE;
                 else
-                    ERR("Failed to allocate, hr %#lx.\n", hr);
+                    ERR("fnAlloc failed with error 0x%x\n", hr);
             }
         }
     }
@@ -278,13 +278,15 @@ static HRESULT WINAPI BaseMemAllocator_Decommit(IMemAllocator * iface)
             else
             {
                 if (This->lWaiting != 0)
-                    ERR("Waiting: %ld\n", This->lWaiting);
+                    ERR("Waiting: %d\n", This->lWaiting);
 
                 This->bCommitted = FALSE;
                 CloseHandle(This->hSemWaiting);
                 This->hSemWaiting = NULL;
 
                 hr = This->fnFree(iface);
+                if (FAILED(hr))
+                    ERR("fnFree failed with error 0x%x\n", hr);
             }
         }
     }
@@ -300,9 +302,8 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
 
     /* NOTE: The pStartTime and pEndTime parameters are not applied to the sample. 
      * The allocator might use these values to determine which buffer it retrieves */
-
-    TRACE("allocator %p, sample %p, start_time %p, end_time %p, flags %#lx.\n",
-            This, pSample, pStartTime, pEndTime, dwFlags);
+    
+    TRACE("(%p)->(%p, %p, %p, %x)\n", This, pSample, pStartTime, pEndTime, dwFlags);
 
     *pSample = NULL;
 
@@ -350,7 +351,7 @@ static HRESULT WINAPI BaseMemAllocator_GetBuffer(IMemAllocator * iface, IMediaSa
     LeaveCriticalSection(This->pCritSect);
 
     if (hr != S_OK)
-        WARN("Returning hr %#lx.\n", hr);
+        WARN("%08x\n", hr);
     return hr;
 }
 
@@ -378,8 +379,10 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
 
         if (list_empty(&This->used_list) && This->bDecommitQueued && This->bCommitted)
         {
+            HRESULT hrfree;
+
             if (This->lWaiting != 0)
-                ERR("Waiting: %ld\n", This->lWaiting);
+                ERR("Waiting: %d\n", This->lWaiting);
 
             This->bCommitted = FALSE;
             This->bDecommitQueued = FALSE;
@@ -387,7 +390,8 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
             CloseHandle(This->hSemWaiting);
             This->hSemWaiting = NULL;
             
-            This->fnFree(iface);
+            if (FAILED(hrfree = This->fnFree(iface)))
+                ERR("fnFree failed with error 0x%x\n", hrfree);
         }
     }
     LeaveCriticalSection(This->pCritSect);
@@ -395,7 +399,7 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
     /* notify a waiting thread that there is now a free buffer */
     if (This->hSemWaiting && !ReleaseSemaphore(This->hSemWaiting, 1, NULL))
     {
-        ERR("Failed to release semaphore, error %lu.\n", GetLastError());
+        ERR("ReleaseSemaphore failed with error %u\n", GetLastError());
         hr = HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -475,7 +479,7 @@ static ULONG WINAPI StdMediaSample2_AddRef(IMediaSample2 * iface)
     StdMediaSample2 *This = impl_from_IMediaSample2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p increasing refcount to %lu.\n", This, ref);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     return ref;
 }
@@ -485,7 +489,7 @@ static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
     StdMediaSample2 *This = impl_from_IMediaSample2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p decreasing refcount to %lu.\n", This, ref);
+    TRACE("(%p)->(): new ref = %d\n", This, ref);
 
     if (!ref)
     {
@@ -641,11 +645,11 @@ static HRESULT WINAPI StdMediaSample2_SetActualDataLength(IMediaSample2 * iface,
 {
     StdMediaSample2 *This = impl_from_IMediaSample2(iface);
 
-    TRACE("sample %p, len %ld.\n", This, len);
+    TRACE("(%p)->(%d)\n", iface, len);
 
     if ((len > This->props.cbBuffer) || (len < 0))
     {
-        ERR("Length %ld exceeds maximum %ld.\n", len, This->props.cbBuffer);
+        WARN("Tried to set length to %d, while max is %d\n", len, This->props.cbBuffer);
         return VFW_E_BUFFER_OVERFLOW;
     }
     else
@@ -762,7 +766,7 @@ static HRESULT WINAPI StdMediaSample2_GetProperties(IMediaSample2 * iface, DWORD
 {
     StdMediaSample2 *This = impl_from_IMediaSample2(iface);
 
-    TRACE("sample %p, size %lu, properties %p.\n", This, cbProperties, pbProperties);
+    TRACE("(%p)->(%d, %p)\n", iface, cbProperties, pbProperties);
 
     memcpy(pbProperties, &This->props, min(cbProperties, sizeof(This->props)));
 
@@ -773,7 +777,7 @@ static HRESULT WINAPI StdMediaSample2_SetProperties(IMediaSample2 * iface, DWORD
 {
     StdMediaSample2 *This = impl_from_IMediaSample2(iface);
 
-    TRACE("sample %p, size %lu, properties %p.\n", This, cbProperties, pbProperties);
+    TRACE("(%p)->(%d, %p)\n", iface, cbProperties, pbProperties);
 
     /* NOTE: pbBuffer and cbBuffer are read-only */
     memcpy(&This->props, pbProperties, min(cbProperties, AM_SAMPLE2_PROP_SIZE_WRITABLE));
@@ -892,7 +896,7 @@ static HRESULT StdMemAllocator_Free(IMemAllocator * iface)
     /* free memory */
     if (!VirtualFree(This->pMemory, 0, MEM_RELEASE))
     {
-        ERR("Failed to free memory, error %lu.\n", GetLastError());
+        ERR("Couldn't free memory. Error: %u\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 

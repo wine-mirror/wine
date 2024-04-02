@@ -99,7 +99,7 @@ static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REF
         return S_OK;
     }
 
-    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -229,8 +229,32 @@ static HRESULT WINAPI raw_controller_get_ButtonCount( IRawGameController *iface,
 
 static HRESULT WINAPI raw_controller_get_ForceFeedbackMotors( IRawGameController *iface, IVectorView_ForceFeedbackMotor **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_ForceFeedbackMotor,
+        .view = &IID_IVectorView_ForceFeedbackMotor,
+        .iterable = &IID_IIterable_ForceFeedbackMotor,
+        .iterator = &IID_IIterator_ForceFeedbackMotor,
+    };
+    struct controller *impl = impl_from_IRawGameController( iface );
+    IVector_ForceFeedbackMotor *vector;
+    IForceFeedbackMotor *motor;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (FAILED(hr = vector_create( &iids, (void **)&vector ))) return hr;
+
+    if (SUCCEEDED(IWineGameControllerProvider_get_ForceFeedbackMotor( impl->wine_provider, &motor )) && motor)
+    {
+        hr = IVector_ForceFeedbackMotor_Append( vector, motor );
+        IForceFeedbackMotor_Release( motor );
+    }
+
+    if (SUCCEEDED(hr)) hr = IVector_ForceFeedbackMotor_GetView( vector, value );
+    IVector_ForceFeedbackMotor_Release( vector );
+
+    return hr;
 }
 
 static HRESULT WINAPI raw_controller_get_HardwareProductId( IRawGameController *iface, UINT16 *value )

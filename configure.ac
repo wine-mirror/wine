@@ -724,6 +724,16 @@ case $host_os in
 
     wine_can_build_preloader=yes
     WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
+
+    dnl The linker that ships with Xcode 15 beta 4 doesn’t support -segaddr unless you also pass -ld_classic.
+    WINE_TRY_CFLAGS([-Wl,-ld_classic],
+                    [ld_classic_flags="-Wl,-ld_classic"
+                     ld_classic_flags="-Wl,-ld_classic"])
+    WINELOADER_LDFLAGS="$ld_classic_flags $WINELOADER_LDFLAGS"
+    WINEPRELOADER_LDFLAGS="$ld_classic_flags $WINEPRELOADER_LDFLAGS"
+    UNIXLDFLAGS="$ld_classic_flags $WINEPRELOADER_LDFLAGS"
+    LDDLLFLAGS="$ld_classic_flags $LDDLLFLAGS"
+
     WINE_TRY_CFLAGS([-Wl,-no_new_main -e _main],
                     [WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
                      WINE_TRY_CFLAGS([-Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs],
@@ -2424,6 +2434,8 @@ WINE_CONFIG_MAKEFILE(dlls/apisetschema)
 WINE_CONFIG_MAKEFILE(dlls/apphelp)
 WINE_CONFIG_MAKEFILE(dlls/apphelp/tests)
 WINE_CONFIG_MAKEFILE(dlls/appwiz.cpl)
+WINE_CONFIG_MAKEFILE(dlls/atiadlxx)
+WINE_CONFIG_MAKEFILE(dlls/api-ms-win-power-base-l1-1-0)
 WINE_CONFIG_MAKEFILE(dlls/atl)
 WINE_CONFIG_MAKEFILE(dlls/atl/tests)
 WINE_CONFIG_MAKEFILE(dlls/atl100)
@@ -3173,6 +3185,8 @@ WINE_CONFIG_MAKEFILE(dlls/windebug.dll16,enable_win16)
 WINE_CONFIG_MAKEFILE(dlls/windows.devices.enumeration)
 WINE_CONFIG_MAKEFILE(dlls/windows.gaming.input)
 WINE_CONFIG_MAKEFILE(dlls/windows.gaming.input/tests)
+WINE_CONFIG_MAKEFILE(dlls/windows.gaming.ui.gamebar)
+WINE_CONFIG_MAKEFILE(dlls/windows.gaming.ui.gamebar/tests)
 WINE_CONFIG_MAKEFILE(dlls/windows.globalization)
 WINE_CONFIG_MAKEFILE(dlls/windows.globalization/tests)
 WINE_CONFIG_MAKEFILE(dlls/windows.media.devices)

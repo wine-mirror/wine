@@ -2294,6 +2294,12 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
     TRACE_(loaddll)( "Loaded %s at %p: %s\n", debugstr_w(wm->ldr.FullDllName.Buffer), *module,
                      is_builtin ? "builtin" : "native" );
 
+#if defined(__x86_64__)
+    if (is_builtin == FALSE)
+    {
+        unix_funcs->pe_module_loaded(*module, (void*)((BYTE*)*module + map_size));
+    }
+#endif
     wm->ldr.LoadCount = 1;
     *pwm = wm;
     *module = NULL;
@@ -3477,8 +3483,8 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
 
     case STATUS_SUCCESS:  /* valid PE file */
         nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, system, pwm );
-#ifdef __x86_64__
-        if (nts == STATUS_SUCCESS && !wcscmp( libname, L"libcef.dll" ))
+#if defined(__APPLE__) && defined(__x86_64__)
+        if (nts == STATUS_SUCCESS && !wcscmp( libname, L"libcef.dll" ) && unix_funcs->gs_patching_needed())
             patch_libcef( pwm );
 #endif
         break;

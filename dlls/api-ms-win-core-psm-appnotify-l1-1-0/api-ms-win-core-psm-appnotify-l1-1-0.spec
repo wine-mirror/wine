@@ -1,0 +1,2 @@
+@ stub RegisterAppStateChangeNotification
+@ stub UnregisterAppStateChangeNotification

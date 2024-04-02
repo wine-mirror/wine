@@ -294,6 +294,10 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
 
     data->hWVTStateData = provData;
     provData->pWintrustData = data;
+
+    if (WVT_ISINSTRUCT(WINTRUST_DATA, data->cbStruct, pSignatureSettings))
+        provData->pSigSettings = data->pSignatureSettings;
+
     if (hwnd == INVALID_HANDLE_VALUE)
         provData->hWndParent = GetDesktopWindow();
     else

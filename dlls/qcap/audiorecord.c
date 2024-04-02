@@ -115,7 +115,13 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBa
     hr = IPropertyBag_Read(pPropBag, L"WaveInID", &var, pErrorLog);
     if (SUCCEEDED(hr))
     {
-        FIXME("FIXME: implement opening waveIn device %ld\n", V_I4(&var));
+        char sgi[64];
+        FIXME("FIXME: implement opening waveIn device %d\n", V_I4(&var));
+        if (GetEnvironmentVariableA("SteamGameId", sgi, sizeof(sgi)) && !strcmp(sgi, "470220"))
+        {
+            FIXME("HACK: returning error.\n");
+            return E_FAIL;
+        }
     }
 
     return hr;

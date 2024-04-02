@@ -22,6 +22,7 @@
 #pragma winrt ns_prefix
 #endif
 
+import "propidl.idl";
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -29,19 +30,51 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.gaming.input.idl";
 import "windows.gaming.input.custom.idl";
+import "windows.gaming.input.forcefeedback.idl";
 
 namespace Windows.Gaming.Input.Custom {
     typedef enum WineGameControllerType WineGameControllerType;
+    typedef enum WineForceFeedbackEffectType WineForceFeedbackEffectType;
     typedef struct WineGameControllerState WineGameControllerState;
     typedef struct WineGameControllerVibration WineGameControllerVibration;
+    typedef struct WineConditionEffectParameters WineConditionEffectParameters;
+    typedef struct WineConstantEffectParameters WineConstantEffectParameters;
+    typedef struct WineRampEffectParameters WineRampEffectParameters;
+    typedef struct WinePeriodicEffectParameters WinePeriodicEffectParameters;
+    typedef struct WineForceFeedbackEffectEnvelope WineForceFeedbackEffectEnvelope;
+    typedef union WineForceFeedbackEffectParameters WineForceFeedbackEffectParameters;
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
+
+    /* type-pruning version of AsyncOperationCompletedHandler<T> */
+    delegate HRESULT WineAsyncOperationCompletedHandler([in] IInspectable *async, [in] AsyncStatus status);
 
     enum WineGameControllerType
     {
         Joystick = 0,
         Gamepad = 1,
         RacingWheel = 2,
+    };
+
+    enum WineForceFeedbackEffectType
+    {
+        Constant = 1,
+        Ramp = 2,
+
+        Periodic = 10,
+        /* same order as PeriodicForceEffectKind */
+        Periodic_SquareWave = 10,
+        Periodic_SineWave = 11,
+        Periodic_TriangleWave = 12,
+        Periodic_SawtoothWaveUp = 13,
+        Periodic_SawtoothWaveDown = 14,
+
+        Condition = 20,
+        /* same order as ConditionForceEffectKind */
+        Condition_Spring = 20,
+        Condition_Damper = 21,
+        Condition_Inertia = 22,
+        Condition_Friction = 23,
     };
 
     struct WineGameControllerState
@@ -58,6 +91,69 @@ namespace Windows.Gaming.Input.Custom {
         UINT16 buzz;
         UINT16 left;
         UINT16 right;
+    };
+
+    struct WineConditionEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 direction;
+        FLOAT positive_coeff;
+        FLOAT negative_coeff;
+        FLOAT max_positive_magnitude;
+        FLOAT max_negative_magnitude;
+        FLOAT deadzone;
+        FLOAT bias;
+    };
+
+    struct WineConstantEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 direction;
+        Windows.Foundation.TimeSpan duration;
+        Windows.Foundation.TimeSpan start_delay;
+        UINT32 repeat_count;
+        FLOAT gain;
+    };
+
+    struct WineRampEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 start_vector;
+        Windows.Foundation.Numerics.Vector3 end_vector;
+        Windows.Foundation.TimeSpan duration;
+        Windows.Foundation.TimeSpan start_delay;
+        UINT32 repeat_count;
+        FLOAT gain;
+    };
+
+    struct WinePeriodicEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 direction;
+        Windows.Foundation.TimeSpan duration;
+        Windows.Foundation.TimeSpan start_delay;
+        UINT32 repeat_count;
+        FLOAT frequency;
+        FLOAT phase;
+        FLOAT bias;
+        FLOAT gain;
+    };
+
+    struct WineForceFeedbackEffectEnvelope
+    {
+        FLOAT attack_gain;
+        FLOAT release_gain;
+        Windows.Foundation.TimeSpan attack_duration;
+        Windows.Foundation.TimeSpan release_duration;
+    };
+
+    union WineForceFeedbackEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        WineConditionEffectParameters condition;
+        WineConstantEffectParameters constant;
+        WineRampEffectParameters ramp;
+        WinePeriodicEffectParameters periodic;
     };
 
     [
@@ -85,6 +181,29 @@ namespace Windows.Gaming.Input.Custom {
         [propget] HRESULT State([out, retval] WineGameControllerState *state);
         [propget] HRESULT Vibration([out, retval] WineGameControllerVibration *vibration);
         [propput] HRESULT Vibration([in] WineGameControllerVibration vibration);
+
+        [propget] HRESULT ForceFeedbackMotor([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor **motor);
+    }
+
+    [
+        uuid(27833469-7760-417e-adbe-e011a66e16ee)
+    ]
+    interface IWineForceFeedbackEffectImpl : IUnknown
+        requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
+    {
+        [propput] HRESULT Parameters([in] WineForceFeedbackEffectParameters parameters,
+                                     [in, optional] WineForceFeedbackEffectEnvelope *envelope);
+    }
+
+    [
+        uuid(83f377ee-c799-11ec-9d64-0242ac120002)
+    ]
+    interface IWineAsyncInfoImpl : IUnknown
+    {
+        [propput] HRESULT Completed([in] WineAsyncOperationCompletedHandler *handler);
+        [propget] HRESULT Completed([out, retval] WineAsyncOperationCompletedHandler **handler);
+        [propget] HRESULT Result([out, retval] PROPVARIANT *result);
+        HRESULT Start();
     }
 
     [

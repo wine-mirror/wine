@@ -36,7 +36,7 @@ static IBaseFilter *create_dsound_render(void)
     IBaseFilter *filter = NULL;
     HRESULT hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     return filter;
 }
 
@@ -45,7 +45,7 @@ static IFilterGraph2 *create_graph(void)
     IFilterGraph2 *ret;
     HRESULT hr;
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&ret);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Failed to create FilterGraph: %#x\n", hr);
     return ret;
 }
 
@@ -115,17 +115,17 @@ static void test_property_bag(void)
 
     hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER,
             &IID_IPersistPropertyBag, (void **)&ppb);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr != S_OK) return;
 
     hr = IPersistPropertyBag_InitNew(ppb);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPersistPropertyBag_Load(ppb, &property_bag, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = IPersistPropertyBag_Release(ppb);
-    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -138,7 +138,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -229,53 +229,53 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_DSoundRender, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_DSoundRender, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBaseFilter, (void **)&filter2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter2 == (IBaseFilter *)0xdeadbeef, "Got unexpected IBaseFilter %p.\n", filter2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IBaseFilter_QueryInterface(filter, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IBaseFilter_Release(filter);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
 static void test_enum_pins(void)
@@ -287,85 +287,85 @@ static void test_enum_pins(void)
     HRESULT hr;
 
     ref = get_refcount(filter);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
     hr = IBaseFilter_EnumPins(filter, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_EnumPins(filter, &enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pins[0]);
-    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
     IPin_Release(pins[0]);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %lu.\n", count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enum1, 1, pins, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(!count, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum1, 2, pins, NULL);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum1, 2, pins, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 2);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum1, 1, pins, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum2, 1, pins, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IPin_Release(pins[0]);
 
     IEnumPins_Release(enum2);
     IEnumPins_Release(enum1);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_find_pin(void)
@@ -377,26 +377,26 @@ static void test_find_pin(void)
     ULONG ref;
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_FindPin(filter, sink_id, &pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(pin == pin2, "Expected pin %p, got %p.\n", pin2, pin);
     IPin_Release(pin);
     IPin_Release(pin2);
 
     IEnumPins_Release(enum_pins);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_pin_info(void)
@@ -410,38 +410,38 @@ static void test_pin_info(void)
     IPin *pin;
 
     hr = IBaseFilter_FindPin(filter, sink_id, &pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
 
     hr = IPin_QueryPinInfo(pin, &info);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
     ok(!wcscmp(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
-    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
-    ok(ref == 3, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(dir == PINDIR_INPUT, "Got direction %d.\n", dir);
 
     hr = IPin_QueryId(pin, &id);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!wcscmp(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IPin_Release(pin);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_basic_audio(void)
@@ -449,57 +449,56 @@ static void test_basic_audio(void)
     IBaseFilter *filter = create_dsound_render();
     LONG balance, volume;
     ITypeInfo *typeinfo;
-    unsigned int count;
     IBasicAudio *audio;
     TYPEATTR *typeattr;
+    ULONG ref, count;
     HRESULT hr;
-    ULONG ref;
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IBasicAudio, (void **)&audio);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBasicAudio_get_Balance(audio, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     hr = IBasicAudio_get_Balance(audio, &balance);
     if (hr != VFW_E_MONO_AUDIO_HW)
     {
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(balance == 0, "Got balance %ld.\n", balance);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == 0, "Got balance %d.\n", balance);
 
         hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT - 1);
-        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
         hr = IBasicAudio_put_Balance(audio, DSBPAN_LEFT);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         hr = IBasicAudio_get_Balance(audio, &balance);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(balance == DSBPAN_LEFT, "Got balance %ld.\n", balance);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(balance == DSBPAN_LEFT, "Got balance %d.\n", balance);
     }
 
     hr = IBasicAudio_get_Volume(audio, &volume);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(volume == 0, "Got volume %ld.\n", volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == 0, "Got volume %d.\n", volume);
 
     hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN - 1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IBasicAudio_put_Volume(audio, DSBVOLUME_MIN);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBasicAudio_get_Volume(audio, &volume);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(volume == DSBVOLUME_MIN, "Got volume %ld.\n", volume);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(volume == DSBVOLUME_MIN, "Got volume %d.\n", volume);
 
     hr = IBasicAudio_GetTypeInfoCount(audio, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
 
     hr = IBasicAudio_GetTypeInfo(audio, 0, 0, &typeinfo);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
     ok(IsEqualGUID(&typeattr->guid, &IID_IBasicAudio), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
     ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
@@ -507,7 +506,7 @@ static void test_basic_audio(void)
 
     IBasicAudio_Release(audio);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_enum_media_types(void)
@@ -522,64 +521,64 @@ static void test_enum_media_types(void)
     IBaseFilter_FindPin(filter, sink_id, &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
     if (hr == S_OK) CoTaskMemFree(mts[0]);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(count == 1, "Got count %lu.\n", count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 1, "Got count %u.\n", count);
     if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
     if (hr == S_OK) CoTaskMemFree(mts[0]);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(!count, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 2, mts, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    todo_wine ok(count == 1, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 1, "Got count %u.\n", count);
     if (count > 0) CoTaskMemFree(mts[0]->pbFormat);
     if (count > 0) CoTaskMemFree(mts[0]);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 2);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Skip(enum1, 1);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr == S_OK) CoTaskMemFree(mts[0]->pbFormat);
     if (hr == S_OK) CoTaskMemFree(mts[0]);
 
@@ -588,7 +587,7 @@ static void test_enum_media_types(void)
     IPin_Release(pin);
 
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 struct testfilter
@@ -656,36 +655,36 @@ static void test_allocator(IMemInputPin *input)
     HRESULT hr;
 
     hr = IMemInputPin_GetAllocatorRequirements(input, &props);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMemInputPin_GetAllocator(input, &ret_allocator);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     if (hr == S_OK)
     {
         hr = IMemAllocator_GetProperties(ret_allocator, &props);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(!props.cBuffers, "Got %ld buffers.\n", props.cBuffers);
-        ok(!props.cbBuffer, "Got size %ld.\n", props.cbBuffer);
-        ok(!props.cbAlign, "Got alignment %ld.\n", props.cbAlign);
-        ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!props.cBuffers, "Got %d buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %d.\n", props.cbBuffer);
+        ok(!props.cbAlign, "Got alignment %d.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
 
         hr = IMemInputPin_NotifyAllocator(input, ret_allocator, TRUE);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         IMemAllocator_Release(ret_allocator);
     }
 
     hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&req_allocator);
 
     hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemInputPin_GetAllocator(input, &ret_allocator);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_allocator == req_allocator, "Allocators didn't match.\n");
 
     IMemAllocator_Release(req_allocator);
@@ -703,9 +702,9 @@ static DWORD WINAPI frame_thread(void *arg)
     struct frame_thread_params *params = arg;
     HRESULT hr;
 
-    if (winetest_debug > 1) trace("%04lx: Sending frame.\n", GetCurrentThreadId());
+    if (winetest_debug > 1) trace("%04x: Sending frame.\n", GetCurrentThreadId());
     hr = IMemInputPin_Receive(params->sink, params->sample);
-    if (winetest_debug > 1) trace("%04lx: Returned %#lx.\n", GetCurrentThreadId(), hr);
+    if (winetest_debug > 1) trace("%04x: Returned %#x.\n", GetCurrentThreadId(), hr);
     IMediaSample_Release(params->sample);
     free(params);
     return hr;
@@ -725,24 +724,24 @@ static HRESULT send_frame(IMemInputPin *sink)
     DWORD ret;
 
     hr = IMemInputPin_GetAllocator(sink, &allocator);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSample_GetPointer(sample, &data);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     words = (unsigned short *)data;
     for (i = 0; i < 44100 * 2; i += 2)
         words[i] = words[i+1] = sinf(i / 20.0f) * 0x7fff;
 
     hr = IMediaSample_SetActualDataLength(sample, 44100 * 4);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     start_time = 0;
     end_time = start_time + 10000000;
     hr = IMediaSample_SetTime(sample, &start_time, &end_time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     params->sink = sink;
     params->sample = sample;
@@ -762,7 +761,7 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
     HRESULT hr;
 
     hr = send_frame(input);
-    ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     /* The renderer is not fully paused until it receives a sample. The
      * DirectSound renderer never blocks in Receive(), despite returning S_OK
@@ -771,71 +770,71 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
      * than it's worth to emulate, so for now, we'll ignore this behaviour. */
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     /* It's possible to queue multiple samples while paused. The number of
      * samples that can be queued depends on the length of each sample, but
      * it's not particularly clear how. */
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* The DirectSound renderer will silently refuse to transition to running
      * if it hasn't finished pausing yet. Once it does it reports itself as
@@ -848,43 +847,43 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
     HRESULT hr;
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_BeginFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IPin_EndFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_BeginFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IPin_EndFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 }
 
 static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
@@ -898,14 +897,14 @@ static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
     {
         if (code == EC_COMPLETE)
         {
-            ok(param1 == S_OK, "Got param1 %#Ix.\n", param1);
-            ok(!param2, "Got param2 %#Ix.\n", param2);
+            ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+            ok(!param2, "Got param2 %#lx.\n", param2);
             ret++;
         }
         IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
         timeout = 0;
     }
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     return ret;
 }
@@ -920,28 +919,28 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     IMediaControl_QueryInterface(control, &IID_IMediaEvent, (void **)&eventsrc);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = IPin_EndOfStream(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = send_frame(input);
-    todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(ret == 1, "Expected EC_COMPLETE.\n");
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
@@ -949,79 +948,79 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
      * done rendering. */
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = IPin_EndOfStream(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
     ret = check_ec_complete(eventsrc, 2000);
     todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     /* Test sending EOS while flushing. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = send_frame(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_BeginFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_EndOfStream(pin);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IPin_EndFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     /* Test sending EOS and then flushing or stopping. */
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = IPin_EndOfStream(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = IPin_BeginFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_EndFlush(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = send_frame(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IPin_EndOfStream(pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
@@ -1070,37 +1069,37 @@ static void test_connect_pin(void)
 
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(pin, &peer);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
     ok(!peer, "Got peer %p.\n", peer);
 
     hr = IPin_ConnectionMediaType(pin, &mt);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_ConnectedTo(pin, &peer);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(peer == &source.source.pin.IPin_iface, "Got peer %p.\n", peer);
     IPin_Release(peer);
 
     hr = IPin_ConnectionMediaType(pin, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, pin);
-    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
 
@@ -1108,48 +1107,48 @@ static void test_connect_pin(void)
 
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&allocator);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
     hr = IMemInputPin_NotifyAllocator(input, allocator, TRUE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemInputPin_ReceiveCanBlock(input);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     test_filter_state(input, control);
     test_flushing(pin, input, control);
     test_eos(pin, input, control);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, pin);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(source.source.pin.peer == pin, "Got peer %p.\n", source.source.pin.peer);
     IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
 
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(pin, &peer);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
     ok(!peer, "Got peer %p.\n", peer);
 
     hr = IPin_ConnectionMediaType(pin, &mt);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     ref = IMemAllocator_Release(allocator);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMemInputPin_Release(input);
     IPin_Release(pin);
     IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_unconnected_filter_state(void)
@@ -1160,53 +1159,53 @@ static void test_unconnected_filter_state(void)
     ULONG ref;
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static HRESULT does_dsound_support_format(WAVEFORMATEX *format)
@@ -1222,7 +1221,7 @@ static HRESULT does_dsound_support_format(WAVEFORMATEX *format)
     HRESULT hr;
 
     hr = DirectSoundCreate(NULL, &dsound, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectSound_CreateSoundBuffer(dsound, &desc, &buffer, NULL);
     if (hr == S_OK)
@@ -1263,30 +1262,30 @@ static void test_media_types(void)
     IBaseFilter_FindPin(filter, sink_id, &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumMediaTypes_Next(enummt, 1, &mt, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (hr == S_OK)
     {
         ok(IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt->majortype));
         ok(IsEqualGUID(&mt->subtype, &GUID_NULL), "Got subtype %s.\n", wine_dbgstr_guid(&mt->subtype));
         ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
         ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
-        ok(mt->lSampleSize == 1, "Got sample size %lu.\n", mt->lSampleSize);
+        ok(mt->lSampleSize == 1, "Got sample size %u.\n", mt->lSampleSize);
         ok(IsEqualGUID(&mt->formattype, &GUID_NULL), "Got format type %s.\n", wine_dbgstr_guid(&mt->formattype));
         ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
-        ok(!mt->cbFormat, "Got format size %lu.\n", mt->cbFormat);
+        ok(!mt->cbFormat, "Got format size %u.\n", mt->cbFormat);
         ok(!mt->pbFormat, "Got unexpected format block.\n");
 
         hr = IPin_QueryAccept(pin, mt);
-        ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
         CoTaskMemFree(mt);
     }
 
     hr = IEnumMediaTypes_Next(enummt, 1, &mt, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     req_mt.majortype = MEDIATYPE_Audio;
     req_mt.formattype = FORMAT_WaveFormatEx;
@@ -1312,7 +1311,7 @@ static void test_media_types(void)
                 expect_hr = does_dsound_support_format(&wfx);
 
                 hr = IPin_QueryAccept(pin, &req_mt);
-                ok(hr == expect_hr, "Expected hr %#lx, got %#lx, for %d channels, %d-bit %s, %ld Hz.\n",
+                ok(hr == expect_hr, "Expected hr %#x, got %#x, for %d channels, %d-bit %s, %d Hz.\n",
                         expect_hr, hr, channels, formats[i].depth,
                         formats[i].tag == WAVE_FORMAT_PCM ? "integer" : "float", sample_rates[j]);
             }
@@ -1321,7 +1320,7 @@ static void test_media_types(void)
 
     IPin_Release(pin);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_unconnected_eos(void)
@@ -1335,49 +1334,49 @@ static void test_unconnected_eos(void)
     ULONG ref;
 
     hr = IFilterGraph2_AddFilter(graph, filter, L"renderer");
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(!ret, "Got %u EC_COMPLETE events.\n", ret);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret = check_ec_complete(eventsrc, 0);
     ok(ret == 1, "Got %u EC_COMPLETE events.\n", ret);
@@ -1385,9 +1384,9 @@ static void test_unconnected_eos(void)
     IMediaControl_Release(control);
     IMediaEvent_Release(eventsrc);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 START_TEST(dsoundrender)
@@ -1405,7 +1404,7 @@ START_TEST(dsoundrender)
         CoUninitialize();
         return;
     }
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IBaseFilter_Release(filter);
 
     test_property_bag();

@@ -16,7 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #define COBJMACROS
+#define NONAMELESSUNION
+
+#include "wine/debug.h"
+#include "wine/list.h"
 
 #include "mfplat_private.h"
 #include "rtworkq.h"
@@ -41,7 +47,7 @@ HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *
     IRtwqAsyncResult *result;
     HRESULT hr;
 
-    TRACE("%#lx, %p, %p.\n", queue, callback, state);
+    TRACE("%#x, %p, %p.\n", queue, callback, state);
 
     if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &result)))
         return hr;
@@ -61,7 +67,7 @@ HRESULT WINAPI MFPutWorkItem2(DWORD queue, LONG priority, IMFAsyncCallback *call
     IRtwqAsyncResult *result;
     HRESULT hr;
 
-    TRACE("%#lx, %ld, %p, %p.\n", queue, priority, callback, state);
+    TRACE("%#x, %d, %p, %p.\n", queue, priority, callback, state);
 
     if (FAILED(hr = RtwqCreateAsyncResult(NULL, (IRtwqAsyncCallback *)callback, state, &result)))
         return hr;
@@ -78,7 +84,7 @@ HRESULT WINAPI MFPutWorkItem2(DWORD queue, LONG priority, IMFAsyncCallback *call
  */
 HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result)
 {
-    TRACE("%#lx, %p\n", queue, result);
+    TRACE("%#x, %p\n", queue, result);
 
     return RtwqPutWorkItem(queue, 0, (IRtwqAsyncResult *)result);
 }
@@ -88,7 +94,7 @@ HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result)
  */
 HRESULT WINAPI MFPutWorkItemEx2(DWORD queue, LONG priority, IMFAsyncResult *result)
 {
-    TRACE("%#lx, %ld, %p\n", queue, priority, result);
+    TRACE("%#x, %d, %p\n", queue, priority, result);
 
     return RtwqPutWorkItem(queue, priority, (IRtwqAsyncResult *)result);
 }

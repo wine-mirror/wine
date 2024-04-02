@@ -507,3 +507,62 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
     }
     return FALSE;
 }
+
+#if defined(__x86_64__) && !defined(__i386_on_x86_64__)
+struct macdrv_functions_t
+{
+    void (*macdrv_init_display_devices)(BOOL);
+    struct macdrv_win_data*(*get_win_data)(HWND hwnd);
+    void (*release_win_data)(struct macdrv_win_data *data);
+    macdrv_window(*macdrv_get_cocoa_window)(HWND hwnd, BOOL require_on_screen);
+    macdrv_metal_device (*macdrv_create_metal_device)(void);
+    void (*macdrv_release_metal_device)(macdrv_metal_device d);
+    macdrv_metal_view (*macdrv_view_create_metal_view)(macdrv_view v, macdrv_metal_device d);
+    macdrv_metal_layer (*macdrv_view_get_metal_layer)(macdrv_metal_view v);
+    void (*macdrv_view_release_metal_view)(macdrv_metal_view v);
+    void (*on_main_thread)(dispatch_block_t b);
+    LSTATUS(WINAPI*RegQueryValueExA)(HKEY, LPCSTR, LPDWORD, LPDWORD, BYTE*, LPDWORD);
+    LSTATUS(WINAPI*RegSetValueExA)(HKEY, LPCSTR, DWORD, DWORD, const BYTE*, DWORD);
+    LSTATUS(WINAPI*RegOpenKeyExA)(HKEY, LPCSTR, DWORD, DWORD, HKEY*);
+    LSTATUS(WINAPI*RegCreateKeyExA)(HKEY, LPCSTR, DWORD, LPSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, HKEY*, LPDWORD);
+    LSTATUS(WINAPI*RegCloseKey)(HKEY);
+    BOOL(WINAPI*EnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
+    BOOL(WINAPI*GetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+    BOOL(WINAPI*AdjustWindowRectEx)(LPRECT,DWORD,BOOL,DWORD);
+    LONG_PTR(WINAPI*GetWindowLongPtrW)(HWND,int);
+    BOOL(WINAPI*GetWindowRect)(HWND,LPRECT);
+    BOOL(WINAPI*MoveWindow)(HWND,int,int,int,int,BOOL);
+    BOOL(WINAPI*SetWindowPos)(HWND,HWND,int,int,int,int,UINT);
+    INT(WINAPI*GetSystemMetrics)(INT);
+    LONG_PTR(WINAPI*SetWindowLongPtrW)(HWND,INT,LONG_PTR);
+};
+
+void OnMainThread(dispatch_block_t);
+
+struct macdrv_functions_t macdrv_functions = {
+    &macdrv_init_display_devices,
+    &get_win_data,
+    &release_win_data,
+    &macdrv_get_cocoa_window,
+    &macdrv_create_metal_device,
+    &macdrv_release_metal_device,
+    &macdrv_view_create_metal_view,
+    &macdrv_view_get_metal_layer,
+    &macdrv_view_release_metal_view,
+    &OnMainThread,
+    &RegQueryValueExA,
+    &RegSetValueExA,
+    &RegOpenKeyExA,
+    &RegCreateKeyExA,
+    &RegCloseKey,
+    &EnumDisplayMonitors,
+    &GetMonitorInfoA,
+    &AdjustWindowRectEx,
+    &GetWindowLongPtrW,
+    &GetWindowRect,
+    &MoveWindow,
+    &SetWindowPos,
+    &GetSystemMetrics,
+    &SetWindowLongPtrW,
+};
+#endif

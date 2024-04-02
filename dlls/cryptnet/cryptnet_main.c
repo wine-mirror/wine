@@ -1690,6 +1690,15 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
     const CRL_CONTEXT *crl;
     DWORD timeout = 0;
 
+    if (!params || !params->pIssuerCert)
+    {
+        TRACE("no issuer certificate\n");
+        return CRYPT_E_REVOCATION_OFFLINE;
+    }
+
+    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, time, status))
+        return status->dwError;
+
     if (!CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &url_array_size, NULL, NULL))
         return GetLastError();
 
@@ -1918,6 +1927,7 @@ static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_
     HCRYPTPROV prov = 0;
     HCRYPTHASH hash = 0;
     HCRYPTKEY key = 0;
+    DWORD algid;
 
     if (!CryptDecodeObjectEx(X509_ASN_ENCODING, OCSP_BASIC_SIGNED_RESPONSE, blob->pbData, blob->cbData,
                              CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)) return GetLastError();
@@ -1925,7 +1935,7 @@ static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_
     if ((error = check_ocsp_response_info(cert, issuer, &info->ToBeSigned, &status))) goto done;
 
     alg = &info->SignatureInfo.SignatureAlgorithm;
-    if (!alg->pszObjId || strcmp(alg->pszObjId, szOID_RSA_SHA256RSA))
+    if (!alg->pszObjId || !(algid = CertOIDToAlgId(alg->pszObjId)))
     {
         FIXME("unhandled signature algorithm %s\n", debugstr_a(alg->pszObjId));
         error = CRYPT_E_NO_REVOCATION_CHECK;
@@ -1933,7 +1943,7 @@ static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_
     }
 
     if (!CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) goto done;
-    if (!CryptCreateHash(prov, CALG_SHA_256, 0, 0, &hash)) goto done;
+    if (!CryptCreateHash(prov, algid, 0, 0, &hash)) goto done;
     if (!CryptHashData(hash, info->ToBeSigned.pbData, info->ToBeSigned.cbData, 0)) goto done;
 
     sig = &info->SignatureInfo.Signature;
@@ -2136,22 +2146,19 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
     DWORD error = ERROR_SUCCESS;
     PCERT_EXTENSION ext;
 
-    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
-        return pRevStatus->dwError;
-
-    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert,
-                pTime, dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        TRACE("verify_cert_revocation_from_aia_ext() returned %08lx\n", error);
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
     }
-    else if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime,
-                dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        TRACE("verify_cert_revocation_from_dist_points_ext() returned %08lx\n", error);
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
     }
-    else
+    if (!ext)
     {
         if (pRevPara && pRevPara->hCrlStore && pRevPara->pIssuerCert)
         {

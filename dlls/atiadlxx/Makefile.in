@@ -1,0 +1,8 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
+MODULE = atiadlxx.dll
+IMPORTS = dxgi
+
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
+
+C_SRCS = \
+	atiadlxx_main.c

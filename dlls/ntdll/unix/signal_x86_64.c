@@ -2949,6 +2949,20 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
     }
 }
 
+static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    ucontext_t *ctx = sigcontext;
+    void ***rsp;
+
+    TRACE("SIGSYS, rax %#llx, rip %#llx.\n", RAX_sig(ctx), RIP_sig(ctx));
+    
+    rsp = (void ***)&RSP_sig(ctx);
+    *rsp -= 1;
+    **rsp = (void *)(RIP_sig(ctx) + 0xb);
+
+    RIP_sig(ctx) = ((ULONG64)__wine_syscall_dispatcher);
+}
+
 
 /***********************************************************************
  *           LDT support
@@ -3292,6 +3306,8 @@ void signal_init_process(void)
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = sigsys_handler;
+    if (sigaction( SIGSYS, &sig_act, NULL ) == -1) goto error;
     return;
 
  error:

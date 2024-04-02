@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINE_NO_LONG_TYPES
 STATICLIB = libstrmbase.a
 
 C_SRCS = \

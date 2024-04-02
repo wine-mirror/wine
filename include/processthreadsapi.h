@@ -23,8 +23,23 @@
 extern "C" {
 #endif
 
+typedef enum _THREAD_INFORMATION_CLASS
+{
+    ThreadMemoryPriority,
+    ThreadAbsoluteCpuPriority,
+    ThreadDynamicCodePolicy,
+    ThreadPowerThrottling,
+    ThreadInformationClassMax
+} THREAD_INFORMATION_CLASS;
+
+typedef struct _MEMORY_PRIORITY_INFORMATION
+{
+    ULONG MemoryPriority;
+} MEMORY_PRIORITY_INFORMATION, *PMEMORY_PRIORITY_INFORMATION;
+
 WINBASEAPI HRESULT WINAPI GetThreadDescription(HANDLE,PWSTR *);
 WINBASEAPI HRESULT WINAPI SetThreadDescription(HANDLE,PCWSTR);
+WINBASEAPI BOOL WINAPI SetThreadInformation(HANDLE,THREAD_INFORMATION_CLASS,LPVOID,DWORD);
 
 #ifdef __cplusplus
 }

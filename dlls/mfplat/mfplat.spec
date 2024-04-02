@@ -20,7 +20,7 @@
 @ stdcall MFAllocateWorkQueue(ptr)
 @ stdcall MFAllocateWorkQueueEx(long ptr) rtworkq.RtwqAllocateWorkQueue
 @ stub MFAppendCollection
-@ stdcall MFAverageTimePerFrameToFrameRate(int64 ptr ptr)
+@ stub MFAverageTimePerFrameToFrameRate
 @ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
 @ stub MFBeginGetHostByName
 @ stdcall MFBeginRegisterWorkQueueWithMMCSS(long wstr long ptr ptr)
@@ -71,7 +71,7 @@
 @ stdcall MFCreateStreamDescriptor(long long ptr ptr)
 @ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
-@ stdcall MFCreateTempFile(long long long ptr)
+@ stub MFCreateTempFile
 @ stdcall MFCreateTrackedSample(ptr)
 @ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath
@@ -162,7 +162,7 @@
 @ stdcall MFTEnumEx(int128 long ptr ptr ptr ptr)
 @ stdcall MFTGetInfo(int128 ptr ptr ptr ptr ptr ptr)
 @ stdcall MFTRegister(int128 int128 wstr long long ptr long ptr ptr)
-@ stdcall MFTRegisterLocal(ptr ptr wstr long long ptr long ptr)
+@ stdcall MFTRegisterLocal(ptr ptr wstr long long  ptr long ptr)
 @ stdcall MFTRegisterLocalByCLSID(ptr ptr wstr long long ptr long ptr)
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)

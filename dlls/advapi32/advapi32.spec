@@ -553,8 +553,8 @@
 @ stdcall -ret64 -import OpenTraceW(ptr)
 # @ stub OperationEnd
 # @ stub OperationStart
-# @ stub PerfAddCounters
-# @ stub PerfCloseQueryHandle
+@ stdcall PerfAddCounters(long ptr long)
+@ stdcall PerfCloseQueryHandle(long)
 @ stdcall -import PerfCreateInstance(long ptr wstr long)
 # @ stub PerfDecrementULongCounterValue
 # @ stub PerfDecrementULongLongCounterValue
@@ -564,8 +564,8 @@
 # @ stub PerfEnumerateCounterSetInstances
 # @ stub PerfIncrementULongCounterValue
 # @ stub PerfIncrementULongLongCounterValue
-# @ stub PerfOpenQueryHandle
-# @ stub PerfQueryCounterData
+@ stdcall PerfOpenQueryHandle(wstr ptr)
+@ stdcall PerfQueryCounterData(long ptr long ptr)
 # @ stub PerfQueryCounterInfo
 # @ stub PerfQueryCounterSetRegistrationInfo
 # @ stub PerfQueryInstance

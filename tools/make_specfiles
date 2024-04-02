@@ -139,6 +139,11 @@ my @dll_groups =
   "sppc",
   "slc",
  ],
+ [
+    "ntdll",
+    "powrprof",
+    "api-ms-win-power-base-l1-1-0",
+ ]
 );
 
 my $update_flags = 0;

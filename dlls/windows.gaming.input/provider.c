@@ -141,21 +141,37 @@ static HRESULT WINAPI wine_provider_GetTrustLevel( IWineGameControllerProvider *
     return E_NOTIMPL;
 }
 
+static BOOL CALLBACK count_ffb_axes( const DIDEVICEOBJECTINSTANCEW *obj, void *args )
+{
+    DWORD *count = args;
+    if (obj->dwType & DIDFT_FFACTUATOR) (*count)++;
+    return DIENUM_CONTINUE;
+}
+
 static HRESULT WINAPI wine_provider_get_Type( IWineGameControllerProvider *iface, WineGameControllerType *value )
 {
     struct provider *impl = impl_from_IWineGameControllerProvider( iface );
     DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    const WCHAR *tmp;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
     if (FAILED(hr = IDirectInputDevice8_GetDeviceInfo( impl->dinput_device, &instance ))) return hr;
 
-    switch (GET_DIDEVICE_TYPE( instance.dwDevType ))
+    if ((tmp = wcschr( impl->device_path + 8, '#' )) && !wcsnicmp( tmp - 6, L"&XI_", 4 ))
+        *value = WineGameControllerType_Gamepad;
+    else switch (GET_DIDEVICE_TYPE( instance.dwDevType ))
     {
     case DI8DEVTYPE_DRIVING: *value = WineGameControllerType_RacingWheel; break;
-    case DI8DEVTYPE_GAMEPAD: *value = WineGameControllerType_Gamepad; break;
-    default: *value = WineGameControllerType_Joystick; break;
+    default:
+    {
+        DWORD count = 0;
+        hr = IDirectInputDevice8_EnumObjects( impl->dinput_device, count_ffb_axes, &count, DIDFT_AXIS );
+        if (SUCCEEDED(hr) && count == 1) *value = WineGameControllerType_RacingWheel;
+        else *value = WineGameControllerType_Joystick;
+        break;
+    }
     }
 
     return S_OK;
@@ -212,7 +228,7 @@ static HRESULT WINAPI wine_provider_get_State( IWineGameControllerProvider *ifac
     if (FAILED(hr = IDirectInputDevice8_GetDeviceState( impl->dinput_device, sizeof(state), &state )))
     {
         WARN( "Failed to read device state, hr %#lx\n", hr );
-        return hr;
+        return S_OK;
     }
 
     i = ARRAY_SIZE(state.rgbButtons);
@@ -315,6 +331,21 @@ static HRESULT WINAPI wine_provider_put_Vibration( IWineGameControllerProvider *
     return S_OK;
 }
 
+static HRESULT WINAPI wine_provider_get_ForceFeedbackMotor( IWineGameControllerProvider *iface, IForceFeedbackMotor **value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetCapabilities( impl->dinput_device, &caps )) && (caps.dwFlags & DIDC_FORCEFEEDBACK))
+        return force_feedback_motor_create( impl->dinput_device, value );
+
+    *value = NULL;
+    return S_OK;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -332,6 +363,7 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_get_State,
     wine_provider_get_Vibration,
     wine_provider_put_Vibration,
+    wine_provider_get_ForceFeedbackMotor,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )
@@ -556,7 +588,7 @@ void provider_create( const WCHAR *device_path )
 
     EnterCriticalSection( &provider_cs );
     LIST_FOR_EACH_ENTRY( entry, &provider_list, struct provider, entry )
-        if ((found = !wcscmp( entry->device_path, device_path ))) break;
+        if ((found = !wcsicmp( entry->device_path, device_path ))) break;
     if (!found) list_add_tail( &provider_list, &impl->entry );
     LeaveCriticalSection( &provider_cs );
 
@@ -576,11 +608,12 @@ void provider_remove( const WCHAR *device_path )
 
     EnterCriticalSection( &provider_cs );
     LIST_FOR_EACH_ENTRY( entry, &provider_list, struct provider, entry )
-        if ((found = !wcscmp( entry->device_path, device_path ))) break;
+        if ((found = !wcsicmp( entry->device_path, device_path ))) break;
     if (found) list_remove( &entry->entry );
     LeaveCriticalSection( &provider_cs );
 
-    if (found)
+    if (!found) WARN( "provider not found for device %s\n", debugstr_w( device_path ) );
+    else
     {
         provider = &entry->IGameControllerProvider_iface;
         manager_on_provider_removed( provider );

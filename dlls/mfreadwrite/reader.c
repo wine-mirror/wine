@@ -2472,6 +2472,92 @@ failed:
     return hr;
 }
 
+static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
+{
+    static const unsigned char asfmagic[]  = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
+    static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+    static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4_magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', 'S', 'N', 'V',0x00,0x00,0x00,0x00};
+    static const unsigned char mp42magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4vmagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', '4', 'V', ' ',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
+    static const struct stream_content_url_hint
+    {
+        const unsigned char *magic;
+        const WCHAR *url;
+        const unsigned char *mask;
+    }
+    url_hints[] =
+    {
+        { asfmagic,  L".asf" },
+        { wavmagic,  L".wav", wavmask },
+        { isommagic, L".mp4", mp4mask },
+        { mp42magic, L".mp4", mp4mask },
+        { mp4_magic, L".mp4", mp4mask },
+        { mp4vmagic, L".m4v", mp4mask },
+    };
+    unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
+    unsigned int i, j, length = 0, caps = 0;
+    IMFAttributes *attributes;
+    QWORD position;
+    HRESULT hr;
+
+    *url = NULL;
+
+    if (SUCCEEDED(IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        IMFAttributes_GetStringLength(attributes, &MF_BYTESTREAM_CONTENT_TYPE, &length);
+        IMFAttributes_Release(attributes);
+    }
+
+    if (length)
+        return S_OK;
+
+    if (FAILED(hr = IMFByteStream_GetCapabilities(stream, &caps)))
+        return hr;
+
+    if (!(caps & MFBYTESTREAM_IS_SEEKABLE))
+        return S_OK;
+
+    if (FAILED(hr = IMFByteStream_GetCurrentPosition(stream, &position)))
+        return hr;
+
+    hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length);
+    IMFByteStream_SetCurrentPosition(stream, position);
+    if (FAILED(hr))
+        return hr;
+
+    if (length < sizeof(buffer))
+        return S_OK;
+
+    for (i = 0; i < ARRAY_SIZE(url_hints); ++i)
+    {
+        memcpy(pattern, buffer, sizeof(buffer));
+        if (url_hints[i].mask)
+        {
+            unsigned int *mask = (unsigned int *)url_hints[i].mask;
+            unsigned int *data = (unsigned int *)pattern;
+
+            for (j = 0; j < sizeof(buffer) / sizeof(unsigned int); ++j)
+                data[j] &= mask[j];
+
+        }
+        if (!memcmp(pattern, url_hints[i].magic, sizeof(pattern)))
+        {
+            *url = url_hints[i].url;
+            break;
+        }
+    }
+
+    if (*url)
+        TRACE("Stream type guessed as %s from %s.\n", debugstr_w(*url), debugstr_an((char *)buffer, length));
+    else
+        WARN("Unrecognized content type %s.\n", debugstr_an((char *)buffer, length));
+
+    return S_OK;
+}
+
 static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttributes *attributes,
         REFIID riid, void **out)
 {
@@ -2479,7 +2565,12 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
     IMFSourceResolver *resolver;
     MF_OBJECT_TYPE obj_type;
     IMFMediaSource *source;
+    const WCHAR *url;
     HRESULT hr;
+
+    /* If stream does not have content type set, try to guess from starting byte sequence. */
+    if (FAILED(hr = bytestream_get_url_hint(stream, &url)))
+        return hr;
 
     if (FAILED(hr = MFCreateSourceResolver(&resolver)))
         return hr;
@@ -2488,7 +2579,7 @@ static HRESULT create_source_reader_from_stream(IMFByteStream *stream, IMFAttrib
         IMFAttributes_GetUnknown(attributes, &MF_SOURCE_READER_MEDIASOURCE_CONFIG, &IID_IPropertyStore,
                 (void **)&props);
 
-    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, url, MF_RESOLUTION_MEDIASOURCE
             | MF_RESOLUTION_CONTENT_DOES_NOT_HAVE_TO_MATCH_EXTENSION_OR_MIME_TYPE, props, &obj_type, (IUnknown **)&source);
     IMFSourceResolver_Release(resolver);
     if (props)

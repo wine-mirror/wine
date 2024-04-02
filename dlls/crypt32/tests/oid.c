@@ -152,14 +152,14 @@ static void test_oidFunctionSet(void)
         ok(ret, "CryptGetDefaultOIDDllList failed: %08lx\n", GetLastError());
         if (ret)
         {
-            buf = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            buf = malloc(size * sizeof(WCHAR));
             if (buf)
             {
                 ret = CryptGetDefaultOIDDllList(set1, 0, buf, &size);
                 ok(ret, "CryptGetDefaultOIDDllList failed: %08lx\n",
                  GetLastError());
                 ok(!*buf, "Expected empty DLL list\n");
-                HeapFree(GetProcessHeap(), 0, buf);
+                free(buf);
             }
         }
     }

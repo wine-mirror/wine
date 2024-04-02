@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 134
+#define NTDLL_UNIXLIB_VERSION 135
 
 struct unix_funcs
 {
@@ -39,6 +39,10 @@ struct unix_funcs
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
 #ifdef __aarch64__
     TEB *         (WINAPI *NtCurrentTeb)(void);
+#endif
+#if defined(__x86_64__)
+    void          (CDECL *pe_module_loaded)(void* start, void* end);
+    BOOL          (CDECL *gs_patching_needed)(void);
 #endif
 };
 

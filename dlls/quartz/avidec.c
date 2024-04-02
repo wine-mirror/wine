@@ -101,13 +101,14 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     struct avi_decompressor *This = impl_from_strmbase_filter(iface->pin.filter);
     VIDEOINFOHEADER *source_format;
     HRESULT hr;
+    DWORD res;
     IMediaSample* pOutSample = NULL;
-    LONG cbDstStream, cbSrcStream;
+    DWORD cbDstStream;
     LPBYTE pbDstStream;
+    DWORD cbSrcStream;
     LPBYTE pbSrcStream;
     LONGLONG tStart, tStop;
     DWORD flags = 0;
-    LRESULT res;
 
     /* We do not expect pin connection state to change while the filter is
      * running. This guarantee is necessary, since otherwise we would have to
@@ -130,18 +131,20 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
-        ERR("Failed to get input buffer pointer, hr %#lx.\n", hr);
+        ERR("Cannot get pointer to sample data (%x)\n", hr);
         return hr;
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
 
+    TRACE("Sample data ptr = %p, size = %d\n", pbSrcStream, cbSrcStream);
+
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;
 
-    if (FAILED(hr = IMemAllocator_GetBuffer(This->source.pAllocator, &pOutSample, NULL, NULL, 0)))
-    {
-        ERR("Failed to get sample, hr %#lx.\n", hr);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&This->source, &pOutSample, NULL, NULL, 0);
+    if (FAILED(hr)) {
+        ERR("Unable to get delivery buffer (%x)\n", hr);
         return hr;
     }
 
@@ -150,14 +153,14 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
 
     hr = IMediaSample_GetPointer(pOutSample, &pbDstStream);
     if (FAILED(hr)) {
-        ERR("Failed to get output buffer pointer, hr %#lx.\n", hr);
+	ERR("Unable to get pointer to buffer (%x)\n", hr);
         IMediaSample_Release(pOutSample);
         return hr;
     }
     cbDstStream = IMediaSample_GetSize(pOutSample);
     if (cbDstStream < source_format->bmiHeader.biSizeImage)
     {
-        ERR("Sample size is too small (%ld < %lu).\n", cbDstStream, source_format->bmiHeader.biSizeImage);
+        ERR("Sample size is too small (%u < %u).\n", cbDstStream, source_format->bmiHeader.biSizeImage);
         IMediaSample_Release(pOutSample);
         return E_FAIL;
     }
@@ -172,7 +175,7 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
 
     res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, &source_format->bmiHeader, pbDstStream);
     if (res != ICERR_OK)
-        ERR("Failed to decompress, error %Id.\n", res);
+        ERR("Error occurred during the decompression (%x)\n", res);
 
     /* Drop sample if it's intended to be dropped */
     if (flags & ICDECOMPRESS_HURRYUP) {
@@ -195,7 +198,7 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
 
     hr = IMemInputPin_Receive(This->source.pMemInputPin, pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
-        ERR("Failed to send sample, hr %#lx.\n", hr);
+        ERR("Error sending sample (%x)\n", hr);
 
     IMediaSample_Release(pOutSample);
     return hr;
@@ -225,7 +228,7 @@ static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *
         if (This->hvid)
         {
             DWORD bih_size;
-            LRESULT result;
+            DWORD result;
 
             /* Copy bitmap header from media type to 1 for input and 1 for output */
             bih_size = bmi->biSize + bmi->biClrUsed * 4;
@@ -239,7 +242,7 @@ static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *
 
             if ((result = ICDecompressQuery(This->hvid, This->pBihIn, NULL)))
             {
-                WARN("No decompressor found, error %Id.\n", result);
+                WARN("No decompressor found, error %d.\n", result);
                 return VFW_E_TYPE_NOT_ACCEPTED;
             }
 
@@ -342,12 +345,9 @@ static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface
 
     if (index < ARRAY_SIZE(formats))
     {
-        /* In theory we could allocate less than this, but gcc generates
-         * -Warray-bounds warnings if we access the structure through a
-         * VIDEOINFO pointer, even if we only access valid fields. */
-        if (!(format = CoTaskMemAlloc(sizeof(*format))))
+        if (!(format = CoTaskMemAlloc(offsetof(VIDEOINFO, dwBitMasks[3]))))
             return E_OUTOFMEMORY;
-        memset(format, 0, sizeof(*format));
+        memset(format, 0, offsetof(VIDEOINFO, dwBitMasks[3]));
 
         format->rcSource = sink_format->rcSource;
         format->rcTarget = sink_format->rcTarget;
@@ -479,7 +479,7 @@ static HRESULT WINAPI avi_decompressor_source_qc_Notify(IQualityControl *iface,
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
 
-    TRACE("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s.\n",
+    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
     EnterCriticalSection(&filter->filter.stream_cs);
@@ -555,12 +555,12 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
     source_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
     if ((res = ICDecompressBegin(filter->hvid, filter->pBihIn, &source_format->bmiHeader)))
     {
-        ERR("ICDecompressBegin() failed, error %Id.\n", res);
+        ERR("ICDecompressBegin() failed, error %ld.\n", res);
         return E_FAIL;
     }
 
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
-        ERR("Failed to commit allocator, hr %#lx.\n", hr);
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
 
     return S_OK;
 }
@@ -575,7 +575,7 @@ static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
 
     if (filter->hvid && (res = ICDecompressEnd(filter->hvid)))
     {
-        ERR("ICDecompressEnd() failed, error %Id.\n", res);
+        ERR("ICDecompressEnd() failed, error %ld.\n", res);
         return E_FAIL;
     }
 
@@ -602,11 +602,8 @@ HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_AVIDec, &filter_ops);
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
-    wcscpy(object->sink.pin.name, L"XForm In");
 
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
-    wcscpy(object->source.pin.name, L"XForm Out");
-
     object->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
     strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
     ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,

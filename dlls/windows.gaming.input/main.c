@@ -185,6 +185,15 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING class_str, IActivationFactory **
     if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_Custom_GameControllerFactoryManager ))
         IGameControllerFactoryManagerStatics2_QueryInterface( manager_factory, &IID_IActivationFactory, (void **)factory );
 
+    if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_ForceFeedback_ConstantForceEffect ))
+        IInspectable_QueryInterface( constant_effect_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_ForceFeedback_RampForceEffect ))
+        IInspectable_QueryInterface( ramp_effect_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_ForceFeedback_PeriodicForceEffect ))
+        IInspectable_QueryInterface( periodic_effect_factory, &IID_IActivationFactory, (void **)factory );
+    if (!wcscmp( buffer, RuntimeClass_Windows_Gaming_Input_ForceFeedback_ConditionForceEffect ))
+        IInspectable_QueryInterface( condition_effect_factory, &IID_IActivationFactory, (void **)factory );
+
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;
 }

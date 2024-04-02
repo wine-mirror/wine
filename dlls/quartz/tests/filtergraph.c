@@ -42,10 +42,10 @@ static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
     GetTempPathW(ARRAY_SIZE(pathW), pathW);
     wcscat(pathW, name);
     file = CreateFileW(pathW, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
             wine_dbgstr_w(pathW), GetLastError());
     WriteFile(file, data, size, &written, NULL);
-    ok(written = size, "Failed to write file data, error %lu.\n", GetLastError());
+    ok(written = size, "Failed to write file data, error %u.\n", GetLastError());
     CloseHandle(file);
 
     return pathW;
@@ -57,7 +57,7 @@ static WCHAR *load_resource(const WCHAR *name)
     void *ptr;
 
     res = FindResourceW(NULL, name, (const WCHAR *)RT_RCDATA);
-    ok(!!res, "Failed to find resource %s, error %lu.\n", wine_dbgstr_w(name), GetLastError());
+    ok(!!res, "Failed to find resource %s, error %u.\n", wine_dbgstr_w(name), GetLastError());
     ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
     return create_file(name, ptr, SizeofResource(GetModuleHandleA(NULL), res));
 }
@@ -67,7 +67,7 @@ static IFilterGraph2 *create_graph(void)
     IFilterGraph2 *ret;
     HRESULT hr;
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&ret);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Failed to create FilterGraph: %#x\n", hr);
     return ret;
 }
 
@@ -88,7 +88,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -98,30 +98,23 @@ static void test_interfaces(void)
     IFilterGraph2 *graph = create_graph();
 
     check_interface(graph, &IID_IBasicAudio, TRUE);
-    check_interface(graph, &IID_IBasicVideo, TRUE);
     check_interface(graph, &IID_IBasicVideo2, TRUE);
-    check_interface(graph, &IID_IFilterGraph, TRUE);
     check_interface(graph, &IID_IFilterGraph2, TRUE);
     check_interface(graph, &IID_IFilterMapper, TRUE);
-    check_interface(graph, &IID_IFilterMapper2, TRUE);
     check_interface(graph, &IID_IFilterMapper3, TRUE);
-    check_interface(graph, &IID_IGraphBuilder, TRUE);
     check_interface(graph, &IID_IGraphConfig, TRUE);
     check_interface(graph, &IID_IGraphVersion, TRUE);
     check_interface(graph, &IID_IMediaControl, TRUE);
     check_interface(graph, &IID_IMediaEvent, TRUE);
-    check_interface(graph, &IID_IMediaEventEx, TRUE);
-    check_interface(graph, &IID_IMediaEventSink, TRUE);
     check_interface(graph, &IID_IMediaFilter, TRUE);
+    check_interface(graph, &IID_IMediaEventSink, TRUE);
     check_interface(graph, &IID_IMediaPosition, TRUE);
     check_interface(graph, &IID_IMediaSeeking, TRUE);
     check_interface(graph, &IID_IObjectWithSite, TRUE);
     check_interface(graph, &IID_IVideoFrameStep, TRUE);
     check_interface(graph, &IID_IVideoWindow, TRUE);
-    check_interface(graph, &IID_IUnknown, TRUE);
 
     check_interface(graph, &IID_IBaseFilter, FALSE);
-    check_interface(graph, &IID_IDispatch, FALSE);
 
     IFilterGraph2_Release(graph);
 }
@@ -134,202 +127,202 @@ static void test_basic_video(IFilterGraph2 *graph)
     HRESULT hr;
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo, (void **)&pbv);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot get IBasicVideo interface returned: %x\n", hr);
 
     /* test get video size */
     hr = IBasicVideo_GetVideoSize(pbv, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr==E_POINTER, "IBasicVideo_GetVideoSize returned: %x\n", hr);
     hr = IBasicVideo_GetVideoSize(pbv, &video_width, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr==E_POINTER, "IBasicVideo_GetVideoSize returned: %x\n", hr);
     hr = IBasicVideo_GetVideoSize(pbv, NULL, &video_height);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr==E_POINTER, "IBasicVideo_GetVideoSize returned: %x\n", hr);
     hr = IBasicVideo_GetVideoSize(pbv, &video_width, &video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot get video size returned: %x\n", hr);
 
     /* test source position */
     hr = IBasicVideo_GetSourcePosition(pbv, NULL, NULL, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, NULL, NULL, &width, &height);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == 0, "Got left %ld.\n", left);
-    ok(top == 0, "Got top %ld.\n", top);
-    ok(width == video_width, "Expected width %ld, got %ld.\n", video_width, width);
-    ok(height == video_height, "Expected height %ld, got %ld.\n", video_height, height);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(left == 0, "expected 0, got %d\n", left);
+    ok(top == 0, "expected 0, got %d\n", top);
+    ok(width == video_width, "expected %d, got %d\n", video_width, width);
+    ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, 0, 0);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width*2, video_height*2);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, -1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put source top returned: %x\n", hr);
     hr = IBasicVideo_put_SourceTop(pbv, 1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_put_SourceTop returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, video_width, 0, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, video_height, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, -1, 0, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, -1, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width, video_height+1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
     hr = IBasicVideo_SetSourcePosition(pbv, 0, 0, video_width+1, video_height);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetSourcePosition returned: %x\n", hr);
 
     hr = IBasicVideo_SetSourcePosition(pbv, video_width/2, video_height/2, video_width/3+1, video_height/3+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set source position returned: %x\n", hr);
 
     hr = IBasicVideo_get_SourceLeft(pbv, &left);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 2, "Expected left %ld, got %ld.\n", video_width / 2, left);
+    ok(hr==S_OK, "Cannot get source left returned: %x\n", hr);
+    ok(left==video_width/2, "expected %d, got %d\n", video_width/2, left);
     hr = IBasicVideo_get_SourceTop(pbv, &top);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 2, "Expected top %ld, got %ld.\n", video_height / 2, top);
+    ok(hr==S_OK, "Cannot get source top returned: %x\n", hr);
+    ok(top==video_height/2, "expected %d, got %d\n", video_height/2, top);
     hr = IBasicVideo_get_SourceWidth(pbv, &width);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(width == video_width / 3 + 1, "Expected width %ld, got %ld.\n", video_width / 3 + 1, width);
+    ok(hr==S_OK, "Cannot get source width returned: %x\n", hr);
+    ok(width==video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
     hr = IBasicVideo_get_SourceHeight(pbv, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(height == video_height / 3 + 1, "Expected height %ld, got %ld.\n", video_height / 3 + 1, height);
+    ok(hr==S_OK, "Cannot get source height returned: %x\n", hr);
+    ok(height==video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_SourceLeft(pbv, video_width/3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put source left returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 3, "Expected left %ld, got %ld.\n", video_width / 3, left);
-    ok(width == video_width / 3 + 1, "Expected width %ld, got %ld.\n", video_width / 3 + 1, width);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
+    ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
 
     hr = IBasicVideo_put_SourceTop(pbv, video_height/3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put source top returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 3, "Expected top %ld, got %ld.\n", video_height / 3, top);
-    ok(height == video_height / 3 + 1, "Expected height %ld, got %ld.\n", video_height / 3 + 1, height);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
+    ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_SourceWidth(pbv, video_width/4+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put source width returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 3, "Expected left %ld, got %ld.\n", video_width / 3, left);
-    ok(width == video_width / 4 + 1, "Expected width %ld, got %ld.\n", video_width / 4 + 1, width);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
+    ok(width == video_width/4+1, "expected %d, got %d\n", video_width/4+1, width);
 
     hr = IBasicVideo_put_SourceHeight(pbv, video_height/4+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put source height returned: %x\n", hr);
     hr = IBasicVideo_GetSourcePosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 3, "Expected top %ld, got %ld.\n", video_height / 3, top);
-    ok(height == video_height / 4 + 1, "Expected height %ld, got %ld.\n", video_height / 4 + 1, height);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
+    ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
 
     /* test destination rectangle */
     window_width = max(video_width, GetSystemMetrics(SM_CXMIN) - 2 * GetSystemMetrics(SM_CXFRAME));
 
     hr = IBasicVideo_GetDestinationPosition(pbv, NULL, NULL, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, NULL, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, NULL, NULL, &width, &height);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "IBasicVideo_GetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == 0, "Got left %ld.\n", left);
-    ok(top == 0, "Got top %ld.\n", top);
-    ok(width == window_width, "Expected width %ld, got %ld.\n", window_width, width);
-    ok(height == video_height, "Expected height %ld, got %ld.\n", video_height, height);
+    ok(hr == S_OK, "Cannot get destination position returned: %x\n", hr);
+    ok(left == 0, "expected 0, got %d\n", left);
+    ok(top == 0, "expected 0, got %d\n", top);
+    ok(width == window_width, "expected %d, got %d\n", window_width, width);
+    ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, 0, 0);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr==E_INVALIDARG, "IBasicVideo_SetDestinationPosition returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, video_width*2, video_height*2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination position returned: %x\n", hr);
 
     hr = IBasicVideo_put_DestinationLeft(pbv, -1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination left returned: %x\n", hr);
     hr = IBasicVideo_put_DestinationLeft(pbv, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination left returned: %x\n", hr);
     hr = IBasicVideo_put_DestinationLeft(pbv, 1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination left returned: %x\n", hr);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, video_width, 0, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destinaiton position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, video_height, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destinaiton position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, -1, 0, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, -1, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, video_width/2, video_height/2, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, video_width, video_height+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, video_width+1, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, video_width/2, video_height/2, video_width/3+1, video_height/3+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
 
     hr = IBasicVideo_get_DestinationLeft(pbv, &left);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 2, "Expected left %ld, got %ld.\n", video_width / 2, left);
+    ok(hr==S_OK, "Cannot get destination left returned: %x\n", hr);
+    ok(left==video_width/2, "expected %d, got %d\n", video_width/2, left);
     hr = IBasicVideo_get_DestinationTop(pbv, &top);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 2, "Expected top %ld, got %ld.\n", video_height / 2, top);
+    ok(hr==S_OK, "Cannot get destination top returned: %x\n", hr);
+    ok(top==video_height/2, "expected %d, got %d\n", video_height/2, top);
     hr = IBasicVideo_get_DestinationWidth(pbv, &width);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(width == video_width / 3 + 1, "Expected width %ld, got %ld.\n", video_width / 3 + 1, width);
+    ok(hr==S_OK, "Cannot get destination width returned: %x\n", hr);
+    ok(width==video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
     hr = IBasicVideo_get_DestinationHeight(pbv, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(height == video_height / 3 + 1, "Expected height %ld, got %ld.\n", video_height / 3 + 1, height);
+    ok(hr==S_OK, "Cannot get destination height returned: %x\n", hr);
+    ok(height==video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_DestinationLeft(pbv, video_width/3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination left returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 3, "Expected left %ld, got %ld.\n", video_width / 3, left);
-    ok(width == video_width / 3 + 1, "Expected width %ld, got %ld.\n", video_width / 3 + 1, width);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
+    ok(width == video_width/3+1, "expected %d, got %d\n", video_width/3+1, width);
 
     hr = IBasicVideo_put_DestinationTop(pbv, video_height/3);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination top returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 3, "Expected top %ld, got %ld.\n", video_height / 3, top);
-    ok(height == video_height / 3 + 1, "Expected height %ld, got %ld.\n", video_height / 3 + 1, height);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
+    ok(height == video_height/3+1, "expected %d, got %d\n", video_height/3+1, height);
 
     hr = IBasicVideo_put_DestinationWidth(pbv, video_width/4+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination width returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(left == video_width / 3, "Expected left %ld, got %ld.\n", video_width / 3, left);
-    ok(width == video_width / 4 + 1, "Expected width %ld, got %ld.\n", video_width / 4 + 1, width);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(left == video_width/3, "expected %d, got %d\n", video_width/3, left);
+    ok(width == video_width/4+1, "expected %d, got %d\n", video_width/4+1, width);
 
     hr = IBasicVideo_put_DestinationHeight(pbv, video_height/4+1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot put destination height returned: %x\n", hr);
     hr = IBasicVideo_GetDestinationPosition(pbv, &left, &top, &width, &height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(top == video_height / 3, "Expected top %ld, got %ld.\n", video_height / 3, top);
-    ok(height == video_height / 4 + 1, "Expected height %ld, got %ld.\n", video_height / 4 + 1, height);
+    ok(hr == S_OK, "Cannot get source position returned: %x\n", hr);
+    ok(top == video_height/3, "expected %d, got %d\n", video_height/3, top);
+    ok(height == video_height/4+1, "expected %d, got %d\n", video_height/4+1, height);
 
     /* reset source rectangle */
     hr = IBasicVideo_SetDefaultSourcePosition(pbv);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "IBasicVideo_SetDefaultSourcePosition returned: %x\n", hr);
 
     /* reset destination position */
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, video_width, video_height);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr==S_OK, "Cannot set destination position returned: %x\n", hr);
 
     IBasicVideo_Release(pbv);
 }
@@ -344,57 +337,57 @@ static void test_media_seeking(IFilterGraph2 *graph)
 
     IFilterGraph2_SetDefaultSyncSource(graph);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %08x\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %08x\n", hr);
 
     format = GUID_NULL;
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetTimeFormat failed: %#x\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "got %s\n", wine_dbgstr_guid(&format));
 
     pos = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
     ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
 
     pos = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
     ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
 
     pos = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &pos, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "ConvertTimeFormat failed: %#x\n", hr);
     ok(pos == 0x123456789a, "got %s\n", wine_dbgstr_longlong(pos));
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetCurrentPosition failed: %#x\n", hr);
     ok(pos == 0, "got %s\n", wine_dbgstr_longlong(pos));
 
     hr = IMediaSeeking_GetDuration(seeking, &duration);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetDuration failed: %#x\n", hr);
     ok(duration > 0, "got %s\n", wine_dbgstr_longlong(duration));
 
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
     ok(stop == duration || stop == duration + 1, "expected %s, got %s\n",
         wine_dbgstr_longlong(duration), wine_dbgstr_longlong(stop));
 
     hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_ReturnTime, NULL, AM_SEEKING_NoPositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
     hr = IMediaSeeking_SetPositions(seeking, NULL, AM_SEEKING_NoPositioning, NULL, AM_SEEKING_ReturnTime);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetPositions failed: %#x\n", hr);
 
     pos = 0;
     hr = IMediaSeeking_SetPositions(seeking, &pos, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetPositions failed: %08x\n", hr);
 
     IMediaFilter_SetSyncSource(filter, NULL);
     pos = 0xdeadbeef;
     hr = IMediaSeeking_GetCurrentPosition(seeking, &pos);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetCurrentPosition failed: %08x\n", hr);
     ok(pos == 0, "Position != 0 (%s)\n", wine_dbgstr_longlong(pos));
     IFilterGraph2_SetDefaultSyncSource(graph);
 
@@ -409,47 +402,47 @@ static void test_state_change(IFilterGraph2 *graph)
     HRESULT hr;
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %x\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
 
     hr = IMediaControl_Run(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Run() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, INFINITE, &state);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %ld.\n", state);
+    ok(SUCCEEDED(hr), "GetState() failed: %x\n", hr);
+    ok(state == State_Running, "wrong state %d\n", state);
 
     hr = IMediaControl_Stop(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Stop() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
 
     hr = IMediaControl_Pause(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Pause() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Paused, "wrong state %d\n", state);
 
     hr = IMediaControl_Run(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Run() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Running, "wrong state %d\n", state);
 
     hr = IMediaControl_Pause(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Pause() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Paused, "wrong state %d\n", state);
 
     hr = IMediaControl_Stop(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Stop() failed: %x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %ld.\n", state);
+    ok(hr == S_OK, "GetState() failed: %x\n", hr);
+    ok(state == State_Stopped, "wrong state %d\n", state);
 
     IMediaControl_Release(control);
 }
@@ -469,33 +462,33 @@ static void test_media_event(IFilterGraph2 *graph)
     LONG code;
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaFilter) failed: %#x\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaControl) failed: %#x\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&media_event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaEvent) failed: %#x\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "QueryInterface(IMediaEvent) failed: %#x\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Stop() failed: %#x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "GetState() timed out\n");
 
     hr = IMediaSeeking_GetDuration(seeking, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetDuration() failed: %#x\n", hr);
     current = 0;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning, &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetPositions() failed: %#x\n", hr);
 
     hr = IMediaFilter_SetSyncSource(filter, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetSyncSource() failed: %#x\n", hr);
 
     hr = IMediaEvent_GetEventHandle(media_event, (OAEVENT *)&event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetEventHandle() failed: %#x\n", hr);
 
     /* flush existing events */
     while ((hr = IMediaEvent_GetEvent(media_event, &code, &lparam1, &lparam2, 0)) == S_OK);
@@ -503,7 +496,7 @@ static void test_media_event(IFilterGraph2 *graph)
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "event should not be signaled\n");
 
     hr = IMediaControl_Run(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Run() failed: %#x\n", hr);
 
     while (!got_eos)
     {
@@ -522,16 +515,16 @@ static void test_media_event(IFilterGraph2 *graph)
     ok(got_eos, "didn't get EOS\n");
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetCurrentPosition() failed: %#x\n", hr);
     ok(current == stop, "expected %s, got %s\n", wine_dbgstr_longlong(stop), wine_dbgstr_longlong(current));
 
     hr = IMediaControl_Stop(control);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Run() failed: %#x\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "GetState() timed out\n");
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetDefaultSinkSource() failed: %#x\n", hr);
 
     IMediaSeeking_Release(seeking);
     IMediaEvent_Release(media_event);
@@ -564,7 +557,7 @@ static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL
                 &IID_IBaseFilter, (void **)&renderer);
     if (hr == VFW_E_NO_AUDIO_HARDWARE)
         return VFW_E_CANNOT_CONNECT;
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     graph = create_graph();
 
@@ -573,13 +566,13 @@ static HRESULT test_graph_builder_connect_file(WCHAR *filename, BOOL audio, BOOL
     IEnumPins_Release(enumpins);
 
     hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &source_filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "AddSourceFilter failed: %#x\n", hr);
 
     hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "AddFilter failed: %#x\n", hr);
 
     hr = IBaseFilter_FindPin(source_filter, L"Output", &pin_out);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "FindPin failed: %#x\n", hr);
     hr = IFilterGraph2_Connect(graph, pin_out, pin_in);
 
     if (SUCCEEDED(hr))
@@ -620,32 +613,32 @@ static void test_render_run(const WCHAR *file, BOOL audio, BOOL video)
         skip("%s: codec not supported; skipping test\n", wine_dbgstr_w(file));
 
         refs = IFilterGraph2_Release(graph);
-        ok(!refs, "Got outsanding refcount %ld.\n", refs);
+        ok(!refs, "Graph has %u references\n", refs);
 
         hr = test_graph_builder_connect_file(filename, audio, video);
-        ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+        ok(hr == VFW_E_CANNOT_CONNECT, "got %#x\n", hr);
     }
     else
     {
         if (audio)
-            ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "Got hr %#lx.\n", hr);
+            ok(hr == S_OK || hr == VFW_S_AUDIO_NOT_RENDERED, "Got hr %#x.\n", hr);
         else
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
         rungraph(graph, video);
 
         refs = IFilterGraph2_Release(graph);
-        ok(!refs, "Got outsanding refcount %ld.\n", refs);
+        ok(!refs, "Graph has %u references\n", refs);
 
         hr = test_graph_builder_connect_file(filename, audio, video);
         if (audio && video)
-            todo_wine ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#lx.\n", hr);
+            todo_wine ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#x.\n", hr);
         else
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
     }
 
     /* check reference leaks */
     h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(h != INVALID_HANDLE_VALUE, "CreateFile failed: err=%ld\n", GetLastError());
+    ok(h != INVALID_HANDLE_VALUE, "CreateFile failed: err=%d\n", GetLastError());
     CloseHandle(h);
 
     DeleteFileW(filename);
@@ -665,74 +658,74 @@ static void test_enum_filters(void)
             &IID_IBaseFilter, (void **)&filter2);
 
     hr = IFilterGraph2_EnumFilters(graph, &enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 0);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     IFilterGraph2_AddFilter(graph, filter1, NULL);
     IFilterGraph2_AddFilter(graph, filter2, NULL);
 
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
-    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 1);
-    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 2);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum1, 1);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
     hr = IEnumFilters_Next(enum1, 1, filters, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %lu.\n", count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
     ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
     hr = IEnumFilters_Next(enum1, 1, filters, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(count == 0, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 0, "Got count %u.\n", count);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(enum1, 2, filters, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(count == 2, "Got count %lu.\n", count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     ok(filters[1] == filter1, "Got filter %p.\n", filters[1]);
     IBaseFilter_Release(filters[0]);
@@ -742,41 +735,41 @@ static void test_enum_filters(void)
     IFilterGraph2_AddFilter(graph, filter1, NULL);
 
     hr = IEnumFilters_Next(enum1, 2, filters, &count);
-    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(enum1, 2, filters, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(count == 2, "Got count %lu.\n", count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got count %u.\n", count);
     ok(filters[0] == filter1, "Got filter %p.\n", filters[0]);
     ok(filters[1] == filter2, "Got filter %p.\n", filters[1]);
     IBaseFilter_Release(filters[0]);
     IBaseFilter_Release(filters[1]);
 
     hr = IEnumFilters_Reset(enum1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Clone(enum1, &enum2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Skip(enum2, 1);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(enum2, 2, filters, &count);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %lu.\n", count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);
     IBaseFilter_Release(filters[0]);
 
     hr = IEnumFilters_Skip(enum1, 3);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     IEnumFilters_Release(enum2);
     IEnumFilters_Release(enum1);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
@@ -786,7 +779,7 @@ static DWORD WINAPI call_RenderFile_multithread(LPVOID lParam)
     HRESULT hr;
 
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     rungraph(graph, TRUE);
 
@@ -1434,7 +1427,7 @@ static HRESULT WINAPI testfilter_Run(IBaseFilter *iface, REFERENCE_TIME start)
 static HRESULT WINAPI testfilter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_STATE *state)
 {
     struct testfilter *filter = impl_from_IBaseFilter(iface);
-    if (winetest_debug > 1) trace("%p->GetState(%lu)\n", filter, timeout);
+    if (winetest_debug > 1) trace("%p->GetState(%u)\n", filter, timeout);
 
     *state = filter->state;
     return filter->GetState_hr;
@@ -1679,7 +1672,7 @@ static HRESULT WINAPI testseek_SetPositions(IMediaSeeking *iface, LONGLONG *curr
     DWORD current_flags, LONGLONG *stop, DWORD stop_flags )
 {
     struct testfilter *filter = impl_from_IMediaSeeking(iface);
-    if (winetest_debug > 1) trace("%p->SetPositions(%s, %#lx, %s, %#lx)\n",
+    if (winetest_debug > 1) trace("%p->SetPositions(%s, %#x, %s, %#x)\n",
             iface, wine_dbgstr_longlong(*current), current_flags, wine_dbgstr_longlong(*stop), stop_flags);
     ok(filter->state != State_Running, "Filter should be paused or stopped while seeking.\n");
     filter->seek_current = *current;
@@ -2093,7 +2086,7 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
@@ -2102,7 +2095,7 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
@@ -2113,7 +2106,7 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &parser.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(parser_pins[1].peer == &sink1_pin.IPin_iface, "Got peer %p.\n", parser_pins[1].peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2125,7 +2118,7 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
@@ -2138,7 +2131,7 @@ static void test_graph_builder_render(void)
 
     parser_pins[1].name[0] = '~';
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!parser_pins[1].peer, "Got peer %p.\n", parser_pins[1].peer);
     ok(!sink1_pin.peer, "Got peer %p.\n", sink1_pin.peer);
@@ -2148,14 +2141,14 @@ static void test_graph_builder_render(void)
     parser_pins[1].name[0] = 0;
     parser_pins[1].id[0] = '~';
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(parser_pins[1].peer == &sink1_pin.IPin_iface, "Got peer %p.\n", parser_pins[1].peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Test enumeration of filters from the registry. */
 
@@ -2183,7 +2176,7 @@ static void test_graph_builder_render(void)
         skip("Not enough permission to register filters.\n");
         goto out;
     }
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     graph = create_graph();
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
@@ -2192,12 +2185,12 @@ static void test_graph_builder_render(void)
     IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink2_pin.IPin_iface || source_pin.peer == &sink1_pin.IPin_iface,
             "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Preference is given to filters already in the graph. */
 
@@ -2206,11 +2199,11 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* No preference is given to renderer filters. */
 
@@ -2225,12 +2218,12 @@ static void test_graph_builder_render(void)
     IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink2_pin.IPin_iface || source_pin.peer == &sink1_pin.IPin_iface,
             "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Preference is given to filters with higher merit. */
 
@@ -2246,11 +2239,11 @@ static void test_graph_builder_render(void)
     IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink2_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     graph = create_graph();
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
@@ -2264,11 +2257,11 @@ static void test_graph_builder_render(void)
     IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Test AM_RENDEREX_RENDERTOEXISTINGRENDERERS. */
 
@@ -2276,16 +2269,16 @@ static void test_graph_builder_render(void)
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_RenderEx(graph, &source_pin.IPin_iface, AM_RENDEREX_RENDERTOEXISTINGRENDERERS, NULL);
-    ok(hr == VFW_E_CANNOT_RENDER, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CANNOT_RENDER, "Got hr %#x.\n", hr);
 
     IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_RenderEx(graph, &source_pin.IPin_iface, AM_RENDEREX_RENDERTOEXISTINGRENDERERS, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
@@ -2294,15 +2287,15 @@ out:
     CoRevokeClassObject(cookie1);
     CoRevokeClassObject(cookie2);
     IFilterMapper2_Release(mapper);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
-    ok(source_pin.ref == 1, "Got outstanding refcount %ld.\n", source_pin.ref);
-    ok(sink1.ref == 1, "Got outstanding refcount %ld.\n", sink1.ref);
-    ok(sink1_pin.ref == 1, "Got outstanding refcount %ld.\n", sink1_pin.ref);
-    ok(sink2.ref == 1, "Got outstanding refcount %ld.\n", sink2.ref);
-    ok(sink2_pin.ref == 1, "Got outstanding refcount %ld.\n", sink2_pin.ref);
-    ok(parser.ref == 1, "Got outstanding refcount %ld.\n", parser.ref);
-    ok(parser_pins[0].ref == 1, "Got outstanding refcount %ld.\n", parser_pins[0].ref);
-    ok(parser_pins[1].ref == 1, "Got outstanding refcount %ld.\n", parser_pins[1].ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+    ok(sink1.ref == 1, "Got outstanding refcount %d.\n", sink1.ref);
+    ok(sink1_pin.ref == 1, "Got outstanding refcount %d.\n", sink1_pin.ref);
+    ok(sink2.ref == 1, "Got outstanding refcount %d.\n", sink2.ref);
+    ok(sink2_pin.ref == 1, "Got outstanding refcount %d.\n", sink2_pin.ref);
+    ok(parser.ref == 1, "Got outstanding refcount %d.\n", parser.ref);
+    ok(parser_pins[0].ref == 1, "Got outstanding refcount %d.\n", parser_pins[0].ref);
+    ok(parser_pins[1].ref == 1, "Got outstanding refcount %d.\n", parser_pins[1].ref);
 }
 
 static void test_graph_builder_connect(void)
@@ -2357,7 +2350,7 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
@@ -2366,7 +2359,7 @@ static void test_graph_builder_connect(void)
             ++source_pin.Connect_hr)
     {
         hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-        ok(hr == source_pin.Connect_hr, "Got hr %#lx for Connect() hr %#lx.\n",
+        ok(hr == source_pin.Connect_hr, "Got hr %#x for Connect() hr %#x.\n",
                 hr, source_pin.Connect_hr);
         ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
         IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2376,7 +2369,7 @@ static void test_graph_builder_connect(void)
 
     sink_pin.accept_mt = &sink_type;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
 
     for (source_pin.Connect_hr = 0x80040200; source_pin.Connect_hr <= 0x800402ff;
@@ -2385,10 +2378,10 @@ static void test_graph_builder_connect(void)
         hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
         if (source_pin.Connect_hr == VFW_E_NOT_CONNECTED
                 || source_pin.Connect_hr == VFW_E_NO_AUDIO_HARDWARE)
-            ok(hr == source_pin.Connect_hr, "Got hr %#lx for Connect() hr %#lx.\n",
+            ok(hr == source_pin.Connect_hr, "Got hr %#x for Connect() hr %#x.\n",
                     hr, source_pin.Connect_hr);
         else
-            ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx for Connect() hr %#lx.\n",
+            ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x for Connect() hr %#x.\n",
                     hr, source_pin.Connect_hr);
         ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
         ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
@@ -2399,7 +2392,7 @@ static void test_graph_builder_connect(void)
             ++source_pin.EnumMediaTypes_hr)
     {
         hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-        ok(hr == source_pin.EnumMediaTypes_hr, "Got hr %#lx for EnumMediaTypes() hr %#lx.\n",
+        ok(hr == source_pin.EnumMediaTypes_hr, "Got hr %#x for EnumMediaTypes() hr %#x.\n",
                 hr, source_pin.EnumMediaTypes_hr);
         ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
         ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
@@ -2414,14 +2407,14 @@ static void test_graph_builder_connect(void)
 
     sink_pin.accept_mt = NULL;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
 
     sink_pin.accept_mt = &sink_type;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2433,7 +2426,7 @@ static void test_graph_builder_connect(void)
             ++source_pin.Connect_hr)
     {
         hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-        ok(hr == S_OK, "Got hr %#lx for Connect() hr %#lx.\n", hr, source_pin.Connect_hr);
+        ok(hr == S_OK, "Got hr %#x for Connect() hr %#x.\n", hr, source_pin.Connect_hr);
         ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
         ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
         IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2447,7 +2440,7 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2459,7 +2452,7 @@ static void test_graph_builder_connect(void)
 
     IFilterGraph2_AddFilter(graph, &parser3.IBaseFilter_iface, NULL);
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser3_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(parser3_pins[1].peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", parser3_pins[1].peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
@@ -2481,7 +2474,8 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_AddFilter(graph, &sink2.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    todo_wine ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#lx.\n", hr);
+todo_wine
+    ok(hr == VFW_S_PARTIAL_RENDER, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     ok(!parser1_pins[2].peer, "Got peer %p.\n", parser1_pins[2].peer);
@@ -2495,7 +2489,7 @@ static void test_graph_builder_connect(void)
 
     parser1_pins[1].QueryInternalConnections_hr = S_OK;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2508,12 +2502,12 @@ static void test_graph_builder_connect(void)
 
     parser1_pins[1].name[0] = '~';
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
 
     parser1.pin_count = 3;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[2].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2525,7 +2519,7 @@ static void test_graph_builder_connect(void)
     parser1_pins[1].name[0] = 0;
     parser1_pins[1].id[0] = '~';
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
@@ -2534,15 +2528,15 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
 
     hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
 
     parser1_pins[0].QueryInternalConnections_hr = S_OK;
     hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     parser1_pins[0].QueryInternalConnections_hr = E_NOTIMPL;
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* The graph connects from source to sink, not from sink to source. */
 
@@ -2554,7 +2548,7 @@ static void test_graph_builder_connect(void)
     parser1_pins[0].require_connected_pin = &parser1_pins[1];
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
@@ -2562,14 +2556,14 @@ static void test_graph_builder_connect(void)
     parser1_pins[1].require_connected_pin = &parser1_pins[0];
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     parser1_pins[1].require_connected_pin = NULL;
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Test enumeration of filters from the registry. */
 
@@ -2605,19 +2599,19 @@ static void test_graph_builder_connect(void)
         skip("Not enough permission to register filters.\n");
         goto out;
     }
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface
             || source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface
             || sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Preference is given to filters already in the graph. */
 
@@ -2627,12 +2621,12 @@ static void test_graph_builder_connect(void)
     IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     /* Preference is given to filters with higher merit. */
 
@@ -2649,12 +2643,12 @@ static void test_graph_builder_connect(void)
     IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     graph = create_graph();
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
@@ -2669,7 +2663,7 @@ static void test_graph_builder_connect(void)
     IFilterMapper2_RegisterFilter(mapper, &parser2_clsid, L"test", NULL, NULL, NULL, &regfilter);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
@@ -2681,21 +2675,21 @@ out:
     CoRevokeClassObject(cookie2);
     IFilterMapper2_Release(mapper);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
-    ok(source_pin.ref == 1, "Got outstanding refcount %ld.\n", source_pin.ref);
-    ok(sink.ref == 1, "Got outstanding refcount %ld.\n", sink.ref);
-    ok(sink_pin.ref == 1, "Got outstanding refcount %ld.\n", sink_pin.ref);
-    ok(parser1.ref == 1, "Got outstanding refcount %ld.\n", parser1.ref);
-    ok(parser1_pins[0].ref == 1, "Got outstanding refcount %ld.\n", parser1_pins[0].ref);
-    ok(parser1_pins[1].ref == 1, "Got outstanding refcount %ld.\n", parser1_pins[1].ref);
-    ok(parser1_pins[2].ref == 1, "Got outstanding refcount %ld.\n", parser1_pins[2].ref);
-    ok(parser2.ref == 1, "Got outstanding refcount %ld.\n", parser2.ref);
-    ok(parser2_pins[0].ref == 1, "Got outstanding refcount %ld.\n", parser2_pins[0].ref);
-    ok(parser2_pins[1].ref == 1, "Got outstanding refcount %ld.\n", parser2_pins[1].ref);
-    ok(parser3.ref == 1, "Got outstanding refcount %ld.\n", parser3.ref);
-    ok(parser3_pins[0].ref == 1, "Got outstanding refcount %ld.\n", parser3_pins[0].ref);
-    ok(parser3_pins[1].ref == 1, "Got outstanding refcount %ld.\n", parser3_pins[1].ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+    ok(sink.ref == 1, "Got outstanding refcount %d.\n", sink.ref);
+    ok(sink_pin.ref == 1, "Got outstanding refcount %d.\n", sink_pin.ref);
+    ok(parser1.ref == 1, "Got outstanding refcount %d.\n", parser1.ref);
+    ok(parser1_pins[0].ref == 1, "Got outstanding refcount %d.\n", parser1_pins[0].ref);
+    ok(parser1_pins[1].ref == 1, "Got outstanding refcount %d.\n", parser1_pins[1].ref);
+    ok(parser1_pins[2].ref == 1, "Got outstanding refcount %d.\n", parser1_pins[2].ref);
+    ok(parser2.ref == 1, "Got outstanding refcount %d.\n", parser2.ref);
+    ok(parser2_pins[0].ref == 1, "Got outstanding refcount %d.\n", parser2_pins[0].ref);
+    ok(parser2_pins[1].ref == 1, "Got outstanding refcount %d.\n", parser2_pins[1].ref);
+    ok(parser3.ref == 1, "Got outstanding refcount %d.\n", parser3.ref);
+    ok(parser3_pins[0].ref == 1, "Got outstanding refcount %d.\n", parser3_pins[0].ref);
+    ok(parser3_pins[1].ref == 1, "Got outstanding refcount %d.\n", parser3_pins[1].ref);
 }
 
 static const GUID test_iid = {0x33333333};
@@ -2744,77 +2738,77 @@ static void test_aggregation(void)
     graph = (IFilterGraph2 *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_FilterGraph, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!graph, "Got interface %p.\n", graph);
 
     hr = CoCreateInstance(&CLSID_FilterGraph, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
     ref = IUnknown_AddRef(unk);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
     ref = IUnknown_Release(unk);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
     hr = IUnknown_QueryInterface(unk, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == unk, "Got unexpected IUnknown %p.\n", unk2);
     IUnknown_Release(unk2);
 
     hr = IUnknown_QueryInterface(unk, &IID_IFilterGraph2, (void **)&graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IUnknown, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IFilterGraph2, (void **)&graph2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(graph2 == (IFilterGraph2 *)0xdeadbeef, "Got unexpected IFilterGraph2 %p.\n", graph2);
 
     hr = IUnknown_QueryInterface(unk, &test_iid, (void **)&unk2);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!unk2, "Got unexpected IUnknown %p.\n", unk2);
 
     hr = IFilterGraph2_QueryInterface(graph, &test_iid, (void **)&unk2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(unk2 == (IUnknown *)0xdeadbeef, "Got unexpected IUnknown %p.\n", unk2);
 
     IFilterGraph2_Release(graph);
     ref = IUnknown_Release(unk);
-    ok(!ref, "Got unexpected refcount %ld.\n", ref);
-    ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 
     /* Test the aggregated filter mapper. */
 
     graph = create_graph();
 
     ref = get_refcount(graph);
-    ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IFilterMapper2, (void **)&mapper);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = get_refcount(graph);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(mapper);
-    ok(ref == 2, "Got unexpected refcount %ld.\n", ref);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
 
     hr = IFilterMapper2_QueryInterface(mapper, &IID_IFilterGraph2, (void **)&graph2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(graph2 == graph, "Got unexpected IFilterGraph2 %p.\n", graph2);
     IFilterGraph2_Release(graph2);
 
     IFilterMapper2_Release(mapper);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got unexpected refcount %ld.\n", ref);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
 }
 
 /* Test how methods from "control" interfaces (IBasicAudio, IBasicVideo,
@@ -2827,123 +2821,123 @@ static void test_control_delegation(void)
     IVideoWindow *window;
     IBasicVideo2 *video;
     ITypeInfo *typeinfo;
-    unsigned int count;
     TYPEATTR *typeattr;
+    ULONG count;
     HRESULT hr;
     LONG val;
 
     /* IBasicAudio */
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicAudio, (void **)&audio);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IBasicAudio_GetTypeInfoCount(audio, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
 
     hr = IBasicAudio_put_Volume(audio, -10);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Volume(audio, &val);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_put_Balance(audio, 10);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Balance(audio, &val);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
 
     hr = CoCreateInstance(&CLSID_DSoundRender, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
     if (hr != VFW_E_NO_AUDIO_HARDWARE)
     {
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "got %#x\n", hr);
 
         hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "got %#x\n", hr);
 
         hr = IBasicAudio_put_Volume(audio, -10);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "got %#x\n", hr);
         hr = IBasicAudio_get_Volume(audio, &val);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(val == -10, "got %ld\n", val);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(val == -10, "got %d\n", val);
         hr = IBasicAudio_put_Balance(audio, 10);
-        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "got %#x\n", hr);
         hr = IBasicAudio_get_Balance(audio, &val);
-        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK || hr == VFW_E_MONO_AUDIO_HW, "got %#x\n", hr);
         if (hr == S_OK)
-            ok(val == 10, "got balance %ld\n", val);
+            ok(val == 10, "got balance %d\n", val);
 
         hr = IBaseFilter_QueryInterface(renderer, &IID_IBasicAudio, (void **)&filter_audio);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "got %#x\n", hr);
 
         hr = IBasicAudio_get_Volume(filter_audio, &val);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(val == -10, "got volume %ld\n", val);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(val == -10, "got volume %d\n", val);
 
         hr = IFilterGraph2_RemoveFilter(graph, renderer);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "got %#x\n", hr);
 
         IBaseFilter_Release(renderer);
         IBasicAudio_Release(filter_audio);
     }
 
     hr = IBasicAudio_put_Volume(audio, -10);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Volume(audio, &val);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_put_Balance(audio, 10);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
     hr = IBasicAudio_get_Balance(audio, &val);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "got %#x\n", hr);
 
     IBasicAudio_Release(audio);
 
     /* IBasicVideo and IVideoWindow */
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IBasicVideo2, (void **)&video);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     /* Unlike IBasicAudio, these return E_NOINTERFACE. */
     hr = IBasicVideo2_get_BitRate(video, &val);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = IBasicVideo2_GetTypeInfoCount(video, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
 
     hr = IBasicVideo2_GetTypeInfo(video, 0, 0, &typeinfo);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
     ok(IsEqualGUID(&typeattr->guid, &IID_IBasicVideo), "Got IID %s.\n", wine_dbgstr_guid(&typeattr->guid));
     ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
     ITypeInfo_Release(typeinfo);
 
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = IVideoWindow_GetTypeInfoCount(window, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count == 1, "Got count %u.\n", count);
 
     hr = CoCreateInstance(&CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&renderer);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IFilterGraph2_AddFilter(graph, renderer, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IBasicVideo2_get_BitRate(video, &val);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "got %#x\n", hr);
 
     hr = IFilterGraph2_RemoveFilter(graph, renderer);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IBasicVideo2_get_BitRate(video, &val);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
-    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     IBaseFilter_Release(renderer);
     IBasicVideo2_Release(video);
@@ -2958,52 +2952,51 @@ static void test_add_remove_filter(void)
     IFilterGraph2 *graph = create_graph();
     IBaseFilter *ret_filter;
     HRESULT hr;
-    LONG ref;
 
     testfilter_init(&filter, NULL, 0);
 
     hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     ok(!ret_filter, "Got filter %p.\n", ret_filter);
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, L"testid");
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
     ok(!wcscmp(filter.name, L"testid"), "Got name %s.\n", wine_dbgstr_w(filter.name));
 
     hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
     IBaseFilter_Release(ret_filter);
 
     hr = IFilterGraph2_RemoveFilter(graph, &filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!filter.graph, "Got graph %p.\n", filter.graph);
     ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
     ok(!filter.clock, "Got clock %p,\n", filter.clock);
-    ok(filter.ref == 1, "Got outstanding refcount %ld.\n", filter.ref);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 
     hr = IFilterGraph2_FindFilterByName(graph, L"testid", &ret_filter);
-    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     ok(!ret_filter, "Got filter %p.\n", ret_filter);
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter.graph == (IFilterGraph *)graph, "Got graph %p.\n", filter.graph);
     ok(!wcscmp(filter.name, L"0001"), "Got name %s.\n", wine_dbgstr_w(filter.name));
 
     hr = IFilterGraph2_FindFilterByName(graph, L"0001", &ret_filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_filter == &filter.IBaseFilter_iface, "Got filter %p.\n", ret_filter);
     IBaseFilter_Release(ret_filter);
 
     /* test releasing the filter graph while filters are still connected */
-    ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    hr = IFilterGraph2_Release(graph);
+    ok(!hr, "Got outstanding refcount %d.\n", hr);
     ok(!filter.graph, "Got graph %p.\n", filter.graph);
     ok(!filter.name, "Got name %s.\n", wine_dbgstr_w(filter.name));
     ok(!filter.clock, "Got clock %p.\n", filter.clock);
-    ok(filter.ref == 1, "Got outstanding refcount %ld.\n", filter.ref);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 }
 
 static HRESULT WINAPI test_connect_direct_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
@@ -3053,7 +3046,6 @@ static void test_connect_direct(void)
     IMediaControl *control;
     AM_MEDIA_TYPE mt;
     HRESULT hr;
-    ULONG ref;
 
     test_connect_direct_init(&source_pin, PINDIR_OUTPUT);
     testfilter_init(&source, &source_pin, 1);
@@ -3067,75 +3059,83 @@ static void test_connect_direct(void)
     testfilter_init(&parser2, parser2_pins, 2);
 
     hr = IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* The filter graph does not prevent connection while it is running; only
      * individual filters do. */
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     /* Swap the pins when connecting. */
     hr = IFilterGraph2_ConnectDirect(graph, &sink_pin.IPin_iface, &source_pin.IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
     ok(!sink_pin.mt, "Got mt %p.\n", sink_pin.mt);
-    todo_wine ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+todo_wine
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Connect(graph, &sink_pin.IPin_iface, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
     ok(!sink_pin.mt, "Got mt %p.\n", sink_pin.mt);
-    todo_wine ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+todo_wine
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+todo_wine
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+todo_wine
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     /* Disconnect() does not disconnect the peer. */
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
@@ -3144,146 +3144,146 @@ static void test_connect_direct(void)
     IPin_AddRef(sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     /* Test specifying the media type. */
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(source_pin.mt == &mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test Reconnect[Ex](). */
 
     hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     sink_pin.peer = &source_pin.IPin_iface;
     IPin_AddRef(sink_pin.peer);
     hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ReconnectEx(graph, &source_pin.IPin_iface, NULL);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ReconnectEx(graph, &sink_pin.IPin_iface, NULL);
-    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ReconnectEx(graph, &source_pin.IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ReconnectEx(graph, &source_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(source_pin.mt == &mt, "Got mt %p.\n", source_pin.mt);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
     hr = IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* ConnectDirect() protects against cyclical connections. */
     hr = IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_AddFilter(graph, &parser2.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
-    ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser2_pins[0].IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ConnectDirect(graph, &parser2_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
-    todo_wine ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_CIRCULAR_GRAPH, "Got hr %#x.\n", hr);
     IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
     IFilterGraph2_Disconnect(graph, &parser2_pins[0].IPin_iface);
 
     parser1_pins[0].QueryInternalConnections_hr = S_OK;
     hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!parser1_pins[0].peer, "Got peer %p.\n", parser1_pins[0].peer);
     todo_wine ok(parser1_pins[1].peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", parser1_pins[1].peer);
     IFilterGraph2_Disconnect(graph, &parser1_pins[0].IPin_iface);
     IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
 
     hr = IFilterGraph2_ConnectDirect(graph, &parser1_pins[1].IPin_iface, &parser2_pins[0].IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ConnectDirect(graph, &parser2_pins[1].IPin_iface, &parser1_pins[0].IPin_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IFilterGraph2_Disconnect(graph, &parser1_pins[1].IPin_iface);
     IFilterGraph2_Disconnect(graph, &parser2_pins[0].IPin_iface);
 
     hr = IFilterGraph2_RemoveFilter(graph, &parser1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_RemoveFilter(graph, &parser2.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Both pins are disconnected when a filter is removed. */
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     sink_pin.peer = &source_pin.IPin_iface;
     IPin_AddRef(sink_pin.peer);
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
     /* If the filter cannot be disconnected, then RemoveFilter() fails. */
 
     hr = IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     sink_pin.peer = &source_pin.IPin_iface;
     IPin_AddRef(sink_pin.peer);
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     source_pin.require_stopped_disconnect = TRUE;
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
-    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
@@ -3292,19 +3292,20 @@ static void test_connect_direct(void)
     source_pin.require_stopped_disconnect = FALSE;
     sink_pin.require_stopped_disconnect = TRUE;
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
-    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     /* Filters are stopped, and pins disconnected, when the graph is destroyed. */
 
     IMediaControl_Release(control);
-    ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
-    ok(sink.ref == 1, "Got outstanding refcount %ld.\n", sink.ref);
-    ok(source_pin.ref == 1, "Got outstanding refcount %ld.\n", source_pin.ref);
-    todo_wine ok(sink_pin.ref == 1, "Got outstanding refcount %ld.\n", sink_pin.ref);
+    hr = IFilterGraph2_Release(graph);
+    ok(!hr, "Got outstanding refcount %d.\n", hr);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(sink.ref == 1, "Got outstanding refcount %d.\n", sink.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+todo_wine
+    ok(sink_pin.ref == 1, "Got outstanding refcount %d.\n", sink_pin.ref);
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 }
@@ -3334,30 +3335,31 @@ static void test_sync_source(void)
             &IID_IReferenceClock, (void **)&systemclock);
 
     hr = IMediaFilter_SetSyncSource(filter, systemclock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter1.clock == systemclock, "Got clock %p.\n", filter1.clock);
     ok(filter2.clock == systemclock, "Got clock %p.\n", filter2.clock);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(clock == systemclock, "Got clock %p.\n", clock);
     IReferenceClock_Release(clock);
 
     hr = IMediaFilter_SetSyncSource(filter, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!filter1.clock, "Got clock %p.\n", filter1.clock);
     ok(!filter2.clock, "Got clock %p.\n", filter2.clock);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+todo_wine
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(!clock, "Got clock %p.\n", clock);
 
     IReferenceClock_Release(systemclock);
     IMediaFilter_Release(filter);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld\n", ref);
-    ok(filter1.ref == 1, "Got outstanding refcount %ld.\n", filter1.ref);
-    ok(filter2.ref == 1, "Got outstanding refcount %ld.\n", filter2.ref);
+    ok(!ref, "Got outstanding refcount %d\n", ref);
+    ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
+    ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
 }
 
 #define check_filter_state(a, b) check_filter_state_(__LINE__, a, b)
@@ -3373,13 +3375,13 @@ static void check_filter_state_(unsigned int line, IFilterGraph2 *graph, FILTER_
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&mediafilter);
     hr = IMediaFilter_GetState(mediafilter, 1000, &state);
-    ok_(__FILE__, line)(hr == S_OK, "IMediaFilter_GetState() returned %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "IMediaFilter_GetState() returned %#x.\n", hr);
     ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
     IMediaFilter_Release(mediafilter);
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     hr = IMediaControl_GetState(control, 1000, &oastate);
-    ok_(__FILE__, line)(hr == S_OK, "IMediaControl_GetState() returned %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "IMediaControl_GetState() returned %#x.\n", hr);
     ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
     IMediaControl_Release(control);
 
@@ -3387,7 +3389,7 @@ static void check_filter_state_(unsigned int line, IFilterGraph2 *graph, FILTER_
     while (IEnumFilters_Next(filterenum, 1, &filter, NULL) == S_OK)
     {
         hr = IBaseFilter_GetState(filter, 1000, &state);
-        ok_(__FILE__, line)(hr == S_OK, "IBaseFilter_GetState() returned %#lx.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "IBaseFilter_GetState() returned %#x.\n", hr);
         ok_(__FILE__, line)(state == expect, "Expected state %u, got %u.\n", expect, state);
         IBaseFilter_Release(filter);
     }
@@ -3431,21 +3433,21 @@ static void test_filter_state(void)
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     /* Pausing sets the default sync source, if it's not already set. */
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!!clock, "Reference clock not set.\n");
     ok(source.clock == clock, "Expected %p, got %p.\n", clock, source.clock);
     ok(sink.clock == clock, "Expected %p, got %p.\n", clock, sink.clock);
 
     hr = IReferenceClock_GetTime(clock, &start_time);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3455,84 +3457,84 @@ static void test_filter_state(void)
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     sink.state = State_Stopped;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state = State_Running;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state = State_Paused;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 
     sink.state = State_Stopped;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     sink.state = State_Paused;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     sink.state = State_Running;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     sink.state = State_Running;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     sink.state = State_Paused;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     sink.state = State_Stopped;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaControl_StopWhenReady(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 
     hr = IMediaControl_StopWhenReady(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     hr = IMediaControl_StopWhenReady(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     IReferenceClock_Release(clock);
@@ -3555,44 +3557,44 @@ static void test_filter_state(void)
     IPin_Connect(&source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
 
     hr = IMediaFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!!clock, "Reference clock not set.\n");
     ok(source.clock == clock, "Expected %p, got %p.\n", clock, source.clock);
     ok(sink.clock == clock, "Expected %p, got %p.\n", clock, sink.clock);
 
     hr = IMediaFilter_Run(filter, 0xdeadbeef);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == 0xdeadbeef, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_Run(filter, 0xdeadf00d);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     ok(source.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == 0xdeadf00d, "Got time %s.\n", wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     hr = IMediaFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     source.expect_run_prev = sink.expect_run_prev = State_Stopped;
     hr = IReferenceClock_GetTime(clock, &start_time);
-    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
     hr = IMediaFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3603,12 +3605,12 @@ static void test_filter_state(void)
 
     Sleep(600);
     hr = IMediaFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
 
     source.expect_run_prev = sink.expect_run_prev = State_Paused;
     hr = IMediaFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3618,13 +3620,13 @@ static void test_filter_state(void)
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Pause(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
     Sleep(600);
 
     start_time += 550 * 10000;
     hr = IMediaFilter_Run(filter, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(source.start_time >= start_time && source.start_time < start_time + 500 * 10000,
@@ -3634,7 +3636,7 @@ static void test_filter_state(void)
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     /* Test removing the sync source. */
@@ -3643,15 +3645,16 @@ static void test_filter_state(void)
     IMediaFilter_SetSyncSource(filter, NULL);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-    todo_wine ok(source.start_time > 0 && source.start_time < 500 * 10000,
-            "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
+todo_wine
+    ok(source.start_time > 0 && source.start_time < 500 * 10000,
+        "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
     ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
         wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     /* Test asynchronous state change. */
@@ -3659,30 +3662,30 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Stop(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     /* Renderers are expected to block completing a state change into paused
      * until they receive a sample. Because the graph can transition from
@@ -3698,11 +3701,11 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
     ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
     ok(source.state == State_Paused, "Got state %u.\n", source.state);
 
@@ -3711,14 +3714,14 @@ static void test_filter_state(void)
     time = 0;
     hr = IMediaSeeking_SetPositions(seeking, &time, AM_SEEKING_AbsolutePositioning,
             NULL, AM_SEEKING_NoPositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
     ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
     ok(source.state == State_Paused, "Got state %u.\n", source.state);
 
@@ -3726,13 +3729,13 @@ static void test_filter_state(void)
 
     while ((hr = IMediaControl_GetState(control, INFINITE, &state)) == VFW_S_STATE_INTERMEDIATE)
     {
-        ok(state == State_Running, "Got state %lu.\n", state);
+        ok(state == State_Running, "Got state %u.\n", state);
         ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
         ok(source.state == State_Paused, "Got state %u.\n", source.state);
         Sleep(10);
     }
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
     ok(sink.state == State_Running, "Got state %u.\n", sink.state);
     ok(source.state == State_Running, "Got state %u.\n", source.state);
 
@@ -3744,21 +3747,21 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Stop(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
 
     /* Try an asynchronous stopped->paused->running transition, but pause or
      * stop the graph before our filter is completely paused. */
@@ -3766,35 +3769,35 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
     ok(sink.state == State_Paused, "Got state %u.\n", sink.state);
     ok(source.state == State_Paused, "Got state %u.\n", source.state);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(state == State_Stopped, "Got state %lu.\n", state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
 
@@ -3803,13 +3806,13 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     graph = create_graph();
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
@@ -3825,23 +3828,23 @@ static void test_filter_state(void)
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaFilter_Run(filter, 0);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaFilter_GetState(filter, 0, &mf_state);
-    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ok(mf_state == State_Running, "Got state %u.\n", mf_state);
     ok(sink.state == State_Running, "Got state %u.\n", sink.state);
     ok(source.state == State_Running, "Got state %u.\n", source.state);
 
     sink.state_hr = sink.GetState_hr = S_OK;
     hr = IMediaFilter_GetState(filter, 0, &mf_state);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(mf_state == State_Running, "Got state %u.\n", mf_state);
     ok(sink.state == State_Running, "Got state %u.\n", sink.state);
     ok(source.state == State_Running, "Got state %u.\n", source.state);
 
     hr = IMediaFilter_Stop(filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
 
@@ -3851,79 +3854,79 @@ static void test_filter_state(void)
 
     sink.GetState_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     source.GetState_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.GetState_hr = VFW_S_CANT_CUE;
     source.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
-    ok(state == State_Paused, "Got state %lu.\n", state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     sink.GetState_hr = source.GetState_hr = S_OK;
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     sink.state_hr = S_FALSE;
     sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
     source.GetState_hr = VFW_S_CANT_CUE;
     hr = IMediaControl_Run(control);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(sink.state == State_Running, "Got state %u.\n", sink.state);
     ok(source.state == State_Running, "Got state %u.\n", source.state);
 
     hr = IMediaControl_GetState(control, 0, &state);
-    ok(hr == VFW_S_CANT_CUE, "Got hr %#lx.\n", hr);
-    ok(state == State_Running, "Got state %lu.\n", state);
+    ok(hr == VFW_S_CANT_CUE, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
     ok(sink.state == State_Running, "Got state %u.\n", sink.state);
     ok(source.state == State_Running, "Got state %u.\n", source.state);
 
     sink.state_hr = sink.GetState_hr = source.GetState_hr = S_OK;
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Add and remove a filter while the graph is running. */
 
     hr = IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, L"dummy");
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(dummy.state == State_Stopped, "Got state %#x.\n", dummy.state);
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Paused);
     ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
 
     hr = IFilterGraph2_RemoveFilter(graph, &dummy.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
 
     hr = IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, L"dummy");
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
     hr = IFilterGraph2_RemoveFilter(graph, &dummy.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(dummy.state == State_Stopped, "Got state %#x.\n", dummy.state);
 
     /* Destroying the graph while it's running stops all filters. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
 
     source.expect_stop_prev = sink.expect_stop_prev = State_Running;
@@ -3931,11 +3934,11 @@ static void test_filter_state(void)
     IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
-    ok(sink.ref == 1, "Got outstanding refcount %ld.\n", sink.ref);
-    ok(source_pin.ref == 1, "Got outstanding refcount %ld.\n", source_pin.ref);
-    ok(sink_pin.ref == 1, "Got outstanding refcount %ld.\n", sink_pin.ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(sink.ref == 1, "Got outstanding refcount %d.\n", sink.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
+    ok(sink_pin.ref == 1, "Got outstanding refcount %d.\n", sink_pin.ref);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
 }
@@ -3958,22 +3961,22 @@ static HRESULT check_ec_complete(IFilterGraph2 *graph, IBaseFilter *filter)
     IMediaControl_Run(control);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ret_hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
     if (ret_hr == S_OK)
     {
-        ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
-        ok(param1 == S_OK, "Got param1 %#Ix.\n", param1);
-        ok(!param2, "Got param2 %#Ix.\n", param2);
+        ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+        ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+        ok(!param2, "Got param2 %#lx.\n", param2);
         hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-        ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+        ok(hr == E_ABORT, "Got hr %#x.\n", hr);
     }
 
     IMediaControl_Stop(control);
@@ -3994,8 +3997,8 @@ static void test_ec_complete(void)
     LONG_PTR param1, param2;
     IMediaControl *control;
     IMediaEvent *eventsrc;
-    LONG code, ref;
     HRESULT hr;
+    LONG code;
 
     testsink_init(&filter1_pin);
     testsink_init(&filter2_pin);
@@ -4028,33 +4031,33 @@ static void test_ec_complete(void)
         ok(code != EC_COMPLETE, "Got unexpected EC_COMPLETE.\n");
         IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
     }
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
-    ok(param1 == S_OK, "Got param1 %#Ix.\n", param1);
-    ok(!param2, "Got param2 %#Ix.\n", param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(!param2, "Got param2 %#lx.\n", param2);
     hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter3.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IMediaControl_Stop(control);
 
@@ -4063,42 +4066,42 @@ static void test_ec_complete(void)
     IMediaControl_Run(control);
 
     hr = IMediaEvent_CancelDefaultHandling(eventsrc, EC_COMPLETE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
-    ok(param1 == S_OK, "Got param1 %#Ix.\n", param1);
-    ok(param2 == (LONG_PTR)&filter1.IBaseFilter_iface, "Got param2 %#Ix.\n", param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(param2 == (LONG_PTR)&filter1.IBaseFilter_iface, "Got param2 %#lx.\n", param2);
     hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter3.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(code == EC_COMPLETE, "Got code %#lx.\n", code);
-    ok(param1 == S_OK, "Got param1 %#Ix.\n", param1);
-    ok(param2 == (LONG_PTR)&filter3.IBaseFilter_iface, "Got param2 %#Ix.\n", param2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(code == EC_COMPLETE, "Got code %#x.\n", code);
+    ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+    ok(param2 == (LONG_PTR)&filter3.IBaseFilter_iface, "Got param2 %#lx.\n", param2);
     hr = IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IMediaControl_Stop(control);
     hr = IMediaEvent_RestoreDefaultHandling(eventsrc, EC_COMPLETE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* A filter counts as a renderer if it (1) exposes IAMFilterMiscFlags and
      * reports itself as a renderer, or (2) exposes IMediaSeeking or
@@ -4112,7 +4115,7 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
     filter1_pin.dir = PINDIR_INPUT;
@@ -4121,37 +4124,37 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
-    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
 
     filter1_pin.dir = PINDIR_OUTPUT;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
-    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
 
     filter1_pin.dir = PINDIR_INPUT;
     filter1.support_media_time = FALSE;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
-    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
     filter1.IMediaPosition_iface.lpVtbl = &testpos_vtbl;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
@@ -4163,7 +4166,7 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
@@ -4171,16 +4174,16 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(control);
     IMediaEvent_Release(eventsrc);
     IMediaEventSink_Release(eventsink);
-    ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(filter1.ref == 1, "Got outstanding refcount %ld.\n", filter1.ref);
-    ok(filter2.ref == 1, "Got outstanding refcount %ld.\n", filter2.ref);
-    ok(filter3.ref == 1, "Got outstanding refcount %ld.\n", filter3.ref);
+    hr = IFilterGraph2_Release(graph);
+    ok(!hr, "Got outstanding refcount %d.\n", hr);
+    ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
+    ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
+    ok(filter3.ref == 1, "Got outstanding refcount %d.\n", filter3.ref);
 }
 
 static void test_renderfile_failure(void)
@@ -4202,28 +4205,28 @@ static void test_renderfile_failure(void)
     graph = create_graph();
     testfilter_init(&testfilter, NULL, 0);
     hr = IFilterGraph2_AddFilter(graph, &testfilter.IBaseFilter_iface, L"dummy");
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filename = create_file(L"test.nonsense", bogus_data, sizeof(bogus_data));
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
-    todo_wine ok(hr == VFW_E_UNSUPPORTED_STREAM, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == VFW_E_UNSUPPORTED_STREAM, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_EnumFilters(graph, &filterenum);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
 
     hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     IEnumFilters_Release(filterenum);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %lu.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
 /* Remove and re-add the filter, to flush the graph's internal
@@ -4284,156 +4287,156 @@ static void test_graph_seeking(void)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&eventsink);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!caps, "Got caps %#lx.\n", caps);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!caps, "Got caps %#x.\n", caps);
 
     caps = 0;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(!caps, "Got caps %#lx.\n", caps);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(!caps, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanSeekAbsolute;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    todo_wine ok(!caps, "Got caps %#lx.\n", caps);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    todo_wine ok(!caps, "Got caps %#x.\n", caps);
 
     hr = IMediaSeeking_IsFormatSupported(seeking, NULL);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(all_formats); ++i)
     {
         hr = IMediaSeeking_IsFormatSupported(seeking, all_formats[i]);
-        todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx for format %s.\n", hr, wine_dbgstr_guid(all_formats[i]));
+        todo_wine ok(hr == E_NOTIMPL, "Got hr %#x for format %s.\n", hr, wine_dbgstr_guid(all_formats[i]));
     }
 
     hr = IMediaSeeking_QueryPreferredFormat(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_GetTimeFormat(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_NONE);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_NONE);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(unsupported_formats); ++i)
     {
         hr = IMediaSeeking_SetTimeFormat(seeking, unsupported_formats[i]);
-        todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx for format %s.\n", hr, wine_dbgstr_guid(unsupported_formats[i]));
+        todo_wine ok(hr == E_NOTIMPL, "Got hr %#x for format %s.\n", hr, wine_dbgstr_guid(unsupported_formats[i]));
     }
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_NONE, 0x123456789a, &TIME_FORMAT_MEDIA_TIME);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_NONE, 0x123456789a, NULL);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_MEDIA_TIME, 0x123456789a, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, NULL, 0x123456789a, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &TIME_FORMAT_NONE, 0x123456789a, &TIME_FORMAT_NONE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &testguid, 0x123456789a, &testguid);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_GetDuration(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetStopPosition(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetPositions(seeking, &current, 0, &stop, 0);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetPositions(seeking, NULL, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetPositions(seeking, NULL, &stop);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     current = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     current = 0xdeadbeef;
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_GetAvailable(seeking, &earliest, &latest);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetRate(seeking, 1.0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_SetRate(seeking, 2.0);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetRate(seeking, &rate);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(rate == 1.0, "Got rate %.16e.\n", rate);
 
     hr = IMediaSeeking_GetPreroll(seeking, &time);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     /* Try with filters added. Note that a filter need only expose
      * IMediaSeeking—no other heuristics are used to determine if it is a
@@ -4445,10 +4448,10 @@ static void test_graph_seeking(void)
     filter1.support_testguid = TRUE;
 
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
     filter1.support_media_time = TRUE;
@@ -4462,91 +4465,91 @@ static void test_graph_seeking(void)
     filter1.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     filter2.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration;
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#lx.\n", caps);
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     flush_cached_seeking(graph, &filter1);
     flush_cached_seeking(graph, &filter2);
 
     caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
-    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#lx.\n", caps);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanDoSegments;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#lx.\n", caps);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
 
     caps = AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
-    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
-    ok(!caps, "Got caps %#lx.\n", caps);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    ok(!caps, "Got caps %#x.\n", caps);
 
     flush_cached_seeking(graph, &filter1);
     flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_IsFormatSupported(seeking, &testguid);
-    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     filter1.support_testguid = TRUE;
     hr = IMediaSeeking_IsFormatSupported(seeking, &testguid);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.support_testguid = FALSE;
     filter2.support_testguid = TRUE;
     hr = IMediaSeeking_IsFormatSupported(seeking, &testguid);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Filters are not consulted about preferred formats. */
     hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     filter2.support_testguid = FALSE;
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     filter1.support_testguid = TRUE;
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(IsEqualGUID(&filter1.time_format, &testguid), "Got format %s.\n",
             debugstr_guid(&filter1.time_format));
     ok(IsEqualGUID(&filter2.time_format, &TIME_FORMAT_MEDIA_TIME),
             "Got format %s.\n", debugstr_guid(&filter2.time_format));
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(IsEqualGUID(&format, &testguid), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_QueryPreferredFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &testguid);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#lx.\n", caps);
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     filter2.support_testguid = TRUE;
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&filter1.time_format, &TIME_FORMAT_MEDIA_TIME),
             "Got format %s.\n", debugstr_guid(&filter1.time_format));
     todo_wine ok(IsEqualGUID(&filter2.time_format, &testguid),
@@ -4556,43 +4559,43 @@ static void test_graph_seeking(void)
     flush_cached_seeking(graph, &filter1);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(caps == (AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration), "Got caps %#lx.\n", caps);
-    ok(!filter1.seeking_ref, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == (AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration), "Got caps %#x.\n", caps);
+    ok(!filter1.seeking_ref, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     filter1.support_media_time = TRUE;
     filter1.support_testguid = FALSE;
     flush_cached_seeking(graph, &filter1);
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#lx.\n", caps);
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     ok(IsEqualGUID(&filter1.time_format, &TIME_FORMAT_MEDIA_TIME),
             "Got format %s.\n", debugstr_guid(&filter1.time_format));
     todo_wine ok(IsEqualGUID(&filter2.time_format, &testguid),
             "Got format %s.\n", debugstr_guid(&filter2.time_format));
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(IsEqualGUID(&format, &testguid), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &testguid, 0x123456789a, &testguid);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x123456789a, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &testguid, 0x123456789a, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     flush_cached_seeking(graph, &filter1);
     flush_cached_seeking(graph, &filter2);
@@ -4600,33 +4603,33 @@ static void test_graph_seeking(void)
     filter1.seek_duration = 0x12345;
     filter2.seek_duration = 0x23456;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter2.seek_duration = 0x12345;
     filter1.seek_duration = 0x23456;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = filter2.seek_hr = 0xbeef;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = E_NOTIMPL;
     filter2.seek_hr = S_OK;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x12345, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = 0xdeadbeef;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
+    ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     filter1.seek_hr = filter2.seek_hr = S_OK;
 
     flush_cached_seeking(graph, &filter1);
@@ -4635,40 +4638,40 @@ static void test_graph_seeking(void)
     filter1.seek_stop = 0x54321;
     filter2.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter2.seek_stop = 0x54321;
     filter1.seek_stop = 0x65432;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = filter2.seek_hr = 0xbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = E_NOTIMPL;
     filter2.seek_hr = S_OK;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x54321, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
+    ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     filter1.seek_hr = filter2.seek_hr = S_OK;
 
     flush_cached_seeking(graph, &filter1);
     flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!time, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     flush_cached_seeking(graph, &filter1);
@@ -4676,7 +4679,7 @@ static void test_graph_seeking(void)
 
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -4687,7 +4690,7 @@ static void test_graph_seeking(void)
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
     ok(filter1.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
@@ -4698,32 +4701,32 @@ static void test_graph_seeking(void)
     filter1.seek_hr = filter2.seek_hr = 0xbeef;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = E_NOTIMPL;
     filter2.seek_hr = S_OK;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = 0xdeadbeef;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
+    ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     filter1.seek_hr = filter2.seek_hr = S_OK;
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current == 12340000, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -4731,7 +4734,7 @@ static void test_graph_seeking(void)
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current == 12340000, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(stop));
     ok(filter1.seek_current == 12340000, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
@@ -4743,7 +4746,7 @@ static void test_graph_seeking(void)
     stop = 0x321;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_ReturnTime);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 43210000, "Got time %s.\n", wine_dbgstr_longlong(stop));
     ok(filter1.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter1.seek_current));
@@ -4755,17 +4758,17 @@ static void test_graph_seeking(void)
     flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_SetRate(seeking, 2.0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(filter1.seek_rate == 2.0, "Got rate %.16e.\n", filter1.seek_rate);
     todo_wine ok(filter2.seek_rate == 2.0, "Got rate %.16e.\n", filter2.seek_rate);
 
     hr = IMediaSeeking_SetRate(seeking, 1.0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(filter1.seek_rate == 1.0, "Got rate %.16e.\n", filter1.seek_rate);
     todo_wine ok(filter2.seek_rate == 1.0, "Got rate %.16e.\n", filter2.seek_rate);
 
     hr = IMediaSeeking_SetRate(seeking, -1.0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(filter1.seek_rate == -1.0, "Got rate %.16e.\n", filter1.seek_rate);
     todo_wine ok(filter2.seek_rate == -1.0, "Got rate %.16e.\n", filter2.seek_rate);
 
@@ -4773,34 +4776,34 @@ static void test_graph_seeking(void)
     flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_GetRate(seeking, &rate);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(rate == -1.0, "Got rate %.16e.\n", rate);
 
     hr = IMediaSeeking_SetRate(seeking, 1.0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test how retrieving the current position behaves while the graph is
      * running. Apparently the graph caches the last position returned by
      * SetPositions() and then adds the clock offset to the stream start. */
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Note that if the graph is running, it is paused while seeking. */
     current = 0;
     stop = 9000 * 10000;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(time, 1234 * 10000, 40 * 10000),
                 "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(current, 1234 * 10000, 40 * 10000),
                 "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
@@ -4812,144 +4815,144 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_SetPositions(seeking, &current,
             AM_SEEKING_AbsolutePositioning | AM_SEEKING_NoFlush,
             &stop, AM_SEEKING_AbsolutePositioning | AM_SEEKING_NoFlush);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     Sleep(100);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(time, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Pause(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     Sleep(100);
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(time, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
         ok(compare_time(current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 12340000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaFilter_SetSyncSource(filter, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     Sleep(100);
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!time, "Got time %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(!stop, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* GetCurrentPositions() will return the stop position once all renderers
      * report EC_COMPLETE. Atelier Sophie depends on this behaviour. */
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.seek_stop = 5000 * 10000;
     filter2.seek_stop = 6000 * 10000;
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
     filter1.seek_stop = filter2.seek_stop = 0xdeadbeef;
 
     hr = IMediaControl_Run(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time < 5000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter1.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(eventsink, EC_COMPLETE, S_OK, (LONG_PTR)&filter2.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 6000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_NONE);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
     IMediaEventSink_Release(eventsink);
 
-    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(filter1.ref == 1, "Got outstanding refcount %ld.\n", filter1.ref);
-    ok(filter2.ref == 1, "Got outstanding refcount %ld.\n", filter2.ref);
-    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %ld.\n", filter1.seeking_ref);
-    ok(filter2.seeking_ref == 0, "Unexpected seeking refcount %ld.\n", filter2.seeking_ref);
+    ok(!ref, "Got outstanding refcount %d.\n", hr);
+    ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
+    ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 }
 
 static void test_default_sync_source(void)
@@ -4978,20 +4981,20 @@ static void test_default_sync_source(void)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!!clock, "Reference clock not set.\n");
     IReferenceClock_Release(clock);
 
     source.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(clock == &source.IReferenceClock_iface, "Got unexpected clock.\n");
     IReferenceClock_Release(clock);
 
@@ -5001,29 +5004,29 @@ static void test_default_sync_source(void)
     sink2.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(clock == &sink2.IReferenceClock_iface, "Got unexpected clock.\n");
     IReferenceClock_Release(clock);
 
     sink1.IReferenceClock_iface.lpVtbl = &testclock_vtbl;
 
     hr = IFilterGraph2_SetDefaultSyncSource(graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaFilter_GetSyncSource(filter, &clock);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(clock == &sink1.IReferenceClock_iface, "Got unexpected clock.\n");
     IReferenceClock_Release(clock);
 
     IMediaFilter_Release(filter);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(sink1.ref == 1, "Got outstanding refcount %ld.\n", sink1.ref);
-    ok(sink2.ref == 1, "Got outstanding refcount %ld.\n", sink2.ref);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(sink1.ref == 1, "Got outstanding refcount %d.\n", sink1.ref);
+    ok(sink2.ref == 1, "Got outstanding refcount %d.\n", sink2.ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
 }
 
 static void test_add_source_filter(void)
@@ -5048,20 +5051,20 @@ static void test_add_source_filter(void)
 
     filename = create_file(L"test.mp3", midi_data, sizeof(midi_data));
     hr = IFilterGraph2_AddSourceFilter(graph, filename, L"test", &filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetClassID(filter, &clsid);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&clsid, &CLSID_AsyncReader), "Got filter %s.\n", wine_dbgstr_guid(&clsid));
     hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!wcscmp(filter_info.achName, L"test"), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
     IFilterGraph_Release(filter_info.pGraph);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFileSourceFilter_GetCurFile(filesource, &ret_filename, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!wcscmp(ret_filename, filename), "Expected filename %s, got %s.\n",
             wine_dbgstr_w(filename), wine_dbgstr_w(ret_filename));
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
@@ -5069,38 +5072,38 @@ static void test_add_source_filter(void)
     IFileSourceFilter_Release(filesource);
 
     hr = IFilterGraph2_AddSourceFilter(graph, filename, L"test", &filter2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filter2 != filter, "Filters shouldn't match.\n");
     hr = IFilterGraph2_RemoveFilter(graph, filter2);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = IBaseFilter_Release(filter2);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     hr = IFilterGraph2_RemoveFilter(graph, filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %lu.\n", wine_dbgstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
 
     /* Test a file which should be registered by signature. */
 
     filename = create_file(L"test.avi", midi_data, sizeof(midi_data));
     hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetClassID(filter, &clsid);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&clsid, &CLSID_AsyncReader), "Got filter %s.\n", wine_dbgstr_guid(&clsid));
     hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(!wcscmp(filter_info.achName, filename), "Got unexpected name %s.\n", wine_dbgstr_w(filter_info.achName));
     IFilterGraph_Release(filter_info.pGraph);
 
     hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFileSourceFilter_GetCurFile(filesource, &ret_filename, &mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!wcscmp(ret_filename, filename), "Expected filename %s, got %s.\n",
             wine_dbgstr_w(filename), wine_dbgstr_w(ret_filename));
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Stream), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
@@ -5108,11 +5111,11 @@ static void test_add_source_filter(void)
     IFileSourceFilter_Release(filesource);
 
     hr = IFilterGraph2_RemoveFilter(graph, filter);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = IBaseFilter_Release(filter);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete %s, error %lu.\n", wine_dbgstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
 
     if (!RegCreateKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}"
             "\\{bccddeef-0000-0000-0000-000000000000}", &key))
@@ -5134,16 +5137,16 @@ static void test_add_source_filter(void)
 
         filename = create_file(L"test.avi", bogus_data, sizeof(bogus_data));
         hr = IFilterGraph2_AddSourceFilter(graph, filename, NULL, &filter);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
 
         hr = IFilterGraph2_RemoveFilter(graph, filter);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         IBaseFilter_Release(filter);
         ref = IBaseFilter_Release(&testfilter.IBaseFilter_iface);
-        ok(!ref, "Got outstanding refcount %ld.\n", ref);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
         ret = DeleteFileW(filename);
-        ok(ret, "Failed to delete %s, error %lu.\n", wine_dbgstr_w(filename), GetLastError());
+        ok(ret, "Failed to delete %s, error %u.\n", wine_dbgstr_w(filename), GetLastError());
         RegDeleteKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}"
             "\\{bccddeef-0000-0000-0000-000000000000}");
         RegDeleteKeyA(HKEY_CLASSES_ROOT, "Media Type\\{abbccdde-0000-0000-0000-000000000000}");
@@ -5153,7 +5156,7 @@ static void test_add_source_filter(void)
         skip("Not enough permission to register media types.\n");
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static HWND get_renderer_hwnd(IFilterGraph2 *graph)
@@ -5167,20 +5170,20 @@ static HWND get_renderer_hwnd(IFilterGraph2 *graph)
     IPin *pin;
 
     hr = IFilterGraph2_EnumFilters(graph, &enum_filters);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     while (IEnumFilters_Next(enum_filters, 1, &filter, NULL) == S_OK)
     {
         hr = IBaseFilter_EnumPins(filter, &enum_pins);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumPins_Next(enum_pins, 1, &pin, NULL);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         IEnumPins_Release(enum_pins);
 
         if (SUCCEEDED(IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay)))
         {
             hr = IOverlay_GetWindowHandle(overlay, &hwnd);
-            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
             IOverlay_Release(overlay);
         }
 
@@ -5226,12 +5229,12 @@ static void test_window_threading(void)
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
     if (FAILED(hr))
     {
-        skip("Cannot render test file, hr %#lx.\n", hr);
+        skip("Cannot render test file, hr %#x.\n", hr);
         IFilterGraph2_Release(graph);
         DeleteFileW(filename);
         return;
     }
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     if ((hwnd = get_renderer_hwnd(graph)))
     {
@@ -5245,9 +5248,9 @@ static void test_window_threading(void)
          * while the video window is released. In particular, we must not send
          * WM_PARENTNOTIFY. This is not achieved through window styles. */
         hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IVideoWindow_put_Owner(window, (OAHWND)parent);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         IVideoWindow_Release(window);
         ok(!(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOPARENTNOTIFY), "Window has WS_EX_NOPARENTNOTIFY.\n");
     }
@@ -5257,7 +5260,7 @@ static void test_window_threading(void)
     SetActiveWindow(parent);
     expect_parent_message = FALSE;
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     expect_parent_message = TRUE;
 
     hwnd = GetActiveWindow();
@@ -5265,10 +5268,10 @@ static void test_window_threading(void)
 
     hr = CoCreateInstance(&CLSID_FilterGraphNoThread, NULL, CLSCTX_INPROC_SERVER,
             &IID_IFilterGraph2, (void **)&graph);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_RenderFile(graph, filename, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     if ((hwnd = get_renderer_hwnd(graph)))
     {
@@ -5279,12 +5282,12 @@ static void test_window_threading(void)
         skip("Could not find renderer window.\n");
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     DestroyWindow(parent);
     UnregisterClassA("quartz_test_parent", GetModuleHandleA(NULL));
     ret = DeleteFileW(filename);
-    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
 /* Hyperdevotion Noire needs to be able to Render() from UYVY. */
@@ -5323,12 +5326,12 @@ static void test_autoplug_uyvy(void)
      * failure to decode up to missing audio hardware, even though we're not
      * trying to render audio. */
     hr = IFilterGraph2_Render(graph, &source_pin.IPin_iface);
-    todo_wine ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
 
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(source.ref == 1, "Got outstanding refcount %ld.\n", source.ref);
-    ok(source_pin.ref == 1, "Got outstanding refcount %ld.\n", source_pin.ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
+    ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
 }
 
 static void test_set_notify_flags(void)
@@ -5353,129 +5356,129 @@ static void test_set_notify_flags(void)
     status = SysAllocString(L"status");
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventEx, (void **)&media_event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&media_event_sink);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     testfilter_init(&filter, NULL, 0);
     filter.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
     filter.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventEx_GetEventHandle(media_event, (OAEVENT *)&event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventEx_SetNotifyWindow(media_event, (OAHWND)window, WM_USER, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     while (PeekMessageA(&msg, window, WM_USER, WM_USER, PM_REMOVE));
 
     hr = IMediaEventEx_SetNotifyFlags(media_event, 2);
-    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IMediaEventEx_GetNotifyFlags(media_event, NULL);
-    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     flags = 0xdeadbeef;
     hr = IMediaEventEx_GetNotifyFlags(media_event, &flags);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!flags, "Got flags %#lx\n", flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!flags, "Got flags %#x\n", flags);
 
     hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     flags = 0xdeadbeef;
     hr = IMediaEventEx_GetNotifyFlags(media_event, &flags);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(flags == AM_MEDIAEVENT_NONOTIFY, "Got flags %#lx\n", flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(flags == AM_MEDIAEVENT_NONOTIFY, "Got flags %#x\n", flags);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     ok(!PeekMessageA(&msg, window, WM_USER, WM_USER, PM_REMOVE), "Window should not be notified.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IMediaControl_Pause(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaEventEx_SetNotifyFlags(media_event, 0);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     flags = 0xdeadbeef;
     hr = IMediaEventEx_GetNotifyFlags(media_event, &flags);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(!flags, "Got flags %#lx\n", flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!flags, "Got flags %#x\n", flags);
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(media_control);
     IMediaEventEx_Release(media_event);
     IMediaEventSink_Release(media_event_sink);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(filter.ref == 1, "Got outstanding refcount %ld.\n", filter.ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 
     SysFreeString(status);
     DestroyWindow(window);
@@ -5500,9 +5503,9 @@ static void check_events_(unsigned int line, IMediaEventEx *media_event,
         if (code == EC_STATUS)
             ++ec_status_count;
         hr = IMediaEventEx_FreeEventParams(media_event, code, param1, param2);
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
     }
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
     ok_(__FILE__, line)(ec_complete_count == expected_ec_complete_count,
         "Expected %d EC_COMPLETE events.\n", expected_ec_complete_count);
     ok_(__FILE__, line)(ec_status_count == expected_ec_status_count,
@@ -5526,58 +5529,58 @@ static void test_events(void)
     status = SysAllocString(L"status");
 
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventEx, (void **)&media_event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&media_event_sink);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     testfilter_init(&filter, NULL, 0);
     filter.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
     filter.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
 
     hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventEx_GetEventHandle(media_event, (OAEVENT *)&event);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     code = 0xdeadbeef;
     param1 = 0xdeadbeef;
     param2 = 0xdeadbeef;
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 0);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
-    ok(!code, "Got code %#lx.\n", code);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    ok(!code, "Got code %#x.\n", code);
     todo_wine ok(!param1, "Got param1 %#Ix.\n", param1);
     todo_wine ok(!param2, "Got param2 %#Ix.\n", param2);
 
     /* EC_COMPLETE is ignored while in stopped or paused state. */
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 0, 2);
 
     hr = IMediaControl_Pause(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 0, 2);
 
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 0, 0);
 
@@ -5585,68 +5588,68 @@ static void test_events(void)
      * This remains true even with default handling canceled. */
 
     hr = IMediaEventEx_CancelDefaultHandling(media_event, EC_COMPLETE);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 1, 2);
 
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 0, 2);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Pause(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 1, 2);
 
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaControl_Run(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_events(media_event, 0, 2);
 
@@ -5655,55 +5658,21 @@ static void test_events(void)
     SetEvent(event);
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    ok(hr == E_ABORT, "Got hr %#lx.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaControl_Stop(media_control);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(media_control);
     IMediaEventEx_Release(media_event);
     IMediaEventSink_Release(media_event_sink);
     ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
-    ok(filter.ref == 1, "Got outstanding refcount %ld.\n", filter.ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
 
     SysFreeString(status);
-}
-
-static void test_event_dispatch(void)
-{
-    IFilterGraph2 *graph = create_graph();
-    IMediaEventEx *event_ex;
-    ITypeInfo *typeinfo;
-    IMediaEvent *event;
-    TYPEATTR *typeattr;
-    unsigned int count;
-    HRESULT hr;
-    ULONG ref;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&event);
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaEventEx, (void **)&event_ex);
-    ok((void *)event == event_ex, "Interface pointers didn't match.\n");
-    IMediaEventEx_Release(event_ex);
-
-    hr = IMediaEvent_GetTypeInfoCount(event, &count);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(count == 1, "Got count %u.\n", count);
-
-    hr = IMediaEvent_GetTypeInfo(event, 0, 0, &typeinfo);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    hr = ITypeInfo_GetTypeAttr(typeinfo, &typeattr);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    ok(typeattr->typekind == TKIND_DISPATCH, "Got kind %u.\n", typeattr->typekind);
-    ok(IsEqualGUID(&typeattr->guid, &IID_IMediaEvent), "Got IID %s.\n", debugstr_guid(&typeattr->guid));
-    ITypeInfo_ReleaseTypeAttr(typeinfo, typeattr);
-    ITypeInfo_Release(typeinfo);
-
-    IMediaEvent_Release(event);
-    ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
 START_TEST(filtergraph)
@@ -5733,7 +5702,6 @@ START_TEST(filtergraph)
     test_autoplug_uyvy();
     test_set_notify_flags();
     test_events();
-    test_event_dispatch();
 
     CoUninitialize();
     test_render_with_multithread();

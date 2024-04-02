@@ -87,7 +87,7 @@ static ULONG WINAPI enum_pins_AddRef(IEnumPins *iface)
 {
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     ULONG refcount = InterlockedIncrement(&enum_pins->refcount);
-    TRACE("%p increasing refcount to %lu.\n", enum_pins, refcount);
+    TRACE("%p increasing refcount to %u.\n", enum_pins, refcount);
     return refcount;
 }
 
@@ -96,7 +96,7 @@ static ULONG WINAPI enum_pins_Release(IEnumPins *iface)
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     ULONG refcount = InterlockedDecrement(&enum_pins->refcount);
 
-    TRACE("%p decreasing refcount to %lu.\n", enum_pins, refcount);
+    TRACE("%p decreasing refcount to %u.\n", enum_pins, refcount);
     if (!refcount)
     {
         IBaseFilter_Release(&enum_pins->filter->IBaseFilter_iface);
@@ -110,7 +110,7 @@ static HRESULT WINAPI enum_pins_Next(IEnumPins *iface, ULONG count, IPin **pins,
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
     unsigned int i;
 
-    TRACE("iface %p, count %lu, pins %p, ret_count %p.\n", iface, count, pins, ret_count);
+    TRACE("iface %p, count %u, pins %p, ret_count %p.\n", iface, count, pins, ret_count);
 
     if (!pins)
         return E_POINTER;
@@ -144,7 +144,7 @@ static HRESULT WINAPI enum_pins_Skip(IEnumPins *iface, ULONG count)
 {
     struct enum_pins *enum_pins = impl_from_IEnumPins(iface);
 
-    TRACE("iface %p, count %lu.\n", iface, count);
+    TRACE("iface %p, count %u.\n", iface, count);
 
     if (enum_pins->version != enum_pins->filter->pin_version)
         return VFW_E_ENUM_OUT_OF_SYNC;
@@ -226,6 +226,8 @@ static HRESULT WINAPI filter_inner_QueryInterface(IUnknown *iface, REFIID iid, v
     {
         *out = &filter->IBaseFilter_iface;
     }
+    else if (IsEqualIID(iid, &IID_IPropertyBag))
+        *out = &filter->IPropertyBag_iface;
     else
     {
         WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
@@ -241,7 +243,7 @@ static ULONG WINAPI filter_inner_AddRef(IUnknown *iface)
     struct strmbase_filter *filter = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&filter->refcount);
 
-    TRACE("%p increasing refcount to %lu.\n", filter, refcount);
+    TRACE("%p increasing refcount to %u.\n", filter, refcount);
 
     return refcount;
 }
@@ -251,7 +253,7 @@ static ULONG WINAPI filter_inner_Release(IUnknown *iface)
     struct strmbase_filter *filter = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&filter->refcount);
 
-    TRACE("%p decreasing refcount to %lu.\n", filter, refcount);
+    TRACE("%p decreasing refcount to %u.\n", filter, refcount);
 
     if (!refcount)
         filter->ops->filter_destroy(filter);
@@ -368,7 +370,7 @@ static HRESULT WINAPI filter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_
     struct strmbase_filter *filter = impl_from_IBaseFilter(iface);
     HRESULT hr = S_OK;
 
-    TRACE("filter %p %s, timeout %lu, state %p.\n", filter, debugstr_w(filter->name), timeout, state);
+    TRACE("filter %p %s, timeout %u, state %p.\n", filter, debugstr_w(filter->name), timeout, state);
 
     EnterCriticalSection(&filter->filter_cs);
 
@@ -436,7 +438,7 @@ static HRESULT WINAPI filter_FindPin(IBaseFilter *iface, const WCHAR *id, IPin *
 
     for (i = 0; (pin = filter->ops->filter_get_pin(filter, i)); ++i)
     {
-        if (!lstrcmpW(id, pin->id))
+        if (!lstrcmpW(id, pin->name))
         {
             IPin_AddRef(*ret = &pin->IPin_iface);
             return S_OK;
@@ -509,6 +511,51 @@ static const IBaseFilterVtbl filter_vtbl =
     filter_QueryVendorInfo,
 };
 
+static inline struct strmbase_filter *impl_from_IPropertyBag(IPropertyBag *iface)
+{
+    return CONTAINING_RECORD(iface, struct strmbase_filter, IPropertyBag_iface);
+}
+
+static HRESULT WINAPI property_bag_QueryInterface(IPropertyBag *iface, REFIID iid, void **out)
+{
+    struct strmbase_filter *filter = impl_from_IPropertyBag(iface);
+    return IUnknown_QueryInterface(filter->outer_unk, iid, out);
+}
+
+static ULONG WINAPI property_bag_AddRef(IPropertyBag *iface)
+{
+    struct strmbase_filter *filter = impl_from_IPropertyBag(iface);
+    return IUnknown_AddRef(filter->outer_unk);
+}
+
+static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
+{
+    struct strmbase_filter *filter = impl_from_IPropertyBag(iface);
+    return IUnknown_Release(filter->outer_unk);
+}
+
+static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *prop_name, VARIANT *value,
+        IErrorLog *error_log)
+{
+    FIXME("iface %p, prop_name %s, value %p, error_log %p stub!\n", iface, debugstr_w(prop_name), value, error_log);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI property_bag_Write(IPropertyBag *iface, const WCHAR *prop_name, VARIANT *value)
+{
+    FIXME("iface %p, prop_name %s, value %p stub!\n", iface, debugstr_w(prop_name), value);
+    return S_OK;
+}
+
+static const IPropertyBagVtbl property_bag_vtbl =
+{
+    property_bag_QueryInterface,
+    property_bag_AddRef,
+    property_bag_Release,
+    property_bag_Read,
+    property_bag_Write,
+};
+
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(struct strmbase_filter *filter)
 {
     InterlockedIncrement(&filter->pin_version);
@@ -520,6 +567,7 @@ void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
     memset(filter, 0, sizeof(*filter));
 
     filter->IBaseFilter_iface.lpVtbl = &filter_vtbl;
+    filter->IPropertyBag_iface.lpVtbl = &property_bag_vtbl;
     filter->IUnknown_inner.lpVtbl = &filter_inner_vtbl;
     filter->outer_unk = outer ? outer : &filter->IUnknown_inner;
     filter->refcount = 1;

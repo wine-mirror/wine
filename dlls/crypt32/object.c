@@ -643,7 +643,7 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
         }
         file = CreateFileW(temp_name, GENERIC_READ | GENERIC_WRITE, 0,
                 NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
-        if (file == INVALID_HANDLE_VALUE)
+        if (!file)
         {
             ERR("Could not create temp file.\n");
             SetLastError(ERROR_OUTOFMEMORY);
