@@ -44,6 +44,7 @@
 
 static const type_t *current_structure;
 static const var_t *current_func;
+static const var_t *current_arg;
 static const type_t *current_iface;
 
 static struct list expr_eval_routines = LIST_INIT(expr_eval_routines);
@@ -78,6 +79,12 @@ static const unsigned short IsByValue = 0x0080;
 static const unsigned short IsSimpleRef = 0x0100;
 /* static const unsigned short IsDontCallFreeInst = 0x0200; */
 /* static const unsigned short SaveForAsyncFinish = 0x0400; */
+
+/* robust flags in correlation descriptors */
+static const unsigned short RobustEarly = 0x0001;
+/* static const unsigned short RobustSplit = 0x0002; */
+static const unsigned short RobustIsIIdIs = 0x0004;
+/* static const unsigned short RobustDontCheck = 0x0008; */
 
 static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
@@ -1617,16 +1624,16 @@ static int write_base_type(FILE *file, const type_t *type, unsigned int *typestr
 /* write conformance / variance descriptor */
 static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
                                            unsigned int baseoff, const type_t *type,
-                                           const expr_t *expr)
+                                           const expr_t *expr, unsigned short robust_flags)
 {
     unsigned char operator_type = 0;
     unsigned char conftype = FC_NORMAL_CONFORMANCE;
-    unsigned short robust_flags = 0;
     const char *conftype_string = "field";
     const expr_t *subexpr;
     const type_t *iface = NULL;
     const char *name;
 
+    robust_flags |= RobustEarly;
     if (!expr)
     {
         print_file(file, 2, "NdrFcLong(0xffffffff),\t/* -1 */\n");
@@ -1726,6 +1733,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
                     break;
                 }
                 offset += get_stack_size( var, NULL );
+                if (var == current_arg) robust_flags &= ~RobustEarly;
             }
         }
         else
@@ -1840,6 +1848,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
             eval->expr = expr;
             list_add_tail (&expr_eval_routines, &eval->entry);
         }
+        robust_flags &= ~RobustEarly;
 
         if (callback_offset > USHRT_MAX)
             error("Maximum number of callback routines reached\n");
@@ -2502,7 +2511,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
             print_file(file, 2, "0x%x,\t/* FC_NON_ENCAPSULATED_UNION */\n", FC_NON_ENCAPSULATED_UNION);
             print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", FC_LONG);
             *tfsoff += 2 + write_conf_or_var_desc(file, current_structure, offset, ft,
-                                                  get_attrp(f->attrs, ATTR_SWITCHIS));
+                                                  get_attrp(f->attrs, ATTR_SWITCHIS), 0);
             reloff = absoff - *tfsoff;
             print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
                        (unsigned short)reloff, reloff, absoff);
@@ -2991,7 +3000,7 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
             (!type_array_is_decl_as_ptr(type) && current_structure
              ? type_memsize(current_structure)
              : 0),
-            type, type_array_get_conformance(type));
+            type, type_array_get_conformance(type), 0);
 
         update_tfsoff(type, start_offset, file);
         return start_offset;
@@ -3057,7 +3066,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
         if (is_conformant_array(type))
             *typestring_offset
                 += write_conf_or_var_desc(file, current_structure, baseoff,
-                                          type, size_is);
+                                          type, size_is, 0);
 
         if (fc == FC_SMVARRAY || fc == FC_LGVARRAY)
         {
@@ -3081,8 +3090,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
 
         if (length_is)
             *typestring_offset
-                += write_conf_or_var_desc(file, current_structure, baseoff,
-                                          type, length_is);
+                += write_conf_or_var_desc(file, current_structure, baseoff, type, length_is, 0);
 
         if (type_has_pointers(type_array_get_element_type(type)) &&
             (type_array_is_decl_as_ptr(type) || !current_structure))
@@ -3103,12 +3111,8 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
         unsigned int dim = size_is ? 0 : type_array_get_dim(type);
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* %u */\n", (unsigned short)dim, dim);
         *typestring_offset += 2;
-        *typestring_offset
-            += write_conf_or_var_desc(file, current_structure, baseoff,
-                                      type, size_is);
-        *typestring_offset
-            += write_conf_or_var_desc(file, current_structure, baseoff,
-                                      type, length_is);
+        *typestring_offset += write_conf_or_var_desc(file, current_structure, baseoff, type, size_is, 0);
+        *typestring_offset += write_conf_or_var_desc(file, current_structure, baseoff, type, length_is, 0);
 
         write_array_element_type(file, is_string_type(attrs, type) ? attrs : NULL, type, TRUE, typestring_offset);
         write_end(file, typestring_offset);
@@ -3474,7 +3478,7 @@ static unsigned int write_union_tfs(FILE *file, const attr_list_t *attrs,
         print_file(file, 2, "0x%x,\t/* Switch type= %s */\n",
                    fc, string_of_type(fc));
         *tfsoff += 2;
-        *tfsoff += write_conf_or_var_desc(file, current_structure, 0, st, switch_is );
+        *tfsoff += write_conf_or_var_desc(file, current_structure, 0, st, switch_is, 0);
         print_file(file, 2, "NdrFcShort(0x2),\t/* Offset= 2 (%u) */\n", *tfsoff + 2);
         *tfsoff += 2;
         print_file(file, 0, "/* %u */\n", *tfsoff);
@@ -3543,8 +3547,8 @@ static unsigned int write_ip_tfs(FILE *file, const attr_list_t *attrs, type_t *t
     {
         print_file(file, 2, "0x2f,  /* FC_IP */\n");
         print_file(file, 2, "0x5c,  /* FC_PAD */\n");
-        *typeformat_offset
-            += write_conf_or_var_desc(file, current_structure, 0, type, iid) + 2;
+        *typeformat_offset += 2 + write_conf_or_var_desc(file, current_structure, 0,
+                                                         type, iid, RobustIsIIdIs);
     }
     else
     {
@@ -3755,24 +3759,28 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
         {
         case STMT_DECLARATION:
         {
-            const var_t *func = stmt->u.var;
+            const var_t *func;
+            const var_list_t *args;
 
             if(stmt->u.var->declspec.stgclass != STG_NONE
                || type_get_type_detect_alias(stmt->u.var->declspec.type) != TYPE_FUNCTION)
                 continue;
 
-            current_func = func;
+            current_func = func = stmt->u.var;
             if (is_local(func->attrs)) continue;
 
-            var = type_function_get_retval(func->declspec.type);
+            current_arg = var = type_function_get_retval(func->declspec.type);
             if (!is_void(var->declspec.type))
                 var->typestring_offset = write_type_tfs( file, var->attrs, var->declspec.type, func->name,
                                                          TYPE_CONTEXT_RETVAL, offset);
 
-            if (type_function_get_args(func->declspec.type))
-                LIST_FOR_EACH_ENTRY( var, type_function_get_args(func->declspec.type), var_t, entry )
-                    var->typestring_offset = write_type_tfs( file, var->attrs, var->declspec.type, var->name,
-                                                             TYPE_CONTEXT_TOPLEVELPARAM, offset );
+            args = type_function_get_args(func->declspec.type);
+            if (args) LIST_FOR_EACH_ENTRY( var, args, var_t, entry )
+            {
+                current_arg = var;
+                var->typestring_offset = write_type_tfs( file, var->attrs, var->declspec.type, var->name,
+                                                         TYPE_CONTEXT_TOPLEVELPARAM, offset );
+            }
             break;
 
         }
