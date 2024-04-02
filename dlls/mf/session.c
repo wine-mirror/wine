@@ -3172,45 +3172,59 @@ static HRESULT transform_get_external_output_sample(const struct media_session *
     return hr;
 }
 
+static HRESULT allocate_output_samples(const struct media_session *session, struct topo_node *node,
+        MFT_OUTPUT_DATA_BUFFER *buffers)
+{
+    HRESULT hr;
+    UINT i;
+
+    for (i = 0; i < node->u.transform.output_count; ++i)
+    {
+        MFT_OUTPUT_STREAM_INFO stream_info = {0};
+
+        buffers[i].dwStreamID = transform_node_get_stream_id(node, TRUE, i);
+
+        if (FAILED(hr = IMFTransform_GetOutputStreamInfo(node->object.transform, buffers[i].dwStreamID, &stream_info)))
+            return hr;
+        if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+                && FAILED(hr = transform_get_external_output_sample(session, node, i, &stream_info, &buffers[i].pSample)))
+            return hr;
+    }
+
+    return S_OK;
+}
+
+static void release_output_samples(struct topo_node *node, MFT_OUTPUT_DATA_BUFFER *buffers)
+{
+    UINT i;
+
+    for (i = 0; i < node->u.transform.output_count; ++i)
+    {
+        if (buffers[i].pSample)
+            IMFSample_Release(buffers[i].pSample);
+        if (buffers[i].pEvents)
+            IMFCollection_Release(buffers[i].pEvents);
+    }
+}
+
 static HRESULT transform_node_pull_samples(const struct media_session *session, struct topo_node *node)
 {
-    MFT_OUTPUT_STREAM_INFO stream_info;
     MFT_OUTPUT_DATA_BUFFER *buffers;
-    HRESULT hr = E_UNEXPECTED;
-    DWORD status = 0;
-    unsigned int i;
+    DWORD status;
+    HRESULT hr;
+    UINT i;
 
     if (!(buffers = calloc(node->u.transform.output_count, sizeof(*buffers))))
         return E_OUTOFMEMORY;
+    if (FAILED(hr = allocate_output_samples(session, node, buffers)))
+        goto done;
 
-    for (i = 0; i < node->u.transform.output_count; ++i)
-    {
-        buffers[i].dwStreamID = transform_node_get_stream_id(node, TRUE, i);
-        buffers[i].pSample = NULL;
-        buffers[i].dwStatus = 0;
-        buffers[i].pEvents = NULL;
+    status = 0;
+    hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
 
-        memset(&stream_info, 0, sizeof(stream_info));
-        if (FAILED(hr = IMFTransform_GetOutputStreamInfo(node->object.transform, buffers[i].dwStreamID, &stream_info)))
-            break;
-
-        if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES)))
-        {
-            if (FAILED(hr = transform_get_external_output_sample(session, node, i, &stream_info, &buffers[i].pSample)))
-                break;
-        }
-    }
-
-    if (SUCCEEDED(hr))
-        hr = IMFTransform_ProcessOutput(node->object.transform, 0, node->u.transform.output_count, buffers, &status);
-
-    /* Collect returned samples for all streams. */
     for (i = 0; i < node->u.transform.output_count; ++i)
     {
         struct transform_stream *stream = &node->u.transform.outputs[i];
-
-        if (buffers[i].pEvents)
-            IMFCollection_Release(buffers[i].pEvents);
 
         if (SUCCEEDED(hr) && !(buffers[i].dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
         {
@@ -3219,11 +3233,10 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
             if (FAILED(hr = transform_stream_push_sample(stream, buffers[i].pSample)))
                 WARN("Failed to queue output sample, hr %#lx\n", hr);
         }
-
-        if (buffers[i].pSample)
-            IMFSample_Release(buffers[i].pSample);
     }
 
+done:
+    release_output_samples(node, buffers);
     free(buffers);
 
     return hr;
