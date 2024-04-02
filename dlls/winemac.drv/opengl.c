@@ -3157,14 +3157,19 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
         }
     }
 
-    if ((major == 3 && (minor == 2 || minor == 3)) ||
+    if (major == 3 && (minor == 0 || minor == 1))
+    {
+        WARN("Upgrading GL version to 3.2\n");
+        minor = 2;
+    }
+
+    if (major == 3 ||
         (major == 4 && (minor == 0 || minor == 1)))
     {
         if (!(flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
         {
-            WARN("OS X only supports forward-compatible 3.2+ contexts\n");
-            SetLastError(ERROR_INVALID_VERSION_ARB);
-            return NULL;
+            WARN("Forcing forward-compatible context\n");
+            flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
         }
         if (profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
         {
@@ -3181,12 +3186,6 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
             return NULL;
         }
         core = TRUE;
-    }
-    else if (major >= 3)
-    {
-        WARN("Profile version %u.%u not supported\n", major, minor);
-        SetLastError(ERROR_INVALID_VERSION_ARB);
-        return NULL;
     }
     else if (major < 1 || (major == 1 && (minor < 0 || minor > 5)) ||
              (major == 2 && (minor < 0 || minor > 1)))
