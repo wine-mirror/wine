@@ -279,8 +279,16 @@ static HRESULT d2d_transform_graph_add_node(struct d2d_transform_graph *graph,
 static void d2d_transform_graph_delete_node(struct d2d_transform_graph *graph,
         struct d2d_transform_node *node)
 {
+    unsigned int i;
+
     list_remove(&node->entry);
     ID2D1TransformNode_Release(node->object);
+
+    for (i = 0; i < graph->input_count; ++i)
+    {
+        if (graph->inputs[i].node == node)
+            memset(&graph->inputs[i].node, 0, sizeof(graph->inputs[i].node));
+    }
 
     free(node);
 }
@@ -336,6 +344,7 @@ static ULONG STDMETHODCALLTYPE d2d_transform_graph_Release(ID2D1TransformGraph *
     if (!refcount)
     {
         d2d_transform_graph_clear(graph);
+        free(graph->inputs);
         free(graph);
     }
 
@@ -403,11 +412,28 @@ static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectNode(ID2D1TransformG
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectToEffectInput(ID2D1TransformGraph *iface,
-        UINT32 input_index, ID2D1TransformNode *node, UINT32 node_index)
+        UINT32 input_index, ID2D1TransformNode *object, UINT32 node_index)
 {
-    FIXME("iface %p, input_index %u, node %p, node_index %u stub!\n", iface, input_index, node, node_index);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
+    struct d2d_transform_node *node;
+    unsigned int count;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, input_index %u, object %p, node_index %u.\n", iface, input_index, object, node_index);
+
+    if (!(node = d2d_transform_graph_get_node(graph, object)))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    if (input_index >= graph->input_count)
+        return E_INVALIDARG;
+
+    count = ID2D1TransformNode_GetInputCount(object);
+    if (node_index >= count)
+        return E_INVALIDARG;
+
+    graph->inputs[input_index].node = node;
+    graph->inputs[input_index].index = node_index;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_transform_graph_Clear(ID2D1TransformGraph *iface)
@@ -451,8 +477,14 @@ static HRESULT d2d_transform_graph_create(UINT32 input_count, struct d2d_transfo
 
     object->ID2D1TransformGraph_iface.lpVtbl = &d2d_transform_graph_vtbl;
     object->refcount = 1;
-    object->input_count = input_count;
     list_init(&object->nodes);
+
+    if (!(object->inputs = calloc(input_count, sizeof(*object->inputs))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    object->input_count = input_count;
 
     *graph = object;
 

@@ -12727,11 +12727,22 @@ static void test_transform_graph(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Add nodes */
+    hr = ID2D1TransformGraph_ConnectToEffectInput(graph, 1, (ID2D1TransformNode *)offset_transform, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)offset_transform);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_AddNode(graph, (ID2D1TransformNode *)blend_transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Invalid effect input index. */
+    hr = ID2D1TransformGraph_ConnectToEffectInput(graph, 1, (ID2D1TransformNode *)offset_transform, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    /* Invalid object input index. */
+    hr = ID2D1TransformGraph_ConnectToEffectInput(graph, 0, (ID2D1TransformNode *)offset_transform, 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1TransformGraph_ConnectToEffectInput(graph, 0, (ID2D1TransformNode *)offset_transform, 0);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Remove nodes */

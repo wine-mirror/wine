@@ -728,12 +728,19 @@ struct d2d_transform_node
     ID2D1TransformNode *object;
 };
 
+struct d2d_transform_node_connection
+{
+    struct d2d_transform_node *node;
+    unsigned int index;
+};
+
 struct d2d_transform_graph
 {
     ID2D1TransformGraph ID2D1TransformGraph_iface;
     LONG refcount;
 
-    UINT32 input_count;
+    struct d2d_transform_node_connection *inputs;
+    unsigned int input_count;
 
     struct list nodes;
 };
