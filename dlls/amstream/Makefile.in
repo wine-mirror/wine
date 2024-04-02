@@ -1,5 +1,5 @@
 MODULE    = amstream.dll
-IMPORTS   = strmiids strmbase uuid ole32 advapi32 ddraw
+IMPORTS   = strmiids strmbase uuid ole32 advapi32 ddraw msvcrt
 
 SOURCES = \
 	amstream_classes.idl \
