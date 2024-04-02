@@ -6,6 +6,12 @@
 #include "opengl_ext.h"
 #include "wine/debug.h"
 
+#ifdef _WIN64
+#define OPENGL32_TEXCONV_IMPLEMENTATION
+#include "texconv.h"
+#undef OPENGL32_TEXCONV_IMPLEMENTATION
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 const int extension_registry_size = 2684;
@@ -1683,6 +1689,27 @@ static void WINAPI glCompressedTexImage2D( GLenum target, GLint level, GLenum in
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, imageSize, data );
+#ifdef _WIN64
+  if ( (internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || internalformat == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * rawdata = decode_bptc_unorm_to_rgba( data, width, height, 1 );
+      glTexImage2D( target, level, ( internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), width, height, border, GL_RGBA, GL_UNSIGNED_BYTE, rawdata );
+      if ( rawdata != NULL )
+      {
+        free( rawdata );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      internalformat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexImage2D( target, level, internalformat, width, height, border, imageSize, data );
 }
 
@@ -1690,6 +1717,27 @@ static void WINAPI glCompressedTexImage2DARB( GLenum target, GLint level, GLenum
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, imageSize, data );
+#ifdef _WIN64
+  if ( (internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || internalformat == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * rawdata = decode_bptc_unorm_to_rgba( data, width, height, 1 );
+      glTexImage2D( target, level, ( internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), width, height, border, GL_RGBA, GL_UNSIGNED_BYTE, rawdata );
+      if ( rawdata != NULL )
+      {
+        free( rawdata );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      internalformat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexImage2DARB( target, level, internalformat, width, height, border, imageSize, data );
 }
 
@@ -1697,6 +1745,27 @@ static void WINAPI glCompressedTexImage3D( GLenum target, GLint level, GLenum in
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, imageSize, data );
+#ifdef _WIN64
+  if ( (internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || internalformat == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D_ARRAY || target == GL_PROXY_TEXTURE_2D_ARRAY) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * rawdata = decode_bptc_unorm_to_rgba( data, width, height, depth );
+      funcs->ext.p_glTexImage3D( target, level, ( internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), width, height, depth, border, GL_RGBA, GL_UNSIGNED_BYTE, rawdata );
+      if ( rawdata != NULL )
+      {
+        free( rawdata );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      internalformat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexImage3D( target, level, internalformat, width, height, depth, border, imageSize, data );
 }
 
@@ -1704,6 +1773,27 @@ static void WINAPI glCompressedTexImage3DARB( GLenum target, GLint level, GLenum
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, imageSize, data );
+#ifdef _WIN64
+  if ( (internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || internalformat == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D_ARRAY || target == GL_PROXY_TEXTURE_2D_ARRAY) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * rawdata = decode_bptc_unorm_to_rgba( data, width, height, depth );
+      funcs->ext.p_glTexImage3D( target, level, ( internalformat == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), width, height, depth, border, GL_RGBA, GL_UNSIGNED_BYTE, rawdata );
+      if ( rawdata != NULL )
+      {
+        free( rawdata );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      internalformat = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexImage3DARB( target, level, internalformat, width, height, depth, border, imageSize, data );
 }
 
@@ -1725,6 +1815,27 @@ static void WINAPI glCompressedTexSubImage2D( GLenum target, GLint level, GLint 
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, imageSize, data );
+#ifdef _WIN64
+  if ( (format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || format == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && target == GL_TEXTURE_2D )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * pixels = decode_bptc_unorm_to_rgba( data, width, height, 1 );
+      funcs->ext.p_glTexSubImage2DEXT( target, level, xoffset, yoffset, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+      if ( pixels != NULL )
+      {
+        free( pixels );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexSubImage2D( target, level, xoffset, yoffset, width, height, format, imageSize, data );
 }
 
@@ -1732,6 +1843,27 @@ static void WINAPI glCompressedTexSubImage2DARB( GLenum target, GLint level, GLi
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, imageSize, data );
+#ifdef _WIN64
+  if ( (format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || format == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && target == GL_TEXTURE_2D )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * pixels = decode_bptc_unorm_to_rgba( data, width, height, 1 );
+      funcs->ext.p_glTexSubImage2DEXT( target, level, xoffset, yoffset, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+      if ( pixels != NULL )
+      {
+        free( pixels );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexSubImage2DARB( target, level, xoffset, yoffset, width, height, format, imageSize, data );
 }
 
@@ -1739,6 +1871,27 @@ static void WINAPI glCompressedTexSubImage3D( GLenum target, GLint level, GLint 
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
+#ifdef _WIN64
+  if ( (format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || format == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D_ARRAY || target == GL_PROXY_TEXTURE_2D_ARRAY) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * pixels = decode_bptc_unorm_to_rgba( data, width, height, depth );
+      funcs->ext.p_glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+      if ( pixels != NULL )
+      {
+        free( pixels );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
 }
 
@@ -1746,6 +1899,27 @@ static void WINAPI glCompressedTexSubImage3DARB( GLenum target, GLint level, GLi
 {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE( "(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
+#ifdef _WIN64
+  if ( (format == GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB || format == GL_COMPRESSED_RGBA_BPTC_UNORM_ARB) && (target == GL_TEXTURE_2D_ARRAY || target == GL_PROXY_TEXTURE_2D_ARRAY) )
+  {
+    unsigned char outfmt = get_btpc_convfmt();
+
+    if ( outfmt == 1 )
+    {
+      char * pixels = decode_bptc_unorm_to_rgba( data, width, height, depth );
+      funcs->ext.p_glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+      if ( pixels != NULL )
+      {
+        free( pixels );
+      }
+      return;
+    }
+    else if ( outfmt == 2 )
+    {
+      format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+  }
+#endif
   funcs->ext.p_glCompressedTexSubImage3DARB( target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
 }
 

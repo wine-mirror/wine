@@ -3159,8 +3159,9 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
 
     if (major == 3 && (minor == 0 || minor == 1))
     {
-        WARN("Upgrading GL version to 3.2\n");
+        WARN("Upgrading context to 3.2 Core, deprecated features will not be available\n");
         minor = 2;
+        profile |= WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     }
 
     if (major == 3 ||
@@ -3168,7 +3169,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
     {
         if (!(flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB))
         {
-            WARN("Forcing forward-compatible context\n");
+            WARN("Forcing forward-compatible context, wide-lines will not be available\n");
             flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
         }
         if (profile != WGL_CONTEXT_CORE_PROFILE_BIT_ARB)
