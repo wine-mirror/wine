@@ -19291,7 +19291,9 @@ msgid "Help topics: "
 msgstr "도움말 항목: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "오류: 명령 줄은 지원하지 않습니다\n"
 
 #: programs/wmic/wmic.rc:29

@@ -20161,7 +20161,9 @@ msgid "Help topics: "
 msgstr "Rubriques d'aide : "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Erreur : ligne de commande invalide\n"
 
 #: programs/wmic/wmic.rc:29

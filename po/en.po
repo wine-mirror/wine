@@ -19355,8 +19355,8 @@ msgid "Help topics: "
 msgstr "Help topics: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
-msgstr "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
+msgstr "Error: Command not supported\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"

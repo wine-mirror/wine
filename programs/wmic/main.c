@@ -341,7 +341,7 @@ static int process_args( int argc, WCHAR *argv[] )
     int i;
 
     for (i = 0; i < argc && argv[i][0] == '/'; i++)
-        WINE_FIXME( "command line switch %s not supported\n", debugstr_w(argv[i]) );
+        WINE_FIXME( "switch %s not supported\n", debugstr_w(argv[i]) );
 
     if (i >= argc)
         goto not_supported;
@@ -351,7 +351,7 @@ static int process_args( int argc, WCHAR *argv[] )
         return 0;
     }
 
-    if (!wcsicmp( argv[i], L"class") || !wcsicmp( argv[i], L"context" ))
+    if (!wcsicmp( argv[i], L"class" ) || !wcsicmp( argv[i], L"context" ))
     {
         WINE_FIXME( "command %s not supported\n", debugstr_w(argv[i]) );
         goto not_supported;
@@ -388,7 +388,7 @@ static int process_args( int argc, WCHAR *argv[] )
     }
 
 not_supported:
-    output_error( STRING_CMDLINE_NOT_SUPPORTED );
+    output_error( STRING_COMMAND_NOT_SUPPORTED );
     return 1;
 }
 

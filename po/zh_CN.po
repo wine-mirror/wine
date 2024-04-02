@@ -19093,7 +19093,9 @@ msgid "Help topics: "
 msgstr "帮助主题: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "错误: 不支持此命令行\n"
 
 #: programs/wmic/wmic.rc:29

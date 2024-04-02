@@ -20105,7 +20105,7 @@ msgstr "Teme pomoći: "
 #: programs/wmic/wmic.rc:28
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 

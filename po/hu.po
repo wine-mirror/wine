@@ -20556,7 +20556,7 @@ msgstr "Súgó témák: "
 #: programs/wmic/wmic.rc:28
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Hiba: Érvénytelen parancssor paraméterek\n"
 
 #: programs/wmic/wmic.rc:29

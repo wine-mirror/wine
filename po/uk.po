@@ -19507,7 +19507,9 @@ msgid "Help topics: "
 msgstr "Розділи Довідки: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Помилка: Командний рядок не підтримується\n"
 
 #: programs/wmic/wmic.rc:29

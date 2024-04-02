@@ -19866,7 +19866,9 @@ msgid "Help topics: "
 msgstr "Temas de ayuda: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Error: parámetros de línea de comandos no soportados\n"
 
 #: programs/wmic/wmic.rc:29

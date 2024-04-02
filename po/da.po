@@ -20560,7 +20560,7 @@ msgstr "Hjælp emner: "
 #: programs/wmic/wmic.rc:28
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Fejl: Ugyldige kommando linje parametre\n"
 
 #: programs/wmic/wmic.rc:29

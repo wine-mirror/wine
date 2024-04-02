@@ -19482,7 +19482,9 @@ msgid "Help topics: "
 msgstr "Yardım konuları: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Hata: Komut satırı desteklenmiyor\n"
 
 #: programs/wmic/wmic.rc:29

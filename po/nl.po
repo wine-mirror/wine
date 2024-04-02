@@ -18497,9 +18497,9 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Elke DLL (Dynamic Link Library) kan apart worden ingesteld op "
-"'ingebouwd' (de versie van Wine) of 'windows' (afkomstig van Windows of "
-"meegeleverd met een programma)."
+"Elke DLL (Dynamic Link Library) kan apart worden ingesteld op 'ingebouwd' "
+"(de versie van Wine) of 'windows' (afkomstig van Windows of meegeleverd met "
+"een programma)."
 
 #: programs/winecfg/winecfg.rc:199
 msgid "&New override for library:"
@@ -19450,7 +19450,9 @@ msgid "Help topics: "
 msgstr "Help-onderwerpen: "
 
 #: programs/wmic/wmic.rc:28
-msgid "Error: Command line not supported\n"
+#, fuzzy
+#| msgid "Error: Command line not supported\n"
+msgid "Error: Command not supported\n"
 msgstr "Fout: Opdrachtregel niet ondersteund\n"
 
 #: programs/wmic/wmic.rc:29
