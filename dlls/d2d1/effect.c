@@ -20,6 +20,107 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+static inline struct d2d_transform *impl_from_ID2D1OffsetTransform(ID2D1OffsetTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_offset_transform_QueryInterface(ID2D1OffsetTransform *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1OffsetTransform)
+            || IsEqualGUID(iid, &IID_ID2D1TransformNode)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        ID2D1OffsetTransform_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_offset_transform_AddRef(ID2D1OffsetTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1OffsetTransform(iface);
+    ULONG refcount = InterlockedIncrement(&transform->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_offset_transform_Release(ID2D1OffsetTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1OffsetTransform(iface);
+    ULONG refcount = InterlockedDecrement(&transform->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(transform);
+
+    return refcount;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_offset_transform_GetInputCount(ID2D1OffsetTransform *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return 1;
+}
+
+static void STDMETHODCALLTYPE d2d_offset_transform_SetOffset(ID2D1OffsetTransform *iface,
+        D2D1_POINT_2L offset)
+{
+    struct d2d_transform *transform = impl_from_ID2D1OffsetTransform(iface);
+
+    TRACE("iface %p, offset %s.\n", iface, debug_d2d_point_2l(&offset));
+
+    transform->offset = offset;
+}
+
+static D2D1_POINT_2L * STDMETHODCALLTYPE d2d_offset_transform_GetOffset(ID2D1OffsetTransform *iface,
+        D2D1_POINT_2L *offset)
+{
+    struct d2d_transform *transform = impl_from_ID2D1OffsetTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    *offset = transform->offset;
+    return offset;
+}
+
+static const ID2D1OffsetTransformVtbl d2d_offset_transform_vtbl =
+{
+    d2d_offset_transform_QueryInterface,
+    d2d_offset_transform_AddRef,
+    d2d_offset_transform_Release,
+    d2d_offset_transform_GetInputCount,
+    d2d_offset_transform_SetOffset,
+    d2d_offset_transform_GetOffset,
+};
+
+static HRESULT d2d_offset_transform_create(D2D1_POINT_2L offset, ID2D1OffsetTransform **transform)
+{
+    struct d2d_transform *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1TransformNode_iface.lpVtbl = (ID2D1TransformNodeVtbl *)&d2d_offset_transform_vtbl;
+    object->refcount = 1;
+    object->offset = offset;
+
+    *transform = (ID2D1OffsetTransform *)&object->ID2D1TransformNode_iface;
+
+    return S_OK;
+}
+
 static inline struct d2d_transform_graph *impl_from_ID2D1TransformGraph(ID2D1TransformGraph *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_transform_graph, ID2D1TransformGraph_iface);
@@ -802,9 +903,9 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBorderTransform(ID2D1E
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateOffsetTransform(ID2D1EffectContext *iface,
         D2D1_POINT_2L offset, ID2D1OffsetTransform **transform)
 {
-    FIXME("iface %p, offset %s, transform %p stub!\n", iface, debug_d2d_point_2l(&offset), transform);
+    TRACE("iface %p, offset %s, transform %p.\n", iface, debug_d2d_point_2l(&offset), transform);
 
-    return E_NOTIMPL;
+    return d2d_offset_transform_create(offset, transform);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBoundsAdjustmentTransform(ID2D1EffectContext *iface,

@@ -12722,7 +12722,7 @@ static void test_transform_graph(BOOL d3d11)
 
     /* Create transforms */
     hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, point, &offset_transform);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 2, &blend_desc, &blend_transform);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (!offset_transform || !blend_transform)
@@ -12836,9 +12836,7 @@ static void test_offset_transform(BOOL d3d11)
     offset.x = 1;
     offset.y = 2;
     hr = ID2D1EffectContext_CreateOffsetTransform(effect_context, offset, &transform);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto done;
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     offset = ID2D1OffsetTransform_GetOffset(transform);
     ok(offset.x == 1 && offset.y == 2, "Got unexpected offset {%ld, %ld}.\n", offset.x, offset.y);
 
@@ -12853,9 +12851,7 @@ static void test_offset_transform(BOOL d3d11)
     offset = ID2D1OffsetTransform_GetOffset(transform);
     ok(offset.x == -10 && offset.y == 20, "Got unexpected offset {%ld, %ld}.\n", offset.x, offset.y);
 
-done:
-    if (transform)
-        ID2D1OffsetTransform_Release(transform);
+    ID2D1OffsetTransform_Release(transform);
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

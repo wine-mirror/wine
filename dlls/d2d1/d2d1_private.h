@@ -708,6 +708,17 @@ void d2d_factory_register_effect(struct d2d_factory *factory,
 HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
         const struct d2d_effect_property *prop, UINT32 *value);
 
+struct d2d_transform
+{
+    ID2D1TransformNode ID2D1TransformNode_iface;
+    LONG refcount;
+
+    union
+    {
+        D2D1_POINT_2L offset;
+    };
+};
+
 struct d2d_transform_graph
 {
     ID2D1TransformGraph ID2D1TransformGraph_iface;
