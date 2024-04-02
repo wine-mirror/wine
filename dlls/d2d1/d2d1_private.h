@@ -742,6 +742,8 @@ struct d2d_transform_graph
     struct d2d_transform_node_connection *inputs;
     unsigned int input_count;
 
+    struct d2d_transform_node *output;
+
     struct list nodes;
 };
 

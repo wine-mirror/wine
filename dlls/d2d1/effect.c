@@ -290,6 +290,9 @@ static void d2d_transform_graph_delete_node(struct d2d_transform_graph *graph,
             memset(&graph->inputs[i].node, 0, sizeof(graph->inputs[i].node));
     }
 
+    if (graph->output == node)
+        graph->output = NULL;
+
     free(node);
 }
 
@@ -396,11 +399,20 @@ static HRESULT STDMETHODCALLTYPE d2d_transform_graph_RemoveNode(ID2D1TransformGr
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetOutputNode(ID2D1TransformGraph *iface, ID2D1TransformNode *node)
+static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetOutputNode(ID2D1TransformGraph *iface,
+        ID2D1TransformNode *object)
 {
-    FIXME("iface %p, node %p stub!\n", iface, node);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
+    struct d2d_transform_node *node;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, object %p.\n", iface, object);
+
+    if (!(node = d2d_transform_graph_get_node(graph, object)))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    graph->output = node;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectNode(ID2D1TransformGraph *iface,
