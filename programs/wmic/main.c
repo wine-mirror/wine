@@ -421,7 +421,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                 int new_argc;
                 WCHAR **new_argv;
 
-                new_argv = CommandLineToArgvW( stripped, &new_argc );
+                if (!(new_argv = CommandLineToArgvW( stripped, &new_argc ))) return 1;
                 ret = process_args( new_argc, new_argv );
                 LocalFree( new_argv );
 
