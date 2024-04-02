@@ -19,6 +19,8 @@
 #ifndef __WINE_SHELLAPI_H
 #define __WINE_SHELLAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -703,5 +705,7 @@ HRESULT     WINAPI SHGetPropertyStoreForWindow(HWND,REFIID,void **);
 #ifndef _WIN64
 #include <poppack.h>
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_SHELLAPI_H */

@@ -19,6 +19,8 @@
 #ifndef __WINE_LOWLEVELMONITORCONFIGURATIONAPI_H
 #define __WINE_LOWLEVELMONITORCONFIGURATIONAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,5 +41,7 @@ typedef enum _MC_VCP_CODE_TYPE
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_LOWLEVELMONITORCONFIGURATIONAPI_H */

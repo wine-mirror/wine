@@ -73,6 +73,7 @@
 # ifndef _POSIX_SPAWN_DISABLE_ASLR
 #  define _POSIX_SPAWN_DISABLE_ASLR 0x0100
 # endif
+# include <sys/utsname.h>
 #endif
 #ifdef __ANDROID__
 # include <jni.h>
@@ -89,6 +90,7 @@
 #include "winioctl.h"
 #include "winternl.h"
 #include "unix_private.h"
+#include "esync.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -98,6 +100,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 static const char so_dir[] = "/i386-unix";
 #elif defined(__x86_64__)
 static const char so_dir[] = "/x86_64-unix";
+static const char so_dir_32on64[] = "/x86_32on64-unix";
 #elif defined(__arm__)
 static const char so_dir[] = "/arm-unix";
 #elif defined(__aarch64__)
@@ -118,6 +121,8 @@ SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 static void *p__wine_syscall_dispatcher;
+
+extern typeof(NtReadFile) __wine_rpc_NtReadFile;
 
 static void * const syscalls[] =
 {
@@ -351,6 +356,7 @@ static void * const syscalls[] =
     NtWriteVirtualMemory,
     NtYieldExecution,
     __wine_dbg_write,
+    __wine_rpc_NtReadFile,
     __wine_unix_call,
     __wine_unix_spawnvp,
     wine_nt_to_unix_file_name,
@@ -403,10 +409,32 @@ static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
     for ( ; count; count--, src++, dst++) *dst = *src ? *src - base : 0;
 }
 
+/* adjust an array of 32-bit pointers to make them into RVAs */
+static inline void fixup_rva_ptrs32( void *array, BYTE *base, unsigned int count )
+{
+    BYTE *src = array;
+    BYTE *dst = array;
+
+    for ( ; count; count--, src+=sizeof(DWORD), dst+=sizeof(DWORD))
+    {
+        DWORD srcptr = *(DWORD*)src;
+        *(DWORD*)dst = srcptr ? (BYTE *)UIntToPtr(srcptr) - base : 0;
+    }
+}
+
+
 /* fixup an array of RVAs by adding the specified delta */
 static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
 {
     for ( ; count; count--, ptr++) if (*ptr) *ptr += delta;
+}
+
+/* fixup an array of 32-bit RVAs by adding the specified delta */
+static inline void fixup_rva_dwords32( DWORD *dptr, int delta, unsigned int count )
+{
+    BYTE *ptr = (BYTE *)dptr;
+    for ( ; count; count--, ptr+=sizeof(DWORD))
+        if (*(DWORD*)ptr) *(DWORD*)ptr += delta;
 }
 
 
@@ -414,6 +442,18 @@ static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
 static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
 {
     for ( ; *ptr; ptr++) if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
+}
+
+/* fixup an array of name/ordinal 32-bit RVAs by adding the specified delta */
+static inline void fixup_rva_names32( UINT_PTR *uiptr, int delta )
+{
+    BYTE *ptr = (BYTE *)uiptr;
+    for ( ; *(UINT*)ptr; ptr+=4) if (!(*(UINT*)ptr & IMAGE_ORDINAL_FLAG32)) *(UINT*)ptr += delta;
+#ifdef __x86_64__
+    /* 32-bit .so DLL on x86_64 must be a hybrid Winelib dll */
+    ptr+=4;
+    for ( ; *(UINT*)ptr; ptr+=4) if (!(*(UINT*)ptr & IMAGE_ORDINAL_FLAG32)) *(UINT*)ptr += delta;
+#endif
 }
 
 
@@ -431,6 +471,21 @@ static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int d
     }
 }
 
+/* fixup 32-bit RVAs in the resource directory */
+static void fixup_so_resources32( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    unsigned int i;
+
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        void *ptr = root + entry->u2.s2.OffsetToDirectory;
+        if (entry->u2.s2.DataIsDirectory) fixup_so_resources32( ptr, root, delta );
+        else fixup_rva_dwords32( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
+    }
+}
+
+
 /* die on a fatal error; use only during initialization */
 static void fatal_error( const char *err, ... )
 {
@@ -441,6 +496,21 @@ static void fatal_error( const char *err, ... )
     vfprintf( stderr, err, args );
     va_end( args );
     exit(1);
+}
+
+static void fixup_so_32on64_sels( void *handle, const char *name )
+{
+/* Each hybrid Winelib .so has its own copy of the selectors, set them here. */
+#if defined(__APPLE__) && defined(__x86_64__)
+    unsigned short *cs32, *cs64, *ds32;
+    cs32 = dlsym( handle, "wine_32on64_cs32" );
+    cs64 = dlsym( handle, "wine_32on64_cs64" );
+    ds32 = dlsym( handle, "wine_32on64_ds32" );
+
+    if (cs32) *cs32 = cs32_sel;
+    if (cs64) *cs64 = cs64_sel;
+    if (ds32) *ds32 = ds32_sel;
+#endif
 }
 
 static void set_max_limit( int limit )
@@ -647,6 +717,26 @@ static void init_paths( char *argv[] )
     set_config_dir();
 }
 
+/* whether to use wow64 for i386 EXEs or launch a 32-bit wine */
+BOOL needs_wow64(void)
+{
+#if defined(__APPLE__) && defined(__x86_64__)
+    static int result = -1;
+    struct utsname name;
+    unsigned major, minor;
+
+    if (result == -1)
+    {
+        result = (uname(&name) == 0 &&
+                  sscanf(name.release, "%u.%u", &major, &minor) == 2 &&
+                  major >= 19 /* macOS 10.15 Catalina */);
+    }
+    return (result == 1) ? TRUE : FALSE;
+#else
+    return FALSE;
+#endif
+}
+
 
 static void preloader_exec( char **argv )
 {
@@ -684,7 +774,7 @@ static NTSTATUS loader_exec( const char *loader, char **argv, WORD machine )
 
     if (build_dir)
     {
-        argv[1] = build_path( build_dir, (machine == IMAGE_FILE_MACHINE_AMD64) ? "loader/wine64" : "loader/wine" );
+        argv[1] = build_path( build_dir, (machine == IMAGE_FILE_MACHINE_AMD64) ? "loader/wine64" : needs_wow64() ? "loader/wine64" : "loader/wine" );
         preloader_exec( argv );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
@@ -732,7 +822,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
 
     is_child_64bit = is_machine_64bit( machine );
 
-    if (!is_win64 ^ !is_child_64bit)
+    if ((!is_win64 ^ !is_child_64bit) && !needs_wow64())
     {
         /* remap WINELOADER to the alternate 32/64-bit version if necessary */
         if (loader_env)
@@ -755,7 +845,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
             loader = env;
             putenv( env );
         }
-        else loader = is_child_64bit ? "wine64" : "wine";
+        else loader = is_child_64bit ? "wine64" : needs_wow64() ? "wine64" : "wine";
     }
 
     signal( SIGPIPE, SIG_DFL );
@@ -858,7 +948,8 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     static const char builtin_signature[32] = "Wine builtin DLL";
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
-    IMAGE_NT_HEADERS *nt;
+    IMAGE_NT_HEADERS *nt = NULL;
+    IMAGE_NT_HEADERS32 *nt32 = NULL;
     IMAGE_SECTION_HEADER *sec;
     BYTE *addr = (BYTE *)module;
     DWORD code_start, code_end, data_start, data_end, align_mask;
@@ -866,14 +957,24 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     unsigned int i;
     DWORD size = (sizeof(IMAGE_DOS_HEADER)
                   + sizeof(builtin_signature)
-                  + sizeof(IMAGE_NT_HEADERS)
                   + nb_sections * sizeof(IMAGE_SECTION_HEADER));
 
-    if (anon_mmap_fixed( addr, size, PROT_READ | PROT_WRITE, 0 ) != addr) return STATUS_NO_MEMORY;
-
     dos = (IMAGE_DOS_HEADER *)addr;
-    nt  = (IMAGE_NT_HEADERS *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
-    sec = (IMAGE_SECTION_HEADER *)(nt + 1);
+
+    if (nt_descr->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        nt32  = (IMAGE_NT_HEADERS32 *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
+        size += sizeof(IMAGE_NT_HEADERS32);
+        sec   = (IMAGE_SECTION_HEADER *)(nt32 + 1);
+    }
+    else
+    {
+        nt    = (IMAGE_NT_HEADERS *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
+        size += sizeof(IMAGE_NT_HEADERS);
+        sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
+    }
+
+    if (anon_mmap_fixed( addr, size, PROT_READ | PROT_WRITE, 0 ) != addr) return STATUS_NO_MEMORY;
 
     /* build the DOS and NT headers */
 
@@ -888,10 +989,19 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     dos->e_lfanew   = sizeof(*dos) + sizeof(builtin_signature);
     memcpy( dos + 1, builtin_signature, sizeof(builtin_signature) );
 
-    *nt = *nt_descr;
+    if (nt32)
+        *nt32 = *(IMAGE_NT_HEADERS32*)nt_descr;
+    else
+        *nt = *nt_descr;
+
+#ifdef __x86_64__
+    /* This flag is set for hybrid DLLs so the PE-side loader.c can tell it's hybrid */
+    if (nt32)
+        nt32->FileHeader.Characteristics |= IMAGE_FILE_BYTES_REVERSED_HI;
+#endif
 
     delta      = (const BYTE *)nt_descr - addr;
-    align_mask = nt->OptionalHeader.SectionAlignment - 1;
+    align_mask = (nt32 ? nt32->OptionalHeader.SectionAlignment : nt->OptionalHeader.SectionAlignment) - 1;
     code_start = (size + align_mask) & ~align_mask;
     data_start = delta & ~align_mask;
 #ifdef __APPLE__
@@ -905,11 +1015,27 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     }
 #else
     code_end   = data_start;
-    data_end   = (nt->OptionalHeader.SizeOfImage + delta + align_mask) & ~align_mask;
+    data_end   = ((nt32 ? nt32->OptionalHeader.SizeOfImage : nt->OptionalHeader.SizeOfImage) + delta + align_mask) & ~align_mask;
 #endif
 
-    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
+    if (nt32)
+        fixup_rva_ptrs32( &nt32->OptionalHeader.AddressOfEntryPoint, addr, 1 );
+    else
+        fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
 
+    if (nt32)
+    {
+    nt32->FileHeader.NumberOfSections                = nb_sections;
+    nt32->OptionalHeader.BaseOfCode                  = code_start;
+    nt32->OptionalHeader.BaseOfData                  = data_start;
+    nt32->OptionalHeader.SizeOfCode                  = code_end - code_start;
+    nt32->OptionalHeader.SizeOfInitializedData       = data_end - data_start;
+    nt32->OptionalHeader.SizeOfUninitializedData     = 0;
+    nt32->OptionalHeader.SizeOfImage                 = data_end;
+    nt32->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
+    }
+    else
+    {
     nt->FileHeader.NumberOfSections                = nb_sections;
     nt->OptionalHeader.BaseOfCode                  = code_start;
 #ifndef _WIN64
@@ -920,6 +1046,7 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
     nt->OptionalHeader.SizeOfImage                 = data_end;
     nt->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
+    }
 
     /* build the code section */
 
@@ -942,18 +1069,41 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
                              IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
     sec++;
 
+    if (nt32)
+    {
+    for (i = 0; i < nt32->OptionalHeader.NumberOfRvaAndSizes; i++)
+        fixup_rva_dwords32( &nt32->OptionalHeader.DataDirectory[i].VirtualAddress, delta, 1 );
+    }
+    else
+    {
     for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
         fixup_rva_dwords( &nt->OptionalHeader.DataDirectory[i].VirtualAddress, delta, 1 );
+    }
 
     /* build the import directory */
 
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+    if (nt32)
+        dir = &nt32->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+    else
+        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
     if (dir->Size)
     {
         IMAGE_IMPORT_DESCRIPTOR *imports = (IMAGE_IMPORT_DESCRIPTOR *)(addr + dir->VirtualAddress);
 
         while (imports->Name)
         {
+            if (nt32)
+            {
+            fixup_rva_dwords32( &imports->u.OriginalFirstThunk, delta, 1 );
+            fixup_rva_dwords32( &imports->Name, delta, 1 );
+            fixup_rva_dwords32( &imports->FirstThunk, delta, 1 );
+            if (imports->u.OriginalFirstThunk)
+                fixup_rva_names32( (UINT_PTR *)(addr + imports->u.OriginalFirstThunk), delta );
+            if (imports->FirstThunk)
+                fixup_rva_names32( (UINT_PTR *)(addr + imports->FirstThunk), delta );
+            }
+            else
+            {
             fixup_rva_dwords( &imports->u.OriginalFirstThunk, delta, 1 );
             fixup_rva_dwords( &imports->Name, delta, 1 );
             fixup_rva_dwords( &imports->FirstThunk, delta, 1 );
@@ -961,32 +1111,57 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
                 fixup_rva_names( (UINT_PTR *)(addr + imports->u.OriginalFirstThunk), delta );
             if (imports->FirstThunk)
                 fixup_rva_names( (UINT_PTR *)(addr + imports->FirstThunk), delta );
+            }
             imports++;
         }
     }
 
     /* build the resource directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+    if (nt32)
+        dir = &nt32->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+    else
+        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
     if (dir->Size)
     {
         void *ptr = addr + dir->VirtualAddress;
-        fixup_so_resources( ptr, ptr, delta );
+        if (nt32)
+            fixup_so_resources32( ptr, ptr, delta );
+        else
+            fixup_so_resources( ptr, ptr, delta );
     }
 
     /* build the export directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    if (nt32)
+        dir = &nt32->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    else
+        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
     if (dir->Size)
     {
         IMAGE_EXPORT_DIRECTORY *exports = (IMAGE_EXPORT_DIRECTORY *)(addr + dir->VirtualAddress);
 
+        if (nt32)
+        {
+        fixup_rva_dwords32( &exports->Name, delta, 1 );
+        fixup_rva_dwords32( &exports->AddressOfFunctions, delta, 1 );
+        fixup_rva_dwords32( &exports->AddressOfNames, delta, 1 );
+        fixup_rva_dwords32( &exports->AddressOfNameOrdinals, delta, 1 );
+        fixup_rva_dwords32( (DWORD *)(addr + exports->AddressOfNames), delta, exports->NumberOfNames );
+#ifdef __x86_64__
+        /* 32-bit .so DLL on x86_64 must be a hybrid Winelib dll */
+        fixup_rva_ptrs32( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions * 2 );
+#else
+        fixup_rva_ptrs( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
+#endif
+        }
+        else
+        {
         fixup_rva_dwords( &exports->Name, delta, 1 );
         fixup_rva_dwords( &exports->AddressOfFunctions, delta, 1 );
         fixup_rva_dwords( &exports->AddressOfNames, delta, 1 );
         fixup_rva_dwords( &exports->AddressOfNameOrdinals, delta, 1 );
         fixup_rva_dwords( (DWORD *)(addr + exports->AddressOfNames), delta, exports->NumberOfNames );
         fixup_rva_ptrs( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
+        }
     }
     return STATUS_SUCCESS;
 }
@@ -1237,27 +1412,31 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
 {
     const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
     const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
+    const IMAGE_NT_HEADERS32 *nt32 = NULL;
 
-    info->base            = nt->OptionalHeader.ImageBase;
-    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
-    info->map_size        = nt->OptionalHeader.SizeOfImage;
-    info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
-    info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        nt32 = (IMAGE_NT_HEADERS32 *)nt;
+
+    info->base            = nt32 ? nt32->OptionalHeader.ImageBase : nt->OptionalHeader.ImageBase;
+    info->entry_point     = nt32 ? nt32->OptionalHeader.AddressOfEntryPoint : nt->OptionalHeader.AddressOfEntryPoint;
+    info->map_size        = nt32 ? nt32->OptionalHeader.SizeOfImage : nt->OptionalHeader.SizeOfImage;
+    info->stack_size      = nt32 ? nt32->OptionalHeader.SizeOfStackReserve : nt->OptionalHeader.SizeOfStackReserve;
+    info->stack_commit    = nt32 ? nt32->OptionalHeader.SizeOfStackCommit : nt->OptionalHeader.SizeOfStackCommit;
     info->zerobits        = 0;
-    info->subsystem       = nt->OptionalHeader.Subsystem;
-    info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
-    info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
-    info->osversion_major = nt->OptionalHeader.MajorOperatingSystemVersion;
-    info->osversion_minor = nt->OptionalHeader.MinorOperatingSystemVersion;
-    info->image_charact   = nt->FileHeader.Characteristics;
-    info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
-    info->machine         = nt->FileHeader.Machine;
+    info->subsystem       = nt32 ? nt32->OptionalHeader.Subsystem : nt->OptionalHeader.Subsystem;
+    info->subsystem_minor = nt32 ? nt32->OptionalHeader.MinorSubsystemVersion : nt->OptionalHeader.MinorSubsystemVersion;
+    info->subsystem_major = nt32 ? nt32->OptionalHeader.MajorSubsystemVersion : nt->OptionalHeader.MajorSubsystemVersion;
+    info->osversion_major = nt32 ? nt32->OptionalHeader.MajorOperatingSystemVersion : nt->OptionalHeader.MajorOperatingSystemVersion;
+    info->osversion_minor = nt32 ? nt32->OptionalHeader.MinorOperatingSystemVersion : nt->OptionalHeader.MinorOperatingSystemVersion;
+    info->image_charact   = nt32 ? nt32->FileHeader.Characteristics : nt->FileHeader.Characteristics;
+    info->dll_charact     = nt32 ? nt32->OptionalHeader.DllCharacteristics : nt->OptionalHeader.DllCharacteristics;
+    info->machine         = nt32 ? nt32->FileHeader.Machine : nt->FileHeader.Machine;
     info->contains_code   = TRUE;
     info->image_flags     = IMAGE_FLAGS_WineBuiltin;
     info->loader_flags    = 0;
-    info->header_size     = nt->OptionalHeader.SizeOfHeaders;
-    info->file_size       = nt->OptionalHeader.SizeOfImage;
-    info->checksum        = nt->OptionalHeader.CheckSum;
+    info->header_size     = nt32 ? nt32->OptionalHeader.SizeOfHeaders : nt->OptionalHeader.SizeOfHeaders;
+    info->file_size       = nt32 ? nt32->OptionalHeader.SizeOfImage : nt->OptionalHeader.SizeOfImage;
+    info->checksum        = nt32 ? nt32->OptionalHeader.CheckSum : nt->OptionalHeader.CheckSum;
     info->dbg_offset      = 0;
     info->dbg_size        = 0;
 }
@@ -1279,6 +1458,7 @@ static NTSTATUS dlopen_dll( const char *so_name, UNICODE_STRING *nt_name, void *
         WARN( "failed to load .so lib %s: %s\n", debugstr_a(so_name), dlerror() );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
+    fixup_so_32on64_sels( handle, so_name );
     if (callback_module != (void *)1)  /* callback was called */
     {
         if (!callback_module) return STATUS_NO_MEMORY;
@@ -1288,7 +1468,12 @@ static NTSTATUS dlopen_dll( const char *so_name, UNICODE_STRING *nt_name, void *
     }
     else if ((nt = dlsym( handle, "__wine_spec_nt_header" )))
     {
-        module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+        const IMAGE_NT_HEADERS32 *nt32 = (const IMAGE_NT_HEADERS32 *)nt;
+        if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            module = (HMODULE)UIntToPtr((nt32->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+        else
+            module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+
         if (get_builtin_so_handle( module )) goto already_loaded;
         if (map_so_dll( nt, module ))
         {
@@ -1475,7 +1660,7 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, HANDLE
  */
 static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
                                       SIZE_T *size, SECTION_IMAGE_INFORMATION *image_info,
-                                      WORD machine, BOOL prefer_native )
+                                      ULONG_PTR zero_bits, WORD machine, BOOL prefer_native )
 {
     NTSTATUS status;
     HANDLE mapping;
@@ -1484,7 +1669,7 @@ static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr,
     status = open_dll_file( name, attr, &mapping );
     if (!status)
     {
-        status = virtual_map_builtin_module( mapping, module, size, image_info, machine, prefer_native );
+        status = virtual_map_builtin_module( mapping, module, size, image_info, zero_bits, machine, prefer_native );
         NtClose( mapping );
     }
     return status;
@@ -1502,7 +1687,13 @@ static NTSTATUS open_builtin_so_file( const char *name, OBJECT_ATTRIBUTES *attr,
     int fd;
 
     *module = NULL;
+#ifdef __x86_64__
+    /* In Wow64 mode, try to load hybrid .dll.so's */
+    if (machine != current_machine && machine != IMAGE_FILE_MACHINE_I386) return STATUS_DLL_NOT_FOUND;
+#else
     if (machine != current_machine) return STATUS_DLL_NOT_FOUND;
+#endif
+
     if ((fd = open( name, O_RDONLY )) == -1) return STATUS_DLL_NOT_FOUND;
 
     if (check_library_arch( fd ))
@@ -1528,7 +1719,8 @@ static NTSTATUS open_builtin_so_file( const char *name, OBJECT_ATTRIBUTES *attr,
  *           find_builtin_dll
  */
 static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T *size_ptr,
-                                  SECTION_IMAGE_INFORMATION *image_info, WORD machine, BOOL prefer_native )
+                                  SECTION_IMAGE_INFORMATION *image_info,
+                                  ULONG_PTR zero_bits, WORD machine, BOOL prefer_native )
 {
     unsigned int i, pos, namepos, namelen, maxlen = 0;
     unsigned int len = nt_name->Length / sizeof(WCHAR);
@@ -1537,6 +1729,14 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
+
+    /* CX HACK 20810: in wow64/32-bit-bottle mode, use 32-bit builtin EXEs */
+    if (wow64_using_32bit_prefix &&
+        len > 4 &&
+        (nt_name->Buffer[len-3] == 'e' &&
+         nt_name->Buffer[len-2] == 'x' &&
+         nt_name->Buffer[len-1] == 'e'))
+        pe_dir = get_pe_dir( IMAGE_FILE_MACHINE_I386 );
 
     for (i = namepos = 0; i < len; i++)
         if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') namepos = i + 1;
@@ -1570,7 +1770,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
@@ -1584,7 +1784,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         strcpy( file + pos + len + 1, ".so" );
         status = open_builtin_so_file( ptr, &attr, module, image_info, machine, prefer_native );
@@ -1597,9 +1797,15 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         file[pos + len + 1] = 0;
         ptr = prepend( ptr, pe_dir, strlen(pe_dir) );
         ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
         /* use so dir for unix lib */
         ptr = file + pos;
+#ifdef __x86_64__
+        /* In Wow64 mode, a .dll.so must be hybrid */
+        if (machine == IMAGE_FILE_MACHINE_I386)
+            ptr = prepend( ptr, so_dir_32on64, strlen(so_dir_32on64) );
+        else
+#endif
         ptr = prepend( ptr, so_dir, strlen(so_dir) );
         ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
@@ -1608,7 +1814,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, zero_bits, machine, prefer_native );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
         {
             found_image = TRUE;
@@ -1641,7 +1847,7 @@ done:
  * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
  */
 NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
-                       void **module, SIZE_T *size )
+                       void **module, SIZE_T *size, ULONG_PTR zero_bits )
 {
     WORD machine = image_info->machine;  /* request same machine as the native one */
     NTSTATUS status;
@@ -1672,9 +1878,9 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
     case LO_NATIVE_BUILTIN:
         return STATUS_IMAGE_ALREADY_LOADED;
     case LO_BUILTIN:
-        return find_builtin_dll( &nt_name, module, size, &info, machine, FALSE );
+        return find_builtin_dll( &nt_name, module, size, &info, zero_bits, machine, FALSE );
     default:
-        status = find_builtin_dll( &nt_name, module, size, &info, machine, (loadorder == LO_DEFAULT) );
+        status = find_builtin_dll( &nt_name, module, size, &info, zero_bits, machine, (loadorder == LO_DEFAULT) );
         if (status == STATUS_DLL_NOT_FOUND || status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
             return STATUS_IMAGE_ALREADY_LOADED;
         return status;
@@ -1695,7 +1901,7 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
     static const WCHAR sysx8664[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','x','8','6','6','4','\\',0};
     static const WCHAR sysarm64[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','a','r','m','6','4','\\',0};
 
-    if (machine == native_machine) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
+    if (machine == native_machine || wow64_using_32bit_prefix) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
 
     switch (machine)
     {
@@ -1769,7 +1975,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
         if (!status)
         {
             NtQuerySection( mapping, SectionImageInformation, info, sizeof(*info), NULL );
-            if (info->u.s.ComPlusNativeReady) info->Machine = native_machine;
+            if (info->u.s.ComPlusNativeReady && !wow64_using_32bit_prefix) info->Machine = native_machine;
         }
         NtClose( mapping );
     }
@@ -1837,7 +2043,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
     if (loadorder != LO_NATIVE && is_builtin_path( &nt_name, &machine ))
     {
-        status = find_builtin_dll( &nt_name, module, &size, &main_image_info, machine, FALSE );
+        status = find_builtin_dll( &nt_name, module, &size, &main_image_info, 0, machine, FALSE );
         if (status != STATUS_DLL_NOT_FOUND) return status;
     }
     if (!contains_path) return STATUS_DLL_NOT_FOUND;
@@ -1866,7 +2072,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
     wcscpy( *image, get_machine_wow64_dir( current_machine ));
     wcscat( *image, startW );
     init_unicode_string( &nt_name, *image );
-    status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE );
+    status = find_builtin_dll( &nt_name, module, &size, &main_image_info, 0, current_machine, FALSE );
     if (status)
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );
@@ -1979,7 +2185,7 @@ static void load_ntdll(void)
     name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
     if (build_dir) sprintf( name, "%s/ntdll.dll", ntdll_dir );
     else sprintf( name, "%s%s/ntdll.dll", dll_dir, pe_dir );
-    status = open_builtin_pe_file( name, &attr, &module, &size, &info, current_machine, FALSE );
+    status = open_builtin_pe_file( name, &attr, &module, &size, &info, 0, current_machine, FALSE );
     if (status == STATUS_DLL_NOT_FOUND)
     {
         sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
@@ -2080,7 +2286,7 @@ static void load_wow64_ntdll( USHORT machine )
     wcscpy( path, get_machine_wow64_dir( machine ));
     wcscat( path, ntdllW );
     init_unicode_string( &nt_name, path );
-    status = find_builtin_dll( &nt_name, &module, &size, &info, machine, FALSE );
+    status = find_builtin_dll( &nt_name, &module, &size, &info, 0, machine, FALSE );
     switch (status)
     {
     case STATUS_IMAGE_NOT_AT_BASE:
@@ -2142,6 +2348,80 @@ static struct unix_funcs unix_funcs =
 };
 
 
+#if defined(__APPLE__) && defined(__x86_64__)
+static __thread struct tm localtime_tls;
+struct tm *my_localtime(const time_t *timep)
+{
+    return localtime_r(timep, &localtime_tls);
+}
+
+static void hook(void *to_hook, const void *replace)
+{
+    size_t offset;
+    int ret;
+
+    struct hooked_function
+    {
+        char jmp[8];
+        const void *dst;
+    } *hooked_function = to_hook;
+    ULONG_PTR intval = (UINT_PTR)to_hook;
+
+    intval -= (intval % 4096);
+    ret = mprotect((void *)intval, 0x2000, PROT_EXEC | PROT_READ | PROT_WRITE);
+
+    /* The offset is from the end of the jmp instruction (6 bytes) to the start of the destination. */
+    offset = offsetof(struct hooked_function, dst) - offsetof(struct hooked_function, jmp) - 0x6;
+
+    /* jmp *(rip + offset) */
+    hooked_function->jmp[0] = 0xff;
+    hooked_function->jmp[1] = 0x25;
+    hooked_function->jmp[2] = offset;
+    hooked_function->jmp[3] = 0x00;
+    hooked_function->jmp[4] = 0x00;
+    hooked_function->jmp[5] = 0x00;
+    /* Filler */
+    hooked_function->jmp[6] = 0xcc;
+    hooked_function->jmp[7] = 0xcc;
+    /* Dest address absolute */
+    hooked_function->dst = replace;
+
+    //size = sizeof(*hooked_function);
+    //NtProtectVirtualMemory(proc, (void **)hooked_function, &size, old_protect, &old_protect);
+}
+#endif
+
+/* CX HACK 21109: dlopen opengl32.dll.so early in 32-on-64 */
+#if defined(__APPLE__) && defined(__x86_64__)
+static void dlopen_32on64_opengl32(void)
+{
+    char file[MAX_PATH];
+    unsigned int i;
+    struct stat st;
+    void *handle;
+
+    for (i = 0; dll_paths[i]; i++)
+    {
+        snprintf(file, MAX_PATH, "%s%s/opengl32.dll.so", dll_paths[i], so_dir_32on64);
+
+        if (!stat(file, &st) &&
+            (handle = dlopen(file, RTLD_NOW)))
+        {
+            /* Nothing special about the NT header; just using something
+             * we know will be there. */
+            Dl_info info = {0};
+            void *symaddr = dlsym(handle, "__wine_spec_nt_header");
+            dladdr(symaddr, &info);
+
+            FIXME("loaded %s early @ %p\n", debugstr_a(file), info.dli_fbase);
+            return;
+        }
+    }
+
+    FIXME("couldn't load opengl32.dll.so early\n");
+}
+#endif
+
 /***********************************************************************
  *           start_main_thread
  */
@@ -2156,6 +2436,7 @@ static void start_main_thread(void)
     signal_init_thread( teb );
     dbg_init();
     startup_info_size = server_init_process();
+    esync_init();
     virtual_map_user_shared_data();
     init_cpu_info();
     init_files();
@@ -2169,7 +2450,16 @@ static void start_main_thread(void)
     init_thread_stack( teb, 0, 0, 0 );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
-    if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
+    if (main_image_info.Machine != current_machine)
+    {
+        load_wow64_ntdll( main_image_info.Machine );
+
+    /* CX HACK 21109: dlopen opengl32.dll.so early in 32-on-64 */
+#if defined(__APPLE__) && defined(__x86_64__)
+        if (main_image_info.Machine == IMAGE_FILE_MACHINE_I386)
+            dlopen_32on64_opengl32();
+#endif
+    }
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
@@ -2178,6 +2468,11 @@ static void start_main_thread(void)
         ERR( "ntdll library version mismatch\n" );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
+#if defined(__APPLE__) && defined(__x86_64__)
+    /* This is necessary because we poke PEB into pthread TLS at offset 0x60. It is normally in use by
+     * localtime(), which is called a lot by system libraries. Make localtime() go away. */
+    hook(localtime, my_localtime);
+#endif
     server_init_process_done();
 }
 
@@ -2322,6 +2617,8 @@ static void apple_create_wine_thread( void *arg )
 
     pthread_attr_init( &attr );
     pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE );
+    /* CW HACK 21133: set Wine thread QoS class */
+    pthread_attr_set_qos_class_np( &attr, QOS_CLASS_USER_INTERACTIVE, 0 );
     if (pthread_create( &thread, &attr, apple_wine_thread, NULL )) exit(1);
     pthread_attr_destroy( &attr );
 }

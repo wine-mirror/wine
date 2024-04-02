@@ -19,6 +19,8 @@
 #ifndef __SECEXT_H__
 #define __SECEXT_H__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,5 +56,7 @@ BOOLEAN WINAPI TranslateNameW( LPCWSTR, EXTENDED_NAME_FORMAT, EXTENDED_NAME_FORM
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __SECEXT_H__ */

@@ -1655,6 +1655,22 @@ static LRESULT COMBO_GetComboBoxInfo(const HEADCOMBO *lphc, COMBOBOXINFO *pcbi)
     pcbi->hwndCombo = lphc->self;
     pcbi->hwndItem = lphc->hWndEdit;
     pcbi->hwndList = lphc->hWndLBox;
+
+    /* Codeweavers Hack for Project 2010, see bug 9946 */
+    if(!pcbi->hwndItem) {
+        char process_name[MAX_PATH], *p;
+
+        GetModuleFileNameA(GetModuleHandleA(NULL), process_name, MAX_PATH);
+        p = strrchr(process_name, '\\');
+        if(p)
+            p++;
+        else
+            p = process_name;
+
+        if(!strcasecmp(p, "winproj.exe"))
+            pcbi->hwndItem = pcbi->hwndCombo;
+    }
+
     return TRUE;
 }
 

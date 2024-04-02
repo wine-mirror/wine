@@ -52,8 +52,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 
 /* Windows uses "Microsoft Internet Explorer" */
+/* CrossOver: We use "CrossOver Web Browser" */
 static const WCHAR wszWineInternetExplorer[] =
-        {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
+    {'C','r','o','s','s','O','v','e','r',' ','W','e','b',' ','B','r','o','w','s','e','r',0};
 
 static LONG obj_cnt;
 static DWORD dde_inst;

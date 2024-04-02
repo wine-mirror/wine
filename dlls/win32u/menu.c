@@ -19,10 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
@@ -339,6 +335,7 @@ DWORD WINAPI NtUserCheckMenuItem( HMENU handle, UINT id, UINT flags )
     if (flags & MF_CHECKED) item->fState |= MF_CHECKED;
     else item->fState &= ~MF_CHECKED;
     release_menu_ptr(menu);
+    /*    MENU_send_window_menubar_to_macapp( NtUserGetForegroundWindow() ); */
     return ret;
 }
 

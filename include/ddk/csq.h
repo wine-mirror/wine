@@ -21,6 +21,8 @@
 #ifndef __WINE_CSQ_H
 #define __WINE_CSQ_H
 
+#include "wine/winheader_enter.h"
+
 typedef struct _IO_CSQ IO_CSQ, *PIO_CSQ;
 typedef VOID (WINAPI *PIO_CSQ_ACQUIRE_LOCK)(PIO_CSQ Csq, PKIRQL Irql);
 typedef VOID (WINAPI *PIO_CSQ_COMPLETE_CANCELED_IRP)(PIO_CSQ Csq, PIRP Irp);
@@ -28,5 +30,7 @@ typedef VOID (WINAPI *PIO_CSQ_INSERT_IRP)(struct _IO_CSQ *Csq, PIRP Irp);
 typedef PIRP (WINAPI *PIO_CSQ_PEEK_NEXT_IRP)(PIO_CSQ Csq, PIRP Irp, PVOID PeekContext);
 typedef VOID (WINAPI *PIO_CSQ_RELEASE_LOCK)(PIO_CSQ Csq, KIRQL Irql);
 typedef VOID (WINAPI *PIO_CSQ_REMOVE_IRP)(PIO_CSQ Csq, PIRP Irp);
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_CSQ_H */

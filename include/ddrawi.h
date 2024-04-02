@@ -22,6 +22,8 @@
 #ifndef __DDRAWI_INCLUDED__
 #define __DDRAWI_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #include <ddraw.h>
 #include <dciddi.h> /* the DD HAL is layered onto DCI escapes */
 
@@ -1066,5 +1068,7 @@ typedef struct _DDRAWI_DDRAWPALETTE_LCL {
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DDRAWI_INCLUDED__ */

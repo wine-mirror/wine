@@ -202,6 +202,13 @@ static void hlsl_type_calculate_reg_size(struct hlsl_ctx *ctx, struct hlsl_type 
     }
 }
 
+/* Returns the size of a type, considered as part of an array of that type.
+ * As such it includes padding after the type. */
+unsigned int hlsl_type_get_array_element_reg_size(const struct hlsl_type *type)
+{
+    return align(type->reg_size, 4);
+}
+
 static struct hlsl_type *hlsl_new_type(struct hlsl_ctx *ctx, const char *name, enum hlsl_type_class type_class,
         enum hlsl_base_type base_type, unsigned dimx, unsigned dimy)
 {
@@ -223,6 +230,85 @@ static struct hlsl_type *hlsl_new_type(struct hlsl_ctx *ctx, const char *name, e
     list_add_tail(&ctx->types, &type->entry);
 
     return type;
+}
+
+/* Returns the register offset of a given component within a type, given its index.
+ * *comp_type will be set to the type of the component. */
+unsigned int hlsl_compute_component_offset(struct hlsl_ctx *ctx, struct hlsl_type *type,
+        unsigned int idx, struct hlsl_type **comp_type)
+{
+    switch (type->type)
+    {
+        case HLSL_CLASS_SCALAR:
+        case HLSL_CLASS_VECTOR:
+        {
+            assert(idx < type->dimx * type->dimy);
+            *comp_type = hlsl_get_scalar_type(ctx, type->base_type);
+            return idx;
+        }
+        case HLSL_CLASS_MATRIX:
+        {
+            unsigned int minor, major, x = idx % type->dimx, y = idx / type->dimx;
+
+            assert(idx < type->dimx * type->dimy);
+
+            if (hlsl_type_is_row_major(type))
+            {
+                minor = x;
+                major = y;
+            }
+            else
+            {
+                minor = y;
+                major = x;
+            }
+
+            *comp_type = hlsl_get_scalar_type(ctx, type->base_type);
+            return 4 * major + minor;
+        }
+
+        case HLSL_CLASS_ARRAY:
+        {
+            unsigned int elem_comp_count = hlsl_type_component_count(type->e.array.type);
+            unsigned int array_idx = idx / elem_comp_count;
+            unsigned int idx_in_elem = idx % elem_comp_count;
+
+            assert(array_idx < type->e.array.elements_count);
+
+            return array_idx * hlsl_type_get_array_element_reg_size(type->e.array.type) +
+                    hlsl_compute_component_offset(ctx, type->e.array.type, idx_in_elem, comp_type);
+        }
+
+        case HLSL_CLASS_STRUCT:
+        {
+            struct hlsl_struct_field *field;
+
+            LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
+            {
+                unsigned int elem_comp_count = hlsl_type_component_count(field->type);
+
+                if (idx < elem_comp_count)
+                {
+                    return field->reg_offset +
+                            hlsl_compute_component_offset(ctx, field->type, idx, comp_type);
+                }
+                idx -= elem_comp_count;
+            }
+
+            assert(0);
+            return 0;
+        }
+
+        case HLSL_CLASS_OBJECT:
+        {
+            assert(idx == 0);
+            *comp_type = type;
+            return 0;
+        }
+    }
+
+    assert(0);
+    return 0;
 }
 
 struct hlsl_type *hlsl_new_array_type(struct hlsl_ctx *ctx, struct hlsl_type *basic_type, unsigned int array_size)
@@ -556,27 +642,44 @@ struct hlsl_ir_store *hlsl_new_simple_store(struct hlsl_ctx *ctx, struct hlsl_ir
     return hlsl_new_store(ctx, lhs, NULL, rhs, 0, rhs->loc);
 }
 
-struct hlsl_ir_constant *hlsl_new_int_constant(struct hlsl_ctx *ctx, int n,
-        const struct vkd3d_shader_location loc)
+struct hlsl_ir_constant *hlsl_new_constant(struct hlsl_ctx *ctx, struct hlsl_type *type,
+        const struct vkd3d_shader_location *loc)
 {
     struct hlsl_ir_constant *c;
 
+    assert(type->type <= HLSL_CLASS_VECTOR);
+
     if (!(c = hlsl_alloc(ctx, sizeof(*c))))
         return NULL;
-    init_node(&c->node, HLSL_IR_CONSTANT, hlsl_get_scalar_type(ctx, HLSL_TYPE_INT), loc);
-    c->value[0].i = n;
+
+    init_node(&c->node, HLSL_IR_CONSTANT, type, *loc);
+
+    return c;
+}
+
+struct hlsl_ir_constant *hlsl_new_int_constant(struct hlsl_ctx *ctx, int n,
+        const struct vkd3d_shader_location *loc)
+{
+    struct hlsl_ir_constant *c;
+
+    c = hlsl_new_constant(ctx, hlsl_get_scalar_type(ctx, HLSL_TYPE_INT), loc);
+
+    if (c)
+        c->value[0].i = n;
+
     return c;
 }
 
 struct hlsl_ir_constant *hlsl_new_uint_constant(struct hlsl_ctx *ctx, unsigned int n,
-        const struct vkd3d_shader_location loc)
+        const struct vkd3d_shader_location *loc)
 {
     struct hlsl_ir_constant *c;
 
-    if (!(c = hlsl_alloc(ctx, sizeof(*c))))
-        return NULL;
-    init_node(&c->node, HLSL_IR_CONSTANT, hlsl_get_scalar_type(ctx, HLSL_TYPE_UINT), loc);
-    c->value[0].u = n;
+    c = hlsl_new_constant(ctx, hlsl_get_scalar_type(ctx, HLSL_TYPE_UINT), loc);
+
+    if (c)
+        c->value[0].u = n;
+
     return c;
 }
 
@@ -1144,7 +1247,7 @@ static void dump_ir_constant(struct vkd3d_string_buffer *buffer, const struct hl
         switch (type->base_type)
         {
             case HLSL_TYPE_BOOL:
-                vkd3d_string_buffer_printf(buffer, "%s ", value->b ? "true" : "false");
+                vkd3d_string_buffer_printf(buffer, "%s ", value->u ? "true" : "false");
                 break;
 
             case HLSL_TYPE_DOUBLE:

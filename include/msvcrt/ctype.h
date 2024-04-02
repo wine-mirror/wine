@@ -8,6 +8,8 @@
 #ifndef __WINE_CTYPE_H
 #define __WINE_CTYPE_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_wctype.h>
 
 #ifdef __cplusplus
@@ -55,5 +57,7 @@ static inline int isascii(int c) { return __isascii(c); }
 static inline int iscsym(int c) { return __iscsym(c); }
 static inline int iscsymf(int c) { return __iscsymf(c); }
 static inline int toascii(int c) { return __toascii(c); }
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_CTYPE_H */

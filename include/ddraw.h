@@ -19,6 +19,8 @@
 #ifndef __DDRAW_INCLUDED__
 #define __DDRAW_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
 
@@ -2772,5 +2774,7 @@ HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DDRAW_INCLUDED__ */

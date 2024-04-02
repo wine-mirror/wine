@@ -1,6 +1,6 @@
 /*
  * Copyright 2017 Józef Kucia for CodeWeavers
- * Copyright 2021 Conor McCarthy for Codeweavers
+ * Copyright 2021 Conor McCarthy for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -206,7 +206,7 @@ static enum vkd3d_shader_input_sysval_semantic vkd3d_siv_from_sysval(enum vkd3d_
 
 #define VKD3D_SPIRV_VERSION 0x00010000
 #define VKD3D_SPIRV_GENERATOR_ID 18
-#define VKD3D_SPIRV_GENERATOR_VERSION 3
+#define VKD3D_SPIRV_GENERATOR_VERSION 4
 #define VKD3D_SPIRV_GENERATOR_MAGIC vkd3d_make_u32(VKD3D_SPIRV_GENERATOR_VERSION, VKD3D_SPIRV_GENERATOR_ID)
 
 struct vkd3d_spirv_stream
@@ -2376,6 +2376,8 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
 
             default:
                 WARN("Ignoring unrecognised option %#x with value %#x.\n", option->name, option->value);
+
+            case VKD3D_SHADER_COMPILE_OPTION_API_VERSION:
                 break;
         }
     }
@@ -7425,7 +7427,7 @@ static void vkd3d_dxbc_compiler_emit_f16tof32(struct vkd3d_dxbc_compiler *compil
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 2);
     scalar_type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 1);
 
-    /* FIXME: Consider a single UnpackHalf2x16 intruction per 2 components. */
+    /* FIXME: Consider a single UnpackHalf2x16 instruction per 2 components. */
     assert(dst->write_mask & VKD3DSP_WRITEMASK_ALL);
     for (i = 0, j = 0; i < VKD3D_VEC4_SIZE; ++i)
     {
@@ -7459,7 +7461,7 @@ static void vkd3d_dxbc_compiler_emit_f32tof16(struct vkd3d_dxbc_compiler *compil
     scalar_type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
     zero_id = vkd3d_dxbc_compiler_get_constant_float(compiler, 0.0f);
 
-    /* FIXME: Consider a single PackHalf2x16 intruction per 2 components. */
+    /* FIXME: Consider a single PackHalf2x16 instruction per 2 components. */
     assert(dst->write_mask & VKD3DSP_WRITEMASK_ALL);
     for (i = 0, j = 0; i < VKD3D_VEC4_SIZE; ++i)
     {
@@ -7802,7 +7804,7 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
 
             /* The OpSwitch instruction is inserted when the endswitch
              * instruction is processed because we do not know the number
-             * of case statments in advance.*/
+             * of case statements in advance.*/
             vkd3d_spirv_begin_function_stream_insertion(builder, cf_info->u.switch_.stream_location);
             vkd3d_spirv_build_op_switch(builder, cf_info->u.switch_.selector_id,
                     cf_info->u.switch_.default_block_id, cf_info->u.switch_.case_blocks,
@@ -8336,10 +8338,10 @@ static void vkd3d_dxbc_compiler_emit_sample(struct vkd3d_dxbc_compiler *compiler
 static void vkd3d_dxbc_compiler_emit_sample_c(struct vkd3d_dxbc_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
-    uint32_t sampled_type_id, coordinate_id, dref_id, val_id, type_id;
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_dst_param *dst = instruction->dst;
     const struct vkd3d_shader_src_param *src = instruction->src;
+    uint32_t sampled_type_id, coordinate_id, dref_id, val_id;
     SpvImageOperandsMask operands_mask = 0;
     unsigned int image_operand_count = 0;
     struct vkd3d_shader_image image;
@@ -8371,10 +8373,6 @@ static void vkd3d_dxbc_compiler_emit_sample_c(struct vkd3d_dxbc_compiler *compil
     sampled_type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, 1);
     coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
     dref_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[3], VKD3DSP_WRITEMASK_0);
-    /* XXX: Nvidia is broken and expects that the D_ref is packed together with coordinates. */
-    type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
-    coordinate_id = vkd3d_spirv_build_op_composite_insert1(builder,
-            type_id, dref_id, coordinate_id, image.resource_type_info->coordinate_component_count);
     val_id = vkd3d_spirv_build_op_image_sample_dref(builder, op, sampled_type_id,
             image.sampled_image_id, coordinate_id, dref_id, operands_mask,
             image_operands, image_operand_count);

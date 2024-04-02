@@ -20,6 +20,8 @@
 #ifndef __WINE_DPLOBBY_H
 #define __WINE_DPLOBBY_H
 
+#include "wine/winheader_enter.h"
+
 #include <dplay.h>
 
 #ifdef __cplusplus
@@ -505,5 +507,7 @@ DECLARE_INTERFACE_(IDirectPlayLobby3,IDirectPlayLobby2)
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DPLOBBY_H */

@@ -144,6 +144,7 @@ struct control_frame
     } no;
     struct wined3d_shader_loop_control loop_control;
     BOOL                            had_else;
+    char                            src_param[256]; /* For the broken ARA quirk */
 };
 
 struct arb_ps_np2fixup_info
@@ -2869,11 +2870,33 @@ static void shader_hw_pow(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void loop_helper_component(unsigned int depth, char *counter, char *aL)
+{
+    if(depth == 0)
+    {
+        *counter = 'x';
+        *aL = 'y';
+        return;
+    }
+    if(depth == 1)
+    {
+        *counter = 'z';
+        *aL = 'w';
+        return;
+    }
+
+    FIXME("Unsupported loop depth for broken ARA quirk: %u\n", depth);
+    *counter = '?';
+    *aL = '?';
+}
+
 static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     char src_name[50];
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_device *device = ins->ctx->shader->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     /* src0 is aL */
     shader_arb_get_src_param(ins, &ins->src[1], 0, src_name);
@@ -2883,12 +2906,30 @@ static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
         struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
         struct list *e = list_head(&priv->control_frames);
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        char counter, aL;
 
         if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
-        /* The constant loader makes sure to load -1 into iX.w */
-        shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
-        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->no.loop);
+
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            loop_helper_component(priv->loop_depth, &counter, &aL);
+            shader_addline(buffer, "MOVC loop_helper.%c%c, %s.xyxy;\n", counter, aL, src_name);
+            strcpy(control_frame->src_param, src_name);
+        }
+        else
+        {
+            /* The constant loader makes sure to load -1 into iX.w */
+            shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
+            counter = 'x';
+            aL = 'y';
+        }
+        shader_addline(buffer, "BRA loop_%u_end (LE.%c);\n", control_frame->no.loop, counter);
         shader_addline(buffer, "loop_%u_start:\n", control_frame->no.loop);
+
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            shader_addline(buffer, "ARL aL.y, loop_helper.%c;\n", aL);
+        }
     }
     else
     {
@@ -2896,11 +2937,24 @@ static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static char rep_helper_component(unsigned int depth)
+{
+    if(depth == 0) return 'x';
+    if(depth == 1) return 'y';
+    if(depth == 2) return 'z';
+    if(depth == 3) return 'w';
+
+    FIXME("Unsupported rep depth for broken ARA quirk: %u\n", depth);
+        return 'w';
+}
+
 static void shader_hw_rep(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     char src_name[50];
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_device *device = ins->ctx->shader->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
 
@@ -2910,11 +2964,21 @@ static void shader_hw_rep(const struct wined3d_shader_instruction *ins)
         struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
         struct list *e = list_head(&priv->control_frames);
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        char component;
 
-        if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
-
-        shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
-        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->no.loop);
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            component = rep_helper_component(priv->loop_depth);
+            shader_addline(buffer, "MOVC rep_helper.%c, %s.x;\n", component, src_name);
+            strcpy(control_frame->src_param, src_name);
+        }
+        else
+        {
+            component = 'x';
+            if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
+            shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
+        }
+        shader_addline(buffer, "BRA loop_%u_end (LE.%c);\n", control_frame->no.loop, component);
         shader_addline(buffer, "loop_%u_start:\n", control_frame->no.loop);
     }
     else
@@ -2927,15 +2991,29 @@ static void shader_hw_endloop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_device *device = ins->ctx->shader->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     if(vshader)
     {
         struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
         struct list *e = list_head(&priv->control_frames);
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        char counter, aL;
 
-        shader_addline(buffer, "ARAC aL.xy, aL;\n");
-        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->no.loop);
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            loop_helper_component(priv->loop_depth, &counter, &aL);
+            shader_addline(buffer, "ADDC loop_helper.%c%c, loop_helper.%c%c%c%c, %s.wzwz;\n",
+                          counter, aL, counter, aL, counter, aL, control_frame->src_param);
+        }
+        else
+        {
+            shader_addline(buffer, "ARAC aL.xy, aL;\n");
+            counter = 'x';
+            aL = 'y';
+        }
+        shader_addline(buffer, "BRA loop_%u_start (GT.%c);\n", control_frame->no.loop, counter);
         shader_addline(buffer, "loop_%u_end:\n", control_frame->no.loop);
 
         if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
@@ -2950,18 +3028,34 @@ static void shader_hw_endrep(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+    const struct wined3d_device *device = ins->ctx->shader->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     if(vshader)
     {
         struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
         struct list *e = list_head(&priv->control_frames);
         struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        char component;
 
-        shader_addline(buffer, "ARAC aL.xy, aL;\n");
-        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->no.loop);
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            component = rep_helper_component(priv->loop_depth);
+            shader_addline(buffer, "ADDC rep_helper.%c, rep_helper.%c, %s.w;\n", component,
+                           component, control_frame->src_param);
+        }
+        else
+        {
+            component = 'x';
+            shader_addline(buffer, "ARAC aL.xy, aL;\n");
+        }
+        shader_addline(buffer, "BRA loop_%u_start (GT.%c);\n", control_frame->no.loop, component);
         shader_addline(buffer, "loop_%u_end:\n", control_frame->no.loop);
 
-        if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
+        if (!(gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA))
+        {
+            if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
+        }
     }
     else
     {
@@ -3510,6 +3604,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     BOOL dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
     struct arb_pshader_private *shader_priv = shader->backend_data;
+    BOOL varying_limit_ok = TRUE;
     BOOL custom_linear_fog = FALSE;
     uint32_t map;
 
@@ -3608,7 +3703,22 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         shader_addline(buffer, "OPTION ARB_draw_buffers;\n");
     }
 
-    if (reg_maps->shader_version.major < 3)
+    if (gl_info->quirks & WINED3D_CX_QUIRK_TEXCOORD_FOG)
+    {
+        unsigned int cnt = 0;
+        for(i = 0; i < MAX_REG_TEXCRD; i++)
+        {
+            if (reg_maps->texcoord & (1 << i)) ++cnt;
+        }
+        if(shader_priv->clipplane_emulation) cnt++;
+        if(cnt >= 8)
+        {
+            WARN("Disabling fog because 8 texcoords are used\n");
+            varying_limit_ok = FALSE;
+        }
+    }
+
+    if (reg_maps->shader_version.major < 3 && varying_limit_ok)
     {
         switch (args->super.fog)
         {
@@ -3798,7 +3908,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         }
     }
 
-    if (shader_priv->clipplane_emulation != ~0U && args->clip)
+    if (shader_priv->clipplane_emulation != ~0U && args->super.clip)
     {
         shader_addline(buffer, "KIL fragment.texcoord[%u];\n", shader_priv->clipplane_emulation);
     }
@@ -4130,6 +4240,11 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         shader_addline(buffer, "OPTION NV_vertex_program3;\n");
         priv_ctx.target_version = NV3;
         shader_addline(buffer, "ADDRESS aL;\n");
+        if (gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_ARA)
+        {
+            shader_addline(buffer, "TEMP rep_helper;\n");
+            shader_addline(buffer, "TEMP loop_helper;\n");
+        }
     }
     else if (gl_info->supported[NV_VERTEX_PROGRAM2_OPTION])
     {
@@ -4417,7 +4532,6 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         const struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader,
         struct arb_ps_compile_args *args)
 {
-    const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     int i;
     WORD int_skip;
@@ -4432,17 +4546,6 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         if (state->ps_consts_b[i])
             args->bools |= ( 1u << i);
     }
-
-    /* Only enable the clip plane emulation KIL if at least one clipplane is enabled. The KIL instruction
-     * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
-     * duplicate the shader than have a no-op KIL instruction in every shader
-     */
-    if (!d3d_info->vs_clipping && use_vs(state)
-            && state->render_states[WINED3D_RS_CLIPPING]
-            && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
-        args->clip = 1;
-    else
-        args->clip = 0;
 
     /* Skip if unused or local, or supported natively */
     int_skip = ~shader->reg_maps.integer_constants | shader->reg_maps.local_int_consts;
@@ -4897,6 +5000,11 @@ static void shader_arb_get_caps(const struct wined3d_adapter *adapter, struct sh
         }
         caps->vs_version = min(wined3d_settings.max_sm_vs, vs_version);
         caps->vs_uniform_count = min(WINED3D_MAX_VS_CONSTS_F, vs_consts);
+        if (cxgames_hacks.safe_vs_consts)
+        {
+            /* One for the posFixup, one for the helper const, and the clipplanes. */
+            caps->vs_uniform_count -= 2 + gl_info->limits.user_clip_distances;
+        }
     }
     else
     {
@@ -5080,6 +5188,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_ENDREP                           */ shader_hw_endrep,
     /* WINED3DSIH_ENDSWITCH                        */ NULL,
     /* WINED3DSIH_EQ                               */ NULL,
+    /* WINED3DSIH_EVAL_CENTROID                    */ NULL,
     /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ NULL,
     /* WINED3DSIH_EXP                              */ shader_hw_scalar_op,
     /* WINED3DSIH_EXPP                             */ shader_hw_scalar_op,
@@ -7744,8 +7853,8 @@ static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wine
             return FALSE;
     }
 
-    decompress = (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
-            && !(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED);
+    decompress = (src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
+            && !(dst_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED);
     if (!decompress && !(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
         return FALSE;
 

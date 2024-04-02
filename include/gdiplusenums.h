@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSENUMS_H
 #define _GDIPLUSENUMS_H
 
+#include "wine/winheader_enter.h"
+
 typedef UINT GraphicsState;
 typedef UINT GraphicsContainer;
 
@@ -800,5 +802,7 @@ typedef enum EmfPlusRecordType EmfPlusRecordType;
 
 #undef GDIP_WMF_RECORD_TO_EMFPLUS
 #define GDIP_WMF_RECORD_TO_EMFPLUS(x) ((EmfPlusRecordType)((x)|GDIP_WMF_RECORD_BASE))
+
+#include "wine/winheader_exit.h"
 
 #endif

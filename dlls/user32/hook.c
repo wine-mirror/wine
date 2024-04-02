@@ -311,11 +311,43 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
 void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module )
 {
     HMODULE mod;
+    static INT isBlocking = -1;
 
     GetModuleHandleExW( 0, module, &mod );
     *free_module = mod;
     if (!mod)
     {
+        /* Codeweavers Hack for Quicken Update */
+        if (isBlocking == -1)
+        {
+            char processName[MAX_PATH];
+            char *p;
+            GetModuleFileNameA(GetModuleHandleA(NULL),processName,MAX_PATH);
+            p = strrchr(processName,'\\');
+            if (p)
+                p++;
+            else
+                p = processName;
+            if (strcasecmp(p,"explorer.exe")==0 || strcasecmp(p,"qwpatch.exe")==0)
+                isBlocking = 1;
+            else
+                isBlocking = 0;
+        }
+
+        if (isBlocking)
+        {
+            LPCWSTR ptr;
+            static const WCHAR szQwMain[] = {'Q','W','M','A','I','N','.','D','L','L',0};
+            static const WCHAR szQwWin[] = {'Q','W','W','I','N','.','D','L','L',0};
+
+            ptr = wcsrchr(module,'\\');
+            if (!ptr) ptr = module; else ptr++;
+            if (lstrcmpiW(ptr,szQwMain)==0 || lstrcmpiW(ptr,szQwWin)==0)
+            {
+                TRACE("Blocking Hook for Quicken Update\n");
+                return NULL;
+            }
+        }
         TRACE( "loading %s\n", debugstr_w(module) );
         /* FIXME: the library will never be freed */
         if (!(mod = LoadLibraryExW(module, NULL, LOAD_WITH_ALTERED_SEARCH_PATH))) return NULL;

@@ -777,8 +777,9 @@ NTSTATUS dhcp_request( void *args )
     ULONG ret = 0;
 
     params->req->offset = params->req->size = 0;
+    *params->ret_size = 0;
 
-    if (!(reply = dhcp4_config_option_request( params->unix_name, map_option(params->req->id), &value ))) return 0;
+    if (!(reply = dhcp4_config_option_request( params->unix_name, map_option(params->req->id), &value ))) return STATUS_SUCCESS;
 
     switch (params->req->id)
     {

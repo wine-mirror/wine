@@ -20,6 +20,8 @@
 #ifndef __WINE_WCTYPE_H
 #define __WINE_WCTYPE_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #include <pshpack8.h>
@@ -78,5 +80,7 @@ wctype_t __cdecl wctype(const char *);
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WCTYPE_H */

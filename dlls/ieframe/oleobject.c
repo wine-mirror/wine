@@ -89,6 +89,42 @@ static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, L
     case WM_KILLFOCUS:
         notify_on_focus(This, FALSE);
         break;
+    /* CX HACK 11688: Return marshaled MSHTML document if requested from wrong thread. */
+    case WM_GETMARSHALEDDOC: {
+        IStream **ret = (IStream**)lParam, *stream;
+        LARGE_INTEGER offset;
+        IDispatch *disp;
+        HRESULT hres;
+
+        TRACE("WM_GETMARSHALEDDOC\n");
+
+        *ret = NULL;
+        if(!This->doc_host.document)
+            return 0;
+
+        hres = IUnknown_QueryInterface(This->doc_host.document, &IID_IDispatch, (void**)&disp);
+        if(FAILED(hres))
+            return hres;
+
+        hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        if(FAILED(hres)) {
+            IDispatch_Release(disp);
+            return 0;
+        }
+
+        hres = CoMarshalInterface(stream, &IID_IDispatch, (IUnknown*)disp, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        IDispatch_Release(disp);
+        if(FAILED(hres)) {
+            IStream_Release(stream);
+            return 0;
+        }
+
+        offset.QuadPart = 0;
+        IStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
+
+        *ret = stream;
+        return 0;
+    }
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);

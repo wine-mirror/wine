@@ -176,7 +176,9 @@ enum {
     kVK_UpArrow             = 0x7E,
 };
 
+#include "wine/hostaddrspace_enter.h"
 extern const CFStringRef kTISTypeKeyboardLayout;
+#include "wine/hostaddrspace_exit.h"
 
 /* Indexed by Mac virtual keycode values defined above. */
 static const struct {
@@ -1055,6 +1057,176 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     ActivateKeyboardLayout(thread_data->active_keyboard_layout, 0);
 
     SendMessageW(GetActiveWindow(), WM_CANCELMODE, 0, 0);
+}
+
+
+/* CrossOver Hack 10912: Mac Edit menu */
+static WORD vkey_to_scan(WORD vkey)
+{
+    struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    int keyc;
+
+    for (keyc = 0; keyc < sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]); keyc++)
+    {
+        if (thread_data->keyc2vkey[keyc] == vkey)
+            return thread_data->keyc2scan[keyc];
+    }
+
+    return 0;
+}
+
+/***********************************************************************
+ *              macdrv_edit_menu_command
+ */
+void macdrv_edit_menu_command(const macdrv_event *event)
+{
+    HWND hwnd = macdrv_get_window_hwnd(event->window);
+
+    TRACE("hwnd %p command %d\n", hwnd, event->edit_menu_command.command);
+
+    if (mac_edit_menu == MAC_EDIT_MENU_DISABLED)
+    {
+        WARN("edit menu disabled, shouldn't be here\n");
+        return;
+    }
+
+    if (mac_edit_menu == MAC_EDIT_MENU_BY_KEY)
+    {
+        WORD key_vkey, key_scan;
+        BOOL left_alt_down, right_alt_down, control_down, need_control = TRUE;
+        WORD left_alt_scan, right_alt_scan, control_scan;
+        DWORD flags;
+
+        switch (event->edit_menu_command.command)
+        {
+            case EDIT_COMMAND_COPY:         key_vkey = 'C'; break;
+            case EDIT_COMMAND_CUT:          key_vkey = 'X'; break;
+            case EDIT_COMMAND_DELETE:       key_vkey = VK_BACK; need_control = FALSE; break;
+            case EDIT_COMMAND_PASTE:        key_vkey = 'V'; break;
+            case EDIT_COMMAND_SELECT_ALL:   key_vkey = 'A'; break;
+            case EDIT_COMMAND_UNDO:         key_vkey = 'Z'; break;
+            default:
+                WARN("unrecognized edit command %d\n", event->edit_menu_command.command);
+                return;
+        }
+        key_scan = vkey_to_scan(key_vkey);
+
+        left_alt_down = (GetAsyncKeyState(VK_LMENU) & 0x8000) != 0;
+        right_alt_down = (GetAsyncKeyState(VK_RMENU) & 0x8000) != 0;
+        if (need_control)
+            control_down = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+
+        if (left_alt_down)
+            left_alt_scan = vkey_to_scan(VK_LMENU);
+        if (right_alt_down)
+            right_alt_scan = vkey_to_scan(VK_RMENU);
+        if (need_control && !control_down)
+            control_scan = vkey_to_scan(VK_LCONTROL);
+
+        if ((left_alt_down && !left_alt_scan) || (right_alt_down && !right_alt_scan) ||
+            (need_control && !control_down && !control_scan) || !key_scan)
+        {
+            WARN("failed to find scan codes\n");
+            return;
+        }
+
+        /* Alt key may be down but we don't want it down for the Control-C/V/X/...
+           sequence that follows.  So simulate releasing it.  Unfortunately,
+           that will often put focus on the menu bar.  To counteract that,
+           we simulate pressing and releasing it again.  [An earlier attempt
+           to use WM_CANCELMODE for this purpose worked for some cases (e.g.
+           Notepad) but not others (e.g. Outlook 2010 and its ribbon).] */
+        if (left_alt_down)
+        {
+            flags = KEYEVENTF_KEYUP;
+            if (left_alt_scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+            macdrv_send_keyboard_input(hwnd, VK_LMENU, left_alt_scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+        }
+        if (right_alt_down)
+        {
+            flags = KEYEVENTF_KEYUP;
+            if (right_alt_scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+            macdrv_send_keyboard_input(hwnd, VK_RMENU, right_alt_scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+        }
+        if (left_alt_down ^ right_alt_down)
+        {
+            WORD vkey = left_alt_down ? VK_LMENU : VK_RMENU;
+            WORD scan = left_alt_down ? left_alt_scan : right_alt_scan;
+
+            flags = 0;
+            if (scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+            macdrv_send_keyboard_input(hwnd, vkey, scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+            flags ^= KEYEVENTF_KEYUP;
+            macdrv_send_keyboard_input(hwnd, vkey, scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+        }
+
+        /* Simulate Control key press, if necessary. */
+        if (need_control && !control_down)
+        {
+            flags = 0;
+            if (control_scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+            macdrv_send_keyboard_input(hwnd, VK_LCONTROL, control_scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+        }
+
+        /* Simulate press and release of the edit menu item accelerator key. */
+        flags = 0;
+        if (key_scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+        macdrv_send_keyboard_input(hwnd, key_vkey, key_scan & 0xff, flags,
+                                   event->edit_menu_command.time_ms);
+
+        flags |= KEYEVENTF_KEYUP;
+        macdrv_send_keyboard_input(hwnd, key_vkey, key_scan & 0xff, flags,
+                                   event->edit_menu_command.time_ms);
+
+        /* Simulate Control key release to restore previous state, if necessary. */
+        if (need_control && !control_down)
+        {
+            flags = KEYEVENTF_KEYUP;
+            if (control_scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+            macdrv_send_keyboard_input(hwnd, VK_LCONTROL, control_scan & 0xff, flags,
+                                       event->edit_menu_command.time_ms);
+        }
+
+        /* In theory, we should simulate an Alt key press here if it was down
+           when we started.  However, that would mean that focus would be put on
+           the menu bar when the user lets go, which we don't want.  Instead, we
+           leave Wine with an incorrect sense of the state of the Alt key.  The
+           Cocoa thread has also cleared its internal record that the Command
+           key is down.  That has two effects: 1) when the user releases the
+           Command key, the Cocoa code thinks nothing has changed and doesn't
+           generate an event; and 2) if the user keeps Command down and issues
+           another key event, the Cocoa code will think the Command key is newly
+           pressed and will generate an event.  In other words, it will resync
+           with the actual key state and generate only the events necessary. */
+    }
+    else // mac_edit_menu == MAC_EDIT_MENU_BY_MESSAGE
+    {
+        UINT msg;
+        LPARAM lparam = 0;
+        HWND focus;
+
+        switch (event->edit_menu_command.command)
+        {
+            case EDIT_COMMAND_COPY:         msg = WM_COPY; break;
+            case EDIT_COMMAND_CUT:          msg = WM_CUT; break;
+            case EDIT_COMMAND_DELETE:       msg = WM_CLEAR; break;
+            case EDIT_COMMAND_PASTE:        msg = WM_PASTE; break;
+            case EDIT_COMMAND_SELECT_ALL:   msg = EM_SETSEL; lparam = -1; break;
+            case EDIT_COMMAND_UNDO:         msg = EM_UNDO; break;
+            default:
+                WARN("unrecognized edit command %d\n", event->edit_menu_command.command);
+                return;
+        }
+
+        focus = GetFocus();
+        if (focus == hwnd || IsChild(hwnd, focus))
+            PostMessageW(focus, msg, 0, lparam);
+    }
 }
 
 

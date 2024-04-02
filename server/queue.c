@@ -41,6 +41,7 @@
 #include "process.h"
 #include "request.h"
 #include "user.h"
+#include "esync.h"
 
 #define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
@@ -138,6 +139,15 @@ struct msg_queue
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
     timeout_t              last_get_msg;    /* time of last get message call */
+    struct esync_fd       *esync_fd;        /* esync file descriptor (signalled on message) */
+    int                    esync_in_msgwait; /* our thread is currently waiting on us */
+    /* FIXME: consider something cleaner */
+    int                    pending_surface_flush; /* flag if there is a surface flush expected
+                                                   * on this queue (meaning that queue needs
+                                                   * to be signaled */
+    struct shm_surface    *surface_flushed; /* currently flushed surface (it's set when get_message
+                                             * returns flush message and cleaned on the next
+                                             * get_message call) */
 };
 
 struct hotkey
@@ -154,6 +164,7 @@ static void msg_queue_dump( struct object *obj, int verbose );
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry *entry );
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct esync_fd *msg_queue_get_esync_fd( struct object *obj, enum esync_type *type );
 static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static void msg_queue_destroy( struct object *obj );
 static void msg_queue_poll_event( struct fd *fd, int event );
@@ -169,6 +180,7 @@ static const struct object_ops msg_queue_ops =
     msg_queue_add_queue,       /* add_queue */
     msg_queue_remove_queue,    /* remove_queue */
     msg_queue_signaled,        /* signaled */
+    msg_queue_get_esync_fd,    /* get_esync_fd */
     msg_queue_satisfied,       /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
@@ -206,6 +218,7 @@ static const struct object_ops thread_input_ops =
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
+    NULL,                         /* get_esync_fd */
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
@@ -303,11 +316,18 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->input           = (struct thread_input *)grab_object( input );
         queue->hooks           = NULL;
         queue->last_get_msg    = current_time;
+        queue->esync_fd        = NULL;
+        queue->esync_in_msgwait = 0;
+        queue->pending_surface_flush = 0;
+        queue->surface_flushed = NULL;
         list_init( &queue->send_result );
         list_init( &queue->callback_result );
         list_init( &queue->pending_timers );
         list_init( &queue->expired_timers );
         for (i = 0; i < NB_MSG_KINDS; i++) list_init( &queue->msg_list[i] );
+
+        if (do_esync())
+            queue->esync_fd = esync_create_fd( 0, 0 );
 
         thread->queue = queue;
     }
@@ -470,7 +490,8 @@ void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
 /* check the queue status */
 static inline int is_signaled( struct msg_queue *queue )
 {
-    return ((queue->wake_bits & queue->wake_mask) || (queue->changed_bits & queue->changed_mask));
+    return ((queue->wake_bits & queue->wake_mask) || (queue->changed_bits & queue->changed_mask))
+        || queue->pending_surface_flush;
 }
 
 /* set some queue bits */
@@ -486,6 +507,9 @@ static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
 {
     queue->wake_bits &= ~bits;
     queue->changed_bits &= ~bits;
+
+    if (do_esync() && !is_signaled( queue ))
+        esync_clear( queue->esync_fd );
 }
 
 /* check whether msg is a keyboard message */
@@ -935,7 +959,21 @@ static int is_queue_hung( struct msg_queue *queue )
         if (get_wait_queue_thread(entry)->queue == queue)
             return 0;  /* thread is waiting on queue -> not hung */
     }
+
+    if (do_esync() && queue->esync_in_msgwait)
+        return 0;   /* thread is waiting on queue in absentia -> not hung */
+
     return 1;
+}
+
+static void clear_flushed_surface( struct msg_queue *queue )
+{
+    if (queue->surface_flushed)
+    {
+        unlock_surface( queue->surface_flushed );
+        release_object( queue->surface_flushed );
+        queue->surface_flushed = NULL;
+    }
 }
 
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -990,6 +1028,13 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
     return ret || is_signaled( queue );
 }
 
+static struct esync_fd *msg_queue_get_esync_fd( struct object *obj, enum esync_type *type )
+{
+    struct msg_queue *queue = (struct msg_queue *)obj;
+    *type = ESYNC_QUEUE;
+    return queue->esync_fd;
+}
+
 static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
@@ -1004,6 +1049,7 @@ static void msg_queue_destroy( struct object *obj )
     struct hotkey *hotkey, *hotkey2;
     int i;
 
+    clear_flushed_surface( queue );
     cleanup_results( queue );
     for (i = 0; i < NB_MSG_KINDS; i++) empty_msg_list( &queue->msg_list[i] );
 
@@ -1033,6 +1079,9 @@ static void msg_queue_destroy( struct object *obj )
     release_object( queue->input );
     if (queue->hooks) release_object( queue->hooks );
     if (queue->fd) release_object( queue->fd );
+
+    if (do_esync())
+        esync_close_fd( queue->esync_fd );
 }
 
 static void msg_queue_poll_event( struct fd *fd, int event )
@@ -1043,6 +1092,18 @@ static void msg_queue_poll_event( struct fd *fd, int event )
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     else set_fd_events( queue->fd, 0 );
     wake_up( &queue->obj, 0 );
+}
+
+void wake_queue_for_surface( struct process *process )
+{
+    struct thread *thread;
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (!thread->queue || list_empty( &thread->queue->obj.wait_queue )) continue;
+        thread->queue->pending_surface_flush = 1;
+        wake_up( &thread->queue->obj, 0 );
+        return;
+    }
 }
 
 static void thread_input_dump( struct object *obj, int verbose )
@@ -2426,6 +2487,9 @@ DECL_HANDLER(set_queue_mask)
             if (req->skip_wait) queue->wake_mask = queue->changed_mask = 0;
             else wake_up( &queue->obj, 0 );
         }
+
+        if (do_esync() && !is_signaled( queue ))
+            esync_clear( queue->esync_fd );
     }
 }
 
@@ -2439,6 +2503,9 @@ DECL_HANDLER(get_queue_status)
         reply->wake_bits    = queue->wake_bits;
         reply->changed_bits = queue->changed_bits;
         queue->changed_bits &= ~req->clear_bits;
+
+        if (do_esync() && !is_signaled( queue ))
+            esync_clear( queue->esync_fd );
     }
     else reply->wake_bits = reply->changed_bits = 0;
 }
@@ -2602,8 +2669,25 @@ DECL_HANDLER(get_message)
     }
 
     if (!queue) return;
+    clear_flushed_surface( queue );
     queue->last_get_msg = current_time;
     if (!filter) filter = QS_ALLINPUT;
+
+    if (get_reply_max_size() >= sizeof(rectangle_t))
+    {
+        struct shm_surface *surface;
+        rectangle_t bounds;
+        if ((surface = find_pending_surface( current->process, &reply->win, &reply->lparam, &bounds )))
+        {
+            reply->type  = MSG_SURFACE;
+            reply->total = sizeof(bounds);
+            set_reply_data( &bounds, sizeof(bounds) );
+            get_message_defaults( queue, &reply->x, &reply->y, &reply->time );
+            queue->surface_flushed = surface;
+            return;
+        }
+        queue->pending_surface_flush = 0;
+    }
 
     /* first check for sent messages */
     if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))
@@ -2676,6 +2760,9 @@ DECL_HANDLER(get_message)
     queue->wake_mask = req->wake_mask;
     queue->changed_mask = req->changed_mask;
     set_error( STATUS_PENDING );  /* FIXME */
+
+    if (do_esync() && !is_signaled( queue ))
+        esync_clear( queue->esync_fd );
 }
 
 
@@ -3395,4 +3482,19 @@ DECL_HANDLER(get_rawinput_devices)
         LIST_FOR_EACH_ENTRY( e, &current->process->rawinput_devices, struct rawinput_device_entry, entry )
             devices[i++] = e->device;
     }
+}
+
+DECL_HANDLER(esync_msgwait)
+{
+    struct msg_queue *queue = get_current_queue();
+
+    if (!queue) return;
+    queue->esync_in_msgwait = req->in_msgwait;
+
+    if (current->process->idle_event && !(queue->wake_mask & QS_SMRESULT))
+        set_event( current->process->idle_event );
+
+    /* and start/stop waiting on the driver */
+    if (queue->fd)
+        set_fd_events( queue->fd, req->in_msgwait ? POLLIN : 0 );
 }

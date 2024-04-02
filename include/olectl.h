@@ -19,6 +19,8 @@
 #ifndef __WINE_OLECTL_H
 #define __WINE_OLECTL_H
 
+#include "wine/winheader_enter.h"
+
 #if !defined(__midl) && !defined(__WIDL__)
 
 #include <ocidl.h>
@@ -444,5 +446,7 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define DISPID_PICT_WIDTH	4
 #define DISPID_PICT_HEIGHT	5
 #define DISPID_PICT_RENDER	6
+
+#include "wine/winheader_exit.h"
 
 #endif /*  __WINE_OLECTL_H */

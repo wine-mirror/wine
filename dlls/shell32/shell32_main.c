@@ -606,16 +606,13 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
         ret = PrivateExtractIconsW(lpszFile, 0, cx, cy, NULL, NULL, 0, LR_DEFAULTCOLOR);
         if (ret != (UINT)-1 && ret)
             return (HICON)(UINT_PTR)ret;
-        return NULL;
     }
     else
+    {
         ret = PrivateExtractIconsW(lpszFile, nIconIndex, cx, cy, &hIcon, NULL, 1, LR_DEFAULTCOLOR);
-
-    if (ret == (UINT)-1)
-        return (HICON)1;
-    else if (ret > 0 && hIcon)
-        return hIcon;
-
+        if (ret > 0 && hIcon)
+            return hIcon;
+    }
     return NULL;
 }
 

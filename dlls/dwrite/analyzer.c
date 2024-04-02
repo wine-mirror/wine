@@ -220,6 +220,13 @@ static const DWRITE_UNICODE_RANGE cjk_ranges[] =
     { 0x4e00, 0x9fff }, /* CJK Unified Ideographs */
 };
 
+static const WCHAR *stub_families[] = { L"Arial", L"Tahoma" };
+
+static const DWRITE_UNICODE_RANGE stub_ranges[] =
+{
+    { 0x0000, 0x2fff },
+};
+
 struct fallback_mapping {
     DWRITE_UNICODE_RANGE *ranges;
     UINT32 ranges_count;
@@ -235,6 +242,7 @@ static const struct fallback_mapping fontfallback_neutral_data[] = {
         { (DWRITE_UNICODE_RANGE *)ranges, ARRAY_SIZE(ranges), \
           (WCHAR **)families, ARRAY_SIZE(families) }
 
+    MAPPING_RANGE(stub_ranges, stub_families),
     MAPPING_RANGE(cjk_ranges, cjk_families),
 
 #undef MAPPING_RANGE

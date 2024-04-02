@@ -21,6 +21,8 @@
 #ifndef _NDIS_
 #define _NDIS_
 
+#include "wine/winheader_enter.h"
+
 typedef ULONG NDIS_AF, *PNDIS_AF;
 typedef MDL   NDIS_BUFFER, *PNDIS_BUFFER;
 typedef void *NDIS_HANDLE, **PNDIS_HANDLE, *PNDIS_PACKET_POOL;
@@ -217,5 +219,7 @@ NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **, UINT, ULONG);
 void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *);
 void WINAPI NdisRegisterProtocol(NDIS_STATUS *, NDIS_HANDLE *, NDIS_PROTOCOL_CHARACTERISTICS *, UINT);
 CCHAR WINAPI NdisSystemProcessorCount(void);
+
+#include "wine/winheader_exit.h"
 
 #endif /* _NDIS_ */

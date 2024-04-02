@@ -82,6 +82,8 @@ extern BOOL process_rawinput_message( MSG *msg, UINT hw_id,
                                       const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                 void **buffer, size_t size ) DECLSPEC_HIDDEN;
+extern void free_cached_data( UINT format, HANDLE handle ) DECLSPEC_HIDDEN;
+extern HANDLE render_synthesized_format( UINT format, UINT from ) DECLSPEC_HIDDEN;
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -192,6 +194,8 @@ typedef struct
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
 extern BOOL get_icon_size( HICON handle, SIZE *size ) DECLSPEC_HIDDEN;
 
+extern BOOL MENU_send_window_menubar_to_macapp( HWND hwnd );
+
 extern struct user_api_hook *user_api DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_DefDlgProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
 LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
@@ -199,5 +203,12 @@ void WINAPI USER_ScrollBarDraw(HWND, HDC, INT, enum SCROLL_HITTEST,
                                const struct SCROLL_TRACKING_INFO *, BOOL, BOOL, RECT *, INT, INT,
                                INT, BOOL) DECLSPEC_HIDDEN;
 void WINAPI SCROLL_SetStandardScrollPainted(HWND hwnd, INT bar, BOOL visible);
+
+/*  CrossOver Hack for bug 6727. */
+struct xml_buffer
+{
+    int len, alloc;
+    char *data;
+};
 
 #endif /* __WINE_USER_PRIVATE_H */

@@ -31,7 +31,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#ifndef WINE32ON64_HOSTSTACK
 #include "wine/debug.h"
+#endif
 #include "wine/gdi_driver.h"
 
 
@@ -41,6 +43,9 @@ extern BOOL allow_set_gamma DECLSPEC_HIDDEN;
 extern BOOL allow_software_rendering DECLSPEC_HIDDEN;
 extern BOOL disable_window_decorations DECLSPEC_HIDDEN;
 extern HMODULE macdrv_module DECLSPEC_HIDDEN;
+
+/* CrossOver Hack 14364 */
+extern BOOL force_backing_store DECLSPEC_HIDDEN;
 
 
 extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
@@ -66,11 +71,13 @@ static inline RECT rect_from_cgrect(CGRect cgrect)
     return empty;
 }
 
-static inline const char *wine_dbgstr_cgrect(CGRect cgrect)
+#ifndef WINE32ON64_HOSTSTACK
+static inline const char * HOSTPTR wine_dbgstr_cgrect(CGRect cgrect)
 {
     return wine_dbg_sprintf("(%g,%g)-(%g,%g)", CGRectGetMinX(cgrect), CGRectGetMinY(cgrect),
                             CGRectGetMaxX(cgrect), CGRectGetMaxY(cgrect));
 }
+#endif
 
 extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
 
@@ -243,6 +250,8 @@ extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event) DECLSPE
 extern void macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
 
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
+/* CrossOver Hack 10912: Mac Edit menu */
+extern void macdrv_edit_menu_command(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_key_event(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_hotkey_press(const macdrv_event *event) DECLSPEC_HIDDEN;
@@ -291,5 +300,29 @@ extern void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const B
 extern void macdrv_im_set_text(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_sent_text_input(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
+
+
+struct macdrv_window_surface
+{
+    struct window_surface   header;
+    macdrv_window           window;
+    RECT                    bounds;
+    HRGN                    region;
+    HRGN                    drawn;
+    BOOL                    use_alpha;
+    RGNDATA                *blit_data;
+    BYTE                   *bits;
+    pthread_mutex_t         mutex;
+    BITMAPINFO              info;   /* variable size, must be last */
+};
+
+extern const struct window_surface_funcs macdrv_surface_funcs;
+
+static inline struct macdrv_window_surface *get_mac_surface(struct window_surface *surface)
+{
+    if (!surface || surface->funcs != &macdrv_surface_funcs) return NULL;
+    return (struct macdrv_window_surface *)surface;
+}
+
 
 #endif  /* __WINE_MACDRV_H */

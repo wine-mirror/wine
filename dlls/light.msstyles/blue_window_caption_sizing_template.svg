@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:66-24" width="66" height="58" version="1.1" viewBox="0 0 17.462 15.346" xmlns="http://www.w3.org/2000/svg">
+ <rect x="-.00034483" y="-4.4409e-16" width="17.463" height="15.346" stroke="#aeaeae" stroke-width=".26459"/>
+ <g>
+  <path d="m1.0333 0.52917h15.395c0.27963 0 0.50475 0.22693 0.50475 0.50882v6.1058h-16.404v-6.1058c0-0.28189 0.22512-0.50882 0.50475-0.50882z" stroke="#fff" stroke-width="1.0583"/>
+  <rect x="1.058" y="6.6147" width="15.346" height="1.0583"/>
+  <path d="m1.0333 8.2022h15.395c0.27963 0 0.50475 0.22693 0.50475 0.50882v6.1058h-16.404v-6.1058c0-0.28189 0.22512-0.50882 0.50475-0.50882z" stroke="#fff" stroke-width="1.0583"/>
+  <rect x="1.058" y="14.288" width="15.346" height="1.0583"/>
+ </g>
+</svg>

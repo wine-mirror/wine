@@ -40,6 +40,8 @@ HKLM,"Software\Microsoft\Internet Explorer","Build",,"99600"
 HKLM,"Software\Microsoft\Internet Explorer","Version",,"9.11.9600.18376"
 HKLM,"Software\Microsoft\Internet Explorer","W2kVersion",,"9.11.9600.18376"
 HKLM,"Software\Microsoft\Internet Explorer","svcVersion",,"11.0.9600.18376"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\Uninstall\CXHTML","DisplayName",,"CrossOver HTML engine"
+HKLM,"Software\Microsoft\Windows\CurrentVersion\Uninstall\CXHTML","UninstallString",,"iexplore -unregserver"
 
 
 [Strings]

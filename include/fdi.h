@@ -19,6 +19,8 @@
 #ifndef __WINE_FDI_H
 #define __WINE_FDI_H
 
+#include "wine/winheader_enter.h"
+
 #include <basetsd.h>
 
 #ifdef __cplusplus
@@ -297,5 +299,7 @@ BOOL __cdecl FDITruncateCabinet(HFDI, char *, USHORT);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_FDI_H */

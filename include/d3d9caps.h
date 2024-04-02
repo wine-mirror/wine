@@ -20,6 +20,8 @@
 #ifndef __WINE_D3D9CAPS_H
 #define __WINE_D3D9CAPS_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __i386__
 #include <pshpack4.h>
 #endif
@@ -451,5 +453,7 @@ DEFINE_GUID(D3DKEYEXCHANGE_DXVA,        0x43d3775c, 0x38e5, 0x4924, 0x8d, 0x86, 
 #ifdef __i386__
 #include <poppack.h>
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

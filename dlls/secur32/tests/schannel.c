@@ -25,6 +25,7 @@
 #include <stdio.h>
 #define SECURITY_WIN32
 #include <security.h>
+#define SCHANNEL_USE_BLACKLISTS
 #include <schannel.h>
 
 #include "wine/test.h"
@@ -272,13 +273,13 @@ static void testAcquireSecurityContext(void)
     SecPkgCredentials_NamesA names;
     TimeStamp exp;
     SCHANNEL_CRED schanCred;
+    SCH_CREDENTIALS schCred;
     PCCERT_CONTEXT certs[2];
     HCRYPTPROV csp;
     WCHAR ms_def_prov_w[MAX_PATH];
     BOOL ret;
     HCRYPTKEY key;
     CRYPT_KEY_PROV_INFO keyProvInfo;
-
 
     if (SUCCEEDED(EnumerateSecurityPackagesA(&i, &package_info)))
     {
@@ -545,6 +546,14 @@ static void testAcquireSecurityContext(void)
         CryptDestroyKey(key);
     }
 
+    memset(&schCred, 0, sizeof(schCred));
+    schCred.dwVersion = SCH_CREDENTIALS_VERSION;
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
+     NULL, &schCred, NULL, NULL, &cred, NULL);
+    ok(st == SEC_E_OK || broken(st == SEC_E_UNKNOWN_CREDENTIALS) /* <= win10v1570 */,
+       "AcquireCredentialsHandleA failed: %08lx\n", st);
+    FreeCredentialsHandle(&cred);
+
     CryptReleaseContext(csp, 0);
     CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 
@@ -566,7 +575,7 @@ static void test_remote_cert(PCCERT_CONTEXT remote_cert)
         cert_cnt++;
     }
 
-    ok(cert_cnt == 2, "cert_cnt = %u\n", cert_cnt);
+    ok(cert_cnt == 3, "cert_cnt = %u\n", cert_cnt);
     ok(incl_remote, "context does not contain cert itself\n");
 }
 

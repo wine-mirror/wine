@@ -19,6 +19,8 @@
 #ifndef _XCMC_H
 #define _XCMC_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -346,5 +348,7 @@ CMC_return_code WINAPI cmc_query_configuration(
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* #ifndef _XCMC_H */

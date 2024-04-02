@@ -21,6 +21,8 @@
 #ifndef __WINE_OLE2VER_H
 #define __WINE_OLE2VER_H
 
+#include "wine/winheader_enter.h"
+
 /*
  * other versions rmm/rup:
  * 23/639
@@ -40,5 +42,7 @@
 /* bad: we shouldn't make use of it that globally ! */
 #define rmm             23
 #define rup		824
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_OLE2VER_H */

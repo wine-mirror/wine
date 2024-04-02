@@ -8,6 +8,8 @@
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_wstdlib.h>
 
 #include <pshpack8.h>
@@ -302,5 +304,7 @@ static inline ldiv_t __wine_msvcrt_ldiv(__msvcrt_long num, __msvcrt_long denom)
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_STDLIB_H */

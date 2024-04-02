@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "hlsl.h"
 
 static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct hlsl_ir_constant *src)
@@ -27,7 +29,6 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
     int32_t i;
     double d;
     float f;
-    bool b;
 
     if (dst->node.data_type->dimx != src->node.data_type->dimx
             || dst->node.data_type->dimy != src->node.data_type->dimy)
@@ -47,7 +48,6 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
                 i = src->value[k].f;
                 f = src->value[k].f;
                 d = src->value[k].f;
-                b = src->value[k].f;
                 break;
 
             case HLSL_TYPE_DOUBLE:
@@ -55,7 +55,6 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
                 i = src->value[k].d;
                 f = src->value[k].d;
                 d = src->value[k].d;
-                b = src->value[k].d;
                 break;
 
             case HLSL_TYPE_INT:
@@ -63,7 +62,6 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
                 i = src->value[k].i;
                 f = src->value[k].i;
                 d = src->value[k].i;
-                b = src->value[k].i;
                 break;
 
             case HLSL_TYPE_UINT:
@@ -71,20 +69,17 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
                 i = src->value[k].u;
                 f = src->value[k].u;
                 d = src->value[k].u;
-                b = src->value[k].u;
                 break;
 
             case HLSL_TYPE_BOOL:
-                u = src->value[k].b;
-                i = src->value[k].b;
-                f = src->value[k].b;
-                d = src->value[k].b;
-                b = src->value[k].b;
+                u = !!src->value[k].u;
+                i = !!src->value[k].u;
+                f = !!src->value[k].u;
+                d = !!src->value[k].u;
                 break;
 
             default:
-                FIXME("Cast from %s to %s.\n", debug_hlsl_type(ctx, src->node.data_type),
-                        debug_hlsl_type(ctx, dst->node.data_type));
+                assert(0);
                 return false;
         }
 
@@ -108,12 +103,12 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst, struct
                 break;
 
             case HLSL_TYPE_BOOL:
-                dst->value[k].b = b;
+                /* Casts to bool should have already been lowered. */
+                assert(0);
                 break;
 
             default:
-                FIXME("Cast from %s to %s.\n", debug_hlsl_type(ctx, src->node.data_type),
-                        debug_hlsl_type(ctx, dst->node.data_type));
+                assert(0);
                 return false;
         }
     }
@@ -194,11 +189,12 @@ static bool fold_mul(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
         struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
 {
     enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
 
     assert(type == src1->node.data_type->base_type);
     assert(type == src2->node.data_type->base_type);
 
-    for (int k = 0; k < 4; ++k)
+    for (k = 0; k < 4; ++k)
     {
         switch (type)
         {
@@ -224,6 +220,155 @@ static bool fold_mul(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
     return true;
 }
 
+static bool fold_nequal(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    unsigned int k;
+
+    assert(dst->node.data_type->base_type == HLSL_TYPE_BOOL);
+    assert(src1->node.data_type->base_type == src2->node.data_type->base_type);
+
+    for (k = 0; k < 4; ++k)
+    {
+        switch (src1->node.data_type->base_type)
+        {
+            case HLSL_TYPE_FLOAT:
+            case HLSL_TYPE_HALF:
+                dst->value[k].u = src1->value[k].f != src2->value[k].f;
+                break;
+
+            case HLSL_TYPE_DOUBLE:
+                dst->value[k].u = src1->value[k].d != src2->value[k].d;
+                break;
+
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_UINT:
+            case HLSL_TYPE_BOOL:
+                dst->value[k].u = src1->value[k].u != src2->value[k].u;
+                break;
+
+            default:
+                assert(0);
+                return false;
+        }
+
+        dst->value[k].u *= ~0u;
+    }
+    return true;
+}
+
+static bool fold_div(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_FLOAT:
+            case HLSL_TYPE_HALF:
+                if (ctx->profile->major_version >= 4 && src2->value[k].f == 0)
+                {
+                    hlsl_warning(ctx, &dst->node.loc, VKD3D_SHADER_WARNING_HLSL_DIVISION_BY_ZERO,
+                            "Floating point division by zero.");
+                }
+                dst->value[k].f = src1->value[k].f / src2->value[k].f;
+                if (ctx->profile->major_version < 4 && !isfinite(dst->value[k].f))
+                {
+                    hlsl_error(ctx, &dst->node.loc, VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO,
+                            "Infinities and NaNs are not allowed by the shader model.");
+                }
+                break;
+
+            case HLSL_TYPE_DOUBLE:
+                if (src2->value[k].d == 0)
+                {
+                    hlsl_warning(ctx, &dst->node.loc, VKD3D_SHADER_WARNING_HLSL_DIVISION_BY_ZERO,
+                            "Floating point division by zero.");
+                }
+                dst->value[k].d = src1->value[k].d / src2->value[k].d;
+                break;
+
+            case HLSL_TYPE_INT:
+                if (src2->value[k].i == 0)
+                {
+                    hlsl_error(ctx, &dst->node.loc, VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO,
+                            "Division by zero.");
+                    return false;
+                }
+                if (src1->value[k].i == INT_MIN && src2->value[k].i == -1)
+                    dst->value[k].i = INT_MIN;
+                else
+                    dst->value[k].i = src1->value[k].i / src2->value[k].i;
+                break;
+
+            case HLSL_TYPE_UINT:
+                if (src2->value[k].u == 0)
+                {
+                    hlsl_error(ctx, &dst->node.loc, VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO,
+                            "Division by zero.");
+                    return false;
+                }
+                dst->value[k].u = src1->value[k].u / src2->value[k].u;
+                break;
+
+            default:
+                FIXME("Fold division for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_ir_constant *dst,
+        struct hlsl_ir_constant *src1, struct hlsl_ir_constant *src2)
+{
+    enum hlsl_base_type type = dst->node.data_type->base_type;
+    unsigned int k;
+
+    assert(type == src1->node.data_type->base_type);
+    assert(type == src2->node.data_type->base_type);
+
+    for (k = 0; k < dst->node.data_type->dimx; ++k)
+    {
+        switch (type)
+        {
+            case HLSL_TYPE_INT:
+                if (src2->value[k].i == 0)
+                {
+                    hlsl_error(ctx, &dst->node.loc, VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO,
+                            "Division by zero.");
+                    return false;
+                }
+                if (src1->value[k].i == INT_MIN && src2->value[k].i == -1)
+                    dst->value[k].i = 0;
+                else
+                    dst->value[k].i = src1->value[k].i % src2->value[k].i;
+                break;
+
+            case HLSL_TYPE_UINT:
+                if (src2->value[k].u == 0)
+                {
+                    hlsl_error(ctx, &dst->node.loc, VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO,
+                            "Division by zero.");
+                    return false;
+                }
+                dst->value[k].u = src1->value[k].u % src2->value[k].u;
+                break;
+
+            default:
+                FIXME("Fold modulus for type %s.\n", debug_hlsl_type(ctx, dst->node.data_type));
+                return false;
+        }
+    }
+    return true;
+}
+
 bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)
 {
     struct hlsl_ir_constant *arg1, *arg2 = NULL, *res;
@@ -235,10 +380,17 @@ bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void 
         return false;
     expr = hlsl_ir_expr(instr);
 
+    if (instr->data_type->type > HLSL_CLASS_VECTOR)
+        return false;
+
     for (i = 0; i < ARRAY_SIZE(expr->operands); ++i)
     {
-        if (expr->operands[i].node && expr->operands[i].node->type != HLSL_IR_CONSTANT)
-            return false;
+        if (expr->operands[i].node)
+        {
+            if (expr->operands[i].node->type != HLSL_IR_CONSTANT)
+                return false;
+            assert(expr->operands[i].node->data_type->type <= HLSL_CLASS_VECTOR);
+        }
     }
     arg1 = hlsl_ir_constant(expr->operands[0].node);
     if (expr->operands[1].node)
@@ -264,6 +416,18 @@ bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void 
 
         case HLSL_OP2_MUL:
             success = fold_mul(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_NEQUAL:
+            success = fold_nequal(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_DIV:
+            success = fold_div(ctx, res, arg1, arg2);
+            break;
+
+        case HLSL_OP2_MOD:
+            success = fold_mod(ctx, res, arg1, arg2);
             break;
 
         default:

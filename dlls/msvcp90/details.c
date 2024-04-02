@@ -207,22 +207,6 @@ static void spin_wait(int *counter)
     }
 }
 
-#ifdef _WIN64
-static size_t InterlockedIncrementSizeT(size_t volatile *dest)
-{
-    size_t v;
-
-    do
-    {
-        v = *dest;
-    } while(InterlockedCompareExchange64((LONGLONG*)dest, v+1, v) != v);
-
-    return v+1;
-}
-#else
-#define InterlockedIncrementSizeT(dest) InterlockedIncrement((LONG*)dest)
-#endif
-
 static void CALLBACK queue_push_finally(BOOL normal, void *ctx)
 {
     threadsafe_queue *queue = ctx;

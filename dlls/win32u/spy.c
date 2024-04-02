@@ -19,10 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "commctrl.h"
@@ -2130,6 +2126,14 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 
         if (sp_e->msgnum >= 0xc000)
         {
+#ifdef __WINESRC__
+            if (GlobalGetAtomNameA( sp_e->msgnum, sp_e->msg_name+1, sizeof(sp_e->msg_name)-2 ))
+            {
+                sp_e->msg_name[0] = '\"';
+                strcat( sp_e->msg_name, "\"" );
+                return;
+            }
+#else
             char buf[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
             ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
             if (!NtQueryInformationAtom( sp_e->msgnum, AtomBasicInformation, abi, sizeof(buf), NULL ))
@@ -2142,6 +2146,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
                 sp_e->msg_name[j] = 0;
                 return;
             }
+#endif
         }
         if (!sp_e->wnd_class[0]) SPY_GetClassName(sp_e);
 

@@ -1439,7 +1439,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
         if (reserved) break;
         dinput_thread_stop();
         unregister_di_em_win_class();
-        DeleteCriticalSection(&dinput_hook_crit);
         break;
     }
     return TRUE;

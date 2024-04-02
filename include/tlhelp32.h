@@ -19,6 +19,8 @@
 #ifndef __WINE_TLHELP32_H
 #define __WINE_TLHELP32_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -180,5 +182,7 @@ BOOL WINAPI Heap32Next(LPHEAPENTRY32);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_TLHELP32_H */

@@ -1079,13 +1079,11 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
     BOOL ret;
     int i;
 
-    if (flags & SPINST_REGSVR)
-    {
-        if (iterate_section_fields( hinf, section, L"WineFakeDlls", fake_dlls_callback, NULL ))
-            cleanup_fake_dlls();
-        else
-            return FALSE;
-    }
+    if (iterate_section_fields( hinf, section, L"WineFakeDlls", fake_dlls_callback, NULL ))
+        cleanup_fake_dlls();
+    else
+        return FALSE;
+
     if (flags & SPINST_FILES)
     {
         HSPFILEQ queue;

@@ -113,6 +113,24 @@ static struct opendll *apartment_get_dll(const WCHAR *library_name)
     return ret;
 }
 
+static BOOL is_olmapi32( const WCHAR *library_name )
+{
+    static const WCHAR olmapi32[] = {'o','l','m','a','p','i','3','2','.','d','l','l',0};
+    DWORD len = sizeof(olmapi32)/sizeof(olmapi32[0]) - 1, len2 = lstrlenW( library_name );
+    return (len <= len2 && !wcsicmp( library_name + len2 - len, olmapi32 ));
+}
+
+static BOOL is_outlook(void)
+{
+    static const WCHAR ol2010[] =
+        {'o','f','f','i','c','e','1','4','\\','o','u','t','l','o','o','k','.','e','x','e',0};
+    static const WCHAR ol2013[] =
+        {'o','f','f','i','c','e','1','5','\\','o','u','t','l','o','o','k','.','e','x','e',0};
+    WCHAR path[MAX_PATH];
+    DWORD len = sizeof(ol2010)/sizeof(ol2010[0]) - 1, len2 = GetModuleFileNameW( NULL, path, MAX_PATH );
+    return (len <= len2 && (!wcsicmp( path + len2 - len, ol2010 ) || !wcsicmp( path + len2 - len, ol2013 )));
+}
+
 /* caller must ensure that library_name is not already in the open dll list */
 static HRESULT apartment_add_dll(const WCHAR *library_name, struct opendll **ret)
 {
@@ -135,6 +153,13 @@ static HRESULT apartment_add_dll(const WCHAR *library_name, struct opendll **ret
         ERR("couldn't load in-process dll %s\n", debugstr_w(library_name));
         /* failure: DLL could not be loaded */
         return E_ACCESSDENIED; /* FIXME: or should this be CO_E_DLLNOTFOUND? */
+    }
+
+    if (is_olmapi32( library_name ) && is_outlook()) /* CrossOver hack bug 14243 */
+    {
+        HRESULT (WINAPI *pMAPIInitialize)(void *) = (void *)GetProcAddress( hLibrary, "MAPIInitialize" );
+        FIXME( "HACK: calling olmapi32.MAPIInitialize\n" );
+        pMAPIInitialize( NULL );
     }
 
     /* DllCanUnloadNow is optional */

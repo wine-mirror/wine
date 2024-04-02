@@ -20,6 +20,8 @@
 #ifndef __WINE_CRTDBG_H_
 #define __WINE_CRTDBG_H_
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 /* The debug API is not implemented in Winelib.
@@ -128,5 +130,7 @@ _ACRTIMP int   __cdecl _CrtSetReportMode(int reportType, int reportMode);
 #define _expand_dbg(p,s,t,f,l)          _expand(p,s)
 #define _free_dbg(p,t)                  free(p)
 #define _realloc_dbg(p,s,t,f,l)         realloc(p,s)
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_CRTDBG_H */

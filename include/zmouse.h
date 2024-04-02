@@ -21,6 +21,8 @@
 #ifndef __WINE_ZMOUSE_H
 #define __WINE_ZMOUSE_H
 
+#include "wine/winheader_enter.h"
+
 #define MSH_MOUSEWHEEL "MSWHEEL_ROLLMSG"
 
 #define MOUSEZ_CLASSNAME  "MouseZ"
@@ -42,5 +44,7 @@
 #ifndef SPI_SETWHEELSCROLLLINES
 #define SPI_SETWHEELSCROLLLINES   105
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_ZMOUSE_H */

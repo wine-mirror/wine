@@ -70,6 +70,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 static int nb_threads = 1;
 
@@ -1049,6 +1050,16 @@ static void pthread_exit_wrapper( int status )
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
     close( ntdll_get_thread_data()->request_fd );
+
+#if defined(__APPLE__) && defined(__x86_64__)
+    /* Remove the PEB from the localtime field in %gs, or MacOS might try
+     * to free() the pointer and crash. That happens for processes that are
+     * using the alt loader for dock integration. */
+    __asm__ volatile (".byte 0x65\n\tmovq %q0,%c1"
+                      :
+                      : "r" (NULL), "n" (FIELD_OFFSET(TEB, Peb)));
+#endif
+
     pthread_exit( UIntToPtr(status) );
 }
 
@@ -1111,7 +1122,7 @@ void *get_cpu_area( USHORT machine )
     case IMAGE_FILE_MACHINE_ARM64: align = TYPE_ALIGNMENT(ARM64_NT_CONTEXT); break;
     default: return NULL;
     }
-    return (void *)(((ULONG_PTR)(cpu + 1) + align - 1) & ~(align - 1));
+    return (void *)(((ULONG_PTR)(cpu + 1) + align - 1) & ~((ULONG_PTR)align - 1));
 }
 
 
@@ -2230,10 +2241,18 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadNameInformation:
     {
         const THREAD_NAME_INFORMATION *info = data;
+        THREAD_BASIC_INFORMATION tbi;
 
         if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
         if (!info) return STATUS_ACCESS_VIOLATION;
         if (info->ThreadName.Length && !info->ThreadName.Buffer) return STATUS_ACCESS_VIOLATION;
+
+        if (handle == GetCurrentThread())
+            WARN_(threadname)( "Thread renamed to %s\n", debugstr_us(&info->ThreadName) );
+        else if (!NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL ))
+            WARN_(threadname)( "Thread ID %04x renamed to %s\n", HandleToULong( tbi.ClientId.UniqueThread ), debugstr_us(&info->ThreadName) );
+        else
+            WARN_(threadname)( "Thread handle %p renamed to %s\n", handle, debugstr_us(&info->ThreadName) );
 
         SERVER_START_REQ( set_thread_info )
         {

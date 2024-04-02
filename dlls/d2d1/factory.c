@@ -19,6 +19,9 @@
 #define D2D1_INIT_GUID
 #include "d2d1_private.h"
 
+#include "xmllite.h"
+#include "wine/list.h"
+
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
@@ -26,6 +29,12 @@ struct d2d_settings d2d_settings =
 {
     ~0u,    /* No ID2D1Factory version limit by default. */
 };
+
+static void d2d_effect_registration_cleanup(struct d2d_effect_registration *reg)
+{
+    d2d_effect_properties_cleanup(&reg->properties);
+    free(reg);
+}
 
 struct d2d_factory
 {
@@ -38,6 +47,9 @@ struct d2d_factory
     float dpi_x;
     float dpi_y;
 
+    struct list effects;
+    INIT_ONCE init_builtins;
+
     CRITICAL_SECTION cs;
 };
 
@@ -46,9 +58,47 @@ static inline struct d2d_factory *impl_from_ID2D1Factory3(ID2D1Factory3 *iface)
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
 }
 
+static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
+}
+
 static inline struct d2d_factory *impl_from_ID2D1Multithread(ID2D1Multithread *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Multithread_iface);
+}
+
+static BOOL WINAPI d2d_factory_builtins_initonce(INIT_ONCE *once, void *param, void **context)
+{
+    d2d_effects_init_builtins(param);
+
+    return TRUE;
+}
+
+static void d2d_factory_init_builtin_effects(struct d2d_factory *factory)
+{
+    InitOnceExecuteOnce(&factory->init_builtins, d2d_factory_builtins_initonce, factory, NULL);
+}
+
+void d2d_factory_register_effect(struct d2d_factory *factory, struct d2d_effect_registration *effect)
+{
+    list_add_tail(&factory->effects, &effect->entry);
+}
+
+struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *iface,
+        const GUID *id)
+{
+    struct d2d_factory *factory = unsafe_impl_from_ID2D1Factory(iface);
+    struct d2d_effect_registration *reg;
+
+    d2d_effects_init_builtins(factory);
+
+    LIST_FOR_EACH_ENTRY(reg, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(id, &reg->id)) return reg;
+    }
+
+    return NULL;
 }
 
 static HRESULT d2d_factory_reload_sysmetrics(struct d2d_factory *factory)
@@ -112,6 +162,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory3 *iface)
 {
     struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
     ULONG refcount = InterlockedDecrement(&factory->refcount);
+    struct d2d_effect_registration *reg, *reg2;
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
@@ -119,8 +170,12 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory3 *iface)
     {
         if (factory->device)
             ID3D10Device1_Release(factory->device);
+        LIST_FOR_EACH_ENTRY_SAFE(reg, reg2, &factory->effects, struct d2d_effect_registration, entry)
+        {
+            d2d_effect_registration_cleanup(reg);
+        }
         DeleteCriticalSection(&factory->cs);
-        heap_free(factory);
+        free(factory);
     }
 
     return refcount;
@@ -153,13 +208,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factor
 
     TRACE("iface %p, rect %s, geometry %p.\n", iface, debug_d2d_rect_f(rect), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_rectangle_geometry_init(object, (ID2D1Factory *)iface, rect)))
     {
         WARN("Failed to initialise rectangle geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -177,13 +232,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRoundedRectangleGeometry(ID2D
 
     TRACE("iface %p, rounded_rect %s, geometry %p.\n", iface, debug_d2d_rounded_rect(rounded_rect), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_rounded_rectangle_geometry_init(object, (ID2D1Factory *)iface, rounded_rect)))
     {
         WARN("Failed to initialise rounded rectangle geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -201,13 +256,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateEllipseGeometry(ID2D1Factory3
 
     TRACE("iface %p, ellipse %s, geometry %p.\n", iface, debug_d2d_ellipse(ellipse), geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_ellipse_geometry_init(object, (ID2D1Factory *)iface, ellipse)))
     {
         WARN("Failed to initialise ellipse geometry, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -226,13 +281,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGeometryGroup(ID2D1Factory3 *
     TRACE("iface %p, fill_mode %#x, geometries %p, geometry_count %u, group %p.\n",
             iface, fill_mode, geometries, geometry_count, group);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_geometry_group_init(object, (ID2D1Factory *)iface, fill_mode, geometries, geometry_count)))
     {
         WARN("Failed to initialise geometry group, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -251,7 +306,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateTransformedGeometry(ID2D1Fact
     TRACE("iface %p, src_geometry %p, transform %p, transformed_geometry %p.\n",
             iface, src_geometry, transform, transformed_geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_transformed_geometry_init(object, (ID2D1Factory *)iface, src_geometry, transform);
@@ -268,7 +323,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry(ID2D1Factory3 *i
 
     TRACE("iface %p, geometry %p.\n", iface, geometry);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_path_geometry_init(object, (ID2D1Factory *)iface);
@@ -290,7 +345,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory3 *if
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     desc1.startCap = desc->startCap;
@@ -305,7 +360,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory3 *if
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface, &desc1, dashes, dash_count)))
     {
         WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -325,7 +380,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
     TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (desc)
@@ -365,19 +420,19 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
 
     TRACE("iface %p, target %p, desc %p, render_target %p.\n", iface, target, desc, render_target);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
     if (FAILED(hr = d2d_wic_render_target_init(object, (ID2D1Factory1 *)iface, device, target, desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -401,13 +456,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
         return hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_hwnd_render_target_init(object, (ID2D1Factory1 *)iface, device, desc, hwnd_rt_desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -458,13 +513,13 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory3 
     if (FAILED(hr = d2d_factory_get_device(factory, &device)))
         return hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_dc_render_target_init(object, (ID2D1Factory1 *)iface, device, desc)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -481,7 +536,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDevice(ID2D1Factory3 *iface,
 
     TRACE("iface %p, dxgi_device %p, device %p.\n", iface, dxgi_device, device);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_device_init(object, (ID2D1Factory1 *)iface, dxgi_device);
@@ -502,14 +557,14 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory3 *i
     TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_stroke_style_init(object, (ID2D1Factory *)iface,
             desc, dashes, dash_count)))
     {
         WARN("Failed to initialise stroke style, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -521,9 +576,19 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle1(ID2D1Factory3 *i
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry1(ID2D1Factory3 *iface, ID2D1PathGeometry1 **geometry)
 {
-    FIXME("iface %p, geometry %p stub!\n", iface, geometry);
+    struct d2d_geometry *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, geometry %p.\n", iface, geometry);
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_path_geometry_init(object, (ID2D1Factory *)iface);
+
+    TRACE("Created path geometry %p.\n", object);
+    *geometry = (ID2D1PathGeometry1 *)&object->ID2D1Geometry_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock1(ID2D1Factory3 *iface,
@@ -535,7 +600,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock1(ID2D1Facto
     TRACE("iface %p, desc %p, text_rendering_params %p, state_block %p.\n",
             iface, desc, text_rendering_params, state_block);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_state_block_init(object, (ID2D1Factory *)iface, desc, text_rendering_params);
@@ -554,40 +619,454 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateGdiMetafile(ID2D1Factory3 *if
     return E_NOTIMPL;
 }
 
+static HRESULT parse_effect_get_next_xml_node(IXmlReader *reader, XmlNodeType expected_type,
+        const WCHAR *expected_name, unsigned int *depth)
+{
+    const WCHAR *node_name;
+    XmlNodeType node_type;
+    HRESULT hr;
+
+    assert(expected_type != XmlNodeType_Whitespace);
+
+    while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
+    {
+        if (node_type == XmlNodeType_Whitespace)
+            continue;
+
+        if (expected_type != XmlNodeType_None && node_type != expected_type)
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        if (expected_name)
+        {
+            if (FAILED(hr = IXmlReader_GetLocalName(reader, &node_name, NULL)))
+                return hr;
+
+            if (wcscmp(node_name, expected_name))
+                return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+        }
+
+        if (depth)
+            IXmlReader_GetDepth(reader, depth);
+        return S_OK;
+    }
+
+    return hr;
+}
+
+static HRESULT parse_effect_skip_element(IXmlReader *reader, unsigned int element_depth)
+{
+    XmlNodeType node_type;
+    unsigned int depth;
+    HRESULT hr;
+
+    if (IXmlReader_IsEmptyElement(reader)) return S_OK;
+
+    while ((hr = IXmlReader_Read(reader, &node_type)) == S_OK)
+    {
+        IXmlReader_GetDepth(reader, &depth);
+        if (node_type == XmlNodeType_EndElement && depth == element_depth + 1)
+        {
+            return S_OK;
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT parse_effect_get_attribute(IXmlReader *reader, const WCHAR *name, WCHAR **ret)
+{
+    const WCHAR *value;
+
+    *ret = NULL;
+
+    if (IXmlReader_MoveToAttributeByName(reader, name, NULL) != S_OK)
+        return E_INVALIDARG;
+    if (IXmlReader_GetValue(reader, &value, NULL) != S_OK)
+        return E_INVALIDARG;
+    if (!(*ret = wcsdup(value)))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+static HRESULT parse_effect_get_property_type(IXmlReader *reader, D2D1_PROPERTY_TYPE *type)
+{
+    static const WCHAR *types[] =
+    {
+        L"",             /* D2D1_PROPERTY_TYPE_UNKNOWN */
+        L"string",       /* D2D1_PROPERTY_TYPE_STRING */
+        L"bool",         /* D2D1_PROPERTY_TYPE_BOOL */
+        L"uint32",       /* D2D1_PROPERTY_TYPE_UINT32 */
+        L"int32",        /* D2D1_PROPERTY_TYPE_INT32 */
+        L"float",        /* D2D1_PROPERTY_TYPE_FLOAT */
+        L"vector2",      /* D2D1_PROPERTY_TYPE_VECTOR2 */
+        L"vector3",      /* D2D1_PROPERTY_TYPE_VECTOR3 */
+        L"vector4",      /* D2D1_PROPERTY_TYPE_VECTOR4 */
+        L"blob",         /* D2D1_PROPERTY_TYPE_BLOB */
+        L"iunknown",     /* D2D1_PROPERTY_TYPE_IUNKNOWN */
+        L"enum",         /* D2D1_PROPERTY_TYPE_ENUM */
+        L"array",        /* D2D1_PROPERTY_TYPE_ARRAY */
+        L"clsid",        /* D2D1_PROPERTY_TYPE_CLSID */
+        L"matrix3x2",    /* D2D1_PROPERTY_TYPE_MATRIX_3X2 */
+        L"matrix4x3",    /* D2D1_PROPERTY_TYPE_MATRIX_4X3 */
+        L"matrix4x4",    /* D2D1_PROPERTY_TYPE_MATRIX_4X4 */
+        L"matrix5x4",    /* D2D1_PROPERTY_TYPE_MATRIX_5X4 */
+        L"colorcontext", /* D2D1_PROPERTY_TYPE_COLOR_CONTEXT */
+    };
+    unsigned int i;
+    WCHAR *value;
+    HRESULT hr;
+
+    if (FAILED(hr = parse_effect_get_attribute(reader, L"type", &value))) return hr;
+
+    *type = D2D1_PROPERTY_TYPE_UNKNOWN;
+
+    for (i = 0; i < ARRAY_SIZE(types); ++i)
+    {
+        if (!wcscmp(value, types[i]))
+        {
+            *type = i;
+            break;
+        }
+    }
+
+    free(value);
+
+    return *type == D2D1_PROPERTY_TYPE_UNKNOWN ? E_INVALIDARG : S_OK;
+}
+
+static struct d2d_effect_property * parse_effect_get_property(const struct d2d_effect_registration *effect,
+        const WCHAR *name)
+{
+    unsigned int i;
+
+    for (i = 0; i < effect->properties.count; ++i)
+    {
+        if (!wcscmp(name, effect->properties.properties[i].name))
+            return &effect->properties.properties[i];
+    }
+
+    return NULL;
+}
+
+static UINT32 parse_effect_get_property_index(struct d2d_effect_properties *props,
+        const WCHAR *name)
+{
+    if (!wcscmp(name, L"DisplayName")) return D2D1_PROPERTY_DISPLAYNAME;
+    if (!wcscmp(name, L"Author")) return D2D1_PROPERTY_AUTHOR;
+    if (!wcscmp(name, L"Category")) return D2D1_PROPERTY_CATEGORY;
+    if (!wcscmp(name, L"Description")) return D2D1_PROPERTY_DESCRIPTION;
+    return props->custom_count;
+}
+
+static HRESULT parse_effect_property(IXmlReader *reader, struct d2d_effect_registration *effect)
+{
+    WCHAR *name = NULL, *value = NULL;
+    D2D1_PROPERTY_TYPE type;
+    unsigned int depth;
+    UINT32 index;
+    HRESULT hr;
+
+    if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name)))
+        return hr;
+
+    if (FAILED(hr = parse_effect_get_property_type(reader, &type)))
+    {
+        free(name);
+        return hr;
+    }
+
+    /* Check for duplicates. */
+    if (parse_effect_get_property(effect, name))
+        hr = E_INVALIDARG;
+
+    parse_effect_get_attribute(reader, L"value", &value);
+
+    if (SUCCEEDED(hr))
+    {
+        /* FIXME: sub properties are ignored */
+        IXmlReader_MoveToElement(reader);
+        IXmlReader_GetDepth(reader, &depth);
+        hr = parse_effect_skip_element(reader, depth);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        index = parse_effect_get_property_index(&effect->properties, name);
+        hr = d2d_effect_properties_add(&effect->properties, name, index, type, value);
+    }
+
+    free(value);
+    free(name);
+
+    return hr;
+}
+
+static HRESULT parse_effect_inputs(IXmlReader *reader, struct d2d_effect_registration *effect)
+{
+    struct d2d_effect_properties *subproperties;
+    unsigned int depth, input_count = 0;
+    struct d2d_effect_property *inputs;
+    XmlNodeType node_type;
+    WCHAR nameW[16];
+    WCHAR *name;
+    HRESULT hr;
+
+    if (FAILED(hr = d2d_effect_properties_add(&effect->properties, L"Inputs",
+            D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY, NULL)))
+        return hr;
+
+    if (!(inputs = d2d_effect_properties_get_property_by_name(&effect->properties, L"Inputs")))
+        return E_FAIL;
+    if (!(inputs->subproperties = calloc(1, sizeof(*inputs->subproperties))))
+        return E_OUTOFMEMORY;
+    subproperties = inputs->subproperties;
+
+    d2d_effect_subproperties_add(subproperties, L"IsReadOnly", D2D1_SUBPROPERTY_ISREADONLY,
+            D2D1_PROPERTY_TYPE_BOOL, L"true");
+    d2d_effect_subproperties_add(subproperties, L"DisplayName", D2D1_SUBPROPERTY_DISPLAYNAME,
+            D2D1_PROPERTY_TYPE_STRING, L"Inputs");
+
+    if (IXmlReader_IsEmptyElement(reader)) return S_OK;
+
+    while (parse_effect_get_next_xml_node(reader, XmlNodeType_None, L"Input", &depth) == S_OK)
+    {
+        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+        if (node_type == XmlNodeType_EndElement) continue;
+        if (node_type != XmlNodeType_Element) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        if (FAILED(hr = parse_effect_get_attribute(reader, L"name", &name))) return hr;
+
+        swprintf(nameW, ARRAY_SIZE(nameW), L"%lu", input_count);
+        d2d_effect_subproperties_add(subproperties, nameW, input_count, D2D1_PROPERTY_TYPE_STRING, name);
+        input_count++;
+
+        free(name);
+    }
+    *(UINT32 *)(effect->properties.data.ptr + inputs->data.offset) = input_count;
+
+    if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+    if (node_type != XmlNodeType_EndElement) return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    return S_OK;
+}
+
+static HRESULT parse_effect_xml(IXmlReader *reader, struct d2d_effect_registration *effect)
+{
+    const WCHAR *node_name;
+    XmlNodeType node_type;
+    unsigned int depth;
+    HRESULT hr;
+
+    /* Xml declaration node is mandatory. */
+    if ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_XmlDeclaration, L"xml", NULL)) != S_OK)
+        return hr;
+
+    /* Top level "Effect" element. */
+    if ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_Element, L"Effect", NULL)) != S_OK)
+        return hr;
+
+    /* Loop inside effect node */
+    while ((hr = parse_effect_get_next_xml_node(reader, XmlNodeType_None, NULL, &depth)) == S_OK)
+    {
+        if (FAILED(hr = IXmlReader_GetNodeType(reader, &node_type))) return hr;
+        if (node_type != XmlNodeType_Element && node_type != XmlNodeType_EndElement) continue;
+        if (FAILED(hr = IXmlReader_GetLocalName(reader, &node_name, NULL))) return hr;
+        if (node_type == XmlNodeType_EndElement) break;
+
+        if (!wcscmp(node_name, L"Property"))
+            hr = parse_effect_property(reader, effect);
+        else if (!wcscmp(node_name, L"Inputs"))
+            hr = parse_effect_inputs(reader, effect);
+        else
+        {
+            WARN("Unexpected element %s.\n", debugstr_w(node_name));
+            hr = parse_effect_skip_element(reader, depth);
+        }
+
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromStream(ID2D1Factory3 *iface,
         REFCLSID effect_id, IStream *property_xml, const D2D1_PROPERTY_BINDING *bindings,
         UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
 {
-    FIXME("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p stub!\n",
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
+    IXmlReader *reader;
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("iface %p, effect_id %s, property_xml %p, bindings %p, binding_count %u, effect_factory %p.\n",
             iface, debugstr_guid(effect_id), property_xml, bindings, binding_count, effect_factory);
 
-    return E_NOTIMPL;
+    d2d_factory_init_builtin_effects(factory);
+
+    LIST_FOR_EACH_ENTRY_REV(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(effect_id, &effect->id))
+        {
+            if (effect->builtin) return E_INVALIDARG;
+            ++effect->registration_count;
+            return S_OK;
+        }
+    }
+
+    if (FAILED(hr = CreateXmlReader(&IID_IXmlReader, (void **)&reader, NULL)))
+        return hr;
+
+    if (FAILED(hr = IXmlReader_SetInput(reader, (IUnknown *)property_xml)))
+    {
+        IXmlReader_Release(reader);
+        return hr;
+    }
+
+    if (!(effect = calloc(1, sizeof(*effect))))
+    {
+        IXmlReader_Release(reader);
+        return E_OUTOFMEMORY;
+    }
+
+    hr = parse_effect_xml(reader, effect);
+    IXmlReader_Release(reader);
+    if (FAILED(hr))
+    {
+        WARN("Failed to parse effect xml, hr %#lx.\n", hr);
+        d2d_effect_registration_cleanup(effect);
+        return hr;
+    }
+
+    /* Check required properties. */
+    if (!parse_effect_get_property(effect, L"DisplayName")
+            || !parse_effect_get_property(effect, L"Author")
+            || !parse_effect_get_property(effect, L"Category")
+            || !parse_effect_get_property(effect, L"Description")
+            || !parse_effect_get_property(effect, L"Inputs"))
+    {
+        WARN("Missing required properties.\n");
+        d2d_effect_registration_cleanup(effect);
+        return E_INVALIDARG;
+    }
+
+    /* Bind getter and setter. */
+    for (i = 0; i < binding_count; ++i)
+    {
+        struct d2d_effect_property *property;
+
+        if (!(property = parse_effect_get_property(effect, bindings[i].propertyName)))
+        {
+            WARN("Failed to bind to missing property.\n");
+            d2d_effect_registration_cleanup(effect);
+            return D2DERR_INVALID_PROPERTY;
+        }
+
+        property->get_function = bindings[i].getFunction;
+        property->set_function = bindings[i].setFunction;
+    }
+
+    effect->registration_count = 1;
+    effect->id = *effect_id;
+    effect->factory = effect_factory;
+    d2d_effect_properties_add(&effect->properties, L"MinInputs", D2D1_PROPERTY_MIN_INPUTS,
+            D2D1_PROPERTY_TYPE_UINT32, L"1");
+    d2d_effect_properties_add(&effect->properties, L"MaxInputs", D2D1_PROPERTY_MAX_INPUTS,
+            D2D1_PROPERTY_TYPE_UINT32, L"1" /* FIXME */);
+    effect->default_input_count = 1;
+    d2d_factory_register_effect(factory, effect);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_RegisterEffectFromString(ID2D1Factory3 *iface,
         REFCLSID effect_id, const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings,
         UINT32 binding_count, PD2D1_EFFECT_FACTORY effect_factory)
 {
-    FIXME("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p stub!\n",
-            iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
+    static const LARGE_INTEGER zero;
+    IStream *stream;
+    ULONG size;
+    HRESULT hr;
 
-    return S_OK;
+    TRACE("iface %p, effect_id %s, property_xml %s, bindings %p, binding_count %u, effect_factory %p.\n",
+          iface, debugstr_guid(effect_id), debugstr_w(property_xml), bindings, binding_count, effect_factory);
+
+    if (FAILED(hr = CreateStreamOnHGlobal(NULL, TRUE, &stream)))
+        return hr;
+
+    size = sizeof(*property_xml) * (wcslen(property_xml) + 1);
+    if (SUCCEEDED(hr = IStream_Write(stream, property_xml, size, NULL)))
+        hr = IStream_Seek(stream, zero, SEEK_SET, NULL);
+
+    if (SUCCEEDED(hr))
+        hr = ID2D1Factory3_RegisterEffectFromStream(iface, effect_id, stream, bindings,
+                binding_count, effect_factory);
+
+    IStream_Release(stream);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_UnregisterEffect(ID2D1Factory3 *iface, REFCLSID effect_id)
 {
-    FIXME("iface %p, effect_id %s stub!\n", iface, debugstr_guid(effect_id));
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, effect_id %s.\n", iface, debugstr_guid(effect_id));
+
+    d2d_factory_init_builtin_effects(factory);
+
+    LIST_FOR_EACH_ENTRY_REV(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (IsEqualGUID(effect_id, &effect->id))
+        {
+            if (effect->builtin) break;
+            if (!--effect->registration_count)
+            {
+                list_remove(&effect->entry);
+                d2d_effect_registration_cleanup(effect);
+            }
+            return S_OK;
+        }
+    }
+
+    return D2DERR_EFFECT_IS_NOT_REGISTERED;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_GetRegisteredEffects(ID2D1Factory3 *iface,
         CLSID *effects, UINT32 effect_count, UINT32 *returned, UINT32 *registered)
 {
-    FIXME("iface %p, effects %p, effect_count %u, returned %p, registered %p stub!\n",
+    struct d2d_factory *factory = impl_from_ID2D1Factory3(iface);
+    struct d2d_effect_registration *effect;
+    UINT32 ret, reg;
+
+    TRACE("iface %p, effects %p, effect_count %u, returned %p, registered %p.\n",
             iface, effects, effect_count, returned, registered);
 
-    return E_NOTIMPL;
+    if (!returned) returned = &ret;
+    if (!registered) registered = &reg;
+
+    *registered = 0;
+    *returned = 0;
+
+    d2d_factory_init_builtin_effects(factory);
+
+    LIST_FOR_EACH_ENTRY(effect, &factory->effects, struct d2d_effect_registration, entry)
+    {
+        if (effects && effect_count)
+        {
+            *effects = effect->id;
+            effects++;
+            effect_count--;
+            *returned += 1;
+        }
+
+        *registered += 1;
+    }
+
+    if (!effects) return S_OK;
+    return *returned == *registered ? S_OK : D2DERR_INSUFFICIENT_BUFFER;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_GetEffectProperties(ID2D1Factory3 *iface,
@@ -732,7 +1211,9 @@ static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE fact
             &d2d_factory_multithread_noop_vtbl : &d2d_factory_multithread_vtbl;
     factory->refcount = 1;
     d2d_factory_reload_sysmetrics(factory);
+    list_init(&factory->effects);
     InitializeCriticalSection(&factory->cs);
+    InitOnceInitialize(&factory->init_builtins);
 }
 
 HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
@@ -750,7 +1231,7 @@ HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         return E_INVALIDARG;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     d2d_factory_init(object, factory_type, factory_options);

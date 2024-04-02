@@ -24,7 +24,6 @@
 
 #include "wine/debug.h"
 #include "wine/rbtree.h"
-#include "wine/heap.h"
 
 #define COBJMACROS
 #include "winbase.h"

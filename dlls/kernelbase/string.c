@@ -150,6 +150,10 @@ LPWSTR WINAPI KERNELBASE_lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 INT WINAPI KERNELBASE_lstrlenA( LPCSTR str )
 {
     INT ret;
+
+    /* CX HACK 21207: Avoid exceptions with lstrlen(NULL) */
+    if (!str) return 0;
+
     __TRY
     {
         ret = strlen(str);
@@ -166,6 +170,10 @@ INT WINAPI KERNELBASE_lstrlenA( LPCSTR str )
 INT WINAPI KERNELBASE_lstrlenW( LPCWSTR str )
 {
     INT ret;
+
+    /* CX HACK 21207: Avoid exceptions with lstrlen(NULL) */
+    if (!str) return 0;
+
     __TRY
     {
         ret = wcslen(str);

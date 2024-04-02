@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/winheader_enter.h"
+
 #define PATHCCH_NONE                            0x00
 #define PATHCCH_ALLOW_LONG_PATHS                0x01
 #define PATHCCH_FORCE_ENABLE_LONG_NAME_PROCESS  0x02
@@ -48,3 +50,5 @@ HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end);
 HRESULT WINAPI PathCchStripPrefix(WCHAR *path, SIZE_T size);
 HRESULT WINAPI PathCchStripToRoot(WCHAR *path, SIZE_T size);
 BOOL    WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server);
+
+#include "wine/winheader_exit.h"

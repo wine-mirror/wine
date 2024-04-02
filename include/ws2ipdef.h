@@ -19,6 +19,8 @@
 #ifndef __WS2IPDEF__
 #define __WS2IPDEF__
 
+#include "wine/winheader_enter.h"
+
 #include <in6addr.h>
 
 #ifdef USE_WS_PREFIX
@@ -402,5 +404,7 @@ static inline BOOLEAN WS(IN6_IS_ADDR_SITELOCAL) ( const IN6_ADDR *a )
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WS2IPDEF__ */

@@ -37,8 +37,13 @@ static FILE_OBJECTID_BUFFER windir_id, sysdir_id;
 
 static inline NTSTATUS get_file_id( HANDLE handle, FILE_OBJECTID_BUFFER *id )
 {
+    IO_STATUS_BLOCK32 io32;
     IO_STATUS_BLOCK io;
 
+    /* HACK: this shouldn't be necessary since we open the file for synchronous
+     * I/O, but we currently ignore that in ntdll.so and always write the 32-bit
+     * IOSB */
+    io.Pointer = &io32;
     return NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, id, sizeof(*id) );
 }
 
@@ -140,6 +145,16 @@ BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr )
     UNICODE_STRING redir;
 
     if (!len) return FALSE;
+
+    /* CW HACK 20810: disable FS redirection when 32-bit-only bottle is being used */
+    {
+        UNICODE_STRING name_str, val_str;
+
+        RtlInitUnicodeString( &name_str, L"WINEWOW6432BPREFIXMODE" );
+        val_str.MaximumLength = 0;
+        if (RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND)
+            return FALSE;
+    }
 
     if (!attr->RootDirectory)
     {
@@ -905,6 +920,33 @@ NTSTATUS WINAPI wow64_NtWriteFileGather( UINT *args )
 
     status = NtWriteFileGather( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                                 iosb_32to64( &io, io32 ), segments, len, offset, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/* CW HACK 14391 */
+/**********************************************************************
+ *           wow64___wine_rpc_NtReadFile
+ */
+extern typeof(NtReadFile) __wine_rpc_NtReadFile;
+NTSTATUS WINAPI wow64___wine_rpc_NtReadFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = __wine_rpc_NtReadFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                             iosb_32to64( &io, io32 ), buffer, len, offset, key );
     put_iosb( io32, &io );
     return status;
 }

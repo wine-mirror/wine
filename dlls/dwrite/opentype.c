@@ -69,39 +69,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define GLYPH_CONTEXT_MAX_LENGTH 64
 #define SHAPE_MAX_NESTING_LEVEL 6
 
-typedef struct {
-    CHAR TTCTag[4];
-    DWORD Version;
-    DWORD numFonts;
-    DWORD OffsetTable[1];
-} TTC_Header_V1;
+struct ttc_header
+{
+    uint32_t tag;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint32_t num_fonts;
+    uint32_t offsets[1];
+};
 
-typedef struct {
-    DWORD version;
-    WORD numTables;
-    WORD searchRange;
-    WORD entrySelector;
-    WORD rangeShift;
-} TTC_SFNT_V1;
+struct ot_table_dir
+{
+    uint32_t version;
+    uint16_t numTables;
+    uint16_t searchRange;
+    uint16_t entrySelector;
+    uint16_t rangeShift;
+};
 
-typedef struct {
-    DWORD tag;
-    DWORD checkSum;
-    DWORD offset;
-    DWORD length;
-} TT_TableRecord;
+struct ot_table_record
+{
+    uint32_t tag;
+    uint32_t checksum;
+    uint32_t offset;
+    uint32_t length;
+};
 
 struct cmap_encoding_record
 {
-    WORD platformID;
-    WORD encodingID;
-    DWORD offset;
+    uint16_t platformID;
+    uint16_t encodingID;
+    uint32_t offset;
 };
 
 struct cmap_header
 {
-    WORD version;
-    WORD num_tables;
+    uint16_t version;
+    uint16_t num_tables;
     struct cmap_encoding_record tables[1];
 };
 
@@ -220,44 +224,44 @@ struct tt_os2
 
 struct tt_hhea
 {
-    USHORT majorVersion;
-    USHORT minorVersion;
-    SHORT  ascender;
-    SHORT  descender;
-    SHORT  linegap;
-    USHORT advanceWidthMax;
-    SHORT  minLeftSideBearing;
-    SHORT  minRightSideBearing;
-    SHORT  xMaxExtent;
-    SHORT  caretSlopeRise;
-    SHORT  caretSlopeRun;
-    SHORT  caretOffset;
-    SHORT  reserved[4];
-    SHORT  metricDataFormat;
-    USHORT numberOfHMetrics;
+    uint16_t majorVersion;
+    uint16_t minorVersion;
+    int16_t ascender;
+    int16_t descender;
+    int16_t linegap;
+    uint16_t advanceWidthMax;
+    int16_t minLeftSideBearing;
+    int16_t minRightSideBearing;
+    int16_t xMaxExtent;
+    int16_t caretSlopeRise;
+    int16_t caretSlopeRun;
+    int16_t caretOffset;
+    int16_t reserved[4];
+    int16_t metricDataFormat;
+    uint16_t numberOfHMetrics;
 };
 
 struct sbix_header
 {
-    WORD version;
-    WORD flags;
-    DWORD num_strikes;
-    DWORD strike_offset[1];
+    uint16_t version;
+    uint16_t flags;
+    uint32_t num_strikes;
+    uint32_t strike_offset[1];
 };
 
 struct sbix_strike
 {
-    WORD ppem;
-    WORD ppi;
-    DWORD glyphdata_offsets[1];
+    uint16_t ppem;
+    uint16_t ppi;
+    uint32_t glyphdata_offsets[1];
 };
 
 struct sbix_glyph_data
 {
-    WORD originOffsetX;
-    WORD originOffsetY;
-    DWORD graphic_type;
-    BYTE data[1];
+    int16_t originOffsetX;
+    int16_t originOffsetY;
+    uint32_t graphic_type;
+    uint8_t data[1];
 };
 
 struct maxp
@@ -268,29 +272,41 @@ struct maxp
 
 struct cblc_header
 {
-    WORD major_version;
-    WORD minor_version;
-    DWORD num_sizes;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint32_t num_sizes;
 };
 
-typedef struct {
-    BYTE res[12];
-} sbitLineMetrics;
+struct sbit_line_metrics
+{
+    int8_t ascender;
+    int8_t descender;
+    uint8_t widthMax;
+    int8_t caretSlopeNumerator;
+    int8_t caretSlopeDenominator;
+    int8_t caretOffset;
+    int8_t minOriginSB;
+    int8_t minAdvanceSB;
+    int8_t maxBeforeBL;
+    int8_t minAfterBL;
+    int8_t pad1;
+    int8_t pad2;
+};
 
 struct cblc_bitmapsize_table
 {
-    DWORD indexSubTableArrayOffset;
-    DWORD indexTablesSize;
-    DWORD numberofIndexSubTables;
-    DWORD colorRef;
-    sbitLineMetrics hori;
-    sbitLineMetrics vert;
-    WORD startGlyphIndex;
-    WORD endGlyphIndex;
-    BYTE ppemX;
-    BYTE ppemY;
-    BYTE bit_depth;
-    BYTE flags;
+    uint32_t indexSubTableArrayOffset;
+    uint32_t indexTablesSize;
+    uint32_t numberofIndexSubTables;
+    uint32_t colorRef;
+    struct sbit_line_metrics hori;
+    struct sbit_line_metrics vert;
+    uint16_t startGlyphIndex;
+    uint16_t endGlyphIndex;
+    uint8_t ppemX;
+    uint8_t ppemY;
+    uint8_t bit_depth;
+    int8_t flags;
 };
 
 struct gasp_range
@@ -321,94 +337,94 @@ enum OS2_FSSELECTION {
 
 struct name_record
 {
-    WORD platformID;
-    WORD encodingID;
-    WORD languageID;
-    WORD nameID;
-    WORD length;
-    WORD offset;
+    uint16_t platformID;
+    uint16_t encodingID;
+    uint16_t languageID;
+    uint16_t nameID;
+    uint16_t length;
+    uint16_t offset;
 };
 
 struct name_header
 {
-    WORD format;
-    WORD count;
-    WORD stringOffset;
+    uint16_t format;
+    uint16_t count;
+    uint16_t stringOffset;
     struct name_record records[1];
 };
 
 struct vdmx_header
 {
-    WORD version;
-    WORD num_recs;
-    WORD num_ratios;
+    uint16_t version;
+    uint16_t num_recs;
+    uint16_t num_ratios;
 };
 
 struct vdmx_ratio
 {
-    BYTE bCharSet;
-    BYTE xRatio;
-    BYTE yStartRatio;
-    BYTE yEndRatio;
+    uint8_t bCharSet;
+    uint8_t xRatio;
+    uint8_t yStartRatio;
+    uint8_t yEndRatio;
 };
 
 struct vdmx_vtable
 {
-    WORD yPelHeight;
-    SHORT yMax;
-    SHORT yMin;
+    uint16_t yPelHeight;
+    int16_t yMax;
+    int16_t yMin;
 };
 
 struct vdmx_group
 {
-    WORD recs;
-    BYTE startsz;
-    BYTE endsz;
+    uint16_t recs;
+    uint8_t startsz;
+    uint8_t endsz;
     struct vdmx_vtable entries[1];
 };
 
 struct ot_feature_record
 {
-    DWORD tag;
-    WORD offset;
+    uint32_t tag;
+    uint16_t offset;
 };
 
 struct ot_feature_list
 {
-    WORD feature_count;
+    uint16_t feature_count;
     struct ot_feature_record features[1];
 };
 
 struct ot_langsys
 {
-    WORD lookup_order; /* Reserved */
-    WORD required_feature_index;
-    WORD feature_count;
-    WORD feature_index[1];
+    uint16_t lookup_order; /* Reserved */
+    uint16_t required_feature_index;
+    uint16_t feature_count;
+    uint16_t feature_index[1];
 };
 
 struct ot_langsys_record
 {
-    CHAR tag[4];
-    WORD langsys;
+    uint32_t tag;
+    uint16_t langsys;
 };
 
 struct ot_script
 {
-    WORD default_langsys;
-    WORD langsys_count;
+    uint16_t default_langsys;
+    uint16_t langsys_count;
     struct ot_langsys_record langsys[1];
 };
 
 struct ot_script_record
 {
-    CHAR tag[4];
-    WORD script;
+    uint32_t tag;
+    uint16_t script;
 };
 
 struct ot_script_list
 {
-    WORD script_count;
+    uint16_t script_count;
     struct ot_script_record scripts[1];
 };
 
@@ -424,42 +440,51 @@ enum ot_gdef_class
 
 struct gdef_header
 {
-    DWORD version;
-    UINT16 classdef;
-    UINT16 attach_list;
-    UINT16 ligcaret_list;
-    UINT16 markattach_classdef;
-    UINT16 markglyphsetdef;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint16_t classdef;
+    uint16_t attach_list;
+    uint16_t ligcaret_list;
+    uint16_t markattach_classdef;
+    uint16_t markglyphsetdef;
 };
 
 struct ot_gdef_classdef_format1
 {
-    WORD format;
-    WORD start_glyph;
-    WORD glyph_count;
-    WORD classes[1];
+    uint16_t format;
+    uint16_t start_glyph;
+    uint16_t glyph_count;
+    uint16_t classes[1];
 };
 
 struct ot_gdef_class_range
 {
-    WORD start_glyph;
-    WORD end_glyph;
-    WORD glyph_class;
+    uint16_t start_glyph;
+    uint16_t end_glyph;
+    uint16_t glyph_class;
 };
 
 struct ot_gdef_classdef_format2
 {
-    WORD format;
-    WORD range_count;
+    uint16_t format;
+    uint16_t range_count;
     struct ot_gdef_class_range ranges[1];
+};
+
+struct ot_gdef_markglyphsets
+{
+    uint16_t format;
+    uint16_t count;
+    uint32_t offsets[1];
 };
 
 struct gpos_gsub_header
 {
-    DWORD version;
-    WORD script_list;
-    WORD feature_list;
-    WORD lookup_list;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint16_t script_list;
+    uint16_t feature_list;
+    uint16_t lookup_list;
 };
 
 enum gsub_gpos_lookup_flags
@@ -545,272 +570,272 @@ enum OPENTYPE_PLATFORM_ID
 
 struct ot_gsubgpos_extension_format1
 {
-    UINT16 format;
-    UINT16 lookup_type;
-    DWORD extension_offset;
+    uint16_t format;
+    uint16_t lookup_type;
+    uint32_t extension_offset;
 };
 
 struct ot_gsub_singlesubst_format1
 {
-    UINT16 format;
-    UINT16 coverage;
-    short delta;
+    uint16_t format;
+    uint16_t coverage;
+    int16_t delta;
 };
 
 struct ot_gsub_singlesubst_format2
 {
-    UINT16 format;
-    UINT16 coverage;
-    UINT16 count;
-    UINT16 substitutes[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t count;
+    uint16_t substitutes[1];
 };
 
 struct ot_gsub_multsubst_format1
 {
-    UINT16 format;
-    UINT16 coverage;
-    UINT16 seq_count;
-    UINT16 seq[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t seq_count;
+    uint16_t seq[1];
 };
 
 struct ot_gsub_altsubst_format1
 {
-    UINT16 format;
-    UINT16 coverage;
-    UINT16 count;
-    UINT16 sets[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t count;
+    uint16_t sets[1];
 };
 
 struct ot_gsub_ligsubst_format1
 {
-    UINT16 format;
-    UINT16 coverage;
-    UINT16 lig_set_count;
-    UINT16 lig_sets[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t lig_set_count;
+    uint16_t lig_sets[1];
 };
 
 struct ot_gsub_ligset
 {
-    UINT16 count;
-    UINT16 offsets[1];
+    uint16_t count;
+    uint16_t offsets[1];
 };
 
 struct ot_gsub_lig
 {
-    UINT16 lig_glyph;
-    UINT16 comp_count;
-    UINT16 components[1];
+    uint16_t lig_glyph;
+    uint16_t comp_count;
+    uint16_t components[1];
 };
 
 struct ot_gsubgpos_context_format1
 {
-    UINT16 format;
-    UINT16 coverage;
-    UINT16 ruleset_count;
-    UINT16 rulesets[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t ruleset_count;
+    uint16_t rulesets[1];
 };
 
 struct ot_gsubgpos_ruleset
 {
-    UINT16 count;
-    UINT16 offsets[1];
+    uint16_t count;
+    uint16_t offsets[1];
 };
 
 struct ot_feature
 {
-    WORD feature_params;
-    WORD lookup_count;
-    WORD lookuplist_index[1];
+    uint16_t feature_params;
+    uint16_t lookup_count;
+    uint16_t lookuplist_index[1];
 };
 
 struct ot_lookup_list
 {
-    WORD lookup_count;
-    WORD lookup[1];
+    uint16_t lookup_count;
+    uint16_t lookup[1];
 };
 
 struct ot_lookup_table
 {
-    WORD lookup_type;
-    WORD flags;
-    WORD subtable_count;
-    WORD subtable[1];
+    uint16_t lookup_type;
+    uint16_t flags;
+    uint16_t subtable_count;
+    uint16_t subtable[1];
 };
 
 #define GLYPH_NOT_COVERED (~0u)
 
 struct ot_coverage_format1
 {
-    WORD format;
-    WORD glyph_count;
-    WORD glyphs[1];
+    uint16_t format;
+    uint16_t glyph_count;
+    uint16_t glyphs[1];
 };
 
 struct ot_coverage_range
 {
-    WORD start_glyph;
-    WORD end_glyph;
-    WORD startcoverage_index;
+    uint16_t start_glyph;
+    uint16_t end_glyph;
+    uint16_t startcoverage_index;
 };
 
 struct ot_coverage_format2
 {
-    WORD format;
-    WORD range_count;
+    uint16_t format;
+    uint16_t range_count;
     struct ot_coverage_range ranges[1];
 };
 
 struct ot_gpos_device_table
 {
-    WORD start_size;
-    WORD end_size;
-    WORD format;
-    WORD values[1];
+    uint16_t start_size;
+    uint16_t end_size;
+    uint16_t format;
+    uint16_t values[1];
 };
 
 struct ot_gpos_singlepos_format1
 {
-    WORD format;
-    WORD coverage;
-    WORD value_format;
-    WORD value[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t value_format;
+    uint16_t value[1];
 };
 
 struct ot_gpos_singlepos_format2
 {
-    WORD format;
-    WORD coverage;
-    WORD value_format;
-    WORD value_count;
-    WORD values[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t value_format;
+    uint16_t value_count;
+    uint16_t values[1];
 };
 
 struct ot_gpos_pairvalue
 {
-    WORD second_glyph;
-    BYTE data[1];
+    uint16_t second_glyph;
+    uint8_t data[1];
 };
 
 struct ot_gpos_pairset
 {
-    WORD pairvalue_count;
+    uint16_t pairvalue_count;
     struct ot_gpos_pairvalue pairvalues[1];
 };
 
 struct ot_gpos_pairpos_format1
 {
-    WORD format;
-    WORD coverage;
-    WORD value_format1;
-    WORD value_format2;
-    WORD pairset_count;
-    WORD pairsets[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t value_format1;
+    uint16_t value_format2;
+    uint16_t pairset_count;
+    uint16_t pairsets[1];
 };
 
 struct ot_gpos_pairpos_format2
 {
-    WORD format;
-    WORD coverage;
-    WORD value_format1;
-    WORD value_format2;
-    WORD class_def1;
-    WORD class_def2;
-    WORD class1_count;
-    WORD class2_count;
-    WORD values[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t value_format1;
+    uint16_t value_format2;
+    uint16_t class_def1;
+    uint16_t class_def2;
+    uint16_t class1_count;
+    uint16_t class2_count;
+    uint16_t values[1];
 };
 
 struct ot_gpos_anchor_format1
 {
-    WORD format;
-    short x_coord;
-    short y_coord;
+    uint16_t format;
+    int16_t x_coord;
+    int16_t y_coord;
 };
 
 struct ot_gpos_anchor_format2
 {
-    WORD format;
-    short x_coord;
-    short y_coord;
-    WORD anchor_point;
+    uint16_t format;
+    int16_t x_coord;
+    int16_t y_coord;
+    uint16_t anchor_point;
 };
 
 struct ot_gpos_anchor_format3
 {
-    WORD format;
-    short x_coord;
-    short y_coord;
-    WORD x_dev_offset;
-    WORD y_dev_offset;
+    uint16_t format;
+    int16_t x_coord;
+    int16_t y_coord;
+    uint16_t x_dev_offset;
+    uint16_t y_dev_offset;
 };
 
 struct ot_gpos_cursive_format1
 {
-    WORD format;
-    WORD coverage;
-    WORD count;
-    WORD anchors[1];
+    uint16_t format;
+    uint16_t coverage;
+    uint16_t count;
+    uint16_t anchors[1];
 };
 
 struct ot_gpos_mark_record
 {
-    WORD mark_class;
-    WORD mark_anchor;
+    uint16_t mark_class;
+    uint16_t mark_anchor;
 };
 
 struct ot_gpos_mark_array
 {
-    WORD count;
+    uint16_t count;
     struct ot_gpos_mark_record records[1];
 };
 
 struct ot_gpos_base_array
 {
-    WORD count;
-    WORD offsets[1];
+    uint16_t count;
+    uint16_t offsets[1];
 };
 
 struct ot_gpos_mark_to_base_format1
 {
-    WORD format;
-    WORD mark_coverage;
-    WORD base_coverage;
-    WORD mark_class_count;
-    WORD mark_array;
-    WORD base_array;
+    uint16_t format;
+    uint16_t mark_coverage;
+    uint16_t base_coverage;
+    uint16_t mark_class_count;
+    uint16_t mark_array;
+    uint16_t base_array;
 };
 
 struct ot_gpos_mark_to_lig_format1
 {
-    WORD format;
-    WORD mark_coverage;
-    WORD lig_coverage;
-    WORD mark_class_count;
-    WORD mark_array;
-    WORD lig_array;
+    uint16_t format;
+    uint16_t mark_coverage;
+    uint16_t lig_coverage;
+    uint16_t mark_class_count;
+    uint16_t mark_array;
+    uint16_t lig_array;
 };
 
 struct ot_gpos_mark_to_mark_format1
 {
-    WORD format;
-    WORD mark1_coverage;
-    WORD mark2_coverage;
-    WORD mark_class_count;
-    WORD mark1_array;
-    WORD mark2_array;
+    uint16_t format;
+    uint16_t mark1_coverage;
+    uint16_t mark2_coverage;
+    uint16_t mark_class_count;
+    uint16_t mark1_array;
+    uint16_t mark2_array;
 };
 
 struct kern_header
 {
-    WORD version;
-    WORD table_count;
+    uint16_t version;
+    uint16_t table_count;
 };
 
 struct kern_subtable_header
 {
-    WORD version;
-    WORD length;
-    WORD coverage;
+    uint16_t version;
+    uint16_t length;
+    uint16_t coverage;
 };
 
 #include "poppack.h"
@@ -1198,58 +1223,58 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_WEIGHT_ST
 /* CPAL table */
 struct cpal_header_0
 {
-    USHORT version;
-    USHORT num_palette_entries;
-    USHORT num_palettes;
-    USHORT num_color_records;
-    ULONG offset_first_color_record;
-    USHORT color_record_indices[1];
+    uint16_t version;
+    uint16_t num_palette_entries;
+    uint16_t num_palettes;
+    uint16_t num_color_records;
+    uint32_t offset_first_color_record;
+    uint16_t color_record_indices[1];
 };
 
 struct cpal_color_record
 {
-    BYTE blue;
-    BYTE green;
-    BYTE red;
-    BYTE alpha;
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t alpha;
 };
 
 /* COLR table */
 struct colr_header
 {
-    USHORT version;
-    USHORT num_baseglyph_records;
-    ULONG offset_baseglyph_records;
-    ULONG offset_layer_records;
-    USHORT num_layer_records;
+    uint16_t version;
+    uint16_t num_baseglyph_records;
+    uint32_t offset_baseglyph_records;
+    uint32_t offset_layer_records;
+    uint16_t num_layer_records;
 };
 
 struct colr_baseglyph_record
 {
-    USHORT glyph;
-    USHORT first_layer_index;
-    USHORT num_layers;
+    uint16_t glyph;
+    uint16_t first_layer_index;
+    uint16_t num_layers;
 };
 
 struct colr_layer_record
 {
-    USHORT glyph;
-    USHORT palette_index;
+    uint16_t glyph;
+    uint16_t palette_index;
 };
 
 struct meta_data_map
 {
-    DWORD tag;
-    DWORD offset;
-    DWORD length;
+    uint32_t tag;
+    uint32_t offset;
+    uint32_t length;
 };
 
 struct meta_header
 {
-    DWORD version;
-    DWORD flags;
-    DWORD reserved;
-    DWORD data_maps_count;
+    uint32_t version;
+    uint32_t flags;
+    uint32_t reserved;
+    uint32_t data_maps_count;
     struct meta_data_map maps[1];
 };
 
@@ -1293,8 +1318,7 @@ typedef HRESULT (*dwrite_fontfile_analyzer)(IDWriteFontFileStream *stream, UINT3
 static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
-    static const DWORD ttctag = MS_TTCF_TAG;
-    const TTC_Header_V1 *header;
+    const struct ttc_header *header;
     void *context;
     HRESULT hr;
 
@@ -1302,8 +1326,9 @@ static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font
     if (FAILED(hr))
         return hr;
 
-    if (!memcmp(header->TTCTag, &ttctag, sizeof(ttctag))) {
-        *font_count = GET_BE_DWORD(header->numFonts);
+    if (header->tag == MS_TTCF_TAG)
+    {
+        *font_count = GET_BE_DWORD(header->num_fonts);
         *file_type = DWRITE_FONT_FILE_TYPE_OPENTYPE_COLLECTION;
         *face_type = DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION;
     }
@@ -1474,8 +1499,8 @@ HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, 
     void **table_context, UINT32 *table_size, BOOL *found)
 {
     void *table_directory_context, *sfnt_context;
-    TT_TableRecord *table_record = NULL;
-    TTC_SFNT_V1 *font_header = NULL;
+    const struct ot_table_record *table_record = NULL;
+    const struct ot_table_dir *table_dir = NULL;
     UINT32 table_offset = 0;
     UINT16 table_count;
     HRESULT hr;
@@ -1486,38 +1511,48 @@ HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, 
     *table_data = NULL;
     *table_context = NULL;
 
-    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION) {
-        const TTC_Header_V1 *ttc_header;
+    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
+    {
+        const struct ttc_header *ttc_header;
         void * ttc_context;
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&ttc_header, 0, sizeof(*ttc_header), &ttc_context);
-        if (SUCCEEDED(hr)) {
-            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->numFonts))
+
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
+                sizeof(*ttc_header), &ttc_context);
+        if (SUCCEEDED(hr))
+        {
+            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
                 hr = E_INVALIDARG;
-            else {
-                table_offset = GET_BE_DWORD(ttc_header->OffsetTable[stream_desc->face_index]);
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&font_header, table_offset, sizeof(*font_header), &sfnt_context);
+            else
+            {
+                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
+                        sizeof(*table_dir), &sfnt_context);
             }
             IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
         }
     }
     else
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&font_header, 0, sizeof(*font_header), &sfnt_context);
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
+                sizeof(*table_dir), &sfnt_context);
 
     if (FAILED(hr))
         return hr;
 
-    table_count = GET_BE_WORD(font_header->numTables);
-    table_offset += sizeof(*font_header);
+    table_count = GET_BE_WORD(table_dir->numTables);
+    table_offset += sizeof(*table_dir);
 
     IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
 
     hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
             table_count * sizeof(*table_record), &table_directory_context);
-    if (hr == S_OK) {
+    if (hr == S_OK)
+    {
         UINT16 i;
 
-        for (i = 0; i < table_count; i++) {
-            if (table_record->tag == tag) {
+        for (i = 0; i < table_count; ++i)
+        {
+            if (table_record->tag == tag)
+            {
                 UINT32 offset = GET_BE_DWORD(table_record->offset);
                 UINT32 length = GET_BE_DWORD(table_record->length);
 
@@ -3538,10 +3573,10 @@ struct lookup
 {
     unsigned short index;
     unsigned short type;
-    unsigned short flags;
     unsigned short subtable_count;
 
     unsigned int mask;
+    unsigned int flags;
     unsigned int offset;
     unsigned int auto_zwnj : 1;
     unsigned int auto_zwj : 1;
@@ -3681,7 +3716,7 @@ static BOOL opentype_match_coverage_func(UINT16 glyph, UINT16 glyph_data, const 
 static BOOL opentype_layout_mark_set_covers(const struct scriptshaping_cache *cache, unsigned int set_index,
         UINT16 glyph)
 {
-    unsigned int format, offset = cache->gdef.markglyphsetdef, coverage_offset, set_count;
+    unsigned int format, offset = cache->gdef.markglyphsetdef, coverage_offset, count;
 
     if (!offset)
         return FALSE;
@@ -3690,11 +3725,12 @@ static BOOL opentype_layout_mark_set_covers(const struct scriptshaping_cache *ca
 
     if (format == 1)
     {
-        set_count = table_read_be_word(&cache->gdef.table, offset + 2);
-        if (!set_count || set_index >= set_count)
+        count = table_read_be_word(&cache->gdef.table, offset + FIELD_OFFSET(struct ot_gdef_markglyphsets, count));
+        if (!count || set_index >= count)
             return FALSE;
 
-        coverage_offset = table_read_be_dword(&cache->gdef.table, offset + 2 + set_index * sizeof(coverage_offset));
+        coverage_offset = table_read_be_dword(&cache->gdef.table, offset +
+                FIELD_OFFSET(struct ot_gdef_markglyphsets, offsets[set_index]));
         return opentype_layout_is_glyph_covered(&cache->gdef.table, offset + coverage_offset, glyph) != GLYPH_NOT_COVERED;
     }
     else
@@ -3936,7 +3972,7 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
                 value_len2 * sizeof(WORD);
 
         pairset_offset = subtable_offset + GET_BE_WORD(format1->pairsets[coverage_index]);
-        pairset = table_read_ensure(table, subtable_offset + pairset_offset, pairvalue_len * pairvalue_count);
+        pairset = table_read_ensure(table, pairset_offset, pairvalue_len * pairvalue_count);
         if (!pairset)
             return FALSE;
 
@@ -4231,7 +4267,7 @@ static BOOL opentype_layout_apply_mark_array(struct scriptshaping_context *conte
     if (context->is_rtl)
         context->offsets[context->cur].advanceOffset = mark_x - base_x;
     else
-        context->offsets[context->cur].advanceOffset = -context->advances[glyph_pos] + base_x - mark_x;
+        context->offsets[context->cur].advanceOffset = base_x - mark_x;
     context->offsets[context->cur].ascenderOffset = base_y - mark_y;
     opentype_set_glyph_attach_type(context, context->cur, GLYPH_ATTACH_MARK);
     context->glyph_infos[context->cur].attach_chain = (int)glyph_pos - (int)context->cur;
@@ -4461,9 +4497,9 @@ static int __cdecl lookups_sorting_compare(const void *a, const void *b)
 static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, unsigned short lookup_index,
         const struct shaping_feature *feature, struct lookup *lookup)
 {
-    unsigned short subtable_count, lookup_type, flags, mark_filtering_set;
+    unsigned short subtable_count, lookup_type, mark_filtering_set;
     const struct ot_lookup_table *lookup_table;
-    unsigned int offset;
+    unsigned int offset, flags;
 
     if (!(offset = table_read_be_word(&table->table, table->lookup_list +
             FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]))))

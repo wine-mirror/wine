@@ -24,6 +24,7 @@
 #include "ieframe.h"
 #include "exdispid.h"
 #include "shlwapi.h"
+#include "shellapi.h"
 
 #include "wine/debug.h"
 
@@ -986,6 +987,62 @@ static ULONG WINAPI NewWindowManager_Release(INewWindowManager *iface)
     return IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
 }
 
+static inline BOOL is_option_true(const char *value)
+{
+    char ch = toupper(*value);
+    return ch == 'Y' || ch == 'T' || ch == '1';
+}
+
+static BOOL use_external_browser_for_new_window(void)
+{
+    char buffer[MAX_PATH+16], *p = buffer, *appname = buffer;
+    BOOL is_iexplore;
+    HKEY key, tmpkey;
+    DWORD size;
+    DWORD res;
+
+    GetModuleFileNameA(0, buffer, MAX_PATH);
+    if((p = strrchr(appname, '/')))
+        appname = p + 1;
+    if((p = strrchr(appname, '\\')))
+        appname = p + 1;
+    is_iexplore = !strcasecmp(appname, "iexplore.exe");
+    TRACE("appname %s\n", debugstr_a(appname));
+
+    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\MSHTML */
+    if(!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey)) {
+        strcat(appname, "\\MSHTML");
+        res = RegOpenKeyA(tmpkey, appname, &key);
+        RegCloseKey(tmpkey);
+        if(res == ERROR_SUCCESS) {
+            res = RegQueryValueExA(key, "UseExternalBrowserForNewWindow", 0, NULL, (LPBYTE)buffer, &size);
+            RegCloseKey(key);
+            if(res == ERROR_SUCCESS) {
+                TRACE("found appdefaults setting %s\n", debugstr_an(buffer, size));
+                return is_option_true(buffer);
+            }
+        }
+    }
+
+    /* iexplore.exe doesn't use external browser unless it's explicitly configured */
+    if(is_iexplore)
+        return FALSE;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
+    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\MSHTML", &key)) {
+        ERR("found MSHTML key\n");
+        res = RegQueryValueExA(key, "UseExternalBrowserForNewWindow", 0, NULL, (LPBYTE)buffer, &size);
+        RegCloseKey(key);
+        if(res == ERROR_SUCCESS) {
+            TRACE("found global setting %s\n", debugstr_an(buffer, size));
+            return is_option_true(buffer);
+        }
+    }
+
+    TRACE("config not found\n");
+    return TRUE;
+}
+
 static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *iface, LPCWSTR pszUrl,
         LPCWSTR pszName, LPCWSTR pszUrlContext, LPCWSTR pszFeatures, BOOL fReplace, DWORD dwFlags,
         DWORD dwUserActionTime)
@@ -993,6 +1050,24 @@ static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *ifac
     NewWindowManager *This = impl_from_INewWindowManager(iface);
     FIXME("(%p)->(%s %s %s %s %x %lx %ld)\n", This, debugstr_w(pszUrl), debugstr_w(pszName), debugstr_w(pszUrlContext),
           debugstr_w(pszFeatures), fReplace, dwFlags, dwUserActionTime);
+
+    /*
+     * CXHACK 12399: Open new window in default browser (usually winebrowser) instead of letting
+     *               MSHTML to open new IE window. This way the context (like scripts and cookies)
+     *               are not shared between embedded document and the new window, but if it's
+     *               not needed, user experience is better this way
+     */
+    if(use_external_browser_for_new_window()) {
+        SHELLEXECUTEINFOW exec_info = {sizeof(exec_info)};
+        static const WCHAR htmlfileW[] = {'h','t','m','l','f','i','l','e',0};
+        exec_info.fMask = SEE_MASK_CLASSNAME;
+        exec_info.lpFile = pszUrl;
+        exec_info.nShow = SW_SHOW;
+        exec_info.lpClass = htmlfileW;
+        TRACE("opening in external browser\n");
+        return ShellExecuteExW(&exec_info) ? E_FAIL : S_OK;
+    }
+
     return S_OK;
 }
 

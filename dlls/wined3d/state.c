@@ -146,6 +146,27 @@ void * CDECL wined3d_depth_stencil_state_get_parent(const struct wined3d_depth_s
     return state->parent;
 }
 
+static bool stencil_op_writes_ds(const struct wined3d_stencil_op_desc *desc)
+{
+    return desc->fail_op != WINED3D_STENCIL_OP_KEEP
+            || desc->depth_fail_op != WINED3D_STENCIL_OP_KEEP
+            || desc->pass_op != WINED3D_STENCIL_OP_KEEP;
+}
+
+static bool depth_stencil_state_desc_writes_ds(const struct wined3d_depth_stencil_state_desc *desc)
+{
+    if (desc->depth && desc->depth_write)
+        return true;
+
+    if (desc->stencil && desc->stencil_write_mask)
+    {
+        if (stencil_op_writes_ds(&desc->front) || stencil_op_writes_ds(&desc->back))
+            return true;
+    }
+
+    return false;
+}
+
 HRESULT CDECL wined3d_depth_stencil_state_create(struct wined3d_device *device,
         const struct wined3d_depth_stencil_state_desc *desc, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_depth_stencil_state **state)
@@ -163,6 +184,8 @@ HRESULT CDECL wined3d_depth_stencil_state_create(struct wined3d_device *device,
     object->parent = parent;
     object->parent_ops = parent_ops;
     object->device = device;
+
+    object->writes_ds = depth_stencil_state_desc_writes_ds(desc);
 
     TRACE("Created depth/stencil state %p.\n", object);
     *state = object;
@@ -843,7 +866,8 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     uint32_t enable_mask;
 
-    if (use_vs(state) && !context->d3d_info->vs_clipping)
+    if (use_vs(state) && !context->d3d_info->vs_clipping
+            && !(context_gl->gl_info->quirks & WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN))
     {
         static BOOL warned;
 
@@ -863,6 +887,9 @@ void state_clipping(struct wined3d_context *context, const struct wined3d_state 
      * shader to update the enabled clipplanes. In case of fixed function, we
      * need to update the clipping field from ffp_vertex_settings. */
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
+    /* If we are emulating user clip planes, in general we have to regenerate the PS. */
+    if (context_gl->gl_info->quirks & WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN)
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 
     /* If enabling / disabling all
      * TODO: Is this correct? Doesn't D3DRS_CLIPPING disable clipping on the viewport frustrum?

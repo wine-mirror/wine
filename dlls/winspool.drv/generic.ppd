@@ -32,7 +32,7 @@
 
 *OpenUI *PageSize/Media Size: PickOne
 *OrderDependency: 10 AnySetup *PageSize
-*DefaultPageSize: A4
+*DefaultPageSize: Letter
 *PageSize Letter/Letter:	"<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
 *PageSize Legal/Legal:		"<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
 *PageSize Executive/Executive:	"<</PageSize[522 756]/ImagingBBox null>>setpagedevice"

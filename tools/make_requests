@@ -383,6 +383,7 @@ print SERVER_PROT " * Edit server/protocol.def instead and re-run tools/make_req
 print SERVER_PROT " */\n\n";
 print SERVER_PROT "#ifndef __WINE_WINE_SERVER_PROTOCOL_H\n";
 print SERVER_PROT "#define __WINE_WINE_SERVER_PROTOCOL_H\n";
+print SERVER_PROT "#include <wine/winheader_enter.h>\n";
 
 ### Parse requests to find request/reply structure definitions
 
@@ -409,6 +410,7 @@ print SERVER_PROT "};\n\n";
 print SERVER_PROT "/* ### protocol_version begin ### */\n\n";
 printf SERVER_PROT "#define SERVER_PROTOCOL_VERSION %d\n\n", $protocol;
 print SERVER_PROT "/* ### protocol_version end ### */\n\n";
+print SERVER_PROT "#include <wine/winheader_exit.h>\n\n";
 print SERVER_PROT "#endif /* __WINE_WINE_SERVER_PROTOCOL_H */\n";
 close SERVER_PROT;
 

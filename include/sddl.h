@@ -18,6 +18,8 @@
 #ifndef __SDDL_H__
 #define __SDDL_H__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -106,5 +108,7 @@ BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorW(
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __SDDL_H__ */

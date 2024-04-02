@@ -176,8 +176,8 @@ Import the specified library, looking for a corresponding
 \fIlibname.def\fR file in the directories specified with the \fB-L\fR
 option.
 .TP
-.B \-m16, -m32, -m64
-Generate respectively 16-bit, 32-bit or 64-bit code.
+.B \-m16, -m32, -m64, -mwine32
+Generate respectively 16-bit, 32-bit, 64-bit or 32-bit-on-64-bit code.
 .TP
 .BI \-marm,\ \-mthumb,\ \-march= option ,\ \-mcpu= option ,\ \-mfpu= option ,\ \-mfloat-abi= option
 Set code generation options for the assembler.

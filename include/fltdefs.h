@@ -6,6 +6,8 @@
 #ifndef _FLTDEFS_H
 #define _FLTDEFS_H
 
+#include "wine/winheader_enter.h"
+
 typedef PVOID FILTER_HANDLE,*PFILTER_HANDLE;
 typedef PVOID INTERFACE_HANDLE,*PINTERFACE_HANDLE;
 
@@ -139,4 +141,6 @@ PFAPIENTRY PfSetLogBuffer(PBYTE pbBuffer,DWORD dwSize,DWORD dwThreshold,DWORD dw
 PFAPIENTRY PfDeleteLog(VOID);
 PFAPIENTRY PfGetInterfaceStatistics(INTERFACE_HANDLE pInterface,PPF_INTERFACE_STATS ppfStats,PDWORD pdwBufferSize,BOOL fResetCounters);
 PFAPIENTRY PfTestPacket(INTERFACE_HANDLE pInInterface,INTERFACE_HANDLE pOutInterface,DWORD cBytes,PBYTE pbPacket,PPFFORWARD_ACTION ppAction);
+#include "wine/winheader_exit.h"
+
 #endif

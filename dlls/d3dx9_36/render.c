@@ -151,7 +151,7 @@ static ULONG WINAPI D3DXRenderToSurface_AddRef(ID3DXRenderToSurface *iface)
     struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
     ULONG ref = InterlockedIncrement(&render->ref);
 
-    TRACE("%p increasing refcount to %u\n", iface, ref);
+    TRACE("%p increasing refcount to %lu.\n", iface, ref);
 
     return ref;
 }
@@ -161,7 +161,7 @@ static ULONG WINAPI D3DXRenderToSurface_Release(ID3DXRenderToSurface *iface)
     struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
     ULONG ref = InterlockedDecrement(&render->ref);
 
-    TRACE("%p decreasing refcount to %u\n", iface, ref);
+    TRACE("%p decreasing refcount to %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -185,7 +185,7 @@ static HRESULT WINAPI D3DXRenderToSurface_GetDevice(ID3DXRenderToSurface *iface,
 {
     struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
 
-    TRACE("(%p)->(%p)\n", iface, device);
+    TRACE("iface %p, device %p.\n", iface, device);
 
     if (!device) return D3DERR_INVALIDCALL;
 
@@ -199,7 +199,7 @@ static HRESULT WINAPI D3DXRenderToSurface_GetDesc(ID3DXRenderToSurface *iface,
 {
     struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
 
-    TRACE("(%p)->(%p)\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc) return D3DERR_INVALIDCALL;
 
@@ -219,7 +219,7 @@ static HRESULT WINAPI D3DXRenderToSurface_BeginScene(ID3DXRenderToSurface *iface
     D3DMULTISAMPLE_TYPE multi_sample_type = D3DMULTISAMPLE_NONE;
     DWORD multi_sample_quality = 0;
 
-    TRACE("(%p)->(%p, %p)\n", iface, surface, viewport);
+    TRACE("iface %p, surface %p, viewport %p.\n", iface, surface, viewport);
 
     if (!surface || render->dst_surface) return D3DERR_INVALIDCALL;
 
@@ -307,7 +307,7 @@ static HRESULT WINAPI D3DXRenderToSurface_EndScene(ID3DXRenderToSurface *iface,
     struct render_to_surface *render = impl_from_ID3DXRenderToSurface(iface);
     HRESULT hr;
 
-    TRACE("(%p)->(%#x)\n", iface, filter);
+    TRACE("iface %p, filter %#lx.\n", iface, filter);
 
     if (!render->dst_surface) return D3DERR_INVALIDCALL;
 
@@ -318,7 +318,8 @@ static HRESULT WINAPI D3DXRenderToSurface_EndScene(ID3DXRenderToSurface *iface,
     {
         hr = D3DXLoadSurfaceFromSurface(render->dst_surface, NULL, NULL,
                 render->render_target, NULL, NULL, filter, 0);
-        if (FAILED(hr)) ERR("Copying render target data to surface failed %#x\n", hr);
+        if (FAILED(hr))
+            ERR("Copying render target data to surface failed, hr %#lx.\n", hr);
     }
 
     device_state_restore(render->device, &render->previous_state);
@@ -344,13 +345,13 @@ static HRESULT WINAPI D3DXRenderToSurface_EndScene(ID3DXRenderToSurface *iface,
 
 static HRESULT WINAPI D3DXRenderToSurface_OnLostDevice(ID3DXRenderToSurface *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    FIXME("iface %p stub!\n", iface);
     return D3D_OK;
 }
 
 static HRESULT WINAPI D3DXRenderToSurface_OnResetDevice(ID3DXRenderToSurface *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    FIXME("iface %p stub!\n", iface);
     return D3D_OK;
 }
 
@@ -380,8 +381,8 @@ HRESULT WINAPI D3DXCreateRenderToSurface(IDirect3DDevice9 *device,
     HRESULT hr;
     struct render_to_surface *render;
 
-    TRACE("(%p, %u, %u, %#x, %d, %#x, %p)\n", device, width, height, format,
-            depth_stencil, depth_stencil_format, out);
+    TRACE("device %p, width %u, height %u, format %#x, depth_stencil %#x, depth_stencil_format %#x, out %p.\n",
+            device, width, height, format, depth_stencil, depth_stencil_format, out);
 
     if (!device || !out) return D3DERR_INVALIDCALL;
 
@@ -453,7 +454,8 @@ static void copy_render_target_to_cube_texture_face(IDirect3DCubeTexture9 *cube_
     IDirect3DCubeTexture9_GetCubeMapSurface(cube_texture, face, 0, &cube_surface);
 
     hr = D3DXLoadSurfaceFromSurface(cube_surface, NULL, NULL, render_target, NULL, NULL, filter, 0);
-    if (FAILED(hr)) ERR("Copying render target data to surface failed %#x\n", hr);
+    if (FAILED(hr))
+        ERR("Copying render target data to surface failed, hr %#lx.\n", hr);
 
     IDirect3DSurface9_Release(cube_surface);
 }
@@ -488,7 +490,7 @@ static ULONG WINAPI D3DXRenderToEnvMap_AddRef(ID3DXRenderToEnvMap *iface)
     struct render_to_envmap *render = impl_from_ID3DXRenderToEnvMap(iface);
     ULONG ref = InterlockedIncrement(&render->ref);
 
-    TRACE("%p increasing refcount to %u\n", iface, ref);
+    TRACE("%p increasing refcount to %lu.\n", iface, ref);
 
     return ref;
 }
@@ -498,7 +500,7 @@ static ULONG WINAPI D3DXRenderToEnvMap_Release(ID3DXRenderToEnvMap *iface)
     struct render_to_envmap *render = impl_from_ID3DXRenderToEnvMap(iface);
     ULONG ref = InterlockedDecrement(&render->ref);
 
-    TRACE("%p decreasing refcount to %u\n", iface, ref);
+    TRACE("%p decreasing refcount to %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -522,7 +524,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_GetDevice(ID3DXRenderToEnvMap *iface,
 {
     struct render_to_envmap *render = impl_from_ID3DXRenderToEnvMap(iface);
 
-    TRACE("(%p)->(%p)\n", iface, device);
+    TRACE("iface %p, device %p.\n", iface, device);
 
     if (!device) return D3DERR_INVALIDCALL;
 
@@ -536,7 +538,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_GetDesc(ID3DXRenderToEnvMap *iface,
 {
     struct render_to_envmap *render = impl_from_ID3DXRenderToEnvMap(iface);
 
-    TRACE("(%p)->(%p)\n", iface, desc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     if (!desc) return D3DERR_INVALIDCALL;
 
@@ -551,7 +553,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_BeginCube(ID3DXRenderToEnvMap *iface,
     HRESULT hr;
     D3DSURFACE_DESC level_desc;
 
-    TRACE("(%p)->(%p)\n", iface, texture);
+    TRACE("iface %p, texture %p.\n", iface, texture);
 
     if (!texture) return D3DERR_INVALIDCALL;
 
@@ -598,7 +600,7 @@ cleanup:
 static HRESULT WINAPI D3DXRenderToEnvMap_BeginSphere(ID3DXRenderToEnvMap *iface,
                                                      IDirect3DTexture9 *texture)
 {
-    FIXME("(%p)->(%p): stub\n", iface, texture);
+    FIXME("iface %p, texture %p stub!\n", iface, texture);
     return E_NOTIMPL;
 }
 
@@ -606,7 +608,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_BeginHemisphere(ID3DXRenderToEnvMap *if
                                                          IDirect3DTexture9 *pos_z_texture,
                                                          IDirect3DTexture9 *neg_z_texture)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, pos_z_texture, neg_z_texture);
+    FIXME("iface %p, pos_z_texture %p, neg_z_texture %p stub!\n", iface, pos_z_texture, neg_z_texture);
     return E_NOTIMPL;
 }
 
@@ -614,7 +616,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_BeginParabolic(ID3DXRenderToEnvMap *ifa
                                                         IDirect3DTexture9 *pos_z_texture,
                                                         IDirect3DTexture9 *neg_z_texture)
 {
-    FIXME("(%p)->(%p, %p): stub\n", iface, pos_z_texture, neg_z_texture);
+    FIXME("iface %p, pos_z_texture %p, neg_z_texture %p stub!\n", iface, pos_z_texture, neg_z_texture);
     return E_NOTIMPL;
 }
 
@@ -626,7 +628,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_Face(ID3DXRenderToEnvMap *iface,
     HRESULT hr;
     unsigned int i;
 
-    TRACE("(%p)->(%u, %#x)\n", iface, face, filter);
+    TRACE("iface %p, face %u, filter %#lx.\n", iface, face, filter);
 
     if (render->state == CUBE_FACE)
     {
@@ -676,7 +678,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_End(ID3DXRenderToEnvMap *iface,
 {
     struct render_to_envmap *render = impl_from_ID3DXRenderToEnvMap(iface);
 
-    TRACE("(%p)->(%#x)\n", iface, filter);
+    TRACE("iface %p, filter %#lx.\n", iface, filter);
 
     if (render->state == INITIAL) return D3DERR_INVALIDCALL;
 
@@ -713,13 +715,13 @@ static HRESULT WINAPI D3DXRenderToEnvMap_End(ID3DXRenderToEnvMap *iface,
 
 static HRESULT WINAPI D3DXRenderToEnvMap_OnLostDevice(ID3DXRenderToEnvMap *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    FIXME("iface %p stub!\n", iface);
     return D3D_OK;
 }
 
 static HRESULT WINAPI D3DXRenderToEnvMap_OnResetDevice(ID3DXRenderToEnvMap *iface)
 {
-    FIXME("(%p)->(): stub\n", iface);
+    FIXME("iface %p stub!\n", iface);
     return D3D_OK;
 }
 

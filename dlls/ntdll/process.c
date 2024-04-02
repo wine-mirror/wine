@@ -161,7 +161,7 @@ NTSTATUS WINAPI RtlWow64GetCpuAreaInfo( WOW64_CPURESERVED *cpu, ULONG reserved, 
 
     for (i = 0; i < ARRAY_SIZE(data); i++)
     {
-#define ALIGN(ptr,align) ((void *)(((ULONG_PTR)(ptr) + (align) - 1) & ~((align) - 1)))
+#define ALIGN(ptr,align) ((void *)(((ULONG_PTR)(ptr) + (align) - 1) & ~((ULONG_PTR)(align) - 1)))
         if (data[i].machine != cpu->Machine) continue;
         info->Context = ALIGN( cpu + 1, data[i].align );
         info->ContextEx = ALIGN( (char *)info->Context + data[i].size, sizeof(void *) );

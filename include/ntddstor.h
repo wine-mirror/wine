@@ -21,6 +21,8 @@
 #ifndef _NTDDSTOR_H_
 #define _NTDDSTOR_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -275,5 +277,7 @@ typedef struct _STORAGE_ADAPTER_DESCRIPTOR {
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _NTDDSTOR_H_ */

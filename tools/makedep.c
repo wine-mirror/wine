@@ -126,7 +126,9 @@ static struct strarray linguas;
 static struct strarray dll_flags;
 static struct strarray unix_dllflags;
 static struct strarray target_flags;
+static struct strarray widl_flags;
 static struct strarray msvcrt_flags;
+static struct strarray module_cflags;
 static struct strarray extra_cflags;
 static struct strarray extra_cross_cflags;
 static struct strarray extra_cflags_extlib;
@@ -170,6 +172,9 @@ struct makefile
     /* values determined from input makefile */
     struct strarray vars;
     struct strarray include_paths;
+#ifdef HAVE_ILOCAL
+    struct strarray local_include_paths;
+#endif
     struct strarray include_args;
     struct strarray define_args;
     struct strarray programs;
@@ -426,6 +431,27 @@ static void output_filenames( struct strarray array )
     unsigned int i;
 
     for (i = 0; i < array.count; i++) output_filename( array.str[i] );
+}
+
+
+/*******************************************************************
+ *         output_includes_defines
+ */
+static void output_includes_defines( struct strarray array, int replace_ilocal )
+{
+    unsigned int i;
+
+    for (i = 0; i < array.count; i++)
+    {
+#ifdef HAVE_ILOCAL
+        if (replace_ilocal && !strcmp( array.str[i], "-ilocal" ))
+            output_filename( "-I" );
+        else
+#else
+        (void)replace_ilocal;
+#endif
+            output_filename( array.str[i] );
+    }
 }
 
 
@@ -1435,6 +1461,30 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         pFile->is_external = 1;
         return file;
     }
+#ifdef HAVE_ILOCAL
+    for (i = 0; i < make->local_include_paths.count; i++)
+    {
+        const char *dir = make->local_include_paths.str[i];
+
+        if (root_src_dir)
+        {
+            len = strlen( root_src_dir );
+            if (!strncmp( dir, root_src_dir, len ) && (!dir[len] || dir[len] == '/'))
+            {
+                while (dir[len] == '/') len++;
+                file = open_global_file( make, concat_paths( dir + len, pFile->name ), &pFile->filename );
+            }
+        }
+        else
+        {
+            if (*dir == '/') continue;
+            file = open_include_path_file( make, dir, pFile->name, &pFile->filename );
+        }
+        if (!file) continue;
+        pFile->is_external = 1;
+        return file;
+    }
+#endif
 
     if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
@@ -2275,9 +2325,24 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
 
     strarray_addall( &ret, make->include_args );
     if (source->use_msvcrt)
+    {
+#ifdef HAVE_ILOCAL
+        strarray_add( &ret, "-ilocal" );
+        strarray_add( &ret, root_src_dir_path( "include/msvcrt" ));
+#else
         strarray_add( &ret, strmake( "-I%s", root_src_dir_path( "include/msvcrt" )));
+#endif
+    }
+
     for (i = 0; i < make->include_paths.count; i++)
         strarray_add( &ret, strmake( "-I%s", make->include_paths.str[i] ));
+#ifdef HAVE_ILOCAL
+    for (i = 0; i < make->local_include_paths.count; i++)
+    {
+        strarray_add( &ret, "-ilocal" );
+        strarray_add( &ret, root_src_dir_path( make->local_include_paths.str[i] ));
+    }
+#endif
     strarray_addall( &ret, make->define_args );
     strarray_addall( &ret, get_expanded_file_local_var( make, obj, "EXTRADEFS" ));
     if ((source->file->flags & FLAG_C_UNIX) && *dll_ext) strarray_add( &ret, "-DWINE_UNIX_LIB" );
@@ -2657,7 +2722,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (make->is_win16) output_filename( "-m16" );
     output_filename( "--nostdinc" );
     if (po_dir) output_filename( strmake( "--po-dir=%s", po_dir ));
-    output_filenames( defines );
+    output_includes_defines( defines, 1 );
     output_filename( source->filename );
     output( "\n" );
     if (po_dir)
@@ -2740,10 +2805,10 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
     output_filenames_obj_dir( make, targets );
     output( ": %s\n", tools_path( make, "widl" ));
     output( "\t%s%s -o $@", cmd_prefix( "WIDL" ), tools_path( make, "widl" ) );
-    output_filenames( target_flags );
+    output_filenames( widl_flags );
     output_filename( "--nostdinc" );
     output_filename( "-Ldlls/\\*" );
-    output_filenames( defines );
+    output_includes_defines( defines, 1 );
     output_filenames( get_expanded_make_var_array( make, "EXTRAIDLFLAGS" ));
     output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
     output_filename( source->filename );
@@ -3000,8 +3065,11 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         else
             strarray_add( &make->clean_files, strmake( "%s.o", obj ));
         output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
-        output( "\t%s$(CC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
-        output_filenames( defines );
+        output( "\t%s$(CC)", cmd_prefix( "CC" ) );
+        if ((make->module && !(source->file->flags & FLAG_C_UNIX)) || make->staticlib)
+            output_filenames( module_cflags );
+        output( " -c -o $@ %s", source->filename );
+        output_includes_defines( defines, 0 );
         output_filenames( make->extlib ? extra_cflags_extlib : extra_cflags );
         if (make->sharedlib || (source->file->flags & FLAG_C_UNIX))
         {
@@ -3028,7 +3096,7 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
             strarray_add( &make->clean_files, strmake( "%s.cross.o", obj ));
         output( "%s.cross.o: %s\n", obj_dir_path( make, obj ), source->filename );
         output( "\t%s$(CROSSCC) -c -o $@ %s", cmd_prefix( "CC" ), source->filename );
-        output_filenames( defines );
+        output_includes_defines( defines, 1 );
         output_filenames( make->extlib ? extra_cross_cflags_extlib : extra_cross_cflags );
         if (make->module && is_crt_module( make->module ))
             output_filename( "-fno-builtin" );
@@ -4143,6 +4211,9 @@ static void load_sources( struct makefile *make )
     }
 
     make->include_paths = empty_strarray;
+#ifdef HAVE_ILOCAL
+    make->local_include_paths = empty_strarray;
+#endif
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
     if (!make->extlib) strarray_add( &make->define_args, "-D__WINESRC__" );
@@ -4151,10 +4222,35 @@ static void load_sources( struct makefile *make )
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-I", 2 ))
             strarray_add_uniq( &make->include_paths, value.str[i] + 2 );
+#ifdef HAVE_ILOCAL
+        else if (!strcmp( value.str[i], "-ilocal" ))
+            strarray_add_uniq( &make->local_include_paths, value.str[++i] );
+#endif
         else if (!strncmp( value.str[i], "-D", 2 ) || !strncmp( value.str[i], "-U", 2 ))
             strarray_add_uniq( &make->define_args, value.str[i] );
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
 
+#ifdef HAVE_ILOCAL
+    strarray_add( &make->include_args, "-ilocal" );
+    strarray_add( &make->include_args, obj_dir_path( make, "" ));
+    if (make->src_dir)
+    {
+        strarray_add( &make->include_args, "-ilocal" );
+        strarray_add( &make->include_args, make->src_dir );
+    }
+    if (make->parent_dir)
+    {
+        strarray_add( &make->include_args, "-ilocal" );
+        strarray_add( &make->include_args, src_dir_path( make, make->parent_dir ));
+    }
+    strarray_add( &make->include_args, "-ilocal" );
+    strarray_add( &make->include_args, "include");
+    if (root_src_dir)
+    {
+        strarray_add( &make->include_args, "-ilocal" );
+        strarray_add( &make->include_args, root_src_dir_path( "include" ));
+    }
+#else
     strarray_add( &make->include_args, strmake( "-I%s", obj_dir_path( make, "" )));
     if (make->src_dir)
         strarray_add( &make->include_args, strmake( "-I%s", make->src_dir ));
@@ -4162,6 +4258,7 @@ static void load_sources( struct makefile *make )
         strarray_add( &make->include_args, strmake( "-I%s", src_dir_path( make, make->parent_dir )));
     strarray_add( &make->include_args, "-Iinclude" );
     if (root_src_dir) strarray_add( &make->include_args, strmake( "-I%s", root_src_dir_path( "include" )));
+#endif
 
     list_init( &make->sources );
     list_init( &make->includes );
@@ -4289,12 +4386,14 @@ int main( int argc, char *argv[] )
     top_makefile = parse_makefile( NULL );
 
     target_flags       = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
+    widl_flags         = get_expanded_make_var_array( top_makefile, "WIDLFLAGS" );
     msvcrt_flags       = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
     dll_flags          = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );
     extra_cflags       = get_expanded_make_var_array( top_makefile, "EXTRACFLAGS" );
     extra_cross_cflags = get_expanded_make_var_array( top_makefile, "EXTRACROSSCFLAGS" );
     unix_dllflags      = get_expanded_make_var_array( top_makefile, "UNIXDLLFLAGS" );
     cpp_flags          = get_expanded_make_var_array( top_makefile, "CPPFLAGS" );
+    module_cflags      = get_expanded_make_var_array( top_makefile, "MODULECFLAGS" );
     lddll_flags        = get_expanded_make_var_array( top_makefile, "LDDLLFLAGS" );
     libs               = get_expanded_make_var_array( top_makefile, "LIBS" );
     enable_tests       = get_expanded_make_var_array( top_makefile, "ENABLE_TESTS" );
@@ -4327,7 +4426,12 @@ int main( int argc, char *argv[] )
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
-    if (host_cpu && (host_cpu = normalize_arch( host_cpu )))
+    if (host_cpu && !strcmp( host_cpu, "x86_32on64" ))
+    {
+        so_dir = strmake( "$(dlldir)/%s-unix", host_cpu );
+        pe_dir = strmake( "$(dlldir)/%s-windows", "i386" );
+    }
+    else if (host_cpu && (host_cpu = normalize_arch( host_cpu )))
     {
         so_dir = strmake( "$(dlldir)/%s-unix", host_cpu );
         pe_dir = strmake( "$(dlldir)/%s-windows", host_cpu );

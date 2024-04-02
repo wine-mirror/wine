@@ -64,6 +64,13 @@ struct d3drm_texture
     IDirect3DRM *d3drm;
     D3DRMIMAGE *image;
     IDirectDrawSurface *surface;
+    LONG decal_x;
+    LONG decal_y;
+    DWORD max_colors;
+    DWORD max_shades;
+    BOOL transparency;
+    D3DVALUE decal_width;
+    D3DVALUE decal_height;
 };
 
 struct d3drm_frame
@@ -165,6 +172,7 @@ struct d3drm_mesh_builder
     DWORD nb_materials;
     struct mesh_material *materials;
     DWORD *material_indices;
+    D3DRMRENDERQUALITY quality;
 };
 
 struct mesh_group

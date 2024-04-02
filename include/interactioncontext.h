@@ -19,6 +19,8 @@
 #ifndef INTERACTION_CONTEXT_H
 #define INTERACTION_CONTEXT_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 
 #ifdef __cplusplus
@@ -191,5 +193,7 @@ HRESULT WINAPI SetPropertyInteractionContext(HINTERACTIONCONTEXT context,
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif

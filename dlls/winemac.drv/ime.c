@@ -1393,7 +1393,7 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOpti
 void macdrv_im_set_text(const macdrv_event *event)
 {
     HWND hwnd = macdrv_get_window_hwnd(event->window);
-    void *himc = event->im_set_text.data;
+    void * WIN32PTR himc = event->im_set_text.data;
 
     TRACE("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, himc,
           debugstr_cf(event->im_set_text.text), event->im_set_text.complete);
@@ -1403,15 +1403,10 @@ void macdrv_im_set_text(const macdrv_event *event)
     if (event->im_set_text.text)
     {
         CFIndex length = CFStringGetLength(event->im_set_text.text);
-        const UniChar *chars = CFStringGetCharactersPtr(event->im_set_text.text);
-        UniChar *buffer = NULL;
+        UniChar * WIN32PTR chars;
 
-        if (!chars)
-        {
-            buffer = HeapAlloc(GetProcessHeap(), 0, length * sizeof(*buffer));
-            CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), buffer);
-            chars = buffer;
-        }
+        chars = HeapAlloc(GetProcessHeap(), 0, length * sizeof(*chars));
+        CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), chars);
 
         if (himc)
             IME_SetCompositionString(himc, SCS_SETSTR, chars, length * sizeof(*chars),
@@ -1437,7 +1432,7 @@ void macdrv_im_set_text(const macdrv_event *event)
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, buffer);
+        HeapFree(GetProcessHeap(), 0, chars);
     }
 
     if (event->im_set_text.complete)
@@ -1460,7 +1455,7 @@ void macdrv_sent_text_input(const macdrv_event *event)
 BOOL query_ime_char_rect(macdrv_query* query)
 {
     HWND hwnd = macdrv_get_window_hwnd(query->window);
-    void *himc = query->ime_char_rect.data;
+    void * WIN32PTR himc = query->ime_char_rect.data;
     CFRange* range = &query->ime_char_rect.range;
     CGRect* rect = &query->ime_char_rect.rect;
     IMECHARPOSITION charpos;

@@ -96,6 +96,7 @@
 #include "handle.h"
 #include "process.h"
 #include "request.h"
+#include "esync.h"
 
 #include "winternl.h"
 #include "winioctl.h"
@@ -193,6 +194,7 @@ struct fd
     struct completion   *completion;  /* completion object attached to this fd */
     apc_param_t          comp_key;    /* completion key to set in completion events */
     unsigned int         comp_flags;  /* completion flags */
+    struct esync_fd     *esync_fd;    /* esync file descriptor */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -206,6 +208,7 @@ static const struct object_ops fd_ops =
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
+    NULL,                     /* get_esync_fd */
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
@@ -247,6 +250,7 @@ static const struct object_ops device_ops =
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
+    NULL,                     /* get_esync_fd */
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
@@ -287,6 +291,7 @@ static const struct object_ops inode_ops =
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
+    NULL,                     /* get_esync_fd */
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
@@ -329,6 +334,7 @@ static const struct object_ops file_lock_ops =
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     file_lock_signaled,         /* signaled */
+    NULL,                       /* get_esync_fd */
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
@@ -1587,6 +1593,9 @@ static void fd_destroy( struct object *obj )
         if (fd->unix_fd != -1) close( fd->unix_fd );
         free( fd->unix_name );
     }
+
+    if (do_esync())
+        esync_close_fd( fd->esync_fd );
 }
 
 /* check if the desired access is possible without violating */
@@ -1703,11 +1712,15 @@ static struct fd *alloc_fd_object(void)
     fd->poll_index = -1;
     fd->completion = NULL;
     fd->comp_flags = 0;
+    fd->esync_fd   = NULL;
     init_async_queue( &fd->read_q );
     init_async_queue( &fd->write_q );
     init_async_queue( &fd->wait_q );
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
+
+    if (do_esync())
+        fd->esync_fd = esync_create_fd( 1, 0 );
 
     if ((fd->poll_index = add_poll_user( fd )) == -1)
     {
@@ -1742,11 +1755,15 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->completion = NULL;
     fd->comp_flags = 0;
     fd->no_fd_status = STATUS_BAD_DEVICE_TYPE;
+    fd->esync_fd   = NULL;
     init_async_queue( &fd->read_q );
     init_async_queue( &fd->write_q );
     init_async_queue( &fd->wait_q );
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
+
+    if (do_esync())
+        fd->esync_fd = esync_create_fd( 0, 0 );
     return fd;
 }
 
@@ -2139,6 +2156,9 @@ void set_fd_signaled( struct fd *fd, int signaled )
     if (fd->comp_flags & FILE_SKIP_SET_EVENT_ON_HANDLE) return;
     fd->signaled = signaled;
     if (signaled) wake_up( fd->user, 0 );
+
+    if (do_esync() && !signaled)
+        esync_clear( fd->esync_fd );
 }
 
 /* check if events are pending and if yes return which one(s) */
@@ -2160,6 +2180,15 @@ int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct fd *fd = get_obj_fd( obj );
     int ret = fd->signaled;
+    release_object( fd );
+    return ret;
+}
+
+struct esync_fd *default_fd_get_esync_fd( struct object *obj, enum esync_type *type )
+{
+    struct fd *fd = get_obj_fd( obj );
+    struct esync_fd *ret = fd->esync_fd;
+    *type = ESYNC_MANUAL_SERVER;
     release_object( fd );
     return ret;
 }

@@ -21,6 +21,8 @@
 #ifndef __WINE_NTSTATUS_H
 #define __WINE_NTSTATUS_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef WIN32_NO_STATUS
 
 /*
@@ -1714,5 +1716,7 @@
 #define DBG_EXCEPTION_NOT_HANDLED   ((NTSTATUS) 0x80010001)
 
 #endif /* WIN32_NO_STATUS */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_NTSTATUS_H */

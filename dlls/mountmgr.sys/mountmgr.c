@@ -436,11 +436,10 @@ static void WINAPI query_symbol_file_callback( TP_CALLBACK_INSTANCE *instance, v
     IoCompleteRequest( irp, IO_NO_INCREMENT );
 }
 
-/* NT APC called from Unix side to add/remove devices */
-static void CALLBACK device_op( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+static void device_op( void )
 {
     struct device_info info;
-    struct dequeue_device_op_params params = { arg1, &info };
+    struct dequeue_device_op_params params = { &info };
 
     if (MOUNTMGR_CALL( dequeue_device_op, &params )) return;
 
@@ -603,13 +602,13 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
 static DWORD WINAPI device_op_thread( void *arg )
 {
-    for (;;) SleepEx( INFINITE, TRUE );  /* wait for APCs */
+    for (;;) device_op();
     return 0;
 }
 
 static DWORD WINAPI run_loop_thread( void *arg )
 {
-    return MOUNTMGR_CALL( run_loop, arg );
+    return MOUNTMGR_CALL( run_loop, NULL );
 }
 
 
@@ -624,7 +623,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     DEVICE_OBJECT *device;
     HKEY devicemap_key;
     NTSTATUS status;
-    struct run_loop_params params;
+    HANDLE thread;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
 
@@ -655,9 +654,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     RtlInitUnicodeString( &nameW, L"\\Driver\\Harddisk" );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );
 
-    params.op_thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
-    params.op_apc = device_op;
-    CloseHandle( CreateThread( NULL, 0, run_loop_thread, &params, 0, NULL ));
+    thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
+    CloseHandle( CreateThread( NULL, 0, run_loop_thread, thread, 0, NULL ));
 
 #ifdef _WIN64
     /* create a symlink so that the Wine port overrides key can be edited with 32-bit reg or regedit */

@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <string.h>
 
@@ -32,6 +28,13 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
+
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 /* GDI logical brush object */
 typedef struct
@@ -141,7 +144,7 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
 void free_brush_pattern( struct brush_pattern *pattern )
 {
     if (pattern->bits.free) pattern->bits.free( &pattern->bits );
-    free( pattern->info );
+    heapfree( pattern->info );
 }
 
 /**********************************************************************
@@ -208,7 +211,7 @@ HBRUSH create_brush( const LOGBRUSH *brush )
     }
 
     free_brush_pattern( &ptr->pattern );
-    free( ptr );
+    heapfree( ptr );
     return 0;
 }
 
@@ -338,7 +341,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 
     if (!brush) return FALSE;
     free_brush_pattern( &brush->pattern );
-    free( brush );
+    heapfree( brush );
     return TRUE;
 }
 

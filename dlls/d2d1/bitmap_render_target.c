@@ -68,7 +68,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_render_target_Release(ID2D1BitmapRende
         IUnknown_Release(render_target->dxgi_inner);
         if (render_target->bitmap)
             ID2D1Bitmap_Release(render_target->bitmap);
-        heap_free(render_target);
+        free(render_target);
     }
 
     return refcount;

@@ -22,6 +22,8 @@
 #ifndef __WINE_WINSPOOL_H
 #define __WINE_WINSPOOL_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1773,5 +1775,7 @@ HANDLE WINAPI GetSpoolFileHandle(HANDLE printer);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_WINSPOOL_H */

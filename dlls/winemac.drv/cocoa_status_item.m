@@ -19,6 +19,9 @@
  */
 
 #import <Cocoa/Cocoa.h>
+
+#include "wine/hostaddrspace_enter.h"
+
 #include "macdrv_cocoa.h"
 #import "cocoa_app.h"
 #import "cocoa_event.h"

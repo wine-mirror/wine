@@ -554,6 +554,7 @@ struct ldap_unbind_ext_s_params
 
 enum unix_ldap_funcs
 {
+    unix_process_attach,
     unix_ber_alloc_t,
     unix_ber_bvecfree,
     unix_ber_bvfree,

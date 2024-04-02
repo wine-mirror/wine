@@ -20,6 +20,8 @@
 #ifndef __WINE_D3D10SHADER_H
 #define __WINE_D3D10SHADER_H
 
+#include "wine/winheader_enter.h"
+
 #include "d3d10.h"
 
 #define D3D10_SHADER_DEBUG                          0x0001
@@ -229,5 +231,7 @@ HRESULT WINAPI D3D10GetShaderDebugInfo(const void *data, SIZE_T data_size, ID3D1
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3D10SHADER_H */

@@ -21,6 +21,8 @@
 #ifndef _INC_CPL
 #define _INC_CPL
 
+#include "wine/winheader_enter.h"
+
 #include <pshpack1.h>
 
 #ifdef __cplusplus
@@ -85,5 +87,7 @@ DECL_WINELIB_TYPE_AW(LPNEWCPLINFO)
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* _INC_CPL */

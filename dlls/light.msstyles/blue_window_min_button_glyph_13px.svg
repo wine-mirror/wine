@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:13-32" width="13" height="104" version="1.1" viewBox="0 0 3.4395 27.517" xmlns="http://www.w3.org/2000/svg">
+ <g transform="matrix(.8182 0 0 1 .3127 0)" stroke-width="1.2222">
+  <rect transform="scale(-1,1)" x="-3.1749" y="2.6458" width="2.9104" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="12.965" width="2.9104" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="6.0855" width="2.9104" height=".26459" fill="#3096fa"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="9.5251" width="2.9104" height=".26459" fill="#2979ff"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="16.404" width="2.9104" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="26.723" width="2.9104" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="19.844" width="2.9104" height=".26459" fill="#3096fa"/>
+  <rect transform="scale(-1,1)" x="-3.1749" y="23.283" width="2.9104" height=".26459" fill="#2979ff"/>
+ </g>
+</svg>

@@ -230,6 +230,10 @@ struct smbios_chassis_args
 #define RSMB 0x52534D42
 
 SYSTEM_CPU_INFORMATION cpu_info = { 0 };
+static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
+static unsigned int logical_proc_info_len, logical_proc_info_alloc_len;
+static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *logical_proc_info_ex;
+static unsigned int logical_proc_info_ex_size, logical_proc_info_ex_alloc_size;
 
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
@@ -536,74 +540,44 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
 #endif /* End architecture specific feature detection for CPUs */
 
-/******************************************************************
- *		init_cpu_info
- *
- * inits a couple of places with CPU related information:
- * - cpu_info in this file
- * - Peb->NumberOfProcessors
- * - SharedUserData->ProcessFeatures[] array
- */
-void init_cpu_info(void)
-{
-    long num;
-
-#ifdef _SC_NPROCESSORS_ONLN
-    num = sysconf(_SC_NPROCESSORS_ONLN);
-    if (num < 1)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
-#elif defined(CTL_HW) && defined(HW_NCPU)
-    int mib[2];
-    size_t len = sizeof(num);
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
-#else
-    num = 1;
-    FIXME("Detecting the number of processors is not supported.\n");
-#endif
-    peb->NumberOfProcessors = num;
-    get_cpuinfo( &cpu_info );
-    TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
-           cpu_info.ProcessorFeatureBits );
-}
-
-static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata, DWORD *max_len )
+static BOOL grow_logical_proc_buf(void)
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
+    unsigned int new_len;
 
-    *max_len *= 2;
-    if (!(new_data = realloc( *pdata, *max_len*sizeof(*new_data) ))) return FALSE;
-    *pdata = new_data;
+    if (logical_proc_info_len < logical_proc_info_alloc_len) return TRUE;
+
+    new_len = max( logical_proc_info_alloc_len * 2, logical_proc_info_len + 1 );
+    if (!(new_data = realloc( logical_proc_info, new_len * sizeof(*new_data) ))) return FALSE;
+    memset( new_data + logical_proc_info_alloc_len, 0,
+            (new_len - logical_proc_info_alloc_len) * sizeof(*new_data) );
+    logical_proc_info = new_data;
+    logical_proc_info_alloc_len = new_len;
     return TRUE;
 }
 
-static BOOL grow_logical_proc_ex_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *max_len )
+static BOOL grow_logical_proc_ex_buf( unsigned int add_size )
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *new_dataex;
-    DWORD new_len = *max_len * 2;
-    if (!(new_dataex = realloc( *pdataex, new_len * sizeof(*new_dataex) ))) return FALSE;
-    memset( new_dataex + *max_len, 0, (new_len - *max_len) * sizeof(*new_dataex) );
-    *pdataex = new_dataex;
-    *max_len = new_len;
+    DWORD new_len;
+
+    if ( logical_proc_info_ex_size + add_size <= logical_proc_info_ex_alloc_size ) return TRUE;
+
+    new_len  = max( logical_proc_info_ex_alloc_size * 2, logical_proc_info_ex_alloc_size + add_size );
+    if (!(new_dataex = realloc( logical_proc_info_ex, new_len ))) return FALSE;
+    memset( (char *)new_dataex + logical_proc_info_ex_alloc_size, 0, new_len - logical_proc_info_ex_alloc_size );
+    logical_proc_info_ex = new_dataex;
+    logical_proc_info_ex_alloc_size = new_len;
     return TRUE;
 }
 
-static DWORD log_proc_ex_size_plus(DWORD size)
+static DWORD log_proc_ex_size_plus( DWORD size )
 {
     /* add SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX.Relationship and .Size */
     return sizeof(LOGICAL_PROCESSOR_RELATIONSHIP) + sizeof(DWORD) + size;
 }
 
-static DWORD count_bits(ULONG_PTR mask)
+static DWORD count_bits( ULONG_PTR mask )
 {
     DWORD count = 0;
     while (mask > 0)
@@ -620,205 +594,164 @@ static DWORD count_bits(ULONG_PTR mask)
  * - RelationProcessorPackage: package id ('CPU socket').
  * - RelationProcessorCore: physical core number.
  */
-static BOOL logical_proc_info_add_by_id( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
-                                         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *len,
-                                         DWORD *pmax_len, LOGICAL_PROCESSOR_RELATIONSHIP rel,
-                                         DWORD id, ULONG_PTR mask )
+static BOOL logical_proc_info_add_by_id( LOGICAL_PROCESSOR_RELATIONSHIP rel, DWORD id, ULONG_PTR mask )
 {
-    if (pdata)
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+    unsigned int ofs = 0, i;
+
+    for (i = 0; i < logical_proc_info_len; i++)
     {
-        DWORD i;
-
-        for (i = 0; i < *len; i++)
+        if (rel == RelationProcessorPackage && logical_proc_info[i].Relationship == rel
+            && logical_proc_info[i].u.Reserved[1] == id)
         {
-            if (rel == RelationProcessorPackage && (*pdata)[i].Relationship == rel && (*pdata)[i].u.Reserved[1] == id)
-            {
-                (*pdata)[i].ProcessorMask |= mask;
-                return TRUE;
-            }
-            else if (rel == RelationProcessorCore && (*pdata)[i].Relationship == rel && (*pdata)[i].u.Reserved[1] == id)
-                return TRUE;
+            logical_proc_info[i].ProcessorMask |= mask;
+            return TRUE;
         }
-
-        while (*len == *pmax_len)
-        {
-            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
-        }
-
-        (*pdata)[i].Relationship = rel;
-        (*pdata)[i].ProcessorMask = mask;
-        if (rel == RelationProcessorCore)
-            (*pdata)[i].u.ProcessorCore.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
-        (*pdata)[i].u.Reserved[0] = 0;
-        (*pdata)[i].u.Reserved[1] = id;
-        *len = i+1;
+        else if (rel == RelationProcessorCore && logical_proc_info[i].Relationship == rel
+                 && logical_proc_info[i].u.Reserved[1] == id)
+            return TRUE;
     }
+
+    if (!grow_logical_proc_buf()) return FALSE;
+
+    logical_proc_info[i].Relationship = rel;
+    logical_proc_info[i].ProcessorMask = mask;
+    if (rel == RelationProcessorCore)
+        logical_proc_info[i].u.ProcessorCore.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
+    logical_proc_info[i].u.Reserved[0] = 0;
+    logical_proc_info[i].u.Reserved[1] = id;
+    logical_proc_info_len = i + 1;
+
+    while (ofs < logical_proc_info_ex_size)
+    {
+        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
+        if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        {
+            dataex->u.Processor.GroupMask[0].Mask |= mask;
+            return TRUE;
+        }
+        else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        {
+            return TRUE;
+        }
+        ofs += dataex->Size;
+    }
+
+    /* TODO: For now, just one group. If more than 64 processors, then we
+     * need another group. */
+    if (!grow_logical_proc_ex_buf( log_proc_ex_size_plus( sizeof(PROCESSOR_RELATIONSHIP) ))) return FALSE;
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
+
+    dataex->Relationship = rel;
+    dataex->Size = log_proc_ex_size_plus( sizeof(PROCESSOR_RELATIONSHIP) );
+    if (rel == RelationProcessorCore)
+        dataex->u.Processor.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
     else
-    {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-        DWORD ofs = 0;
+        dataex->u.Processor.Flags = 0;
+    dataex->u.Processor.EfficiencyClass = 0;
+    dataex->u.Processor.GroupCount = 1;
+    dataex->u.Processor.GroupMask[0].Mask = mask;
+    dataex->u.Processor.GroupMask[0].Group = 0;
+    /* mark for future lookup */
+    dataex->u.Processor.Reserved[0] = 0;
+    dataex->u.Processor.Reserved[1] = id;
 
-        while (ofs < *len)
-        {
-            dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-            if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
-            {
-                dataex->u.Processor.GroupMask[0].Mask |= mask;
-                return TRUE;
-            }
-            else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
-            {
-                return TRUE;
-            }
-            ofs += dataex->Size;
-        }
-
-        /* TODO: For now, just one group. If more than 64 processors, then we
-         * need another group. */
-
-        while (ofs + log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
-        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-
-        dataex->Relationship = rel;
-        dataex->Size = log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP));
-        if (rel == RelationProcessorCore)
-            dataex->u.Processor.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
-        else
-            dataex->u.Processor.Flags = 0;
-        dataex->u.Processor.EfficiencyClass = 0;
-        dataex->u.Processor.GroupCount = 1;
-        dataex->u.Processor.GroupMask[0].Mask = mask;
-        dataex->u.Processor.GroupMask[0].Group = 0;
-        /* mark for future lookup */
-        dataex->u.Processor.Reserved[0] = 0;
-        dataex->u.Processor.Reserved[1] = id;
-
-        *len += dataex->Size;
-    }
+    logical_proc_info_ex_size += dataex->Size;
 
     return TRUE;
 }
 
-static BOOL logical_proc_info_add_cache( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
-                                         SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *len,
-                                         DWORD *pmax_len, ULONG_PTR mask, CACHE_DESCRIPTOR *cache )
+static BOOL logical_proc_info_add_cache( ULONG_PTR mask, CACHE_DESCRIPTOR *cache )
 {
-    if (pdata)
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+    unsigned int ofs = 0, i;
+
+    for (i = 0; i < logical_proc_info_len; i++)
     {
-        DWORD i;
-
-        for (i = 0; i < *len; i++)
-        {
-            if ((*pdata)[i].Relationship==RelationCache && (*pdata)[i].ProcessorMask==mask
-                    && (*pdata)[i].u.Cache.Level==cache->Level && (*pdata)[i].u.Cache.Type==cache->Type)
-                return TRUE;
-        }
-
-        while (*len == *pmax_len)
-            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
-
-        (*pdata)[i].Relationship = RelationCache;
-        (*pdata)[i].ProcessorMask = mask;
-        (*pdata)[i].u.Cache = *cache;
-        *len = i+1;
+        if (logical_proc_info[i].Relationship==RelationCache && logical_proc_info[i].ProcessorMask==mask
+            && logical_proc_info[i].u.Cache.Level==cache->Level && logical_proc_info[i].u.Cache.Type==cache->Type)
+            return TRUE;
     }
-    else
+
+    if (!grow_logical_proc_buf()) return FALSE;
+
+    logical_proc_info[i].Relationship = RelationCache;
+    logical_proc_info[i].ProcessorMask = mask;
+    logical_proc_info[i].u.Cache = *cache;
+    logical_proc_info_len = i + 1;
+
+    for (ofs = 0; ofs < logical_proc_info_ex_size; )
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-        DWORD ofs;
-
-        for (ofs = 0; ofs < *len; )
-        {
-            dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-            if (dataex->Relationship == RelationCache && dataex->u.Cache.GroupMask.Mask == mask &&
-                    dataex->u.Cache.Level == cache->Level && dataex->u.Cache.Type == cache->Type)
-                return TRUE;
-            ofs += dataex->Size;
-        }
-
-        while (ofs + log_proc_ex_size_plus(sizeof(CACHE_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
-        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-
-        dataex->Relationship = RelationCache;
-        dataex->Size = log_proc_ex_size_plus(sizeof(CACHE_RELATIONSHIP));
-        dataex->u.Cache.Level = cache->Level;
-        dataex->u.Cache.Associativity = cache->Associativity;
-        dataex->u.Cache.LineSize = cache->LineSize;
-        dataex->u.Cache.CacheSize = cache->Size;
-        dataex->u.Cache.Type = cache->Type;
-        dataex->u.Cache.GroupMask.Mask = mask;
-        dataex->u.Cache.GroupMask.Group = 0;
-
-        *len += dataex->Size;
+        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
+        if (dataex->Relationship == RelationCache && dataex->u.Cache.GroupMask.Mask == mask
+            && dataex->u.Cache.Level == cache->Level && dataex->u.Cache.Type == cache->Type)
+            return TRUE;
+        ofs += dataex->Size;
     }
+
+    if (!grow_logical_proc_ex_buf( log_proc_ex_size_plus( sizeof(CACHE_RELATIONSHIP) ))) return FALSE;
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + ofs);
+
+    dataex->Relationship = RelationCache;
+    dataex->Size = log_proc_ex_size_plus( sizeof(CACHE_RELATIONSHIP) );
+    dataex->u.Cache.Level = cache->Level;
+    dataex->u.Cache.Associativity = cache->Associativity;
+    dataex->u.Cache.LineSize = cache->LineSize;
+    dataex->u.Cache.CacheSize = cache->Size;
+    dataex->u.Cache.Type = cache->Type;
+    dataex->u.Cache.GroupMask.Mask = mask;
+    dataex->u.Cache.GroupMask.Group = 0;
+
+    logical_proc_info_ex_size += dataex->Size;
 
     return TRUE;
 }
 
-static BOOL logical_proc_info_add_numa_node( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata,
-                                             SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *len,
-                                             DWORD *pmax_len, ULONG_PTR mask, DWORD node_id )
-{
-    if (pdata)
-    {
-        while (*len == *pmax_len)
-            if (!grow_logical_proc_buf(pdata, pmax_len)) return FALSE;
-
-        (*pdata)[*len].Relationship = RelationNumaNode;
-        (*pdata)[*len].ProcessorMask = mask;
-        (*pdata)[*len].u.NumaNode.NodeNumber = node_id;
-        (*len)++;
-    }
-    else
-    {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-
-        while (*len + log_proc_ex_size_plus(sizeof(NUMA_NODE_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
-        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
-
-        dataex->Relationship = RelationNumaNode;
-        dataex->Size = log_proc_ex_size_plus(sizeof(NUMA_NODE_RELATIONSHIP));
-        dataex->u.NumaNode.NodeNumber = node_id;
-        dataex->u.NumaNode.GroupMask.Mask = mask;
-        dataex->u.NumaNode.GroupMask.Group = 0;
-
-        *len += dataex->Size;
-    }
-
-    return TRUE;
-}
-
-static BOOL logical_proc_info_add_group( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex,
-                                         DWORD *len, DWORD *pmax_len, DWORD num_cpus, ULONG_PTR mask )
+static BOOL logical_proc_info_add_numa_node( ULONG_PTR mask, DWORD node_id )
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
 
-    while (*len + log_proc_ex_size_plus(sizeof(GROUP_RELATIONSHIP)) > *pmax_len)
-        if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
+    if (!grow_logical_proc_buf()) return FALSE;
 
-    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
+    logical_proc_info[logical_proc_info_len].Relationship = RelationNumaNode;
+    logical_proc_info[logical_proc_info_len].ProcessorMask = mask;
+    logical_proc_info[logical_proc_info_len].u.NumaNode.NodeNumber = node_id;
+    ++logical_proc_info_len;
+
+    if (!grow_logical_proc_ex_buf( log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) ))) return FALSE;
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)logical_proc_info_ex + logical_proc_info_ex_size);
+
+    dataex->Relationship = RelationNumaNode;
+    dataex->Size = log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) );
+    dataex->u.NumaNode.NodeNumber = node_id;
+    dataex->u.NumaNode.GroupMask.Mask = mask;
+    dataex->u.NumaNode.GroupMask.Group = 0;
+
+    logical_proc_info_ex_size += dataex->Size;
+
+    return TRUE;
+}
+
+static BOOL logical_proc_info_add_group( DWORD num_cpus, ULONG_PTR mask )
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+
+    if (!grow_logical_proc_ex_buf( log_proc_ex_size_plus( sizeof(GROUP_RELATIONSHIP) ))) return FALSE;
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)logical_proc_info_ex) + logical_proc_info_ex_size);
 
     dataex->Relationship = RelationGroup;
-    dataex->Size = log_proc_ex_size_plus(sizeof(GROUP_RELATIONSHIP));
+    dataex->Size = log_proc_ex_size_plus( sizeof(GROUP_RELATIONSHIP) );
     dataex->u.Group.MaximumGroupCount = 1;
     dataex->u.Group.ActiveGroupCount = 1;
     dataex->u.Group.GroupInfo[0].MaximumProcessorCount = num_cpus;
     dataex->u.Group.GroupInfo[0].ActiveProcessorCount = num_cpus;
     dataex->u.Group.GroupInfo[0].ActiveProcessorMask = mask;
 
-    *len += dataex->Size;
+    logical_proc_info_ex_size += dataex->Size;
     return TRUE;
 }
 
@@ -885,16 +818,14 @@ static BOOL sysfs_count_list_elements(const char *filename, DWORD *result)
 }
 
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
-static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-                                          SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex,
-                                          DWORD *max_len, DWORD relation )
+static NTSTATUS create_logical_proc_info(void)
 {
     static const char core_info[] = "/sys/devices/system/cpu/cpu%u/topology/%s";
     static const char cache_info[] = "/sys/devices/system/cpu/cpu%u/cache/index%u/%s";
     static const char numa_info[] = "/sys/devices/system/node/node%u/cpumap";
 
     FILE *fcpu_list, *fnuma_list, *f;
-    DWORD len = 0, beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
+    DWORD beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
     char op, name[MAX_PATH];
     ULONG_PTR all_cpus_mask = 0;
 
@@ -926,27 +857,24 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
             DWORD phys_core = 0;
             ULONG_PTR thread_mask = 0;
 
-            if (i > 8*sizeof(ULONG_PTR))
+            if (i > 8 * sizeof(ULONG_PTR))
             {
                 FIXME("skipping logical processor %d\n", i);
                 continue;
             }
 
-            if (relation == RelationAll || relation == RelationProcessorPackage)
+            sprintf(name, core_info, i, "physical_package_id");
+            f = fopen(name, "r");
+            if (f)
             {
-                sprintf(name, core_info, i, "physical_package_id");
-                f = fopen(name, "r");
-                if (f)
-                {
-                    fscanf(f, "%u", &r);
-                    fclose(f);
-                }
-                else r = 0;
-                if (!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorPackage, r, (ULONG_PTR)1 << i))
-                {
-                    fclose(fcpu_list);
-                    return STATUS_NO_MEMORY;
-                }
+                fscanf(f, "%u", &r);
+                fclose(f);
+            }
+            else r = 0;
+            if (!logical_proc_info_add_by_id( RelationProcessorPackage, r, (ULONG_PTR)1 << i ))
+            {
+                fclose(fcpu_list);
+                return STATUS_NO_MEMORY;
             }
 
             /* Sysfs enumerates logical cores (and not physical cores), but Windows enumerates
@@ -959,92 +887,83 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
              * on kernel cpu core numbering as opposed to a hardware core ID like provided through
              * 'core_id', so are suitable as a unique ID.
              */
-            if(relation == RelationAll || relation == RelationProcessorCore ||
-               relation == RelationNumaNode || relation == RelationGroup)
+
+            /* Mask of logical threads sharing same physical core in kernel core numbering. */
+            sprintf(name, core_info, i, "thread_siblings");
+            if(!sysfs_parse_bitmap(name, &thread_mask)) thread_mask = 1<<i;
+
+            /* Needed later for NumaNode and Group. */
+            all_cpus_mask |= thread_mask;
+
+            sprintf(name, core_info, i, "thread_siblings_list");
+            f = fopen(name, "r");
+            if (f)
             {
-                /* Mask of logical threads sharing same physical core in kernel core numbering. */
-                sprintf(name, core_info, i, "thread_siblings");
-                if(!sysfs_parse_bitmap(name, &thread_mask)) thread_mask = 1<<i;
+                fscanf(f, "%d%c", &phys_core, &op);
+                fclose(f);
+            }
+            else phys_core = i;
 
-                /* Needed later for NumaNode and Group. */
-                all_cpus_mask |= thread_mask;
-
-                if (relation == RelationAll || relation == RelationProcessorCore)
-                {
-                    sprintf(name, core_info, i, "thread_siblings_list");
-                    f = fopen(name, "r");
-                    if (f)
-                    {
-                        fscanf(f, "%d%c", &phys_core, &op);
-                        fclose(f);
-                    }
-                    else phys_core = i;
-
-                    if (!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorCore, phys_core, thread_mask))
-                    {
-                        fclose(fcpu_list);
-                        return STATUS_NO_MEMORY;
-                    }
-                }
+            if (!logical_proc_info_add_by_id( RelationProcessorCore, phys_core, thread_mask ))
+            {
+                fclose(fcpu_list);
+                return STATUS_NO_MEMORY;
             }
 
-            if (relation == RelationAll || relation == RelationCache)
+            for (j = 0; j < 4; j++)
             {
-                for(j = 0; j < 4; j++)
+                CACHE_DESCRIPTOR cache;
+                ULONG_PTR mask = 0;
+
+                sprintf(name, cache_info, i, j, "shared_cpu_map");
+                if(!sysfs_parse_bitmap(name, &mask)) continue;
+
+                sprintf(name, cache_info, i, j, "level");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.Level = r;
+
+                sprintf(name, cache_info, i, j, "ways_of_associativity");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.Associativity = r;
+
+                sprintf(name, cache_info, i, j, "coherency_line_size");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u", &r);
+                fclose(f);
+                cache.LineSize = r;
+
+                sprintf(name, cache_info, i, j, "size");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%u%c", &r, &op);
+                fclose(f);
+                if(op != 'K')
+                    WARN("unknown cache size %u%c\n", r, op);
+                cache.Size = (op=='K' ? r*1024 : r);
+
+                sprintf(name, cache_info, i, j, "type");
+                f = fopen(name, "r");
+                if(!f) continue;
+                fscanf(f, "%s", name);
+                fclose(f);
+                if (!memcmp(name, "Data", 5))
+                    cache.Type = CacheData;
+                else if(!memcmp(name, "Instruction", 11))
+                    cache.Type = CacheInstruction;
+                else
+                    cache.Type = CacheUnified;
+
+                if (!logical_proc_info_add_cache( mask, &cache ))
                 {
-                    CACHE_DESCRIPTOR cache;
-                    ULONG_PTR mask = 0;
-
-                    sprintf(name, cache_info, i, j, "shared_cpu_map");
-                    if(!sysfs_parse_bitmap(name, &mask)) continue;
-
-                    sprintf(name, cache_info, i, j, "level");
-                    f = fopen(name, "r");
-                    if(!f) continue;
-                    fscanf(f, "%u", &r);
-                    fclose(f);
-                    cache.Level = r;
-
-                    sprintf(name, cache_info, i, j, "ways_of_associativity");
-                    f = fopen(name, "r");
-                    if(!f) continue;
-                    fscanf(f, "%u", &r);
-                    fclose(f);
-                    cache.Associativity = r;
-
-                    sprintf(name, cache_info, i, j, "coherency_line_size");
-                    f = fopen(name, "r");
-                    if(!f) continue;
-                    fscanf(f, "%u", &r);
-                    fclose(f);
-                    cache.LineSize = r;
-
-                    sprintf(name, cache_info, i, j, "size");
-                    f = fopen(name, "r");
-                    if(!f) continue;
-                    fscanf(f, "%u%c", &r, &op);
-                    fclose(f);
-                    if(op != 'K')
-                        WARN("unknown cache size %u%c\n", r, op);
-                    cache.Size = (op=='K' ? r*1024 : r);
-
-                    sprintf(name, cache_info, i, j, "type");
-                    f = fopen(name, "r");
-                    if(!f) continue;
-                    fscanf(f, "%s", name);
-                    fclose(f);
-                    if (!memcmp(name, "Data", 5))
-                        cache.Type = CacheData;
-                    else if(!memcmp(name, "Instruction", 11))
-                        cache.Type = CacheInstruction;
-                    else
-                        cache.Type = CacheUnified;
-
-                    if (!logical_proc_info_add_cache(data, dataex, &len, max_len, mask, &cache))
-                    {
-                        fclose(fcpu_list);
-                        return STATUS_NO_MEMORY;
-                    }
+                    fclose(fcpu_list);
+                    return STATUS_NO_MEMORY;
                 }
             }
         }
@@ -1053,48 +972,39 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
 
     num_cpus = count_bits(all_cpus_mask);
 
-    if(relation == RelationAll || relation == RelationNumaNode)
+    fnuma_list = fopen("/sys/devices/system/node/online", "r");
+    if (!fnuma_list)
     {
-        fnuma_list = fopen("/sys/devices/system/node/online", "r");
-        if (!fnuma_list)
+        if (!logical_proc_info_add_numa_node( all_cpus_mask, 0 ))
+            return STATUS_NO_MEMORY;
+    }
+    else
+    {
+        while (!feof(fnuma_list))
         {
-            if (!logical_proc_info_add_numa_node(data, dataex, &len, max_len, all_cpus_mask, 0))
-                return STATUS_NO_MEMORY;
-        }
-        else
-        {
-            while (!feof(fnuma_list))
+            if (!fscanf(fnuma_list, "%u%c ", &beg, &op))
+                break;
+            if (op == '-') fscanf(fnuma_list, "%u%c ", &end, &op);
+            else end = beg;
+
+            for (i = beg; i <= end; i++)
             {
-                if (!fscanf(fnuma_list, "%u%c ", &beg, &op))
-                    break;
-                if (op == '-') fscanf(fnuma_list, "%u%c ", &end, &op);
-                else end = beg;
+                ULONG_PTR mask = 0;
 
-                for (i = beg; i <= end; i++)
+                sprintf(name, numa_info, i);
+                if (!sysfs_parse_bitmap( name, &mask )) continue;
+
+                if (!logical_proc_info_add_numa_node( mask, i ))
                 {
-                    ULONG_PTR mask = 0;
-
-                    sprintf(name, numa_info, i);
-                    if (!sysfs_parse_bitmap( name, &mask )) continue;
-
-                    if (!logical_proc_info_add_numa_node(data, dataex, &len, max_len, mask, i))
-                    {
-                        fclose(fnuma_list);
-                        return STATUS_NO_MEMORY;
-                    }
+                    fclose(fnuma_list);
+                    return STATUS_NO_MEMORY;
                 }
             }
-            fclose(fnuma_list);
         }
+        fclose(fnuma_list);
     }
 
-    if(dataex && (relation == RelationAll || relation == RelationGroup))
-        logical_proc_info_add_group(dataex, &len, max_len, num_cpus, all_cpus_mask);
-
-    if(data)
-        *max_len = len * sizeof(**data);
-    else
-        *max_len = len;
+    logical_proc_info_add_group( num_cpus, all_cpus_mask );
 
     return STATUS_SUCCESS;
 }
@@ -1102,20 +1012,15 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
 #elif defined(__APPLE__)
 
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
-static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-                                          SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex,
-                                          DWORD *max_len, DWORD relation)
+static NTSTATUS create_logical_proc_info(void)
 {
-    DWORD pkgs_no, cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc, len = 0;
+    DWORD pkgs_no, cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc;
     DWORD cache_ctrs[10] = {0};
     ULONG_PTR all_cpus_mask = 0;
     CACHE_DESCRIPTOR cache[10];
     LONGLONG cache_size, cache_line_size, cache_sharing[10];
     size_t size;
     DWORD p,i,j,k;
-
-    if (relation != RelationAll)
-        FIXME("Relationship filtering not implemented: 0x%x\n", relation);
 
     lcpu_no = peb->NumberOfProcessors;
 
@@ -1203,12 +1108,12 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
             all_cpus_mask |= mask;
 
             /* add to package */
-            if(!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorPackage, p, mask))
+            if(!logical_proc_info_add_by_id( RelationProcessorPackage, p, mask ))
                 return STATUS_NO_MEMORY;
 
             /* add new core */
             phys_core = p * cores_per_package + j;
-            if(!logical_proc_info_add_by_id(data, dataex, &len, max_len, RelationProcessorCore, phys_core, mask))
+            if(!logical_proc_info_add_by_id( RelationProcessorCore, phys_core, mask ))
                 return STATUS_NO_MEMORY;
 
             for(i = 1; i < 5; ++i)
@@ -1219,7 +1124,7 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
                     for(k = 0; k < cache_sharing[i]; ++k)
                         mask |= (ULONG_PTR)1 << (j * lcpu_per_core + k);
 
-                    if(!logical_proc_info_add_cache(data, dataex, &len, max_len, mask, &cache[i]))
+                    if (!logical_proc_info_add_cache( mask, &cache[i] ))
                         return STATUS_NO_MEMORY;
                 }
 
@@ -1230,56 +1135,98 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
     }
 
     /* OSX doesn't support NUMA, so just make one NUMA node for all CPUs */
-    if(!logical_proc_info_add_numa_node(data, dataex, &len, max_len, all_cpus_mask, 0))
+    if(!logical_proc_info_add_numa_node( all_cpus_mask, 0 ))
         return STATUS_NO_MEMORY;
 
-    if(dataex) logical_proc_info_add_group(dataex, &len, max_len, lcpu_no, all_cpus_mask);
-
-    if(data)
-        *max_len = len * sizeof(**data);
-    else
-        *max_len = len;
+    logical_proc_info_add_group( lcpu_no, all_cpus_mask );
 
     return STATUS_SUCCESS;
 }
 
 #else
 
-static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data,
-                                          SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **dataex,
-                                          DWORD *max_len, DWORD relation )
+static NTSTATUS create_logical_proc_info(void)
 {
     FIXME("stub\n");
     return STATUS_NOT_IMPLEMENTED;
 }
 #endif
 
+/******************************************************************
+ *		init_cpu_info
+ *
+ * inits a couple of places with CPU related information:
+ * - cpu_info in this file
+ * - Peb->NumberOfProcessors
+ * - SharedUserData->ProcessFeatures[] array
+ */
+void init_cpu_info(void)
+{
+    NTSTATUS status;
+    long num;
+
+#ifdef _SC_NPROCESSORS_ONLN
+    num = sysconf(_SC_NPROCESSORS_ONLN);
+    if (num < 1)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#elif defined(CTL_HW) && defined(HW_NCPU)
+    int mib[2];
+    size_t len = sizeof(num);
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#else
+    num = 1;
+    FIXME("Detecting the number of processors is not supported.\n");
+#endif
+    peb->NumberOfProcessors = num;
+    get_cpuinfo( &cpu_info );
+    TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
+           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
+           cpu_info.ProcessorFeatureBits );
+
+    if ((status = create_logical_proc_info()))
+    {
+        FIXME( "Failed to get logical processor information, status %#x.\n", status );
+        free( logical_proc_info );
+        logical_proc_info = NULL;
+        logical_proc_info_len = 0;
+
+        free( logical_proc_info_ex );
+        logical_proc_info_ex = NULL;
+        logical_proc_info_ex_size = 0;
+    }
+    else
+    {
+        logical_proc_info = realloc( logical_proc_info, logical_proc_info_len * sizeof(*logical_proc_info) );
+        logical_proc_info_alloc_len = logical_proc_info_len;
+        logical_proc_info_ex = realloc( logical_proc_info_ex, logical_proc_info_ex_size );
+        logical_proc_info_ex_alloc_size = logical_proc_info_ex_size;
+    }
+}
+
 static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
 {
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info;
+    const SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info;
+    const DWORD cpu_info_size = logical_proc_info_ex_size;
     BYTE core_index, cache_index, max_cache_level;
     unsigned int i, j, count;
-    BYTE *proc_info_buffer;
-    DWORD cpu_info_size;
     ULONG64 cpu_mask;
-    NTSTATUS status;
+
+    if (!logical_proc_info_ex) return STATUS_NOT_IMPLEMENTED;
 
     count = peb->NumberOfProcessors;
 
-    cpu_info_size = 3 * sizeof(*proc_info);
-    if (!(proc_info_buffer = malloc(cpu_info_size)))
-        return STATUS_NO_MEMORY;
-
-    if ((status = create_logical_proc_info(NULL, (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **)&proc_info_buffer,
-            &cpu_info_size, RelationAll)))
-    {
-        free(proc_info_buffer);
-        return status;
-    }
-
     max_cache_level = 0;
-    proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)proc_info_buffer;
-    for (i = 0; (BYTE *)proc_info != proc_info_buffer + cpu_info_size; ++i)
+    proc_info = logical_proc_info_ex;
+    for (i = 0; (char *)proc_info != (char *)logical_proc_info_ex + cpu_info_size; ++i)
     {
         if (proc_info->Relationship == RelationCache)
         {
@@ -1293,7 +1240,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
 
     core_index = 0;
     cache_index = 0;
-    proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)proc_info_buffer;
+    proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)logical_proc_info_ex;
     for (i = 0; i < count; ++i)
     {
         info[i].Size = sizeof(*info);
@@ -1302,7 +1249,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
         info[i].u.CpuSet.LogicalProcessorIndex = i;
     }
 
-    for (i = 0; (BYTE *)proc_info != (BYTE *)proc_info_buffer + cpu_info_size; ++i)
+    for (i = 0; (char *)proc_info != (char *)logical_proc_info_ex + cpu_info_size; ++i)
     {
         if (proc_info->Relationship == RelationProcessorCore)
         {
@@ -1338,10 +1285,8 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
                 if (((ULONG64)1 << j) & cpu_mask)
                     info[j].u.CpuSet.NumaNodeIndex = proc_info->u.NumaNode.NodeNumber;
         }
-        proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
+        proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)proc_info + proc_info->Size);
     }
-
-    free(proc_info_buffer);
 
     return STATUS_SUCCESS;
 }
@@ -2648,8 +2593,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             processor_cpu_load_info_data_t *pinfo;
             mach_msg_type_number_t info_count;
+            host_name_port_t host = mach_host_self ();
 
-            if (host_processor_info( mach_host_self (),
+            if (host_processor_info( host,
                                      PROCESSOR_CPU_LOAD_INFO,
                                      &cpus,
                                      (processor_info_array_t*)&pinfo,
@@ -2665,6 +2611,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 }
                 vm_deallocate (mach_task_self (), (vm_address_t) pinfo, info_count * sizeof(natural_t));
             }
+
+            mach_port_deallocate (mach_task_self (), host);
         }
 #elif defined(linux)
         {
@@ -3061,28 +3009,18 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemLogicalProcessorInformation:  /* 73 */
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION *buf;
-
-        /* Each logical processor may use up to 7 entries in returned table:
-         * core, numa node, package, L1i, L1d, L2, L3 */
-        len = 7 * peb->NumberOfProcessors;
-        buf = malloc( len * sizeof(*buf) );
-        if (!buf)
+        if (!logical_proc_info)
         {
-            ret = STATUS_NO_MEMORY;
+            ret = STATUS_NOT_IMPLEMENTED;
             break;
         }
-        ret = create_logical_proc_info(&buf, NULL, &len, RelationAll);
-        if (!ret)
+        len = logical_proc_info_len * sizeof(*logical_proc_info);
+        if (size >= len)
         {
-            if (size >= len)
-            {
-                if (!info) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy( info, buf, len);
-            }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, logical_proc_info, len);
         }
-        free( buf );
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
 
@@ -3240,31 +3178,34 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     {
     case SystemLogicalProcessorInformationEx:
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *buf;
+        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p;
+        DWORD relation;
 
         if (!query || query_len < sizeof(DWORD))
         {
             ret = STATUS_INVALID_PARAMETER;
             break;
         }
-
-        len = 3 * sizeof(*buf);
-        if (!(buf = malloc( len )))
+        if (!logical_proc_info_ex)
         {
-            ret = STATUS_NO_MEMORY;
+            ret = STATUS_NOT_IMPLEMENTED;
             break;
         }
-        ret = create_logical_proc_info(NULL, &buf, &len, *(DWORD *)query);
-        if (!ret)
+
+        relation = *(DWORD *)query;
+        len = 0;
+        p = logical_proc_info_ex;
+        while ((char *)p != (char *)logical_proc_info_ex + logical_proc_info_ex_size)
         {
-            if (size >= len)
+            if (relation == RelationAll || p->Relationship == relation)
             {
-                if (!info) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy(info, buf, len);
+                if (len + p->Size <= size)
+                    memcpy( (char *)info + len, p, p->Size );
+                len += p->Size;
             }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
+            p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size);
         }
-        free( buf );
+        ret = size >= len ? STATUS_SUCCESS : STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
 
@@ -3327,6 +3268,14 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
             ((DWORD *)info)[i] = MAKELONG( supported_machines[i], flags );
         }
         ((DWORD *)info)[i] = 0;
+
+        /* CW HACK 20810: report i386-only when in 32-bit-bottle/Wow64 mode */
+        if (wow64_using_32bit_prefix)
+        {
+            ((DWORD *)info)[0] = MAKELONG( IMAGE_FILE_MACHINE_I386, 2 | 5 | 8 );
+            ((DWORD *)info)[1] = 0;
+        }
+
         ret = STATUS_SUCCESS;
         break;
     }

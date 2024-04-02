@@ -18,6 +18,8 @@
 #ifndef __HIDCLASS_H
 #define __HIDCLASS_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,5 +78,7 @@ typedef struct _HID_XFER_PACKET {
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __HIDCLASS_H */

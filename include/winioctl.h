@@ -19,6 +19,8 @@
 #ifndef __WINE_WINIOCTL_H
 #define __WINE_WINIOCTL_H
 
+#include "wine/winheader_enter.h"
+
 #define CTL_CODE( DeviceType, Function, Method, Access ) (                 \
     (DWORD)((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
 )
@@ -680,5 +682,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_SERENUM_BUS_ENUMERATOR, 0x4D36E978, 0xE325,
 #define GUID_SERENUM_BUS_ENUMERATOR GUID_DEVINTERFACE_SERENUM_BUS_ENUMERATOR
 
 #endif /* DEFINE_GUID */
+
+#include "wine/winheader_exit.h"
 
 #endif

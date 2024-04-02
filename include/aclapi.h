@@ -19,6 +19,8 @@
 #ifndef __WINE_ACLAPI_H
 #define __WINE_ACLAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 #include <accctrl.h>
 
@@ -79,5 +81,7 @@ WINADVAPI DWORD  WINAPI GetEffectiveRightsFromAclW(PACL,PTRUSTEE_W,PACCESS_MASK)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ACLAPI_H */

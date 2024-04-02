@@ -19,6 +19,8 @@
 #ifndef __WINE_RAS_H
 #define __WINE_RAS_H
 
+#include "wine/winheader_enter.h"
+
 #include <lmcons.h>
 
 #ifdef __cplusplus
@@ -555,5 +557,7 @@ DWORD WINAPI RasSetAutodialEnableW(DWORD dwDialingLocation, BOOL fEnabled);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

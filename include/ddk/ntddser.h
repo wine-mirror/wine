@@ -22,6 +22,8 @@
 #ifndef _NTDDSER_H_
 #define _NTDDSER_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -394,5 +396,7 @@ typedef struct _SERIALCONFIG
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _NTDDSER_H_ */

@@ -20,7 +20,6 @@ import "d2d1.idl";
 import "d2d1effects.idl";
 
 interface ID2D1DeviceContext;
-interface ID2D1PathGeometry1;
 interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
 interface ID2D1PrintControl;
@@ -34,6 +33,7 @@ cpp_quote("#ifndef __dwrite_h__")
 /* already defined in dwrite.h but needed for WIDL */
 typedef struct DWRITE_GLYPH_RUN_DESCRIPTION DWRITE_GLYPH_RUN_DESCRIPTION;
 cpp_quote("#endif /* __dwrite_h__ */")
+cpp_quote("#define D2D1_INVALID_PROPERTY_INDEX UINT_MAX")
 
 typedef enum D2D1_DEVICE_CONTEXT_OPTIONS
 {
@@ -351,6 +351,22 @@ interface ID2D1GdiMetafile : ID2D1Resource
 
 [
     object,
+    uuid(62baa2d2-ab54-41b7-b872-787e0106a421),
+    local,
+]
+interface ID2D1PathGeometry1 : ID2D1PathGeometry
+{
+    HRESULT ComputePointAndSegmentAtLength(
+        [in] float length,
+        [in] UINT32 start_segment,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] D2D1_POINT_DESCRIPTION *point_desc
+    );
+}
+
+[
+    object,
     uuid(483473d7-cd46-4f9d-9d3a-3112aa80159d),
     local,
 ]
@@ -559,7 +575,7 @@ interface ID2D1CommandSink : IUnknown
         [in] IDWriteRenderingParams *text_rendering_params
     );
     HRESULT SetTransform(
-        [in] D2D1_MATRIX_3X2_F *transform
+        [in] const D2D1_MATRIX_3X2_F *transform
     );
     HRESULT SetPrimitiveBlend(
         [in] D2D1_PRIMITIVE_BLEND primitive_blend
@@ -607,7 +623,7 @@ interface ID2D1CommandSink : IUnknown
     HRESULT DrawImage(
         [in] ID2D1Image *image,
         [in] const D2D1_POINT_2F *target_offset,
-        [in] const D2D1_POINT_2F *image_rect,
+        [in] const D2D1_RECT_F *image_rect,
         [in] D2D1_INTERPOLATION_MODE interpolation_mode,
         [in] D2D1_COMPOSITE_MODE composite_mode
     );

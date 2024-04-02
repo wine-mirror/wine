@@ -8,6 +8,8 @@
 #ifndef __WINE_DOS_H
 #define __WINE_DOS_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #include <pshpack8.h>
@@ -46,5 +48,7 @@ _ACRTIMP unsigned int __cdecl _getdiskfree(unsigned int, struct _diskfree_t *);
 #define diskfree_t _diskfree_t
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DOS_H */

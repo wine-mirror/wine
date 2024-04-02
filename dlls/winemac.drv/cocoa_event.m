@@ -24,6 +24,8 @@
 #include <libkern/OSAtomic.h>
 #import <Carbon/Carbon.h>
 
+#include "wine/hostaddrspace_enter.h"
+
 #include "macdrv_cocoa.h"
 #import "cocoa_event.h"
 #import "cocoa_app.h"

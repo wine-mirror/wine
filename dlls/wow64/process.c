@@ -46,12 +46,31 @@ static SIZE_T get_machine_context_size( USHORT machine )
     }
 }
 
+static BOOL is_32b_prefix_on_wow64( void )
+{
+    UNICODE_STRING name_str, val_str;
+
+    RtlInitUnicodeString( &name_str, L"WINEWOW6432BPREFIXMODE" );
+    val_str.MaximumLength = 0;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND)
+        return TRUE;
+    return FALSE;
+}
 
 static BOOL is_process_wow64( HANDLE handle )
 {
     ULONG_PTR info;
 
     if (handle == GetCurrentProcess()) return TRUE;
+    /* CW HACK 20872: fixes getting ProcessBasicInformation and ThreadBasicInformation info */
+    {
+        UNICODE_STRING name_str, val_str;
+
+        RtlInitUnicodeString( &name_str, L"WINEWOW6432BPREFIXMODE" );
+        val_str.MaximumLength = 0;
+        if (RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND)
+            return TRUE;
+    }
     if (NtQueryInformationProcess( handle, ProcessWow64Information, &info, sizeof(info), NULL ))
         return FALSE;
     return !!info;
@@ -794,9 +813,34 @@ NTSTATUS WINAPI wow64_NtQueryInformationProcess( UINT *args )
         if (retlen) *retlen = sizeof(VM_COUNTERS_EX32);
         return STATUS_INFO_LENGTH_MISMATCH;
 
+    case ProcessWow64Information:  /* ULONG_PTR */
+        /* CW HACK 21111
+         * Spoof the result of NtQueryInformationProcess(ProcessWow64Information) for 'DXSETUP.exe'
+         * when using a 32-bit bottle under Wow64.
+         * The 'DirectX for Modern Games' installer uses this to determine when on a 64-bit OS.
+         */
+        if (is_32b_prefix_on_wow64())
+        {
+            WCHAR filename[512];
+            UNICODE_STRING name_us;
+
+            name_us.Buffer = filename;
+            name_us.MaximumLength = sizeof(filename);
+            status = LdrGetDllFullName( NULL, &name_us );
+            if (len == sizeof(ULONG) && !status && (name_us.Length != name_us.MaximumLength) && (name_us.Length > 22))
+            {
+                filename[name_us.Length / sizeof(WCHAR)] = '\0';
+                if (!wcscmp(&filename[(name_us.Length - 22) / sizeof(WCHAR)], L"DXSETUP.exe"))
+                {
+                    *(ULONG *)ptr = 0;
+                    if (retlen) *retlen = sizeof(ULONG);
+                    return STATUS_SUCCESS;
+                }
+            }
+        }
+        // fallthrough
     case ProcessDebugPort:  /* ULONG_PTR */
     case ProcessAffinityMask:  /* ULONG_PTR */
-    case ProcessWow64Information:  /* ULONG_PTR */
     case ProcessDebugObjectHandle:  /* HANDLE */
         if (len == sizeof(ULONG))
         {
@@ -1075,6 +1119,7 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
     {
     case ProcessDefaultHardErrorMode:   /* ULONG */
     case ProcessPriorityClass:   /* PROCESS_PRIORITY_CLASS */
+    case ProcessExecuteFlags:   /* ULONG */
         return NtSetInformationProcess( handle, class, ptr, len );
 
     case ProcessAffinityMask:   /* ULONG_PTR */
@@ -1084,9 +1129,6 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
             return NtSetInformationProcess( handle, class, &mask, sizeof(mask) );
         }
         else return STATUS_INVALID_PARAMETER;
-
-    case ProcessExecuteFlags:   /* ULONG */
-        return STATUS_ACCESS_DENIED;
 
     case ProcessInstrumentationCallback:   /* PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION */
         if (len == sizeof(PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION32))
@@ -1118,7 +1160,7 @@ NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
             PROCESS_STACK_ALLOCATION_INFORMATION info;
 
             info.ReserveSize = stack->ReserveSize;
-            info.ZeroBits = stack->ZeroBits ? stack->ZeroBits : 0x7fffffff;
+            info.ZeroBits = get_zero_bits( stack->ZeroBits );
             if (!(status = NtSetInformationProcess( handle, class, &info, sizeof(info) )))
                 stack->StackBase = PtrToUlong( info.StackBase );
             return status;

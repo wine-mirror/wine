@@ -21,7 +21,6 @@
 #include "d3dx10.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -82,7 +81,7 @@ static ULONG WINAPI d3dx_font_Release(ID3DX10Font *iface)
         DeleteObject(font->hfont);
         DeleteDC(font->hdc);
         ID3D10Device_Release(font->device);
-        heap_free(font);
+        free(font);
     }
     return refcount;
 }
@@ -179,14 +178,14 @@ static HRESULT WINAPI d3dx_font_PreloadCharacters(ID3DX10Font *iface, UINT first
         return S_OK;
 
     count = last - first + 1;
-    indices = heap_alloc(count * sizeof(*indices));
+    indices = malloc(count * sizeof(*indices));
     if (!indices)
         return E_OUTOFMEMORY;
 
-    chars = heap_alloc(count * sizeof(*chars));
+    chars = malloc(count * sizeof(*chars));
     if (!chars)
     {
-        heap_free(indices);
+        free(indices);
         return E_OUTOFMEMORY;
     }
 
@@ -208,8 +207,8 @@ static HRESULT WINAPI d3dx_font_PreloadCharacters(ID3DX10Font *iface, UINT first
     }
     ID3DX10Font_PreloadGlyphs(iface, start, end);
 
-    heap_free(chars);
-    heap_free(indices);
+    free(chars);
+    free(indices);
 
     return S_OK;
 }
@@ -237,14 +236,14 @@ static HRESULT WINAPI d3dx_font_PreloadTextA(ID3DX10Font *iface, const char *str
 
     countW = MultiByteToWideChar(CP_ACP, 0, string, count < 0 ? -1 : count, NULL, 0);
 
-    if (!(wstr = heap_alloc(countW * sizeof(*wstr))))
+    if (!(wstr = malloc(countW * sizeof(*wstr))))
         return E_OUTOFMEMORY;
 
     MultiByteToWideChar(CP_ACP, 0, string, count < 0 ? -1 : count, wstr, countW);
 
     hr = ID3DX10Font_PreloadTextW(iface, wstr, count < 0 ? countW - 1 : countW);
 
-    heap_free(wstr);
+    free(wstr);
 
     return hr;
 }
@@ -266,7 +265,7 @@ static HRESULT WINAPI d3dx_font_PreloadTextW(ID3DX10Font *iface, const WCHAR *st
     if (count < 0)
         count = lstrlenW(string);
 
-    indices = heap_alloc(count * sizeof(*indices));
+    indices = malloc(count * sizeof(*indices));
     if (!indices)
         return E_OUTOFMEMORY;
 
@@ -275,7 +274,7 @@ static HRESULT WINAPI d3dx_font_PreloadTextW(ID3DX10Font *iface, const WCHAR *st
     for (i = 0; i < count; ++i)
         ID3DX10Font_PreloadGlyphs(iface, indices[i], indices[i]);
 
-    heap_free(indices);
+    free(indices);
 
     return S_OK;
 }
@@ -296,7 +295,7 @@ static INT WINAPI d3dx_font_DrawTextA(ID3DX10Font *iface, ID3DX10Sprite *sprite,
     if (!(countW = MultiByteToWideChar(CP_ACP, 0, string, count < 0 ? -1 : count, NULL, 0)))
         return 0;
 
-    if (!(wstr = heap_alloc_zero(countW * sizeof(*wstr))))
+    if (!(wstr = calloc(countW, sizeof(*wstr))))
         return 0;
 
     MultiByteToWideChar(CP_ACP, 0, string, count < 0 ? -1 : count, wstr, countW);
@@ -304,7 +303,7 @@ static INT WINAPI d3dx_font_DrawTextA(ID3DX10Font *iface, ID3DX10Sprite *sprite,
     ret = ID3DX10Font_DrawTextW(iface, sprite, wstr, count < 0 ? countW - 1 : countW,
                               rect, format, color);
 
-    heap_free(wstr);
+    free(wstr);
 
     return ret;
 }
@@ -430,13 +429,13 @@ HRESULT WINAPI D3DX10CreateFontIndirectW(ID3D10Device *device, const D3DX10_FONT
 
     *font = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->hdc = CreateCompatibleDC(NULL);
     if (!object->hdc)
     {
-        heap_free(object);
+        free(object);
         return E_FAIL;
     }
 
@@ -445,7 +444,7 @@ HRESULT WINAPI D3DX10CreateFontIndirectW(ID3D10Device *device, const D3DX10_FONT
     if (!object->hfont)
     {
         DeleteDC(object->hdc);
-        heap_free(object);
+        free(object);
         return E_FAIL;
     }
     SelectObject(object->hdc, object->hfont);

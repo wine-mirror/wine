@@ -20,6 +20,8 @@
 #ifndef __WINE_RICHEDIT_H
 #define __WINE_RICHEDIT_H
 
+#include "wine/winheader_enter.h"
+
 #include <pshpack4.h>
 
 #ifdef __cplusplus
@@ -1084,5 +1086,7 @@ typedef struct _settextex {
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_RICHEDIT_H */

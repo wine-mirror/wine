@@ -19,6 +19,8 @@
 #ifndef _TCPESTATS_
 #define _TCPESTATS_
 
+#include "wine/winheader_enter.h"
+
 /* Values used in Get/SetPerTcpConnectionEStats */
 typedef enum
 {
@@ -33,5 +35,7 @@ typedef enum
     TcpConnectionEstatsFineRtt,
     TcpConnectionEstatsMaximum
 } TCP_ESTATS_TYPE;
+
+#include "wine/winheader_exit.h"
 
 #endif /* _TCPESTATS_ */

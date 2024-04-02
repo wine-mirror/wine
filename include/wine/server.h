@@ -26,6 +26,7 @@
 #include <winbase.h>
 #include <winternl.h>
 #include <wine/server_protocol.h>
+#include <wine/winheader_enter.h>
 
 /* client communication functions */
 
@@ -136,5 +137,6 @@ static inline void *wine_server_get_ptr( client_ptr_t ptr )
         while(0); \
     } while(0)
 
+#include <wine/winheader_exit.h>
 
 #endif  /* __WINE_WINE_SERVER_H */

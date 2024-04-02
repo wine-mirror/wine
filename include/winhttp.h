@@ -19,6 +19,8 @@
 #ifndef __WINE_WINHTTP_H
 #define __WINE_WINHTTP_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef _WIN64
 #include <pshpack8.h>
 #else
@@ -867,5 +869,7 @@ DWORD       WINAPI WinHttpWriteProxySettings(HINTERNET,BOOL,WINHTTP_PROXY_SETTIN
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_WINHTTP_H */

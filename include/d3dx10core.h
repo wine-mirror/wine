@@ -298,3 +298,4 @@ HRESULT WINAPI D3DX10CreateFontW(ID3D10Device *device, INT height, UINT width, U
         UINT miplevels, BOOL italic, UINT charset, UINT precision, UINT quality,
         UINT pitchandfamily, const WCHAR *facename, ID3DX10Font **font);
 HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite **sprite);
+HRESULT WINAPI D3DX10CreateThreadPump(UINT io_threads, UINT proc_threads, ID3DX10ThreadPump **pump);

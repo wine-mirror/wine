@@ -21,6 +21,8 @@
 #ifndef __WINE_IPEXPORT_H
 #define __WINE_IPEXPORT_H
 
+#include "wine/winheader_enter.h"
+
 #include <in6addr.h>
 #include <inaddr.h>
 
@@ -115,5 +117,7 @@ typedef struct _IP_UNIDIRECTIONAL_ADAPTER_ADDRESS {
   ULONG  NumAdapters;
   IPAddr Address[1];
 } IP_UNIDIRECTIONAL_ADAPTER_ADDRESS, *PIP_UNIDIRECTIONAL_ADAPTER_ADDRESS;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_IPEXPORT_H */

@@ -41,7 +41,10 @@
 #include "audiopolicy.h"
 #include "unixlib.h"
 
+#include "coreaudio_cocoa.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 unixlib_handle_t coreaudio_handle = 0;
 
@@ -103,7 +106,7 @@ struct ACImpl {
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
 
-    struct coreaudio_stream *stream;
+    stream_handle stream;
     struct list entry;
 };
 
@@ -341,13 +344,15 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
     }
 
     for(i = 0; i < params.num; i++){
-        int size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
+        int size = (wcslen(name) + 1) * sizeof(WCHAR);
+
         ids[i] = heap_alloc(size);
         if(!ids[i]){
             params.result = E_OUTOFMEMORY;
             goto end;
         }
-        memcpy(ids[i], params.endpoints[i].name, size);
+        memcpy(ids[i], name, size);
         get_device_guid(flow, params.endpoints[i].id, guids + i);
     }
     *def_index = params.default_idx;
@@ -666,6 +671,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct release_stream_params release_params;
     struct create_stream_params params;
+    stream_handle stream;
     UINT32 i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
@@ -734,10 +740,13 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
-    params.stream = NULL;
+    params.stream = &stream;
 
     UNIX_CALL(create_stream, &params);
-    if(FAILED(params.result)) goto end;
+    if(FAILED(params.result)){
+        LeaveCriticalSection(&g_sessions_lock);
+        return params.result;
+    }
 
     This->flags = flags;
     This->channel_count = fmt->nChannels;
@@ -759,14 +768,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 end:
     if(FAILED(params.result)){
-        if(params.stream){
-            release_params.stream = params.stream;
-            UNIX_CALL(release_stream, &release_params);
-        }
+        release_params.stream = stream;
+        UNIX_CALL(release_stream, &release_params);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
-        This->stream = params.stream;
+        This->stream = stream;
         set_stream_volumes(This, -1);
     }
 

@@ -18,6 +18,8 @@
 #ifndef __WINE_NPAPI_H__
 #define __WINE_NPAPI_H__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -215,5 +217,7 @@ typedef DWORD (APIENTRY *PF_CancelConnectNotify)(LPNOTIFYINFO lpNotifyInfo,
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* ndef __WINE_NPAPI_H__ */

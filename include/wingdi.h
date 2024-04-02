@@ -20,6 +20,8 @@
 #define _WINGDI_
 #ifndef NOGDI
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -4184,6 +4186,8 @@ WGLAPI BOOL    WINAPI wglUseFontOutlinesW(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,INT,
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* !NOGDI */
 #endif /* _WINGDI_ */

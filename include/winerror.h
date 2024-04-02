@@ -19,6 +19,8 @@
 #ifndef __WINE_WINERROR_H
 #define __WINE_WINERROR_H
 
+#include "wine/winheader_enter.h"
+
 #include <specstrings.h>
 
 #define FACILITY_NULL                         0
@@ -3984,5 +3986,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 
 #define ERROR_AUDITING_DISABLED                            _HRESULT_TYPEDEF_(0xC0090001)
 #define ERROR_ALL_SIDS_FILTERED                            _HRESULT_TYPEDEF_(0xC0090002)
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_WINERROR_H */

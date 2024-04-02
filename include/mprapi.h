@@ -19,6 +19,8 @@
 #ifndef __WINE_MPRAPI_H
 #define __WINE_MPRAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <lmcons.h>
 #include <ras.h>
 #include <in6addr.h>
@@ -42,5 +44,7 @@ BOOL APIENTRY MprAdminIsServiceRunning(LPWSTR);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_MPRAPI_H */

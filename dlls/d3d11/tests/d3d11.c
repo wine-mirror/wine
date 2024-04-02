@@ -158,9 +158,15 @@ static void queue_test(void (*test)(void))
 static void run_mt_test(const struct test_entry *t)
 {
     if (t->fl)
+    {
+        winetest_push_context("Feature level %#x", t->fl);
         t->u.test_fl(t->fl);
+        winetest_pop_context();
+    }
     else
+    {
         t->u.test();
+    }
 }
 
 static DWORD WINAPI thread_func(void *ctx)
@@ -246,7 +252,7 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
 
     hr = IUnknown_QueryInterface(unknown, riid, (void **)&out);
     ok_(__FILE__, line)(hr == expected_hr || broken(is_broken && hr == broken_hr),
-            "Got hr %#x, expected %#x.\n", hr, expected_hr);
+            "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(out);
     return hr;
@@ -783,7 +789,7 @@ static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, data ? &resource_data : NULL, &buffer);
-    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create buffer, hr %#lx.\n", hr);
     return buffer;
 }
 
@@ -873,7 +879,7 @@ static void init_resource_readback(ID3D11Resource *resource, ID3D11Resource *rea
     if (FAILED(hr = ID3D11DeviceContext_Map(rb->immediate_context,
             rb->resource, sub_resource_idx, D3D11_MAP_READ, 0, &rb->map_desc)))
     {
-        trace("Failed to map resource, hr %#x.\n", hr);
+        trace("Failed to map resource, hr %#lx.\n", hr);
         ID3D11Resource_Release(rb->resource);
         rb->resource = NULL;
         ID3D11DeviceContext_Release(rb->immediate_context);
@@ -900,7 +906,7 @@ static void get_buffer_readback(ID3D11Buffer *buffer, struct resource_readback *
     buffer_desc.StructureByteStride = 0;
     if (FAILED(hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, (ID3D11Buffer **)&rb_buffer)))
     {
-        trace("Failed to create staging buffer, hr %#x.\n", hr);
+        trace("Failed to create staging buffer, hr %#lx.\n", hr);
         ID3D11Device_Release(device);
         return;
     }
@@ -931,7 +937,7 @@ static void get_texture1d_readback(ID3D11Texture1D *texture, unsigned int sub_re
     texture_desc.MiscFlags = 0;
     if (FAILED(hr = ID3D11Device_CreateTexture1D(device, &texture_desc, NULL, (ID3D11Texture1D **)&rb_texture)))
     {
-        trace("Failed to create texture, hr %#x.\n", hr);
+        trace("Failed to create texture, hr %#lx.\n", hr);
         ID3D11Device_Release(device);
         return;
     }
@@ -963,7 +969,7 @@ static void get_texture_readback(ID3D11Texture2D *texture, unsigned int sub_reso
     texture_desc.MiscFlags = 0;
     if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&rb_texture)))
     {
-        trace("Failed to create texture, hr %#x.\n", hr);
+        trace("Failed to create texture, hr %#lx.\n", hr);
         ID3D11Device_Release(device);
         return;
     }
@@ -997,7 +1003,7 @@ static void get_texture3d_readback(ID3D11Texture3D *texture, unsigned int sub_re
     texture_desc.MiscFlags = 0;
     if (FAILED(hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, (ID3D11Texture3D **)&rb_texture)))
     {
-        trace("Failed to create texture, hr %#x.\n", hr);
+        trace("Failed to create texture, hr %#lx.\n", hr);
         ID3D11Device_Release(device);
         return;
     }
@@ -1203,7 +1209,7 @@ static void check_readback_data_u24_(unsigned int line, struct resource_readback
 
 done:
     ok_(__FILE__, line)(all_match,
-            "Got 0x%06x, expected 0x%06x at (%u, %u, %u), sub-resource %u.\n",
+            "Got 0x%06lx, expected 0x%06lx at (%u, %u, %u), sub-resource %u.\n",
             value, expected_value, x, y, z, rb->sub_resource_idx);
 }
 
@@ -1238,7 +1244,7 @@ static void check_readback_data_color_(unsigned int line, struct resource_readba
 
 done:
     ok_(__FILE__, line)(all_match,
-            "Got 0x%08x, expected 0x%08x at (%u, %u, %u), sub-resource %u.\n",
+            "Got 0x%08lx, expected 0x%08lx at (%u, %u, %u), sub-resource %u.\n",
             color, expected_color, x, y, z, rb->sub_resource_idx);
 }
 
@@ -1478,7 +1484,7 @@ static IDXGIAdapter *create_adapter(void)
 
     if (FAILED(hr = CreateDXGIFactory1(&IID_IDXGIFactory, (void **)&factory)))
     {
-        trace("Failed to create IDXGIFactory, hr %#x.\n", hr);
+        trace("Failed to create IDXGIFactory, hr %#lx.\n", hr);
         return NULL;
     }
 
@@ -1492,7 +1498,7 @@ static IDXGIAdapter *create_adapter(void)
         }
         else
         {
-            trace("Failed to get IDXGIFactory4, hr %#x.\n", hr);
+            trace("Failed to get IDXGIFactory4, hr %#lx.\n", hr);
         }
     }
     else
@@ -1501,7 +1507,7 @@ static IDXGIAdapter *create_adapter(void)
     }
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
-        trace("Failed to get adapter, hr %#x.\n", hr);
+        trace("Failed to get adapter, hr %#lx.\n", hr);
     return adapter;
 }
 
@@ -1562,12 +1568,12 @@ static void get_device_adapter_desc(ID3D11Device *device, DXGI_ADAPTER_DESC *ada
     HRESULT hr;
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetDesc(adapter, adapter_desc);
-    ok(SUCCEEDED(hr), "Failed to get adapter desc, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 }
 
@@ -1669,12 +1675,12 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window,
     HRESULT hr;
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
     dxgi_desc.BufferDesc.Width = 640;
@@ -1708,7 +1714,7 @@ static IDXGISwapChain *create_swapchain(ID3D11Device *device, HWND window,
     }
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &dxgi_desc, &swapchain);
-    ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory_Release(factory);
 
     return swapchain;
@@ -1761,11 +1767,11 @@ static BOOL init_test_context_(unsigned int line, struct d3d11_test_context *con
             0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     context->swapchain = create_swapchain(context->device, context->window, swapchain_desc);
     hr = IDXGISwapChain_GetBuffer(context->swapchain, 0, &IID_ID3D11Texture2D, (void **)&context->backbuffer);
-    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(context->device, (ID3D11Resource *)context->backbuffer,
             NULL, &context->backbuffer_rtv);
-    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create rendertarget view, hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(context->device, &context->immediate_context);
 
@@ -1801,7 +1807,14 @@ static void release_test_context_(unsigned int line, struct d3d11_test_context *
     DestroyWindow(context->window);
 
     ref = ID3D11Device_Release(context->device);
-    ok_(__FILE__, line)(!ref, "Device has %u references left.\n", ref);
+    ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
+}
+
+static void clear_rtv(ID3D11DeviceContext *context, ID3D11RenderTargetView *rtv, const struct vec4 *v)
+{
+    /* Cast to (const float *) instead of passing &v->x, since gcc warns about
+     * overreading a float[4] from a float otherwise. */
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, (const float *)v);
 }
 
 #define draw_quad(context) draw_quad_vs_(__LINE__, context, NULL, 0)
@@ -1859,7 +1872,7 @@ static void draw_quad_vs_(unsigned int line, struct d3d11_test_context *context,
     {
         hr = ID3D11Device_CreateInputLayout(device, default_layout_desc, ARRAY_SIZE(default_layout_desc),
                 vs_code, vs_code_size, &context->input_layout);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create input layout, hr %#lx.\n", hr);
     }
 
     if (context->vs_code != vs_code)
@@ -1868,7 +1881,7 @@ static void draw_quad_vs_(unsigned int line, struct d3d11_test_context *context,
             ID3D11VertexShader_Release(context->vs);
 
         hr = ID3D11Device_CreateVertexShader(device, vs_code, vs_code_size, NULL, &context->vs);
-        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create vertex shader, hr %#lx.\n", hr);
 
         context->vs_code = vs_code;
     }
@@ -1962,7 +1975,7 @@ static void draw_color_quad_(unsigned int line, struct d3d11_test_context *conte
     if (!context->ps)
     {
         hr = ID3D11Device_CreatePixelShader(device, ps_color_code, sizeof(ps_color_code), NULL, &context->ps);
-        ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create pixel shader, hr %#lx.\n", hr);
     }
 
     if (!context->ps_cb)
@@ -2013,41 +2026,41 @@ static void test_create_device(void)
     ID3D11Device_Release(device);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL, NULL, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL,
             &feature_level, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, default_feature_levels,
             ARRAY_SIZE(default_feature_levels), D3D11_SDK_VERSION, NULL, &feature_level, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, NULL, NULL,
             &immediate_context);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(!!immediate_context, "Expected immediate device context pointer, got NULL.\n");
     refcount = get_refcount(immediate_context);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got refcount %lu, expected 1.\n", refcount);
 
     ID3D11DeviceContext_GetDevice(immediate_context, &device);
     refcount = ID3D11Device_Release(device);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got refcount %lu, expected 1.\n", refcount);
 
     refcount = ID3D11DeviceContext_Release(immediate_context);
-    ok(!refcount, "ID3D11DeviceContext has %u references left.\n", refcount);
+    ok(!refcount, "ID3D11DeviceContext has %lu references left.\n", refcount);
 
     device = (ID3D11Device *)0xdeadbeef;
     feature_level = 0xdeadbeef;
     immediate_context = (ID3D11DeviceContext *)0xdeadbeef;
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &device, &feature_level, &immediate_context);
-    todo_wine ok(hr == E_INVALIDARG, "D3D11CreateDevice returned %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!device, "Got unexpected device pointer %p.\n", device);
     ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
     ok(!immediate_context, "Got unexpected immediate context pointer %p.\n", immediate_context);
@@ -2072,23 +2085,23 @@ static void test_create_device(void)
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, NULL, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, &feature_level, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, &device, NULL, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_interface(swapchain, &IID_IDXGISwapChain1, TRUE, FALSE);
 
     memset(&obtained_desc, 0, sizeof(obtained_desc));
     hr = IDXGISwapChain_GetDesc(swapchain, &obtained_desc);
-    ok(SUCCEEDED(hr), "GetDesc failed %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(obtained_desc.BufferDesc.Width == swapchain_desc.BufferDesc.Width,
             "Got unexpected BufferDesc.Width %u.\n", obtained_desc.BufferDesc.Width);
     ok(obtained_desc.BufferDesc.Height == swapchain_desc.BufferDesc.Height,
@@ -2123,51 +2136,51 @@ static void test_create_device(void)
             "Got unexpected Flags %#x.\n", obtained_desc.Flags);
 
     refcount = IDXGISwapChain_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
 
     feature_level = ID3D11Device_GetFeatureLevel(device);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, &device, NULL, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Device_Release(device);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, NULL, NULL, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, NULL, &feature_level, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
             feature_level, supported_feature_level);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             NULL, NULL, NULL, NULL, &immediate_context);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_Release(immediate_context);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, NULL, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, NULL, NULL, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGISwapChain_Release(swapchain);
 
     swapchain_desc.OutputWindow = NULL;
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, NULL, NULL, NULL);
-    ok(hr == S_FALSE, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, NULL, &device, NULL, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Device_Release(device);
 
     swapchain = (IDXGISwapChain *)0xdeadbeef;
@@ -2177,7 +2190,7 @@ static void test_create_device(void)
     swapchain_desc.OutputWindow = NULL;
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, &device, &feature_level, &immediate_context);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
     ok(!device, "Got unexpected device pointer %p.\n", device);
     ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
@@ -2191,7 +2204,7 @@ static void test_create_device(void)
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_BC5_UNORM;
     hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
             &swapchain_desc, &swapchain, &device, &feature_level, &immediate_context);
-    ok(hr == E_INVALIDARG, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
     ok(!device, "Got unexpected device pointer %p.\n", device);
     ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
@@ -2214,7 +2227,7 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -2244,20 +2257,20 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     IDXGIDevice_Release(dxgi_device);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 
     device_desc.feature_level = &feature_level;
     device_desc.flags = D3D11_CREATE_DEVICE_DEBUG;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create debug device for feature level %#x.\n", feature_level);
+        skip("Failed to create debug device.\n");
         return;
     }
 
     todo_wine check_interface(device, &IID_ID3D11InfoQueue, TRUE, FALSE);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_immediate_context(void)
@@ -2287,23 +2300,23 @@ static void test_immediate_context(void)
     expected_refcount = get_refcount(device) + 1;
     ID3D11Device_GetImmediateContext(device, &immediate_context);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu.\n", refcount);
     previous_immediate_context = immediate_context;
 
     ID3D11Device_GetImmediateContext(device, &immediate_context);
     ok(immediate_context == previous_immediate_context, "Got different immediate device context objects.\n");
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID3D11DeviceContext_Release(previous_immediate_context);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11DeviceContext_Release(immediate_context);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     ID3D11Device_GetImmediateContext(device, &immediate_context);
     ok(immediate_context == previous_immediate_context, "Got different immediate device context objects.\n");
     refcount = ID3D11DeviceContext_Release(immediate_context);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     ID3D11Device_GetImmediateContext(device, &immediate_context);
     expected_refcount = get_refcount(immediate_context) + 1;
@@ -2313,14 +2326,14 @@ static void test_immediate_context(void)
         win_skip("ID3D11Multithread is not supported.\n");
         goto done;
     }
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     refcount = get_refcount(immediate_context);
-    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
     expected_refcount = refcount;
     refcount = get_refcount(multithread);
-    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
     enabled = ID3D11Multithread_GetMultithreadProtected(multithread);
     todo_wine ok(!enabled, "Multithread protection is %#x.\n", enabled);
@@ -2333,7 +2346,7 @@ static void test_immediate_context(void)
     ok(!flags, "Got unexpected flags %#x.\n", flags);
 
     hr = ID3D11DeviceContext_FinishCommandList(immediate_context, FALSE, &command_list);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     buffer[0] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 16, &buffer_contents[0]);
     buffer[1] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 16, &buffer_contents[4]);
@@ -2341,7 +2354,7 @@ static void test_immediate_context(void)
     ID3D11DeviceContext_CopyResource(immediate_context, (ID3D11Resource *)buffer[1], (ID3D11Resource *)buffer[0]);
 
     hr = ID3D11DeviceContext_FinishCommandList(immediate_context, FALSE, &command_list);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Buffer_Release(buffer[1]);
     ID3D11Buffer_Release(buffer[0]);
@@ -2349,9 +2362,9 @@ static void test_immediate_context(void)
 
 done:
     refcount = ID3D11DeviceContext_Release(immediate_context);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_deferred_context(void)
@@ -2371,12 +2384,12 @@ static void test_create_deferred_context(void)
     }
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Failed to create deferred context, hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         ID3D11DeviceContext_Release(context);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 
     if (!(device = create_device(NULL)))
     {
@@ -2386,11 +2399,11 @@ static void test_create_deferred_context(void)
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateDeferredContext(device, 0, &context);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
     refcount = get_refcount(context);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     check_interface(context, &IID_IUnknown, TRUE, FALSE);
     check_interface(context, &IID_ID3D11DeviceChild, TRUE, FALSE);
@@ -2398,10 +2411,10 @@ static void test_create_deferred_context(void)
     check_interface(context, &IID_ID3D11Multithread, FALSE, FALSE);
 
     refcount = ID3D11DeviceContext_Release(context);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_texture1d(void)
@@ -2430,19 +2443,19 @@ static void test_create_texture1d(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture1D(device, &desc, &data, &texture);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture1D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
@@ -2451,15 +2464,15 @@ static void test_create_texture1d(void)
     desc.MipLevels = 0;
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture1D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11Texture1D_GetDesc(texture, &desc);
@@ -2478,7 +2491,7 @@ static void test_create_texture1d(void)
     desc.MipLevels = 1;
     desc.ArraySize = 2;
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
     ID3D11Texture1D_Release(texture);
@@ -2490,13 +2503,70 @@ static void test_create_texture1d(void)
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         desc.MiscFlags = 0;
         hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
-        ok(hr == (i ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (i ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (SUCCEEDED(hr))
             ID3D11Texture1D_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
+#define test_dxgi_resource(a) test_dxgi_resource_(__LINE__, a)
+static void test_dxgi_resource_(unsigned int line, void *iface)
+{
+    IDXGIResource *resource, *resource2;
+    IDXGISurface *surface, *surface2;
+    IUnknown *object = iface, *unk;
+    DWORD data;
+    HRESULT hr;
+    UINT size;
+
+    hr = IUnknown_QueryInterface(object, &IID_IDXGIResource, (void **)&resource);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IDXGISurface, (void **)&surface)))
+    {
+        hr = IDXGISurface_QueryInterface(surface, &IID_IDXGIDeviceSubObject, (void **)&unk);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)((IUnknown *)resource == unk, "Unexpected interface pointer.\n");
+        IUnknown_Release(unk);
+
+        hr = IDXGISurface_QueryInterface(surface, &IID_IDXGIObject, (void **)&unk);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)((IUnknown *)resource == unk, "Unexpected interface pointer.\n");
+        IUnknown_Release(unk);
+
+        hr = IDXGISurface_QueryInterface(surface, &IID_IDXGIResource, (void **)&resource2);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)(resource2 == resource, "Unexpected resource pointer.\n");
+        IDXGIResource_Release(resource2);
+
+        hr = IDXGIResource_QueryInterface(resource, &IID_IDXGISurface, (void **)&surface2);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)(surface2 == surface, "Unexpected surface pointer.\n");
+        IDXGISurface_Release(surface2);
+
+        hr = IDXGISurface_GetParent(surface, &IID_IDXGIResource, (void **)&resource2);
+        ok_(__FILE__, line)(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
+        hr = IDXGIResource_GetParent(resource, &IID_IDXGISurface, (void **)&surface2);
+        ok_(__FILE__, line)(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
+
+        data = 123;
+        hr = IDXGIResource_SetPrivateData(resource, &IID_IUnknown, sizeof(data), &data);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        size = sizeof(data);
+        data = 0;
+        hr = IDXGISurface_GetPrivateData(surface, &IID_IUnknown, &size, &data);
+        ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)(data == 123, "Unexpected data %#lx.\n", data);
+
+        IDXGISurface_Release(surface);
+    }
+
+    IDXGIResource_Release(resource);
 }
 
 static void test_texture1d_interfaces(void)
@@ -2548,7 +2618,7 @@ static void test_texture1d_interfaces(void)
     }
 
     desc.Width = 512;
-    desc.MipLevels = 0;
+    desc.MipLevels = 1;
     desc.ArraySize = 1;
     desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     desc.Usage = D3D11_USAGE_DEFAULT;
@@ -2557,8 +2627,16 @@ static void test_texture1d_interfaces(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 1d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    test_dxgi_resource(texture);
+    ID3D11Texture1D_Release(texture);
+
+    desc.MipLevels = 0;
+    hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    test_dxgi_resource(texture);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
     hr = check_interface(texture, &IID_ID3D10Texture1D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture1D_Release(texture);
     if (FAILED(hr))
@@ -2586,7 +2664,7 @@ static void test_texture1d_interfaces(void)
         hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
         /* Shared resources are not supported by REF and WARP devices. */
         ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY),
-                "Test %u: Failed to create a 1d texture, hr %#x.\n", i, hr);
+                "Test %u: Failed to create a 1d texture, hr %#lx.\n", i, hr);
         if (FAILED(hr))
         {
             win_skip("Failed to create ID3D11Texture1D, skipping test %u.\n", i);
@@ -2635,7 +2713,7 @@ static void test_texture1d_interfaces(void)
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_texture2d(void)
@@ -2771,19 +2849,19 @@ static void test_create_texture2d(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &desc, &data, &texture);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture2D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
@@ -2792,15 +2870,15 @@ static void test_create_texture2d(void)
     desc.MipLevels = 0;
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture2D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11Texture2D_GetDesc(texture, &desc);
@@ -2822,30 +2900,30 @@ static void test_create_texture2d(void)
     desc.MipLevels = 1;
     desc.ArraySize = 2;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
     ID3D11Texture2D_Release(texture);
 
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_level_count);
-    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     desc.ArraySize = 1;
     desc.SampleDesc.Count = 2;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     if (quality_level_count)
     {
-        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID3D11Texture2D_Release(texture);
         desc.SampleDesc.Quality = quality_level_count;
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     }
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     /* We assume 15 samples multisampling is never supported in practice. */
     desc.SampleDesc.Count = 15;
     desc.SampleDesc.Quality = 0;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     desc.SampleDesc.Count = 1;
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -2868,7 +2946,7 @@ static void test_create_texture2d(void)
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
 
         todo_wine_if(todo)
-        ok(hr == expected_hr, "Test %u: Got unexpected hr %#x (format %#x).\n",
+        ok(hr == expected_hr, "Test %u: Got unexpected hr %#lx (format %#x).\n",
                 i, hr, desc.Format);
 
         if (SUCCEEDED(hr))
@@ -2876,7 +2954,7 @@ static void test_create_texture2d(void)
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_texture2d_interfaces(void)
@@ -2934,7 +3012,7 @@ static void test_texture2d_interfaces(void)
 
     desc.Width = 512;
     desc.Height = 512;
-    desc.MipLevels = 0;
+    desc.MipLevels = 1;
     desc.ArraySize = 1;
     desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     desc.SampleDesc.Count = 1;
@@ -2945,8 +3023,18 @@ static void test_texture2d_interfaces(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
+    check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
+    test_dxgi_resource(texture);
+    ID3D11Texture2D_Release(texture);
+
+    desc.MipLevels = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
+    test_dxgi_resource(texture);
     hr = check_interface(texture, &IID_ID3D10Texture2D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture2D_Release(texture);
     if (FAILED(hr))
@@ -2976,8 +3064,7 @@ static void test_texture2d_interfaces(void)
 
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
         /* Shared resources are not supported by REF and WARP devices. */
-        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY),
-                "Test %u: Failed to create a 2d texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK || broken(hr == E_OUTOFMEMORY), "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
         {
             win_skip("Failed to create ID3D11Texture2D, skipping test %u.\n", i);
@@ -3034,7 +3121,7 @@ static void test_texture2d_interfaces(void)
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_texture3d(void)
@@ -3087,19 +3174,19 @@ static void test_create_texture3d(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture3D(device, &desc, &data, &texture);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture3D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
@@ -3108,15 +3195,15 @@ static void test_create_texture3d(void)
     desc.MipLevels = 0;
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Texture3D_GetDevice(texture, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11Texture3D_GetDesc(texture, &desc);
@@ -3141,14 +3228,14 @@ static void test_create_texture3d(void)
         hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
 
         todo_wine_if(tests[i].todo)
-        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == (tests[i].succeeds ? S_OK : E_INVALIDARG), "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         if (SUCCEEDED(hr))
             ID3D11Texture3D_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_texture3d_interfaces(void)
@@ -3210,8 +3297,10 @@ static void test_texture3d_interfaces(void)
     desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
+    check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
+    test_dxgi_resource(texture);
     hr = check_interface(texture, &IID_ID3D10Texture3D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture3D_Release(texture);
     if (FAILED(hr))
@@ -3239,8 +3328,7 @@ static void test_texture3d_interfaces(void)
 
         hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
         /* Shared resources are not supported by REF and WARP devices. */
-        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY),
-                "Test %u: Failed to create a 3d texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK || broken(hr == E_OUTOFMEMORY), "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
         {
             win_skip("Failed to create ID3D11Texture3D, skipping test %u.\n", i);
@@ -3293,7 +3381,7 @@ static void test_texture3d_interfaces(void)
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_buffer(void)
@@ -3519,7 +3607,7 @@ static void test_create_buffer(void)
         hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
         expected_hr = current->succeeds ? S_OK : E_INVALIDARG;
         /* Shared resources are not supported by REF and WARP devices. */
-        ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY), "Test %u: Got hr %#x, expected %#x.\n",
+        ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY), "Test %u: Got hr %#lx, expected %#lx.\n",
                 i, hr, expected_hr);
         if (FAILED(hr))
         {
@@ -3527,6 +3615,8 @@ static void test_create_buffer(void)
                 win_skip("Failed to create a buffer, skipping test %u.\n", i);
             continue;
         }
+
+        check_interface(buffer, &IID_IDXGIResource, TRUE, FALSE);
 
         if (!(desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED))
             desc.StructureByteStride = 0;
@@ -3588,13 +3678,13 @@ static void test_create_buffer(void)
         desc.ByteWidth = i;
         expected_hr = !i || i % 16 ? E_INVALIDARG : S_OK;
         hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
-        ok(hr == expected_hr, "Got unexpected hr %#x for constant buffer size %u.\n", hr, i);
+        ok(hr == expected_hr, "Got unexpected hr %#lx for constant buffer size %u.\n", hr, i);
         if (SUCCEEDED(hr))
             ID3D11Buffer_Release(buffer);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_depthstencil_view(void)
@@ -3715,19 +3805,19 @@ static void test_create_depthstencil_view(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsview);
-    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11DepthStencilView_GetDevice(dsview, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     memset(&dsv_desc, 0, sizeof(dsv_desc));
@@ -3750,7 +3840,7 @@ static void test_create_depthstencil_view(void)
         texture_desc.Format = tests[i].texture.format;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         if (tests[i].dsv_desc.dimension == D3D11_DSV_DIMENSION_UNKNOWN)
         {
@@ -3764,9 +3854,9 @@ static void test_create_depthstencil_view(void)
 
         expected_refcount = get_refcount(texture);
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, current_desc, &dsview);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create depth stencil view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         refcount = get_refcount(texture);
-        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
         /* Not available on all Windows versions. */
         check_interface(dsview, &IID_ID3D10DepthStencilView, TRUE, TRUE);
@@ -3786,19 +3876,19 @@ static void test_create_depthstencil_view(void)
         texture_desc.Format = invalid_desc_tests[i].texture.format;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         dsview = (void *)0xdeadbeef;
         get_dsv_desc(&dsv_desc, &invalid_desc_tests[i].dsv_desc);
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsview);
-        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ok(!dsview, "Unexpected pointer %p.\n", dsview);
 
         ID3D11Texture2D_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_depthstencil_view_interfaces(void)
@@ -3832,7 +3922,7 @@ static void test_depthstencil_view_interfaces(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     dsv_desc.Format = texture_desc.Format;
     dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -3840,12 +3930,12 @@ static void test_depthstencil_view_interfaces(void)
     U(dsv_desc).Texture2D.MipSlice = 0;
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsview);
-    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DepthStencilView_QueryInterface(dsview, &IID_ID3D10DepthStencilView, (void **)&d3d10_dsview);
     ID3D11DepthStencilView_Release(dsview);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Depth stencil view should implement ID3D10DepthStencilView.\n");
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
 
     if (FAILED(hr))
     {
@@ -3866,7 +3956,7 @@ done:
     ID3D11Texture2D_Release(texture);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_rendertarget_view(void)
@@ -4030,19 +4120,19 @@ static void test_create_rendertarget_view(void)
     buffer_desc.StructureByteStride = 0;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Buffer_GetDevice(buffer, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -4054,21 +4144,21 @@ static void test_create_rendertarget_view(void)
     {
         rtview = (void *)0xdeadbeef;
         hr = ID3D11Device_CreateRenderTargetView(device, NULL, &rtv_desc, &rtview);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         ok(!rtview, "Unexpected pointer %p.\n", rtview);
     }
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)buffer, &rtv_desc, &rtview);
-    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11RenderTargetView_GetDevice(rtview, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     /* Not available on all Windows versions. */
@@ -4104,7 +4194,7 @@ static void test_create_rendertarget_view(void)
             texture2d_desc.Format = tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -4114,7 +4204,7 @@ static void test_create_rendertarget_view(void)
             texture3d_desc.Format = tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
@@ -4130,9 +4220,9 @@ static void test_create_rendertarget_view(void)
 
         expected_refcount = get_refcount(texture);
         hr = ID3D11Device_CreateRenderTargetView(device, texture, current_desc, &rtview);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         refcount = get_refcount(texture);
-        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
         /* Not available on all Windows versions. */
         check_interface(rtview, &IID_ID3D10RenderTargetView, TRUE, TRUE);
@@ -4157,7 +4247,7 @@ static void test_create_rendertarget_view(void)
             texture2d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -4167,21 +4257,21 @@ static void test_create_rendertarget_view(void)
             texture3d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
         get_rtv_desc(&rtv_desc, &invalid_desc_tests[i].rtv_desc);
         rtview = (void *)0xdeadbeef;
         hr = ID3D11Device_CreateRenderTargetView(device, texture, &rtv_desc, &rtview);
-        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ok(!rtview, "Unexpected pointer %p.\n", rtview);
 
         ID3D11Resource_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_shader_resource_view(void)
@@ -4375,7 +4465,7 @@ static void test_create_shader_resource_view(void)
 
     srview = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, NULL, &srview);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!srview, "Unexpected pointer %p.\n", srview);
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -4385,20 +4475,20 @@ static void test_create_shader_resource_view(void)
 
     srview = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateShaderResourceView(device, NULL, &srv_desc, &srview);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!srview, "Unexpected pointer %p.\n", srview);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srview);
-    ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11ShaderResourceView_GetDevice(srview, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     /* Not available on all Windows versions. */
@@ -4413,7 +4503,7 @@ static void test_create_shader_resource_view(void)
 
     srview = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srview);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!srview, "Unexpected pointer %p.\n", srview);
 
     ID3D11Buffer_Release(buffer);
@@ -4428,10 +4518,10 @@ static void test_create_shader_resource_view(void)
         buffer_desc.StructureByteStride = 4;
 
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-        ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, NULL, &srview);
-        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         memset(&srv_desc, 0, sizeof(srv_desc));
         ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
@@ -4492,7 +4582,7 @@ static void test_create_shader_resource_view(void)
             }
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -4502,7 +4592,7 @@ static void test_create_shader_resource_view(void)
             texture3d_desc.Format = tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
@@ -4518,9 +4608,9 @@ static void test_create_shader_resource_view(void)
 
         expected_refcount = get_refcount(texture);
         hr = ID3D11Device_CreateShaderResourceView(device, texture, current_desc, &srview);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create a shader resource view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         refcount = get_refcount(texture);
-        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Got refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
         /* Not available on all Windows versions. */
         check_interface(srview, &IID_ID3D10ShaderResourceView, TRUE, TRUE);
@@ -4558,7 +4648,7 @@ static void test_create_shader_resource_view(void)
             }
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -4568,21 +4658,21 @@ static void test_create_shader_resource_view(void)
             texture3d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
         srview = (void *)0xdeadbeef;
         get_srv_desc(&srv_desc, &invalid_desc_tests[i].srv_desc);
         hr = ID3D11Device_CreateShaderResourceView(device, texture, &srv_desc, &srview);
-        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ok(!srview, "Unexpected pointer %p.\n", srview);
 
         ID3D11Resource_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
@@ -4825,51 +4915,64 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     struct device_desc device_desc;
     ID3D11Device *device, *tmp;
     ID3D11GeometryShader *gs;
+    ID3D11ComputeShader *cs;
     ID3D11VertexShader *vs;
+    ID3D11DomainShader *ds;
     ID3D11PixelShader *ps;
+    ID3D11HullShader *hs;
     HRESULT hr;
 
     device_desc.feature_level = &feature_level;
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
     /* level_9 shaders */
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_0, sizeof(ps_4_0_level_9_0), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_0 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_1, sizeof(ps_4_0_level_9_1), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_1 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0_level_9_3, sizeof(ps_4_0_level_9_3), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create ps_4_0_level_9_3 shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11PixelShader_Release(ps);
 
+    ps = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreatePixelShader(device, vs_2_0, sizeof(vs_2_0), NULL, &ps);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!ps, "Unexpected pointer %p.\n", ps);
+
     /* vertex shader */
+    vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
+    vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, vs_3_0, sizeof(vs_3_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Created a SM3 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
+    vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, ps_4_0, sizeof(ps_4_0), NULL, &vs);
-    ok(hr == E_INVALIDARG, "Created a SM4 vertex shader from a pixel shader source, hr %#x, feature level %#x.\n",
-            hr, feature_level);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), NULL, &vs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Created a SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
             refcount, expected_refcount);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
     {
@@ -4878,7 +4981,7 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         ID3D11VertexShader_GetDevice(vs, &tmp);
         ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
         refcount = get_refcount(device);
-        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+        ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
 
@@ -4886,22 +4989,20 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         check_interface(vs, &IID_ID3D10VertexShader, TRUE, TRUE);
 
         refcount = ID3D11VertexShader_Release(vs);
-        ok(!refcount, "Vertex shader has %u references left.\n", refcount);
+        ok(!refcount, "Vertex shader has %lu references left.\n", refcount);
     }
 
     hr = ID3D11Device_CreateVertexShader(device, vs_4_1, sizeof(vs_4_1), NULL, &vs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(SUCCEEDED(hr), "Failed to create SM4.1 vertex shader, hr %#x, feature level %#x.\n",
-                hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11VertexShader_Release(vs);
-        ok(!refcount, "Vertex shader has %u references left.\n", refcount);
+        ok(!refcount, "Vertex shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Created a SM4.1 vertex shader, hr %#x, feature level %#x.\n",
-                    hr, feature_level);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11VertexShader_Release(vs);
     }
@@ -4910,12 +5011,12 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(SUCCEEDED(hr), "Failed to create SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Created a SM4 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
             refcount, expected_refcount);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
     {
@@ -4924,7 +5025,7 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         ID3D11PixelShader_GetDevice(ps, &tmp);
         ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
         refcount = get_refcount(device);
-        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+        ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
 
@@ -4932,21 +5033,20 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         check_interface(ps, &IID_ID3D10PixelShader, TRUE, TRUE);
 
         refcount = ID3D11PixelShader_Release(ps);
-        ok(!refcount, "Pixel shader has %u references left.\n", refcount);
+        ok(!refcount, "Pixel shader has %lu references left.\n", refcount);
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_4_1, sizeof(ps_4_1), NULL, &ps);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(SUCCEEDED(hr), "Failed to create SM4.1 pixel shader, hr %#x, feature level %#x.\n",
-                hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11PixelShader_Release(ps);
-        ok(!refcount, "Pixel shader has %u references left.\n", refcount);
+        ok(!refcount, "Pixel shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Created a SM4.1 pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11PixelShader_Release(ps);
     }
@@ -4955,12 +5055,12 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     expected_refcount = get_refcount(device) + (feature_level >= D3D_FEATURE_LEVEL_10_0);
     hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
-        ok(SUCCEEDED(hr), "Failed to create SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
     else
-        ok(hr == E_INVALIDARG, "Created a SM4 geometry shader, hr %#x, feature level %#x.\n", hr, feature_level);
+        ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n",
             refcount, expected_refcount);
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
     {
@@ -4969,7 +5069,7 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         ID3D11GeometryShader_GetDevice(gs, &tmp);
         ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
         refcount = get_refcount(device);
-        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+        ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
 
@@ -4977,28 +5077,44 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         check_interface(gs, &IID_ID3D10GeometryShader, TRUE, TRUE);
 
         refcount = ID3D11GeometryShader_Release(gs);
-        ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+        ok(!refcount, "Geometry shader has %lu references left.\n", refcount);
     }
 
     hr = ID3D11Device_CreateGeometryShader(device, gs_4_1, sizeof(gs_4_1), NULL, &gs);
     if (feature_level >= D3D_FEATURE_LEVEL_10_1)
     {
-        ok(SUCCEEDED(hr), "Failed to create SM4.1 geometry shader, hr %#x, feature level %#x.\n",
-                hr, feature_level);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         refcount = ID3D11GeometryShader_Release(gs);
-        ok(!refcount, "Geometry shader has %u references left.\n", refcount);
+        ok(!refcount, "Geometry shader has %lu references left.\n", refcount);
     }
     else
     {
         todo_wine_if(feature_level >= D3D_FEATURE_LEVEL_10_0)
-            ok(hr == E_INVALIDARG, "Created a SM4.1 geometry shader, hr %#x, feature level %#x.\n",
-                    hr, feature_level);
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11GeometryShader_Release(gs);
     }
 
+    /* Hull shader */
+    hs = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateHullShader(device, gs_4_0, sizeof(gs_4_0), NULL, &hs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!hs, "Unexpected pointer %p.\n", hs);
+
+    /* Domain shader */
+    ds = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateDomainShader(device, gs_4_0, sizeof(gs_4_0), NULL, &ds);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!ds, "Unexpected pointer %p.\n", ds);
+
+    /* Compute shader */
+    ds = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateComputeShader(device, gs_4_0, sizeof(gs_4_0), NULL, &cs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!cs, "Unexpected pointer %p.\n", cs);
+
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_sampler_state(void)
@@ -5051,7 +5167,7 @@ static void test_create_sampler_state(void)
     }
 
     hr = ID3D11Device_CreateSamplerState(device, NULL, &sampler_state1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -5069,18 +5185,18 @@ static void test_create_sampler_state(void)
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateSamplerState(device, &desc, &sampler_state1);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateSamplerState(device, &desc, &sampler_state2);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(sampler_state1 == sampler_state2, "Got different sampler state objects.\n");
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11SamplerState_GetDevice(sampler_state1, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11SamplerState_GetDesc(sampler_state1, &desc);
@@ -5098,9 +5214,9 @@ static void test_create_sampler_state(void)
     ok(desc.MaxLOD == 16.0f, "Got unexpected max LOD %f.\n", desc.MaxLOD);
 
     refcount = ID3D11SamplerState_Release(sampler_state2);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11SamplerState_Release(sampler_state1);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
@@ -5122,12 +5238,12 @@ static void test_create_sampler_state(void)
         desc.MaxLOD = 16.0f;
 
         hr = ID3D11Device_CreateSamplerState(device, &desc, &sampler_state1);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create sampler state, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11SamplerState_QueryInterface(sampler_state1, &IID_ID3D10SamplerState,
                 (void **)&d3d10_sampler_state);
-        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                "Test %u: Sampler state should implement ID3D10SamplerState.\n", i);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
         {
             win_skip("Sampler state does not implement ID3D10SamplerState.\n");
@@ -5170,13 +5286,13 @@ static void test_create_sampler_state(void)
                 "Test %u: Got unexpected max LOD %f.\n", i, d3d10_desc.MaxLOD);
 
         refcount = ID3D10SamplerState_Release(d3d10_sampler_state);
-        ok(refcount == 1, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+        ok(refcount == 1, "Test %u: Got unexpected refcount %lu.\n", i, refcount);
         refcount = ID3D11SamplerState_Release(sampler_state1);
-        ok(!refcount, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+        ok(!refcount, "Test %u: Got unexpected refcount %lu.\n", i, refcount);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_blend_state(void)
@@ -5284,7 +5400,7 @@ static void test_create_blend_state(void)
     }
 
     hr = ID3D11Device_CreateBlendState(device, NULL, &blend_state1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     memset(&desc, 0, sizeof(desc));
     desc.AlphaToCoverageEnable = FALSE;
@@ -5294,18 +5410,18 @@ static void test_create_blend_state(void)
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateBlendState(device, &desc, &blend_state1);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBlendState(device, &desc, &blend_state2);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(blend_state1 == blend_state2, "Got different blend state objects.\n");
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11BlendState_GetDevice(blend_state1, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11BlendState_GetDesc(blend_state1, &obtained_desc);
@@ -5346,20 +5462,20 @@ static void test_create_blend_state(void)
     check_interface(blend_state1, &IID_ID3D10BlendState1, TRUE, TRUE);
 
     refcount = ID3D11BlendState_Release(blend_state1);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11BlendState_Release(blend_state2);
-    ok(!refcount, "Blend state has %u references left.\n", refcount);
+    ok(!refcount, "Blend state has %lu references left.\n", refcount);
 
     for (i = 0; i < ARRAY_SIZE(desc_conversion_tests); ++i)
     {
         const D3D11_BLEND_DESC *current_desc = &desc_conversion_tests[i];
 
         hr = ID3D11Device_CreateBlendState(device, current_desc, &blend_state1);
-        ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11BlendState_QueryInterface(blend_state1, &IID_ID3D10BlendState, (void **)&d3d10_blend_state);
-        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-                "Blend state should implement ID3D10BlendState.\n");
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
         {
             win_skip("Blend state does not implement ID3D10BlendState.\n");
@@ -5397,11 +5513,11 @@ static void test_create_blend_state(void)
         ID3D10BlendState_Release(d3d10_blend_state);
 
         refcount = ID3D11BlendState_Release(blend_state1);
-        ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_depthstencil_state(void)
@@ -5419,7 +5535,7 @@ static void test_create_depthstencil_state(void)
     }
 
     hr = ID3D11Device_CreateDepthStencilState(device, NULL, &ds_state1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     ds_desc.DepthEnable = TRUE;
     ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -5438,27 +5554,27 @@ static void test_create_depthstencil_state(void)
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state1);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state2);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ds_state1 == ds_state2, "Got different depthstencil state objects.\n");
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11DepthStencilState_GetDevice(ds_state1, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     /* Not available on all Windows versions. */
     check_interface(ds_state1, &IID_ID3D10DepthStencilState, TRUE, TRUE);
 
     refcount = ID3D11DepthStencilState_Release(ds_state2);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11DepthStencilState_Release(ds_state1);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     ds_desc.DepthEnable = FALSE;
     ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
@@ -5473,7 +5589,7 @@ static void test_create_depthstencil_state(void)
     ds_desc.BackFace = ds_desc.FrontFace;
 
     hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state1);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&ds_desc, 0, sizeof(ds_desc));
     ID3D11DepthStencilState_GetDesc(ds_state1, &ds_desc);
@@ -5506,7 +5622,7 @@ static void test_create_depthstencil_state(void)
     ID3D11DepthStencilState_Release(ds_state1);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_rasterizer_state(void)
@@ -5527,7 +5643,7 @@ static void test_create_rasterizer_state(void)
     }
 
     hr = ID3D11Device_CreateRasterizerState(device, NULL, &rast_state1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     desc.FillMode = D3D11_FILL_SOLID;
     desc.CullMode = D3D11_CULL_BACK;
@@ -5542,18 +5658,18 @@ static void test_create_rasterizer_state(void)
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateRasterizerState(device, &desc, &rast_state1);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRasterizerState(device, &desc, &rast_state2);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(rast_state1 == rast_state2, "Got different rasterizer state objects.\n");
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11RasterizerState_GetDevice(rast_state1, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     hr = ID3D11RasterizerState_QueryInterface(rast_state1, &IID_ID3D10RasterizerState, (void **)&d3d10_rast_state);
@@ -5578,7 +5694,7 @@ static void test_create_rasterizer_state(void)
                 d3d10_desc.AntialiasedLineEnable);
 
         refcount = ID3D10RasterizerState_Release(d3d10_rast_state);
-        ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+        ok(refcount == 2, "Got unexpected refcount %lu.\n", refcount);
     }
 
     if (ID3D11Device_QueryInterface(device, &IID_ID3D11Device1, (void **)&device1) == S_OK)
@@ -5587,7 +5703,7 @@ static void test_create_rasterizer_state(void)
         D3D11_RASTERIZER_DESC1 desc1;
 
         hr = ID3D11RasterizerState_QueryInterface(rast_state1, &IID_ID3D11RasterizerState1, (void **)&state_ex1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         memset(&desc1, 0xcc, sizeof(desc1));
         ID3D11RasterizerState1_GetDesc1(state_ex1, &desc1);
@@ -5599,7 +5715,7 @@ static void test_create_rasterizer_state(void)
         memcpy(&desc1, &desc, sizeof(desc));
         desc1.ForcedSampleCount = 0;
         hr = ID3D11Device1_CreateRasterizerState1(device1, &desc1, &state_ex1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         ID3D11RasterizerState1_Release(state_ex1);
 
@@ -5607,12 +5723,12 @@ static void test_create_rasterizer_state(void)
     }
 
     refcount = ID3D11RasterizerState_Release(rast_state2);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3D11RasterizerState_Release(rast_state1);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_query(void)
@@ -5662,9 +5778,9 @@ static void test_create_query(void)
     feature_level = ID3D11Device_GetFeatureLevel(device);
 
     hr = ID3D11Device_CreateQuery(device, NULL, &query);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePredicate(device, NULL, &predicate);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -5679,12 +5795,12 @@ static void test_create_query(void)
 
         hr = ID3D11Device_CreateQuery(device, &query_desc, NULL);
         todo_wine_if(tests[i].todo)
-        ok(hr == S_FALSE, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        ok(hr == S_FALSE, "Got unexpected hr %#lx for query type %u.\n", hr, query_desc.Query);
 
         query_desc.Query = tests[i].query;
         hr = ID3D11Device_CreateQuery(device, &query_desc, &query);
         todo_wine_if(tests[i].todo)
-        ok(hr == S_OK, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        ok(hr == S_OK, "Got unexpected hr %#lx for query type %u.\n", hr, query_desc.Query);
         if (FAILED(hr))
             continue;
 
@@ -5693,11 +5809,11 @@ static void test_create_query(void)
 
         expected_hr = tests[i].can_use_create_predicate ? S_FALSE : E_INVALIDARG;
         hr = ID3D11Device_CreatePredicate(device, &query_desc, NULL);
-        ok(hr == expected_hr, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        ok(hr == expected_hr, "Got unexpected hr %#lx for query type %u.\n", hr, query_desc.Query);
 
         expected_hr = tests[i].can_use_create_predicate ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
-        ok(hr == expected_hr, "Got unexpected hr %#x for query type %u.\n", hr, query_desc.Query);
+        ok(hr == expected_hr, "Got unexpected hr %#lx for query type %u.\n", hr, query_desc.Query);
         if (SUCCEEDED(hr))
             ID3D11Predicate_Release(predicate);
     }
@@ -5705,22 +5821,22 @@ static void test_create_query(void)
     query_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
-    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Predicate_GetDevice(predicate, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
     /* Not available on all Windows versions. */
     check_interface(predicate, &IID_ID3D10Predicate, TRUE, TRUE);
     ID3D11Predicate_Release(predicate);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 #define get_query_data(a, b, c, d) get_query_data_(__LINE__, a, b, c, d)
@@ -5736,10 +5852,10 @@ static void get_query_data_(unsigned int line, ID3D11DeviceContext *context,
             break;
         Sleep(10);
     }
-    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     memset(data, 0xff, data_size);
     hr = ID3D11DeviceContext_GetData(context, query, data, data_size, 0);
-    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
 static void test_occlusion_query(void)
@@ -5774,17 +5890,17 @@ static void test_occlusion_query(void)
     query_desc.Query = D3D11_QUERY_OCCLUSION;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     data_size = ID3D11Asynchronous_GetDataSize(query);
     ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
-            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+            "Data was modified 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     ID3D11DeviceContext_End(context, query);
     ID3D11DeviceContext_Begin(context, query);
@@ -5792,49 +5908,49 @@ static void test_occlusion_query(void)
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
-            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+            "Data was modified 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     draw_color_quad(&test_context, &red);
 
     ID3D11DeviceContext_End(context, query);
     get_query_data(context, query, &data, sizeof(data));
-    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(DWORD), 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(WORD), 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) - 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data) + 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
-            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+            "Data was modified 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, &data, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(data.dword[0] == 0xffffffff && data.dword[1] == 0xffffffff,
-            "Data was modified 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+            "Data was modified 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(DWORD), 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, NULL, sizeof(data), 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_Begin(context, query);
     ID3D11DeviceContext_End(context, query);
     ID3D11DeviceContext_End(context, query);
 
     get_query_data(context, query, &data, sizeof(data));
-    ok(!data.uint, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    ok(!data.uint, "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
     texture_desc.Height = D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
@@ -5848,9 +5964,9 @@ static void test_occlusion_query(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     set_viewport(context, 0.0f, 0.0f, texture_desc.Width, texture_desc.Height, 0.0f, 1.0f);
@@ -5864,16 +5980,16 @@ static void test_occlusion_query(void)
     ok((data.dword[0] == 0x90000000 && data.dword[1] == 0x1)
             || (data.dword[0] == 0xffffffff && !data.dword[1])
             || broken(!data.uint),
-            "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+            "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Asynchronous_Release(query);
 
     /* The following test exercises a code path in wined3d. A wined3d context
      * associated with the query is destroyed when the swapchain is released. */
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_viewport(context, 0.0f, 0.0f, 64.0f, 64.0f, 0.0f, 1.0f);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
@@ -5887,10 +6003,10 @@ static void test_occlusion_query(void)
     test_context.swapchain = create_swapchain(device, test_context.window, NULL);
     hr = IDXGISwapChain_GetBuffer(test_context.swapchain, 0, &IID_ID3D11Texture2D,
             (void **)&test_context.backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)test_context.backbuffer,
             NULL, &test_context.backbuffer_rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
 
@@ -5899,7 +6015,7 @@ static void test_occlusion_query(void)
     if (0)
     {
         todo_wine ok(data.dword[0] == 0x1000 && !data.dword[1],
-                "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+                "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
     }
 
     ID3D11Asynchronous_Release(query);
@@ -5911,7 +6027,6 @@ static void test_occlusion_query(void)
 static void test_pipeline_statistics_query(void)
 {
     static const D3D11_QUERY_DATA_PIPELINE_STATISTICS zero_data = {0};
-    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     D3D11_QUERY_DATA_PIPELINE_STATISTICS data;
@@ -5920,8 +6035,26 @@ static void test_pipeline_statistics_query(void)
     D3D11_QUERY_DESC query_desc;
     ID3D11Asynchronous *query;
     unsigned int data_size;
+    ID3D11PixelShader *ps;
     ID3D11Device *device;
     HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(float4 pos : sv_position) : sv_target
+        {
+            return pos;
+        }
+#endif
+        0x43425844, 0xac408178, 0x2ca4213f, 0x4f2551e1, 0x1626b422, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x705f7673, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x745f7673, 0x65677261, 0xabab0074, 0x52444853, 0x0000003c, 0x00000040,
+        0x0000000f, 0x04002064, 0x001010f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
 
     if (!init_test_context(&test_context, NULL))
         return;
@@ -5934,14 +6067,14 @@ static void test_pipeline_statistics_query(void)
     query_desc.Query = D3D11_QUERY_PIPELINE_STATISTICS;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     data_size = ID3D11Asynchronous_GetDataSize(query);
     ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
 
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_End(context, query);
     ID3D11DeviceContext_Begin(context, query);
@@ -5949,9 +6082,9 @@ static void test_pipeline_statistics_query(void)
 
     memset(&data, 0xff, sizeof(data));
     hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(data.IAVertices == ~(UINT64)0, "Data was modified.\n");
 
     draw_quad(&test_context);
@@ -5982,8 +6115,12 @@ static void test_pipeline_statistics_query(void)
         ok(!data.CSInvocations, "Got unexpected CSInvocations count: %u.\n", (unsigned int)data.CSInvocations);
     }
 
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
     ID3D11DeviceContext_Begin(context, query);
-    draw_color_quad(&test_context, &red);
+    draw_quad(&test_context);
     ID3D11DeviceContext_End(context, query);
     get_query_data(context, query, &data, sizeof(data));
     ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
@@ -5998,6 +6135,7 @@ static void test_pipeline_statistics_query(void)
     ok(!data.DSInvocations, "Got unexpected DSInvocations count: %u.\n", (unsigned int)data.DSInvocations);
     ok(!data.CSInvocations, "Got unexpected CSInvocations count: %u.\n", (unsigned int)data.CSInvocations);
 
+    ID3D11PixelShader_Release(ps);
     ID3D11Asynchronous_Release(query);
     release_test_context(&test_context);
 }
@@ -6025,23 +6163,23 @@ static void test_timestamp_query(void)
     query_desc.Query = D3D11_QUERY_TIMESTAMP;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     data_size = ID3D11Asynchronous_GetDataSize(timestamp_query);
     ok(data_size == sizeof(UINT64), "Got unexpected data size %u.\n", data_size);
 
     query_desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_disjoint_query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     data_size = ID3D11Asynchronous_GetDataSize(timestamp_disjoint_query);
     ok(data_size == sizeof(disjoint), "Got unexpected data size %u.\n", data_size);
 
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
     ok(disjoint.Disjoint == 0xdeadbeef, "Disjoint data was modified.\n");
 
@@ -6051,9 +6189,9 @@ static void test_timestamp_query(void)
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
     ok(disjoint.Disjoint == 0xdeadbeef, "Disjoint data was modified.\n");
 
@@ -6067,29 +6205,29 @@ static void test_timestamp_query(void)
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xff;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) - 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) + 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) / 2, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint) * 2, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(disjoint.Frequency == 0xdeadbeef, "Frequency data was modified.\n");
     ok(disjoint.Disjoint == 0xff, "Disjoint data was modified.\n");
 
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, NULL, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint),
             D3D11_ASYNC_GETDATA_DONOTFLUSH);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(disjoint.Frequency == prev_disjoint.Frequency, "Frequency data mismatch.\n");
     ok(disjoint.Disjoint == prev_disjoint.Disjoint, "Disjoint data mismatch.\n");
 
     memset(&timestamp, 0xff, sizeof(timestamp));
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
 
     /* Test a TIMESTAMP query inside a TIMESTAMP_DISJOINT query. */
@@ -6097,7 +6235,7 @@ static void test_timestamp_query(void)
 
     memset(&timestamp, 0xff, sizeof(timestamp));
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     ok(timestamp == ~(UINT64)0, "Timestamp data was modified.\n");
 
     draw_color_quad(&test_context, &red);
@@ -6107,22 +6245,22 @@ static void test_timestamp_query(void)
 
     timestamp = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
 
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(timestamp != 0xdeadbeef, "Timestamp was not modified.\n");
 
     timestamp = 0xdeadbeef;
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) - 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) + 1, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) / 2, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(context, timestamp_query, &timestamp, sizeof(timestamp) * 2, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(timestamp == 0xdeadbeef, "Timestamp was modified.\n");
 
     ID3D11DeviceContext_End(context, timestamp_disjoint_query);
@@ -6130,7 +6268,7 @@ static void test_timestamp_query(void)
     disjoint.Frequency = 0xdeadbeef;
     disjoint.Disjoint = 0xff;
     hr = ID3D11DeviceContext_GetData(context, timestamp_disjoint_query, &disjoint, sizeof(disjoint), 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(disjoint.Frequency != 0xdeadbeef, "Frequency data was not modified.\n");
     ok(disjoint.Disjoint == TRUE || disjoint.Disjoint == FALSE, "Got unexpected disjoint %#x.\n", disjoint.Disjoint);
 
@@ -6139,7 +6277,7 @@ static void test_timestamp_query(void)
     query_desc.Query = D3D11_QUERY_TIMESTAMP;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&timestamp_query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     draw_color_quad(&test_context, &red);
 
@@ -6274,14 +6412,14 @@ static void test_so_statistics_query(void)
         query_desc.Query = tests[i].query;
         query_desc.MiscFlags = 0;
         hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         data_size = ID3D11Asynchronous_GetDataSize(query);
         ok(data_size == sizeof(data), "Got unexpected data size %u.\n", data_size);
 
         hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
         hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
         ID3D11DeviceContext_End(context, query);
         ID3D11DeviceContext_Begin(context, query);
@@ -6289,9 +6427,9 @@ static void test_so_statistics_query(void)
 
         memset(&data, 0xff, sizeof(data));
         hr = ID3D11DeviceContext_GetData(context, query, NULL, 0, 0);
-        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
         hr = ID3D11DeviceContext_GetData(context, query, &data, sizeof(data), 0);
-        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
         ok(data.NumPrimitivesWritten == ~(UINT64)0, "Data was modified.\n");
         ok(data.PrimitivesStorageNeeded == ~(UINT64)0, "Data was modified.\n");
 
@@ -6326,14 +6464,14 @@ static void test_so_statistics_query(void)
 
     /* multiple vertex streams */
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
 
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, ARRAY_SIZE(so_declaration),
             NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
     todo_wine
-    ok(hr == S_OK, "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (FAILED(hr))
     {
         ID3D11VertexShader_Release(vs);
@@ -6351,7 +6489,7 @@ static void test_so_statistics_query(void)
     query_desc.Query = D3D11_QUERY_SO_STATISTICS;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_Begin(context, query);
     ID3D11DeviceContext_Draw(context, 5, 0);
@@ -6437,12 +6575,12 @@ static void test_device_removed_reason(void)
     }
 
     hr = ID3D11Device_GetDeviceRemovedReason(device);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_GetDeviceRemovedReason(device);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_private_data(void)
@@ -6486,118 +6624,118 @@ static void test_private_data(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get IDXGISurface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_SetPrivateData(device, &test_guid, 0, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_SetPrivateData(device, &test_guid, ~0u, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_SetPrivateData(device, &test_guid, ~0u, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     size = sizeof(ptr) * 2;
     ptr = (IUnknown *)0xdeadbeef;
     hr = ID3D11Device_GetPrivateData(device, &test_guid, &size, &ptr);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!ptr, "Got unexpected pointer %p.\n", ptr);
     ok(size == sizeof(IUnknown *), "Got unexpected size %u.\n", size);
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     size = sizeof(ptr) * 2;
     ptr = (IUnknown *)0xdeadbeef;
     hr = IDXGIDevice_GetPrivateData(dxgi_device, &test_guid, &size, &ptr);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!ptr, "Got unexpected pointer %p.\n", ptr);
     ok(size == sizeof(IUnknown *), "Got unexpected size %u.\n", size);
     IDXGIDevice_Release(dxgi_device);
 
     refcount = get_refcount(test_object);
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, (IUnknown *)test_object);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     expected_refcount = refcount + 1;
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, (IUnknown *)test_object);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     --expected_refcount;
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, (IUnknown *)test_object);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     size = sizeof(data);
     hr = ID3D11Device_SetPrivateData(device, &test_guid, size, data);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     hr = ID3D11Device_SetPrivateData(device, &test_guid, 42, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_SetPrivateData(device, &test_guid, 42, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_SetPrivateDataInterface(device, &test_guid, (IUnknown *)test_object);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ++expected_refcount;
     size = 2 * sizeof(ptr);
     ptr = NULL;
     hr = ID3D11Device_GetPrivateData(device, &test_guid, &size, &ptr);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(size == sizeof(test_object), "Got unexpected size %u.\n", size);
     ++expected_refcount;
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     IUnknown_Release(ptr);
     --expected_refcount;
 
     ptr = (IUnknown *)0xdeadbeef;
     size = 1;
     hr = ID3D11Device_GetPrivateData(device, &test_guid, &size, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     size = 2 * sizeof(ptr);
     hr = ID3D11Device_GetPrivateData(device, &test_guid, &size, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     refcount = get_refcount(test_object);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
 
     size = 1;
     hr = ID3D11Device_GetPrivateData(device, &test_guid, &size, &ptr);
-    ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#lx.\n", hr);
     ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
     if (!enable_debug_layer)
     {
         hr = ID3D11Device_GetPrivateData(device, &test_guid2, NULL, NULL);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         size = 0xdeadbabe;
         hr = ID3D11Device_GetPrivateData(device, &test_guid2, &size, &ptr);
-        ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+        ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#lx.\n", hr);
         ok(size == 0, "Got unexpected size %u.\n", size);
         ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
         hr = ID3D11Device_GetPrivateData(device, &test_guid, NULL, &ptr);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
     }
 
     hr = ID3D11Texture2D_SetPrivateDataInterface(texture, &test_guid, (IUnknown *)test_object);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ptr = NULL;
     size = sizeof(ptr);
     hr = IDXGISurface_GetPrivateData(surface, &test_guid, &size, &ptr);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
     IUnknown_Release(ptr);
 
@@ -6609,7 +6747,7 @@ static void test_private_data(void)
         ptr = NULL;
         size = sizeof(ptr);
         hr = ID3D10Texture2D_GetPrivateData(d3d10_texture, &test_guid, &size, &ptr);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
         IUnknown_Release(ptr);
         ID3D10Texture2D_Release(d3d10_texture);
@@ -6618,9 +6756,9 @@ static void test_private_data(void)
     IDXGISurface_Release(surface);
     ID3D11Texture2D_Release(texture);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     refcount = ID3D11Device_Release(test_object);
-    ok(!refcount, "Test object has %u references left.\n", refcount);
+    ok(!refcount, "Test object has %lu references left.\n", refcount);
 }
 
 static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
@@ -6645,7 +6783,7 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -6659,30 +6797,30 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.MaxLOD = FLT_MAX;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &tmp_sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     ID3D11SamplerState_Release(tmp_sampler);
 
     tmp_sampler = sampler;
     refcount = get_refcount(sampler);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got refcount %lu, expected 1.\n", refcount);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
     refcount = ID3D11SamplerState_Release(sampler);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
     sampler = NULL;
     ID3D11DeviceContext_PSGetSamplers(context, 0, 1, &sampler);
     ok(sampler == tmp_sampler, "Got sampler %p, expected %p.\n", sampler, tmp_sampler);
     refcount = ID3D11SamplerState_Release(sampler);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &tmp_sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     refcount = ID3D11SamplerState_Release(tmp_sampler);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
 
     /* ID3D11RasterizerState */
     memset(&rasterizer_desc, 0, sizeof(rasterizer_desc));
@@ -6690,16 +6828,16 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     rasterizer_desc.CullMode = D3D11_CULL_BACK;
     rasterizer_desc.DepthClipEnable = TRUE;
     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_RSSetState(context, rasterizer_state);
     refcount = ID3D11RasterizerState_Release(rasterizer_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
     ID3D11DeviceContext_RSGetState(context, &tmp_rasterizer_state);
     ok(tmp_rasterizer_state == rasterizer_state, "Got rasterizer state %p, expected %p.\n",
             tmp_rasterizer_state, rasterizer_state);
     refcount = ID3D11RasterizerState_Release(tmp_rasterizer_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
 
     /* ID3D11ShaderResourceView */
     memset(&texture_desc, 0, sizeof(texture_desc));
@@ -6712,34 +6850,34 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Texture2D_Release(texture);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
     refcount = ID3D11ShaderResourceView_Release(srv);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
     ID3D11DeviceContext_PSGetShaderResources(context, 0, 1, &tmp_srv);
     ok(tmp_srv == srv, "Got SRV %p, expected %p.\n", tmp_srv, srv);
     refcount = ID3D11ShaderResourceView_Release(tmp_srv);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
 
     /* ID3D11RenderTargetView */
     texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Texture2D_Release(texture);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     refcount = ID3D11RenderTargetView_Release(rtv);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
     ID3D11DeviceContext_OMGetRenderTargets(context, 1, &tmp_rtv, NULL);
     ok(tmp_rtv == rtv, "Got RTV %p, expected %p.\n", tmp_rtv, rtv);
     refcount = ID3D11RenderTargetView_Release(tmp_rtv);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
 
     /* ID3D11Predicate */
     if (feature_level >= D3D_FEATURE_LEVEL_10_0)
@@ -6747,20 +6885,20 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
         predicate_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
         predicate_desc.MiscFlags = 0;
         hr = ID3D11Device_CreatePredicate(device, &predicate_desc, &predicate);
-        ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ID3D11DeviceContext_SetPredication(context, predicate, TRUE);
         refcount = ID3D11Predicate_Release(predicate);
-        ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+        ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
         ID3D11DeviceContext_GetPredication(context, &tmp_predicate, NULL);
         ok(tmp_predicate == predicate, "Got predicate %p, expected %p.\n", tmp_predicate, predicate);
         refcount = ID3D11Predicate_Release(tmp_predicate);
-        ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+        ok(!refcount, "Got refcount %lu, expected 0.\n", refcount);
     }
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_device_context_state(void)
@@ -6976,9 +7114,9 @@ static void test_device_context_state(void)
     ID3D11Texture2D *texture;
     enum DXGI_FORMAT format;
     float blend_factor[4];
-    DWORD data_size;
     BOOL pred_value;
     ULONG refcount;
+    UINT data_size;
     char data[64];
     HRESULT hr;
 
@@ -7018,18 +7156,18 @@ static void test_device_context_state(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 16.0f;
     hr = ID3D11Device1_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_11_1);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
             1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
 
     selected_feature_level = 0xc0de0000;
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1,
             D3D11_SDK_VERSION, &IID_ID3D11Device1, &selected_feature_level, NULL);
-    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got unexpected hr %#lx.\n", hr);
     ok(selected_feature_level == feature_level, "Got unexpected feature level %#x, expected %#x.\n",
             selected_feature_level, feature_level);
 
@@ -7037,23 +7175,23 @@ static void test_device_context_state(void)
     context_state = (void *)0xc0de0001;
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 0,
             D3D11_SDK_VERSION, &IID_ID3D11Device1, &selected_feature_level, &context_state);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!selected_feature_level, "Got unexpected feature level %#x.\n", selected_feature_level);
     ok(!context_state, "Got unexpected context state %p.\n", context_state);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
             0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, NULL,
             0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
             1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, &context_state);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(context_state);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     context_type = ID3D11DeviceContext1_GetType(context);
     ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
@@ -7071,33 +7209,33 @@ static void test_device_context_state(void)
     sob = create_buffer((ID3D11Device *)device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
 
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device1_CreateGeometryShader(device, simple_gs, sizeof(simple_gs), NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device1_CreatePixelShader(device, simple_ps, sizeof(simple_ps), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     if (feature_level < D3D_FEATURE_LEVEL_11_0) hs = NULL;
     else
     {
         hr = ID3D11Device1_CreateHullShader(device, simple_hs, sizeof(simple_hs), NULL, &hs);
-        ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     if (feature_level < D3D_FEATURE_LEVEL_11_0) ds = NULL;
     else
     {
         hr = ID3D11Device1_CreateDomainShader(device, simple_ds, sizeof(simple_ds), NULL, &ds);
-        ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     if (feature_level < D3D_FEATURE_LEVEL_11_0) cs = NULL;
     else
     {
         hr = ID3D11Device1_CreateComputeShader(device, simple_cs, sizeof(simple_cs), NULL, &cs);
-        ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -7105,7 +7243,7 @@ static void test_device_context_state(void)
     U(srv_desc).Buffer.ElementOffset = 0;
     U(srv_desc).Buffer.ElementWidth = 64;
     hr = ID3D11Device1_CreateShaderResourceView(device, (ID3D11Resource *)srvb, &srv_desc, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Buffer_Release(srvb);
 
     uav_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -7114,17 +7252,17 @@ static void test_device_context_state(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device1_CreateUnorderedAccessView(device, (ID3D11Resource *)uavb, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Buffer_Release(uavb);
 
     uavb = create_buffer((ID3D11Device *)device, D3D11_BIND_UNORDERED_ACCESS, 1024, NULL);
     hr = ID3D11Device1_CreateUnorderedAccessView(device, (ID3D11Resource *)uavb, &uav_desc, &ps_uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Buffer_Release(uavb);
 
     hr = ID3D11Device1_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             simple_vs, sizeof(simple_vs), &il);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ib_offset = 16;
     vb_offset = 16;
@@ -7143,17 +7281,17 @@ static void test_device_context_state(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device1_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device1_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Texture2D_Release(texture);
 
     texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device1_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device1_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth/stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11Texture2D_Release(texture);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
@@ -7166,7 +7304,7 @@ static void test_device_context_state(void)
     blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     hr = ID3D11Device1_CreateBlendState(device, &blend_desc, &bs);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ds_desc.DepthEnable = TRUE;
     ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -7183,7 +7321,7 @@ static void test_device_context_state(void)
     ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
     ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
     hr = ID3D11Device1_CreateDepthStencilState(device, &ds_desc, &dss);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rs_desc.FillMode = D3D11_FILL_SOLID;
     rs_desc.CullMode = D3D11_CULL_BACK;
@@ -7196,7 +7334,7 @@ static void test_device_context_state(void)
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
     hr = ID3D11Device1_CreateRasterizerState(device, &rs_desc, &rs);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     SetRect(&rect, 0, 0, 1, 2);
     vp.TopLeftX = 0;
@@ -7215,7 +7353,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext1_VSSetShaderResources(context, 0, 1, &srv);
     refcount = get_refcount(vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     ID3D11DeviceContext1_GSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
@@ -7266,18 +7404,18 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
     refcount = get_refcount(vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     hr = ID3DDeviceContextState_SetPrivateData(context_state, &test_guid, sizeof(constant), &constant);
-    ok(hr == S_OK, "Failed to set private data, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
     data_size = sizeof(data);
     memset(data, 0xa5, sizeof(data));
     hr = ID3DDeviceContextState_GetPrivateData(context_state, &test_guid, &data_size, data);
-    ok(hr == S_OK, "Failed to get private data, hr %#x.\n", hr);
-    ok(data_size == sizeof(constant), "Got private data size %x, expected %x.\n", data_size, sizeof(constant));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(data_size == sizeof(constant), "Got private data size %#x, expected %#Ix.\n", data_size, sizeof(constant));
     ok(!memcmp(data, &constant, sizeof(constant)), "Got unexpected private data.\n");
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, NULL);
 
@@ -7432,17 +7570,17 @@ static void test_device_context_state(void)
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext1_VSSetShader(context, vs2, NULL, 0);
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &tmp_context_state);
     refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
     tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
     ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
     refcount = ID3D11VertexShader_Release(tmp_vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* context states may be used with other devices instances too
      *
@@ -7461,7 +7599,7 @@ static void test_device_context_state(void)
         d3d11_device2 = create_device(NULL);
         ok(!!d3d11_device2, "Failed to create device.\n");
         hr = ID3D11Device_QueryInterface(d3d11_device2, &IID_ID3D11Device1, (void **)&device2);
-        ok(SUCCEEDED(hr), "Failed to query device interface, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID3D11Device_Release(d3d11_device2);
         ID3D11Device1_GetImmediateContext1(device2, &context2);
         ok(!!context2, "Failed to get immediate context.\n");
@@ -7478,13 +7616,13 @@ static void test_device_context_state(void)
         ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
         ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
         refcount = ID3D11VertexShader_Release(tmp_vs);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
         ID3D11DeviceContext1_SwapDeviceContextState(context2, tmp_context_state, &context_state2);
         refcount = ID3DDeviceContextState_Release(tmp_context_state);
-        ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
         refcount = ID3DDeviceContextState_Release(context_state2);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
         ok(context_state2 == context_state, "Got unexpected state pointer.\n");
 
         /* swapping the default state on context2 effectively clears the vertex shader */
@@ -7495,17 +7633,17 @@ static void test_device_context_state(void)
         ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
         ok(!!tmp_context_state, "Failed to get context state.\n");
         refcount = ID3DDeviceContextState_Release(tmp_context_state);
-        ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
         /* clearing the vertex shader on context doesn't have side effect on context2 */
         ID3D11DeviceContext1_VSSetShader(context, NULL, NULL, 0);
         refcount = get_refcount(vs2);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
         tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
         ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
         ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
         refcount = ID3D11VertexShader_Release(tmp_vs);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
         /* even after swapping it again */
         ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, NULL);
@@ -7513,7 +7651,7 @@ static void test_device_context_state(void)
         ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
         ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
         refcount = ID3D11VertexShader_Release(tmp_vs);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
         /* swapping the initial state on context2 doesn't have side effect on context either */
         ID3D11DeviceContext1_SwapDeviceContextState(context2, previous_context_state, NULL);
@@ -7522,21 +7660,21 @@ static void test_device_context_state(void)
         ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
 
         refcount = ID3D11DeviceContext1_Release(context2);
-        ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
         refcount = ID3D11Device1_Release(device2);
-        ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+        ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     }
 
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &tmp_context_state);
     refcount = ID3DDeviceContextState_Release(previous_context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
     refcount = get_refcount(vs);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     /* ID3DDeviceContextState retains the previous state. */
 
@@ -7730,9 +7868,9 @@ static void test_device_context_state(void)
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
-    ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(context_state);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     context_type = ID3D11DeviceContext1_GetType(context);
     ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
@@ -7741,7 +7879,7 @@ static void test_device_context_state(void)
     previous_context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
 
     context_type = ID3D11DeviceContext1_GetType(context);
@@ -7982,9 +8120,9 @@ static void test_device_context_state(void)
     context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
     refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     refcount = ID3DDeviceContextState_Release(previous_context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     /* ID3DDeviceContextState retains the previous state. */
 
@@ -8202,7 +8340,7 @@ static void test_device_context_state(void)
     ID3D11SamplerState_Release(sampler);
     ID3D11DeviceContext1_Release(context);
     refcount = ID3D11Device1_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_blend(void)
@@ -8310,14 +8448,14 @@ static void test_blend(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quads), quads);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
     blend_desc.RenderTarget[0].BlendEnable = TRUE;
@@ -8330,7 +8468,7 @@ static void test_blend(void)
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &src_blend);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_DEST_ALPHA;
     blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_DEST_ALPHA;
@@ -8338,7 +8476,7 @@ static void test_blend(void)
     blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &dst_blend);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;
     blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_BLEND_FACTOR;
@@ -8346,7 +8484,7 @@ static void test_blend(void)
     blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_DEST_ALPHA;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &dst_blend_factor);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -8364,9 +8502,9 @@ static void test_blend(void)
     ID3D11DeviceContext_Draw(context, 4, 4);
 
     color = get_texture_color(test_context.backbuffer, 320, 360);
-    ok(compare_color(color, 0x700040bf, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x700040bf, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 120);
-    ok(compare_color(color, 0xa080007f, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xa080007f, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
 
@@ -8375,9 +8513,9 @@ static void test_blend(void)
     ID3D11DeviceContext_Draw(context, 4, 4);
 
     color = get_texture_color(test_context.backbuffer, 320, 360);
-    ok(compare_color(color, 0x600066b3, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x600066b3, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 120);
-    ok(compare_color(color, 0xa0cc00b3, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xa0cc00b3, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     texture_desc.Width = 128;
     texture_desc.Height = 128;
@@ -8399,7 +8537,7 @@ static void test_blend(void)
     }
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)offscreen, NULL, &offscreen_rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &offscreen_rtv, NULL);
 
@@ -8413,9 +8551,9 @@ static void test_blend(void)
     ID3D11DeviceContext_Draw(context, 4, 4);
 
     color = get_texture_color(offscreen, 64, 96) & 0x00ffffff;
-    ok(compare_color(color, 0x00bf4000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00bf4000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(offscreen, 64, 32) & 0x00ffffff;
-    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11RenderTargetView_Release(offscreen_rtv);
     ID3D11Texture2D_Release(offscreen);
@@ -8788,7 +8926,7 @@ static void test_texture1d(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
@@ -8810,10 +8948,10 @@ static void test_texture1d(void)
                 texture_desc.Format = current_texture->format;
 
                 hr = ID3D11Device_CreateTexture1D(device, &texture_desc, current_texture->data, &texture);
-                ok(SUCCEEDED(hr), "Test %u: Failed to create 1d texture, hr %#x.\n", i, hr);
+                ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
                 hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-                ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+                ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             }
             else
             {
@@ -8838,7 +8976,7 @@ static void test_texture1d(void)
             sampler_desc.MaxLOD = test->max_lod;
 
             hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create sampler state, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
         }
@@ -8855,7 +8993,7 @@ static void test_texture1d(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 0, 0);
             ok(compare_color(color, test->expected_colors[x], 2),
-                    "Test %u: Got unexpected color 0x%08x at (%u).\n", i, color, x);
+                    "Test %u: Got unexpected colour 0x%08lx at (%u).\n", i, color, x);
         }
         release_resource_readback(&rb);
     }
@@ -8880,7 +9018,7 @@ static void test_texture1d(void)
     sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
 
@@ -8901,7 +9039,7 @@ static void test_texture1d(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
@@ -8919,7 +9057,7 @@ static void test_texture1d(void)
             texture_desc.Format = current_texture->format;
 
             hr = ID3D11Device_CreateTexture1D(device, &texture_desc, current_texture->data, &texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 1d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
 
         if (srv)
@@ -8927,7 +9065,7 @@ static void test_texture1d(void)
 
         get_srv_desc(&srv_desc, &test->srv_desc);
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
@@ -8943,7 +9081,7 @@ static void test_texture1d(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 0, 0);
             ok(compare_color(color, test->expected_colors[x], 1),
-                    "Test %u: Got unexpected color 0x%08x at (%u).\n", i, color, x);
+                    "Test %u: Got unexpected colour 0x%08lx at (%u).\n", i, color, x);
         }
         release_resource_readback(&rb);
     }
@@ -9765,7 +9903,7 @@ static void test_texture(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
@@ -9788,10 +9926,10 @@ static void test_texture(void)
                 texture_desc.Format = current_texture->format;
 
                 hr = ID3D11Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
-                ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+                ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
                 hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-                ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+                ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             }
             else
             {
@@ -9816,7 +9954,7 @@ static void test_texture(void)
             sampler_desc.MaxLOD = test->max_lod;
 
             hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create sampler state, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
         }
@@ -9835,7 +9973,7 @@ static void test_texture(void)
             {
                 color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, test->expected_colors[y * 4 + x], 2),
-                        "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
+                        "Test %u: Got unexpected colour 0x%08lx at (%u, %u).\n", i, color, x, y);
             }
         }
         release_resource_readback(&rb);
@@ -9861,7 +9999,7 @@ static void test_texture(void)
     sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
 
@@ -9882,7 +10020,7 @@ static void test_texture(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
@@ -9901,7 +10039,7 @@ static void test_texture(void)
             texture_desc.Format = current_texture->format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
 
         if (srv)
@@ -9909,7 +10047,7 @@ static void test_texture(void)
 
         get_srv_desc(&srv_desc, &test->srv_desc);
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
@@ -9927,7 +10065,7 @@ static void test_texture(void)
             {
                 color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, test->expected_colors[y * 4 + x], 1),
-                        "Test %u: Got unexpected color 0x%08x at (%u, %u).\n", i, color, x, y);
+                        "Test %u: Got unexpected colour 0x%08lx at (%u, %u).\n", i, color, x, y);
             }
         }
         release_resource_readback(&rb);
@@ -10141,9 +10279,9 @@ static void test_cube_maps(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rtv_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rtv_texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&constant, 0, sizeof(constant));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
@@ -10171,7 +10309,7 @@ static void test_cube_maps(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
 
@@ -10205,10 +10343,10 @@ static void test_cube_maps(void)
         texture_desc.CPUAccessFlags = 0;
         texture_desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&texture);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11Device_CreateShaderResourceView(device, texture, NULL, &srv);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
         sub_resource_count = texture_desc.MipLevels * texture_desc.ArraySize;
@@ -10424,12 +10562,12 @@ static void test_depth_stencil_sampling(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 0.0f;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &cmp_sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = 640;
     texture_desc.Height = 480;
@@ -10443,9 +10581,9 @@ static void test_depth_stencil_sampling(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     memset(&ps_constant, 0, sizeof(ps_constant));
@@ -10453,38 +10591,35 @@ static void test_depth_stencil_sampling(void)
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_compare_code, sizeof(ps_compare_code), NULL, &ps_cmp);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_sample_code, sizeof(ps_sample_code), NULL, &ps_depth);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_stencil_code, sizeof(ps_stencil_code), NULL, &ps_stencil);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_depth_stencil_code, sizeof(ps_depth_stencil_code), NULL,
             &ps_depth_stencil);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         texture_desc.Format = tests[i].typeless_format;
         texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Failed to create texture for format %#x, hr %#x.\n",
-                texture_desc.Format, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         dsv_desc.Format = tests[i].dsv_format;
         dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
         dsv_desc.Flags = 0;
         U(dsv_desc).Texture2D.MipSlice = 0;
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create depth stencil view for format %#x, hr %#x.\n",
-                dsv_desc.Format, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         srv_desc.Format = tests[i].depth_view_format;
         srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
         U(srv_desc).Texture2D.MostDetailedMip = 0;
         U(srv_desc).Texture2D.MipLevels = 1;
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &depth_srv);
-        ok(SUCCEEDED(hr), "Failed to create depth shader resource view for format %#x, hr %#x.\n",
-                srv_desc.Format, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_PSSetShader(context, ps_cmp, NULL, 0);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &depth_srv);
@@ -10553,8 +10688,7 @@ static void test_depth_stencil_sampling(void)
             ID3D11Texture2D_Release(texture);
             continue;
         }
-        ok(SUCCEEDED(hr), "Failed to create stencil shader resource view for format %#x, hr %#x.\n",
-                srv_desc.Format, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_PSSetShader(context, ps_stencil, NULL, 0);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &stencil_srv);
@@ -10780,14 +10914,14 @@ static void test_sample_c_lz(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 10.0f;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     memset(&ps_constant, 0, sizeof(ps_constant));
@@ -10802,7 +10936,7 @@ static void test_sample_c_lz(void)
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(depth_values); ++i)
     {
@@ -10814,13 +10948,13 @@ static void test_sample_c_lz(void)
         U(dsv_desc).Texture2DArray.ArraySize = 1;
 
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Slice %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, depth_values[i], 0);
         ID3D11DepthStencilView_Release(dsv);
 
         U(dsv_desc).Texture2DArray.MipSlice = 1;
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Slice %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
         ID3D11DepthStencilView_Release(dsv);
     }
@@ -10832,10 +10966,10 @@ static void test_sample_c_lz(void)
     U(srv_desc).Texture2DArray.FirstArraySlice = 0;
     U(srv_desc).Texture2DArray.ArraySize = ~0u;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_array_code, sizeof(ps_array_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
@@ -10860,7 +10994,7 @@ static void test_sample_c_lz(void)
     /* cube texture */
     texture_desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(depth_values); ++i)
     {
@@ -10872,13 +11006,13 @@ static void test_sample_c_lz(void)
         U(dsv_desc).Texture2DArray.ArraySize = 1;
 
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Slice %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, depth_values[i], 0);
         ID3D11DepthStencilView_Release(dsv);
 
         U(dsv_desc).Texture2DArray.MipSlice = 1;
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Slice %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
         ID3D11DepthStencilView_Release(dsv);
     }
@@ -10888,10 +11022,10 @@ static void test_sample_c_lz(void)
     U(srv_desc).TextureCube.MostDetailedMip = 0;
     U(srv_desc).TextureCube.MipLevels = ~0u;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_cube_code, sizeof(ps_cube_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
@@ -11010,7 +11144,7 @@ static void test_multiple_render_targets(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
@@ -11029,16 +11163,16 @@ static void test_multiple_render_targets(void)
     for (i = 0; i < ARRAY_SIZE(rt); ++i)
     {
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt[i]);
-        ok(SUCCEEDED(hr), "Failed to create texture %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "RT %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt[i], NULL, &rtv[i]);
-        ok(SUCCEEDED(hr), "Failed to create rendertarget view %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "RT %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(device, &context);
 
@@ -11086,7 +11220,7 @@ static void test_multiple_render_targets(void)
     }
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_render_target_views(void)
@@ -11253,11 +11387,11 @@ static void test_render_target_views(void)
         texture_desc.ArraySize = test->texture.array_size;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         get_rtv_desc(&rtv_desc, &test->rtv);
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create render target view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         for (j = 0; j < texture_desc.ArraySize; ++j)
         {
@@ -11304,7 +11438,7 @@ static void test_render_target_views(void)
             texture_desc.MiscFlags = 0;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             resource = (ID3D11Resource *)texture;
         }
         else
@@ -11314,13 +11448,13 @@ static void test_render_target_views(void)
             texture3d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             resource = (ID3D11Resource *)texture3d;
         }
 
         get_rtv_desc(&rtv_desc, &invalid_desc_tests[i].rtv_desc);
         hr = ID3D11Device_CreateRenderTargetView(device, resource, &rtv_desc, &rtv);
-        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11Resource_Release(resource);
     }
@@ -11528,17 +11662,17 @@ static void test_layered_rendering(void)
     if (ID3D11Device_GetFeatureLevel(device) < D3D_FEATURE_LEVEL_11_0 || warp)
     {
         hr = ID3D11Device_CreateGeometryShader(device, gs_4_code, sizeof(gs_4_code), NULL, &gs);
-        ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
     else
     {
         hr = ID3D11Device_CreateGeometryShader(device, gs_5_code, sizeof(gs_5_code), NULL, &gs);
-        ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     texture_desc.Width = 32;
@@ -11553,10 +11687,10 @@ static void test_layered_rendering(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     constant.layer_offset = 0;
     constant.draw_id = 0;
@@ -11574,7 +11708,7 @@ static void test_layered_rendering(void)
     U(rtv_desc).Texture2DArray.FirstArraySlice = 3;
     U(rtv_desc).Texture2DArray.ArraySize = 1;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     constant.layer_offset = 1;
     constant.draw_id = 2;
@@ -11587,7 +11721,7 @@ static void test_layered_rendering(void)
     U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
     U(rtv_desc).Texture2DArray.ArraySize = ~0u;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     constant.layer_offset = 0;
     constant.draw_id = 3;
@@ -11606,7 +11740,7 @@ static void test_layered_rendering(void)
     {
         U(rtv_desc).Texture2DArray.FirstArraySlice = texture_desc.ArraySize - 1 - i;
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-        ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Slice %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
         constant.layer_offset = 0;
         constant.draw_id = 4 + i;
@@ -11628,7 +11762,7 @@ static void test_layered_rendering(void)
     if (!check_viewport_array_index_from_any_shader_support(device))
     {
         hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11VertexShader_Release(vs);
         skip("Viewport array index not supported in vertex shaders.\n");
@@ -11645,7 +11779,7 @@ static void test_layered_rendering(void)
     U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
     U(rtv_desc).Texture2DArray.ArraySize = ~0u;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     draw_quad_vs(&test_context, vs_code, sizeof(vs_code));
     check_texture_sub_resource_vec4(texture,
@@ -11692,7 +11826,7 @@ static void test_scissor(void)
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
     hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     SetRect(&scissor_rect, 160, 120, 480, 360);
     ID3D11DeviceContext_RSSetScissorRects(immediate_context, 1, &scissor_rect);
@@ -11702,29 +11836,29 @@ static void test_scissor(void)
 
     draw_color_quad(&test_context, &green);
     color = get_texture_color(test_context.backbuffer, 320, 60);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 80, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 560, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 420);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate_context, test_context.backbuffer_rtv, red);
     ID3D11DeviceContext_RSSetState(immediate_context, rs);
     draw_color_quad(&test_context, &green);
     color = get_texture_color(test_context.backbuffer, 320, 60);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 80, 240);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 560, 240);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 420);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     set_viewport(immediate_context, -1.0f, 0.0f, 641, 480, 0.0f, 1.0f);
     SetRect(&scissor_rect, -1, 0, 640, 480);
@@ -11733,15 +11867,15 @@ static void test_scissor(void)
     check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
     draw_color_quad(&test_context, &green);
     color = get_texture_color(test_context.backbuffer, 320, 60);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 80, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 560, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 420);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11RasterizerState_Release(rs);
     release_test_context(&test_context);
@@ -12230,7 +12364,7 @@ static void test_clear_state(void)
     {
         hr = ID3D11Device_CreateShaderResourceView(device,
                 (ID3D11Resource *)buffer[i % D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT], &srv_desc, &srv[i]);
-        ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+        ok(hr == S_OK, "View %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     uav_desc.Format = DXGI_FORMAT_R32_UINT;
@@ -12244,13 +12378,13 @@ static void test_clear_state(void)
         cs_uav_buffer[i] = create_buffer(device, D3D11_BIND_UNORDERED_ACCESS, 32, NULL);
         hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)cs_uav_buffer[i],
                 &uav_desc, &cs_uav[i]);
-        ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+        ok(hr == S_OK, "View %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     ps_uav_buffer = create_buffer(device, D3D11_BIND_UNORDERED_ACCESS, 32, NULL);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)ps_uav_buffer,
             &uav_desc, &ps_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -12271,30 +12405,30 @@ static void test_clear_state(void)
         sampler_desc.MinLOD = (float)i;
 
         hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler[i]);
-        ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+        ok(hr == S_OK, "Sampler %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     hr = ID3D11Device_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateHullShader(device, simple_hs, sizeof(simple_hs), NULL, &hs);
-    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateDomainShader(device, simple_ds, sizeof(simple_ds), NULL, &ds);
-    ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateGeometryShader(device, simple_gs, sizeof(simple_gs), NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, simple_ps, sizeof(simple_ps), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateComputeShader(device, simple_cs, sizeof(simple_cs), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             simple_vs, sizeof(simple_vs), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
     blend_desc.AlphaToCoverageEnable = FALSE;
@@ -12309,7 +12443,7 @@ static void test_clear_state(void)
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ds_desc.DepthEnable = TRUE;
     ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -12327,7 +12461,7 @@ static void test_clear_state(void)
     ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 
     hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = 512;
     texture_desc.Height = 512;
@@ -12344,23 +12478,23 @@ static void test_clear_state(void)
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture[i]);
-        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Texture %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ds_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture[i], NULL, &rtv[i]);
-        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+        ok(hr == S_OK, "View %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)ds_texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depthstencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE; ++i)
     {
@@ -12386,13 +12520,13 @@ static void test_clear_state(void)
     rs_desc.AntialiasedLineEnable = FALSE;
 
     hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs_state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     predicate_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
     predicate_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreatePredicate(device, &predicate_desc, &predicate);
-    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Setup state. */
 
@@ -13032,7 +13166,7 @@ static void test_clear_state(void)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_il_append_aligned(void)
@@ -13178,16 +13312,16 @@ static void test_il_append_aligned(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb[0] = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(stream0), stream0);
     vb[1] = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(stream1), stream1);
     vb[2] = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(stream2), stream2);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -13206,13 +13340,13 @@ static void test_il_append_aligned(void)
     ID3D11DeviceContext_DrawInstanced(context, 4, 4, 0, 0);
 
     color = get_texture_color(test_context.backbuffer,  80, 240);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 240, 240);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 400, 240);
-    ok(compare_color(color, 0xffff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffff0000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 560, 240);
-    ok(compare_color(color, 0xffff00ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffff00ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11PixelShader_Release(ps);
     ID3D11VertexShader_Release(vs);
@@ -13417,18 +13551,18 @@ static void test_instanced_draw(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtvs[1]);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb[0] = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(stream0), stream0);
     vb[1] = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(stream1), stream1);
@@ -13591,19 +13725,19 @@ static void test_vertex_id(void)
     query_desc.Query = D3D11_QUERY_SO_STATISTICS;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(hr == S_OK, "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(hr == S_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     stride = 16;
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, vs_code, sizeof(vs_code),
             so_declaration, ARRAY_SIZE(so_declaration), &stride, 1, 0, NULL, &gs);
-    ok(hr == S_OK, "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
     ib = create_buffer(device, D3D11_BIND_INDEX_BUFFER, sizeof(indices), indices);
@@ -13741,9 +13875,9 @@ static void test_fragment_coords(void)
     ps_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cutoff), &cutoff);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_frac_code, sizeof(ps_frac_code), NULL, &ps_frac);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &ps_cb);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
@@ -13753,13 +13887,13 @@ static void test_fragment_coords(void)
     draw_quad(&test_context);
 
     color = get_texture_color(test_context.backbuffer, 319, 239);
-    ok(compare_color(color, 0xff000000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff000000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 239);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 319, 240);
-    ok(compare_color(color, 0xffff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffff0000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffffff00, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11Buffer_Release(ps_cb);
     cutoff.x = 16.0f;
@@ -13770,13 +13904,13 @@ static void test_fragment_coords(void)
     draw_quad(&test_context);
 
     color = get_texture_color(test_context.backbuffer, 14, 14);
-    ok(compare_color(color, 0xff000000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff000000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 18, 14);
-    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 14, 18);
-    ok(compare_color(color, 0xffff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffff0000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(test_context.backbuffer, 18, 18);
-    ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffffff00, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext_PSSetShader(context, ps_frac, NULL, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
@@ -13784,7 +13918,7 @@ static void test_fragment_coords(void)
     ID3D11DeviceContext_Draw(context, 4, 0);
 
     color = get_texture_color(test_context.backbuffer, 14, 14);
-    ok(compare_color(color, 0xff008080, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff008080, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11Buffer_Release(ps_cb);
     ID3D11PixelShader_Release(ps_frac);
@@ -13867,18 +14001,18 @@ static void test_initial_texture_data(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &staging_texture);
-    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.CPUAccessFlags = 0;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)texture, (ID3D11Resource *)staging_texture);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &ps_srv);
-    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -13894,10 +14028,10 @@ static void test_initial_texture_data(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 0.0f;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(hr == S_OK, "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
@@ -13912,7 +14046,7 @@ static void test_initial_texture_data(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14064,10 +14198,10 @@ static void test_update_subresource(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &ps_srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -14084,10 +14218,10 @@ static void test_update_subresource(void)
     sampler_desc.MaxLOD = 0.0f;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
@@ -14125,7 +14259,7 @@ static void test_update_subresource(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
@@ -14141,7 +14275,7 @@ static void test_update_subresource(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14152,7 +14286,7 @@ static void test_update_subresource(void)
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code_3d, sizeof(ps_code_3d), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc_3d.Width = 2;
     texture_desc_3d.Height = 2;
@@ -14168,10 +14302,10 @@ static void test_update_subresource(void)
     resource_data.SysMemSlicePitch = texture_desc_3d.Width * texture_desc_3d.Height * sizeof(*initial_data);
 
     hr = ID3D11Device_CreateTexture3D(device, &texture_desc_3d, &resource_data, &texture_3d);
-    ok(SUCCEEDED(hr), "Failed to create 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture_3d, NULL, &ps_srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
@@ -14197,7 +14331,7 @@ static void test_update_subresource(void)
         {
             color = get_readback_color(&rb, 160 + j * 320, 120 + i * 240, 0);
             ok(compare_color(color, expected_colors_3d[j + i * 2], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, expected_colors_3d[j + i * 2]);
         }
     }
@@ -14216,12 +14350,12 @@ static void test_update_subresource(void)
     hr = ID3D11Device_CreateTexture3D(device, &texture_desc_3d, &resource_data, &texture_3d);
     if (FAILED(hr))
     {
-        skip("Failed to create BC7 3d texture, hr %#x.\n", hr);
+        skip("Failed to create BC7 3d texture, hr %#lx.\n", hr);
     }
     else
     {
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture_3d, NULL, &ps_srv);
-        ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
         ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
@@ -14247,7 +14381,7 @@ static void test_update_subresource(void)
             {
                 color = get_readback_color(&rb, 70 + j * 160, 50 + i * 120, 0);
                 ok(compare_color(color, bc7_expected_colors[j + i * 4], 1),
-                        "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                         color, j, i, bc7_expected_colors[j + i * 4]);
             }
         }
@@ -14373,7 +14507,7 @@ static void test_copy_subresource_region(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
 
@@ -14382,10 +14516,10 @@ static void test_copy_subresource_region(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &src_texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)dst_texture, NULL, &ps_srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -14402,10 +14536,10 @@ static void test_copy_subresource_region(void)
     sampler_desc.MaxLOD = 0.0f;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
@@ -14444,7 +14578,7 @@ static void test_copy_subresource_region(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
@@ -14460,15 +14594,15 @@ static void test_copy_subresource_region(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
     release_resource_readback(&rb);
 
     hr = ID3D11DeviceContext_QueryInterface(context, &IID_ID3D11DeviceContext1, (void **)&context1);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Failed to query ID3D11DeviceContext1, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Got unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
     {
@@ -14495,7 +14629,7 @@ static void test_copy_subresource_region(void)
             {
                 color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
                 ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                        "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                         color, j, i, bitmap_data[j + i * 4]);
             }
         }
@@ -14507,7 +14641,7 @@ static void test_copy_subresource_region(void)
 
     ID3D11PixelShader_Release(ps);
     hr = ID3D11Device_CreatePixelShader(device, ps_buffer_code, sizeof(ps_buffer_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11ShaderResourceView_Release(ps_srv);
     ps_srv = NULL;
@@ -14570,7 +14704,7 @@ static void test_copy_subresource_region(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14628,7 +14762,7 @@ static void test_copy_subresource_region_1d(void)
     }
 
     hr = ID3D11Device_CreateTexture1D(device, &texture1d_desc, resource_data, &texture1d);
-    ok(hr == S_OK, "Failed to create 1d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture2d_desc.Width = 4;
     texture2d_desc.Height = 4;
@@ -14643,7 +14777,7 @@ static void test_copy_subresource_region_1d(void)
     texture2d_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_box(&box, 0, 0, 0, 4, 1, 1);
     for (i = 0; i < ARRAY_SIZE(resource_data); ++i)
@@ -14659,7 +14793,7 @@ static void test_copy_subresource_region_1d(void)
         {
             color = get_readback_color(&rb, j, i, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14670,7 +14804,7 @@ static void test_copy_subresource_region_1d(void)
     {
         color = get_readback_color(&rb, i, 0, 0);
         ok(compare_color(color, bitmap_data[i], 1),
-                "Got color 0x%08x at %u, expected 0x%08x.\n",
+                "Got colour 0x%08lx at %u, expected 0x%08lx.\n",
                 color, i, bitmap_data[i]);
     }
     release_resource_readback(&rb);
@@ -14747,9 +14881,9 @@ static void test_copy_subresource_region_3d(void)
     texture3d_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &src_texture);
-    ok(hr == S_OK, "Failed to create 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &dst_texture);
-    ok(hr == S_OK, "Failed to create 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture2d_desc.Width = 4;
     texture2d_desc.Height = 4;
@@ -14779,12 +14913,12 @@ static void test_copy_subresource_region_3d(void)
     }
 
     hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, resource_data, &texture2d);
-    ok(hr == S_OK, "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)src_texture, NULL, &src_srv);
-    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)dst_texture, NULL, &dst_srv);
-    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -14801,10 +14935,10 @@ static void test_copy_subresource_region_3d(void)
     sampler_desc.MaxLOD = 0.0f;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &src_srv);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
@@ -14826,7 +14960,7 @@ static void test_copy_subresource_region_3d(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14865,7 +14999,7 @@ static void test_copy_subresource_region_3d(void)
         {
             color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120, 0);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
-                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    "Got colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
@@ -14912,14 +15046,20 @@ static void test_resource_map(void)
     buffer_desc.StructureByteStride = 0;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    mapped_subresource.pData = (void *)0xdeadbeef;
+    mapped_subresource.RowPitch = 0xabab;
+    mapped_subresource.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 1, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!mapped_subresource.pData, "Unexpected pointer %p.\n", mapped_subresource.pData);
+    ok(mapped_subresource.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", mapped_subresource.DepthPitch);
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 1024, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 1024, "Got unexpected depth pitch %u.\n", mapped_subresource.DepthPitch);
     *((DWORD *)mapped_subresource.pData) = 0xdeadbeef;
@@ -14927,15 +15067,15 @@ static void test_resource_map(void)
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 1024, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 1024, "Got unexpected depth pitch %u.\n", mapped_subresource.DepthPitch);
     data = *((DWORD *)mapped_subresource.pData);
-    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ok(data == 0xdeadbeef, "Got unexpected data %#lx.\n", data);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffer, 0);
 
     refcount = ID3D11Buffer_Release(buffer);
-    ok(!refcount, "Buffer has %u references left.\n", refcount);
+    ok(!refcount, "Buffer has %lu references left.\n", refcount);
 
     texture2d_desc.Width = 512;
     texture2d_desc.Height = 512;
@@ -14950,14 +15090,20 @@ static void test_resource_map(void)
     texture2d_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    mapped_subresource.pData = (void *)0xdeadbeef;
+    mapped_subresource.RowPitch = 0xabab;
+    mapped_subresource.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 1, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!mapped_subresource.pData, "Unexpected pointer %p.\n", mapped_subresource.pData);
+    ok(mapped_subresource.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", mapped_subresource.DepthPitch);
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 4 * 512, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 4 * 512 * 512, "Got unexpected depth pitch %u.\n",
             mapped_subresource.DepthPitch);
@@ -14966,16 +15112,16 @@ static void test_resource_map(void)
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 0, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 4 * 512, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 4 * 512 * 512, "Got unexpected depth pitch %u.\n",
             mapped_subresource.DepthPitch);
     data = *((DWORD *)mapped_subresource.pData);
-    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ok(data == 0xdeadbeef, "Got unexpected data %#lx.\n", data);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture2d, 0);
 
     refcount = ID3D11Texture2D_Release(texture2d);
-    ok(!refcount, "2D texture has %u references left.\n", refcount);
+    ok(!refcount, "2D texture has %lu references left.\n", refcount);
 
     texture3d_desc.Width = 64;
     texture3d_desc.Height = 64;
@@ -14988,14 +15134,14 @@ static void test_resource_map(void)
     texture3d_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-    ok(SUCCEEDED(hr), "Failed to create 3d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 1, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 4 * 64, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 4 * 64 * 64, "Got unexpected depth pitch %u.\n",
             mapped_subresource.DepthPitch);
@@ -15004,21 +15150,21 @@ static void test_resource_map(void)
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 0, D3D11_MAP_READ, 0, &mapped_subresource);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(mapped_subresource.RowPitch == 4 * 64, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
     ok(mapped_subresource.DepthPitch == 4 * 64 * 64, "Got unexpected depth pitch %u.\n",
             mapped_subresource.DepthPitch);
     data = *((DWORD *)mapped_subresource.pData);
-    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ok(data == 0xdeadbeef, "Got unexpected data %#lx.\n", data);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture3d, 0);
 
     refcount = ID3D11Texture3D_Release(texture3d);
-    ok(!refcount, "3D texture has %u references left.\n", refcount);
+    ok(!refcount, "3D texture has %lu references left.\n", refcount);
 
     ID3D11DeviceContext_Release(context);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 #define check_resource_cpu_access(a, b, c, d, e) check_resource_cpu_access_(__LINE__, a, b, c, d, e)
@@ -15034,7 +15180,7 @@ static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *c
 
     expected_hr = cpu_read ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ, 0, &map_desc);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx for READ.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
@@ -15042,20 +15188,20 @@ static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *c
     expected_hr = !dynamic && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE, 0, &map_desc);
     todo_wine_if(dynamic && cpu_write)
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx for WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
     expected_hr = cpu_read && cpu_write ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for READ_WRITE.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx for READ_WRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
     expected_hr = dynamic ? S_OK : E_INVALIDARG;
     hr = ID3D11DeviceContext_Map(context, resource, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
     todo_wine_if(!dynamic && cpu_write)
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x for WRITE_DISCARD.\n", hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx for WRITE_DISCARD.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
@@ -15071,7 +15217,7 @@ static void check_resource_cpu_access_(unsigned int line, ID3D11DeviceContext *c
     todo_wine_if(expected_hr != S_OK)
     ok_(__FILE__, line)(hr == expected_hr
             || broken(bind_flags & (D3D11_BIND_CONSTANT_BUFFER | D3D11_BIND_SHADER_RESOURCE)),
-            "Got hr %#x for WRITE_NO_OVERWRITE.\n", hr);
+            "Got hr %#lx for WRITE_NO_OVERWRITE.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11DeviceContext_Unmap(context, resource, 0);
 
@@ -15152,7 +15298,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
     ID3D11Device_GetImmediateContext(device, &context);
@@ -15205,7 +15351,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         buffer_desc.CPUAccessFlags = 0;
         expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
-        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        ok(hr == expected_hr, "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             check_resource_cpu_access(context, resource,
@@ -15216,7 +15362,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
-        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        ok(hr == expected_hr, "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             check_resource_cpu_access(context, resource,
@@ -15227,7 +15373,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
-        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        ok(hr == expected_hr, "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             check_resource_cpu_access(context, resource,
@@ -15238,7 +15384,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
         expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, (ID3D11Buffer **)&resource);
-        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        ok(hr == expected_hr, "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             check_resource_cpu_access(context, resource,
@@ -15293,7 +15439,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         texture_desc.CPUAccessFlags = 0;
         expected_hr = tests[i].is_valid && !required_cpu_access ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
-        ok(hr == expected_hr, "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+        ok(hr == expected_hr, "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             check_resource_cpu_access(context, resource,
@@ -15305,7 +15451,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         expected_hr = tests[i].is_valid && cpu_write ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
         ok(hr == expected_hr || (hr == S_OK && broken_validation),
-                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+                "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             if (broken_validation)
@@ -15319,7 +15465,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         expected_hr = tests[i].is_valid && cpu_read ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
         ok(hr == expected_hr || (hr == S_OK && broken_validation),
-                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+                "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             if (broken_validation)
@@ -15333,7 +15479,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
         expected_hr = tests[i].is_valid && cpu_write && cpu_read ? S_OK : E_INVALIDARG;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &data, (ID3D11Texture2D **)&resource);
         ok(hr == expected_hr || (hr == S_OK && broken_validation),
-                "Got hr %#x, expected %#x, test %u.\n", hr, expected_hr, i);
+                "Test %u: Got hr %#lx, expected %#lx.\n", i, hr, expected_hr);
         if (SUCCEEDED(hr))
         {
             if (broken_validation)
@@ -15348,7 +15494,7 @@ static void test_resource_access(const D3D_FEATURE_LEVEL feature_level)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_check_multisample_quality_levels(void)
@@ -15365,7 +15511,7 @@ static void test_check_multisample_quality_levels(void)
     }
 
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
-    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (!quality_levels)
     {
         skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping test.\n");
@@ -15374,61 +15520,61 @@ static void test_check_multisample_quality_levels(void)
 
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_UNKNOWN, 2, &quality_levels);
-    todo_wine ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, 65536, 2, &quality_levels);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     todo_wine ok(quality_levels == 0xdeadbeef, "Got unexpected quality_levels %u.\n", quality_levels);
 
     if (!enable_debug_layer)
     {
         hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, NULL);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, NULL);
-        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     }
 
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &quality_levels);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
 
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, &quality_levels);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(quality_levels == 1, "Got unexpected quality_levels %u.\n", quality_levels);
 
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
 
     /* We assume 15 samples multisampling is never supported in practice. */
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 15, &quality_levels);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 32, &quality_levels);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 33, &quality_levels);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
     quality_levels = 0xdeadbeef;
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 64, &quality_levels);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
 
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_BC3_UNORM, 2, &quality_levels);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
 
 done:
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
@@ -15463,23 +15609,22 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "GetParent failed, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
     swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x for typeless format (feature level %#x).\n",
-            hr, feature_level);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         IDXGISwapChain_Release(swapchain);
 
@@ -15510,18 +15655,18 @@ static void test_swapchain_formats(const D3D_FEATURE_LEVEL feature_level)
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
         todo_wine_if(todo)
             ok(hr == expected_hr || broken(hr == E_OUTOFMEMORY),
-                    "Got hr %#x, expected %#x (feature level %#x, format %#x).\n",
-                    hr, expected_hr, feature_level, format);
+                    "Got hr %#lx, expected %#lx (format %#x).\n",
+                    hr, expected_hr, format);
         if (FAILED(hr))
             continue;
         refcount = IDXGISwapChain_Release(swapchain);
-        ok(!refcount, "Swapchain has %u references left.\n", refcount);
+        ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ok(!refcount, "Factory has %lu references left.\n", refcount);
     DestroyWindow(swapchain_desc.OutputWindow);
 }
 
@@ -15546,7 +15691,7 @@ static void test_swapchain_views(void)
     context = test_context.immediate_context;
 
     refcount = get_refcount(test_context.backbuffer);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     draw_color_quad(&test_context, &color);
     check_texture_color(test_context.backbuffer, 0xff7f4c33, 1);
@@ -15555,11 +15700,11 @@ static void test_swapchain_views(void)
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     U(rtv_desc).Texture2D.MipSlice = 0;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)test_context.backbuffer, &rtv_desc, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     refcount = get_refcount(test_context.backbuffer);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     draw_color_quad(&test_context, &color);
     check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
@@ -15569,7 +15714,7 @@ static void test_swapchain_views(void)
     U(srv_desc).Texture2D.MostDetailedMip = 0;
     U(srv_desc).Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)test_context.backbuffer, &srv_desc, &srv);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11ShaderResourceView_Release(srv);
 
@@ -15678,18 +15823,18 @@ static void test_swapchain_flip(void)
     swapchain = create_swapchain(device, window, &desc);
 
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer_0);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_GetBuffer(swapchain, 1, &IID_ID3D11Texture2D, (void **)&backbuffer_1);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_GetBuffer(swapchain, 2, &IID_ID3D11Texture2D, (void **)&backbuffer_2);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_0, NULL, &backbuffer_0_rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)backbuffer_0, NULL, &backbuffer_0_srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)backbuffer_1, NULL, &backbuffer_1_srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(backbuffer_0, &texture_desc);
     ok((texture_desc.BindFlags & (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE))
@@ -15704,7 +15849,7 @@ static void test_swapchain_flip(void)
     ok(texture_desc.Usage == D3D11_USAGE_DEFAULT, "Got unexpected usage %u.\n", texture_desc.Usage);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer_1, NULL, &offscreen_rtv);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11RenderTargetView_Release(offscreen_rtv);
 
@@ -15725,19 +15870,19 @@ static void test_swapchain_flip(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &offscreen);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)offscreen, NULL, &offscreen_rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &offscreen_rtv, NULL);
     set_viewport(context, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
@@ -15746,14 +15891,14 @@ static void test_swapchain_flip(void)
     ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_0_rtv, red);
 
     ID3D11DeviceContext_Draw(context, 4, 0);
     color = get_texture_color(offscreen, 120, 240);
-    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     /* DXGI moves buffers in the same direction as earlier versions. Buffer 2
      * becomes buffer 1, buffer 1 becomes the new buffer 0, and buffer 0
@@ -15771,13 +15916,13 @@ static void test_swapchain_flip(void)
 
     ID3D11DeviceContext_Draw(context, 4, 0);
     color = get_texture_color(offscreen, 120, 240); /* green, buf 0 */
-    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     /* Buffer 1 is still untouched. */
 
     color = get_texture_color(backbuffer_0, 320, 240); /* green */
-    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(backbuffer_2, 320, 240); /* red */
-    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     IDXGISwapChain_Present(swapchain, 0, 0);
 
@@ -15785,16 +15930,16 @@ static void test_swapchain_flip(void)
 
     ID3D11DeviceContext_Draw(context, 4, 0);
     color = get_texture_color(offscreen, 120, 240); /* blue, buf 0 */
-    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(offscreen, 360, 240); /* red, buf 1 */
-    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     color = get_texture_color(backbuffer_0, 320, 240); /* blue */
-    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7fff0000, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(backbuffer_1, 320, 240); /* red */
-    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_texture_color(backbuffer_2, 320, 240); /* green */
-    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x7f00ff00, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11VertexShader_Release(vs);
     ID3D11PixelShader_Release(ps);
@@ -15812,7 +15957,7 @@ static void test_swapchain_flip(void)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
 
@@ -15844,10 +15989,10 @@ static void test_clear_render_target_view_1d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture1D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
     check_texture1d_color(texture, 0xbf4c7f19, 1);
@@ -15897,17 +16042,17 @@ static void test_clear_render_target_view_2d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &srgb_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv[0]);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)srgb_texture, NULL, &srgb_rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, clear_colour);
     check_texture_color(test_context.backbuffer, expected_color, 1);
@@ -15929,19 +16074,19 @@ static void test_clear_render_target_view_2d(void)
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     U(rtv_desc).Texture2D.MipSlice = 0;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &srgb_rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     U(rtv_desc).Texture2D.MipSlice = 0;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv[0]);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv[0], clear_colour);
     check_texture_color(texture, expected_color, 1);
@@ -15956,7 +16101,7 @@ static void test_clear_render_target_view_2d(void)
             colour = get_readback_color(&rb, 80 + i * 160, 60 + j * 120, 0);
             ok(compare_color(colour, expected_srgb_color, 1)
                     || broken(compare_color(colour, expected_color, 1) && broken_device),
-                    "Got unexpected colour 0x%08x.\n", colour);
+                    "Got unexpected colour 0x%08lx.\n", colour);
         }
     }
     release_resource_readback(&rb);
@@ -15969,24 +16114,24 @@ static void test_clear_render_target_view_2d(void)
     texture_desc.Height = 16;
     texture_desc.ArraySize = 5;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
     U(rtv_desc).Texture2DArray.MipSlice = 0;
     U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
     U(rtv_desc).Texture2DArray.ArraySize = 5;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv[0]);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     U(rtv_desc).Texture2DArray.FirstArraySlice = 1;
     U(rtv_desc).Texture2DArray.ArraySize = 3;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv[1]);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     U(rtv_desc).Texture2DArray.FirstArraySlice = 2;
     U(rtv_desc).Texture2DArray.ArraySize = 1;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv[2]);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv[0], blue);
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv[1], green);
@@ -15994,27 +16139,27 @@ static void test_clear_render_target_view_2d(void)
 
     get_texture_readback(texture, 0, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08lx.\n", colour);
     release_resource_readback(&rb);
 
     get_texture_readback(texture, 1, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08lx.\n", colour);
     release_resource_readback(&rb);
 
     get_texture_readback(texture, 2, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(colour, 0xbf4c7f19, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0xbf4c7f19, 1), "Got unexpected colour 0x%08lx.\n", colour);
     release_resource_readback(&rb);
 
     get_texture_readback(texture, 3, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08lx.\n", colour);
     release_resource_readback(&rb);
 
     get_texture_readback(texture, 4, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08lx.\n", colour);
     release_resource_readback(&rb);
 
     ID3D11RenderTargetView_Release(rtv[2]);
@@ -16054,10 +16199,10 @@ static void test_clear_render_target_view_3d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
     check_texture3d_color(texture, 0xbf4c7f19, 1);
@@ -16069,7 +16214,7 @@ static void test_clear_render_target_view_3d(void)
 
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_TYPELESS;
     hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
@@ -16077,7 +16222,7 @@ static void test_clear_render_target_view_3d(void)
     U(rtv_desc).Texture3D.FirstWSlice = 0;
     U(rtv_desc).Texture3D.WSize = ~0u;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, color);
     check_texture3d_color(texture, 0xbf95bc59, 1);
@@ -16119,10 +16264,10 @@ static void test_clear_depth_stencil_view(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)depth_texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
     check_texture_float(depth_texture, 1.0f, 0);
@@ -16139,10 +16284,10 @@ static void test_clear_depth_stencil_view(void)
 
     texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
-    ok(SUCCEEDED(hr), "Failed to create depth texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)depth_texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
     todo_wine check_texture_color(depth_texture, 0x00ffffff, 0);
@@ -16168,7 +16313,7 @@ static void test_clear_depth_stencil_view(void)
     ID3D11DeviceContext_Release(context);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static unsigned int to_sint8(unsigned int x)
@@ -16200,7 +16345,7 @@ static void check_rgba_sint8_(unsigned int line, DWORD data, const struct uvec4 
     };
 
     ok_(__FILE__, line)(data == expected[0] || data == expected[1] || broken(data == expected[2]),
-            "Got %#x, expected %#x or %#x at %u, uvec4 %#x, %#x, %#x, %#x.\n",
+            "Got %#lx, expected %#lx or %#lx at %u, uvec4 %#x, %#x, %#x, %#x.\n",
             data, expected[0], expected[1], x, v->x, v->y, v->z, v->w);
 }
 
@@ -16303,10 +16448,10 @@ static void test_clear_buffer_unordered_access_view(void)
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = 8;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -16314,7 +16459,7 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -16342,7 +16487,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Raw buffer views */
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -16350,11 +16495,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -16381,7 +16526,7 @@ static void test_clear_buffer_unordered_access_view(void)
     /* Typed buffer views */
     buffer_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_SINT;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -16389,11 +16534,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     U(uav_desc).Buffer.FirstElement = 9;
     U(uav_desc).Buffer.NumElements = 7;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -16422,11 +16567,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 4;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     U(uav_desc).Buffer.FirstElement = 2;
     U(uav_desc).Buffer.NumElements = 2;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -16480,11 +16625,11 @@ static void test_clear_buffer_unordered_access_view(void)
     U(uav_desc).Buffer.NumElements = 16;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     U(uav_desc).Buffer.FirstElement = 8;
     U(uav_desc).Buffer.NumElements = 8;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav2);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(uvec4_data); ++i)
     {
@@ -16511,7 +16656,7 @@ static void test_clear_buffer_unordered_access_view(void)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_clear_image_unordered_access_view(void)
@@ -16626,7 +16771,7 @@ static void test_clear_image_unordered_access_view(void)
             resource_desc.format = tests[i].format;
             if (FAILED(hr = create_resource(device, &resource_desc, NULL, &resource)))
             {
-                skip("Failed to create resource, hr %#x.\n", hr);
+                skip("Failed to create resource, hr %#lx.\n", hr);
                 winetest_pop_context();
                 continue;
             }
@@ -16663,7 +16808,7 @@ static void test_clear_image_unordered_access_view(void)
                 }
 
                 hr = ID3D11Device_CreateUnorderedAccessView(device, resource, &uav_desc, &uav[j]);
-                ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             }
 
             for (j = 0; j < 4; ++j)
@@ -16758,10 +16903,10 @@ static void test_initial_depth_stencil_state(void)
     texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
 
@@ -16845,15 +16990,15 @@ static void test_draw_depth_only(void)
     texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_color_code, sizeof(ps_color_code), NULL, &ps_color);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_depth_code, sizeof(ps_depth_code), NULL, &ps_depth);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_PSSetShader(context, ps_color, NULL, 0);
@@ -16969,13 +17114,13 @@ static void test_draw_uav_only(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 0, NULL, NULL,
@@ -17125,7 +17270,7 @@ float4 main(const ps_in v) : SV_TARGET
     index_cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_VSSetConstantBuffers(context, 0, 1, &index_cb);
     ID3D11DeviceContext_VSSetConstantBuffers(context, 1, 1, &colors_cb);
@@ -17237,7 +17382,7 @@ static void test_vs_input_relative_addressing(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &test_context.input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
     ID3D11DeviceContext_VSSetConstantBuffers(context, 0, 1, &cb);
@@ -17248,7 +17393,7 @@ static void test_vs_input_relative_addressing(void)
     ID3D11DeviceContext_IASetVertexBuffers(context, 1, 1, &vb, &stride, &offset);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     for (i = 0; i < ARRAY_SIZE(colors); ++i)
@@ -17314,32 +17459,32 @@ static void test_getdc(void)
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
-    ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     IDXGISurface1_Release(surface);
     ID3D11Texture2D_Release(texture);
 
     desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
-    ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDXGISurface1_ReleaseDC(surface, NULL);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
-    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDXGISurface1_ReleaseDC(surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     IDXGISurface1_Release(surface);
     ID3D11Texture2D_Release(texture);
@@ -17366,32 +17511,32 @@ static void test_getdc(void)
         desc.MiscFlags = 0;
 
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
         ID3D11Texture2D_Release(texture);
 
         /* STAGING usage, requesting GDI compatibility mode. */
         desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
-        ok(FAILED(hr), "Expected CreateTexture2D to fail, hr %#x.\n", hr);
+        ok(FAILED(hr), "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
 
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_RENDER_TARGET;
         desc.CPUAccessFlags = 0;
         hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
         if (testdata[i].getdc_supported)
-            ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+            ok(hr == S_OK, "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
         else
-            ok(FAILED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+            ok(FAILED(hr), "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
 
         if (FAILED(hr))
             continue;
 
         hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface1, (void**)&surface);
-        ok(SUCCEEDED(hr), "Failed to get IDXGISurface1 interface, hr %#x.\n", hr);
+        ok(hr == S_OK, "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
 
         dc = (void *)0x1234;
         hr = IDXGISurface1_GetDC(surface, FALSE, &dc);
-        ok(SUCCEEDED(hr), "Got unexpected hr %#x for format %s.\n", hr, testdata[i].name);
+        ok(hr == S_OK, "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
 
         if (FAILED(hr))
         {
@@ -17401,10 +17546,10 @@ static void test_getdc(void)
         }
 
         type = GetObjectType(dc);
-        ok(type == OBJ_MEMDC, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+        ok(type == OBJ_MEMDC, "Format %s: Got unexpected object type %#lx.\n", testdata[i].name, type);
         bitmap = GetCurrentObject(dc, OBJ_BITMAP);
         type = GetObjectType(bitmap);
-        ok(type == OBJ_BITMAP, "Got unexpected object type %#x for format %s.\n", type, testdata[i].name);
+        ok(type == OBJ_BITMAP, "Format %s: Got unexpected object type %#lx.\n", testdata[i].name, type);
 
         size = GetObjectA(bitmap, sizeof(dib), &dib);
         ok(size == sizeof(dib) || broken(size == sizeof(dib.dsBm)),
@@ -17433,44 +17578,44 @@ static void test_getdc(void)
 
         if (size == sizeof(dib))
         {
-            ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %u for format %s.\n",
+            ok(dib.dsBmih.biSize == sizeof(dib.dsBmih), "Got unexpected size %lu for format %s.\n",
                     dib.dsBmih.biSize, testdata[i].name);
-            ok(dib.dsBmih.biWidth == 64, "Got unexpected width %d for format %s.\n",
+            ok(dib.dsBmih.biWidth == 64, "Got unexpected width %ld for format %s.\n",
                     dib.dsBmih.biHeight, testdata[i].name);
-            ok(dib.dsBmih.biHeight == 64, "Got unexpected height %d for format %s.\n",
+            ok(dib.dsBmih.biHeight == 64, "Got unexpected height %ld for format %s.\n",
                     dib.dsBmih.biHeight, testdata[i].name);
             ok(dib.dsBmih.biPlanes == 1, "Got unexpected plane count %u for format %s.\n",
                     dib.dsBmih.biPlanes, testdata[i].name);
             ok(dib.dsBmih.biBitCount == bit_count, "Got unexpected bit count %u for format %s.\n",
                     dib.dsBmih.biBitCount, testdata[i].name);
-            ok(dib.dsBmih.biCompression == BI_RGB, "Got unexpected compression %#x for format %s.\n",
+            ok(dib.dsBmih.biCompression == BI_RGB, "Got unexpected compression %#lx for format %s.\n",
                     dib.dsBmih.biCompression, testdata[i].name);
-            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %u for format %s.\n",
+            ok(!dib.dsBmih.biSizeImage, "Got unexpected image size %lu for format %s.\n",
                     dib.dsBmih.biSizeImage, testdata[i].name);
-            ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %d for format %s.\n",
+            ok(!dib.dsBmih.biXPelsPerMeter, "Got unexpected horizontal resolution %ld for format %s.\n",
                     dib.dsBmih.biXPelsPerMeter, testdata[i].name);
-            ok(!dib.dsBmih.biYPelsPerMeter, "Got unexpected vertical resolution %d for format %s.\n",
+            ok(!dib.dsBmih.biYPelsPerMeter, "Got unexpected vertical resolution %ld for format %s.\n",
                     dib.dsBmih.biYPelsPerMeter, testdata[i].name);
-            ok(!dib.dsBmih.biClrUsed, "Got unexpected used colour count %u for format %s.\n",
+            ok(!dib.dsBmih.biClrUsed, "Got unexpected used colour count %lu for format %s.\n",
                     dib.dsBmih.biClrUsed, testdata[i].name);
-            ok(!dib.dsBmih.biClrImportant, "Got unexpected important colour count %u for format %s.\n",
+            ok(!dib.dsBmih.biClrImportant, "Got unexpected important colour count %lu for format %s.\n",
                     dib.dsBmih.biClrImportant, testdata[i].name);
             ok(!dib.dsBitfields[0] && !dib.dsBitfields[1] && !dib.dsBitfields[2],
-                    "Got unexpected colour masks 0x%08x 0x%08x 0x%08x for format %s.\n",
+                    "Got unexpected colour masks 0x%08lx 0x%08lx 0x%08lx for format %s.\n",
                     dib.dsBitfields[0], dib.dsBitfields[1], dib.dsBitfields[2], testdata[i].name);
             ok(!dib.dshSection, "Got unexpected section %p for format %s.\n", dib.dshSection, testdata[i].name);
-            ok(!dib.dsOffset, "Got unexpected offset %u for format %s.\n", dib.dsOffset, testdata[i].name);
+            ok(!dib.dsOffset, "Got unexpected offset %lu for format %s.\n", dib.dsOffset, testdata[i].name);
         }
 
         hr = IDXGISurface1_ReleaseDC(surface, NULL);
-        ok(hr == S_OK, "Failed to release DC, hr %#x.\n", hr);
+        ok(hr == S_OK, "Format %s: Got unexpected hr %#lx.\n", testdata[i].name, hr);
 
         IDXGISurface1_Release(surface);
         ID3D11Texture2D_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_shader_stage_input_output_matching(void)
@@ -17564,17 +17709,17 @@ static void test_shader_stage_input_output_matching(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv[0] = test_context.backbuffer_rtv;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtv[1]);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
@@ -17664,11 +17809,11 @@ static void test_unbound_streams(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &test_context.input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, white);
@@ -17861,19 +18006,19 @@ static void test_shader_interstage_interface(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
@@ -17890,7 +18035,7 @@ static void test_shader_interstage_interface(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps_code, tests[i].ps_size, NULL, &ps);
-        ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         ID3D11DeviceContext_Draw(context, 4, 0);
         check_texture_vec4(render_target, &tests[i].expected_result, 0);
@@ -17973,9 +18118,9 @@ static void test_sm4_if_instruction(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_if_nz_code, sizeof(ps_if_nz_code), NULL, &ps_if_nz);
-    ok(SUCCEEDED(hr), "Failed to create if_nz pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_if_z_code, sizeof(ps_if_z_code), NULL, &ps_if_z);
-    ok(SUCCEEDED(hr), "Failed to create if_z pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(bits), NULL);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
@@ -18079,14 +18224,14 @@ static void test_sm4_breakc_instruction(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_breakc_nz_code, sizeof(ps_breakc_nz_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create breakc_nz pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_breakc_z_code, sizeof(ps_breakc_z_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create breakc_z pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
@@ -18195,14 +18340,14 @@ static void test_sm4_continuec_instruction(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_continuec_nz_code, sizeof(ps_continuec_nz_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create continuec_nz pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_continuec_z_code, sizeof(ps_continuec_z_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create continuec_z pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
@@ -18281,10 +18426,10 @@ static void test_sm4_discard_instruction(void)
 
     hr = ID3D11Device_CreatePixelShader(device, ps_discard_nz_code, sizeof(ps_discard_nz_code),
             NULL, &ps_discard_nz);
-    ok(SUCCEEDED(hr), "Failed to create discard_nz pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_discard_z_code, sizeof(ps_discard_z_code),
             NULL, &ps_discard_z);
-    ok(SUCCEEDED(hr), "Failed to create discard_z pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(values); ++i)
     {
@@ -18520,10 +18665,10 @@ static void test_sm5_swapc_instruction(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
@@ -18531,17 +18676,17 @@ static void test_sm5_swapc_instruction(void)
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc0_code, sizeof(ps_swapc0_code), NULL, &ps[0]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc1_code, sizeof(ps_swapc1_code), NULL, &ps[1]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc2_code, sizeof(ps_swapc2_code), NULL, &ps[2]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc3_code, sizeof(ps_swapc3_code), NULL, &ps[3]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc4_code, sizeof(ps_swapc4_code), NULL, &ps[4]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_swapc5_code, sizeof(ps_swapc5_code), NULL, &ps[5]);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
@@ -18580,12 +18725,57 @@ static void test_sm5_swapc_instruction(void)
     release_test_context(&test_context);
 }
 
+static BOOL is_vs_sysval_semantic(const char *name)
+{
+    return !strcmp(name, "SV_InstanceID") || !strcmp(name, "SV_VertexID");
+}
+
+static void check_layout_element_exclusion(ID3D11Device *device, const D3D11_INPUT_ELEMENT_DESC *elements,
+        unsigned int element_count, const DWORD *shader_code, unsigned int shader_code_size, BOOL is_cs,
+        const char *test_context)
+{
+    D3D11_INPUT_ELEMENT_DESC elements_temp[32];
+    ID3D11InputLayout *layout;
+    unsigned int i;
+    HRESULT hr;
+
+    winetest_push_context(test_context);
+
+    hr = ID3D11Device_CreateInputLayout(device, elements, element_count, shader_code, shader_code_size, &layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11InputLayout_Release(layout);
+
+    for (i = 0; i < element_count; ++i)
+    {
+        winetest_push_context("%s excluded", elements[i].SemanticName);
+        memcpy(elements_temp, elements, sizeof(*elements_temp) * i);
+        memcpy(elements_temp + i, elements + i + 1, sizeof(*elements_temp) * (element_count - i - 1));
+        hr = ID3D11Device_CreateInputLayout(device, elements_temp, element_count - 1,
+                shader_code, shader_code_size, &layout);
+        if (is_cs || is_vs_sysval_semantic(elements[i].SemanticName))
+        {
+            /* sysval semantic. */
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            ID3D11InputLayout_Release(layout);
+        }
+        else
+        {
+            ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+        }
+        winetest_pop_context();
+    }
+
+    winetest_pop_context();
+}
+
 static void test_create_input_layout(void)
 {
     D3D11_INPUT_ELEMENT_DESC layout_desc[] =
     {
         {"POSITION", 0, DXGI_FORMAT_UNKNOWN, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
+
     ULONG refcount, expected_refcount;
     ID3D11InputLayout *input_layout;
     ID3D11Device *device;
@@ -18608,6 +18798,109 @@ static void test_create_input_layout(void)
         0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
         0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
+
+    static D3D11_INPUT_ELEMENT_DESC vs2_layout_desc[] =
+    {
+        {"CUSTOMDATA", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_ClipDistance", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_InstanceID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_VertexID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+    };
+#if 0
+    float4 main(float4 d : CUSTOMDATA, float4 p1 : POSITION, float4 p2 : SV_Position, float4 c : COLOR,
+                float cd : SV_ClipDistance, uint iid : SV_InstanceID, uint vid : SV_VertexID) : SV_POSITION
+    {
+        return p1;
+    }
+#endif
+    static const DWORD vs2_code[] =
+    {
+        0x43425844, 0x3e9b7242, 0x048c7a6e, 0x31fd9fc7, 0x1105dc32, 0x00000001, 0x000001ac, 0x00000003,
+        0x0000002c, 0x00000134, 0x00000168, 0x4e475349, 0x00000100, 0x00000007, 0x00000008, 0x000000b0,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x000000bb, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x000000c4, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
+        0x0000000f, 0x000000d0, 0x00000000, 0x00000000, 0x00000003, 0x00000003, 0x0000000f, 0x000000d6,
+        0x00000000, 0x00000000, 0x00000003, 0x00000004, 0x00000001, 0x000000e6, 0x00000000, 0x00000008,
+        0x00000001, 0x00000005, 0x00000001, 0x000000f4, 0x00000000, 0x00000006, 0x00000001, 0x00000006,
+        0x00000001, 0x54535543, 0x41444d4f, 0x50004154, 0x5449534f, 0x004e4f49, 0x505f5653, 0x7469736f,
+        0x006e6f69, 0x4f4c4f43, 0x56530052, 0x696c435f, 0x73694470, 0x636e6174, 0x56530065, 0x736e495f,
+        0x636e6174, 0x00444965, 0x565f5653, 0x65747265, 0x00444978, 0x4e47534f, 0x0000002c, 0x00000001,
+        0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653,
+        0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040, 0x0000000f, 0x0300005f, 0x001010f2,
+        0x00000001, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x05000036, 0x001020f2, 0x00000000,
+        0x00101e46, 0x00000001, 0x0100003e
+    };
+
+#if 0
+float4 main() : SV_POSITION
+{
+    return float4(0, 0, 0, 1);
+}
+#endif
+    static const DWORD vs3_code[] =
+    {
+        0x43425844, 0xcf477c49, 0x343fc59b, 0x52dff555, 0x73ebaa82, 0x00000001, 0x000000b4, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003, 0x00000000,
+        0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040, 0x0000000f,
+        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x08000036, 0x001020f2, 0x00000000, 0x00004002,
+        0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+
+    static D3D11_INPUT_ELEMENT_DESC cs_layout_desc[] =
+    {
+        {"SV_GroupID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_GroupThreadID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_DispatchThreadID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"SV_GroupIndex", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+#if 0
+    [numthreads(256, 1, 1)]
+    void main(uint p1 : SV_GroupID, uint p2 : SV_GroupThreadID, uint p3 : SV_DispatchThreadID, uint p4 : SV_GroupIndex)
+    {
+    }
+#endif
+    static const DWORD cs_code[] =
+    {
+        0x43425844, 0x4ea5ca3f, 0xc6e47bfe, 0x5409d22b, 0xff4f75b7, 0x00000001, 0x00000074, 0x00000003,
+        0x0000002c, 0x0000003c, 0x0000004c, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000020, 0x00050040, 0x00000008, 0x0100086a,
+        0x0400009b, 0x00000100, 0x00000001, 0x00000001, 0x0100003e,
+    };
+
+    static D3D11_INPUT_ELEMENT_DESC ps_layout_desc[] =
+    {
+        {"CUSTOMDATA", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+        {"SV_InstanceID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0},
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+    float4 main(float4 d : CUSTOMDATA, float4 p1 : POSITION, float4 p2 : SV_Position, float4 c : COLOR,
+                uint iid : SV_InstanceID) : SV_Target
+    {
+        return c;
+    }
+#endif
+        0x43425844, 0x0138f525, 0x4a391fec, 0xaf43a6b1, 0xab08068f, 0x00000001, 0x0000015c, 0x00000003,
+        0x0000002c, 0x000000e8, 0x0000011c, 0x4e475349, 0x000000b4, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x0000008b, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x0000000f, 0x00000094, 0x00000000, 0x00000001, 0x00000003, 0x00000002,
+        0x0000000f, 0x000000a0, 0x00000000, 0x00000000, 0x00000003, 0x00000003, 0x00000f0f, 0x000000a6,
+        0x00000000, 0x00000000, 0x00000001, 0x00000004, 0x00000001, 0x54535543, 0x41444d4f, 0x50004154,
+        0x5449534f, 0x004e4f49, 0x505f5653, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0x56530052, 0x736e495f,
+        0x636e6174, 0x00444965, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000,
+        0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853,
+        0x00000038, 0x00000040, 0x0000000e, 0x03001062, 0x001010f2, 0x00000003, 0x03000065, 0x001020f2,
+        0x00000000, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000003, 0x0100003e,
+    };
+
     static const DXGI_FORMAT vertex_formats[] =
     {
         DXGI_FORMAT_R32G32_FLOAT,
@@ -18640,16 +18933,61 @@ static void test_create_input_layout(void)
         layout_desc->Format = vertex_formats[i];
         hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
                 vs_code, sizeof(vs_code), &input_layout);
-        ok(hr == S_OK, "Failed to create input layout for format %#x, hr %#x.\n",
-                vertex_formats[i], hr);
+        ok(hr == S_OK, "Format %#x: Got unexpected hr %#lx.\n", vertex_formats[i], hr);
         refcount = get_refcount(device);
-        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n",
-                refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Format %#x: Got refcount %lu, expected %lu.\n",
+                vertex_formats[i], refcount, expected_refcount);
         ID3D11InputLayout_Release(input_layout);
     }
 
+    layout_desc[0].Format = vertex_formats[0];
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 0, vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 0, vs3_code, sizeof(vs3_code), &input_layout);
+    ID3D11InputLayout_Release(input_layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, NULL, 0, vs3_code, sizeof(vs3_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    layout_desc->SemanticIndex = 1;
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    layout_desc->SemanticIndex = 0;
+
+    layout_desc->InputSlotClass = D3D11_INPUT_PER_INSTANCE_DATA;
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11InputLayout_Release(input_layout);
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, 1, vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11InputLayout_Release(input_layout);
+    layout_desc->InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+    layout_desc->SemanticName = "SV_POSITION";
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    layout_desc->SemanticName = "POSITION2";
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    check_layout_element_exclusion(device, vs2_layout_desc, ARRAY_SIZE(vs2_layout_desc), vs2_code,
+            sizeof(vs2_code), FALSE, "vs2");
+    check_layout_element_exclusion(device, cs_layout_desc, ARRAY_SIZE(cs_layout_desc), cs_code,
+            sizeof(cs_code), TRUE, "cs");
+    check_layout_element_exclusion(device, ps_layout_desc, ARRAY_SIZE(ps_layout_desc), ps_code,
+            sizeof(ps_code), FALSE, "ps");
+
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_input_layout_alignment(void)
@@ -18735,13 +19073,13 @@ static void test_input_layout_alignment(void)
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         hr = ID3D11Device_CreateInputLayout(device, test_data[i].elements, 2, vs_code, sizeof(vs_code), &layout);
-        ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#lx, expected %#lx.\n", i, hr, test_data[i].hr);
         if (SUCCEEDED(hr))
             ID3D11InputLayout_Release(layout);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_input_assembler(void)
@@ -18983,14 +19321,14 @@ static void test_input_assembler(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_float_code, sizeof(vs_float_code), NULL, &vs_float);
-    ok(SUCCEEDED(hr), "Failed to create float vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateVertexShader(device, vs_uint_code, sizeof(vs_uint_code), NULL, &vs_uint);
-    ok(SUCCEEDED(hr), "Failed to create uint vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateVertexShader(device, vs_sint_code, sizeof(vs_sint_code), NULL, &vs_sint);
-    ok(SUCCEEDED(hr), "Failed to create sint vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < LAYOUT_COUNT; ++i)
     {
@@ -18999,7 +19337,7 @@ static void test_input_assembler(void)
         hr = ID3D11Device_CreateInputLayout(device, input_layout_desc, ARRAY_SIZE(input_layout_desc),
                 vs_float_code, sizeof(vs_float_code), &input_layout[i]);
         todo_wine_if(input_layout_desc[1].Format == DXGI_FORMAT_R10G10B10A2_UINT)
-        ok(SUCCEEDED(hr), "Failed to create input layout for format %#x, hr %#x.\n", layout_formats[i], hr);
+        ok(hr == S_OK, "Format %#x: Got unexpected hr %#lx.\n", layout_formats[i], hr);
     }
 
     vb_position = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
@@ -19018,10 +19356,10 @@ static void test_input_assembler(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_target);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)render_target, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     offset = 0;
@@ -19142,7 +19480,7 @@ static void test_null_sampler(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = 64;
     texture_desc.Height = 64;
@@ -19157,13 +19495,13 @@ static void test_null_sampler(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, blue);
 
@@ -19199,17 +19537,17 @@ static void test_check_feature_support(void)
     memset(threading, 0xef, sizeof(threading));
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, NULL, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) - 1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) / 2);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) + 1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading) * 2);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     ok(threading[0].DriverConcurrentCreates == 0xefefefef,
             "Got unexpected concurrent creates %#x.\n", threading[0].DriverConcurrentCreates);
@@ -19221,38 +19559,38 @@ static void test_check_feature_support(void)
             "Got unexpected command lists %#x.\n", threading[1].DriverCommandLists);
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_THREADING, threading, sizeof(*threading));
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(threading->DriverConcurrentCreates == TRUE || threading->DriverConcurrentCreates == FALSE,
             "Got unexpected concurrent creates %#x.\n", threading->DriverConcurrentCreates);
     ok(threading->DriverCommandLists == TRUE || threading->DriverCommandLists == FALSE,
             "Got unexpected command lists %#x.\n", threading->DriverCommandLists);
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, NULL, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, 0);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) - 1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) / 2);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) + 1);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts) * 2);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &hwopts, sizeof(hwopts));
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     trace("Compute shader support via SM4 %#x.\n", hwopts.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x);
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_ARCHITECTURE_INFO, &archinfo, sizeof(archinfo));
     ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Not available on all Windows versions. */,
-            "Got unexpected hr %#x.\n", hr);
+            "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_ARCHITECTURE_INFO, &archinfo, sizeof(archinfo)*2);
     ok(hr == E_INVALIDARG /* Not available on all Windows versions but they will return E_INVALIDARG anyways. */,
-            "Got unexpected hr %#x.\n", hr);
+            "Got unexpected hr %#lx.\n", hr);
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_unordered_access_view(void)
@@ -19414,19 +19752,19 @@ static void test_create_unordered_access_view(void)
     buffer_desc.StructureByteStride = 0;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11Buffer_GetDevice(buffer, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     uav_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -19437,20 +19775,20 @@ static void test_create_unordered_access_view(void)
 
     uav = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!uav, "Unexpected pointer %p.\n", uav);
 
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(device);
-    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %lu, expected >= %lu.\n", refcount, expected_refcount);
     tmp = NULL;
     expected_refcount = refcount + 1;
     ID3D11UnorderedAccessView_GetDevice(uav, &tmp);
     ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
     refcount = get_refcount(device);
-    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ok(refcount == expected_refcount, "Got unexpected refcount %lu, expected %lu.\n", refcount, expected_refcount);
     ID3D11Device_Release(tmp);
 
     ID3D11UnorderedAccessView_Release(uav);
@@ -19460,10 +19798,10 @@ static void test_create_unordered_access_view(void)
     buffer_desc.StructureByteStride = 4;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&uav_desc, 0, sizeof(uav_desc));
     ID3D11UnorderedAccessView_GetDesc(uav, &uav_desc);
@@ -19489,7 +19827,7 @@ static void test_create_unordered_access_view(void)
 
     uav = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!uav, "Unexpected pointer %p.\n", uav);
 
     ID3D11Buffer_Release(buffer);
@@ -19521,7 +19859,7 @@ static void test_create_unordered_access_view(void)
             texture2d_desc.Format = tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -19531,7 +19869,7 @@ static void test_create_unordered_access_view(void)
             texture3d_desc.Format = tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
@@ -19547,9 +19885,10 @@ static void test_create_unordered_access_view(void)
 
         expected_refcount = get_refcount(texture);
         hr = ID3D11Device_CreateUnorderedAccessView(device, texture, current_desc, &uav);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create unordered access view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         refcount = get_refcount(texture);
-        ok(refcount == expected_refcount, "Got refcount %u, expected %u.\n", refcount, expected_refcount);
+        ok(refcount == expected_refcount, "Test %u: Got refcount %lu, expected %lu.\n",
+                i, refcount, expected_refcount);
 
         memset(&uav_desc, 0, sizeof(uav_desc));
         ID3D11UnorderedAccessView_GetDesc(uav, &uav_desc);
@@ -19571,7 +19910,7 @@ static void test_create_unordered_access_view(void)
             texture2d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture2d;
         }
         else
@@ -19581,21 +19920,21 @@ static void test_create_unordered_access_view(void)
             texture3d_desc.Format = invalid_desc_tests[i].texture.format;
 
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             texture = (ID3D11Resource *)texture3d;
         }
 
         uav = (void *)0xdeadbeef;
         get_uav_desc(&uav_desc, &invalid_desc_tests[i].uav_desc);
         hr = ID3D11Device_CreateUnorderedAccessView(device, texture, &uav_desc, &uav);
-        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == E_INVALIDARG, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ok(!uav, "Unexpected pointer %p.\n", uav);
 
         ID3D11Resource_Release(texture);
     }
 
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_immediate_constant_buffer(void)
@@ -19668,7 +20007,7 @@ static void test_immediate_constant_buffer(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(index), NULL);
@@ -19677,10 +20016,10 @@ static void test_immediate_constant_buffer(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     for (i = 0; i < ARRAY_SIZE(expected_result); ++i)
@@ -19734,16 +20073,16 @@ static void test_fp_specials(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
@@ -20164,10 +20503,10 @@ static void test_uint_shader_instructions(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
@@ -20177,7 +20516,7 @@ static void test_uint_shader_instructions(void)
             continue;
 
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps->code, tests[i].ps->size, NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
         ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, tests[i].bits, 0, 0);
@@ -20320,16 +20659,16 @@ static void test_index_buffer_offset(void)
 
     hr = ID3D11Device_CreateInputLayout(device, input_desc, ARRAY_SIZE(input_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     stride = 32;
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, ARRAY_SIZE(so_declaration),
             &stride, 1, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
     ib = create_buffer(device, D3D11_BIND_INDEX_BUFFER, sizeof(indices), indices);
@@ -20468,7 +20807,7 @@ static void test_face_culling(void)
     device = test_context.device;
     context = test_context.immediate_context;
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
@@ -20476,7 +20815,7 @@ static void test_face_culling(void)
     ccw_vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(ccw_quad), ccw_quad);
 
     test_context.vb = ccw_vb;
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff0000ff, 0);
 
@@ -20496,17 +20835,17 @@ static void test_face_culling(void)
         rasterizer_desc.CullMode = tests[i].cull_mode;
         rasterizer_desc.FrontCounterClockwise = tests[i].front_ccw;
         hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &state);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create rasterizer state, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_RSSetState(context, state);
 
         test_context.vb = cw_vb;
-        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+        clear_rtv(context, test_context.backbuffer_rtv, &red);
         draw_color_quad(&test_context, &green);
         check_texture_color(test_context.backbuffer, tests[i].expected_cw ? 0xff00ff00 : 0xff0000ff, 0);
 
         test_context.vb = ccw_vb;
-        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+        clear_rtv(context, test_context.backbuffer_rtv, &red);
         draw_color_quad(&test_context, &green);
         check_texture_color(test_context.backbuffer, tests[i].expected_ccw ? 0xff00ff00 : 0xff0000ff, 0);
 
@@ -20518,20 +20857,20 @@ static void test_face_culling(void)
     /* Test SV_IsFrontFace. */
     ID3D11PixelShader_Release(test_context.ps);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &test_context.ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rasterizer_desc.CullMode = D3D11_CULL_NONE;
     rasterizer_desc.FrontCounterClockwise = FALSE;
     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_RSSetState(context, state);
 
     test_context.vb = cw_vb;
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
     test_context.vb = ccw_vb;
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     if (!broken_warp)
         check_texture_color(test_context.backbuffer, 0xffff0000, 0);
@@ -20543,18 +20882,18 @@ static void test_face_culling(void)
     rasterizer_desc.CullMode = D3D11_CULL_NONE;
     rasterizer_desc.FrontCounterClockwise = TRUE;
     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_RSSetState(context, state);
 
     test_context.vb = cw_vb;
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     if (!broken_warp)
         check_texture_color(test_context.backbuffer, 0xffff0000 , 0);
     else
         win_skip("Broken WARP.\n");
     test_context.vb = ccw_vb;
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
@@ -20598,25 +20937,25 @@ static void test_line_antialiasing_blending(void)
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &green.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xe2007fcc, 1);
 
     ID3D11DeviceContext_OMSetBlendState(context, NULL, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &green.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
 
@@ -20632,14 +20971,14 @@ static void test_line_antialiasing_blending(void)
     rasterizer_desc.AntialiasedLineEnable = TRUE;
 
     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_RSSetState(context, rasterizer_state);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &red);
     draw_color_quad(&test_context, &green);
     check_texture_color(test_context.backbuffer, 0x7f00ff00, 1);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &green.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &green);
     draw_color_quad(&test_context, &red);
     check_texture_color(test_context.backbuffer, 0xcc0000ff, 1);
 
@@ -20647,10 +20986,11 @@ static void test_line_antialiasing_blending(void)
     release_test_context(&test_context);
 }
 
-static void check_format_support(const unsigned int *format_support, D3D_FEATURE_LEVEL feature_level,
-        const struct format_support *formats, unsigned int format_count, unsigned int feature_flag,
-        const char *feature_name)
+static void check_format_support(ID3D11Device *device, const unsigned int *format_support,
+        D3D_FEATURE_LEVEL feature_level, const struct format_support *formats,
+        unsigned int format_count, unsigned int feature_flag, const char *feature_name)
 {
+    BOOL warp = is_warp_device(device);
     unsigned int i;
 
     for (i = 0; i < format_count; ++i)
@@ -20661,28 +21001,29 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
         if (formats[i].fl_required <= feature_level)
         {
             todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
-                ok(supported, "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
-                        format, feature_name, feature_level, format_support[format]);
+                ok(supported || broken(warp),
+                        "Format %#x - %s not supported, format support %#x.\n",
+                        format, feature_name, format_support[format]);
             continue;
         }
 
         if (formats[i].fl_optional && formats[i].fl_optional <= feature_level)
         {
             if (supported)
-                trace("Optional format %#x - %s supported, feature level %#x.\n",
-                        format, feature_name, feature_level);
+                trace("Optional format %#x - %s supported.\n", format, feature_name);
             continue;
         }
 
         todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY)
-            ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
-                    format, feature_name, feature_level, format_support[format]);
+            ok(!supported, "Format %#x - %s supported, format support %#x.\n",
+                    format, feature_name, format_support[format]);
     }
 }
 
 static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
 {
     unsigned int format_support[DXGI_FORMAT_B4G4R4A4_UNORM + 1];
+    D3D11_FEATURE_DATA_FORMAT_SUPPORT feature_data;
     struct device_desc device_desc;
     ID3D11Device *device;
     DXGI_FORMAT format;
@@ -20703,31 +21044,96 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         {DXGI_FORMAT_R16_FLOAT, D3D_FEATURE_LEVEL_10_0},
     };
 
+    static const struct format_support blend[] =
+    {
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16G16_UNORM,          D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16_UNORM,             D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16G16B16A16_SNORM,    D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R16G16_SNORM,          D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R16_SNORM,             D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8G8B8A8_SNORM,        D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8G8_SNORM,            D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8_SNORM,              D3D_FEATURE_LEVEL_10_1},
+
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R32G32_FLOAT,          D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R32_FLOAT,             D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,     D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R11G11B10_FLOAT,       D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16_FLOAT,             D3D_FEATURE_LEVEL_10_0},
+
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    D3D_FEATURE_LEVEL_9_3},
+
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8G8_UNORM,            D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8_UNORM,              D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_A8_UNORM,              D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B5G6R5_UNORM,          D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
+    };
+
     device_desc.feature_level = &feature_level;
     device_desc.flags = 0;
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
 
+    feature_data.InFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, NULL, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, 0);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) - 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) / 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) + 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data) * 2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
     support = 0xdeadbeef;
     hr = ID3D11Device_CheckFormatSupport(device, ~0u, &support);
-    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
     ok(!support, "Got unexpected format support %#x.\n", support);
+
+    feature_data.InFormat = ~0u;
+    feature_data.OutFormatSupport = 0xdeadbeef;
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT, &feature_data, sizeof(feature_data));
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    ok(!feature_data.OutFormatSupport, "Got unexpected format support %#x.\n", feature_data.OutFormatSupport);
 
     memset(format_support, 0, sizeof(format_support));
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
     {
+        winetest_push_context("format %#x", format);
+
         hr = ID3D11Device_CheckFormatSupport(device, format, &format_support[format]);
-        ok(hr == S_OK || (hr == E_FAIL && !format_support[format]),
-                "Got unexpected result for format %#x: hr %#x, format_support %#x.\n",
-                format, hr, format_support[format]);
+        ok((hr == S_OK && format_support[format]) || (hr == E_FAIL && !format_support[format]),
+                "Got unexpected hr %#lx, format_support %#x.\n", hr, format_support[format]);
         if (format_support[format] & D3D11_FORMAT_SUPPORT_MIP_AUTOGEN)
         {
             ok(format_support[format] & D3D11_FORMAT_SUPPORT_TEXTURE2D,
-                    "Got unexpected format support %#x for format %#x", format_support[format], format);
+                    "Got unexpected format support %#x", format);
         }
+
+        feature_data.InFormat = format;
+        hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_FORMAT_SUPPORT,
+                &feature_data, sizeof(feature_data));
+        ok((hr == S_OK && feature_data.OutFormatSupport) || (hr == E_FAIL && !feature_data.OutFormatSupport),
+                "Got unexpected hr %#lx, format_support %#x.\n", hr, feature_data.OutFormatSupport);
+        ok(feature_data.OutFormatSupport == format_support[format], "Expected format support %#x, got %#x.\n",
+                format_support[format], feature_data.OutFormatSupport);
+
+        winetest_pop_context();
     }
 
     for (format = DXGI_FORMAT_UNKNOWN; format <= DXGI_FORMAT_B4G4R4A4_UNORM; ++format)
@@ -20736,20 +21142,16 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         {
             /* SHADER_SAMPLE_COMPARISON is never advertised as supported on feature level 9. */
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON),
-                    "Unexpected SHADER_SAMPLE_COMPARISON for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_SAMPLE_COMPARISON for format %#x.\n", format);
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_BUFFER),
-                    "Unexpected BUFFER for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected BUFFER for format %#x.\n", format);
         }
         if (feature_level < D3D_FEATURE_LEVEL_10_1)
         {
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER),
-                    "Unexpected SHADER_GATHER for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_GATHER for format %#x.\n", format);
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_GATHER_COMPARISON),
-                    "Unexpected SHADER_GATHER_COMPARISON for format %#x, feature level %#x.\n",
-                    format, feature_level);
+                    "Unexpected SHADER_GATHER_COMPARISON for format %#x.\n", format);
         }
     }
 
@@ -20764,20 +21166,23 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
                 "SHADER_LOAD is not supported for R32G32B32A32_UINT.\n");
     }
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             index_buffers, ARRAY_SIZE(index_buffers),
             D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             vertex_buffers, ARRAY_SIZE(vertex_buffers),
             D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER, "vertex buffer");
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             display_format_support, ARRAY_SIZE(display_format_support),
             D3D11_FORMAT_SUPPORT_DISPLAY, "display");
 
+    check_format_support(device, format_support, feature_level, blend, ARRAY_SIZE(blend),
+            D3D11_FORMAT_SUPPORT_BLENDABLE, "blendable");
+
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
@@ -20864,12 +21269,12 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     resource_data.SysMemPitch = sizeof(texture_data);
     resource_data.SysMemSlicePitch = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     draw_quad(&test_context);
     check_texture_color(test_context.backbuffer, 0x7f0000ff, 1);
@@ -20879,7 +21284,7 @@ static void test_fl9_draw(const D3D_FEATURE_LEVEL feature_level)
     todo_wine check_texture_color(test_context.backbuffer, 0xff004c33, 1);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_texture_code, sizeof(ps_texture_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x, feature level %#x.\n", hr, feature_level);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
     draw_quad(&test_context);
@@ -21086,19 +21491,19 @@ float4 main(struct ps_data ps_input) : SV_Target
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -21117,7 +21522,7 @@ float4 main(struct ps_data ps_input) : SV_Target
         }
 
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps_code, tests[i].ps_code_size, NULL, &ps);
-        ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
@@ -21127,15 +21532,15 @@ float4 main(struct ps_data ps_input) : SV_Target
 
         get_texture_readback(texture, 0, &rb);
         color = get_readback_color(&rb, 320, 190, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 255, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 385, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 320, 290, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         release_resource_readback(&rb);
 
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
@@ -21144,15 +21549,15 @@ float4 main(struct ps_data ps_input) : SV_Target
 
         get_texture_readback(test_context.backbuffer, 0, &rb);
         color = get_readback_color(&rb, 320, 190, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 255, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 385, 240, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         color = get_readback_color(&rb, 320, 290, 0);
-        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected color 0x%08x.\n", color);
+        ok(compare_color(color, 0x7fff007f, 1), "Got unexpected colour 0x%08lx.\n", color);
         release_resource_readback(&rb);
 
         ID3D11PixelShader_Release(ps);
@@ -21225,10 +21630,10 @@ static void test_shader_input_registers_limits(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -21245,10 +21650,10 @@ static void test_shader_input_registers_limits(void)
     sampler_desc.MaxLOD = 0.0f;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_last_register_code, sizeof(ps_last_register_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_PSSetShaderResources(context,
@@ -21328,11 +21733,11 @@ static void test_unbind_shader_resource_view(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
@@ -21396,9 +21801,9 @@ static void test_stencil_separate(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &ds_view);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ds_desc.DepthEnable = TRUE;
     ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -21415,7 +21820,7 @@ static void test_stencil_separate(void)
     ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_ZERO;
     ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
     hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rs_desc.FillMode = D3D11_FILL_SOLID;
     rs_desc.CullMode = D3D11_CULL_NONE;
@@ -21428,7 +21833,7 @@ static void test_stencil_separate(void)
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
     ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
     ID3D11DeviceContext_ClearDepthStencilView(context, ds_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -21448,7 +21853,7 @@ static void test_stencil_separate(void)
     ID3D11RasterizerState_Release(rs);
     rs_desc.FrontCounterClockwise = TRUE;
     ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_RSSetState(context, rs);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
@@ -21705,22 +22110,22 @@ static void test_uav_load(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     U(rtv_desc).Texture2D.MipSlice = 0;
 
     rtv_desc.Format = DXGI_FORMAT_R32_FLOAT;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_float);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R32_UINT;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_uint);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtv_desc.Format = DXGI_FORMAT_R32_SINT;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt_texture, &rtv_desc, &rtv_sint);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 
@@ -21748,7 +22153,7 @@ static void test_uav_load(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
@@ -21767,7 +22172,7 @@ static void test_uav_load(void)
             texture_desc.Format = current_texture->format;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, current_texture->data, &texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
 
         if (uav)
@@ -21775,7 +22180,7 @@ static void test_uav_load(void)
 
         get_uav_desc(&uav_desc, &test->uav_desc);
         hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, &uav_desc, &uav);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create unordered access view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         switch (uav_desc.Format)
         {
@@ -21809,7 +22214,7 @@ static void test_uav_load(void)
                 DWORD expected = test->expected_colors[y * 4 + x];
                 DWORD color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 ok(compare_color(color, expected, 0),
-                        "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
+                        "Test %u: Got 0x%08lx, expected 0x%08lx at (%u, %u).\n",
                         i, color, expected, x, y);
             }
         }
@@ -22015,14 +22420,14 @@ static void test_cs_uav_store(void)
     texture_desc.MiscFlags = 0;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = texture_desc.Format;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
     U(uav_desc).Texture2D.MipSlice = 0;
 
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(device, &context);
 
@@ -22033,7 +22438,7 @@ static void test_cs_uav_store(void)
     check_texture_float(texture, 0.0f, 2);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_1_thread_code, sizeof(cs_1_thread_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
@@ -22053,7 +22458,7 @@ static void test_cs_uav_store(void)
     check_texture_float(texture, 0.5f, 2);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_1_group_code, sizeof(cs_1_group_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
@@ -22067,7 +22472,7 @@ static void test_cs_uav_store(void)
     ID3D11ComputeShader_Release(cs);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_1_store_code, sizeof(cs_1_store_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     input.x = 1.0f;
@@ -22088,7 +22493,7 @@ static void test_cs_uav_store(void)
     ID3D11ComputeShader_Release(cs);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_dispatch_id_code, sizeof(cs_dispatch_id_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     input.x = 0.6f;
@@ -22109,7 +22514,7 @@ static void test_cs_uav_store(void)
     ID3D11ComputeShader_Release(cs);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_group_index_code, sizeof(cs_group_index_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     input.x = 0.3f;
@@ -22129,7 +22534,7 @@ static void test_cs_uav_store(void)
     ID3D11UnorderedAccessView_Release(uav);
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_uav_store_immediate_constant(void)
@@ -22238,9 +22643,9 @@ static void test_uav_store_immediate_constant(void)
     U(uav_desc).Buffer.NumElements = 1;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, cs_store_int_code, sizeof(cs_store_int_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
@@ -22255,9 +22660,9 @@ static void test_uav_store_immediate_constant(void)
     ID3D11UnorderedAccessView_Release(uav);
     uav_desc.Format = DXGI_FORMAT_R32_FLOAT;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, cs_store_float_code, sizeof(cs_store_float_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
@@ -22280,14 +22685,14 @@ static void test_uav_store_immediate_constant(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11UnorderedAccessView_Release(uav);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11ComputeShader_Release(cs);
     hr = ID3D11Device_CreateComputeShader(device, cs_store_unorm_code, sizeof(cs_store_unorm_code), NULL, &cs);
-    ok(hr == S_OK, "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
@@ -22300,14 +22705,14 @@ static void test_uav_store_immediate_constant(void)
     ID3D11Texture2D_Release(texture);
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11UnorderedAccessView_Release(uav);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11ComputeShader_Release(cs);
     hr = ID3D11Device_CreateComputeShader(device, cs_store_snorm_code, sizeof(cs_store_snorm_code), NULL, &cs);
-    ok(hr == S_OK, "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
@@ -22431,17 +22836,17 @@ static void test_ps_cs_uav_binding(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &cs_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ps_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = texture_desc.Format;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
     U(uav_desc).Texture2D.MipSlice = 0;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)cs_texture, &uav_desc, &cs_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)ps_texture, &uav_desc, &ps_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(device, &context);
 
@@ -22457,10 +22862,10 @@ static void test_ps_cs_uav_binding(void)
     check_texture_float(ps_texture, 0.0f, 2);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_Dispatch(context, 1, 1, 1);
@@ -22651,9 +23056,9 @@ static void test_atomic_instructions(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &in_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &out_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -22661,18 +23066,18 @@ static void test_atomic_instructions(void)
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(*tests->input);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)in_buffer, &uav_desc, &in_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)out_buffer, &uav_desc, &out_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     set_viewport(context, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_atomics_code, sizeof(ps_atomics_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_atomics_code, sizeof(cs_atomics_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
@@ -22797,7 +23202,7 @@ static void test_sm4_ret_instruction(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     memset(&constant, 0, sizeof(constant));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
@@ -22929,16 +23334,16 @@ static void test_primitive_restart(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create return pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ib16 = create_buffer(device, D3D11_BIND_INDEX_BUFFER, sizeof(indices16), indices16);
     ib32 = create_buffer(device, D3D11_BIND_INDEX_BUFFER, sizeof(indices32), indices32);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
 
@@ -23255,9 +23660,9 @@ static void test_resinfo_instruction(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rtv_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rtv_texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&constant, 0, sizeof(constant));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
@@ -23285,7 +23690,7 @@ static void test_resinfo_instruction(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
 
@@ -23301,7 +23706,7 @@ static void test_resinfo_instruction(void)
             texture3d_desc.CPUAccessFlags = 0;
             texture3d_desc.MiscFlags = 0;
             hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, (ID3D11Texture3D **)&texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 3d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
         else
         {
@@ -23315,11 +23720,11 @@ static void test_resinfo_instruction(void)
             if (test->texture_desc.cube_count)
                 texture_desc.MiscFlags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&texture);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create 2d texture, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
 
         hr = ID3D11Device_CreateShaderResourceView(device, texture, NULL, &srv);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
         for (type = 0; type < 2; ++type)
@@ -23587,9 +23992,9 @@ static void test_sm5_bufinfo_instruction(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ps = NULL;
     current_ps = NULL;
@@ -23605,7 +24010,7 @@ static void test_sm5_bufinfo_instruction(void)
             current_ps = test->ps;
 
             hr = ID3D11Device_CreatePixelShader(device, current_ps->code, current_ps->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
 
@@ -23616,7 +24021,7 @@ static void test_sm5_bufinfo_instruction(void)
         buffer_desc.MiscFlags = test->buffer_misc_flags;
         buffer_desc.StructureByteStride = test->buffer_structure_byte_stride;
         hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         if (test->uav)
         {
@@ -23628,7 +24033,7 @@ static void test_sm5_bufinfo_instruction(void)
             if (buffer_desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)
                 U(uav_desc).Buffer.Flags |= D3D11_BUFFER_UAV_FLAG_RAW;
             hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create unordered access view, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             srv = NULL;
 
             ID3D11DeviceContext_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, NULL,
@@ -23644,7 +24049,7 @@ static void test_sm5_bufinfo_instruction(void)
             if (buffer_desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS)
                 U(srv_desc).BufferEx.Flags |= D3D11_BUFFEREX_SRV_FLAG_RAW;
             hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             uav = NULL;
 
             ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
@@ -23759,23 +24164,23 @@ static void test_sampleinfo_instruction(void)
 
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &float_rt_texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)float_rt_texture, NULL, &float_rtv);
-    ok(hr == S_OK, "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     texture_desc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &uint_rt_texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)uint_rt_texture, NULL, &uint_rtv);
-    ok(hr == S_OK, "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtvs[0] = float_rtv;
     rtvs[1] = uint_rtv;
     ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_float_code, sizeof(ps_float_code), NULL, &ps_float);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_uint_code, sizeof(ps_uint_code), NULL, &ps_uint);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (sample_count = 2; sample_count <= 8; sample_count *= 2)
     {
@@ -23784,7 +24189,7 @@ static void test_sampleinfo_instruction(void)
         texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
         hr = ID3D11Device_CheckMultisampleQualityLevels(device, texture_desc.Format, sample_count, &quality);
-        ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         if (!quality)
         {
             skip("Sample count %u not supported.\n", sample_count);
@@ -23792,9 +24197,9 @@ static void test_sampleinfo_instruction(void)
         }
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(hr == S_OK, "Failed to create texture, hr %#x, sample count %u.\n", hr, sample_count);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-        ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
         ID3D11DeviceContext_PSSetShader(context, ps_float, NULL, 0);
@@ -23812,7 +24217,7 @@ static void test_sampleinfo_instruction(void)
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_rt_code, sizeof(ps_rt_code), NULL, &ps_rt);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     for (sample_count = 1; sample_count <= 8; sample_count *= 2)
     {
         texture_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -23820,7 +24225,7 @@ static void test_sampleinfo_instruction(void)
         texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
 
         hr = ID3D11Device_CheckMultisampleQualityLevels(device, texture_desc.Format, sample_count, &quality);
-        ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         if (!quality)
         {
             skip("Sample count %u not supported.\n", sample_count);
@@ -23828,9 +24233,9 @@ static void test_sampleinfo_instruction(void)
         }
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(hr == S_OK, "Failed to create texture, hr %#x, sample count %u.\n", hr, sample_count);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-        ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
         /* Some drivers (AMD Radeon HD 6310) return stale sample counts if we
@@ -23844,7 +24249,7 @@ static void test_sampleinfo_instruction(void)
         {
             texture_desc.SampleDesc.Count = 1;
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &readback_texture);
-            ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+            ok(hr == S_OK, "Sample count %u: Got unexpected hr %#lx.\n", sample_count, hr);
             ID3D11DeviceContext_ResolveSubresource(context, (ID3D11Resource *)readback_texture, 0,
                     (ID3D11Resource *)texture, 0, texture_desc.Format);
         }
@@ -23905,7 +24310,7 @@ static void test_render_target_device_mismatch(void)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     release_test_context(&test_context);
 }
 
@@ -24111,13 +24516,13 @@ static void test_buffer_srv(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     srv_desc.Format = DXGI_FORMAT_R8_UNORM;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     U(srv_desc).Buffer.FirstElement = 0;
     U(srv_desc).Buffer.NumElements = 0;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ID3D11Buffer_Release(buffer);
 
     ps = NULL;
@@ -24150,7 +24555,7 @@ static void test_buffer_srv(void)
             current_shader = test->shader;
 
             hr = ID3D11Device_CreatePixelShader(device, current_shader->code, current_shader->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
 
@@ -24186,7 +24591,7 @@ static void test_buffer_srv(void)
                     resource_data.pSysMem = current_buffer->data;
                 }
                 hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
-                ok(SUCCEEDED(hr), "Test %u: Failed to create buffer, hr %#x.\n", i, hr);
+                ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
                 heap_free(data);
             }
             else
@@ -24204,7 +24609,7 @@ static void test_buffer_srv(void)
             U(srv_desc).Buffer.FirstElement = test->srv_first_element;
             U(srv_desc).Buffer.NumElements = test->srv_element_count;
             hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &srv);
-            ok(SUCCEEDED(hr), "Test %u: Failed to create shader resource view, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         }
         else
         {
@@ -24227,7 +24632,7 @@ static void test_buffer_srv(void)
                 color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
                 expected_color = test->expected_colors[y * 4 + x];
                 ok(compare_color(color, expected_color, 1),
-                        "Test %u: Got 0x%08x, expected 0x%08x at (%u, %u).\n",
+                        "Test %u: Got 0x%08lx, expected 0x%08lx at (%u, %u).\n",
                         i, color, expected_color, x, y);
             }
         }
@@ -24321,7 +24726,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     if (feature_level < D3D_FEATURE_LEVEL_11_0 && !check_compute_shaders_via_sm4_support(device))
     {
         hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-        todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID3D11PixelShader_Release(ps);
         skip("Raw buffers are not supported.\n");
@@ -24340,7 +24745,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     memset(&offset, 0, sizeof(offset));
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(offset), &offset.x);
@@ -24348,9 +24753,9 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R32_UINT;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
@@ -24363,7 +24768,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     resource_data.SysMemPitch = 0;
     resource_data.SysMemSlicePitch = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &raw_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     srv_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
@@ -24371,7 +24776,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     U(srv_desc).BufferEx.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(srv_desc).BufferEx.Flags = D3D11_BUFFEREX_SRV_FLAG_RAW;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)raw_buffer, &srv_desc, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
@@ -24424,7 +24829,7 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     ID3D11Buffer_Release(raw_buffer);
     buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &raw_buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -24432,10 +24837,10 @@ static void test_unaligned_raw_buffer_access(const D3D_FEATURE_LEVEL feature_lev
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)raw_buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
@@ -24615,16 +25020,16 @@ static void test_uav_counters(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreateComputeShader(device, cs_producer_code, sizeof(cs_producer_code), NULL, &cs_producer);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, cs_consumer_code, sizeof(cs_consumer_code), NULL, &cs_consumer);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&buffer_desc, 0, sizeof(buffer_desc));
     buffer_desc.ByteWidth = sizeof(unsigned int);
     buffer_desc.Usage = D3D11_USAGE_STAGING;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &staging_buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 1024;
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -24633,18 +25038,18 @@ static void test_uav_counters(void)
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = sizeof(unsigned int);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     U(uav_desc).Buffer.FirstElement = 0;
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_COUNTER;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, NULL, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     data = read_uav_counter(context, staging_buffer, uav);
     ok(!data, "Got unexpected initial value %u.\n", data);
@@ -24840,16 +25245,16 @@ static void test_dispatch_indirect(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreateComputeShader(device, cs_append_code, sizeof(cs_append_code), NULL, &cs_append);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, cs_stats_code, sizeof(cs_stats_code), NULL, &cs_stats);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&buffer_desc, 0, sizeof(buffer_desc));
     buffer_desc.ByteWidth = sizeof(unsigned int);
     buffer_desc.Usage = D3D11_USAGE_STAGING;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &staging_buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 60;
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -24858,14 +25263,14 @@ static void test_dispatch_indirect(void)
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = 3 * sizeof(unsigned int);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &append_buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     U(uav_desc).Buffer.FirstElement = 0;
     U(uav_desc).Buffer.NumElements = 5;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)append_buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* We use a separate buffer because D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS
      * and D3D11_RESOURCE_MISC_BUFFER_STRUCTURED are mutually exclusive flags.
@@ -24873,16 +25278,16 @@ static void test_dispatch_indirect(void)
     buffer_desc.BindFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &args_buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = sizeof(*stats);
     buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
     buffer_desc.StructureByteStride = sizeof(*stats);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &stats_buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)stats_buffer, NULL, &stats_uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     data = read_uav_counter(context, staging_buffer, uav);
     ok(!data, "Got unexpected initial value %u.\n", data);
@@ -25007,14 +25412,14 @@ static void test_compute_shader_registers(void)
     buffer_desc.StructureByteStride = 40;
     assert(sizeof(struct data) == buffer_desc.StructureByteStride);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(dimensions), NULL);
 
     hr = ID3D11Device_CreateComputeShader(device, cs_code, sizeof(cs_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetConstantBuffers(context, 0, 1, &cb);
@@ -25247,7 +25652,7 @@ static void test_tgsm(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
@@ -25255,10 +25660,10 @@ static void test_tgsm(void)
     U(uav_desc).Buffer.NumElements = buffer_desc.ByteWidth / sizeof(unsigned int);
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateComputeShader(device, raw_tgsm_code, sizeof(raw_tgsm_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
@@ -25279,15 +25684,15 @@ static void test_tgsm(void)
     ID3D11UnorderedAccessView_Release(uav);
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, structured_tgsm_code, sizeof(structured_tgsm_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
@@ -25318,18 +25723,18 @@ static void test_tgsm(void)
     buffer_desc.MiscFlags = 0;
     U(uav_desc).Buffer.Flags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_R32_FLOAT;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer2);
-    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_R32_UINT;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer2, &uav_desc, &uav2);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateComputeShader(device, structured_tgsm_float_code,
             sizeof(structured_tgsm_float_code), NULL, &cs);
-    ok(SUCCEEDED(hr), "Failed to create compute shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
@@ -25532,21 +25937,27 @@ float4 main(struct ps_data ps_input) : SV_Target
     device = test_context.device;
     context = test_context.immediate_context;
 
+    /* Failing case */
+    gs = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateGeometryShader(device, vs_code, sizeof(vs_code), NULL, &gs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!gs, "Unexpected pointer %p.\n", gs);
+
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertex), vertex);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (ID3D11Device_GetFeatureLevel(device) >= D3D_FEATURE_LEVEL_11_0)
         hr = ID3D11Device_CreateGeometryShader(device, gs_5_0_code, sizeof(gs_5_0_code), NULL, &gs);
     else
         hr = ID3D11Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -25562,15 +25973,15 @@ float4 main(struct ps_data ps_input) : SV_Target
 
     get_texture_readback(test_context.backbuffer, 0, &rb);
     color = get_readback_color(&rb, 320, 190, 0);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_readback_color(&rb, 255, 240, 0);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_readback_color(&rb, 320, 240, 0);
-    ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xffffff00, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_readback_color(&rb, 385, 240, 0);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     color = get_readback_color(&rb, 320, 290, 0);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected colour 0x%08lx.\n", color);
     release_resource_readback(&rb);
 
     ID3D11PixelShader_Release(ps);
@@ -25875,7 +26286,7 @@ static void test_quad_tessellation(void)
     so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, sizeof(zero_data), zero_data);
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, 0, NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
 
     for (i = 0; i < ARRAY_SIZE(constant.tess_factors); ++i)
@@ -25885,10 +26296,10 @@ static void test_quad_tessellation(void)
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), &constant);
     ID3D11DeviceContext_HSSetConstantBuffers(context, 0, 1, &cb);
     hr = ID3D11Device_CreateHullShader(device, hs_quad_ccw_code, sizeof(hs_quad_ccw_code), NULL, &hs);
-    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
     hr = ID3D11Device_CreateDomainShader(device, ds_quad_code, sizeof(ds_quad_code), NULL, &ds);
-    ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_DSSetShader(context, ds, NULL, 0);
 
     ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
@@ -25901,7 +26312,7 @@ static void test_quad_tessellation(void)
 
     ID3D11HullShader_Release(hs);
     hr = ID3D11Device_CreateHullShader(device, hs_quad_cw_code, sizeof(hs_quad_cw_code), NULL, &hs);
-    ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
 
     ID3D11DeviceContext_SOSetTargets(context, 1, &so_buffer, &offset);
@@ -25916,7 +26327,7 @@ static void test_quad_tessellation(void)
     query_desc.Query = D3D11_QUERY_SO_STATISTICS_STREAM0;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_Begin(context, query);
 
     set_quad_color(&test_context, &white);
@@ -25972,7 +26383,7 @@ static void check_so_desc_(unsigned int line, ID3D11Device *device,
 
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, code, code_size,
             entry, entry_count, strides, stride_count, rasterizer_stream, NULL, &gs);
-    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
         ID3D11GeometryShader_Release(gs);
 }
@@ -25988,7 +26399,7 @@ static void check_invalid_so_desc_(unsigned int line, ID3D11Device *device,
 
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, code, code_size,
             entry, entry_count, strides, stride_count, rasterizer_stream, NULL, &gs);
-    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok_(__FILE__, line)(!gs, "Got unexpected geometry shader %p.\n", gs);
     if (SUCCEEDED(hr))
         ID3D11GeometryShader_Release(gs);
@@ -26771,7 +27182,7 @@ static void test_stream_output_resume(void)
 
     hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
             so_declaration, ARRAY_SIZE(so_declaration), NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constants[0]), &constants[0]);
     so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
@@ -26780,7 +27191,7 @@ static void test_stream_output_resume(void)
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
     ID3D11DeviceContext_GSSetConstantBuffers(context, 0, 1, &cb);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(context, test_context.backbuffer_rtv, &white);
     check_texture_color(test_context.backbuffer, 0xffffffff, 0);
 
     /* Draw into a SO buffer and then immediately destroy it, to make sure that
@@ -27054,15 +27465,15 @@ static void test_stream_output_components(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout[0]);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateInputLayout(device, layout_desc2, ARRAY_SIZE(layout_desc2),
             vs_code, sizeof(vs_code), &input_layout[1]);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -27083,7 +27494,7 @@ static void test_stream_output_components(void)
             hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, gs_code, sizeof(gs_code),
                     tests[i].so_declaration, tests[i].so_entry_count, NULL, 0,
                     D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
-            ok(SUCCEEDED(hr), "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
             current_so_declaration = tests[i].so_declaration;
         }
@@ -27246,10 +27657,10 @@ static void test_stream_output_vs(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     so_buffer = create_buffer(device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
 
@@ -27272,7 +27683,7 @@ static void test_stream_output_vs(void)
             hr = ID3D11Device_CreateGeometryShaderWithStreamOutput(device, vs_code, sizeof(vs_code),
                     tests[i].so_declaration, tests[i].so_entry_count, NULL, 0,
                     D3D11_SO_NO_RASTERIZED_STREAM, NULL, &gs);
-            ok(hr == S_OK, "Failed to create geometry shader with stream output, hr %#x.\n", hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
             current_so_declaration = tests[i].so_declaration;
         }
@@ -27480,16 +27891,16 @@ static void test_gather(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
     constant.width = texture_desc.Width;
@@ -27500,10 +27911,10 @@ static void test_gather(void)
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
     hr = ID3D11Device_CreatePixelShader(device, gather4_code, sizeof(gather4_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27521,10 +27932,10 @@ static void test_gather(void)
 
     ID3D11PixelShader_Release(ps);
     hr = ID3D11Device_CreatePixelShader(device, gather4_offset_code, sizeof(gather4_offset_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27549,10 +27960,10 @@ static void test_gather(void)
     }
 
     hr = ID3D11Device_CreatePixelShader(device, gather4_green_code, sizeof(gather4_green_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27570,10 +27981,10 @@ static void test_gather(void)
 
     ID3D11PixelShader_Release(ps);
     hr = ID3D11Device_CreatePixelShader(device, gather4_po_code, sizeof(gather4_po_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27592,7 +28003,7 @@ static void test_gather(void)
     constant.offset_x = 0;
     constant.offset_y = 0;
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)cb, 0, NULL, &constant, 0, 0);
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27746,7 +28157,7 @@ static void test_gather_c(void)
     sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
 
     texture_desc.Width = 4;
@@ -27761,9 +28172,9 @@ static void test_gather_c(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     constant.width = texture_desc.Width;
@@ -27777,21 +28188,21 @@ static void test_gather_c(void)
     texture_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     srv_desc.Format = DXGI_FORMAT_R32_FLOAT;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     U(srv_desc).Texture2D.MostDetailedMip = 0;
     U(srv_desc).Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
     hr = ID3D11Device_CreatePixelShader(device, gather4_c_code, sizeof(gather4_c_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27809,10 +28220,10 @@ static void test_gather_c(void)
     ID3D11PixelShader_Release(ps);
 
     hr = ID3D11Device_CreatePixelShader(device, gather4_po_c_code, sizeof(gather4_po_c_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, &white.x);
+    clear_rtv(context, rtv, &white);
     draw_quad(&test_context);
     get_texture_readback(rt, 0, &rb);
     for (y = 0; y < texture_desc.Height; ++y)
@@ -27947,9 +28358,9 @@ static void test_depth_bias(void)
         texture_desc.Format = format;
         texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Format %#x: Got unexpected hr %#lx.\n", format, hr);
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-        ok(SUCCEEDED(hr), "Failed to create render depth stencil view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Format %#x: Got unexpected hr %#lx.\n", format, hr);
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
         ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
         draw_quad_z(&test_context, 1.0f);
@@ -27991,7 +28402,8 @@ static void test_depth_bias(void)
                 {
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
                     ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
-                    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+                    ok(hr == S_OK, "Format %#x, quad %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
+                            format, i, j, k, hr);
                     ID3D11DeviceContext_RSSetState(context, rs);
                     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
                     draw_quad(&test_context);
@@ -28074,7 +28486,8 @@ static void test_depth_bias(void)
                     BOOL all_match = TRUE;
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
                     ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
-                    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+                    ok(hr == S_OK, "Format %#x, slope %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
+                            format, i, j, k, hr);
                     ID3D11DeviceContext_RSSetState(context, rs);
                     ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
                     draw_quad(&test_context);
@@ -28231,14 +28644,14 @@ static void test_fractional_viewports(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(quad), quad);
 
     ID3D11DeviceContext_IASetInputLayout(context, input_layout);
@@ -28248,11 +28661,11 @@ static void test_fractional_viewports(void)
     ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
 
     hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
-    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     for (i = 0; i < ARRAY_SIZE(viewport_offsets); ++i)
@@ -28390,7 +28803,7 @@ static void test_early_depth_stencil(void)
     depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
     depth_stencil_desc.StencilEnable = FALSE;
     hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_stencil_state);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = 1;
     texture_desc.Height = 1;
@@ -28404,21 +28817,21 @@ static void test_early_depth_stencil(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)texture, NULL, &uav);
-    ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_D32_FLOAT;
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &depth_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)depth_texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     set_viewport(context, 0.0f, 0.0f, 1.0f, 100.0f, 0.5f, 0.5f);
@@ -28559,16 +28972,16 @@ static void test_conservative_depth_output(void)
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     depth_stencil_desc.DepthEnable = TRUE;
     depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
     depth_stencil_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
     depth_stencil_desc.StencilEnable = FALSE;
     hr = ID3D11Device_CreateDepthStencilState(device, &depth_stencil_desc, &depth_stencil_state);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
@@ -28585,7 +28998,7 @@ static void test_conservative_depth_output(void)
 
             current_shader = tests[i].ps;
             hr = ID3D11Device_CreatePixelShader(device, current_shader->code, current_shader->size, NULL, &ps);
-            ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
             ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
         }
 
@@ -28704,7 +29117,7 @@ static void test_format_compatibility(void)
         resource_data.SysMemSlicePitch = 0;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &src_texture);
-        ok(SUCCEEDED(hr), "Failed to create source texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         texture_desc.Format = test_data[i].dst_format;
         texture_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -28713,7 +29126,7 @@ static void test_format_compatibility(void)
         resource_data.pSysMem = initial_data;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
-        ok(SUCCEEDED(hr), "Failed to create destination texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         set_box(&box, 0, 0, 0, texture_desc.Width - 1, texture_desc.Height - 1, 1);
         ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0, 1, 1, 0,
@@ -28736,7 +29149,7 @@ static void test_format_compatibility(void)
             expected = test_data[i].success && !test_data[i].src_ds && !test_data[i].dst_ds
                     && x >= texel_dwords && y ? bitmap_data[j - (4 + texel_dwords)] : initial_data[j];
             todo_wine_if((test_data[i].src_ds || test_data[i].dst_ds) && colour)
-                ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                ok(colour == expected, "Test %u: Got unexpected colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                         i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
@@ -28750,7 +29163,7 @@ static void test_format_compatibility(void)
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
-            ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+            ok(colour == expected, "Test %u: Got unexpected colour 0x%08lx at (%u, %u), expected 0x%08lx.\n",
                     i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
@@ -28761,7 +29174,7 @@ static void test_format_compatibility(void)
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature_level)
@@ -28885,7 +29298,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
 
     if (!(device = create_device(&device_desc)))
     {
-        skip("Failed to create device for feature level %#x.\n", feature_level);
+        skip("Failed to create device.\n");
         return;
     }
     ID3D11Device_GetImmediateContext(device, &context);
@@ -28919,7 +29332,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
             continue;
 
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &src_texture);
-        ok(hr == S_OK, "Source format %#x: Got unexpected hr %#x.\n", src_format->id, hr);
+        ok(hr == S_OK, "Source format %#x: Got unexpected hr %#lx.\n", src_format->id, hr);
 
         for (j = 0; j < ARRAY_SIZE(formats); ++j)
         {
@@ -28956,7 +29369,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
             resource_data.SysMemPitch = row_block_count * dst_format->block_size;
 
             hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
-            ok(hr == S_OK, "%#x -> %#x: Got unexpected hr %#x.\n", src_format->id, dst_format->id, hr);
+            ok(hr == S_OK, "%#x -> %#x: Got unexpected hr %#lx.\n", src_format->id, dst_format->id, hr);
 
             if (supported && broken_dst_offset)
             {
@@ -28990,7 +29403,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
                         expected = texture_data[k - ((row_block_count + 1) * dst_format->block_size) / sizeof(colour)];
                     else
                         expected = initial_data[k];
-                    ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
+                    ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08lx at %u, expected 0x%08lx.\n",
                             src_format->id, dst_format->id, colour, k, expected);
                     if (colour != expected)
                         break;
@@ -29013,7 +29426,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
                     expected = texture_data[k];
                 else
                     expected = initial_data[k];
-                ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
+                ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08lx at %u, expected 0x%08lx.\n",
                         src_format->id, dst_format->id, colour, k, expected);
                 if (colour != expected)
                     break;
@@ -29028,7 +29441,7 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
 
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void check_clip_distance(struct d3d11_test_context *test_context, ID3D11Buffer *vb)
@@ -29465,7 +29878,7 @@ static void test_clip_distance(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &test_context.input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
     stride = sizeof(*vertices);
@@ -29499,10 +29912,10 @@ static void test_clip_distance(void)
         ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
 
         hr = ID3D11Device_CreateHullShader(device, hs_code, sizeof(hs_code), NULL, &hs);
-        ok(SUCCEEDED(hr), "Failed to create hull shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID3D11DeviceContext_HSSetShader(context, hs, NULL, 0);
         hr = ID3D11Device_CreateDomainShader(device, ds_code, sizeof(ds_code), NULL, &ds);
-        ok(SUCCEEDED(hr), "Failed to create domain shader, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID3D11DeviceContext_DSSetShader(context, ds, NULL, 0);
 
         check_clip_distance(&test_context, vb);
@@ -29529,7 +29942,7 @@ static void test_clip_distance(void)
 
     /* geometry shader */
     hr = ID3D11Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
 
     check_clip_distance(&test_context, vb);
@@ -29726,7 +30139,7 @@ static void test_combined_clip_and_cull_distances(void)
 
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &test_context.input_layout);
-    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     vb = create_buffer(device, D3D11_BIND_VERTEX_BUFFER, sizeof(vertices), vertices);
     stride = sizeof(*vertices);
@@ -29945,10 +30358,10 @@ static void test_generate_mips(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code_3d, sizeof(ps_code_3d), NULL, &ps_3d);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -29965,7 +30378,7 @@ static void test_generate_mips(void)
     sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler_state);
 
     data = heap_alloc(sizeof(*data) * 32 * 32 * 32);
@@ -30059,12 +30472,11 @@ static void test_generate_mips(void)
             if (tests[j].expected_creation && (resource_types[i].dim != D3D11_RESOURCE_DIMENSION_BUFFER
                     || !(tests[j].misc_flags & D3D11_RESOURCE_MISC_GENERATE_MIPS)))
             {
-                ok(SUCCEEDED(hr), "Resource type %u, test %u: failed to create resource, hr %#x.\n", i, j, hr);
+                ok(hr == S_OK, "Resource type %u, test %u: Got unexpected hr %#lx.\n", i, j, hr);
             }
             else
             {
-                ok(hr == E_INVALIDARG, "Resource type %u, test %u: unexpectedly succeeded "
-                        "to create resource, hr %#x.\n", i, j, hr);
+                ok(hr == E_INVALIDARG, "Resource type %u, test %u: Got unexpected hr %#lx.\n", i, j, hr);
                 continue;
             }
 
@@ -30103,15 +30515,13 @@ static void test_generate_mips(void)
             }
             if (resource_types[i].dim == D3D11_RESOURCE_DIMENSION_BUFFER)
             {
-                ok(FAILED(hr), "Test %u: unexpectedly succeeded to create shader resource view, "
-                        "hr %#x.\n", j, hr);
+                ok(FAILED(hr), "Test %u: Got unexpected hr %#lx.\n", j, hr);
                 ID3D11Resource_Release(resource);
                 continue;
             }
             else
             {
-                ok(SUCCEEDED(hr), "Resource type %u, test %u: failed to create "
-                        "shader resource view, hr %#x.\n", i, j, hr);
+                ok(hr == S_OK, "Resource type %u, test %u: Got unexpected hr %#lx.\n", i, j, hr);
             }
 
             ID3D11DeviceContext_UpdateSubresource(context, resource, tests[j].base_level,
@@ -30121,7 +30531,7 @@ static void test_generate_mips(void)
 
             ID3D11DeviceContext_GenerateMips(context, srv);
 
-            ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &white.x);
+            clear_rtv(context, test_context.backbuffer_rtv, &white);
 
             srv_desc.Format = tests[j].texture_format == DXGI_FORMAT_R8G8B8A8_UINT
                     ? DXGI_FORMAT_R8G8B8A8_UINT : DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -30130,8 +30540,7 @@ static void test_generate_mips(void)
             srv_desc.Texture2D.MostDetailedMip = tests[j].base_level + 1;
             srv_desc.Texture2D.MipLevels = ~0u;
             hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-            ok(SUCCEEDED(hr), "Resource type %u, test %u: failed to create shader resource view, "
-                    "hr %#x.\n", i, j, hr);
+            ok(hr == S_OK, "Resource type %u, test %u: Got unexpected hr %#lx.\n", i, j, hr);
             ID3D11DeviceContext_PSSetShader(context, resource_types[i].dim
                     == D3D11_RESOURCE_DIMENSION_TEXTURE3D ? ps_3d : ps, NULL, 0);
             ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
@@ -30143,8 +30552,8 @@ static void test_generate_mips(void)
             {
                 color = get_readback_color(&rb, expected[k].pos.x, expected[k].pos.y, 0);
                 expected_color = tests[j].expected_mips ? expected[k].color : 0;
-                ok(color == expected_color, "Resource type %u, test %u: pixel (%u, %u) "
-                        "has color %08x, expected %08x.\n",
+                ok(color == expected_color, "Resource type %u, test %u: pixel (%lu, %lu) "
+                        "has colour %08lx, expected %08lx.\n",
                         i, j, expected[k].pos.x, expected[k].pos.y, color, expected_color);
             }
             release_resource_readback(&rb);
@@ -30178,9 +30587,9 @@ static void test_generate_mips(void)
     texture2d_desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, (ID3D11Texture2D **)&resource);
-    ok(SUCCEEDED(hr), "Failed to create resource, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, resource, NULL, &srv);
-    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srv_desc.Texture2D.MostDetailedMip = 0;
@@ -30191,14 +30600,14 @@ static void test_generate_mips(void)
 
     ID3D11DeviceContext_GenerateMips(context, srv);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &white.w);
+    clear_rtv(context, test_context.backbuffer_rtv, &white);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srv_desc.Texture2D.MostDetailedMip = 1;
     srv_desc.Texture2D.MipLevels = ~0u;
     hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
 
@@ -30207,7 +30616,7 @@ static void test_generate_mips(void)
     get_texture_readback(test_context.backbuffer, 0, &rb);
     color = get_readback_color(&rb, 320, 240, 0);
     ok(compare_color(color, 0x7fbcbcbc, 1) || broken(compare_color(color, 0x7f7f7f7f, 1)), /* AMD */
-            "Unexpected color %08x.\n", color);
+            "Got unexpected colour %08lx.\n", color);
     release_resource_readback(&rb);
 
     ID3D11ShaderResourceView_Release(srv_sampling);
@@ -30223,14 +30632,14 @@ static void test_generate_mips(void)
 
     ID3D11DeviceContext_GenerateMips(context, srv);
 
-    ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, &white.w);
+    clear_rtv(context, test_context.backbuffer_rtv, &white);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     srv_desc.Texture2D.MostDetailedMip = 1;
     srv_desc.Texture2D.MipLevels = ~0u;
     hr = ID3D11Device_CreateShaderResourceView(device, resource, &srv_desc, &srv_sampling);
-    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_sampling);
 
@@ -30331,14 +30740,14 @@ static void test_alpha_to_coverage(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
     blend_desc.AlphaToCoverageEnable = TRUE;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
 
     render_targets[0] = test_context.backbuffer;
@@ -30347,10 +30756,10 @@ static void test_alpha_to_coverage(void)
     {
         ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[i]);
-        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Target %u: Got unexpected hr %#lx.\n", i, hr);
         hr = ID3D11Device_CreateRenderTargetView(device,
                 (ID3D11Resource *)render_targets[i], NULL, &rtvs[i]);
-        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Target %u: Got unexpected hr %#lx.\n", i, hr);
     }
     ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
 
@@ -30389,10 +30798,10 @@ static void test_alpha_to_coverage(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_R16G16_UNORM;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[0]);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device,
             (ID3D11Resource *)render_targets[0], NULL, &rtvs[0]);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[0], white);
@@ -30415,7 +30824,7 @@ static void test_alpha_to_coverage(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D11Device_CheckMultisampleQualityLevels(device,
             texture_desc.Format, 4, &quality_level_count);
-    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (!quality_level_count)
     {
         skip("4xMSAA not supported.\n");
@@ -30427,10 +30836,10 @@ static void test_alpha_to_coverage(void)
     for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
     {
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &render_targets[i]);
-        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Target %u: Got unexpected hr %#lx.\n", i, hr);
         hr = ID3D11Device_CreateRenderTargetView(device,
                 (ID3D11Resource *)render_targets[i], NULL, &rtvs[i]);
-        ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Target %u: Got unexpected hr %#lx.\n", i, hr);
     }
     ID3D11DeviceContext_OMSetRenderTargets(context, ARRAY_SIZE(rtvs), rtvs, NULL);
 
@@ -30439,7 +30848,7 @@ static void test_alpha_to_coverage(void)
     draw_quad(&test_context);
     texture_desc.SampleDesc.Count = 1;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &readback_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     for (i = 0; i < ARRAY_SIZE(render_targets); ++i)
     {
         DWORD expected_color;
@@ -30540,7 +30949,7 @@ static void test_unbound_multisample_texture(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     memset(&cb_data, 0, sizeof(cb_data));
@@ -30675,11 +31084,11 @@ static void test_multiple_viewports(void)
     ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
 
     hr = ID3D11Device_CreateGeometryShader(device, gs_code, sizeof(gs_code), NULL, &gs);
-    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_GSSetShader(context, gs, NULL, 0);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     texture_desc.Width = 32;
@@ -30694,10 +31103,10 @@ static void test_multiple_viewports(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
 
     width = texture_desc.Width / 2;
@@ -30756,7 +31165,7 @@ static void test_multiple_viewports(void)
     rasterizer_desc.DepthClipEnable = TRUE;
     rasterizer_desc.ScissorEnable = TRUE;
     hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rasterizer_state);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_RSSetState(context, rasterizer_state);
     ID3D11RasterizerState_Release(rasterizer_state);
@@ -30972,7 +31381,7 @@ static void test_multisample_resolve(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_TYPELESS, 4, &i);
-    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (!i)
     {
         skip("4xMSAA not supported.\n");
@@ -30987,17 +31396,17 @@ static void test_multisample_resolve(void)
         ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
         texture_desc.Format = tests[i].dst_format;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-        ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         texture_desc.Format = tests[i].src_format;
         texture_desc.SampleDesc.Count = 4;
         texture_desc.SampleDesc.Quality = 0;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ms_texture);
-        ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         rtv_desc.Format = tests[i].rtv_format;
         rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)ms_texture, &rtv_desc, &rtv);
-        ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
         ID3D11DeviceContext_ClearRenderTargetView(context, rtv, white);
@@ -31348,11 +31757,11 @@ static void test_sample_shading(void)
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 1024;
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -31360,19 +31769,19 @@ static void test_sample_shading(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     U(uav_desc).Buffer.FirstElement = 0;
     U(uav_desc).Buffer.NumElements = 256;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = ID3D11Device_CreatePixelShader(device, tests[i].ps->code, tests[i].ps->size, NULL, &ps);
-        ok(hr == S_OK, "Test %u: Failed to create pixel shader, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
         ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
@@ -31418,7 +31827,7 @@ static void test_sample_shading(void)
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_color_code, sizeof(ps_color_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11PixelShader_Release(ps);
 
@@ -31430,7 +31839,7 @@ static void test_sample_shading(void)
     check_texture_color(test_context.backbuffer, 0xff404040, 2);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_resolve_code, sizeof(ps_resolve_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11PixelShader_Release(ps);
     ps_constant.x = 0;
@@ -31505,7 +31914,7 @@ static void test_sample_mask(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_TYPELESS, 4, &quality_levels);
-    ok(hr == S_OK, "Failed to check multisample quality levels, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (!quality_levels)
     {
         skip("4xMSAA not supported.\n");
@@ -31514,16 +31923,16 @@ static void test_sample_mask(void)
     }
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.SampleDesc.Count = 4;
     texture_desc.SampleDesc.Quality = 0;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, black);
@@ -31569,9 +31978,9 @@ static void test_depth_clip(void)
     texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
-    ok(SUCCEEDED(hr), "Failed to create depth stencil view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, dsv);
 
     count = 1;
@@ -31597,7 +32006,7 @@ static void test_depth_clip(void)
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
     hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
-    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_RSSetState(context, rs);
 
@@ -31648,13 +32057,13 @@ static void test_staging_buffers(void)
     resource_data.SysMemSlicePitch = 0;
 
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &src_buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
     buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &dst_buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)dst_buffer, (ID3D11Resource *)src_buffer);
     get_buffer_readback(dst_buffer, &rb);
@@ -31718,15 +32127,15 @@ static void test_render_a8(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.Format = DXGI_FORMAT_A8_UNORM;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Failed to create render target view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < 2; ++i)
     {
@@ -31823,9 +32232,9 @@ static void test_standard_pattern(void)
     texture_desc.SampleDesc.Quality = D3D11_STANDARD_MULTISAMPLE_PATTERN;
     texture_desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(hr == S_OK, "Failed to create shader resource view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 1024;
     buffer_desc.Usage = D3D11_USAGE_DEFAULT;
@@ -31833,17 +32242,17 @@ static void test_standard_pattern(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     uav_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     U(uav_desc).Buffer.FirstElement = 0;
     U(uav_desc).Buffer.NumElements = 256;
     U(uav_desc).Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
     hr = ID3D11Device_CreateUnorderedAccessView(device, (ID3D11Resource *)buffer, &uav_desc, &uav);
-    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_samplepos, sizeof(ps_samplepos), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav, zero);
@@ -31893,12 +32302,12 @@ static void test_desktop_window(void)
     }
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
-    ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
     swapchain_desc.BufferDesc.Width = 640;
@@ -31918,8 +32327,7 @@ static void test_desktop_window(void)
     swapchain_desc.Flags = 0;
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    ok(hr == S_OK || broken(hr == DXGI_ERROR_INVALID_CALL) /* Not available on all Windows versions. */,
-            "Failed to create swapchain, hr %#x.\n", hr);
+    ok(hr == S_OK || broken(hr == DXGI_ERROR_INVALID_CALL), "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
     {
@@ -31928,10 +32336,10 @@ static void test_desktop_window(void)
     }
 
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer, NULL, &backbuffer_rtv);
-    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11Device_GetImmediateContext(device, &context);
 
@@ -31939,14 +32347,14 @@ static void test_desktop_window(void)
     check_texture_color(backbuffer, 0xff0000ff, 1);
 
     hr = IDXGISwapChain_Present(swapchain, 0, 0);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11RenderTargetView_Release(backbuffer_rtv);
     ID3D11Texture2D_Release(backbuffer);
     IDXGISwapChain_Release(swapchain);
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_sample_attached_rtv(void)
@@ -32068,7 +32476,7 @@ static void test_sample_attached_rtv(void)
     sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_ld_code, sizeof(ps_ld_code), NULL, &ps);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
@@ -32079,12 +32487,12 @@ static void test_sample_attached_rtv(void)
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     texture_desc.Width = 640;
     texture_desc.Height = 480;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture2);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.MipLODBias = 0.0f;
@@ -32092,7 +32500,7 @@ static void test_sample_attached_rtv(void)
     sampler_desc.MaxLOD = 0.0f;
 
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &sampler);
 
@@ -32104,10 +32512,10 @@ static void test_sample_attached_rtv(void)
     U(rtv_desc).Texture2D.MipSlice = 0;
 
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, &rtv_desc, &rtv);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     U(rtv_desc).Texture2D.MipSlice = 1;
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture2, &rtv_desc, &rtv2);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     rtvs[0] = test_context.backbuffer_rtv;
     rtvs[1] = rtv;
@@ -32120,7 +32528,7 @@ static void test_sample_attached_rtv(void)
     U(srv_desc).Texture2D.MipLevels = 1;
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srv);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
 
     draw_quad(&test_context);
@@ -32135,7 +32543,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
             ok(compare_color(color, 0x40404040, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32146,7 +32554,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 40 + x * 80, 30 + y * 60, 0);
             ok(compare_color(color, 0x40404040, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32157,19 +32565,19 @@ static void test_sample_attached_rtv(void)
     ID3D11DeviceContext_ClearRenderTargetView(context, rtv, red);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, &srv_desc, &srv);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     U(srv_desc).Texture2D.MostDetailedMip = 1;
     U(srv_desc).Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture2, &srv_desc, &srv2);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
     blend_desc.IndependentBlendEnable = TRUE;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     blend_desc.RenderTarget[1].RenderTargetWriteMask = 0;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32180,7 +32588,7 @@ static void test_sample_attached_rtv(void)
 
     blend_desc.RenderTarget[1].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32196,7 +32604,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
             ok(compare_color(color, 0x40404040, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32208,7 +32616,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
             ok(compare_color(color, 0x40404040, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32227,7 +32635,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
             ok(compare_color(color, 0x80808080, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32252,7 +32660,7 @@ static void test_sample_attached_rtv(void)
         {
             color = get_readback_color(&rb, 80 + x * 160, 60 + y * 120, 0);
             ok(compare_color(color, 0x80808080, 2),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
+                    "Got unexpected colour 0x%08lx at (%u, %u).\n", color, x, y);
         }
     }
     release_resource_readback(&rb);
@@ -32279,15 +32687,15 @@ static void test_sample_attached_rtv(void)
 
         texture_desc.Format = ds_tests[i].texture_format;
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &dstexture);
-        ok(hr == S_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         dsview_desc.Format = ds_tests[i].dsv_format;
         dsview_desc.Flags = ds_tests[i].dsv_flags;
         hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)dstexture, &dsview_desc, &dsview);
-        ok(hr == S_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         srvds_desc.Format = ds_tests[i].srv_format;
         hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)dstexture, &srvds_desc, &srv_ds);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
 
         ID3D11DeviceContext_OMSetRenderTargets(context, 1, rtvs, NULL);
         ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv_ds);
@@ -32391,7 +32799,7 @@ static void test_color_mask(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
@@ -32406,7 +32814,7 @@ static void test_color_mask(void)
     blend_desc.RenderTarget[7].RenderTargetWriteMask = 0;
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32414,10 +32822,10 @@ static void test_color_mask(void)
     {
         ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rts[i]);
-        ok(hr == S_OK, "Failed to create texture %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Texture %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rts[i], NULL, &rtvs[i]);
-        ok(hr == S_OK, "Failed to create rendertarget view %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "RTV %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 8, rtvs, NULL);
@@ -32430,13 +32838,13 @@ static void test_color_mask(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected colour 0x%08lx.\n", i, color);
         release_resource_readback(&rb);
     }
 
     blend_desc.IndependentBlendEnable = FALSE;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32448,7 +32856,7 @@ static void test_color_mask(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, expected_colors[0], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[0], 1), "%u: Got unexpected colour 0x%08lx.\n", i, color);
         release_resource_readback(&rb);
 
         ID3D11Texture2D_Release(rts[i]);
@@ -32547,11 +32955,11 @@ static void test_independent_blend(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32559,10 +32967,10 @@ static void test_independent_blend(void)
     {
         ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
         hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rts[i]);
-        ok(hr == S_OK, "Failed to create texture %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Texture %u: Got unexpected hr %#lx.\n", i, hr);
 
         hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rts[i], NULL, &rtvs[i]);
-        ok(hr == S_OK, "Failed to create rendertarget view %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "RTV %u: Got unexpected hr %#lx.\n", i, hr);
     }
 
     ID3D11DeviceContext_OMSetRenderTargets(context, 8, rtvs, NULL);
@@ -32575,13 +32983,13 @@ static void test_independent_blend(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[i], 1), "%u: Got unexpected colour 0x%08lx.\n", i, color);
         release_resource_readback(&rb);
     }
 
     blend_desc.IndependentBlendEnable = FALSE;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32593,7 +33001,7 @@ static void test_independent_blend(void)
     {
         get_texture_readback(rts[i], 0, &rb);
         color = get_readback_color(&rb, 320, 240, 0);
-        ok(compare_color(color, expected_colors[0], 1), "%u: Got unexpected color 0x%08x.\n", i, color);
+        ok(compare_color(color, expected_colors[0], 1), "%u: Got unexpected colour 0x%08lx.\n", i, color);
         release_resource_readback(&rb);
 
         ID3D11Texture2D_Release(rts[i]);
@@ -32656,11 +33064,11 @@ static void test_dual_source_blend(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
 
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blend_state);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_OMSetBlendState(context, blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11BlendState_Release(blend_state);
 
@@ -32668,7 +33076,7 @@ static void test_dual_source_blend(void)
     draw_quad(&test_context);
 
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0x80804000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x80804000, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
@@ -32701,7 +33109,7 @@ static void test_deferred_context_state(void)
     ID3D11DeviceContext_PSSetConstantBuffers(immediate, 0, 1, &green_buffer);
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSGetConstantBuffers(deferred, 0, 1, &ret_buffer);
     ok(!ret_buffer, "Got unexpected buffer %p.\n", ret_buffer);
@@ -32713,14 +33121,14 @@ static void test_deferred_context_state(void)
     ID3D11Buffer_Release(ret_buffer);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSGetConstantBuffers(deferred, 0, 1, &ret_buffer);
     ok(ret_buffer == blue_buffer, "Got unexpected buffer %p.\n", ret_buffer);
     ID3D11Buffer_Release(ret_buffer);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list2);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSGetConstantBuffers(deferred, 0, 1, &ret_buffer);
     ok(!ret_buffer, "Got unexpected buffer %p.\n", ret_buffer);
@@ -32742,12 +33150,12 @@ static void test_deferred_context_state(void)
     /* Test recording a command list into another deferred context. */
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred2);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetConstantBuffers(deferred2, 0, 1, &green_buffer);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred2, FALSE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetConstantBuffers(deferred, 0, 1, &blue_buffer);
     ID3D11DeviceContext_ExecuteCommandList(deferred, list1, TRUE);
@@ -32768,11 +33176,11 @@ static void test_deferred_context_state(void)
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Failed to create view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(hr == S_OK, "Failed to create view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShaderResources(deferred, 0, 1, &srv);
     ID3D11DeviceContext_PSGetShaderResources(deferred, 0, 1, &ret_srv);
@@ -32832,12 +33240,12 @@ static void test_deferred_context_swap_state(void)
     ID3D11DeviceContext1_PSSetConstantBuffers(immediate, 0, 1, &green_buffer);
 
     hr = ID3D11Device1_CreateDeferredContext1(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D11Device1, NULL, &state);
-    ok(hr == S_OK, "Failed to create device context state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     prev_state = (void *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(deferred, NULL, &prev_state);
@@ -32887,57 +33295,57 @@ static void test_deferred_context_rendering(void)
     immediate = test_context.immediate_context;
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&blend_desc, 0, sizeof(blend_desc));
 
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &red_blend);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_GREEN;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &green_blend);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_BLUE;
     hr = ID3D11Device_CreateBlendState(device, &blend_desc, &blue_blend);
-    ok(hr == S_OK, "Failed to create blend state, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
 
     ID3D11DeviceContext_ClearRenderTargetView(deferred, test_context.backbuffer_rtv, green);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list2);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected colour %#08lx.\n", color);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected colour %#08lx.\n", color);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list2);
 
     ID3D11DeviceContext_ExecuteCommandList(deferred, list1, TRUE);
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list2);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list2);
     ID3D11CommandList_Release(list1);
@@ -32945,25 +33353,25 @@ static void test_deferred_context_rendering(void)
 
     ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
     hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
-    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
-    ok(hr == S_OK, "Failed to create view, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &white);
     ID3D11DeviceContext_ClearRenderTargetView(immediate, rtv, green);
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_CopyResource(deferred, (ID3D11Resource *)test_context.backbuffer, (ID3D11Resource *)texture);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, rtv, blue);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffff0000, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffff0000, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
@@ -32972,19 +33380,19 @@ static void test_deferred_context_rendering(void)
      * affect subsequent draws after the state is restored or cleared. */
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetBlendState(deferred, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext_OMSetBlendState(immediate, blue_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     draw_color_quad(&test_context, &white);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffff0000, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffff0000, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11DeviceContext_OMGetBlendState(immediate, &ret_blend, blend_factor, &sample_mask);
     ok(ret_blend == blue_blend, "Got unexpected blend state %p.\n", ret_blend);
@@ -32997,7 +33405,7 @@ static void test_deferred_context_rendering(void)
     set_viewport(immediate, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
     draw_color_quad(&test_context, &white);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11DeviceContext_OMGetBlendState(immediate, &ret_blend, blend_factor, &sample_mask);
     ok(!ret_blend, "Got unexpected blend state %p.\n", ret_blend);
@@ -33008,7 +33416,7 @@ static void test_deferred_context_rendering(void)
     /* Command lists do not inherit state from the immediate context. */
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
 
@@ -33018,12 +33426,12 @@ static void test_deferred_context_rendering(void)
     draw_color_quad(&test_context, &white);
     test_context.immediate_context = immediate;
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetBlendState(immediate, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, FALSE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
@@ -33032,11 +33440,11 @@ static void test_deferred_context_rendering(void)
      * subsequent call to FinishCommandList... */
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetBlendState(deferred, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11CommandList_Release(list1);
 
     ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &test_context.backbuffer_rtv, NULL);
@@ -33045,13 +33453,13 @@ static void test_deferred_context_rendering(void)
     draw_color_quad(&test_context, &white);
     test_context.immediate_context = immediate;
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext_OMSetBlendState(immediate, red_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, FALSE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list1);
 
@@ -33059,7 +33467,7 @@ static void test_deferred_context_rendering(void)
 
     ID3D11DeviceContext_OMSetBlendState(deferred, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11CommandList_Release(list1);
 
     ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &test_context.backbuffer_rtv, NULL);
@@ -33068,13 +33476,13 @@ static void test_deferred_context_rendering(void)
     draw_color_quad(&test_context, &white);
     test_context.immediate_context = immediate;
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext_OMSetBlendState(immediate, red_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, FALSE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list1);
 
@@ -33084,14 +33492,14 @@ static void test_deferred_context_rendering(void)
      * subsequent call to FinishCommandList. */
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred2);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetBlendState(deferred2, blue_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred2, FALSE, &list1);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetBlendState(deferred, green_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(deferred, list1, FALSE);
@@ -33101,13 +33509,13 @@ static void test_deferred_context_rendering(void)
     draw_color_quad(&test_context, &white);
     test_context.immediate_context = immediate;
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list2);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext_OMSetBlendState(immediate, red_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, FALSE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xffffffff, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list2);
 
@@ -33121,13 +33529,13 @@ static void test_deferred_context_rendering(void)
     draw_color_quad(&test_context, &white);
     test_context.immediate_context = immediate;
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list2);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext_OMSetBlendState(immediate, red_blend, NULL, D3D11_DEFAULT_SAMPLE_MASK);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, FALSE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected colour %#08lx.\n", color);
 
     ID3D11CommandList_Release(list2);
 
@@ -33168,17 +33576,17 @@ static void test_deferred_context_queries(void)
     immediate = test_context.immediate_context;
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     query_desc.Query = D3D11_QUERY_OCCLUSION;
     query_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateQuery(device, &query_desc, (ID3D11Query **)&query);
-    ok(hr == S_OK, "Failed to create query, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_GetData(deferred, query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &test_context.backbuffer_rtv, NULL);
     set_viewport(deferred, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
@@ -33186,7 +33594,7 @@ static void test_deferred_context_queries(void)
     ID3D11DeviceContext_Begin(deferred, query);
 
     hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     test_context.immediate_context = deferred;
     draw_color_quad(&test_context, &white);
@@ -33195,26 +33603,26 @@ static void test_deferred_context_queries(void)
     ID3D11DeviceContext_End(deferred, query);
 
     hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(immediate, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
 
     hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(immediate, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ExecuteCommandList(immediate, list, FALSE);
 
     hr = ID3D11DeviceContext_GetData(deferred, query, &data, sizeof(data), 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_GetData(deferred, query, NULL, 0, 0);
-    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     get_query_data(immediate, query, &data, sizeof(data));
-    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08x%08x.\n", data.dword[1], data.dword[0]);
+    ok(data.uint == 640 * 480, "Got unexpected query result 0x%08lx%08lx.\n", data.dword[1], data.dword[0]);
 
     ID3D11Asynchronous_Release(query);
     ID3D11CommandList_Release(list);
@@ -33245,7 +33653,7 @@ static void test_deferred_context_map(void)
     immediate = test_context.immediate_context;
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         data[i] = i;
@@ -33258,24 +33666,30 @@ static void test_deferred_context_map(void)
     buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer2);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    map_desc.pData = (void *)0xdeadbeef;
+    map_desc.RowPitch = 0xabab;
+    map_desc.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!map_desc.pData, "Unexpected pointer %p.\n", map_desc.pData);
+    ok(map_desc.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", map_desc.RowPitch);
+    ok(map_desc.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", map_desc.DepthPitch);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     /* The previous contents of map_data are undefined and may in practice be
      * uninitialized garbage. */
@@ -33285,14 +33699,14 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = 3 * i;
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     get_buffer_readback(buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33317,7 +33731,7 @@ static void test_deferred_context_map(void)
     /* Dead Rising unmaps a resource on the wrong context. */
 
     hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
@@ -33326,17 +33740,17 @@ static void test_deferred_context_map(void)
     /* Test WRITE_NO_OVERWRITE. */
 
     hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = i;
     ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = 2 * i;
@@ -33344,16 +33758,16 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &map_desc);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33367,7 +33781,7 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33381,7 +33795,7 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     get_buffer_readback(buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33406,14 +33820,14 @@ static void test_deferred_context_map(void)
     /* Do something with the mapped data from within the deferred context. */
 
     hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = i;
     ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = 2 * i;
@@ -33422,14 +33836,14 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_CopyResource(deferred, (ID3D11Resource *)buffer2, (ID3D11Resource *)buffer);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = 3 * i;
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     get_buffer_readback(buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33472,16 +33886,16 @@ static void test_deferred_context_map(void)
     buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     buffer_desc.CPUAccessFlags = 0;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer2);
-    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         data[i] = 2 * i;
     ID3D11DeviceContext_UpdateSubresource(deferred, (ID3D11Resource *)buffer, 0, NULL, data, 0, 0);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     get_buffer_readback(buffer, &rb);
     for (i = 0; i < ARRAY_SIZE(data); ++i)
@@ -33566,7 +33980,7 @@ static void test_texture_compressed_3d(void)
     context = test_context.immediate_context;
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Simply test all combinations of r0 and r1. */
     texture_data = heap_alloc(256 * 256 * sizeof(UINT64));
@@ -33593,11 +34007,11 @@ static void test_texture_compressed_3d(void)
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     hr = ID3D11Device_CreateTexture3D(device, &texture_desc, &resource_data, &texture);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     heap_free(texture_data);
 
     hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -33613,7 +34027,7 @@ static void test_texture_compressed_3d(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 0.0f;
     hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
@@ -33655,7 +34069,7 @@ static void test_texture_compressed_3d(void)
         if (!equal)
             break;
     }
-    ok(equal, "Got unexpected colour 0x%08x at (%u, %u, %u), expected 0x%08x.\n", colour, x, y, z, expected);
+    ok(equal, "Got unexpected colour 0x%08lx at (%u, %u, %u), expected 0x%08lx.\n", colour, x, y, z, expected);
 
     ID3D11PixelShader_Release(ps);
     ID3D11SamplerState_Release(sampler_state);
@@ -33736,7 +34150,7 @@ static void test_constant_buffer_offset(void)
     buffers[1] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(buffer_data), buffer_data);
 
     hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
-    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext1_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
     ID3D11DeviceContext1_PSSetShader(context, ps, NULL, 0);
@@ -33790,7 +34204,7 @@ static void test_constant_buffer_offset(void)
 
     draw_quad(&test_context);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xccb23319, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xccb23319, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     /* The following calls are all invalid. */
 
@@ -33854,7 +34268,7 @@ static void test_constant_buffer_offset(void)
 
     draw_quad(&test_context);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0xccb23319, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0xccb23319, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, NULL, NULL);
 
@@ -33870,7 +34284,7 @@ static void test_constant_buffer_offset(void)
 
     draw_quad(&test_context);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0x99803319, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x99803319, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     offsets[0] = 16;
     offsets[1] = 0;
@@ -33890,7 +34304,7 @@ static void test_constant_buffer_offset(void)
 
     draw_quad(&test_context);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0x9980664c, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x9980664c, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext1_PSSetConstantBuffers(context, 1, 2, buffers);
 
@@ -33906,7 +34320,7 @@ static void test_constant_buffer_offset(void)
 
     draw_quad(&test_context);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(compare_color(color, 0x99803319, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x99803319, 1), "Got unexpected colour 0x%08lx.\n", color);
 
     ID3D11DeviceContext1_Release(context);
     ID3D11Buffer_Release(buffers[0]);
@@ -33949,16 +34363,16 @@ static void test_dynamic_map_synchronization(void)
     immediate = test_context.immediate_context;
 
     hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 200 * 4 * sizeof(struct vec3);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
     buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &test_context.vb);
-    ok(hr == S_OK, "Failed to create vertex buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &red.x);
+    clear_rtv(immediate, test_context.backbuffer_rtv, &red);
 
     for (y = 0; y < 200; ++y)
     {
@@ -33966,7 +34380,7 @@ static void test_dynamic_map_synchronization(void)
         {
             hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)test_context.vb,
                     0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-            ok(hr == S_OK, "Failed to map buffer, hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             fill_dynamic_vb_quad(&map_desc, 0, y);
 
@@ -33977,14 +34391,14 @@ static void test_dynamic_map_synchronization(void)
         {
             hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)test_context.vb,
                     0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-            ok(hr == S_OK, "Failed to map buffer, hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             fill_dynamic_vb_quad(&map_desc, 0, y);
 
             ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)test_context.vb, 0);
 
             hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-            ok(hr == S_OK, "Failed to record command list, hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ID3D11DeviceContext_ExecuteCommandList(immediate, list, TRUE);
             ID3D11CommandList_Release(list);
             draw_color_quad(&test_context, &green);
@@ -33994,7 +34408,7 @@ static void test_dynamic_map_synchronization(void)
         {
             hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)test_context.vb,
                     0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-            ok(hr == S_OK, "Failed to map buffer, hr %#x.\n", hr);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
             fill_dynamic_vb_quad(&map_desc, x, y);
 
@@ -34022,7 +34436,7 @@ static void test_user_defined_annotation(void)
 
     hr = ID3D11DeviceContext_QueryInterface(test_context.immediate_context,
             &IID_ID3DUserDefinedAnnotation, (void **)&annotation);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ret = ID3DUserDefinedAnnotation_BeginEvent(annotation, L"Event 1");
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ret = ID3DUserDefinedAnnotation_EndEvent(annotation);
@@ -34033,9 +34447,9 @@ static void test_user_defined_annotation(void)
     ID3DUserDefinedAnnotation_Release(annotation);
 
     hr = ID3D11Device_CreateDeferredContext(test_context.device, 0, &context);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID3D11DeviceContext_QueryInterface(context, &IID_ID3DUserDefinedAnnotation, (void **)&annotation);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ret = ID3DUserDefinedAnnotation_BeginEvent(annotation, L"Event 2");
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ret = ID3DUserDefinedAnnotation_EndEvent(annotation);
@@ -34046,6 +34460,285 @@ static void test_user_defined_annotation(void)
     ID3DUserDefinedAnnotation_Release(annotation);
     ID3D11DeviceContext_Release(context);
 
+    release_test_context(&test_context);
+}
+
+static void test_logic_op(void)
+{
+    D3D11_FEATURE_DATA_D3D11_OPTIONS options;
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11RenderTargetView *rtvs[8];
+    ID3D11BlendState1 *blend_state;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Texture2D *rts[8];
+    ID3D11Device1 *device1;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int i, j;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        void main(float4 position : SV_Position,
+                out uint4 t0 : SV_Target0, out uint4 t1 : SV_Target1,
+                out uint4 t2 : SV_Target2, out uint4 t3 : SV_Target3,
+                out uint4 t4 : SV_Target4, out uint4 t5 : SV_Target5,
+                out uint4 t6 : SV_Target6, out uint4 t7 : SV_Target7)
+        {
+            t0 = t1 = t2 = t3 = t4 = t5 = t6 = t7 = uint4(0x00, 0x00, 0xff, 0xff);
+        }
+#endif
+         0x43425844, 0x4ed0bba7, 0x9f7d54c4, 0xba1e3dce, 0xc29634f8, 0x00000001, 0x000002b0, 0x00000003,
+         0x0000002c, 0x00000060, 0x0000013c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69,
+         0x4e47534f, 0x000000d4, 0x00000008, 0x00000008, 0x000000c8, 0x00000000, 0x00000000, 0x00000001,
+         0x00000000, 0x0000000f, 0x000000c8, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x0000000f,
+         0x000000c8, 0x00000002, 0x00000000, 0x00000001, 0x00000002, 0x0000000f, 0x000000c8, 0x00000003,
+         0x00000000, 0x00000001, 0x00000003, 0x0000000f, 0x000000c8, 0x00000004, 0x00000000, 0x00000001,
+         0x00000004, 0x0000000f, 0x000000c8, 0x00000005, 0x00000000, 0x00000001, 0x00000005, 0x0000000f,
+         0x000000c8, 0x00000006, 0x00000000, 0x00000001, 0x00000006, 0x0000000f, 0x000000c8, 0x00000007,
+         0x00000000, 0x00000001, 0x00000007, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853,
+         0x0000016c, 0x00000040, 0x0000005b, 0x03000065, 0x001020f2, 0x00000000, 0x03000065, 0x001020f2,
+         0x00000001, 0x03000065, 0x001020f2, 0x00000002, 0x03000065, 0x001020f2, 0x00000003, 0x03000065,
+         0x001020f2, 0x00000004, 0x03000065, 0x001020f2, 0x00000005, 0x03000065, 0x001020f2, 0x00000006,
+         0x03000065, 0x001020f2, 0x00000007, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000001, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000002, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000003, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000004, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000005, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000006, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000007, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x0100003e
+    };
+
+    D3D11_BLEND_DESC1 blend_desc =
+    {
+        .IndependentBlendEnable = TRUE,
+        .RenderTarget =
+        {
+            {FALSE, TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,
+                    D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_LOGIC_OP_CLEAR,
+                    D3D11_COLOR_WRITE_ENABLE_ALL},
+            {FALSE, TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,
+                    D3D11_BLEND_ZERO, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_LOGIC_OP_CLEAR,
+                    D3D11_COLOR_WRITE_ENABLE_ALL},
+        },
+    };
+
+    static const struct
+    {
+        D3D11_LOGIC_OP op;
+        DWORD color;
+    }
+    tests[] =
+    {
+        {D3D11_LOGIC_OP_CLEAR,          0x00000000},
+        {D3D11_LOGIC_OP_NOR,            0x000000ff},
+        {D3D11_LOGIC_OP_AND_INVERTED,   0x0000ff00},
+        {D3D11_LOGIC_OP_COPY_INVERTED,  0x0000ffff},
+        {D3D11_LOGIC_OP_AND_REVERSE,    0x00ff0000},
+        {D3D11_LOGIC_OP_INVERT,         0x00ff00ff},
+        {D3D11_LOGIC_OP_XOR,            0x00ffff00},
+        {D3D11_LOGIC_OP_NAND,           0x00ffffff},
+        {D3D11_LOGIC_OP_AND,            0xff000000},
+        {D3D11_LOGIC_OP_EQUIV,          0xff0000ff},
+        {D3D11_LOGIC_OP_NOOP,           0xff00ff00},
+        {D3D11_LOGIC_OP_OR_INVERTED,    0xff00ffff},
+        {D3D11_LOGIC_OP_COPY,           0xffff0000},
+        {D3D11_LOGIC_OP_OR_REVERSE,     0xffff00ff},
+        {D3D11_LOGIC_OP_OR,             0xffffff00},
+        {D3D11_LOGIC_OP_SET,            0xffffffff},
+    };
+    static const float clear_color[] = {0.0f, 255.0f, 0.0f, 255.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    if (FAILED(hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D11_OPTIONS, &options, sizeof(options)))
+            || !options.OutputMergerLogicOp)
+    {
+        skip("Logic op is not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11Device1, (void **)&device1);
+    ok(hr == S_OK, "Failed to get ID3D11Device1 interface, hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#lx.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    blend_desc.IndependentBlendEnable = FALSE;
+    hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11BlendState1_Release(blend_state);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+    for (i = 0; i < 8; ++i)
+    {
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rts[i]);
+        ok(hr == S_OK, "Failed to create texture %u, hr %#lx.\n", i, hr);
+
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rts[i], NULL, &rtvs[i]);
+        ok(hr == S_OK, "Failed to create rendertarget view %u, hr %#lx.\n", i, hr);
+    }
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 8, rtvs, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        blend_desc.RenderTarget[0].LogicOp = tests[i].op;
+        hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+        ok(hr == S_OK, "Failed to create blend state, hr %#lx.\n", hr);
+        ID3D11DeviceContext_OMSetBlendState(context, (ID3D11BlendState *)blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
+        ID3D11BlendState1_Release(blend_state);
+
+        for (j = 0; j < 8; ++j)
+            ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[j], clear_color);
+        draw_quad(&test_context);
+
+        for (j = 0; j < 8; ++j)
+        {
+            get_texture_readback(rts[j], 0, &rb);
+            color = get_readback_color(&rb, 320, 240, 0);
+            ok(compare_color(color, tests[i].color, 1), "%u: Got unexpected color 0x%08lx.\n", i, color);
+            release_resource_readback(&rb);
+        }
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        ID3D11Texture2D_Release(rts[i]);
+        ID3D11RenderTargetView_Release(rtvs[i]);
+    }
+    ID3D11PixelShader_Release(ps);
+    ID3D11Device1_Release(device1);
+    release_test_context(&test_context);
+}
+
+static void test_rtv_depth_slice(void)
+{
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+    struct d3d11_test_context test_context;
+    ID3D11ShaderResourceView *srv;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Texture3D *texture;
+    unsigned int i, colour;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture3D t;
+
+        float4 main(float4 pos : SV_Position) : SV_Target
+        {
+            return t[int3(pos.x / 640, pos.y / 480, pos.y * 4 / 480)];
+        }
+#endif
+        0x43425844, 0xef9f40c6, 0xbc613d8c, 0x02b23c2b, 0xd2cfcfe7, 0x00000001, 0x00000148, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000ac, 0x00000040,
+        0x0000002b, 0x04002858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000038, 0x00100072,
+        0x00000000, 0x00101146, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x3c088889, 0x00000000,
+        0x0500001b, 0x00100072, 0x00000000, 0x00100246, 0x00000000, 0x05000036, 0x00100082, 0x00000000,
+        0x00004001, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00107e46,
+        0x00000000, 0x0100003e,
+    };
+
+    static const struct
+    {
+        struct vec4 ps_colour;
+        unsigned int output;
+    }
+    colours[] =
+    {
+        {{1.0f, 0.0f, 0.0f, 1.0f}, 0xff0000ff},
+        {{0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {{0.0f, 0.0f, 1.0f, 1.0f}, 0xffff0000},
+        {{1.0f, 1.0f, 1.0f, 1.0f}, 0xffffffff},
+    };
+
+    static const D3D11_TEXTURE3D_DESC texture_desc =
+    {
+        .Width = 32,
+        .Height = 32,
+        .Depth = ARRAY_SIZE(colours),
+        .MipLevels = 1,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .Usage = D3D11_USAGE_DEFAULT,
+        .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (i = 0; i < texture_desc.Depth; ++i)
+    {
+        ID3D11RenderTargetView *rtv;
+
+        rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE3D;
+        rtv_desc.Format = texture_desc.Format;
+        rtv_desc.Texture3D.MipSlice = 0;
+        rtv_desc.Texture3D.FirstWSlice = i;
+        rtv_desc.Texture3D.WSize = 1;
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+        draw_color_quad(&test_context, &colours[i].ps_colour);
+
+        ID3D11RenderTargetView_Release(rtv);
+    }
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    draw_quad(&test_context);
+
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (i = 0; i < texture_desc.Depth; ++i)
+    {
+        unsigned int x = 320, y = 60 + i * 480 / 4;
+
+        colour = get_readback_color(&rb, x, y, 0);
+        todo_wine ok(colour == colours[i].output, "Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                colour, x, y, colours[i].output);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Texture3D_Release(texture);
+    ID3D11PixelShader_Release(ps);
     release_test_context(&test_context);
 }
 
@@ -34229,6 +34922,8 @@ START_TEST(d3d11)
     queue_test(test_constant_buffer_offset);
     queue_test(test_dynamic_map_synchronization);
     queue_test(test_user_defined_annotation);
+    queue_test(test_logic_op);
+    queue_test(test_rtv_depth_slice);
 
     run_queued_tests();
 

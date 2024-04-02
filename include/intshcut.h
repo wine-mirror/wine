@@ -19,6 +19,8 @@
 #ifndef __WINE_INTSHCUT_H
 #define __WINE_INTSHCUT_H
 
+#include "wine/winheader_enter.h"
+
 #include <isguids.h>
 
 #define INTSHCUTAPI
@@ -110,5 +112,7 @@ BOOL    WINAPI InetIsOffline(DWORD);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_INTSHCUT_H */

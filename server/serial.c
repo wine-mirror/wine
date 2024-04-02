@@ -85,6 +85,7 @@ static const struct object_ops serial_ops =
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
+    NULL,                         /* get_esync_fd */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     serial_get_fd,                /* get_fd */

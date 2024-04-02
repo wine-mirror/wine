@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSMETAHEADER_H
 #define _GDIPLUSMETAHEADER_H
 
+#include "wine/winheader_enter.h"
+
 typedef struct
 {
     DWORD   iType;
@@ -163,5 +165,7 @@ typedef struct MetafileHeader
 } MetafileHeader;
 
 #endif /* end of c typedefs */
+
+#include "wine/winheader_exit.h"
 
 #endif /* _GDIPLUSMETAHEADER_H */

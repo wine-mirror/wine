@@ -41,54 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(globalmem);
 
-/* address where we try to map the system heap */
-#define SYSTEM_HEAP_BASE  ((void*)0x80000000)
-#define SYSTEM_HEAP_SIZE  0x1000000   /* Default heap size = 16Mb */
-
-static HANDLE systemHeap;   /* globally shared heap */
-
-
-/***********************************************************************
- *           HEAP_CreateSystemHeap
- *
- * Create the system heap.
- */
-static inline HANDLE HEAP_CreateSystemHeap(void)
-{
-    int created;
-    void *base;
-    HANDLE map, event;
-
-    /* create the system heap event first */
-    event = CreateEventA( NULL, TRUE, FALSE, "__wine_system_heap_event" );
-
-    if (!(map = CreateFileMappingA( INVALID_HANDLE_VALUE, NULL, SEC_COMMIT | PAGE_READWRITE,
-                                    0, SYSTEM_HEAP_SIZE, "__wine_system_heap" ))) return 0;
-    created = (GetLastError() != ERROR_ALREADY_EXISTS);
-
-    if (!(base = MapViewOfFileEx( map, FILE_MAP_ALL_ACCESS, 0, 0, 0, SYSTEM_HEAP_BASE )))
-    {
-        /* pre-defined address not available */
-        ERR( "system heap base address %p not available\n", SYSTEM_HEAP_BASE );
-        return 0;
-    }
-
-    if (created)  /* newly created heap */
-    {
-        systemHeap = RtlCreateHeap( HEAP_SHARED, base, SYSTEM_HEAP_SIZE,
-                                    SYSTEM_HEAP_SIZE, NULL, NULL );
-        SetEvent( event );
-    }
-    else
-    {
-        /* wait for the heap to be initialized */
-        WaitForSingleObject( event, INFINITE );
-        systemHeap = base;
-    }
-    CloseHandle( map );
-    return systemHeap;
-}
-
 
 /***********************************************************************
  *           HeapCreate   (KERNEL32.@)
@@ -106,17 +58,8 @@ HANDLE WINAPI HeapCreate(
 ) {
     HANDLE ret;
 
-    if ( flags & HEAP_SHARED )
-    {
-        if (!systemHeap) HEAP_CreateSystemHeap();
-        else WARN( "Shared Heap requested, returning system heap.\n" );
-        ret = systemHeap;
-    }
-    else
-    {
-        ret = RtlCreateHeap( flags, NULL, maxSize, initialSize, NULL, NULL );
-        if (!ret) SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-    }
+    ret = RtlCreateHeap( flags, NULL, maxSize, initialSize, NULL, NULL );
+    if (!ret) SetLastError( ERROR_NOT_ENOUGH_MEMORY );
     return ret;
 }
 
@@ -132,11 +75,6 @@ HANDLE WINAPI HeapCreate(
  */
 BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 {
-    if (heap == systemHeap)
-    {
-        WARN( "attempt to destroy system heap, returning TRUE!\n" );
-        return TRUE;
-    }
     if (!RtlDestroyHeap( heap )) return TRUE;
     SetLastError( ERROR_INVALID_HANDLE );
     return FALSE;
@@ -548,6 +486,30 @@ SIZE_T WINAPI LocalSize(
     return GlobalSize( handle );
 }
 
+/* CROSSOVER HACK: bug 17634
+ * This makes the result of GlobalMemoryStatus consistent with
+ * ntdll when the LARGE_ADDRESS_AWARE flag is overridden. */
+#ifndef _WIN64
+static BOOL large_address_enabled(void)
+{
+    static BOOL result = -1;
+
+    if (result == -1)
+    {
+        NTSTATUS status;
+        SYSTEM_BASIC_INFORMATION info;
+
+        status = NtQuerySystemInformation(SystemBasicInformation, &info, sizeof(info), NULL);
+
+        if (status)
+            return 0;
+
+        result = ((ULONG)info.HighestUserAddress >= 0x80000000);
+    }
+
+    return result;
+}
+#endif
 
 /***********************************************************************
  *           GlobalMemoryStatus   (KERNEL32.@)
@@ -602,7 +564,8 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 
     /* values are limited to 2Gb unless the app has the IMAGE_FILE_LARGE_ADDRESS_AWARE flag */
     /* page file sizes are not limited (Adobe Illustrator 8 depends on this) */
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE))
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE) &&
+        !large_address_enabled())
     {
         if (lpBuffer->dwTotalPhys > MAXLONG) lpBuffer->dwTotalPhys = MAXLONG;
         if (lpBuffer->dwAvailPhys > MAXLONG) lpBuffer->dwAvailPhys = MAXLONG;

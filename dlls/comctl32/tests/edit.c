@@ -899,6 +899,10 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, 
         message != WM_GETMINMAXINFO &&
         message != WM_PAINT &&
         message != WM_CTLCOLOREDIT &&
+        message != WM_WINDOWPOSCHANGING &&
+        message != WM_WINDOWPOSCHANGED &&
+        message != WM_MOVE &&
+        message != WM_MOUSEACTIVATE &&
         message < 0xc000)
     {
         add_message(sequences, COMBINED_SEQ_INDEX, &msg);
@@ -3325,6 +3329,22 @@ static const struct message killfocus_combined_seq[] =
     { 0 }
 };
 
+static const struct message setfocus_sent_only_combined_seq[] =
+{
+    { WM_KILLFOCUS,    sent|id,            0, 0,                      PARENT_ID },
+    { WM_SETFOCUS,     sent|id,            0, 0,                      EDIT_ID   },
+    { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_SETFOCUS), 0, PARENT_ID },
+    { 0 }
+};
+
+static const struct message killfocus_sent_only_combined_seq[] =
+{
+    { WM_KILLFOCUS,    sent|id,            0, 0,                       EDIT_ID   },
+    { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_KILLFOCUS), 0, PARENT_ID },
+    { WM_SETFOCUS,     sent|id,            0, 0,                       PARENT_ID },
+    { 0 }
+};
+
 static void test_cue_banner(void)
 {
     HWND hwnd_edit;
@@ -3434,7 +3454,19 @@ static void test_change_focus(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     SetFocus(parent_wnd);
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", TRUE);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_combined_seq, "Kill focus", FALSE);
+
+    /* Test message sequences without waiting for posted messages */
+    SetFocus(parent_wnd);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SetFocus(hwnd);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, setfocus_sent_only_combined_seq,
+                "Set focus sent only", FALSE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SetFocus(parent_wnd);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, killfocus_sent_only_combined_seq,
+                "Kill focus sent only", FALSE);
 
     SetCursorPos(orig_pos.x, orig_pos.y);
 

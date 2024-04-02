@@ -20,6 +20,8 @@
 #ifndef AVIRIFF_H
 #define AVIRIFF_H
 
+#include "wine/winheader_enter.h"
+
 /* All definitions here are packed structures of on-disk formats */
 #include <pshpack2.h>
 
@@ -325,5 +327,7 @@ typedef struct _avifieldindex_chunk {
 } AVIFIELDINDEX, * PAVIFIELDINDEX;
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif  /* AVIRIFF_H */

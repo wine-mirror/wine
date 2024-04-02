@@ -929,6 +929,7 @@ typedef struct
     timeout_t    server_start; /* server start time */
     unsigned int session_id;   /* process session id */
     data_size_t  info_size;    /* total size of startup info */
+    int          bottle_32b;   /* Bottle is 32-bit-only */
     VARARG(machines,ushorts);  /* array of supported machines */
 @END
 
@@ -2019,7 +2020,8 @@ enum message_type
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
     MSG_HARDWARE,       /* hardware message */
     MSG_WINEVENT,       /* winevent message */
-    MSG_HOOK_LL         /* low-level hardware hook */
+    MSG_HOOK_LL,        /* low-level hardware hook */
+    MSG_SURFACE         /* flush surface pseudo-message */
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
 
@@ -2481,6 +2483,30 @@ enum coords_relative
     rectangle_t    visible_rect;  /* window visible rect in screen coords */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
+@END
+
+
+/* Create shared memory surface object */
+@REQ(create_shm_surface)
+    user_handle_t  window;        /* handle to the window */
+    data_size_t    mapping_size;  /* size of shared memory */
+@REPLY
+    obj_handle_t   handle;        /* handle to the surface */
+    obj_handle_t   mapping;       /* handle to the mapping */
+@END
+
+
+/* Lock or unlock the surface */
+@REQ(lock_shm_surface)
+    obj_handle_t   surface;       /* handle to the surface */
+    int            lock;          /* lock/unlock flag */
+@END
+
+
+/* Flush the surface */
+@REQ(flush_shm_surface)
+    obj_handle_t   surface;       /* handle to the surface */
+    rectangle_t    bounds;        /* bounds of flushed rectangle */
 @END
 
 
@@ -3735,7 +3761,6 @@ struct handle_info
     obj_handle_t handle;       /* process handle */
 @END
 
-
 /* Iterate thread list for process */
 @REQ(get_next_thread)
     obj_handle_t process;      /* process handle */
@@ -3745,4 +3770,63 @@ struct handle_info
     unsigned int flags;        /* controls iteration direction */
 @REPLY
     obj_handle_t handle;       /* next thread handle */
+@END
+
+enum esync_type
+{
+    ESYNC_SEMAPHORE = 1,
+    ESYNC_AUTO_EVENT,
+    ESYNC_MANUAL_EVENT,
+    ESYNC_MUTEX,
+    ESYNC_AUTO_SERVER,
+    ESYNC_MANUAL_SERVER,
+    ESYNC_QUEUE,
+};
+
+/* Create a new eventfd-based synchronization object */
+@REQ(create_esync)
+    unsigned int access;        /* wanted access rights */
+    int          initval;       /* initial value */
+    int          type;          /* type of esync object */
+    int          max;           /* maximum count on a semaphore */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;        /* handle to the object */
+    int          type;          /* actual type (may be different for events) */
+    unsigned int shm_idx;
+@END
+
+@REQ(open_esync)
+    unsigned int access;        /* wanted access rights */
+    unsigned int attributes;    /* object attributes */
+    obj_handle_t rootdir;       /* root directory */
+    int          type;          /* type of esync object (above) */
+    VARARG(name,unicode_str);   /* object name */
+@REPLY
+    obj_handle_t handle;        /* handle to the event */
+    int          type;          /* type of esync object (above) */
+    unsigned int shm_idx;       /* this object's index into the shm section */
+@END
+
+/* Retrieve the esync read fd for an object. */
+@REQ(get_esync_read_fd)
+    obj_handle_t handle;        /* handle to the object */
+@REPLY
+    int          type;
+    unsigned int shm_idx;
+@END
+
+/* Retrieve the esync write fd for an object. */
+@REQ(get_esync_write_fd)
+    obj_handle_t handle;        /* handle to the object */
+@REPLY
+@END
+
+/* Notify the server that we are doing a message wait or done with one. */
+@REQ(esync_msgwait)
+    int          in_msgwait;    /* are we in a message wait? */
+@END
+
+/* Retrieve the fd to wait on for user APCs. */
+@REQ(get_esync_apc_fd)
 @END

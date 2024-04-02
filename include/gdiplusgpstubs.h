@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSGPSTUBS_H
 #define _GDIPLUSGPSTUBS_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 
 class GpGraphics {};
@@ -96,5 +98,7 @@ typedef CoordinateSpace GpCoordinateSpace;
 typedef PenAlignment GpPenAlignment;
 typedef PenType GpPenType;
 typedef HatchStyle GpHatchStyle;
+
+#include "wine/winheader_exit.h"
 
 #endif

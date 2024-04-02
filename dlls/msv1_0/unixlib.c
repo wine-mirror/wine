@@ -151,6 +151,9 @@ static NTSTATUS ntlm_cleanup( void *args )
     return STATUS_SUCCESS;
 }
 
+static char ntlm_auth[256];
+static char *config_file_option;
+
 static NTSTATUS ntlm_fork( void *args )
 {
     const struct fork_params *params = args;
@@ -181,6 +184,10 @@ static NTSTATUS ntlm_fork( void *args )
 
     if (!(ctx->pid = fork())) /* child */
     {
+        char **argv = params->argv;
+        char *new_argv[6];
+        unsigned int i = 0;
+
         dup2( pipe_out[0], 0 );
         close( pipe_out[0] );
         close( pipe_out[1] );
@@ -189,7 +196,15 @@ static NTSTATUS ntlm_fork( void *args )
         close( pipe_in[0] );
         close( pipe_in[1] );
 
-        execvp( params->argv[0], params->argv );
+        while (*argv)
+        {
+            new_argv[i++] = *argv;
+            argv++;
+        }
+        if (config_file_option) new_argv[i++] = config_file_option;
+        new_argv[i] = NULL;
+
+        execvp( ntlm_auth, new_argv );
 
         write( 1, "BH\n", 3 );
         _exit( 1 );
@@ -211,13 +226,16 @@ static NTSTATUS ntlm_fork( void *args )
 
 static NTSTATUS ntlm_check_version( void *args )
 {
+    struct check_version_params *check_params = args;
+    const char *datadir = check_params->datadir;
     struct ntlm_ctx ctx = { 0 };
     char *argv[3], buf[80];
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     struct fork_params params = { &ctx, argv };
     int len;
 
-    argv[0] = (char *)"ntlm_auth";
+    strcpy( ntlm_auth, "ntlm_auth" );
+    argv[0] = ntlm_auth;
     argv[1] = (char *)"--version";
     argv[2] = NULL;
     if (ntlm_fork( &params ) != SEC_E_OK) return status;
@@ -238,6 +256,38 @@ static NTSTATUS ntlm_check_version( void *args )
                   micro >= NTLM_AUTH_MICRO_VERSION)))
             {
                 TRACE( "detected ntlm_auth version %d.%d.%d\n", major, minor, micro );
+                status = STATUS_SUCCESS;
+            }
+        }
+    }
+
+    if (status && getenv("CX_ROOT")) /* CrossOver hack 13228 */
+    {
+        ntlm_cleanup( &ctx );
+        memset( &ctx, 0, sizeof(ctx) );
+
+        TRACE( "falling back to CrossOver version of ntlm_auth\n" );
+
+        strcpy( ntlm_auth, getenv("CX_ROOT") );
+        strcat( ntlm_auth, "/bin/cxntlm_auth" );
+
+        if (ntlm_fork( &params ) == SEC_E_OK && (len = read( ctx.pipe_in, buf, sizeof(buf) - 1 )) > 8)
+        {
+            char *newline;
+            int major = 0, minor = 0, micro = 0;
+
+            if ((newline = memchr( buf, '\n', len ))) *newline = 0;
+            else buf[len] = 0;
+
+            if (sscanf( buf, "Version %d.%d.%d", &major, &minor, &micro ) == 3)
+            {
+                static const char config_file_format[] = "--configfile=%s/smb.conf";
+                TRACE( "detected cxntlm_auth version %d.%d.%d datadir %s\n", major, minor, micro, datadir );
+                if (datadir)
+                {
+                    config_file_option = malloc( sizeof(config_file_format) + strlen(datadir) );
+                    sprintf( config_file_option, config_file_format, datadir );
+                }
                 status = STATUS_SUCCESS;
             }
         }
@@ -309,12 +359,27 @@ static NTSTATUS wow64_ntlm_fork( void *args )
     return ret;
 }
 
+static NTSTATUS wow64_ntlm_check_version( void *args )
+{
+    struct
+    {
+        PTR32 datadir;
+    } const *params32 = args;
+
+    struct check_version_params params =
+    {
+        ULongToPtr(params32->datadir)
+    };
+
+    return ntlm_check_version( &params );
+}
+
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_ntlm_chat,
     ntlm_cleanup,
     wow64_ntlm_fork,
-    ntlm_check_version,
+    wow64_ntlm_check_version,
 };
 
 #endif  /* _WIN64 */

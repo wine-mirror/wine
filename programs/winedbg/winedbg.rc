@@ -53,9 +53,7 @@ BEGIN
     LTEXT           "The program %s has encountered a serious problem and needs \
                     to close. We are sorry for the inconvenience.",
                     IDC_STATIC_TXT1,27,10,224,30
-    CONTROL         "This can be caused by a problem in the program or a deficiency in Wine. \
-                    You may want to check the <a href=\"https://appdb.winehq.org\">Application Database</a> \
-                    for tips about running this application.",
+    CONTROL         WINDEBUG_WHAT_HAPPENED_MESSAGE,
                     IDC_STATIC_TXT2,"SysLink",0,27,60,224,100
     DEFPUSHBUTTON   "Close", IDOK, 205, 151, 60, 16, WS_TABSTOP
     PUSHBUTTON      "Show &Details", ID_DETAILS, 140, 151, 60, 16, WS_TABSTOP
@@ -67,10 +65,7 @@ CAPTION "Program Error Details"
 FONT 8, "MS Shell Dlg"
 BEGIN
     EDITTEXT        IDC_CRASH_TXT, 4, 4, 392, 272, ES_MULTILINE | ES_READONLY | WS_HSCROLL | WS_VSCROLL, WS_TABSTOP
-    CONTROL         "If this problem is not present under Windows and has not been reported yet, \
-                     you can save the detailed information to a file using the \"Save As\" button, \
-                     then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> \
-                     and attach that file to the report.",
+    CONTROL         WINDEBUG_USER_SUGGESTION_MESSAGE,
                     IDC_STATIC_TXT2,"SysLink",0,6,285,388,32
     DEFPUSHBUTTON   "Close", IDOK, 326, 320, 70, 16, WS_TABSTOP
     PUSHBUTTON      "&Save As...", ID_SAVEAS, 252, 320, 70, 16, WS_TABSTOP

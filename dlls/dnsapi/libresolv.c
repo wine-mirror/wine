@@ -125,16 +125,15 @@ static DNS_STATUS map_h_errno( int error )
 static NTSTATUS resolv_get_searchlist( void *args )
 {
     const struct get_searchlist_params *params = args;
-    DNS_TXT_DATAW *list = params->list;
-    DWORD i, needed, str_needed = 0;
-    char *ptr, *end;
+    WCHAR *list = params->list;
+    DWORD i, needed = 0;
+    WCHAR *ptr, *end;
 
     init_resolver();
 
     for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
-        str_needed += (strlen(_res.dnsrch[i]) + 1) * sizeof(WCHAR);
-
-    needed = FIELD_OFFSET(DNS_TXT_DATAW, pStringArray[i]) + str_needed;
+        needed += (strlen(_res.dnsrch[i]) + 1) * sizeof(WCHAR);
+    needed += sizeof(WCHAR); /* null terminator */
 
     if (!list || *params->len < needed)
     {
@@ -143,16 +142,12 @@ static NTSTATUS resolv_get_searchlist( void *args )
     }
 
     *params->len = needed;
-    list->dwStringCount = i;
 
-    ptr = (char *)(list->pStringArray + i);
-    end = ptr + str_needed;
+    ptr = list;
+    end = ptr + needed / sizeof(WCHAR);
     for (i = 0; i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
-    {
-        list->pStringArray[i] = (WCHAR *)ptr;
-        ptr += ntdll_umbstowcs( _res.dnsrch[i], strlen(_res.dnsrch[i]) + 1,
-                                list->pStringArray[i], end - ptr );
-    }
+        ptr += ntdll_umbstowcs( _res.dnsrch[i], strlen(_res.dnsrch[i]) + 1, ptr, end - ptr );
+    *ptr = 0; /* null terminator */
     return ERROR_SUCCESS;
 }
 

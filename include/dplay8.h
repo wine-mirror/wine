@@ -19,6 +19,8 @@
 #ifndef __WINE_DPLAY8_H
 #define __WINE_DPLAY8_H
 
+#include "wine/winheader_enter.h"
+
 #include <ole2.h>
 #include <dpaddr.h>
 
@@ -997,5 +999,7 @@ HRESULT WINAPI DirectPlay8Create(const CLSID* pcIID, LPVOID* ppvInterface, IUnkn
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

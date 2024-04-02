@@ -5,6 +5,8 @@
 #ifndef __WINE_FPIEEE_H
 #define __WINE_FPIEEE_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #ifdef __cplusplus
@@ -235,5 +237,7 @@ _ACRTIMP int __cdecl _fpieee_flt(__msvcrt_ulong _ExceptionCode,struct _EXCEPTION
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

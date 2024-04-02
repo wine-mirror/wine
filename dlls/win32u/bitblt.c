@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <limits.h>
 #include <math.h>
@@ -34,6 +30,13 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
+
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 static inline BOOL rop_uses_src( DWORD rop )
 {
@@ -165,7 +168,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 
 void CDECL free_heap_bits( struct gdi_image_bits *bits )
 {
-    free( bits->ptr );
+    heapfree( bits->ptr );
 }
 
 DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
@@ -495,7 +498,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     NtGdiDeleteObjectApp( rgn );
 
 done:
-    free( pts );
+    heapfree( pts );
     return ret;
 }
 

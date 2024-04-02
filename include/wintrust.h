@@ -19,6 +19,8 @@
 #ifndef __WINE_WINTRUST_H
 #define __WINE_WINTRUST_H
 
+#include "wine/winheader_enter.h"
+
 #include <wincrypt.h>
 
 
@@ -661,5 +663,7 @@ typedef struct _WIN_TRUST_SUBJECT_FILE_AND_DISPLAY
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

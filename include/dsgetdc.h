@@ -19,6 +19,8 @@
 #ifndef __WINE_DSGETDC_H
 #define __WINE_DSGETDC_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -132,5 +134,7 @@ DWORD WINAPI DsEnumerateDomainTrustsW(LPWSTR, ULONG, PDS_DOMAIN_TRUSTSW*, PULONG
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DSGETDC_H */

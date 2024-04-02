@@ -18,6 +18,8 @@
 #ifndef _LMSERVER_
 #define _LMSERVER_
 
+#include "wine/winheader_enter.h"
+
 #include <winsvc.h>
 #include <lmcons.h>
 
@@ -81,5 +83,7 @@ BOOL WINAPI SetServiceBits(SERVICE_STATUS_HANDLE,DWORD,BOOL,BOOL);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* ndef _LMSERVER_ */

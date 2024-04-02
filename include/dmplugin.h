@@ -21,6 +21,8 @@
 #ifndef __WINE_DMUSIC_PLUGIN_H
 #define __WINE_DMUSIC_PLUGIN_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 
 #define COM_NO_WINDOWS_H
@@ -292,5 +294,7 @@ DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack)
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DMUSIC_PLUGIN_H */

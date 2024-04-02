@@ -11,6 +11,7 @@ IDL_SRCS = \
 	actxprxy_hlink.idl \
 	actxprxy_htiface.idl \
 	actxprxy_htiframe.idl \
+	actxprxy_mshtml.idl \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
 	actxprxy_servprov.idl \

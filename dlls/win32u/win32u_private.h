@@ -31,6 +31,29 @@
 #include "wine/unixlib.h"
 #include "wine/debug.h"
 
+#ifdef __WINESRC__
+#include "wine/unicode.h"
+
+#define wcscmp(a,b) strcmpW(a,b)
+#define wcsicmp(a,b) strcmpiW(a,b)
+#define wcsnicmp(a,b,c) strncmpiW(a,b,c)
+#define wcschr(a,b) strchrW(a,b)
+#define wcsrchr(a,b) strrchrW(a,b)
+
+static inline NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
+{
+    NTSTATUS (WINAPI *func)(const void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    return func( args, len );
+}
+#endif
+
+#ifdef __i386_on_x86_64__
+#define malloc(x) HeapAlloc(GetProcessHeap(), 0, x)
+#define calloc(x,y) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, x*y)
+#define realloc(x,y) (x ? HeapReAlloc(GetProcessHeap(), 0, x, y) : HeapAlloc(GetProcessHeap(), 0, y))
+#define free(x) HeapFree(GetProcessHeap(), 0, x)
+#endif
+
 extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
 
 struct unix_funcs
@@ -211,6 +234,7 @@ struct unix_funcs
     LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDrawIconEx)( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                           INT height, UINT istep, HBRUSH hbr, UINT flags );
+    BOOL     (WINAPI *pNtUserEmptyClipboard)(void);
     BOOL     (WINAPI *pNtUserEnableMenuItem)( HMENU handle, UINT id, UINT flags );
     BOOL     (WINAPI *pNtUserEndDeferWindowPosEx)( HDWP hdwp, BOOL async );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
@@ -224,6 +248,7 @@ struct unix_funcs
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                               struct client_menu_name *menu_name, BOOL ansi );
+    HANDLE   (WINAPI *pNtUserGetClipboardData)( UINT format, struct get_clipboard_params *params );
     BOOL     (WINAPI *pNtUserGetCursorInfo)( CURSORINFO *info );
     HDC      (WINAPI *pNtUserGetDCEx)( HWND hwnd, HRGN clip_rgn, DWORD flags );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
@@ -245,6 +270,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserMoveWindow)( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
     DWORD    (WINAPI *pNtUserMsgWaitForMultipleObjectsEx)( DWORD count, const HANDLE *handles,
                                                            DWORD timeout, DWORD mask, DWORD flags );
+    BOOL     (WINAPI *pNtUserOpenClipboard)( HWND hwnd, ULONG unk );
     BOOL     (WINAPI *pNtUserPeekMessage)( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
     BOOL     (WINAPI *pNtUserPostMessage)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
     BOOL     (WINAPI *pNtUserPostThreadMessage)( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
@@ -261,6 +287,8 @@ struct unix_funcs
     UINT     (WINAPI *pNtUserSendInput)( UINT count, INPUT *inputs, int size );
     HWND     (WINAPI *pNtUserSetActiveWindow)( HWND hwnd );
     HWND     (WINAPI *pNtUserSetCapture)( HWND hwnd );
+    NTSTATUS (WINAPI *pNtUserSetClipboardData)( UINT format, HANDLE handle,
+                                                struct set_clipboard_params *params );
     DWORD    (WINAPI *pNtUserSetClassLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
     ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
     WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );
@@ -603,11 +631,21 @@ static inline WCHAR *win32u_wcsdup( const WCHAR *str )
     return ret;
 }
 
-static inline WCHAR *towstr( const char *str )
+static inline WCHAR *towstr( const char * HOSTPTR str )
 {
     DWORD len = strlen( str ) + 1;
     WCHAR *ret = malloc( len * sizeof(WCHAR) );
+#ifdef __i386_on_x86_64__
+    if (ret)
+    {
+        char *copy = malloc( len );
+        memcpy( copy, str, len );
+        win32u_mbtowc( &ansi_cp, ret, len, copy, len );
+        free( copy );
+    }
+#else
     if (ret) win32u_mbtowc( &ansi_cp, ret, len, str, len );
+#endif
     return ret;
 }
 

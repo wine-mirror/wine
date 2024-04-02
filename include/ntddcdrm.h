@@ -21,6 +21,8 @@
 #ifndef __NTDDCDRM_H
 #define __NTDDCDRM_H
 
+#include "wine/winheader_enter.h"
+
 #define IOCTL_CDROM_BASE                FILE_DEVICE_CD_ROM
 #define IOCTL_CDROM_UNLOAD_DRIVER       CTL_CODE(IOCTL_CDROM_BASE, 0x0402, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define IOCTL_CDROM_READ_TOC            CTL_CODE(IOCTL_CDROM_BASE, 0x0000, METHOD_BUFFERED, FILE_READ_ACCESS)
@@ -181,5 +183,7 @@ typedef struct __RAW_READ_INFO {
     ULONG               SectorCount;
     TRACK_MODE_TYPE     TrackMode;
 } RAW_READ_INFO, *PRAW_READ_INFO;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __NTDDCDRM_H */

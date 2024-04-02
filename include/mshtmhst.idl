@@ -149,7 +149,7 @@ typedef enum tagDOCHOSTUIFLAG
     object,
     uuid(BD3F23C0-D43E-11CF-893B-00AA00BDCE1A),
     pointer_default(unique),
-    local
+ /* local, CXHACK 15579 */
 ]
 interface IDocHostUIHandler : IUnknown
 {
@@ -223,7 +223,7 @@ cpp_quote("DEFINE_GUID(CGID_DocHostCommandHandler,0xf38bc242,0xb950,0x11d1,0x89,
     object,
     uuid(3050F6D0-98b5-11CF-BB82-00AA00BDCE0B),
     pointer_default(unique),
-    local
+ /* local, CXHACK 15579 */
 ]
 interface IDocHostUIHandler2 : IDocHostUIHandler
 {
@@ -239,7 +239,7 @@ interface IDocHostUIHandler2 : IDocHostUIHandler
     object,
     uuid(3050f3f0-98b5-11cf-bb82-00aa00bdce0b),
     pointer_default(unique),
-    local
+ /* local, CXHACK 15579 */
 ]
 interface ICustomDoc : IUnknown
 {

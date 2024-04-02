@@ -21,6 +21,8 @@
 #ifndef _INC_DCIMAN
 #define _INC_DCIMAN
 
+#include "wine/winheader_enter.h"
+
 #include <dciddi.h>
 
 #ifdef __cplusplus
@@ -34,5 +36,7 @@ int         WINAPI DCICreatePrimary(HDC,LPDCISURFACEINFO*);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _INC_DCIMAN */

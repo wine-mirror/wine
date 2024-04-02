@@ -20,6 +20,8 @@
 #ifndef __WINE_WINVER_H
 #define __WINE_WINVER_H
 
+#include "wine/winheader_enter.h"
+
 /* FIXME: #include <specstrings.h> */
 #include <verrsrc.h>
 
@@ -61,5 +63,7 @@ BOOL        WINAPI GetFileVersionInfoExW(DWORD,LPCWSTR,DWORD,DWORD,LPVOID);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WINVER_H */

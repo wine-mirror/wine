@@ -21,6 +21,8 @@
 #ifndef __D3DX9EFFECT_H__
 #define __D3DX9EFFECT_H__
 
+#include "wine/winheader_enter.h"
+
 #define D3DXFX_DONOTSAVESTATE (1 << 0)
 #define D3DXFX_DONOTSAVESHADERSTATE (1 << 1)
 #define D3DXFX_DONOTSAVESAMPLERSTATE (1 << 2)
@@ -441,5 +443,7 @@ HRESULT WINAPI D3DXDisassembleEffect(ID3DXEffect *effect, BOOL enable_color_code
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __D3DX9EFFECT_H__ */

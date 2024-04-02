@@ -21,6 +21,8 @@
 #ifndef _WINSOCK2SPI_
 #define _WINSOCK2SPI_
 
+#include "wine/winheader_enter.h"
+
 #ifndef _WINSOCK2API_
 #include <winsock2.h>
 #endif /* !defined(_WINSOCK2API_) */
@@ -58,5 +60,7 @@ INT      WINAPI WSCWriteProviderOrder(LPDWORD,DWORD);
 #endif /* defined(__cplusplus) */
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* !defined(_WINSOCK2SPI_) */

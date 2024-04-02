@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSPIXELFORMATS_H
 #define _GDIPLUSPIXELFORMATS_H
 
+#include "wine/winheader_enter.h"
+
 typedef DWORD ARGB;
 typedef INT PixelFormat;
 
@@ -130,5 +132,7 @@ typedef enum PaletteType
     PaletteTypeFixedHalftone252,
     PaletteTypeFixedHalftone256
 } PaletteType;
+
+#include "wine/winheader_exit.h"
 
 #endif

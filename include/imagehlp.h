@@ -21,6 +21,8 @@
 #ifndef __WINE_IMAGEHLP_H
 #define __WINE_IMAGEHLP_H
 
+#include "wine/winheader_enter.h"
+
 #include <wintrust.h>
 
 #ifdef __cplusplus
@@ -1343,5 +1345,7 @@ BOOL WINAPI UpdateDebugInfoFileEx(
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_IMAGEHLP_H */

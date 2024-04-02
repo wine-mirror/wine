@@ -81,7 +81,7 @@ static void d2d_size_set(D2D1_SIZE_U *dst, float width, float height)
 
 static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
 {
-    if (!(stack->stack = heap_alloc(INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
+    if (!(stack->stack = malloc(INITIAL_CLIP_STACK_SIZE * sizeof(*stack->stack))))
         return FALSE;
 
     stack->size = INITIAL_CLIP_STACK_SIZE;
@@ -92,7 +92,7 @@ static BOOL d2d_clip_stack_init(struct d2d_clip_stack *stack)
 
 static void d2d_clip_stack_cleanup(struct d2d_clip_stack *stack)
 {
-    heap_free(stack->stack);
+    free(stack->stack);
 }
 
 static BOOL d2d_clip_stack_push(struct d2d_clip_stack *stack, const D2D1_RECT_F *rect)
@@ -169,7 +169,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     }
     ID3D11DeviceContext1_RSSetScissorRects(context, 1, &scissor_rect);
     ID3D11DeviceContext1_RSSetState(context, render_target->rs);
-    ID3D11DeviceContext1_OMSetRenderTargets(context, 1, &render_target->target->rtv, NULL);
+    ID3D11DeviceContext1_OMSetRenderTargets(context, 1, &render_target->target.bitmap->rtv, NULL);
     if (brush)
     {
         ID3D11DeviceContext1_OMSetBlendState(context, render_target->bs, NULL, D3D11_DEFAULT_SAMPLE_MASK);
@@ -204,9 +204,9 @@ static inline struct d2d_device_context *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, struct d2d_device_context, IUnknown_iface);
 }
 
-static inline struct d2d_device_context *impl_from_ID2D1DeviceContext(ID2D1DeviceContext *iface)
+static inline struct d2d_device_context *impl_from_ID2D1DeviceContext(ID2D1DeviceContext1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d2d_device_context, ID2D1DeviceContext_iface);
+    return CONTAINING_RECORD(iface, struct d2d_device_context, ID2D1DeviceContext1_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_inner_QueryInterface(IUnknown *iface, REFIID iid, void **out)
@@ -215,13 +215,14 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_inner_QueryInterface(IUnknow
 
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_ID2D1DeviceContext)
+    if (IsEqualGUID(iid, &IID_ID2D1DeviceContext1)
+            || IsEqualGUID(iid, &IID_ID2D1DeviceContext)
             || IsEqualGUID(iid, &IID_ID2D1RenderTarget)
             || IsEqualGUID(iid, &IID_ID2D1Resource)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
-        ID2D1DeviceContext_AddRef(&context->ID2D1DeviceContext_iface);
-        *out = &context->ID2D1DeviceContext_iface;
+        ID2D1DeviceContext1_AddRef(&context->ID2D1DeviceContext1_iface);
+        *out = &context->ID2D1DeviceContext1_iface;
         return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_ID2D1GdiInteropRenderTarget))
@@ -288,12 +289,12 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         }
         if (context->d3d_state)
             ID3DDeviceContextState_Release(context->d3d_state);
-        if (context->target)
-            ID2D1Bitmap1_Release(&context->target->ID2D1Bitmap1_iface);
+        if (context->target.object)
+            IUnknown_Release(context->target.object);
         ID3D11Device1_Release(context->d3d_device);
         ID2D1Factory_Release(context->factory);
         ID2D1Device_Release(context->device);
-        heap_free(context);
+        free(context);
     }
 
     return refcount;
@@ -306,7 +307,7 @@ static const struct IUnknownVtbl d2d_device_context_inner_unknown_vtbl =
     d2d_device_context_inner_Release,
 };
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_QueryInterface(ID2D1DeviceContext *iface, REFIID iid, void **out)
+static HRESULT STDMETHODCALLTYPE d2d_device_context_QueryInterface(ID2D1DeviceContext1 *iface, REFIID iid, void **out)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
@@ -315,7 +316,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_QueryInterface(ID2D1DeviceCo
     return IUnknown_QueryInterface(context->outer_unknown, iid, out);
 }
 
-static ULONG STDMETHODCALLTYPE d2d_device_context_AddRef(ID2D1DeviceContext *iface)
+static ULONG STDMETHODCALLTYPE d2d_device_context_AddRef(ID2D1DeviceContext1 *iface)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
@@ -324,7 +325,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_AddRef(ID2D1DeviceContext *ifa
     return IUnknown_AddRef(context->outer_unknown);
 }
 
-static ULONG STDMETHODCALLTYPE d2d_device_context_Release(ID2D1DeviceContext *iface)
+static ULONG STDMETHODCALLTYPE d2d_device_context_Release(ID2D1DeviceContext1 *iface)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
@@ -333,7 +334,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_Release(ID2D1DeviceContext *if
     return IUnknown_Release(context->outer_unknown);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_GetFactory(ID2D1DeviceContext *iface, ID2D1Factory **factory)
+static void STDMETHODCALLTYPE d2d_device_context_GetFactory(ID2D1DeviceContext1 *iface, ID2D1Factory **factory)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
 
@@ -343,7 +344,7 @@ static void STDMETHODCALLTYPE d2d_device_context_GetFactory(ID2D1DeviceContext *
     ID2D1Factory_AddRef(*factory);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceContext1 *iface,
         D2D1_SIZE_U size, const void *src_data, UINT32 pitch, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
@@ -367,7 +368,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmap(ID2D1DeviceCont
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID2D1DeviceContext1 *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
@@ -391,7 +392,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromWicBitmap(ID
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1DeviceContext1 *iface,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
@@ -405,7 +406,10 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1Devi
     if (desc)
     {
         memcpy(&bitmap_desc, desc, sizeof(*desc));
-        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+        if (IsEqualIID(iid, &IID_IDXGISurface) || IsEqualIID(iid, &IID_IDXGISurface1))
+            bitmap_desc.bitmapOptions = d2d_get_bitmap_options_for_surface(data);
+        else
+            bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         bitmap_desc.colorContext = NULL;
     }
 
@@ -415,7 +419,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSharedBitmap(ID2D1Devi
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapBrush(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapBrush(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1BitmapBrush **brush)
 {
@@ -433,7 +437,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapBrush(ID2D1Devic
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSolidColorBrush(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSolidColorBrush(ID2D1DeviceContext1 *iface,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc, ID2D1SolidColorBrush **brush)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -448,7 +452,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateSolidColorBrush(ID2D1D
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateGradientStopCollection(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateGradientStopCollection(ID2D1DeviceContext1 *iface,
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode,
         ID2D1GradientStopCollection **gradient)
 {
@@ -466,7 +470,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateGradientStopCollection
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLinearGradientBrush(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLinearGradientBrush(ID2D1DeviceContext1 *iface,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, ID2D1LinearGradientBrush **brush)
 {
@@ -484,7 +488,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLinearGradientBrush(ID
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateRadialGradientBrush(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateRadialGradientBrush(ID2D1DeviceContext1 *iface,
         const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, ID2D1RadialGradientBrush **brush)
 {
@@ -502,7 +506,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateRadialGradientBrush(ID
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCompatibleRenderTarget(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCompatibleRenderTarget(ID2D1DeviceContext1 *iface,
         const D2D1_SIZE_F *size, const D2D1_SIZE_U *pixel_size, const D2D1_PIXEL_FORMAT *format,
         D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options, ID2D1BitmapRenderTarget **rt)
 {
@@ -513,14 +517,14 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCompatibleRenderTarget
     TRACE("iface %p, size %p, pixel_size %p, format %p, options %#x, render_target %p.\n",
             iface, size, pixel_size, format, options, rt);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_bitmap_render_target_init(object, render_target, size, pixel_size,
             format, options)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -530,7 +534,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCompatibleRenderTarget
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLayer(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLayer(ID2D1DeviceContext1 *iface,
         const D2D1_SIZE_F *size, ID2D1Layer **layer)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -545,7 +549,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateLayer(ID2D1DeviceConte
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateMesh(ID2D1DeviceContext *iface, ID2D1Mesh **mesh)
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateMesh(ID2D1DeviceContext1 *iface, ID2D1Mesh **mesh)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
     struct d2d_mesh *object;
@@ -559,10 +563,10 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateMesh(ID2D1DeviceContex
     return hr;
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext1 *iface,
         D2D1_POINT_2F p0, D2D1_POINT_2F p1, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     ID2D1PathGeometry *geometry;
     ID2D1GeometrySink *sink;
     HRESULT hr;
@@ -570,7 +574,13 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext *if
     TRACE("iface %p, p0 %s, p1 %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, debug_d2d_point_2f(&p0), debug_d2d_point_2f(&p1), brush, stroke_width, stroke_style);
 
-    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_line(context->target.command_list, context, p0, p1, brush, stroke_width, stroke_style);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(context->factory, &geometry)))
     {
         WARN("Failed to create path geometry, hr %#lx.\n", hr);
         return;
@@ -590,50 +600,62 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawLine(ID2D1DeviceContext *if
         WARN("Failed to close geometry sink, hr %#lx.\n", hr);
     ID2D1GeometrySink_Release(sink);
 
-    ID2D1DeviceContext_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
+    ID2D1DeviceContext1_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
     ID2D1PathGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawRectangle(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawRectangle(ID2D1DeviceContext1 *iface,
         const D2D1_RECT_F *rect, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     ID2D1RectangleGeometry *geometry;
     HRESULT hr;
 
     TRACE("iface %p, rect %s, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, debug_d2d_rect_f(rect), brush, stroke_width, stroke_style);
 
-    if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(render_target->factory, rect, &geometry)))
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_rectangle(context->target.command_list, context, rect, brush, stroke_width, stroke_style);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(context->factory, rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#lx.\n", hr);
         return;
     }
 
-    ID2D1DeviceContext_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
+    ID2D1DeviceContext1_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
     ID2D1RectangleGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillRectangle(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillRectangle(ID2D1DeviceContext1 *iface,
         const D2D1_RECT_F *rect, ID2D1Brush *brush)
 {
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     ID2D1RectangleGeometry *geometry;
     HRESULT hr;
 
     TRACE("iface %p, rect %s, brush %p.\n", iface, debug_d2d_rect_f(rect), brush);
 
-    if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(render_target->factory, rect, &geometry)))
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_fill_rectangle(context->target.command_list, context, rect, brush);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(context->factory, rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#lx.\n", hr);
         return;
     }
 
-    ID2D1DeviceContext_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    ID2D1DeviceContext1_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
     ID2D1RectangleGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawRoundedRectangle(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawRoundedRectangle(ID2D1DeviceContext1 *iface,
         const D2D1_ROUNDED_RECT *rect, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -649,11 +671,11 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawRoundedRectangle(ID2D1Devic
         return;
     }
 
-    ID2D1DeviceContext_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
+    ID2D1DeviceContext1_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
     ID2D1RoundedRectangleGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillRoundedRectangle(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillRoundedRectangle(ID2D1DeviceContext1 *iface,
         const D2D1_ROUNDED_RECT *rect, ID2D1Brush *brush)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -668,11 +690,11 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRoundedRectangle(ID2D1Devic
         return;
     }
 
-    ID2D1DeviceContext_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    ID2D1DeviceContext1_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
     ID2D1RoundedRectangleGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawEllipse(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawEllipse(ID2D1DeviceContext1 *iface,
         const D2D1_ELLIPSE *ellipse, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -688,11 +710,11 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawEllipse(ID2D1DeviceContext 
         return;
     }
 
-    ID2D1DeviceContext_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
+    ID2D1DeviceContext1_DrawGeometry(iface, (ID2D1Geometry *)geometry, brush, stroke_width, stroke_style);
     ID2D1EllipseGeometry_Release(geometry);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillEllipse(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillEllipse(ID2D1DeviceContext1 *iface,
         const D2D1_ELLIPSE *ellipse, ID2D1Brush *brush)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -707,7 +729,7 @@ static void STDMETHODCALLTYPE d2d_device_context_FillEllipse(ID2D1DeviceContext 
         return;
     }
 
-    ID2D1DeviceContext_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    ID2D1DeviceContext1_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
     ID2D1EllipseGeometry_Release(geometry);
 }
 
@@ -916,20 +938,27 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
     }
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext1 *iface,
         ID2D1Geometry *geometry, ID2D1Brush *brush, float stroke_width, ID2D1StrokeStyle *stroke_style)
 {
     const struct d2d_geometry *geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
 
     TRACE("iface %p, geometry %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, geometry, brush, stroke_width, stroke_style);
 
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_geometry(context->target.command_list, context, geometry, brush,
+                stroke_width, stroke_style);
+        return;
+    }
+
     if (stroke_style)
         FIXME("Ignoring stroke style %p.\n", stroke_style);
 
-    d2d_device_context_draw_geometry(render_target, geometry_impl, brush_impl, stroke_width);
+    d2d_device_context_draw_geometry(context, geometry_impl, brush_impl, stroke_width);
 }
 
 static void d2d_device_context_fill_geometry(struct d2d_device_context *render_target,
@@ -1027,7 +1056,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
     }
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext1 *iface,
         ID2D1Geometry *geometry, ID2D1Brush *brush, ID2D1Brush *opacity_brush)
 {
     const struct d2d_geometry *geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
@@ -1046,21 +1075,49 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
         return;
     }
 
-    d2d_device_context_fill_geometry(context, geometry_impl, brush_impl, opacity_brush_impl);
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_geometry(context->target.command_list, context, geometry, brush, opacity_brush);
+    else
+        d2d_device_context_fill_geometry(context, geometry_impl, brush_impl, opacity_brush_impl);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillMesh(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillMesh(ID2D1DeviceContext1 *iface,
         ID2D1Mesh *mesh, ID2D1Brush *brush)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mesh %p, brush %p stub!\n", iface, mesh, brush);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_mesh(context->target.command_list, context, mesh, brush);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *mask, ID2D1Brush *brush, D2D1_OPACITY_MASK_CONTENT content,
         const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mask %p, brush %p, content %#x, dst_rect %s, src_rect %s stub!\n",
             iface, mask, brush, content, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
+
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->drawing_state.antialiasMode != D2D1_ANTIALIAS_MODE_ALIASED)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
+    if ((unsigned int)content > D2D1_OPACITY_MASK_CONTENT_TEXT_GDI_COMPATIBLE)
+    {
+        d2d_device_context_set_error(context, E_INVALIDARG);
+        return;
+    }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_opacity_mask(context->target.command_list, context, mask, brush, dst_rect, src_rect);
 }
 
 static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, ID2D1Bitmap *bitmap,
@@ -1127,11 +1184,11 @@ static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, I
         return;
     }
 
-    d2d_device_context_FillRectangle(&context->ID2D1DeviceContext_iface, &d, &brush->ID2D1Brush_iface);
+    d2d_device_context_FillRectangle(&context->ID2D1DeviceContext1_iface, &d, &brush->ID2D1Brush_iface);
     ID2D1Brush_Release(&brush->ID2D1Brush_iface);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity,
         D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode, const D2D1_RECT_F *src_rect)
 {
@@ -1147,11 +1204,19 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
         return;
     }
 
-    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
-            src_rect, NULL, NULL);
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_bitmap(context->target.command_list, bitmap, dst_rect, opacity,
+                d2d1_1_interp_mode_from_d2d1(interpolation_mode), src_rect, NULL);
+    }
+    else
+    {
+        d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity,
+                d2d1_1_interp_mode_from_d2d1(interpolation_mode), src_rect, NULL, NULL);
+    }
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext1 *iface,
         const WCHAR *string, UINT32 string_len, IDWriteTextFormat *text_format, const D2D1_RECT_F *layout_rect,
         ID2D1Brush *brush, D2D1_DRAW_TEXT_OPTIONS options, DWRITE_MEASURING_MODE measuring_mode)
 {
@@ -1191,11 +1256,11 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *if
     }
 
     d2d_point_set(&origin, min(layout_rect->left, layout_rect->right), min(layout_rect->top, layout_rect->bottom));
-    ID2D1DeviceContext_DrawTextLayout(iface, origin, text_layout, brush, options);
+    ID2D1DeviceContext1_DrawTextLayout(iface, origin, text_layout, brush, options);
     IDWriteTextLayout_Release(text_layout);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawTextLayout(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawTextLayout(ID2D1DeviceContext1 *iface,
         D2D1_POINT_2F origin, IDWriteTextLayout *layout, ID2D1Brush *brush, D2D1_DRAW_TEXT_OPTIONS options)
 {
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
@@ -1341,7 +1406,7 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
 
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_size.width *= 3;
-    if (!(opacity_values = heap_calloc(bitmap_size.height, bitmap_size.width)))
+    if (!(opacity_values = calloc(bitmap_size.height, bitmap_size.width)))
     {
         ERR("Failed to allocate opacity values.\n");
         goto done;
@@ -1361,7 +1426,7 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     if (texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         bitmap_desc.dpiX *= 3.0f;
     bitmap_desc.dpiY = render_target->desc.dpiY;
-    if (FAILED(hr = d2d_device_context_CreateBitmap(&render_target->ID2D1DeviceContext_iface,
+    if (FAILED(hr = d2d_device_context_CreateBitmap(&render_target->ID2D1DeviceContext1_iface,
             bitmap_size, opacity_values, bitmap_size.width, &bitmap_desc, &opacity_bitmap)))
     {
         ERR("Failed to create opacity bitmap, hr %#lx.\n", hr);
@@ -1378,7 +1443,7 @@ static void d2d_device_context_draw_glyph_run_bitmap(struct d2d_device_context *
     brush_desc.transform._22 = 1.0f;
     brush_desc.transform._31 = run_rect.left;
     brush_desc.transform._32 = run_rect.top;
-    if (FAILED(hr = d2d_device_context_CreateBitmapBrush(&render_target->ID2D1DeviceContext_iface,
+    if (FAILED(hr = d2d_device_context_CreateBitmapBrush(&render_target->ID2D1DeviceContext1_iface,
             opacity_bitmap, NULL, &brush_desc, &opacity_brush)))
     {
         ERR("Failed to create opacity bitmap brush, hr %#lx.\n", hr);
@@ -1404,788 +1469,28 @@ done:
         ID2D1BitmapBrush_Release(opacity_brush);
     if (opacity_bitmap)
         ID2D1Bitmap_Release(opacity_bitmap);
-    heap_free(opacity_values);
+    free(opacity_values);
     IDWriteGlyphRunAnalysis_Release(analysis);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext *iface,
-        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
-        DWRITE_MEASURING_MODE measuring_mode)
-{
-    TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
-            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
-
-    ID2D1DeviceContext_DrawGlyphRun(iface, baseline_origin, glyph_run, NULL, brush, measuring_mode);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetTransform(ID2D1DeviceContext *iface,
-        const D2D1_MATRIX_3X2_F *transform)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, transform %p.\n", iface, transform);
-
-    render_target->drawing_state.transform = *transform;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetTransform(ID2D1DeviceContext *iface,
-        D2D1_MATRIX_3X2_F *transform)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, transform %p.\n", iface, transform);
-
-    *transform = render_target->drawing_state.transform;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetAntialiasMode(ID2D1DeviceContext *iface,
-        D2D1_ANTIALIAS_MODE antialias_mode)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, antialias_mode %#x stub!\n", iface, antialias_mode);
-
-    render_target->drawing_state.antialiasMode = antialias_mode;
-}
-
-static D2D1_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_device_context_GetAntialiasMode(ID2D1DeviceContext *iface)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return render_target->drawing_state.antialiasMode;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetTextAntialiasMode(ID2D1DeviceContext *iface,
-        D2D1_TEXT_ANTIALIAS_MODE antialias_mode)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, antialias_mode %#x.\n", iface, antialias_mode);
-
-    render_target->drawing_state.textAntialiasMode = antialias_mode;
-}
-
-static D2D1_TEXT_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_device_context_GetTextAntialiasMode(ID2D1DeviceContext *iface)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return render_target->drawing_state.textAntialiasMode;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetTextRenderingParams(ID2D1DeviceContext *iface,
-        IDWriteRenderingParams *text_rendering_params)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
-
-    if (text_rendering_params)
-        IDWriteRenderingParams_AddRef(text_rendering_params);
-    if (render_target->text_rendering_params)
-        IDWriteRenderingParams_Release(render_target->text_rendering_params);
-    render_target->text_rendering_params = text_rendering_params;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetTextRenderingParams(ID2D1DeviceContext *iface,
-        IDWriteRenderingParams **text_rendering_params)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
-
-    if ((*text_rendering_params = render_target->text_rendering_params))
-        IDWriteRenderingParams_AddRef(*text_rendering_params);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetTags(ID2D1DeviceContext *iface, D2D1_TAG tag1, D2D1_TAG tag2)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, tag1 %s, tag2 %s.\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
-
-    render_target->drawing_state.tag1 = tag1;
-    render_target->drawing_state.tag2 = tag2;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetTags(ID2D1DeviceContext *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
-
-    *tag1 = render_target->drawing_state.tag1;
-    *tag2 = render_target->drawing_state.tag2;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_PushLayer(ID2D1DeviceContext *iface,
-        const D2D1_LAYER_PARAMETERS *layer_parameters, ID2D1Layer *layer)
-{
-    FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_PopLayer(ID2D1DeviceContext *iface)
-{
-    FIXME("iface %p stub!\n", iface);
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
-    FIXME("iface %p, tag1 %p, tag2 %p stub!\n", iface, tag1, tag2);
-
-    if (context->ops && context->ops->device_context_present)
-        context->ops->device_context_present(context->outer_unknown);
-
-    return E_NOTIMPL;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SaveDrawingState(ID2D1DeviceContext *iface,
-        ID2D1DrawingStateBlock *state_block)
-{
-    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, state_block %p.\n", iface, state_block);
-
-    state_block_impl->drawing_state = render_target->drawing_state;
-    if (render_target->text_rendering_params)
-        IDWriteRenderingParams_AddRef(render_target->text_rendering_params);
-    if (state_block_impl->text_rendering_params)
-        IDWriteRenderingParams_Release(state_block_impl->text_rendering_params);
-    state_block_impl->text_rendering_params = render_target->text_rendering_params;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_RestoreDrawingState(ID2D1DeviceContext *iface,
-        ID2D1DrawingStateBlock *state_block)
-{
-    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, state_block %p.\n", iface, state_block);
-
-    render_target->drawing_state = state_block_impl->drawing_state;
-    if (state_block_impl->text_rendering_params)
-        IDWriteRenderingParams_AddRef(state_block_impl->text_rendering_params);
-    if (render_target->text_rendering_params)
-        IDWriteRenderingParams_Release(render_target->text_rendering_params);
-    render_target->text_rendering_params = state_block_impl->text_rendering_params;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_PushAxisAlignedClip(ID2D1DeviceContext *iface,
-        const D2D1_RECT_F *clip_rect, D2D1_ANTIALIAS_MODE antialias_mode)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-    D2D1_RECT_F transformed_rect;
-    float x_scale, y_scale;
-    D2D1_POINT_2F point;
-
-    TRACE("iface %p, clip_rect %s, antialias_mode %#x.\n", iface, debug_d2d_rect_f(clip_rect), antialias_mode);
-
-    if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
-        FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
-
-    x_scale = render_target->desc.dpiX / 96.0f;
-    y_scale = render_target->desc.dpiY / 96.0f;
-    d2d_point_transform(&point, &render_target->drawing_state.transform,
-            clip_rect->left * x_scale, clip_rect->top * y_scale);
-    d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
-    d2d_point_transform(&point, &render_target->drawing_state.transform,
-            clip_rect->left * x_scale, clip_rect->bottom * y_scale);
-    d2d_rect_expand(&transformed_rect, &point);
-    d2d_point_transform(&point, &render_target->drawing_state.transform,
-            clip_rect->right * x_scale, clip_rect->top * y_scale);
-    d2d_rect_expand(&transformed_rect, &point);
-    d2d_point_transform(&point, &render_target->drawing_state.transform,
-            clip_rect->right * x_scale, clip_rect->bottom * y_scale);
-    d2d_rect_expand(&transformed_rect, &point);
-
-    if (!d2d_clip_stack_push(&render_target->clip_stack, &transformed_rect))
-        WARN("Failed to push clip rect.\n");
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_PopAxisAlignedClip(ID2D1DeviceContext *iface)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    d2d_clip_stack_pop(&render_target->clip_stack);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext *iface, const D2D1_COLOR_F *colour)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-    D3D11_MAPPED_SUBRESOURCE map_desc;
-    ID3D11DeviceContext *d3d_context;
-    struct d2d_ps_cb *ps_cb_data;
-    struct d2d_vs_cb *vs_cb_data;
-    D2D1_COLOR_F *c;
-    HRESULT hr;
-
-    TRACE("iface %p, colour %p.\n", iface, colour);
-
-    ID3D11Device1_GetImmediateContext(render_target->d3d_device, &d3d_context);
-
-    if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)render_target->vs_cb,
-            0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
-    {
-        WARN("Failed to map vs constant buffer, hr %#lx.\n", hr);
-        ID3D11DeviceContext_Release(d3d_context);
-        return;
-    }
-
-    vs_cb_data = map_desc.pData;
-    vs_cb_data->transform_geometry._11 = 1.0f;
-    vs_cb_data->transform_geometry._21 = 0.0f;
-    vs_cb_data->transform_geometry._31 = 0.0f;
-    vs_cb_data->transform_geometry.pad0 = 0.0f;
-    vs_cb_data->transform_geometry._12 = 0.0f;
-    vs_cb_data->transform_geometry._22 = 1.0f;
-    vs_cb_data->transform_geometry._32 = 0.0f;
-    vs_cb_data->transform_geometry.stroke_width = 0.0f;
-    vs_cb_data->transform_rtx.x = 1.0f;
-    vs_cb_data->transform_rtx.y = 0.0f;
-    vs_cb_data->transform_rtx.z = 1.0f;
-    vs_cb_data->transform_rtx.w = 1.0f;
-    vs_cb_data->transform_rty.x = 0.0f;
-    vs_cb_data->transform_rty.y = 1.0f;
-    vs_cb_data->transform_rty.z = 1.0f;
-    vs_cb_data->transform_rty.w = -1.0f;
-
-    ID3D11DeviceContext_Unmap(d3d_context, (ID3D11Resource *)render_target->vs_cb, 0);
-
-    if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)render_target->ps_cb,
-            0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
-    {
-        WARN("Failed to map ps constant buffer, hr %#lx.\n", hr);
-        ID3D11DeviceContext_Release(d3d_context);
-        return;
-    }
-
-    ps_cb_data = map_desc.pData;
-    memset(ps_cb_data, 0, sizeof(*ps_cb_data));
-    ps_cb_data->colour_brush.type = D2D_BRUSH_TYPE_SOLID;
-    ps_cb_data->colour_brush.opacity = 1.0f;
-    ps_cb_data->opacity_brush.type = D2D_BRUSH_TYPE_COUNT;
-    c = &ps_cb_data->colour_brush.u.solid.colour;
-    if (colour)
-        *c = *colour;
-    if (render_target->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
-        c->a = 1.0f;
-    c->r *= c->a;
-    c->g *= c->a;
-    c->b *= c->a;
-
-    ID3D11DeviceContext_Unmap(d3d_context, (ID3D11Resource *)render_target->ps_cb, 0);
-    ID3D11DeviceContext_Release(d3d_context);
-
-    d2d_device_context_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, render_target->ib, 6,
-            render_target->vb, render_target->vb_stride, NULL, NULL);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_BeginDraw(ID2D1DeviceContext *iface)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    memset(&render_target->error, 0, sizeof(render_target->error));
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_EndDraw(ID2D1DeviceContext *iface,
-        D2D1_TAG *tag1, D2D1_TAG *tag2)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    HRESULT hr;
-
-    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
-
-    if (tag1)
-        *tag1 = context->error.tag1;
-    if (tag2)
-        *tag2 = context->error.tag2;
-
-    if (context->ops && context->ops->device_context_present)
-    {
-        if (FAILED(hr = context->ops->device_context_present(context->outer_unknown)))
-            context->error.code = hr;
-    }
-
-    return context->error.code;
-}
-
-static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_device_context_GetPixelFormat(ID2D1DeviceContext *iface,
-        D2D1_PIXEL_FORMAT *format)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, format %p.\n", iface, format);
-
-    *format = render_target->desc.pixelFormat;
-    return format;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetDpi(ID2D1DeviceContext *iface, float dpi_x, float dpi_y)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, dpi_x %.8e, dpi_y %.8e.\n", iface, dpi_x, dpi_y);
-
-    if (dpi_x == 0.0f && dpi_y == 0.0f)
-    {
-        dpi_x = 96.0f;
-        dpi_y = 96.0f;
-    }
-    else if (dpi_x <= 0.0f || dpi_y <= 0.0f)
-        return;
-
-    render_target->desc.dpiX = dpi_x;
-    render_target->desc.dpiY = dpi_y;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetDpi(ID2D1DeviceContext *iface, float *dpi_x, float *dpi_y)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
-
-    *dpi_x = render_target->desc.dpiX;
-    *dpi_y = render_target->desc.dpiY;
-}
-
-static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_device_context_GetSize(ID2D1DeviceContext *iface, D2D1_SIZE_F *size)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, size %p.\n", iface, size);
-
-    size->width = render_target->pixel_size.width / (render_target->desc.dpiX / 96.0f);
-    size->height = render_target->pixel_size.height / (render_target->desc.dpiY / 96.0f);
-    return size;
-}
-
-static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_device_context_GetPixelSize(ID2D1DeviceContext *iface,
-        D2D1_SIZE_U *pixel_size)
-{
-    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, pixel_size %p.\n", iface, pixel_size);
-
-    *pixel_size = render_target->pixel_size;
-    return pixel_size;
-}
-
-static UINT32 STDMETHODCALLTYPE d2d_device_context_GetMaximumBitmapSize(ID2D1DeviceContext *iface)
-{
-    TRACE("iface %p.\n", iface);
-
-    return D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-}
-
-static BOOL STDMETHODCALLTYPE d2d_device_context_IsSupported(ID2D1DeviceContext *iface,
-        const D2D1_RENDER_TARGET_PROPERTIES *desc)
-{
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
-
-    return FALSE;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmap(ID2D1DeviceContext *iface,
-        D2D1_SIZE_U size, const void *src_data, UINT32 pitch,
-        const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_bitmap *object;
-    HRESULT hr;
-
-    TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
-            iface, size.width, size.height, src_data, pitch, desc, bitmap);
-
-    if (SUCCEEDED(hr = d2d_bitmap_create(context, size, src_data, pitch, desc, &object)))
-        *bitmap = &object->ID2D1Bitmap1_iface;
-
-    return hr;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmapFromWicBitmap(
-        ID2D1DeviceContext *iface, IWICBitmapSource *bitmap_source,
-        const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_bitmap *object;
-    HRESULT hr;
-
-    TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n", iface, bitmap_source, desc, bitmap);
-
-    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(context, bitmap_source, desc, &object)))
-        *bitmap = &object->ID2D1Bitmap1_iface;
-
-    return hr;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContext(ID2D1DeviceContext *iface,
-        D2D1_COLOR_SPACE space, const BYTE *profile, UINT32 profile_size, ID2D1ColorContext **color_context)
-{
-    FIXME("iface %p, space %#x, profile %p, profile_size %u, color_context %p stub!\n",
-            iface, space, profile, profile_size, color_context);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromFilename(ID2D1DeviceContext *iface,
-        const WCHAR *filename, ID2D1ColorContext **color_context)
-{
-    FIXME("iface %p, filename %s, color_context %p stub!\n", iface, debugstr_w(filename), color_context);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromWicColorContext(ID2D1DeviceContext *iface,
-        IWICColorContext *wic_color_context, ID2D1ColorContext **color_context)
-{
-    FIXME("iface %p, wic_color_context %p, color_context %p stub!\n", iface, wic_color_context, color_context);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(ID2D1DeviceContext *iface,
-        IDXGISurface *surface, const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
-    struct d2d_bitmap *object;
-    HRESULT hr;
-
-    TRACE("iface %p, surface %p, desc %p, bitmap %p.\n", iface, surface, desc, bitmap);
-
-    if (!desc)
-    {
-        DXGI_SURFACE_DESC surface_desc;
-
-        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
-        {
-            WARN("Failed to get surface desc, hr %#lx.\n", hr);
-            return hr;
-        }
-
-        memset(&bitmap_desc, 0, sizeof(bitmap_desc));
-        bitmap_desc.pixelFormat.format = surface_desc.Format;
-        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-        bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-        desc = &bitmap_desc;
-    }
-
-    if (SUCCEEDED(hr = d2d_bitmap_create_shared(context, &IID_IDXGISurface, surface, desc, &object)))
-        *bitmap = &object->ID2D1Bitmap1_iface;
-
-    return hr;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceContext *iface,
-        REFCLSID effect_id, ID2D1Effect **effect)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_effect *object;
-    HRESULT hr;
-
-    FIXME("iface %p, effect_id %s, effect %p stub!\n", iface, debugstr_guid(effect_id), effect);
-
-    if (!(object = heap_alloc_zero(sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d2d_effect_init(object, context->factory, effect_id)))
-    {
-        WARN("Failed to initialise effect, hr %#lx.\n", hr);
-        heap_free(object);
-        return hr;
-    }
-
-    TRACE("Created effect %p.\n", object);
-    *effect = &object->ID2D1Effect_iface;
-
-    return S_OK;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateGradientStopCollection(
-        ID2D1DeviceContext *iface, const D2D1_GRADIENT_STOP *stops, UINT32 stop_count,
-        D2D1_COLOR_SPACE preinterpolation_space, D2D1_COLOR_SPACE postinterpolation_space,
-        D2D1_BUFFER_PRECISION buffer_precision, D2D1_EXTEND_MODE extend_mode,
-        D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode, ID2D1GradientStopCollection1 **gradient)
-{
-    FIXME("iface %p, stops %p, stop_count %u, preinterpolation_space %#x, postinterpolation_space %#x, "
-            "buffer_precision %#x, extend_mode %#x, color_interpolation_mode %#x, gradient %p stub!\n",
-            iface, stops, stop_count, preinterpolation_space, postinterpolation_space,
-            buffer_precision, extend_mode, color_interpolation_mode, gradient);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateImageBrush(ID2D1DeviceContext *iface,
-        ID2D1Image *image, const D2D1_IMAGE_BRUSH_PROPERTIES *image_brush_desc,
-        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1ImageBrush **brush)
-{
-    FIXME("iface %p, image %p, image_brush_desc %p, brush_desc %p, brush %p stub!\n",
-            iface, image, image_brush_desc, brush_desc, brush);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmapBrush(ID2D1DeviceContext *iface,
-        ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc,
-        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1BitmapBrush1 **brush)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_brush *object;
-    HRESULT hr;
-
-    TRACE("iface %p, bitmap %p, bitmap_brush_desc %p, brush_desc %p, brush %p.\n", iface, bitmap, bitmap_brush_desc,
-            brush_desc, brush);
-
-    if (SUCCEEDED(hr = d2d_bitmap_brush_create(context->factory, bitmap, bitmap_brush_desc, brush_desc, &object)))
-        *brush = (ID2D1BitmapBrush1 *)&object->ID2D1Brush_iface;
-
-    return hr;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCommandList(ID2D1DeviceContext *iface,
-        ID2D1CommandList **command_list)
-{
-    FIXME("iface %p, command_list %p stub!\n", iface, command_list);
-
-    return E_NOTIMPL;
-}
-
-static BOOL STDMETHODCALLTYPE d2d_device_context_IsDxgiFormatSupported(ID2D1DeviceContext *iface, DXGI_FORMAT format)
-{
-    FIXME("iface %p, format %#x stub!\n", iface, format);
-
-    return FALSE;
-}
-
-static BOOL STDMETHODCALLTYPE d2d_device_context_IsBufferPrecisionSupported(ID2D1DeviceContext *iface,
-        D2D1_BUFFER_PRECISION buffer_precision)
-{
-    FIXME("iface %p, buffer_precision %#x stub!\n", iface, buffer_precision);
-
-    return FALSE;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext *iface,
-        ID2D1Image *image, D2D1_RECT_F *local_bounds)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    D2D_SIZE_U pixel_size;
-    ID2D1Bitmap *bitmap;
-    D2D_SIZE_F size;
-
-    TRACE("iface %p, image %p, local_bounds %p.\n", iface, image, local_bounds);
-
-    if (SUCCEEDED(ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap)))
-    {
-        local_bounds->left = 0.0f;
-        local_bounds->top  = 0.0f;
-        switch (context->drawing_state.unitMode)
-        {
-            case D2D1_UNIT_MODE_DIPS:
-                size = ID2D1Bitmap_GetSize(bitmap);
-                local_bounds->right  = size.width;
-                local_bounds->bottom = size.height;
-                break;
-
-            case D2D1_UNIT_MODE_PIXELS:
-                pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
-                local_bounds->right  = pixel_size.width;
-                local_bounds->bottom = pixel_size.height;
-                break;
-
-            default:
-                WARN("Unknown unit mode %#x.\n", context->drawing_state.unitMode);
-                break;
-        }
-        ID2D1Bitmap_Release(bitmap);
-    }
-    else
-    {
-        FIXME("Unable to get local bounds of image %p.\n", image);
-    }
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_GetImageWorldBounds(ID2D1DeviceContext *iface,
-        ID2D1Image *image, D2D1_RECT_F *world_bounds)
-{
-    FIXME("iface %p, image %p, world_bounds %p stub!\n", iface, image, world_bounds);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE d2d_device_context_GetGlyphRunWorldBounds(ID2D1DeviceContext *iface,
-        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
-        DWRITE_MEASURING_MODE measuring_mode, D2D1_RECT_F *bounds)
-{
-    FIXME("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p stub!\n",
-            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, measuring_mode, bounds);
-
-    return E_NOTIMPL;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext *iface, ID2D1Device **device)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, device %p.\n", iface, device);
-
-    *device = context->device;
-    ID2D1Device_AddRef(*device);
-}
-
-static void d2d_device_context_reset_target(struct d2d_device_context *context)
-{
-    if (!context->target)
-        return;
-
-    ID2D1Bitmap1_Release(&context->target->ID2D1Bitmap1_iface);
-    context->target = NULL;
-
-    /* Note that DPI settings are kept. */
-    memset(&context->desc.pixelFormat, 0, sizeof(context->desc.pixelFormat));
-    memset(&context->pixel_size, 0, sizeof(context->pixel_size));
-
-    ID3D11BlendState_Release(context->bs);
-    context->bs = NULL;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *iface, ID2D1Image *target)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_bitmap *bitmap_impl;
-    D3D11_BLEND_DESC blend_desc;
-    ID2D1Bitmap *bitmap;
-    HRESULT hr;
-
-    TRACE("iface %p, target %p.\n", iface, target);
-
-    if (!target)
-    {
-        d2d_device_context_reset_target(context);
-        return;
-    }
-
-    if (FAILED(ID2D1Image_QueryInterface(target, &IID_ID2D1Bitmap, (void **)&bitmap)))
-    {
-        FIXME("Only bitmap targets are supported.\n");
-        return;
-    }
-
-    bitmap_impl = unsafe_impl_from_ID2D1Bitmap(bitmap);
-
-    if (!(bitmap_impl->options & D2D1_BITMAP_OPTIONS_TARGET))
-    {
-        ID2D1Bitmap_Release(bitmap);
-        d2d_device_context_set_error(context, D2DERR_INVALID_TARGET);
-        return;
-    }
-
-    d2d_device_context_reset_target(context);
-
-    /* Set sizes and pixel format. */
-    context->pixel_size = bitmap_impl->pixel_size;
-    context->desc.pixelFormat = bitmap_impl->format;
-    context->target = bitmap_impl;
-
-    memset(&blend_desc, 0, sizeof(blend_desc));
-    blend_desc.IndependentBlendEnable = FALSE;
-    blend_desc.RenderTarget[0].BlendEnable = TRUE;
-    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-    blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d_device, &blend_desc, &context->bs)))
-        WARN("Failed to create blend state, hr %#lx.\n", hr);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetTarget(ID2D1DeviceContext *iface, ID2D1Image **target)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, target %p.\n", iface, target);
-
-    *target = context->target ? (ID2D1Image *)&context->target->ID2D1Bitmap1_iface : NULL;
-    if (*target)
-        ID2D1Image_AddRef(*target);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetRenderingControls(ID2D1DeviceContext *iface,
-        const D2D1_RENDERING_CONTROLS *rendering_controls)
-{
-    FIXME("iface %p, rendering_controls %p stub!\n", iface, rendering_controls);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_GetRenderingControls(ID2D1DeviceContext *iface,
-        D2D1_RENDERING_CONTROLS *rendering_controls)
-{
-    FIXME("iface %p, rendering_controls %p stub!\n", iface, rendering_controls);
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetPrimitiveBlend(ID2D1DeviceContext *iface,
-        D2D1_PRIMITIVE_BLEND primitive_blend)
-{
-    FIXME("iface %p, primitive_blend %#x stub!\n", iface, primitive_blend);
-}
-
-static D2D1_PRIMITIVE_BLEND STDMETHODCALLTYPE d2d_device_context_GetPrimitiveBlend(ID2D1DeviceContext *iface)
-{
-    FIXME("iface %p stub!\n", iface);
-
-    return D2D1_PRIMITIVE_BLEND_SOURCE_OVER;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext *iface, D2D1_UNIT_MODE unit_mode)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p, unit_mode %#x.\n", iface, unit_mode);
-
-    if (unit_mode != D2D1_UNIT_MODE_DIPS && unit_mode != D2D1_UNIT_MODE_PIXELS)
-    {
-        WARN("Unknown unit mode %#x.\n", unit_mode);
-        return;
-    }
-
-    context->drawing_state.unitMode = unit_mode;
-}
-
-static D2D1_UNIT_MODE STDMETHODCALLTYPE d2d_device_context_GetUnitMode(ID2D1DeviceContext *iface)
-{
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-
-    TRACE("iface %p.\n", iface);
-
-    return context->drawing_state.unitMode;
-}
-
-static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun(ID2D1DeviceContext *iface,
+static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context,
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
         const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, ID2D1Brush *brush, DWRITE_MEASURING_MODE measuring_mode)
 {
     DWRITE_TEXT_ANTIALIAS_MODE antialias_mode = DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE;
-    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     IDWriteRenderingParams *rendering_params;
     DWRITE_RENDERING_MODE rendering_mode;
     HRESULT hr;
 
-    TRACE("iface %p, baseline_origin %s, glyph_run %p, glyph_run_desc %p, brush %p, measuring_mode %#x.\n",
-            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, glyph_run_desc, brush, measuring_mode);
-
     if (FAILED(context->error.code))
         return;
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_glyph_run(context->target.command_list, context, baseline_origin, glyph_run,
+                glyph_run_desc, brush, measuring_mode);
+        return;
+    }
 
     rendering_params = context->text_rendering_params ? context->text_rendering_params
             : context->default_text_rendering_params;
@@ -2258,7 +1563,958 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun
                 rendering_mode, measuring_mode, antialias_mode);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext *iface, ID2D1Image *image,
+static void STDMETHODCALLTYPE d2d_device_context_DrawGlyphRun(ID2D1DeviceContext1 *iface,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
+        DWRITE_MEASURING_MODE measuring_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, brush %p, measuring_mode %#x.\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, brush, measuring_mode);
+
+    d2d_device_context_draw_glyph_run(context, baseline_origin, glyph_run, NULL, brush, measuring_mode);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetTransform(ID2D1DeviceContext1 *iface,
+        const D2D1_MATRIX_3X2_F *transform)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_transform(context->target.command_list, transform);
+
+    context->drawing_state.transform = *transform;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetTransform(ID2D1DeviceContext1 *iface,
+        D2D1_MATRIX_3X2_F *transform)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    *transform = render_target->drawing_state.transform;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetAntialiasMode(ID2D1DeviceContext1 *iface,
+        D2D1_ANTIALIAS_MODE antialias_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, antialias_mode %#x stub!\n", iface, antialias_mode);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_antialias_mode(context->target.command_list, antialias_mode);
+
+    context->drawing_state.antialiasMode = antialias_mode;
+}
+
+static D2D1_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_device_context_GetAntialiasMode(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return render_target->drawing_state.antialiasMode;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetTextAntialiasMode(ID2D1DeviceContext1 *iface,
+        D2D1_TEXT_ANTIALIAS_MODE antialias_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, antialias_mode %#x.\n", iface, antialias_mode);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_text_antialias_mode(context->target.command_list, antialias_mode);
+
+    context->drawing_state.textAntialiasMode = antialias_mode;
+}
+
+static D2D1_TEXT_ANTIALIAS_MODE STDMETHODCALLTYPE d2d_device_context_GetTextAntialiasMode(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return render_target->drawing_state.textAntialiasMode;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetTextRenderingParams(ID2D1DeviceContext1 *iface,
+        IDWriteRenderingParams *text_rendering_params)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_text_rendering_params(context->target.command_list, text_rendering_params);
+
+    if (text_rendering_params)
+        IDWriteRenderingParams_AddRef(text_rendering_params);
+    if (context->text_rendering_params)
+        IDWriteRenderingParams_Release(context->text_rendering_params);
+    context->text_rendering_params = text_rendering_params;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetTextRenderingParams(ID2D1DeviceContext1 *iface,
+        IDWriteRenderingParams **text_rendering_params)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, text_rendering_params %p.\n", iface, text_rendering_params);
+
+    if ((*text_rendering_params = render_target->text_rendering_params))
+        IDWriteRenderingParams_AddRef(*text_rendering_params);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetTags(ID2D1DeviceContext1 *iface, D2D1_TAG tag1, D2D1_TAG tag2)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, tag1 %s, tag2 %s.\n", iface, wine_dbgstr_longlong(tag1), wine_dbgstr_longlong(tag2));
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_tags(context->target.command_list, tag1, tag2);
+
+    context->drawing_state.tag1 = tag1;
+    context->drawing_state.tag2 = tag2;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetTags(ID2D1DeviceContext1 *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
+
+    *tag1 = render_target->drawing_state.tag1;
+    *tag2 = render_target->drawing_state.tag2;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_PushLayer(ID2D1DeviceContext1 *iface,
+        const D2D1_LAYER_PARAMETERS *layer_parameters, ID2D1Layer *layer)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        D2D1_LAYER_PARAMETERS1 parameters;
+
+        memcpy(&parameters, layer_parameters, sizeof(*layer_parameters));
+        parameters.layerOptions = D2D1_LAYER_OPTIONS1_NONE;
+        d2d_command_list_push_layer(context->target.command_list, context, &parameters, layer);
+    }
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_PopLayer(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    FIXME("iface %p stub!\n", iface);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_pop_layer(context->target.command_list);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext1 *iface, D2D1_TAG *tag1, D2D1_TAG *tag2)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    FIXME("iface %p, tag1 %p, tag2 %p stub!\n", iface, tag1, tag2);
+
+    if (context->ops && context->ops->device_context_present)
+        context->ops->device_context_present(context->outer_unknown);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SaveDrawingState(ID2D1DeviceContext1 *iface,
+        ID2D1DrawingStateBlock *state_block)
+{
+    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, state_block %p.\n", iface, state_block);
+
+    state_block_impl->drawing_state = render_target->drawing_state;
+    if (render_target->text_rendering_params)
+        IDWriteRenderingParams_AddRef(render_target->text_rendering_params);
+    if (state_block_impl->text_rendering_params)
+        IDWriteRenderingParams_Release(state_block_impl->text_rendering_params);
+    state_block_impl->text_rendering_params = render_target->text_rendering_params;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_RestoreDrawingState(ID2D1DeviceContext1 *iface,
+        ID2D1DrawingStateBlock *state_block)
+{
+    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, state_block %p.\n", iface, state_block);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        struct d2d_command_list *command_list = context->target.command_list;
+
+        if (context->drawing_state.antialiasMode != state_block_impl->drawing_state.antialiasMode)
+            d2d_command_list_set_antialias_mode(command_list, state_block_impl->drawing_state.antialiasMode);
+        d2d_command_list_set_text_antialias_mode(command_list, state_block_impl->drawing_state.textAntialiasMode);
+        d2d_command_list_set_tags(command_list, state_block_impl->drawing_state.tag1, state_block_impl->drawing_state.tag2);
+        d2d_command_list_set_transform(command_list, &state_block_impl->drawing_state.transform);
+        d2d_command_list_set_primitive_blend(command_list, state_block_impl->drawing_state.primitiveBlend);
+        d2d_command_list_set_unit_mode(command_list, state_block_impl->drawing_state.unitMode);
+        d2d_command_list_set_text_rendering_params(command_list, state_block_impl->text_rendering_params);
+    }
+
+    context->drawing_state = state_block_impl->drawing_state;
+    if (state_block_impl->text_rendering_params)
+        IDWriteRenderingParams_AddRef(state_block_impl->text_rendering_params);
+    if (context->text_rendering_params)
+        IDWriteRenderingParams_Release(context->text_rendering_params);
+    context->text_rendering_params = state_block_impl->text_rendering_params;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_PushAxisAlignedClip(ID2D1DeviceContext1 *iface,
+        const D2D1_RECT_F *clip_rect, D2D1_ANTIALIAS_MODE antialias_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_RECT_F transformed_rect;
+    float x_scale, y_scale;
+    D2D1_POINT_2F point;
+
+    TRACE("iface %p, clip_rect %s, antialias_mode %#x.\n", iface, debug_d2d_rect_f(clip_rect), antialias_mode);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_push_clip(context->target.command_list, clip_rect, antialias_mode);
+
+    if (antialias_mode != D2D1_ANTIALIAS_MODE_ALIASED)
+        FIXME("Ignoring antialias_mode %#x.\n", antialias_mode);
+
+    x_scale = context->desc.dpiX / 96.0f;
+    y_scale = context->desc.dpiY / 96.0f;
+    d2d_point_transform(&point, &context->drawing_state.transform,
+            clip_rect->left * x_scale, clip_rect->top * y_scale);
+    d2d_rect_set(&transformed_rect, point.x, point.y, point.x, point.y);
+    d2d_point_transform(&point, &context->drawing_state.transform,
+            clip_rect->left * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &context->drawing_state.transform,
+            clip_rect->right * x_scale, clip_rect->top * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+    d2d_point_transform(&point, &context->drawing_state.transform,
+            clip_rect->right * x_scale, clip_rect->bottom * y_scale);
+    d2d_rect_expand(&transformed_rect, &point);
+
+    if (!d2d_clip_stack_push(&context->clip_stack, &transformed_rect))
+        WARN("Failed to push clip rect.\n");
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_PopAxisAlignedClip(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_pop_clip(context->target.command_list);
+
+    d2d_clip_stack_pop(&context->clip_stack);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext1 *iface, const D2D1_COLOR_F *colour)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    ID3D11DeviceContext *d3d_context;
+    struct d2d_ps_cb *ps_cb_data;
+    struct d2d_vs_cb *vs_cb_data;
+    D2D1_COLOR_F *c;
+    HRESULT hr;
+
+    TRACE("iface %p, colour %p.\n", iface, colour);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_clear(context->target.command_list, colour);
+        return;
+    }
+
+    ID3D11Device1_GetImmediateContext(context->d3d_device, &d3d_context);
+
+    if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)context->vs_cb,
+            0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
+    {
+        WARN("Failed to map vs constant buffer, hr %#lx.\n", hr);
+        ID3D11DeviceContext_Release(d3d_context);
+        return;
+    }
+
+    vs_cb_data = map_desc.pData;
+    vs_cb_data->transform_geometry._11 = 1.0f;
+    vs_cb_data->transform_geometry._21 = 0.0f;
+    vs_cb_data->transform_geometry._31 = 0.0f;
+    vs_cb_data->transform_geometry.pad0 = 0.0f;
+    vs_cb_data->transform_geometry._12 = 0.0f;
+    vs_cb_data->transform_geometry._22 = 1.0f;
+    vs_cb_data->transform_geometry._32 = 0.0f;
+    vs_cb_data->transform_geometry.stroke_width = 0.0f;
+    vs_cb_data->transform_rtx.x = 1.0f;
+    vs_cb_data->transform_rtx.y = 0.0f;
+    vs_cb_data->transform_rtx.z = 1.0f;
+    vs_cb_data->transform_rtx.w = 1.0f;
+    vs_cb_data->transform_rty.x = 0.0f;
+    vs_cb_data->transform_rty.y = 1.0f;
+    vs_cb_data->transform_rty.z = 1.0f;
+    vs_cb_data->transform_rty.w = -1.0f;
+
+    ID3D11DeviceContext_Unmap(d3d_context, (ID3D11Resource *)context->vs_cb, 0);
+
+    if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)context->ps_cb,
+            0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
+    {
+        WARN("Failed to map ps constant buffer, hr %#lx.\n", hr);
+        ID3D11DeviceContext_Release(d3d_context);
+        return;
+    }
+
+    ps_cb_data = map_desc.pData;
+    memset(ps_cb_data, 0, sizeof(*ps_cb_data));
+    ps_cb_data->colour_brush.type = D2D_BRUSH_TYPE_SOLID;
+    ps_cb_data->colour_brush.opacity = 1.0f;
+    ps_cb_data->opacity_brush.type = D2D_BRUSH_TYPE_COUNT;
+    c = &ps_cb_data->colour_brush.u.solid.colour;
+    if (colour)
+        *c = *colour;
+    if (context->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
+        c->a = 1.0f;
+    c->r *= c->a;
+    c->g *= c->a;
+    c->b *= c->a;
+
+    ID3D11DeviceContext_Unmap(d3d_context, (ID3D11Resource *)context->ps_cb, 0);
+    ID3D11DeviceContext_Release(d3d_context);
+
+    d2d_device_context_draw(context, D2D_SHAPE_TYPE_TRIANGLE, context->ib, 6,
+            context->vb, context->vb_stride, NULL, NULL);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_BeginDraw(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_begin_draw(context->target.command_list, context);
+
+    memset(&context->error, 0, sizeof(context->error));
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_EndDraw(ID2D1DeviceContext1 *iface,
+        D2D1_TAG *tag1, D2D1_TAG *tag2)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        FIXME("Unimplemented for command list target.\n");
+        return E_NOTIMPL;
+    }
+
+    if (tag1)
+        *tag1 = context->error.tag1;
+    if (tag2)
+        *tag2 = context->error.tag2;
+
+    if (context->ops && context->ops->device_context_present)
+    {
+        if (FAILED(hr = context->ops->device_context_present(context->outer_unknown)))
+            context->error.code = hr;
+    }
+
+    return context->error.code;
+}
+
+static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_device_context_GetPixelFormat(ID2D1DeviceContext1 *iface,
+        D2D1_PIXEL_FORMAT *format)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, format %p.\n", iface, format);
+
+    *format = render_target->desc.pixelFormat;
+    return format;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetDpi(ID2D1DeviceContext1 *iface, float dpi_x, float dpi_y)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, dpi_x %.8e, dpi_y %.8e.\n", iface, dpi_x, dpi_y);
+
+    if (dpi_x == 0.0f && dpi_y == 0.0f)
+    {
+        dpi_x = 96.0f;
+        dpi_y = 96.0f;
+    }
+    else if (dpi_x <= 0.0f || dpi_y <= 0.0f)
+        return;
+
+    render_target->desc.dpiX = dpi_x;
+    render_target->desc.dpiY = dpi_y;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetDpi(ID2D1DeviceContext1 *iface, float *dpi_x, float *dpi_y)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
+
+    *dpi_x = render_target->desc.dpiX;
+    *dpi_y = render_target->desc.dpiY;
+}
+
+static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_device_context_GetSize(ID2D1DeviceContext1 *iface, D2D1_SIZE_F *size)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, size %p.\n", iface, size);
+
+    size->width = render_target->pixel_size.width / (render_target->desc.dpiX / 96.0f);
+    size->height = render_target->pixel_size.height / (render_target->desc.dpiY / 96.0f);
+    return size;
+}
+
+static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_device_context_GetPixelSize(ID2D1DeviceContext1 *iface,
+        D2D1_SIZE_U *pixel_size)
+{
+    struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, pixel_size %p.\n", iface, pixel_size);
+
+    *pixel_size = render_target->pixel_size;
+    return pixel_size;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_device_context_GetMaximumBitmapSize(ID2D1DeviceContext1 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+}
+
+static BOOL STDMETHODCALLTYPE d2d_device_context_IsSupported(ID2D1DeviceContext1 *iface,
+        const D2D1_RENDER_TARGET_PROPERTIES *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return FALSE;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmap(ID2D1DeviceContext1 *iface,
+        D2D1_SIZE_U size, const void *src_data, UINT32 pitch,
+        const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_bitmap *object;
+    HRESULT hr;
+
+    TRACE("iface %p, size {%u, %u}, src_data %p, pitch %u, desc %p, bitmap %p.\n",
+            iface, size.width, size.height, src_data, pitch, desc, bitmap);
+
+    if (SUCCEEDED(hr = d2d_bitmap_create(context, size, src_data, pitch, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap1_iface;
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmapFromWicBitmap(
+        ID2D1DeviceContext1 *iface, IWICBitmapSource *bitmap_source,
+        const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_bitmap *object;
+    HRESULT hr;
+
+    TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n", iface, bitmap_source, desc, bitmap);
+
+    if (SUCCEEDED(hr = d2d_bitmap_create_from_wic_bitmap(context, bitmap_source, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap1_iface;
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContext(ID2D1DeviceContext1 *iface,
+        D2D1_COLOR_SPACE space, const BYTE *profile, UINT32 profile_size, ID2D1ColorContext **color_context)
+{
+    FIXME("iface %p, space %#x, profile %p, profile_size %u, color_context %p stub!\n",
+            iface, space, profile, profile_size, color_context);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromFilename(ID2D1DeviceContext1 *iface,
+        const WCHAR *filename, ID2D1ColorContext **color_context)
+{
+    FIXME("iface %p, filename %s, color_context %p stub!\n", iface, debugstr_w(filename), color_context);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromWicColorContext(ID2D1DeviceContext1 *iface,
+        IWICColorContext *wic_color_context, ID2D1ColorContext **color_context)
+{
+    FIXME("iface %p, wic_color_context %p, color_context %p stub!\n", iface, wic_color_context, color_context);
+
+    return E_NOTIMPL;
+}
+
+static BOOL d2d_bitmap_check_options_with_surface(unsigned int options, unsigned int surface_options)
+{
+    switch (options)
+    {
+        case D2D1_BITMAP_OPTIONS_NONE:
+        case D2D1_BITMAP_OPTIONS_TARGET:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ:
+        case D2D1_BITMAP_OPTIONS_CANNOT_DRAW:
+            break;
+        default:
+            WARN("Invalid bitmap options %#x.\n", options);
+            return FALSE;
+    }
+
+    if (options && (options & D2D1_BITMAP_OPTIONS_TARGET) != (surface_options & D2D1_BITMAP_OPTIONS_TARGET))
+        return FALSE;
+    if (options & D2D1_BITMAP_OPTIONS_TARGET)
+    {
+        if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW) && (surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+            return FALSE;
+        if (options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE && !(surface_options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE))
+            return FALSE;
+        return TRUE;
+    }
+
+    if (options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW)
+    {
+        if (!(surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+            return FALSE;
+
+        if (options & D2D1_BITMAP_OPTIONS_CPU_READ && !(surface_options & D2D1_BITMAP_OPTIONS_CPU_READ))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(ID2D1DeviceContext1 *iface,
+        IDXGISurface *surface, const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    unsigned int surface_options;
+    struct d2d_bitmap *object;
+    HRESULT hr;
+
+    TRACE("iface %p, surface %p, desc %p, bitmap %p.\n", iface, surface, desc, bitmap);
+
+    surface_options = d2d_get_bitmap_options_for_surface(surface);
+
+    if (desc)
+    {
+        if (!d2d_bitmap_check_options_with_surface(desc->bitmapOptions, surface_options))
+        {
+            WARN("Incompatible bitmap options %#x, surface options %#x.\n",
+                    desc->bitmapOptions, surface_options);
+            return E_INVALIDARG;
+        }
+    }
+    else
+    {
+        DXGI_SURFACE_DESC surface_desc;
+
+        if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
+        {
+            WARN("Failed to get surface desc, hr %#lx.\n", hr);
+            return hr;
+        }
+
+        memset(&bitmap_desc, 0, sizeof(bitmap_desc));
+        bitmap_desc.pixelFormat.format = surface_desc.Format;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        bitmap_desc.bitmapOptions = surface_options;
+        desc = &bitmap_desc;
+    }
+
+    if (SUCCEEDED(hr = d2d_bitmap_create_shared(context, &IID_IDXGISurface, surface, desc, &object)))
+        *bitmap = &object->ID2D1Bitmap1_iface;
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceContext1 *iface,
+        REFCLSID effect_id, ID2D1Effect **effect)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, effect_id %s, effect %p.\n", iface, debugstr_guid(effect_id), effect);
+
+    return d2d_effect_create(context, effect_id, effect);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateGradientStopCollection(
+        ID2D1DeviceContext1 *iface, const D2D1_GRADIENT_STOP *stops, UINT32 stop_count,
+        D2D1_COLOR_SPACE preinterpolation_space, D2D1_COLOR_SPACE postinterpolation_space,
+        D2D1_BUFFER_PRECISION buffer_precision, D2D1_EXTEND_MODE extend_mode,
+        D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode, ID2D1GradientStopCollection1 **gradient)
+{
+    FIXME("iface %p, stops %p, stop_count %u, preinterpolation_space %#x, postinterpolation_space %#x, "
+            "buffer_precision %#x, extend_mode %#x, color_interpolation_mode %#x, gradient %p stub!\n",
+            iface, stops, stop_count, preinterpolation_space, postinterpolation_space,
+            buffer_precision, extend_mode, color_interpolation_mode, gradient);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateImageBrush(ID2D1DeviceContext1 *iface,
+        ID2D1Image *image, const D2D1_IMAGE_BRUSH_PROPERTIES *image_brush_desc,
+        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1ImageBrush **brush)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_brush *object;
+    HRESULT hr;
+
+    TRACE("iface %p, image %p, image_brush_desc %p, brush_desc %p, brush %p.\n", iface, image, image_brush_desc,
+            brush_desc, brush);
+
+    if (SUCCEEDED(hr = d2d_image_brush_create(context->factory, image, image_brush_desc,
+            brush_desc, &object)))
+        *brush = (ID2D1ImageBrush *)&object->ID2D1Brush_iface;
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmapBrush(ID2D1DeviceContext1 *iface,
+        ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc,
+        const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1BitmapBrush1 **brush)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_brush *object;
+    HRESULT hr;
+
+    TRACE("iface %p, bitmap %p, bitmap_brush_desc %p, brush_desc %p, brush %p.\n", iface, bitmap, bitmap_brush_desc,
+            brush_desc, brush);
+
+    if (SUCCEEDED(hr = d2d_bitmap_brush_create(context->factory, bitmap, bitmap_brush_desc, brush_desc, &object)))
+        *brush = (ID2D1BitmapBrush1 *)&object->ID2D1Brush_iface;
+
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateCommandList(ID2D1DeviceContext1 *iface,
+        ID2D1CommandList **command_list)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_command_list *object;
+    HRESULT hr;
+
+    TRACE("iface %p, command_list %p.\n", iface, command_list);
+
+    if (SUCCEEDED(hr = d2d_command_list_create(context->factory, &object)))
+        *command_list = &object->ID2D1CommandList_iface;
+
+    return hr;
+}
+
+static BOOL STDMETHODCALLTYPE d2d_device_context_IsDxgiFormatSupported(ID2D1DeviceContext1 *iface, DXGI_FORMAT format)
+{
+    FIXME("iface %p, format %#x stub!\n", iface, format);
+
+    return FALSE;
+}
+
+static BOOL STDMETHODCALLTYPE d2d_device_context_IsBufferPrecisionSupported(ID2D1DeviceContext1 *iface,
+        D2D1_BUFFER_PRECISION buffer_precision)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    DXGI_FORMAT format;
+    UINT support = 0;
+    HRESULT hr;
+
+    TRACE("iface %p, buffer_precision %u.\n", iface, buffer_precision);
+
+    switch (buffer_precision)
+    {
+        case D2D1_BUFFER_PRECISION_8BPC_UNORM: format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+        case D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB: format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; break;
+        case D2D1_BUFFER_PRECISION_16BPC_UNORM: format = DXGI_FORMAT_R16G16B16A16_UNORM; break;
+        case D2D1_BUFFER_PRECISION_16BPC_FLOAT: format = DXGI_FORMAT_R16G16B16A16_FLOAT; break;
+        case D2D1_BUFFER_PRECISION_32BPC_FLOAT: format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+        default:
+            WARN("Unexpected precision %u.\n", buffer_precision);
+            return FALSE;
+    }
+
+    if (FAILED(hr = ID3D11Device1_CheckFormatSupport(context->d3d_device, format, &support)))
+    {
+        WARN("Format support check failed, hr %#lx.\n", hr);
+    }
+
+    return !!(support & D3D11_FORMAT_SUPPORT_BUFFER);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext1 *iface,
+        ID2D1Image *image, D2D1_RECT_F *local_bounds)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D_SIZE_U pixel_size;
+    ID2D1Bitmap *bitmap;
+    D2D_SIZE_F size;
+
+    TRACE("iface %p, image %p, local_bounds %p.\n", iface, image, local_bounds);
+
+    if (SUCCEEDED(ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap)))
+    {
+        local_bounds->left = 0.0f;
+        local_bounds->top  = 0.0f;
+        switch (context->drawing_state.unitMode)
+        {
+            case D2D1_UNIT_MODE_DIPS:
+                size = ID2D1Bitmap_GetSize(bitmap);
+                local_bounds->right  = size.width;
+                local_bounds->bottom = size.height;
+                break;
+
+            case D2D1_UNIT_MODE_PIXELS:
+                pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
+                local_bounds->right  = pixel_size.width;
+                local_bounds->bottom = pixel_size.height;
+                break;
+
+            default:
+                WARN("Unknown unit mode %#x.\n", context->drawing_state.unitMode);
+                break;
+        }
+        ID2D1Bitmap_Release(bitmap);
+    }
+    else
+    {
+        FIXME("Unable to get local bounds of image %p.\n", image);
+    }
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetImageWorldBounds(ID2D1DeviceContext1 *iface,
+        ID2D1Image *image, D2D1_RECT_F *world_bounds)
+{
+    FIXME("iface %p, image %p, world_bounds %p stub!\n", iface, image, world_bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetGlyphRunWorldBounds(ID2D1DeviceContext1 *iface,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
+        DWRITE_MEASURING_MODE measuring_mode, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, baseline_origin %s, glyph_run %p, measuring_mode %#x, bounds %p stub!\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, measuring_mode, bounds);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetDevice(ID2D1DeviceContext1 *iface, ID2D1Device **device)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = context->device;
+    ID2D1Device_AddRef(*device);
+}
+
+static void d2d_device_context_reset_target(struct d2d_device_context *context)
+{
+    if (!context->target.object)
+        return;
+
+    IUnknown_Release(context->target.object);
+    memset(&context->target, 0, sizeof(context->target));
+
+    /* Note that DPI settings are kept. */
+    memset(&context->desc.pixelFormat, 0, sizeof(context->desc.pixelFormat));
+    memset(&context->pixel_size, 0, sizeof(context->pixel_size));
+
+    if (context->bs)
+        ID3D11BlendState_Release(context->bs);
+    context->bs = NULL;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext1 *iface, ID2D1Image *target)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_command_list *command_list_impl;
+    struct d2d_bitmap *bitmap_impl;
+    ID2D1CommandList *command_list;
+    D3D11_BLEND_DESC blend_desc;
+    ID2D1Bitmap *bitmap;
+    HRESULT hr;
+
+    TRACE("iface %p, target %p.\n", iface, target);
+
+    if (!target)
+    {
+        d2d_device_context_reset_target(context);
+        return;
+    }
+
+    if (SUCCEEDED(ID2D1Image_QueryInterface(target, &IID_ID2D1Bitmap, (void **)&bitmap)))
+    {
+        bitmap_impl = unsafe_impl_from_ID2D1Bitmap(bitmap);
+
+        if (!(bitmap_impl->options & D2D1_BITMAP_OPTIONS_TARGET))
+        {
+            ID2D1Bitmap_Release(bitmap);
+            d2d_device_context_set_error(context, D2DERR_INVALID_TARGET);
+            return;
+        }
+
+        d2d_device_context_reset_target(context);
+
+        /* Set sizes and pixel format. */
+        context->pixel_size = bitmap_impl->pixel_size;
+        context->desc.pixelFormat = bitmap_impl->format;
+        context->target.bitmap = bitmap_impl;
+        context->target.object = target;
+        context->target.type = D2D_TARGET_BITMAP;
+
+        memset(&blend_desc, 0, sizeof(blend_desc));
+        blend_desc.IndependentBlendEnable = FALSE;
+        blend_desc.RenderTarget[0].BlendEnable = TRUE;
+        blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+        blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+        blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+        blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+        blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+        if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d_device, &blend_desc, &context->bs)))
+            WARN("Failed to create blend state, hr %#lx.\n", hr);
+    }
+    else if (SUCCEEDED(ID2D1Image_QueryInterface(target, &IID_ID2D1CommandList, (void **)&command_list)))
+    {
+        command_list_impl = unsafe_impl_from_ID2D1CommandList(command_list);
+
+        d2d_device_context_reset_target(context);
+
+        context->target.command_list = command_list_impl;
+        context->target.object = target;
+        context->target.type = D2D_TARGET_COMMAND_LIST;
+    }
+    else
+    {
+        WARN("Unsupported target type.\n");
+    }
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetTarget(ID2D1DeviceContext1 *iface, ID2D1Image **target)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, target %p.\n", iface, target);
+
+    *target = context->target.object ? context->target.object : NULL;
+    if (*target)
+        ID2D1Image_AddRef(*target);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetRenderingControls(ID2D1DeviceContext1 *iface,
+        const D2D1_RENDERING_CONTROLS *rendering_controls)
+{
+    FIXME("iface %p, rendering_controls %p stub!\n", iface, rendering_controls);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_GetRenderingControls(ID2D1DeviceContext1 *iface,
+        D2D1_RENDERING_CONTROLS *rendering_controls)
+{
+    FIXME("iface %p, rendering_controls %p stub!\n", iface, rendering_controls);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetPrimitiveBlend(ID2D1DeviceContext1 *iface,
+        D2D1_PRIMITIVE_BLEND primitive_blend)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, primitive_blend %u.\n", iface, primitive_blend);
+
+    if (primitive_blend > D2D1_PRIMITIVE_BLEND_MAX)
+    {
+        WARN("Unknown blend mode %u.\n", primitive_blend);
+        return;
+    }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_primitive_blend(context->target.command_list, primitive_blend);
+
+    context->drawing_state.primitiveBlend = primitive_blend;
+}
+
+static D2D1_PRIMITIVE_BLEND STDMETHODCALLTYPE d2d_device_context_GetPrimitiveBlend(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return context->drawing_state.primitiveBlend;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext1 *iface, D2D1_UNIT_MODE unit_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, unit_mode %#x.\n", iface, unit_mode);
+
+    if (unit_mode != D2D1_UNIT_MODE_DIPS && unit_mode != D2D1_UNIT_MODE_PIXELS)
+    {
+        WARN("Unknown unit mode %#x.\n", unit_mode);
+        return;
+    }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_set_unit_mode(context->target.command_list, unit_mode);
+
+    context->drawing_state.unitMode = unit_mode;
+}
+
+static D2D1_UNIT_MODE STDMETHODCALLTYPE d2d_device_context_GetUnitMode(ID2D1DeviceContext1 *iface)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return context->drawing_state.unitMode;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun(ID2D1DeviceContext1 *iface,
+        D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run,
+        const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, ID2D1Brush *brush, DWRITE_MEASURING_MODE measuring_mode)
+{
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, baseline_origin %s, glyph_run %p, glyph_run_desc %p, brush %p, measuring_mode %#x.\n",
+            iface, debug_d2d_point_2f(&baseline_origin), glyph_run, glyph_run_desc, brush, measuring_mode);
+
+    d2d_device_context_draw_glyph_run(context, baseline_origin, glyph_run, glyph_run_desc, brush, measuring_mode);
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext1 *iface, ID2D1Image *image,
         const D2D1_POINT_2F *target_offset, const D2D1_RECT_F *image_rect, D2D1_INTERPOLATION_MODE interpolation_mode,
         D2D1_COMPOSITE_MODE composite_mode)
 {
@@ -2268,6 +2524,13 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext *i
     TRACE("iface %p, image %p, target_offset %s, image_rect %s, interpolation_mode %#x, composite_mode %#x.\n",
             iface, image, debug_d2d_point_2f(target_offset), debug_d2d_rect_f(image_rect),
             interpolation_mode, composite_mode);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_image(context->target.command_list, image, target_offset, image_rect,
+                interpolation_mode, composite_mode);
+        return;
+    }
 
     if (composite_mode != D2D1_COMPOSITE_MODE_SOURCE_OVER)
         FIXME("Unhandled composite mode %#x.\n", composite_mode);
@@ -2284,14 +2547,14 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext *i
     FIXME("Unhandled image %p.\n", image);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_DrawGdiMetafile(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_DrawGdiMetafile(ID2D1DeviceContext1 *iface,
         ID2D1GdiMetafile *metafile, const D2D1_POINT_2F *target_offset)
 {
     FIXME("iface %p, metafile %p, target_offset %s stub!\n",
             iface, metafile, debug_d2d_point_2f(target_offset));
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *bitmap, const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
         const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
 {
@@ -2302,17 +2565,30 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
             iface, bitmap, debug_d2d_rect_f(dst_rect), opacity, interpolation_mode,
             debug_d2d_rect_f(src_rect), perspective_transform);
 
-    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
-            NULL, perspective_transform);
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+    {
+        d2d_command_list_draw_bitmap(context->target.command_list, bitmap, dst_rect, opacity, interpolation_mode,
+                src_rect, perspective_transform);
+    }
+    else
+    {
+        d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
+                NULL, perspective_transform);
+    }
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext1 *iface,
         const D2D1_LAYER_PARAMETERS1 *layer_parameters, ID2D1Layer *layer)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, layer_parameters %p, layer %p stub!\n", iface, layer_parameters, layer);
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_push_layer(context->target.command_list, context, layer_parameters, layer);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_InvalidateEffectInputRectangle(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_InvalidateEffectInputRectangle(ID2D1DeviceContext1 *iface,
         ID2D1Effect *effect, UINT32 input, const D2D1_RECT_F *input_rect)
 {
     FIXME("iface %p, effect %p, input %u, input_rect %s stub!\n",
@@ -2321,7 +2597,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_InvalidateEffectInputRectang
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangleCount(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangleCount(ID2D1DeviceContext1 *iface,
         ID2D1Effect *effect, UINT32 *rect_count)
 {
     FIXME("iface %p, effect %p, rect_count %p stub!\n", iface, effect, rect_count);
@@ -2329,7 +2605,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangleCou
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangles(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangles(ID2D1DeviceContext1 *iface,
         ID2D1Effect *effect, D2D1_RECT_F *rectangles, UINT32 rect_count)
 {
     FIXME("iface %p, effect %p, rectangles %p, rect_count %u stub!\n", iface, effect, rectangles, rect_count);
@@ -2337,7 +2613,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectInvalidRectangles(I
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectRequiredInputRectangles(ID2D1DeviceContext *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectRequiredInputRectangles(ID2D1DeviceContext1 *iface,
         ID2D1Effect *effect, const D2D1_RECT_F *image_rect, const D2D1_EFFECT_INPUT_DESCRIPTION *desc,
         D2D1_RECT_F *input_rect, UINT32 input_count)
 {
@@ -2347,14 +2623,53 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_GetEffectRequiredInputRectan
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityMask(ID2D1DeviceContext *iface,
+static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_FillOpacityMask(ID2D1DeviceContext1 *iface,
         ID2D1Bitmap *mask, ID2D1Brush *brush, const D2D1_RECT_F *dst_rect, const D2D1_RECT_F *src_rect)
 {
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
     FIXME("iface %p, mask %p, brush %p, dst_rect %s, src_rect %s stub!\n",
             iface, mask, brush, debug_d2d_rect_f(dst_rect), debug_d2d_rect_f(src_rect));
+
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->drawing_state.antialiasMode != D2D1_ANTIALIAS_MODE_ALIASED)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
+    if (context->target.type == D2D_TARGET_COMMAND_LIST)
+        d2d_command_list_fill_opacity_mask(context->target.command_list, context, mask, brush, dst_rect, src_rect);
 }
 
-static const struct ID2D1DeviceContextVtbl d2d_device_context_vtbl =
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateFilledGeometryRealization(ID2D1DeviceContext1 *iface,
+        ID2D1Geometry *geometry, float tolerance, ID2D1GeometryRealization **realization)
+{
+    FIXME("iface %p, geometry %p, tolerance %.8e, realization %p stub!\n", iface, geometry, tolerance,
+            realization);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateStrokedGeometryRealization(ID2D1DeviceContext1 *iface,
+        ID2D1Geometry *geometry, float tolerance, float stroke_width, ID2D1StrokeStyle *stroke_style,
+        ID2D1GeometryRealization **realization)
+{
+    FIXME("iface %p, geometry %p, tolerance %.8e, stroke_width %.8e, stroke_style %p, realization %p stub!\n",
+            iface, geometry, tolerance, stroke_width, stroke_style, realization);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_device_context_DrawGeometryRealization(ID2D1DeviceContext1 *iface,
+        ID2D1GeometryRealization *realization, ID2D1Brush *brush)
+{
+    FIXME("iface %p, realization %p, brush %p stub!\n", iface, realization, brush);
+}
+
+static const struct ID2D1DeviceContext1Vtbl d2d_device_context_vtbl =
 {
     d2d_device_context_QueryInterface,
     d2d_device_context_AddRef,
@@ -2448,6 +2763,9 @@ static const struct ID2D1DeviceContextVtbl d2d_device_context_vtbl =
     d2d_device_context_GetEffectInvalidRectangles,
     d2d_device_context_GetEffectRequiredInputRectangles,
     d2d_device_context_ID2D1DeviceContext_FillOpacityMask,
+    d2d_device_context_CreateFilledGeometryRealization,
+    d2d_device_context_CreateStrokedGeometryRealization,
+    d2d_device_context_DrawGeometryRealization,
 };
 
 static inline struct d2d_device_context *impl_from_IDWriteTextRenderer(IDWriteTextRenderer *iface)
@@ -2480,7 +2798,7 @@ static ULONG STDMETHODCALLTYPE d2d_text_renderer_AddRef(IDWriteTextRenderer *ifa
 
     TRACE("iface %p.\n", iface);
 
-    return d2d_device_context_AddRef(&render_target->ID2D1DeviceContext_iface);
+    return d2d_device_context_AddRef(&render_target->ID2D1DeviceContext1_iface);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *iface)
@@ -2489,7 +2807,7 @@ static ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *if
 
     TRACE("iface %p.\n", iface);
 
-    return d2d_device_context_Release(&render_target->ID2D1DeviceContext_iface);
+    return d2d_device_context_Release(&render_target->ID2D1DeviceContext1_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
@@ -2511,7 +2829,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTe
 
     TRACE("iface %p, ctx %p, transform %p.\n", iface, ctx, transform);
 
-    d2d_device_context_GetTransform(&render_target->ID2D1DeviceContext_iface, (D2D1_MATRIX_3X2_F *)transform);
+    d2d_device_context_GetTransform(&render_target->ID2D1DeviceContext1_iface, (D2D1_MATRIX_3X2_F *)transform);
 
     return S_OK;
 }
@@ -2529,7 +2847,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRe
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *iface, void *ctx,
         float baseline_origin_x, float baseline_origin_y, DWRITE_MEASURING_MODE measuring_mode,
-        const DWRITE_GLYPH_RUN *glyph_run, const DWRITE_GLYPH_RUN_DESCRIPTION *desc, IUnknown *effect)
+        const DWRITE_GLYPH_RUN *glyph_run, const DWRITE_GLYPH_RUN_DESCRIPTION *glyph_run_desc, IUnknown *effect)
 {
     struct d2d_device_context *render_target = impl_from_IDWriteTextRenderer(iface);
     D2D1_POINT_2F baseline_origin = {baseline_origin_x, baseline_origin_y};
@@ -2538,18 +2856,16 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
     ID2D1Brush *brush;
 
     TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
-            "measuring_mode %#x, glyph_run %p, desc %p, effect %p.\n",
+            "measuring_mode %#x, glyph_run %p, glyph_run_desc %p, effect %p.\n",
             iface, ctx, baseline_origin_x, baseline_origin_y,
-            measuring_mode, glyph_run, desc, effect);
+            measuring_mode, glyph_run, glyph_run_desc, effect);
 
-    if (desc)
-        WARN("Ignoring glyph run description %p.\n", desc);
     if (context->options & ~(D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT))
         FIXME("Ignoring options %#x.\n", context->options);
 
     brush = d2d_draw_get_text_brush(context, effect);
 
-    TRACE("%s\n", debugstr_wn(desc->string, desc->stringLength));
+    TRACE("%s\n", debugstr_wn(glyph_run_desc->string, glyph_run_desc->stringLength));
 
     if (context->options & D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT)
     {
@@ -2578,7 +2894,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
         }
 
         hr = IDWriteFactory2_TranslateColorGlyphRun(dwrite_factory, baseline_origin_x, baseline_origin_y,
-                glyph_run, desc, measuring_mode, (DWRITE_MATRIX *)&render_target->drawing_state.transform, 0, &layers);
+                glyph_run, glyph_run_desc, measuring_mode, (DWRITE_MATRIX *)&render_target->drawing_state.transform, 0, &layers);
         IDWriteFactory2_Release(dwrite_factory);
         if (FAILED(hr))
         {
@@ -2613,7 +2929,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
                 color_brush = brush;
             else
             {
-                if (FAILED(hr = d2d_device_context_CreateSolidColorBrush(&render_target->ID2D1DeviceContext_iface,
+                if (FAILED(hr = d2d_device_context_CreateSolidColorBrush(&render_target->ID2D1DeviceContext1_iface,
                         &color_run->runColor, NULL, (ID2D1SolidColorBrush **)&color_brush)))
                 {
                     ERR("Failed to create solid colour brush, hr %#lx.\n", hr);
@@ -2623,8 +2939,8 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
 
             origin.x = color_run->baselineOriginX;
             origin.y = color_run->baselineOriginY;
-            d2d_device_context_DrawGlyphRun(&render_target->ID2D1DeviceContext_iface,
-                    origin, &color_run->glyphRun, color_brush, measuring_mode);
+            d2d_device_context_draw_glyph_run(render_target, origin, &color_run->glyphRun,
+                    color_run->glyphRunDescription, color_brush, measuring_mode);
 
             if (color_brush != brush)
                 ID2D1Brush_Release(color_brush);
@@ -2633,8 +2949,8 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
         IDWriteColorGlyphRunEnumerator_Release(layers);
     }
     else
-        d2d_device_context_DrawGlyphRun(&render_target->ID2D1DeviceContext_iface,
-                baseline_origin, glyph_run, brush, measuring_mode);
+        d2d_device_context_draw_glyph_run(render_target, baseline_origin, glyph_run, glyph_run_desc,
+                brush, measuring_mode);
 
     ID2D1Brush_Release(brush);
 
@@ -2666,7 +2982,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     end.x = start.x + underline->width;
     end.y = start.y;
     prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(render_target);
-    d2d_device_context_DrawLine(&render_target->ID2D1DeviceContext_iface, start, end, brush, thickness, NULL);
+    d2d_device_context_DrawLine(&render_target->ID2D1DeviceContext1_iface, start, end, brush, thickness, NULL);
     render_target->drawing_state.antialiasMode = prev_antialias_mode;
 
     ID2D1Brush_Release(brush);
@@ -2699,7 +3015,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteText
     end.x = start.x + strikethrough->width;
     end.y = start.y;
     prev_antialias_mode = d2d_device_context_set_aa_mode_from_text_aa_mode(render_target);
-    d2d_device_context_DrawLine(&render_target->ID2D1DeviceContext_iface, start, end, brush, thickness, NULL);
+    d2d_device_context_DrawLine(&render_target->ID2D1DeviceContext1_iface, start, end, brush, thickness, NULL);
     render_target->drawing_state.antialiasMode = prev_antialias_mode;
 
     ID2D1Brush_Release(brush);
@@ -2779,12 +3095,18 @@ static ULONG STDMETHODCALLTYPE d2d_gdi_interop_render_target_Release(ID2D1GdiInt
     return IUnknown_Release(render_target->outer_unknown);
 }
 
-static HRESULT d2d_device_context_get_surface(struct d2d_device_context *render_target, IDXGISurface1 **surface)
+static HRESULT d2d_device_context_get_surface(struct d2d_device_context *context, IDXGISurface1 **surface)
 {
     ID3D11Resource *resource;
     HRESULT hr;
 
-    ID3D11RenderTargetView_GetResource(render_target->target->rtv, &resource);
+    if (context->target.type != D2D_TARGET_BITMAP)
+    {
+        FIXME("Unimplemented for target type %u.\n", context->target.type);
+        return E_NOTIMPL;
+    }
+
+    ID3D11RenderTargetView_GetResource(context->target.bitmap->rtv, &resource);
     hr = ID3D11Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
     ID3D11Resource_Release(resource);
     if (FAILED(hr))
@@ -3904,7 +4226,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     static const UINT16 indices[] = {0, 1, 2, 2, 1, 3};
     static const D3D_FEATURE_LEVEL feature_levels = D3D_FEATURE_LEVEL_10_0;
 
-    render_target->ID2D1DeviceContext_iface.lpVtbl = &d2d_device_context_vtbl;
+    render_target->ID2D1DeviceContext1_iface.lpVtbl = &d2d_device_context_vtbl;
     render_target->ID2D1GdiInteropRenderTarget_iface.lpVtbl = &d2d_gdi_interop_render_target_vtbl;
     render_target->IDWriteTextRenderer_iface.lpVtbl = &d2d_text_renderer_vtbl;
     render_target->IUnknown_iface.lpVtbl = &d2d_device_context_inner_unknown_vtbl;
@@ -3954,8 +4276,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 
     buffer_desc.ByteWidth = sizeof(struct d2d_vs_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
     if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
@@ -3974,8 +4296,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 
     buffer_desc.ByteWidth = sizeof(struct d2d_ps_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
     if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
@@ -4116,17 +4438,17 @@ HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface,
     else if (bitmap_desc.dpiX <= 0.0f || bitmap_desc.dpiY <= 0.0f)
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_device_context_init(object, device, outer_unknown, ops)))
     {
         WARN("Failed to initialise render target, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
-    ID2D1DeviceContext_SetDpi(&object->ID2D1DeviceContext_iface, bitmap_desc.dpiX, bitmap_desc.dpiY);
+    ID2D1DeviceContext1_SetDpi(&object->ID2D1DeviceContext1_iface, bitmap_desc.dpiX, bitmap_desc.dpiY);
 
     if (surface)
     {
@@ -4134,23 +4456,23 @@ HRESULT d2d_d3d_create_render_target(ID2D1Device *device, IDXGISurface *surface,
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         bitmap_desc.colorContext = NULL;
 
-        if (FAILED(hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(&object->ID2D1DeviceContext_iface,
+        if (FAILED(hr = ID2D1DeviceContext1_CreateBitmapFromDxgiSurface(&object->ID2D1DeviceContext1_iface,
                 surface, &bitmap_desc, &bitmap)))
         {
             WARN("Failed to create target bitmap, hr %#lx.\n", hr);
             IUnknown_Release(&object->IUnknown_iface);
-            heap_free(object);
+            free(object);
             return hr;
         }
 
-        ID2D1DeviceContext_SetTarget(&object->ID2D1DeviceContext_iface, (ID2D1Image *)bitmap);
+        ID2D1DeviceContext1_SetTarget(&object->ID2D1DeviceContext1_iface, (ID2D1Image *)bitmap);
         ID2D1Bitmap1_Release(bitmap);
     }
     else
         object->desc.pixelFormat = desc->pixelFormat;
 
     TRACE("Created render target %p.\n", object);
-    *render_target = outer_unknown ? &object->IUnknown_iface : (IUnknown *)&object->ID2D1DeviceContext_iface;
+    *render_target = outer_unknown ? &object->IUnknown_iface : (IUnknown *)&object->ID2D1DeviceContext1_iface;
 
     return S_OK;
 }
@@ -4195,7 +4517,7 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device *iface)
     {
         IDXGIDevice_Release(device->dxgi_device);
         ID2D1Factory1_Release(device->factory);
-        heap_free(device);
+        free(device);
     }
 
     return refcount;
@@ -4222,18 +4544,18 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device *iface, D2D1_DE
     if (options)
         FIXME("Options are ignored %#x.\n", options);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = d2d_device_context_init(object, iface, NULL, NULL)))
     {
         WARN("Failed to initialise device context, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
     TRACE("Created device context %p.\n", object);
-    *context = &object->ID2D1DeviceContext_iface;
+    *context = (ID2D1DeviceContext *)&object->ID2D1DeviceContext1_iface;
 
     return S_OK;
 }

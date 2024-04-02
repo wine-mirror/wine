@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/winheader_enter.h"
+
 #ifndef __WINE_POWRPROF_H
 #define __WINE_POWRPROF_H 1
 
@@ -179,5 +181,7 @@ POWER_PLATFORM_ROLE WINAPI PowerDeterminePlatformRole(void);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _POWRPROF_H */

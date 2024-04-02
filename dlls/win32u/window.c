@@ -19,10 +19,6 @@
  */
 
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 
 #include "ntstatus.h"
@@ -1788,7 +1784,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 {
     WND *win;
     HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    BOOL ret, needs_update = FALSE;
+    BOOL ret, needs_update = FALSE, dummy_shm_surface = FALSE;
     RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface = NULL;
 
@@ -1796,6 +1792,18 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     {
         new_surface = &dummy_surface;  /* provide a default surface for top-level windows */
         window_surface_add_ref( new_surface );
+    }
+    else if (!(swp_flags & SWP_HIDEWINDOW))
+    {
+        win = get_win_ptr( parent );
+        if (win == OBJ_OTHER_PROCESS)
+        {
+            /* provide a default shm surface for windows with parents in other process */
+            new_surface = &dummy_surface;
+            window_surface_add_ref( new_surface );
+            dummy_shm_surface = TRUE;
+        }
+        else if (win && win != WND_DESKTOP) release_win_ptr( win );
     }
     visible_rect = *window_rect;
     if (!(ret = user_driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
@@ -1831,6 +1839,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     old_visible_rect = win->visible_rect;
     old_client_rect = win->client_rect;
     old_surface = win->surface;
+
+    if (dummy_shm_surface && new_surface == &dummy_surface)
+    {
+        FIXME("Other process parent\n");
+        window_surface_release( new_surface );
+        new_surface = create_shm_surface( hwnd, &visible_rect, old_surface );
+    }
+
     if (old_surface != new_surface) swp_flags |= SWP_FRAMECHANGED;  /* force refreshing non-client area */
     if (new_surface == &dummy_surface) swp_flags |= SWP_NOREDRAW;
     else if (old_surface == &dummy_surface)
@@ -2172,6 +2188,26 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
            wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
 
     apply_window_pos( hwnd, 0, swp_flags, &window_rect, &client_rect, NULL );
+
+    /*
+     * CrossOver hack:
+     * Hide non-working, semi-transparent window in Quicken 2012.
+     * for bug 8982.
+     */
+    if(1)
+    {
+        static const WCHAR QWinLightbox[] = {'Q','W','i','n','L','i','g','h','t','b','o','x',0};
+        WCHAR buffer[sizeof(QWinLightbox) / sizeof(WCHAR)];
+        UNICODE_STRING name = { .Buffer = buffer, .MaximumLength = sizeof(QWinLightbox) };
+
+        if (NtUserGetClassName( hwnd, FALSE, &name )
+                && !memcmp( QWinLightbox, buffer, sizeof(QWinLightbox) ))
+        {
+            FIXME( "Hide semi-transparent window that is created over application window.\n" );
+            NtUserSetWindowPos( hwnd, HWND_BOTTOM, 0, 0, 0, 0,
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW | SWP_NOSENDCHANGING );
+        }
+    }
 
     info.cbSize   = sizeof(info);
     info.hdcDst   = hdc_dst;
@@ -4154,8 +4190,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
         if (!is_window( hwnd )) goto done;
     }
 
-    if (IsRectEmpty( &newPos )) new_swp = swp;
-    else if ((new_swp = user_driver->pShowWindow( hwnd, cmd, &newPos, swp )) == ~0)
+    if ((new_swp = user_driver->pShowWindow( hwnd, cmd, &newPos, swp )) == ~0)
     {
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) new_swp = swp;
         else if (is_iconic( hwnd ) && (newPos.left != -32000 || newPos.top != -32000))

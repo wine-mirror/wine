@@ -1659,3 +1659,10 @@
 # Filesystem
 @ stdcall -syscall wine_nt_to_unix_file_name(ptr ptr ptr long)
 @ stdcall -syscall wine_unix_to_nt_file_name(str ptr ptr)
+
+# CW HACK 14391
+@ stdcall -syscall __wine_rpc_NtReadFile(long long ptr ptr ptr ptr long ptr ptr)
+
+# Loader
+@ cdecl -arch=i386 __wine_get_extra_proc(ptr ptr)
+@ cdecl -arch=i386 __wine_is_module_hybrid(ptr)

@@ -18,6 +18,8 @@
 #ifndef __WINE_TCPMIB_H
 #define __WINE_TCPMIB_H
 
+#include "wine/winheader_enter.h"
+
 #define TCPIP_OWNING_MODULE_SIZE 16
 
 
@@ -226,5 +228,7 @@ typedef struct _MIB_TCPSTATS
     DWORD dwOutRsts;
     DWORD dwNumConns;
 } MIB_TCPSTATS, *PMIB_TCPSTATS;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_TCPMIB_H */

@@ -636,7 +636,7 @@ static void test_float_vectors(void)
         return;
     device = test_context.device;
 
-    todo_wine ps_code = compile_shader(ps_indexing_source, "ps_2_0");
+    ps_code = compile_shader(ps_indexing_source, "ps_2_0");
     if (ps_code)
     {
         draw_quad(device, ps_code);
@@ -648,7 +648,7 @@ static void test_float_vectors(void)
         ID3D10Blob_Release(ps_code);
     }
 
-    todo_wine ps_code = compile_shader(ps_uniform_indexing_source, "ps_2_0");
+    ps_code = compile_shader(ps_uniform_indexing_source, "ps_2_0");
     if (ps_code)
     {
         hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
@@ -659,6 +659,7 @@ static void test_float_vectors(void)
         draw_quad(device, ps_code);
 
         v = get_color_vec4(device, 0, 0);
+        todo_wine
         ok(compare_vec4(&v, 0.5f, 0.3f, 0.8f, 0.2f, 0),
                 "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
@@ -771,7 +772,7 @@ static void test_return(void)
 
     ID3D10Blob_Release(ps_code);
 
-    todo_wine ps_code = compile_shader(implicit_conversion_source, "ps_2_0");
+    ps_code = compile_shader(implicit_conversion_source, "ps_2_0");
     if (ps_code)
     {
         draw_quad(test_context.device, ps_code);
@@ -863,7 +864,7 @@ static void test_majority(void)
         return;
     device = test_context.device;
 
-    todo_wine ps_code = compile_shader(ps_typedef_source, "ps_2_0");
+    ps_code = compile_shader(ps_typedef_source, "ps_2_0");
     if (ps_code)
     {
         hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
@@ -883,7 +884,7 @@ static void test_majority(void)
         ID3D10Blob_Release(ps_code);
     }
 
-    todo_wine ps_code = compile_shader(ps_default_source, "ps_2_0");
+    ps_code = compile_shader(ps_default_source, "ps_2_0");
     if (ps_code)
     {
         hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);

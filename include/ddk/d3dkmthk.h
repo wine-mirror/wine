@@ -19,6 +19,8 @@
 #ifndef __WINE_D3DKMTHK_H
 #define __WINE_D3DKMTHK_H
 
+#include "wine/winheader_enter.h"
+
 #include <d3dukmdt.h>
 
 typedef enum _D3DKMT_VIDPNSOURCEOWNER_TYPE
@@ -670,5 +672,7 @@ NTSTATUS WINAPI D3DKMTSetVidPnSourceOwner(const D3DKMT_SETVIDPNSOURCEOWNER *desc
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3DKMTHK_H */

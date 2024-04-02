@@ -21,6 +21,8 @@
 #ifndef __WINE_COMMCTRL_H
 #define __WINE_COMMCTRL_H
 
+#include "wine/winheader_enter.h"
+
 #include <prsht.h>
 #include <commctrl.rh>
 
@@ -1380,7 +1382,7 @@ typedef struct _NMTBCUSTOMDRAW
 #define TBCDRF_NOETCHEDEFFECT 0x00100000  /* No etched effect for          */
                                           /* disabled items                */
 #define TBCDRF_BLENDICON      0x00200000  /* ILD_BLEND50 on the icon image */
-#define TBCDRF_NOBACKGROUND   0x00400000  /* ILD_BLEND50 on the icon image */
+#define TBCDRF_NOBACKGROUND   0x00400000  /* Don't draw button background  */
 #define TBCDRF_USECDCOLORS    0x00800000
 
 
@@ -5561,5 +5563,7 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *, int *, int *, BOOL *
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_COMMCTRL_H */

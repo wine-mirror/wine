@@ -387,6 +387,7 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, const WCHA
         struct get_serverlist_params params = { AF_INET6, buffer, len };
         return RESOLV_CALL( get_serverlist, &params );
     }
+    /* Windows does not implement this, but we need it in iphlpapi. */
     case DnsConfigSearchList:
     {
         struct get_searchlist_params params = { buffer, len };

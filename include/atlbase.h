@@ -21,6 +21,8 @@
 #ifndef __WINE_ATLBASE_H__
 #define __WINE_ATLBASE_H__
 
+#include "wine/winheader_enter.h"
+
 #include <atliface.h>
 #include <comcat.h>
 
@@ -292,5 +294,7 @@ BOOL WINAPI AtlWaitWithMessageLoop(HANDLE);
 HRESULT WINAPI AtlGetObjectSourceInterface(IUnknown*,GUID*,IID*,unsigned short*,unsigned short*);
 HRESULT WINAPI AtlSetPerUserRegistration(unsigned char /*bool*/);
 HRESULT WINAPI AtlGetPerUserRegistration(unsigned char /*bool*/ *);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ATLBASE_H__ */

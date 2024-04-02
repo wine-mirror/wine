@@ -19,6 +19,8 @@
 #ifndef __WINE_WCT_H
 #define __WINE_WCT_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -99,5 +101,7 @@ void WINAPI RegisterWaitChainCOMCallback(PCOGETCALLSTATE,PCOGETACTIVATIONSTATE);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WCT_H */

@@ -37,6 +37,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#if defined(__APPLE__) && defined(__x86_64__)
+#include <sys/utsname.h>
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "object.h"
@@ -149,6 +153,7 @@ static struct save_branch_info save_branch_info[MAX_SAVE_BRANCH_INFO];
 unsigned int supported_machines_count = 0;
 unsigned short supported_machines[8];
 unsigned short native_machine = 0;
+int wow64_using_32bit_prefix = 0;
 
 /* information about a file being loaded */
 struct file_load_info
@@ -178,6 +183,7 @@ static const struct object_ops key_ops =
     no_add_queue,            /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
+    NULL,                    /* get_esync_fd */
     NULL,                    /* satisfied */
     no_signal,               /* signal */
     no_get_fd,               /* get_fd */
@@ -1807,14 +1813,32 @@ static WCHAR *format_user_registry_path( const struct sid *sid, struct unicode_s
     return ascii_to_unicode_str( buffer, path );
 }
 
+/* whether to use wow64 for i386 EXEs or launch a 32-bit wine */
+static int needs_wow64(void)
+{
+#if defined(__APPLE__) && defined(__x86_64__)
+    struct utsname name;
+    unsigned major, minor;
+
+    return (uname(&name) == 0 &&
+            sscanf(name.release, "%u.%u", &major, &minor) == 2 &&
+            major >= 19 /* macOS 10.15 Catalina */);
+#else
+    return 0;
+#endif
+}
+
 static void init_supported_machines(void)
 {
     unsigned int count = 0;
 #ifdef __i386__
     if (prefix_type == PREFIX_32BIT) supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)
-    if (prefix_type == PREFIX_64BIT) supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
+    if (prefix_type == PREFIX_64BIT || needs_wow64()) supported_machines[count++] = IMAGE_FILE_MACHINE_AMD64;
     supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
+
+    /* CX HACK 20810: detect when using a 32-bit prefix in Wow64 mode and disable various checks */
+    wow64_using_32bit_prefix = (prefix_type == PREFIX_32BIT) && needs_wow64();
 #elif defined(__arm__)
     if (prefix_type == PREFIX_32BIT) supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
@@ -2123,7 +2147,10 @@ void flush_registry(void)
 /* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
 static int is_wow64_thread( struct thread *thread )
 {
-    return (is_machine_64bit( native_machine ) && !is_machine_64bit( thread->process->machine ));
+    /* CX HACK 21221: Apps in 32-bit prefixes running in Wow64 mode should not
+     * be subject to Wow6432Node redirections. */
+    return !wow64_using_32bit_prefix &&
+           (is_machine_64bit( native_machine ) && !is_machine_64bit( thread->process->machine ));
 }
 
 

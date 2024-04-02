@@ -22,10 +22,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
 #include "initguid.h"
 #include "wined3d_private.h"
+#include "d3d12.h"
+#include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(vkd3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct wined3d_wndproc
@@ -122,6 +127,15 @@ struct wined3d_settings wined3d_settings =
     .max_sm_cs = UINT_MAX,
     .renderer = WINED3D_RENDERER_AUTO,
     .shader_backend = WINED3D_SHADER_BACKEND_AUTO,
+    .multiply_special = 1,
+};
+
+/* CXGames hacks, not in the main wined3d configuration settings */
+struct cxgames_hacks cxgames_hacks =
+{
+    FALSE,                      /* safe_vs_consts */
+    WINED3D_MAPBUF_NEVER_NV,    /* Don't use glMapBuffer on dynamic buffers with NV threading */
+    FALSE,                      /* Don't force success when creating transform feedback buffers */
 };
 
 struct wined3d * CDECL wined3d_create(DWORD flags)
@@ -247,6 +261,14 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size)
     return TRUE;
 }
 
+static void vkd3d_log_callback(const char *fmt, va_list args)
+{
+    char buffer[1024];
+
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    __wine_dbg_output(buffer);
+}
+
 static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 {
     DWORD wined3d_context_tls_idx;
@@ -321,6 +343,11 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     {
         if (!get_config_key_dword(hkey, appkey, env, "csmt", &wined3d_settings.cs_multithreaded))
             ERR_(winediag)("Setting multithreaded command stream to %#x.\n", wined3d_settings.cs_multithreaded);
+        else if (!get_config_key(hkey, appkey, env, "csmt", buffer, size) && !strcmp(buffer,"disabled"))
+        {
+            wined3d_settings.cs_multithreaded = 0;
+            ERR_(winediag)("Disabling multithreaded command stream.\n");
+        }
         if (!get_config_key_dword(hkey, appkey, env, "MaxVersionGL", &tmpvalue))
         {
             ERR_(winediag)("Setting maximum allowed wined3d GL version to %u.%u.\n",
@@ -350,6 +377,27 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         {
             ERR_(winediag)("The GLSL shader backend has been disabled. You get to keep all the pieces if it breaks.\n");
             TRACE("Use of GL Shading Language disabled.\n");
+        }
+        if ( !get_config_key( hkey, appkey, env, "hl2_disable_glsl", buffer, size) )
+        {
+            /* This allows disabling GLSL for single HL2 mods(they all use hl2.exe).
+             * It is important that this key is evaluated *after* the UseGLS one,
+             * otherwise the useGLSL key may overwrite decisions made here
+             */
+            char *token;
+            LPSTR cmdline;
+            cmdline = GetCommandLineA();
+            TRACE("Checking command line for disabling GLSL per HL2 mod\n");
+            token = strtok(buffer, ";");
+            while(token) {
+                TRACE("Looking for \"%s\"\n", token);
+                if(strstr(cmdline, token)) {
+                    TRACE("Disabling GLSL for this HL2 mod\n");
+                    wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_ARB;
+                    break;
+                }
+                token = strtok(NULL, ";");
+            }
         }
         if (!get_config_key(hkey, appkey, env, "OffscreenRenderingMode", buffer, size)
                 && !strcmp(buffer,"backbuffer"))
@@ -411,6 +459,14 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         if (!get_config_key_dword(hkey, appkey, env, "SampleCount", &wined3d_settings.sample_count))
             ERR_(winediag)("Forcing sample count to %u. This may not be compatible with all applications.\n",
                     wined3d_settings.sample_count);
+        if ( !get_config_key( hkey, appkey, env, "SafeVsConsts", buffer, size) )
+        {
+            if (!strcmp(buffer,"enable"))
+            {
+                TRACE("Advertising only always available shader constants\n");
+                cxgames_hacks.safe_vs_consts = TRUE;
+            }
+        }
         if (!get_config_key(hkey, appkey, env, "CheckFloatConstants", buffer, size)
                 && !strcmp(buffer, "enabled"))
         {
@@ -419,6 +475,8 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
         if (!get_config_key_dword(hkey, appkey, env, "strict_shader_math", &wined3d_settings.strict_shader_math))
             ERR_(winediag)("Setting strict shader math to %#x.\n", wined3d_settings.strict_shader_math);
+        if (!get_config_key_dword(hkey, appkey, env, "multiply_special", &wined3d_settings.multiply_special))
+            ERR_(winediag)("Setting multiply special to %#x.\n", wined3d_settings.multiply_special);
         if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelVS", &wined3d_settings.max_sm_vs))
             TRACE("Limiting VS shader model to %u.\n", wined3d_settings.max_sm_vs);
         if (!get_config_key_dword(hkey, appkey, env, "MaxShaderModelHS", &wined3d_settings.max_sm_hs))
@@ -449,15 +507,52 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.renderer = WINED3D_RENDERER_NO3D;
             }
         }
+        if (!get_config_key(hkey, appkey, env, "AllowGlMapBuffer", buffer, size))
+        {
+            if (!strcmp(buffer, "always"))
+            {
+                TRACE("Always using glMapBuffer if possible.\n");
+                cxgames_hacks.allow_glmapbuffer = WINED3D_MAPBUF_ALWAYS;
+            }
+            else if (!strcmp(buffer, "never") || !strcmp(buffer, "static"))
+            {
+                TRACE("Never using glMapBuffer.\n");
+                cxgames_hacks.allow_glmapbuffer = WINED3D_MAPBUF_NEVER;
+            }
+        }
         if (!get_config_key_dword(hkey, appkey, env, "cb_access_map_w", &tmpvalue) && tmpvalue)
         {
             TRACE("Forcing all constant buffers to be write-mappable.\n");
             wined3d_settings.cb_access_map_w = TRUE;
         }
+        if (!get_config_key_dword(hkey, appkey, env, "force_transform_feedback", &tmpvalue) && tmpvalue)
+        {
+            TRACE("Forcing success on transform feedback buffer creation.\n");
+            cxgames_hacks.force_transform_feedback = TRUE;
+        }
     }
 
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
+
+    if (!getenv( "VKD3D_DEBUG" ))
+    {
+        if (TRACE_ON(vkd3d)) putenv( "VKD3D_DEBUG=trace" );
+        else if (WARN_ON(vkd3d)) putenv( "VKD3D_DEBUG=warn" );
+        else if (FIXME_ON(vkd3d)) putenv( "VKD3D_DEBUG=fixme" );
+        else if (ERR_ON(vkd3d)) putenv( "VKD3D_DEBUG=err" );
+        else putenv( "VKD3D_DEBUG=none" );
+    }
+    if (!getenv( "VKD3D_SHADER_DEBUG" ))
+    {
+        if (TRACE_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=trace" );
+        else if (WARN_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=warn" );
+        else if (FIXME_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=fixme" );
+        else if (ERR_ON(vkd3d)) putenv( "VKD3D_SHADER_DEBUG=err" );
+        else putenv( "VKD3D_SHADER_DEBUG=none" );
+    }
+
+    vkd3d_set_log_callback(vkd3d_log_callback);
 
     return TRUE;
 }
@@ -616,7 +711,7 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     {
         if (filter && message != WM_DISPLAYCHANGE)
         {
-            TRACE("Filtering message: window %p, message %#x, wparam %#lx, lparam %#lx.\n",
+            TRACE("Filtering message: window %p, message %#x, wparam %#Ix, lparam %#Ix.\n",
                     window, message, wparam, lparam);
 
             if (unicode)

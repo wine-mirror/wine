@@ -25,6 +25,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 static const struct wined3d_shader_backend_ops spirv_shader_backend_vk;
 
+static const struct vkd3d_shader_compile_option spirv_compile_options[] =
+{
+    {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_3},
+};
+
 struct shader_spirv_resource_bindings
 {
     struct vkd3d_shader_resource_binding *bindings;
@@ -57,6 +62,7 @@ struct shader_spirv_compile_arguments
         {
             uint32_t alpha_swizzle;
             unsigned int sample_count;
+            bool dual_source_blending;
         } fs;
     } u;
 };
@@ -147,6 +153,7 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
                     args->u.fs.alpha_swizzle |= 1u << i;
             }
             args->u.fs.sample_count = sample_count;
+            args->u.fs.dual_source_blending = state->blend_state && state->blend_state->dual_source;
             break;
 
         default:
@@ -176,6 +183,8 @@ static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_a
         shader_parameter->type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
         shader_parameter->data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
         shader_parameter->u.immediate_constant.u.u32 = compile_args->u.fs.sample_count;
+
+        args->spirv_target.dual_source_blending = compile_args->u.fs.dual_source_blending;
 
         args->spirv_target.parameter_count = 1;
         args->spirv_target.parameters = shader_parameter;
@@ -262,8 +271,8 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
     info.source.size = shader_desc->byte_code_size;
     info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
-    info.options = NULL;
-    info.option_count = 0;
+    info.options = spirv_compile_options;
+    info.option_count = ARRAY_SIZE(spirv_compile_options);
     info.log_level = VKD3D_SHADER_LOG_WARNING;
     info.source_name = NULL;
 
@@ -592,6 +601,8 @@ static enum wined3d_data_type wined3d_data_type_from_vkd3d(enum vkd3d_shader_res
             return WINED3D_DATA_UINT;
         case VKD3D_SHADER_RESOURCE_DATA_FLOAT:
             return WINED3D_DATA_FLOAT;
+        case VKD3D_SHADER_RESOURCE_DATA_MIXED:
+            return WINED3D_DATA_UINT;
         default:
             FIXME("Unhandled resource data type %#x.\n", t);
             return WINED3D_DATA_FLOAT;
@@ -699,8 +710,8 @@ static void shader_spirv_scan_shader(struct wined3d_shader *shader,
     info.source.size = shader->byte_code_size;
     info.source_type = VKD3D_SHADER_SOURCE_DXBC_TPF;
     info.target_type = VKD3D_SHADER_TARGET_SPIRV_BINARY;
-    info.options = NULL;
-    info.option_count = 0;
+    info.options = spirv_compile_options;
+    info.option_count = ARRAY_SIZE(spirv_compile_options);
     info.log_level = VKD3D_SHADER_LOG_WARNING;
     info.source_name = NULL;
 
@@ -926,10 +937,11 @@ static void shader_spirv_destroy_compute_vk(struct wined3d_shader *shader)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(shader->device);
     struct shader_spirv_compute_program_vk *program = shader->backend_data;
+    struct wined3d_context_vk *context_vk = &device_vk->context_vk;
     struct wined3d_vk_info *vk_info = &device_vk->vk_info;
 
     shader_spirv_invalidate_contexts_compute_program(&device_vk->d, program);
-    VK_CALL(vkDestroyPipeline(device_vk->vk_device, program->vk_pipeline, NULL));
+    wined3d_context_vk_destroy_vk_pipeline(context_vk, program->vk_pipeline, context_vk->current_command_buffer.id);
     VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
     vkd3d_shader_free_scan_descriptor_info(&program->descriptor_info);
     shader->backend_data = NULL;
@@ -1089,6 +1101,8 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void)
 {
+    TRACE("Using %s.\n", vkd3d_shader_get_version(NULL, NULL));
+
     return &spirv_shader_backend_vk;
 }
 

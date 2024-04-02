@@ -24,10 +24,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
@@ -600,7 +596,7 @@ BOOL WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *modul
             {
                 size_t size = min( res_name->MaximumLength, lstrlenW( obj->resname) * sizeof(WCHAR) );
                 if (size) memcpy( res_name->Buffer, obj->resname, size );
-                module->Length = size / sizeof(WCHAR); /* length in chars, not bytes */
+                res_name->Length = size / sizeof(WCHAR); /* length in chars, not bytes */
             }
         }
     }

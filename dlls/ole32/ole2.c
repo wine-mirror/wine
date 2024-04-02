@@ -2469,6 +2469,18 @@ HRESULT WINAPI OleCreate(
 
     hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER, riid, (LPVOID*)&pUnk);
 
+    /*
+     * If that fails, as it will most times, load the default
+     * OLE handler.
+     */
+    if (FAILED(hres))
+    {
+        hres = OleCreateDefaultHandler(rclsid,
+				   NULL,
+				   riid,
+				   (void**)&pUnk);
+    }
+
     if (SUCCEEDED(hres))
         hres = IStorage_SetClass(pStg, rclsid);
 

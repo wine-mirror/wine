@@ -19,6 +19,8 @@
 #ifndef __WINE_PHYSICALMONITORENUMERATIONAPI_H
 #define __WINE_PHYSICALMONITORENUMERATIONAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <d3d9.h>
 
 #ifdef __cplusplus
@@ -36,5 +38,7 @@ typedef struct _PHYSICAL_MONITOR
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_PHYSICALMONITORENUMERATIONAPI_H */

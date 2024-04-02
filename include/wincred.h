@@ -19,6 +19,8 @@
 #ifndef _WINCRED_H_
 #define _WINCRED_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -295,5 +297,7 @@ DWORD WINAPI CredUIReadSSOCredW(PCWSTR,PWSTR*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINCRED_H_ */

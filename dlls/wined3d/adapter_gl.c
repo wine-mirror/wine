@@ -523,6 +523,28 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     }
 }
 
+static BOOL match_broken_ara(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    if (!gl_info->supported[NV_VERTEX_PROGRAM2_OPTION]) return FALSE;
+    if (gl_vendor != GL_VENDOR_APPLE) return FALSE;
+
+    switch (device)
+    {
+        /* There are no intel macs with pre-geforce 7 cards. ARA works on pre-gf8 cards */
+        case CARD_NVIDIA_GEFORCE_7400:
+        case CARD_NVIDIA_GEFORCE_7300:
+        case CARD_NVIDIA_GEFORCE_7600:
+        case CARD_NVIDIA_GEFORCE_7800GT:
+            /* ARA works on GF7 cards */
+            return FALSE;
+
+        default:
+            /* Assume ARA is broken */
+            return TRUE;
+    }
+}
+
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
         const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -705,6 +727,101 @@ static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, struct wined3d_ca
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
+static BOOL match_broken_round(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    const char *shader =
+        "#version 120\n"
+        "#extension GL_EXT_gpu_shader4 : enable\n"
+        "void main()\n"
+        "{\n"
+        "    vec4 color;\n"
+        "    vec4 rounded = round(gl_MultiTexCoord0.yxzw);\n"
+        "    /* all(rounded == gl_MultiTexCoord1) fails for some reason */\n"
+        "    if (all(equal(rounded, gl_MultiTexCoord1)))\n"
+        "    {\n"
+        "        color = vec4(0.0, 1.0, 0.0, 0.0);\n"
+        "    }\n"
+        "    else\n"
+        "    {\n"
+        "        color = vec4(1.0, 0.0, 0.0, 0.0);\n"
+        "    }\n"
+        "    gl_FrontColor = color;\n"
+        "    gl_Position = gl_Vertex;\n"
+        "}\n";
+    GLuint tex, fbo;
+    GLuint prog, vs;
+    GLenum status;
+    DWORD check;
+    unsigned char red, green, blue;
+
+    if (!gl_info->supported[EXT_GPU_SHADER4]) return FALSE;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    {
+        WARN("FBOs not available, guessing broken glsl round from driver info\n");
+        return gl_vendor == GL_VENDOR_APPLE && card_vendor == HW_VENDOR_AMD;
+    }
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &tex);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    checkGLcall("glTexImage2D");
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, 0);
+
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+    checkGLcall("glFramebufferTexture2D");
+
+    status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) ERR("FBO status %#x\n", status);
+    checkGLcall("glCheckFramebufferStatus");
+
+    vs = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER));
+    GL_EXTCALL(glShaderSourceARB(vs, 1, &shader, 0));
+    GL_EXTCALL(glCompileShaderARB(vs));
+
+    prog = GL_EXTCALL(glCreateProgramObjectARB());
+    GL_EXTCALL(glAttachObjectARB(prog, vs));
+    GL_EXTCALL(glLinkProgramARB(prog));
+    GL_EXTCALL(glDeleteObjectARB(vs));
+    GL_EXTCALL(glUseProgramObjectARB(prog));
+    checkGLcall("round test shader setup");
+
+    gl_info->gl_ops.gl.p_glBegin(GL_QUADS);
+    GL_EXTCALL(glMultiTexCoord4fARB(0, 1.0, 2.0, 3.0, 4.0));
+    /* Note that the result is swizzled */
+    GL_EXTCALL(glMultiTexCoord4fARB(1, 2.0, 1.0, 3.0, 4.0));
+    gl_info->gl_ops.gl.p_glVertex3f(-1.0, -1.0, -0.5);
+    gl_info->gl_ops.gl.p_glVertex3f(-1.0,  1.0, -0.5);
+    gl_info->gl_ops.gl.p_glVertex3f( 1.0,  1.0, -0.5);
+    gl_info->gl_ops.gl.p_glVertex3f( 1.0, -1.0, -0.5);
+    gl_info->gl_ops.gl.p_glEnd();
+    checkGLcall("round test draw");
+
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, tex);
+    gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, &check);
+    GL_EXTCALL(glUseProgramObjectARB(0));
+    GL_EXTCALL(glDeleteObjectARB(prog));
+
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, 0);
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex);
+    checkGLcall("round test teardown");
+
+    TRACE("GLSL round test color: %08x\n", check);
+    red = (check & 0x00ff0000) >> 16;
+    green = (check & 0x0000ff00) >> 8;
+    blue = (check & 0x000000ff);
+    /* If round behaves correctly green is returned. Return FALSE in this
+     * case(don't enable quirk). For any other color return TRUE */
+    return (red > 0x10) || (green < 0xf0) || (blue > 0x10);
+}
+
 static BOOL match_r200(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
         const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -812,6 +929,36 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
     return data[0] != 0x00ff0000 || data[3] != 0x0000ff00;
 }
 
+static BOOL match_nvidia_multithreading(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    char buffer[2];
+    DWORD ret;
+
+    if (gl_vendor != GL_VENDOR_NVIDIA) return FALSE;
+
+    SetLastError(0);
+    ret = GetEnvironmentVariableA("__GL_THREADED_OPTIMIZATIONS", buffer, sizeof(buffer));
+
+    /* The nvidia driver enables its threaded optimizations when the variable is set
+     * and not "0", "n" or "N". Even a value like "00", "NN" or "" enables it */
+    if (!ret)
+        return !GetLastError();
+    if (ret > 1)
+        return TRUE;
+
+    switch(buffer[0])
+    {
+        case 'n':
+        case 'N':
+        case '0':
+            return FALSE;
+
+        default:
+            return TRUE;
+    }
+}
+
 static BOOL match_broken_viewport_subpixel_bits(const struct wined3d_gl_info *gl_info,
         struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -864,6 +1011,13 @@ static BOOL match_no_independent_bit_depths(const struct wined3d_gl_info *gl_inf
     checkGLcall("testing multiple framebuffer attachments with different bit depths");
 
     return status != GL_FRAMEBUFFER_COMPLETE;
+}
+
+static BOOL match_nouveau(const struct wined3d_gl_info *gl_info,
+        struct wined3d_caps_gl_ctx *ctx, const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
+        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    return gl_vendor == GL_VENDOR_MESA && card_vendor == HW_VENDOR_NVIDIA;
 }
 
 static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
@@ -944,6 +1098,21 @@ static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_NV_CLIP_BROKEN;
 }
 
+static void quirk_apple_no_glsl_clip(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN;
+}
+
+static void texcoord_fog_quirk(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_CX_QUIRK_TEXCOORD_FOG;
+}
+
+static void broken_ara_quirk(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_CX_QUIRK_BROKEN_ARA;
+}
+
 static void quirk_fbo_tex_update(struct wined3d_gl_info *gl_info)
 {
     gl_info->quirks |= WINED3D_QUIRK_FBO_TEX_UPDATE;
@@ -966,6 +1135,11 @@ static void quirk_limited_tex_filtering(struct wined3d_gl_info *gl_info)
      * GPUs supporting VTF. Also, Direct3D 9-era GPUs are somewhat limited
      * with float texture filtering and blending. */
     gl_info->quirks |= WINED3D_QUIRK_LIMITED_TEX_FILTERING;
+}
+
+static void broken_round_quirk(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_CX_QUIRK_BROKEN_ROUND;
 }
 
 static void quirk_r200_constants(struct wined3d_gl_info *gl_info)
@@ -1002,6 +1176,11 @@ static void quirk_no_independent_bit_depths(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_NO_INDEPENDENT_BIT_DEPTHS;
 }
 
+static void quirk_broken_multithread_gl(struct wined3d_gl_info *gl_info)
+{
+    gl_info->quirks |= WINED3D_CX_QUIRK_BROKEN_MULTITHREAD_GL;
+}
+
 static const struct wined3d_gpu_description *query_gpu_description(const struct wined3d_gl_info *gl_info,
         UINT64 *vram_bytes)
 {
@@ -1031,6 +1210,12 @@ static const struct wined3d_gpu_description *query_gpu_description(const struct 
     return gpu_description;
 }
 
+static void quirk_mapbuffer(struct wined3d_gl_info *gl_info)
+{
+    if (cxgames_hacks.allow_glmapbuffer == WINED3D_MAPBUF_NEVER_NV)
+        cxgames_hacks.allow_glmapbuffer = WINED3D_MAPBUF_NEVER;
+}
+
 /* Context activation is done by the caller. */
 static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
         const char *gl_renderer, enum wined3d_gl_vendor gl_vendor)
@@ -1057,7 +1242,15 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
         {
             match_apple,
             quirk_apple_glsl_constants,
-            "Apple GLSL uniform override"
+            "Reserving 12 GLSL uniforms on OSX"
+        },
+        /* Additionally to matching the apple vendor this code could try to compile a testing NVvp shader
+         * that writes to result.clip[n]. This syntax is broken on osx
+         */
+        {
+            match_apple,
+            quirk_apple_no_glsl_clip,
+            "Disabled vertex shader clipping on Macs"
         },
         {
             match_geforce5,
@@ -1068,6 +1261,17 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
             match_dx10_capable,
             quirk_clip_varying,
             "Reserved varying for gl_ClipPos"
+        },
+        {
+            match_amd_r300_to_500,
+            texcoord_fog_quirk,
+            "Disable fog if 8 texcoords are used"
+        },
+        {
+            /* GL_NV_vertex_program2's ARA instruction is broken on gf8+ cards on OSX. */
+            match_broken_ara,
+            broken_ara_quirk,
+            "Disable broken ARA instruction"
         },
         {
             /* GL_EXT_secondary_color does not allow 4 component secondary
@@ -1110,6 +1314,11 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
             "Texture filtering, blending and VTF support is limited"
         },
         {
+            match_broken_round,
+            broken_round_quirk,
+            "Broken GLSL round"
+        },
+        {
             match_r200,
             quirk_r200_constants,
             "r200 vertex shader constants"
@@ -1120,6 +1329,11 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
             "ARBfp fogstart == fogend workaround"
         },
         {
+            match_nvidia_multithreading,
+            quirk_mapbuffer,
+            "NVidia multithreading glMapBuffer[Range] quirk"
+        },
+        {
             match_broken_viewport_subpixel_bits,
             quirk_broken_viewport_subpixel_bits,
             "NVIDIA viewport subpixel bits bug"
@@ -1128,6 +1342,11 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
             match_no_independent_bit_depths,
             quirk_no_independent_bit_depths,
             "No support for MRT with independent bit depths"
+        },
+        {
+            match_nouveau,
+            quirk_broken_multithread_gl,
+            "broken OpenGL calls from multiple threads in the same process"
         },
     };
 
@@ -1262,7 +1481,6 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_g
     shader_model = min(shader_model, max(shader_caps->ds_version, 4));
 
     if (gl_info->supported[WINED3D_GL_VERSION_3_2]
-            && gl_info->supported[ARB_POLYGON_OFFSET_CLAMP]
             && gl_info->supported[ARB_SAMPLER_OBJECTS])
     {
         if (shader_model >= 5
@@ -1311,6 +1529,7 @@ cards_nvidia_binary[] =
 {
     /* Direct 3D 11 */
     {"Tesla T4",                    CARD_NVIDIA_TESLA_T4},
+    {"Ampere A10",                  CARD_NVIDIA_AMPERE_A10},
     {"RTX 2080 Ti",                 CARD_NVIDIA_GEFORCE_RTX2080TI}, /* GeForce 2000 - highend */
     {"RTX 2080",                    CARD_NVIDIA_GEFORCE_RTX2080},   /* GeForce 2000 - highend */
     {"RTX 2070",                    CARD_NVIDIA_GEFORCE_RTX2070},   /* GeForce 2000 - highend */
@@ -2754,12 +2973,6 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glVertexAttribIPointer)                        /* OpenGL 3.0 */
     USE_GL_FUNC(glVertexAttribPointer)                         /* OpenGL 2.0 */
 #undef USE_GL_FUNC
-
-#ifndef USE_WIN32_OPENGL
-    /* hack: use the functions directly from the TEB table to bypass the thunks */
-    /* note that we still need the above wglGetProcAddress calls to initialize the table */
-    gl_info->gl_ops.ext = ((struct opengl_funcs *)NtCurrentTeb()->glTable)->ext;
-#endif
 
 #define MAP_GL_FUNCTION(core_func, ext_func)                                          \
         do                                                                            \
@@ -4474,7 +4687,7 @@ static BOOL wined3d_check_pixel_format_color(const struct wined3d_pixel_format *
         const struct wined3d_format *format)
 {
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
         return FALSE;
 
     /* Probably a RGBA_float or color index mode. */
@@ -4496,7 +4709,7 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_pixel_format *
     BOOL lockable = FALSE;
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
         return FALSE;
 
     if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))
@@ -5226,10 +5439,14 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->clip_control = !!gl_info->supported[ARB_CLIP_CONTROL];
     d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
     d3d_info->scaled_resolve = !!gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE_BLIT_SCALED];
+    d3d_info->emulated_clipplanes = !!(gl_info->quirks & WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN);
+    d3d_info->multithread_safe = !(gl_info->quirks & WINED3D_CX_QUIRK_BROKEN_MULTITHREAD_GL);
     d3d_info->pbo = !!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT];
     d3d_info->subpixel_viewport = gl_info->limits.viewport_subpixel_bits >= 8;
+    d3d_info->fences = wined3d_fence_supported(gl_info);
     d3d_info->feature_level = feature_level_from_caps(gl_info, &shader_caps, &fragment_caps);
     d3d_info->filling_convention_offset = gl_info->filling_convention_offset;
+    d3d_info->persistent_map = !!gl_info->supported[ARB_BUFFER_STORAGE];
 
     if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
         d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
@@ -5309,7 +5526,6 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         return FALSE;
 
     /* Dynamically load all GL core functions */
-#ifdef USE_WIN32_OPENGL
     {
         HMODULE mod_gl = GetModuleHandleA("opengl32.dll");
 #define USE_GL_FUNC(f) gl_info->gl_ops.gl.p_##f = (void *)GetProcAddress(mod_gl, #f);
@@ -5318,17 +5534,6 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         gl_info->gl_ops.wgl.p_wglSwapBuffers = (void *)GetProcAddress(mod_gl, "wglSwapBuffers");
         gl_info->gl_ops.wgl.p_wglGetPixelFormat = (void *)GetProcAddress(mod_gl, "wglGetPixelFormat");
     }
-#else
-    /* To bypass the opengl32 thunks retrieve functions from the WGL driver instead of opengl32 */
-    {
-        HDC hdc = GetDC( 0 );
-        const struct opengl_funcs *wgl_driver = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
-        ReleaseDC( 0, hdc );
-        if (!wgl_driver || wgl_driver == (void *)-1) return FALSE;
-        gl_info->gl_ops.wgl = wgl_driver->wgl;
-        gl_info->gl_ops.gl = wgl_driver->gl;
-    }
-#endif
 
     gl_info->p_glEnableWINE = gl_info->gl_ops.gl.p_glEnable;
     gl_info->p_glDisableWINE = gl_info->gl_ops.gl.p_glDisable;

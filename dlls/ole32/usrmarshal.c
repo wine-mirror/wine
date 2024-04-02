@@ -1283,16 +1283,16 @@ HRESULT CALLBACK IClassFactory_LockServer_Proxy(
     IClassFactory* This,
     BOOL fLock)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%s)\n", fLock ? "TRUE" : "FALSE");
+    return S_OK; /* like native, ignore LockServer requests */
 }
 
 HRESULT __RPC_STUB IClassFactory_LockServer_Stub(
     IClassFactory* This,
     BOOL fLock)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%s)\n", fLock ? "TRUE" : "FALSE");
+    return IClassFactory_LockServer(This, fLock);
 }
 
 /* call_as/local stubs for objidl.idl */
@@ -2032,8 +2032,11 @@ HRESULT CALLBACK IOleInPlaceActiveObject_ResizeBorder_Proxy(
     IOleInPlaceUIWindow *pUIWindow,
     BOOL fFrameWindow)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %d)\n", prcBorder, pUIWindow, fFrameWindow);
+    return IOleInPlaceActiveObject_RemoteResizeBorder_Proxy(
+        This, prcBorder,
+        fFrameWindow ? &IID_IOleInPlaceFrame : &IID_IOleInPlaceUIWindow,
+        pUIWindow, fFrameWindow);
 }
 
 HRESULT __RPC_STUB IOleInPlaceActiveObject_ResizeBorder_Stub(
@@ -2043,8 +2046,8 @@ HRESULT __RPC_STUB IOleInPlaceActiveObject_ResizeBorder_Stub(
     IOleInPlaceUIWindow *pUIWindow,
     BOOL fFrameWindow)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %p, %d)\n", prcBorder, debugstr_guid(riid), pUIWindow, fFrameWindow);
+    return IOleInPlaceActiveObject_ResizeBorder(This, prcBorder, pUIWindow, fFrameWindow);
 }
 
 HRESULT CALLBACK IOleCache2_UpdateCache_Proxy(

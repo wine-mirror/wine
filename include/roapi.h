@@ -20,6 +20,8 @@
 #ifndef __WINE_ROAPI_H
 #define __WINE_ROAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <windef.h>
 #include <activation.h>
 
@@ -50,5 +52,7 @@ void WINAPI RoUninitialize(void);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_ROAPI_H */

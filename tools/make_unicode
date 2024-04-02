@@ -4697,7 +4697,7 @@ sub build_locale_data()
         $sthousand =~ s/\x{202f}/\x{00a0}/;
         my $smonthousandsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyGroup" ) || $sthousand;
         my $spositivesign = "";
-        my $snegativesign = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/minusSign" );
+        my $snegativesign = "-";
         my $spercent = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/percentSign" );
         my $snan = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/nan" );
         my $sposinfinity = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/infinity" );

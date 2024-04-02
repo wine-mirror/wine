@@ -18,6 +18,8 @@
 #ifndef __HIDUSAGE_H
 #define __HIDUSAGE_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -262,5 +264,7 @@ typedef USHORT USAGE, *PUSAGE;
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __HIDUSAGE_H */

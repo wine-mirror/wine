@@ -184,6 +184,20 @@ static const struct user_callbacks user_funcs =
     unregister_imm,
 };
 
+static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_data_params *params,
+                                                      ULONG size )
+{
+    free_cached_data( params->format, params->handle );
+    return 0;
+}
+
+static NTSTATUS WINAPI User32RenderSsynthesizedFormat( const struct render_synthesized_format_params *params,
+                                                       ULONG size )
+{
+    render_synthesized_format( params->format, params->from );
+    return 0;
+}
+
 static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
 {
     return LoadLibraryW( path ) != NULL;
@@ -196,7 +210,9 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWinEventHook,
     User32CallWindowProc,
     User32CallWindowsHook,
+    User32FreeCachedClipboardData,
     User32LoadDriver,
+    User32RenderSsynthesizedFormat,
 };
 
 

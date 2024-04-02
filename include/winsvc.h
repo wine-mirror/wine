@@ -19,6 +19,8 @@
 #ifndef __WINE_WINSVC_H
 #define __WINE_WINSVC_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -452,5 +454,7 @@ WINADVAPI BOOL        WINAPI UnlockServiceDatabase(SC_LOCK);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* !defined(__WINE_WINSVC_H) */

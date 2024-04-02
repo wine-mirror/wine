@@ -21,6 +21,8 @@
 #ifndef __WINE_OLEDLG_H
 #define __WINE_OLEDLG_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 #include <shellapi.h>
 #include <commdlg.h>
@@ -965,5 +967,7 @@ INT  WINAPIV OleUIPromptUserW(INT,HWND, ...);
 } /* Extern "C" */
 #endif
 
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_OLEDLG_H */

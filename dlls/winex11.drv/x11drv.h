@@ -299,7 +299,7 @@ extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event ) DECLS
 extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
                                               Atom *targets, UINT count,
-                                              void (*callback)( Atom, UINT, HANDLE )) DECLSPEC_HIDDEN;
+                                              void (*callback)( UINT, HANDLE )) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * X11 GDI driver
@@ -904,5 +904,7 @@ static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
     while ((*p++ = *src++));
     return (p - dst) * sizeof(WCHAR);
 }
+
+extern BOOL enable_shm_surface DECLSPEC_HIDDEN;
 
 #endif  /* __WINE_X11DRV_H */

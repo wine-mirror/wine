@@ -59,10 +59,6 @@
     Search for "Bitmap Structures" in MSDN
 */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,6 +77,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 static INT DIB_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL DIB_DeleteObject( HGDIOBJ handle );
@@ -456,7 +458,7 @@ done:
 fail:
     if (run) NtGdiDeleteObjectApp( run );
     if (clip && *clip) NtGdiDeleteObjectApp( *clip );
-    free( out_bits );
+    heapfree( out_bits );
     return FALSE;
 }
 
@@ -1568,8 +1570,8 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
         NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
     }
 error:
-    free( bmp->color_table );
-    free( bmp );
+    heapfree( bmp->color_table );
+    heapfree( bmp );
     return 0;
 }
 
@@ -1580,8 +1582,8 @@ static BOOL memory_dib_DeleteObject( HGDIOBJ handle )
 
     if (!(bmp = free_gdi_handle( handle ))) return FALSE;
 
-    free( bmp->color_table );
-    free( bmp );
+    heapfree( bmp->color_table );
+    heapfree( bmp );
     return TRUE;
 }
 
@@ -1699,8 +1701,8 @@ NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
     return STATUS_SUCCESS;
 
 error:
-    if (bmp) free( bmp->color_table );
-    free( bmp );
+    if (bmp) heapfree( bmp->color_table );
+    heapfree( bmp );
     NtGdiDeleteObjectApp( dc );
     return STATUS_INVALID_PARAMETER;
 }
@@ -1776,7 +1778,7 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle )
         NtFreeVirtualMemory( GetCurrentProcess(), &bmp->dib.dsBm.bmBits, &size, MEM_RELEASE );
     }
 
-    free( bmp->color_table );
-    free( bmp );
+    heapfree( bmp->color_table );
+    heapfree( bmp );
     return TRUE;
 }

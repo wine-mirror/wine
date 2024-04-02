@@ -19,6 +19,8 @@
 #ifndef WSDUTIL_H
 #define WSDUTIL_H
 
+#include "wine/winheader_enter.h"
+
 void * WINAPI WSDAllocateLinkedMemory(void *pParent, SIZE_T cbSize);
 void WINAPI WSDAttachLinkedMemory(void *pParent, void *pChild);
 void WINAPI WSDDetachLinkedMemory(void *pVoid);
@@ -29,5 +31,7 @@ HRESULT WINAPI WSDXMLAddSibling(WSDXML_ELEMENT *pFirst, WSDXML_ELEMENT *pSecond)
 HRESULT WINAPI WSDXMLBuildAnyForSingleElement(WSDXML_NAME *pElementName, LPCWSTR pszText, WSDXML_ELEMENT **ppAny);
 HRESULT WINAPI WSDXMLCleanupElement(WSDXML_ELEMENT *pAny);
 HRESULT WINAPI WSDXMLGetValueFromAny(const WCHAR *pszNamespace, const WCHAR *pszName, WSDXML_ELEMENT *pAny, LPCWSTR *ppszValue);
+
+#include "wine/winheader_exit.h"
 
 #endif

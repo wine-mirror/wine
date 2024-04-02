@@ -19,6 +19,8 @@
 #ifndef __WINE_ATLCOM_H__
 #define __WINE_ATLCOM_H__
 
+#include "wine/winheader_enter.h"
+
 #ifndef __WINE_ATLBASE_H__
 # error You must include atlbase.h to use this header
 #endif
@@ -46,5 +48,7 @@ HRESULT WINAPI AtlIPersistStreamInit_Load(IStream*, ATL_PROPMAP_ENTRY*, void*, I
 HRESULT WINAPI AtlIPersistStreamInit_Save(IStream*, BOOL, ATL_PROPMAP_ENTRY*, void*, IUnknown*);
 HRESULT WINAPI AtlIPersistPropertyBag_Load(IPropertyBag*, IErrorLog*, ATL_PROPMAP_ENTRY*, void*, IUnknown*);
 HRESULT WINAPI AtlIPersistPropertyBag_Save(IPropertyBag*, BOOL, BOOL, ATL_PROPMAP_ENTRY*, void*, IUnknown*);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ATLCOM_H__ */

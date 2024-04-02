@@ -20,6 +20,8 @@
 #ifndef MAPITAGS_H
 #define MAPITAGS_H
 
+#include "wine/winheader_enter.h"
+
 #define FIsTransmittable(t) (PROP_ID(t) < 0x0E00 || PROP_ID(t) >= 0x8000 || \
  (PROP_ID(t) >= 0x1000 && PROP_ID(t) < 0x6000) || \
  (PROP_ID(t) >= 0x6800 && PROP_ID(t) < 0x7C00))
@@ -810,5 +812,7 @@
 
 #define PROP_ID_SECURE_MIN 0x67F0
 #define PROP_ID_SECURE_MAX 0x67FF
+
+#include "wine/winheader_exit.h"
 
 #endif /* MAPITAGS_H */

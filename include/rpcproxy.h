@@ -24,6 +24,8 @@
 #ifndef __WINE_RPCPROXY_H
 #define __WINE_RPCPROXY_H
 
+#include "wine/winheader_enter.h"
+
 #define __midl_proxy
 
 #include <basetsd.h>
@@ -381,5 +383,7 @@ RPCRTAPI HRESULT RPC_ENTRY
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /*__WINE_RPCPROXY_H */

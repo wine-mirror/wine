@@ -161,3 +161,8 @@ NTSTATUS icmp_cancel_listen( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_close( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_listen( void *args ) DECLSPEC_HIDDEN;
 NTSTATUS icmp_send_echo( void *args ) DECLSPEC_HIDDEN;
+
+#ifdef _WIN64
+NTSTATUS wow64_icmp_listen( void *args ) DECLSPEC_HIDDEN;
+NTSTATUS wow64_icmp_send_echo( void *args ) DECLSPEC_HIDDEN;
+#endif /* _WIN64 */

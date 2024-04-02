@@ -124,7 +124,9 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
     IDirectDrawSurface *ds = NULL;
     IDirect3DDevice *device1 = NULL;
     IDirect3DDevice2 *device2 = NULL;
+    IDirect3DDevice3 *device3 = NULL;
     IDirect3D2 *d3d2 = NULL;
+    IDirect3D3 *d3d3 = NULL;
     DDSURFACEDESC desc, surface_desc;
     HRESULT hr;
 
@@ -171,11 +173,21 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
 
     if (version == 1)
         hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DRGBDevice, (void **)&device1);
-    else
+    else if (version == 2)
     {
         IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D2, (void**)&d3d2);
         hr = IDirect3D2_CreateDevice(d3d2, &IID_IDirect3DRGBDevice, surface, &device2);
         IDirect3D2_Release(d3d2);
+    }
+    else
+    {
+        IDirectDrawSurface4 *surface4 = NULL;
+
+        IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface4, (void**)&surface4);
+        IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D3, (void**)&d3d3);
+        hr = IDirect3D3_CreateDevice(d3d3, &IID_IDirect3DRGBDevice, surface4, &device3, NULL);
+        IDirectDrawSurface4_Release(surface4);
+        IDirect3D3_Release(d3d3);
     }
     if (FAILED(hr))
     {
@@ -183,10 +195,20 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirectDraw
         return hr;
     }
 
-    if (version != 1)
+    if (version == 2)
     {
         hr = IDirect3DDevice2_QueryInterface(device2, &IID_IDirect3DDevice, (void**)&device1);
         IDirect3DDevice2_Release(device2);
+        if (FAILED(hr))
+        {
+            IDirectDrawSurface_DeleteAttachedSurface(surface, 0, ds);
+            return hr;
+        }
+    }
+    else if (version == 3)
+    {
+        hr = IDirect3DDevice3_QueryInterface(device3, &IID_IDirect3DDevice, (void**)&device1);
+        IDirect3DDevice3_Release(device3);
         if (FAILED(hr))
         {
             IDirectDrawSurface_DeleteAttachedSurface(surface, 0, ds);

@@ -18,6 +18,8 @@
 #ifndef _MSWSOCK_
 #define _MSWSOCK_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -256,5 +258,7 @@ INT  WINAPI WSARecvEx(SOCKET, char *, INT, INT *);
 #endif
 
 #undef WS
+
+#include "wine/winheader_exit.h"
 
 #endif /* _MSWSOCK_ */

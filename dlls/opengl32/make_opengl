@@ -42,6 +42,7 @@ use XML::LibXML;
 #
 # Copyright 2000 Lionel Ulmer
 # Copyright 2012 Alexandre Julliard
+# Copyright 2019 Conor McCarthy for Codeweavers
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -138,10 +139,25 @@ my %arg_types =
      "FLOAT" =>                [ "float",  "%f" ],
     );
 
+my %specially_handled_types =
+    (
+     "HGLRC" => 1,
+     "HPBUFFERARB" => 1,
+    );
+
 my %remap_types =
     (
      "HGLRC" => "struct wgl_context *",
      "HPBUFFERARB" => "struct wgl_pbuffer *",
+     "GLintptr" => "WINEGLDEF(GLintptr)",
+     "GLsizeiptr" => "WINEGLDEF(GLsizeiptr)",
+     "GLintptrARB" =>  "WINEGLDEF(GLintptrARB)",
+     "GLsizeiptrARB" =>  "WINEGLDEF(GLsizeiptrARB)",
+     "GLvdpauSurfaceNV" => "WINEGLDEF(GLvdpauSurfaceNV)",
+     "GLDEBUGPROC" => "void *",
+     "GLDEBUGPROCAMD" => "void *",
+     "GLDEBUGPROCARB" => "void *",
+     "PROC" => "WINEGLDEF(PROC)",
     );
 
 my %khronos_types =
@@ -157,9 +173,9 @@ my %khronos_types =
 #
 # Used to convert some types
 #
-sub ConvertType($)
+sub ConvertType($$)
 {
-    my $arg = shift;
+    my ($arg, $wgl_func) = @_;
     my $ret = $arg->textContent();
     my @type = $arg->findnodes("./ptype");
 
@@ -167,6 +183,10 @@ sub ConvertType($)
     {
         my $type = $type[0]->textContent();
         $ret =~ s/$type/$remap_types{$type}/ if defined $remap_types{$type};
+    }
+    if ($wgl_func && $ret =~ /([\w\s]+\*)( *)([\w\s]*)/)
+    {
+        $ret = $1 . "WIN32PTR " . $3;
     }
     return $ret;
 }
@@ -176,17 +196,102 @@ sub ConvertType($)
 #
 sub GenerateThunk($$$)
 {
+    # Map values:
+    # >= 0 : argument number of the array count
+    # < -1 : fixed array count
+    # -1   : function has an indirect output argument
+    my %indirect_arg_functions =
+        (
+        # Indirect output
+         "glGetPointerv" => -1,
+         "glGetBufferPointerv" => -1,
+         "glGetBufferPointervARB" => -1,
+         "glGetNamedBufferPointerv" => -1,
+         "glGetNamedBufferPointervEXT" => -1,
+         "glGetPointerIndexedvEXT" => -1,
+         "glGetPointeri_vEXT" => -1,
+         "glGetPointervEXT" => -1,
+         "glGetTexParameterPointervAPPLE" => -1,
+         "glGetVariantPointervEXT" => -1,
+         "glGetVertexArrayPointeri_vEXT" => -1,
+         "glGetVertexArrayPointervEXT" => -1,
+         "glGetVertexAttribPointerv" => -1,
+         "glGetVertexAttribPointervARB" => -1,
+         "glGetVertexAttribPointervNV" => -1,
+        # Indirect input
+         "glColorPointerListIBM" => 0,
+         "glColorPointervINTEL" => 0,
+         "glCompileShaderIncludeARB" => 1,
+         "glCreateShaderProgramv" => 1,
+         "glGetUniformIndices" => 1,
+         "glListDrawCommandsStatesClientNV" => 6,
+         "glMultiDrawElements" => 4,
+         "glMultiDrawElementsBaseVertex" => 4,
+         "glMultiDrawElementsEXT" => 4,
+         "glMultiModeDrawElementsIBM" => 4,
+         "glNormalPointervINTEL" => -3,
+         "glSecondaryColorPointerListIBM" => 0,
+         "glShaderSource" => 1,
+         "glShaderSourceARB" => 1,
+         "glTexCoordPointerListIBM" => 0,
+         "glTexCoordPointervINTEL" => 0,
+         "glTransformFeedbackVaryings" => 1,
+         "glTransformFeedbackVaryingsEXT" => 1,
+         "glVertexPointerListIBM" => 0,
+         "glVertexPointervINTEL" => 0,
+        );
+    my %intptr_array_functions =
+        (
+         "glBindBuffersRange" => 2,
+         "glBindVertexBuffers" => 1,
+         "glDrawCommandsNV" => 4,
+         "glDrawCommandsStatesNV" => 5,
+         "glVDPAUMapSurfacesNV" => 0,
+         "glVDPAUUnmapSurfacesNV" => 0,
+         "glVertexArrayVertexBuffers" => 2,
+        );
+
     my ($name, $func_ref, $prefix) = @_;
     my $call_arg = "";
     my $trace_call_arg = "";
     my $trace_arg = "";
+    my $indirect_type = "";
+    my $indirect_name = "";
+    my $indirect_count = "";
+    my @intptr_types;
+    my @intptr_names;
 
-    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref, 0 );
-    foreach my $arg (@{$func_ref->[1]}) {
+    my $indirect_arg = $indirect_arg_functions{$name};
+    my $intptr_arg = $intptr_array_functions{$name};
+    my $wgl_func = $name =~ /^wgl[A-Z]\w+/;
+
+    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref, 0, 0 );
+    for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
+        my $arg = @{$func_ref->[1]}[$i];
         my $ptype = get_arg_type( $arg );
         my $pname = get_arg_name( $arg );
         my $param = $arg->textContent();
-        $call_arg .= " " . $pname . ",";
+        if (defined $indirect_arg && ($param =~ /([\w\s]+\*)(\s*const|)\s*\*/)) {
+            $indirect_type = $1 . $2;
+            $indirect_name = $pname;
+            if ($indirect_arg == -1) {
+                $call_arg .= " &temp,";
+            }
+            else {
+                $call_arg .= " temp,";
+                $indirect_count = $indirect_arg >= 0 ? get_arg_name(@{$func_ref->[1]}[$indirect_arg]) : -$indirect_arg;
+            }
+        }
+        elsif (defined $intptr_arg && ($param =~ /(GL[a-z]+)(ptr\w*|dpauSurfaceNV)\s*\*/))
+        {
+            $intptr_types[++$#intptr_types] = $1 . $2;
+            $intptr_names[++$#intptr_names] = $pname;
+            $call_arg .= sprintf(" temp%d,", $#intptr_types);
+            $indirect_count = get_arg_name(@{$func_ref->[1]}[$intptr_arg]);
+        }
+        else {
+            $call_arg .= " " . $pname . ",";
+        }
         if ($param =~ /\*/ || $param =~ /\[/) {
             $trace_arg .= ", %p";
             $trace_call_arg .= ", " . $pname;
@@ -213,11 +318,26 @@ sub GenerateThunk($$$)
     else
     {
         $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
+        $ret .= sprintf("  %s HOSTPTR *temp = mirror_pointer_array((void**)%s, %s);\n", $indirect_type, $indirect_name, $indirect_count) if defined $indirect_arg && $indirect_arg != -1;
+        $ret .= sprintf("  %s HOSTPTR temp = NULL;\n", $indirect_type) if defined $indirect_arg && $indirect_arg == -1;
+        if (defined $intptr_arg) {
+            for my $i (0 .. $#intptr_names) {
+                $ret .= sprintf("  WINEGLHOST(%s) *temp%d = mirror_intptr_array(%s, %s);\n", $intptr_types[$i], $i, $intptr_names[$i], $indirect_count);
+            }
+        }
         $ret .= "  TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
     }
     $ret .= "  ";
     $ret .= "return " unless is_void_func( $func_ref );
-    $ret .= "funcs->$prefix.p_$name($call_arg);\n";
+    $ret .= "ADDRSPACECAST(void*, " if is_pointer_func( $func_ref ) && !$wgl_func;
+    $ret .= "funcs->$prefix.p_$name($call_arg)" . (is_pointer_func( $func_ref ) && !$wgl_func ? ");\n" : ";\n");
+    $ret .= sprintf("  gl_temp_free(temp);\n") if defined $indirect_arg && $indirect_arg != -1;
+    $ret .= sprintf("  *%s = ADDRSPACECAST(%s, temp);\n", $indirect_name, $indirect_type) if defined $indirect_arg && $indirect_arg == -1;
+    if (defined $intptr_arg) {
+        for my $i (0 .. $#intptr_names) {
+            $ret .= sprintf("  gl_temp_free(temp%d);\n", $i);
+        }
+    }
     $ret .= "}\n\n";
     return $ret;
 }
@@ -229,7 +349,7 @@ sub generate_null_func($$$)
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func_ref, 1 );
+    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func_ref, 1, 0 );
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -270,6 +390,13 @@ sub is_void_func($)
     return $func->[0]->textContent() eq "void ";
 }
 
+sub is_pointer_func($)
+{
+    my $func = shift;
+    return 0 if @{$func->[0]->findnodes("./ptype")};
+    return $func->[0]->textContent() =~ /\w+\s*\*/;
+}
+
 sub get_arg_type($)
 {
     my $p = shift;
@@ -284,16 +411,17 @@ sub get_arg_name($)
     return $name[0]->textContent();
 }
 
-sub get_func_proto($$$$)
+sub get_func_proto($$$$$)
 {
-    my ($format, $name, $func, $convert_args) = @_;
+    my ($format, $name, $func, $convert_args, $test_wgl) = @_;
     die "unknown func $name" unless defined $func->[0];
-    my $proto = $convert_args ? ConvertType( $func->[0] ) : $func->[0]->textContent();
+    my $wgl_func = $test_wgl && index($name, "wgl") == 0;
+    my $proto = $convert_args ? ConvertType( $func->[0], $wgl_func ) : $func->[0]->textContent();
     $proto =~ s/ $//;
     my $args = "";
     foreach my $arg (@{$func->[1]})
     {
-        $args .= " " . ($convert_args ? ConvertType( $arg ) : $arg->textContent()) . ",";
+        $args .= " " . ($convert_args ? ConvertType( $arg, $wgl_func ) : $arg->textContent()) . ",";
     }
     $args =~ s/,$/ /;
     $args ||= "void";
@@ -426,6 +554,32 @@ sub is_supported_api($)
     return 0;
 }
 
+# Not listed for Apple and problematic to implement for 32on64
+my %unsupported_functions =
+    (
+     "glEdgeFlagPointerListIBM" => 1,
+     "glFogCoordPointerListIBM" => 1,
+     "glIndexPointerListIBM" => 1,
+     "glNormalPointerListIBM" => 1,
+     "glReplacementCodePointerSUN" => 1,
+     "glGetVkProcAddrNV" => 1,
+     # We can probably implement the following, but they are part of GL_IBM_vertex_array_lists
+     # which is not fully supported and not listed for Apple.
+     "glColorPointerListIBM" => 1,
+     "glSecondaryColorPointerListIBM" => 1,
+     "glTexCoordPointerListIBM" => 1,
+     "glVertexPointerListIBM" => 1
+    );
+
+my %hybrid_remap_types =
+    (
+     "GLintptr" => "INT64",
+     "GLsizeiptr" => "INT64",
+     "GLintptrARB" => "INT64",
+     "GLsizeiptrARB" => "INT64",
+     "GLvdpauSurfaceNV" => "WINEGLHOST(GLintptr)",
+    );
+
 # some functions need a hand-written wrapper
 sub needs_wrapper($$)
 {
@@ -445,12 +599,12 @@ sub needs_wrapper($$)
     return 1 if defined $funcs{$name};
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;
-    return 1 if defined $remap_types{$type};
+    return 1 if defined $specially_handled_types{$type};
     # check if one of the arguments needs special handling
     foreach (@{$func->[1]})
     {
         $type = get_arg_type( $_ );
-        return 1 if defined $remap_types{$type};
+        return 1 if defined $specially_handled_types{$type};
     }
     return 0;
 }
@@ -469,7 +623,7 @@ sub parse_file($)
         my $name = @{$command->findnodes("./proto/name")}[0];
         $proto->removeChild( $name );
         my @params = $command->findnodes("./param");
-        $functions{$name->textContent()} = [ $proto, \@params ];
+        $functions{$name->textContent()} = [ $proto, \@params ] unless defined $unsupported_functions{$name};
     }
 
     # save all enums
@@ -561,7 +715,7 @@ sub parse_file($)
             foreach my $cmd ($req->findnodes("./command"))
             {
                 my $name = $cmd->{name};
-                next if $norm_functions{$name};
+                next if $norm_functions{$name} || defined $unsupported_functions{$name};
                 if (!$ext_functions{$name})
                 {
                     $ext_functions{$name} = [ $functions{$name}[0], $functions{$name}[1], [ $ext->{name} ] ];
@@ -612,29 +766,51 @@ printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
 print HEADER "struct wgl_context;\n";
 print HEADER "struct wgl_pbuffer;\n\n";
 
-print HEADER "struct opengl_funcs\n{\n";
-print HEADER "    struct\n    {\n";
-foreach (sort keys %wgl_functions)
-{
-    next unless defined $supported_wgl_functions{$_};
-    print HEADER get_func_proto("        %-10s (WINAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
-}
-print HEADER "    } wgl;\n\n";
+print HEADER "#ifdef __i386_on_x86_64__\n";
+print HEADER "#ifdef WINE_GL_WIN32\n";
+print HEADER "#define WINEGLDEF(x) x\n";
+print HEADER "#define WINE_OPENGL_FUNCS _wine_win32_opengl_funcs\n";
+print HEADER "#else\n";
+print HEADER "#define WINEGLDEF(x) _wine_host_##x\n";
+print HEADER "#define WINE_OPENGL_FUNCS opengl_funcs\n";
+print HEADER "#include \"hostaddrspace_enter.h\"\n";
+print HEADER "#endif\n";
+print HEADER "#else\n";
+print HEADER "#define WINEGLDEF(x) x\n";
+print HEADER "#define WINE_OPENGL_FUNCS opengl_funcs\n";
+print HEADER "#endif\n\n";
 
-print HEADER "    struct\n    {\n";
+print HEADER "struct opengl_funcs_gl\n{\n";
 foreach (sort keys %norm_functions)
 {
     next if $_ eq "glDebugEntry";
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $norm_functions{$_}, 1);
+    print HEADER get_func_proto("    %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $norm_functions{$_}, 1, 0);
 }
-print HEADER "    } gl;\n\n";
+print HEADER "};\n\n";
 
-print HEADER "    struct\n    {\n";
+print HEADER "struct opengl_funcs_ext\n{\n";
 foreach (sort keys %ext_functions)
 {
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $ext_functions{$_}, 1);
+    print HEADER get_func_proto("    %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $ext_functions{$_}, 1, 1);
 }
-print HEADER "    } ext;\n";
+print HEADER "};\n\n";
+
+print HEADER "#ifndef WINE_GL_WIN32\n";
+print HEADER "#include \"hostaddrspace_exit.h\"\n";
+print HEADER "#endif\n\n";
+
+print HEADER "struct opengl_funcs_wgl\n{\n";
+foreach (sort keys %wgl_functions)
+{
+    next unless defined $supported_wgl_functions{$_};
+    print HEADER get_func_proto("        %-10s (WINAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1, 0);
+}
+print HEADER "};\n\n";
+
+print HEADER "struct WINE_OPENGL_FUNCS\n{\n";
+print HEADER "    struct opengl_funcs_wgl wgl;\n";
+print HEADER "    struct opengl_funcs_gl gl;\n";
+print HEADER "    struct opengl_funcs_ext ext;\n";
 print HEADER "};\n\n";
 
 print HEADER "#define ALL_WGL_FUNCS";
@@ -657,9 +833,26 @@ print HEADER "/* Automatically generated from http://www.opengl.org/registry fil
 print HEADER "#ifndef __WINE_WGL_H\n";
 print HEADER "#define __WINE_WGL_H\n\n";
 
+print HEADER "#include <stdint.h>\n\n";
+
 print HEADER "#ifndef GLAPIENTRY\n";
 print HEADER "#define GLAPIENTRY __stdcall\n";
 print HEADER "#endif\n\n";
+
+print HEADER "#ifdef __i386_on_x86_64__\n";
+print HEADER "#define WINEGLHOST(x) _wine_host_##x\n";
+print HEADER "typedef INT64 (CALLBACK *HOSTPTR _wine_host_PROC)(void);\n";
+print HEADER "#else\n";
+print HEADER "#define WINEGLHOST(x) x\n";
+print HEADER "#endif\n\n";
+
+print HEADER "typedef signed char khronos_int8_t;\n";
+print HEADER "typedef unsigned char khronos_uint8_t;\n";
+print HEADER "typedef signed short int khronos_int16_t;\n";
+print HEADER "typedef unsigned short int khronos_uint16_t;\n";
+print HEADER "typedef float khronos_float_t;\n";
+print HEADER "typedef int32_t khronos_int32_t;\n";
+print HEADER "typedef uint32_t khronos_uint32_t;\n\n";
 
 foreach (@gl_types)
 {
@@ -667,7 +860,14 @@ foreach (@gl_types)
     foreach my $t (keys %khronos_types) { $type =~ s/\s(\Q$t\E)\s/ $khronos_types{$t} /; }
     printf HEADER $type . "\n";
 }
-print HEADER "\n";
+print HEADER "#ifdef __i386_on_x86_64__\n";
+foreach (@gl_types)
+{
+    if (defined $hybrid_remap_types{$_}) {
+        printf HEADER "typedef %s WINEGLHOST(%s);\n", $hybrid_remap_types{$_}, $_;
+    }
+}
+print HEADER "#endif\n\n";
 
 my $maxlen = 1;
 foreach (keys %gl_enums) { $maxlen = length($_) if length($_) > $maxlen; }
@@ -679,7 +879,7 @@ print HEADER "\n";
 
 foreach (sort keys %norm_functions)
 {
-    printf HEADER "%s;\n", get_func_proto("%-10s GLAPIENTRY %s(%s)", $_, $norm_functions{$_}, 0);
+    printf HEADER "%s;\n", get_func_proto("%-10s GLAPIENTRY %s(%s)", $_, $norm_functions{$_}, 0, 0);
 }
 
 print HEADER "\n#endif /* __WINE_WGL_H */\n";
@@ -724,10 +924,18 @@ foreach (sort keys %wgl_functions) {
     next unless defined $supported_wgl_functions{$_};
     print NORM generate_null_func($_, $wgl_functions{$_}, " WINAPI");
 }
+
+print NORM "\n#include \"wine/hostaddrspace_enter.h\"\n\n";
+
 foreach (sort keys %norm_functions) {
     print NORM generate_null_func($_, $norm_functions{$_}, "");
 }
+my $exited_host = 0;
 foreach (sort keys %ext_functions) {
+    if (!$exited_host && index($_, "wgl") == 0) {
+        print NORM "\n#include \"wine/hostaddrspace_exit.h\"\n\n";
+        $exited_host = 1;
+    }
     print NORM generate_null_func($_, $ext_functions{$_}, "");
 }
 
@@ -758,7 +966,7 @@ print EXT "const int extension_registry_size = $count;\n\n";
 foreach (sort keys %ext_functions) {
     if (needs_wrapper( $_, $ext_functions{$_} ))
     {
-        $wrappers .= get_func_proto("extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $_, $ext_functions{$_}, 0);
+        $wrappers .= get_func_proto("extern %s WINAPI %s(%s) DECLSPEC_HIDDEN;\n", $_, $ext_functions{$_}, 0, 0);
     }
     else
     {

@@ -1042,7 +1042,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
         (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
         OffsetRect(&rcText, 1, 1);
 
-    if (!(tbcd.nmcd.uItemState & CDIS_HOT) && 
+    if (!theme && !(tbcd.nmcd.uItemState & CDIS_HOT) &&
         ((tbcd.nmcd.uItemState & CDIS_CHECKED) || (tbcd.nmcd.uItemState & CDIS_INDETERMINATE)))
         TOOLBAR_DrawPattern (&rc, &tbcd);
 
@@ -1062,20 +1062,23 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
 
     if (theme)
     {
-        int partId = drawSepDropDownArrow ? TP_SPLITBUTTON : TP_BUTTON;
-        int stateId = TS_NORMAL;
-        
-        if (tbcd.nmcd.uItemState & CDIS_DISABLED)
-            stateId = TS_DISABLED;
-        else if (tbcd.nmcd.uItemState & CDIS_SELECTED)
-            stateId = TS_PRESSED;
-        else if (tbcd.nmcd.uItemState & CDIS_CHECKED)
-            stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
-        else if ((tbcd.nmcd.uItemState & CDIS_HOT)
-            || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
-            stateId = TS_HOT;
-            
-        DrawThemeBackground (theme, hdc, partId, stateId, &rc, NULL);
+        if (!(dwItemCDFlag & TBCDRF_NOBACKGROUND))
+        {
+            int partId = drawSepDropDownArrow ? TP_SPLITBUTTON : TP_BUTTON;
+            int stateId = TS_NORMAL;
+
+            if (tbcd.nmcd.uItemState & CDIS_DISABLED)
+                stateId = TS_DISABLED;
+            else if (tbcd.nmcd.uItemState & CDIS_SELECTED)
+                stateId = TS_PRESSED;
+            else if (tbcd.nmcd.uItemState & CDIS_CHECKED)
+                stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
+            else if ((tbcd.nmcd.uItemState & CDIS_HOT)
+                     || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
+                stateId = TS_HOT;
+
+            DrawThemeBackground(theme, hdc, partId, stateId, &rc, NULL);
+        }
     }
     else
         TOOLBAR_DrawFrame(infoPtr, &tbcd, &rc, dwItemCDFlag);

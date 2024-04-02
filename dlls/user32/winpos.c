@@ -854,7 +854,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     HDC hdc;
     HWND parent;
     LONG hittest = (LONG)(wParam & 0x0f);
-    WPARAM syscommand = wParam & 0xfff0;
+    WPARAM syscommand = wParam & 0xfff0,mmstate;
     MINMAXINFO minmax;
     POINT capturePoint, pt;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -1086,6 +1086,11 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                                     origRect.bottom - origRect.top,
                                     ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
+
+        /* CrossOver Hack 10879 */
+        if (hittest != HTCAPTION)
+            NtUserRedrawWindow( hwnd, NULL, NULL,
+                                RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
     }
 
     if (IsIconic(hwnd))
@@ -1099,4 +1104,15 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                               SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x,pt.y));
         }
     }
+
+    /* windows finishes this off with a WM_MOUSEMOVE with the current position
+       and buttons state. This message is relied on by some games. */
+    mmstate = 0;
+    if (NtUserGetAsyncKeyState(VK_LBUTTON)&0x1) mmstate &= MK_LBUTTON;
+    if (NtUserGetAsyncKeyState(VK_RBUTTON)&0x1) mmstate &= MK_RBUTTON;
+    if (NtUserGetAsyncKeyState(VK_MBUTTON)&0x1) mmstate &= MK_MBUTTON;
+    if (NtUserGetAsyncKeyState(VK_CONTROL)&0x1) mmstate &= MK_CONTROL;
+    if (NtUserGetAsyncKeyState(VK_SHIFT)&0x1) mmstate &= MK_SHIFT;
+
+    PostMessageW( hwnd, WM_MOUSEMOVE, mmstate, MAKELONG(pt.x,pt.y) );
 }

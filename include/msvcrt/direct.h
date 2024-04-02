@@ -8,6 +8,8 @@
 #ifndef __WINE_DIRECT_H
 #define __WINE_DIRECT_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_wdirect.h>
 
 #include <pshpack8.h>
@@ -46,5 +48,7 @@ static inline int mkdir(const char* newdir) { return _mkdir(newdir); }
 static inline int rmdir(const char* dir) { return _rmdir(dir); }
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DIRECT_H */

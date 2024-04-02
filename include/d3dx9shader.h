@@ -22,6 +22,8 @@
 #ifndef __D3DX9SHADER_H__
 #define __D3DX9SHADER_H__
 
+#include "wine/winheader_enter.h"
+
 #define D3DXSHADER_DEBUG                          0x1
 #define D3DXSHADER_SKIPVALIDATION                 0x2
 #define D3DXSHADER_SKIPOPTIMIZATION               0x4
@@ -459,5 +461,7 @@ typedef struct _D3DXSHADER_STRUCTMEMBERINFO
     DWORD Name;
     DWORD TypeInfo;
 } D3DXSHADER_STRUCTMEMBERINFO, *LPD3DXSHADER_STRUCTMEMBERINFO;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __D3DX9SHADER_H__ */

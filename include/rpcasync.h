@@ -22,6 +22,8 @@
 # include <windef.h>
 #endif
 
+#include "wine/winheader_enter.h"
+
 #ifdef __RPC_WIN64__
 # include <pshpack8.h>
 #endif
@@ -197,5 +199,7 @@ RPCRTAPI int        RPC_ENTRY I_RpcExceptionFilter(ULONG);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

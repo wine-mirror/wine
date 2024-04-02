@@ -19,6 +19,8 @@
 import "d2d1_2.idl";
 import "d2d1effects_2.idl";
 
+interface ID2D1SpriteBatch;
+
 typedef enum D2D1_INK_NIB_SHAPE
 {
     D2D1_INK_NIB_SHAPE_ROUND = 0x0,
@@ -68,6 +70,13 @@ typedef enum D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS
     D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION = 0x1,
     D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_FORCE_DWORD = 0xffffffff
 } D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS;
+
+typedef enum D2D1_SPRITE_OPTIONS
+{
+    D2D1_SPRITE_OPTIONS_NONE = 0x0,
+    D2D1_SPRITE_OPTIONS_CLAMP_TO_SOURCE_RECTANGLE = 0x1,
+    D2D1_SPRITE_OPTIONS_FORCE_DWORD = 0xffffffff
+} D2D1_SPRITE_OPTIONS;
 
 typedef struct D2D1_INK_POINT
 {
@@ -354,5 +363,58 @@ interface ID2D1Factory3 : ID2D1Factory2
     HRESULT CreateDevice(
         [in] IDXGIDevice *dxgi_device,
         [out] ID2D1Device2 **d2d_device
+    );
+}
+
+[
+    object,
+    uuid(3bab440e-417e-47df-a2e2-bc0be6a00916),
+    local,
+]
+interface ID2D1CommandSink2 : ID2D1CommandSink1
+{
+    HRESULT DrawInk(
+        [in] ID2D1Ink *ink,
+        [in] ID2D1Brush *brush,
+        [in] ID2D1InkStyle *ink_style
+    );
+
+    HRESULT DrawGradientMesh(
+        [in] ID2D1GradientMesh *gradient_mesh
+    );
+
+    HRESULT DrawGdiMetafile(
+        [in] ID2D1GdiMetafile *gdi_metafile,
+        [in] const D2D1_RECT_F *dest_rect,
+        [in] const D2D1_RECT_F *src_rect
+    );
+}
+
+[
+    object,
+    uuid(18079135-4cf3-4868-bc8e-06067e6d242d),
+    local,
+]
+interface ID2D1CommandSink3 : ID2D1CommandSink2
+{
+    HRESULT DrawSpriteBatch(
+        [in] ID2D1SpriteBatch *sprite_batch,
+        [in] UINT32 start_index,
+        [in] UINT32 sprite_count,
+        [in] ID2D1Bitmap *bitmap,
+        [in] D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
+        [in] D2D1_SPRITE_OPTIONS sprite_options
+    );
+}
+
+[
+    object,
+    uuid(c78a6519-40d6-4218-b2de-beeeb744bb3e),
+    local,
+]
+interface ID2D1CommandSink4 : ID2D1CommandSink3
+{
+    HRESULT SetPrimitiveBlend2(
+        [in] D2D1_PRIMITIVE_BLEND primitive_blend
     );
 }

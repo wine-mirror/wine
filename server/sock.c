@@ -255,6 +255,7 @@ static const struct object_ops sock_ops =
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
+    NULL,                         /* get_esync_fd */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
@@ -632,13 +633,27 @@ static void sock_wake_up( struct sock *sock )
     }
 }
 
-static inline int sock_error( struct fd *fd )
+static inline int sock_error( struct sock *sock )
 {
-    unsigned int optval = 0;
-    socklen_t optlen = sizeof(optval);
+    int error = 0;
+    socklen_t len = sizeof(error);
 
-    getsockopt( get_unix_fd(fd), SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
-    return optval;
+    getsockopt( get_unix_fd(sock->fd), SOL_SOCKET, SO_ERROR, (void *)&error, &len);
+    if (sock->state == SOCK_CONNECTING)
+    {
+        if (error)
+            sock->errors[AFD_POLL_BIT_CONNECT_ERR] = error;
+        else
+            error = sock->errors[AFD_POLL_BIT_CONNECT_ERR];
+    }
+    else if (sock->state == SOCK_LISTENING)
+    {
+        if (error)
+            sock->errors[AFD_POLL_BIT_ACCEPT] = error;
+        else
+            error = sock->errors[AFD_POLL_BIT_ACCEPT];
+    }
+    return error;
 }
 
 static void free_accept_req( void *private )
@@ -1117,9 +1132,9 @@ static void sock_poll_event( struct fd *fd, int event )
     case SOCK_CONNECTING:
         if (event & (POLLERR|POLLHUP))
         {
+            error = sock_error( sock );
             sock->state = SOCK_UNCONNECTED;
             event &= ~POLLOUT;
-            error = sock_error( fd );
         }
         else if (event & POLLOUT)
         {
@@ -1130,7 +1145,7 @@ static void sock_poll_event( struct fd *fd, int event )
 
     case SOCK_LISTENING:
         if (event & (POLLERR|POLLHUP))
-            error = sock_error( fd );
+            error = sock_error( sock );
         break;
 
     case SOCK_CONNECTED:
@@ -2768,7 +2783,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_WINE_GET_SO_ERROR:
     {
         int error;
-        socklen_t len = sizeof(error);
         unsigned int i;
 
         if (get_reply_max_size() < sizeof(error))
@@ -2777,24 +2791,20 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return;
         }
 
-        if (getsockopt( unix_fd, SOL_SOCKET, SO_ERROR, (char *)&error, &len ) < 0)
-        {
-            set_error( sock_get_ntstatus( errno ) );
-            return;
-        }
-
+        error = sock_error( sock );
         if (!error)
         {
             for (i = 0; i < ARRAY_SIZE( sock->errors ); ++i)
             {
                 if (sock->errors[i])
                 {
-                    error = sock_get_error( sock->errors[i] );
+                    error = sock->errors[i];
                     break;
                 }
             }
         }
 
+        error = sock_get_error( error );
         set_reply_data( &error, sizeof(error) );
         return;
     }
@@ -3109,7 +3119,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
         {
             signaled = TRUE;
             req->sockets[i].flags = flags;
-            req->sockets[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+            req->sockets[i].status = sock_get_ntstatus( sock_error( sock ) );
         }
 
         /* FIXME: do other error conditions deserve a similar treatment? */
@@ -3156,6 +3166,7 @@ static const struct object_ops ifchange_ops =
     no_add_queue,            /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
+    NULL,                    /* get_esync_fd */
     no_satisfied,            /* satisfied */
     no_signal,               /* signal */
     ifchange_get_fd,         /* get_fd */
@@ -3377,6 +3388,7 @@ static const struct object_ops socket_device_ops =
     no_add_queue,               /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
+    NULL,                       /* get_esync_fd */
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */

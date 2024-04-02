@@ -21,6 +21,8 @@
 #ifndef _PDH_MSG_H_
 #define _PDH_MSG_H_
 
+#include "wine/winheader_enter.h"
+
 #define PDH_CSTATUS_VALID_DATA          0x00000000
 #define PDH_CSTATUS_NEW_DATA            0x00000001
 #define PDH_CSTATUS_NO_MACHINE          0x800007d0
@@ -107,5 +109,7 @@
 #define PDH_UNMATCHED_APPEND_COUNTER    0xc0000bfc
 #define PDH_SQL_ALTER_DETAIL_FAILED     0xc0000bfd
 #define PDH_QUERY_PERF_DATA_TIMEOUT     0xc0000bfe
+
+#include "wine/winheader_exit.h"
 
 #endif /* _PDH_MSG_H_ */

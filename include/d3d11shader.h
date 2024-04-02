@@ -19,6 +19,8 @@
 #ifndef __D3D11SHADER_H__
 #define __D3D11SHADER_H__
 
+#include "wine/winheader_enter.h"
+
 #include "d3dcommon.h"
 
 /* If not defined set d3dcompiler_47 by default. */
@@ -260,5 +262,7 @@ DECLARE_INTERFACE_(ID3D11Module, IUnknown)
     STDMETHOD(CreateInstance)(THIS_ const char *instnamespace, ID3D11ModuleInstance **moduleinstance) PURE;
 };
 #undef INTERFACE
+
+#include "wine/winheader_exit.h"
 
 #endif

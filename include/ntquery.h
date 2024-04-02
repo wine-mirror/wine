@@ -19,6 +19,8 @@
 #ifndef __WINE_NTQUERY_H__
 #define __WINE_NTQUERY_H__
 
+#include "wine/winheader_enter.h"
+
 #include "stgprop.h"
 #include <pshpack4.h>
 
@@ -56,5 +58,7 @@ STDAPI LoadIFilter(WCHAR const *, IUnknown *, void **);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

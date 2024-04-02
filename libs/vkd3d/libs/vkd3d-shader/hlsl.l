@@ -197,15 +197,15 @@ row_major               {return KW_ROW_MAJOR;           }
                             return C_FLOAT;
                         }
 0x[0-9a-fA-F]+          {
-                            sscanf(yytext, "0x%x", &yylval->intval);
+                            yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
 0[0-7]+                 {
-                            sscanf(yytext, "0%o", &yylval->intval);
+                            yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
 [0-9]+                  {
-                            yylval->intval = (atoi(yytext));
+                            yylval->intval = vkd3d_parse_integer(yytext);
                             return C_INTEGER;
                         }
 

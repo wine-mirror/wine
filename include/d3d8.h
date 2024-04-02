@@ -19,6 +19,8 @@
 #ifndef __WINE_D3D8_H
 #define __WINE_D3D8_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef DIRECT3D_VERSION
 #define DIRECT3D_VERSION  0x0800
 #endif
@@ -1149,5 +1151,7 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3D8_H */

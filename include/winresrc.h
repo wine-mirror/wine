@@ -19,6 +19,8 @@
 #ifndef _WINRESRC_
 #define _WINRESRC_
 
+#include "wine/winheader_enter.h"
+
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
@@ -41,5 +43,7 @@
 #include <winnt.rh>
 #include <dlgs.h>
 #include <winver.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINRESRC_ */

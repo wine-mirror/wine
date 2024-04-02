@@ -670,9 +670,10 @@ static HRESULT WINAPI d3drm_mesh_builder2_SetTextureTopology(IDirect3DRMMeshBuil
 static HRESULT WINAPI d3drm_mesh_builder2_SetQuality(IDirect3DRMMeshBuilder2 *iface,
         D3DRMRENDERQUALITY quality)
 {
-    FIXME("iface %p, quality %#lx stub!\n", iface, quality);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
+    TRACE("iface %p, quality %#lx\n", iface, quality);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetQuality(&mesh_builder->IDirect3DRMMeshBuilder3_iface, quality);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder2_SetPerspective(IDirect3DRMMeshBuilder2 *iface, BOOL enable)
@@ -815,9 +816,11 @@ static HRESULT WINAPI d3drm_mesh_builder2_CreateFace(IDirect3DRMMeshBuilder2 *if
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder2_GetQuality(IDirect3DRMMeshBuilder2 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return mesh_builder->quality;
 }
 
 static BOOL WINAPI d3drm_mesh_builder2_GetPerspective(IDirect3DRMMeshBuilder2 *iface)
@@ -1459,8 +1462,10 @@ end:
 static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, void *filename,
         void *name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURE3CALLBACK cb, void *arg)
 {
+    static const DWORD supported_flags = D3DRMLOAD_FROMFILE | D3DRMLOAD_FROMRESOURCE
+            | D3DRMLOAD_FROMMEMORY | D3DRMLOAD_FROMSTREAM | D3DRMLOAD_FROMURL;
     struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
-    DXFILELOADOPTIONS load_options;
+    DXFILELOADOPTIONS load_options = loadflags & supported_flags;
     IDirectXFile *dxfile = NULL;
     IDirectXFileEnumObject *enum_object = NULL;
     IDirectXFileData *data = NULL;
@@ -1473,22 +1478,10 @@ static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, v
     TRACE("iface %p, filename %p, name %p, loadflags %#lx, cb %p, arg %p.\n",
             iface, filename, name, loadflags, cb, arg);
 
-    clean_mesh_builder_data(mesh_builder);
+    if (loadflags & ~supported_flags)
+        FIXME("Ignoring flags %#lx.\n", loadflags & ~supported_flags);
 
-    if (loadflags == D3DRMLOAD_FROMMEMORY)
-    {
-        load_options = DXFILELOAD_FROMMEMORY;
-    }
-    else if (loadflags == D3DRMLOAD_FROMFILE)
-    {
-        load_options = DXFILELOAD_FROMFILE;
-        TRACE("Loading from file %s\n", debugstr_a(filename));
-    }
-    else
-    {
-        FIXME("Load options %ld not supported yet\n", loadflags);
-        return E_NOTIMPL;
-    }
+    clean_mesh_builder_data(mesh_builder);
 
     hr = DirectXFileCreate(&dxfile);
     if (hr != DXFILE_OK)
@@ -1500,7 +1493,10 @@ static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, v
 
     hr = IDirectXFile_CreateEnumObject(dxfile, filename, load_options, &enum_object);
     if (hr != DXFILE_OK)
+    {
+        WARN("Failed to create object, load flags %#lx.\n", loadflags);
         goto end;
+    }
 
     hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
     if (hr != DXFILE_OK)
@@ -1754,9 +1750,13 @@ static HRESULT WINAPI d3drm_mesh_builder3_SetTextureTopology(IDirect3DRMMeshBuil
 static HRESULT WINAPI d3drm_mesh_builder3_SetQuality(IDirect3DRMMeshBuilder3 *iface,
         D3DRMRENDERQUALITY quality)
 {
-    FIXME("iface %p, quality %#lx stub!\n", iface, quality);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, quality %#lx\n", iface, quality);
+
+    mesh_builder->quality = quality;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_SetPerspective(IDirect3DRMMeshBuilder3 *iface,
@@ -1904,9 +1904,11 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateFace(IDirect3DRMMeshBuilder3 *if
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder3_GetQuality(IDirect3DRMMeshBuilder3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return mesh_builder->quality;
 }
 
 static BOOL WINAPI d3drm_mesh_builder3_GetPerspective(IDirect3DRMMeshBuilder3 *iface)
@@ -2132,7 +2134,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_Optimize(IDirect3DRMMeshBuilder3 *ifac
 {
     FIXME("iface %p, flags %#lx stub!\n", iface, flags);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_AddFacesIndexed(IDirect3DRMMeshBuilder3 *iface,
@@ -2345,6 +2347,7 @@ HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDir
     object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &d3drm_mesh_builder3_vtbl;
     object->ref = 1;
     object->d3drm = d3drm;
+    object->quality = D3DRMRENDER_GOURAUD;
     IDirect3DRM_AddRef(object->d3drm);
 
     d3drm_object_init(&object->obj, classname);

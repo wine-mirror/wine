@@ -19,6 +19,8 @@
 #ifndef _RASDLG_H_
 #define _RASDLG_H_
 
+#include "wine/winheader_enter.h"
+
 #include <ras.h>
 
 typedef struct tagRASENTRYDLGW
@@ -33,5 +35,7 @@ typedef struct tagRASENTRYDLGW
     ULONG_PTR reserved;
     ULONG_PTR reserved2;
 } RASENTRYDLGW;
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _RASDLG_H_ */

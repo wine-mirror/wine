@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/hostaddrspace_enter.h"
+
 #import "cocoa_app.h"
 #import "cocoa_cursorclipping.h"
 #import "cocoa_window.h"

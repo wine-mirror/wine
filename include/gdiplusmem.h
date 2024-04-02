@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSMEM_H
 #define _GDIPLUSMEM_H
 
+#include "wine/winheader_enter.h"
+
 #define WINGDIPAPI __stdcall
 
 #ifdef __cplusplus
@@ -31,5 +33,7 @@ void WINGDIPAPI GdipFree(void*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

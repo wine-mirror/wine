@@ -633,7 +633,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
         gl_info->gl_ops.wgl.p_wglSwapBuffers(context_gl->dc);
     }
 
-    wined3d_context_gl_submit_command_fence(context_gl);
+    if (context->d3d_info->fences)
+        wined3d_context_gl_submit_command_fence(context_gl);
 
     wined3d_swapchain_gl_rotate(swapchain, context);
 
@@ -922,7 +923,13 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
         goto fail;
     }
 
-    image_count = desc->backbuffer_count;
+    /* For CW bug 18838. Create MoltenVK swapchains with 3 images, as
+     * recommended by the MoltenVK documentation. Performance of full-screen
+     * swapchains is atrocious with the only other supported image count of 2. */
+    if (adapter_vk->driver_properties.driverID == VK_DRIVER_ID_MOLTENVK)
+        image_count = 3;
+    else
+        image_count = desc->backbuffer_count;
     if (image_count < surface_caps.minImageCount)
         image_count = surface_caps.minImageCount;
     else if (surface_caps.maxImageCount && image_count > surface_caps.maxImageCount)
@@ -1458,7 +1465,13 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             && desc->swap_effect != WINED3D_SWAP_EFFECT_COPY)
         FIXME("Unimplemented swap effect %#x.\n", desc->swap_effect);
 
-    window = desc->device_window ? desc->device_window : device->create_parms.focus_window;
+    if (!desc->device_window)
+    {
+        TRACE("Updating device_window to %p.\n", device->create_parms.focus_window);
+        desc->device_window = device->create_parms.focus_window;
+    }
+    window = desc->device_window;
+
     if (FAILED(hr = wined3d_swapchain_state_init(&swapchain->state, desc, window, device->wined3d, state_parent)))
     {
         ERR("Failed to initialise swapchain state, hr %#x.\n", hr);
@@ -2192,6 +2205,8 @@ static DWORD WINAPI wined3d_set_window_state(void *ctx)
 {
     struct wined3d_window_state *s = ctx;
     bool filter;
+
+    SetThreadDescription(GetCurrentThread(), L"wined3d_set_window_state");
 
     filter = wined3d_filter_messages(s->window, TRUE);
 

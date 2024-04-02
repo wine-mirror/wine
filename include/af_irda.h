@@ -18,6 +18,8 @@
 #ifndef AF_IRDA_H
 #define AF_IRDA_H
 
+#include "wine/winheader_enter.h"
+
 typedef struct _IRDA_DEVICE_INFO
 {
     UCHAR irdaDeviceID[4];
@@ -96,5 +98,7 @@ typedef struct _SOCKADDR_IRDA
 #define LmCharSetISO_8859_8 0x08
 #define LmCharSetISO_8859_9 0x09
 #define LmCharSetUNICODE    0xff
+
+#include "wine/winheader_exit.h"
 
 #endif /* AF_IRDA_H */

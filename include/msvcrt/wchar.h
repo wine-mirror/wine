@@ -8,6 +8,8 @@
 #ifndef __WINE_WCHAR_H
 #define __WINE_WCHAR_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_wctype.h>
 #include <corecrt_wdirect.h>
 #include <corecrt_wio.h>
@@ -84,5 +86,7 @@ static inline wchar_t* __cdecl wmemset(wchar_t *s, wchar_t c, size_t n)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WCHAR_H */

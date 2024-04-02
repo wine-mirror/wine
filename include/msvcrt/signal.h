@@ -20,6 +20,8 @@
 #ifndef _WINE_SIGNAL_H
 #define _WINE_SIGNAL_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #define SIGINT   2
@@ -49,5 +51,7 @@ _ACRTIMP int __cdecl raise(int sig);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINE_SIGNAL_H */

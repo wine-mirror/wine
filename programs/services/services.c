@@ -42,7 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 struct scmdatabase *active_database;
 
-DWORD service_pipe_timeout = 10000;
+/* CW HACK 20218:
+ * Double service_pipe_timeout, the Rockstar Launcher service takes 10+
+ * seconds to launch under Rosetta.
+ */
+DWORD service_pipe_timeout = 20000;
 DWORD service_kill_timeout = 60000;
 static DWORD default_preshutdown_timeout = 180000;
 static DWORD autostart_delay = 120000;

@@ -19,6 +19,8 @@
 #ifndef __VSSYM32_H__
 #define __VSSYM32_H__
 
+#include "wine/winheader_enter.h"
+
 #include "vsstyle.h"
 
 
@@ -522,6 +524,8 @@ enum CLOCKPARTS {
 
 enum CLOCKSTATES {
     CLS_NORMAL = 1,
+    CLS_HOT = 2,
+    CLS_PRESSED = 3,
 };
 
 /* TRAYNOTIFY class */
@@ -658,5 +662,7 @@ enum MENUBANDSTATES {
     MDS_CHECKED = 5,
     MDS_HOTCHECKED = 6,
 };
+
+#include "wine/winheader_exit.h"
 
 #endif /* __VSSYM32_H__ */

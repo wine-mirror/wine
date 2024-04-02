@@ -19,6 +19,8 @@
 #ifndef __WINE_DIGITALV_H
 #define __WINE_DIGITALV_H
 
+#include "wine/winheader_enter.h"
+
 /*
  * Wine Digital Video extensions
  */
@@ -866,5 +868,7 @@ DECL_WINELIB_TYPE_AW(MCI_DGV_WINDOW_PARMS)
 #endif
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DIGITALV_H */

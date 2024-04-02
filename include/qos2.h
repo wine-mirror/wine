@@ -19,6 +19,8 @@
 #ifndef __WINE_QOS2_H__
 #define __WINE_QOS2_H__
 
+#include "wine/winheader_enter.h"
+
 #include <ws2tcpip.h>
 #include <mstcpip.h>
 
@@ -120,5 +122,7 @@ BOOL WINAPI QOSStopTrackingClient(HANDLE handle, PSOCKADDR addr, DWORD flags);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_QOS2_H__ */

@@ -21,6 +21,8 @@
 #ifndef __WINE_TAPI_H
 #define __WINE_TAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 #include <basetsd.h>
 #include <oaidl.h>
@@ -1069,5 +1071,7 @@ DWORD WINAPI tapiRequestMakeCallA(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_TAPI_H */

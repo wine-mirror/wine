@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -46,6 +47,16 @@ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
     DWORD len = GetEnvironmentVariableA( "WINEUSERNAME", name, *size );
     BOOL ret;
 
+    /* CrossOver Hack 12735: Use a consistent username */
+    if (!getenv( "CX_REPORT_REAL_USERNAME" ))
+    {
+        len = sizeof("crossover");
+        if ((ret = (len <= *size))) strcpy( name, "crossover" );
+        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        *size = len;
+        return ret;
+    }
+
     if (!len) return FALSE;
     if ((ret = (len < *size))) len++;
     else SetLastError( ERROR_INSUFFICIENT_BUFFER );
@@ -60,6 +71,16 @@ BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
 {
     DWORD len = GetEnvironmentVariableW( L"WINEUSERNAME", name, *size );
     BOOL ret;
+
+    /* CrossOver Hack 12735: Use a consistent username */
+    if (!getenv( "CX_REPORT_REAL_USERNAME" ))
+    {
+        len = ARRAY_SIZE( L"crossover" );
+        if ((ret = (len <= *size))) wcscpy( name, L"crossover" );
+        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        *size = len;
+        return ret;
+    }
 
     if (!len) return FALSE;
     if ((ret = (len < *size))) len++;

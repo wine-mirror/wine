@@ -19,6 +19,8 @@
 #ifndef _KS_
 #define _KS_
 
+#include "wine/winheader_enter.h"
+
 typedef union tagKSIDENTIFIER
 {
     struct
@@ -62,5 +64,7 @@ typedef union unionKSDATAFORMAT
     } DUMMYSTRUCTNAME;
     LONGLONG Alignment;
 } KSDATAFORMAT, *PKSDATAFORMAT, KSDATARANGE, *PKSDATARANGE;
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _KS_ */

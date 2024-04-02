@@ -23,6 +23,8 @@
 #ifndef _KSMEDIA_
 #define _KSMEDIA_
 
+#include "wine/winheader_enter.h"
+
 DEFINE_GUID(KSDATAFORMAT_TYPE_AUDIO, 0x73647561, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 
 DEFINE_GUID(KSDATAFORMAT_SUBTYPE_PCM, 0x00000001, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
@@ -142,5 +144,7 @@ typedef struct _tagKSJACK_DESCRIPTION2
 } KSJACK_DESCRIPTION2;
 
 typedef struct _tagKSJACK_DESCRIPTION2 *PKSJACK_DESCRIPTION2;
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _KSMEDIA_ */

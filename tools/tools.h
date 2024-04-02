@@ -79,7 +79,7 @@
 
 struct target
 {
-    enum { CPU_i386, CPU_x86_64, CPU_ARM, CPU_ARM64 } cpu;
+    enum { CPU_i386, CPU_x86_64, CPU_x86_32on64, CPU_ARM, CPU_ARM64 } cpu;
 
     enum
     {
@@ -377,6 +377,8 @@ static inline struct target get_default_target(void)
     struct target target;
 #ifdef __i386__
     target.cpu = CPU_i386;
+#elif defined(__i386_on_x86_64__)
+    target.cpu = CPU_x86_32on64;
 #elif defined(__x86_64__)
     target.cpu = CPU_x86_64;
 #elif defined(__arm__)
@@ -414,6 +416,7 @@ static inline unsigned int get_target_ptr_size( struct target target )
     static const unsigned int sizes[] =
     {
         [CPU_i386]      = 4,
+        [CPU_x86_32on64]= 4,
         [CPU_x86_64]    = 8,
         [CPU_ARM]       = 4,
         [CPU_ARM64]     = 8,
@@ -428,6 +431,8 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
     {
     case CPU_i386:
         if (size == 8) target->cpu = CPU_x86_64;
+        break;
+    case CPU_x86_32on64:
         break;
     case CPU_x86_64:
         if (size == 4) target->cpu = CPU_i386;
@@ -457,6 +462,7 @@ static inline int get_cpu_from_name( const char *name )
         { "i786",      CPU_i386 },
         { "x86_64",    CPU_x86_64 },
         { "amd64",     CPU_x86_64 },
+        { "x86_32on64",  CPU_x86_32on64 },
         { "aarch64",   CPU_ARM64 },
         { "arm64",     CPU_ARM64 },
         { "arm",       CPU_ARM },

@@ -17,6 +17,8 @@
 #ifndef __OBJSEL_H_
 #define __OBJSEL_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -170,4 +172,6 @@ DECLARE_INTERFACE_(IDsObjectPicker,IUnknown)
 #ifdef __cplusplus
 }
 #endif
+#include "wine/winheader_exit.h"
+
 #endif /* __OBJSEL_H_ */

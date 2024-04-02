@@ -20,6 +20,8 @@
 #define __WINE_WINNLS_H
 #ifndef NONLS
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -997,6 +999,8 @@ WINBASEAPI INT         WINAPI FindNLSStringEx(const WCHAR *,DWORD,const WCHAR *,
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* !NONLS */
 #endif  /* __WINE_WINNLS_H */

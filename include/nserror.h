@@ -19,6 +19,8 @@
 #ifndef _NSERROR_H
 #define _NSERROR_H
 
+#include "wine/winheader_enter.h"
+
 /* Facility codes */
 #define FACILITY_NS_WIN32                                             0x7
 #define FACILITY_NS                                                   0xD
@@ -1262,5 +1264,7 @@
 #define NS_E_METADATA_INVALID_DOCUMENT_TYPE                           _HRESULT_TYPEDEF_(0xc00d32dc)
 #define NS_E_METADATA_IDENTIFIER_NOT_AVAILABLE                        _HRESULT_TYPEDEF_(0xc00d32dd)
 #define NS_E_METADATA_CANNOT_RETRIEVE_FROM_OFFLINE_CACHE              _HRESULT_TYPEDEF_(0xc00d32de)
+
+#include "wine/winheader_exit.h"
 
 #endif /* _NSERROR_H */

@@ -19,6 +19,8 @@
 #ifndef __WINE_VFW_H
 #define __WINE_VFW_H
 
+#include "wine/winheader_enter.h"
+
 #include <mmsystem.h>
 #include <mmreg.h>
 #include <msacm.h>
@@ -1940,5 +1942,7 @@ BOOL VFWAPI capGetDriverDescriptionW(WORD,LPWSTR,INT,LPWSTR,INT);
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_VFW_H */

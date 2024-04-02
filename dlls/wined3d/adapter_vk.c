@@ -18,8 +18,6 @@
 
 #include "wined3d_private.h"
 
-#include "wine/vulkan_driver.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 static const struct wined3d_state_entry_template misc_state_template_vk[] =
@@ -214,7 +212,6 @@ static HRESULT hresult_from_vk_result(VkResult vr)
     }
 }
 
-#ifdef USE_WIN32_VULKAN
 static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
 {
     struct vulkan_ops *vk_ops = &vk_info->vk_ops;
@@ -244,23 +241,6 @@ static void wined3d_unload_vulkan(struct wined3d_vk_info *vk_info)
         vk_info->vulkan_lib = NULL;
     }
 }
-#else
-static BOOL wined3d_load_vulkan(struct wined3d_vk_info *vk_info)
-{
-    struct vulkan_ops *vk_ops = &vk_info->vk_ops;
-    const struct vulkan_funcs *vk_funcs;
-
-    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
-
-    if (!vk_funcs)
-        return FALSE;
-
-    vk_ops->vkGetInstanceProcAddr = (void *)vk_funcs->p_vkGetInstanceProcAddr;
-    return TRUE;
-}
-
-static void wined3d_unload_vulkan(struct wined3d_vk_info *vk_info) {}
-#endif
 
 static void adapter_vk_destroy(struct wined3d_adapter *adapter)
 {
@@ -1084,6 +1064,8 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
         return;
     bo = wined3d_bo_vk(data->buffer_object);
 
+    assert(bo->b.map_ptr);
+
     if (!bo->b.coherent)
     {
         for (i = 0; i < range_count; ++i)
@@ -1183,9 +1165,12 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
         return;
     }
 
+    for (i = 0; i < range_count; ++i)
+        size = max(size, ranges[i].offset + ranges[i].size);
+
     if (src_bo && !(src_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
     {
-        if (!(wined3d_context_vk_create_bo(context_vk, src_bo->size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        if (!(wined3d_context_vk_create_bo(context_vk, size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo)))
         {
             ERR("Failed to create staging bo.\n");
@@ -1205,7 +1190,7 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
     if (dst_bo && (!(dst_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) || (!(map_flags & WINED3D_MAP_DISCARD)
             && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id)))
     {
-        if (!(wined3d_context_vk_create_bo(context_vk, dst_bo->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        if (!(wined3d_context_vk_create_bo(context_vk, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo)))
         {
             ERR("Failed to create staging bo.\n");
@@ -1221,9 +1206,6 @@ void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         return;
     }
-
-    for (i = 0; i < range_count; ++i)
-        size = max(size, ranges[i].offset + ranges[i].size);
 
     src_ptr = adapter_vk_map_bo_address(context, src, size, WINED3D_MAP_READ);
     dst_ptr = adapter_vk_map_bo_address(context, dst, size, map_flags);
@@ -1831,23 +1813,14 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     if (parameters->indirect)
     {
         struct wined3d_bo_vk *bo = wined3d_bo_vk(indirect_vk->b.buffer_object);
-        uint32_t stride, size;
 
         wined3d_context_vk_reference_bo(context_vk, bo);
-        size = indirect_vk->b.resource.size - parameters->u.indirect.offset;
-
         if (parameters->indexed)
-        {
-            stride = sizeof(VkDrawIndexedIndirectCommand);
             VK_CALL(vkCmdDrawIndexedIndirect(vk_command_buffer, bo->vk_buffer,
-                    bo->b.buffer_offset + parameters->u.indirect.offset, size / stride, stride));
-        }
+                    bo->b.buffer_offset + parameters->u.indirect.offset, 1, sizeof(VkDrawIndexedIndirectCommand)));
         else
-        {
-            stride = sizeof(VkDrawIndirectCommand);
             VK_CALL(vkCmdDrawIndirect(vk_command_buffer, bo->vk_buffer,
-                    bo->b.buffer_offset + parameters->u.indirect.offset, size / stride, stride));
-        }
+                    bo->b.buffer_offset + parameters->u.indirect.offset, 1, sizeof(VkDrawIndirectCommand)));
     }
     else
     {
@@ -2347,9 +2320,12 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->clip_control = true;
     d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
     d3d_info->scaled_resolve = false;
+    d3d_info->multithread_safe = true;
     d3d_info->pbo = true;
     d3d_info->feature_level = feature_level_from_caps(&shader_caps);
     d3d_info->subpixel_viewport = true;
+    d3d_info->fences = true;
+    d3d_info->persistent_map = true;
 
     /* Like GL, Vulkan doesn't explicitly specify a filling convention and only mandates that a
      * shared edge of two adjacent triangles generate a fragment for exactly one of the triangles.
@@ -2388,6 +2364,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1, true},
         {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
         {VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,            VK_API_VERSION_1_2},
+        {VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME,           VK_API_VERSION_1_2},
     };
 
     static const struct
@@ -2514,11 +2491,31 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     properties2.pNext = &id_properties;
 
+    memset(&adapter_vk->driver_properties, 0, sizeof(adapter_vk->driver_properties));
+    adapter_vk->driver_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+    id_properties.pNext = &adapter_vk->driver_properties;
+
     if (vk_info->vk_ops.vkGetPhysicalDeviceProperties2)
         VK_CALL(vkGetPhysicalDeviceProperties2(adapter_vk->physical_device, &properties2));
     else
         VK_CALL(vkGetPhysicalDeviceProperties(adapter_vk->physical_device, &properties2.properties));
     adapter_vk->device_limits = properties2.properties.limits;
+
+    /* CW HACK 18311: Use VK on 64-bit macOS for d3d10/11. */
+    if (wined3d_settings.renderer == WINED3D_RENDERER_AUTO)
+    {
+        bool d3d10 = !(wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER);
+        bool moltenvk = adapter_vk->driver_properties.driverID == VK_DRIVER_ID_MOLTENVK;
+
+        if (!moltenvk || !d3d10)
+        {
+            if (!moltenvk)
+                TRACE("Not running on MoltenVK, defaulting to the OpenGL backend.\n");
+            if (!d3d10)
+                TRACE("Application using < d3d10 API, defaulting to the OpenGL backend.\n");
+            goto fail_vulkan;
+        }
+    }
 
     VK_CALL(vkGetPhysicalDeviceMemoryProperties(adapter_vk->physical_device, &adapter_vk->memory_properties));
 

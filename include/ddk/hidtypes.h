@@ -18,6 +18,8 @@
 #ifndef __HIDTYPES_H
 #define __HIDTYPES_H
 
+#include "wine/winheader_enter.h"
+
 typedef enum _HID_STRING_TYPE {
     HID_STRING_INDEXED = 0,
     HID_STRING_ID_IMANUFACTURER,
@@ -25,5 +27,7 @@ typedef enum _HID_STRING_TYPE {
     HID_STRING_ID_ISERIALNUMBER,
     HID_STRING_MAX
 } HID_STRING_TYPE;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __HIDTYPES_H */

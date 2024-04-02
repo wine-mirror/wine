@@ -18,6 +18,8 @@
 #ifndef __BLUETOOTHAPIS_H
 #define __BLUETOOTHAPIS_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -200,5 +202,7 @@ DWORD WINAPI BluetoothUpdateDeviceRecord(BLUETOOTH_DEVICE_INFO *);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __BLUETOOTHAPIS_H */

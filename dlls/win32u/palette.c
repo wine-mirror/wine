@@ -23,10 +23,6 @@
  * Information in the "Undocumented Windows" is incorrect.
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/debug.h"

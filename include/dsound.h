@@ -19,6 +19,8 @@
 #ifndef __DSOUND_INCLUDED__
 #define __DSOUND_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #ifndef DIRECTSOUND_VERSION
 #define DIRECTSOUND_VERSION 0x0900
 #endif
@@ -1869,5 +1871,7 @@ enum
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DSOUND_INCLUDED__ */

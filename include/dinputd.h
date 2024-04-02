@@ -19,6 +19,8 @@
 #ifndef __DINPUTD_INCLUDED__
 #define __DINPUTD_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
 
@@ -242,5 +244,7 @@ DECLARE_INTERFACE_(IDirectInputJoyConfig8, IUnknown)
 #define IDirectInputJoyConfig8_OpenTypeKey(p,a,b,c)       (p)->OpenTypeKey(a,b,c)
 #define IDirectInputJoyConfig8_OpenAppStatusKey(p,a)      (p)->OpenAppStatusKey(a)
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DINPUTD_INCLUDED__ */

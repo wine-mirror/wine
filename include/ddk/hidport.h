@@ -19,6 +19,8 @@
 #ifndef __HIDPORT_H__
 #define __HIDPORT_H__
 
+#include "wine/winheader_enter.h"
+
 #include <ddk/hidclass.h>
 
 typedef struct _HID_MINIDRIVER_REGISTRATION
@@ -77,5 +79,7 @@ typedef struct _HID_DESCRIPTOR
 #define IOCTL_HID_DEACTIVATE_DEVICE              HID_CTL_CODE(8)
 #define IOCTL_HID_GET_DEVICE_ATTRIBUTES          HID_CTL_CODE(9)
 #define IOCTL_HID_SEND_IDLE_NOTIFICATION_REQUEST HID_CTL_CODE(10)
+
+#include "wine/winheader_exit.h"
 
 #endif /* __HIDPORT_H__ */

@@ -21,6 +21,8 @@
 #ifndef _INC_REGSTR
 #define _INC_REGSTR
 
+#include "wine/winheader_enter.h"
+
 
 #define REGSTR_PATH_UNINSTALL			TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall")
 #define REGSTR_VAL_MAX_HCID_LEN 1024
@@ -30,5 +32,7 @@
 /* UninstallString <= 63 chars in Windows (otherwise problems) */
 #define REGSTR_VAL_UNINSTALLER_COMMANDLINE	TEXT("UninstallString")
 
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _INC_REGSTR_H */

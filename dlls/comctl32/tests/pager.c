@@ -267,14 +267,6 @@ static const struct message set_pos_empty_seq[] = {
     { 0 }
 };
 
-static CHAR *heap_strdup(const CHAR *str)
-{
-    int len = lstrlenA(str) + 1;
-    CHAR *ret = heap_alloc(len * sizeof(CHAR));
-    lstrcpyA(ret, str);
-    return ret;
-}
-
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;

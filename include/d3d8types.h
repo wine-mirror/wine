@@ -19,6 +19,8 @@
 #ifndef __WINE_D3D8TYPES_H
 #define __WINE_D3D8TYPES_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __i386__
 #include <pshpack4.h>
 #endif
@@ -1216,5 +1218,7 @@ typedef struct _D3DVOLUME_DESC {
 #ifdef __i386__
 #include <poppack.h>
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_D3D8TYPES_H */

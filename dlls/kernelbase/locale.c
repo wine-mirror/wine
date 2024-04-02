@@ -3950,8 +3950,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW pro
         if (!lcnames_index[i].name) continue;  /* skip invariant locale */
         if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
         if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
-        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
-            continue;  /* skip alternate sorts */
+        if (SORTIDFROMLCID( lcnames_index[i].id )) continue;  /* skip alternate sorts */
         if (flags & MUI_LANGUAGE_NAME)
         {
             const WCHAR *str = locale_strings + lcnames_index[i].name;

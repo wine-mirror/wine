@@ -607,7 +607,7 @@ int remove_stdcall_decoration( char *name )
 {
     char *p, *end = strrchr( name, '@' );
     if (!end || !end[1] || end == name) return -1;
-    if (target.cpu != CPU_i386) return -1;
+    if (target.cpu != CPU_i386 && target.cpu != CPU_x86_32on64) return -1;
     /* make sure all the rest is digits */
     for (p = end + 1; *p; p++) if (!isdigit(*p)) return -1;
     *end = 0;
@@ -822,6 +822,7 @@ unsigned int get_alignment(unsigned int align)
     {
     case CPU_i386:
     case CPU_x86_64:
+    case CPU_x86_32on64:
         if (target.platform != PLATFORM_APPLE) return align;
         /* fall through */
     case CPU_ARM:
@@ -891,6 +892,16 @@ const char *asm_name( const char *sym )
     default:
         return sym;
     }
+}
+
+/* return the 32-bit-to-64-bit thunk name for a C function */
+const char *thunk32_name( const char *func )
+{
+    static const char *thunk_prefix = "wine";
+    static char *buffer;
+    free( buffer );
+    buffer = strmake( "%s_thunk_%s", thunk_prefix, func );
+    return buffer;
 }
 
 /* return an assembly function declaration for a C function name */
@@ -1026,15 +1037,25 @@ const char *asm_globl( const char *func )
     return buffer;
 }
 
-const char *get_asm_ptr_keyword(void)
+static const char *get_asm_ptr_keyword_for_size(unsigned int ptr_size)
 {
-    switch(get_ptr_size())
+    switch(ptr_size)
     {
     case 4: return ".long";
     case 8: return ".quad";
     }
     assert(0);
     return NULL;
+}
+
+const char *get_asm_ptr_keyword(void)
+{
+    return get_asm_ptr_keyword_for_size(get_ptr_size());
+}
+
+const char *get_asm_host_ptr_keyword(void)
+{
+    return get_asm_ptr_keyword_for_size(get_host_ptr_size());
 }
 
 const char *get_asm_string_keyword(void)

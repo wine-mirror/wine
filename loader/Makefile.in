@@ -21,6 +21,10 @@ wine_OBJS = main.o
 wine_DEPS = $(WINELOADER_DEPENDS)
 wine_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
 
+wine32on64_OBJS = main.o
+wine32on64_DEPS = $(WINELOADER_DEPENDS)
+wine32on64_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
+
 wine64_OBJS = main.o
 wine64_DEPS = $(WINELOADER_DEPENDS)
 wine64_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
@@ -28,6 +32,10 @@ wine64_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) $(PTHREAD_LIBS)
 wine_preloader_OBJS = preloader.o preloader_mac.o
 wine_preloader_DEPS = $(WINELOADER_DEPENDS)
 wine_preloader_LDFLAGS = $(WINEPRELOADER_LDFLAGS)
+
+wine32on64_preloader_OBJS = preloader.o preloader_mac.o
+wine32on64_preloader_DEPS = $(WINELOADER_DEPENDS)
+wine32on64_preloader_LDFLAGS = $(WINEPRELOADER_LDFLAGS)
 
 wine64_preloader_OBJS = preloader.o preloader_mac.o
 wine64_preloader_DEPS = $(WINELOADER_DEPENDS)

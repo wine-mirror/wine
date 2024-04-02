@@ -19,6 +19,8 @@
 #ifndef __WINE_PROFINFO_H
 #define __WINE_PROFINFO_H
 
+#include "wine/winheader_enter.h"
+
 typedef struct _PROFILEINFOA {
     DWORD dwSize;
     DWORD dwFlags;
@@ -43,5 +45,7 @@ typedef struct _PROFILEINFOW {
 
 DECL_WINELIB_TYPE_AW(PROFILEINFO)
 DECL_WINELIB_TYPE_AW(LPPROFILEINFO)
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_PROFINFO_H */

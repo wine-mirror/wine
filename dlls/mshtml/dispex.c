@@ -883,10 +883,152 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return hres;
 }
 
+static HRESULT function_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *pid)
+{
+    if(!wcscmp(name, L"apply")) {
+        *pid = MSHTML_DISPID_CUSTOM_MIN;
+        return S_OK;
+    }
+
+    if(!wcscmp(name, L"call")) {
+        *pid = MSHTML_DISPID_CUSTOM_MIN + 1;
+        return S_OK;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT args_to_dp(IDispatch *args_obj, LCID lcid,  DISPPARAMS *dp)
+{
+    DISPPARAMS propget_dp = {NULL};
+    IDispatchEx *dispex;
+    BSTR str;
+    WCHAR buf[12];
+    unsigned i;
+    VARIANT v;
+    DISPID id;
+    HRESULT hres;
+
+    static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
+    static const WCHAR formatW[] = {'%','u',0};
+
+    hres = IDispatch_QueryInterface(args_obj, &IID_IDispatchEx, (void**)&dispex);
+    if(FAILED(hres)) {
+        FIXME("Could not get IDispatchEx\n");
+        return hres;
+    }
+
+    str = SysAllocString(lengthW);
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
+    SysFreeString(str);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_PROPERTYGET, &propget_dp, &v, NULL, NULL);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&v) == VT_I4) {
+                TRACE("length %d\n", V_I4(&v));
+                dp->cArgs = V_I4(&v);
+            }
+            VariantClear(&v);
+        }
+    }
+
+    if(dp->cArgs)
+        dp->rgvarg = heap_alloc(dp->cArgs * sizeof(*dp->rgvarg));
+
+    for(i = 0; i < dp->cArgs; i++) {
+        swprintf(buf, ARRAY_SIZE(buf), formatW, i);
+        str = SysAllocString(buf);
+        hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
+        SysFreeString(str);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_InvokeEx(dispex, id, lcid, DISPATCH_PROPERTYGET, &propget_dp, dp->rgvarg+dp->cArgs-i-1, NULL, NULL);
+            if(SUCCEEDED(hres)) {
+                TRACE("[%u] = %s\n", i, debugstr_variant(dp->rgvarg+dp->cArgs-i-1));
+            }else {
+                TRACE("InvokeEx failed: %08x\n", hres);
+            }
+        }else {
+            TRACE("no arg %u\n", i);
+            V_VT(dp->rgvarg+dp->cArgs-i-1) = VT_EMPTY;
+        }
+    }
+
+    IDispatchEx_Release(dispex);
+    return S_OK;
+}
+
+static HRESULT function_dispex_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
+        IServiceProvider *caller)
+{
+    func_disp_t *This = impl_from_DispatchEx(dispex);
+
+    switch(id) {
+    case MSHTML_DISPID_CUSTOM_MIN: {
+        DISPPARAMS dp = {NULL};
+        unsigned i;
+        HRESULT hres;
+
+        if(params->cArgs != 2 || params->cNamedArgs) {
+            FIXME("unsupported apply arguments\n");
+            return E_FAIL;
+        }
+
+        FIXME("%p.apply(%s %s)\n", This, debugstr_variant(params->rgvarg+1), debugstr_variant(params->rgvarg));
+        if((IDispatch*)&This->obj->IDispatchEx_iface != V_DISPATCH(params->rgvarg+1)) {
+            FIXME("obj != this_arg not supported\n");
+            return E_FAIL;
+        }
+        if(V_VT(params->rgvarg) == VT_DISPATCH) {
+            hres = args_to_dp(V_DISPATCH(params->rgvarg), lcid, &dp);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        hres = function_value(&This->dispex, lcid, flags, &dp, res, ei, caller);
+
+        TRACE("function returned %08x\n", hres);
+
+        for(i = 0; i < dp.cArgs; i++)
+            VariantClear(dp.rgvarg + i);
+        heap_free(dp.rgvarg);
+        return hres;
+    }
+    case MSHTML_DISPID_CUSTOM_MIN + 1: {
+        DISPPARAMS dp = *params;
+        IDispatch *disp_this;
+        HRESULT hres;
+
+        if(!params->cArgs || params->cNamedArgs || V_VT(params->rgvarg + params->cArgs - 1) != VT_DISPATCH) {
+            FIXME("unsupported apply arguments\n");
+            return E_FAIL;
+        }
+
+        FIXME("%p.call(%s ...)\n", This, debugstr_variant(params->rgvarg + params->cArgs - 1));
+
+        hres = IDispatch_QueryInterface(V_DISPATCH(params->rgvarg + params->cArgs - 1),
+                                        tid_ids[This->info->tid], (void**)&disp_this);
+        if(FAILED(hres)) {
+            FIXME("call iface not supported\n");
+            return E_NOTIMPL;
+        }
+
+        dp.cArgs--;
+        hres = IDispatch_Invoke(disp_this, This->info->id, &IID_NULL, 0, DISPATCH_METHOD, &dp, res, ei, NULL);
+        IDispatch_Release(disp_this);
+
+        TRACE("function returned %08x\n", hres);
+        return hres;
+    }
+    }
+
+    return DISP_E_MEMBERNOTFOUND;
+}
+
 static const dispex_static_data_vtbl_t function_dispex_vtbl = {
     function_value,
-    NULL,
-    NULL,
+    function_get_dispid,
+    function_dispex_invoke,
     NULL
 };
 

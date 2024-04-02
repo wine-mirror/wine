@@ -19,6 +19,8 @@
 #ifndef __WINE_USERENV_H
 #define __WINE_USERENV_H
 
+#include "wine/winheader_enter.h"
+
 #include <wbemcli.h>
 #include <profinfo.h>
 
@@ -103,5 +105,7 @@ BOOL WINAPI UnregisterGPNotification(HANDLE);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_USERENV_H */

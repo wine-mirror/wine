@@ -36,6 +36,7 @@ static const char *dbgstr_event(int type)
         "APP_DEACTIVATED",
         "APP_QUIT_REQUESTED",
         "DISPLAYS_CHANGED",
+        "EDIT_MENU_COMMAND", /* CrossOver Hack 10912: Mac Edit menu */
         "HOTKEY_PRESS",
         "IM_SET_TEXT",
         "KEY_PRESS",
@@ -86,6 +87,8 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_KEY)
     {
+        /* CrossOver Hack 10912: Mac Edit menu */
+        event_mask |= event_mask_for_type(EDIT_MENU_COMMAND);
         event_mask |= event_mask_for_type(KEY_PRESS);
         event_mask |= event_mask_for_type(KEY_RELEASE);
         event_mask |= event_mask_for_type(KEYBOARD_CHANGED);
@@ -223,6 +226,10 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case DISPLAYS_CHANGED:
         macdrv_displays_changed(event);
+        break;
+    /* CrossOver Hack 10912: Mac Edit menu */
+    case EDIT_MENU_COMMAND:
+        macdrv_edit_menu_command(event);
         break;
     case HOTKEY_PRESS:
         macdrv_hotkey_press(event);

@@ -19,6 +19,8 @@
 #ifndef __APPCOMPAT_H
 #define __APPCOMPAT_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,5 +30,7 @@ BOOL WINAPI ApphelpCheckShellObject(REFCLSID, BOOL, ULONGLONG *);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __APPCOMPAT_H */

@@ -19,6 +19,8 @@
 #ifndef _WINUSER_
 #define _WINUSER_
 
+#include "wine/winheader_enter.h"
+
 #if !defined(_USER32_)
 #define WINUSERAPI DECLSPEC_HIDDEN
 #else
@@ -4445,5 +4447,7 @@ WINUSERAPI void WINAPI UnregisterUserApiHook(void);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINUSER_ */

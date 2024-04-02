@@ -523,6 +523,39 @@ static inline void get_transparency (HTHEME hTheme, int iPartId, int iStateId,
     }
 }
 
+/* Reset alpha values in hdc to 0xFF if the background is opaque */
+static void reset_dc_alpha_values(HTHEME htheme, HDC hdc, int part_id, int state_id,
+                                  const RECT *rect)
+{
+    static const RGBQUAD bitmap_bits = {0x0, 0x0, 0x0, 0xFF};
+    BITMAPINFO bitmap_info = {{0}};
+    RECT image_rect;
+    BOOL has_alpha;
+    HBITMAP hbmp;
+    int bg_type;
+
+    if (GetDeviceCaps(hdc, BITSPIXEL) != 32)
+        return;
+
+    if (FAILED(GetThemeEnumValue(htheme, part_id, state_id, TMT_BGTYPE, &bg_type))
+        || bg_type != BT_IMAGEFILE)
+        return;
+
+    if (FAILED(UXTHEME_LoadImage(htheme, part_id, state_id, rect, FALSE, &hbmp, &image_rect,
+                                 &has_alpha, NULL)) || has_alpha)
+        return;
+
+    bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmap_info.bmiHeader.biWidth = 1;
+    bitmap_info.bmiHeader.biHeight = 1;
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    StretchDIBits(hdc, rect->left, rect->top, abs(rect->right - rect->left),
+                  abs(rect->bottom - rect->top), 0, 0, 1, 1, &bitmap_bits, &bitmap_info,
+                  DIB_RGB_COLORS, SRCPAINT);
+}
+
 /***********************************************************************
  *      UXTHEME_DrawImageGlyph
  *
@@ -581,6 +614,11 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
 
     SelectObject(hdcSrc, oldSrc);
     DeleteDC(hdcSrc);
+
+    /* Don't transfer alpha values from the glyph when drawing opaque background */
+    if (SUCCEEDED(hr) && hasAlpha)
+        reset_dc_alpha_values(hTheme, hdc, iPartId, iStateId, pRect);
+
     return hr;
 }
 
@@ -2025,8 +2063,12 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
         if(!*pRegion)
             hr = HRESULT_FROM_WIN32(GetLastError());
     }
+    else if (bgtype == BT_NONE)
+    {
+        hr = E_UNEXPECTED;
+    }
     else {
-        FIXME("Unknown background type\n");
+        FIXME("Unknown background type %d\n", bgtype);
         /* This should never happen, and hence I don't know what to return */
         hr = E_FAIL;
     }

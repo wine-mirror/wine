@@ -2,7 +2,7 @@ EXTRADEFS = -DWINE_NO_LONG_TYPES -D_SPOOL32_
 MODULE    = winspool.drv
 UNIXLIB   = winspool.so
 IMPORTLIB = winspool
-IMPORTS   = user32 gdi32 advapi32
+IMPORTS   = user32 gdi32 advapi32 shell32 kernel32
 EXTRAINCL = $(CUPS_CFLAGS)
 EXTRALIBS = $(APPLICATIONSERVICES_LIBS)
 

@@ -36,7 +36,7 @@ static inline void *image_base(void)
     return (void *)&__ImageBase;
 #else
     extern IMAGE_NT_HEADERS __wine_spec_nt_header;
-    return (void *)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    return TRUNCCAST(void *, (__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
 #endif
 }
 

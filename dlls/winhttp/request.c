@@ -230,7 +230,7 @@ static BOOL valid_token_char( WCHAR c )
     }
 }
 
-static struct header *parse_header( const WCHAR *string )
+static struct header *parse_header( const WCHAR *string, size_t string_len )
 {
     const WCHAR *p, *q;
     struct header *header;
@@ -268,7 +268,7 @@ static struct header *parse_header( const WCHAR *string )
 
     q++; /* skip past colon */
     while (*q == ' ') q++;
-    len = lstrlenW( q );
+    len = (string + string_len) - q;
 
     if (!(header->value = malloc( (len + 1) * sizeof(WCHAR) )))
     {
@@ -399,39 +399,26 @@ DWORD process_header( struct request *request, const WCHAR *field, const WCHAR *
 DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD len, DWORD flags )
 {
     DWORD ret = ERROR_WINHTTP_INVALID_HEADER;
-    WCHAR *buffer, *p, *q;
     struct header *header;
+    const WCHAR *p, *q;
 
     if (len == ~0u) len = lstrlenW( headers );
     if (!len) return ERROR_SUCCESS;
-    if (!(buffer = malloc( (len + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-    memcpy( buffer, headers, len * sizeof(WCHAR) );
-    buffer[len] = 0;
 
-    p = buffer;
+    p = headers;
     do
     {
-        q = p;
-        while (*q)
-        {
-            if (q[0] == '\n' && q[1] == '\r')
-            {
-                q[0] = '\r';
-                q[1] = '\n';
-            }
-            if (q[0] == '\r') break;
-            q++;
-        }
-        if (!*p) break;
-        if (*q == '\r')
-        {
-            *q = 0;
-            if (q[1] == '\n')
-                q += 2; /* jump over \r\n */
-            else
-                q++; /* jump over \r */
-        }
-        if ((header = parse_header( p )))
+        const WCHAR *end;
+
+        if (p >= headers + len) break;
+
+        for (q = p; q < headers + len && *q != '\r' && *q != '\n'; ++q)
+            ;
+        end = q;
+        while (*q == '\r' || *q == '\n')
+            ++q;
+
+        if ((header = parse_header( p, end - p )))
         {
             ret = process_header( request, header->field, header->value, flags, TRUE );
             free_header( header );
@@ -439,7 +426,6 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
         p = q;
     } while (!ret);
 
-    free( buffer );
     return ret;
 }
 
@@ -2507,6 +2493,7 @@ static DWORD read_reply( struct request *request )
     for (;;)
     {
         struct header *header;
+        int lenW;
 
         buflen = MAX_REPLY_LEN;
         if (read_line( request, buffer, &buflen )) return ERROR_SUCCESS;
@@ -2524,9 +2511,9 @@ static DWORD read_reply( struct request *request )
             memcpy( raw_headers + offset, L"\r\n", sizeof(L"\r\n") );
             break;
         }
-        MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
+        lenW = MultiByteToWideChar( CP_ACP, 0, buffer, buflen, raw_headers + offset, buflen );
 
-        if (!(header = parse_header( raw_headers + offset ))) break;
+        if (!(header = parse_header( raw_headers + offset, lenW - 1 ))) break;
         if ((ret = process_header( request, header->field, header->value, WINHTTP_ADDREQ_FLAG_ADD, FALSE )))
         {
             free_header( header );

@@ -326,31 +326,31 @@ static void STDMETHODCALLTYPE dxgi_device_Trim(IWineDXGIDevice *iface)
 
 /* IWineDXGIDevice methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
-        struct wined3d_texture *wined3d_texture, DXGI_USAGE usage,
-        const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
+static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *iface,
+        struct wined3d_resource *wined3d_resource, DXGI_USAGE usage,
+        const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, BOOL needs_surface, void **resource)
 {
-    struct dxgi_surface *object;
+    struct dxgi_resource *object;
     HRESULT hr;
 
-    TRACE("iface %p, wined3d_texture %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
-            iface, wined3d_texture, usage, shared_resource, outer, surface);
+    TRACE("iface %p, wined3d_resource %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
+            iface, wined3d_resource, usage, shared_resource, outer, resource);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
     {
-        ERR("Failed to allocate DXGI surface object memory.\n");
+        ERR("Failed to allocate DXGI resource object memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, wined3d_texture)))
+    if (FAILED(hr = dxgi_resource_init(object, (IDXGIDevice *)iface, outer, needs_surface, wined3d_resource)))
     {
-        WARN("Failed to initialize surface, hr %#lx.\n", hr);
+        WARN("Failed to initialize resource, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
 
-    TRACE("Created IDXGISurface %p.\n", object);
-    *surface = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGISurface1_iface;
+    TRACE("Created resource %p.\n", object);
+    *resource = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGIResource_iface;
 
     return S_OK;
 }
@@ -382,7 +382,7 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     /* IDXGIDevice3 methods */
     dxgi_device_Trim,
     /* IWineDXGIDevice methods */
-    dxgi_device_create_surface,
+    dxgi_device_create_resource,
 };
 
 static inline struct dxgi_device *impl_from_IWineDXGISwapChainFactory(IWineDXGISwapChainFactory *iface)

@@ -3,7 +3,6 @@ UNIXLIB   = wldap32.so
 IMPORTLIB = wldap32
 IMPORTS   = user32
 EXTRAINCL = $(LDAP_CFLAGS)
-EXTRALIBS = $(LDAP_LIBS)
 
 C_SRCS = \
 	add.c \

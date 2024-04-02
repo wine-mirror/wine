@@ -152,7 +152,7 @@ static UINT WINAPI d3d8_GetAdapterModeCount(IDirect3D8 *iface, UINT adapter)
 
     wined3d_mutex_lock();
     count = wined3d_output_get_mode_count(d3d8->wined3d_outputs[output_idx],
-            WINED3DFMT_UNKNOWN, WINED3D_SCANLINE_ORDERING_UNKNOWN);
+            WINED3DFMT_UNKNOWN, WINED3D_SCANLINE_ORDERING_UNKNOWN, true);
     wined3d_mutex_unlock();
 
     return count;
@@ -174,7 +174,7 @@ static HRESULT WINAPI d3d8_EnumAdapterModes(IDirect3D8 *iface, UINT adapter, UIN
 
     wined3d_mutex_lock();
     hr = wined3d_output_get_mode(d3d8->wined3d_outputs[output_idx], WINED3DFMT_UNKNOWN,
-            WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode);
+            WINED3D_SCANLINE_ORDERING_UNKNOWN, mode_idx, &wined3d_mode, true);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

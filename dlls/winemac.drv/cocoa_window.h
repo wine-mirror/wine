@@ -19,6 +19,7 @@
  */
 
 #import <AppKit/AppKit.h>
+#import "macdrv_cocoa.h"
 
 
 @class WineEventQueue;
@@ -41,10 +42,10 @@
     WineWindow* latentParentWindow;
     NSMutableArray* latentChildWindows;
 
-    void* hwnd;
+    void* WIN32PTR hwnd;
     WineEventQueue* queue;
 
-    void* surface;
+    void* WIN32PTR surface;
     pthread_mutex_t* surface_mutex;
 
     CGDirectDisplayID _lastDisplayID;
@@ -53,6 +54,8 @@
     NSRect wineFrame;
     NSRect roundedWineFrame;
 
+    NSBezierPath* shape;
+    NSData* shapeData;
     BOOL shapeChangedSinceLastDraw;
 
     BOOL colorKeyed;
@@ -65,7 +68,7 @@
     NSRect frameAtResizeStart;
     BOOL resizingFromLeft, resizingFromTop;
 
-    void* imeData;
+    void* WIN32PTR imeData;
     BOOL commandDone;
 
     NSSize savedContentMinSize;

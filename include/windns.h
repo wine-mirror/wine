@@ -21,6 +21,8 @@
 #ifndef __WINE_WINDNS_H
 #define __WINE_WINDNS_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -802,5 +804,7 @@ BOOL WINAPI DnsGetCacheDataTable(PDNS_CACHE_ENTRY*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

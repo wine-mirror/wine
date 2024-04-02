@@ -19,6 +19,8 @@
 #ifndef _SYNCHAPI_H
 #define _SYNCHAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,5 +32,7 @@ void WINAPI WakeByAddressSingle(void*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _SYNCHAPI_H */

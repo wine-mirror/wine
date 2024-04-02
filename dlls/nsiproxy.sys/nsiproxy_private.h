@@ -17,9 +17,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+typedef UINT icmp_handle;
+
+struct icmp_cancel_listen_params
+{
+    icmp_handle handle;
+};
+
+struct icmp_close_params
+{
+    icmp_handle handle;
+};
+
 struct icmp_listen_params
 {
-    HANDLE handle;
+    icmp_handle handle;
     void *reply;
     ULONGLONG user_reply_ptr;
     unsigned int bits, reply_len;
@@ -32,7 +45,7 @@ struct icmp_send_echo_params
     void *request, *reply;
     DWORD request_size, reply_len;
     BYTE bits, ttl, tos;
-    HANDLE handle;
+    icmp_handle *handle;
 };
 
 /* output for IOCTL_NSIPROXY_WINE_ICMP_ECHO - cf. ICMP_ECHO_REPLY */

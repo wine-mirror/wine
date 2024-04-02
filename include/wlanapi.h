@@ -19,6 +19,8 @@
 #ifndef _WLAN_WLANAPI_H
 #define _WLAN_WLANAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <windot11.h>
 
 typedef enum _WLAN_INTERFACE_STATE
@@ -253,5 +255,7 @@ DWORD WINAPI WlanScan(HANDLE, const GUID *, const DOT11_SSID *, const WLAN_RAW_D
 DWORD WINAPI WlanRegisterNotification(HANDLE, DWORD, BOOL, WLAN_NOTIFICATION_CALLBACK, void *, void *, DWORD *);
 DWORD WINAPI WlanGetAvailableNetworkList(HANDLE, const GUID *, DWORD, void *, WLAN_AVAILABLE_NETWORK_LIST **);
 DWORD WINAPI WlanQueryInterface(HANDLE, const GUID *, WLAN_INTF_OPCODE, void *, DWORD *, void **, WLAN_OPCODE_VALUE_TYPE *);
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WLAN_WLANAPI_H */

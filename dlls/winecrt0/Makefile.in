@@ -2,6 +2,7 @@ EXTRADEFS = -DWINE_NO_LONG_TYPES
 STATICLIB = libwinecrt0.a
 
 C_SRCS = \
+	32on64_ldt.c \
 	crt_dllmain.c \
 	crt_fltused.c \
 	debug.c \

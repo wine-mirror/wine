@@ -22,6 +22,8 @@
 #ifndef __WINE_D3DX9MESH_H
 #define __WINE_D3DX9MESH_H
 
+#include "wine/winheader_enter.h"
+
 DEFINE_GUID(IID_ID3DXBaseMesh, 0x7ed943dd, 0x52e8, 0x40b5, 0xa8, 0xd8, 0x76, 0x68, 0x5c, 0x40, 0x63, 0x30);
 DEFINE_GUID(IID_ID3DXMesh,     0x4020e5c2, 0x1403, 0x4929, 0x88, 0x3f, 0xe2, 0xe8, 0x49, 0xfa, 0xc1, 0x95);
 DEFINE_GUID(IID_ID3DXPMesh,    0x8875769a, 0xd579, 0x4088, 0xaa, 0xeb, 0x53, 0x4d, 0x1a, 0xd8, 0x4e, 0x96);
@@ -1054,5 +1056,7 @@ DEFINE_GUID(DXFILEOBJ_CompressedAnimationSet,   0x7f9b00b3, 0xf125, 0x4890, 0x87
             DWORD nAttributeMispredicts; \
             array DWORD attributeMispredicts[nAttributeMispredicts]; \
         } "
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3DX9MESH_H */

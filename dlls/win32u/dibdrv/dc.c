@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 
 #include "ntgdi_private.h"
@@ -32,7 +28,18 @@
 #include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
+#ifdef __WINESRC__
+#include "wine/exception.h"
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
+
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 static const struct osmesa_funcs *osmesa_funcs;
 
@@ -227,17 +234,35 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits );
     init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits );
 
+#ifdef __i386_on_x86_64__
+/* BKS HACK */
+    if (IsBadReadPtr(src_bits, 1))
+    {
+        WARN( "invalid bits pointer %p\n", src_bits );
+        ret = FALSE;
+    }
+    else
+    {
+        dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect, FALSE );
+        ret = TRUE;
+    }
+#else
     __TRY
     {
         dst_dib.funcs->convert_to( &dst_dib, &src_dib, &src->visrect, FALSE );
         ret = TRUE;
     }
+#ifdef __WINESRC__
+    __EXCEPT_PAGE_FAULT
+#else
     __EXCEPT
+#endif
     {
         WARN( "invalid bits pointer %p\n", src_bits );
         ret = FALSE;
     }
     __ENDTRY
+#endif
 
     if(!ret) return ERROR_BAD_FORMAT;
 
@@ -348,7 +373,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
     free_pattern_brush( &pdev->brush );
     free_pattern_brush( &pdev->pen_brush );
     release_cached_font( pdev->font );
-    free( pdev );
+    heapfree( pdev );
     return TRUE;
 }
 
@@ -516,11 +541,16 @@ static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		dibdrv_wglGetProcAddress
  */
-static PROC WINAPI dibdrv_wglGetProcAddress( const char *proc )
+static WINEGLDEF(PROC) WINAPI dibdrv_wglGetProcAddress( const char *proc )
 {
     if (!strncmp( proc, "wgl", 3 )) return NULL;
     if (!osmesa_funcs) return NULL;
+#ifdef SONAME_LIBOSMESA
+/* BKS HACK */
     return osmesa_funcs->get_proc_address( proc );
+#else
+    return NULL;
+#endif
 }
 
 /***********************************************************************
@@ -874,7 +904,7 @@ static BOOL CDECL windrv_CreateDC( PHYSDEV *dev, LPCWSTR device, LPCWSTR output,
 
     if (!dib_driver.pCreateDC( dev, NULL, NULL, NULL ))
     {
-        free( physdev );
+        heapfree( physdev );
         return FALSE;
     }
     physdev->dibdrv = get_dibdrv_pdev( *dev );
@@ -887,7 +917,7 @@ static BOOL CDECL windrv_DeleteDC( PHYSDEV dev )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
 
     window_surface_release( physdev->surface );
-    free( physdev );
+    heapfree( physdev );
     return TRUE;
 }
 

@@ -20,6 +20,8 @@
 #ifndef __WINE_SYS_UTIME_H
 #define __WINE_SYS_UTIME_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #include <pshpack8.h>
@@ -74,5 +76,7 @@ static inline int _wutime(const wchar_t *s, struct _utimbuf *buf) { return _wuti
 static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_SYS_UTIME_H */

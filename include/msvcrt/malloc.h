@@ -20,6 +20,8 @@
 #ifndef __WINE_MALLOC_H
 #define __WINE_MALLOC_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 /* heap function constants */
@@ -85,5 +87,7 @@ _ACRTIMP int    __cdecl _set_sbh_threshold(size_t size);
 # define _alloca(x) __builtin_alloca((x))
 # define alloca(x) __builtin_alloca((x))
 # endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_MALLOC_H */

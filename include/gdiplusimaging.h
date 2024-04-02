@@ -19,6 +19,8 @@
 #ifndef _GDIPLUSIMAGING_H
 #define _GDIPLUSIMAGING_H
 
+#include "wine/winheader_enter.h"
+
 DEFINE_GUID(ImageFormatUndefined, 0xb96b3ca9, 0x728, 0x11d3, 0x9d, 0x7b, 0, 0, 0xf8, 0x1e, 0xf3, 0x2e);
 DEFINE_GUID(ImageFormatMemoryBMP, 0xb96b3caa, 0x728, 0x11d3, 0x9d, 0x7b, 0, 0, 0xf8, 0x1e, 0xf3, 0x2e);
 DEFINE_GUID(ImageFormatBMP,       0xb96b3cab, 0x728, 0x11d3, 0x9d, 0x7b, 0, 0, 0xf8, 0x1e, 0xf3, 0x2e);
@@ -451,5 +453,7 @@ typedef struct PropertyItem
 #define PropertyTagGpsDestBear       0x0018
 #define PropertyTagGpsDestDistRef    0x0019
 #define PropertyTagGpsDestDist       0x001A
+
+#include "wine/winheader_exit.h"
 
 #endif /* _GDIPLUSIMAGING_H */

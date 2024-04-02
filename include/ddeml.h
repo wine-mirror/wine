@@ -22,6 +22,8 @@
 #ifndef __WINE_DDEML_H
 #define __WINE_DDEML_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -401,5 +403,7 @@ WINUSERAPI BOOL      WINAPI DdeUninitialize(DWORD);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_DDEML_H */

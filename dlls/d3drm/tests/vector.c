@@ -236,7 +236,7 @@ static void ColorTest(void)
     blue=0.55f;
     expected_color=0xffcc4c8c;
     got_color=D3DRMCreateColorRGB(red,green,blue);
-    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+    ok((expected_color==got_color),"Expected color=%lx, Got color=%lx\n",expected_color,got_color);
 
 /*___________D3DRMCreateColorRGBA________________________*/
     red=0.1f;
@@ -245,7 +245,7 @@ static void ColorTest(void)
     alpha=0.58f;
     expected_color=0x931966b2;
     got_color=D3DRMCreateColorRGBA(red,green,blue,alpha);
-    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+    ok((expected_color==got_color),"Expected color=%lx, Got color=%lx\n",expected_color,got_color);
 
 /* if a component is <0 then, then one considers this component as 0. The following test proves this fact (test only with the red component). */
     red=-0.88f;
@@ -254,7 +254,7 @@ static void ColorTest(void)
     alpha=0.41f;
     expected_color=0x68006699;
     got_color=D3DRMCreateColorRGBA(red,green,blue,alpha);
-    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+    ok((expected_color==got_color),"Expected color=%lx, Got color=%lx\n",expected_color,got_color);
 
 /* if a component is >1 then, then one considers this component as 1. The following test proves this fact (test only with the red component). */
     red=2.37f;
@@ -263,7 +263,7 @@ static void ColorTest(void)
     alpha=0.41f;
     expected_color=0x68ff6699;
     got_color=D3DRMCreateColorRGBA(red,green,blue,alpha);
-    ok((expected_color==got_color),"Expected color=%x, Got color=%x\n",expected_color,got_color);
+    ok((expected_color==got_color),"Expected color=%lx, Got color=%lx\n",expected_color,got_color);
 
 /*___________D3DRMColorGetAlpha_________________________*/
     color=0x0e4921bf;

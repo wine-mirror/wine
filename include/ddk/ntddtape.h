@@ -22,6 +22,8 @@
 #ifndef _NTDDTAPE_H_
 #define _NTDDTAPE_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,5 +48,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _NTDDTAPE_H_ */

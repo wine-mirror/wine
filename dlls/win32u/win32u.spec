@@ -1,4 +1,4 @@
-@ extern -arch=win32 Wow64Transition __wine_syscall_dispatcher
+#@ extern -arch=win32 Wow64Transition __wine_syscall_dispatcher
 @ stub NtBindCompositionSurface
 @ stub NtCloseCompositionInputSink
 @ stub NtCompositionInputThread
@@ -107,8 +107,8 @@
 @ stdcall NtGdiAbortDoc(long)
 @ stdcall NtGdiAbortPath(long)
 @ stub NtGdiAddEmbFontToDC
-@ stdcall -syscall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
-@ stdcall -syscall NtGdiAddFontResourceW(wstr long long long long ptr)
+@ stdcall NtGdiAddFontMemResourceEx(ptr long ptr long ptr)
+@ stdcall NtGdiAddFontResourceW(wstr long long long long ptr)
 @ stub NtGdiAddInitialFonts
 @ stub NtGdiAddRemoteFontToDC
 @ stub NtGdiAddRemoteMMInstanceToDC
@@ -134,36 +134,36 @@
 @ stub NtGdiClearBrushAttributes
 @ stdcall NtGdiCloseFigure(long)
 @ stub NtGdiColorCorrectPalette
-@ stdcall -syscall NtGdiCombineRgn(long long long long)
+@ stdcall NtGdiCombineRgn(long long long long)
 @ stub NtGdiCombineTransform
 @ stdcall NtGdiComputeXformCoefficients(long)
 @ stub NtGdiConfigureOPMProtectedOutput
 @ stub NtGdiConvertMetafileRect
-@ stdcall -syscall NtGdiCreateBitmap(long long long long ptr)
+@ stdcall NtGdiCreateBitmap(long long long long ptr)
 @ stub NtGdiCreateBitmapFromDxSurface
 @ stub NtGdiCreateBitmapFromDxSurface2
-@ stdcall -syscall NtGdiCreateClientObj(long)
+@ stdcall NtGdiCreateClientObj(long)
 @ stub NtGdiCreateColorSpace
 @ stub NtGdiCreateColorTransform
 @ stdcall NtGdiCreateCompatibleBitmap(long long long)
 @ stdcall NtGdiCreateCompatibleDC(long)
-@ stdcall -syscall NtGdiCreateDIBBrush(ptr long long long long ptr)
-@ stdcall -syscall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
+@ stdcall NtGdiCreateDIBBrush(ptr long long long long ptr)
+@ stdcall NtGdiCreateDIBSection(long long long ptr long long long long ptr)
 @ stdcall NtGdiCreateDIBitmapInternal(long long long long ptr ptr long long long long long)
-@ stdcall -syscall NtGdiCreateEllipticRgn(long long long long)
-@ stdcall -syscall NtGdiCreateHalftonePalette(long)
-@ stdcall -syscall NtGdiCreateHatchBrushInternal(long long long)
+@ stdcall NtGdiCreateEllipticRgn(long long long long)
+@ stdcall NtGdiCreateHalftonePalette(long)
+@ stdcall NtGdiCreateHatchBrushInternal(long long long)
 @ stdcall NtGdiCreateMetafileDC(long)
 @ stub NtGdiCreateOPMProtectedOutput
 @ stub NtGdiCreateOPMProtectedOutputs
-@ stdcall -syscall NtGdiCreatePaletteInternal(ptr long)
-@ stdcall -syscall NtGdiCreatePatternBrushInternal(long long long)
-@ stdcall -syscall NtGdiCreatePen(long long long long)
-@ stdcall -syscall NtGdiCreateRectRgn(long long long long)
-@ stdcall -syscall NtGdiCreateRoundRectRgn(long long long long long long)
+@ stdcall NtGdiCreatePaletteInternal(ptr long)
+@ stdcall NtGdiCreatePatternBrushInternal(long long long)
+@ stdcall NtGdiCreatePen(long long long long)
+@ stdcall NtGdiCreateRectRgn(long long long long)
+@ stdcall NtGdiCreateRoundRectRgn(long long long long long long)
 @ stub NtGdiCreateServerMetaFile
 @ stub NtGdiCreateSessionMappedDIBSection
-@ stdcall -syscall NtGdiCreateSolidBrush(long long)
+@ stdcall NtGdiCreateSolidBrush(long long)
 @ stub NtGdiDDCCIGetCapabilitiesString
 @ stub NtGdiDDCCIGetCapabilitiesStringLength
 @ stub NtGdiDDCCIGetTimingReport
@@ -187,14 +187,14 @@
 @ stub NtGdiDdDDICheckOcclusion
 @ stub NtGdiDdDDICheckSharedResourceAccess
 @ stdcall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
-@ stdcall -syscall NtGdiDdDDICloseAdapter(ptr)
+@ stdcall NtGdiDdDDICloseAdapter(ptr)
 @ stub NtGdiDdDDIConfigureSharedResource
 @ stub NtGdiDdDDICreateAllocation
 @ stub NtGdiDdDDICreateBundleObject
 @ stub NtGdiDdDDICreateContext
 @ stub NtGdiDdDDICreateContextVirtual
 @ stdcall NtGdiDdDDICreateDCFromMemory(ptr)
-@ stdcall -syscall NtGdiDdDDICreateDevice(ptr)
+@ stdcall NtGdiDdDDICreateDevice(ptr)
 @ stub NtGdiDdDDICreateHwContext
 @ stub NtGdiDdDDICreateHwQueue
 @ stub NtGdiDdDDICreateKeyedMutex
@@ -268,9 +268,9 @@
 @ stub NtGdiDdDDINetDispStartMiracastDisplayDevice
 @ stub NtGdiDdDDINetDispStopMiracastDisplayDevice
 @ stub NtGdiDdDDIOfferAllocations
-@ stdcall -syscall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
-@ stdcall -syscall NtGdiDdDDIOpenAdapterFromHdc(ptr)
-@ stdcall -syscall NtGdiDdDDIOpenAdapterFromLuid(ptr)
+@ stdcall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
+@ stdcall NtGdiDdDDIOpenAdapterFromHdc(ptr)
+@ stdcall NtGdiDdDDIOpenAdapterFromLuid(ptr)
 @ stub NtGdiDdDDIOpenBundleObjectNtHandleFromName
 @ stub NtGdiDdDDIOpenKeyedMutex
 @ stub NtGdiDdDDIOpenKeyedMutex2
@@ -305,7 +305,7 @@
 @ stub NtGdiDdDDIQueryRemoteVidPnSourceFromGdiDisplayName
 @ stub NtGdiDdDDIQueryResourceInfo
 @ stub NtGdiDdDDIQueryResourceInfoFromNtHandle
-@ stdcall -syscall NtGdiDdDDIQueryStatistics(ptr)
+@ stdcall NtGdiDdDDIQueryStatistics(ptr)
 @ stub NtGdiDdDDIQueryVidPnExclusiveOwnership
 @ stub NtGdiDdDDIQueryVideoMemoryInfo
 @ stub NtGdiDdDDIReclaimAllocations
@@ -330,7 +330,7 @@
 @ stub NtGdiDdDDISetProcessDeviceRemovalSupport
 @ stub NtGdiDdDDISetProcessSchedulingPriorityBand
 @ stub NtGdiDdDDISetProcessSchedulingPriorityClass
-@ stdcall -syscall NtGdiDdDDISetQueuedLimit(ptr)
+@ stdcall NtGdiDdDDISetQueuedLimit(ptr)
 @ stub NtGdiDdDDISetStablePowerState
 @ stub NtGdiDdDDISetStereoEnabled
 @ stub NtGdiDdDDISetSyncRefreshCountWaitTarget
@@ -364,17 +364,17 @@
 @ stub NtGdiDdDestroyFullscreenSprite
 @ stub NtGdiDdNotifyFullscreenSpriteUpdate
 @ stub NtGdiDdQueryVisRgnUniqueness
-@ stdcall -syscall NtGdiDeleteClientObj(long)
+@ stdcall NtGdiDeleteClientObj(long)
 @ stub NtGdiDeleteColorSpace
 @ stub NtGdiDeleteColorTransform
 @ stdcall NtGdiDeleteObjectApp(long )
-@ stdcall -syscall NtGdiDescribePixelFormat(long long long ptr)
+@ stdcall NtGdiDescribePixelFormat(long long long ptr)
 @ stub NtGdiDestroyOPMProtectedOutput
 @ stub NtGdiDestroyPhysicalMonitor
 @ stub NtGdiDoBanding
 @ stdcall NtGdiDoPalette(long long long ptr long long)
 @ stub NtGdiDrawEscape
-@ stdcall -syscall NtGdiDrawStream(long long ptr)
+@ stdcall NtGdiDrawStream(long long ptr)
 @ stub NtGdiDwmCreatedBitmapRemotingOutput
 @ stdcall NtGdiEllipse(long long long long long)
 @ stub NtGdiEnableEudc
@@ -415,14 +415,14 @@
 @ stub NtGdiEnsureDpiDepDefaultGuiFontForPlateau
 @ stdcall NtGdiEnumFonts(long long long long wstr long ptr ptr)
 @ stub NtGdiEnumObjects
-@ stdcall -syscall NtGdiEqualRgn(long long)
+@ stdcall NtGdiEqualRgn(long long)
 @ stub NtGdiEudcLoadUnloadLink
 @ stdcall NtGdiExcludeClipRect(long long long long long)
-@ stdcall -syscall NtGdiExtCreatePen(long long long long long long long ptr long long long)
-@ stdcall -syscall NtGdiExtCreateRegion(ptr long ptr)
+@ stdcall NtGdiExtCreatePen(long long long long long long long ptr long long long)
+@ stdcall NtGdiExtCreateRegion(ptr long ptr)
 @ stdcall NtGdiExtEscape(long wstr long long long ptr long ptr)
 @ stdcall NtGdiExtFloodFill(long long long long long)
-@ stdcall -syscall NtGdiExtGetObjectW(long long ptr)
+@ stdcall NtGdiExtGetObjectW(long long ptr)
 @ stdcall NtGdiExtSelectClipRgn(long long long)
 @ stdcall NtGdiExtTextOutW(long long long long ptr ptr long ptr long)
 @ stub NtGdiFONTOBJ_cGetAllGlyphHandles
@@ -435,8 +435,8 @@
 @ stub NtGdiFONTOBJ_vGetInfo
 @ stdcall NtGdiFillPath(long)
 @ stdcall NtGdiFillRgn(long long long)
-@ stdcall -syscall NtGdiFlattenPath(long)
-@ stdcall -syscall NtGdiFlush()
+@ stdcall NtGdiFlattenPath(long)
+@ stdcall NtGdiFlush()
 @ stdcall NtGdiFontIsLinked(long)
 @ stub NtGdiForceUFIMapping
 @ stdcall NtGdiFrameRgn(long long long long long)
@@ -444,8 +444,8 @@
 @ stdcall NtGdiGetAndSetDCDword(long long long ptr)
 @ stdcall NtGdiGetAppClipBox(long ptr)
 @ stub NtGdiGetAppliedDeviceGammaRamp
-@ stdcall -syscall NtGdiGetBitmapBits(long long ptr)
-@ stdcall -syscall NtGdiGetBitmapDimension(long ptr)
+@ stdcall NtGdiGetBitmapBits(long long ptr)
+@ stdcall NtGdiGetBitmapDimension(long ptr)
 @ stub NtGdiGetBitmapDpiScaleValue
 @ stdcall NtGdiGetBoundsRect(long ptr long)
 @ stub NtGdiGetCOPPCompatibleOPMInformation
@@ -458,13 +458,13 @@
 @ stdcall NtGdiGetCharWidthInfo(long ptr)
 @ stdcall NtGdiGetCharWidthW(long long long ptr long ptr)
 @ stub NtGdiGetCharacterPlacementW
-@ stdcall -syscall NtGdiGetColorAdjustment(long ptr)
+@ stdcall NtGdiGetColorAdjustment(long ptr)
 @ stub NtGdiGetColorSpaceforBitmap
 @ stub NtGdiGetCurrentDpiInfo
 @ stub NtGdiGetDCDpiScaleValue
-@ stdcall -syscall NtGdiGetDCDword(long long ptr)
-@ stdcall -syscall NtGdiGetDCObject(long long)
-@ stdcall -syscall NtGdiGetDCPoint(long long ptr)
+@ stdcall NtGdiGetDCDword(long long ptr)
+@ stdcall NtGdiGetDCObject(long long)
+@ stdcall NtGdiGetDCPoint(long long ptr)
 @ stub NtGdiGetDCforBitmap
 @ stdcall NtGdiGetDIBitsInternal(long long long long ptr ptr long long long)
 @ stdcall NtGdiGetDeviceCaps(long long)
@@ -478,8 +478,8 @@
 @ stub NtGdiGetEntry
 @ stub NtGdiGetEudcTimeStampEx
 @ stdcall NtGdiGetFontData(long long long ptr long)
-@ stdcall -syscall NtGdiGetFontFileData(long long ptr ptr long)
-@ stdcall -syscall NtGdiGetFontFileInfo(long long ptr long ptr)
+@ stdcall NtGdiGetFontFileData(long long ptr ptr long)
+@ stdcall NtGdiGetFontFileInfo(long long ptr long ptr)
 @ stub NtGdiGetFontResourceInfoInternalW
 @ stdcall NtGdiGetFontUnicodeRanges(long ptr)
 @ stub NtGdiGetGammaRampCapability
@@ -491,13 +491,13 @@
 @ stub NtGdiGetMiterLimit
 @ stub NtGdiGetMonitorID
 @ stdcall NtGdiGetNearestColor(long long)
-@ stdcall -syscall NtGdiGetNearestPaletteIndex(long long)
+@ stdcall NtGdiGetNearestPaletteIndex(long long)
 @ stub NtGdiGetNumberOfPhysicalMonitors
 @ stub NtGdiGetOPMInformation
 @ stub NtGdiGetOPMRandomNumber
 @ stub NtGdiGetObjectBitmapHandle
 @ stdcall NtGdiGetOutlineTextMetricsInternalW(long long ptr long)
-@ stdcall -syscall NtGdiGetPath(long ptr ptr long)
+@ stdcall NtGdiGetPath(long ptr ptr long)
 @ stub NtGdiGetPerBandInfo
 @ stub NtGdiGetPhysicalMonitorDescription
 @ stub NtGdiGetPhysicalMonitors
@@ -507,20 +507,20 @@
 @ stdcall NtGdiGetRandomRgn(long long long)
 @ stdcall NtGdiGetRasterizerCaps(ptr long)
 @ stdcall NtGdiGetRealizationInfo(long ptr)
-@ stdcall -syscall NtGdiGetRegionData(long long ptr)
-@ stdcall -syscall NtGdiGetRgnBox(long ptr)
+@ stdcall NtGdiGetRegionData(long long ptr)
+@ stdcall NtGdiGetRgnBox(long ptr)
 @ stub NtGdiGetServerMetaFileBits
-@ stdcall -syscall NtGdiGetSpoolMessage(ptr long ptr long)
+@ stdcall NtGdiGetSpoolMessage(ptr long ptr long)
 @ stub NtGdiGetStats
 @ stub NtGdiGetStringBitmapW
 @ stub NtGdiGetSuggestedOPMProtectedOutputArraySize
-@ stdcall -syscall NtGdiGetSystemPaletteUse(long)
+@ stdcall NtGdiGetSystemPaletteUse(long)
 @ stdcall NtGdiGetTextCharsetInfo(long ptr long)
 @ stub NtGdiGetTextExtent
 @ stdcall NtGdiGetTextExtentExW(long wstr long long ptr ptr ptr long)
 @ stdcall NtGdiGetTextFaceW(long long ptr long)
 @ stdcall NtGdiGetTextMetricsW(long ptr long)
-@ stdcall -syscall NtGdiGetTransform(long long ptr)
+@ stdcall NtGdiGetTransform(long long ptr)
 @ stub NtGdiGetUFI
 @ stub NtGdiGetUFIPathname
 @ stub NtGdiGetWidthTable
@@ -529,10 +529,10 @@
 @ stub NtGdiHLSurfSetInformation
 @ stub NtGdiHT_Get8BPPFormatPalette
 @ stub NtGdiHT_Get8BPPMaskPalette
-@ stdcall -syscall NtGdiHfontCreate(ptr long long long ptr)
+@ stdcall NtGdiHfontCreate(ptr long long long ptr)
 @ stub NtGdiIcmBrushInfo
 @ stub NtGdiInit
-@ stdcall -syscall NtGdiInitSpool()
+@ stdcall NtGdiInitSpool()
 @ stdcall NtGdiIntersectClipRect(long long long long long)
 @ stdcall NtGdiInvertRgn(long long)
 @ stdcall NtGdiLineTo(long long long)
@@ -546,7 +546,7 @@
 @ stub NtGdiMonoBitmap
 @ stdcall NtGdiMoveTo(long long long ptr)
 @ stdcall NtGdiOffsetClipRgn(long long long)
-@ stdcall -syscall NtGdiOffsetRgn(long long long)
+@ stdcall NtGdiOffsetRgn(long long long)
 @ stdcall NtGdiOpenDCW(ptr ptr ptr long long ptr ptr ptr)
 @ stub NtGdiPATHOBJ_bEnum
 @ stub NtGdiPATHOBJ_bEnumClipLines
@@ -554,21 +554,21 @@
 @ stub NtGdiPATHOBJ_vEnumStartClipLines
 @ stub NtGdiPATHOBJ_vGetBounds
 @ stdcall NtGdiPatBlt(long long long long long long)
-@ stdcall -syscall NtGdiPathToRegion(long)
+@ stdcall NtGdiPathToRegion(long)
 @ stdcall NtGdiPlgBlt(long ptr long long long long long long long long long)
 @ stdcall NtGdiPolyDraw(long ptr ptr long)
 @ stub NtGdiPolyPatBlt
 @ stdcall NtGdiPolyPolyDraw(long ptr ptr long long)
 @ stub NtGdiPolyTextOutW
-@ stdcall -syscall NtGdiPtInRegion(long long long)
+@ stdcall NtGdiPtInRegion(long long long)
 @ stdcall NtGdiPtVisible(long long long)
 @ stub NtGdiQueryFontAssocInfo
 @ stub NtGdiQueryFonts
-@ stdcall -syscall NtGdiRectInRegion(long ptr)
+@ stdcall NtGdiRectInRegion(long ptr)
 @ stdcall NtGdiRectVisible(long ptr)
 @ stdcall NtGdiRectangle(long long long long long)
-@ stdcall -syscall NtGdiRemoveFontMemResourceEx(long)
-@ stdcall -syscall NtGdiRemoveFontResourceW(wstr long long long long ptr)
+@ stdcall NtGdiRemoveFontMemResourceEx(long)
+@ stdcall NtGdiRemoveFontResourceW(wstr long long long long ptr)
 @ stub NtGdiRemoveMergeFont
 @ stdcall NtGdiResetDC(long ptr ptr ptr ptr)
 @ stdcall NtGdiResizePalette(long long)
@@ -579,7 +579,7 @@
 @ stub NtGdiSTROBJ_bGetAdvanceWidths
 @ stub NtGdiSTROBJ_dwGetCodePage
 @ stub NtGdiSTROBJ_vEnumStart
-@ stdcall -syscall NtGdiSaveDC(long)
+@ stdcall NtGdiSaveDC(long)
 @ stub NtGdiScaleRgn
 @ stub NtGdiScaleValues
 @ stdcall NtGdiScaleViewportExtEx(long long long long long ptr)
@@ -590,12 +590,12 @@
 @ stdcall NtGdiSelectFont(long long)
 @ stdcall NtGdiSelectPen(long long)
 @ stub NtGdiSetBitmapAttributes
-@ stdcall -syscall NtGdiSetBitmapBits(long long ptr)
-@ stdcall -syscall NtGdiSetBitmapDimension(long long long ptr)
+@ stdcall NtGdiSetBitmapBits(long long ptr)
+@ stdcall NtGdiSetBitmapDimension(long long long ptr)
 @ stdcall NtGdiSetBoundsRect(long ptr long)
 @ stub NtGdiSetBrushAttributes
-@ stdcall -syscall NtGdiSetBrushOrg(long long long ptr)
-@ stdcall -syscall NtGdiSetColorAdjustment(long ptr)
+@ stdcall NtGdiSetBrushOrg(long long long ptr)
+@ stdcall NtGdiSetColorAdjustment(long ptr)
 @ stub NtGdiSetColorSpace
 @ stdcall NtGdiSetDIBitsToDeviceInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiSetDeviceGammaRamp(ptr ptr)
@@ -604,28 +604,28 @@
 @ stub NtGdiSetIcmMode
 @ stdcall NtGdiSetLayout(long long long)
 @ stub NtGdiSetLinkedUFIs
-@ stdcall -syscall NtGdiSetMagicColors(long long long)
-@ stdcall -syscall NtGdiSetMetaRgn(long)
+@ stdcall NtGdiSetMagicColors(long long long)
+@ stdcall NtGdiSetMetaRgn(long)
 @ stub NtGdiSetMiterLimit
 @ stub NtGdiSetOPMSigningKeyAndSequenceNumbers
 @ stub NtGdiSetPUMPDOBJ
 @ stdcall NtGdiSetPixel(long long long long)
-@ stdcall -syscall NtGdiSetPixelFormat(long long)
+@ stdcall NtGdiSetPixelFormat(long long)
 @ stub NtGdiSetPrivateDeviceGammaRamp
-@ stdcall -syscall NtGdiSetRectRgn(long long long long long)
+@ stdcall NtGdiSetRectRgn(long long long long long)
 @ stub NtGdiSetSizeDevice
 @ stdcall NtGdiSetSystemPaletteUse(long long)
-@ stdcall -syscall NtGdiSetTextJustification(long long long)
+@ stdcall NtGdiSetTextJustification(long long long)
 @ stub NtGdiSetUMPDSandboxState
-@ stdcall -syscall NtGdiSetVirtualResolution(long long long long long)
+@ stdcall NtGdiSetVirtualResolution(long long long long long)
 @ stdcall NtGdiStartDoc(long ptr ptr long)
 @ stdcall NtGdiStartPage(long)
 @ stdcall NtGdiStretchBlt(long long long long long long long long long long long long)
 @ stdcall NtGdiStretchDIBitsInternal(long long long long long long long long long ptr ptr long long long long long)
 @ stdcall NtGdiStrokeAndFillPath(long)
 @ stdcall NtGdiStrokePath(long)
-@ stdcall -syscall NtGdiSwapBuffers(long)
-@ stdcall -syscall NtGdiTransformPoints(long ptr ptr long long)
+@ stdcall NtGdiSwapBuffers(long)
+@ stdcall NtGdiTransformPoints(long ptr ptr long long)
 @ stdcall NtGdiTransparentBlt(long long long long long long long long long long long)
 @ stub NtGdiUMPDEngFreeUserMem
 @ stub NtGdiUnloadPrinterDriver
@@ -750,11 +750,11 @@
 @ stub NtUserAcquireIAMKey
 @ stub NtUserAcquireInteractiveControlBackgroundAccess
 @ stdcall NtUserActivateKeyboardLayout(long long)
-@ stdcall -syscall NtUserAddClipboardFormatListener(long)
+@ stdcall NtUserAddClipboardFormatListener(long)
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAlterWindowStyle
 @ stub NtUserAssociateInputContext
-@ stdcall -syscall NtUserAttachThreadInput(long long long)
+@ stdcall NtUserAttachThreadInput(long long long)
 @ stub NtUserAutoPromoteMouseInPointer
 @ stub NtUserAutoRotateScreen
 @ stub NtUserBeginLayoutUpdate
@@ -763,7 +763,7 @@
 @ stub NtUserBlockInput
 @ stub NtUserBroadcastThemeChangeEvent
 @ stub NtUserBuildHimcList
-@ stdcall -syscall NtUserBuildHwndList(long long long long long long ptr ptr)
+@ stdcall NtUserBuildHwndList(long long long long long long ptr ptr)
 @ stub NtUserBuildNameList
 @ stub NtUserBuildPropList
 @ stub NtUserCalcMenuBar
@@ -786,37 +786,37 @@
 @ stdcall NtUserChangeDisplaySettings(ptr ptr long long ptr)
 @ stub NtUserChangeWindowMessageFilterEx
 @ stub NtUserCheckAccessForIntegrityLevel
-@ stdcall -syscall NtUserCheckMenuItem(long long long)
+@ stdcall NtUserCheckMenuItem(long long long)
 @ stub NtUserCheckProcessForClipboardAccess
 @ stub NtUserCheckProcessSession
 @ stub NtUserCheckWindowThreadDesktop
-@ stdcall -syscall NtUserChildWindowFromPointEx(long long long long)
+@ stdcall NtUserChildWindowFromPointEx(long long long long)
 @ stub NtUserClearForeground
 @ stdcall NtUserClipCursor(ptr)
 @ stdcall NtUserCloseClipboard()
-@ stdcall -syscall NtUserCloseDesktop(long)
-@ stdcall -syscall NtUserCloseWindowStation(long)
+@ stdcall NtUserCloseDesktop(long)
+@ stdcall NtUserCloseWindowStation(long)
 @ stub NtUserCompositionInputSinkLuidFromPoint
 @ stub NtUserCompositionInputSinkViewInstanceIdFromPoint
 @ stub NtUserConfigureActivationObject
 @ stub NtUserConfirmResizeCommit
 @ stub NtUserConsoleControl
 @ stub NtUserConvertMemHandle
-@ stdcall -syscall NtUserCopyAcceleratorTable(long ptr long)
+@ stdcall NtUserCopyAcceleratorTable(long ptr long)
 @ stdcall NtUserCountClipboardFormats()
-@ stdcall -syscall NtUserCreateAcceleratorTable(ptr long)
+@ stdcall NtUserCreateAcceleratorTable(ptr long)
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject
 @ stub NtUserCreateCaret
 @ stub NtUserCreateDCompositionHwndTarget
-@ stdcall -syscall NtUserCreateDesktopEx(ptr ptr ptr long long long)
+@ stdcall NtUserCreateDesktopEx(ptr ptr ptr long long long)
 @ stub NtUserCreateEmptyCursorObject
 @ stub NtUserCreateInputContext
 @ stub NtUserCreateLocalMemHandle
 @ stub NtUserCreatePalmRejectionDelayZone
 @ stdcall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long long long)
 @ stub NtUserCreateWindowGroup
-@ stdcall -syscall NtUserCreateWindowStation(ptr long long long long long long)
+@ stdcall NtUserCreateWindowStation(ptr long long long long long long)
 @ stub NtUserCtxDisplayIOCtl
 @ stub NtUserDdeInitialize
 @ stub NtUserDefSetText
@@ -826,7 +826,7 @@
 @ stub NtUserDelegateInput
 @ stub NtUserDeleteMenu
 @ stub NtUserDeleteWindowGroup
-@ stdcall -syscall NtUserDestroyAcceleratorTable(long)
+@ stdcall NtUserDestroyAcceleratorTable(long)
 @ stub NtUserDestroyActivationGroup
 @ stub NtUserDestroyActivationObject
 @ stdcall NtUserDestroyCursor(long long)
@@ -857,7 +857,7 @@
 @ stub NtUserDwmKernelShutdown
 @ stub NtUserDwmKernelStartup
 @ stub NtUserDwmValidateWindow
-@ stub NtUserEmptyClipboard
+@ stdcall NtUserEmptyClipboard()
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
 @ stdcall NtUserEnableMenuItem(long long long)
@@ -881,39 +881,39 @@
 @ stub NtUserEvent
 @ stdcall NtUserExcludeUpdateRgn(long long)
 @ stub NtUserFillWindow
-@ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
-@ stdcall -syscall NtUserFindWindowEx(long long ptr ptr long)
+@ stdcall NtUserFindExistingCursorIcon(ptr ptr ptr)
+@ stdcall NtUserFindWindowEx(long long ptr ptr long)
 @ stdcall NtUserFlashWindowEx(ptr)
 @ stub NtUserForceWindowToDpiForTest
 @ stub NtUserFrostCrashedWindow
 @ stub NtUserFunctionalizeDisplayConfig
 @ stub NtUserGetActiveProcessesDpis
 @ stub NtUserGetAltTabInfo
-@ stdcall -syscall NtUserGetAncestor(long long)
+@ stdcall NtUserGetAncestor(long long)
 @ stub NtUserGetAppImeLevel
 @ stdcall NtUserGetAsyncKeyState(long)
-@ stdcall -syscall NtUserGetAtomName(long ptr)
+@ stdcall NtUserGetAtomName(long ptr)
 @ stub NtUserGetAutoRotationState
 @ stub NtUserGetCIMSSM
 @ stub NtUserGetCPD
 @ stub NtUserGetCaretBlinkTime
 @ stub NtUserGetCaretPos
 @ stdcall NtUserGetClassInfoEx(ptr ptr ptr ptr long)
-@ stdcall -syscall NtUserGetClassName(long long ptr)
+@ stdcall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
-@ stub NtUserGetClipboardData
-@ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)
-@ stdcall -syscall NtUserGetClipboardOwner()
-@ stdcall -syscall NtUserGetClipboardSequenceNumber()
-@ stdcall -syscall NtUserGetClipboardViewer()
+@ stdcall NtUserGetClipboardData(long ptr)
+@ stdcall NtUserGetClipboardFormatName(long ptr long)
+@ stdcall NtUserGetClipboardOwner()
+@ stdcall NtUserGetClipboardSequenceNumber()
+@ stdcall NtUserGetClipboardViewer()
 @ stub NtUserGetComboBoxInfo
 @ stub NtUserGetControlBrush
 @ stub NtUserGetControlColor
 @ stub NtUserGetCurrentDpiInfoForWindow
 @ stub NtUserGetCurrentInputMessageSource
-@ stdcall -syscall NtUserGetCursor()
-@ stdcall -syscall NtUserGetCursorFrameInfo(long long ptr ptr)
+@ stdcall NtUserGetCursor()
+@ stdcall NtUserGetCursorFrameInfo(long long ptr ptr)
 @ stdcall NtUserGetCursorInfo(ptr)
 @ stub NtUserGetDC
 @ stdcall NtUserGetDCEx(long long long)
@@ -922,12 +922,12 @@
 @ stub NtUserGetDisplayAutoRotationPreferences
 @ stub NtUserGetDisplayAutoRotationPreferencesByProcessId
 @ stdcall NtUserGetDisplayConfigBufferSizes(long ptr ptr)
-@ stdcall -syscall NtUserGetDoubleClickTime()
+@ stdcall NtUserGetDoubleClickTime()
 @ stub NtUserGetDpiForCurrentProcess
-@ stdcall -syscall NtUserGetDpiForMonitor(long long ptr ptr)
+@ stdcall NtUserGetDpiForMonitor(long long ptr ptr)
 @ stub NtUserGetExtendedPointerDeviceProperty
-@ stdcall -syscall NtUserGetForegroundWindow()
-@ stdcall -syscall NtUserGetGUIThreadInfo(long ptr)
+@ stdcall NtUserGetForegroundWindow()
+@ stdcall NtUserGetGUIThreadInfo(long ptr)
 @ stub NtUserGetGestureConfig
 @ stub NtUserGetGestureExtArgs
 @ stub NtUserGetGestureInfo
@@ -935,7 +935,7 @@
 @ stub NtUserGetHDevName
 @ stub NtUserGetHimetricScaleFactorFromPixelLocation
 @ stdcall NtUserGetIconInfo(long ptr ptr ptr ptr long)
-@ stdcall -syscall NtUserGetIconSize(long long ptr ptr)
+@ stdcall NtUserGetIconSize(long long ptr ptr)
 @ stub NtUserGetImeHotKey
 @ stub NtUserGetImeInfoEx
 @ stub NtUserGetInputContainerId
@@ -945,21 +945,21 @@
 @ stub NtUserGetInteractiveCtrlSupportedWaveforms
 @ stub NtUserGetInternalWindowPos
 @ stdcall NtUserGetKeyNameText(long ptr long)
-@ stdcall -syscall NtUserGetKeyState(long)
-@ stdcall -syscall NtUserGetKeyboardLayout(long)
+@ stdcall NtUserGetKeyState(long)
+@ stdcall NtUserGetKeyboardLayout(long)
 @ stdcall NtUserGetKeyboardLayoutList(long ptr)
-@ stdcall -syscall NtUserGetKeyboardLayoutName(ptr)
-@ stdcall -syscall NtUserGetKeyboardState(ptr)
-@ stdcall -syscall NtUserGetLayeredWindowAttributes(long ptr ptr ptr)
+@ stdcall NtUserGetKeyboardLayoutName(ptr)
+@ stdcall NtUserGetKeyboardState(ptr)
+@ stdcall NtUserGetLayeredWindowAttributes(long ptr ptr ptr)
 @ stub NtUserGetListBoxInfo
 @ stub NtUserGetMenuBarInfo
 @ stub NtUserGetMenuIndex
-@ stdcall -syscall NtUserGetMenuItemRect(long long long ptr)
+@ stdcall NtUserGetMenuItemRect(long long long ptr)
 @ stdcall NtUserGetMessage(ptr long long long)
-@ stdcall -syscall NtUserGetMouseMovePointsEx(long ptr ptr long long)
-@ stdcall -syscall NtUserGetObjectInformation(long long long long ptr)
+@ stdcall NtUserGetMouseMovePointsEx(long ptr ptr long long)
+@ stdcall NtUserGetObjectInformation(long long long long ptr)
 @ stub NtUserGetOemBitmapSize
-@ stdcall -syscall NtUserGetOpenClipboardWindow()
+@ stdcall NtUserGetOpenClipboardWindow()
 @ stub NtUserGetOwnerTransformedMonitorRect
 @ stub NtUserGetPhysicalDeviceRect
 @ stub NtUserGetPointerCursorId
@@ -977,10 +977,10 @@
 @ stub NtUserGetPointerType
 @ stub NtUserGetPrecisionTouchPadConfiguration
 @ stdcall NtUserGetPriorityClipboardFormat(ptr long)
-@ stdcall -syscall NtUserGetProcessDpiAwarenessContext(long)
+@ stdcall NtUserGetProcessDpiAwarenessContext(long)
 @ stub NtUserGetProcessUIContextInformation
-@ stdcall -syscall NtUserGetProcessWindowStation()
-@ stdcall -syscall NtUserGetProp(long wstr)
+@ stdcall NtUserGetProcessWindowStation()
+@ stdcall NtUserGetProp(long wstr)
 @ stdcall NtUserGetQueueStatus(long)
 @ stub NtUserGetQueueStatusReadonly
 @ stub NtUserGetRawInputBuffer
@@ -993,9 +993,9 @@
 @ stub NtUserGetResizeDCompositionSynchronizationObject
 @ stub NtUserGetScrollBarInfo
 @ stub NtUserGetSharedWindowData
-@ stdcall -syscall NtUserGetSystemDpiForProcess(long)
+@ stdcall NtUserGetSystemDpiForProcess(long)
 @ stub NtUserGetSystemMenu
-@ stdcall -syscall NtUserGetThreadDesktop(long)
+@ stdcall NtUserGetThreadDesktop(long)
 @ stub NtUserGetThreadState
 @ stub NtUserGetTitleBarInfo
 @ stub NtUserGetTopLevelWindow
@@ -1016,7 +1016,7 @@
 @ stub NtUserGetWindowMinimizeRect
 @ stub NtUserGetWindowPlacement
 @ stub NtUserGetWindowProcessHandle
-@ stdcall -syscall NtUserGetWindowRgnEx(long long long)
+@ stdcall NtUserGetWindowRgnEx(long long long)
 @ stub NtUserGhostWindowFromHungWindow
 @ stub NtUserHandleDelegatedInput
 @ stub NtUserHardErrorControl
@@ -1030,7 +1030,7 @@
 @ stub NtUserInheritWindowMonitor
 @ stub NtUserInitTask
 @ stub NtUserInitialize
-@ stdcall -syscall NtUserInitializeClientPfnArrays(ptr ptr ptr ptr)
+@ stdcall NtUserInitializeClientPfnArrays(ptr ptr ptr ptr)
 @ stub NtUserInitializeGenericHidInjection
 @ stub NtUserInitializeInputDeviceInjection
 @ stub NtUserInitializePointerDeviceInjection
@@ -1045,7 +1045,7 @@
 @ stub NtUserInjectTouchInput
 @ stub NtUserInteractiveControlQueryUsage
 @ stub NtUserInternalGetWindowIcon
-@ stdcall -syscall NtUserInternalGetWindowText(long ptr long)
+@ stdcall NtUserInternalGetWindowText(long ptr long)
 @ stub NtUserInternalToUnicode
 @ stub NtUserInvalidateRect
 @ stub NtUserInvalidateRgn
@@ -1059,7 +1059,7 @@
 @ stub NtUserIsTouchWindow
 @ stub NtUserIsWindowBroadcastingDpiToChildren
 @ stub NtUserIsWindowGDIScaledDpiMessageEnabled
-@ stdcall -syscall NtUserKillTimer(long long)
+@ stdcall NtUserKillTimer(long long)
 @ stub NtUserLayoutCompleted
 @ stub NtUserLinkDpiCursor
 @ stub NtUserLoadKeyboardLayoutEx
@@ -1089,12 +1089,12 @@
 @ stub NtUserNavigateFocus
 @ stub NtUserNotifyIMEStatus
 @ stub NtUserNotifyProcessCreate
-@ stdcall -syscall NtUserNotifyWinEvent(long long long long)
-@ stub NtUserOpenClipboard
-@ stdcall -syscall NtUserOpenDesktop(ptr long long)
-@ stdcall -syscall NtUserOpenInputDesktop(long long long)
+@ stdcall NtUserNotifyWinEvent(long long long long)
+@ stdcall NtUserOpenClipboard(long long)
+@ stdcall NtUserOpenDesktop(ptr long long)
+@ stdcall NtUserOpenInputDesktop(long long long)
 @ stub NtUserOpenThreadDesktop
-@ stdcall -syscall NtUserOpenWindowStation(ptr long)
+@ stdcall NtUserOpenWindowStation(ptr long)
 @ stub NtUserPaintDesktop
 @ stub NtUserPaintMenuBar
 @ stub NtUserPaintMonitor
@@ -1145,10 +1145,10 @@
 @ stub NtUserRemoteRedrawRectangle
 @ stub NtUserRemoteRedrawScreen
 @ stub NtUserRemoteStopScreenUpdates
-@ stdcall -syscall NtUserRemoveClipboardFormatListener(long)
+@ stdcall NtUserRemoveClipboardFormatListener(long)
 @ stub NtUserRemoveInjectionDevice
 @ stub NtUserRemoveMenu
-@ stdcall -syscall NtUserRemoveProp(long wstr)
+@ stdcall NtUserRemoveProp(long wstr)
 @ stub NtUserRemoveVisualIdentifier
 @ stub NtUserReportInertia
 @ stub NtUserRequestMoveSizeOperation
@@ -1174,7 +1174,7 @@
 @ stdcall NtUserSetClassLong(long long long long)
 @ stdcall NtUserSetClassLongPtr(long long long long)
 @ stdcall NtUserSetClassWord(long long long)
-@ stub NtUserSetClipboardData
+@ stdcall NtUserSetClipboardData(long ptr ptr)
 @ stdcall NtUserSetClipboardViewer(long)
 @ stub NtUserSetCoreWindow
 @ stub NtUserSetCoreWindowPartner
@@ -1202,27 +1202,27 @@
 @ stub NtUserSetInteractiveControlFocus
 @ stub NtUserSetInteractiveCtrlRotationAngle
 @ stub NtUserSetInternalWindowPos
-@ stdcall -syscall NtUserSetKeyboardState(ptr)
+@ stdcall NtUserSetKeyboardState(ptr)
 @ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
 @ stub NtUserSetManipulationInputTarget
 @ stdcall NtUserSetMenu(long long)
-@ stdcall -syscall NtUserSetMenuContextHelpId(long long)
-@ stdcall -syscall NtUserSetMenuDefaultItem(long long long)
+@ stdcall NtUserSetMenuContextHelpId(long long)
+@ stdcall NtUserSetMenuDefaultItem(long long long)
 @ stub NtUserSetMenuFlagRtoL
 @ stub NtUserSetMirrorRendering
 @ stub NtUserSetMonitorWorkArea
 @ stub NtUserSetMouseInputRateLimitingTimer
-@ stdcall -syscall NtUserSetObjectInformation(long long ptr long)
+@ stdcall NtUserSetObjectInformation(long long ptr long)
 @ stdcall NtUserSetParent(long long)
 @ stub NtUserSetPrecisionTouchPadConfiguration
-@ stdcall -syscall NtUserSetProcessDpiAwarenessContext(long long)
+@ stdcall NtUserSetProcessDpiAwarenessContext(long long)
 @ stub NtUserSetProcessInteractionFlags
 @ stub NtUserSetProcessMousewheelRoutingMode
 @ stub NtUserSetProcessRestrictionExemption
 @ stub NtUserSetProcessUIAccessZorder
-@ stdcall -syscall NtUserSetProcessWindowStation(long)
-@ stdcall -syscall NtUserSetProp(long wstr ptr)
+@ stdcall NtUserSetProcessWindowStation(long)
+@ stdcall NtUserSetProp(long wstr ptr)
 @ stub NtUserSetScrollInfo
 @ stub NtUserSetSensorPresence
 @ stub NtUserSetSharedWindowData
@@ -1230,14 +1230,14 @@
 @ stdcall NtUserSetSysColors(long ptr ptr)
 @ stub NtUserSetSystemCursor
 @ stub NtUserSetSystemMenu
-@ stdcall -syscall NtUserSetSystemTimer(long long long)
+@ stdcall NtUserSetSystemTimer(long long long)
 @ stub NtUserSetTargetForResourceBrokering
-@ stdcall -syscall NtUserSetThreadDesktop(long)
+@ stdcall NtUserSetThreadDesktop(long)
 @ stub NtUserSetThreadInputBlocked
 @ stub NtUserSetThreadLayoutHandles
 @ stub NtUserSetThreadState
-@ stdcall -syscall NtUserSetTimer(long long long ptr long)
-@ stdcall -syscall NtUserSetWinEventHook(long long long ptr ptr long long long)
+@ stdcall NtUserSetTimer(long long long ptr long)
+@ stdcall NtUserSetWinEventHook(long long long ptr ptr long long long)
 @ stub NtUserSetWindowArrangement
 @ stub NtUserSetWindowBand
 @ stub NtUserSetWindowCompositionAttribute
@@ -1256,7 +1256,7 @@
 @ stub NtUserSetWindowStationUser
 @ stdcall NtUserSetWindowWord(long long long)
 @ stub NtUserSetWindowsHookAW
-@ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
+@ stdcall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
 @ stub NtUserShowCaret
 @ stdcall NtUserShowCursor(long)
 @ stub NtUserShowScrollBar
@@ -1274,7 +1274,7 @@
 @ stdcall NtUserSystemParametersInfo(long long ptr long)
 @ stdcall NtUserSystemParametersInfoForDpi(long long ptr long long)
 @ stub NtUserTestForInteractiveUser
-@ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
+@ stdcall NtUserThunkedMenuInfo(long ptr)
 @ stub NtUserThunkedMenuItemInfo
 @ stdcall NtUserToUnicodeEx(long long ptr ptr long long long)
 @ stub NtUserTrackMouseEvent
@@ -1284,8 +1284,8 @@
 @ stub NtUserTranslateAccelerator
 @ stdcall NtUserTranslateMessage(ptr long)
 @ stub NtUserUndelegateInput
-@ stdcall -syscall NtUserUnhookWinEvent(long)
-@ stdcall -syscall NtUserUnhookWindowsHookEx(long)
+@ stdcall NtUserUnhookWinEvent(long)
+@ stdcall NtUserUnhookWindowsHookEx(long)
 @ stub NtUserUnloadKeyboardLayout
 @ stub NtUserUnlockWindowStation
 @ stdcall NtUserUnregisterClass(ptr ptr ptr)
@@ -1309,7 +1309,7 @@
 @ stub NtUserWaitForMsgAndEvent
 @ stub NtUserWaitForRedirectionStartComplete
 @ stub NtUserWaitMessage
-@ stdcall -syscall NtUserWindowFromDC(long)
+@ stdcall NtUserWindowFromDC(long)
 @ stub NtUserWindowFromPhysicalPoint
 @ stdcall NtUserWindowFromPoint(long long)
 @ stub NtUserYieldTask
@@ -1329,6 +1329,7 @@
 
 # Vulkan
 @ cdecl __wine_get_vulkan_driver(long)
+@ stdcall __wine_direct_unix_call(int64 long ptr)
 
 # gdi32
 @ stdcall SetDIBits(long long long long ptr ptr long)

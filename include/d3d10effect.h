@@ -20,6 +20,8 @@
 #ifndef __WINE_D3D10EFFECT_H
 #define __WINE_D3D10EFFECT_H
 
+#include "wine/winheader_enter.h"
+
 #include "d3d10.h"
 
 #define D3D10_EFFECT_VARIABLE_POOLED                0x1
@@ -855,5 +857,7 @@ HRESULT WINAPI D3D10StateBlockMaskUnion(D3D10_STATE_BLOCK_MASK *mask_x,
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3D10EFFECT_H */

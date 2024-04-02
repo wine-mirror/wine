@@ -20,6 +20,8 @@
 #ifndef __USP10_H
 #define __USP10_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 /* FIXME: #include <specstrings.h> */
 
@@ -307,5 +309,7 @@ const SIZE* WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __USP10_H */

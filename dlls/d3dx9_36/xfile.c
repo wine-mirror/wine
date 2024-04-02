@@ -40,7 +40,7 @@ static HRESULT error_dxfile_to_d3dxfile(HRESULT error)
         case DXFILEERR_BADVALUE:
             return D3DXFERR_BADVALUE;
         default:
-            FIXME("Cannot map error %#x\n", error);
+            FIXME("Cannot map error %#lx.\n", error);
             return E_FAIL;
     }
 }
@@ -56,7 +56,7 @@ struct d3dx9_file_enum_object
 {
     ID3DXFileEnumObject ID3DXFileEnumObject_iface;
     LONG ref;
-    ULONG nb_children;
+    unsigned int child_count;
     ID3DXFileData **children;
 };
 
@@ -66,7 +66,7 @@ struct d3dx9_file_data
     LONG ref;
     BOOL reference;
     IDirectXFileData *dxfile_data;
-    ULONG nb_children;
+    unsigned int child_count;
     ID3DXFileData **children;
 };
 
@@ -108,7 +108,7 @@ static ULONG WINAPI d3dx9_file_data_AddRef(ID3DXFileData *iface)
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
     ULONG refcount = InterlockedIncrement(&file_data->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file_data, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file_data, refcount);
 
     return refcount;
 }
@@ -118,13 +118,13 @@ static ULONG WINAPI d3dx9_file_data_Release(ID3DXFileData *iface)
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
     ULONG refcount = InterlockedDecrement(&file_data->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file_data, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file_data, refcount);
 
     if (!refcount)
     {
         ULONG i;
 
-        for (i = 0; i < file_data->nb_children; ++i)
+        for (i = 0; i < file_data->child_count; ++i)
         {
             ID3DXFileData *child = file_data->children[i];
             child->lpVtbl->Release(child);
@@ -256,7 +256,7 @@ static HRESULT WINAPI d3dx9_file_data_GetChildren(ID3DXFileData *iface, SIZE_T *
     if (!children)
         return E_POINTER;
 
-    *children = file_data->nb_children;
+    *children = file_data->child_count;
 
     return S_OK;
 }
@@ -265,7 +265,7 @@ static HRESULT WINAPI d3dx9_file_data_GetChild(ID3DXFileData *iface, SIZE_T id, 
 {
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
 
-    TRACE("iface %p, id %#lx, object %p.\n", iface, id, object);
+    TRACE("iface %p, id %#Ix, object %p.\n", iface, id, object);
 
     if (!object)
         return E_POINTER;
@@ -337,7 +337,7 @@ static HRESULT d3dx9_file_data_create(IDirectXFileObject *dxfile_object, ID3DXFi
 
     while (SUCCEEDED(ret = IDirectXFileData_GetNextObject(object->dxfile_data, &data_object)))
     {
-        if (object->nb_children >= children_array_size)
+        if (object->child_count >= children_array_size)
         {
             ID3DXFileData **new_children;
 
@@ -359,11 +359,11 @@ static HRESULT d3dx9_file_data_create(IDirectXFileObject *dxfile_object, ID3DXFi
             }
             object->children = new_children;
         }
-        ret = d3dx9_file_data_create(data_object, &object->children[object->nb_children]);
+        ret = d3dx9_file_data_create(data_object, &object->children[object->child_count]);
         IUnknown_Release(data_object);
         if (FAILED(ret))
             break;
-        object->nb_children++;
+        ++object->child_count;
     }
     if (ret != DXFILEERR_NOMOREOBJECTS)
     {
@@ -375,12 +375,12 @@ static HRESULT d3dx9_file_data_create(IDirectXFileObject *dxfile_object, ID3DXFi
         ID3DXFileData **new_children;
 
         new_children = HeapReAlloc(GetProcessHeap(), 0, object->children,
-                sizeof(*object->children) * object->nb_children);
+                sizeof(*object->children) * object->child_count);
         if (new_children)
             object->children = new_children;
     }
 
-    TRACE("Found %u children\n", object->nb_children);
+    TRACE("Found %u children.\n", object->child_count);
 
     *ret_iface = &object->ID3DXFileData_iface;
 
@@ -410,7 +410,7 @@ static ULONG WINAPI d3dx9_file_enum_object_AddRef(ID3DXFileEnumObject *iface)
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
     ULONG refcount = InterlockedIncrement(&file_enum->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file_enum, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file_enum, refcount);
 
     return refcount;
 }
@@ -420,13 +420,13 @@ static ULONG WINAPI d3dx9_file_enum_object_Release(ID3DXFileEnumObject *iface)
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
     ULONG refcount = InterlockedDecrement(&file_enum->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file_enum, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file_enum, refcount);
 
     if (!refcount)
     {
         ULONG i;
 
-        for (i = 0; i < file_enum->nb_children; ++i)
+        for (i = 0; i < file_enum->child_count; ++i)
         {
             ID3DXFileData *child = file_enum->children[i];
             child->lpVtbl->Release(child);
@@ -454,7 +454,7 @@ static HRESULT WINAPI d3dx9_file_enum_object_GetChildren(ID3DXFileEnumObject *if
     if (!children)
         return E_POINTER;
 
-    *children = file_enum->nb_children;
+    *children = file_enum->child_count;
 
     return S_OK;
 }
@@ -463,7 +463,7 @@ static HRESULT WINAPI d3dx9_file_enum_object_GetChild(ID3DXFileEnumObject *iface
 {
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
 
-    TRACE("iface %p, id %#lx, object %p.\n", iface, id, object);
+    TRACE("iface %p, id %#Ix, object %p.\n", iface, id, object);
 
     if (!object)
         return E_POINTER;
@@ -525,7 +525,7 @@ static ULONG WINAPI d3dx9_file_AddRef(ID3DXFile *iface)
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     ULONG refcount = InterlockedIncrement(&file->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file, refcount);
 
     return refcount;
 }
@@ -535,7 +535,7 @@ static ULONG WINAPI d3dx9_file_Release(ID3DXFile *iface)
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     ULONG refcount = InterlockedDecrement(&file->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file, refcount);
 
     if (!refcount)
     {
@@ -560,7 +560,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     unsigned children_array_size = 0;
     HRESULT ret;
 
-    TRACE("iface %p, source %p, options %#x, enum_object %p.\n", iface, source, options, enum_object);
+    TRACE("iface %p, source %p, options %#lx, enum_object %p.\n", iface, source, options, enum_object);
 
     if (!enum_object)
         return E_POINTER;
@@ -593,7 +593,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     }
     else
     {
-        FIXME("Source type %u is not handled yet\n", options);
+        FIXME("Source type %lu not handled yet.\n", options);
         return E_NOTIMPL;
     }
 
@@ -615,7 +615,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     /* Fill enum object with top level data objects */
     while (SUCCEEDED(ret = IDirectXFileEnumObject_GetNextDataObject(dxfile_enum_object, &data_object)))
     {
-        if (object->nb_children >= children_array_size)
+        if (object->child_count >= children_array_size)
         {
             ID3DXFileData **new_children;
 
@@ -638,18 +638,18 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
             object->children = new_children;
         }
         ret = d3dx9_file_data_create((IDirectXFileObject*)data_object,
-                &object->children[object->nb_children]);
+                &object->children[object->child_count]);
         IUnknown_Release(data_object);
         if (FAILED(ret))
             break;
-        object->nb_children++;
+        ++object->child_count;
     }
     if (object->children)
     {
         ID3DXFileData **new_children;
 
         new_children = HeapReAlloc(GetProcessHeap(), 0, object->children,
-                sizeof(*object->children) * object->nb_children);
+                sizeof(*object->children) * object->child_count);
         if (new_children)
             object->children = new_children;
     }
@@ -659,7 +659,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     if (ret != DXFILEERR_NOMOREOBJECTS)
         WARN("Cannot get all top level data objects\n");
 
-    TRACE("Found %u children\n", object->nb_children);
+    TRACE("Found %u children.\n", object->child_count);
 
     *enum_object = &object->ID3DXFileEnumObject_iface;
 
@@ -669,7 +669,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
 static HRESULT WINAPI d3dx9_file_CreateSaveObject(ID3DXFile *iface, const void *data,
         D3DXF_FILESAVEOPTIONS options, D3DXF_FILEFORMAT format, ID3DXFileSaveObject **save_object)
 {
-    FIXME("iface %p, data %p, options %#x, format %#x, save_object %p stub!\n",
+    FIXME("iface %p, data %p, options %#lx, format %#lx, save_object %p stub!\n",
             iface, data, options, format, save_object);
 
     return E_NOTIMPL;
@@ -680,12 +680,12 @@ static HRESULT WINAPI d3dx9_file_RegisterTemplates(ID3DXFile *iface, const void 
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     HRESULT ret;
 
-    TRACE("iface %p, data %p, size %lu.\n", iface, data, size);
+    TRACE("iface %p, data %p, size %Iu.\n", iface, data, size);
 
     ret = IDirectXFile_RegisterTemplates(file->dxfile, (void *)data, size);
     if (ret != DXFILE_OK)
     {
-        WARN("Error %#x\n", ret);
+        WARN("Error registering templates, hr %#lx.\n", ret);
         return error_dxfile_to_d3dxfile(ret);
     }
 

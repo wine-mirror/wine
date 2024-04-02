@@ -186,7 +186,7 @@ cpp_quote("#define HLNF_ALLOW_AUTONAVIGATE          0x20000000")
 cpp_quote("#define HLNF_NEWWINDOWSMANAGED           0x80000000")
 
 [
-    local,
+ /* local, CXHACK 15579 */
     object,
     uuid(02ba3b52-0547-11d1-b833-00c04fc9b31f)
 ]
@@ -220,7 +220,7 @@ interface IBrowserService : IUnknown
 
     HRESULT IEGetDisplayName(
         [in] PCIDLIST_ABSOLUTE pidl,
-        [out, size_is(INTERNET_MAX_URL_LENGTH)] LPWSTR pwszName,
+        [out, size_is(300)] LPWSTR pwszName,
         [in] UINT uFlags);
 
     HRESULT IEParseDisplayName(

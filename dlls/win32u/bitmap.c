@@ -19,10 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +31,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle );
@@ -162,15 +164,15 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     bmpobj->dib.dsBm.bmBits       = calloc( 1, size );
     if (!bmpobj->dib.dsBm.bmBits)
     {
-        free( bmpobj );
+        heapfree( bmpobj );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->obj, NTGDI_OBJ_BITMAP, &bitmap_funcs )))
     {
-        free( bmpobj->dib.dsBm.bmBits );
-        free( bmpobj );
+        heapfree( bmpobj->dib.dsBm.bmBits );
+        heapfree( bmpobj );
         return 0;
     }
 
@@ -446,8 +448,8 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
     BITMAPOBJ *bmp = free_gdi_handle( handle );
 
     if (!bmp) return FALSE;
-    free( bmp->dib.dsBm.bmBits );
-    free( bmp );
+    heapfree( bmp->dib.dsBm.bmBits );
+    heapfree( bmp );
     return TRUE;
 }
 

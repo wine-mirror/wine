@@ -682,6 +682,7 @@ void output_res_o_file( DLLSPEC *spec )
     switch (target.cpu)
     {
         case CPU_i386:
+        case CPU_x86_32on64:
             strarray_add( &args, "-F" );
             strarray_add( &args, "pe-i386" );
             break;

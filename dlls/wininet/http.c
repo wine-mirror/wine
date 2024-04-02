@@ -3173,6 +3173,18 @@ static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buf, DWORD size, DWORD
 
     allow_blocking = !(req->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC);
 
+    /* CXHACK: bug 14423 */
+    if(!allow_blocking) {
+        char name[MAX_PATH], *p;
+        GetModuleFileNameA(GetModuleHandleA(NULL), name, sizeof(name));
+        p = strrchr(name, '\\');
+        p = p ? p+1 : name;
+        if (!strcasecmp(p,"qw.exe")) {
+            FIXME("Forcing sync read for Quicken\n");
+            allow_blocking = TRUE;
+        }
+    }
+
     if(allow_blocking || TryEnterCriticalSection(&req->read_section)) {
         if(allow_blocking)
             EnterCriticalSection(&req->read_section);

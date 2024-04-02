@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1151,6 +1147,7 @@ static struct unix_funcs unix_funcs =
     NtUserDestroyWindow,
     NtUserDispatchMessage,
     NtUserDrawIconEx,
+    NtUserEmptyClipboard,
     NtUserEnableMenuItem,
     NtUserEndDeferWindowPosEx,
     NtUserEndPaint,
@@ -1161,6 +1158,7 @@ static struct unix_funcs unix_funcs =
     NtUserFlashWindowEx,
     NtUserGetAsyncKeyState,
     NtUserGetClassInfoEx,
+    NtUserGetClipboardData,
     NtUserGetCursorInfo,
     NtUserGetDCEx,
     NtUserGetDisplayConfigBufferSizes,
@@ -1178,6 +1176,7 @@ static struct unix_funcs unix_funcs =
     NtUserMessageCall,
     NtUserMoveWindow,
     NtUserMsgWaitForMultipleObjectsEx,
+    NtUserOpenClipboard,
     NtUserPeekMessage,
     NtUserPostMessage,
     NtUserPostThreadMessage,
@@ -1190,6 +1189,7 @@ static struct unix_funcs unix_funcs =
     NtUserSendInput,
     NtUserSetActiveWindow,
     NtUserSetCapture,
+    NtUserSetClipboardData,
     NtUserSetClassLong,
     NtUserSetClassLongPtr,
     NtUserSetClassWord,

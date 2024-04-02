@@ -21,6 +21,8 @@
 #ifndef __WINE_REASON_H
 #define __WINE_REASON_H
 
+#include "wine/winheader_enter.h"
+
 
 #define SHTDN_REASON_FLAG_USER_DEFINED            0x40000000
 #define SHTDN_REASON_FLAG_PLANNED                 0x80000000
@@ -71,5 +73,7 @@
 
 #define SHTDN_REASON_UNKNOWN                      SHTDN_REASON_MINOR_NONE
 #define SHTDN_REASON_LEGACY_API                   (SHTDN_REASON_MAJOR_LEGACY_API | SHTDN_REASON_FLAG_PLANNED)
+
+#include "wine/winheader_exit.h"
 
 #endif

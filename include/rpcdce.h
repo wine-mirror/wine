@@ -19,6 +19,8 @@
 #ifndef __WINE_RPCDCE_H
 #define __WINE_RPCDCE_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -636,5 +638,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #endif
 
 #include <rpcdcep.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /*__WINE_RPCDCE_H */

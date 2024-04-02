@@ -45,6 +45,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_1,
     VKD3D_SHADER_API_VERSION_1_2,
     VKD3D_SHADER_API_VERSION_1_3,
+    VKD3D_SHADER_API_VERSION_1_4,
 };
 
 /** The type of a chained structure. */
@@ -1806,6 +1807,18 @@ VKD3D_SHADER_API void vkd3d_shader_free_shader_signature(struct vkd3d_shader_sig
 VKD3D_SHADER_API int vkd3d_shader_preprocess(const struct vkd3d_shader_compile_info *compile_info,
         struct vkd3d_shader_code *out, char **messages);
 
+/**
+ * Set a callback to be called when vkd3d-shader outputs debug logging.
+ *
+ * If NULL, or if this function has not been called, libvkd3d-shader will print
+ * all enabled log output to stderr.
+ *
+ * \param callback Callback function to set.
+ *
+ * \since 1.4
+ */
+VKD3D_SHADER_API void vkd3d_shader_set_log_callback(PFN_vkd3d_log callback);
+
 #endif  /* VKD3D_SHADER_NO_PROTOTYPES */
 
 /** Type of vkd3d_shader_get_version(). */
@@ -1858,6 +1871,9 @@ typedef void (*PFN_vkd3d_shader_free_shader_signature)(struct vkd3d_shader_signa
 /** Type of vkd3d_shader_preprocess(). \since 1.3 */
 typedef void (*PFN_vkd3d_shader_preprocess)(struct vkd3d_shader_compile_info *compile_info,
         struct vkd3d_shader_code *out, char **messages);
+
+/** Type of vkd3d_shader_set_log_callback(). \since 1.4 */
+typedef void (*PFN_vkd3d_shader_set_log_callback)(PFN_vkd3d_log callback);
 
 #ifdef __cplusplus
 }

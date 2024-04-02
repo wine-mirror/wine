@@ -19,6 +19,8 @@
 #ifndef _WINE_WININETI_H_
 #define _WINE_WININETI_H_
 
+#include "wine/winheader_enter.h"
+
 /* FIXME: #include <iedial.h> */
 #include <schannel.h>
 #include <sspi.h>
@@ -143,5 +145,7 @@ BOOL        WINAPI InternetGetSecurityInfoByURLW(LPCWSTR,PCCERT_CHAIN_CONTEXT*,D
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINE_WININETI_H_ */

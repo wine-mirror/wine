@@ -20,6 +20,8 @@
 #ifndef __WINE_LZEXPAND_H
 #define __WINE_LZEXPAND_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -51,5 +53,7 @@ INT         WINAPI GetExpandedNameW(LPWSTR,LPWSTR);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_LZEXPAND_H */

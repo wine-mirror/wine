@@ -29,6 +29,7 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
+static BOOL (WINAPI *pGetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR *);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -311,11 +312,12 @@ static BOOL init_function_pointers(void)
      */
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
     MAKEFUNC_ORD(SetWindowSubclass, 410);
+    MAKEFUNC_ORD(GetWindowSubclass, 411);
     MAKEFUNC_ORD(RemoveWindowSubclass, 412);
     MAKEFUNC_ORD(DefSubclassProc, 413);
 #undef MAKEFUNC_ORD
 
-    if(!pSetWindowSubclass || !pRemoveWindowSubclass || !pDefSubclassProc)
+    if(!pSetWindowSubclass || !pGetWindowSubclass || !pRemoveWindowSubclass || !pDefSubclassProc)
     {
         win_skip("SetWindowSubclass and friends are not available\n");
         return FALSE;
@@ -338,6 +340,49 @@ static BOOL init_function_pointers(void)
     return TRUE;
 }
 
+static void test_GetWindowSubclass(void)
+{
+    DWORD_PTR data;
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = CreateWindowA("TestSubclass", "Test subclass", WS_OVERLAPPEDWINDOW, 100, 100, 200, 200,
+                         0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %ld.\n", GetLastError());
+
+    ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, 7);
+    ok(ret, "SetWindowSubclass failed.\n");
+
+    data = 0xdeadbeef;
+    ret = pGetWindowSubclass(NULL, wnd_proc_sub, 2, &data);
+    ok(!ret, "GetWindowSubclass succeeded.\n");
+    todo_wine
+    ok(data == 0, "Got unexpected data %#Ix.\n", data);
+
+    data = 0xdeadbeef;
+    ret = pGetWindowSubclass(hwnd, NULL, 2, &data);
+    ok(!ret, "GetWindowSubclass succeeded.\n");
+    todo_wine
+    ok(data == 0, "Got unexpected data %#Ix.\n", data);
+
+    data = 0xdeadbeef;
+    ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 0, &data);
+    ok(!ret, "GetWindowSubclass succeeded.\n");
+    todo_wine
+    ok(data == 0, "Got unexpected data %#Ix.\n", data);
+
+    ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 2, NULL);
+    ok(ret, "GetWindowSubclass failed.\n");
+
+    data = 0xdeadbeef;
+    ret = pGetWindowSubclass(hwnd, wnd_proc_sub, 2, &data);
+    ok(ret, "GetWindowSubclass failed.\n");
+    ok(data == 7, "Got unexpected data %#Ix.\n", data);
+
+    pRemoveWindowSubclass(hwnd, wnd_proc_sub, 2);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(subclass)
 {
     if(!init_function_pointers()) return;
@@ -345,4 +390,5 @@ START_TEST(subclass)
     if(!register_window_classes()) return;
 
     test_subclass();
+    test_GetWindowSubclass();
 }

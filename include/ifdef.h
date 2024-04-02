@@ -18,6 +18,8 @@
 #ifndef WINE_IFDEF_H
 #define WINE_IFDEF_H
 
+#include "wine/winheader_enter.h"
+
 #include <ipifcons.h>
 
 typedef ULONG32 NET_IF_OBJECT_ID, *PNET_IF_OBJECT_ID;
@@ -225,5 +227,7 @@ typedef struct _NDIS_INTERFACE_INFORMATION {
     NET_IF_COMPARTMENT_ID      CompartmentId;
     ULONG                      SupportedStatistics;
 } NDIS_INTERFACE_INFORMATION, *PNDIS_INTERFACE_INFORMATION;
+
+#include "wine/winheader_exit.h"
 
 #endif /* WINE_IFDEF_H*/

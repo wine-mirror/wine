@@ -20,6 +20,8 @@
 #ifndef __WINE_VIRTDISK_DLL_H
 #define __WINE_VIRTDISK_DLL_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -248,5 +250,7 @@ DWORD WINAPI OpenVirtualDisk(VIRTUAL_STORAGE_TYPE *type, const WCHAR *path, VIRT
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_VIRTDISK_DLL_H */

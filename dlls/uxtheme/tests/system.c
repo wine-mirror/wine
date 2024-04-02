@@ -40,6 +40,7 @@ static HTHEME  (WINAPI * pOpenThemeDataEx)(HWND, LPCWSTR, DWORD);
 static HTHEME (WINAPI *pOpenThemeDataForDpi)(HWND, LPCWSTR, UINT);
 static HPAINTBUFFER (WINAPI *pBeginBufferedPaint)(HDC, const RECT *, BP_BUFFERFORMAT, BP_PAINTPARAMS *, HDC *);
 static HRESULT (WINAPI *pBufferedPaintClear)(HPAINTBUFFER, const RECT *);
+static HRESULT (WINAPI *pDrawThemeBackgroundEx)(HTHEME, HDC, int, int, const RECT *, const DTBGOPTS *);
 static HRESULT (WINAPI *pEndBufferedPaint)(HPAINTBUFFER, BOOL);
 static HRESULT (WINAPI *pGetBufferedPaintBits)(HPAINTBUFFER, RGBQUAD **, int *);
 static HDC (WINAPI *pGetBufferedPaintDC)(HPAINTBUFFER);
@@ -80,6 +81,7 @@ static void init_funcs(void)
     GET_PROC(uxtheme, BeginBufferedPaint)
     GET_PROC(uxtheme, BufferedPaintClear)
     GET_PROC(uxtheme, EndBufferedPaint)
+    GET_PROC(uxtheme, DrawThemeBackgroundEx)
     GET_PROC(uxtheme, GetBufferedPaintBits)
     GET_PROC(uxtheme, GetBufferedPaintDC)
     GET_PROC(uxtheme, GetBufferedPaintTargetDC)
@@ -98,6 +100,13 @@ static void init_funcs(void)
     GET_PROC(gdi32, D3DKMTOpenAdapterFromGdiDisplayName)
 
 #undef GET_PROC
+}
+
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
 }
 
 /* Try to make sure pending X events have been processed before continuing */
@@ -824,6 +833,8 @@ static void test_CloseThemeData(void)
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
     hRes = CloseThemeData(INVALID_HANDLE_VALUE);
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
+    hRes = CloseThemeData((HTHEME)0xdeadbeef);
+    ok(hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08lx\n", hRes);
 }
 
 static void test_buffer_dc_props(HDC hdc, const RECT *rect)
@@ -1054,14 +1065,15 @@ static void test_buffered_paint(void)
 static void test_GetThemePartSize(void)
 {
     static const DWORD enabled = 1;
+    int old_dpi, current_dpi, system_dpi, target_dpi, min_dpi;
     DPI_AWARENESS_CONTEXT old_context;
-    unsigned int old_dpi, current_dpi;
+    int i, expected, stretch_mark = 0;
     HTHEME htheme = NULL;
     HWND hwnd = NULL;
-    SIZE size, size2;
     HKEY key = NULL;
+    HDC hdc = NULL;
     HRESULT hr;
-    HDC hdc;
+    SIZE size;
 
     if (!pSetThreadDpiAwarenessContext)
     {
@@ -1078,90 +1090,134 @@ static void test_GetThemePartSize(void)
     old_context = pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     current_dpi = get_primary_monitor_effective_dpi();
     old_dpi = current_dpi;
-    /* DPI needs to be 50% larger than 96 to avoid the effect of TrueSizeStretchMark */
-    if (current_dpi < 192 && !set_primary_monitor_effective_dpi(192))
-    {
-        skip("Failed to set primary monitor dpi to 192.\n");
-        goto done;
-    }
+    system_dpi = GetDpiForSystem();
+    target_dpi = system_dpi;
 
     hwnd = CreateWindowA("Button", "Test", WS_POPUP, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
-    htheme = OpenThemeData(hwnd, WC_BUTTONW);
+    hdc = GetDC(hwnd);
+
+    /* Test in the current DPI */
+    /* Test that OpenThemeData() with NULL window handle uses system DPI even if DPI changes while running */
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
     if (!htheme)
     {
         skip("Theming is inactive.\n");
         goto done;
     }
 
-    hdc = GetDC(hwnd);
+    /* TMT_TRUESIZESTRETCHMARK is present, choose the next minimum DPI */
+    hr = GetThemeInt(htheme, BP_CHECKBOX, CBS_CHECKEDNORMAL, TMT_TRUESIZESTRETCHMARK, &stretch_mark);
+    if (SUCCEEDED(hr) && stretch_mark > 0)
+    {
+        for (i = 7; i >= 1; --i)
+        {
+            hr = GetThemeInt(htheme, BP_CHECKBOX, CBS_CHECKEDNORMAL,
+                             i <= 5 ? TMT_MINDPI1 + i - 1 : TMT_MINDPI6 + i - 6, &min_dpi);
+            if (SUCCEEDED(hr) && min_dpi <= system_dpi)
+            {
+                target_dpi = min_dpi;
+                break;
+            }
+        }
+    }
+    expected = MulDiv(13, target_dpi, 96);
+
     hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n",
-       size.cx, size.cy, size2.cx, size2.cy);
-    ReleaseDC(hwnd, hdc);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
 
-    /* Test that theme part size doesn't change even if DPI is changed */
-    if (!set_primary_monitor_effective_dpi(96))
+    /* Test in 192 DPI */
+    /* DPI needs to be 50% larger than 96 to avoid the effect of TrueSizeStretchMark */
+    if (current_dpi != 192 && !set_primary_monitor_effective_dpi(192))
     {
-        skip("Failed to set primary monitor dpi to 96.\n");
+        skip("Failed to set primary monitor dpi to 192.\n");
         goto done;
     }
 
-    hdc = GetDC(hwnd);
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    /* Test that OpenThemeData() with NULL window handle uses system DPI even if DPI changes while running */
+    expected = MulDiv(13, target_dpi, 96);
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
+
+    /* Test that OpenThemeData() with a window handle use window DPI */
+    expected = 26;
+    htheme = OpenThemeData(hwnd, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+
+    /* Test in 96 DPI */
+    if (!set_primary_monitor_effective_dpi(96))
+    {
+        skip("Failed to set primary monitor dpi to 96.\n");
+        CloseThemeData(htheme);
+        goto done;
+    }
+
+    /* Test that theme part size doesn't change even if DPI is changed */
+    expected = 26;
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
+    ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
 
     /* Test that theme part size changes after DPI is changed and theme handle is reopened.
      * If DPI awareness context is not DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, theme part size
      * still doesn't change, even after the theme handle is reopened. */
     CloseThemeData(htheme);
     htheme = OpenThemeData(hwnd, WC_BUTTONW);
-
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    expected = 13;
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
-       size.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx != size.cx || size2.cy != size.cy, "Expected size not equal to %ldx%ld.\n", size.cx,
-       size.cy);
-    ReleaseDC(hwnd, hdc);
-
-    /* Test that OpenThemeData() without a window will assume the DPI is 96 */
-    if (!set_primary_monitor_effective_dpi(192))
-    {
-        skip("Failed to set primary monitor dpi to 192.\n");
-        goto done;
-    }
-
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
     CloseThemeData(htheme);
-    htheme = OpenThemeData(NULL, WC_BUTTONW);
-    size = size2;
 
-    hdc = GetDC(hwnd);
-    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    /* Test that OpenThemeData() with NULL window handle use system DPI even if DPI changes while running */
+    expected = MulDiv(13, target_dpi, 96);
+    htheme = OpenThemeData(NULL, WC_BUTTONW);
+    hr = GetThemePartSize(htheme, hdc, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size2);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    hr = GetThemePartSize(htheme, NULL, BP_CHECKBOX, CBS_CHECKEDNORMAL, NULL, TS_DRAW, &size);
     ok(hr == S_OK, "GetThemePartSize failed, hr %#lx.\n", hr);
-    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %ldx%ld, got %ldx%ld.\n", size.cx,
-       size.cy, size2.cx, size2.cy);
-    ReleaseDC(hwnd, hdc);
+    ok(compare_uint(size.cx, expected, 1) && compare_uint(size.cy, expected, 1),
+       "Got unexpected size %ldx%ld.\n", size.cx, size.cy);
+    CloseThemeData(htheme);
 
 done:
+    if (hdc)
+        ReleaseDC(hwnd, hdc);
     if (hwnd)
         DestroyWindow(hwnd);
-    if (htheme)
-        CloseThemeData(htheme);
     if (get_primary_monitor_effective_dpi() != old_dpi)
         set_primary_monitor_effective_dpi(old_dpi);
     if (key)
@@ -1612,6 +1668,37 @@ static const struct message empty_seq[] =
     {0}
 };
 
+static const struct message wm_erasebkgnd_seq[] =
+{
+    {WM_ERASEBKGND, sent},
+    {WM_CTLCOLORDLG, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolormsgbox_seq[] =
+{
+    {WM_CTLCOLORMSGBOX, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolorbtn_seq[] =
+{
+    {WM_CTLCOLORBTN, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolordlg_seq[] =
+{
+    {WM_CTLCOLORDLG, sent},
+    {0}
+};
+
+static const struct message wm_ctlcolorstatic_seq[] =
+{
+    {WM_CTLCOLORSTATIC, sent},
+    {0}
+};
+
 static HWND dialog_child;
 static DWORD dialog_init_flag;
 static BOOL handle_WM_ERASEBKGND;
@@ -1671,6 +1758,7 @@ static void test_EnableThemeDialogTexture(void)
     HBRUSH brush, brush2;
     HDC child_hdc, hdc;
     LOGBRUSH log_brush;
+    char buffer[32];
     ULONG_PTR proc;
     WNDCLASSA cls;
     HTHEME theme;
@@ -1775,6 +1863,20 @@ static void test_EnableThemeDialogTexture(void)
         {{WC_TREEVIEWA}},
         {{UPDOWN_CLASSA}},
         {{WC_SCROLLBARA}},
+    };
+
+    static const struct message_test
+    {
+        UINT msg;
+        const struct message *msg_seq;
+    }
+    message_tests[] =
+    {
+        {WM_ERASEBKGND, wm_erasebkgnd_seq},
+        {WM_CTLCOLORMSGBOX, wm_ctlcolormsgbox_seq},
+        {WM_CTLCOLORBTN, wm_ctlcolorbtn_seq},
+        {WM_CTLCOLORDLG, wm_ctlcolordlg_seq},
+        {WM_CTLCOLORSTATIC, wm_ctlcolorstatic_seq},
     };
 
     if (!IsThemeActive())
@@ -2258,7 +2360,194 @@ static void test_EnableThemeDialogTexture(void)
     DestroyWindow(hwnd2);
     DestroyWindow(hwnd);
 
+    /* Test that application dialog procedures should be called only once for each message */
+    dialog = CreateDialogIndirectParamA(NULL, &temp.template, GetDesktopWindow(),
+                                        test_EnableThemeDialogTexture_proc,
+                                        (LPARAM)&param);
+    ok(dialog != NULL, "CreateDialogIndirectParamA failed, error %ld.\n", GetLastError());
+    child = dialog_child;
+    ok(child != NULL, "Failed to get child control, error %ld.\n", GetLastError());
+    child_hdc = GetDC(child);
+    for (i = 0; i < ARRAY_SIZE(message_tests); ++i)
+    {
+        sprintf(buffer, "message %#x\n", message_tests[i].msg);
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        SendMessageW(dialog, message_tests[i].msg, (WPARAM)child_hdc, (LPARAM)child);
+        ok_sequence(sequences, PARENT_SEQ_INDEX, message_tests[i].msg_seq, buffer, FALSE);
+    }
+    ReleaseDC(child, child_hdc);
+    EndDialog(dialog, 0);
+
     UnregisterClassA(cls.lpszClassName, GetModuleHandleA(NULL));
+}
+
+static void test_DrawThemeBackgroundEx(void)
+{
+    static const int width = 10, height = 10;
+    static const RECT rect = {0, 0, 10, 10};
+    HBITMAP bitmap, old_bitmap;
+    BOOL transparent, found;
+    BITMAPINFO bitmap_info;
+    int i, glyph_type;
+    BYTE *bits, *ptr;
+    HTHEME htheme;
+    void *proc;
+    HDC mem_dc;
+    HRESULT hr;
+    HWND hwnd;
+
+    proc = GetProcAddress(GetModuleHandleA("uxtheme.dll"), MAKEINTRESOURCEA(47));
+    ok(proc == (void *)pDrawThemeBackgroundEx, "Expected DrawThemeBackgroundEx() at ordinal 47.\n");
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Spin");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
+    bitmap_info.bmiHeader.biWidth = width;
+    bitmap_info.bmiHeader.biHeight = height;
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    bitmap = CreateDIBSection(0, &bitmap_info, DIB_RGB_COLORS, (void **)&bits, 0, 0);
+    mem_dc = CreateCompatibleDC(NULL);
+    old_bitmap = SelectObject(mem_dc, bitmap);
+
+    /* Drawing opaque background with transparent glyphs should discard the alpha values from the glyphs */
+    transparent = IsThemeBackgroundPartiallyTransparent(htheme, SPNP_UP, UPS_NORMAL);
+    ok(!transparent, "Expected spin button background opaque.\n");
+    hr = GetThemeBool(htheme, SPNP_UP, UPS_NORMAL, TMT_TRANSPARENT, &transparent);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "Got unexpected hr %#lx.\n", hr);
+    transparent = FALSE;
+    hr = GetThemeBool(htheme, SPNP_UP, UPS_NORMAL, TMT_GLYPHTRANSPARENT, &transparent);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(transparent, "Expected spin button glyph transparent.\n");
+
+    memset(bits, 0xa5, width * height * sizeof(int));
+    hr = DrawThemeBackgroundEx(htheme, mem_dc, SPNP_UP, UPS_NORMAL, &rect, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ptr = bits;
+    for (i = 0; i < width * height; ++i)
+    {
+        if (ptr[3] != 0xff)
+            break;
+
+        ptr += 4;
+    }
+    ok(i == width * height || broken(ptr[3] == 0) /* Spin button glyphs on XP don't use alpha */,
+       "Unexpected alpha value %#x at (%d,%d).\n", ptr[3], i % height, i / height);
+
+    /* Drawing transparent background without glyphs should keep the alpha values */
+    CloseThemeData(htheme);
+    htheme = OpenThemeData(hwnd, L"Scrollbar");
+    transparent = IsThemeBackgroundPartiallyTransparent(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN);
+    ok(transparent, "Expected scrollbar sizebox transparent.\n");
+    transparent = FALSE;
+    hr = GetThemeBool(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN, TMT_TRANSPARENT, &transparent);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(transparent, "Expected scrollbar sizebox transparent.\n");
+    hr = GetThemeEnumValue(htheme, SBP_SIZEBOX, SZB_RIGHTALIGN, TMT_GLYPHTYPE, &glyph_type);
+    ok(hr == E_PROP_ID_UNSUPPORTED, "Got unexpected hr %#lx.\n", hr);
+
+    memset(bits, 0xa5, width * height * sizeof(int));
+    hr = DrawThemeBackgroundEx(htheme, mem_dc, SBP_SIZEBOX, SZB_RIGHTALIGN, &rect, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    found = FALSE;
+    ptr = bits;
+    for (i = 0; i < width * height; ++i)
+    {
+        if (ptr[3] == 0xa5)
+        {
+            found = TRUE;
+            break;
+        }
+
+        ptr += 4;
+    }
+    ok(found, "Expected alpha values found.\n");
+
+    /* Drawing transparent background with transparent glyphs should keep alpha values */
+    CloseThemeData(htheme);
+    htheme = OpenThemeData(hwnd, L"Header");
+    if (IsThemePartDefined(htheme, HP_HEADERDROPDOWN, 0))
+    {
+        transparent = IsThemeBackgroundPartiallyTransparent(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL);
+        ok(transparent, "Expected header dropdown transparent.\n");
+        transparent = FALSE;
+        hr = GetThemeBool(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL, TMT_TRANSPARENT, &transparent);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(transparent, "Expected header dropdown background transparent.\n");
+        transparent = FALSE;
+        hr = GetThemeBool(htheme, HP_HEADERDROPDOWN, HDDS_NORMAL, TMT_GLYPHTRANSPARENT, &transparent);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(transparent, "Expected header dropdown glyph transparent.\n");
+
+        memset(bits, 0xa5, width * height * sizeof(int));
+        hr = DrawThemeBackgroundEx(htheme, mem_dc, HP_HEADERDROPDOWN, HDDS_NORMAL, &rect, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        found = FALSE;
+        ptr = bits;
+        for (i = 0; i < width * height; ++i)
+        {
+            if (ptr[3] == 0xa5)
+            {
+                found = TRUE;
+                break;
+            }
+
+            ptr += 4;
+        }
+        ok(found, "Expected alpha values found.\n");
+    }
+    else
+    {
+        skip("Failed to get header dropdown parts.\n");
+    }
+
+    SelectObject(mem_dc, old_bitmap);
+    DeleteDC(mem_dc);
+    DeleteObject(bitmap);
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
+}
+
+static void test_GetThemeBackgroundRegion(void)
+{
+    HTHEME htheme;
+    HRGN region;
+    HRESULT hr;
+    HWND hwnd;
+    RECT rect;
+    int ret;
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Rebar");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    hr = GetThemeEnumValue(htheme, RP_BAND, 0, TMT_BGTYPE, &ret);
+    ok(hr == S_OK, "Got unexpected hr %#lx,\n", hr);
+    ok(ret == BT_NONE, "Got expected type %d.\n", ret);
+
+    SetRect(&rect, 0, 0, 10, 10);
+    region = (HRGN)0xdeadbeef;
+    hr = GetThemeBackgroundRegion(htheme, NULL, RP_BAND, 0, &rect, &region);
+    ok(hr == E_UNEXPECTED || broken(hr == S_OK) /* < Win10 */, "Got unexpected hr %#lx.\n", hr);
+    ok(region == (HRGN)0xdeadbeef, "Got unexpected region.\n");
+
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
 }
 
 START_TEST(system)
@@ -2268,10 +2557,6 @@ START_TEST(system)
 
     init_funcs();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    /* No real functional theme API tests will be done (yet). The current tests
-     * only show input/return behaviour
-     */
 
     test_IsThemed();
     test_IsThemePartDefined();
@@ -2287,6 +2572,8 @@ START_TEST(system)
     test_GetThemeIntList();
     test_GetThemeTransitionDuration();
     test_DrawThemeParentBackground();
+    test_DrawThemeBackgroundEx();
+    test_GetThemeBackgroundRegion();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {

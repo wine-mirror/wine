@@ -20,6 +20,8 @@
 #ifndef __WINE_PKTDEF_H
 #define __WINE_PKTDEF_H
 
+#include "wine/winheader_enter.h"
+
 /***********************************************************************
  * How to use pktdef.h:
  * 
@@ -244,5 +246,7 @@ typedef struct __TAG {
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* defined(__WINE_PKTDEF_H */

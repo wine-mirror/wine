@@ -21,6 +21,8 @@
 #ifndef __WINE_D3DX9CORE_H
 #define __WINE_D3DX9CORE_H
 
+#include "wine/winheader_enter.h"
+
 /**********************************************
  ***************** Definitions ****************
  **********************************************/
@@ -501,5 +503,7 @@ UINT WINAPI D3DXGetDriverLevel(struct IDirect3DDevice9 *device);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3DX9CORE_H */

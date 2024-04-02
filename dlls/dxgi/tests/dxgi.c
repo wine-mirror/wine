@@ -1265,6 +1265,7 @@ static void test_create_surface(void)
     hr = IDXGIDevice_CreateSurface(device, &desc, 1, DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &surface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    check_interface(surface, &IID_IDXGIResource, TRUE, FALSE);
     check_interface(surface, &IID_ID3D10Texture2D, TRUE, FALSE);
     /* Not available on all Windows versions. */
     check_interface(surface, &IID_ID3D11Texture2D, TRUE, TRUE);
@@ -4490,19 +4491,13 @@ static void test_swapchain_parameters(void)
             continue;
 
         hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGIResource, (void **)&resource);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
-        if (FAILED(hr))
-        {
-            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-            IDXGISwapChain_Release(swapchain);
-            continue;
-        }
+        ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
 
         expected_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
         hr = IDXGIResource_GetUsage(resource, &usage);
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
+        todo_wine
         ok((usage & expected_usage) == expected_usage, "Got usage %x, expected %x, test %u.\n",
                 usage, expected_usage, i);
 
@@ -4539,15 +4534,21 @@ static void test_swapchain_parameters(void)
                 broken_usage |= DXGI_USAGE_READ_ONLY;
 
             hr = IDXGIResource_GetUsage(resource, &usage);
+            todo_wine
             ok(hr == S_OK, "Got unexpected hr %#lx, test %u, buffer %u.\n", hr, i, j);
+            todo_wine
             ok(usage == expected_usage || broken(usage == broken_usage),
                     "Got usage %x, expected %x, test %u, buffer %u.\n",
                     usage, expected_usage, i, j);
 
             IDXGIResource_Release(resource);
         }
-        hr = IDXGISwapChain_GetBuffer(swapchain, j, &IID_IDXGIResource, (void **)&resource);
-        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx, test %u.\n", hr, i);
+
+        if (strcmp(winetest_platform, "wine"))
+        {
+            hr = IDXGISwapChain_GetBuffer(swapchain, j, &IID_IDXGIResource, (void **)&resource);
+            ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx, test %u.\n", hr, i);
+        }
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
@@ -4603,15 +4604,12 @@ static void test_swapchain_parameters(void)
         }
 
         hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGIResource, (void **)&resource);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
-        if (FAILED(hr))
-        {
-            IDXGISwapChain_Release(swapchain);
-            continue;
-        }
+        ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
         expected_usage = usage | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_DISCARD_ON_PRESENT;
         hr = IDXGIResource_GetUsage(resource, &usage);
+        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
+        todo_wine_if(i != 7)
         ok(usage == expected_usage, "Got usage %x, expected %x, test %u.\n", usage, expected_usage, i);
         IDXGIResource_Release(resource);
 

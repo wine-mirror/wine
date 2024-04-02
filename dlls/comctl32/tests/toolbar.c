@@ -62,6 +62,7 @@ static BOOL g_fExpectedHotItemOld;
 static BOOL g_fExpectedHotItemNew;
 static DWORD g_dwExpectedDispInfoMask;
 static BOOL g_ResetDispTextPtr;
+static BOOL g_TestCheckedItemPrePaint;
 
 static const struct message ttgetdispinfo_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, TBN_GETINFOTIPA },
@@ -346,6 +347,28 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
                 tb->tbButton.iString = 3;
                 return 1;
             }
+            return 0;
+        }
+        case NM_CUSTOMDRAW:
+        {
+            NMTBCUSTOMDRAW *cd = (NMTBCUSTOMDRAW *)lParam;
+
+            switch (cd->nmcd.dwDrawStage)
+            {
+            case CDDS_PREPAINT:
+                return CDRF_NOTIFYITEMDRAW;
+            case CDDS_ITEMPREPAINT:
+            {
+                if (g_TestCheckedItemPrePaint)
+                {
+                    cd->clrBtnHighlight = RGB(0xff, 0, 0);
+                    cd->clrBtnFace = RGB(0xff, 0, 0);
+                    return TBCDRF_NOBACKGROUND;
+                }
+                return CDRF_DODEFAULT;
+            }
+            }
+
             return 0;
         }
     }
@@ -2617,34 +2640,48 @@ static void test_visual(void)
     HDC mem_dc1, mem_dc2, toolbar_dc;
     TBBUTTON tbbutton;
     int width, height;
+    COLORREF color;
     HTHEME theme;
     HWND toolbar;
     RECT rect;
     BOOL ret;
 
-    if (!is_theme_active)
-    {
-        skip("Theming is not active, skipping visual tests.\n");
-        return;
-    }
-
-    /* Test that toolbar shouldn't use outside theme handles */
     toolbar = CreateWindowA(TOOLBARCLASSNAMEA, "", WS_CHILD | WS_VISIBLE, 0, 0, 50, 50, hMainWnd, 0, 0, NULL);
     ok(!!toolbar, "Failed to create a toolbar window.\n");
 
-    /* Toolbar needs data for it to show */
+    /* Test that the comctl32 55AA pattern brush is not used to draw checked background when theming is on */
     memset(&tbbutton, 0, sizeof(tbbutton));
-    tbbutton.fsState = TBSTATE_ENABLED;
-    tbbutton.iString = (INT_PTR)"test";
+    tbbutton.idCommand = 1000;
+    tbbutton.fsState = TBSTATE_ENABLED | TBSTATE_CHECKED;
+    tbbutton.iString = (INT_PTR)" ";
     SendMessageA(toolbar, TB_BUTTONSTRUCTSIZE, sizeof(tbbutton), 0);
     ret = SendMessageA(toolbar, TB_ADDBUTTONSA, 1, (LPARAM)&tbbutton);
     ok(ret, "TB_ADDBUTTONSA failed.\n");
     flush_events();
+    g_TestCheckedItemPrePaint = TRUE;
+    ret = RedrawWindow(toolbar, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW | RDW_UPDATENOW);
+    ok(ret, "RedrawWindow failed.\n");
+    g_TestCheckedItemPrePaint = FALSE;
 
+    toolbar_dc = GetDC(toolbar);
+    color = GetPixel(toolbar_dc, 5, 5);
+    if (is_theme_active)
+        ok(color != RGB(0xff, 0, 0), "Unexpected color %#lx.\n", color);
+    else
+        ok(color == RGB(0xff, 0, 0), "Unexpected color %#lx.\n", color);
+
+    if (!is_theme_active)
+    {
+        skip("Theming is not active, skipping the rest of visual tests.\n");
+        ReleaseDC(toolbar, toolbar_dc);
+        DestroyWindow(toolbar);
+        return;
+    }
+
+    /* Test that toolbar shouldn't use outside theme handles */
     theme = pGetWindowTheme(toolbar);
     ok(!theme, "Expected theme not opened by window.\n");
 
-    toolbar_dc = GetDC(toolbar);
     GetClientRect(toolbar, &rect);
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;

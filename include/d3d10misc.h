@@ -19,6 +19,8 @@
 #ifndef __D3D10MISC_H__
 #define __D3D10MISC_H__
 
+#include "wine/winheader_enter.h"
+
 #include "d3d10.h"
 
 #ifdef __cplusplus
@@ -45,5 +47,7 @@ HRESULT WINAPI D3D10CreateBlob(SIZE_T data_size, ID3D10Blob **blob);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __D3D10MISC_H__ */

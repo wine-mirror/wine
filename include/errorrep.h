@@ -21,6 +21,8 @@
 #ifndef __WINE_ERRORREP_H
 #define __WINE_ERRORREP_H
 
+#include "wine/winheader_enter.h"
+
 typedef enum tagEFaultRepRetVal
 {
     frrvOk,
@@ -39,5 +41,7 @@ EFaultRepRetVal WINAPI ReportFault(LPEXCEPTION_POINTERS, DWORD);
 BOOL WINAPI AddERExcludedApplicationA(LPCSTR);
 BOOL WINAPI AddERExcludedApplicationW(LPCWSTR);
 #define     AddERExcludedApplication WINELIB_NAME_AW(AddERExcludedApplication)
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_ERORREP_H */

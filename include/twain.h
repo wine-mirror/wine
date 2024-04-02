@@ -52,6 +52,8 @@
 #ifndef TWAIN
 #define TWAIN
 
+#include "wine/winheader_enter.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -1869,5 +1871,7 @@ typedef struct {
 
 /* The Twain structures must be packed on 2 byte alignment */
 #include "poppack.h"
+
+#include "wine/winheader_exit.h"
 
 #endif  /* TWAIN */

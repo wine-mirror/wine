@@ -19,6 +19,8 @@
 #ifndef __DDK_USB100_H__
 #define __DDK_USB100_H__
 
+#include "wine/winheader_enter.h"
+
 #define USB_DEVICE_DESCRIPTOR_TYPE                0x01
 #define USB_CONFIGURATION_DESCRIPTOR_TYPE         0x02
 #define USB_STRING_DESCRIPTOR_TYPE                0x03
@@ -114,5 +116,7 @@ typedef struct _USB_HUB_DESCRIPTOR {
 typedef struct _USB_HUB_DESCRIPTOR *PUSB_HUB_DESCRIPTOR;
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif

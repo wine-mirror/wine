@@ -1142,6 +1142,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         WCHAR *textW = NULL;
         LONG codepage = unicode ? CP_UNICODE : CP_ACP;
         int len;
+        LRESULT evmask;
 
         ITextServices_OnTxInPlaceActivate( host->text_srv, NULL );
 
@@ -1150,7 +1151,10 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             text = unicode ? (void *)createW->lpszName : (void *)createA->lpszName;
             textW = ME_ToUnicode( codepage, text, &len );
         }
+        ITextServices_TxSendMessage( host->text_srv, EM_GETEVENTMASK, 0, 0, &evmask );
+        ITextServices_TxSendMessage( host->text_srv, EM_SETEVENTMASK, 0, evmask & ~ENM_CHANGE, &evmask );
         ITextServices_TxSetText( host->text_srv, textW );
+        ITextServices_TxSendMessage( host->text_srv, EM_SETEVENTMASK, 0, evmask, NULL );
         if (lparam) ME_EndToUnicode( codepage, textW );
         break;
     }

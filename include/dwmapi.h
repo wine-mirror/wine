@@ -17,6 +17,8 @@
 #ifndef __WINE_DWMAPI_H
 #define __WINE_DWMAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include "wtypes.h"
 #include "uxtheme.h"
 
@@ -217,5 +219,7 @@ DWMAPI DwmUpdateThumbnailProperties(HTHUMBNAIL, const DWM_THUMBNAIL_PROPERTIES *
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_DWMAPI_H */

@@ -913,23 +913,25 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_QueryInterface(ID3DXMatrixStack *ifac
 
 static ULONG WINAPI ID3DXMatrixStackImpl_AddRef(ID3DXMatrixStack *iface)
 {
-    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
-    return ref;
+    struct ID3DXMatrixStackImpl *stack = impl_from_ID3DXMatrixStack(iface);
+    ULONG refcount = InterlockedIncrement(&stack->ref);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+    return refcount;
 }
 
 static ULONG WINAPI ID3DXMatrixStackImpl_Release(ID3DXMatrixStack *iface)
 {
-    struct ID3DXMatrixStackImpl *This = impl_from_ID3DXMatrixStack(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    if (!ref)
+    struct ID3DXMatrixStackImpl *stack = impl_from_ID3DXMatrixStack(iface);
+    ULONG refcount = InterlockedDecrement(&stack->ref);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+    if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This->stack);
-        HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, stack->stack);
+        HeapFree(GetProcessHeap(), 0, stack);
     }
-    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
-    return ref;
+    return refcount;
 }
 
 static D3DXMATRIX* WINAPI ID3DXMatrixStackImpl_GetTop(ID3DXMatrixStack *iface)
@@ -1170,7 +1172,7 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack)
 {
     struct ID3DXMatrixStackImpl *object;
 
-    TRACE("flags %#x, stack %p.\n", flags, stack);
+    TRACE("flags %#lx, stack %p.\n", flags, stack);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
     {
@@ -3010,7 +3012,7 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
 
     if (FAILED(hr = IDirect3DCubeTexture9_GetLevelDesc(texture, 0, &desc)))
     {
-        ERR("Failed to get level desc, hr %#x.\n", hr);
+        ERR("Failed to get level desc, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -3036,7 +3038,7 @@ HRESULT WINAPI D3DXSHProjectCubeMap(unsigned int order, IDirect3DCubeTexture9 *t
 
         if (FAILED(hr = IDirect3DCubeTexture9_LockRect(texture, face, 0, &map_desc, NULL, D3DLOCK_READONLY)))
         {
-            ERR("Failed to map texture, hr %#x.\n", hr);
+            ERR("Failed to map texture, hr %#lx.\n", hr);
             free(temp);
             return hr;
         }

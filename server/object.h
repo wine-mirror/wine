@@ -78,6 +78,8 @@ struct object_ops
     void (*remove_queue)(struct object *,struct wait_queue_entry *);
     /* is object signaled? */
     int  (*signaled)(struct object *,struct wait_queue_entry *);
+    /* return the esync fd for this object */
+    struct esync_fd *(*get_esync_fd)(struct object *, enum esync_type *type);
     /* wait satisfied */
     void (*satisfied)(struct object *,struct wait_queue_entry *);
     /* signal an object */
@@ -238,6 +240,7 @@ extern void generate_startup_debug_events( struct process *process );
 extern unsigned int supported_machines_count;
 extern unsigned short supported_machines[8];
 extern unsigned short native_machine;
+extern int wow64_using_32bit_prefix;
 extern void init_registry(void);
 extern void flush_registry(void);
 

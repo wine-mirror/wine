@@ -225,6 +225,7 @@ static const char * const shader_opcode_names[] =
     [VKD3DSIH_MOV                             ] = "mov",
     [VKD3DSIH_MOVA                            ] = "mova",
     [VKD3DSIH_MOVC                            ] = "movc",
+    [VKD3DSIH_MSAD                            ] = "msad",
     [VKD3DSIH_MUL                             ] = "mul",
     [VKD3DSIH_NE                              ] = "ne",
     [VKD3DSIH_NOP                             ] = "nop",

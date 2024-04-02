@@ -769,26 +769,32 @@ NTSTATUS WINAPI wow64_NtQueryDirectoryObject( UINT *args )
     BOOLEAN restart = get_ulong( &args );
     ULONG *context = get_ptr( &args );
     ULONG *retlen = get_ptr( &args );
+    ULONG retsize;
 
     NTSTATUS status;
     DIRECTORY_BASIC_INFORMATION *info;
-    ULONG size = size32 + sizeof(*info) - sizeof(*info32);
+    ULONG size = size32 + 2 * sizeof(*info) - 2 * sizeof(*info32);
 
     if (!single_entry) FIXME( "not implemented\n" );
     info = Wow64AllocateTemp( size );
-    status = NtQueryDirectoryObject( handle, info, size, single_entry, restart, context, NULL );
+    status = NtQueryDirectoryObject( handle, info, size, single_entry, restart, context, &retsize );
     if (!status)
     {
-        info32->ObjectName.Buffer            = PtrToUlong( info32 + 1 );
+        info32->ObjectName.Buffer            = PtrToUlong( info32 + 2 );
         info32->ObjectName.Length            = info->ObjectName.Length;
         info32->ObjectName.MaximumLength     = info->ObjectName.MaximumLength;
         info32->ObjectTypeName.Buffer        = info32->ObjectName.Buffer + info->ObjectName.MaximumLength;
         info32->ObjectTypeName.Length        = info->ObjectTypeName.Length;
         info32->ObjectTypeName.MaximumLength = info->ObjectTypeName.MaximumLength;
+        memset( info32 + 1, 0, sizeof(*info32) );
         size = info->ObjectName.MaximumLength + info->ObjectTypeName.MaximumLength;
-        memcpy( info32 + 1, info + 1, size );
-        if (retlen) *retlen = sizeof(*info32) + size;
+        memcpy( info32 + 2, info + 2, size );
+        if (retlen) *retlen = 2 * sizeof(*info32) + size;
     }
+    else if (retlen && status == STATUS_BUFFER_TOO_SMALL)
+        *retlen = retsize - 2 * sizeof(*info) + 2 * sizeof(*info32);
+    else if (retlen && status == STATUS_NO_MORE_ENTRIES)
+        *retlen = 0;
     return status;
 }
 

@@ -8,6 +8,8 @@
 #ifndef __WINE_PROCESS_H
 #define __WINE_PROCESS_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_startup.h>
 #include <corecrt_wprocess.h>
 
@@ -103,5 +105,7 @@ _ACRTIMP intptr_t WINAPIV spawnlpe(int,const char*,const char*,...) __attribute_
 #define spawnlp  _spawnlp
 #define spawnlpe _spawnlpe
 #endif  /* __GNUC__ */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_PROCESS_H */

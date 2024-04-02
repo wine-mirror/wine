@@ -19,6 +19,8 @@
 #ifndef __WINE_TCHAR_H
 #define __WINE_TCHAR_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __WINESRC__
 #error Wine should not include tchar.h internally
 #endif
@@ -276,5 +278,7 @@ typedef _TCHAR        TCHAR, *PTCHAR;
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_TCHAR_H */

@@ -407,6 +407,13 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         strarray_add( &flags, opts->unix_lib ? "-dynamiclib" : "-bundle" );
         strarray_add( &flags, "-multiply_defined" );
         strarray_add( &flags, "suppress" );
+        if (opts->target.cpu == CPU_x86_32on64)
+        {
+            strarray_add( &flags, "-sectcreate" );
+            strarray_add( &flags, "WINE_32on64" );
+            strarray_add( &flags, "WINE_32on64" );
+            strarray_add( &flags, "/dev/null" );
+        }
         if (opts->image_base)
         {
             strarray_add( &flags, "-image_base" );
@@ -544,6 +551,7 @@ static const char *get_multiarch_dir( struct target target )
    switch (target.cpu)
    {
    case CPU_i386:    return "/i386-linux-gnu";
+   case CPU_x86_32on64: /* fall through */
    case CPU_x86_64:  return "/x86_64-linux-gnu";
    case CPU_ARM:     return "/arm-linux-gnueabi";
    case CPU_ARM64:   return "/aarch64-linux-gnu";
@@ -562,6 +570,7 @@ static char *get_lib_dir( struct options *opts )
     size_t build_len, target_len;
 
     bit_suffix = get_target_ptr_size( opts->target ) == 8 ? "64" : "32";
+/* BKS TODO: bit_suffix? */
     other_bit_suffix = get_target_ptr_size( opts->target ) == 8 ? "32" : "64";
     winecrt0 = strmake( "/wine%s/libwinecrt0.a", get_arch_dir( opts->target ));
     build_multiarch = get_multiarch_dir( get_default_target() );
@@ -681,7 +690,9 @@ static void compile(struct options* opts, const char* lang)
     struct strarray gcc;
     struct strarray gpp;
 
-    if (opts->force_pointer_size)
+    if (opts->target.cpu == CPU_x86_32on64)
+        strarray_add( &comp_args, strmake("-mwine32") );
+    else if (opts->force_pointer_size)
         strarray_add( &comp_args, strmake("-m%u", 8 * opts->force_pointer_size ) );
     switch(opts->processor)
     {
@@ -754,6 +765,14 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(&comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
             strarray_add(&comp_args, "-D__fastcall=__attribute__((__fastcall__))");
             break;
+        case CPU_x86_32on64:
+            strarray_add(&comp_args, "-D__stdcall=__attribute__((stdcall32))");
+            strarray_add(&comp_args, "-D__cdecl=__attribute__((cdecl32))");
+            strarray_add(&comp_args, "-D_stdcall=__attribute__((stdcall32))");
+            strarray_add(&comp_args, "-D_cdecl=__attribute__((cdecl32))");
+            strarray_add(&comp_args, "-D__fastcall=__attribute__((fastcall32))");
+            strarray_add(&comp_args, "-D_fastcall=__attribute__((fastcall32))");
+            break;
         case CPU_ARM:
             strarray_add(&comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
             strarray_add(&comp_args, "-D__cdecl=__stdcall");
@@ -781,7 +800,7 @@ static void compile(struct options* opts, const char* lang)
     strarray_add(&comp_args, "-D__int8=char");
     strarray_add(&comp_args, "-D__int16=short");
     strarray_add(&comp_args, "-D__int32=int");
-    if (get_target_ptr_size( opts->target ) == 8)
+    if (get_target_ptr_size( opts->target ) == 8 || opts->target.cpu == CPU_x86_32on64)
         strarray_add(&comp_args, "-D__int64=long");
     else
         strarray_add(&comp_args, "-D__int64=long long");
@@ -843,7 +862,15 @@ no_compat_defines:
         }
     }
     else if (opts->wine_objdir)
+    {
+#ifdef HAVE_ILOCAL
+        if (opts->target.cpu == CPU_x86_32on64 && !opts->use_msvcrt)
+            strarray_add(&comp_args, "-ilocal" );
+        else
+#endif
+            strarray_add(&comp_args, "-I" );
         strarray_add(&comp_args, strmake("-I%s/include", opts->wine_objdir) );
+    }
 
     spawn(opts->prefix, comp_args, 0);
 }
@@ -890,7 +917,9 @@ static struct strarray get_winebuild_args(struct options *opts)
         strarray_add( &spec_args, "--target" );
         strarray_add( &spec_args, opts->target_alias );
     }
-    if (opts->force_pointer_size)
+    if (opts->target.cpu == CPU_x86_32on64)
+        strarray_add(&spec_args, strmake("-mwine32"));
+    else if (opts->force_pointer_size)
         strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     for (i = 0; i < opts->prefix.count; i++)
         strarray_add( &spec_args, strmake( "-B%s", opts->prefix.str[i] ));
@@ -1779,6 +1808,13 @@ int main(int argc, char **argv)
                         set_target_ptr_size( &opts.target, 8 );
                         opts.force_pointer_size = 8;
 			raw_linker_arg = 1;
+                    }
+                    else if (strcmp("-mwine32", opts.args.str[i]) == 0)
+                    {
+                        if (opts.target.cpu == CPU_x86_64 || opts.target.cpu == CPU_i386)
+                            opts.target.cpu = CPU_x86_32on64;
+                        opts.force_pointer_size = 8;
+                        raw_linker_arg = 1;
                     }
                     else if (!strcmp("-marm", opts.args.str[i] ) || !strcmp("-mthumb", opts.args.str[i] ))
                     {

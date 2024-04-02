@@ -45,15 +45,8 @@ struct device_info
     char              str_buffer[1024];
 };
 
-struct run_loop_params
-{
-    HANDLE     op_thread;
-    PNTAPCFUNC op_apc;
-};
-
 struct dequeue_device_op_params
 {
-    ULONG_PTR arg;
     struct device_info *info;
 };
 

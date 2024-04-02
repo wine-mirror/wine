@@ -19,6 +19,8 @@
 #ifndef __WINE_ACCCTRL_H
 #define __WINE_ACCCTRL_H
 
+#include "wine/winheader_enter.h"
+
 #include <wtypes.h>
 
 #ifdef __cplusplus
@@ -447,5 +449,7 @@ DECL_WINELIB_TYPE_AW(PINHERITED_FROM)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ACCCTRL_H */

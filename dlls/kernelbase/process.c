@@ -27,6 +27,7 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "wincontypes.h"
 #include "winternl.h"
@@ -493,6 +494,58 @@ done:
     return ret;
 }
 
+/***********************************************************************
+ *    CROSSOVER HACK: bug 17440 - see more below
+ *           hack_steam_exe
+ */
+static WCHAR * hack_steam_exe(const WCHAR *tidy_cmdline, WCHAR *steam_dir)
+{
+    HKEY key;
+    DWORD res;
+    static const WCHAR allosarchesW[] = {' ','-','a','l','l','o','s','a','r','c','h','e','s',0};
+    static const WCHAR cefforce32bitW[] = {' ','-','c','e','f','-','f','o','r','c','e','-','3','2','b','i','t',0};
+    static const WCHAR enable_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','W','i','n','e',
+         '\\','A','p','p','D','e','f','a','u','l','t','s',
+         '\\','s','t','e','a','m','.','e','x','e',
+         '\\','F','o','r','c','e','B','e','t','a',0};
+
+    LPWSTR new_command_line;
+
+    new_command_line = RtlAllocateHeap(GetProcessHeap(), 0,
+        sizeof(WCHAR) * (lstrlenW(tidy_cmdline) + lstrlenW(allosarchesW) + lstrlenW(cefforce32bitW) + 1));
+
+    if (!new_command_line) return NULL;
+
+    wcscpy(new_command_line, tidy_cmdline);
+    lstrcatW(new_command_line, allosarchesW);
+    lstrcatW(new_command_line, cefforce32bitW);
+
+    res = RegOpenKeyExW(HKEY_CURRENT_USER, enable_keyW, 0, KEY_READ, &key);
+    if (res == ERROR_SUCCESS)
+    {
+        HANDLE handle;
+        DWORD bytes_written;
+        static const WCHAR betasuffixW[] = {'p','a','c','k','a','g','e','/','b','e','t','a',0};
+        WCHAR betafile[MAX_PATH];
+        const char *betaversion = "publicbeta";
+
+        RegCloseKey(key);
+        lstrcpyW(betafile, steam_dir);
+        lstrcatW(betafile, betasuffixW);
+        handle = CreateFileW(betafile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            WriteFile(handle, betaversion, strlen(betaversion), &bytes_written, NULL);
+            CloseHandle(handle);
+            TRACE("CrossOver hack writing %s to %s\n", betaversion, debugstr_w(betafile));
+        }
+    }
+
+    return new_command_line;
+}
+
 /**********************************************************************
  *           CreateProcessInternalW   (kernelbase.@)
  */
@@ -532,6 +585,123 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessInternalW( HANDLE token, const WCHAR 
         if (!(tidy_cmdline = get_file_name( cmd_line, name, ARRAY_SIZE(name) ))) return FALSE;
         app_name = name;
     }
+
+    /* CROSSOVER HACK: bug 13322 (winehq bug 39403)
+     * Insert --no-sandbox in command line of Steam's web helper process to
+     * work around rendering problems.
+     * CROSSOVER HACK: bug 17315
+     * Insert --in-process-gpu in command line of Steam's web helper process to
+     * work around page rendering problems. */
+    /* CROSSOVER HACK: bug 18582
+     * Add --in-process-gpu to the Rockstar Social Club's
+     * web helper process command line.
+     */
+    /* CROSSOVER HACK: bug 19537
+     * Add --in-process-gpu to Foxmail's command line.
+     */
+    /* CROSSOVER HACK: bug 15388
+     * Add --in-process-gpu and --use-gl=swiftshader to EO.WebBrowser CEF processes,
+     * used by Quicken.
+     * (It launches processes through rundll32.exe and already passes --no-sandbox)
+     */
+    /* CROSSOVER HACK: bug 19252
+     * Add --use-angle=gl to Ubisoft Connect.
+     */
+    /* CROSSOVER HACK: bug 20889
+     * Add --in-process-gpu and --use-gl=swiftshader to qwSubprocess.exe, another
+     * CEF helper used by Quicken. It already passes --no-sandbox.
+     */
+    /* CROSSOVER HACK: bug 20645
+     * Add --in-process-gpu and --no-sandbox to the Paradox Launcher.
+     */
+    {
+        static const WCHAR steamwebhelperexeW[] = {'s','t','e','a','m','w','e','b','h','e','l','p','e','r','.','e','x','e',0};
+        static const WCHAR socialclubhelperexeW[] = {'S','o','c','i','a','l','C','l','u','b','H','e','l','p','e','r','.','e','x','e',0};
+        static const WCHAR foxmailW[] = {'F','o','x','m','a','i','l','.','e','x','e',0};
+        static const WCHAR rundll32W[] = {'r','u','n','d','l','l','3','2','.','e','x','e',0};
+        static const WCHAR BattlenetW[] = {'B','a','t','t','l','e','.','n','e','t','.','e','x','e',0};
+        static const WCHAR UplayW[] = {'U','p','l','a','y','W','e','b','C','o','r','e','.','e','x','e',0};
+        static const WCHAR qwSubprocessW[] = {'q','w','S','u','b','p','r','o','c','e','s','s','.','e','x','e',0};
+        static const WCHAR paradoxlauncherW[] = {'P','a','r','a','d','o','x',' ','L','a','u','n','c','h','e','r','.','e','x','e',0};
+        static const WCHAR wechatW[] = {'W','e','C','h','a','t','.','e','x','e',0};
+
+        static const WCHAR inprocessgpuW[] = {' ','-','-','i','n','-','p','r','o','c','e','s','s','-','g','p','u',0};
+        static const WCHAR nosandboxW[] = {' ','-','-','n','o','-','s','a','n','d','b','o','x',0};
+        static const WCHAR swiftshaderW[] = {' ','-','-','u','s','e','-','g','l','=','s','w','i','f','t','s','h','a','d','e','r',0};
+        static const WCHAR angleglW[] = {' ','-','-','u','s','e','-','a','n','g','l','e','=','g','l',0};
+        static const WCHAR disablegpuW[] = {' ','-','-','d','i','s','a','b','l','e','-','g','p','u',0};
+
+        if (wcsstr(app_name, steamwebhelperexeW) || wcsstr(app_name, socialclubhelperexeW) || wcsstr(app_name, foxmailW)
+                || wcsstr(app_name, BattlenetW) || (wcsstr(app_name, rundll32W) && wcsstr(tidy_cmdline, nosandboxW))
+                || wcsstr(app_name, UplayW)
+                || wcsstr(app_name, qwSubprocessW)
+                || wcsstr(app_name, wechatW)
+                || wcsstr(app_name, paradoxlauncherW)
+           )
+        {
+            LPWSTR new_command_line;
+
+            new_command_line = RtlAllocateHeap(GetProcessHeap(), 0,
+                    sizeof(WCHAR) * (lstrlenW(tidy_cmdline) + lstrlenW(nosandboxW) +  lstrlenW(inprocessgpuW)
+                        + lstrlenW(swiftshaderW) + lstrlenW(angleglW) + lstrlenW(disablegpuW) + 1));
+
+            if (!new_command_line) return FALSE;
+
+            wcscpy(new_command_line, tidy_cmdline);
+            lstrcatW(new_command_line, nosandboxW);
+            lstrcatW(new_command_line, inprocessgpuW);
+
+            if ((wcsstr(app_name, rundll32W) && wcsstr(tidy_cmdline, nosandboxW))
+                    || wcsstr(app_name, qwSubprocessW))
+            {
+                lstrcatW(new_command_line, swiftshaderW);
+            }
+
+            if (wcsstr(app_name, UplayW))
+            {
+                lstrcatW(new_command_line, angleglW);
+            }
+
+            if (wcsstr(app_name, steamwebhelperexeW))
+            {
+                lstrcatW(new_command_line, disablegpuW);
+            }
+
+            TRACE("CrossOver hack changing command line to %s\n", debugstr_w(new_command_line));
+
+            if (tidy_cmdline != cmd_line) RtlFreeHeap( GetProcessHeap(), 0, tidy_cmdline );
+            tidy_cmdline = new_command_line;
+        }
+    }
+    /* end CROSSOVER HACK */
+
+    /* CROSSOVER HACK: bug 17440
+     *  On the Mac, we cannot use the 64 bit version of cef because it
+     *  uses registers that conflict.
+     * Valve kindly made a set of options for us to make Steam use 32 bit cef as a workaround.
+     *   So we inject -allosarches -cef-force-32bit to the command line, it works.
+     * A slight wrinkle is that this was only supported in Beta at the time of this writing (5/5/2020)
+     *   so we force the beta client for now.  */
+    {
+        static const WCHAR steamexeW[] = {'s','t','e','a','m','.','e','x','e',0};
+
+        if (wcsstr(name, steamexeW))
+        {
+            WCHAR *new_command_line;
+            WCHAR steam_dir[MAX_PATH];
+
+            lstrcpyW(steam_dir, name);
+            steam_dir[lstrlenW(steam_dir) - lstrlenW(steamexeW)] = 0;
+            new_command_line = hack_steam_exe(tidy_cmdline, steam_dir);
+            if (new_command_line)
+            {
+                TRACE("CrossOver hack changing command line to %s\n", debugstr_w(new_command_line));
+                if (tidy_cmdline != cmd_line) RtlFreeHeap( GetProcessHeap(), 0, tidy_cmdline );
+                tidy_cmdline = new_command_line;
+            }
+        }
+    }
+    /* end CROSSOVER HACK */
 
     /* Warn if unsupported features are used */
 
@@ -985,7 +1155,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsProcessorFeaturePresent ( DWORD feature )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process2( HANDLE process, USHORT *machine, USHORT *native_machine )
 {
-    return set_ntstatus( RtlWow64GetProcessMachines( process, machine, native_machine ));
+    /* CX HACK 20810: in Wow64 with a 32-bit-only bottle, pretend we aren't in Wow64 */
+    UNICODE_STRING name_str, val_str;
+    RtlInitUnicodeString( &name_str, L"WINEWOW6432BPREFIXMODE" );
+    val_str.MaximumLength = 0;
+
+    if (RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND)
+    {
+        *machine = IMAGE_FILE_MACHINE_UNKNOWN;
+        if (native_machine) *native_machine = IMAGE_FILE_MACHINE_I386;
+        return STATUS_SUCCESS;
+    }
+    else
+        return set_ntstatus( RtlWow64GetProcessMachines( process, machine, native_machine ));
 }
 
 
@@ -997,8 +1179,20 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process( HANDLE process, PBOOL wow64 )
     ULONG_PTR pbi;
     NTSTATUS status;
 
-    status = NtQueryInformationProcess( process, ProcessWow64Information, &pbi, sizeof(pbi), NULL );
-    if (!status) *wow64 = !!pbi;
+    /* CX HACK 20810: in Wow64 with a 32-bit-only bottle, pretend we aren't in Wow64 */
+    UNICODE_STRING name_str, val_str;
+    RtlInitUnicodeString( &name_str, L"WINEWOW6432BPREFIXMODE" );
+    val_str.MaximumLength = 0;
+    if (RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND)
+    {
+        status = STATUS_SUCCESS;
+        if (!status) *wow64 = FALSE;
+    }
+    else
+    {
+        status = NtQueryInformationProcess( process, ProcessWow64Information, &pbi, sizeof(pbi), NULL );
+        if (!status) *wow64 = !!pbi;
+    }
     return set_ntstatus( status );
 }
 

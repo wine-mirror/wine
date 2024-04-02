@@ -176,6 +176,15 @@ static const printenv_t * const all_printenv[] = { &env_x86, &env_x64, &env_arm,
  *
  */
 
+static char *strdup_unixcp( const WCHAR *str )
+{
+    char *ret;
+    int len = WideCharToMultiByte( CP_UNIXCP, 0, str, -1, NULL, 0, NULL, NULL );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        WideCharToMultiByte( CP_UNIXCP, 0, str, -1, ret, len, NULL, NULL );
+    return ret;
+}
+
 static const  printenv_t * validate_envW(LPCWSTR env)
 {
     const printenv_t *result = NULL;
@@ -1855,7 +1864,7 @@ LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DE
         outputW = HeapAlloc(GetProcessHeap(), 0, ret);
     }
 
-    if (input) inputW = GdiConvertToDevmodeW(input);
+    if (input && (mode & DM_IN_BUFFER)) inputW = GdiConvertToDevmodeW(input);
 
     ret = DocumentPropertiesW(hwnd, printer, device, outputW, inputW, mode);
 
@@ -2072,6 +2081,15 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
         if (!deleting && (status & PRINTER_STATUS_DRIVER_UPDATE_NEEDED))
             update_driver( *phPrinter );
         RegCloseKey( key );
+    }
+
+    /* CrossOver hack for bug 21116 */
+    if (lpPrinterName &&
+        (!wcsncmp(lpPrinterName, L"progeCAD PDF Virtual Printer", 28) ||
+            !wcsncmp(lpPrinterName, L"progeCAD Image Virtual Printer", 30)))
+    {
+        TRACE("Crossover hack: Return error for %s printer\n", debugstr_w(lpPrinterName));
+        *phPrinter = NULL;
     }
 
     TRACE("returning %d with %u and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
@@ -6449,6 +6467,11 @@ BOOL WINAPI AddPrinterConnectionW( LPWSTR pName )
  */
 BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, DWORD dwFileCopyFlags)
 {
+    WCHAR *ppd_dir = NULL, *ppd_fullpath;
+    char *printer_name;
+    DRIVER_INFO_3W *pd = (DRIVER_INFO_3W*)pDriverInfo;
+    int i;
+
     TRACE("(%s, %d, %p, 0x%x)\n", debugstr_w(pName), level, pDriverInfo, dwFileCopyFlags);
 
     if ((backend == NULL)  && !load_backend()) return FALSE;
@@ -6462,6 +6485,20 @@ BOOL WINAPI AddPrinterDriverExW( LPWSTR pName, DWORD level, LPBYTE pDriverInfo, 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+#ifdef __ANDROID__
+    TRACE( "Querying for fallback ppd on Android.\n" );
+    ppd_dir = get_ppd_dir();
+
+    if (!pName) pName = pd->pName;
+    ppd_fullpath = get_ppd_filename( ppd_dir, pName );
+    printer_name = strdup_unixcp( pName );
+
+    get_fallback_ppd( printer_name, ppd_fullpath );
+    pd->pDataFile = ppd_fullpath;
+    dwFileCopyFlags |= APD_COPY_NEW_FILES | APD_COPY_FROM_DIRECTORY;
+    HeapFree( GetProcessHeap(), 0, printer_name );
+#endif
 
     return backend->fpAddPrinterDriverEx(pName, level, pDriverInfo, dwFileCopyFlags);
 }

@@ -19,6 +19,8 @@
 #ifndef _INC_CUSTCNTL
 #define _INC_CUSTCNTL
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -124,5 +126,7 @@ DECL_WINELIB_TYPE_AW(LPFNCCINFO)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _INC_CUSTCNTL */

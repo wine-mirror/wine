@@ -20,6 +20,8 @@
 #ifndef __WINE_SEARCH_H
 #define __WINE_SEARCH_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #ifdef __cplusplus
@@ -40,5 +42,7 @@ static inline void* lfind(const void* match, const void* start, unsigned int* ar
     { return _lfind(match, start, array_size, elem_size, cf); }
 static inline void* lsearch(const void* match, void* start, unsigned int* array_size, unsigned int elem_size, int (__cdecl *cf)(const void*,const void*) )
     { return _lsearch(match, start, array_size, elem_size, cf); }
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_SEARCH_H */

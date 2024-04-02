@@ -19,6 +19,8 @@
 #ifndef _WMISTR_
 #define _WMISTR_
 
+#include "wine/winheader_enter.h"
+
 #define WNODE_FLAG_ALL_DATA              0x00000001
 #define WNODE_FLAG_SINGLE_INSTANCE       0x00000002
 #define WNODE_FLAG_SINGLE_ITEM           0x00000004
@@ -80,5 +82,7 @@ typedef struct _WNODE_HEADER
     ULONG ClientContext;
     ULONG Flags;
 } WNODE_HEADER, *PWNODE_HEADER;
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WMISTR_ */

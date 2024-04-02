@@ -18,6 +18,8 @@
 #ifndef _WINE_SNMP_H
 #define _WINE_SNMP_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 
 #include <pshpack4.h>
@@ -290,5 +292,7 @@ VOID WINAPIV SnmpUtilDbgPrint(INT nLogLevel, LPSTR szFormat, ...);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINE_SNMP_H */

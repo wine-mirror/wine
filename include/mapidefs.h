@@ -20,6 +20,8 @@
 #ifndef MAPIDEFS_H
 #define MAPIDEFS_H
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 #include <winerror.h>
 #include <objbase.h>
@@ -1319,5 +1321,7 @@ DECLARE_INTERFACE_(IAttach,IMAPIProp)
 
 #define NO_ATTACHMENT        0x00000000U
 #define ATTACH_BY_VALUE      0x00000001U
+
+#include "wine/winheader_exit.h"
 
 #endif /*MAPIDEFS_H*/

@@ -31,6 +31,43 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(display);
 
+/* CrossOver Hack #18576: don't check for kDisplayModeSafeFlag on Apple Silicon. */
+/* Also used by CrossOver Hack #20512. */
+#include <sys/types.h>
+#include <sys/sysctl.h>
+static int apple_silicon_status;
+static BOOL CALLBACK init_is_apple_silicon(INIT_ONCE* once, void* param, void** context)
+{
+    /* returns 0 for native process or on error, 1 for translated */
+    int ret = 0;
+    size_t size = sizeof(ret);
+    if (sysctlbyname("sysctl.proc_translated", &ret, &size, NULL, 0) == -1)
+        apple_silicon_status = 0;
+    else
+        apple_silicon_status = ret;
+
+    return TRUE;
+}
+int is_apple_silicon(void)
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    InitOnceExecuteOnce(&once, init_is_apple_silicon, NULL, NULL);
+    return apple_silicon_status;
+}
+
+/* CrossOver Hack #20512 */
+int is_skyrim_se_launcher(void)
+{
+    char name[MAX_PATH], *module_exe;
+    if (!GetModuleFileNameA(NULL, name, sizeof(name)))
+        return FALSE;
+
+    module_exe = strrchr(name, '\\');
+    module_exe = module_exe ? module_exe + 1 : name;
+
+    return !strcasecmp(module_exe, "SkyrimSELauncher.exe");
+}
+
 
 struct display_mode_descriptor
 {
@@ -527,7 +564,9 @@ static int get_default_bpp(void)
 static BOOL display_mode_is_supported(CGDisplayModeRef display_mode)
 {
     uint32_t io_flags = CGDisplayModeGetIOFlags(display_mode);
-    return (io_flags & kDisplayModeValidFlag) && (io_flags & kDisplayModeSafeFlag);
+    /* CrossOver Hack #18576: don't check for kDisplayModeSafeFlag on Apple Silicon. */
+    return (io_flags & kDisplayModeValidFlag) &&
+            ((io_flags & kDisplayModeSafeFlag) || is_apple_silicon());
 }
 
 
@@ -563,7 +602,7 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
             CFSTR("pixel_encoding"),
             CFSTR("refresh_rate"),
         };
-        const void* values[ARRAY_SIZE(keys)] = {
+        const void* HOSTPTR values[ARRAY_SIZE(keys)] = {
             cf_io_flags,
             cf_width,
             cf_height,
@@ -571,7 +610,7 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
             cf_refresh,
         };
 
-        ret = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, ARRAY_SIZE(keys),
+        ret = CFDictionaryCreate(NULL, (const void* HOSTPTR * HOSTPTR)keys, (const void* HOSTPTR * HOSTPTR)values, ARRAY_SIZE(keys),
                                  &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     }
 
@@ -656,7 +695,7 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
 #endif
 
 
-static CFComparisonResult mode_compare(const void *p1, const void *p2, void *context)
+static CFComparisonResult mode_compare(const void * HOSTPTR p1, const void * HOSTPTR p2, void * HOSTPTR context)
 {
     CGDisplayModeRef a = (CGDisplayModeRef)p1, b = (CGDisplayModeRef)p2;
     size_t a_val, b_val;
@@ -724,10 +763,10 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display, BOOL include_uns
         struct display_mode_descriptor* desc;
         CFMutableDictionaryRef modes_by_size;
         CFIndex i, count;
-        CGDisplayModeRef* mode_array;
+        CGDisplayModeRef* WIN32PTR mode_array;
 
-        options = CFDictionaryCreate(NULL, (const void**)&kCGDisplayShowDuplicateLowResolutionModes,
-                                     (const void**)&kCFBooleanTrue, 1, &kCFTypeDictionaryKeyCallBacks,
+        options = CFDictionaryCreate(NULL, (const void* HOSTPTR * HOSTPTR)&kCGDisplayShowDuplicateLowResolutionModes,
+                                     (const void* HOSTPTR * HOSTPTR)&kCFBooleanTrue, 1, &kCFTypeDictionaryKeyCallBacks,
                                      &kCFTypeDictionaryValueCallBacks);
 
         modes = CGDisplayCopyAllDisplayModes(display, options);
@@ -758,8 +797,8 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display, BOOL include_uns
 
         count = CFDictionaryGetCount(modes_by_size);
         mode_array = HeapAlloc(GetProcessHeap(), 0, count * sizeof(mode_array[0]));
-        CFDictionaryGetKeysAndValues(modes_by_size, NULL, (const void **)mode_array);
-        modes = CFArrayCreate(NULL, (const void **)mode_array, count, &kCFTypeArrayCallBacks);
+        CFDictionaryGetKeysAndValues(modes_by_size, NULL, (const void * HOSTPTR * HOSTPTR)mode_array);
+        modes = CFArrayCreate(NULL, (const void * HOSTPTR * HOSTPTR)mode_array, count, &kCFTypeArrayCallBacks);
         HeapFree(GetProcessHeap(), 0, mode_array);
         CFRelease(modes_by_size);
     }
@@ -1240,7 +1279,7 @@ BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     int num_displays;
     uint32_t mac_entries;
     int win_entries = ARRAY_SIZE(r->red);
-    CGGammaValue *red, *green, *blue;
+    CGGammaValue * WIN32PTR red, * WIN32PTR green, * WIN32PTR blue;
     CGError err;
     int win_entry;
 
@@ -1322,7 +1361,7 @@ BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
     struct macdrv_display *displays;
     int num_displays;
     int win_entries = ARRAY_SIZE(r->red);
-    CGGammaValue *red, *green, *blue;
+    CGGammaValue * WIN32PTR red, * WIN32PTR green, * WIN32PTR blue;
     int i;
     CGError err = kCGErrorFailure;
 
@@ -1465,6 +1504,7 @@ void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
     for (gpu = gpus; gpu < gpus + gpu_count; gpu++)
     {
+        char gpucopy[ARRAY_SIZE(gpu->name)];
         struct gdi_gpu gdi_gpu =
         {
             .id = gpu->id,
@@ -1473,12 +1513,13 @@ void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             .subsys_id = gpu->subsys_id,
             .revision_id = gpu->revision_id,
         };
-        RtlUTF8ToUnicodeN(gdi_gpu.name, sizeof(gdi_gpu.name), &len, gpu->name, strlen(gpu->name));
+        memcpy(gpucopy, gpu->name, sizeof(gpu->name));
+        RtlUTF8ToUnicodeN(gdi_gpu.name, sizeof(gdi_gpu.name), &len, gpucopy, strlen(gpucopy));
         device_manager->add_gpu(&gdi_gpu, param);
 
         /* Initialize adapters */
         if (macdrv_get_adapters(gpu->id, &adapters, &adapter_count)) break;
-        TRACE("GPU: %llx %s, adapter count: %d\n", gpu->id, debugstr_a(gpu->name), adapter_count);
+        TRACE("GPU: %llx %s, adapter count: %d\n", gpu->id, debugstr_a(gpucopy), adapter_count);
 
         for (adapter = adapters; adapter < adapters + adapter_count; adapter++)
         {
@@ -1495,15 +1536,17 @@ void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             /* Initialize monitors */
             for (monitor = monitors; monitor < monitors + monitor_count; monitor++)
             {
+                char monitorcopy[ARRAY_SIZE(monitor->name)];
                 struct gdi_monitor gdi_monitor =
                 {
                     .rc_monitor = rect_from_cgrect(monitor->rc_monitor),
                     .rc_work = rect_from_cgrect(monitor->rc_work),
                     .state_flags = monitor->state_flags,
                 };
+                memcpy(monitorcopy, monitor->name, sizeof(monitor->name));
                 RtlUTF8ToUnicodeN(gdi_monitor.name, sizeof(gdi_monitor.name), &len,
-                                  monitor->name, strlen(monitor->name));
-                TRACE("monitor: %s\n", debugstr_a(monitor->name));
+                                  monitorcopy, strlen(monitorcopy));
+                TRACE("monitor: %s\n", debugstr_a(monitorcopy));
                 device_manager->add_monitor( &gdi_monitor, param );
             }
 

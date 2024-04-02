@@ -20,10 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -44,8 +40,20 @@
 #include "wine/unixlib.h"
 #include "wine/rbtree.h"
 #include "wine/debug.h"
+#include "wine/server.h"
+
+#ifdef __WINESRC__
+#include "wine/exception.h"
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
+
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
 
 static HKEY wine_fonts_key;
 static HKEY wine_fonts_cache_key;
@@ -476,6 +484,19 @@ static pthread_mutex_t font_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
+#ifdef __WINESRC__
+    SIZE_T len;
+
+    static const WCHAR winedatadirW[]  = {'W','I','N','E','D','A','T','A','D','I','R'};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R'};
+
+    if (!RtlQueryEnvironmentVariable( NULL, winedatadirW, ARRAYSIZE(winedatadirW),
+                                      path, MAX_PATH, &len ))
+        asciiz_to_unicode( path + len, "\\" WINE_FONT_DIR "\\" );
+    else if (!RtlQueryEnvironmentVariable( NULL, winebuilddirW, ARRAYSIZE(winebuilddirW),
+                                           path, MAX_PATH, &len ))
+        asciiz_to_unicode( path + len, "\\fonts\\" );
+#else
     const char *dir;
     ULONG len = MAX_PATH;
 
@@ -489,6 +510,7 @@ static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
         wine_unix_to_nt_file_name( dir, path, &len );
         asciiz_to_unicode( path + len - 1, "\\fonts\\" );
     }
+#endif
 
     if (file) lstrcatW( path, file );
 }
@@ -497,6 +519,46 @@ static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
     asciiz_to_unicode( path, "\\??\\C:\\windows\\fonts\\" );
     if (file) lstrcatW( path, file );
+}
+
+static NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
+{
+    if (!attr || attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
+
+    if (attr->ObjectName)
+    {
+        if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
+    }
+    else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
+
+    return STATUS_SUCCESS;
+}
+
+/* Copied from NtOpenKeyEx */
+static NTSTATUS nt_open_key( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
+{
+    NTSTATUS ret;
+
+    if (!retkey || !attr || !attr->ObjectName) return STATUS_ACCESS_VIOLATION;
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
+           debugstr_us(attr->ObjectName), access, retkey );
+    if (options & ~REG_OPTION_OPEN_LINK)
+        FIXME("options %x not implemented\n", options);
+
+    SERVER_START_REQ( open_key )
+    {
+        req->parent     = wine_server_obj_handle( attr->RootDirectory );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *retkey = wine_server_ptr_handle( reply->hkey );
+    }
+    SERVER_END_REQ;
+    TRACE("<- %p\n", *retkey);
+    return ret;
 }
 
 HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
@@ -512,7 +574,9 @@ HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return 0;
+    /* CW Bug 17646 HACK: Office 2016/365 hooks NtOpenKeyEx to filter out some
+     * registry keys that Wine needs */
+    if (nt_open_key( &ret, MAXIMUM_ALLOWED, &attr, 0 )) return 0;
     return ret;
 }
 
@@ -825,7 +889,7 @@ static void release_family( struct gdi_font_family *family )
     wine_rb_remove( &family_name_tree, &family->name_entry );
     if (family->second_name[0]) wine_rb_remove( &family_second_name_tree, &family->second_name_entry );
     if (family->replacement) release_family( family->replacement );
-    free( family );
+    heapfree( family );
 }
 
 static struct gdi_font_family *find_family_from_name( const WCHAR *name )
@@ -945,6 +1009,53 @@ static void load_gdi_font_replacements(void)
 
     static const WCHAR replacementsW[] = {'R','e','p','l','a','c','e','m','e','n','t','s'};
 
+/* CROSSOVER HACK - bug 13095 and 13610 */
+    static const WCHAR STSong[] = {'S','T','S','o','n','g',0};
+    static const WCHAR atSTSong[] = {'@','S','T','S','o','n','g',0};
+    static const WCHAR SongTi[] = {0x5b8b,0x4f53,0};
+    static const WCHAR atSongTi[] = {'@',0x5b8b,0x4f53,0};
+    static const WCHAR XinSongTi[] = {0x65B0,0x5b8b,0x4f53,0};
+    static const WCHAR atXinSongTi[] = {'@',0x65B0,0x5b8b,0x4f53,0};
+    static const WCHAR SimSun[] = {'S','i','m','S','u','n',0};
+    static const WCHAR NSimSun[] = {'N','S','i','m','S','u','n',0};
+    static const WCHAR atSimSun[] = {'@','S','i','m','S','u','n',0};
+    static const WCHAR atNSimSun[] = {'@','N','S','i','m','S','u','n',0};
+    static const WCHAR *cn_font_replacement[] = {
+        SimSun,
+        NSimSun,
+        SongTi,
+        XinSongTi,
+        atSimSun,
+        atNSimSun,
+        atSongTi,
+        atXinSongTi
+    };
+    BOOL cn_font_seen[ARRAY_SIZE(cn_font_replacement)] = {FALSE};
+    static const WCHAR new_cn_font[] =
+        {'H','i','r','a','g','i','n','o',' ','S','a','n','s',' ','G','B',' ','W','3','\0',
+        'S','T','S','o','n','g','\0',
+        /* Noto Sans CJK SC Regular - default Simplified Chinese font for Ubuntu 16.04 or later */
+        'N','o','t','o',' ','S','a','n','s',' ','C','J','K',' ','S','C',' ','R','e','g','u','l','a','r','\0',
+        /* Source Han Sans CN - Fedora's default Simplified Chinese font */
+        'S','o','u','r','c','e',' ','H','a','n',' ','S','a','n','s',' ','C','N',' ','R','e','g','u','l','a','r','\0',
+        /* WenQuanYi Micro Hei - popular open source Simplified Chinese font */
+        'W','e','n','Q','u','a','n','Y','i',' ','M','i','c','r','o',' ','H','e','i','\0',
+        /* Droid Sans Fallback - Ubuntu's default Simplified Chinese font */
+        'D','r','o','i','d',' ','S','a','n','s',' ','F','a','l','l','b','a','c','k','\0',0};
+    static const WCHAR vertical_new_cn_font[] =
+        {'@','H','i','r','a','g','i','n','o',' ','S','a','n','s',' ','G','B',' ','W','3','\0',
+        '@','S','T','S','o','n','g','\0',
+        /* Noto Sans CJK SC Regular - default Simplified Chinese font for Ubuntu 16.04 or later */
+        '@','N','o','t','o',' ','S','a','n','s',' ','C','J','K',' ','S','C',' ','R','e','g','u','l','a','r','\0',
+        /* Source Han Sans CN - Fedora's default Simplified Chinese font */
+        '@','S','o','u','r','c','e',' ','H','a','n',' ','S','a','n','s',' ','C','N',' ','R','e','g','u','l','a','r','\0',
+        /* WenQuanYi Micro Hei - popular open source Simplified Chinese font */
+        '@','W','e','n','Q','u','a','n','Y','i',' ','M','i','c','r','o',' ','H','e','i','\0',
+        /* Droid Sans Fallback - Ubuntu's default Simplified Chinese font */
+        '@','D','r','o','i','d',' ','S','a','n','s',' ','F','a','l','l','b','a','c','k','\0',0};
+
+    if (getenv( "CX_TURN_OFF_FONT_REPLACEMENTS" )) return;
+
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
     if (!(hkey = reg_open_key( wine_fonts_key, replacementsW, sizeof(replacementsW) ))) return;
 
@@ -954,9 +1065,28 @@ static void load_gdi_font_replacements(void)
         /* "NewName"="Oldname" */
         if (!find_family_from_any_name( value ))
         {
+            const WCHAR *replace = data;
+
+            /* CROSSOVER HACK - bug 13095 and 13610 */
+            int j;
+            for (j = 0; j < ARRAY_SIZE(cn_font_replacement); j++)
+            {
+                if (!cn_font_seen[j] && !wcscmp(value, cn_font_replacement[j]))
+                {
+                    BOOL is_vertical = value[0] == '@';
+                    if (info->Type == REG_SZ && !wcscmp(data, is_vertical ? atSTSong : STSong))
+                    {
+                        if (is_vertical) replace = vertical_new_cn_font;
+                        else replace = new_cn_font;
+                        info->Type = REG_MULTI_SZ;
+                    }
+                    cn_font_seen[j] = TRUE;
+                    break;
+                }
+            }
+
             if (info->Type == REG_MULTI_SZ)
             {
-                WCHAR *replace = data;
                 while (*replace)
                 {
                     if (add_family_replacement( value, replace )) break;
@@ -967,6 +1097,26 @@ static void load_gdi_font_replacements(void)
         }
         else TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
     }
+
+    /* CROSSOVER HACK - bug 13095 and 13610 */
+    for (i = 0; i < ARRAY_SIZE(cn_font_replacement); i++)
+    {
+        if (!cn_font_seen[i] && !find_family_from_any_name(cn_font_replacement[i]))
+        {
+            const WCHAR *replace;
+            if (cn_font_replacement[i][0] == '@')
+                replace = vertical_new_cn_font;
+            else
+                replace = new_cn_font;
+            while (*replace)
+            {
+                if (add_family_replacement(cn_font_replacement[i], replace))
+                    break;
+                replace += lstrlenW(replace) + 1;
+            }
+        }
+    }
+
     NtClose( hkey );
 }
 
@@ -1039,11 +1189,11 @@ static void release_face( struct gdi_font_face *face )
         release_family( face->family );
     }
     if (face_is_in_full_name_tree( face )) wine_rb_remove( &face_full_name_tree, &face->full_name_entry );
-    free( face->file );
-    free( face->style_name );
-    free( face->full_name );
-    free( face->cached_enum_data );
-    free( face );
+    heapfree( face->file );
+    heapfree( face->style_name );
+    heapfree( face->full_name );
+    heapfree( face->cached_enum_data );
+    heapfree( face );
 }
 
 static int remove_font( const WCHAR *file, DWORD flags )
@@ -2005,15 +2155,15 @@ static void free_gdi_font( struct gdi_font *font )
         list_remove( &child->entry );
         free_gdi_font( child );
     }
-    for (i = 0; i < font->gm_size; i++) free( font->gm[i] );
-    free( font->otm.otmpFamilyName );
-    free( font->otm.otmpStyleName );
-    free( font->otm.otmpFaceName );
-    free( font->otm.otmpFullName );
-    free( font->gm );
-    free( font->kern_pairs );
-    free( font->gsub_table );
-    free( font );
+    for (i = 0; i < font->gm_size; i++) heapfree( font->gm[i] );
+    heapfree( font->otm.otmpFamilyName );
+    heapfree( font->otm.otmpStyleName );
+    heapfree( font->otm.otmpFaceName );
+    heapfree( font->otm.otmpFullName );
+    heapfree( font->gm );
+    heapfree( font->kern_pairs );
+    heapfree( font->gsub_table );
+    heapfree( font );
 }
 
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font )
@@ -2318,7 +2468,7 @@ static void *get_GSUB_vert_feature( struct gdi_font *font )
     }
     else TRACE("Script not found\n");
 
-    free( header );
+    heapfree( header );
     return NULL;
 }
 
@@ -2851,7 +3001,7 @@ static BOOL CDECL font_DeleteDC( PHYSDEV dev )
     struct font_physdev *physdev = get_font_dev( dev );
 
     release_gdi_font( physdev->font );
-    free( physdev );
+    heapfree( physdev );
     return TRUE;
 }
 
@@ -3067,7 +3217,7 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
         if (!(data = calloc( 1, sizeof(*data) )) ||
             !get_face_enum_data( face, &data->elf, &data->ntm ))
         {
-            free( data );
+            heapfree( data );
             return TRUE;
         }
         face->cached_enum_data = data;
@@ -3365,7 +3515,7 @@ static DWORD get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
     ret = font_funcs->get_glyph_outline( font, index, format, &gm, &abc, buflen, buf, mat, tategaki );
     if (ret == GDI_ERROR) return ret;
 
-    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) && !mat)
+    if (format == GGO_METRICS && !mat)
         set_gdi_font_glyph_metrics( font, index, &gm, &abc );
 
 done:
@@ -4501,7 +4651,7 @@ HFONT WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *penumex, ULONG size, ULON
 
     if (!(hFont = alloc_gdi_handle( &fontPtr->obj, NTGDI_OBJ_FONT, &fontobj_funcs )))
     {
-        free( fontPtr );
+        heapfree( fontPtr );
         return 0;
     }
 
@@ -4676,7 +4826,7 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
     FONTOBJ *obj;
 
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
-    free( obj );
+    heapfree( obj );
     return TRUE;
 }
 
@@ -4841,7 +4991,7 @@ BOOL WINAPI NtGdiGetTextExtentExW( HDC hdc, const WCHAR *str, INT count, INT max
         size->cy = abs( INTERNAL_YDSTOWS( dc, size->cy ));
     }
 
-    if (pos != buffer && pos != dxs) free( pos );
+    if (pos != buffer && pos != dxs) heapfree( pos );
     release_dc_ptr( dc );
 
     TRACE("(%p, %s, %d) returning %dx%d\n", hdc, debugstr_wn(str,count), max_ext, size->cx, size->cy );
@@ -4967,7 +5117,7 @@ UINT WINAPI NtGdiGetOutlineTextMetricsInternalW( HDC hdc, UINT cbData,
         if(output != lpOTM)
         {
             memcpy(lpOTM, output, cbData);
-            free( output );
+            heapfree( output );
             ret = cbData;
         }
     }
@@ -4998,14 +5148,14 @@ BOOL WINAPI NtGdiGetCharWidthW( HDC hdc, UINT first, UINT last, WCHAR *chars,
                                      NTGDI_GETCHARABCWIDTHS_INT | NTGDI_GETCHARABCWIDTHS_INDICES,
                                      abc ))
         {
-            free( abc );
+            heapfree( abc );
             return FALSE;
         }
 
         for (i = 0; i < count; i++)
             ((INT *)buf)[i] = abc[i].abcA + abc[i].abcB + abc[i].abcC;
 
-        free( abc );
+        heapfree( abc );
         return TRUE;
     }
 
@@ -5077,7 +5227,7 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
                                 &identity, FALSE );
     if (ret == GDI_ERROR)
     {
-        free( image->ptr );
+        heapfree( image->ptr );
         return ERROR_NOT_FOUND;
     }
     return ERROR_SUCCESS;
@@ -5168,7 +5318,7 @@ static void draw_glyph( DC *dc, INT origin_x, INT origin_y, const GLYPHMETRICS *
         const ULONG pts_count = 2;
         NtGdiPolyPolyDraw( dc->hSelf, pts + i, &pts_count, 1, NtGdiPolyPolyline );
     }
-    free( pts );
+    heapfree( pts );
 }
 
 /***********************************************************************
@@ -5498,7 +5648,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                 deltas[i].x = dx[i] - dx[i - 1];
                 deltas[i].y = 0;
             }
-            free( dx );
+            heapfree( dx );
         }
 
         for(i = 0; i < count; i++)
@@ -5625,7 +5775,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                                        str, count, (INT*)deltas );
 
 done:
-    free( deltas );
+    heapfree( deltas );
 
     if (ret && (lf.lfUnderline || lf.lfStrikeOut))
     {
@@ -5656,7 +5806,7 @@ done:
             strikeoutPos = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutPosition ));
             if (otm->otmsStrikeoutPosition < 0) strikeoutPos = -strikeoutPos;
             strikeoutWidth = get_line_width( dc, otm->otmsStrikeoutSize );
-            free( otm );
+            heapfree( otm );
         }
 
 
@@ -6180,7 +6330,7 @@ static void update_external_font_keys(void)
         reg_delete_value( winnt_key, key->value );
         reg_delete_value( hkey, key->value );
         list_remove( &key->entry );
-        free( key );
+        heapfree( key );
     }
     NtClose( win9x_key );
     NtClose( winnt_key );
@@ -6361,7 +6511,7 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
 
     if (!num_fonts)
     {
-        free( copy );
+        heapfree( copy );
         return NULL;
     }
 
@@ -6370,17 +6520,25 @@ HANDLE WINAPI NtGdiAddFontMemResourceEx( void *ptr, DWORD size, void *dv, ULONG 
      */
     ret = (HANDLE)((INT_PTR)copy ^ 0x87654321);
 
+#ifdef __i386_on_x86_64__
+    *count = num_fonts;
+#else
     __TRY
     {
         *count = num_fonts;
     }
+#ifdef __WINESRC__
+    __EXCEPT_PAGE_FAULT
+#else
     __EXCEPT
+#endif
     {
         WARN( "page fault while writing to *count (%p)\n", count );
         NtGdiRemoveFontMemResourceEx( ret );
         ret = 0;
     }
     __ENDTRY
+#endif
     TRACE( "Returning handle %p\n", ret );
     return ret;
 }

@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/winheader_enter.h"
+
 /* Note that if you included winerror.h directly or indirectly,
  * none of these definitions will be used!
  */
@@ -92,5 +94,7 @@
 #define SCARD_W_CACHE_ITEM_NOT_FOUND                       ((DWORD)0x80100070)
 #define SCARD_W_CACHE_ITEM_STALE                           ((DWORD)0x80100071)
 #define SCARD_W_CACHE_ITEM_TOO_BIG                         ((DWORD)0x80100072)
+
+#include "wine/winheader_exit.h"
 
 #endif /* SCARD_S_SUCCESS */

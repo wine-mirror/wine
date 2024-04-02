@@ -24,7 +24,29 @@
 #ifdef HAVE_MTLDEVICE_REGISTRYID
 #import <Metal/Metal.h>
 #endif
+
+#include "wine/hostaddrspace_enter.h"
+
 #include "macdrv_cocoa.h"
+
+/* CrossOver Hack #20512 */
+@interface NSScreen (SafeAreaInsetsForOldSDKs)
+/* Defining this selector for compiling against older SDKs. */
+@property (readonly) NSEdgeInsets safeAreaInsets API_AVAILABLE(macos(12.0));
+@end
+
+static BOOL needs_skyrim_se_launcher_hack(void)
+{
+    static BOOL did_check = FALSE, needs_hack;
+    if (!did_check)
+    {
+        did_check = TRUE;
+        needs_hack = is_apple_silicon() && is_skyrim_se_launcher();
+    }
+
+    return needs_hack;
+}
+/* End hack. */
 
 static uint64_t dedicated_gpu_id;
 static uint64_t integrated_gpu_id;
@@ -82,6 +104,24 @@ int macdrv_get_displays(struct macdrv_display** displays, int* count)
                     primary_frame = frame;
 
                 disps[i].displayID = [[[screen deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue];
+
+                /* CrossOver Hack #20512: lie to the Skyrim SE launcher about
+                   the screen resolution on notched Apple Silicon laptops. */
+                if (needs_skyrim_se_launcher_hack() &&
+                    CGDisplayIsBuiltin(disps[i].displayID) &&
+                    [screen respondsToSelector:@selector(safeAreaInsets)])
+                {
+                    NSEdgeInsets insets = screen.safeAreaInsets;
+                    CGFloat adj_height = NSHeight(frame) - insets.top - insets.bottom;
+                    if (adj_height != NSHeight(frame))
+                    {
+                        CGFloat adj_ar = NSWidth(frame) / adj_height;
+                        /* Snap to 16:10 if the area under the notch is close. */
+                        if (fabs(adj_ar - 1.6) < 0.01)
+                            frame.size.height = NSWidth(frame) / 16 * 10;
+                    }
+                }
+
                 convert_display_rect(&disps[i].frame, frame, primary_frame);
                 convert_display_rect(&disps[i].work_frame, visible_frame,
                                      primary_frame);

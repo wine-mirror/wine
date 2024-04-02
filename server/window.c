@@ -34,6 +34,8 @@
 #include "thread.h"
 #include "process.h"
 #include "user.h"
+#include "handle.h"
+#include "file.h"
 #include "unicode.h"
 
 /* a window property */
@@ -107,6 +109,7 @@ static const struct object_ops window_ops =
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
+    NULL,                     /* get_esync_fd */
     NULL,                     /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
@@ -121,6 +124,47 @@ static const struct object_ops window_ops =
     no_kernel_obj_list,       /* get_kernel_obj_list */
     no_close_handle,          /* close_handle */
     window_destroy            /* destroy */
+};
+
+static void shm_surface_dump( struct object *obj, int verbose );
+static int shm_surface_signaled( struct object *obj, struct wait_queue_entry *entry );
+static void shm_surface_destroy( struct object *obj );
+
+struct shm_surface
+{
+    struct object    obj;             /* object header */
+    user_handle_t    window;          /* window handle */
+    unsigned int     lock_cnt;        /* recursive lock count */
+    unsigned int     lock_tid;        /* locking thread id (0 if locked for flush) */
+    rectangle_t      bounds;          /* bounds of region requiring flush */
+    struct process  *process;         /* flushing process */
+    struct mapping  *mapping;         /* mapping of surface data */
+    struct list      entry;           /* entry in process list */
+};
+
+static const struct object_ops shm_surface_ops =
+{
+    sizeof(struct shm_surface),  /* size */
+    &no_type,                    /* type */
+    shm_surface_dump,            /* dump */
+    add_queue,                   /* add_queue */
+    remove_queue,                /* remove_queue */
+    shm_surface_signaled,        /* signaled */
+    NULL,                        /* get_esync_fd */
+    no_satisfied,                /* satisfied */
+    no_signal,                   /* signal */
+    no_get_fd,                   /* get_fd */
+    default_map_access,          /* map_access */
+    default_get_sd,              /* get_sd */
+    default_set_sd,              /* set_sd */
+    no_get_full_name,            /* get_full_name */
+    no_lookup_name,              /* lookup_name */
+    no_link_name,                /* link_name */
+    NULL,                        /* unlink_name */
+    no_open_file,                /* open_file */
+    no_kernel_obj_list,          /* get_kernel_obj_list */
+    no_close_handle,             /* close_handle */
+    shm_surface_destroy          /* destroy */
 };
 
 /* flags that can be set by the client */
@@ -251,6 +295,18 @@ static unsigned int get_monitor_dpi( struct window *win )
     /* FIXME: we return the desktop window DPI for now */
     while (!is_desktop_window( win )) win = win->parent;
     return win->dpi ? win->dpi : USER_DEFAULT_SCREEN_DPI;
+}
+
+static rectangle_t union_rect( const rectangle_t *src1, const rectangle_t *src2 )
+{
+    rectangle_t r;
+    if (is_rect_empty( src1 )) return *src2;
+    if (is_rect_empty( src2 )) return *src1;
+    r.left   = min( src1->left, src2->left );
+    r.top    = min( src1->top, src2->top );
+    r.right  = max( src1->right, src2->right );
+    r.bottom = max( src1->bottom, src2->bottom );
+    return r;
 }
 
 /* link a window at the right place in the siblings list */
@@ -1089,7 +1145,8 @@ static void set_region_visible_rect( struct region *region, struct window *win )
 /* get the top-level window to clip against for a given window */
 static inline struct window *get_top_clipping_window( struct window *win )
 {
-    while (!(win->paint_flags & PAINT_HAS_SURFACE) && win->parent && !is_desktop_window(win->parent))
+    while ((!(win->paint_flags & PAINT_HAS_SURFACE) || !win->thread || win->thread->process != current->process)
+           && win->parent && !is_desktop_window(win->parent))
         win = win->parent;
     return win;
 }
@@ -2014,6 +2071,102 @@ void free_window_handle( struct window *win )
     free_user_handle( win->handle );
     win->handle = 0;
     release_object( win );
+}
+
+
+static void shm_surface_dump( struct object *obj, int verbose )
+{
+    struct shm_surface *surface = (struct shm_surface *)obj;
+    assert( obj->ops == &shm_surface_ops );
+    fprintf( stderr, "shm surface of window %x\n", surface->window );
+}
+
+
+static int shm_surface_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct shm_surface *surface = (struct shm_surface *)obj;
+    assert( obj->ops == &shm_surface_ops );
+    return !surface->lock_cnt;
+}
+
+
+static void shm_surface_destroy( struct object *obj )
+{
+    struct shm_surface *surface = (struct shm_surface *)obj;
+    assert( obj->ops == &shm_surface_ops );
+    if (surface->mapping) release_object( surface->mapping );
+    if (surface->process) list_remove( &surface->entry );
+}
+
+
+struct shm_surface *find_pending_surface( struct process *process, user_handle_t *win,
+                                          lparam_t *lparam, rectangle_t *bounds )
+{
+    struct shm_surface *surface;
+    LIST_FOR_EACH_ENTRY( surface, &process->surfaces, struct shm_surface, entry )
+    {
+        if (surface->lock_cnt || is_rect_empty( &surface->bounds )) continue;
+
+        *lparam = alloc_handle( process, surface->mapping, SECTION_MAP_READ, 0 );
+        *win    = surface->window;
+        *bounds = surface->bounds;
+
+        surface->bounds = empty_rect;
+        surface->lock_cnt++;
+        return (struct shm_surface *)grab_object( surface );
+    }
+    return NULL;
+}
+
+
+void unlock_surface( struct shm_surface *surface )
+{
+    assert( surface->lock_cnt );
+    if (--surface->lock_cnt) return;
+
+    surface->lock_tid = 0;
+    wake_up( &surface->obj, 0 );
+    if (surface->process && !is_rect_empty( &surface->bounds ))
+        wake_queue_for_surface( surface->process );
+}
+
+
+void remove_process_surfaces( struct process *process )
+{
+    struct shm_surface *surface;
+
+    while (!list_empty( &process->surfaces ))
+    {
+        surface = LIST_ENTRY( list_head( &process->surfaces ), struct shm_surface, entry );
+        list_remove( &surface->entry );
+        surface->process = NULL;
+    }
+}
+
+
+static struct shm_surface *create_shm_surface( data_size_t mapping_size, struct process *process,
+                                               user_handle_t window )
+{
+    struct shm_surface *surface;
+
+    if (!(surface = alloc_object( &shm_surface_ops ))) return NULL;
+
+    surface->window         = window;
+    surface->lock_cnt       = 0;
+    surface->lock_tid       = 0;
+    surface->bounds         = empty_rect;
+    surface->process        = process;
+    list_add_head( &process->surfaces, &surface->entry );
+
+    surface->mapping = create_mapping( NULL, NULL, 0, mapping_size, SEC_RESERVE, 0,
+                                       SECTION_MAP_READ | SECTION_MAP_WRITE, NULL );
+    if (!surface->mapping)
+    {
+        release_object( surface );
+        return NULL;
+    }
+
+    return surface;
 }
 
 
@@ -2982,4 +3135,72 @@ DECL_HANDLER(set_window_layered_info)
         if (!was_layered) redraw_window( win, 0, 1, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+}
+
+
+/* lock or unlock the surface */
+DECL_HANDLER(lock_shm_surface)
+{
+    struct shm_surface *surface;
+    surface = (struct shm_surface *)get_handle_obj( current->process, req->surface,
+                                                    0, &shm_surface_ops );
+    if (!surface) return;
+
+    if (req->lock)
+    {
+        if (!surface->lock_cnt || surface->lock_tid == current->id)
+        {
+            surface->lock_cnt++;
+            surface->lock_tid = current->id;
+        }
+        else set_error( STATUS_PENDING );
+    }
+    else if (surface->lock_cnt)
+    {
+        unlock_surface( surface );
+    }
+    else set_error( STATUS_INVALID_DEVICE_STATE );
+    release_object( surface );
+}
+
+
+/* flush the surface */
+DECL_HANDLER(flush_shm_surface)
+{
+    struct shm_surface *surface;
+    surface = (struct shm_surface *)get_handle_obj( current->process, req->surface,
+                                                    0, &shm_surface_ops );
+    if (!surface) return;
+
+    if (surface->process)
+    {
+        surface->bounds = union_rect( &surface->bounds, &req->bounds );
+        wake_queue_for_surface( surface->process );
+    }
+    else set_error( STATUS_INVALID_DEVICE_STATE );
+    release_object( surface );
+}
+
+
+/* create shared memory surface object */
+DECL_HANDLER(create_shm_surface)
+{
+    struct shm_surface *surface;
+    struct window *win;
+
+    if (!(win = get_window( req->window ))) return;
+    if (!win->parent || !win->parent->thread)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    surface = create_shm_surface( req->mapping_size, win->parent->thread->process, req->window );
+    if (surface)
+    {
+        reply->mapping = alloc_handle( current->process, surface->mapping,
+                                       SECTION_MAP_READ | SECTION_MAP_WRITE, 0 );
+        if (reply->mapping) reply->handle = alloc_handle( current->process, surface, SYNCHRONIZE, 0 );
+        release_object( surface );
+    }
 }

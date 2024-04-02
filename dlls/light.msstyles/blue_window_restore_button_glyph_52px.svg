@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:52-32" width="52" height="416" version="1.1" viewBox="0 0 13.759 110.07" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none">
+  <g stroke-width="1.0584">
+   <rect x="2.646" y="4.7626" width="6.3503" height="6.3503" stroke="#aeaeae"/>
+   <rect x="2.646" y="18.521" width="6.3503" height="6.3503" stroke="#3096fa"/>
+   <rect x="2.646" y="32.28" width="6.3503" height="6.3503" stroke="#2979ff"/>
+  </g>
+  <rect transform="scale(-1,1)" x="-11.642" y="2.1166" width="7.4087" height="1.0584" fill="#aeaeae" stroke-width=".23933"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="3.175" width="1.0584" height="6.3503" fill="#aeaeae" stroke-width=".23933"/>
+  <rect x="2.646" y="46.039" width="6.3503" height="6.3503" stroke="#aeaeae" stroke-width="1.0584"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="43.393" width="7.4087" height="1.0584" fill="#aeaeae" stroke-width=".23933"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="44.452" width="1.0584" height="6.3503" fill="#aeaeae" stroke-width=".23933"/>
+  <g stroke-width=".23933">
+   <rect transform="scale(-1,1)" x="-11.642" y="15.876" width="7.4087" height="1.0584" fill="#3096fa"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="16.934" width="1.0584" height="6.3503" fill="#3096fa"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="29.634" width="7.4087" height="1.0584" fill="#2979ff"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="30.693" width="1.0584" height="6.3503" fill="#2979ff"/>
+  </g>
+  <g stroke-width="1.0584">
+   <rect x="2.646" y="59.798" width="6.3503" height="6.3503" stroke="#aeaeae"/>
+   <rect x="2.646" y="73.557" width="6.3503" height="6.3503" stroke="#3096fa"/>
+   <rect x="2.646" y="87.316" width="6.3503" height="6.3503" stroke="#2979ff"/>
+  </g>
+  <rect transform="scale(-1,1)" x="-11.642" y="57.152" width="7.4087" height="1.0584" fill="#aeaeae" stroke-width=".23933"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="58.211" width="1.0584" height="6.3503" fill="#aeaeae" stroke-width=".23933"/>
+  <rect x="2.646" y="101.07" width="6.3503" height="6.3503" stroke="#aeaeae" stroke-width="1.0584"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="98.429" width="7.4087" height="1.0584" fill="#aeaeae" stroke-width=".23933"/>
+  <rect transform="scale(-1,1)" x="-11.642" y="99.487" width="1.0584" height="6.3503" fill="#aeaeae" stroke-width=".23933"/>
+  <g stroke-width=".23933">
+   <rect transform="scale(-1,1)" x="-11.642" y="70.911" width="7.4087" height="1.0584" fill="#3096fa"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="71.969" width="1.0584" height="6.3503" fill="#3096fa"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="84.67" width="7.4087" height="1.0584" fill="#2979ff"/>
+   <rect transform="scale(-1,1)" x="-11.642" y="85.728" width="1.0584" height="6.3503" fill="#2979ff"/>
+  </g>
+ </g>
+</svg>

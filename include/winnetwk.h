@@ -20,6 +20,8 @@
 #ifndef _WINNETWK_H_
 #define _WINNETWK_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -404,5 +406,7 @@ DWORD WINAPI WNetCachePassword( LPSTR, WORD, LPSTR, WORD, BYTE, WORD );
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINNETWK_H_ */

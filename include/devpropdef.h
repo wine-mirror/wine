@@ -19,6 +19,8 @@
 #ifndef _DEVPROPDEF_H_
 #define _DEVPROPDEF_H_
 
+#include "wine/winheader_enter.h"
+
 typedef ULONG DEVPROPTYPE, *PDEVPROPTYPE;
 
 #define DEVPROP_TYPEMOD_ARRAY 0x1000
@@ -102,4 +104,6 @@ typedef struct _DEVPROPKEY {
 #else
 #define IsEqualDevPropKey(a,b) (((a).pid == (b).pid) && IsEqualIID(&(a).fmtid,&(b).fmtid))
 #endif
+#include "wine/winheader_exit.h"
+
 #endif

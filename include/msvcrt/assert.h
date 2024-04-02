@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #ifdef  __cplusplus
@@ -34,4 +36,6 @@ _ACRTIMP void __cdecl _assert(const char *, const char *, unsigned int);
 
 #ifdef  __cplusplus
 }
+#include "wine/winheader_exit.h"
+
 #endif

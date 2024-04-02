@@ -1352,6 +1352,85 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, I
     return hr;
 }
 
+/* CW HACK 19248 */
+static BOOL is_bethesda_game(void)
+{
+    static const WCHAR *exe_names[] = { L"oblivion.exe", L"fallout3.exe", L"morrowind.exe" };
+    WCHAR name[MAX_PATH], *module_exe;
+    int i;
+
+    if (!GetModuleFileNameW(NULL, name, sizeof(name)))
+        return FALSE;
+
+    module_exe = wcsrchr(name, '\\');
+    module_exe = module_exe ? module_exe + 1 : name;
+
+    for (i = 0; i < ARRAY_SIZE(exe_names); i++) {
+        if (!_wcsicmp(module_exe, exe_names[i]))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL is_mac_os(void)
+{
+    const char *sysname;
+    void (CDECL *my_wine_get_host_version)(const char **sysname, const char **release);
+
+    my_wine_get_host_version = (void *)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "wine_get_host_version");
+    if (!my_wine_get_host_version)
+        return FALSE;
+
+    my_wine_get_host_version(&sysname, NULL);
+
+    return !strcmp(sysname, "Darwin");
+}
+
+static BOOL needs_mp3_hack(void)
+{
+    static BOOL needs_hack, did_check = FALSE;
+
+    if (!did_check) {
+        needs_hack = is_mac_os() && is_bethesda_game();
+        did_check = TRUE;
+    }
+
+    return needs_hack;
+}
+
+static BOOL is_mp3_file(LPCWSTR filename)
+{
+    LPCWSTR ext = wcsrchr(filename, '.');
+    if (!ext)
+        return FALSE;
+
+    return !_wcsicmp(ext, L".mp3");
+}
+
+static BOOL is_fallout3_mp3_source(IPin *source)
+{
+    static const CLSID fallout_source_clsid = { 0xc553f2c0, 0x1529, 0x11d0, { 0xb4, 0xd1, 0x00, 0x80, 0x5f, 0x6c, 0xbb, 0xea } };
+    PIN_INFO pin_info;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (!source)
+        return FALSE;
+
+    hr = IPin_QueryPinInfo(source, &pin_info);
+    if (FAILED(hr))
+        return FALSE;
+
+    hr = IBaseFilter_GetClassID(pin_info.pFilter, &clsid);
+    IBaseFilter_Release(pin_info.pFilter);
+    if (FAILED(hr))
+        return FALSE;
+
+    return IsEqualGUID(&clsid, &fallout_source_clsid);
+}
+/* End hack */
+
 static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
 {
     struct filter_graph *graph = impl_from_IFilterGraph2(iface);
@@ -1364,6 +1443,10 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
     LeaveCriticalSection(&graph->cs);
     if (hr == VFW_E_CANNOT_CONNECT)
         hr = VFW_E_CANNOT_RENDER;
+
+    /* CW HACK 19248 */
+    if (FAILED(hr) && needs_mp3_hack() && is_fallout3_mp3_source(source))
+        hr = S_OK;
 
     TRACE("Returning %#lx.\n", hr);
     return hr;
@@ -1419,7 +1502,12 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
         {
             if (FAILED(hr = IFilterGraph2_RemoveFilter(iface, preader)))
                 ERR("Failed to remove source filter, hr %#lx.\n", hr);
-            hr = VFW_E_CANNOT_RENDER;
+
+            /* CW HACK 19248 */
+            if (needs_mp3_hack() && is_mp3_file(lpcwstrFile))
+                hr = S_OK;
+            else
+                hr = VFW_E_CANNOT_RENDER;
         }
         else if (partial)
         {

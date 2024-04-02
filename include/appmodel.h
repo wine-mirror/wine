@@ -18,6 +18,8 @@
 #ifndef _APPMODEL_H_
 #define _APPMODEL_H_
 
+#include "wine/winheader_enter.h"
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -94,5 +96,7 @@ LONG WINAPI PackageIdFromFullName(const WCHAR *full_name, UINT32 flags, UINT32 *
 #if defined(__cplusplus)
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _APPMODEL_H_ */

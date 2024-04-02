@@ -20,6 +20,8 @@
 #ifndef __WINE_SCHEMADEF_H
 #define __WINE_SCHEMADEF_H
 
+#include "wine/winheader_enter.h"
+
 #define BEGIN_TM_SCHEMA(name)
 #define END_TM_SCHEMA(name)
 
@@ -41,5 +43,7 @@
                                                name##StateFiller0,
 #define TM_STATE(value, prefix, name)          prefix##_##name = (value),
 #define END_TM_PART_STATES()               };
+
+#include "wine/winheader_exit.h"
 
 #endif

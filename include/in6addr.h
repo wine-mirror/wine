@@ -19,6 +19,8 @@
 #ifndef __IN6ADDR__
 #define __IN6ADDR__
 
+#include "wine/winheader_enter.h"
+
 #ifdef USE_WS_PREFIX
 #define WS(x)    WS_##x
 #else
@@ -48,5 +50,7 @@ typedef struct WS(in6_addr) {
 #define s6_words    u.Word
 
 #undef WS
+
+#include "wine/winheader_exit.h"
 
 #endif /* __IN6ADDR__ */

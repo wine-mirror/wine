@@ -1059,11 +1059,12 @@ void manage_desktop( WCHAR *arg )
     }
 
     desktopshellbrowserwindow_init();
-    shellwindows_init();
 
     /* run the desktop message loop */
     if (hwnd)
     {
+        shellwindows_init();
+
         WINE_TRACE( "desktop message loop starting on hwnd %p\n", hwnd );
         while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
         WINE_TRACE( "desktop message loop exiting for hwnd %p\n", hwnd );

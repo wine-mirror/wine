@@ -17,10 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -273,6 +269,11 @@ enum OS2_FSSELECTION
     OS2_FSSELECTION_OBLIQUE          = 1 << 9
 };
 
+#ifdef __i386_on_x86_64__
+#pragma clang default_addr_space(push, default)
+#pragma clang storage_addr_space(push, default)
+#endif
+
 static BOOL opentype_get_table_ptr( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
                                     UINT32 table_tag, const void **table_ptr, UINT32 *table_size )
 {
@@ -313,6 +314,11 @@ static BOOL opentype_get_tt_head( const void *data, size_t size, const struct tt
     UINT32 table_size = sizeof(**tt_head);
     return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_HEAD_TAG, (const void **)tt_head, &table_size );
 }
+
+#ifdef __i386_on_x86_64__
+#pragma clang default_addr_space(pop)
+#pragma clang storage_addr_space(pop)
+#endif
 
 static UINT get_name_record_codepage( enum OPENTYPE_PLATFORM_ID platform, USHORT encoding )
 {
@@ -564,10 +570,10 @@ static LANGID get_name_record_langid( enum OPENTYPE_PLATFORM_ID platform, USHORT
     return MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
 }
 
-static BOOL opentype_enum_font_names( const struct tt_name_v0 *header, enum OPENTYPE_PLATFORM_ID platform,
+static BOOL opentype_enum_font_names( const struct tt_name_v0 * HOSTPTR header, enum OPENTYPE_PLATFORM_ID platform,
                                       enum OPENTYPE_NAME_ID name, opentype_enum_names_cb callback, void *user )
 {
-    const char *name_data;
+    const char * HOSTPTR name_data;
     USHORT i, name_count, encoding, language, length, offset;
     USHORT platform_id = GET_BE_WORD( platform ), name_id = GET_BE_WORD( name );
     LANGID langid;
@@ -583,11 +589,11 @@ static BOOL opentype_enum_font_names( const struct tt_name_v0 *header, enum OPEN
         return FALSE;
     }
 
-    name_data = (const char *)header + GET_BE_WORD( header->stringOffset );
+    name_data = (const char * HOSTPTR)header + GET_BE_WORD( header->stringOffset );
     name_count = GET_BE_WORD( header->count );
     for (i = 0; i < name_count; i++)
     {
-        const struct tt_namerecord *record = &header->nameRecord[i];
+        const struct tt_namerecord * HOSTPTR record = &header->nameRecord[i];
         struct opentype_name opentype_name;
 
         if (record->nameID != name_id) continue;
@@ -615,10 +621,10 @@ static BOOL opentype_enum_font_names( const struct tt_name_v0 *header, enum OPEN
     return ret;
 }
 
-BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD *count, const struct ttc_sfnt_v1 **ttc_sfnt_v1 )
+BOOL opentype_get_ttc_sfnt_v1( const void * HOSTPTR data, size_t size, DWORD index, DWORD *count, const struct ttc_sfnt_v1 * HOSTPTR * HOSTPTR ttc_sfnt_v1 )
 {
-    const struct ttc_header_v1 *ttc_header_v1 = data;
-    const struct tt_os2_v1 *tt_os2_v1;
+    const struct ttc_header_v1 * HOSTPTR ttc_header_v1 = data;
+    const struct tt_os2_v1 * HOSTPTR tt_os2_v1;
     UINT32 offset, fourcc;
 
     *ttc_sfnt_v1 = NULL;
@@ -644,7 +650,7 @@ BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD
     }
 
     if (size < offset + sizeof(**ttc_sfnt_v1)) return FALSE;
-    *ttc_sfnt_v1 = (const struct ttc_sfnt_v1 *)((const char *)data + offset);
+    *ttc_sfnt_v1 = (const struct ttc_sfnt_v1 * HOSTPTR )((const char * HOSTPTR )data + offset);
 
     if (!opentype_get_table_ptr( data, size, *ttc_sfnt_v1, MS_HEAD_TAG, NULL, NULL ))
     {
@@ -683,14 +689,14 @@ BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD
     return TRUE;
 }
 
-BOOL opentype_get_tt_name_v0( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
-                              const struct tt_name_v0 **tt_name_v0 )
+BOOL opentype_get_tt_name_v0( const void * HOSTPTR data, size_t size, const struct ttc_sfnt_v1 * HOSTPTR ttc_sfnt_v1,
+                              const struct tt_name_v0 * HOSTPTR * HOSTPTR tt_name_v0 )
 {
     UINT32 table_size = sizeof(**tt_name_v0);
-    return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_NAME_TAG, (const void **)tt_name_v0, &table_size );
+    return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_NAME_TAG, (const void * HOSTPTR * HOSTPTR )tt_name_v0, &table_size );
 }
 
-BOOL opentype_enum_family_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+BOOL opentype_enum_family_names( const struct tt_name_v0 * HOSTPTR header, opentype_enum_names_cb callback, void *user )
 {
     if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_FAMILY, callback, user ))
         return TRUE;
@@ -701,7 +707,7 @@ BOOL opentype_enum_family_names( const struct tt_name_v0 *header, opentype_enum_
     return FALSE;
 }
 
-BOOL opentype_enum_style_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+BOOL opentype_enum_style_names( const struct tt_name_v0 * HOSTPTR header, opentype_enum_names_cb callback, void *user )
 {
     if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_SUBFAMILY, callback, user ))
         return TRUE;
@@ -712,7 +718,7 @@ BOOL opentype_enum_style_names( const struct tt_name_v0 *header, opentype_enum_n
     return FALSE;
 }
 
-BOOL opentype_enum_full_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+BOOL opentype_enum_full_names( const struct tt_name_v0 * HOSTPTR header, opentype_enum_names_cb callback, void *user )
 {
     if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_FULLNAME, callback, user ))
         return TRUE;
@@ -723,12 +729,12 @@ BOOL opentype_enum_full_names( const struct tt_name_v0 *header, opentype_enum_na
     return FALSE;
 }
 
-BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
+BOOL opentype_get_properties( const void * HOSTPTR data, size_t size, const struct ttc_sfnt_v1 * HOSTPTR ttc_sfnt_v1,
                               DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags )
 {
-    const struct tt_os2_v1 *tt_os2_v1;
-    const struct tt_head *tt_head;
-    const void *cff_header;
+    const struct tt_os2_v1 * HOSTPTR tt_os2_v1;
+    const struct tt_head * HOSTPTR tt_head;
+    const void * HOSTPTR cff_header;
     UINT32 table_size = 0;
     USHORT idx, selection;
     DWORD flags = 0;

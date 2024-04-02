@@ -32,6 +32,7 @@ static void resource_check_usage(DWORD usage, unsigned int access)
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
             | WINED3DUSAGE_SCRATCH
+            | WINED3DUSAGE_MANAGED
             | WINED3DUSAGE_PRIVATE
             | WINED3DUSAGE_LEGACY_CUBEMAP
             | ~WINED3DUSAGE_MASK;
@@ -97,8 +98,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             return WINED3DERR_INVALIDCALL;
         }
 
-        /* Dynamic usage is incompatible with GPU writes. */
-        if (usage & WINED3DUSAGE_DYNAMIC)
+        /* Dynamic and managed usages are incompatible with GPU writes. */
+        if (usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_MANAGED))
         {
             WARN("Bind flags %s are incompatible with resource usage %s.\n",
                     wined3d_debug_bind_flags(bind_flags), debug_d3dusage(usage));
@@ -174,8 +175,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     }
 
     if (base_type != WINED3D_GL_RES_TYPE_COUNT
-            && (format->flags[base_type] & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY))
-            == WINED3DFMT_FLAG_BLOCKS)
+            && (format->attrs & (WINED3D_FORMAT_ATTR_BLOCKS | WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY))
+            == WINED3D_FORMAT_ATTR_BLOCKS)
     {
         UINT width_mask = format->block_width - 1;
         UINT height_mask = format->block_height - 1;
@@ -188,13 +189,14 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->type = type;
     resource->gl_type = gl_type;
     resource->format = format;
+    resource->format_attrs = format->attrs;
     if (gl_type < WINED3D_GL_RES_TYPE_COUNT)
         resource->format_flags = format->flags[gl_type];
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
     resource->bind_flags = bind_flags;
-    if (resource->format_flags & WINED3DFMT_FLAG_MAPPABLE)
+    if (resource->format_attrs & WINED3D_FORMAT_ATTR_MAPPABLE)
         access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     resource->access = access;
     resource->width = width;
@@ -267,7 +269,7 @@ DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWO
 {
     DWORD prev;
 
-    if (!wined3d_resource_access_is_managed(resource->access))
+    if (!(resource->usage & WINED3DUSAGE_MANAGED))
     {
         WARN("Called on non-managed resource %p, ignoring.\n", resource);
         return 0;
@@ -519,7 +521,7 @@ HRESULT wined3d_resource_check_box_dimensions(struct wined3d_resource *resource,
         return WINEDDERR_INVALIDRECT;
     }
 
-    if (resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         /* This assumes power of two block sizes, but NPOT block sizes would
          * be silly anyway.
@@ -596,7 +598,8 @@ void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned in
 
     wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
 
-    if ((resource->format_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+    if ((resource->format_attrs & (WINED3D_FORMAT_ATTR_BLOCKS | WINED3D_FORMAT_ATTR_BROKEN_PITCH))
+            == WINED3D_FORMAT_ATTR_BLOCKS)
     {
         /* Compressed textures are block based, so calculate the offset of
          * the block that contains the top-left pixel of the mapped box. */
@@ -612,4 +615,96 @@ void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned in
                 + (box->top * row_pitch)
                 + (box->left * format->byte_count);
     }
+}
+
+void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
+        const struct wined3d_map_desc *map, const struct wined3d_color *colour,
+        const struct wined3d_box *box, bool full_subresource)
+{
+    const struct wined3d_format *format = resource->format;
+    unsigned int w, h, d, x, y, z, bpp;
+    uint8_t *dst, *dst2;
+    uint32_t c[4];
+
+    /* Fast and simple path for setting everything to zero. The C library's memset is
+     * more sophisticated than our code below. Also this works for block formats, which
+     * we still need to zero-initialize for newly created resources. */
+    if (full_subresource && !colour->r && !colour->g && !colour->b && !colour->a)
+    {
+        memset(map->data, 0, map->slice_pitch * box->back);
+        return;
+    }
+
+    w = box->right - box->left;
+    h = box->bottom - box->top;
+    d = box->back - box->front;
+
+    dst = (uint8_t *)map->data
+            + (box->front * map->slice_pitch)
+            + ((box->top / format->block_height) * map->row_pitch)
+            + ((box->left / format->block_width) * format->block_byte_count);
+
+    wined3d_format_convert_from_float(format, colour, c);
+    bpp = format->byte_count;
+
+    switch (bpp)
+    {
+        case 1:
+            for (x = 0; x < w; ++x)
+            {
+                dst[x] = c[0];
+            }
+            break;
+
+        case 2:
+            for (x = 0; x < w; ++x)
+            {
+                ((uint16_t *)dst)[x] = c[0];
+            }
+            break;
+
+        case 3:
+        {
+            dst2 = dst;
+            for (x = 0; x < w; ++x, dst2 += 3)
+            {
+                dst2[0] = (c[0]      ) & 0xff;
+                dst2[1] = (c[0] >>  8) & 0xff;
+                dst2[2] = (c[0] >> 16) & 0xff;
+            }
+            break;
+        }
+        case 4:
+            for (x = 0; x < w; ++x)
+            {
+                ((uint32_t *)dst)[x] = c[0];
+            }
+            break;
+
+        case 8:
+        case 12:
+        case 16:
+            for (x = 0; x < w; ++x)
+                memcpy(((uint8_t *)map->data) + x * bpp, c, bpp);
+            break;
+
+        default:
+            FIXME("Not implemented for bpp %u.\n", bpp);
+            return;
+    }
+
+    dst2 = dst;
+    for (y = 1; y < h; ++y)
+    {
+        dst2 += map->row_pitch;
+        memcpy(dst2, dst, w * bpp);
+    }
+
+    dst2 = dst;
+    for (z = 1; z < d; ++z)
+    {
+        dst2 += map->slice_pitch;
+        memcpy(dst2, dst, w * h * bpp);
+    }
+
 }

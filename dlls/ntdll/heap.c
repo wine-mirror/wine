@@ -103,9 +103,10 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  0x7f000
-/* extra size to add at the end of block for tail checking */
+/* extra size to add at the end of block to mitigate overruns and allow tail checking */
+/* CW HACK 18582: always add a tail to heap allocs to fix Rockstar Launcher installer */
 #define HEAP_TAIL_EXTRA_SIZE(flags) \
-    ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? ALIGNMENT : 0)
+    ALIGNMENT
 
 /* There will be a free list bucket for every arena size up to and including this value */
 #define HEAP_MAX_SMALL_FREE_LIST 0x100
@@ -153,7 +154,6 @@ typedef struct tagHEAP
     DWORD            force_flags;   /* 0044/0074 */
     /* end of the Windows 10 compatible struct layout */
 
-    BOOL             shared;        /* System shared heap */
     SUBHEAP          subheap;       /* First sub-heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
@@ -689,7 +689,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 
     /* Decommit the end of the heap */
 
-    if (!(subheap->heap->shared)) HEAP_Decommit( subheap, pFree + 1 );
+    HEAP_Decommit( subheap, pFree + 1 );
 }
 
 
@@ -886,7 +886,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         if (!commitSize) commitSize = COMMIT_MASK + 1;
         totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4GB */
         if (totalSize < commitSize) totalSize = commitSize;
-        if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
         commitSize = min( totalSize, (commitSize + COMMIT_MASK) & ~COMMIT_MASK );
 
         /* allocate the memory block */
@@ -926,7 +925,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         heap->ffeeffee      = 0xffeeffee;
         heap->auto_flags    = (flags & HEAP_GROWABLE);
         heap->flags         = (flags & ~HEAP_SHARED);
-        heap->shared        = (flags & HEAP_SHARED) != 0;
         heap->magic         = HEAP_MAGIC;
         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
         list_init( &heap->subheap_list );
@@ -970,19 +968,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         {
             RtlInitializeCriticalSection( &heap->critSection );
             heap->critSection.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": HEAP.critSection");
-        }
-
-        if (heap->shared)
-        {
-            /* let's assume that only one thread at a time will try to do this */
-            HANDLE sem = heap->critSection.LockSemaphore;
-            if (!sem) NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 );
-
-            NtDuplicateObject( NtCurrentProcess(), sem, NtCurrentProcess(), &sem, 0, 0,
-                               DUPLICATE_MAKE_GLOBAL | DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
-            heap->critSection.LockSemaphore = sem;
-            RtlFreeHeap( processHeap, 0, heap->critSection.DebugInfo );
-            heap->critSection.DebugInfo = NULL;
         }
     }
 

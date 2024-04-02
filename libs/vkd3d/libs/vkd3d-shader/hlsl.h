@@ -152,6 +152,7 @@ struct hlsl_struct_field
     struct hlsl_type *type;
     const char *name;
     struct hlsl_semantic semantic;
+    unsigned int modifiers;
     unsigned int reg_offset;
 
     size_t name_bytecode_offset;
@@ -415,7 +416,6 @@ struct hlsl_ir_constant
         int32_t i;
         float f;
         double d;
-        bool b;
     } value[4];
     struct hlsl_reg reg;
 };
@@ -733,12 +733,14 @@ struct hlsl_buffer *hlsl_new_buffer(struct hlsl_ctx *ctx, enum hlsl_buffer_type 
         const struct hlsl_reg_reservation *reservation, struct vkd3d_shader_location loc);
 struct hlsl_ir_expr *hlsl_new_cast(struct hlsl_ctx *ctx, struct hlsl_ir_node *node, struct hlsl_type *type,
         const struct vkd3d_shader_location *loc);
+struct hlsl_ir_constant *hlsl_new_constant(struct hlsl_ctx *ctx, struct hlsl_type *type,
+        const struct vkd3d_shader_location *loc);
 struct hlsl_ir_expr *hlsl_new_copy(struct hlsl_ctx *ctx, struct hlsl_ir_node *node);
 struct hlsl_ir_function_decl *hlsl_new_func_decl(struct hlsl_ctx *ctx, struct hlsl_type *return_type,
         struct list *parameters, const struct hlsl_semantic *semantic, struct vkd3d_shader_location loc);
 struct hlsl_ir_if *hlsl_new_if(struct hlsl_ctx *ctx, struct hlsl_ir_node *condition, struct vkd3d_shader_location loc);
 struct hlsl_ir_constant *hlsl_new_int_constant(struct hlsl_ctx *ctx, int n,
-        const struct vkd3d_shader_location loc);
+        const struct vkd3d_shader_location *loc);
 struct hlsl_ir_jump *hlsl_new_jump(struct hlsl_ctx *ctx, enum hlsl_ir_jump_type type, struct vkd3d_shader_location loc);
 struct hlsl_ir_load *hlsl_new_load(struct hlsl_ctx *ctx, struct hlsl_ir_var *var, struct hlsl_ir_node *offset,
         struct hlsl_type *type, struct vkd3d_shader_location loc);
@@ -757,7 +759,7 @@ struct hlsl_ir_var *hlsl_new_synthetic_var(struct hlsl_ctx *ctx, const char *nam
         const struct vkd3d_shader_location loc);
 struct hlsl_type *hlsl_new_texture_type(struct hlsl_ctx *ctx, enum hlsl_sampler_dim dim, struct hlsl_type *format);
 struct hlsl_ir_constant *hlsl_new_uint_constant(struct hlsl_ctx *ctx, unsigned int n,
-        const struct vkd3d_shader_location loc);
+        const struct vkd3d_shader_location *loc);
 struct hlsl_ir_node *hlsl_new_unary_expr(struct hlsl_ctx *ctx, enum hlsl_ir_expr_op op, struct hlsl_ir_node *arg,
         struct vkd3d_shader_location loc);
 struct hlsl_ir_var *hlsl_new_var(struct hlsl_ctx *ctx, const char *name, struct hlsl_type *type,
@@ -783,6 +785,9 @@ bool hlsl_scope_add_type(struct hlsl_scope *scope, struct hlsl_type *type);
 struct hlsl_type *hlsl_type_clone(struct hlsl_ctx *ctx, struct hlsl_type *old,
         unsigned int default_majority, unsigned int modifiers);
 unsigned int hlsl_type_component_count(struct hlsl_type *type);
+unsigned int hlsl_type_get_array_element_reg_size(const struct hlsl_type *type);
+unsigned int hlsl_compute_component_offset(struct hlsl_ctx *ctx, struct hlsl_type *type,
+        unsigned int idx, struct hlsl_type **comp_type);
 unsigned int hlsl_type_get_sm4_offset(const struct hlsl_type *type, unsigned int offset);
 bool hlsl_types_are_equal(const struct hlsl_type *t1, const struct hlsl_type *t2);
 
@@ -793,8 +798,7 @@ unsigned int hlsl_swizzle_from_writemask(unsigned int writemask);
 
 bool hlsl_offset_from_deref(struct hlsl_ctx *ctx, const struct hlsl_deref *deref, unsigned int *offset);
 unsigned int hlsl_offset_from_deref_safe(struct hlsl_ctx *ctx, const struct hlsl_deref *deref);
-struct hlsl_reg hlsl_reg_from_deref(struct hlsl_ctx *ctx, const struct hlsl_deref *deref,
-        const struct hlsl_type *type);
+struct hlsl_reg hlsl_reg_from_deref(struct hlsl_ctx *ctx, const struct hlsl_deref *deref);
 
 bool hlsl_fold_constants(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context);
 

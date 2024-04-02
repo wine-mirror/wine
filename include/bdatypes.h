@@ -19,6 +19,8 @@
 #ifndef _BDATYPES_
 #define _BDATYPES_
 
+#include "wine/winheader_enter.h"
+
 typedef struct _BDANODE_DESCRIPTOR
 {
     ULONG ulBdaNodeType;
@@ -260,5 +262,7 @@ typedef enum Pilot
     BDA_PILOT_ON,
     BDA_PILOT_MAX,
 } Pilot;
+
+#include "wine/winheader_exit.h"
 
 #endif /* _BDATYPES_ */

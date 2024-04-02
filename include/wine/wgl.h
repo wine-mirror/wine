@@ -3,9 +3,26 @@
 #ifndef __WINE_WGL_H
 #define __WINE_WGL_H
 
+#include <stdint.h>
+
 #ifndef GLAPIENTRY
 #define GLAPIENTRY __stdcall
 #endif
+
+#ifdef __i386_on_x86_64__
+#define WINEGLHOST(x) _wine_host_##x
+typedef INT64 (CALLBACK *HOSTPTR _wine_host_PROC)(void);
+#else
+#define WINEGLHOST(x) x
+#endif
+
+typedef signed char khronos_int8_t;
+typedef unsigned char khronos_uint8_t;
+typedef signed short int khronos_int16_t;
+typedef unsigned short int khronos_uint16_t;
+typedef float khronos_float_t;
+typedef int32_t khronos_int32_t;
+typedef uint32_t khronos_uint32_t;
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
@@ -65,6 +82,13 @@ DECLARE_HANDLE(HVIDEOINPUTDEVICENV);
 typedef struct _GPU_DEVICE GPU_DEVICE;
 typedef struct _GPU_DEVICE *PGPU_DEVICE;
 typedef unsigned int GLhandleARB;
+#ifdef __i386_on_x86_64__
+typedef INT64 WINEGLHOST(GLintptr);
+typedef INT64 WINEGLHOST(GLintptrARB);
+typedef INT64 WINEGLHOST(GLsizeiptr);
+typedef INT64 WINEGLHOST(GLsizeiptrARB);
+typedef WINEGLHOST(GLintptr) WINEGLHOST(GLvdpauSurfaceNV);
+#endif
 
 #define ERROR_INCOMPATIBLE_DEVICE_CONTEXTS_ARB                        0x2054
 #define ERROR_INVALID_PIXEL_TYPE_ARB                                  0x2043

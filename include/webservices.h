@@ -19,6 +19,8 @@
 #ifndef __WINE_WEBSERVICES_H
 #define __WINE_WEBSERVICES_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif  /* __cplusplus */
@@ -1827,5 +1829,7 @@ HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WEBSERVICES_H */

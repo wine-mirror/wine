@@ -1217,7 +1217,8 @@ static HRESULT WINAPI dwritefontface_GetRecommendedRenderingMode(IDWriteFontFace
 
     ppem = emSize * ppdip;
 
-    if (ppem >= RECOMMENDED_OUTLINE_AA_THRESHOLD) {
+    /* CXHACK: disable outline rendering mode to workaround d2d issue, see bug 14558, bug 14721 */
+    if (0 && ppem >= RECOMMENDED_OUTLINE_AA_THRESHOLD) {
         *mode = DWRITE_RENDERING_MODE_OUTLINE;
         return S_OK;
     }
@@ -4583,6 +4584,10 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     WCHAR *name;
     void *data;
     HKEY hkey;
+#ifdef __ANDROID__
+    WCHAR meiryoW[] = {'M','e','i','r','y','o',0};
+    WCHAR meiryo_replacement[] = {'D','r','o','i','d',' ','S','a','n','s',' ','F','a','l','l','b','a','c','k',0};
+#endif
 
     if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey))
         return;
@@ -4621,6 +4626,11 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
     free(data);
     free(name);
     RegCloseKey(hkey);
+
+#ifdef __ANDROID__
+    /* CROSSOVER HACK - bug 14034 */
+    fontcollection_add_replacement(collection, meiryoW, meiryo_replacement);
+#endif
 }
 
 HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system,

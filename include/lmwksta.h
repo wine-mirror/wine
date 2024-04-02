@@ -19,6 +19,8 @@
 #ifndef __WINE_LMWKSTA_H
 #define __WINE_LMWKSTA_H
 
+#include "wine/winheader_enter.h"
+
 #include <lmcons.h>
 #include <lmuseflg.h>
 
@@ -89,5 +91,7 @@ NET_API_STATUS WINAPI NetWkstaUserEnum(LMSTR,DWORD,LPBYTE*,DWORD,LPDWORD,LPDWORD
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

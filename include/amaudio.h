@@ -19,6 +19,8 @@
 #ifndef __AMAUDIO__
 #define __AMAUDIO__
 
+#include "wine/winheader_enter.h"
+
 #include <mmsystem.h>
 #include <dsound.h>
 
@@ -43,5 +45,7 @@ DECLARE_INTERFACE_(IAMDirectSound,IUnknown)
     STDMETHOD(GetFocusWindow)(THIS_ HWND *hwnd, BOOL *bgaudible) PURE;
 };
 #undef INTERFACE
+
+#include "wine/winheader_exit.h"
 
 #endif

@@ -56,20 +56,6 @@ static inline void reset_bounds(RECT *bounds)
 }
 
 
-struct macdrv_window_surface
-{
-    struct window_surface   header;
-    macdrv_window           window;
-    RECT                    bounds;
-    HRGN                    region;
-    HRGN                    drawn;
-    BOOL                    use_alpha;
-    RGNDATA                *blit_data;
-    BYTE                   *bits;
-    pthread_mutex_t         mutex;
-    BITMAPINFO              info;   /* variable size, must be last */
-};
-
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
 
 /***********************************************************************
@@ -213,7 +199,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     HeapFree(GetProcessHeap(), 0, surface);
 }
 
-static const struct window_surface_funcs macdrv_surface_funcs =
+const struct window_surface_funcs macdrv_surface_funcs =
 {
     macdrv_surface_lock,
     macdrv_surface_unlock,
@@ -223,12 +209,6 @@ static const struct window_surface_funcs macdrv_surface_funcs =
     macdrv_surface_flush,
     macdrv_surface_destroy,
 };
-
-static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface)
-{
-    if (!surface || surface->funcs != &macdrv_surface_funcs) return NULL;
-    return (struct macdrv_window_surface *)surface;
-}
 
 /***********************************************************************
  *              create_surface
@@ -264,7 +244,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
 
     surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
     surface->info.bmiHeader.biWidth       = width;
-    surface->info.bmiHeader.biHeight      = -height; /* top-down */
+    surface->info.bmiHeader.biHeight      = height; /* bottom-up */
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biBitCount    = 32;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size(&surface->info);
@@ -338,101 +318,22 @@ void set_window_surface(macdrv_window window, struct window_surface *window_surf
  *            must not use Win32 or Wine functions, including debug
  *            logging.
  */
-int get_surface_blit_rects(void *window_surface, const CGRect **rects, int *count)
+int get_surface_blit_rects(void * WIN32PTR window_surface, const CGRect **rects, int *count)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
-    if (rects && count)
+    if (surface->blit_data)
     {
-        if (surface->blit_data)
-        {
-            *rects = (const CGRect*)surface->blit_data->Buffer;
-            *count = surface->blit_data->rdh.nCount;
-        }
-        else
-        {
-            *rects = NULL;
-            *count = 0;
-        }
+        *rects = (const CGRect*)surface->blit_data->Buffer;
+        *count = surface->blit_data->rdh.nCount;
+    }
+    else
+    {
+        *rects = NULL;
+        *count = 0;
     }
 
-    return (surface->blit_data != NULL && surface->blit_data->rdh.nCount > 0);
-}
-
-/***********************************************************************
- *              create_surface_image
- *
- * Caller must hold the surface lock.  On input, *rect is the requested
- * image rect, relative to the window whole_rect, a.k.a. visible_rect.
- * On output, it's been intersected with that part backed by the surface
- * and is the actual size of the returned image.  copy_data indicates if
- * the caller will keep the returned image beyond the point where the
- * surface bits can be guaranteed to remain valid and unchanged.  If so,
- * the bits are copied instead of merely referenced by the image.
- *
- * IMPORTANT: This function is called from non-Wine threads, so it
- *            must not use Win32 or Wine functions, including debug
- *            logging.
- */
-CGImageRef create_surface_image(void *window_surface, CGRect *rect, int copy_data, int color_keyed,
-        CGFloat key_red, CGFloat key_green, CGFloat key_blue)
-{
-    CGImageRef cgimage = NULL;
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    int width, height;
-
-    width  = surface->header.rect.right - surface->header.rect.left;
-    height = surface->header.rect.bottom - surface->header.rect.top;
-    *rect = CGRectIntersection(cgrect_from_rect(surface->header.rect), *rect);
-    if (!CGRectIsEmpty(*rect))
-    {
-        CGRect visrect;
-        CGColorSpaceRef colorspace;
-        CGDataProviderRef provider;
-        int bytes_per_row, offset, size;
-        CGImageAlphaInfo alphaInfo;
-
-        visrect = CGRectOffset(*rect, -surface->header.rect.left, -surface->header.rect.top);
-
-        colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-        bytes_per_row = get_dib_stride(width, 32);
-        offset = CGRectGetMinX(visrect) * 4 + CGRectGetMinY(visrect) * bytes_per_row;
-        size = min(CGRectGetHeight(visrect) * bytes_per_row,
-                   surface->info.bmiHeader.biSizeImage - offset);
-
-        if (copy_data)
-        {
-            CFDataRef data = CFDataCreate(NULL, (UInt8*)surface->bits + offset, size);
-            provider = CGDataProviderCreateWithCFData(data);
-            CFRelease(data);
-        }
-        else
-            provider = CGDataProviderCreateWithData(NULL, surface->bits + offset, size, NULL);
-
-        alphaInfo = surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst;
-        cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),
-                                8, 32, bytes_per_row, colorspace,
-                                alphaInfo | kCGBitmapByteOrder32Little,
-                                provider, NULL, retina_on, kCGRenderingIntentDefault);
-        CGDataProviderRelease(provider);
-        CGColorSpaceRelease(colorspace);
-
-        if (color_keyed)
-        {
-            CGImageRef maskedImage;
-            CGFloat components[] = { key_red   - 0.5, key_red   + 0.5,
-                                     key_green - 0.5, key_green + 0.5,
-                                     key_blue  - 0.5, key_blue  + 0.5 };
-            maskedImage = CGImageCreateWithMaskingColors(cgimage, components);
-            if (maskedImage)
-            {
-                CGImageRelease(cgimage);
-                cgimage = maskedImage;
-            }
-        }
-    }
-
-    return cgimage;
+    return (surface->blit_data != NULL);
 }
 
 /***********************************************************************
@@ -454,9 +355,9 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
         HRGN region;
 
         rect = *visible_rect;
-        OffsetRect(&rect, -rect.left, -rect.top);
+        OffsetRect(TRUNCCAST(RECT * WIN32PTR, &rect), -rect.left, -rect.top);
 
-        if ((region = CreateRectRgnIndirect(&rect)))
+        if ((region = CreateRectRgnIndirect(TRUNCCAST(RECT * WIN32PTR, &rect))))
         {
             CombineRgn(surface->drawn, surface->drawn, region, RGN_AND);
             DeleteObject(region);

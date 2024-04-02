@@ -349,9 +349,9 @@ static void LoadSettings(void)
     TaskManagerSettings.ShowProcessesFromAllUsers = FALSE; /* Server-only? */
     TaskManagerSettings.Column_ImageName = TRUE;
     TaskManagerSettings.Column_PID = TRUE;
-    TaskManagerSettings.Column_CPUUsage = TRUE;
-    TaskManagerSettings.Column_CPUTime = TRUE;
-    TaskManagerSettings.Column_MemoryUsage = TRUE;
+    TaskManagerSettings.Column_CPUUsage = FALSE;
+    TaskManagerSettings.Column_CPUTime = FALSE;
+    TaskManagerSettings.Column_MemoryUsage = FALSE;
     TaskManagerSettings.Column_MemoryUsageDelta = FALSE;
     TaskManagerSettings.Column_PeakMemoryUsage = FALSE;
     TaskManagerSettings.Column_PageFaults = FALSE;

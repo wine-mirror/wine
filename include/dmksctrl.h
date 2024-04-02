@@ -21,6 +21,8 @@
 #ifndef _DMKSCTRL_
 #define _DMKSCTRL_
 
+#include "wine/winheader_enter.h"
+
 #include <pshpack8.h>
 
 #include <objbase.h>
@@ -106,5 +108,7 @@ DEFINE_GUID(KSDATAFORMAT_SUBTYPE_MIDI, 0x1d262760, 0xe957, 0x11cf, 0xa5, 0xd6, 0
 DEFINE_GUID(KSDATAFORMAT_SUBTYPE_DIRECTMUSIC, 0x1a82f8bc, 0x3f8b, 0x11d2, 0xb7, 0x74, 0x00, 0x60, 0x08, 0x33, 0x16, 0xc1);
 
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _DMKSCTRL_ */

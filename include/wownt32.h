@@ -21,6 +21,8 @@
 #ifndef _WOWNT32_H_
 #define _WOWNT32_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __WINESRC__
 /* under Wine use the kernel functions directly so we don't have to import wow32 */
 #define WOWCallback16 K32WOWCallback16
@@ -152,5 +154,7 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 DWORD WINAPI WOWCallback16(DWORD,DWORD);
 BOOL  WINAPI WOWCallback16Ex(DWORD,DWORD,DWORD,LPVOID,LPDWORD);
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WOWNT32_H_ */

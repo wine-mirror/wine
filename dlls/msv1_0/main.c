@@ -41,12 +41,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
 static ULONG ntlm_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
+static char *wine_data_dir;
 
 static unixlib_handle_t ntlm_handle;
 
-static NTSTATUS ntlm_check_version(void)
+static NTSTATUS ntlm_check_version( const char *datadir )
 {
-    return __wine_unix_call( ntlm_handle, unix_check_version, NULL );
+    struct check_version_params params = { datadir };
+
+    return __wine_unix_call( ntlm_handle, unix_check_version, &params );
 }
 
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
@@ -114,7 +117,7 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
     TRACE( "%#lx, %p, %s, %s, %p\n", package_id, dispatch, debugstr_as(database), debugstr_as(confidentiality),
            package_name );
 
-    if (ntlm_check_version())
+    if (ntlm_check_version( wine_data_dir ))
     {
         ERR( "no NTLM support, expect problems\n" );
         return STATUS_UNSUCCESSFUL;
@@ -137,7 +140,7 @@ static NTSTATUS NTAPI ntlm_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS
 {
     TRACE( "%#Ix, %p, %p\n", package_id, params, lsa_function_table );
 
-    if (ntlm_check_version())
+    if (ntlm_check_version( wine_data_dir ))
     {
         ERR( "no NTLM support, expect problems\n" );
         return STATUS_UNSUCCESSFUL;
@@ -1567,11 +1570,29 @@ NTSTATUS NTAPI SpUserModeInitialize( ULONG lsa_version, ULONG *package_version, 
     return STATUS_SUCCESS;
 }
 
+static char *get_data_dir(void)
+{
+    const WCHAR *dir = _wgetenv( L"WINEDATADIR" );
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nt_name;
+    ULONG size = 1024;
+    char *ret;
+
+    if (!dir) return NULL;
+    RtlInitUnicodeString( &nt_name, dir );
+    InitializeObjectAttributes( &attr, &nt_name, 0, 0, NULL );
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return NULL;
+    if (!wine_nt_to_unix_file_name( &attr, ret, &size, 0 )) return ret;
+    RtlFreeHeap( GetProcessHeap(), 0, ret );
+    return NULL;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        wine_data_dir = get_data_dir();
         if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
                                   &ntlm_handle, sizeof(ntlm_handle), NULL ))
             return FALSE;

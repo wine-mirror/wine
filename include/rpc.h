@@ -25,6 +25,8 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef _WIN64
 # define __RPC_WIN64__
 #else
@@ -76,5 +78,7 @@ typedef void* I_RPC_HANDLE;
 /* #define RpcAbnormalTermination() abort() */
 
 #endif /* USE_COMPILER_EXCEPTIONS */
+
+#include "wine/winheader_exit.h"
 
 #endif /*__WINE_RPC_H */

@@ -117,8 +117,10 @@ enum vkd3d_shader_error
     VKD3D_SHADER_ERROR_HLSL_INVALID_TEXEL_OFFSET        = 5018,
     VKD3D_SHADER_ERROR_HLSL_OFFSET_OUT_OF_BOUNDS        = 5019,
     VKD3D_SHADER_ERROR_HLSL_INCOMPATIBLE_PROFILE        = 5020,
+    VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO            = 5021,
 
     VKD3D_SHADER_WARNING_HLSL_IMPLICIT_TRUNCATION       = 5300,
+    VKD3D_SHADER_WARNING_HLSL_DIVISION_BY_ZERO          = 5301,
 
     VKD3D_SHADER_ERROR_GLSL_INTERNAL                    = 6000,
 
@@ -328,6 +330,7 @@ enum vkd3d_shader_opcode
     VKD3DSIH_MOV,
     VKD3DSIH_MOVA,
     VKD3DSIH_MOVC,
+    VKD3DSIH_MSAD,
     VKD3DSIH_MUL,
     VKD3DSIH_NE,
     VKD3DSIH_NOP,
@@ -1031,6 +1034,8 @@ static inline size_t bytecode_get_size(struct vkd3d_bytecode_buffer *buffer)
 {
     return buffer->size;
 }
+
+uint32_t vkd3d_parse_integer(const char *s);
 
 struct vkd3d_shader_message_context
 {

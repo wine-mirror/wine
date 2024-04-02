@@ -21,6 +21,8 @@
 #ifndef __WINE_COMMDLG_H
 #define __WINE_COMMDLG_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -819,5 +821,7 @@ void COMDLG32_SetCommDlgExtendedError(DWORD err);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_COMMDLG_H */

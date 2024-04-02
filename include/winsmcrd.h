@@ -19,6 +19,8 @@
 #ifndef __WINE_WINSMCRD_H
 #define __WINE_WINSMCRD_H
 
+#include "wine/winheader_enter.h"
+
 #define SCARD_PROTOCOL_UNDEFINED        0x00000000
 #define SCARD_PROTOCOL_OPTIMAL          0x00000000
 #define SCARD_PROTOCOL_T0               0x00000001
@@ -33,5 +35,7 @@ typedef struct _SCARD_IO_REQUEST
     DWORD cbPciLength;
 } SCARD_IO_REQUEST, *PSCARD_IO_REQUEST, *LPSCARD_IO_REQUEST;
 typedef const SCARD_IO_REQUEST *LPCSCARD_IO_REQUEST;
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_WINSMCRD_H */

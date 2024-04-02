@@ -18,6 +18,8 @@
 #ifndef __FLTKERNEL__
 #define __FLTKERNEL__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -662,5 +664,7 @@ void     WINAPI FltUnregisterFilter(PFLT_FILTER);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

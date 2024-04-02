@@ -20,6 +20,8 @@
 #ifndef __WINE_DMUSIC_DLS_H
 #define __WINE_DMUSIC_DLS_H
 
+#include "wine/winheader_enter.h"
+
 #include <dls1.h>
 
 /*****************************************************************************
@@ -208,5 +210,7 @@ struct _DMUS_WAVEARTDL {
 struct _DMUS_WAVEDL {
 	ULONG cbWaveData;
 };
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DMUSIC_DLS_H */

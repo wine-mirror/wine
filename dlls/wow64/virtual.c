@@ -140,6 +140,16 @@ NTSTATUS WINAPI wow64_NtFreeVirtualMemory( UINT *args )
     SIZE_T size;
     NTSTATUS status;
 
+    /* Hack for CW bug 20262 and 20768:
+     * Don't free reserved address space areas in 32on64. See
+     * dlls/ntdll/loader.c, release_address_space() and
+     * dlls/ntdll/unix/virtual.c, virtual_release_address_space(). */
+    if (*addr32 == 1 && !*size32)
+    {
+        TRACE("Preventing reserved address space release request.\n");
+        return STATUS_SUCCESS;
+    }
+
     status = NtFreeVirtualMemory( process, addr_32to64( &addr, addr32 ),
                                   size_32to64( &size, size32 ), type );
     if (!status)
@@ -332,7 +342,11 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
     switch (class)
     {
     case MemoryBasicInformation:  /* MEMORY_BASIC_INFORMATION */
-        if (len >= sizeof(MEMORY_BASIC_INFORMATION32))
+        if (len < sizeof(MEMORY_BASIC_INFORMATION32))
+            status = STATUS_INFO_LENGTH_MISMATCH;
+        else if ((ULONG_PTR)addr > highest_user_address)
+            status = STATUS_INVALID_PARAMETER;
+        else
         {
             MEMORY_BASIC_INFORMATION info;
             MEMORY_BASIC_INFORMATION32 *info32 = ptr;
@@ -346,9 +360,10 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
                 info32->State = info.State;
                 info32->Protect = info.Protect;
                 info32->Type = info.Type;
+                if ((ULONG_PTR)info.BaseAddress + info.RegionSize > highest_user_address)
+                    info32->RegionSize = highest_user_address - (ULONG_PTR)info.BaseAddress + 1;
             }
         }
-        else status = STATUS_INFO_LENGTH_MISMATCH;
         res_len = sizeof(MEMORY_BASIC_INFORMATION32);
         break;
 

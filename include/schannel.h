@@ -18,6 +18,8 @@
 #ifndef __WINE_SCHANNEL_H__
 #define __WINE_SCHANNEL_H__
 
+#include "wine/winheader_enter.h"
+
 #include <wincrypt.h>
 
 /* Package names */
@@ -80,6 +82,7 @@ static const WCHAR SCHANNEL_NAME_W[] = { 'S','c','h','a','n','n','e','l',0 };
 #define SCH_CRED_VERSION      2
 #define SCH_CRED_V3           3
 #define SCHANNEL_CRED_VERSION 4
+#define SCH_CREDENTIALS_VERSION 5
 
 #define SCHANNEL_RENEGOTIATE 0
 #define SCHANNEL_SHUTDOWN    1
@@ -216,6 +219,54 @@ typedef struct _SCHANNEL_CRED
     DWORD dwCredFormat;
 } SCHANNEL_CRED, *PSCHANNEL_CRED;
 
+#ifdef SCHANNEL_USE_BLACKLISTS
+
+typedef enum _eTlsAlgorithmUsage
+{
+    TlsParametersCngAlgUsageKeyExchange,
+    TlsParametersCngAlgUsageSignature,
+    TlsParametersCngAlgUsageCipher,
+    TlsParametersCngAlgUsageDigest,
+    TlsParametersCngAlgUsageCertSig,
+} eTlsAlgorithmUsage;
+
+typedef struct _CRYPTO_SETTINGS
+{
+    eTlsAlgorithmUsage eAlgorithmUsage;
+    UNICODE_STRING     strCngAlgId;
+    DWORD              cChainingModes;
+    PUNICODE_STRING    rgstrChainingModes;
+    DWORD              dwMinBitLength;
+    DWORD              dwMaxBitLength;
+} CRYPTO_SETTINGS, *PCRYPTO_SETTINGS;
+
+typedef struct _TLS_PARAMETERS
+{
+    DWORD            cAlpnIds;
+    PUNICODE_STRING  rgstrAlpnIds;
+    DWORD            grbitDisabledProtocols;
+    DWORD            cDisabledCrypto;
+    PCRYPTO_SETTINGS pDisabledCrypto;
+    DWORD            dwFlags;
+} TLS_PARAMETERS, *PTLS_PARAMETERS;
+
+typedef struct _SCH_CREDENTIALS
+{
+    DWORD             dwVersion;
+    DWORD             dwCredFormat;
+    DWORD             cCreds;
+    PCCERT_CONTEXT   *paCred;
+    HCERTSTORE        hRootStore;
+    DWORD             cMappers;
+    struct _HMAPPER **aphMappers;
+    DWORD             dwSessionLifespan;
+    DWORD             dwFlags;
+    DWORD             cTlsParameters;
+    PTLS_PARAMETERS   pTlsParameters;
+} SCH_CREDENTIALS, *PSCH_CREDENTIALS;
+
+#endif
+
 typedef struct _SecPkgCred_SupportedAlgs
 {
     DWORD cSupportedAlgs;
@@ -249,5 +300,7 @@ typedef struct _SecPkgContext_ConnectionInfo
     ALG_ID aiExch;
     DWORD dwExchStrength;
 } SecPkgContext_ConnectionInfo, *PSecPkgContext_ConnectionInfo;
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_SCHANNEL_H__ */

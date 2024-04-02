@@ -21,6 +21,8 @@
 #ifndef _WINPERF_
 #define _WINPERF_
 
+#include "wine/winheader_enter.h"
+
 #define PERF_SIZE_DWORD         0x00000000
 #define PERF_SIZE_LARGE         0x00000100
 #define PERF_SIZE_ZERO          0x00000200
@@ -197,5 +199,7 @@ typedef DWORD (APIENTRY PM_OPEN_PROC)(LPWSTR);
 typedef DWORD (APIENTRY PM_COLLECT_PROC)(LPWSTR,LPVOID *,LPDWORD,LPDWORD);
 typedef DWORD (APIENTRY PM_CLOSE_PROC)(void);
 typedef DWORD (APIENTRY PM_QUERY_PROC)(LPDWORD,LPVOID *,LPDWORD,LPDWORD);
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WINPERF_ */

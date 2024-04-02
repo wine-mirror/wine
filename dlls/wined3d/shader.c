@@ -133,6 +133,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ENDREP                           */ "endrep",
     /* WINED3DSIH_ENDSWITCH                        */ "endswitch",
     /* WINED3DSIH_EQ                               */ "eq",
+    /* WINED3DSIH_EVAL_CENTROID                    */ "eval_centroid",
     /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ "eval_sample_index",
     /* WINED3DSIH_EXP                              */ "exp",
     /* WINED3DSIH_EXPP                             */ "expp",
@@ -1876,8 +1877,12 @@ static void shader_cleanup_reg_maps(struct wined3d_shader_reg_maps *reg_maps)
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps, unsigned int max)
 {
     DWORD map = 1u << max;
+
     map |= map - 1;
     map &= reg_maps->shader_version.major < 3 ? ~reg_maps->texcoord : ~reg_maps->input_registers;
+
+    if (!map)
+      return ~0u;
 
     return wined3d_log2i(map);
 }
@@ -3558,6 +3563,8 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
     else
         args->flatshading = 0;
 
+    args->emulated_clipplanes = find_emulated_clipplanes(context, state);
+
     init_interpolation_compile_args(args->interpolation_mode,
             args->next_shader_type == WINED3D_SHADER_TYPE_PIXEL ? pixel_shader : NULL, d3d_info);
 }
@@ -4174,6 +4181,16 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         {
             args->fog = WINED3D_FFP_PS_FOG_OFF;
         }
+    }
+    /* Only inser the KIL fragment.texcoord[clip] line if clipping is used.
+     * It is expensive because KIL can break early Z discard. Its cheaper to
+     * have two shaders than KIL needlessly. The same applies to the
+     * clipplane emulation in GLSL with discard. */
+    if (!shader->device->adapter->d3d_info.vs_clipping && use_vs(state)
+            && state->render_states[WINED3D_RS_CLIPPING]
+            && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
+    {
+        args->clip = TRUE;
     }
 
     if (!d3d_info->full_ffp_varyings)

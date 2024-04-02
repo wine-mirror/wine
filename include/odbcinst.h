@@ -19,6 +19,8 @@
 #ifndef __WINE_ODBCINST_H
 #define __WINE_ODBCINST_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -128,5 +130,7 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /*__WINE_ODBCINST_H*/

@@ -21,6 +21,8 @@
 #ifndef __WINE_WINSAFER_H
 #define __WINE_WINSAFER_H
 
+#include "wine/winheader_enter.h"
+
 #include <guiddef.h>
 #include <wincrypt.h>
 
@@ -107,5 +109,7 @@ WINADVAPI BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE,SAFER_OBJECT_I
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WINSAFER_H */

@@ -21,6 +21,8 @@
 #ifndef __WINE_SRRESTOREPTAPI_H
 #define __WINE_SRRESTOREPTAPI_H
 
+#include "wine/winheader_enter.h"
+
 /* Event types */
 #define BEGIN_NESTED_SYSTEM_CHANGE 102
 #define END_NESTED_SYSTEM_CHANGE   103
@@ -73,5 +75,7 @@ DWORD WINAPI SRRemoveRestorePoint(DWORD);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* !defined(__WINE_SRRESTOREPTAPI_H) */

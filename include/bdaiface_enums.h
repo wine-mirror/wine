@@ -19,6 +19,8 @@
 #ifndef BDAIFACE_ENUMS_H
 #define BDAIFACE_ENUMS_H
 
+#include "wine/winheader_enter.h"
+
 typedef enum EntitlementType
 {
     Entitled,
@@ -85,5 +87,7 @@ typedef enum SmartCardAssociationType
     Associated,
     AssociationUnknown
 } SmartCardAssociationType;
+
+#include "wine/winheader_exit.h"
 
 #endif /* BDAIFACE_ENUMS_H */

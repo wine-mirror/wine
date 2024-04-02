@@ -81,31 +81,46 @@ static void delete_directory(const char *name)
     RemoveDirectoryA(path);
 }
 
+struct test_include
+{
+    ID3DXInclude ID3DXInclude_iface;
+    BOOL terminated_data;
+};
+
+static inline struct test_include *impl_from_ID3DXInclude(ID3DXInclude *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_include, ID3DXInclude_iface);
+}
+
 static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE include_type,
         const char *filename, const void *parent_data, const void **data, UINT *bytes)
 {
-    char *buffer;
     static const char shader[] =
             "#include \"incl.vsh\"\n"
             "mov REGISTER, v0\n";
     static const char include[] = "#define REGISTER r0\nvs.1.1\n";
     static const char include2[] = "#include \"incl3.vsh\"\n";
     static const char include3[] = "vs.1.1\n";
+    struct test_include *test_include = impl_from_ID3DXInclude(iface);
+    unsigned int size;
+    char *buffer;
 
     trace("filename %s.\n", filename);
-    trace("parent_data %p: %s.\n", parent_data, parent_data ? (char *)parent_data : "(null)");
+    trace("parent_data %p.\n", parent_data);
 
     if (!strcmp(filename, "shader.vsh"))
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(shader));
-        memcpy(buffer, shader, sizeof(shader));
-        *bytes = sizeof(shader);
+        size = test_include->terminated_data ? sizeof(shader) : sizeof(shader) - 1;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(buffer, shader, size);
+        *bytes = size;
     }
     else if (!strcmp(filename, "incl.vsh"))
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
-        memcpy(buffer, include, sizeof(include));
-        *bytes = sizeof(include);
+        size = test_include->terminated_data ? sizeof(include) : sizeof(include) - 1;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(buffer, include, size);
+        *bytes = size;
         /* This is included from the first D3DXAssembleShader with non-null ID3DXInclude test
          * (parent_data == NULL) and from shader.vsh / shader[] (with matching parent_data).
          * Allow both cases. */
@@ -113,24 +128,26 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface, D3DXINCLUDE_TYPE
     }
     else if (!strcmp(filename, "incl2.vsh"))
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
-        memcpy(buffer, include2, sizeof(include2));
-        *bytes = sizeof(include2);
+        size = test_include->terminated_data ? sizeof(include2) : sizeof(include2) - 1;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(buffer, include2, size);
+        *bytes = size;
     }
     else if (!strcmp(filename, "incl3.vsh"))
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include3));
-        memcpy(buffer, include3, sizeof(include3));
-        *bytes = sizeof(include3);
-        /* Also check for the correct parent_data content */
-        ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value\n");
+        size = test_include->terminated_data ? sizeof(include3) : sizeof(include3) - 1;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(buffer, include3, size);
+        *bytes = size;
+        ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value.\n");
     }
     else if (!strcmp(filename, "include/incl3.vsh"))
     {
-        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
-        memcpy(buffer, include, sizeof(include));
-        *bytes = sizeof(include);
-        ok(!parent_data, "wrong parent_data value\n");
+        size = test_include->terminated_data ? sizeof(include) : sizeof(include) - 1;
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(buffer, include, size);
+        *bytes = size;
+        ok(!parent_data, "wrong parent_data value.\n");
     }
     else
     {
@@ -147,13 +164,10 @@ static HRESULT WINAPI testD3DXInclude_close(ID3DXInclude *iface, const void *dat
     return S_OK;
 }
 
-static const struct ID3DXIncludeVtbl D3DXInclude_Vtbl = {
+static const struct ID3DXIncludeVtbl test_include_vtbl =
+{
     testD3DXInclude_open,
     testD3DXInclude_close
-};
-
-struct D3DXIncludeImpl {
-    ID3DXInclude ID3DXInclude_iface;
 };
 
 static void assembleshader_test(void)
@@ -180,8 +194,6 @@ static void assembleshader_test(void)
         "vs.1.1\n";
     static const char testincl4_wrong[] =
         "#error \"wrong include\"\n";
-    HRESULT hr;
-    ID3DXBuffer *shader, *messages;
     static const D3DXMACRO defines[] = {
         {
             "DEF1", "10 + 15"
@@ -193,8 +205,11 @@ static void assembleshader_test(void)
             NULL, NULL
         }
     };
-    struct D3DXIncludeImpl include;
     char shader_vsh_path[MAX_PATH], shader3_vsh_path[MAX_PATH];
+    ID3DXBuffer *shader, *messages;
+    struct test_include include;
+    unsigned int i;
+    HRESULT hr;
 
     /* pDefines test */
     shader = NULL;
@@ -229,56 +244,67 @@ static void assembleshader_test(void)
     }
 
     /* pInclude test */
-    shader = NULL;
-    messages = NULL;
-    include.ID3DXInclude_iface.lpVtbl = &D3DXInclude_Vtbl;
-    hr = D3DXAssembleShader(testshader, strlen(testshader), NULL, &include.ID3DXInclude_iface,
-                            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
-    ok(hr == D3D_OK, "pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
-    if(messages) {
-        trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
-        ID3DXBuffer_Release(messages);
-    }
-    if(shader) ID3DXBuffer_Release(shader);
-
-    /* "unexpected #include file from memory" test */
-    shader = NULL;
-    messages = NULL;
-    hr = D3DXAssembleShader(testshader, strlen(testshader),
-                            NULL, NULL, D3DXSHADER_SKIPVALIDATION,
-                            &shader, &messages);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
-    if(messages) {
-        trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
-        ID3DXBuffer_Release(messages);
-    }
-    if(shader) ID3DXBuffer_Release(shader);
-
-    /* recursive #include test */
-    shader = NULL;
-    messages = NULL;
-    hr = D3DXAssembleShader(testshader2, strlen(testshader2), NULL, &include.ID3DXInclude_iface,
-                            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
-    todo_wine ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
-    if(messages) {
-        trace("recursive D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
-        ID3DXBuffer_Release(messages);
-    }
-    if(shader) ID3DXBuffer_Release(shader);
-
-    /* #include with a path. */
-    shader = NULL;
-    messages = NULL;
-    hr = D3DXAssembleShader(testshader3, strlen(testshader3), NULL, &include.ID3DXInclude_iface,
-            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
-    ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000ffff);
-    if (messages)
+    for (i = 0; i < 2; ++i)
     {
-        trace("Path search D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
-        ID3DXBuffer_Release(messages);
+        shader = NULL;
+        messages = NULL;
+        include.ID3DXInclude_iface.lpVtbl = &test_include_vtbl;
+        include.terminated_data = i;
+        winetest_push_context(i ? "terminated include data" : "nonterminated include data");
+        hr = D3DXAssembleShader(testshader, strlen(testshader), NULL, &include.ID3DXInclude_iface,
+                D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        if (messages)
+        {
+            trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+
+        /* "unexpected #include file from memory" test */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShader(testshader, strlen(testshader), NULL, NULL, D3DXSHADER_SKIPVALIDATION,
+                &shader, &messages);
+        ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#x.\n", hr);
+        if (messages)
+        {
+            trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+
+        /* recursive #include test */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShader(testshader2, strlen(testshader2), NULL, &include.ID3DXInclude_iface,
+                D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+        todo_wine_if(i) ok(hr == (i ? D3D_OK : D3DXERR_INVALIDDATA), "Unexpected hr %#x.\n", hr);
+        if (messages)
+        {
+            trace("Recursive D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+
+        /* #include with a path. */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShader(testshader3, strlen(testshader3), NULL, &include.ID3DXInclude_iface,
+                D3DXSHADER_SKIPVALIDATION, &shader, &messages);
+        ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+        if (messages)
+        {
+            trace("Path search D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if (shader)
+            ID3DXBuffer_Release(shader);
+        winetest_pop_context();
     }
-    if (shader)
-        ID3DXBuffer_Release(shader);
 
     if (create_file("shader.vsh", testshader, sizeof(testshader) - 1, shader_vsh_path))
     {
@@ -443,7 +469,7 @@ static void d3dxpreprocess_test(void)
     HRESULT hr;
     ID3DXBuffer *shader, *messages;
     char shader_vsh_path[MAX_PATH], shader3_vsh_path[MAX_PATH];
-    static struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
+    static struct test_include include = {{&test_include_vtbl}, TRUE};
 
     if (create_file("shader.vsh", testshader, sizeof(testshader) - 1, shader_vsh_path))
     {

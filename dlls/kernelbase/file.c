@@ -946,7 +946,20 @@ done:
  */
 BOOLEAN WINAPI /* DECLSPEC_HOTPATCH */ CreateSymbolicLinkW( LPCWSTR link, LPCWSTR target, DWORD flags )
 {
-    FIXME( "(%s %s %ld): stub\n", debugstr_w(link), debugstr_w(target), flags );
+    char name[MAX_PATH], *p;
+
+    FIXME("(%s %s %ld): stub\n", debugstr_w(link), debugstr_w(target), flags);
+
+    /* CXHACK 13427 */
+    GetModuleFileNameA(GetModuleHandleA(NULL), name, sizeof(name));
+    p = strrchr(name, '\\');
+    p = p ? p+1 : name;
+    if(!strcasecmp(p, "OfficeClickToRun.exe"))
+    {
+        FIXME("CXHACK 13427: Using CopyFile\n");
+        return CopyFileW(target, link, FALSE);
+    }
+
     return TRUE;
 }
 

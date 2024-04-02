@@ -16,9 +16,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windows.h>
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(arp);
+
+static int printA(const char *msgA)
+{
+    DWORD len;
+    DWORD count, ret;
+
+    len = lstrlenA(msgA);
+    ret = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, NULL);
+    if (!ret)
+    {
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
+    }
+
+    return count;
+}
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
@@ -28,6 +44,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     for (i = 0; i < argc; i++)
         WINE_FIXME(" %s", wine_dbgstr_w(argv[i]));
     WINE_FIXME("\n");
+
+    printA("\n");
 
     return 0;
 }

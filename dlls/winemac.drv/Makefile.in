@@ -7,6 +7,7 @@ EXTRALIBS = -framework AppKit -framework Carbon -framework Security -framework O
 EXTRADLLFLAGS = -mcygwin
 
 C_SRCS = \
+	32on64hack.c \
 	clipboard.c \
 	display.c \
 	dragdrop.c \
@@ -19,6 +20,7 @@ C_SRCS = \
 	mouse.c \
 	opengl.c \
 	surface.c \
+	surface_hoststack.c \
 	systray.c \
 	vulkan.c \
 	window.c
@@ -35,3 +37,14 @@ OBJC_SRCS = \
 	cocoa_window.m
 
 RC_SRCS = winemac.rc
+
+cocoa_app_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_clipboard_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_cursorclipping_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_display_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_event_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_main_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_opengl_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_status_item_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+cocoa_window_EXTRADEFS = $(HOSTSTACK_CFLAGS)
+surface_hoststack_EXTRADEFS = $(HOSTSTACK_CFLAGS)

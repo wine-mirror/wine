@@ -19,11 +19,15 @@
 #ifndef __DMORT_H__
 #define __DMORT_H__
 
+#include "wine/winheader_enter.h"
+
 HRESULT WINAPI MoCopyMediaType(DMO_MEDIA_TYPE*,const DMO_MEDIA_TYPE*);
 HRESULT WINAPI MoCreateMediaType(DMO_MEDIA_TYPE**,DWORD);
 HRESULT WINAPI MoDeleteMediaType(DMO_MEDIA_TYPE*);
 HRESULT WINAPI MoDuplicateMediaType(DMO_MEDIA_TYPE**,const DMO_MEDIA_TYPE*);
 HRESULT WINAPI MoFreeMediaType(DMO_MEDIA_TYPE*);
 HRESULT WINAPI MoInitMediaType(DMO_MEDIA_TYPE*,DWORD);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DMORT_H__ */

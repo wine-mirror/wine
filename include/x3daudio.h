@@ -19,6 +19,8 @@
 #ifndef _X3DAUDIO_H
 #define _X3DAUDIO_H
 
+#include "wine/winheader_enter.h"
+
 typedef struct X3DAUDIO_VECTOR {
     float x, y, z;
 } X3DAUDIO_VECTOR;
@@ -148,5 +150,7 @@ typedef BYTE X3DAUDIO_HANDLE[X3DAUDIO_HANDLE_BYTESIZE];
 HRESULT CDECL X3DAudioInitialize(UINT32, float, X3DAUDIO_HANDLE);
 void CDECL X3DAudioCalculate(const X3DAUDIO_HANDLE, const X3DAUDIO_LISTENER *,
         const X3DAUDIO_EMITTER *, UINT32, X3DAUDIO_DSP_SETTINGS *);
+
+#include "wine/winheader_exit.h"
 
 #endif

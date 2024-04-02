@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = d3d10core.dll
 IMPORTLIB = d3d10core
 IMPORTS   = d3d11 dxgi

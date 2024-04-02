@@ -19,6 +19,8 @@
 #ifndef __WINE_FONTSUB_H
 #define __WINE_FONTSUB_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,5 +62,7 @@ ULONG __cdecl CreateFontPackage(const unsigned char *src, const ULONG src_len, u
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

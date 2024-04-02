@@ -110,6 +110,8 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
+#include "wine/winheader_enter.h"
+
 #include <inaddr.h>
 
 #ifdef USE_WS_PREFIX
@@ -980,5 +982,7 @@ int WINAPI WS(gethostname)(char*,int);
 #endif
 
 #undef WS
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _WINSOCKAPI_ */

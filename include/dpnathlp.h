@@ -19,6 +19,8 @@
 #ifndef __DPNATHLP_H__
 #define __DPNATHLP_H__
 
+#include "wine/winheader_enter.h"
+
 #include <ole2.h>
 
 #ifdef __cplusplus
@@ -188,5 +190,7 @@ DECLARE_INTERFACE_(IDirectPlayNATHelp,IUnknown)
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DPNATHLP_H__ */

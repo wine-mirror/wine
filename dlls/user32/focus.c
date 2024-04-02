@@ -48,6 +48,7 @@ BOOL FOCUS_MouseActivate( HWND hwnd )
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
+    MENU_send_window_menubar_to_macapp( hwnd );
     return NtUserSetForegroundWindow( hwnd, FALSE );
 }
 

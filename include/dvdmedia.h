@@ -19,6 +19,8 @@
 #ifndef __DVDMEDIA_H__
 #define __DVDMEDIA_H__
 
+#include "wine/winheader_enter.h"
+
 #define AMCONTROL_USED 0x00000001
 #define AMCONTROL_PAD_TO_4x3 0x00000002
 #define AMCONTROL_PAD_TO_16x9 0x00000004
@@ -65,5 +67,7 @@ typedef struct tagMPEG2VIDEOINFO {
 #define AMINTERLACE_DisplayModeWeaveOnly  0x0040
 #define AMINTERLACE_DisplayModeBobOrWeave 0x0080
 #define AMINTERLACE_DisplayModeMask       0x00c0
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DVDMEDIA_H__ */

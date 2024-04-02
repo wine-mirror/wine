@@ -19,6 +19,8 @@
 #ifndef __WINE_DPLAY_H
 #define __WINE_DPLAY_H
 
+#include "wine/winheader_enter.h"
+
 #include <ole2.h>
 
 #ifdef __cplusplus
@@ -1282,5 +1284,7 @@ typedef struct
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DPLAY_H */

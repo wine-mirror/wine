@@ -21,7 +21,6 @@
 #include "d3dx10.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -79,7 +78,7 @@ static ULONG WINAPI d3dx10_sprite_Release(ID3DX10Sprite *iface)
     if (!refcount)
     {
         ID3D10Device_Release(sprite->device);
-        heap_free(sprite);
+        free(sprite);
     }
 
     return refcount;
@@ -209,7 +208,7 @@ HRESULT WINAPI D3DX10CreateSprite(ID3D10Device *device, UINT size, ID3DX10Sprite
 
     *sprite = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3DX10Sprite_iface.lpVtbl = &d3dx10_sprite_vtbl;

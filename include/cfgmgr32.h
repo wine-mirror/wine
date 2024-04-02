@@ -19,6 +19,8 @@
 #ifndef _CFGMGR32_H_
 #define _CFGMGR32_H_
 
+#include "wine/winheader_enter.h"
+
 /* FIXME: #include <cfg.h> */
 
 #ifndef GUID_DEFINED
@@ -253,5 +255,7 @@ CMAPI CONFIGRET WINAPI CM_Request_Device_EjectW(DEVINST dev, PPNP_VETO_TYPE type
 #endif
 
 #undef DECL_WINELIB_CFGMGR32_TYPE_AW
+
+#include "wine/winheader_exit.h"
 
 #endif /* _CFGMGR32_H_ */

@@ -230,7 +230,8 @@ static inline BOOL is_param_type_sampler(D3DXPARAMETER_TYPE type)
 /* Returns the smallest power of 2 which is greater than or equal to num */
 static inline uint32_t make_pow2(uint32_t num)
 {
-    uint32_t index;
+    DWORD index;
+
     return BitScanReverse(&index, num - 1) ? 1u << (index + 1) : 1;
 }
 
@@ -318,13 +319,13 @@ struct d3dx_parameter
     void *data;
     D3DXPARAMETER_CLASS class;
     D3DXPARAMETER_TYPE  type;
-    UINT rows;
-    UINT columns;
-    UINT element_count;
-    UINT member_count;
-    DWORD flags;
-    UINT bytes;
-    DWORD object_id;
+    unsigned int rows;
+    unsigned int columns;
+    unsigned int element_count;
+    unsigned int member_count;
+    uint32_t flags;
+    unsigned int bytes;
+    unsigned int object_id;
 
     struct d3dx_parameter *members;
     char *semantic;
@@ -336,7 +337,7 @@ struct d3dx_parameter
 struct d3dx_top_level_parameter
 {
     struct d3dx_parameter param;
-    UINT annotation_count;
+    unsigned int annotation_count;
     struct d3dx_parameter *annotations;
     ULONG64 update_version;
     ULONG64 *version_counter;

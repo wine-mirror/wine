@@ -19,6 +19,8 @@
 #ifndef __WINE_WTSAPI32_H
 #define __WINE_WTSAPI32_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -213,5 +215,7 @@ BOOL WINAPI WTSWaitSystemEvent(HANDLE, DWORD, DWORD*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

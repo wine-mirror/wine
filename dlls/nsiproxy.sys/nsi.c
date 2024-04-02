@@ -155,3 +155,134 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_nsi_get_all_parameters_ex,
     unix_nsi_get_parameter_ex
 };
+
+#ifdef _WIN64
+
+typedef UINT PTR32;
+
+static NTSTATUS wow64_nsi_enumerate_all_ex( void *args )
+{
+    struct
+    {
+        PTR32 unknown[2];
+        PTR32 module;
+        UINT table;
+        UINT first_arg;
+        UINT second_arg;
+        PTR32 key_data;
+        UINT key_size;
+        PTR32 rw_data;
+        UINT rw_size;
+        PTR32 dynamic_data;
+        UINT dynamic_size;
+        PTR32 static_data;
+        UINT static_size;
+        UINT count;
+    } *params32 = args;
+    struct nsi_enumerate_all_ex params =
+    {
+        .unknown[0] = ULongToPtr( params32->unknown[0] ),
+        .unknown[1] = ULongToPtr( params32->unknown[1] ),
+        .module = ULongToPtr( params32->module ),
+        .table = params32->table,
+        .first_arg = params32->first_arg,
+        .second_arg = params32->second_arg,
+        .key_data = ULongToPtr( params32->key_data ),
+        .key_size = params32->key_size,
+        .rw_data = ULongToPtr( params32->rw_data ),
+        .rw_size = params32->rw_size,
+        .dynamic_data = ULongToPtr( params32->dynamic_data ),
+        .dynamic_size = params32->dynamic_size,
+        .static_data = ULongToPtr( params32->static_data ),
+        .static_size = params32->static_size,
+        .count = params32->count
+    };
+    NTSTATUS status = nsi_enumerate_all_ex( &params );
+    params32->count = params.count;
+    return status;
+}
+
+static NTSTATUS wow64_nsi_get_all_parameters_ex( void *args )
+{
+    struct
+    {
+        PTR32 unknown[2];
+        PTR32 module;
+        UINT table;
+        UINT first_arg;
+        UINT unknown2;
+        PTR32 key;
+        UINT key_size;
+        PTR32 rw_data;
+        UINT rw_size;
+        PTR32 dynamic_data;
+        UINT dynamic_size;
+        PTR32 static_data;
+        UINT static_size;
+    } const *params32 = args;
+    struct nsi_get_all_parameters_ex params =
+    {
+        .unknown[0] = ULongToPtr( params32->unknown[0] ),
+        .unknown[1] = ULongToPtr( params32->unknown[1] ),
+        .module = ULongToPtr( params32->module ),
+        .table = params32->table,
+        .first_arg = params32->first_arg,
+        .unknown2 = params32->unknown2,
+        .key = ULongToPtr( params32->key ),
+        .key_size = params32->key_size,
+        .rw_data = ULongToPtr( params32->rw_data ),
+        .rw_size = params32->rw_size,
+        .dynamic_data = ULongToPtr( params32->dynamic_data ),
+        .dynamic_size = params32->dynamic_size,
+        .static_data = ULongToPtr( params32->static_data ),
+        .static_size = params32->static_size
+    };
+    return nsi_get_all_parameters_ex( &params );
+}
+
+static NTSTATUS wow64_nsi_get_parameter_ex( void *args )
+{
+    struct
+    {
+        PTR32 unknown[2];
+        PTR32 module;
+        UINT table;
+        UINT first_arg;
+        UINT unknown2;
+        PTR32 key;
+        UINT key_size;
+        UINT param_type;
+        PTR32 data;
+        UINT data_size;
+        UINT data_offset;
+    } const *params32 = args;
+    struct nsi_get_parameter_ex params =
+    {
+        .unknown[0] = ULongToPtr( params32->unknown[0] ),
+        .unknown[1] = ULongToPtr( params32->unknown[1] ),
+        .module = ULongToPtr( params32->module ),
+        .table = params32->table,
+        .first_arg = params32->first_arg,
+        .unknown2 = params32->unknown2,
+        .key = ULongToPtr( params32->key ),
+        .key_size = params32->key_size,
+        .param_type = params32->param_type,
+        .data = ULongToPtr( params32->data ),
+        .data_size = params32->data_size,
+        .data_offset = params32->data_offset
+    };
+    return nsi_get_parameter_ex( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    icmp_cancel_listen,
+    icmp_close,
+    wow64_icmp_listen,
+    wow64_icmp_send_echo,
+    wow64_nsi_enumerate_all_ex,
+    wow64_nsi_get_all_parameters_ex,
+    wow64_nsi_get_parameter_ex
+};
+
+#endif /* _WIN64 */

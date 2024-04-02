@@ -937,6 +937,12 @@ end:
     return ret;
 }
 
+/* CROSSOVER HACK bug 10194 */
+void WINAPI wine_install_mono(HWND hwnd, HINSTANCE hinst, LPSTR cmdline, int cmdshow)
+{
+    install_wine_mono();
+}
+
 HRESULT WINAPI DllRegisterServer(void)
 {
     install_wine_mono();

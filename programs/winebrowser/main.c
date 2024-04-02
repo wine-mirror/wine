@@ -115,7 +115,8 @@ static LSTATUS get_commands( HKEY key, const WCHAR *value, WCHAR *buffer, DWORD 
 static int open_http_url( const WCHAR *url )
 {
     static const WCHAR defaultbrowsers[] =
-        L"xdg-open\0"
+        L"launchurl\0"
+        "xdg-open\0"
         "/usr/bin/open\0"
         "firefox\0"
         "konqueror\0"
@@ -427,6 +428,30 @@ int wmain(int argc, WCHAR *argv[])
     IUri_GetScheme(uri, &scheme);
 
     if(scheme == URL_SCHEME_FILE) {
+#ifdef __ANDROID__
+        /* on Chrome OS, open HTML in iexplore. Otherwise pass to native browser. */
+        static const WCHAR iexploreW[] = {'i','e','x','p','l','o','r','e','.','e','x','e',0};
+        static const WCHAR htmW[] = {'.','h','t','m',0};
+        static const WCHAR htmlW[] = {'.','h','t','m','l',0};
+
+        BSTR ext = NULL;
+
+        hres = IUri_GetExtension(uri, &ext);
+        if(SUCCEEDED(hres) && ext){
+            if(!strcmpiW(ext, htmW) ||
+                    !strcmpiW(ext, htmlW)){
+                BSTR path = NULL;
+
+                hres = IUri_GetPath(uri, &path);
+                if(SUCCEEDED(hres) && path){
+                    ShellExecuteW(NULL, NULL, iexploreW, path, NULL, SW_SHOW);
+                    return 0;
+                }
+            }
+            SysFreeString(ext);
+        }
+#endif
+
         display_uri = convert_file_uri(uri);
         if(!display_uri) {
             WINE_ERR("Failed to convert file URL to unix path\n");

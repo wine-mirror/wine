@@ -21,13 +21,13 @@
 #ifndef __WINE_WINE_ASM_H
 #define __WINE_WINE_ASM_H
 
-#if defined(__APPLE__) || (defined(__WINE_PE_BUILD) && defined(__i386__))
+#if defined(__APPLE__) || (defined(__WINE_PE_BUILD) && (defined(__i386__) || defined(__i386_on_x86_64__)))
 # define __ASM_NAME(name) "_" name
 #else
 # define __ASM_NAME(name) name
 #endif
 
-#if defined(__WINE_PE_BUILD) && defined(__i386__)
+#if defined(__WINE_PE_BUILD) && (defined(__i386__) || defined(__i386_on_x86_64__))
 # define __ASM_STDCALL(name,args)  "_" name "@" #args
 # define __ASM_FASTCALL(name,args) "@" name "@" #args
 #else
@@ -35,7 +35,7 @@
 # define __ASM_FASTCALL(name,args) __ASM_NAME("__fastcall_" name)
 #endif
 
-#if defined(__GCC_HAVE_DWARF2_CFI_ASM) || (defined(__clang__) && defined(__GNUC__) && !defined(__SEH__))
+#if defined(__GCC_HAVE_DWARF2_CFI_ASM) || ((defined(__APPLE__) || defined(__clang__)) && defined(__GNUC__) && !defined(__SEH__))
 # define __ASM_CFI(str) str
 #else
 # define __ASM_CFI(str)

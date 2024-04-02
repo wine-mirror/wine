@@ -2069,7 +2069,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,cryptnet.dll,1
 11,,devenum.dll,1
 11,,mp3dmod.dll,1
-11,,mscoree.dll,1
+;(cw)11,,mscoree.dll,1
 11,,mshtml.dll,1
 11,,msisip.dll,1
 11,,qcap.dll,1
@@ -5083,7 +5083,7 @@ StartType=3
 ErrorControl=1
 
 [Services]
-HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
+;(cw)HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,"System\CurrentControlSet\Services\Eventlog\Application",,16
 HKLM,"System\CurrentControlSet\Services\Eventlog\System","Sources",0x10000,""
 HKLM,"System\CurrentControlSet\Services\Tcpip\Parameters","DataBasePath",,"%12%\etc"

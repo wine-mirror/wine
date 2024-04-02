@@ -7,6 +7,7 @@
 #define _WSTRING_DEFINED
 
 #include <corecrt.h>
+#include "wine/asm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +18,9 @@ extern "C" {
 _ACRTIMP void*   __cdecl memchr(const void*,int,size_t);
 _ACRTIMP int     __cdecl memcmp(const void*,const void*,size_t);
 _ACRTIMP void*   __cdecl memcpy(void*,const void*,size_t);
+#ifdef __i386_on_x86_64__
+_ACRTIMP void* HOSTPTR __cdecl memcpy(void* HOSTPTR,const void* HOSTPTR,size_t) __attribute__((overloadable)) asm(__ASM_NAME("wine_memcpy_HOSTPTR"));
+#endif
 _ACRTIMP errno_t __cdecl memcpy_s(void*,size_t,const void*,size_t);
 _ACRTIMP void*   __cdecl memset(void*,int,size_t);
 _ACRTIMP void*   __cdecl _memccpy(void*,const void*,int,size_t);

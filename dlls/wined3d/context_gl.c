@@ -1393,13 +1393,16 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     {
         /* If we're here because we're switching away from a previously
          * destroyed context, acquiring a context in order to submit a fence
-         * is problematic. (In particular, we'd end up back here again in the
-         * process of switching to the newly acquired context.) */
+         * is problematic. In particular, we'd end up back here again in the
+         * process of switching to the newly acquired context.
+         *
+         * If fences aren't supported there should be nothing to wait for
+         * anyway, so just do nothing in that case. */
         if (context_gl->c.destroyed)
         {
             gl_info->gl_ops.gl.p_glFinish();
         }
-        else
+        else if (context_gl->c.d3d_info->fences)
         {
             wined3d_context_gl_submit_command_fence(context_gl);
             wined3d_context_gl_wait_command_fence(context_gl,
@@ -2439,6 +2442,9 @@ void wined3d_context_gl_enable_clip_distances(struct wined3d_context_gl *context
     unsigned int clip_distance_count, i;
     uint32_t disable_mask, current_mask;
 
+    if (gl_info->quirks & WINED3D_CX_QUIRK_GLSL_CLIP_BROKEN)
+        return;
+
     clip_distance_count = gl_info->limits.user_clip_distances;
     disable_mask = ~enable_mask;
     enable_mask &= wined3d_mask_from_size(clip_distance_count);
@@ -2865,9 +2871,12 @@ static void *wined3d_bo_gl_map(struct wined3d_bo_gl *bo, struct wined3d_context_
         ERR("Failed to create new buffer object.\n");
     }
 
-    if (bo->command_fence_id == device_gl->current_fence_id)
-        wined3d_context_gl_submit_command_fence(context_gl);
-    wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
+    if (context_gl->c.d3d_info->fences)
+    {
+        if (bo->command_fence_id == device_gl->current_fence_id)
+            wined3d_context_gl_submit_command_fence(context_gl);
+        wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
+    }
 
 map:
     if (bo->b.map_ptr)
@@ -2931,19 +2940,10 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
-    if (context_gl->c.device->adapter->mapped_size <= MAX_PERSISTENT_MAPPED_BYTES)
+    if (context_gl->c.d3d_info->persistent_map
+            && context_gl->c.device->adapter->mapped_size <= MAX_PERSISTENT_MAPPED_BYTES)
     {
         TRACE("Not unmapping BO %p.\n", bo);
-        return;
-    }
-
-    if (bo->memory)
-    {
-        struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
-
-        wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
-        if (!chunk_gl->c.map_ptr)
-            bo->b.map_ptr = NULL;
         return;
     }
 
@@ -2954,11 +2954,20 @@ static void wined3d_bo_gl_unmap(struct wined3d_bo_gl *bo, struct wined3d_context
     if (bo->b.client_map_count)
     {
         wined3d_device_bo_map_unlock(context_gl->c.device);
+        assert(context_gl->c.d3d_info->persistent_map);
         TRACE("BO %p is still in use by a client thread; not unmapping.\n", bo);
         return;
     }
     bo->b.map_ptr = NULL;
     wined3d_device_bo_map_unlock(context_gl->c.device);
+
+    if (bo->memory)
+    {
+        struct wined3d_allocator_chunk_gl *chunk_gl = wined3d_allocator_chunk_gl(bo->memory->chunk);
+
+        wined3d_allocator_chunk_gl_unmap(chunk_gl, context_gl);
+        return;
+    }
 
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
     GL_EXTCALL(glUnmapBuffer(bo->binding));
@@ -3032,6 +3041,8 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
     if (!data->buffer_object)
         return;
     bo = wined3d_bo_gl(data->buffer_object);
+
+    assert(bo->b.map_ptr);
 
     flush_bo_ranges(context_gl, wined3d_const_bo_address(data), range_count, ranges);
     wined3d_bo_gl_unmap(bo, context_gl);
@@ -4818,7 +4829,8 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
             unsigned int element_idx;
 
             stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
-            for (element_idx = MAX_ATTRIBS - 1; use_map; use_map &= ~(1u << element_idx), --element_idx)
+            for (element_idx = gl_info->limits.vertex_attribs - 1; use_map;
+                     use_map &= ~(1u << element_idx), --element_idx)
             {
                 if (!(use_map & 1u << element_idx))
                     continue;
@@ -5163,7 +5175,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         return;
     }
 
-    if (dsv && (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write))
+    if (dsv && (!state->depth_stencil_state || state->depth_stencil_state->writes_ds))
     {
         DWORD location = context->render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
@@ -5311,8 +5323,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         GL_EXTCALL(glMemoryBarrier(GL_ALL_BARRIER_BITS));
         checkGLcall("glMemoryBarrier");
     }
-
-    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
 
     if (rasterizer_discard)
     {
@@ -5657,7 +5667,15 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     context->instance_count = 0;
     current_bo = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0u : 0;
 
-    for (i = 0; i < MAX_ATTRIBS; ++i)
+    if (stream_info->use_map & ~wined3d_mask_from_size(gl_info->limits.vertex_attribs))
+    {
+        static unsigned int once;
+
+        if (!once++)
+            FIXME("More than the supported %u vertex attributes are in use.\n", gl_info->limits.vertex_attribs);
+    }
+
+    for (i = 0; i < gl_info->limits.vertex_attribs; ++i)
     {
         const struct wined3d_stream_info_element *element = &stream_info->elements[i];
         const void *offset = get_vertex_attrib_pointer(element, state);
@@ -5718,7 +5736,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         if (element->stride)
         {
-            DWORD format_flags = format_gl->f.flags[WINED3D_GL_RES_TYPE_BUFFER];
+            unsigned int format_attrs = format_gl->f.attrs;
 
             bo = wined3d_bo_gl_id(element->data.buffer_object);
             if (current_bo != bo)
@@ -5731,7 +5749,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
              * pointer. vb can point to a user pointer data blob. In that case
              * current_bo will be 0. If there is a vertex buffer but no vbo we
              * won't be load converted attributes anyway. */
-            if (vs && vs->reg_maps.shader_version.major >= 4 && (format_flags & WINED3DFMT_FLAG_INTEGER))
+            if (vs && vs->reg_maps.shader_version.major >= 4 && (format_attrs & WINED3D_FORMAT_ATTR_INTEGER))
             {
                 GL_EXTCALL(glVertexAttribIPointer(i, format_gl->vtx_format,
                         format_gl->vtx_type, element->stride, offset));
@@ -5739,7 +5757,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
             else
             {
                 GL_EXTCALL(glVertexAttribPointer(i, format_gl->vtx_format, format_gl->vtx_type,
-                        !!(format_flags & WINED3DFMT_FLAG_NORMALISED), element->stride, offset));
+                        !!(format_attrs & WINED3D_FORMAT_ATTR_NORMALISED), element->stride, offset));
             }
 
             if (!(context->numbered_array_mask & (1u << i)))
@@ -5929,6 +5947,8 @@ void wined3d_context_gl_draw_shaded_quad(struct wined3d_context_gl *context_gl, 
     apply_texture_blit_state(gl_info, &texture_gl->texture_rgb, info.bind_target, level, filter);
     gl_info->gl_ops.gl.p_glTexParameteri(info.bind_target, GL_TEXTURE_MAX_LEVEL, level);
 
+    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
+
     wined3d_context_gl_get_rt_size(context_gl, &dst_size);
     w = dst_size.cx;
     h = dst_size.cy;
@@ -6011,6 +6031,8 @@ void wined3d_context_gl_draw_textured_quad(struct wined3d_context_gl *context_gl
     gl_info->gl_ops.gl.p_glTexParameteri(info.bind_target, GL_TEXTURE_MAX_LEVEL, level);
     gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     checkGLcall("glTexEnvi");
+
+    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
 
     /* Draw a quad. */
     gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);

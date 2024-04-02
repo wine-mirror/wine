@@ -21,6 +21,8 @@
 #ifndef __WINE_D3DX9TEX_H
 #define __WINE_D3DX9TEX_H
 
+#include "wine/winheader_enter.h"
+
 /**********************************************
  ***************** Definitions ****************
  **********************************************/
@@ -347,5 +349,7 @@ HRESULT WINAPI D3DXComputeNormalMap(IDirect3DTexture9 *texture, IDirect3DTexture
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3DX9TEX_H */

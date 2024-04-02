@@ -60,6 +60,7 @@ enum vkd3d_api_version
     VKD3D_API_VERSION_1_1,
     VKD3D_API_VERSION_1_2,
     VKD3D_API_VERSION_1_3,
+    VKD3D_API_VERSION_1_4,
 };
 
 typedef HRESULT (*PFN_vkd3d_signal_event)(HANDLE event);
@@ -212,6 +213,20 @@ VKD3D_API HRESULT vkd3d_serialize_versioned_root_signature(const D3D12_VERSIONED
 VKD3D_API HRESULT vkd3d_create_versioned_root_signature_deserializer(const void *data, SIZE_T data_size,
         REFIID iid, void **deserializer);
 
+/**
+ * Set a callback to be called when vkd3d outputs debug logging.
+ *
+ * If NULL, or if this function has not been called, libvkd3d will print all
+ * enabled log output to stderr.
+ *
+ * Calling this function will also set the log callback for libvkd3d-shader.
+ *
+ * \param callback Callback function to set.
+ *
+ * \since 1.4
+ */
+VKD3D_API void vkd3d_set_log_callback(PFN_vkd3d_log callback);
+
 #endif  /* VKD3D_NO_PROTOTYPES */
 
 /*
@@ -254,6 +269,9 @@ typedef HRESULT (*PFN_vkd3d_serialize_versioned_root_signature)(const D3D12_VERS
         ID3DBlob **blob, ID3DBlob **error_blob);
 typedef HRESULT (*PFN_vkd3d_create_versioned_root_signature_deserializer)(const void *data, SIZE_T data_size,
         REFIID iid, void **deserializer);
+
+/** Type of vkd3d_set_log_callback(). \since 1.4 */
+typedef void (*PFN_vkd3d_set_log_callback)(PFN_vkd3d_log callback);
 
 #ifdef __cplusplus
 }

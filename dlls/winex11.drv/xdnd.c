@@ -48,7 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 typedef struct tagXDNDDATA
 {
     int cf_win;
-    Atom cf_xdnd;
     HANDLE contents;
     struct list entry;
 } XDNDDATA, *LPXDNDDATA;
@@ -63,7 +62,7 @@ static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
-static void X11DRV_XDND_InsertXDNDData( Atom property, UINT format, HANDLE contents );
+static void X11DRV_XDND_InsertXDNDData( UINT format, HANDLE contents );
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
 static BOOL X11DRV_XDND_HasHDROP(void);
@@ -565,14 +564,13 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
  *
  * Cache available XDND property
  */
-static void X11DRV_XDND_InsertXDNDData( Atom property, UINT format, HANDLE contents )
+static void X11DRV_XDND_InsertXDNDData( UINT format, HANDLE contents )
 {
     LPXDNDDATA current = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XDNDDATA));
 
     if (current)
     {
         EnterCriticalSection(&xdnd_cs);
-        current->cf_xdnd = property;
         current->cf_win = format;
         current->contents = contents;
         list_add_tail(&xdndData, &current->entry);

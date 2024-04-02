@@ -579,7 +579,10 @@ int yylex(YYSTYPE *lval, YYLTYPE *lloc, yyscan_t scanner)
                 if (ctx->current_directive)
                     return return_token(token, lval, text);
 
-                vkd3d_string_buffer_printf(&ctx->buffer, "%s ", text);
+                if (isspace(text[0]))
+                    vkd3d_string_buffer_printf(&ctx->buffer, "%s", text);
+                else
+                    vkd3d_string_buffer_printf(&ctx->buffer, "%s ", text);
                 break;
             }
 

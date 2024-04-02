@@ -20,6 +20,8 @@
 #ifndef __D3DRMOBJ_H__
 #define __D3DRMOBJ_H__
 
+#include "wine/winheader_enter.h"
+
 #include <objbase.h>
 #define VIRTUAL
 #include <d3drmdef.h>
@@ -4698,5 +4700,7 @@ DECLARE_INTERFACE_(IDirect3DRMClippedVisual, IDirect3DRMVisual)
 #ifdef __cplusplus
 };
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __D3DRMOBJ_H__ */

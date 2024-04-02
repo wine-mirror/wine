@@ -9,6 +9,8 @@
 #ifndef __WINE_MATH_H
 #define __WINE_MATH_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
 
 #include <pshpack8.h>
@@ -376,5 +378,7 @@ static inline double y1( double x ) { return _y1( x ); }
 static inline double yn( int n, double x ) { return _yn( n, x ); }
 
 static inline float hypotf( float x, float y ) { return _hypotf( x, y ); }
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_MATH_H */

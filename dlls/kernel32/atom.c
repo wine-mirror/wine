@@ -110,8 +110,10 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
     {
         if (!check_integral_atom( str, &atom ))
 	{
-	    WCHAR buffer[MAX_ATOM_LEN];
+	    /* Note: Adobe Reader XI in protected mode hijacks NtAddAtom and its replacement expects the string to be null terminated. */
+	    WCHAR buffer[MAX_ATOM_LEN+1];
 	    DWORD len = MultiByteToWideChar( CP_ACP, 0, str, strlen(str), buffer, MAX_ATOM_LEN );
+	    buffer[len] = 0;
 	    if (!len) SetLastError( ERROR_INVALID_PARAMETER );
 	    else if (!set_ntstatus( NtAddAtom( buffer, len * sizeof(WCHAR), &atom ))) atom = 0;
 	}

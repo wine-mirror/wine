@@ -19,6 +19,8 @@
 #ifndef _WS2DEF_
 #define _WS2DEF_
 
+#include "wine/winheader_enter.h"
+
 #include <inaddr.h>
 
 #ifdef USE_WS_PREFIX
@@ -317,5 +319,7 @@ typedef struct addrinfoexW {
     GUID *ai_provider;
     struct addrinfoexW *ai_next;
 } ADDRINFOEXW, *PADDRINFOEXW, *LPADDRINFOEXW;
+
+#include "wine/winheader_exit.h"
 
 #endif /* _WS2DEF_ */

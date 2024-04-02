@@ -19,6 +19,8 @@
 #ifndef __WS2TCPIP__
 #define __WS2TCPIP__
 
+#include "wine/winheader_enter.h"
+
 #include <winsock2.h>
 #include <ws2ipdef.h>
 #include <limits.h>
@@ -232,5 +234,7 @@ typedef int (WINAPI *LPFN_GETNAMEINFOW)(const SOCKADDR*,socklen_t,PWCHAR,DWORD,P
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WS2TCPIP__ */

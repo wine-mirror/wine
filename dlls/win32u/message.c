@@ -20,20 +20,21 @@
  */
 
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "hidusage.h"
 #include "dbt.h"
 #include "dde.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+
+#ifdef __WINESRC__
+#include "wine/exception.h"
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(key);
@@ -1776,6 +1777,9 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             }
             reply_message( &info, result, &info.msg );
             continue;
+        case MSG_SURFACE:
+            process_surface_message( &info.msg, buffer );
+            continue;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
@@ -1830,6 +1834,15 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 if (!user_callbacks->unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
                                                          &info.msg.lParam, &buffer, size ))
                     continue;  /* ignore it */
+            }
+            /* CXHACK 19488 */
+            if (info.msg.message == WM_PAINT &&
+                    flags == (PM_REMOVE | PM_QS_INPUT | PM_QS_POSTMESSAGE | PM_QS_PAINT | PM_QS_SENDMESSAGE) &&
+                    (get_window_long( info.msg.hwnd, GWL_EXSTYLE ) & WS_EX_COMPOSITED ))
+            {
+                send_message( info.msg.hwnd, info.msg.message, info.msg.wParam, info.msg.lParam );
+                flags &= ~PM_QS_PAINT;
+                continue;
             }
             *msg = info.msg;
             msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
@@ -2462,7 +2475,11 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
         {
             dispatch_win_proc_params( &params, sizeof(params) );
         }
+#ifdef __WINESRC__
+        __EXCEPT_PAGE_FAULT
+#else
         __EXCEPT
+#endif
         {
             retval = 0;
         }

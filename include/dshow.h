@@ -19,6 +19,8 @@
 #ifndef __DSHOW_INCLUDED__
 #define __DSHOW_INCLUDED__
 
+#include "wine/winheader_enter.h"
+
 #define AM_NOVTABLE
 
 #include <windows.h>
@@ -56,5 +58,7 @@
 #ifndef OAFALSE
 #define OAFALSE (0)
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __DSHOW_INCLUDED__ */

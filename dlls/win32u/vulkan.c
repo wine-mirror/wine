@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include "ntgdi_private.h"
 
 /***********************************************************************
@@ -30,4 +26,16 @@
 const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version )
 {
     return user_driver->pwine_get_vulkan_driver( version );
+}
+
+/***********************************************************************
+ *      __wine_direct_unix_call  (win32u.@)
+ *
+ * Used by winevulkan to do direct calls to Unix lib. We can't use __wine_unix_call
+ * in cases that may end up calling display driver.
+ */
+NTSTATUS WINAPI __wine_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)
+{
+    NTSTATUS (* HOSTPTR * HOSTPTR funcs)( void * HOSTPTR args ) = (void *)(UINT_PTR)handle;
+    return funcs[code](params);
 }

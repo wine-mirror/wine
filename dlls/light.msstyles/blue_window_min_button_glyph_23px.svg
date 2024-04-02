@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:23-32" width="23" height="184" version="1.1" viewBox="0 0 6.0853 48.684" xmlns="http://www.w3.org/2000/svg">
+ <rect transform="scale(-1,1)" x="-5.0271" y="4.7626" width="3.9688" height=".26459" fill="#aeaeae"/>
+ <g transform="matrix(.88235 0 0 1 .35802 .79377)" stroke-width="1.1333">
+  <rect transform="scale(-1,1)" x="-5.2916" y="22.225" width="4.498" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-5.2916" y="10.054" width="4.498" height=".26459" fill="#3096fa"/>
+  <rect transform="scale(-1,1)" x="-5.2916" y="16.14" width="4.498" height=".26459" fill="#2979ff"/>
+ </g>
+ <rect transform="scale(-1,1)" x="-5.0271" y="29.105" width="3.9688" height=".26459" fill="#aeaeae"/>
+ <g transform="matrix(.88235 0 0 1 .35802 .79377)" stroke-width="1.1333">
+  <rect transform="scale(-1,1)" x="-5.2916" y="46.567" width="4.498" height=".26459" fill="#aeaeae"/>
+  <rect transform="scale(-1,1)" x="-5.2916" y="34.396" width="4.498" height=".26459" fill="#3096fa"/>
+  <rect transform="scale(-1,1)" x="-5.2916" y="40.482" width="4.498" height=".26459" fill="#2979ff"/>
+ </g>
+</svg>

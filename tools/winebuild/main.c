@@ -218,6 +218,7 @@ static const char usage_str[] =
 "   -l, --library=LIB         Import the specified library\n"
 "   -L, --library-path=DIR    Look for imports libraries in DIR\n"
 "   -m16, -m32, -m64          Force building 16-bit, 32-bit resp. 64-bit code\n"
+"   -mwine32                  Force building 32-bit-on-64-bit hybrid code\n"
 "   -M, --main-module=MODULE  Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM           Command to use to get undefined symbols (default: nm)\n"
 "       --nxcompat=y|n        Set the NX compatibility flag (default: yes)\n"
@@ -400,6 +401,7 @@ static void option_callback( int optc, char *optarg )
         if (!strcmp( optarg, "16" )) main_spec->type = SPEC_WIN16;
         else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
         else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
+        else if (!strcmp( optarg, "wine32" )) { force_pointer_size = 8; target.cpu = CPU_x86_32on64; }
         else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
         else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
@@ -626,7 +628,7 @@ int main(int argc, char **argv)
         strcat( spec->file_name, exec_mode == MODE_EXE ? ".exe" : ".dll" );
     init_dll_name( spec );
 
-    if (force_pointer_size) set_target_ptr_size( &target, force_pointer_size );
+    if (force_pointer_size && target.cpu != CPU_x86_32on64) set_target_ptr_size( &target, force_pointer_size );
 
     switch(exec_mode)
     {

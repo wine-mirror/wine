@@ -25,6 +25,8 @@
 #include <math.h>
 #include "win32u_private.h"
 
+#include "wine/server_protocol.h"
+
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 
@@ -351,23 +353,23 @@ struct opentype_name
 {
     DWORD codepage;
     DWORD length;
-    const void *bytes;
+    const void * HOSTPTR bytes;
 };
 
-extern BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD *count,
-                                      const struct ttc_sfnt_v1 **ttc_sfnt_v1 ) DECLSPEC_HIDDEN;
-extern BOOL opentype_get_tt_name_v0( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
-                                     const struct tt_name_v0 **tt_name_v0 ) DECLSPEC_HIDDEN;
+extern BOOL opentype_get_ttc_sfnt_v1( const void * HOSTPTR data, size_t size, DWORD index, DWORD *count,
+                                      const struct ttc_sfnt_v1 * HOSTPTR * HOSTPTR ttc_sfnt_v1 ) DECLSPEC_HIDDEN;
+extern BOOL opentype_get_tt_name_v0( const void * HOSTPTR data, size_t size, const struct ttc_sfnt_v1 * HOSTPTR ttc_sfnt_v1,
+                                     const struct tt_name_v0 * HOSTPTR * HOSTPTR tt_name_v0 ) DECLSPEC_HIDDEN;
 
 typedef BOOL ( *opentype_enum_names_cb )( LANGID langid, struct opentype_name *name, void *user );
-extern BOOL opentype_enum_family_names( const struct tt_name_v0 *tt_name_v0,
+extern BOOL opentype_enum_family_names( const struct tt_name_v0 * HOSTPTR tt_name_v0,
                                         opentype_enum_names_cb callback, void *user ) DECLSPEC_HIDDEN;
-extern BOOL opentype_enum_style_names( const struct tt_name_v0 *tt_name_v0,
+extern BOOL opentype_enum_style_names( const struct tt_name_v0 * HOSTPTR tt_name_v0,
                                        opentype_enum_names_cb callback, void *user ) DECLSPEC_HIDDEN;
-extern BOOL opentype_enum_full_names( const struct tt_name_v0 *tt_name_v0,
+extern BOOL opentype_enum_full_names( const struct tt_name_v0 * HOSTPTR tt_name_v0,
                                       opentype_enum_names_cb callback, void *user ) DECLSPEC_HIDDEN;
 
-extern BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
+extern BOOL opentype_get_properties( const void * HOSTPTR data, size_t size, const struct ttc_sfnt_v1 * HOSTPTR ttc_sfnt_v1,
                                      DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags ) DECLSPEC_HIDDEN;
 extern BOOL translate_charset_info( DWORD *src, CHARSETINFO *cs, DWORD flags ) DECLSPEC_HIDDEN;
 
@@ -406,6 +408,10 @@ extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 
 /* painting.c */
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;
+
+extern struct window_surface *create_shm_surface( HWND hwnd, const RECT *visible_rect,
+                                                  struct window_surface *old_surface ) DECLSPEC_HIDDEN;
+extern void process_surface_message( const MSG *msg, const rectangle_t *bounds ) DECLSPEC_HIDDEN;
 
 /* palette.c */
 extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;

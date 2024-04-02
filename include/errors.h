@@ -19,6 +19,8 @@
 #ifndef __ERRORS__
 #define __ERRORS__
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,5 +43,7 @@ DWORD WINAPI AMGetErrorTextW(HRESULT,LPWSTR,DWORD);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __ERRORS__ */

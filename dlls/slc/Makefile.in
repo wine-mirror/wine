@@ -2,7 +2,11 @@ EXTRADEFS = -D_SLC_
 MODULE    = slc.dll
 IMPORTLIB = slc
 
+# CROSSOVER HACK: bug 19782
+PARENTSRC = ../sppc
+
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
-	slc.c
+	slc.c \
+	sppc.c

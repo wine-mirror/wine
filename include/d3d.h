@@ -19,6 +19,8 @@
 #ifndef __WINE_D3D_H
 #define __WINE_D3D_H
 
+#include "wine/winheader_enter.h"
+
 #include <stdlib.h>
 
 #define COM_NO_WINDOWS_H
@@ -1564,5 +1566,7 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer7,IUnknown)
 #define IDirect3DVertexBuffer7_Optimize(p,a,b)                         (p)->Optimize(a,b)
 #define IDirect3DVertexBuffer7_ProcessVerticesStrided(p,a,b,c,d,e,f,g) (p)->ProcessVerticesStrided(a,b,c,d,e,f,g)
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3D_H */

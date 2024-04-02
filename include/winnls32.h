@@ -19,6 +19,8 @@
 #ifndef _WINNLS32_
 #define _WINNLS32_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,5 +32,7 @@ BOOL        WINAPI WINNLSGetEnableStatus(HWND);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* _WINNLS32_ */

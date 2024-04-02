@@ -18296,8 +18296,9 @@ msgstr ""
 #: programs/winedbg/winedbg.rc:59
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check the <a href=\"https://appdb.winehq.org\">Application "
-"Database</a> for tips about running this application."
+"may want to check <a href=\"http://www.codeweavers.com/compatibility/"
+"\">http://www.codeweavers.com/compatibility/</a> for tips about running this "
+"application."
 msgstr ""
 
 #: programs/winedbg/winedbg.rc:62
@@ -18313,8 +18314,8 @@ msgstr "&Propietés"
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
-"and attach that file to the report."
+"button, then <a href=\"http://www.codeweavers.com/support/tickets/enter/"
+"\">file a bug report</a> and attach that file to the report."
 msgstr ""
 
 #: programs/winedbg/winedbg.rc:40

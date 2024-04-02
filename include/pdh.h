@@ -21,6 +21,8 @@
 #ifndef _PDH_H_
 #define _PDH_H_
 
+#include "wine/winheader_enter.h"
+
 #include <windows.h>
 #include <winperf.h>
 
@@ -245,5 +247,7 @@ PDH_STATUS WINAPI PdhValidatePathExW(PDH_HLOG, LPCWSTR);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _PDH_H_ */

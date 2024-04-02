@@ -124,7 +124,7 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
 
     wined3d_mutex_lock();
     max_count = wined3d_output_get_mode_count(output->wined3d_output,
-            wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
+            wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN, false);
 
     if (!modes)
     {
@@ -144,7 +144,7 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
     for (i = 0; i < *mode_count; ++i)
     {
         if (FAILED(hr = wined3d_output_get_mode(output->wined3d_output, wined3d_format,
-                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode)))
+                WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode, true)))
         {
             WARN("Failed to get output mode %u, hr %#lx.\n", i, hr);
             wined3d_mutex_unlock();

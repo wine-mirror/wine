@@ -173,11 +173,6 @@ static struct wined3d_pipeline_statistics_query *wined3d_pipeline_statistics_que
     return CONTAINING_RECORD(query, struct wined3d_pipeline_statistics_query, query);
 }
 
-static BOOL wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
-{
-    return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
-}
-
 enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
         struct wined3d_device *device, DWORD flags)
 {

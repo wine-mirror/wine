@@ -23,6 +23,8 @@
 #ifndef __WINE_MMREG_H
 #define __WINE_MMREG_H
 
+#include "wine/winheader_enter.h"
+
 #include <pshpack1.h>
 
 /***********************************************************************
@@ -838,5 +840,7 @@ typedef struct {
 
 #pragma pack(pop)
 cpp_quote("#endif")
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WIDL__ */

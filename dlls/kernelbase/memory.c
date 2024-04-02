@@ -1498,6 +1498,13 @@ UINT WINAPI EnumSystemFirmwareTables( DWORD provider, void *buffer, DWORD size )
     return 0;
 }
 
+static BOOL is_osppsvc(void)
+{
+    static const WCHAR osppsvc[] = {'o','s','p','p','s','v','c','.','e','x','e',0};
+    WCHAR path[MAX_PATH];
+    DWORD len = ARRAY_SIZE(osppsvc) - 1, len2 = GetModuleFileNameW( NULL, path, MAX_PATH );
+    return (len <= len2 && !lstrcmpiW( path + len2 - len, osppsvc ));
+}
 
 /***********************************************************************
  *             GetSystemFirmwareTable   (kernelbase.@)
@@ -1508,6 +1515,24 @@ UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWOR
     ULONG buffer_size = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer ) + size;
 
     TRACE( "(0x%08lx, 0x%08lx, %p, %ld)\n", provider, id, buffer, size );
+
+    if (is_osppsvc()) /* CrossOver hack for bug 16403 */
+    {
+        HANDLE handle = CreateFileA( "c:\\", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            FILETIME bottle = {0}, release18 = {779059200, 30696675}; /* October 16, 2018 */
+
+            GetFileTime( handle, &bottle, NULL, NULL );
+            CloseHandle( handle );
+            if (CompareFileTime( &bottle, &release18 ) < 0) /* revert to stub if bottle was created before 18 release */
+            {
+                FIXME ("(%lu, %lu, %p, %lu) stub\n", provider, id, buffer, size );
+                SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+                return 0;
+            }
+        }
+    }
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, buffer_size )))
     {

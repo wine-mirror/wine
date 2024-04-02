@@ -153,8 +153,14 @@ static const struct
     { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_RIFF,              CFSTR("org.winehq.builtin.riff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_SYLK,              CFSTR("org.winehq.builtin.sylk"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+
     { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+#if 1 /* CodeWeavers Hack #12338: don't map CF_TIFF to Mac-native type since we don't ship libtiff */
+    { CF_TIFF,              CFSTR("org.winehq.builtin.tiff"),               import_clipboard_data,          export_clipboard_data,      FALSE },
+#else
     { CF_TIFF,              CFSTR("public.tiff"),                           import_clipboard_data,          export_clipboard_data,      FALSE },
+#endif
+
     { CF_WAVE,              CFSTR("com.microsoft.waveform-audio"),          import_clipboard_data,          export_clipboard_data,      FALSE },
 
     { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
@@ -605,13 +611,13 @@ static HANDLE import_bmp_to_bitmap(CFDataRef data)
 static HANDLE import_bmp_to_dib(CFDataRef data)
 {
     HANDLE ret = 0;
-    BITMAPFILEHEADER *bfh = (BITMAPFILEHEADER*)CFDataGetBytePtr(data);
+    BITMAPFILEHEADER * HOSTPTR bfh = (BITMAPFILEHEADER* HOSTPTR)CFDataGetBytePtr(data);
     CFIndex len = CFDataGetLength(data);
 
     if (len >= sizeof(*bfh) + sizeof(BITMAPCOREHEADER) &&
         bfh->bfType == 0x4d42 /* "BM" */)
     {
-        BITMAPINFO *bmi = (BITMAPINFO*)(bfh + 1);
+        BITMAPINFO * HOSTPTR bmi = (BITMAPINFO* HOSTPTR)(bfh + 1);
         BYTE* p;
 
         len -= sizeof(*bfh);
@@ -629,6 +635,82 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
     return ret;
 }
 
+#ifdef __i386_on_x86_64__
+static const BYTE* lock_cfdataref(CFDataRef data)
+{
+    const BYTE * HOSTPTR byteptr;
+    CFIndex len;
+    BYTE *result;
+
+    len = CFDataGetLength(data);
+    if (!len)
+        return NULL;
+
+    byteptr = (const BYTE* HOSTPTR)CFDataGetBytePtr(data);
+
+    result = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(result, byteptr, len);
+
+    return result;
+}
+
+static inline void unlock_cfdataref(const BYTE* data)
+{
+    HeapFree(GetProcessHeap(), 0, (BYTE*)data);
+}
+
+static BYTE* lock_cfmutabledataref(CFMutableDataRef data)
+{
+    CFIndex len;
+    BYTE* result;
+    BYTE* HOSTPTR existing;
+
+    len = CFDataGetLength(data);
+    if (!len)
+        return NULL;
+
+    result = HeapAlloc(GetProcessHeap(), 0, len);
+
+    if (result)
+    {
+        existing = (BYTE* HOSTPTR)CFDataGetMutableBytePtr(data);
+        memcpy(result, existing, len);
+    }
+
+    return result;
+}
+
+static void unlock_cfmutabledataref(CFMutableDataRef ref, BYTE* data)
+{
+    CFIndex len;
+    BYTE* HOSTPTR mutable;
+
+    len = CFDataGetLength(ref);
+
+    mutable = (BYTE* HOSTPTR)CFDataGetMutableBytePtr(ref);
+    memcpy(mutable, data, len);
+    HeapFree(GetProcessHeap(), 0, data);
+}
+#else /* !__i386_on_x86_64__ */
+static inline const BYTE* lock_cfdataref(CFDataRef data)
+{
+    return (const BYTE*)CFDataGetBytePtr(data);
+}
+
+static inline void unlock_cfdataref(const BYTE* data)
+{
+}
+
+static inline const BYTE* lock_cfmutabledataref(CFMutableDataRef data)
+{
+    return (BYTE*)CFDataGetMutableBytePtr(data);
+}
+
+static inline void unlock_cfmutabledataref(CFMutableDataRef ref, BYTE* data)
+{
+}
+#endif
+
 
 /**************************************************************************
  *              import_enhmetafile
@@ -639,11 +721,16 @@ static HANDLE import_enhmetafile(CFDataRef data)
 {
     HANDLE ret = 0;
     CFIndex len = CFDataGetLength(data);
+    const BYTE* bits;
 
     TRACE("data %s\n", debugstr_cf(data));
 
     if (len)
-        ret = SetEnhMetaFileBits(len, (const BYTE*)CFDataGetBytePtr(data));
+    {
+        bits = lock_cfdataref(data);
+        ret = SetEnhMetaFileBits(len, bits);
+        unlock_cfdataref(bits);
+    }
 
     return ret;
 }
@@ -697,12 +784,13 @@ static HANDLE import_metafilepict(CFDataRef data)
 
     if (len >= sizeof(*mfp) && (ret = GlobalAlloc(GMEM_FIXED, sizeof(*mfp))))
     {
-        const BYTE *bytes = (const BYTE*)CFDataGetBytePtr(data);
+        const BYTE * bytes = lock_cfdataref(data);
 
         mfp = GlobalLock(ret);
         memcpy(mfp, bytes, sizeof(*mfp));
         mfp->hMF = SetMetaFileBitsEx(len - sizeof(*mfp), bytes + sizeof(*mfp));
         GlobalUnlock(ret);
+        unlock_cfdataref(bytes);
     }
 
     return ret;
@@ -724,7 +812,7 @@ static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
     char *buffer = NULL;
     WCHAR **paths = NULL;
     DROPFILES* dropfiles;
-    UniChar* p;
+    UniChar* WIN32PTR p;
 
     TRACE("data %s\n", debugstr_cf(data));
 
@@ -873,7 +961,7 @@ static HANDLE import_utf8_to_text(CFDataRef data)
  */
 static HANDLE import_utf8_to_unicodetext(CFDataRef data)
 {
-    const BYTE *src;
+    const BYTE * HOSTPTR src;
     unsigned long src_len;
     unsigned long new_lines = 0;
     LPSTR dst;
@@ -925,14 +1013,14 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
  */
 static HANDLE import_utf16_to_unicodetext(CFDataRef data)
 {
-    const WCHAR *src;
+    const WCHAR * HOSTPTR src;
     unsigned long src_len;
     unsigned long new_lines = 0;
     LPWSTR dst;
     unsigned long i, j;
     HANDLE unicode_handle;
 
-    src = (const WCHAR *)CFDataGetBytePtr(data);
+    src = (const WCHAR * HOSTPTR)CFDataGetBytePtr(data);
     src_len = CFDataGetLength(data) / sizeof(WCHAR);
     for (i = 0; i < src_len; i++)
     {
@@ -1055,6 +1143,7 @@ static CFDataRef export_enhmetafile(HANDLE data)
 {
     CFMutableDataRef ret = NULL;
     unsigned int size = GetEnhMetaFileBits(data, 0, NULL);
+    BYTE* bits;
 
     TRACE("data %p\n", data);
 
@@ -1062,7 +1151,9 @@ static CFDataRef export_enhmetafile(HANDLE data)
     if (ret)
     {
         CFDataSetLength(ret, size);
-        GetEnhMetaFileBits(data, size, (BYTE*)CFDataGetMutableBytePtr(ret));
+        bits = lock_cfmutabledataref(ret);
+        GetEnhMetaFileBits(data, size, bits);
+        unlock_cfmutabledataref(ret, bits);
     }
 
     TRACE(" -> %s\n", debugstr_cf(ret));
@@ -1216,6 +1307,7 @@ static CFDataRef export_metafilepict(HANDLE data)
     CFMutableDataRef ret = NULL;
     METAFILEPICT *mfp = GlobalLock(data);
     unsigned int size = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
+    BYTE *mutable;
 
     TRACE("data %p\n", data);
 
@@ -1224,7 +1316,9 @@ static CFDataRef export_metafilepict(HANDLE data)
     {
         CFDataAppendBytes(ret, (UInt8*)mfp, sizeof(*mfp));
         CFDataIncreaseLength(ret, size);
-        GetMetaFileBitsEx(mfp->hMF, size, (BYTE*)CFDataGetMutableBytePtr(ret) + sizeof(*mfp));
+        mutable = lock_cfmutabledataref(ret);
+        GetMetaFileBitsEx(mfp->hMF, size, mutable + sizeof(*mfp));
+        unlock_cfmutabledataref(ret, mutable);
     }
 
     GlobalUnlock(data);
@@ -1293,11 +1387,13 @@ static CFDataRef export_unicodetext_to_utf8(HANDLE data)
     ret = CFDataCreateMutable(NULL, dst_len);
     if (ret)
     {
+        BYTE* mutable;
         LPSTR dst;
         int i, j;
 
         CFDataSetLength(ret, dst_len);
-        dst = (LPSTR)CFDataGetMutableBytePtr(ret);
+        mutable = lock_cfmutabledataref(ret);
+        dst = (LPSTR)mutable;
         WideCharToMultiByte(CP_UTF8, 0, src, -1, dst, dst_len, NULL, NULL);
 
         /* Remove carriage returns */
@@ -1308,6 +1404,7 @@ static CFDataRef export_unicodetext_to_utf8(HANDLE data)
                 continue;
             dst[j++] = dst[i];
         }
+        unlock_cfmutabledataref(ret, mutable);
         CFDataSetLength(ret, j);
     }
     GlobalUnlock(data);
@@ -1335,11 +1432,11 @@ static CFDataRef export_unicodetext_to_utf16(HANDLE data)
     ret = CFDataCreateMutable(NULL, src_len * sizeof(WCHAR));
     if (ret)
     {
-        LPWSTR dst;
+        WCHAR* HOSTPTR dst;
         int i, j;
 
         CFDataSetLength(ret, src_len * sizeof(WCHAR));
-        dst = (LPWSTR)CFDataGetMutableBytePtr(ret);
+        dst = (WCHAR* HOSTPTR)CFDataGetMutableBytePtr(ret);
 
         /* Remove carriage returns */
         for (i = 0, j = 0; i < src_len; i++)
@@ -1514,7 +1611,7 @@ static WINE_CLIPFORMAT** get_formats_for_pasteboard_types(CFArrayRef types, UINT
         if (!format->synthesized)
         {
             TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-            CFSetAddValue(seen_formats, (void*)format->format_id);
+            CFSetAddValue(seen_formats, ULongToPtr(format->format_id));
             formats[pos++] = format;
         }
         else if (format->natural_format &&
@@ -1523,7 +1620,7 @@ static WINE_CLIPFORMAT** get_formats_for_pasteboard_types(CFArrayRef types, UINT
             TRACE("for type %s deferring synthesized formats because type %s is also present\n",
                   debugstr_cf(type), debugstr_cf(format->natural_format->type));
         }
-        else if (CFSetContainsValue(seen_formats, (void*)format->format_id))
+        else if (CFSetContainsValue(seen_formats, ULongToPtr(format->format_id)))
         {
             TRACE("for type %s got duplicate synthesized format %p/%s; skipping\n", debugstr_cf(type), format,
                   debugstr_format(format->format_id));
@@ -1531,7 +1628,7 @@ static WINE_CLIPFORMAT** get_formats_for_pasteboard_types(CFArrayRef types, UINT
         else
         {
             TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-            CFSetAddValue(seen_formats, (void*)format->format_id);
+            CFSetAddValue(seen_formats, ULongToPtr(format->format_id));
             formats[pos++] = format;
         }
     }
@@ -1546,10 +1643,10 @@ static WINE_CLIPFORMAT** get_formats_for_pasteboard_types(CFArrayRef types, UINT
         if (!format->synthesized) continue;
 
         /* Don't duplicate a real value with a synthesized value. */
-        if (CFSetContainsValue(seen_formats, (void*)format->format_id)) continue;
+        if (CFSetContainsValue(seen_formats, ULongToPtr(format->format_id))) continue;
 
         TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
-        CFSetAddValue(seen_formats, (void*)format->format_id);
+        CFSetAddValue(seen_formats, ULongToPtr(format->format_id));
         formats[pos++] = format;
     }
 

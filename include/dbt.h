@@ -19,6 +19,8 @@
 #ifndef __WINE_DBT_H
 #define __WINE_DBT_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef GUID_DEFINED
 # include <guiddef.h>
 #endif
@@ -151,5 +153,7 @@ typedef struct _DEV_BROADCAST_HANDLE
 } DEV_BROADCAST_HANDLE, *PDEV_BROADCAST_HANDLE;
 
 #undef DECL_WINELIB_DBT_TYPE_AW
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DBT_H */

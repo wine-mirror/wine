@@ -826,9 +826,10 @@ static UINT HANDLE_CustomType1( MSIPACKAGE *package, const WCHAR *source, const 
     return wait_thread_handle( info );
 }
 
-static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
+static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir, const WCHAR *action )
 {
     STARTUPINFOW si;
+    DWORD creation_flags = 0;
     PROCESS_INFORMATION info;
     WCHAR *exe = NULL, *cmd = NULL, *p;
     BOOL ret;
@@ -881,7 +882,16 @@ static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
         }
     }
     memset( &si, 0, sizeof(STARTUPINFOW) );
-    ret = CreateProcessW( exe, exe ? cmd : arg, NULL, NULL, FALSE, 0, NULL, dir, &si, &info );
+
+    /* CX HACK 21038: Don't create console windows for wine-mono's
+     * installinf tool. */
+    if (!wcscmp( action, L"INSTALLFAKEDLLS" ) ||
+        !wcscmp( action, L"INSTALLFAKEDLLS64" ))
+    {
+        creation_flags = CREATE_NO_WINDOW;
+    }
+
+    ret = CreateProcessW( exe, exe ? cmd : arg, NULL, NULL, FALSE, creation_flags, NULL, dir, &si, &info );
     msi_free( cmd );
     msi_free( exe );
     if (!ret)
@@ -906,7 +916,7 @@ static UINT HANDLE_CustomType2( MSIPACKAGE *package, const WCHAR *source, const 
     deformat_string( package, target, &arg );
     TRACE("exe %s arg %s\n", debugstr_w(binary->tmpfile), debugstr_w(arg));
 
-    handle = execute_command( binary->tmpfile, arg, L"C:\\" );
+    handle = execute_command( binary->tmpfile, arg, L"C:\\", action );
     msi_free( arg );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );
@@ -944,7 +954,7 @@ static UINT HANDLE_CustomType18( MSIPACKAGE *package, const WCHAR *source, const
     deformat_string( package, target, &arg );
     TRACE("exe %s arg %s\n", debugstr_w(file->TargetPath), debugstr_w(arg));
 
-    handle = execute_command( file->TargetPath, arg, L"C:\\" );
+    handle = execute_command( file->TargetPath, arg, L"C:\\", action );
     msi_free( arg );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );
@@ -1025,7 +1035,7 @@ static UINT HANDLE_CustomType23( MSIPACKAGE *package, const WCHAR *source, const
 
     TRACE("installing %s concurrently\n", debugstr_w(source));
 
-    handle = execute_command( L"msiexec", args, dir );
+    handle = execute_command( L"msiexec", args, dir, action );
     msi_free( dir );
     msi_free( args );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
@@ -1094,7 +1104,7 @@ static UINT HANDLE_CustomType7( MSIPACKAGE *package, const WCHAR *source, const 
 
     TRACE("installing %s concurrently\n", debugstr_w(source));
 
-    handle = execute_command( L"msiexec", args, L"C:\\" );
+    handle = execute_command( L"msiexec", args, L"C:\\", action );
     msi_free( args );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );
@@ -1116,7 +1126,7 @@ static UINT HANDLE_CustomType50( MSIPACKAGE *package, const WCHAR *source, const
     deformat_string( package, target, &arg );
     TRACE("exe %s arg %s\n", debugstr_w(exe), debugstr_w(arg));
 
-    handle = execute_command( exe, arg, L"C:\\" );
+    handle = execute_command( exe, arg, L"C:\\", action );
     msi_free( exe );
     msi_free( arg );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
@@ -1140,7 +1150,7 @@ static UINT HANDLE_CustomType34( MSIPACKAGE *package, const WCHAR *source, const
 
     TRACE("cmd %s dir %s\n", debugstr_w(cmd), debugstr_w(workingdir));
 
-    handle = execute_command( NULL, cmd, workingdir );
+    handle = execute_command( NULL, cmd, workingdir, action );
     msi_free( cmd );
     if (handle == INVALID_HANDLE_VALUE) return ERROR_SUCCESS;
     return wait_process_handle( package, type, handle, action );

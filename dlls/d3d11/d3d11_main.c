@@ -57,7 +57,7 @@ static HRESULT WINAPI layer_init(enum dxgi_device_layer_id id, DWORD *count, DWO
 
 static UINT WINAPI layer_get_size(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0)
 {
-    TRACE("id %#x, args %p, unknown0 %#x\n", id, args, unknown0);
+    TRACE("id %#x, args %p, unknown0 %#lx.\n", id, args, unknown0);
 
     if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
     {
@@ -73,7 +73,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
 {
     struct d3d_device *object;
 
-    TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",
+    TRACE("id %#x, layer_base %p, unknown0 %#lx, device_object %p, riid %s, device_layer %p.\n",
             id, layer_base, unknown0, device_object, debugstr_guid(riid), device_layer);
 
     if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
@@ -119,7 +119,7 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
     hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, feature_levels, levels, (void **)&dxgi_device);
     if (FAILED(hr))
     {
-        WARN("Failed to create device, returning %#x.\n", hr);
+        WARN("Failed to create device, returning %#lx.\n", hr);
         return hr;
     }
 
@@ -176,7 +176,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
         hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
         if (FAILED(hr))
         {
-            WARN("Failed to get dxgi factory, returning %#x.\n", hr);
+            WARN("Failed to get dxgi factory, returning %#lx.\n", hr);
             return hr;
         }
     }
@@ -185,7 +185,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
         hr = CreateDXGIFactory1(&IID_IDXGIFactory, (void **)&factory);
         if (FAILED(hr))
         {
-            WARN("Failed to create dxgi factory, returning %#x.\n", hr);
+            WARN("Failed to create dxgi factory, returning %#lx.\n", hr);
             return hr;
         }
 
@@ -198,7 +198,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
                 hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
                 if (FAILED(hr))
                 {
-                    WARN("No adapters found, returning %#x.\n", hr);
+                    WARN("No adapters found, returning %#lx.\n", hr);
                     IDXGIFactory_Release(factory);
                     return hr;
                 }
@@ -221,7 +221,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
                 FreeLibrary(refrast);
                 if (FAILED(hr))
                 {
-                    WARN("Failed to create a software adapter, returning %#x.\n", hr);
+                    WARN("Failed to create a software adapter, returning %#lx.\n", hr);
                     IDXGIFactory_Release(factory);
                     return hr;
                 }
@@ -239,7 +239,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
                 hr = IDXGIFactory_CreateSoftwareAdapter(factory, swrast, &adapter);
                 if (FAILED(hr))
                 {
-                    WARN("Failed to create a software adapter, returning %#x.\n", hr);
+                    WARN("Failed to create a software adapter, returning %#lx.\n", hr);
                     IDXGIFactory_Release(factory);
                     return hr;
                 }
@@ -263,7 +263,7 @@ static HRESULT d3d11_create_device(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
     {
-        WARN("Failed to create a device, returning %#x.\n", hr);
+        WARN("Failed to create a device, returning %#lx.\n", hr);
         return hr;
     }
 
@@ -317,7 +317,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
     if (FAILED(hr = d3d11_create_device(adapter, driver_type, swrast, flags, feature_levels,
             levels, sdk_version, &device, obtained_feature_level, immediate_context)))
     {
-        WARN("Failed to create a device, returning %#x.\n", hr);
+        WARN("Failed to create a device, returning %#lx.\n", hr);
         return hr;
     }
 
@@ -325,7 +325,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
     {
         if (FAILED(hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device)))
         {
-            ERR("Failed to get a dxgi device from the d3d11 device, returning %#x.\n", hr);
+            ERR("Failed to get a dxgi device from the d3d11 device, returning %#lx.\n", hr);
             goto cleanup;
         }
 
@@ -333,7 +333,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
         IDXGIDevice_Release(dxgi_device);
         if (FAILED(hr))
         {
-            ERR("Failed to get the device adapter, returning %#x.\n", hr);
+            ERR("Failed to get the device adapter, returning %#lx.\n", hr);
             goto cleanup;
         }
 
@@ -341,7 +341,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
         IDXGIAdapter_Release(adapter);
         if (FAILED(hr))
         {
-            ERR("Failed to get the adapter factory, returning %#x.\n", hr);
+            ERR("Failed to get the adapter factory, returning %#lx.\n", hr);
             goto cleanup;
         }
 
@@ -350,7 +350,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
         IDXGIFactory_Release(factory);
         if (FAILED(hr))
         {
-            WARN("Failed to create a swapchain, returning %#x.\n", hr);
+            WARN("Failed to create a swapchain, returning %#lx.\n", hr);
             goto cleanup;
         }
 

@@ -19,6 +19,8 @@
 #ifndef SVRAPI_INCLUDED
 #define SVRAPI_INCLUDED
 
+#include "wine/winheader_enter.h"
+
 #include <lmcons.h>
 #include <lmerr.h>
 
@@ -42,5 +44,7 @@ typedef struct _share_info_50 {
 } share_info_50;
 
 #include <poppack.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* SVRAPI_INCLUDED */

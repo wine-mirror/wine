@@ -19,6 +19,8 @@
 #ifndef __WINE_MSI_H
 #define __WINE_MSI_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef _MSI_NO_CRYPTO
 #include <wincrypt.h>
 #endif
@@ -734,5 +736,7 @@ UINT WINAPI MsiSetExternalUIRecord(INSTALLUI_HANDLER_RECORD, DWORD, LPVOID, PINS
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_MSI_H */

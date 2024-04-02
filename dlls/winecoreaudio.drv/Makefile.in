@@ -3,10 +3,13 @@ MODULE    = winecoreaudio.drv
 UNIXLIB   = winecoreaudio.so
 IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
-EXTRALIBS = $(COREAUDIO_LIBS)
+EXTRALIBS = $(COREAUDIO_LIBS) -framework AppKit $(AVFOUNDATION_LIBS)
 
 C_SRCS = \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \
 	mmdevdrv.c
+
+OBJC_SRCS = \
+	authorization.m

@@ -19,6 +19,8 @@
 #ifndef __WINE_WINSNMP_H
 #define __WINE_WINSNMP_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,5 +55,7 @@ SNMPAPI_STATUS WINAPI SnmpStartup(smiLPUINT32,smiLPUINT32,smiLPUINT32,smiLPUINT3
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_WINSNMP_H */

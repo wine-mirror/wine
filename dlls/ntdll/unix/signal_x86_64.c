@@ -94,7 +94,7 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    "pushq %rbx\n\t"
                    "pushq %rdi\n\t"
                    "movq %rsp,%rdi\n\t"
-                   "movq %gs:0x8,%rsp\n\t"    /* NtCurrentTeb()->Tib.StackBase */
+                   "movl 0x4(%rdx),%esp\n\t"  /* Tib.StackBase */
                    "subl $0x10,%esp\n\t"
                    /* setup modify_ldt struct on 32-bit stack */
                    "movl %ecx,(%rsp)\n\t"     /* entry_number */
@@ -208,6 +208,44 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
 
 #elif defined (__APPLE__)
 
+#include <i386/user_ldt.h>
+
+/* The 'full' structs were added in the macOS 10.14.6 SDK/Xcode 10.3. */
+#ifndef _STRUCT_X86_THREAD_FULL_STATE64
+#define _STRUCT_X86_THREAD_FULL_STATE64 struct __darwin_x86_thread_full_state64
+_STRUCT_X86_THREAD_FULL_STATE64
+{
+        _STRUCT_X86_THREAD_STATE64      __ss64;
+        __uint64_t                      __ds;
+        __uint64_t                      __es;
+        __uint64_t                      __ss;
+        __uint64_t                      __gsbase;
+};
+
+#define _STRUCT_MCONTEXT64_FULL      struct __darwin_mcontext64_full
+_STRUCT_MCONTEXT64_FULL
+{
+        _STRUCT_X86_EXCEPTION_STATE64   __es;
+        _STRUCT_X86_THREAD_FULL_STATE64 __ss;
+        _STRUCT_X86_FLOAT_STATE64       __fs;
+};
+
+#define _STRUCT_MCONTEXT_AVX64_FULL  struct __darwin_mcontext_avx64_full
+_STRUCT_MCONTEXT_AVX64_FULL
+{
+        _STRUCT_X86_EXCEPTION_STATE64   __es;
+        _STRUCT_X86_THREAD_FULL_STATE64 __ss;
+        _STRUCT_X86_AVX_STATE64         __fs;
+};
+#endif
+
+/* AVX512 structs were added in the macOS 10.13 SDK/Xcode 9. */
+#ifdef _STRUCT_MCONTEXT_AVX512_64_FULL
+#define SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL sizeof(_STRUCT_MCONTEXT_AVX512_64_FULL)
+#else
+#define SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL 2664
+#endif
+
 #define RAX_sig(context)     ((context)->uc_mcontext->__ss.__rax)
 #define RBX_sig(context)     ((context)->uc_mcontext->__ss.__rbx)
 #define RCX_sig(context)     ((context)->uc_mcontext->__ss.__rcx)
@@ -231,7 +269,23 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
 #define RSP_sig(context)     ((context)->uc_mcontext->__ss.__rsp)
 #define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
 #define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw)
+
+/* Once a custom LDT is installed (i.e. Wow64), mcontext will point to a
+ * larger '_full' struct which includes DS, ES, SS, and GSbase.
+ * This changes the offset of the FPU state.
+ * Checking mcsize is the only way to determine which mcontext is in use.
+ */
+static inline XMM_SAVE_AREA32 *FPU_sig( const ucontext_t *context )
+{
+    if (context->uc_mcsize == sizeof(_STRUCT_MCONTEXT64_FULL) ||
+        context->uc_mcsize == sizeof(_STRUCT_MCONTEXT_AVX64_FULL) ||
+        context->uc_mcsize == SIZEOF_STRUCT_MCONTEXT_AVX512_64_FULL)
+    {
+        return (XMM_SAVE_AREA32 *)&((_STRUCT_MCONTEXT64_FULL *)context->uc_mcontext)->__fs.__fpu_fcw;
+    }
+    return (XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw;
+}
+
 #define XState_sig(context)  NULL
 
 #else
@@ -367,6 +421,7 @@ struct amd64_thread_data
     void                 *exit_frame;    /* 0320 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
     void                 *pthread_teb;   /* 0330 thread data for pthread */
+    DWORD                 fs;            /* 0338 WOW TEB selector */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -430,8 +485,11 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
 }
 
-static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
-static USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
+USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
+#ifdef __APPLE__
+USHORT ds32_sel;  /* selector for %ds in 32-bit mode */
+#endif
+USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
 static USHORT ds64_sel;  /* selector for %ds/%es/%ss in 64-bit mode */
 static USHORT fs32_sel;  /* selector for %fs in 32-bit mode */
 
@@ -2008,7 +2066,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     {
         wow_frame->SegDs = ds64_sel;
         wow_frame->SegEs = ds64_sel;
-        wow_frame->SegFs = fs32_sel;
+        wow_frame->SegFs = amd64_thread_data()->fs;
         wow_frame->SegGs = ds64_sel;
     }
     if (flags & CONTEXT_I386_DEBUG_REGISTERS)
@@ -2023,10 +2081,12 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     if (flags & CONTEXT_I386_EXTENDED_REGISTERS)
     {
         memcpy( &frame->xsave, context->ExtendedRegisters, sizeof(frame->xsave) );
+        frame->restore_flags |= CONTEXT_FLOATING_POINT;
     }
     else if (flags & CONTEXT_I386_FLOATING_POINT)
     {
         fpu_to_fpux( &frame->xsave, &context->FloatSave );
+        frame->restore_flags |= CONTEXT_FLOATING_POINT;
     }
     if (flags & CONTEXT_I386_XSTATE)
     {
@@ -2355,7 +2415,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.rdx           = (ULONG_PTR)args;
         callback_frame.frame.r8            = len;
         callback_frame.frame.cs            = cs64_sel;
-        callback_frame.frame.fs            = fs32_sel;
+        callback_frame.frame.fs            = amd64_thread_data()->fs;
         callback_frame.frame.gs            = ds64_sel;
         callback_frame.frame.ss            = ds64_sel;
         callback_frame.frame.rsp           = (ULONG_PTR)args_data - 0x28;
@@ -2389,6 +2449,70 @@ NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status 
     __wine_longjmp( &frame->jmpbuf, 1 );
 }
 
+#ifdef __APPLE__
+/***********************************************************************
+ *           handle_cet_nop
+ *
+ * Check if the fault location is an Intel CET instruction that should be treated as a NOP.
+ * Rosetta on Big Sur throws an exception for this, but is fixed in Monterey.
+ * CW HACK 20186
+ */
+static inline BOOL handle_cet_nop( ucontext_t *sigcontext, CONTEXT *context )
+{
+    BYTE instr[16];
+    unsigned int i, prefix_count = 0;
+    unsigned int len = virtual_uninterrupted_read_memory( (BYTE *)context->Rip, instr, sizeof(instr) );
+
+    for (i = 0; i < len; i++) switch (instr[i])
+    {
+    /* instruction prefixes */
+    case 0x2e:  /* %cs: */
+    case 0x36:  /* %ss: */
+    case 0x3e:  /* %ds: */
+    case 0x26:  /* %es: */
+    case 0x40:  /* rex */
+    case 0x41:  /* rex */
+    case 0x42:  /* rex */
+    case 0x43:  /* rex */
+    case 0x44:  /* rex */
+    case 0x45:  /* rex */
+    case 0x46:  /* rex */
+    case 0x47:  /* rex */
+    case 0x48:  /* rex */
+    case 0x49:  /* rex */
+    case 0x4a:  /* rex */
+    case 0x4b:  /* rex */
+    case 0x4c:  /* rex */
+    case 0x4d:  /* rex */
+    case 0x4e:  /* rex */
+    case 0x4f:  /* rex */
+    case 0x64:  /* %fs: */
+    case 0x65:  /* %gs: */
+    case 0x66:  /* opcode size */
+    case 0x67:  /* addr size */
+    case 0xf0:  /* lock */
+    case 0xf2:  /* repne */
+    case 0xf3:  /* repe */
+        if (++prefix_count >= 15) return FALSE;
+        continue;
+
+    case 0x0f: /* extended instruction */
+        if (i == len - 1) return 0;
+        switch (instr[i + 1])
+        {
+        case 0x1E:
+            /* RDSSPD/RDSSPQ: (prefixes) 0F 1E (modrm) */
+            RIP_sig(sigcontext) += prefix_count + 3;
+            TRACE_(seh)( "skipped RDSSPD/RDSSPQ instruction\n" );
+            return TRUE;
+        }
+        break;
+    default:
+        break;
+    }
+    return FALSE;
+}
+#endif
 
 /***********************************************************************
  *           is_privileged_instr
@@ -2611,6 +2735,10 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
     case TRAP_x86_PRIVINFLT:   /* Invalid opcode exception */
+#ifdef __APPLE__
+        /* CW HACK 20186 */
+        if (handle_cet_nop( ucontext, &context.c )) return;
+#endif
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case TRAP_x86_STKFLT:  /* Stack fault */
@@ -2682,22 +2810,12 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.ExceptionAddress = (void *)RIP_sig(ucontext);
     save_context( &context, sigcontext );
 
-    switch (siginfo->si_code)
+    switch (TRAP_sig(ucontext))
     {
-    case TRAP_TRACE:  /* Single-step exception */
-    case 4 /* TRAP_HWBKPT */: /* Hardware breakpoint exception */
+    case TRAP_x86_TRCTRAP:
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
-    case TRAP_BRKPT:   /* Breakpoint exception */
-#ifdef SI_KERNEL
-    case SI_KERNEL:
-#endif
-        /* Check if this is actually icebp instruction */
-        if (((unsigned char *)RIP_sig(ucontext))[-1] == 0xF1)
-        {
-            rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-            break;
-        }
+    case TRAP_x86_BPTFLT:
         rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
         /* fall through */
     default:
@@ -2832,6 +2950,80 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
 }
 
 
+/***********************************************************************
+ *           LDT support
+ */
+
+#define LDT_SIZE 8192
+
+#define LDT_FLAGS_DATA      0x13  /* Data segment */
+#define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
+
+static ULONG first_ldt_entry = 32;
+
+struct ldt_copy
+{
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+} __wine_ldt_copy;
+
+static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static inline void *ldt_get_base( LDT_ENTRY ent )
+{
+    return (void *)(ent.BaseLow |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseMid << 16 |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseHi << 24);
+}
+
+static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
+{
+    unsigned int limit = ent.LimitLow | (ent.HighWord.Bits.LimitHi << 16);
+    if (ent.HighWord.Bits.Granularity) limit = (limit << 12) | 0xfff;
+    return limit;
+}
+
+static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
+{
+    LDT_ENTRY entry;
+
+    entry.BaseLow                   = (WORD)(ULONG_PTR)base;
+    entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
+    entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
+    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+    entry.LimitLow                  = (WORD)limit;
+    entry.HighWord.Bits.LimitHi     = limit >> 16;
+    entry.HighWord.Bits.Dpl         = 3;
+    entry.HighWord.Bits.Pres        = 1;
+    entry.HighWord.Bits.Type        = flags;
+    entry.HighWord.Bits.Sys         = 0;
+    entry.HighWord.Bits.Reserved_0  = 0;
+    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
+    return entry;
+}
+
+static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+{
+    int index = sel >> 3;
+
+#if defined(__APPLE__)
+    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+#else
+    fprintf( stderr, "No LDT support on this platform\n" );
+    exit(1);
+#endif
+
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
+                                    LDT_FLAGS_ALLOCATED);
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */
@@ -2866,6 +3058,30 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB *teb )
 {
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+
+    if (teb->WowTebOffset)
+    {
+        if (!fs32_sel)
+        {
+            void *teb32 = (char *)teb + teb->WowTebOffset;
+            sigset_t sigset;
+            int idx;
+            LDT_ENTRY entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+            server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+            {
+                if (__wine_ldt_copy.flags[idx]) continue;
+                ldt_set_entry( (idx << 3) | 7, entry );
+                break;
+            }
+            server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
+            thread_data->fs = (idx << 3) | 7;
+        }
+        else thread_data->fs = fs32_sel;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -2875,6 +3091,15 @@ NTSTATUS signal_alloc_thread( TEB *teb )
  */
 void signal_free_thread( TEB *teb )
 {
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+    sigset_t sigset;
+
+    if (teb->WowTebOffset && !fs32_sel)
+    {
+        server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+        __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
+        server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+    }
 }
 
 #ifdef __APPLE__
@@ -2887,7 +3112,10 @@ static void *mac_thread_gsbase(void)
     unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
     static int gsbase_offset = -1;
 
-    kern_return_t kr = thread_info(mach_thread_self(), THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
+    mach_port_t self = mach_thread_self();
+    kern_return_t kr = thread_info(self, THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
+    mach_port_deallocate(mach_task_self(), self);
+
     if (kr == KERN_SUCCESS) return (void*)tiinfo.thread_handle;
 
     if (gsbase_offset < 0)
@@ -2953,6 +3181,9 @@ void signal_init_thread( TEB *teb )
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
                       :
                       : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
+                      :
+                      : "r" (teb->Peb), "n" (FIELD_OFFSET(TEB, Peb)));
     amd64_thread_data()->pthread_teb = mac_thread_gsbase();
 
     /* alloc_tls_slot() needs to poke a value to an address relative to each
@@ -2998,11 +3229,47 @@ void signal_init_process(void)
         cs32_sel = 0x23;
         if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
         {
-            fs32_sel = (sel << 3) | 3;
+            amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
             syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
             if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
+    }
+#elif defined(__APPLE__)
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        void *teb32 = (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset;
+        LDT_ENTRY cs32_entry, ds32_entry, fs32_entry;
+        int idx;
+
+        cs32_entry = ldt_make_entry( NULL, -1, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+        ds32_entry = ldt_make_entry( NULL, -1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+        fs32_entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+        {
+            if (__wine_ldt_copy.flags[idx]) continue;
+            cs32_sel = (idx << 3) | 7;
+            ldt_set_entry( cs32_sel, cs32_entry );
+            break;
+        }
+
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+        {
+            if (__wine_ldt_copy.flags[idx]) continue;
+            ds32_sel = (idx << 3) | 7;
+            ldt_set_entry( ds32_sel, ds32_entry );
+            break;
+        }
+
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+        {
+            if (__wine_ldt_copy.flags[idx]) continue;
+            amd64_thread_data()->fs = (idx << 3) | 7;
+            ldt_set_entry( amd64_thread_data()->fs, fs32_entry );
+            break;
+        }
+        fixup_builtin_so_32on64_sels();
     }
 #endif
 
@@ -3051,7 +3318,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.SegCs  = cs64_sel;
     context.SegDs  = ds64_sel;
     context.SegEs  = ds64_sel;
-    context.SegFs  = fs32_sel;
+    context.SegFs  = thread_data->fs;
     context.SegGs  = ds64_sel;
     context.SegSs  = ds64_sel;
     context.EFlags = 0x200;
@@ -3161,6 +3428,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "pushfq\n\t"
                    "popq 0x80(%rcx)\n\t"
                    "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
+                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_prolog_end") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_prolog_end") ":\n\t"
                    "movq %rax,0x00(%rcx)\n\t"
                    "movq %rbx,0x08(%rcx)\n\t"
@@ -3290,7 +3558,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x10(%rcx),%rcx\n"
                    "iretq\n"
                    "5:\tmovl $0xc000000d,%edx\n\t" /* STATUS_INVALID_PARAMETER */
-                   "movq %rsp,%rcx\n"
+                   "movq %rsp,%rcx\n\t"
+                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "movq %rdx,%rax\n\t"

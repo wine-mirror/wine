@@ -21,6 +21,10 @@
 #ifndef __WINE_CRTDEFS_H
 #define __WINE_CRTDEFS_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt.h>
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_CRTDEFS_H */

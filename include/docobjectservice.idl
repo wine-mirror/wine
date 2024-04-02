@@ -17,23 +17,25 @@
  */
 
 import "objidl.idl";
+#ifndef NO_MSHTML_IMPORT
 import "mshtml.idl";
+#endif
 
 [
-    local,
+ /* local, CXHACK 15579 */
     object,
     uuid(3050f801-98b5-11cf-bb82-00aa00bdce0b)
 ]
 interface IDocObjectService : IUnknown
 {
     HRESULT FireBeforeNavigate2(
-            [in] IDispatch *pDispatch,
-            [in] LPCWSTR lpszUrl,
+            [in, optional] IDispatch *pDispatch,
+            [in, string, unique] LPCWSTR lpszUrl,
             [in] DWORD dwFlags,
-            [in] LPCWSTR lpszFrameName,
-            [in] BYTE *pPostData,
+            [in, string, unique] LPCWSTR lpszFrameName,
+            [in, unique, size_is(cbPostData)] BYTE *pPostData,
             [in] DWORD cbPostData,
-            [in] LPCWSTR lpszHeaders,
+            [in, string, unique] LPCWSTR lpszHeaders,
             [in] BOOL fPlayNavSound,
             [out] BOOL *pfCancel);
 

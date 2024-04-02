@@ -20,6 +20,8 @@
 #ifndef _D3D9_H_
 #define _D3D9_H_
 
+#include "wine/winheader_enter.h"
+
 #ifndef DIRECT3D_VERSION
 #define DIRECT3D_VERSION  0x0900
 #endif
@@ -2224,5 +2226,7 @@ HRESULT WINAPI Direct3DCreate9Ex(UINT sdk_version, IDirect3D9Ex **d3d9ex);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
+
+#include "wine/winheader_exit.h"
 
 #endif /* _D3D9_H_ */

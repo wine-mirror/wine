@@ -18,10 +18,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef __i386_on_x86_64__
+#if defined(__WINE_SERVER_LIST_H) && defined(WINE_LIST_HOSTADDRSPACE) && defined(WINE_LIST_HOSTADDRSPACE_DISABLED)
+#error "list.h was previously included without WINE_LIST_HOSTADDRSPACE but it's now defined"
+#endif
+
+#if defined(__WINE_SERVER_LIST_H) && !defined(WINE_LIST_HOSTADDRSPACE) && defined(WINE_LIST_HOSTADDRSPACE_ENABLED)
+#error "list.h was previously included with WINE_LIST_HOSTADDRSPACE but it's now not defined"
+#endif
+#endif
+
 #ifndef __WINE_SERVER_LIST_H
 #define __WINE_SERVER_LIST_H
 
 #include <stddef.h>
+#include <stdint.h>
+#include <wine/32on64utils.h>
+
+#ifdef WINE_LIST_HOSTADDRSPACE
+#include <wine/hostaddrspace_enter.h>
+#define WINE_LIST_HOSTADDRSPACE_ENABLED
+#else
+#include <wine/winheader_enter.h>
+#define WINE_LIST_HOSTADDRSPACE_DISABLED
+#endif
 
 struct list
 {
@@ -229,6 +249,15 @@ static inline void list_move_head( struct list *dst, struct list *src )
 /* get pointer to object containing list element */
 #undef LIST_ENTRY
 #define LIST_ENTRY(elem, type, field) \
-    ((type *)((char *)(elem) - offsetof(type, field)))
+    TRUNCCAST(type *, ((uintptr_t)(elem) - offsetof(type, field)))
+
+#ifdef WINE_LIST_HOSTADDRSPACE
+#include <wine/hostaddrspace_exit.h>
+#else
+#include <wine/winheader_exit.h>
+#endif
+
+/* Undef WINE_LIST_HOSTADDRSPACE so we can detect if list.h is included later without it re-defined */
+#undef WINE_LIST_HOSTADDRSPACE
 
 #endif  /* __WINE_SERVER_LIST_H */

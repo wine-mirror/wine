@@ -19,6 +19,8 @@
 #ifndef _NTSECPKG_H
 #define _NTSECPKG_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -511,4 +513,6 @@ typedef NTSTATUS (WINAPI *SpUserModeInitializeFn)(ULONG, PULONG,
 #ifdef __cplusplus
 }
 #endif
+#include "wine/winheader_exit.h"
+
 #endif /* _NTSECPKG_H */

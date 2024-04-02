@@ -64,7 +64,7 @@ static ULONG STDMETHODCALLTYPE d2d_layer_Release(ID2D1Layer *iface)
     if (!refcount)
     {
         ID2D1Factory_Release(layer->factory);
-        heap_free(layer);
+        free(layer);
     }
 
     return refcount;
@@ -100,7 +100,7 @@ static const struct ID2D1LayerVtbl d2d_layer_vtbl =
 
 HRESULT d2d_layer_create(ID2D1Factory *factory, const D2D1_SIZE_F *size, struct d2d_layer **layer)
 {
-    if (!(*layer = heap_alloc_zero(sizeof(**layer))))
+    if (!(*layer = calloc(1, sizeof(**layer))))
         return E_OUTOFMEMORY;
 
     (*layer)->ID2D1Layer_iface.lpVtbl = &d2d_layer_vtbl;

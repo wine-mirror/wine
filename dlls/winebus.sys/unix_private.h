@@ -90,6 +90,8 @@ struct effect_params
     };
 };
 
+struct unix_device;
+
 struct raw_device_vtbl
 {
     void (*destroy)(struct unix_device *iface);
@@ -228,6 +230,10 @@ extern NTSTATUS udev_bus_stop(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_init(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_wait(void *) DECLSPEC_HIDDEN;
 extern NTSTATUS iohid_bus_stop(void *) DECLSPEC_HIDDEN;
+
+extern NTSTATUS xbox_bus_init(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS xbox_bus_wait(void *) DECLSPEC_HIDDEN;
+extern NTSTATUS xbox_bus_stop(void *) DECLSPEC_HIDDEN;
 
 extern void bus_event_cleanup(struct bus_event *event) DECLSPEC_HIDDEN;
 extern void bus_event_queue_destroy(struct list *queue) DECLSPEC_HIDDEN;

@@ -21,6 +21,8 @@
 #ifndef __D3DX11TEX_H__
 #define __D3DX11TEX_H__
 
+#include "wine/winheader_enter.h"
+
 typedef enum D3DX11_FILTER_FLAG
 {
     D3DX11_FILTER_NONE             = 0x00000001,
@@ -135,5 +137,7 @@ HRESULT WINAPI D3DX11SaveTextureToMemory(ID3D11DeviceContext *context, ID3D11Res
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

@@ -20,10 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -34,6 +30,7 @@
 #include "winerror.h"
 #include "ntgdi_private.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -1024,4 +1021,232 @@ BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const R
     NtGdiDeleteObjectApp( visrgn );
     NtGdiDeleteObjectApp( dstrgn );
     return ret;
+}
+
+
+struct shm_window_surface
+{
+    struct window_surface header;
+    HANDLE      handle;
+    RECT        bounds;
+    /* FIXME: do we really want BITMAPINFO in shm? Having only bits could be enough. */
+    BITMAPINFO *info;
+};
+
+static struct shm_window_surface *get_shm_surface( struct window_surface *surface )
+{
+    return CONTAINING_RECORD(surface, struct shm_window_surface, header);
+}
+
+static NTSTATUS server_lock_shm_surface( struct shm_window_surface *surface, BOOL lock )
+{
+    NTSTATUS status;
+    SERVER_START_REQ( lock_shm_surface )
+    {
+        req->surface = wine_server_obj_handle( surface->handle );
+        req->lock    = lock;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status && status != STATUS_PENDING) ERR( "error %x\n", status );
+    return status;
+}
+
+static void shm_surface_lock( struct window_surface *window_surface )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+
+    TRACE( "%p\n", surface );
+
+    /* NOTE: we could (should?) avoid server-side locking and just use CS if we know
+     * that no flush is in progress */
+    while (server_lock_shm_surface( surface, TRUE ) == STATUS_PENDING)
+        NtWaitForSingleObject( surface->handle, FALSE, NULL );
+}
+
+static void shm_surface_unlock( struct window_surface *window_surface )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+    TRACE( "%p\n", surface );
+    server_lock_shm_surface( surface, FALSE );
+}
+
+static void *shm_surface_get_bitmap_info( struct window_surface *window_surface,
+                                          BITMAPINFO *info )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+    TRACE( "%p\n", surface );
+    *info = *surface->info;
+    return surface->info + 1;
+}
+
+static RECT *shm_surface_get_bounds( struct window_surface *window_surface )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+    return &surface->bounds;
+}
+
+static void shm_surface_set_region( struct window_surface *window_surface, HRGN region )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+    FIXME( "(%p %p)\n", surface, region );
+}
+
+static void shm_surface_flush( struct window_surface *window_surface )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+    RECT bounds;
+    NTSTATUS status;
+
+    TRACE("%p\n", surface);
+
+    window_surface->funcs->lock( window_surface );
+    bounds = surface->bounds;
+    reset_bounds( &surface->bounds );
+    window_surface->funcs->unlock( window_surface );
+
+    if (IsRectEmpty( &bounds )) return;
+
+    SERVER_START_REQ(flush_shm_surface)
+    {
+        req->surface       = wine_server_obj_handle( surface->handle );
+        req->bounds.left   = bounds.left;
+        req->bounds.top    = bounds.top;
+        req->bounds.right  = bounds.right;
+        req->bounds.bottom = bounds.bottom;
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (status) ERR( "failed %x\n", status );
+}
+
+static void shm_surface_destroy( struct window_surface *window_surface )
+{
+    struct shm_window_surface *surface = get_shm_surface( window_surface );
+
+    TRACE( "freeing %p\n", surface );
+    if (surface->info) NtUnmapViewOfSection( GetCurrentProcess(), surface->info );
+    if (surface->handle) NtClose( surface->handle );
+    free( surface );
+}
+
+static const struct window_surface_funcs shm_surface_funcs =
+{
+    shm_surface_lock,
+    shm_surface_unlock,
+    shm_surface_get_bitmap_info,
+    shm_surface_get_bounds,
+    shm_surface_set_region,
+    shm_surface_flush,
+    shm_surface_destroy,
+};
+
+struct window_surface *create_shm_surface( HWND window, const RECT *visible_rect,
+                                           struct window_surface *old_surface )
+{
+    struct shm_window_surface *surface;
+    SIZE_T view_size = 0;
+    BITMAPINFO info;
+    HANDLE mapping;
+    NTSTATUS status;
+    RECT r;
+
+    r = *visible_rect;
+    OffsetRect( &r, -r.left, -r.top );
+    if (IsRectEmpty( &r )) return NULL;
+
+    if (old_surface && old_surface->funcs == &shm_surface_funcs)
+    {
+        surface = get_shm_surface( old_surface );
+        if (EqualRect( &surface->header.rect, &r ))
+        {
+            TRACE( "reusing surface %p\n", surface );
+            window_surface_add_ref( old_surface );
+            return old_surface;
+        }
+    }
+
+    surface = calloc( 1, sizeof(*surface) );
+    if (!surface) return NULL;
+
+    TRACE( "crating surface %p for visible_rect %s of window %p\n", surface,
+           wine_dbgstr_rect(visible_rect), window );
+
+    surface->header.funcs = &shm_surface_funcs;
+    surface->header.ref   = 1;
+    surface->header.rect  = r;
+
+    reset_bounds( &surface->bounds );
+
+    info.bmiHeader.biSize        = sizeof(info.bmiHeader);
+    info.bmiHeader.biWidth       = r.right;
+    info.bmiHeader.biHeight      = -r.bottom;
+    info.bmiHeader.biPlanes      = 1;
+    info.bmiHeader.biBitCount    = 32;
+    info.bmiHeader.biSizeImage   = get_dib_image_size( &info );
+    info.bmiHeader.biCompression = BI_RGB;
+    info.bmiHeader.biClrUsed     = 0;
+
+    SERVER_START_REQ( create_shm_surface )
+    {
+        req->window = wine_server_user_handle( window );
+        req->mapping_size = sizeof(info) + info.bmiHeader.biSizeImage;
+        status = wine_server_call( req );
+        if (!status)
+        {
+            surface->handle = wine_server_ptr_handle( reply->handle );
+            mapping = wine_server_ptr_handle( reply->mapping );
+        }
+    }
+    SERVER_END_REQ;
+    if (status)
+    {
+        shm_surface_destroy( &surface->header );
+        return NULL;
+    }
+
+    status = NtMapViewOfSection( mapping, GetCurrentProcess(), (void**)&surface->info, 0, 0, NULL,
+                                 &view_size, ViewShare, 0, PAGE_READWRITE );
+    NtClose( mapping );
+    if (!surface->info)
+    {
+        ERR( "NtMapViewOfSection failed: %x\n", status );
+        shm_surface_destroy( &surface->header );
+        return NULL;
+    }
+
+    *surface->info = info;
+    return &surface->header;
+}
+
+void process_surface_message( const MSG *msg, const rectangle_t *bounds )
+{
+    HANDLE mapping = (HANDLE)msg->lParam;
+    BITMAPINFO *info = NULL;
+    SIZE_T view_size = 0;
+    unsigned int height;
+    NTSTATUS status;
+    HDC hdc;
+
+    TRACE( "Flushing %p window surface (%d,%d)->(%d,%d)\n", msg->hwnd,
+           bounds->left, bounds->top, bounds->right, bounds->bottom );
+
+    status = NtMapViewOfSection( mapping, GetCurrentProcess(), (void**)&info, 0, 0, NULL,
+                                 &view_size, ViewShare, 0, PAGE_READONLY );
+    if (!info)
+    {
+        ERR( "NtMapViewOfSection(%p) failed: %x\n", mapping, status );
+        NtClose( mapping );
+        return;
+    }
+    height = abs( info->bmiHeader.biHeight );
+
+    hdc = NtUserGetDCEx( msg->hwnd, NULL, DCX_CLIPSIBLINGS );
+    NtGdiSetDIBitsToDeviceInternal( hdc, bounds->left, bounds->top,
+                                    bounds->right - bounds->left, bounds->bottom - bounds->top,
+                                    bounds->left, height - bounds->bottom, 0, height,
+                                    info + 1, info, DIB_RGB_COLORS, 0, 0, FALSE, NULL);
+    NtUserReleaseDC( msg->hwnd, hdc );
+    NtUnmapViewOfSection( GetCurrentProcess(), info );
+    NtClose( mapping );
 }

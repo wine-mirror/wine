@@ -19,6 +19,8 @@
 #ifndef __WINE_DXFILE_H
 #define __WINE_DXFILE_H
 
+#include "wine/winheader_enter.h"
+
 #include <objbase.h>
 #include <winnt.h>
 
@@ -295,5 +297,7 @@ DEFINE_GUID(TID_DXFILEHeader,               0x3d82ab43, 0x62da, 0x11cf, 0xab, 0x
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DXFILE_H */

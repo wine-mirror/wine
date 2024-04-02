@@ -23,6 +23,8 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
+#include "wine/winheader_enter.h"
+
 #include <basetsd.h>
 #include <rpcsal.h>
 
@@ -743,4 +745,6 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 #endif /*__WINE_RPCNDR_H */

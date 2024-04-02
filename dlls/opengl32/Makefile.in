@@ -7,6 +7,7 @@ DELAYIMPORTS = glu32
 EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
 
 C_SRCS = \
+	32on64hack.c \
 	opengl_ext.c \
 	opengl_norm.c \
 	wgl.c

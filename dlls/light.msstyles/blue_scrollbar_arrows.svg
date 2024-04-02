@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="bitmap:17-24" width="17" height="272" version="1.1" viewBox="0 0 4.4979 71.967" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<svg id="bitmap:17-24" width="17" height="340" version="1.1" viewBox="0 0 4.4979 89.959" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
  <metadata>
   <rdf:RDF>
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
- <rect x="-1.875e-5" width="4.4979" height="71.967" fill="#fff"/>
+ <rect x="-1.875e-5" width="4.4979" height="89.959" fill="#fff"/>
  <g stroke-width=".26458">
-  <rect x=".13229" y=".13229" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#fff" stroke="#aeaeae"/>
-  <rect x=".13229" y="4.6302" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#fff" stroke="#3096fa"/>
+  <g fill="#fff">
+   <rect x=".13229" y=".13229" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>
+   <g stroke="#3096fa">
+    <rect x=".13229" y="4.6302" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="72.099" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="76.597" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="81.095" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+    <rect x=".13227" y="85.593" width="4.2334" height="4.2333" rx=".52917" ry=".52917"/>
+   </g>
+  </g>
   <rect x=".13229" y="9.1281" width="4.2333" height="4.2333" rx=".52917" ry=".52917" fill="#2979ff" stroke="#2979ff"/>
   <g fill="#fff">
    <rect x=".13229" y="13.626" width="4.2333" height="4.2333" rx=".52917" ry=".52917" stroke="#aeaeae"/>

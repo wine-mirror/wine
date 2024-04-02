@@ -19,6 +19,8 @@
 #ifndef __WINE_DELAYLOADHANDLER_H
 #define __WINE_DELAYLOADHANDLER_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,5 +54,7 @@ typedef PVOID (WINAPI *PDELAYLOAD_FAILURE_SYSTEM_ROUTINE)(LPCSTR, LPCSTR);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif  /* __WINE_DELAYLOADHANDLER_H */

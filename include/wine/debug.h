@@ -29,9 +29,13 @@
 #include <guiddef.h>
 #endif
 
+#include "wine/asm.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <wine/winheader_enter.h>
 
 struct _GUID;
 
@@ -150,6 +154,15 @@ extern int __cdecl __wine_dbg_output( const char *str );
 extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                                       const char *function );
 
+#ifdef __i386_on_x86_64__
+//extern unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel * HOSTPTR channel ) __attribute__((overloadable)) asm(__ASM_NAME(
+//__wine_dbg_get_channel_flags_HOSTPTR"));
+//extern const char * __cdecl __wine_dbg_strdup( const char * HOSTPTR str ) __attribute__((overloadable)) asm(__ASM_NAME("__wine_dbg_strdup_HOSTPTR"));
+//extern int __cdecl __wine_dbg_output( const char * HOSTPTR str ) __attribute__((overloadable)) asm(__ASM_NAME("__wine_dbg_output_HOSTPTR"));
+//extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel * HOSTPTR channel,
+//                                      const char * HOSTPTR function ) __attribute__((overloadable)) asm(__ASM_NAME("__wine_dbg_header_HOSTPTR"));
+#endif
+
 /*
  * Exported definitions and macros
  */
@@ -158,7 +171,12 @@ extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
 
-#if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+#if defined(__i386_on_x86_64__) && defined(__WINE_USE_MSVCRT)
+# define __wine_dbg_cdecl __cdecl
+# define __wine_dbg_va_list __builtin_va_list32
+# define __wine_dbg_va_start(list,arg) __builtin_va_start32(list,arg)
+# define __wine_dbg_va_end(list) __builtin_va_end32(list)
+#elif (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
 # define __wine_dbg_cdecl __cdecl
 # define __wine_dbg_va_list __builtin_ms_va_list
 # define __wine_dbg_va_start(list,arg) __builtin_ms_va_start(list,arg)
@@ -170,8 +188,8 @@ extern int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine
 # define __wine_dbg_va_end(list) va_end(list)
 #endif
 
-static const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
-static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format, ... )
+static const char * __wine_dbg_cdecl wine_dbg_sprintf( const char * HOSTPTR format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char * HOSTPTR format, ... )
 {
     char buffer[200];
     __wine_dbg_va_list args;
@@ -182,8 +200,8 @@ static inline const char * __wine_dbg_cdecl wine_dbg_sprintf( const char *format
     return __wine_dbg_strdup( buffer );
 }
 
-static int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
-static inline int __wine_dbg_cdecl wine_dbg_printf( const char *format, ... )
+static int __wine_dbg_cdecl wine_dbg_printf( const char * HOSTPTR format, ... ) __WINE_PRINTF_ATTR(1,2);
+static inline int __wine_dbg_cdecl wine_dbg_printf( const char * HOSTPTR format, ... )
 {
     char buffer[1024];
     __wine_dbg_va_list args;
@@ -219,14 +237,14 @@ static inline int __wine_dbg_cdecl wine_dbg_log( enum __wine_debug_class cls,
     return ret;
 }
 
-static inline const char *wine_dbgstr_an( const char *str, int n )
+static inline const char *wine_dbgstr_an( const char * HOSTPTR str, int n )
 {
     static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
-    char buffer[300], *dst = buffer;
+    char buffer[300], * HOSTPTR dst = buffer;
 
     if (!str) return "(null)";
-    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
-#ifndef WINE_UNIX_LIB
+    if (!((ULONG_HOSTPTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#if (!defined(WINE_UNIX_LIB) && !defined(__i386_on_x86_64__))
     if (IsBadStringPtrA( str, n )) return "(invalid)";
 #endif
     if (n == -1) for (n = 0; str[n]; n++) ;
@@ -263,14 +281,14 @@ static inline const char *wine_dbgstr_an( const char *str, int n )
     return __wine_dbg_strdup( buffer );
 }
 
-static inline const char *wine_dbgstr_wn( const WCHAR *str, int n )
+static inline const char *wine_dbgstr_wn( const WCHAR * HOSTPTR str, int n )
 {
     static const char hex[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
-    char buffer[300], *dst = buffer;
+    char buffer[300], * HOSTPTR dst = buffer;
 
     if (!str) return "(null)";
-    if (!((ULONG_PTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
-#ifndef WINE_UNIX_LIB
+    if (!((ULONG_HOSTPTR)str >> 16)) return wine_dbg_sprintf( "#%04x", LOWORD(str) );
+#if (!defined(WINE_UNIX_LIB) && !defined(__i386_on_x86_64__))
     if (IsBadStringPtrW( str, n )) return "(invalid)";
 #endif
     if (n == -1) for (n = 0; str[n]; n++) ;
@@ -507,9 +525,9 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
 /* Wine uses shorter names that are very likely to conflict with other software */
 
 static inline const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
-static inline const char *debugstr_wn( const WCHAR *s, int n ) { return wine_dbgstr_wn( s, n ); }
+static inline const char *debugstr_wn( const WCHAR * HOSTPTR s, int n ) { return wine_dbgstr_wn( s, n ); }
 static inline const char *debugstr_guid( const struct _GUID *id ) { return wine_dbgstr_guid(id); }
-static inline const char *debugstr_a( const char *s )  { return wine_dbgstr_an( s, -1 ); }
+static inline const char *debugstr_a( const char * HOSTPTR s )  { return wine_dbgstr_an( s, -1 ); }
 static inline const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
 
 #if defined(__oaidl_h__) && defined(V_VT)
@@ -541,5 +559,7 @@ static inline const char *debugstr_variant( const VARIANT *v ) { return wine_dbg
 #ifdef __cplusplus
 }
 #endif
+
+#include <wine/winheader_exit.h>
 
 #endif  /* __WINE_WINE_DEBUG_H */

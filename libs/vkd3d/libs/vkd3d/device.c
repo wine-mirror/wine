@@ -19,51 +19,6 @@
 #include "vkd3d_private.h"
 #include "vkd3d_version.h"
 
-#ifdef HAVE_DLFCN_H
-#include <dlfcn.h>
-
-static void *vkd3d_dlopen(const char *name)
-{
-    return dlopen(name, RTLD_NOW);
-}
-
-static void *vkd3d_dlsym(void *handle, const char *symbol)
-{
-    return dlsym(handle, symbol);
-}
-
-static int vkd3d_dlclose(void *handle)
-{
-    return dlclose(handle);
-}
-
-static const char *vkd3d_dlerror(void)
-{
-    return dlerror();
-}
-#else
-static void *vkd3d_dlopen(const char *name)
-{
-    FIXME("Not implemented for this platform.\n");
-    return NULL;
-}
-
-static void *vkd3d_dlsym(void *handle, const char *symbol)
-{
-    return NULL;
-}
-
-static int vkd3d_dlclose(void *handle)
-{
-    return 0;
-}
-
-static const char *vkd3d_dlerror(void)
-{
-    return "Not implemented for this platform.\n";
-}
-#endif
-
 struct vkd3d_struct
 {
     enum vkd3d_structure_type type;
@@ -129,18 +84,126 @@ static const struct vkd3d_optional_extension_info optional_device_extensions[] =
     VK_EXTENSION(KHR_MAINTENANCE3, KHR_maintenance3),
     VK_EXTENSION(KHR_PUSH_DESCRIPTOR, KHR_push_descriptor),
     VK_EXTENSION(KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE, KHR_sampler_mirror_clamp_to_edge),
+    VK_EXTENSION(KHR_TIMELINE_SEMAPHORE, KHR_timeline_semaphore),
     /* EXT extensions */
     VK_EXTENSION(EXT_CALIBRATED_TIMESTAMPS, EXT_calibrated_timestamps),
     VK_EXTENSION(EXT_CONDITIONAL_RENDERING, EXT_conditional_rendering),
     VK_EXTENSION(EXT_DEBUG_MARKER, EXT_debug_marker),
     VK_EXTENSION(EXT_DEPTH_CLIP_ENABLE, EXT_depth_clip_enable),
     VK_EXTENSION(EXT_DESCRIPTOR_INDEXING, EXT_descriptor_indexing),
+    VK_EXTENSION(EXT_ROBUSTNESS_2, EXT_robustness2),
     VK_EXTENSION(EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION, EXT_shader_demote_to_helper_invocation),
     VK_EXTENSION(EXT_SHADER_STENCIL_EXPORT, EXT_shader_stencil_export),
     VK_EXTENSION(EXT_TEXEL_BUFFER_ALIGNMENT, EXT_texel_buffer_alignment),
     VK_EXTENSION(EXT_TRANSFORM_FEEDBACK, EXT_transform_feedback),
     VK_EXTENSION(EXT_VERTEX_ATTRIBUTE_DIVISOR, EXT_vertex_attribute_divisor),
 };
+
+static HRESULT vkd3d_create_vk_descriptor_heap_layout(struct d3d12_device *device, unsigned int index)
+{
+    const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
+    VkDescriptorSetLayoutBindingFlagsCreateInfoEXT flags_info;
+    VkDescriptorSetLayoutCreateInfo set_desc;
+    VkDescriptorBindingFlagsEXT set_flags;
+    VkDescriptorSetLayoutBinding binding;
+    VkResult vr;
+
+    binding.binding = 0;
+    binding.descriptorType = device->vk_descriptor_heap_layouts[index].type;
+    binding.descriptorCount = device->vk_descriptor_heap_layouts[index].count;
+    binding.stageFlags = VK_SHADER_STAGE_ALL;
+    binding.pImmutableSamplers = NULL;
+
+    set_desc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    set_desc.pNext = &flags_info;
+    set_desc.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
+    set_desc.bindingCount = 1;
+    set_desc.pBindings = &binding;
+
+    set_flags = VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
+            | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
+            | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
+
+    flags_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+    flags_info.pNext = NULL;
+    flags_info.bindingCount = 1;
+    flags_info.pBindingFlags = &set_flags;
+
+    if ((vr = VK_CALL(vkCreateDescriptorSetLayout(device->vk_device, &set_desc, NULL,
+            &device->vk_descriptor_heap_layouts[index].vk_set_layout))) < 0)
+    {
+        WARN("Failed to create Vulkan descriptor set layout, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+
+    return S_OK;
+}
+
+static void vkd3d_vk_descriptor_heap_layouts_cleanup(struct d3d12_device *device)
+{
+    const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
+    enum vkd3d_vk_descriptor_set_index set;
+
+    for (set = 0; set < ARRAY_SIZE(device->vk_descriptor_heap_layouts); ++set)
+        VK_CALL(vkDestroyDescriptorSetLayout(device->vk_device, device->vk_descriptor_heap_layouts[set].vk_set_layout,
+                NULL));
+}
+
+static HRESULT vkd3d_vk_descriptor_heap_layouts_init(struct d3d12_device *device)
+{
+    static const struct vkd3d_vk_descriptor_heap_layout vk_descriptor_heap_layouts[VKD3D_SET_INDEX_COUNT] =
+    {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, false, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+        {VK_DESCRIPTOR_TYPE_SAMPLER, false, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER},
+        /* UAV counters */
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, true, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV},
+    };
+    const struct vkd3d_device_descriptor_limits *limits = &device->vk_info.descriptor_limits;
+    enum vkd3d_vk_descriptor_set_index set;
+    HRESULT hr;
+
+    for (set = 0; set < ARRAY_SIZE(device->vk_descriptor_heap_layouts); ++set)
+        device->vk_descriptor_heap_layouts[set] = vk_descriptor_heap_layouts[set];
+
+    if (!device->use_vk_heaps)
+        return S_OK;
+
+    for (set = 0; set < ARRAY_SIZE(device->vk_descriptor_heap_layouts); ++set)
+    {
+        switch (device->vk_descriptor_heap_layouts[set].type)
+        {
+            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                device->vk_descriptor_heap_layouts[set].count = limits->uniform_buffer_max_descriptors;
+                break;
+            case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+            case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                device->vk_descriptor_heap_layouts[set].count = limits->sampled_image_max_descriptors;
+                break;
+            case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+            case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                device->vk_descriptor_heap_layouts[set].count = limits->storage_image_max_descriptors;
+                break;
+            case VK_DESCRIPTOR_TYPE_SAMPLER:
+                device->vk_descriptor_heap_layouts[set].count = limits->sampler_max_descriptors;
+                break;
+            default:
+                ERR("Unhandled descriptor type %#x.\n", device->vk_descriptor_heap_layouts[set].type);
+                break;
+        }
+
+        if (FAILED(hr = vkd3d_create_vk_descriptor_heap_layout(device, set)))
+        {
+            vkd3d_vk_descriptor_heap_layouts_cleanup(device);
+            return hr;
+        }
+    }
+
+    return S_OK;
+}
 
 static unsigned int get_spec_version(const VkExtensionProperties *extensions,
         unsigned int count, const char *extension_name)
@@ -431,6 +494,7 @@ static void vkd3d_init_debug_report(struct vkd3d_instance *instance)
 
 static const struct vkd3d_debug_option vkd3d_config_options[] =
 {
+    {"virtual_heaps", VKD3D_CONFIG_FLAG_VIRTUAL_HEAPS}, /* always use virtual descriptor heaps */
     {"vk_debug", VKD3D_CONFIG_FLAG_VULKAN_DEBUG}, /* enable Vulkan debug extensions */
 };
 
@@ -690,10 +754,12 @@ struct vkd3d_physical_device_info
     VkPhysicalDeviceConditionalRenderingFeaturesEXT conditional_rendering_features;
     VkPhysicalDeviceDepthClipEnableFeaturesEXT depth_clip_features;
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features;
+    VkPhysicalDeviceRobustness2FeaturesEXT robustness2_features;
     VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demote_features;
     VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT texel_buffer_alignment_features;
     VkPhysicalDeviceTransformFeedbackFeaturesEXT xfb_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
+    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timeline_semaphore_features;
 
     VkPhysicalDeviceFeatures2 features2;
 };
@@ -706,9 +772,11 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *vertex_divisor_properties;
     VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT *buffer_alignment_properties;
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT *descriptor_indexing_features;
+    VkPhysicalDeviceRobustness2FeaturesEXT *robustness2_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
     VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *buffer_alignment_features;
     VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT *demote_features;
+    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR *timeline_semaphore_features;
     VkPhysicalDeviceDepthClipEnableFeaturesEXT *depth_clip_features;
     VkPhysicalDeviceMaintenance3Properties *maintenance3_properties;
     VkPhysicalDeviceTransformFeedbackPropertiesEXT *xfb_properties;
@@ -720,6 +788,7 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     conditional_rendering_features = &info->conditional_rendering_features;
     depth_clip_features = &info->depth_clip_features;
     descriptor_indexing_features = &info->descriptor_indexing_features;
+    robustness2_features = &info->robustness2_features;
     descriptor_indexing_properties = &info->descriptor_indexing_properties;
     maintenance3_properties = &info->maintenance3_properties;
     demote_features = &info->demote_features;
@@ -727,6 +796,7 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     buffer_alignment_properties = &info->texel_buffer_alignment_properties;
     vertex_divisor_features = &info->vertex_divisor_features;
     vertex_divisor_properties = &info->vertex_divisor_properties;
+    timeline_semaphore_features = &info->timeline_semaphore_features;
     xfb_features = &info->xfb_features;
     xfb_properties = &info->xfb_properties;
 
@@ -738,6 +808,8 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     vk_prepend_struct(&info->features2, depth_clip_features);
     descriptor_indexing_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
     vk_prepend_struct(&info->features2, descriptor_indexing_features);
+    robustness2_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+    vk_prepend_struct(&info->features2, robustness2_features);
     demote_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
     vk_prepend_struct(&info->features2, demote_features);
     buffer_alignment_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
@@ -746,6 +818,8 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     vk_prepend_struct(&info->features2, xfb_features);
     vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
     vk_prepend_struct(&info->features2, vertex_divisor_features);
+    timeline_semaphore_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+    vk_prepend_struct(&info->features2, timeline_semaphore_features);
 
     if (vulkan_info->KHR_get_physical_device_properties2)
         VK_CALL(vkGetPhysicalDeviceFeatures2KHR(physical_device, &info->features2));
@@ -1287,6 +1361,36 @@ static void vkd3d_device_descriptor_limits_init(struct vkd3d_device_descriptor_l
     limits->sampler_max_descriptors = min(device_limits->maxDescriptorSetSamplers, VKD3D_MAX_DESCRIPTOR_SET_SAMPLERS);
 }
 
+static void vkd3d_device_vk_heaps_descriptor_limits_init(struct vkd3d_device_descriptor_limits *limits,
+        const VkPhysicalDeviceDescriptorIndexingPropertiesEXT *properties)
+{
+    const unsigned int root_provision = D3D12_MAX_ROOT_COST / 2;
+    unsigned int srv_divisor = 1, uav_divisor = 1;
+
+    /* The total number of populated sampled image or storage image descriptors never exceeds the size of
+     * one set (or two sets if every UAV has a counter), but the total size of bound layouts will exceed
+     * device limits if each set size is maxDescriptorSet*, because of the D3D12 buffer + image allowance
+     * (and UAV counters). Breaking limits for layouts seems to work with RADV and Nvidia drivers at
+     * least, but let's try to stay within them if limits are high enough. */
+    if (properties->maxDescriptorSetUpdateAfterBindSampledImages >= (1u << 21))
+    {
+        srv_divisor = 2;
+        uav_divisor = properties->maxDescriptorSetUpdateAfterBindSampledImages >= (3u << 20) ? 3 : 2;
+    }
+
+    limits->uniform_buffer_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindUniformBuffers,
+            properties->maxPerStageDescriptorUpdateAfterBindUniformBuffers - root_provision);
+    limits->sampled_image_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindSampledImages,
+            properties->maxPerStageDescriptorUpdateAfterBindSampledImages / srv_divisor - root_provision);
+    limits->storage_buffer_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindStorageBuffers,
+            properties->maxPerStageDescriptorUpdateAfterBindStorageBuffers - root_provision);
+    limits->storage_image_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindStorageImages,
+            properties->maxPerStageDescriptorUpdateAfterBindStorageImages / uav_divisor - root_provision);
+    limits->sampler_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindSamplers,
+            properties->maxPerStageDescriptorUpdateAfterBindSamplers - root_provision);
+    limits->sampler_max_descriptors = min(limits->sampler_max_descriptors, VKD3D_MAX_DESCRIPTOR_SET_SAMPLERS);
+}
+
 static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         const struct vkd3d_device_create_info *create_info,
         struct vkd3d_physical_device_info *physical_device_info,
@@ -1440,10 +1544,14 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         vulkan_info->EXT_conditional_rendering = false;
     if (!physical_device_info->depth_clip_features.depthClipEnable)
         vulkan_info->EXT_depth_clip_enable = false;
+    if (!physical_device_info->robustness2_features.nullDescriptor)
+        vulkan_info->EXT_robustness2 = false;
     if (!physical_device_info->demote_features.shaderDemoteToHelperInvocation)
         vulkan_info->EXT_shader_demote_to_helper_invocation = false;
     if (!physical_device_info->texel_buffer_alignment_features.texelBufferAlignment)
         vulkan_info->EXT_texel_buffer_alignment = false;
+    if (!physical_device_info->timeline_semaphore_features.timelineSemaphore)
+        vulkan_info->KHR_timeline_semaphore = false;
 
     vulkan_info->texel_buffer_alignment_properties = physical_device_info->texel_buffer_alignment_properties;
 
@@ -1492,16 +1600,13 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     features->shaderTessellationAndGeometryPointSize = VK_FALSE;
 
     descriptor_indexing = &physical_device_info->descriptor_indexing_features;
-    if (descriptor_indexing)
-    {
-        descriptor_indexing->shaderInputAttachmentArrayDynamicIndexing = VK_FALSE;
-        descriptor_indexing->shaderInputAttachmentArrayNonUniformIndexing = VK_FALSE;
+    descriptor_indexing->shaderInputAttachmentArrayDynamicIndexing = VK_FALSE;
+    descriptor_indexing->shaderInputAttachmentArrayNonUniformIndexing = VK_FALSE;
 
-        /* We do not use storage buffers currently. */
-        features->shaderStorageBufferArrayDynamicIndexing = VK_FALSE;
-        descriptor_indexing->shaderStorageBufferArrayNonUniformIndexing = VK_FALSE;
-        descriptor_indexing->descriptorBindingStorageBufferUpdateAfterBind = VK_FALSE;
-    }
+    /* We do not use storage buffers currently. */
+    features->shaderStorageBufferArrayDynamicIndexing = VK_FALSE;
+    descriptor_indexing->shaderStorageBufferArrayNonUniformIndexing = VK_FALSE;
+    descriptor_indexing->descriptorBindingStorageBufferUpdateAfterBind = VK_FALSE;
 
     if (vulkan_info->EXT_descriptor_indexing && descriptor_indexing
             && (descriptor_indexing->descriptorBindingUniformBufferUpdateAfterBind
@@ -1514,8 +1619,25 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         features->robustBufferAccess = VK_FALSE;
     }
 
-    vkd3d_device_descriptor_limits_init(&vulkan_info->descriptor_limits,
-            &physical_device_info->properties2.properties.limits);
+    /* Select descriptor heap implementation. Forcing virtual heaps may be useful if
+     * a client allocates descriptor heaps too large for the Vulkan device, or the
+     * root signature cost exceeds the available push constant size. Virtual heaps
+     * use only enough descriptors for the descriptor tables of the currently bound
+     * root signature, and don't require a 32-bit push constant for each table. */
+    device->use_vk_heaps = vulkan_info->EXT_descriptor_indexing
+            && !(device->vkd3d_instance->config_flags & VKD3D_CONFIG_FLAG_VIRTUAL_HEAPS)
+            && descriptor_indexing->descriptorBindingUniformBufferUpdateAfterBind
+            && descriptor_indexing->descriptorBindingSampledImageUpdateAfterBind
+            && descriptor_indexing->descriptorBindingStorageImageUpdateAfterBind
+            && descriptor_indexing->descriptorBindingUniformTexelBufferUpdateAfterBind
+            && descriptor_indexing->descriptorBindingStorageTexelBufferUpdateAfterBind;
+
+    if (device->use_vk_heaps)
+        vkd3d_device_vk_heaps_descriptor_limits_init(&vulkan_info->descriptor_limits,
+                &physical_device_info->descriptor_indexing_properties);
+    else
+        vkd3d_device_descriptor_limits_init(&vulkan_info->descriptor_limits,
+                &physical_device_info->properties2.properties.limits);
 
     return S_OK;
 }
@@ -2504,12 +2626,12 @@ static ULONG STDMETHODCALLTYPE d3d12_device_Release(ID3D12Device *iface)
         vkd3d_private_store_destroy(&device->private_store);
 
         vkd3d_cleanup_format_info(device);
+        vkd3d_vk_descriptor_heap_layouts_cleanup(device);
         vkd3d_uav_clear_state_cleanup(&device->uav_clear_state, device);
         vkd3d_destroy_null_resources(&device->null_resources, device);
         vkd3d_gpu_va_allocator_cleanup(&device->gpu_va_allocator);
         vkd3d_gpu_descriptor_allocator_cleanup(&device->gpu_descriptor_allocator);
         vkd3d_render_pass_cache_cleanup(&device->render_pass_cache, device);
-        vkd3d_fence_worker_stop(&device->fence_worker, device);
         d3d12_device_destroy_pipeline_cache(device);
         d3d12_device_destroy_vkd3d_queues(device);
         for (i = 0; i < ARRAY_SIZE(device->desc_mutex); ++i)
@@ -3406,6 +3528,134 @@ static void STDMETHODCALLTYPE d3d12_device_CreateSampler(ID3D12Device *iface,
     d3d12_desc_write_atomic(d3d12_desc_from_cpu_handle(descriptor), &tmp, device);
 }
 
+static void flush_desc_writes(struct d3d12_desc_copy_location locations[][VKD3D_DESCRIPTOR_WRITE_BUFFER_SIZE],
+        struct d3d12_desc_copy_info *infos, struct d3d12_descriptor_heap *descriptor_heap, struct d3d12_device *device)
+{
+    enum vkd3d_vk_descriptor_set_index set;
+    for (set = 0; set < VKD3D_SET_INDEX_COUNT; ++set)
+    {
+        if (!infos[set].count)
+            continue;
+        d3d12_desc_copy_vk_heap_range(locations[set], &infos[set], descriptor_heap, set, device);
+        infos[set].count = 0;
+        infos[set].uav_counter = false;
+    }
+}
+
+static void d3d12_desc_buffered_copy_atomic(struct d3d12_desc *dst, const struct d3d12_desc *src,
+        struct d3d12_desc_copy_location locations[][VKD3D_DESCRIPTOR_WRITE_BUFFER_SIZE],
+        struct d3d12_desc_copy_info *infos, struct d3d12_descriptor_heap *descriptor_heap, struct d3d12_device *device)
+{
+    struct d3d12_desc_copy_location *location;
+    enum vkd3d_vk_descriptor_set_index set;
+    struct vkd3d_mutex *mutex;
+
+    mutex = d3d12_device_get_descriptor_mutex(device, src);
+    vkd3d_mutex_lock(mutex);
+
+    if (src->magic == VKD3D_DESCRIPTOR_MAGIC_FREE)
+    {
+        /* Source must be unlocked first, and therefore can't be used as a null source. */
+        static const struct d3d12_desc null = {0};
+        vkd3d_mutex_unlock(mutex);
+        d3d12_desc_write_atomic(dst, &null, device);
+        return;
+    }
+
+    set = vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(src->vk_descriptor_type);
+    location = &locations[set][infos[set].count++];
+
+    location->src = *src;
+
+    if (location->src.magic & VKD3D_DESCRIPTOR_MAGIC_HAS_VIEW)
+        vkd3d_view_incref(location->src.u.view_info.view);
+
+    vkd3d_mutex_unlock(mutex);
+
+    infos[set].uav_counter |= (location->src.magic == VKD3D_DESCRIPTOR_MAGIC_UAV)
+            && !!location->src.u.view_info.view->vk_counter_view;
+    location->dst = dst;
+
+    if (infos[set].count == ARRAY_SIZE(locations[0]))
+    {
+        d3d12_desc_copy_vk_heap_range(locations[set], &infos[set], descriptor_heap, set, device);
+        infos[set].count = 0;
+        infos[set].uav_counter = false;
+    }
+}
+
+/* Some games, e.g. Control, copy a large number of descriptors per frame, so the
+ * speed of this function is critical. */
+static void d3d12_device_vk_heaps_copy_descriptors(struct d3d12_device *device,
+        UINT dst_descriptor_range_count, const D3D12_CPU_DESCRIPTOR_HANDLE *dst_descriptor_range_offsets,
+        const UINT *dst_descriptor_range_sizes,
+        UINT src_descriptor_range_count, const D3D12_CPU_DESCRIPTOR_HANDLE *src_descriptor_range_offsets,
+        const UINT *src_descriptor_range_sizes)
+{
+    struct d3d12_desc_copy_location locations[VKD3D_SET_INDEX_COUNT][VKD3D_DESCRIPTOR_WRITE_BUFFER_SIZE];
+    unsigned int dst_range_idx, dst_idx, src_range_idx, src_idx;
+    /* The locations array is relatively large, and often mostly empty. Keeping these
+     * values together in a separate array will likely result in fewer cache misses. */
+    struct d3d12_desc_copy_info infos[VKD3D_SET_INDEX_COUNT];
+    struct d3d12_descriptor_heap *descriptor_heap = NULL;
+    const struct d3d12_desc *src, *heap_base, *heap_end;
+    unsigned int dst_range_size, src_range_size;
+    struct d3d12_desc *dst;
+
+    descriptor_heap = vkd3d_gpu_descriptor_allocator_heap_from_descriptor(&device->gpu_descriptor_allocator,
+            d3d12_desc_from_cpu_handle(dst_descriptor_range_offsets[0]));
+    heap_base = (const struct d3d12_desc *)descriptor_heap->descriptors;
+    heap_end = heap_base + descriptor_heap->desc.NumDescriptors;
+
+    memset(infos, 0, sizeof(infos));
+    dst_range_idx = dst_idx = 0;
+    src_range_idx = src_idx = 0;
+    while (dst_range_idx < dst_descriptor_range_count && src_range_idx < src_descriptor_range_count)
+    {
+        dst_range_size = dst_descriptor_range_sizes ? dst_descriptor_range_sizes[dst_range_idx] : 1;
+        src_range_size = src_descriptor_range_sizes ? src_descriptor_range_sizes[src_range_idx] : 1;
+
+        dst = d3d12_desc_from_cpu_handle(dst_descriptor_range_offsets[dst_range_idx]);
+        src = d3d12_desc_from_cpu_handle(src_descriptor_range_offsets[src_range_idx]);
+
+        if (dst < heap_base || dst >= heap_end)
+        {
+            flush_desc_writes(locations, infos, descriptor_heap, device);
+            descriptor_heap = vkd3d_gpu_descriptor_allocator_heap_from_descriptor(&device->gpu_descriptor_allocator,
+                    dst);
+            heap_base = (const struct d3d12_desc *)descriptor_heap->descriptors;
+            heap_end = heap_base + descriptor_heap->desc.NumDescriptors;
+        }
+
+        for (; dst_idx < dst_range_size && src_idx < src_range_size; src_idx++, dst_idx++)
+        {
+            /* We don't need to lock either descriptor for the identity check. The descriptor
+             * mutex is only intended to prevent use-after-free of the vkd3d_view caused by a
+             * race condition in the calling app. It is unnecessary to protect this test as it's
+             * the app's race condition, not ours. */
+            if (dst[dst_idx].magic == src[src_idx].magic && (dst[dst_idx].magic & VKD3D_DESCRIPTOR_MAGIC_HAS_VIEW)
+                    && dst[dst_idx].u.view_info.written_serial_id == src[src_idx].u.view_info.view->serial_id)
+                continue;
+            d3d12_desc_buffered_copy_atomic(&dst[dst_idx], &src[src_idx], locations, infos, descriptor_heap, device);
+        }
+
+        if (dst_idx >= dst_range_size)
+        {
+            ++dst_range_idx;
+            dst_idx = 0;
+        }
+        if (src_idx >= src_range_size)
+        {
+            ++src_range_idx;
+            src_idx = 0;
+        }
+    }
+
+    flush_desc_writes(locations, infos, descriptor_heap, device);
+}
+
+#define VKD3D_DESCRIPTOR_OPTIMISED_COPY_MIN_COUNT 8
+
 static void STDMETHODCALLTYPE d3d12_device_CopyDescriptors(ID3D12Device *iface,
         UINT dst_descriptor_range_count, const D3D12_CPU_DESCRIPTOR_HANDLE *dst_descriptor_range_offsets,
         const UINT *dst_descriptor_range_sizes,
@@ -3431,6 +3681,18 @@ static void STDMETHODCALLTYPE d3d12_device_CopyDescriptors(ID3D12Device *iface,
             && descriptor_heap_type != D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
     {
         FIXME("Unhandled descriptor heap type %#x.\n", descriptor_heap_type);
+        return;
+    }
+
+    if (!dst_descriptor_range_count)
+        return;
+
+    if (device->use_vk_heaps && (dst_descriptor_range_count > 1 || (dst_descriptor_range_sizes
+            && dst_descriptor_range_sizes[0] >= VKD3D_DESCRIPTOR_OPTIMISED_COPY_MIN_COUNT)))
+    {
+        d3d12_device_vk_heaps_copy_descriptors(device, dst_descriptor_range_count, dst_descriptor_range_offsets,
+                dst_descriptor_range_sizes, src_descriptor_range_count, src_descriptor_range_offsets,
+                src_descriptor_range_sizes);
         return;
     }
 
@@ -3469,6 +3731,17 @@ static void STDMETHODCALLTYPE d3d12_device_CopyDescriptorsSimple(ID3D12Device *i
             "src_descriptor_range_offset %#lx, descriptor_heap_type %#x.\n",
             iface, descriptor_count, dst_descriptor_range_offset.ptr, src_descriptor_range_offset.ptr,
             descriptor_heap_type);
+
+    if (descriptor_count >= VKD3D_DESCRIPTOR_OPTIMISED_COPY_MIN_COUNT)
+    {
+        struct d3d12_device *device = impl_from_ID3D12Device(iface);
+        if (device->use_vk_heaps)
+        {
+            d3d12_device_vk_heaps_copy_descriptors(device, 1, &dst_descriptor_range_offset,
+                    &descriptor_count, 1, &src_descriptor_range_offset, &descriptor_count);
+            return;
+        }
+    }
 
     d3d12_device_CopyDescriptors(iface, 1, &dst_descriptor_range_offset, &descriptor_count,
             1, &src_descriptor_range_offset, &descriptor_count, descriptor_heap_type);
@@ -3736,7 +4009,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateFence(ID3D12Device *iface,
     struct d3d12_fence *object;
     HRESULT hr;
 
-    TRACE("iface %p, intial_value %#"PRIx64", flags %#x, riid %s, fence %p.\n",
+    TRACE("iface %p, initial_value %#"PRIx64", flags %#x, riid %s, fence %p.\n",
             iface, initial_value, flags, debugstr_guid(riid), fence);
 
     if (FAILED(hr = d3d12_fence_create(device, initial_value, flags, &object)))
@@ -3993,11 +4266,8 @@ static HRESULT d3d12_device_init(struct d3d12_device *device,
     if (FAILED(hr = vkd3d_private_store_init(&device->private_store)))
         goto out_free_pipeline_cache;
 
-    if (FAILED(hr = vkd3d_fence_worker_start(&device->fence_worker, device)))
-        goto out_free_private_store;
-
     if (FAILED(hr = vkd3d_init_format_info(device)))
-        goto out_stop_fence_worker;
+        goto out_free_private_store;
 
     if (FAILED(hr = vkd3d_init_null_resources(&device->null_resources, device)))
         goto out_cleanup_format_info;
@@ -4005,10 +4275,15 @@ static HRESULT d3d12_device_init(struct d3d12_device *device,
     if (FAILED(hr = vkd3d_uav_clear_state_init(&device->uav_clear_state, device)))
         goto out_destroy_null_resources;
 
+    if (FAILED(hr = vkd3d_vk_descriptor_heap_layouts_init(device)))
+        goto out_cleanup_uav_clear_state;
+
     vkd3d_render_pass_cache_init(&device->render_pass_cache);
     vkd3d_gpu_descriptor_allocator_init(&device->gpu_descriptor_allocator);
     vkd3d_gpu_va_allocator_init(&device->gpu_va_allocator);
     vkd3d_time_domains_init(device);
+
+    device->blocked_queue_count = 0;
 
     for (i = 0; i < ARRAY_SIZE(device->desc_mutex); ++i)
         vkd3d_mutex_init(&device->desc_mutex[i]);
@@ -4020,12 +4295,12 @@ static HRESULT d3d12_device_init(struct d3d12_device *device,
 
     return S_OK;
 
+out_cleanup_uav_clear_state:
+    vkd3d_uav_clear_state_cleanup(&device->uav_clear_state, device);
 out_destroy_null_resources:
     vkd3d_destroy_null_resources(&device->null_resources, device);
 out_cleanup_format_info:
     vkd3d_cleanup_format_info(device);
-out_stop_fence_worker:
-    vkd3d_fence_worker_stop(&device->fence_worker, device);
 out_free_private_store:
     vkd3d_private_store_destroy(&device->private_store);
 out_free_pipeline_cache:

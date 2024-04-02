@@ -699,10 +699,6 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
   }
   LeaveCriticalSection(&cps->cs);
 
-  EnterCriticalSection(&listen_cs);
-  CloseHandle(cps->server_thread);
-  cps->server_thread = NULL;
-  LeaveCriticalSection(&listen_cs);
   TRACE("done\n");
   return 0;
 }
@@ -1570,7 +1566,10 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
       LIST_FOR_EACH_ENTRY(protseq, &protseqs, RpcServerProtseq, entry)
       {
           if ((wait_thread = protseq->server_thread))
+          {
+              protseq->server_thread = NULL;
               break;
+          }
       }
       LeaveCriticalSection(&server_cs);
       if (!wait_thread)
@@ -1579,6 +1578,7 @@ RPC_STATUS WINAPI RpcMgmtWaitServerListen( void )
       TRACE("waiting for thread %lu\n", GetThreadId(wait_thread));
       LeaveCriticalSection(&listen_cs);
       WaitForSingleObject(wait_thread, INFINITE);
+      CloseHandle(wait_thread);
       EnterCriticalSection(&listen_cs);
   }
   if (listen_done_event == event)

@@ -21,6 +21,8 @@
 #ifndef __SQL_H
 #define __SQL_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef ODBCVER
 #define ODBCVER 0x0351
 #endif
@@ -743,4 +745,6 @@ SQLRETURN WINAPI   SQLTransact(SQLHENV EnvironmentHandle,
 #ifdef __cplusplus
 }
 #endif
+#include "wine/winheader_exit.h"
+
 #endif

@@ -18,6 +18,8 @@
 #ifndef _LMSHARE_H
 #define _LMSHARE_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,5 +83,7 @@ NET_API_STATUS WINAPI NetSessionGetInfo(LMSTR,LMSTR,LMSTR,DWORD,LPBYTE*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* ndef _LMSHARE_H */

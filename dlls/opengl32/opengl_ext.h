@@ -1,6 +1,7 @@
 /* Typedefs for extensions loading
 
      Copyright (c) 2000 Lionel Ulmer
+     Copyright     2019 Conor McCarthy for Codeweavers
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +20,11 @@
 #ifndef __DLLS_OPENGL32_OPENGL_EXT_H
 #define __DLLS_OPENGL32_OPENGL_EXT_H
 
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "wine/heap.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 
@@ -42,5 +45,67 @@ static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
     else if (funcs == (void *)-1) funcs = &null_opengl_funcs;
     return funcs;
 }
+
+#ifdef __i386_on_x86_64__
+
+static inline void *mirror_pointer_array(void **pointers, size_t count)
+{
+    void * HOSTPTR *ret = heap_alloc(count * sizeof(void * HOSTPTR));
+    if (ret)
+    {
+      size_t i;
+      for (i = 0; i < count; ++i)
+          ret[i] = pointers[i];
+    }
+    return ret;
+}
+
+static inline WINEGLHOST(GLintptr) *mirror_intptr_array(const GLintptr *array, size_t count)
+{
+    WINEGLHOST(GLintptr) *ret = heap_alloc(count * sizeof(WINEGLHOST(GLintptr)));
+    if (ret)
+    {
+      size_t i;
+      for (i = 0; i < count; ++i)
+          ret[i] = array[i];
+    }
+    return ret;
+}
+
+static inline GLchar *mirror_callback_string(const GLchar *message)
+{
+    return message ? heap_strdup(message) : NULL;
+}
+
+static inline void gl_temp_free(void *buffer)
+{
+    heap_free(buffer);
+}
+
+#else
+
+static inline void *mirror_pointer_array(void **pointers, size_t count)
+{
+    (void)count;
+    return pointers;
+}
+
+static inline GLintptr *mirror_intptr_array(const GLintptr *array, size_t count)
+{
+    (void)count;
+    return (GLintptr*)array;
+}
+
+static inline GLchar *mirror_callback_string(const GLchar *message)
+{
+    return (GLchar*)message;
+}
+
+static inline void gl_temp_free(const void *buffer)
+{
+    (void)buffer;
+}
+
+#endif /* __i386_on_x86_64__ */
 
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

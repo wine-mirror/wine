@@ -21,6 +21,8 @@
 #ifndef __WINE_ATLWIN_H__
 #define __WINE_ATLWIN_H__
 
+#include "wine/winheader_enter.h"
+
 typedef struct _ATL_WNDCLASSINFOA_TAG
 {
     WNDCLASSEXA m_wc;
@@ -49,5 +51,7 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 HDC WINAPI AtlCreateTargetDC(HDC hdc, DVTARGETDEVICE *ptd);
 void WINAPI AtlHiMetricToPixel(const SIZEL *lpSizeInHiMetric, LPSIZEL lpSizeInPix);
 void WINAPI AtlPixelToHiMetric(const SIZEL *lpSizeInPix, LPSIZEL lpSizeInHiMetric);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ATLWIN_H__ */

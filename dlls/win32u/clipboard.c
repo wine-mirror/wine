@@ -23,16 +23,36 @@
  *
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
+#include <pthread.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
+
+#ifdef __i386_on_x86_64__
+#undef free
+#define heapfree(x) HeapFree(GetProcessHeap(), 0, x)
+#else
+#define heapfree(x) free(x)
+#endif
+
+static pthread_mutex_t clipboard_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+struct cached_format
+{
+    struct list entry;       /* entry in cache list */
+    UINT        format;      /* format id */
+    UINT        seqno;       /* sequence number when the data was set */
+    HANDLE      handle;      /* original data handle */
+};
+
+static struct list cached_formats = LIST_INIT( cached_formats );
+static struct list formats_to_free = LIST_INIT( formats_to_free );
 
 
 /* get a debug string for a format id */
@@ -76,6 +96,109 @@ static const char *debugstr_format( UINT id )
     }
 }
 
+/* retrieve a data format from the cache */
+static struct cached_format *get_cached_format( UINT format )
+{
+    struct cached_format *cache;
+
+    LIST_FOR_EACH_ENTRY( cache, &cached_formats, struct cached_format, entry )
+        if (cache->format == format) return cache;
+    return NULL;
+}
+
+/* free a single cached format */
+static void free_cached_data( struct cached_format *cache )
+{
+    struct free_cached_data_params params;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    switch (cache->format)
+    {
+    case CF_BITMAP:
+    case CF_PALETTE:
+        make_gdi_object_system( cache->handle, FALSE );
+    case CF_DSPBITMAP:
+        NtGdiDeleteObjectApp( cache->handle );
+        break;
+
+    default:
+        params.format = cache->format;
+        params.handle = cache->handle;
+        KeUserModeCallback( NtUserFreeCachedClipboardData, &params, sizeof(params),
+                            &ret_ptr, &ret_len );
+        break;
+    }
+    heapfree( cache );
+}
+
+/* free all the data in the cache */
+static void free_cached_formats( struct list *list )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( list )))
+    {
+        list_remove( ptr );
+        free_cached_data( LIST_ENTRY( ptr, struct cached_format, entry ));
+    }
+}
+
+/* clear global memory formats; special types are freed on EmptyClipboard */
+static void invalidate_memory_formats( struct list *free_list )
+{
+    struct cached_format *cache, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( cache, next, &cached_formats, struct cached_format, entry )
+    {
+        switch (cache->format)
+        {
+        case CF_BITMAP:
+        case CF_DSPBITMAP:
+        case CF_PALETTE:
+        case CF_ENHMETAFILE:
+        case CF_DSPENHMETAFILE:
+        case CF_METAFILEPICT:
+        case CF_DSPMETAFILEPICT:
+            continue;
+        default:
+            list_remove( &cache->entry );
+            list_add_tail( free_list, &cache->entry );
+            break;
+        }
+    }
+}
+
+/**************************************************************************
+ *           NtUserOpenClipboard    (win32u.@)
+ */
+BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
+{
+    struct list free_list = LIST_INIT( free_list );
+    BOOL ret;
+    HWND owner;
+
+    TRACE( "%p\n", hwnd );
+
+    user_driver->pUpdateClipboard();
+
+    pthread_mutex_lock( &clipboard_mutex );
+
+    SERVER_START_REQ( open_clipboard )
+    {
+        req->window = wine_server_user_handle( hwnd );
+        ret = !wine_server_call_err( req );
+        owner = wine_server_ptr_handle( reply->owner );
+    }
+    SERVER_END_REQ;
+
+    if (ret && !is_current_process_window( owner )) invalidate_memory_formats( &free_list );
+
+    pthread_mutex_unlock( &clipboard_mutex );
+    free_cached_formats( &free_list );
+    return ret;
+}
+
 /**************************************************************************
  *           NtUserCloseClipboard    (win32u.@)
  */
@@ -98,6 +221,39 @@ BOOL WINAPI NtUserCloseClipboard(void)
 
     if (viewer) NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
                                    0, NtUserSendNotifyMessage, FALSE );
+    return ret;
+}
+
+/**************************************************************************
+ *           NtUserEmptyClipboard    (win32u.@)
+ */
+BOOL WINAPI NtUserEmptyClipboard(void)
+{
+    BOOL ret;
+    HWND owner = NtUserGetClipboardOwner();
+    struct list free_list = LIST_INIT( free_list );
+
+    TRACE( "owner %p\n", owner );
+
+    if (owner) send_message_timeout( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG,
+                                     5000, NULL, FALSE );
+
+    pthread_mutex_lock( &clipboard_mutex );
+
+    SERVER_START_REQ( empty_clipboard )
+    {
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        list_move_tail( &free_list, &formats_to_free );
+        list_move_tail( &free_list, &cached_formats );
+    }
+
+    pthread_mutex_unlock( &clipboard_mutex );
+    free_cached_formats( &free_list );
     return ret;
 }
 
@@ -409,4 +565,178 @@ void release_clipboard_owner( HWND hwnd )
     if (viewer)
         NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
                            0, NtUserSendNotifyMessage, FALSE );
+}
+
+/**************************************************************************
+ *           NtUserSetClipboardData    (win32u.@)
+ */
+NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE data, struct set_clipboard_params *params )
+{
+    struct cached_format *cache = NULL, *prev = NULL;
+    void *ptr = NULL;
+    data_size_t size = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    TRACE( "%s %p\n", debugstr_format( format ), data );
+
+    if (params->cache_only)
+    {
+        pthread_mutex_lock( &clipboard_mutex );
+        if ((cache = get_cached_format( format )) && cache->seqno == params->seqno)
+            cache->handle = data;
+        else
+            status = STATUS_UNSUCCESSFUL;
+        pthread_mutex_unlock( &clipboard_mutex );
+        return status;
+    }
+
+    if (params->data)
+    {
+        ptr = ULongToPtr(params->data);
+        size = params->size;
+        if (data)
+        {
+            if (!(cache = malloc( sizeof(*cache) ))) goto done;
+            cache->format = format;
+            cache->handle = data;
+        }
+
+        if (format == CF_BITMAP || format == CF_PALETTE)
+        {
+            make_gdi_object_system( cache->handle, TRUE );
+        }
+    }
+
+    pthread_mutex_lock( &clipboard_mutex );
+
+    SERVER_START_REQ( set_clipboard_data )
+    {
+        req->format = format;
+        NtQueryDefaultLocale( TRUE, &req->lcid );
+        wine_server_add_data( req, ptr, size );
+        if (!(status = wine_server_call( req )))
+        {
+            if (cache) cache->seqno = reply->seqno;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (!status)
+    {
+        /* free the previous entry if any */
+        if ((prev = get_cached_format( format ))) list_remove( &prev->entry );
+        if (cache) list_add_tail( &cached_formats, &cache->entry );
+    }
+    else heapfree( cache );
+
+    pthread_mutex_unlock( &clipboard_mutex );
+    if (prev) free_cached_data( prev );
+
+done:
+    return status;
+}
+
+/**************************************************************************
+ *           NtUserGetClipboardData    (win32u.@)
+ */
+HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
+{
+    struct cached_format *cache;
+    NTSTATUS status;
+    UINT from, data_seqno;
+    size_t size;
+    HWND owner;
+    BOOL render = TRUE;
+
+    for (;;)
+    {
+        pthread_mutex_lock( &clipboard_mutex );
+
+        cache = get_cached_format( format );
+
+        SERVER_START_REQ( get_clipboard_data )
+        {
+            req->format = format;
+            req->render = render;
+            if (cache && cache->handle)
+            {
+                req->cached = 1;
+                req->seqno = cache->seqno;
+            }
+            wine_server_set_reply( req, ULongToPtr(params->data), params->size );
+            status = wine_server_call( req );
+            from = reply->from;
+            size = reply->total;
+            data_seqno = reply->seqno;
+            owner = wine_server_ptr_handle( reply->owner );
+        }
+        SERVER_END_REQ;
+
+        if (!status && size)
+        {
+            if (cache)
+            {
+                if (cache->handle && data_seqno == cache->seqno)  /* we can reuse the cached data */
+                {
+                    HANDLE ret = cache->handle;
+                    pthread_mutex_unlock( &clipboard_mutex );
+                    TRACE( "%s returning %p\n", debugstr_format( format ), ret );
+                    return ret;
+                }
+
+                /* cache entry is stale, remove it */
+                list_remove( &cache->entry );
+                list_add_tail( &formats_to_free, &cache->entry );
+            }
+
+            /* allocate new cache entry */
+            if (!(cache = malloc( sizeof(*cache) ))) return 0;
+
+            cache->format = format;
+            cache->seqno  = data_seqno;
+            cache->handle = NULL;
+            params->seqno = cache->seqno;
+            list_add_tail( &cached_formats, &cache->entry );
+            pthread_mutex_unlock( &clipboard_mutex );
+            TRACE( "%s needs unmarshaling\n", debugstr_format( format ) );
+            params->data_size = ~0;
+            params->size = size;
+            return 0;
+        }
+        pthread_mutex_unlock( &clipboard_mutex );
+
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
+            params->data_size = size;
+            return 0;
+        }
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0; /* no such format */
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError( status ));
+            TRACE( "%s error %08x\n", debugstr_format( format ), status );
+            return 0;
+        }
+        if (render)  /* try rendering it */
+        {
+            render = FALSE;
+            if (from)
+            {
+                struct render_synthesized_format_params params = { .format = format, .from = from };
+                ULONG ret_len;
+                void *ret_ptr;
+                KeUserModeCallback( NtUserRenderSynthesizedFormat, &params, sizeof(params),
+                                    &ret_ptr, &ret_len );
+                continue;
+            }
+            if (owner)
+            {
+                TRACE( "%s sending WM_RENDERFORMAT to %p\n", debugstr_format( format ), owner );
+                send_message( owner, WM_RENDERFORMAT, format, 0 );
+                continue;
+            }
+        }
+        TRACE( "%s returning 0\n", debugstr_format( format ));
+        return 0;
+    }
 }

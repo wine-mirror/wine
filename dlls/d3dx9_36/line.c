@@ -60,7 +60,7 @@ static ULONG WINAPI d3dx9_line_AddRef(ID3DXLine *iface)
     struct d3dx9_line *line = impl_from_ID3DXLine(iface);
     ULONG refcount = InterlockedIncrement(&line->ref);
 
-    TRACE("%p increasing refcount to %u.\n", line, refcount);
+    TRACE("%p increasing refcount to %lu.\n", line, refcount);
 
     return refcount;
 }
@@ -70,7 +70,7 @@ static ULONG WINAPI d3dx9_line_Release(ID3DXLine *iface)
     struct d3dx9_line *line = impl_from_ID3DXLine(iface);
     ULONG refcount = InterlockedDecrement(&line->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", line, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", line, refcount);
 
     if (!refcount)
     {
@@ -148,7 +148,7 @@ failed:
 static HRESULT WINAPI d3dx9_line_Draw(ID3DXLine *iface, const D3DXVECTOR2 *vertex_list,
         DWORD vertex_list_count, D3DCOLOR color)
 {
-    FIXME("iface %p, vertex_list %p, vertex_list_count %u, color 0x%08x stub!\n",
+    FIXME("iface %p, vertex_list %p, vertex_list_count %lu, color 0x%08lx stub!\n",
             iface, vertex_list, vertex_list_count, color);
 
     return E_NOTIMPL;
@@ -157,7 +157,7 @@ static HRESULT WINAPI d3dx9_line_Draw(ID3DXLine *iface, const D3DXVECTOR2 *verte
 static HRESULT WINAPI d3dx9_line_DrawTransform(ID3DXLine *iface, const D3DXVECTOR3 *vertex_list,
         DWORD vertex_list_count, const D3DXMATRIX *transform, D3DCOLOR color)
 {
-    FIXME("iface %p, vertex_list %p, vertex_list_count %u, transform %p, color 0x%08x stub!\n",
+    FIXME("iface %p, vertex_list %p, vertex_list_count %lu, transform %p, color 0x%08lx stub!\n",
             iface, vertex_list, vertex_list_count, transform, color);
 
     return E_NOTIMPL;
@@ -165,7 +165,7 @@ static HRESULT WINAPI d3dx9_line_DrawTransform(ID3DXLine *iface, const D3DXVECTO
 
 static HRESULT WINAPI d3dx9_line_SetPattern(ID3DXLine *iface, DWORD pattern)
 {
-    FIXME("iface %p, pattern 0x%08x stub!\n", iface, pattern);
+    FIXME("iface %p, pattern 0x%08lx stub!\n", iface, pattern);
 
     return E_NOTIMPL;
 }

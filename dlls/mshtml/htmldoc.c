@@ -5951,10 +5951,67 @@ static dispex_static_data_t HTMLDocumentObj_dispex = {
     HTMLDocumentObj_iface_tids
 };
 
+/* TRUE if we create a dedicated thread for all HTML documents */
+static BOOL gecko_main_thread_config;
+
+static LONG gecko_main_thread;
+static HWND gecko_main_thread_hwnd;
+static HANDLE gecko_main_thread_event;
+
+static DWORD WINAPI gecko_main_thread_proc(void *arg)
+{
+    MSG msg;
+
+    TRACE("\n");
+
+    CoInitialize(NULL);
+
+    gecko_main_thread_hwnd = get_thread_hwnd();
+    if(!gecko_main_thread_hwnd) {
+        ERR("Could not create thread window\n");
+        SetEvent(gecko_main_thread_event);
+        CoUninitialize();
+        return 0;
+    }
+
+    gecko_main_thread = GetCurrentThreadId();
+    SetEvent(gecko_main_thread_event);
+
+    while(GetMessageW(&msg, NULL, 0, 0)) {
+        DispatchMessageW(&msg);
+        TranslateMessage(&msg);
+    }
+
+    CoUninitialize();
+    return 0;
+}
+
+static BOOL WINAPI read_thread_config(INIT_ONCE *once, void *param, void **context)
+{
+    HKEY key;
+    DWORD res;
+    static const WCHAR enable_keyW[] =
+        {'S','o','f','t','w','a','r','e',
+         '\\','W','i','n','e',
+         '\\','M','S','H','T','M','L',
+         '\\','M','a','i','n','T','h','r','e','a','d','H','a','c','k',0};
+
+    res = RegOpenKeyW(HKEY_CURRENT_USER, enable_keyW, &key);
+    if(res == ERROR_SUCCESS) {
+        RegCloseKey(key);
+        FIXME("CXHACK: Using separated main thread.\n");
+        gecko_main_thread_config = TRUE;
+    }
+
+    return TRUE;
+}
+
 static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID riid, void **ppv)
 {
     HTMLDocumentObj *doc;
     HRESULT hres;
+
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
     if(outer && !IsEqualGUID(&IID_IUnknown, riid)) {
         *ppv = NULL;
@@ -5964,6 +6021,36 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     /* ensure that security manager is initialized */
     if(!get_security_manager())
         return E_OUTOFMEMORY;
+
+    /* CXHACK 15579 */
+    InitOnceExecuteOnce(&init_once, read_thread_config, NULL, NULL);
+    if(gecko_main_thread_config && !gecko_main_thread) {
+        HANDLE thread, event;
+
+        event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        if(InterlockedCompareExchangePointer(&gecko_main_thread_event, event, NULL))
+            CloseHandle(event);
+
+        thread = CreateThread(NULL, 0, gecko_main_thread_proc, NULL, 0, NULL);
+        if(thread) {
+            WaitForSingleObject(gecko_main_thread_event, INFINITE);
+            CloseHandle(thread);
+        }else {
+            ERR("Could not create a thread\n");
+        }
+    }
+
+    if(!gecko_main_thread) {
+        gecko_main_thread = GetCurrentThreadId();
+        gecko_main_thread_hwnd = get_thread_hwnd();
+    }else if(GetCurrentThreadId() != gecko_main_thread) {
+        FIXME("CXHACK: Creating HTMLDocument outside Gecko main thread\n");
+        if(!gecko_main_thread_config) {
+            FIXME("CXHACK: Dedicated main thread not configured\n");
+            FIXME("CXHACK: Create HKCU\\Software\\Wine\\MSHTML\\MainThreadHack key\n");
+        }
+        return create_marshaled_doc(gecko_main_thread_hwnd, riid, ppv);
+    }
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
     if(!doc)

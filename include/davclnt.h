@@ -19,6 +19,8 @@
 #ifndef __WINE_DAVCLNT_H
 #define __WINE_DAVCLNT_H
 
+#include "wine/winheader_enter.h"
+
 #define OPAQUE_HANDLE DWORD
 
 #define DAV_AUTHN_SCHEME_BASIC     0x00000001
@@ -69,5 +71,7 @@ DWORD WINAPI DavGetHTTPFromUNCPath(LPCWSTR,LPWSTR,LPDWORD);
 DWORD WINAPI DavGetUNCFromHTTPPath(LPCWSTR,LPWSTR,LPDWORD);
 OPAQUE_HANDLE WINAPI DavRegisterAuthCallback(PFNDAVAUTHCALLBACK,ULONG);
 VOID WINAPI DavUnregisterAuthCallback(OPAQUE_HANDLE);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DAVCLNT_H */

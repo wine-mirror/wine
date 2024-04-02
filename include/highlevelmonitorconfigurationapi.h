@@ -19,6 +19,8 @@
 #ifndef __WINE_HIGHLEVELMONITORCONFIGURATIONAPI_H
 #define __WINE_HIGHLEVELMONITORCONFIGURATIONAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,5 +80,7 @@ typedef enum _MC_DISPLAY_TECHNOLOGY_TYPE
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_HIGHLEVELMONITORCONFIGURATIONAPI_H */

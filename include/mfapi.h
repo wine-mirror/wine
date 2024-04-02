@@ -19,6 +19,8 @@
 #ifndef __WINE_MFAPI_H
 #define __WINE_MFAPI_H
 
+#include "wine/winheader_enter.h"
+
 #include <mfobjects.h>
 #include <mmreg.h>
 #include <avrt.h>
@@ -612,5 +614,7 @@ HRESULT WINAPI MFUnwrapMediaType(IMFMediaType *wrapped, IMFMediaType **original)
 #if defined(__cplusplus)
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_MFAPI_H */

@@ -19,6 +19,8 @@
 #ifndef __WINE_D3DX9ANIM_H
 #define __WINE_D3DX9ANIM_H
 
+#include "wine/winheader_enter.h"
+
 DEFINE_GUID(IID_ID3DXAnimationSet,           0x698cfb3f, 0x9289, 0x4d95, 0x9a, 0x57, 0x33, 0xa9, 0x4b, 0x5a, 0x65, 0xf9);
 DEFINE_GUID(IID_ID3DXKeyframedAnimationSet,  0xfa4e8e3a, 0x9786, 0x407d, 0x8b, 0x4c, 0x59, 0x95, 0x89, 0x37, 0x64, 0xaf);
 DEFINE_GUID(IID_ID3DXCompressedAnimationSet, 0x6cc2480d, 0x3808, 0x4739, 0x9f, 0x88, 0xde, 0x49, 0xfa, 0xcd, 0x8d, 0x4c);
@@ -404,5 +406,7 @@ HRESULT WINAPI D3DXCreateAnimationController(UINT max_animation_output_count, UI
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_D3DX9ANIM_H */

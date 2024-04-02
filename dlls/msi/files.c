@@ -324,6 +324,17 @@ static msi_file_state calculate_install_state( MSIPACKAGE *package, MSIFILE *fil
                       HIWORD(file_version->dwFileVersionLS), LOWORD(file_version->dwFileVersionLS));
                 state = msifs_overwrite;
             }
+            /* CrossOver Hack #19776 for Microsoft Visual C++ Redistributable (2015 and 2017).
+             * Always install ucrtbase.dll. */
+            else if (!wcscmp(file->File, L"ucrtbase.dll") &&
+                    (!wcscmp(package->ProductCode, L"{A2563E55-3BEC-3828-8D67-E5E8B9E8B675}") ||
+                     !wcscmp(package->ProductCode, L"{029DA848-1A80-34D3-BFC1-A6447BFC8E7F}") ||
+                     !wcscmp(package->ProductCode, L"{0D3E9E15-DE7A-300B-96F1-B4AF12B96488}") ||
+                     !wcscmp(package->ProductCode, L"{B0037450-526D-3448-A370-CACBD87769A0}")))
+            {
+                    FIXME("hack: Force ucrtbase.dll installation\n");
+                    state = msifs_overwrite;
+            }
             else
             {
                 TRACE("keeping %s (new version %s old version %u.%u.%u.%u)\n",

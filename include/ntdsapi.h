@@ -19,6 +19,8 @@
 #ifndef __WINE_NTDSAPI_H
 #define __WINE_NTDSAPI_H
 
+#include "wine/winheader_enter.h"
+
 /* FIXME: #include <schedule.h> */
 
 #ifdef __cplusplus
@@ -116,5 +118,7 @@ DWORD WINAPI DsServerRegisterSpnW(DS_SPN_WRITE_OP operation, LPCWSTR ServiceClas
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_NTDSAPI_H */

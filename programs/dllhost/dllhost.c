@@ -34,6 +34,7 @@ struct factory
     IMarshal IMarshal_iface;
     CLSID clsid;
     LONG ref;
+    IClassFactory *dll_factory;
 };
 
 static inline struct factory *impl_from_IClassFactory(IClassFactory *iface)
@@ -90,7 +91,10 @@ static ULONG WINAPI factory_Release(IClassFactory *iface)
     TRACE("(%p)->%lu\n", iface, ref);
 
     if (!ref)
+    {
+        if (factory->dll_factory) IClassFactory_Release(factory->dll_factory);
         HeapFree(GetProcessHeap(), 0, factory);
+    }
 
     return ref;
 }
@@ -166,18 +170,10 @@ static HRESULT WINAPI marshal_MarshalInterface(IMarshal *iface, IStream *stream,
         void *pv, DWORD dwDestContext, void *pvDestContext, DWORD mshlflags)
 {
     struct factory *factory = impl_from_IMarshal(iface);
-    IUnknown *object;
-    HRESULT hr;
 
     TRACE("(%p,%s,%p,%08lx,%p,%08lx)\n", stream, wine_dbgstr_guid(iid), pv, dwDestContext, pvDestContext, mshlflags);
 
-    hr = CoGetClassObject(&factory->clsid, CLSCTX_INPROC_SERVER, NULL, iid, (void **)&object);
-    if (hr == S_OK)
-    {
-        hr = CoMarshalInterface(stream, iid, object, dwDestContext, pvDestContext, mshlflags);
-        IUnknown_Release(object);
-    }
-    return hr;
+    return CoMarshalInterface(stream, iid, (IUnknown *)factory->dll_factory, dwDestContext, pvDestContext, mshlflags);
 }
 
 static HRESULT WINAPI marshal_UnmarshalInterface(IMarshal *iface, IStream *stream,
@@ -275,10 +271,13 @@ static HRESULT WINAPI surrogate_LoadDllServer(ISurrogate *iface, const CLSID *cl
     factory->IMarshal_iface.lpVtbl = &Marshal_Vtbl;
     factory->clsid = *clsid;
     factory->ref = 1;
+    factory->dll_factory = NULL;
 
-    hr = CoRegisterClassObject(clsid, (IUnknown *)&factory->IClassFactory_iface,
-                               CLSCTX_LOCAL_SERVER, REGCLS_SURROGATE, &surrogate->cookie);
-    if (hr != S_OK)
+    hr = CoGetClassObject(clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void **)&factory->dll_factory);
+    if (SUCCEEDED(hr))
+        hr = CoRegisterClassObject(clsid, (IUnknown *)&factory->IClassFactory_iface,
+                                   CLSCTX_LOCAL_SERVER, REGCLS_SURROGATE, &surrogate->cookie);
+    if (FAILED(hr))
         IClassFactory_Release(&factory->IClassFactory_iface);
     else
     {

@@ -20,10 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <pthread.h>
 #include <assert.h>
 
@@ -1556,6 +1552,9 @@ static BOOL is_window_rect_full_screen( const RECT *rect )
 
     LIST_FOR_EACH_ENTRY( monitor, &monitors, struct monitor, entry )
     {
+        if (!(monitor->dev.state_flags & DISPLAY_DEVICE_ACTIVE))
+            continue;
+
         if (rect->left <= monitor->rc_monitor.left && rect->right >= monitor->rc_monitor.right &&
             rect->top <= monitor->rc_monitor.top && rect->bottom >= monitor->rc_monitor.bottom)
         {
@@ -4134,6 +4133,31 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
 #undef WINE_SPI_WARN
 }
 
+/* CX HACK 19134 */
+#ifdef __APPLE__
+static BOOL is_star_trek_away_team(void)
+{
+    static const WCHAR star_trekW[] = {'S','t','a','r',' ','T','r','e','k','.','e','x','e',0};
+    WCHAR *module_exe, *name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+
+    module_exe = wcsrchr(name, '\\');
+    module_exe = module_exe ? module_exe + 1 : name;
+    return !wcsicmp(module_exe, star_trekW );
+}
+
+static BOOL needs_mouse_hack(void)
+{
+    static BOOL needs_hack, did_check = FALSE;
+
+    if (!did_check) {
+        needs_hack = is_star_trek_away_team();
+        did_check = TRUE;
+    }
+    return needs_hack;
+}
+#endif
+/* End hack */
+
 int get_system_metrics( int index )
 {
     NONCLIENTMETRICSW ncm;
@@ -4190,6 +4214,10 @@ int get_system_metrics( int index )
     case SM_CYKANJIWINDOW:
         return 0;
     case SM_MOUSEPRESENT:
+        /* CX HACK 19134 */
+#ifdef __APPLE__
+        if (needs_mouse_hack()) return 0;
+#endif
         return 1;
     case SM_DEBUG:
         return 0;
@@ -4669,10 +4697,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 
     case NtUserThreadDetach:
         thread_detach();
-        return 0;
-
-    case NtUserUpdateClipboard:
-        user_driver->pUpdateClipboard();
         return 0;
 
     default:

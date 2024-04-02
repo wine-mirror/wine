@@ -19,6 +19,8 @@
 #ifndef _NTDDK_
 #define _NTDDK_
 
+#include "wine/winheader_enter.h"
+
 /* Note: We will probably have to duplicate everything ultimately :-( */
 #include <ddk/wdm.h>
 
@@ -271,5 +273,7 @@ void      WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE,PRTL_AVL_COMPARE_RO
 void      WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE,void *,ULONG,BOOL*);
 void *    WINAPI RtlLookupElementGenericTable(PRTL_GENERIC_TABLE,void *);
 ULONG     WINAPI RtlNumberGenericTableElements(PRTL_GENERIC_TABLE);
+
+#include "wine/winheader_exit.h"
 
 #endif

@@ -94,10 +94,6 @@ SOFTWARE.
  * the y-x-banding that's so nice to have...
  */
 
-#if 0
-#pragma makedep unix
-#endif
-
 #include <assert.h>
 #include "ntgdi_private.h"
 #include "ntuser_private.h"

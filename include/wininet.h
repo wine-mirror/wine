@@ -19,6 +19,8 @@
 #ifndef _WINE_WININET_H_
 #define _WINE_WININET_H_
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1775,5 +1777,7 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR, DWORD, DWORD);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

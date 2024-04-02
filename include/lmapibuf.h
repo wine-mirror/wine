@@ -21,6 +21,8 @@
 #ifndef __WINE_LMAPIBUF_H
 #define __WINE_LMAPIBUF_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,5 +38,7 @@ NET_API_STATUS WINAPI NetapipBufferAllocate(DWORD ByteCount, LPVOID* Buffer);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

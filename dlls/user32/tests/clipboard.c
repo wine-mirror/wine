@@ -1897,10 +1897,15 @@ static void test_data_handles(void)
 {
     BOOL r;
     char *ptr;
-    HANDLE h, text;
+    HANDLE h, text, metafile;
     HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
     BITMAPINFO bmi;
     void *bits;
+    PALETTEENTRY entry;
+    BYTE buffer[1024];
+    HENHMETAFILE emf;
+    int result;
+    HDC hdc = GetDC( 0 );
 
     ok( hwnd != 0, "window creation failed\n" );
     format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
@@ -2013,6 +2018,80 @@ static void test_data_handles(void)
     r = CloseClipboard();
     ok( r, "gle %ld\n", GetLastError() );
 
+    r = open_clipboard( hwnd );
+    ok( r, "Open clipboard failed: %#lx.\n", GetLastError() );
+    r = EmptyClipboard();
+    ok( r, "EmptyClipboard failed: %#lx.\n", GetLastError() );
+
+    bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
+    h = SetClipboardData( CF_BITMAP, bitmap );
+    ok( h == bitmap, "Expected bitmap %p, got %p.\n", bitmap, h );
+    ok( !!DeleteObject( bitmap ), "DeleteObject failed.\n" );
+    h = GetClipboardData( CF_BITMAP );
+    ok( h == bitmap, "Expected bitmap %p, got %p.\n", bitmap, h );
+    memset( &bmi, 0, sizeof(bmi) );
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    result = GetDIBits( hdc, h, 0, 0, NULL, &bmi, 0 );
+    ok( !!result, "GetDIBits failed: %#lx.\n", GetLastError() );
+
+    bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
+    h = SetClipboardData( CF_DSPBITMAP, bitmap );
+    ok( h == bitmap, "Expected bitmap %p, got %p.\n", bitmap, h );
+    ok( !!DeleteObject( bitmap ), "DeleteObject failed.\n" );
+    h = GetClipboardData( CF_DSPBITMAP );
+    ok( h == bitmap, "Expected bitmap %p, got %p.\n", bitmap, h );
+    memset( &bmi, 0, sizeof(bmi) );
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    ok( !GetDIBits( hdc, h, 0, 0, 0, &bmi, 0 ), "GetDIBits returned unexpected value.\n" );
+
+    palette = CreatePalette( &logpalette );
+    h = SetClipboardData( CF_PALETTE, palette );
+    ok( h == palette, "Expected palette %p, got %p.\n", palette, h );
+    ok( !!DeleteObject( palette ), "DeleteObject failed.\n" );
+    h = GetClipboardData( CF_PALETTE );
+    ok( h == palette, "Expected palette %p, got %p.\n", palette, h );
+    ok( !!GetPaletteEntries( h, 0, 1, &entry ), "GetPaletteEntries %p failed.\n", h );
+    ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
+            "Got wrong color (%02x, %02x, %02x).\n", entry.peRed, entry.peGreen, entry.peBlue );
+
+    emf = create_emf();
+    h = SetClipboardData( CF_ENHMETAFILE, emf );
+    ok( h == emf, "Expected enhmetafile %p, got %p.\n", palette, h );
+    ok( !!DeleteEnhMetaFile( emf ), "DeleteEnhMetaFile failed.\n" );
+    h = GetClipboardData( CF_ENHMETAFILE );
+    ok( h == emf, "Expected enhmetafile %p, got %p.\n", palette, h );
+    ok( !GetEnhMetaFileBits( h, sizeof(buffer), buffer ), "GetEnhMetaFileBits returned unexpected value.\n" );
+
+    emf = create_emf();
+    h = SetClipboardData( CF_DSPENHMETAFILE, emf );
+    ok( h == emf, "Expected enhmetafile %p, got %p.\n", emf, h );
+    ok( !!DeleteEnhMetaFile( emf ), "DeleteEnhMetaFile failed.\n" );
+    h = GetClipboardData( CF_DSPENHMETAFILE );
+    ok( h == emf, "Expected enhmetafile %p, got %p.\n", emf, h );
+    ok( !GetEnhMetaFileBits( h, sizeof(buffer), buffer ), "GetEnhMetaFileBits returned unexpected value.\n" );
+
+    metafile = create_metafile();
+    h = SetClipboardData( CF_METAFILEPICT, metafile );
+    ok( h == metafile, "Expected metafilepict %p, got %p.\n", metafile, h );
+    ok( !GlobalFree( metafile ), "GlobalFree failed.\n" );
+    h = GetClipboardData( CF_METAFILEPICT );
+    ok( h == metafile, "Expected metafile %p, got %p.\n", metafile, h );
+    ok( is_freed( h ), "Expected freed mem %p.\n", h );
+
+    metafile = create_metafile();
+    h = SetClipboardData( CF_DSPMETAFILEPICT, metafile );
+    ok( h == metafile, "Expected metafilepict %p, got %p.\n", metafile, h );
+    ok( !GlobalFree( metafile ), "GlobalFree failed.\n" );
+    h = GetClipboardData( CF_DSPMETAFILEPICT );
+    ok( h == metafile, "Expected metafile %p, got %p.\n", metafile, h );
+    ok( is_freed( h ), "Expected freed mem %p.\n", h );
+
+    r = EmptyClipboard();
+    ok( r, "EmptyClipboard failed: %#lx.\n", GetLastError() );
+    r = CloseClipboard();
+    ok( r, "CloseClipboard failed: %#lx.\n", GetLastError() );
+
+    ReleaseDC( 0, hdc );
     DestroyWindow( hwnd );
 }
 

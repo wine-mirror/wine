@@ -81,9 +81,9 @@ static BOOL createdirectdraw(void)
     SetRect(&rect_before_create, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 
     rc = DirectDrawCreate(NULL, &lpDD, NULL);
-    ok(rc==DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", rc);
+    ok(rc == DD_OK || rc==DDERR_NODIRECTDRAWSUPPORT, "Got hr %#lx.\n", rc);
     if (!lpDD) {
-        trace("DirectDrawCreateEx() failed with an error %x\n", rc);
+        trace("DirectDrawCreateEx() failed with an error %#lx\n", rc);
         return FALSE;
     }
     return TRUE;
@@ -138,17 +138,17 @@ static void test_DirectDrawEnumerateA(void)
 
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateA(NULL, NULL);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and NULL context parameter. */
     trace("Calling DirectDrawEnumerateA with test_nullcontext_callbackA callback and NULL context.\n");
     ret = pDirectDrawEnumerateA(test_nullcontext_callbackA, NULL);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and valid context parameter. */
     trace("Calling DirectDrawEnumerateA with test_context_callbackA callback and non-NULL context.\n");
     ret = pDirectDrawEnumerateA(test_context_callbackA, (void *)0xdeadbeef);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
 }
 
 static BOOL WINAPI test_callbackW(GUID *lpGUID, WCHAR *lpDriverDescription,
@@ -174,17 +174,17 @@ static void test_DirectDrawEnumerateW(void)
     ret = pDirectDrawEnumerateW(NULL, NULL);
     ok(ret == DDERR_INVALIDPARAMS ||
        ret == DDERR_UNSUPPORTED, /* Older ddraw */
-       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %d\n", ret);
+       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %#lx\n", ret);
 
     /* Test with invalid callback parameter. */
     ret = pDirectDrawEnumerateW((LPDDENUMCALLBACKW)0xdeadbeef, NULL);
     ok(ret == DDERR_INVALIDPARAMS /* XP */ ||
        ret == DDERR_UNSUPPORTED /* Win7 */,
-       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %d\n", ret);
+       "Expected DDERR_INVALIDPARAMS or DDERR_UNSUPPORTED, got %#lx\n", ret);
 
     /* Test with valid callback parameter and NULL context parameter. */
     ret = pDirectDrawEnumerateW(test_callbackW, NULL);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %#lx\n", ret);
 }
 
 static BOOL WINAPI test_nullcontext_callbackExA(GUID *lpGUID, char *lpDriverDescription,
@@ -235,36 +235,36 @@ static void test_DirectDrawEnumerateExA(void)
 
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateExA(NULL, NULL, 0);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and invalid flags */
     ret = pDirectDrawEnumerateExA(test_nullcontext_callbackExA, NULL, ~0);
-    ok(ret == DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, got %d\n", ret);
+    ok(ret == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and NULL context parameter. */
     trace("Calling DirectDrawEnumerateExA with empty flags and NULL context.\n");
     ret = pDirectDrawEnumerateExA(test_nullcontext_callbackExA, NULL, 0);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and non-NULL context parameter. */
     trace("Calling DirectDrawEnumerateExA with empty flags and non-NULL context.\n");
     ret = pDirectDrawEnumerateExA(test_context_callbackExA, (void *)0xdeadbeef, 0);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and count the number of primary devices */
     callbackCount = 0;
     ret = pDirectDrawEnumerateExA(test_count_callbackExA, &callbackCount, 0);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
-    ok(callbackCount == 1, "Expected 1 primary device, got %d\n", callbackCount);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
+    ok(callbackCount == 1, "Expected 1 primary device, got %lu\n", callbackCount);
 
     /* Test with valid callback parameter and count the number of secondary devices */
     callbackCount = 0;
     ret = pDirectDrawEnumerateExA(test_count_callbackExA, &callbackCount,
                                   DDENUM_ATTACHEDSECONDARYDEVICES);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
     /* Note: this list includes the primary devices as well and some systems (such as the TestBot)
        do not include any secondary devices */
-    ok(callbackCount >= 1, "Expected at least one device, got %d\n", callbackCount);
+    ok(callbackCount >= 1, "Expected at least one device, got %lu\n", callbackCount);
 
     /* Test with valid callback parameter, NULL context parameter, and all flags set. */
     trace("Calling DirectDrawEnumerateExA with all flags set and NULL context.\n");
@@ -272,7 +272,7 @@ static void test_DirectDrawEnumerateExA(void)
                                   DDENUM_ATTACHEDSECONDARYDEVICES |
                                   DDENUM_DETACHEDSECONDARYDEVICES |
                                   DDENUM_NONDISPLAYDEVICES);
-    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(ret == DD_OK, "Got hr %#lx.\n", ret);
 }
 
 static BOOL WINAPI test_callbackExW(GUID *lpGUID, WCHAR *lpDriverDescription,
@@ -296,26 +296,26 @@ static void test_DirectDrawEnumerateExW(void)
 
     /* Test with NULL callback parameter. */
     ret = pDirectDrawEnumerateExW(NULL, NULL, 0);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Got hr %#lx.\n", ret);
 
     /* Test with invalid callback parameter. */
     ret = pDirectDrawEnumerateExW((LPDDENUMCALLBACKEXW)0xdeadbeef, NULL, 0);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and invalid flags */
     ret = pDirectDrawEnumerateExW(test_callbackExW, NULL, ~0);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter and NULL context parameter. */
     ret = pDirectDrawEnumerateExW(test_callbackExW, NULL, 0);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Got hr %#lx.\n", ret);
 
     /* Test with valid callback parameter, NULL context parameter, and all flags set. */
     ret = pDirectDrawEnumerateExW(test_callbackExW, NULL,
                                   DDENUM_ATTACHEDSECONDARYDEVICES |
                                   DDENUM_DETACHEDSECONDARYDEVICES |
                                   DDENUM_NONDISPLAYDEVICES);
-    ok(ret == DDERR_UNSUPPORTED, "Expected DDERR_UNSUPPORTED, got %d\n", ret);
+    ok(ret == DDERR_UNSUPPORTED, "Got hr %#lx.\n", ret);
 }
 
 static void adddisplaymode(DDSURFACEDESC *lpddsd)
@@ -338,7 +338,7 @@ static void flushdisplaymodes(void)
 static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     if (winetest_debug > 1)
-        trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
+        trace("Width = %li, Height = %li, bpp = %li, Refresh Rate = %li, Pitch = %li, flags = %#lx\n",
               lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
               U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
 
@@ -368,15 +368,15 @@ static HRESULT WINAPI enummodescallback(DDSURFACEDESC *lpddsd, void *lpContext)
 static HRESULT WINAPI enummodescallback_16bit(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     if (winetest_debug > 1)
-        trace("Width = %i, Height = %i, bpp = %i, Refresh Rate = %i, Pitch = %i, flags =%02X\n",
+        trace("Width = %li, Height = %li, bpp = %li, Refresh Rate = %li, Pitch = %li, flags = %#lx\n",
               lpddsd->dwWidth, lpddsd->dwHeight, U1(lpddsd->ddpfPixelFormat).dwRGBBitCount,
               U2(*lpddsd).dwRefreshRate, U1(*lpddsd).lPitch, lpddsd->dwFlags);
 
     ok(lpddsd->dwFlags == (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE),
-            "Wrong surface description flags %02X\n", lpddsd->dwFlags);
-    ok(lpddsd->ddpfPixelFormat.dwFlags == DDPF_RGB, "Wrong pixel format flag %02X\n",
+            "Wrong surface description flags %#lx\n", lpddsd->dwFlags);
+    ok(lpddsd->ddpfPixelFormat.dwFlags == DDPF_RGB, "Wrong pixel format flag %#lx\n",
             lpddsd->ddpfPixelFormat.dwFlags);
-    ok(U1(lpddsd->ddpfPixelFormat).dwRGBBitCount == 16, "Expected 16 bpp got %i\n",
+    ok(U1(lpddsd->ddpfPixelFormat).dwRGBBitCount == 16, "Expected 16 bpp got %li\n",
             U1(lpddsd->ddpfPixelFormat).dwRGBBitCount);
 
     /* Check that the pitch is valid if applicable */
@@ -407,7 +407,7 @@ static HRESULT WINAPI enummodescallback_16bit(DDSURFACEDESC *lpddsd, void *lpCon
 static HRESULT WINAPI enummodescallback_count(DDSURFACEDESC *lpddsd, void *lpContext)
 {
     ok(lpddsd->dwFlags == (DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE),
-            "Wrong surface description flags %02X\n", lpddsd->dwFlags);
+            "Wrong surface description flags %#lx\n", lpddsd->dwFlags);
 
     modes16bpp_cnt++;
 
@@ -427,7 +427,7 @@ static void enumdisplaymodes(void)
 
     /* Flags parameter is reserved in very old ddraw versions (3 and older?) and must be 0 */
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback);
-    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     count = modes16bpp_cnt;
 
@@ -440,7 +440,7 @@ static void enumdisplaymodes(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x001F;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -449,7 +449,7 @@ static void enumdisplaymodes(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -458,7 +458,7 @@ static void enumdisplaymodes(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000F;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
 
@@ -466,14 +466,14 @@ static void enumdisplaymodes(void)
     ddsd.ddpfPixelFormat.dwFlags = DDPF_YUV;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
     ddsd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -481,14 +481,14 @@ static void enumdisplaymodes(void)
     ddsd.ddpfPixelFormat.dwFlags = 0;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
     ddsd.dwFlags = 0;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_count);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == modes_cnt, "Expected %d modes got %d\n", modes_cnt, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -496,7 +496,7 @@ static void enumdisplaymodes(void)
     U1(ddsd).lPitch = 123;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == count, "Expected %d modes got %d\n", count, modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -507,7 +507,7 @@ static void enumdisplaymodes(void)
     U2(ddsd).dwRefreshRate = 2;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ok(modes16bpp_cnt == 0, "Expected 0 modes got %d\n", modes16bpp_cnt);
 
     modes16bpp_cnt = 0;
@@ -519,7 +519,7 @@ static void enumdisplaymodes(void)
         skip("Ddraw version too old. Skipping.\n");
         return;
     }
-    ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     refresh_count = refresh_rate_cnt;
 
     if(refresh_rate)
@@ -529,12 +529,12 @@ static void enumdisplaymodes(void)
         U2(ddsd).dwRefreshRate = refresh_rate;
 
         rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
-        ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
+        ok(rc == DD_OK, "Got hr %#lx.\n", rc);
         ok(modes16bpp_cnt == refresh_count, "Expected %d modes got %d\n", refresh_count, modes16bpp_cnt);
     }
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, NULL, 0, enummodescallback);
-    ok(rc==DD_OK, "EnumDisplayModes returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 }
 
 
@@ -547,7 +547,7 @@ static void setdisplaymode(int i)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    ok(rc==DD_OK,"SetCooperativeLevel returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     if (modes[i].dwFlags & DDSD_PIXELFORMAT)
     {
         if (modes[i].ddpfPixelFormat.dwFlags & DDPF_RGB)
@@ -555,7 +555,7 @@ static void setdisplaymode(int i)
             rc = IDirectDraw_SetDisplayMode(lpDD,
                 modes[i].dwWidth, modes[i].dwHeight,
                 U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
-            ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %x\n",rc);
+            ok(rc == DD_OK || rc == DDERR_UNSUPPORTED, "Got hr %#lx.\n", rc);
             if (rc == DD_OK)
             {
                 RECT scrn, test, virt;
@@ -563,7 +563,7 @@ static void setdisplaymode(int i)
                 SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
                 OffsetRect(&virt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
                 SetRect(&scrn, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-                trace("Mode (%dx%d) [%dx%d] (%d %d)x(%d %d)\n", modes[i].dwWidth, modes[i].dwHeight,
+                trace("Mode (%ldx%ld) [%ldx%ld] (%ld %ld)-(%ld %ld)\n", modes[i].dwWidth, modes[i].dwHeight,
                       scrn.right, scrn.bottom, virt.left, virt.top, virt.right, virt.bottom);
                 if (!EqualRect(&scrn, &orig_rect))
                 {
@@ -578,7 +578,7 @@ static void setdisplaymode(int i)
                     /* Check that switching to normal cooperative level
                        does not restore the display mode */
                     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_NORMAL);
-                    ok(rc==DD_OK, "SetCooperativeLevel returned %x\n", rc);
+                    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
                     SetRect(&test, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
                     rect_result = EqualRect(&scrn, &test);
                     ok(rect_result!=0, "Setting cooperative level to DDSCL_NORMAL changed the display mode\n");
@@ -586,7 +586,7 @@ static void setdisplaymode(int i)
                     /* Go back to fullscreen */
                     rc = IDirectDraw_SetCooperativeLevel(lpDD,
                         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-                    ok(rc==DD_OK, "SetCooperativeLevel returned: %x\n",rc);
+                    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
                     /* If the display mode was changed, set the correct mode
                        to avoid irrelevant failures */
@@ -595,11 +595,11 @@ static void setdisplaymode(int i)
                         rc = IDirectDraw_SetDisplayMode(lpDD,
                             modes[i].dwWidth, modes[i].dwHeight,
                             U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
-                        ok(DD_OK==rc, "SetDisplayMode returned: %x\n",rc);
+                        ok(rc == DD_OK, "Got hr %#lx.\n", rc);
                     }
                 }
                 rc = IDirectDraw_RestoreDisplayMode(lpDD);
-                ok(DD_OK==rc,"RestoreDisplayMode returned: %x\n",rc);
+                ok(rc == DD_OK, "Got hr %#lx.\n", rc);
             }
         }
     }
@@ -618,10 +618,10 @@ static void createsurface(void)
         DDSCAPS_COMPLEX;
     ddsd.dwBackBufferCount = 1;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSPrimary, NULL );
-    ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
     rc = IDirectDrawSurface_GetAttachedSurface(lpDDSPrimary, &ddscaps, &lpDDSBack);
-    ok(rc==DD_OK,"GetAttachedSurface returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 }
 
 static void destroysurface(void)
@@ -640,17 +640,17 @@ static void testsurface(void)
     HRESULT rc;
 
     rc = IDirectDrawSurface_GetDC(lpDDSBack, &hdc);
-    ok(rc==DD_OK, "IDirectDrawSurface_GetDC returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
     SetBkColor(hdc, RGB(0, 0, 255));
     SetTextColor(hdc, RGB(255, 255, 0));
     TextOutA(hdc, 0, 0, testMsg, strlen(testMsg));
     rc = IDirectDrawSurface_ReleaseDC(lpDDSBack, hdc);
-    ok(rc==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     while (1)
     {
         rc = IDirectDrawSurface_Flip(lpDDSPrimary, NULL, DDFLIP_WAIT);
-        ok(rc==DD_OK || rc==DDERR_SURFACELOST, "IDirectDrawSurface_BltFast returned: %x\n",rc);
+        ok(rc == DD_OK || rc==DDERR_SURFACELOST, "Got hr %#lx.\n", rc);
 
         if (rc == DD_OK)
         {
@@ -659,7 +659,7 @@ static void testsurface(void)
         else if (rc == DDERR_SURFACELOST)
         {
             rc = IDirectDrawSurface_Restore(lpDDSPrimary);
-            ok(rc==DD_OK, "IDirectDrawSurface_Restore returned: %x\n",rc);
+            ok(rc == DD_OK, "Got hr %#lx.\n", rc);
         }
     }
 }
@@ -692,14 +692,14 @@ static void testcooperativelevels_normal(void)
     surfacedesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Do some tests with DDSCL_NORMAL mode */
 
     /* Fullscreen mode + normal mode + exclusive mode */
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
-    ok(rc==DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, received: %x\n", rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     sfw=FALSE;
     if(hwnd2)
@@ -708,7 +708,7 @@ static void testcooperativelevels_normal(void)
         skip("Failed to create the second window\n");
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
@@ -720,14 +720,14 @@ static void testcooperativelevels_normal(void)
         skip("Unsupported mode\n");
     else
     {
-        ok(rc == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(rc == DD_OK, "Got hr %#lx.\n", rc);
         ok(surface!=NULL, "Returned NULL surface pointer\n");
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
 
     /* Exclusive mode + normal mode */
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_EXCLUSIVE | DDSCL_NORMAL);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Fullscreen mode + normal mode */
 
@@ -735,13 +735,13 @@ static void testcooperativelevels_normal(void)
     if(hwnd2) sfw=SetForegroundWindow(hwnd2);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_NORMAL);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_FULLSCREEN | DDSCL_NORMAL);
-    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Try creating a double buffered primary in fullscreen + normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
@@ -749,7 +749,7 @@ static void testcooperativelevels_normal(void)
         skip("Unsupported mode\n");
     else
     {
-        ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(rc == DDERR_NOEXCLUSIVEMODE, "Got hr %#lx.\n", rc);
         ok(surface == NULL, "Returned surface pointer is %p\n", surface);
     }
 
@@ -762,13 +762,13 @@ static void testcooperativelevels_normal(void)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
-    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Try creating a double buffered primary in normal mode */
     rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
@@ -776,7 +776,7 @@ static void testcooperativelevels_normal(void)
         skip("Unsupported mode\n");
     else
     {
-        ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(rc == DDERR_NOEXCLUSIVEMODE, "Got hr %#lx.\n", rc);
         ok(surface == NULL, "Returned surface pointer is %p\n", surface);
     }
     if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
@@ -788,18 +788,18 @@ static void testcooperativelevels_normal(void)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_FULLSCREEN);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | FULLSCREEN) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd2,"Expected the second windows (%p) for foreground, received the main one (%p)\n",hwnd2, hwnd);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL | DDSCL_FULLSCREEN);
-    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Set the focus window */
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW | DDSCL_CREATEDEVICEWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_SETFOCUSWINDOW);
 
@@ -809,7 +809,7 @@ static void testcooperativelevels_normal(void)
         return;
     }
 
-    ok(rc==DD_OK, "Expected DD_OK, received %x\n", rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
@@ -820,61 +820,61 @@ static void testcooperativelevels_normal(void)
         return;
     }
 
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Set the focus window a second time*/
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) the second time returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Test DDSCL_SETFOCUSWINDOW with the other flags. They should all fail, except of DDSCL_NOWINDOWCHANGES */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* This one succeeds */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NOWINDOWCHANGES | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NOWINDOWCHANGES | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_MULTITHREADED | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_MULTITHREADED | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FPUSETUP | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUSETUP | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FPUPRESERVE | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FPUPRESERVE | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWREBOOT | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWREBOOT | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_ALLOWMODEX | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Set the device window without any other flags. Should give an error */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETDEVICEWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_SETDEVICEWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Set device window with DDSCL_NORMAL */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     /* Also set the focus window. Should give an error */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_ALLOWMODEX | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_SETDEVICEWINDOW | DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_NORMAL | DDSCL_SETDEVICEWINDOW | DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* All done */
 }
@@ -894,17 +894,17 @@ static void testcooperativelevels_exclusive(void)
     /* Try to set exclusive mode only */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_EXCLUSIVE);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Full screen mode only */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN);
-    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_FULLSCREEN) returned: %x\n",rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     /* Full screen mode + exclusive mode */
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
-    ok(rc==DDERR_INVALIDPARAMS, "Expected DDERR_INVALIDPARAMS, received %x\n", rc);
+    ok(rc == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", rc);
 
     sfw=FALSE;
     if(hwnd2)
@@ -914,7 +914,7 @@ static void testcooperativelevels_exclusive(void)
 
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
-    ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN) returned: %x\n",rc);
+    ok(rc == DD_OK, "Got hr %#lx.\n", rc);
 
     if(sfw)
         ok(GetForegroundWindow()==hwnd,"Expected the main windows (%p) for foreground, received the second one (%p)\n",hwnd, hwnd2);
@@ -927,8 +927,8 @@ static void testcooperativelevels_exclusive(void)
     /* Set the focus window. Should fail */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_HWNDALREADYSET ||
-       broken(rc==DDERR_INVALIDPARAMS) /* NT4/Win95 */,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc == DDERR_HWNDALREADYSET ||
+       broken(rc==DDERR_INVALIDPARAMS) /* NT4/Win95 */, "Got hr %#lx.\n", rc);
 
 
     /* All done */
@@ -945,7 +945,7 @@ static void testddraw3(void)
     IDirectDraw3 *dd3;
     HRESULT hr;
     hr = IDirectDraw_QueryInterface(lpDD, &My_IID_IDirectDraw3, (void **) &dd3);
-    ok(hr == E_NOINTERFACE, "QueryInterface for IID_IDirectDraw3 returned 0x%08x, expected E_NOINTERFACE\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     if(SUCCEEDED(hr) && dd3) IDirectDraw3_Release(dd3);
 }
 
@@ -963,7 +963,7 @@ static void testddraw7(void)
         win_skip("DirectDraw7 is not supported\n");
         return;
     }
-    ok(hr==DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", hr);
+    ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
     if (hr==DD_OK)
     {
@@ -975,7 +975,7 @@ static void testddraw7(void)
          pend[1] = 0xdeadbeef;
 
          hr = IDirectDraw7_GetDeviceIdentifier(dd7, pdddi2, 0);
-         ok(hr==DD_OK, "get device identifier failed with %08x\n", hr);
+         ok(hr == DD_OK, "Got hr %#lx.\n", hr);
 
          if (hr==DD_OK)
          {
@@ -994,7 +994,7 @@ static void testddraw7(void)
          pend[0] = 0xdeadbeef;
          pend[1] = 0xdeadbeef;
          hr = IDirectDraw7_GetDeviceIdentifier(dd7, pdddi2, DDGDI_GETHOSTIDENTIFIER);
-         ok(hr==DD_OK, "get device identifier failed with %08x\n", hr);
+         ok(hr == DD_OK, "Got hr %#lx.\n", hr);
          if (hr==DD_OK)
          {
              /* szDriver contains the name of the driver DLL */

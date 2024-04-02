@@ -130,6 +130,8 @@ typedef ULONG          u_long;
 
 typedef UINT_PTR SOCKET;
 
+#include "wine/winheader_enter.h"
+
 /*
  * Setup phase
  */
@@ -1310,5 +1312,7 @@ typedef DWORD (WINAPI *LPFN_WSAWAITFORMULTIPLEEVENTS)(DWORD,const WSAEVENT*,BOOL
 #undef WS
 #undef WS_API_PROTOTYPES
 #undef WS_API_TYPEDEFS
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINSOCK2API__ */

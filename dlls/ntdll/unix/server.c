@@ -79,6 +79,7 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "unix_private.h"
+#include "esync.h"
 #include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(server);
@@ -106,7 +107,7 @@ sigset_t server_block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 static int initial_cwd = -1;
 static pid_t server_pid;
-static pthread_mutex_t fd_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fd_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* atomically exchange a 64-bit value */
 static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
@@ -807,7 +808,7 @@ void wine_server_send_fd( int fd )
  *
  * Receive a file descriptor passed from the server.
  */
-static int receive_fd( obj_handle_t *handle )
+int receive_fd( obj_handle_t *handle )
 {
     struct iovec vec;
     struct msghdr msghdr;
@@ -1498,6 +1499,7 @@ size_t server_init_process(void)
         peb->SessionId    = reply->session_id;
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
+        wow64_using_32bit_prefix = !!reply->bottle_32b;
         supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);
     }
     SERVER_END_REQ;
@@ -1520,6 +1522,9 @@ size_t server_init_process(void)
         NtCurrentTeb()->WowTebOffset  = -teb_offset;
         wow_peb = (PEB64 *)((char *)peb - page_size);
 #endif
+        /* CW HACK 20810: Allow using a 32-bit prefix in Wow64 mode. */
+        if (wow64_using_32bit_prefix)
+            fprintf( stderr, "Using a 32-bit prefix in Wow64 mode (%s) pid %x. tid %x\n", config_dir, pid, tid );
     }
     else
     {
@@ -1537,6 +1542,53 @@ size_t server_init_process(void)
     fatal_error( "wineserver doesn't support the %04x architecture\n", current_machine );
 }
 
+/* CROSSOVER HACK: bug 17634 */
+static BOOL force_laa(const WCHAR *app_name)
+{
+    static const WCHAR LargeAddressAwareW[] = {'L','a','r','g','e','A','d','d','r','e','s','s','A','w','a','r','e',0};
+    const char *e = getenv("WINE_LARGE_ADDRESS_AWARE");
+    UNICODE_STRING nameW, valuenameW;
+    HANDLE root, app_key = 0;
+    OBJECT_ATTRIBUTES attr;
+    char tmp[64];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
+    DWORD count;
+    BOOL result=FALSE;
+
+    if ((e != NULL) && (*e != '\0' && *e != '0'))
+        return TRUE;
+
+    if (!open_hkcu_key( "Software\\Wine\\AppDefaults", &root ))
+    {
+        ULONG len = wcslen( app_name ) + 1;
+        nameW.Length = (len - 1) * sizeof(WCHAR);
+        nameW.Buffer = malloc( len * sizeof(WCHAR) );
+        wcscpy( nameW.Buffer, app_name );
+        InitializeObjectAttributes( &attr, &nameW, 0, root, NULL );
+
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe */
+        NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr );
+        NtClose( root );
+        free( nameW.Buffer );
+    }
+
+    if (app_key)
+    {
+        valuenameW.Length = sizeof(LargeAddressAwareW) - sizeof(WCHAR);
+        valuenameW.Buffer = (WCHAR*)LargeAddressAwareW;
+        if (!NtQueryValueKey( app_key, &valuenameW, KeyValuePartialInformation, tmp, sizeof(tmp)-1, &count))
+        {
+            if (info->DataLength >= sizeof(DWORD))
+            {
+                if ((*(DWORD *)info->Data) != 0)
+                    result = TRUE;
+            }
+        }
+        NtClose( app_key );
+    }
+
+    return result;
+}
 
 /***********************************************************************
  *           server_init_process_done
@@ -1545,6 +1597,7 @@ void server_init_process_done(void)
 {
     void *entry, *teb;
     NTSTATUS status;
+    const WCHAR *exename;
     int suspend;
     FILE_FS_DEVICE_INFORMATION info;
 
@@ -1552,10 +1605,40 @@ void server_init_process_done(void)
         chdir( "/" );
     close( initial_cwd );
 
+    if ((exename = ntdll_wcsrchr( main_wargv[0], '\\' ))) exename++;
+    else exename = main_wargv[0];
+
+    /* CROSSOVER HACK: bug 3853 */
+    {
+        static const WCHAR explorerexeW[] = {'e','x','p','l','o','r','e','r','.','e','x','e',0};
+        const char *child_pipe = getenv("WINE_WAIT_CHILD_PIPE");
+        const char *ignore_child = getenv("WINE_WAIT_CHILD_PIPE_IGNORE");
+        if (child_pipe)
+        {
+            if (!ntdll_wcsicmp( exename, explorerexeW ))
+            {
+                int fd = atoi(child_pipe);
+                if (fd) close( fd );
+                unsetenv("WINE_WAIT_CHILD_PIPE");
+            }
+            else if (ignore_child)
+            {
+                WCHAR ignore[MAX_PATH];
+                ntdll_umbstowcs( ignore_child, strlen(ignore_child) + 1, ignore, MAX_PATH );
+                if (!ntdll_wcsicmp( exename, ignore ))
+                {
+                    int fd = atoi(child_pipe);
+                    if (fd) close( fd );
+                    unsetenv("WINE_WAIT_CHILD_PIPE");
+                }
+            }
+        }
+    }
+
 #ifdef __APPLE__
     send_server_task_port();
 #endif
-    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
+    if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE || force_laa(exename))
         virtual_set_large_address_space();
 
     /* Install signal handlers; this cannot be done earlier, since we cannot
@@ -1712,6 +1795,9 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     /* always remove the cached fd; if the server request fails we'll just
      * retrieve it again */
     fd = remove_fd_from_cache( handle );
+
+    if (do_esync())
+        esync_close( handle );
 
     SERVER_START_REQ( close_handle )
     {

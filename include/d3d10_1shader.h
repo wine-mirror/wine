@@ -19,6 +19,8 @@
 #ifndef __D3D10_1SHADER_H__
 #define __D3D10_1SHADER_H__
 
+#include "wine/winheader_enter.h"
+
 #include "d3d10shader.h"
 
 DEFINE_GUID(IID_ID3D10ShaderReflection1, 0xc3457783, 0xa846, 0x47ce, 0x95, 0x20, 0xce, 0xa6, 0xf6, 0x6e, 0x74, 0x47);
@@ -48,5 +50,7 @@ DECLARE_INTERFACE_(ID3D10ShaderReflection1, IUnknown)
     STDMETHOD(IsSampleFrequencyShader)(THIS_ BOOL *samplefrequency) PURE;
 };
 #undef INTERFACE
+
+#include "wine/winheader_exit.h"
 
 #endif

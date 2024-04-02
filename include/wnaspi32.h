@@ -19,6 +19,8 @@
 #ifndef __WNASPI32_H__
 #define __WNASPI32_H__
 
+#include "wine/winheader_enter.h"
+
 /* This file should be 100% source compatible according to MS docs and
  * Adaptec docs */
 
@@ -248,5 +250,7 @@ extern BOOL  __cdecl GetASPI32Buffer(PASPI32BUFF pab);
 #ifdef __cplusplus
 }
 #endif /* #ifdef __cplusplus */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WNASPI32_H__ */

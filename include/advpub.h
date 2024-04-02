@@ -18,6 +18,8 @@
 #ifndef __WINE_ADVPUB_H
 #define __WINE_ADVPUB_H
 
+#include "wine/winheader_enter.h"
+
 #include <setupapi.h>
 #include <cfgmgr32.h>
 
@@ -280,5 +282,7 @@ HRESULT WINAPI UserUnInstStubWrapperW(HWND hWnd, HINSTANCE hInstance, LPWSTR psz
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_ADVPUB_H */

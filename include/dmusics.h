@@ -21,6 +21,8 @@
 #ifndef __WINE_DMUSIC_SOFTWARESYNTH_H
 #define __WINE_DMUSIC_SOFTWARESYNTH_H
 
+#include "wine/winheader_enter.h"
+
 #include <dmusicc.h>
 
 /*****************************************************************************
@@ -233,5 +235,7 @@ DECLARE_INTERFACE_(IDirectMusicSynthSink,IUnknown)
 #define IDirectMusicSynthSink_SetDirectSound(p,a,b)      (p)->lpVtbl->SetDirectSound(p,a,b)
 #define IDirectMusicSynthSink_GetDesiredBufferSize(p,a)  (p)->lpVtbl->GetDesiredBufferSize(p,a)
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_DMUSIC_SOFTWARESYNTH_H */

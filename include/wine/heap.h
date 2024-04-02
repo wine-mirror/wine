@@ -23,6 +23,7 @@
 #define __WINE_WINE_HEAP_H
 
 #include <winbase.h>
+#include <wine/winheader_enter.h>
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(SIZE_T len)
 {
@@ -54,5 +55,15 @@ static inline void *heap_calloc(SIZE_T count, SIZE_T size)
         return NULL;
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 }
+
+static inline char *heap_strdup(const char * HOSTPTR str)
+{
+    SIZE_T len = strlen(str);
+    char *ret = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    memcpy(ret, str, len + 1);
+    return ret;
+}
+
+#include <wine/winheader_exit.h>
 
 #endif  /* __WINE_WINE_HEAP_H */

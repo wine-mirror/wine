@@ -180,19 +180,20 @@ static NTSTATUS nsiproxy_get_parameter( IRP *irp )
     return status;
 }
 
-static inline HANDLE irp_get_icmp_handle( IRP *irp )
+static inline icmp_handle irp_get_icmp_handle( IRP *irp )
 {
-    return irp->Tail.Overlay.DriverContext[0];
+    return PtrToUlong( irp->Tail.Overlay.DriverContext[0] );
 }
 
-static inline HANDLE irp_set_icmp_handle( IRP *irp, HANDLE handle )
+static inline icmp_handle irp_set_icmp_handle( IRP *irp, icmp_handle handle )
 {
-    return InterlockedExchangePointer( irp->Tail.Overlay.DriverContext, handle );
+    return PtrToUlong( InterlockedExchangePointer( irp->Tail.Overlay.DriverContext,
+                                                   ULongToPtr( handle ) ) );
 }
 
 static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
 {
-    HANDLE handle;
+    struct icmp_cancel_listen_params params;
 
     TRACE( "device %p, irp %p.\n", device, irp );
 
@@ -205,8 +206,8 @@ static void WINAPI icmp_echo_cancel( DEVICE_OBJECT *device, IRP *irp )
        cancel it, or the irp has already finished.  If the handle
        does exist then notify the listen thread.  In all cases the irp
        will be completed elsewhere. */
-    handle = irp_get_icmp_handle( irp );
-    if (handle) nsiproxy_call( icmp_cancel_listen, handle );
+    params.handle = irp_get_icmp_handle( irp );
+    if (params.handle) nsiproxy_call( icmp_cancel_listen, &params );
 
     LeaveCriticalSection( &nsiproxy_cs );
 }
@@ -328,6 +329,7 @@ static DWORD WINAPI listen_thread_proc( void *arg )
     IRP *irp = arg;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct nsiproxy_icmp_echo *in = irp->AssociatedIrp.SystemBuffer;
+    struct icmp_close_params close_params;
     struct icmp_listen_params params;
     NTSTATUS status;
 
@@ -345,7 +347,8 @@ static DWORD WINAPI listen_thread_proc( void *arg )
 
     EnterCriticalSection( &nsiproxy_cs );
 
-    nsiproxy_call( icmp_close, irp_set_icmp_handle( irp, NULL ) );
+    close_params.handle = irp_set_icmp_handle( irp, 0 );
+    nsiproxy_call( icmp_close, &close_params );
 
     irp->IoStatus.Status = status;
     if (status == STATUS_SUCCESS)
@@ -363,6 +366,7 @@ static void handle_queued_send_echo( IRP *irp )
 {
     struct nsiproxy_icmp_echo *in = (struct nsiproxy_icmp_echo *)irp->AssociatedIrp.SystemBuffer;
     struct icmp_send_echo_params params;
+    icmp_handle handle;
     NTSTATUS status;
 
     TRACE( "\n" );
@@ -373,6 +377,7 @@ static void handle_queued_send_echo( IRP *irp )
     params.ttl = in->ttl;
     params.tos = in->tos;
     params.dst = &in->dst;
+    params.handle = &handle;
 
     status = nsiproxy_call( icmp_send_echo, &params );
     TRACE( "icmp_send_echo rets %08x\n", status );
@@ -386,7 +391,7 @@ static void handle_queued_send_echo( IRP *irp )
     }
     else
     {
-        irp_set_icmp_handle( irp, params.handle );
+        irp_set_icmp_handle( irp, handle );
         RtlQueueWorkItem( listen_thread_proc, irp, WT_EXECUTELONGFUNCTION );
     }
 }

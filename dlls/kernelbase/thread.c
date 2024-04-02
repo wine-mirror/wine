@@ -992,6 +992,25 @@ LPVOID WINAPI DECLSPEC_HOTPATCH ConvertThreadToFiberEx( LPVOID param, DWORD flag
 
     if (NtCurrentTeb()->Tib.u.FiberData)
     {
+        /* CrossOver hack for bug 20987 */
+        static int is_halo_mcc = -1;
+
+        if (is_halo_mcc == -1)
+        {
+            static const WCHAR mcc[] = {'M','C','C','-','W','i','n','6','4','-',
+                'S','h','i','p','p','i','n','g','.','e','x','e',0};
+            WCHAR path[MAX_PATH];
+            DWORD len = ARRAY_SIZE(mcc) - 1, len2 = GetModuleFileNameW( NULL, path, MAX_PATH );
+
+            is_halo_mcc = len <= len2 && !lstrcmpiW( path + len2 - len, mcc );
+        }
+
+        if (is_halo_mcc)
+        {
+            TRACE("CrossOver hack: faking success\n");
+            return NtCurrentTeb()->Tib.u.FiberData;
+        }
+
         SetLastError( ERROR_ALREADY_FIBER );
         return NULL;
     }

@@ -262,7 +262,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     unsigned int width_bytes = (width + 31) / 32 * 4;
     unsigned long *and_bits = NULL, *xor_bits;
-    unsigned long *data_bits;
+    unsigned long * HOSTPTR data_bits;
     int count, i;
     CGColorSpaceRef colorspace;
     CFMutableDataRef data;
@@ -347,7 +347,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     /* image data = AND mask */
     CFDataAppendBytes(data, (UInt8*)and_bits, info->bmiHeader.biSizeImage / 2);
     /* image data ^= XOR mask */
-    data_bits = (unsigned long*)CFDataGetMutableBytePtr(data);
+    data_bits = (unsigned long* HOSTPTR)CFDataGetMutableBytePtr(data);
     count = (info->bmiHeader.biSizeImage / 2) / sizeof(*data_bits);
     for (i = 0; i < count; i++)
         data_bits[i] ^= xor_bits[i];
@@ -396,7 +396,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     /* mask data = AND mask */
     CFDataAppendBytes(data, (UInt8*)and_bits, info->bmiHeader.biSizeImage / 2);
     /* mask data &= ~XOR mask */
-    data_bits = (unsigned long*)CFDataGetMutableBytePtr(data);
+    data_bits = (unsigned long* HOSTPTR)CFDataGetMutableBytePtr(data);
     for (i = 0; i < count; i++)
         data_bits[i] &= ~xor_bits[i];
     HeapFree(GetProcessHeap(), 0, and_bits);
@@ -439,7 +439,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
 
     values[0] = cgmasked;
     values[1] = hot_spot_dict;
-    frame = CFDictionaryCreate(NULL, (const void**)keys, values, ARRAY_SIZE(keys),
+    frame = CFDictionaryCreate(NULL, (const void* HOSTPTR *)keys, values, ARRAY_SIZE(keys),
                                &kCFCopyStringDictionaryKeyCallBacks,
                                &kCFTypeDictionaryValueCallBacks);
     CFRelease(hot_spot_dict);
@@ -450,7 +450,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
         return NULL;
     }
 
-    frames = CFArrayCreate(NULL, (const void**)&frame, 1, &kCFTypeArrayCallBacks);
+    frames = CFArrayCreate(NULL, (const void* HOSTPTR *)&frame, 1, &kCFTypeArrayCallBacks);
     CFRelease(frame);
     if (!frames)
     {
@@ -833,11 +833,18 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
 {
     UINT flags = 0;
     WORD data = 0;
+    POINT pt;
 
     TRACE("win %p button %d %s at (%d,%d) time %lu (%lu ticks ago)\n", hwnd, event->mouse_button.button,
           (event->mouse_button.pressed ? "pressed" : "released"),
           event->mouse_button.x, event->mouse_button.y,
           event->mouse_button.time_ms, (GetTickCount() - event->mouse_button.time_ms));
+
+    /* CrossOver Hack #15388 */
+    pt.x = event->mouse_button.x;
+    pt.y = event->mouse_button.y;
+    if (quicken_signin_hack)
+        MapWindowPoints(hwnd, 0, &pt, 1);
 
     if (event->mouse_button.pressed)
     {
@@ -867,7 +874,7 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
     }
 
     send_mouse_input(hwnd, event->window, flags | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                     event->mouse_button.x, event->mouse_button.y,
+                     pt.x, pt.y,
                      data, FALSE, event->mouse_button.time_ms);
 }
 
@@ -880,16 +887,26 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
 void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event)
 {
     UINT flags = MOUSEEVENTF_MOVE;
+    POINT pt;
 
     TRACE("win %p/%p %s (%d,%d) drag %d time %lu (%lu ticks ago)\n", hwnd, event->window,
           (event->type == MOUSE_MOVED) ? "relative" : "absolute",
           event->mouse_moved.x, event->mouse_moved.y, event->mouse_moved.drag,
           event->mouse_moved.time_ms, (GetTickCount() - event->mouse_moved.time_ms));
 
+    pt.x = event->mouse_moved.x;
+    pt.y = event->mouse_moved.y;
+
     if (event->type == MOUSE_MOVED_ABSOLUTE)
+    {
         flags |= MOUSEEVENTF_ABSOLUTE;
 
-    send_mouse_input(hwnd, event->window, flags, event->mouse_moved.x, event->mouse_moved.y,
+        /* CrossOver Hack #15388 */
+        if (quicken_signin_hack)
+            MapWindowPoints(hwnd, 0, &pt, 1);
+    }
+
+    send_mouse_input(hwnd, event->window, flags, pt.x, pt.y,
                      0, event->mouse_moved.drag, event->mouse_moved.time_ms);
 }
 

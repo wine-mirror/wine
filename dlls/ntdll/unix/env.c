@@ -65,6 +65,7 @@ WOW_PEB *wow_peb = NULL;
 USHORT *uctable = NULL, *lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
+BOOL wow64_using_32bit_prefix = FALSE;
 
 static const WCHAR bootstrapW[] = {'W','I','N','E','B','O','O','T','S','T','R','A','P','M','O','D','E'};
 
@@ -1086,6 +1087,9 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     append_envA( env, pos, size, "WINEUSERLOCALE", user_locale );
     append_envA( env, pos, size, "SystemDrive", "C:" );
     append_envA( env, pos, size, "SystemRoot", "C:\\windows" );
+
+    /* CW HACK 20810: Set this environment variable so PE code can look for it. */
+    if (wow64_using_32bit_prefix) append_envA( env, pos, size, "WINEWOW6432BPREFIXMODE", "1" );
 }
 
 
@@ -1919,7 +1923,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     if (!status)
     {
         if (main_image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
-        if (main_image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
+        if ((main_image_info.Machine != current_machine) && !needs_wow64()) status = STATUS_INVALID_IMAGE_FORMAT;
     }
 
     if (status)  /* try launching it through start.exe */

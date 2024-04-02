@@ -19,6 +19,8 @@
 #ifndef __D3DCOMPILER_H__
 #define __D3DCOMPILER_H__
 
+#include "wine/winheader_enter.h"
+
 #include "d3d11shader.h"
 #include "d3d12shader.h"
 
@@ -158,5 +160,7 @@ HRESULT WINAPI D3DLoadModule(const void *data, SIZE_T size, ID3D11Module **modul
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

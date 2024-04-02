@@ -21,6 +21,8 @@
 #ifndef _RTUTILS_H_
 #define _RTUTILS_H_
 
+#include "wine/winheader_enter.h"
+
 #include <stdarg.h>
 
 #ifdef __cplusplus
@@ -45,5 +47,7 @@ DWORD WINAPI TraceRegisterExA(LPCSTR name, DWORD flags);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* _RTUTILS_H_ */

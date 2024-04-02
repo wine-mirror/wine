@@ -22,6 +22,8 @@
 #ifndef __D3DX9MATH_H__
 #define __D3DX9MATH_H__
 
+#include "wine/winheader_enter.h"
+
 #include <math.h>
 
 #define D3DX_PI    ((FLOAT)3.141592654)
@@ -471,5 +473,7 @@ HRESULT WINAPI D3DXCreateMatrixStack(DWORD flags, ID3DXMatrixStack **stack);
 #endif
 
 #include "d3dx9math.inl"
+
+#include "wine/winheader_exit.h"
 
 #endif /* __D3DX9MATH_H__ */

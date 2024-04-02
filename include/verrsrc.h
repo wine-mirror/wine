@@ -20,6 +20,8 @@
 #ifndef __WINE_VERRSRC_H
 #define __WINE_VERRSRC_H
 
+#include "wine/winheader_enter.h"
+
 /* Macro to deal with LP64 <=> LLP64 differences in numeric constants with 'l' modifier */
 #ifndef __MSABI_LONG
 #if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
@@ -169,5 +171,7 @@ typedef struct tagVS_FIXEDFILEINFO {
 #endif /* defined(__cplusplus) */
 
 #endif /* RC_INVOKED */
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_VERRSRC_H */

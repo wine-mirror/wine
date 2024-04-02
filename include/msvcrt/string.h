@@ -8,7 +8,10 @@
 #ifndef __WINE_STRING_H
 #define __WINE_STRING_H
 
+#include "wine/winheader_enter.h"
+
 #include <corecrt_wstring.h>
+#include "wine/asm.h"
 
 #ifndef _NLSCMP_DEFINED
 #define _NLSCMPERROR               ((unsigned int)0x7fffffff)
@@ -53,6 +56,14 @@ _ACRTIMP errno_t __cdecl strcpy_s(char*,size_t,const char*);
 _ACRTIMP size_t  __cdecl strcspn(const char*,const char*);
 _ACRTIMP char*   __cdecl strerror(int);
 _ACRTIMP size_t  __cdecl strlen(const char*);
+#ifdef __i386_on_x86_64__
+static inline size_t  __cdecl strlen(const char* HOSTPTR str) __attribute__((overloadable))
+{
+    const char * HOSTPTR s = str;
+    while (*s) s++;
+    return s - str;
+}
+#endif
 _ACRTIMP char*   __cdecl strncat(char*,const char*,size_t);
 _ACRTIMP errno_t __cdecl strncat_s(char*,size_t,const char*,size_t);
 _ACRTIMP int     __cdecl strncmp(const char*,const char*,size_t);
@@ -94,5 +105,7 @@ static inline wchar_t* wcsnset(wchar_t* str, wchar_t c, size_t n) { return _wcsn
 static inline wchar_t* wcsrev(wchar_t* str) { return _wcsrev(str); }
 static inline wchar_t* wcsset(wchar_t* str, wchar_t c) { return _wcsset(str, c); }
 static inline wchar_t* wcsupr(wchar_t* str) { return _wcsupr(str); }
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_STRING_H */

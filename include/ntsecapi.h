@@ -19,6 +19,8 @@
 #ifndef __WINE_NTSECAPI_H
 #define __WINE_NTSECAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifndef GUID_DEFINED
 # include <guiddef.h>
 #endif
@@ -511,5 +513,7 @@ NTSTATUS WINAPI LsaUnregisterPolicyChangeNotification(POLICY_NOTIFICATION_INFORM
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
+
+#include "wine/winheader_exit.h"
 
 #endif /* !defined(__WINE_NTSECAPI_H) */

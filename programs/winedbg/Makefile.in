@@ -1,6 +1,7 @@
 MODULE    = winedbg.exe
 IMPORTS   = dbghelp advapi32
 DELAYIMPORTS = comdlg32 shell32 comctl32 user32 gdi32 ws2_32
+EXTRAINCL = -I$(top_srcdir)/..
 
 EXTRADLLFLAGS = -mconsole
 

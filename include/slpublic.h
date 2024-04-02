@@ -19,6 +19,8 @@
 #ifndef __WINE_SLPUBLIC_H
 #define __WINE_SLPUBLIC_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -70,5 +72,7 @@ SLCAPI HRESULT WINAPI SLOpen(HSLC*);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_SLPUBLIC_H */

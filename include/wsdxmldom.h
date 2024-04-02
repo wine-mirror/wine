@@ -19,6 +19,8 @@
 #ifndef __WSDXMLDOM_H__
 #define __WSDXMLDOM_H__
 
+#include "wine/winheader_enter.h"
+
 typedef struct _WSDXML_TYPE WSDXML_TYPE;
 typedef struct _WSDXML_NAMESPACE WSDXML_NAMESPACE;
 typedef struct _WSDXML_NAME WSDXML_NAME;
@@ -93,5 +95,7 @@ struct _WSDXML_TEXT
     WSDXML_NODE Node;
     WCHAR *Text;
 };
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WSDXMLDOM_H__ */

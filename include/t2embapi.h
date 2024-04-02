@@ -19,6 +19,8 @@
 #ifndef __WINE_T2EMBAPI_H
 #define __WINE_T2EMBAPI_H
 
+#include "wine/winheader_enter.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,5 +84,7 @@ LONG WINAPI TTIsEmbeddingEnabled(HDC hdc, BOOL *enabled);
 #ifdef __cplusplus
 }
 #endif
+
+#include "wine/winheader_exit.h"
 
 #endif

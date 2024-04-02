@@ -36,6 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(unwind);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 typedef struct _SCOPE_TABLE
 {
@@ -510,7 +511,7 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
                  (void *)context->Rip, GetCurrentThreadId() );
     for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
-        TRACE( " info[%d]=%016I64x\n", c, rec->ExceptionInformation[c] );
+        TRACE_(seh)( " info[%d]=%016I64x\n", c, rec->ExceptionInformation[c] );
 
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
@@ -525,8 +526,11 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     }
     else if (rec->ExceptionCode == EXCEPTION_WINE_NAME_THREAD && rec->ExceptionInformation[0] == 0x1000)
     {
-        WARN_(seh)( "Thread %04x renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
-                    debugstr_a((char *)rec->ExceptionInformation[1]) );
+        if ((DWORD)rec->ExceptionInformation[2] == -1)
+            WARN_(threadname)( "Thread renamed to %s\n", debugstr_a((char *)rec->ExceptionInformation[1]) );
+        else
+            WARN_(threadname)( "Thread ID %04x renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
+                               debugstr_a((char *)rec->ExceptionInformation[1]) );
     }
     else if (rec->ExceptionCode == DBG_PRINTEXCEPTION_C)
     {
@@ -593,7 +597,13 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                   "je 1f\n\t"
                   "mov %rsp,%rdx\n\t" /* context */
                   "lea 0x4f0(%rsp),%rcx\n\t" /* rec */
+
+                  "pushq %r12\n\t"
+                  "movq %gs:0x30,%r12\n\t"
+                  "movq 0x1490(%r12),%r14\n\t" /* NtCurrentTeb()->TlsSlots[WOW64_TLS_WINEHYBRID_RESERVED_R14] */
+                  "popq %r12\n\t"
                   "movq %r14,%rsp\n\t"  /* switch to 64-bit stack */
+
                   "call " __ASM_NAME("dispatch_wow_exception") "\n\t"
                   "int3\n"
                   "1:\tmov 0xf8(%rsp),%rdx\n\t" /* context->Rip */

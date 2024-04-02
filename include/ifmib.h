@@ -18,6 +18,8 @@
 #ifndef __WINE_IFMIB_H
 #define __WINE_IFMIB_H
 
+#include "wine/winheader_enter.h"
+
 #include <ifdef.h>
 
 typedef struct _MIB_IFNUMBER
@@ -66,5 +68,7 @@ typedef struct _MIB_IFTABLE
     MIB_IFROW table[1];
 } MIB_IFTABLE, *PMIB_IFTABLE;
 
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_IFMIB_H */

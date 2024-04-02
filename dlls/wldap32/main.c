@@ -42,8 +42,11 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         hwldap32 = hinst;
         DisableThreadLibraryCalls( hinst );
         if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
-                                  &ldap_handle, sizeof(ldap_handle), NULL ))
+                                  &ldap_handle, sizeof(ldap_handle), NULL ) || LDAP_CALL( process_attach, NULL ))
+	{
+            ldap_handle = 0;
             ERR( "No libldap support, expect problems\n" );
+        }
         break;
     }
     return TRUE;

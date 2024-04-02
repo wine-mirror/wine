@@ -33,6 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define WM_PROCESSTASK 0x8008
+#define WM_CREATEDOC   0x8018
 #define TIMER_ID 0x3000
 
 typedef struct {
@@ -309,6 +310,13 @@ static LRESULT process_timer(void)
     return 0;
 }
 
+typedef struct {
+    IUnknown *unk;
+    IID iid;
+    IStream *stream;
+    HRESULT hres;
+} create_doc_params_t;
+
 static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -325,6 +333,20 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return 0;
     case WM_TIMER:
         return process_timer();
+    case WM_CREATEDOC: {
+        create_doc_params_t *params = (create_doc_params_t*)lParam;
+        IUnknown *unk;
+
+        TRACE("WM_CREATEDOC %p\n", params);
+
+        params->hres = HTMLDocument_Create(NULL, &params->iid, (void**)&unk);
+        if(FAILED(params->hres))
+            return 0;
+
+        params->hres = CoMarshalInterface(params->stream, &params->iid, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        IUnknown_Release(unk);
+        return 0;
+    }
     }
 
     if(msg > WM_USER)
@@ -365,6 +387,35 @@ HWND get_thread_hwnd(void)
         thread_data->thread_hwnd = create_thread_hwnd();
 
     return thread_data->thread_hwnd;
+}
+
+HRESULT create_marshaled_doc(HWND main_thread_hwnd, REFIID riid, void **ppv)
+{
+    create_doc_params_t params = {NULL, *riid, NULL, E_FAIL};
+    LARGE_INTEGER zero;
+    BOOL res;
+    HRESULT hres;
+
+    hres = CreateStreamOnHGlobal(NULL, TRUE, &params.stream);
+    if(FAILED(hres))
+        return hres;
+
+    res = SendMessageW(main_thread_hwnd, WM_CREATEDOC, 0, (LPARAM)&params);
+    TRACE("SendMessage ret %x\n", res);
+    if(FAILED(params.hres)) {
+        WARN("EM_CREATEDOC failed: %08lx\n", params.hres);
+        IStream_Release(params.stream);
+        return hres;
+    }
+
+    zero.QuadPart = 0;
+    hres = IStream_Seek(params.stream, zero, STREAM_SEEK_SET, NULL);
+    if(SUCCEEDED(hres))
+        hres = CoUnmarshalInterface(params.stream, riid, ppv);
+    IStream_Release(params.stream);
+    if(FAILED(hres))
+        WARN("CoUnmarshalInterface failed: %08lx\n", hres);
+    return hres;
 }
 
 thread_data_t *get_thread_data(BOOL create)

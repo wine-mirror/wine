@@ -19,6 +19,8 @@
 #ifndef __WINE_RMXFGUID_H
 #define __WINE_RMXFGUID_H
 
+#include "wine/winheader_enter.h"
+
 /*****************************************************************************
  * Define GUIDs
  */
@@ -126,5 +128,7 @@ DEFINE_GUID(TID_D3DRMTimedFloatKeys,        0xf406b180, 0x7b3b, 0x11cf, 0x8f, 0x
 DEFINE_GUID(TID_D3DRMUrl,                   0x3a23eea1, 0x94b1, 0x11d0, 0xab, 0x39, 0x00, 0x20, 0xaf, 0x71, 0xe4, 0x33);
 
 DEFINE_GUID(TID_D3DRMVector,                0x3d82ab5e, 0x62da, 0x11cf, 0xab, 0x39, 0x00, 0x20, 0xaf, 0x71, 0xe4, 0x33);
+
+#include "wine/winheader_exit.h"
 
 #endif /* __WINE_RMXFGUID_H */

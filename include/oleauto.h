@@ -19,6 +19,8 @@
 #ifndef __WINE_OLEAUTO_H
 #define __WINE_OLEAUTO_H
 
+#include "wine/winheader_enter.h"
+
 #include <oaidl.h>
 
 #ifdef __cplusplus
@@ -763,5 +765,7 @@ VOID WINAPI ClearCustData(LPCUSTDATA);
 } /* extern "C" */
 #endif
 
+
+#include "wine/winheader_exit.h"
 
 #endif /*__WINE_OLEAUTO_H*/
