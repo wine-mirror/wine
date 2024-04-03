@@ -3161,25 +3161,12 @@ static void write_struct_members(FILE *file, const type_t *type,
 
         if (!is_conformant_array(ft) || type_array_is_decl_as_ptr(ft))
         {
-            if ((align - 1) & offset)
+            unsigned short aligned = ROUND_SIZE(offset, align);
+            if (aligned > offset)
             {
-                unsigned char fc = 0;
-                switch (align)
-                {
-                case 2:
-                    fc = FC_ALIGNM2;
-                    break;
-                case 4:
-                    fc = FC_ALIGNM4;
-                    break;
-                case 8:
-                    fc = FC_ALIGNM8;
-                    break;
-                default:
-                    error("write_struct_members: cannot align type %d\n", type_get_type(ft));
-                }
+                unsigned char fc = FC_STRUCTPAD1 + (aligned - offset) - 1;
                 print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
-                offset = ROUND_SIZE(offset, align);
+                offset = aligned;
                 *typestring_offset += 1;
             }
             write_member_type(file, type, is_complex, field->attrs, field->declspec.type, corroff,
