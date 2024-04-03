@@ -845,22 +845,22 @@ static void mf_media_type_to_wg_format_video_indeo(IMFMediaType *type, uint32_t 
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
-        format->u.video_indeo.width = frame_size >> 32;
-        format->u.video_indeo.height = (UINT32)frame_size;
+        format->u.video.width = frame_size >> 32;
+        format->u.video.height = (UINT32)frame_size;
     }
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
     {
-        format->u.video_indeo.fps_n = frame_rate >> 32;
-        format->u.video_indeo.fps_d = (UINT32)frame_rate;
+        format->u.video.fps_n = frame_rate >> 32;
+        format->u.video.fps_d = (UINT32)frame_rate;
     }
     else
     {
-        format->u.video_indeo.fps_n = 1;
-        format->u.video_indeo.fps_d = 1;
+        format->u.video.fps_n = 1;
+        format->u.video.fps_d = 1;
     }
 
-    format->u.video_indeo.version = version;
+    format->u.video.version = version;
 }
 
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)

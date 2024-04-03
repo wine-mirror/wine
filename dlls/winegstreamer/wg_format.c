@@ -822,14 +822,14 @@ static GstCaps *wg_format_to_caps_video_indeo(const struct wg_format *format)
     if (!(caps = gst_caps_new_empty_simple("video/x-indeo")))
         return NULL;
 
-    if (format->u.video_indeo.width)
-        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_indeo.width, NULL);
-    if (format->u.video_indeo.height)
-        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_indeo.height, NULL);
-    if (format->u.video_indeo.fps_d || format->u.video_indeo.fps_n)
-        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_indeo.fps_n, format->u.video_indeo.fps_d, NULL);
-    if (format->u.video_indeo.version)
-        gst_caps_set_simple(caps, "indeoversion", G_TYPE_INT, format->u.video_indeo.version, NULL);
+    if (format->u.video.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video.width, NULL);
+    if (format->u.video.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video.height, NULL);
+    if (format->u.video.fps_d || format->u.video.fps_n)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video.fps_n, format->u.video.fps_d, NULL);
+    if (format->u.video.version)
+        gst_caps_set_simple(caps, "indeoversion", G_TYPE_INT, format->u.video.version, NULL);
 
     return caps;
 }
