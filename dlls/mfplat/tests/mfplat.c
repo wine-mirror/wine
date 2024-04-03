@@ -7105,16 +7105,13 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &GUID_NULL);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 16, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(length == 16, "Got length %#lx.\n", length);
     IMFMediaBuffer_Release(buffer);
-    }
 
     hr = MFCreateMediaType(&media_type2);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
@@ -7186,11 +7183,9 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 16, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 16, "Unexpected max length.\n");
@@ -7199,17 +7194,14 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == S_OK, "Failed to unlock, hr %#lx.\n", hr);
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* MF_MT_FRAME_SIZE is required  unless min length is provided */
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 16, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 16, "Unexpected max length.\n");
@@ -7218,29 +7210,26 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaBuffer_Unlock(buffer);
     ok(hr == S_OK, "Failed to unlock, hr %#lx.\n", hr);
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* MF_MT_SAMPLE_SIZE / MF_MT_FIXED_SIZE_SAMPLES / MF_MT_COMPRESSED don't have any effect */
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, 1024);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_FIXED_SIZE_SAMPLES, 1);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_COMPRESSED, 0);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     /* MF_MT_FRAME_SIZE forces the buffer size, regardless of min length */
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)7 << 32 | 8);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 224, "Unexpected max length.\n");
@@ -7271,13 +7260,10 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* minimum buffer size value is ignored */
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 4096, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 224, "got max %lu.\n", max);
@@ -7295,13 +7281,10 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* minimum alignment value is ignored */
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0x1fff, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 224, "got max %lu.\n", max);
@@ -7319,15 +7302,12 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* MF_MT_DEFAULT_STRIDE value is ignored */
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -123456);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
     ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
     ok(max == 224, "got max %lu.\n", max);
@@ -7345,15 +7325,12 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* MF_MT_DEFAULT_STRIDE sign controls bottom-up */
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, 123456);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&buffer_2d2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer2_Lock2DSize(buffer_2d2, MF2DBuffer_LockFlags_Read, &scanline0, &pitch, &data, &length);
@@ -7366,14 +7343,11 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, -123456);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&buffer_2d2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMF2DBuffer2_Lock2DSize(buffer_2d2, MF2DBuffer_LockFlags_Read, &scanline0, &pitch, &data, &length);
@@ -7386,7 +7360,6 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMF2DBuffer_Release(buffer_2d);
 
     IMFMediaBuffer_Release(buffer);
-    }
 
     /* MF_MT_FRAME_SIZE doesn't work with compressed formats */
     hr = IMFMediaType_DeleteItem(media_type, &MF_MT_FRAME_SIZE);
@@ -7396,7 +7369,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)16 << 32 | 32);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
     hr = pMFCreateMediaBufferFromMediaType(media_type, 0, 0, 0, &buffer);
-    todo_wine ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     IMFMediaType_Release(media_type);
 }

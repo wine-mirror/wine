@@ -1688,8 +1688,10 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
 {
     UINT32 length = 0, block_alignment;
     LONGLONG avg_length;
+    GUID major, subtype;
+    UINT64 frame_size;
+    BOOL is_yuv;
     HRESULT hr;
-    GUID major;
 
     TRACE("%p, %s, %lu, %lu, %p.\n", media_type, debugstr_time(duration), min_length, alignment, buffer);
 
@@ -1731,8 +1733,30 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
 
         return create_1d_buffer(length, alignment - 1, buffer);
     }
-    else
-        FIXME("Major type %s is not supported.\n", debugstr_guid(&major));
 
+    if (IsEqualGUID(&major, &MFMediaType_Video))
+    {
+        if (SUCCEEDED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype))
+                && SUCCEEDED(hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size))
+                && mf_format_get_stride(&subtype, frame_size >> 32, &is_yuv))
+        {
+            BOOL bottom_up = FALSE;
+            UINT32 stride;
+
+            if (!is_yuv && SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, &stride)))
+                bottom_up = (int)stride < 0;
+
+            if (SUCCEEDED(hr = create_2d_buffer(frame_size >> 32, (UINT32)frame_size, subtype.Data1, bottom_up, buffer)))
+                return hr;
+        }
+
+        if (!min_length)
+            return FAILED(hr) ? hr : E_INVALIDARG;
+
+        alignment = max(16, alignment);
+        return create_1d_buffer(min_length, alignment - 1, buffer);
+    }
+
+    FIXME("Major type %s is not supported.\n", debugstr_guid(&major));
     return E_NOTIMPL;
 }
