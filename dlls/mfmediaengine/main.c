@@ -1060,6 +1060,7 @@ static HRESULT media_engine_create_effects(struct effect *effects, size_t count,
 
     for (i = 0; i < count; ++i)
     {
+        UINT32 method = MF_CONNECT_ALLOW_DECODER;
         IMFTopologyNode *node = NULL;
 
         if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
@@ -1072,7 +1073,8 @@ static HRESULT media_engine_create_effects(struct effect *effects, size_t count,
         IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE);
 
         if (effects[i].optional)
-            IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, MF_CONNECT_AS_OPTIONAL);
+            method |= MF_CONNECT_AS_OPTIONAL;
+        IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, method);
 
         IMFTopology_AddNode(topology, node);
         IMFTopologyNode_ConnectOutput(last, 0, node, 0);
