@@ -10906,8 +10906,7 @@ static void check_system_properties_(unsigned int line, ID2D1Effect *effect)
         {
             hr = ID2D1Effect_GetValue(effect, test->index, D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
             ok_(__FILE__, line)(hr == S_OK, "Failed to get value, hr %#lx.\n", hr);
-            str_size = (wcslen((WCHAR *)buffer) + 1) * sizeof(WCHAR);
-            todo_wine_if(buffer[0] == 0)
+            str_size = (wcslen(buffer) + 1) * sizeof(WCHAR);
             ok_(__FILE__, line)(value_size == str_size, "Got unexpected value size %u, expected %u.\n",
                     value_size, str_size);
         }

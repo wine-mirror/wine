@@ -796,10 +796,10 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
         p->readonly = index != D2D1_PROPERTY_CACHED && index != D2D1_PROPERTY_PRECISION;
     p->name = wcsdup(name);
     p->type = type;
-    if (p->type == D2D1_PROPERTY_TYPE_STRING && value)
+    if (p->type == D2D1_PROPERTY_TYPE_STRING)
     {
         p->data.ptr = wcsdup(value);
-        p->size = (wcslen(value) + 1) * sizeof(WCHAR);
+        p->size = value ? (wcslen(value) + 1) * sizeof(WCHAR) : sizeof(WCHAR);
     }
     else
     {
