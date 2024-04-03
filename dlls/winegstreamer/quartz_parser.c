@@ -370,8 +370,8 @@ static unsigned int wg_format_get_max_size_video_raw(enum wg_video_format format
             return ALIGN(width, 4) * ALIGN(height, 2) /* Y plane */
                     + ALIGN(width, 4) * ((height + 1) / 2); /* U/V plane */
 
-        case WG_VIDEO_FORMAT_UNKNOWN:
-            FIXME("Cannot guess maximum sample size for unknown video format.\n");
+        default:
+            FIXME("Cannot guess maximum sample size for video format %d.\n", format);
             return 0;
     }
 
@@ -402,7 +402,7 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_VIDEO_WMV:
             return wg_format_get_max_size_video_raw(WG_VIDEO_FORMAT_YV12,
-                    format->u.video_wmv.width, format->u.video_wmv.height);
+                    format->u.video.width, format->u.video.height);
 
         case WG_MAJOR_TYPE_AUDIO:
         {
@@ -488,6 +488,11 @@ static const GUID *wg_video_format_get_mediasubtype(enum wg_video_format format)
         case WG_VIDEO_FORMAT_YUY2: return &MEDIASUBTYPE_YUY2;
         case WG_VIDEO_FORMAT_YV12: return &MEDIASUBTYPE_YV12;
         case WG_VIDEO_FORMAT_YVYU: return &MEDIASUBTYPE_YVYU;
+        case WG_VIDEO_FORMAT_WMV1: return &MEDIASUBTYPE_WMV1;
+        case WG_VIDEO_FORMAT_WMV2: return &MEDIASUBTYPE_WMV2;
+        case WG_VIDEO_FORMAT_WMV3: return &MEDIASUBTYPE_WMV3;
+        case WG_VIDEO_FORMAT_WMVA: return &MEDIASUBTYPE_WMVA;
+        case WG_VIDEO_FORMAT_WVC1: return &MEDIASUBTYPE_WVC1;
     }
 
     assert(0);
@@ -511,10 +516,10 @@ static DWORD wg_video_format_get_compression(enum wg_video_format format)
         case WG_VIDEO_FORMAT_YUY2: return mmioFOURCC('Y','U','Y','2');
         case WG_VIDEO_FORMAT_YV12: return mmioFOURCC('Y','V','1','2');
         case WG_VIDEO_FORMAT_YVYU: return mmioFOURCC('Y','V','Y','U');
+        default:
+            ERR("Cannot get compression for video format %d.", format);
+            return 0;
     }
-
-    assert(0);
-    return 0;
 }
 
 static WORD wg_video_format_get_depth(enum wg_video_format format)
@@ -534,10 +539,10 @@ static WORD wg_video_format_get_depth(enum wg_video_format format)
         case WG_VIDEO_FORMAT_YUY2: return 16;
         case WG_VIDEO_FORMAT_YV12: return 12;
         case WG_VIDEO_FORMAT_YVYU: return 16;
+        default:
+            ERR("Cannot get depth for video format %d.", format);
+            return 0;
     }
-
-    assert(0);
-    return 0;
 }
 
 static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
@@ -628,29 +633,29 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     uint32_t frame_time;
     const GUID *subtype;
 
-    switch (format->u.video_wmv.format)
+    switch (format->u.video.format)
     {
-        case WG_WMV_VIDEO_FORMAT_WMV1:
+        case WG_VIDEO_FORMAT_WMV1:
             subtype = &MEDIASUBTYPE_WMV1;
             break;
-        case WG_WMV_VIDEO_FORMAT_WMV2:
+        case WG_VIDEO_FORMAT_WMV2:
             subtype = &MEDIASUBTYPE_WMV2;
             break;
-        case WG_WMV_VIDEO_FORMAT_WMV3:
+        case WG_VIDEO_FORMAT_WMV3:
             subtype = &MEDIASUBTYPE_WMV3;
             break;
-        case WG_WMV_VIDEO_FORMAT_WMVA:
+        case WG_VIDEO_FORMAT_WMVA:
             subtype = &MEDIASUBTYPE_WMVA;
             break;
-        case WG_WMV_VIDEO_FORMAT_WVC1:
+        case WG_VIDEO_FORMAT_WVC1:
             subtype = &MEDIASUBTYPE_WVC1;
             break;
         default:
-            WARN("Invalid WMV format %u.\n", format->u.video_wmv.format);
+            WARN("Invalid WMV format %u.\n", format->u.video.format);
             return false;
     }
 
-    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format) + format->u.video_wmv.codec_data_len)))
+    if (!(video_format = CoTaskMemAlloc(sizeof(*video_format) + format->u.video.codec_data_len)))
         return false;
 
     mt->majortype = MEDIATYPE_Video;
@@ -659,22 +664,22 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     mt->bTemporalCompression = TRUE;
     mt->lSampleSize = 0;
     mt->formattype = FORMAT_VideoInfo;
-    mt->cbFormat = sizeof(*video_format) + format->u.video_wmv.codec_data_len;
+    mt->cbFormat = sizeof(*video_format) + format->u.video.codec_data_len;
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
-    SetRect(&video_format->rcSource, 0, 0, format->u.video_wmv.width, format->u.video_wmv.height);
+    SetRect(&video_format->rcSource, 0, 0, format->u.video.width, format->u.video.height);
     video_format->rcTarget = video_format->rcSource;
-    if ((frame_time = MulDiv(10000000, format->u.video_wmv.fps_d, format->u.video_wmv.fps_n)) != -1)
+    if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->AvgTimePerFrame = frame_time;
-    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER) + format->u.video_wmv.codec_data_len;
-    video_format->bmiHeader.biWidth = format->u.video_wmv.width;
-    video_format->bmiHeader.biHeight = format->u.video_wmv.height;
+    video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER) + format->u.video.codec_data_len;
+    video_format->bmiHeader.biWidth = format->u.video.width;
+    video_format->bmiHeader.biHeight = format->u.video.height;
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biCompression = mt->subtype.Data1;
     video_format->bmiHeader.biBitCount = 24;
     video_format->dwBitRate = 0;
-    memcpy(video_format+1, format->u.video_wmv.codec_data, format->u.video_wmv.codec_data_len);
+    memcpy(video_format+1, format->u.video.codec_data, format->u.video.codec_data_len);
 
     return true;
 }
@@ -985,31 +990,31 @@ static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format
     }
 
     format->major_type = WG_MAJOR_TYPE_VIDEO_WMV;
-    format->u.video_wmv.width = video_format->bmiHeader.biWidth;
-    format->u.video_wmv.height = video_format->bmiHeader.biHeight;
-    format->u.video_wmv.fps_n = 10000000;
-    format->u.video_wmv.fps_d = video_format->AvgTimePerFrame;
+    format->u.video.width = video_format->bmiHeader.biWidth;
+    format->u.video.height = video_format->bmiHeader.biHeight;
+    format->u.video.fps_n = 10000000;
+    format->u.video.fps_d = video_format->AvgTimePerFrame;
 
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1))
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV1;
+        format->u.video.format = WG_VIDEO_FORMAT_WMV1;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2))
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV2;
+        format->u.video.format = WG_VIDEO_FORMAT_WMV2;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV3))
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV3;
+        format->u.video.format = WG_VIDEO_FORMAT_WMV3;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVA))
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMVA;
+        format->u.video.format = WG_VIDEO_FORMAT_WMVA;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WVC1))
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WVC1;
+        format->u.video.format = WG_VIDEO_FORMAT_WVC1;
     else
-        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_UNKNOWN;
+        format->u.video.format = WG_VIDEO_FORMAT_UNKNOWN;
 
-    format->u.video_wmv.codec_data_len = mt->cbFormat - sizeof(VIDEOINFOHEADER);
-    if (format->u.video_wmv.codec_data_len > sizeof(format->u.video_wmv.codec_data))
+    format->u.video.codec_data_len = mt->cbFormat - sizeof(VIDEOINFOHEADER);
+    if (format->u.video.codec_data_len > sizeof(format->u.video.codec_data))
     {
-        ERR("Too big codec_data value (%u).\n", format->u.video_wmv.codec_data_len);
-        format->u.video_wmv.codec_data_len = 0;
+        ERR("Too big codec_data value (%u).\n", format->u.video.codec_data_len);
+        format->u.video.codec_data_len = 0;
     }
-    memcpy(format->u.video_wmv.codec_data, video_format+1, format->u.video_wmv.codec_data_len);
+    memcpy(format->u.video.codec_data, video_format+1, format->u.video.codec_data_len);
     return true;
 }
 

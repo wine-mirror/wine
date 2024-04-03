@@ -445,8 +445,8 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     if (!wg_format_is_set(&decoder->input_format))
         return DMO_E_TYPE_NOT_SET;
 
-    width = decoder->input_format.u.video_wmv.width;
-    height = abs(decoder->input_format.u.video_wmv.height);
+    width = decoder->input_format.u.video.width;
+    height = abs(decoder->input_format.u.video.height);
     subtype = wmv_decoder_output_types[type_index].subtype;
     if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &image_size)))
     {
@@ -470,8 +470,8 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     info->rcSource.bottom = height;
     info->rcTarget.right  = width;
     info->rcTarget.bottom = height;
-    info->AvgTimePerFrame = MulDiv(10000000, decoder->input_format.u.video_wmv.fps_d,
-            decoder->input_format.u.video_wmv.fps_n);
+    info->AvgTimePerFrame = MulDiv(10000000, decoder->input_format.u.video.fps_d,
+            decoder->input_format.u.video.fps_n);
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     info->bmiHeader.biWidth  = width;
     info->bmiHeader.biHeight = height;
@@ -881,7 +881,7 @@ HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out)
     static const struct wg_format input_format =
     {
         .major_type = WG_MAJOR_TYPE_VIDEO_WMV,
-        .u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV3,
+        .u.video.format = WG_VIDEO_FORMAT_WMV3,
     };
     static const struct wg_format output_format =
     {

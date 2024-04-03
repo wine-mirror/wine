@@ -76,17 +76,12 @@ enum wg_video_format
     WG_VIDEO_FORMAT_YUY2,
     WG_VIDEO_FORMAT_YV12,
     WG_VIDEO_FORMAT_YVYU,
-};
 
-typedef UINT32 wg_wmv_video_format;
-enum wg_wmv_video_format
-{
-    WG_WMV_VIDEO_FORMAT_UNKNOWN,
-    WG_WMV_VIDEO_FORMAT_WMV1,
-    WG_WMV_VIDEO_FORMAT_WMV2,
-    WG_WMV_VIDEO_FORMAT_WMV3,
-    WG_WMV_VIDEO_FORMAT_WMVA,
-    WG_WMV_VIDEO_FORMAT_WVC1,
+    WG_VIDEO_FORMAT_WMV1,
+    WG_VIDEO_FORMAT_WMV2,
+    WG_VIDEO_FORMAT_WMV3,
+    WG_VIDEO_FORMAT_WMVA,
+    WG_VIDEO_FORMAT_WVC1,
 };
 
 struct wg_format
@@ -123,7 +118,8 @@ struct wg_format
          *
          * Uncompressed(RGB and YUV): width, height, fps_n, fps_d, padding.
          * CINEPAK: width, height, fps_n, fps_d.
-         * H264: width, height, fps_n, fps_d, profile, level, codec_data_len, codec_data. */
+         * H264: width, height, fps_n, fps_d, profile, level, codec_data_len, codec_data.
+         * WMV: width, height, fps_n, fps_d, codec_data_len, codec_data. */
         struct
         {
             wg_video_format format;
@@ -138,14 +134,6 @@ struct wg_format
             uint32_t codec_data_len;
             unsigned char codec_data[64];
         } video;
-        struct
-        {
-            wg_wmv_video_format format;
-            int32_t width, height;
-            uint32_t fps_n, fps_d;
-            uint32_t codec_data_len;
-            unsigned char codec_data[64];
-        } video_wmv;
         struct
         {
             int32_t width, height;

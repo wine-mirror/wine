@@ -358,21 +358,21 @@ static GstCaps *transform_get_parsed_caps(struct wg_format *format, const char *
             gst_caps_set_simple(parsed_caps, "parsed", G_TYPE_BOOLEAN, true, "mpegversion", G_TYPE_INT, 1, NULL);
             break;
         case WG_MAJOR_TYPE_VIDEO_WMV:
-            switch (format->u.video_wmv.format)
+            switch (format->u.video.format)
             {
-                case WG_WMV_VIDEO_FORMAT_WMV1:
+                case WG_VIDEO_FORMAT_WMV1:
                     gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 1, NULL);
                     break;
-                case WG_WMV_VIDEO_FORMAT_WMV2:
+                case WG_VIDEO_FORMAT_WMV2:
                     gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 2, NULL);
                     break;
-                case WG_WMV_VIDEO_FORMAT_WMV3:
-                case WG_WMV_VIDEO_FORMAT_WMVA:
-                case WG_WMV_VIDEO_FORMAT_WVC1:
+                case WG_VIDEO_FORMAT_WMV3:
+                case WG_VIDEO_FORMAT_WMVA:
+                case WG_VIDEO_FORMAT_WVC1:
                     gst_caps_set_simple(parsed_caps, "wmvversion", G_TYPE_INT, 3, NULL);
                     break;
                 default:
-                    GST_WARNING("Unknown WMV format %u.", format->u.video_wmv.format);
+                    GST_WARNING("Unknown WMV format %u.", format->u.video.format);
                     break;
             }
             break;
