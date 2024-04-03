@@ -55,7 +55,6 @@ static void test_std_stream_buffering(void)
     if (broken(!GetProcAddress(GetModuleHandleA("ucrtbase"), "__CxxFrameHandler4") && !pos))
         trace("stderr is buffered\n");
     else
-        todo_wine
         ok(pos == 4, "expected stderr to be unbuffered (%d)\n", pos);
 
     fflush(stderr);

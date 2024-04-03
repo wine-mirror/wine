@@ -830,9 +830,15 @@ int CDECL _isatty(int fd)
 /* INTERNAL: Allocate stdio file buffer */
 static BOOL msvcrt_alloc_buffer(FILE* file)
 {
+#if _MSVCR_VER >= 140
+    if((file->_file==STDOUT_FILENO && _isatty(file->_file))
+        || file->_file == STDERR_FILENO)
+        return FALSE;
+#else
     if((file->_file==STDOUT_FILENO || file->_file==STDERR_FILENO)
             && _isatty(file->_file))
         return FALSE;
+#endif
 
     file->_base = calloc(1, MSVCRT_INTERNAL_BUFSIZ);
     if(file->_base) {
