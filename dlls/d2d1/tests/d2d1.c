@@ -497,6 +497,14 @@ static void set_rect_u(D2D1_RECT_U *rect, UINT32 left, UINT32 top, UINT32 right,
     rect->bottom = bottom;
 }
 
+static void set_rect_l(D2D1_RECT_L *rect, LONG left, LONG top, LONG right, LONG bottom)
+{
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
 static void set_ellipse(D2D1_ELLIPSE *ellipse, float x, float y, float rx, float ry)
 {
     set_point(&ellipse->point, x, y);
@@ -13103,6 +13111,69 @@ static void test_border_transform(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_bounds_adjustment_transform(BOOL d3d11)
+{
+    ID2D1BoundsAdjustmentTransform *transform = NULL;
+    ID2D1EffectContext *effect_context;
+    D2D1_PROPERTY_BINDING binding;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    UINT input_count;
+    D2D1_RECT_L rect;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    binding.propertyName = L"Context";
+    binding.setFunction = NULL;
+    binding.getFunction = effect_impl_get_context;
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, &binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_rect_l(&rect, -1, 0, 25, -50);
+    hr = ID2D1EffectContext_CreateBoundsAdjustmentTransform(effect_context, &rect, &transform);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    memset(&rect, 0, sizeof(rect));
+    ID2D1BoundsAdjustmentTransform_GetOutputBounds(transform, &rect);
+    ok(rect.left == -1 && rect.top == 0 && rect.right == 25 && rect.bottom == -50,
+            "Unexpected rectangle.\n");
+
+    set_rect_l(&rect, -50, 25, 0, -1);
+    ID2D1BoundsAdjustmentTransform_SetOutputBounds(transform, &rect);
+    memset(&rect, 0, sizeof(rect));
+    ID2D1BoundsAdjustmentTransform_GetOutputBounds(transform, &rect);
+    ok(rect.left == -50 && rect.top == 25 && rect.right == 0 && rect.bottom == -1,
+            "Unexpected rectangle.\n");
+
+    /* Input count */
+    input_count = ID2D1BoundsAdjustmentTransform_GetInputCount(transform);
+    ok(input_count == 1, "Got unexpected input count %u.\n", input_count);
+
+    ID2D1BoundsAdjustmentTransform_Release(transform);
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    release_test_context(&ctx);
+}
+
 static void test_stroke_contains_point(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
@@ -14640,6 +14711,7 @@ START_TEST(d2d1)
     queue_test(test_offset_transform);
     queue_test(test_blend_transform);
     queue_test(test_border_transform);
+    queue_test(test_bounds_adjustment_transform);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);

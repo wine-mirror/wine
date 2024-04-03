@@ -722,6 +722,7 @@ struct d2d_transform
             D2D1_EXTEND_MODE mode_x;
             D2D1_EXTEND_MODE mode_y;
         } border;
+        D2D1_RECT_L bounds;
     };
 
     UINT32 input_count;
