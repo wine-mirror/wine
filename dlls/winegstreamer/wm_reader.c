@@ -2224,16 +2224,34 @@ static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
 
 static HRESULT WINAPI reader_OpenStream(IWMSyncReader2 *iface, IStream *stream)
 {
+    static const ULONG64 canary_size = 0xdeadbeeffeedcafe;
     struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
     STATSTG stat;
     HRESULT hr;
 
     TRACE("reader %p, stream %p.\n", reader, stream);
 
+    stat.cbSize.QuadPart = canary_size;
     if (FAILED(hr = IStream_Stat(stream, &stat, STATFLAG_NONAME)))
     {
         ERR("Failed to stat stream, hr %#lx.\n", hr);
         return hr;
+    }
+
+    if (stat.cbSize.QuadPart == canary_size)
+    {
+        /* Call of Juarez: Gunslinger implements IStream_Stat as an empty function returning S_OK, leaving
+         * the output stat unchanged. Windows doesn't call IStream_Seek(_SEEK_END) and probably validates
+         * the size against WMV file headers so the bigger cbSize doesn't change anything.
+         * Such streams work as soon as the uninitialized cbSize is big enough which is usually the case
+         * (if that is not the case Windows will favour shorter cbSize). */
+        static const LARGE_INTEGER zero = { 0 };
+        ULARGE_INTEGER pos = { .QuadPart = canary_size };
+
+        if (SUCCEEDED(hr = IStream_Seek(stream, zero, STREAM_SEEK_END, &pos)))
+            IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+        stat.cbSize.QuadPart = pos.QuadPart == canary_size ? 0 : pos.QuadPart;
+        ERR("IStream_Stat did not fill the stream size, size from _Seek %I64u.\n", stat.cbSize.QuadPart);
     }
 
     EnterCriticalSection(&reader->cs);
