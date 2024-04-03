@@ -391,7 +391,7 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             /* Both ffmpeg's encoder and a Cinepak file seen in the wild report
              * 24 bpp. ffmpeg sets biSizeImage as below; others may be smaller,
              * but as long as every sample fits into our allocator, we're fine. */
-            return format->u.video_cinepak.width * format->u.video_cinepak.height * 3;
+            return format->u.video.width * format->u.video.height * 3;
 
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
             /* Estimated max size of a compressed video frame.
@@ -609,11 +609,11 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
-    if ((frame_time = MulDiv(10000000, format->u.video_cinepak.fps_d, format->u.video_cinepak.fps_n)) != -1)
+    if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->AvgTimePerFrame = frame_time;
     video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    video_format->bmiHeader.biWidth = format->u.video_cinepak.width;
-    video_format->bmiHeader.biHeight = format->u.video_cinepak.height;
+    video_format->bmiHeader.biWidth = format->u.video.width;
+    video_format->bmiHeader.biHeight = format->u.video.height;
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biBitCount = 24;
     video_format->bmiHeader.biCompression = mt->subtype.Data1;

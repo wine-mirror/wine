@@ -119,22 +119,20 @@ struct wg_format
             unsigned char codec_data[64];
         } audio;
 
+        /* Valid members for different video formats:
+         *
+         * Uncompressed(RGB and YUV): width, height, fps_n, fps_d, padding.
+         * CINEPAK: width, height, fps_n, fps_d. */
         struct
         {
             wg_video_format format;
+
             /* Positive height indicates top-down video; negative height
              * indicates bottom-up video. */
             int32_t width, height;
             uint32_t fps_n, fps_d;
             RECT padding;
         } video;
-        struct
-        {
-            uint32_t width;
-            uint32_t height;
-            uint32_t fps_n;
-            uint32_t fps_d;
-        } video_cinepak;
         struct
         {
             int32_t width, height;
