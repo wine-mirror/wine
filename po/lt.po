@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-03-30 00:22+0200\n"
+"PO-Revision-Date: 2024-04-03 22:59+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -19381,10 +19381,8 @@ msgid "Help topics: "
 msgstr "Žinyno temos: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Command line not supported\n"
 msgid "Error: Command not supported\n"
-msgstr "Klaida: Komandos eilutė nepalaikoma\n"
+msgstr "Klaida: Komanda nepalaikoma\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
