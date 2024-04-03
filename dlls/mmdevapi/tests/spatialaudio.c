@@ -64,6 +64,27 @@ static void test_formats(void)
     ok(fmt->nAvgBytesPerSec == 192000, "Wrong avg bytes per sec, expected 192000 got %lu\n", fmt->nAvgBytesPerSec);
     ok(fmt->cbSize == 0, "Wrong cbSize for simple format, expected 0, got %hu\n", fmt->cbSize);
 
+    hr = ISpatialAudioClient_IsAudioObjectFormatSupported(sac, NULL);
+    ok(hr == E_POINTER, "Got %#lx.\n", hr);
+
+    memcpy(&format, fmt, sizeof(format));
+    hr = ISpatialAudioClient_IsAudioObjectFormatSupported(sac, &format);
+    ok(hr == S_OK, "Got %#lx.\n", hr);
+
+    format.nBlockAlign *= 2;
+    hr = ISpatialAudioClient_IsAudioObjectFormatSupported(sac, &format);
+    todo_wine ok(hr == S_OK, "Got %#lx.\n", hr);
+
+    memcpy(&format, fmt, sizeof(format));
+    format.wBitsPerSample *= 2;
+    hr = ISpatialAudioClient_IsAudioObjectFormatSupported(sac, &format);
+    ok(hr == E_INVALIDARG, "Got %#lx.\n", hr);
+
+    memcpy(&format, fmt, sizeof(format));
+    format.nChannels = 2;
+    hr = ISpatialAudioClient_IsAudioObjectFormatSupported(sac, &format);
+    ok(hr == E_INVALIDARG, "Got %#lx.\n", hr);
+
     memcpy(&format, fmt, sizeof(format));
 
     IAudioFormatEnumerator_Release(afe);

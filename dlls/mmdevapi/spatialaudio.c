@@ -49,6 +49,36 @@ static UINT32 AudioObjectType_to_index(AudioObjectType type)
     return o - 2;
 }
 
+static const char *debugstr_fmtex(const WAVEFORMATEX *fmt)
+{
+    static char buf[2048];
+
+    if (!fmt)
+    {
+        strcpy(buf, "(null)");
+    }
+    else if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+        snprintf(buf, sizeof(buf), "tag: 0x%x (%s), ch: %u (mask: 0x%lx), rate: %lu, depth: %u",
+                fmt->wFormatTag, debugstr_guid(&fmtex->SubFormat),
+                fmt->nChannels, fmtex->dwChannelMask, fmt->nSamplesPerSec,
+                fmt->wBitsPerSample);
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "tag: 0x%x, ch: %u, rate: %lu, depth: %u",
+                fmt->wFormatTag, fmt->nChannels, fmt->nSamplesPerSec,
+                fmt->wBitsPerSample);
+    }
+    return buf;
+}
+
+static BOOL formats_equal(const WAVEFORMATEX *fmt1, const WAVEFORMATEX *fmt2)
+{
+    return !memcmp(fmt1, fmt2, sizeof(*fmt1)) && !memcmp(fmt1 + 1, fmt2 + 1, fmt1->cbSize);
+}
+
 typedef struct SpatialAudioImpl SpatialAudioImpl;
 typedef struct SpatialAudioStreamImpl SpatialAudioStreamImpl;
 typedef struct SpatialAudioObjectImpl SpatialAudioObjectImpl;
@@ -610,9 +640,20 @@ static HRESULT WINAPI SAC_GetMaxFrameCount(ISpatialAudioClient *iface,
 static HRESULT WINAPI SAC_IsAudioObjectFormatSupported(ISpatialAudioClient *iface,
         const WAVEFORMATEX *format)
 {
-    SpatialAudioImpl *This = impl_from_ISpatialAudioClient(iface);
-    FIXME("(%p)->(%p)\n", This, format);
-    return E_NOTIMPL;
+    SpatialAudioImpl *sac = impl_from_ISpatialAudioClient(iface);
+
+    TRACE("sac %p, format %s.\n", sac, debugstr_fmtex(format));
+
+    if (!format)
+        return E_POINTER;
+
+    if (!formats_equal(&sac->object_fmtex.Format, format))
+    {
+        FIXME("Reporting format %s as unsupported.\n", debugstr_fmtex(format));
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI SAC_IsSpatialAudioStreamAvailable(ISpatialAudioClient *iface,
@@ -628,23 +669,6 @@ static WAVEFORMATEX *clone_fmtex(const WAVEFORMATEX *src)
     WAVEFORMATEX *r = malloc(sizeof(WAVEFORMATEX) + src->cbSize);
     memcpy(r, src, sizeof(WAVEFORMATEX) + src->cbSize);
     return r;
-}
-
-static const char *debugstr_fmtex(const WAVEFORMATEX *fmt)
-{
-    static char buf[2048];
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
-        snprintf(buf, sizeof(buf), "tag: 0x%x (%s), ch: %u (mask: 0x%lx), rate: %lu, depth: %u",
-                fmt->wFormatTag, debugstr_guid(&fmtex->SubFormat),
-                fmt->nChannels, fmtex->dwChannelMask, fmt->nSamplesPerSec,
-                fmt->wBitsPerSample);
-    }else{
-        snprintf(buf, sizeof(buf), "tag: 0x%x, ch: %u, rate: %lu, depth: %u",
-                fmt->wFormatTag, fmt->nChannels, fmt->nSamplesPerSec,
-                fmt->wBitsPerSample);
-    }
-    return buf;
 }
 
 static void static_mask_to_channels(AudioObjectType static_mask, WORD *count, DWORD *mask, UINT32 *map)
@@ -776,8 +800,7 @@ static HRESULT WINAPI SAC_ActivateSpatialAudioStream(ISpatialAudioClient *iface,
             return E_INVALIDARG;
         }
 
-        if(!params->ObjectFormat ||
-                memcmp(params->ObjectFormat, &This->object_fmtex.Format, sizeof(*params->ObjectFormat) + params->ObjectFormat->cbSize)){
+        if(!(params->ObjectFormat && formats_equal(params->ObjectFormat, &This->object_fmtex.Format))) {
             *stream = NULL;
             return AUDCLNT_E_UNSUPPORTED_FORMAT;
         }
