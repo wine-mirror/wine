@@ -1103,7 +1103,7 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
             if (!is_string_type( var->attrs, ref ))
                 buffer_size = get_required_buffer_size_type( ref, NULL, NULL, TRUE, &alignment );
 
-            switch (typegen_detect_type( ref, NULL, TDT_ALL_TYPES ))
+            switch (typegen_detect_type( ref, var->attrs, TDT_ALL_TYPES ))
             {
             case TGT_BASIC:
                 *flags |= IsSimpleRef | IsBasetype;
@@ -2186,7 +2186,7 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     {
         if (context == TYPE_CONTEXT_TOPLEVELPARAM && is_ptr(type) && pointer_type == FC_RP)
         {
-            switch (typegen_detect_type(type_pointer_get_ref_type(type), NULL, TDT_ALL_TYPES))
+            switch (typegen_detect_type(type_pointer_get_ref_type(type), attrs, TDT_ALL_TYPES))
             {
             case TGT_STRING:
             case TGT_POINTER:
