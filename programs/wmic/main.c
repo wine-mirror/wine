@@ -43,17 +43,17 @@ static const struct
 }
 alias_map[] =
 {
+    { L"baseboard", L"Win32_BaseBoard" },
     { L"bios", L"Win32_BIOS" },
     { L"computersystem", L"Win32_ComputerSystem" },
     { L"cpu", L"Win32_Processor" },
-    { L"LogicalDisk", L"Win32_LogicalDisk" },
+    { L"diskdrive", L"Win32_DiskDrive" },
+    { L"logicaldisk", L"Win32_LogicalDisk" },
+    { L"memorychip", L"Win32_PhysicalMemory" },
     { L"nic", L"Win32_NetworkAdapter" },
+    { L"nicconfig", L"Win32_NetworkAdapterConfiguration" },
     { L"os", L"Win32_OperatingSystem" },
     { L"process", L"Win32_Process" },
-    { L"baseboard", L"Win32_BaseBoard" },
-    { L"diskdrive", L"Win32_DiskDrive" },
-    { L"memorychip", L"Win32_PhysicalMemory" },
-    { L"nicconfig", L"Win32_NetworkAdapterConfiguration" },
 };
 
 static const WCHAR *find_class( const WCHAR *alias )
