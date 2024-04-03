@@ -411,11 +411,6 @@ static void append_data(struct sltg_data *block, const void *data, int size)
     block->size = new_size;
 }
 
-static void add_typedef_typeinfo(struct sltg_typelib *typelib, type_t *type)
-{
-    error("add_typedef_typeinfo: %s not implemented\n", type->name);
-}
-
 static void add_module_typeinfo(struct sltg_typelib *typelib, type_t *type)
 {
     error("add_module_typeinfo: %s not implemented\n", type->name);
@@ -996,12 +991,8 @@ static void add_statement(struct sltg_typelib *typelib, const statement_t *stmt)
 
         LIST_FOR_EACH_ENTRY(ref, stmt->u.type_list, typeref_t, entry)
         {
-            /* if the type is public then add the typedef, otherwise attempt
-             * to add the aliased type */
-            if (is_attr(ref->type->attrs, ATTR_PUBLIC))
-                add_typedef_typeinfo(typelib, ref->type);
-            else
-                add_type_typeinfo(typelib, type_alias_get_aliasee_type(ref->type));
+            /* in old style typelibs all types are public */
+            add_type_typeinfo(typelib, ref->type);
         }
         break;
     }
