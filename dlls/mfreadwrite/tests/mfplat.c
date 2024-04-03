@@ -2604,28 +2604,25 @@ static HRESULT WINAPI test_decoder_ProcessOutput(IMFTransform *iface, DWORD flag
 
         hr = MFCreateSample(&data->pSample);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = MFCreateMediaBufferFromMediaType(decoder->output_type, 0, 0, 0, &buffer);
-        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        if (hr != S_OK)
-        {
-            hr = MFCreateMemoryBuffer(96 * 96 * 4, &buffer);
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        }
+        hr = MFCreateMemoryBuffer(96 * 96 * 4, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IMFSample_AddBuffer(data->pSample, buffer);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         IMFMediaBuffer_Release(buffer);
     }
+    else
+    {
+        ok(!!data->pSample, "Missing sample\n");
 
-    ok(!!data->pSample, "Missing sample\n");
-
-    hr = IMFSample_GetBufferByIndex(data->pSample, 0, &buffer);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
-    todo_wine check_interface(buffer, &IID_IMFGetService, TRUE);
-    check_interface(buffer, &IID_IMFDXGIBuffer, FALSE);
-    hr = MFGetService((IUnknown *)buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&unknown);
-    todo_wine ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
-    IMFMediaBuffer_Release(buffer);
+        hr = IMFSample_GetBufferByIndex(data->pSample, 0, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
+        todo_wine check_interface(buffer, &IID_IMFGetService, TRUE);
+        check_interface(buffer, &IID_IMFDXGIBuffer, FALSE);
+        hr = MFGetService((IUnknown *)buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&unknown);
+        todo_wine ok(hr == E_NOTIMPL, "Unexpected hr %#lx.\n", hr);
+        IMFMediaBuffer_Release(buffer);
+    }
 
     if (decoder->next_output == MF_E_TRANSFORM_STREAM_CHANGE)
     {
@@ -2817,6 +2814,16 @@ static void test_source_reader_transform_stream_change(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaSource_Release(source);
 
+    /* skip tests on Win7 which misses IMFSourceReaderEx */
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win7 */, "Unexpected hr %#lx.\n", hr);
+    if (broken(hr == E_NOINTERFACE))
+    {
+        win_skip("missing IMFSourceReaderEx interface, skipping tests on Win7\n");
+        goto skip_tests;
+    }
+    IMFSourceReaderEx_Release(reader_ex);
+
     hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -2881,6 +2888,7 @@ static void test_source_reader_transform_stream_change(void)
 
     IMFTransform_Release(test_decoder);
 
+skip_tests:
     IMFSourceReader_Release(reader);
 
     hr = MFTUnregisterLocal(&factory);
@@ -2992,6 +3000,17 @@ static void test_source_reader_transforms_d3d(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFAttributes_Release(attributes);
     IMFMediaSource_Release(source);
+
+    /* skip tests on Win7 which misses IMFSourceReaderEx */
+    hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win7 */, "Unexpected hr %#lx.\n", hr);
+    if (broken(hr == E_NOINTERFACE))
+    {
+        win_skip("missing IMFSourceReaderEx interface, skipping tests on Win7\n");
+        IMFSourceReader_Release(reader);
+        goto skip_tests;
+    }
+    IMFSourceReaderEx_Release(reader_ex);
 
     hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3152,6 +3171,7 @@ static void test_source_reader_transforms_d3d(void)
     test_decoder_allocate_samples = FALSE;
 
 
+skip_tests:
     hr = MFTUnregisterLocal(&factory);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
