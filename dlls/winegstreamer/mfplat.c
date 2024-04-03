@@ -800,33 +800,33 @@ static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
-        format->u.video_h264.width = frame_size >> 32;
-        format->u.video_h264.height = (UINT32)frame_size;
+        format->u.video.width = frame_size >> 32;
+        format->u.video.height = (UINT32)frame_size;
     }
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
     {
-        format->u.video_h264.fps_n = frame_rate >> 32;
-        format->u.video_h264.fps_d = (UINT32)frame_rate;
+        format->u.video.fps_n = frame_rate >> 32;
+        format->u.video.fps_d = (UINT32)frame_rate;
     }
     else
     {
-        format->u.video_h264.fps_n = 1;
-        format->u.video_h264.fps_d = 1;
+        format->u.video.fps_n = 1;
+        format->u.video.fps_d = 1;
     }
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_PROFILE, &profile)))
-        format->u.video_h264.profile = profile;
+        format->u.video.profile = profile;
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_LEVEL, &level)))
-        format->u.video_h264.level = level;
+        format->u.video.level = level;
 
     if (SUCCEEDED(IMFMediaType_GetAllocatedBlob(type, &MF_MT_MPEG_SEQUENCE_HEADER, &codec_data, &codec_data_len)))
     {
-        if (codec_data_len <= sizeof(format->u.video_h264.codec_data))
+        if (codec_data_len <= sizeof(format->u.video.codec_data))
         {
-            format->u.video_h264.codec_data_len = codec_data_len;
-            memcpy(format->u.video_h264.codec_data, codec_data, codec_data_len);
+            format->u.video.codec_data_len = codec_data_len;
+            memcpy(format->u.video.codec_data, codec_data, codec_data_len);
         }
         else
         {

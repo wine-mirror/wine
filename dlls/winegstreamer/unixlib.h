@@ -122,7 +122,8 @@ struct wg_format
         /* Valid members for different video formats:
          *
          * Uncompressed(RGB and YUV): width, height, fps_n, fps_d, padding.
-         * CINEPAK: width, height, fps_n, fps_d. */
+         * CINEPAK: width, height, fps_n, fps_d.
+         * H264: width, height, fps_n, fps_d, profile, level, codec_data_len, codec_data. */
         struct
         {
             wg_video_format format;
@@ -132,16 +133,11 @@ struct wg_format
             int32_t width, height;
             uint32_t fps_n, fps_d;
             RECT padding;
-        } video;
-        struct
-        {
-            int32_t width, height;
-            uint32_t fps_n, fps_d;
             uint32_t profile;
             uint32_t level;
             uint32_t codec_data_len;
             unsigned char codec_data[64];
-        } video_h264;
+        } video;
         struct
         {
             wg_wmv_video_format format;

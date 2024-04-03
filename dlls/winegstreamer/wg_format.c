@@ -680,20 +680,20 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
     gst_caps_set_simple(caps, "alignment", G_TYPE_STRING, "au", NULL);
 
-    if (format->u.video_h264.width)
-        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_h264.width, NULL);
-    if (format->u.video_h264.height)
-        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_h264.height, NULL);
-    if (format->u.video_h264.fps_n || format->u.video_h264.fps_d)
-        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_h264.fps_n, format->u.video_h264.fps_d, NULL);
+    if (format->u.video.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video.width, NULL);
+    if (format->u.video.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video.height, NULL);
+    if (format->u.video.fps_n || format->u.video.fps_d)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video.fps_n, format->u.video.fps_d, NULL);
 
-    switch (format->u.video_h264.profile)
+    switch (format->u.video.profile)
     {
         case eAVEncH264VProfile_Main: profile = "main"; break;
         case eAVEncH264VProfile_High: profile = "high"; break;
         case eAVEncH264VProfile_444:  profile = "high-4:4:4"; break;
         default:
-            GST_FIXME("H264 profile attribute %u not implemented.", format->u.video_h264.profile);
+            GST_FIXME("H264 profile attribute %u not implemented.", format->u.video.profile);
             /* fallthrough */
         case eAVEncH264VProfile_unknown:
             profile = "baseline";
@@ -701,7 +701,7 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     }
     gst_caps_set_simple(caps, "profile", G_TYPE_STRING, profile, NULL);
 
-    switch (format->u.video_h264.level)
+    switch (format->u.video.level)
     {
         case eAVEncH264VLevel1:   level = "1";   break;
         case eAVEncH264VLevel1_1: level = "1.1"; break;
@@ -720,7 +720,7 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
         case eAVEncH264VLevel5_1: level = "5.1"; break;
         case eAVEncH264VLevel5_2: level = "5.2"; break;
         default:
-            GST_FIXME("H264 level attribute %u not implemented.", format->u.video_h264.level);
+            GST_FIXME("H264 level attribute %u not implemented.", format->u.video.level);
             /* fallthrough */
         case 0:
             level = NULL;
@@ -729,9 +729,9 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
     if (level)
         gst_caps_set_simple(caps, "level", G_TYPE_STRING, level, NULL);
 
-    if (format->u.video_h264.codec_data_len)
+    if (format->u.video.codec_data_len)
     {
-        if (!(buffer = gst_buffer_new_and_alloc(format->u.video_h264.codec_data_len)))
+        if (!(buffer = gst_buffer_new_and_alloc(format->u.video.codec_data_len)))
         {
             gst_caps_unref(caps);
             return NULL;
@@ -739,7 +739,7 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
 
         GST_BUFFER_PTS(buffer) = 0;
         GST_BUFFER_DTS(buffer) = 0;
-        gst_buffer_fill(buffer, 0, format->u.video_h264.codec_data, format->u.video_h264.codec_data_len);
+        gst_buffer_fill(buffer, 0, format->u.video.codec_data, format->u.video.codec_data_len);
         gst_caps_set_simple(caps, "streamheader", GST_TYPE_BUFFER, buffer, NULL);
         gst_buffer_unref(buffer);
     }
