@@ -120,7 +120,8 @@ struct wg_format
          * CINEPAK: width, height, fps_n, fps_d.
          * H264: width, height, fps_n, fps_d, profile, level, codec_data_len, codec_data.
          * WMV: width, height, fps_n, fps_d, codec_data_len, codec_data.
-         * INDEO: width, height, fps_n, fps_d, version. */
+         * INDEO: width, height, fps_n, fps_d, version.
+         * MPEG1: width, height, fps_n, fps_d. */
         struct
         {
             wg_video_format format;
@@ -136,11 +137,6 @@ struct wg_format
             uint32_t codec_data_len;
             unsigned char codec_data[64];
         } video;
-        struct
-        {
-            int32_t width, height;
-            uint32_t fps_n, fps_d;
-        } video_mpeg1;
     } u;
 };
 

@@ -394,13 +394,10 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
             return format->u.video.width * format->u.video.height * 3;
 
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
+        case WG_MAJOR_TYPE_VIDEO_WMV:
             /* Estimated max size of a compressed video frame.
              * There's no way to no way to know the real upper bound,
              * so let's just use the decompressed size and hope it works. */
-            return wg_format_get_max_size_video_raw(WG_VIDEO_FORMAT_YV12,
-                    format->u.video_mpeg1.width, format->u.video_mpeg1.height);
-
-        case WG_MAJOR_TYPE_VIDEO_WMV:
             return wg_format_get_max_size_video_raw(WG_VIDEO_FORMAT_YV12,
                     format->u.video.width, format->u.video.height);
 
@@ -701,11 +698,11 @@ static bool amt_from_wg_format_video_mpeg1(AM_MEDIA_TYPE *mt, const struct wg_fo
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
-    if ((frame_time = MulDiv(10000000, format->u.video_mpeg1.fps_d, format->u.video_mpeg1.fps_n)) != -1)
+    if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->hdr.AvgTimePerFrame = frame_time;
     video_format->hdr.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    video_format->hdr.bmiHeader.biWidth = format->u.video_mpeg1.width;
-    video_format->hdr.bmiHeader.biHeight = format->u.video_mpeg1.height;
+    video_format->hdr.bmiHeader.biWidth = format->u.video.width;
+    video_format->hdr.bmiHeader.biHeight = format->u.video.height;
     video_format->hdr.bmiHeader.biPlanes = 1;
     video_format->hdr.bmiHeader.biBitCount = 12;
     video_format->hdr.bmiHeader.biCompression = mt->subtype.Data1;
@@ -1034,10 +1031,10 @@ static bool amt_to_wg_format_video_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_form
     }
 
     format->major_type = WG_MAJOR_TYPE_VIDEO_MPEG1;
-    format->u.video_mpeg1.width = video_format->hdr.bmiHeader.biWidth;
-    format->u.video_mpeg1.height = video_format->hdr.bmiHeader.biHeight;
-    format->u.video_mpeg1.fps_n = 10000000;
-    format->u.video_mpeg1.fps_d = video_format->hdr.AvgTimePerFrame;
+    format->u.video.width = video_format->hdr.bmiHeader.biWidth;
+    format->u.video.height = video_format->hdr.bmiHeader.biHeight;
+    format->u.video.fps_n = 10000000;
+    format->u.video.fps_d = video_format->hdr.AvgTimePerFrame;
 
     return true;
 }

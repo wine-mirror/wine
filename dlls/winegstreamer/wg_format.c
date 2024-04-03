@@ -384,10 +384,10 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     }
 
     format->major_type = WG_MAJOR_TYPE_VIDEO_MPEG1;
-    format->u.video_mpeg1.width = width;
-    format->u.video_mpeg1.height = height;
-    format->u.video_mpeg1.fps_n = fps_n;
-    format->u.video_mpeg1.fps_d = fps_d;
+    format->u.video.width = width;
+    format->u.video.height = height;
+    format->u.video.fps_n = fps_n;
+    format->u.video.fps_d = fps_d;
 }
 
 void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
@@ -844,12 +844,12 @@ static GstCaps *wg_format_to_caps_video_mpeg1(const struct wg_format *format)
     gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 1, NULL);
     gst_caps_set_simple(caps, "systemstream", G_TYPE_BOOLEAN, FALSE, NULL);
     gst_caps_set_simple(caps, "parsed", G_TYPE_BOOLEAN, TRUE, NULL);
-    if (format->u.video_mpeg1.width)
-        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_mpeg1.width, NULL);
-    if (format->u.video_mpeg1.height)
-        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_mpeg1.height, NULL);
-    if (format->u.video_mpeg1.fps_d || format->u.video.fps_n)
-        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_mpeg1.fps_n, format->u.video_mpeg1.fps_d, NULL);
+    if (format->u.video.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video.width, NULL);
+    if (format->u.video.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video.height, NULL);
+    if (format->u.video.fps_d || format->u.video.fps_n)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video.fps_n, format->u.video.fps_d, NULL);
     return caps;
 }
 
