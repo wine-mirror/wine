@@ -12874,6 +12874,9 @@ static void test_offset_transform(BOOL d3d11)
     offset = ID2D1OffsetTransform_GetOffset(transform);
     ok(offset.x == 1 && offset.y == 2, "Got unexpected offset {%ld, %ld}.\n", offset.x, offset.y);
 
+    check_interface(transform, &IID_ID2D1OffsetTransform, TRUE);
+    check_interface(transform, &IID_ID2D1TransformNode, TRUE);
+
     /* Input count */
     input_count = ID2D1OffsetTransform_GetInputCount(transform);
     ok(input_count == 1, "Got unexpected input count %u.\n", input_count);
@@ -12973,8 +12976,13 @@ static void test_blend_transform(BOOL d3d11)
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 1, &expected, &transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID2D1BlendTransform_Release(transform);
+
     hr = ID2D1EffectContext_CreateBlendTransform(effect_context, 4, &expected, &transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_interface(transform, &IID_ID2D1BlendTransform, TRUE);
+    check_interface(transform, &IID_ID2D1ConcreteTransform, TRUE);
+    check_interface(transform, &IID_ID2D1TransformNode, TRUE);
 
     /* Get description */
     ID2D1BlendTransform_GetDescription(transform, &blend_desc);
@@ -13057,6 +13065,11 @@ static void test_border_transform(BOOL d3d11)
     /* Create transform with invalid extend mode */
     hr = ID2D1EffectContext_CreateBorderTransform(effect_context, 0xdeadbeef, 0xdeadbeef, &transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_interface(transform, &IID_ID2D1BorderTransform, TRUE);
+    check_interface(transform, &IID_ID2D1ConcreteTransform, TRUE);
+    check_interface(transform, &IID_ID2D1TransformNode, TRUE);
+
     mode = ID2D1BorderTransform_GetExtendModeX(transform);
     ok(mode == 0xdeadbeef, "Got unexpected extend mode %u.\n", mode);
     mode = ID2D1BorderTransform_GetExtendModeY(transform);
@@ -13151,6 +13164,10 @@ static void test_bounds_adjustment_transform(BOOL d3d11)
     set_rect_l(&rect, -1, 0, 25, -50);
     hr = ID2D1EffectContext_CreateBoundsAdjustmentTransform(effect_context, &rect, &transform);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    check_interface(transform, &IID_ID2D1BoundsAdjustmentTransform, TRUE);
+    check_interface(transform, &IID_ID2D1TransformNode, TRUE);
+
     memset(&rect, 0, sizeof(rect));
     ID2D1BoundsAdjustmentTransform_GetOutputBounds(transform, &rect);
     ok(rect.left == -1 && rect.top == 0 && rect.right == 25 && rect.bottom == -50,
