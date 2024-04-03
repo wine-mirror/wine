@@ -1668,12 +1668,13 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
     const type_t *iface = NULL;
     const char *name;
 
-    robust_flags |= RobustEarly;
     if (!expr)
     {
         print_file(file, 2, "NdrFcLong(0xffffffff),\t/* -1 */\n");
+        robust_flags = 0;
         goto done;
     }
+    robust_flags |= RobustEarly;
 
     if (expr->is_const)
     {
