@@ -717,6 +717,11 @@ struct d2d_transform
     {
         D2D1_POINT_2L offset;
         D2D1_BLEND_DESCRIPTION blend_desc;
+        struct
+        {
+            D2D1_EXTEND_MODE mode_x;
+            D2D1_EXTEND_MODE mode_y;
+        } border;
     };
 
     UINT32 input_count;

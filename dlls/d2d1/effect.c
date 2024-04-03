@@ -30,6 +30,11 @@ static inline struct d2d_transform *impl_from_ID2D1BlendTransform(ID2D1BlendTran
     return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
 }
 
+static inline struct d2d_transform *impl_from_ID2D1BorderTransform(ID2D1BorderTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_offset_transform_QueryInterface(ID2D1OffsetTransform *iface,
         REFIID iid, void **out)
 {
@@ -243,6 +248,162 @@ static HRESULT d2d_blend_transform_create(UINT32 input_count, const D2D1_BLEND_D
     object->blend_desc = *blend_desc;
 
     *transform = (ID2D1BlendTransform *)&object->ID2D1TransformNode_iface;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_border_transform_QueryInterface(ID2D1BorderTransform *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1BorderTransform)
+            || IsEqualGUID(iid, &IID_ID2D1ConcreteTransform)
+            || IsEqualGUID(iid, &IID_ID2D1TransformNode)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        ID2D1BorderTransform_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_border_transform_AddRef(ID2D1BorderTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+    ULONG refcount = InterlockedIncrement(&transform->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_border_transform_Release(ID2D1BorderTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+    ULONG refcount = InterlockedDecrement(&transform->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(transform);
+
+    return refcount;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_border_transform_GetInputCount(ID2D1BorderTransform *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return 1;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_border_transform_SetOutputBuffer(
+        ID2D1BorderTransform *iface, D2D1_BUFFER_PRECISION precision, D2D1_CHANNEL_DEPTH depth)
+{
+    FIXME("iface %p, precision %u, depth %u stub.\n", iface, precision, depth);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_border_transform_SetCached(
+        ID2D1BorderTransform *iface, BOOL is_cached)
+{
+    FIXME("iface %p, is_cached %d stub.\n", iface, is_cached);
+}
+
+static void STDMETHODCALLTYPE d2d_border_transform_SetExtendModeX(
+        ID2D1BorderTransform *iface, D2D1_EXTEND_MODE mode)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    switch (mode)
+    {
+        case D2D1_EXTEND_MODE_CLAMP:
+        case D2D1_EXTEND_MODE_WRAP:
+        case D2D1_EXTEND_MODE_MIRROR:
+            transform->border.mode_x = mode;
+            break;
+        default:
+            ;
+    }
+}
+
+static void STDMETHODCALLTYPE d2d_border_transform_SetExtendModeY(
+        ID2D1BorderTransform *iface, D2D1_EXTEND_MODE mode)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    switch (mode)
+    {
+        case D2D1_EXTEND_MODE_CLAMP:
+        case D2D1_EXTEND_MODE_WRAP:
+        case D2D1_EXTEND_MODE_MIRROR:
+            transform->border.mode_y = mode;
+            break;
+        default:
+            ;
+    }
+}
+
+static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_border_transform_GetExtendModeX(
+        ID2D1BorderTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return transform->border.mode_x;
+}
+
+static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_border_transform_GetExtendModeY(
+        ID2D1BorderTransform *iface)
+{
+    struct d2d_transform *transform = impl_from_ID2D1BorderTransform(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return transform->border.mode_y;
+}
+
+static const ID2D1BorderTransformVtbl d2d_border_transform_vtbl =
+{
+    d2d_border_transform_QueryInterface,
+    d2d_border_transform_AddRef,
+    d2d_border_transform_Release,
+    d2d_border_transform_GetInputCount,
+    d2d_border_transform_SetOutputBuffer,
+    d2d_border_transform_SetCached,
+    d2d_border_transform_SetExtendModeX,
+    d2d_border_transform_SetExtendModeY,
+    d2d_border_transform_GetExtendModeX,
+    d2d_border_transform_GetExtendModeY,
+};
+
+static HRESULT d2d_border_transform_create(D2D1_EXTEND_MODE mode_x, D2D1_EXTEND_MODE mode_y,
+        ID2D1BorderTransform **transform)
+{
+    struct d2d_transform *object;
+
+    *transform = NULL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1TransformNode_iface.lpVtbl = (ID2D1TransformNodeVtbl *)&d2d_border_transform_vtbl;
+    object->refcount = 1;
+    object->border.mode_x = mode_x;
+    object->border.mode_y = mode_y;
+
+    *transform = (ID2D1BorderTransform *)&object->ID2D1TransformNode_iface;
 
     return S_OK;
 }
@@ -1157,9 +1318,9 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBlendTransform(ID2D1Ef
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateBorderTransform(ID2D1EffectContext *iface,
         D2D1_EXTEND_MODE mode_x, D2D1_EXTEND_MODE mode_y, ID2D1BorderTransform **transform)
 {
-    FIXME("iface %p, mode_x %#x, mode_y %#x, transform %p stub!\n", iface, mode_x, mode_y, transform);
+    TRACE("iface %p, mode_x %#x, mode_y %#x, transform %p.\n", iface, mode_x, mode_y, transform);
 
-    return E_NOTIMPL;
+    return d2d_border_transform_create(mode_x, mode_y, transform);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateOffsetTransform(ID2D1EffectContext *iface,

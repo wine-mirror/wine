@@ -13048,9 +13048,7 @@ static void test_border_transform(BOOL d3d11)
 
     /* Create transform with invalid extend mode */
     hr = ID2D1EffectContext_CreateBorderTransform(effect_context, 0xdeadbeef, 0xdeadbeef, &transform);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto done;
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     mode = ID2D1BorderTransform_GetExtendModeX(transform);
     ok(mode == 0xdeadbeef, "Got unexpected extend mode %u.\n", mode);
     mode = ID2D1BorderTransform_GetExtendModeY(transform);
@@ -13073,10 +13071,13 @@ static void test_border_transform(BOOL d3d11)
 
     /* Set output buffer */
     hr = ID2D1BorderTransform_SetOutputBuffer(transform, 0xdeadbeef, D2D1_CHANNEL_DEPTH_DEFAULT);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1BorderTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, 0xdeadbeef);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1BorderTransform_SetOutputBuffer(transform, D2D1_BUFFER_PRECISION_UNKNOWN, D2D1_CHANNEL_DEPTH_DEFAULT);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Set extend mode */
@@ -13095,9 +13096,7 @@ static void test_border_transform(BOOL d3d11)
     mode = ID2D1BorderTransform_GetExtendModeY(transform);
     ok(mode == D2D1_EXTEND_MODE_CLAMP, "Got unexpected extend mode %u.\n", mode);
 
-done:
-    if (transform)
-        ID2D1BorderTransform_Release(transform);
+    ID2D1BorderTransform_Release(transform);
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
