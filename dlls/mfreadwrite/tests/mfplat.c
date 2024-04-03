@@ -2488,6 +2488,13 @@ static HRESULT WINAPI test_decoder_SetInputType(IMFTransform *iface, DWORD id, I
 static HRESULT WINAPI test_decoder_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
     struct test_decoder *decoder = test_decoder_from_IMFTransform(iface);
+    GUID subtype;
+    HRESULT hr;
+
+    if (type && SUCCEEDED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype))
+            && IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+        return MF_E_INVALIDMEDIATYPE;
+
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
     if (decoder->output_type)
@@ -2900,7 +2907,7 @@ static void test_source_reader_transforms_d3d(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
-        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1, .todo = TRUE),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
         ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo = TRUE),
         {0},
@@ -3019,18 +3026,14 @@ static void test_source_reader_transforms_d3d(void)
 
     /* video processor transform is not D3D aware */
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 1, NULL, &video_processor);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    /* FIXME: Wine skips the video processor as the test decoder accepts the output type directly */
-    if (hr == S_OK)
-    {
-        ok(video_processor->lpVtbl != &test_decoder_vtbl, "got unexpected transform\n");
-        hr = IMFTransform_GetAttributes(video_processor, &attributes);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value);
-        ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
-        IMFAttributes_Release(attributes);
-        IMFTransform_Release(video_processor);
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(video_processor->lpVtbl != &test_decoder_vtbl, "got unexpected transform\n");
+    hr = IMFTransform_GetAttributes(video_processor, &attributes);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    IMFAttributes_Release(attributes);
+    IMFTransform_Release(video_processor);
 
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, NULL, &test_decoder);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
