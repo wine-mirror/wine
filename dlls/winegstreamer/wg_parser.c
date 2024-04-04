@@ -1784,29 +1784,6 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     return TRUE;
 }
 
-static BOOL avi_parser_init_gst(struct wg_parser *parser)
-{
-    GstElement *element;
-
-    if (!(element = create_element("avidemux", "good")))
-        return FALSE;
-
-    gst_bin_add(GST_BIN(parser->container), element);
-
-    g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
-
-    pthread_mutex_lock(&parser->mutex);
-    parser->no_more_pads = false;
-    pthread_mutex_unlock(&parser->mutex);
-
-    if (!link_src_to_element(parser->my_src, element))
-        return FALSE;
-
-    return TRUE;
-}
-
 static BOOL wave_parser_init_gst(struct wg_parser *parser)
 {
     struct wg_parser_stream *stream;
@@ -1837,7 +1814,6 @@ static NTSTATUS wg_parser_create(void *args)
     static const init_gst_cb init_funcs[] =
     {
         [WG_PARSER_DECODEBIN] = decodebin_parser_init_gst,
-        [WG_PARSER_AVIDEMUX] = avi_parser_init_gst,
         [WG_PARSER_WAVPARSE] = wave_parser_init_gst,
     };
 
