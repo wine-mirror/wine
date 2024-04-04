@@ -223,6 +223,8 @@ static void media_stream_destroy(struct media_stream *stream)
         transform_entry_destroy(entry);
     }
 
+    if (stream->transform_service)
+        IMFTransform_Release(stream->transform_service);
     if (stream->stream)
         IMFMediaStream_Release(stream->stream);
     if (stream->current)
