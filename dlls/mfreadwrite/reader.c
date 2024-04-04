@@ -79,6 +79,7 @@ struct transform_entry
     UINT32 pending_flags;
     GUID category;
     BOOL hidden;
+    BOOL attributes_initialized;
 };
 
 struct media_stream
@@ -816,6 +817,35 @@ static HRESULT transform_entry_update_input_type(struct transform_entry *entry, 
     return hr;
 }
 
+static void transform_entry_initialize_attributes(struct source_reader *reader, struct transform_entry *entry)
+{
+    IMFAttributes *attributes;
+
+    if (SUCCEEDED(IMFTransform_GetAttributes(entry->transform, &attributes)))
+    {
+        if (FAILED(IMFAttributes_GetItem(attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, NULL)))
+            IMFAttributes_SetUINT32(attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, 6);
+
+        IMFAttributes_Release(attributes);
+    }
+
+    if (SUCCEEDED(IMFTransform_GetOutputStreamAttributes(entry->transform, 0, &attributes)))
+    {
+        UINT32 shared, shared_without_mutex, bind_flags;
+
+        if (SUCCEEDED(IMFAttributes_GetUINT32(reader->attributes, &MF_SA_D3D11_SHARED, &shared)))
+            IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_SHARED, shared);
+        if (SUCCEEDED(IMFAttributes_GetUINT32(reader->attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, &shared_without_mutex)))
+            IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, shared_without_mutex);
+        if (SUCCEEDED(IMFAttributes_GetUINT32(reader->attributes, &MF_SOURCE_READER_D3D11_BIND_FLAGS, &bind_flags)))
+            IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_BINDFLAGS, bind_flags);
+        else if ((reader->flags & SOURCE_READER_DXGI_DEVICE_MANAGER) && FAILED(IMFAttributes_GetItem(attributes, &MF_SA_D3D11_BINDFLAGS, NULL)))
+            IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_BINDFLAGS, 1024);
+
+        IMFAttributes_Release(attributes);
+    }
+}
+
 static HRESULT source_reader_pull_transform_samples(struct source_reader *reader, struct media_stream *stream,
         struct transform_entry *entry)
 {
@@ -827,6 +857,12 @@ static HRESULT source_reader_pull_transform_samples(struct source_reader *reader
 
     if ((ptr = list_next(&stream->transforms, &entry->entry)))
         next = LIST_ENTRY(ptr, struct transform_entry, entry);
+
+    if (!entry->attributes_initialized)
+    {
+        transform_entry_initialize_attributes(reader, entry);
+        entry->attributes_initialized = TRUE;
+    }
 
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(entry->transform, 0, &stream_info)))
         return hr;
@@ -2011,10 +2047,33 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
 
         for (i = 0; i < count; i++)
         {
+            IMFAttributes *attributes;
             IMFMediaType *media_type;
 
             if (FAILED(hr = IMFActivate_ActivateObject(activates[i], &IID_IMFTransform, (void **)&transform)))
                 continue;
+
+            if (!reader->device_manager || FAILED(IMFTransform_GetAttributes(transform, &attributes)))
+                entry->attributes_initialized = TRUE;
+            else
+            {
+                UINT32 d3d_aware = FALSE;
+
+                if (reader->flags & SOURCE_READER_DXGI_DEVICE_MANAGER)
+                {
+                    if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_AWARE, &d3d_aware)) && d3d_aware)
+                        IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)reader->device_manager);
+                }
+                else if (reader->flags & SOURCE_READER_D3D9_DEVICE_MANAGER)
+                {
+                    if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware)) && d3d_aware)
+                        IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)reader->device_manager);
+                }
+
+                entry->attributes_initialized = !d3d_aware;
+                IMFAttributes_Release(attributes);
+            }
+
             if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {

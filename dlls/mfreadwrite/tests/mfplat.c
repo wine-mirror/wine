@@ -3070,7 +3070,7 @@ static void test_source_reader_transforms_d3d9(void)
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(media_type);
-    todo_wine ok(!!test_decoder_got_d3d_manager, "d3d manager not received\n");
+    ok(!!test_decoder_got_d3d_manager, "d3d manager not received\n");
 
     hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3147,10 +3147,9 @@ static void test_source_reader_transforms_d3d9(void)
 
     hr = IMFTransform_GetAttributes(video_processor, &attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, &value);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(value == 6, "got %u.\n", value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 6, "got %u.\n", value);
     IMFAttributes_Release(attributes);
 
     hr = IMFTransform_GetOutputStreamAttributes(video_processor, 0, &attributes);
@@ -3204,7 +3203,7 @@ static void test_source_reader_transforms_d3d9(void)
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(media_type);
-    todo_wine ok(!!test_decoder_got_d3d_manager, "d3d manager not received\n");
+    ok(!!test_decoder_got_d3d_manager, "d3d manager not received\n");
 
 
     hr = IMFSourceReader_QueryInterface(reader, &IID_IMFSourceReaderEx, (void **)&reader_ex);
@@ -3463,16 +3462,16 @@ static void test_source_reader_transforms_d3d11(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_MINIMUM_OUTPUT_SAMPLE_COUNT, &value);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(value == 6, "got %u.\n", value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 6, "got %u.\n", value);
     IMFAttributes_Release(attributes);
 
     hr = IMFTransform_GetOutputStreamAttributes(video_processor, 0, &attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     value = 0xdeadbeef;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_BINDFLAGS, &value);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(value == 1024, "got %u.\n", value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 1024, "got %u.\n", value);
     IMFAttributes_Release(attributes);
 
     IMFTransform_Release(video_processor);
