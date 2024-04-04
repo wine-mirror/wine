@@ -9578,8 +9578,6 @@ fi
             ;;
         esac
                 WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -mmacosx-version-min=10.7"
-    else
-        as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
     fi
 
     if test "x$with_coreaudio" != "xno";

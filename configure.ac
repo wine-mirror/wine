@@ -659,8 +659,6 @@ case $host_os in
         esac
         dnl If preloader is used, the loader needs to be an LC_UNIXTHREAD binary to avoid AppKit/Core Animation problems.
         WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -mmacosx-version-min=10.7"
-    else
-        WINE_WARNING([can't build Wine preloader; many programs won't work])
     fi
 
     if test "x$with_coreaudio" != "xno";
