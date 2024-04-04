@@ -2251,7 +2251,7 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     struct parser *object;
     HRESULT hr;
 
-    if (FAILED(hr = parser_create(WG_PARSER_WAVPARSE, FALSE, &object)))
+    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, TRUE, &object)))
         return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);

@@ -201,7 +201,6 @@ typedef UINT32 wg_parser_type;
 enum wg_parser_type
 {
     WG_PARSER_DECODEBIN,
-    WG_PARSER_WAVPARSE,
 };
 
 typedef UINT64 wg_parser_t;
