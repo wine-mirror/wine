@@ -1229,6 +1229,9 @@ static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *e
         case VT_UINT:
         case VT_HRESULT:
             break;
+        case VT_USERDEFINED:
+            vt = VT_I4;
+            break;
         case VT_VARIANT: {
             switch (expr->type) {
             case EXPR_DOUBLE:
