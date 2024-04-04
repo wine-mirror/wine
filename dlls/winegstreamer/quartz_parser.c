@@ -1650,14 +1650,14 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
     return VFW_S_NO_MORE_ITEMS;
 }
 
-static HRESULT parser_create(enum wg_parser_type type, BOOL output_compressed, struct parser **parser)
+static HRESULT parser_create(BOOL output_compressed, struct parser **parser)
 {
     struct parser *object;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (!(object->wg_parser = wg_parser_create(type, output_compressed)))
+    if (!(object->wg_parser = wg_parser_create(output_compressed)))
     {
         free(object);
         return E_OUTOFMEMORY;
@@ -1677,7 +1677,7 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
     struct parser *object;
     HRESULT hr;
 
-    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, FALSE, &object)))
+    if (FAILED(hr = parser_create(FALSE, &object)))
         return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_decodebin_parser, &filter_ops);
@@ -2251,7 +2251,7 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     struct parser *object;
     HRESULT hr;
 
-    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, TRUE, &object)))
+    if (FAILED(hr = parser_create(TRUE, &object)))
         return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
@@ -2329,7 +2329,7 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
     struct parser *object;
     HRESULT hr;
 
-    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, TRUE, &object)))
+    if (FAILED(hr = parser_create(TRUE, &object)))
         return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
@@ -2446,7 +2446,7 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
     struct parser *object;
     HRESULT hr;
 
-    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, TRUE, &object)))
+    if (FAILED(hr = parser_create(TRUE, &object)))
         return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);

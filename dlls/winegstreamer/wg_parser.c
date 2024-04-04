@@ -51,18 +51,16 @@ typedef enum
 
 struct wg_parser;
 
-typedef BOOL (*init_gst_cb)(struct wg_parser *parser);
-
 struct input_cache_chunk
 {
     guint64 position;
     uint8_t *data;
 };
 
+static BOOL decodebin_parser_init_gst(struct wg_parser *parser);
+
 struct wg_parser
 {
-    init_gst_cb init_gst;
-
     struct wg_parser_stream **streams;
     unsigned int stream_count;
 
@@ -1576,7 +1574,7 @@ static NTSTATUS wg_parser_connect(void *args)
     parser->next_pull_offset = 0;
     parser->error = false;
 
-    if (!parser->init_gst(parser))
+    if (!decodebin_parser_init_gst(parser))
         goto out;
 
     gst_element_set_state(parser->container, GST_STATE_PAUSED);
@@ -1787,11 +1785,6 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
 static NTSTATUS wg_parser_create(void *args)
 {
-    static const init_gst_cb init_funcs[] =
-    {
-        [WG_PARSER_DECODEBIN] = decodebin_parser_init_gst,
-    };
-
     struct wg_parser_create_params *params = args;
     struct wg_parser *parser;
 
@@ -1802,7 +1795,6 @@ static NTSTATUS wg_parser_create(void *args)
     pthread_cond_init(&parser->init_cond, NULL);
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
-    parser->init_gst = init_funcs[params->type];
     parser->output_compressed = params->output_compressed;
     parser->err_on = params->err_on;
     parser->warn_on = params->warn_on;
