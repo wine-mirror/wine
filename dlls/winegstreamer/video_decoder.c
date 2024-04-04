@@ -457,9 +457,15 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     {
         if (FAILED(hr = IMFMediaType_SetUINT64(decoder->stream_type, &MF_MT_FRAME_SIZE, frame_size)))
             WARN("Failed to update stream type frame size, hr %#lx\n", hr);
-        return update_output_info_size(decoder, frame_size >> 32, frame_size);
+        if (FAILED(hr = update_output_info_size(decoder, frame_size >> 32, frame_size)))
+            return hr;
     }
 
+    if (decoder->wg_transform)
+    {
+        wg_transform_destroy(decoder->wg_transform);
+        decoder->wg_transform = 0;
+    }
     return S_OK;
 }
 

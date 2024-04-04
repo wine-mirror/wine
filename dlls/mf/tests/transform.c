@@ -4379,7 +4379,7 @@ static void test_h264_decoder(void)
         ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     }
     ok(i == 2, "got %lu iterations\n", i);
-    ok(h264_encoded_data_len == 2425, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
+    ok(h264_encoded_data_len == 7619, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output_status == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE, "got output[0].dwStatus %#lx\n", output_status);
     hr = IMFSample_GetTotalLength(output_sample, &length);
@@ -8368,6 +8368,7 @@ static void test_h264_with_dxgi_manager(void)
         .attributes = output_sample_attributes,
         .sample_time = 333667, .sample_duration = 333667,
         .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+        .todo_time = TRUE, /* _SetInputType() / _SetOutputType() type resets the output sample timestamp on Windows. */
     };
 
     IMFDXGIDeviceManager *manager = NULL;
@@ -8521,6 +8522,54 @@ static void test_h264_with_dxgi_manager(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(info.dwFlags == (MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
             | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE | MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), "got %#lx.\n", info.dwFlags);
+
+    hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(output[0].dwStatus == 0, "got %#lx.\n", status);
+    sample = output[0].pSample;
+    IMFSample_Release(sample);
+
+    /* Set input and output type trying to change output frame size (results in MF_E_TRANSFORM_STREAM_CHANGE with
+     * frame size reset. */
+    hr = MFCreateMediaType(&type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, 1088 | (1920ull << 32));
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_NV12);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, ((UINT64)1920) << 32 | 1088);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
+    hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
+    ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "got %#lx\n", hr);
+    ok(!output[0].pSample, "got %p.\n", output[0].pSample);
+
+    /* Need to set output type with matching size now, or that hangs on Windows. */
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    width = frame_size >> 32;
+    height = frame_size & 0xffffffff;
+    ok(width == aligned_width, "got %u.\n", width);
+    ok(height == aligned_height, "got %u.\n", height);
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
 
     hr = get_next_h264_output_sample(transform, &input_sample, NULL, output, &data, &data_len);
     ok(hr == S_OK, "got %#lx\n", hr);
