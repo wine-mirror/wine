@@ -317,7 +317,7 @@ void write_typelib_regscript( const statement_list_t *stmts )
             error( "Cannot store multiple typelibs into %s\n", typelib_name );
         else
         {
-            if (do_old_typelib)
+            if (old_typelib)
                 create_sltg_typelib( stmt->u.lib );
             else
                 create_msft_typelib( stmt->u.lib );
