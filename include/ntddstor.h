@@ -272,6 +272,14 @@ typedef struct _STORAGE_ADAPTER_DESCRIPTOR {
     USHORT                      BusMinorVersion;
 } STORAGE_ADAPTER_DESCRIPTOR, *PSTORAGE_ADAPTER_DESCRIPTOR;
 
+typedef struct _STORAGE_HOTPLUG_INFO {
+    ULONG                       Size;
+    BOOLEAN                     MediaRemovable;
+    BOOLEAN                     MediaHotplug;
+    BOOLEAN                     DeviceHotplug;
+    BOOLEAN                     WriteCacheEnableOverride;
+} STORAGE_HOTPLUG_INFO, *PSTORAGE_HOTPLUG_INFO;
+
 #ifdef __cplusplus
 }
 #endif
