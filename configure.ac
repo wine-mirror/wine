@@ -640,11 +640,11 @@ case $host_os in
     WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     case $HOST_ARCH in
-      i386|x86_64) wine_can_build_preloader=yes ;;
-      *)           wine_can_build_preloader=no ;;
+      i386|x86_64) wine_use_preloader=yes ;;
+      *)           wine_use_preloader=no ;;
     esac
 
-    if test "$wine_can_build_preloader" = "yes"
+    if test "$wine_use_preloader" = "yes"
     then
         WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -mmacosx-version-min=10.7 -Wl,-no_new_main,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
         WINE_TRY_CFLAGS([-Wl,-no_pie],
@@ -2033,18 +2033,16 @@ case $host_os in
   linux*)
     if test $HOST_ARCH != unknown
     then
-        test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine-preloader)
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
-    fi
-    ;;
-  darwin*|macosx*)
-    if test "$wine_can_build_preloader" = "yes"
-    then
-        test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine-preloader)
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+      wine_use_preloader=yes
     fi
     ;;
 esac
+
+if test "$wine_use_preloader" = "yes"
+then
+  test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine-preloader)
+  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+fi
 
 dnl **** Check for functions ****
 

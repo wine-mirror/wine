@@ -9534,11 +9534,11 @@ fi
     WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     case $HOST_ARCH in
-      i386|x86_64) wine_can_build_preloader=yes ;;
-      *)           wine_can_build_preloader=no ;;
+      i386|x86_64) wine_use_preloader=yes ;;
+      *)           wine_use_preloader=no ;;
     esac
 
-    if test "$wine_can_build_preloader" = "yes"
+    if test "$wine_use_preloader" = "yes"
     then
         WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -mmacosx-version-min=10.7 -Wl,-no_new_main,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
@@ -20448,18 +20448,16 @@ case $host_os in
   linux*)
     if test $HOST_ARCH != unknown
     then
-        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
-    fi
-    ;;
-  darwin*|macosx*)
-    if test "$wine_can_build_preloader" = "yes"
-    then
-        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+      wine_use_preloader=yes
     fi
     ;;
 esac
+
+if test "$wine_use_preloader" = "yes"
+then
+  test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
+  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+fi
 
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
