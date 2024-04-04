@@ -4179,7 +4179,7 @@ static void test_topology_loader(void)
         {
             IMFTopology_GetTopologyID(topology, &oldtopoid);
             IMFTopology_GetTopologyID(full_topology, &newtopoid);
-            ok(oldtopoid == newtopoid, "Expected the same topology id. %llu == %llu\n", oldtopoid, newtopoid);
+            ok(oldtopoid == newtopoid, "Expected the same topology id. %I64u == %I64u\n", oldtopoid, newtopoid);
             ok(topology != full_topology, "Expected a different object for the resolved topology.\n");
 
             hr = IMFTopology_GetCount(full_topology, &count);
@@ -4331,7 +4331,7 @@ todo_wine {
             ok(full_topology != topology2, "Unexpected instance.\n");
             IMFTopology_GetTopologyID(topology2, &oldtopoid);
             IMFTopology_GetTopologyID(full_topology, &newtopoid);
-            ok(oldtopoid == newtopoid, "Expected the same topology id. %llu == %llu\n", oldtopoid, newtopoid);
+            ok(oldtopoid == newtopoid, "Expected the same topology id. %I64u == %I64u\n", oldtopoid, newtopoid);
             hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
