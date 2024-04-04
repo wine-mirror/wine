@@ -147,7 +147,7 @@ SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4] =
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
 #endif
 
-#if defined(linux) || defined(__APPLE__)
+#ifdef HAVE_WINE_PRELOADER
 static const BOOL use_preloader = TRUE;
 #else
 static const BOOL use_preloader = FALSE;
@@ -2074,7 +2074,7 @@ static int pre_exec(void)
     return 1;  /* we have a preloader on x86-64/arm64 */
 }
 
-#elif defined(__APPLE__) && (defined(__i386__) || defined(__x86_64__))
+#elif defined(__APPLE__) && defined(HAVE_WINE_PRELOADER)
 
 static int pre_exec(void)
 {
