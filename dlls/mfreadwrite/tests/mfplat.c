@@ -554,9 +554,15 @@ static HRESULT WINAPI test_source_Shutdown(IMFMediaSource *iface)
 {
     struct test_source *source = impl_from_IMFMediaSource(iface);
     HRESULT hr;
+    UINT i;
 
     hr = IMFMediaEventQueue_Shutdown(source->event_queue);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < source->stream_count; ++i)
+    {
+        hr = IMFMediaEventQueue_Shutdown(source->streams[i]->event_queue);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
 
     return S_OK;
 }
