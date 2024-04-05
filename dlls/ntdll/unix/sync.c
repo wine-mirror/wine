@@ -43,6 +43,9 @@
 #ifdef HAVE_SCHED_H
 # include <sched.h>
 #endif
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -1514,7 +1517,17 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
 NTSTATUS WINAPI NtYieldExecution(void)
 {
 #ifdef HAVE_SCHED_YIELD
+#ifdef RUSAGE_THREAD
+    struct rusage u1, u2;
+    int ret;
+
+    ret = getrusage( RUSAGE_THREAD, &u1 );
+#endif
     sched_yield();
+#ifdef RUSAGE_THREAD
+    if (!ret) ret = getrusage( RUSAGE_THREAD, &u2 );
+    if (!ret && u1.ru_nvcsw == u2.ru_nvcsw && u1.ru_nivcsw == u2.ru_nivcsw) return STATUS_NO_YIELD_PERFORMED;
+#endif
     return STATUS_SUCCESS;
 #else
     return STATUS_NO_YIELD_PERFORMED;
