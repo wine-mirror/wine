@@ -208,6 +208,8 @@ USER_DRIVER_FUNCS = {
 
 # functions for which the unix thunk is manually implemented
 MANUAL_UNIX_THUNKS = {
+    "vkAcquireNextImage2KHR",
+    "vkAcquireNextImageKHR",
     "vkAllocateCommandBuffers",
     "vkAllocateMemory",
     "vkCreateBuffer",

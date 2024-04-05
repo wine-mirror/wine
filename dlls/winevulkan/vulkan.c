@@ -1630,6 +1630,53 @@ static BOOL extents_equals(const VkExtent2D *extents, const RECT *rect)
            extents->height == rect->bottom - rect->top;
 }
 
+VkResult wine_vkAcquireNextImage2KHR(VkDevice device_handle, const VkAcquireNextImageInfoKHR *acquire_info,
+                                     uint32_t *image_index)
+{
+    struct wine_swapchain *swapchain = wine_swapchain_from_handle(acquire_info->swapchain);
+    struct wine_device *device = wine_device_from_handle(device_handle);
+    VkAcquireNextImageInfoKHR acquire_info_host = *acquire_info;
+    struct wine_surface *surface = swapchain->surface;
+    RECT client_rect;
+    VkResult res;
+
+    acquire_info_host.swapchain = swapchain->host_swapchain;
+    res = device->funcs.p_vkAcquireNextImage2KHR(device->host_device, &acquire_info_host, image_index);
+
+    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect) &&
+        !extents_equals(&swapchain->extents, &client_rect))
+    {
+        WARN("Swapchain size %dx%d does not match client rect %s, returning VK_SUBOPTIMAL_KHR\n",
+             swapchain->extents.width, swapchain->extents.height, wine_dbgstr_rect(&client_rect));
+        return VK_SUBOPTIMAL_KHR;
+    }
+
+    return res;
+}
+
+VkResult wine_vkAcquireNextImageKHR(VkDevice device_handle, VkSwapchainKHR swapchain_handle, uint64_t timeout,
+                                    VkSemaphore semaphore, VkFence fence, uint32_t *image_index)
+{
+    struct wine_swapchain *swapchain = wine_swapchain_from_handle(swapchain_handle);
+    struct wine_device *device = wine_device_from_handle(device_handle);
+    struct wine_surface *surface = swapchain->surface;
+    RECT client_rect;
+    VkResult res;
+
+    res = device->funcs.p_vkAcquireNextImageKHR(device->host_device, swapchain->host_swapchain, timeout,
+                                                semaphore, fence, image_index);
+
+    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect) &&
+        !extents_equals(&swapchain->extents, &client_rect))
+    {
+        WARN("Swapchain size %dx%d does not match client rect %s, returning VK_SUBOPTIMAL_KHR\n",
+             swapchain->extents.width, swapchain->extents.height, wine_dbgstr_rect(&client_rect));
+        return VK_SUBOPTIMAL_KHR;
+    }
+
+    return res;
+}
+
 VkResult wine_vkCreateSwapchainKHR(VkDevice device_handle, const VkSwapchainCreateInfoKHR *create_info,
                                    const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain_handle)
 {
