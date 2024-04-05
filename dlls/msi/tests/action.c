@@ -2669,7 +2669,7 @@ static void test_register_product(void)
     static const CHAR userugkey[] = "Software\\Microsoft\\Installer\\UpgradeCodes"
                                     "\\51AAE0C44620A5E4788506E91F249BD2";
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -3052,7 +3052,7 @@ static void test_publish_product(void)
     BOOL old_installer = FALSE;
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -3283,7 +3283,7 @@ static void test_publish_features(void)
     CHAR keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -3467,7 +3467,7 @@ static void test_register_user(void)
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
         "UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -3563,7 +3563,7 @@ static void test_process_components(void)
     CHAR program_files_maximus[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -3700,7 +3700,7 @@ static void test_publish(void)
         win_skip("MsiQueryFeatureStateExA is not available\n");
         return;
     }
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4297,7 +4297,7 @@ static void test_publish_sourcelist(void)
         win_skip("MsiSourceListEnumSourcesA and/or MsiSourceListGetInfoA are not available\n");
         return;
     }
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4495,7 +4495,7 @@ static void test_remove_files(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4630,7 +4630,7 @@ static void test_move_files(void)
     UINT r;
     char props[4 * MAX_PATH + 74];
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4776,7 +4776,7 @@ static void test_duplicate_files(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4819,7 +4819,7 @@ static void test_write_registry_values(void)
     LONG res;
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -4987,7 +4987,7 @@ static void test_envvar(void)
     HKEY env, env2;
     LONG res;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5102,7 +5102,7 @@ static void test_create_remove_folder(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5274,7 +5274,7 @@ static void test_delete_services(void)
     SC_HANDLE manager, service;
     DWORD error;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5348,7 +5348,7 @@ static void test_install_services(void)
     HKEY hKey;
     DWORD err_control, err_controlsize, err_controltype;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5424,7 +5424,7 @@ static void test_self_registration(void)
     HKEY key;
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5472,7 +5472,7 @@ static void test_register_font(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5523,7 +5523,7 @@ static void test_validate_product_id(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5577,7 +5577,7 @@ static void test_install_remove_odbc(void)
     WORD len;
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5660,7 +5660,7 @@ static void test_register_typelib(void)
     HRESULT hr;
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5710,7 +5710,7 @@ static void test_create_remove_shortcut(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5759,7 +5759,7 @@ static void test_publish_components(void)
     BYTE *data;
     DWORD size;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5843,7 +5843,7 @@ static void test_remove_duplicate_files(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5893,7 +5893,7 @@ static void test_find_related_products(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5937,7 +5937,7 @@ static void test_ini_values(void)
     HANDLE file;
     BOOL ret;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -5998,7 +5998,7 @@ static void test_register_class_info(void)
     LONG res;
     HKEY hkey;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6063,7 +6063,7 @@ static void test_register_extension_info(void)
     LONG res;
     HKEY hkey;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6115,7 +6115,7 @@ static void test_register_progid_info(void)
     LONG res;
     HKEY hkey;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6241,7 +6241,7 @@ static void test_register_mime_info(void)
     LONG res;
     HKEY hkey;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6340,7 +6340,7 @@ static void test_publish_assemblies(void)
     const char *path;
     int access;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6504,7 +6504,7 @@ static void test_remove_existing_products(void)
 {
     UINT r;
 
-    if (is_process_limited())
+    if (!is_process_elevated())
     {
         skip("process is limited\n");
         return;
@@ -6536,12 +6536,55 @@ error:
     DeleteFileA(msifile);
 }
 
+static HANDLE get_admin_token(void)
+{
+    TOKEN_ELEVATION_TYPE type;
+    TOKEN_LINKED_TOKEN linked;
+    DWORD size;
+
+    if (!GetTokenInformation(GetCurrentThreadEffectiveToken(), TokenElevationType, &type, sizeof(type), &size)
+            || type == TokenElevationTypeFull)
+        return NULL;
+
+    if (!GetTokenInformation(GetCurrentThreadEffectiveToken(), TokenLinkedToken, &linked, sizeof(linked), &size))
+        return NULL;
+    return linked.LinkedToken;
+}
+
+void restart_as_admin_elevated(void)
+{
+    HANDLE token;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+
+    if (!(token = get_admin_token())) return;
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    if (CreateProcessAsUserW(token, NULL, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        DWORD exit_code;
+
+        trace("restarting\n");
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        GetExitCodeProcess(pi.hProcess, &exit_code);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        ExitProcess(exit_code);
+    }
+    else trace("failed to restart as admin %lu\n", GetLastError());
+
+    CloseHandle(token);
+}
+
 START_TEST(action)
 {
     DWORD len;
     char temp_path[MAX_PATH], prev_path[MAX_PATH], log_file[MAX_PATH];
     STATEMGRSTATUS status;
     BOOL ret = FALSE;
+
+    if (!is_process_elevated()) restart_as_admin_elevated();
 
     init_functionpointers();
     subtest("custom");
