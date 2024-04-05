@@ -832,7 +832,7 @@ BOOL WINAPI SymSrvGetFileIndexInfoW(const WCHAR *file, SYMSRV_INDEX_INFOW* info,
     if (hMap) CloseHandle(hMap);
     if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
 
-    if (ret == ERROR_SUCCESS) wcscpy(info->file, file_name(file)); /* overflow? */
+    if (ret == ERROR_SUCCESS || ret == ERROR_BAD_EXE_FORMAT) wcscpy(info->file, file_name(file)); /* overflow? */
     SetLastError(ret);
     return ret == ERROR_SUCCESS;
 }

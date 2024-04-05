@@ -1019,7 +1019,7 @@ DWORD pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     if (!(nthdr = RtlImageNtHeader(image))) return ERROR_BAD_FORMAT;
 
     dbg = RtlImageDirectoryEntryToData(image, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &dirsize);
-    if (!dbg || dirsize < sizeof(dbg)) return ERROR_BAD_EXE_FORMAT;
+    if (!dbg) dirsize = 0;
 
     /* fill in information from NT header */
     info->timestamp = nthdr->FileHeader.TimeDateStamp;

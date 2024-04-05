@@ -817,8 +817,6 @@ static void test_srvgetindexes_pe(void)
                 ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
             if (ret || indexes[i].last_error == ERROR_BAD_EXE_FORMAT)
             {
-                todo_wine_if(i==0||i==4)
-                {
                 ok(ssii.age == indexes[i].age, "Mismatch in age: %lu\n", ssii.age);
                 ok(IsEqualGUID(&ssii.guid, indexes[i].guid),
                    "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
@@ -829,13 +827,9 @@ static void test_srvgetindexes_pe(void)
                    (!ssii.stripped) == ((indexes[i].charac & IMAGE_FILE_DEBUG_STRIPPED) == 0),
                    "Mismatch in stripped: %x\n", ssii.stripped);
                 ok(ssii.timestamp == 0x67890000 + i, "Mismatch in timestamp: %lx\n", ssii.timestamp);
-                }
-                if (i > 4)
-                {
                 ok(!wcscmp(ssii.file, filename + 2), "Mismatch in file: '%ls'\n", ssii.file);
                 ok(!wcscmp(ssii.dbgfile, indexes[i].dbg_name), "Mismatch in dbgfile: '%ls'\n", ssii.dbgfile);
                 ok(!wcscmp(ssii.pdbfile, indexes[i].pdb_name), "Mismatch in pdbfile: '%ls'\n", ssii.pdbfile);
-                }
             }
             ret = DeleteFileW(filename);
             ok(ret, "Couldn't delete test DLL file\n");
@@ -948,24 +942,15 @@ static void test_srvgetindexes_dbg(void)
         else
             ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
 
-        todo_wine
-        {
         ok(ssii.age == indexes[i].age, "Mismatch in age: %lx\n", ssii.age);
         ok(IsEqualGUID(&ssii.guid, indexes[i].guid),
            "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
-        }
-        todo_wine_if(i < 2)
-        {
         ok(ssii.sig == 0, "Mismatch in sig: %lx\n", ssii.sig);
         ok(ssii.size == indexes[i].imagesize, "Mismatch in size: %lx\n", ssii.size);
         ok(!ssii.stripped, "Mismatch in stripped: %x\n", ssii.stripped);
         ok(ssii.timestamp == indexes[i].timestamp, "Mismatch in timestamp: %lx\n", ssii.timestamp);
-        }
-        if (i >= 2)
         ok(!wcscmp(ssii.file, filename), "Mismatch in file: %ls\n", ssii.file);
-        todo_wine
         ok(!wcscmp(ssii.pdbfile, indexes[i].pdbname), "Mismatch in pdbfile: %ls\n", ssii.pdbfile);
-        if (i >= 2)
         ok(!wcscmp(ssii.dbgfile, indexes[i].dbgname), "Mismatch in dbgfile: %ls\n", ssii.dbgfile);
 
         DeleteFileW(filename);
