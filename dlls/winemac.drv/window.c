@@ -1930,6 +1930,11 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     else set_surface_use_alpha(surface, TRUE);
 
     if (surface) window_surface_add_ref(surface);
+
+    /* Since layered attributes are now set, can now show the window */
+    if (data->cocoa_window && !data->on_screen && NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)
+        show_window(data);
+
     release_win_data(data);
 
     if (!surface) return FALSE;
