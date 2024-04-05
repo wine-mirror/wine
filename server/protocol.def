@@ -933,6 +933,8 @@ typedef volatile struct
     user_handle_t        move_size;        /* handle to the moving/resizing window */
     user_handle_t        caret;            /* handle to the caret window */
     rectangle_t          caret_rect;       /* caret rectangle */
+    user_handle_t        cursor;           /* handle to the cursor */
+    int                  cursor_count;     /* cursor show count */
 } input_shm_t;
 
 typedef volatile union

@@ -917,6 +917,8 @@ typedef volatile struct
     user_handle_t        move_size;
     user_handle_t        caret;
     rectangle_t          caret_rect;
+    user_handle_t        cursor;
+    int                  cursor_count;
 } input_shm_t;
 
 typedef volatile union
@@ -6621,7 +6623,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 828
+#define SERVER_PROTOCOL_VERSION 829
 
 /* ### protocol_version end ### */
 
