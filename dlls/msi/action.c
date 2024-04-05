@@ -5139,16 +5139,6 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
     MSIFILE *file;
     MSIFILEPATCH *patch;
 
-    /* first do the same as an InstallExecute */
-    rc = execute_script(package, SCRIPT_INSTALL);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    /* then handle commit actions */
-    rc = execute_script(package, SCRIPT_COMMIT);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
     /* install global assemblies */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
@@ -5186,6 +5176,16 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
             return rc;
         }
     }
+
+    /* first do the same as an InstallExecute */
+    rc = execute_script(package, SCRIPT_INSTALL);
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    /* then handle commit actions */
+    rc = execute_script(package, SCRIPT_COMMIT);
+    if (rc != ERROR_SUCCESS)
+        return rc;
 
     if (is_full_uninstall(package))
         rc = ACTION_UnpublishProduct(package);
