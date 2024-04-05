@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 #define SCROLL_MIN_RECT  4
 
 /* Minimum size of the thumb in pixels */
-#define SCROLL_MIN_THUMB 8
+#define SCROLL_MIN_THUMB 17
 
 /* Overlap between arrows and thumb */
 #define SCROLL_ARROW_THUMB_OVERLAP 0
