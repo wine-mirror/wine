@@ -104,9 +104,6 @@ struct thread_input
 {
     struct object          obj;           /* object header */
     struct desktop        *desktop;       /* desktop that this thread input belongs to */
-    user_handle_t          capture;       /* capture window */
-    user_handle_t          menu_owner;    /* current menu owner window */
-    user_handle_t          move_size;     /* current moving/resizing window */
     user_handle_t          caret;         /* caret window */
     rectangle_t            caret_rect;    /* caret rectangle */
     int                    caret_hide;    /* caret hide count */
@@ -257,9 +254,6 @@ static struct thread_input *create_thread_input( struct thread *thread )
 
     if ((input = alloc_object( &thread_input_ops )))
     {
-        input->capture      = 0;
-        input->menu_owner   = 0;
-        input->move_size    = 0;
         input->cursor       = 0;
         input->cursor_count = 0;
         list_init( &input->msg_list );
@@ -286,6 +280,9 @@ static struct thread_input *create_thread_input( struct thread *thread )
         {
             shared->active = 0;
             shared->focus = 0;
+            shared->capture = 0;
+            shared->menu_owner = 0;
+            shared->move_size = 0;
         }
         SHARED_WRITE_END;
     }
@@ -1296,7 +1293,7 @@ static void thread_input_dump( struct object *obj, int verbose )
     struct thread_input *input = (struct thread_input *)obj;
     const input_shm_t *input_shm = input->shared;
     fprintf( stderr, "Thread input focus=%08x capture=%08x active=%08x\n",
-             input_shm->focus, input->capture, input_shm->active );
+             input_shm->focus, input_shm->capture, input_shm->active );
 }
 
 static void thread_input_destroy( struct object *obj )
@@ -1319,17 +1316,16 @@ static inline void thread_input_cleanup_window( struct msg_queue *queue, user_ha
     struct thread_input *input = queue->input;
     const input_shm_t *input_shm = input->shared;
 
-    if (window == input->capture) input->capture = 0;
-
     SHARED_WRITE_BEGIN( input_shm, input_shm_t )
     {
         if (window == shared->focus) shared->focus = 0;
+        if (window == shared->capture) shared->capture = 0;
         if (window == shared->active) shared->active = 0;
+        if (window == shared->menu_owner) shared->menu_owner = 0;
+        if (window == shared->move_size) shared->move_size = 0;
     }
     SHARED_WRITE_END;
 
-    if (window == input->menu_owner) input->menu_owner = 0;
-    if (window == input->move_size) input->move_size = 0;
     if (window == input->caret) set_caret_window( input, 0 );
 }
 
@@ -1766,7 +1762,7 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
         break;
     case QS_MOUSEMOVE:
     case QS_MOUSEBUTTON:
-        if (!input || !(win = input->capture))
+        if (!input || !(win = input_shm->capture))
         {
             if (is_window_visible( msg->win ) && !is_window_transparent( msg->win )) win = msg->win;
             else win = shallow_window_from_point( desktop, msg->x, msg->y );
@@ -3664,10 +3660,10 @@ DECL_HANDLER(get_thread_input_data)
     {
         const input_shm_t *input_shm = input->shared;
         reply->focus      = input_shm->focus;
-        reply->capture    = input->capture;
+        reply->capture    = input_shm->capture;
         reply->active     = input_shm->active;
-        reply->menu_owner = input->menu_owner;
-        reply->move_size  = input->move_size;
+        reply->menu_owner = input_shm->menu_owner;
+        reply->move_size  = input_shm->move_size;
         reply->caret      = input->caret;
         reply->cursor     = input->cursor;
         reply->show_count = input->cursor_count;
@@ -3846,18 +3842,23 @@ DECL_HANDLER(set_capture_window)
     if (queue && check_queue_input_window( queue, req->handle ))
     {
         struct thread_input *input = queue->input;
+        const input_shm_t *input_shm = input->shared;
 
         /* if in menu mode, reject all requests to change focus, except if the menu bit is set */
-        if (input->menu_owner && !(req->flags & CAPTURE_MENU))
+        if (input_shm->menu_owner && !(req->flags & CAPTURE_MENU))
         {
             set_error(STATUS_ACCESS_DENIED);
             return;
         }
-        reply->previous = input->capture;
-        input->capture = get_user_full_handle( req->handle );
-        input->menu_owner = (req->flags & CAPTURE_MENU) ? input->capture : 0;
-        input->move_size = (req->flags & CAPTURE_MOVESIZE) ? input->capture : 0;
-        reply->full_handle = input->capture;
+        SHARED_WRITE_BEGIN( input_shm, input_shm_t )
+        {
+            reply->previous = shared->capture;
+            shared->capture = get_user_full_handle( req->handle );
+            shared->menu_owner = (req->flags & CAPTURE_MENU) ? shared->capture : 0;
+            shared->move_size = (req->flags & CAPTURE_MOVESIZE) ? shared->capture : 0;
+            reply->full_handle = shared->capture;
+        }
+        SHARED_WRITE_END;
     }
 }
 
