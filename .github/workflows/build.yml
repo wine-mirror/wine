@@ -193,7 +193,7 @@ jobs:
           mkdir -p Libraries/DXVK
           mkdir -p Libraries/Wine
 
-          cp -a install/. Libraries/Wine/
+          cp -a ${{ env.WINE_INSTALLROOT }}/. Libraries/Wine/
 
           rm -rf Libraries/Wine/share/man
 
@@ -206,84 +206,129 @@ jobs:
       - name: Copy External Libs
         run: |
           LIBS=(
+              "libaom.3"
+              "libaribb24.0"
+              "libass.9"
+              "libavcodec.60"
+              "libavdevice.60"
+              "libavfilter.9"
+              "libavformat.60"
+              "libavif.16"
+              "libavutil.58"
+              "libbluray.2"
+              "libdav1d.7"
+              "libfdk-aac.2"
+              "libFLAC.12"
               "libfreetype"
               "libfreetype.6"
               "libgio-2.0.0"
-              "libgio-2.0"
               "libglib-2.0.0"
-              "libglib-2.0"
               "libgmodule-2.0.0"
-              "libgmodule-2.0"
-              "libgmp"
-              "libgnutls"
+              "libgmp.10"
+              "libgnutls.30"
               "libgobject-2.0.0"
-              "libgobject-2.0"
+              "libgraphene-1.0.0"
               "libgstadaptivedemux-1.0.0"
-              "libgstadaptivedemux-1.0"
               "libgstallocators-1.0.0"
-              "libgstallocators-1.0"
               "libgstapp-1.0.0"
-              "libgstapp-1.0"
               "libgstaudio-1.0.0"
-              "libgstaudio-1.0"
               "libgstbadaudio-1.0.0"
-              "libgstbadaudio-1.0"
               "libgstbase-1.0.0"
-              "libgstbase-1.0"
               "libgstbasecamerabinsrc-1.0.0"
-              "libgstbasecamerabinsrc-1.0"
               "libgstcodecparsers-1.0.0"
-              "libgstcodecparsers-1.0"
               "libgstcodecs-1.0.0"
-              "libgstcodecs-1.0"
               "libgstcontroller-1.0.0"
-              "libgstcontroller-1.0"
               "libgstfft-1.0.0"
-              "libgstfft-1.0"
               "libgstgl-1.0.0"
-              "libgstgl-1.0"
               "libgstinsertbin-1.0.0"
-              "libgstinsertbin-1.0"
               "libgstisoff-1.0.0"
-              "libgstisoff-1.0"
               "libgstmpegts-1.0.0"
-              "libgstmpegts-1.0"
               "libgstnet-1.0.0"
-              "libgstnet-1.0"
               "libgstpbutils-1.0.0"
-              "libgstpbutils-1.0"
               "libgstphotography-1.0.0"
-              "libgstphotography-1.0"
               "libgstplay-1.0.0"
-              "libgstplay-1.0"
               "libgstplayer-1.0.0"
-              "libgstplayer-1.0"
               "libgstreamer-1.0.0"
-              "libgstreamer-1.0"
               "libgstriff-1.0.0"
-              "libgstriff-1.0"
               "libgstrtp-1.0.0"
-              "libgstrtp-1.0"
               "libgstrtsp-1.0.0"
-              "libgstrtsp-1.0"
               "libgstsctp-1.0.0"
-              "libgstsctp-1.0"
+              "libgstsdp-1.0.0"
               "libgsttag-1.0.0"
-              "libgsttag-1.0"
               "libgsttranscoder-1.0.0"
-              "libgsttranscoder-1.0"
               "libgsturidownloader-1.0.0"
-              "libgsturidownloader-1.0"
               "libgstvideo-1.0.0"
-              "libgstvideo-1.0"
               "libgstwebrtc-1.0.0"
-              "libgstwebrtc-1.0"
               "libgthread-2.0.0"
-              "libgthread-2.0"
-              "libintl"
+              "libhogweed.6"
+              "libidn2.0"
+              "libintl.8"
+              "libjpeg.8"
+              "libjxl.0.10"
+              "libjxl_threads.0.10"
               "libMoltenVK"
-              "libnettle"
+              "libmp3lame.0"
+              "libnettle.8"
+              "libogg.0"
+              "libopencore-amrnb.0"
+              "libopencore-amrwb.0"
+              "libopenjp2.7"
+              "libopus.0"
+              "liborc-0.4.0"
+              "libp11-kit.0"
+              "libpcre2-8.0"
+              "libpng16.16"
+              "librav1e.0.7"
+              "librist.4"
               "libSDL2"
+              "libSvtAv1Enc.2"
+              "libshout.3"
+              "libsnappy.1"
+              "libsoxr.0"
+              "libspeex.1"
+              "libsrt.1.5"
+              "libssh.4"
+              "libswresample.4"
+              "libtasn1.6"
+              "libtheora.0"
+              "libtheoraenc.1"
+              "libtheoradec.1"
+              "libunistring.5"
+              "libvmaf.3"
+              "libvorbis.0"
+              "libvorbisenc.2"
+              "libvorbisfile.3"
+              "libvpx.8"
+              "libwebp.7"
+              "libwebpmux.3"
+              "libXau.6"
+              "libXdmcp.6"
+              "libX11.6"
+              "libX11-xcb.1"
+              "libx264.164"
+              "libx265.209"
+              "libxcb.1"
+              "libzmq.5"
+          )
+
+          GSTREAMER_LIBS=(
+              "libgstapplemedia"
+              "libgstasf"
+              "libgstaudioconvert"
+              "libgstaudioparsers"
+              "libgstaudioresample"
+              "libgstavi"
+              "libgstcoreelements"
+              "libgstdeinterlace"
+              "libgstid3demux"
+              "libgstisomp4"
+              "libgstopengl"
+              "libgstplayback"
+              "libgsttypefindfunctions"
+              "libgstvideoconvertscale"
+              "libgstvideofilter"
+              "libgstvideoparsersbad"
+              "libgstwavparse"
           )
 
           for i in "${LIBS[@]}"
@@ -291,9 +336,90 @@ jobs:
               cp -Lr $(brew --prefix)/lib/"$i".dylib Libraries/Wine/lib
           done
 
-          cp -a $(brew --prefix gstreamer)/lib/gstreamer-1.0 Libraries/Wine/lib
+          mkdir Libraries/Wine/lib/gstreamer-1.0
+
+          for i in "${GSTREAMER_LIBS[@]}"
+          do
+              cp -Lr $(brew --prefix gstreamer)/lib/gstreamer-1.0/"$i".dylib Libraries/Wine/lib/gstreamer-1.0
+          done
+
+          cp -a $(brew --prefix gstreamer)/lib/gstreamer-1.0/include Libraries/Wine/lib/gstreamer-1.0
+
+          # Fixup brew dylib LCs
+
+          update_dylib_paths() {
+              local dylib_file="$1"
+              echo "Processing $dylib_file..."
+
+              # Extract LC_LOAD_DYLIB paths using otool
+              local load_dylibs=$(otool -L "$dylib_file" | grep -v "$dylib_file" | awk '{print $1}')
+
+              for path in $load_dylibs; do
+                  if [[ $path != /usr/lib* && $path != /System/* ]]; then
+                      # For paths not excluded, replace the prefix with @loader_path/
+                      local lib_name="${path##*/}"
+                      local new_path="@loader_path/${lib_name}"
+                      echo "Updating $path to $new_path"
+                      # Use install_name_tool to change the path
+                      install_name_tool -change "$path" "$new_path" "$dylib_file"
+                  fi
+              done
+          }
+
+          export -f update_dylib_paths
+
+          gstreamer_update_dylib_paths() {
+              local dylib_file="$1"
+              echo "Processing $dylib_file..."
+
+              # Extract LC_LOAD_DYLIB paths using otool
+              local load_dylibs=$(otool -L "$dylib_file" | grep -v "$dylib_file" | awk '{print $1}')
+
+              for path in $load_dylibs; do
+                  if [[ $path != /usr/lib* && $path != /System/* ]]; then
+                      # For paths not excluded, replace the prefix with @loader_path/
+                      local lib_name="${path##*/}"
+                      local new_path="@loader_path/../${lib_name}"
+                      echo "Updating $path to $new_path"
+                      # Use install_name_tool to change the path
+                      install_name_tool -change "$path" "$new_path" "$dylib_file"
+                  fi
+              done
+          }
+
+          export -f gstreamer_update_dylib_paths
+
+          wine_update_dylib_paths() {
+              local dylib_file="$1"
+              echo "Processing $dylib_file..."
+
+              # Extract LC_LOAD_DYLIB paths using otool
+              local load_dylibs=$(otool -L "$dylib_file" | grep -v "$dylib_file" | awk '{print $1}')
+
+              for path in $load_dylibs; do
+                  if [[ $path != /usr/lib* && $path != /System/* ]]; then
+                      # For paths not excluded, replace the prefix with @loader_path/
+                      local lib_name="${path##*/}"
+                      local new_path="@rpath/${lib_name}"
+                      echo "Updating $path to $new_path"
+                      # Use install_name_tool to change the path
+                      install_name_tool -change "$path" "$new_path" "$dylib_file"
+                  fi
+              done
+          }
+
+          export -f wine_update_dylib_paths
+
+          find Libraries/Wine/lib -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'update_dylib_paths "$0"' {} \;
+          find Libraries/Wine/lib/gstreamer-1.0 -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'gstreamer_update_dylib_paths "$0"' {} \;
+
+          wine_update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so
 
           sudo xattr -rd com.apple.quarantine Libraries/Wine
+
+      - name: Install GPTK
+        run: |
+          ditto GPTK/redist/lib/ Libraries/Wine/lib/
 
       - name: Upload config64.log
         if: failure()
