@@ -1,0 +1,322 @@
+name: Build Wine
+
+on:
+  push:
+    branches:
+      - '7.7'
+  workflow_dispatch:
+
+env: 
+  CC: clang
+  CXX: clang++
+  CPATH: /usr/local/include
+  LIBRARY_PATH: /usr/local/lib
+  CFLAGS: -O3 -Wno-deprecated-declarations -Wno-incompatible-pointer-types
+  CROSSCFLAGS: -O3
+  LDFLAGS: -Wl,-ld_classic -Wl,-headerpad_max_install_names -Wl,-rpath,@loader_path/../../ -Wl,-rpath,/usr/local/lib
+  MACOSX_DEPLOYMENT_TARGET: 10.14
+  WINE_CONFIGURE: $GITHUB_WORKSPACE/configure
+  BUILDROOT: $GITHUB_WORKSPACE/build
+  WINE_INSTALLROOT: install
+
+jobs:
+  build:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Xcode 15
+        run: sudo xcode-select -switch /Applications/Xcode_15.2.app/Contents/Developer
+
+      - name: Install Homebrew Packages
+        run: |
+          REQUIRED_PACKAGES=(
+              # Build Dependencies
+              "bison"
+              "pkg-config"
+              "mingw-w64"
+              "gcenx/wine/cx-llvm"
+
+              # Utilities (DXVK)
+              "jq"
+
+              # Dependencies
+              "freetype"
+              "gettext"
+              "gnutls"
+              "gstreamer"
+              "sdl2"
+              "molten-vk"
+              "winetricks"
+          )
+
+          brew install "${REQUIRED_PACKAGES[@]}"
+
+      - name: Add bison & cx-llvm to $PATH
+        run: |
+          echo "$(brew --prefix bison)/bin" >> $GITHUB_PATH
+          echo "$(brew --prefix cx-llvm)/bin" >> $GITHUB_PATH
+
+      - name: Configure wine64
+        run: |
+          set -x
+
+          export ac_cv_lib_soname_MoltenVK="libMoltenVK.dylib"
+          export ac_cv_lib_soname_vulkan=""
+
+          mkdir -p ${{ env.BUILDROOT }}/wine64
+          pushd ${{ env.BUILDROOT }}/wine64
+          ${{ env.WINE_CONFIGURE }} \
+            --prefix= \
+            --disable-tests \
+            --disable-winedbg \
+            --enable-win64 \
+            --without-alsa \
+            --without-capi \
+            --with-coreaudio \
+            --with-cups \
+            --without-dbus \
+            --without-fontconfig \
+            --with-freetype \
+            --with-gettext \
+            --without-gettextpo \
+            --without-gphoto \
+            --with-gnutls \
+            --without-gssapi \
+            --with-gstreamer \
+            --without-krb5 \
+            --with-mingw \
+            --without-netapi \
+            --with-opencl \
+            --with-opengl \
+            --without-oss \
+            --with-pcap \
+            --with-pthread \
+            --without-pulse \
+            --without-sane \
+            --with-sdl \
+            --without-udev \
+            --with-unwind \
+            --without-usb \
+            --without-v4l2 \
+            --with-vulkan \
+            --without-x 
+          popd
+
+      - name: Build wine64
+        run: |
+          pushd ${{ env.BUILDROOT }}/wine64
+          make -j$(sysctl -n hw.ncpu 2>/dev/null)
+          popd
+
+      - name: Install wine64
+        run: |
+          pushd ${{ env.BUILDROOT }}/wine64
+          make install-lib DESTDIR="$GITHUB_WORKSPACE/${{ env.WINE_INSTALLROOT }}"
+          popd
+  
+      - name: Configure wine32on64
+        run: |
+          set -x
+
+          export ac_cv_lib_soname_MoltenVK="libMoltenVK.dylib"
+          export ac_cv_lib_soname_vulkan=""
+
+          mkdir -p ${{ env.BUILDROOT }}/wine32on64
+          pushd ${{ env.BUILDROOT }}/wine32on64
+          ${{ env.WINE_CONFIGURE }} \
+            --prefix= \
+            --disable-loader \
+            --disable-tests \
+            --disable-winedbg \
+            --enable-win32on64 \
+            --without-alsa \
+            --without-capi \
+            --with-coreaudio \
+            --with-cups \
+            --without-dbus \
+            --without-fontconfig \
+            --with-freetype \
+            --with-gettext \
+            --without-gettextpo \
+            --without-gphoto \
+            --with-gnutls \
+            --without-gssapi \
+            --without-gstreamer \
+            --without-inotify \
+            --without-krb5 \
+            --with-mingw \
+            --without-netapi \
+            --without-openal \
+            --with-opencl \
+            --with-opengl \
+            --without-oss \
+            --with-pcap \
+            --with-pthread \
+            --without-pulse \
+            --without-sane \
+            --with-sdl \
+            --without-udev \
+            --with-unwind \
+            --without-usb \
+            --without-v4l2 \
+            --with-vulkan \
+            --with-wine64=${{ env.BUILDROOT }}/wine64 \
+            --without-x
+          popd
+
+      - name: Build wine32on64
+        run: |
+          pushd ${{ env.BUILDROOT }}/wine32on64
+          make -j$(sysctl -n hw.ncpu 2>/dev/null)
+          popd
+
+      - name: Install wine32on64
+        run: |
+          pushd ${{ env.BUILDROOT }}/wine32on64
+          make install-lib DESTDIR="$GITHUB_WORKSPACE/${{ env.WINE_INSTALLROOT }}"
+          popd
+  
+      - name: Install DXVK
+        run: |
+          DXVK_URL=$(curl -s https://api.github.com/repos/Gcenx/DXVK-MacOS/releases/latest | jq -r '.assets[] | select(.browser_download_url | contains("dxvk-macOS")) | .browser_download_url')
+          curl -L -o dxvk.tar.gz $DXVK_URL
+          tar -xzf dxvk.tar.gz --strip-components=1
+          rm dxvk.tar.gz
+
+      - name: Grab Verbs From Winetricks
+        run: |
+          curl -L -o verbs.txt https://raw.githubusercontent.com/Winetricks/winetricks/master/files/verbs/all.txt
+
+      - name: Create Final Package
+        run: |
+          mkdir -p Libraries/DXVK
+          mkdir -p Libraries/Wine
+
+          cp -a install/. Libraries/Wine/
+
+          rm -rf Libraries/Wine/share/man
+
+          cp -a $(brew --prefix winetricks)/bin/winetricks Libraries
+          cp -a verbs.txt Libraries
+
+          cp -a x32 Libraries/DXVK
+          cp -a x64 Libraries/DXVK
+
+      - name: Copy External Libs
+        run: |
+          LIBS=(
+              "libfreetype"
+              "libfreetype.6"
+              "libgio-2.0.0"
+              "libgio-2.0"
+              "libglib-2.0.0"
+              "libglib-2.0"
+              "libgmodule-2.0.0"
+              "libgmodule-2.0"
+              "libgmp"
+              "libgnutls"
+              "libgobject-2.0.0"
+              "libgobject-2.0"
+              "libgstadaptivedemux-1.0.0"
+              "libgstadaptivedemux-1.0"
+              "libgstallocators-1.0.0"
+              "libgstallocators-1.0"
+              "libgstapp-1.0.0"
+              "libgstapp-1.0"
+              "libgstaudio-1.0.0"
+              "libgstaudio-1.0"
+              "libgstbadaudio-1.0.0"
+              "libgstbadaudio-1.0"
+              "libgstbase-1.0.0"
+              "libgstbase-1.0"
+              "libgstbasecamerabinsrc-1.0.0"
+              "libgstbasecamerabinsrc-1.0"
+              "libgstcodecparsers-1.0.0"
+              "libgstcodecparsers-1.0"
+              "libgstcodecs-1.0.0"
+              "libgstcodecs-1.0"
+              "libgstcontroller-1.0.0"
+              "libgstcontroller-1.0"
+              "libgstfft-1.0.0"
+              "libgstfft-1.0"
+              "libgstgl-1.0.0"
+              "libgstgl-1.0"
+              "libgstinsertbin-1.0.0"
+              "libgstinsertbin-1.0"
+              "libgstisoff-1.0.0"
+              "libgstisoff-1.0"
+              "libgstmpegts-1.0.0"
+              "libgstmpegts-1.0"
+              "libgstnet-1.0.0"
+              "libgstnet-1.0"
+              "libgstpbutils-1.0.0"
+              "libgstpbutils-1.0"
+              "libgstphotography-1.0.0"
+              "libgstphotography-1.0"
+              "libgstplay-1.0.0"
+              "libgstplay-1.0"
+              "libgstplayer-1.0.0"
+              "libgstplayer-1.0"
+              "libgstreamer-1.0.0"
+              "libgstreamer-1.0"
+              "libgstriff-1.0.0"
+              "libgstriff-1.0"
+              "libgstrtp-1.0.0"
+              "libgstrtp-1.0"
+              "libgstrtsp-1.0.0"
+              "libgstrtsp-1.0"
+              "libgstsctp-1.0.0"
+              "libgstsctp-1.0"
+              "libgsttag-1.0.0"
+              "libgsttag-1.0"
+              "libgsttranscoder-1.0.0"
+              "libgsttranscoder-1.0"
+              "libgsturidownloader-1.0.0"
+              "libgsturidownloader-1.0"
+              "libgstvideo-1.0.0"
+              "libgstvideo-1.0"
+              "libgstwebrtc-1.0.0"
+              "libgstwebrtc-1.0"
+              "libgthread-2.0.0"
+              "libgthread-2.0"
+              "libintl"
+              "libMoltenVK"
+              "libnettle"
+              "libSDL2"
+          )
+
+          for i in "${LIBS[@]}"
+          do
+              cp -Lr $(brew --prefix)/lib/"$i".dylib Libraries/Wine/lib
+          done
+
+          cp -a $(brew --prefix gstreamer)/lib/gstreamer-1.0 Libraries/Wine/lib
+
+          sudo xattr -rd com.apple.quarantine Libraries/Wine
+
+      - name: Upload config64.log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: config64
+          path: build/wine64/config.log
+
+      - name: Upload config32.log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: config32
+          path: build/wine32on64/config.log
+  
+      - name: Tar Libraries
+        if: success()
+        run: |
+          tar -zcf Libraries.tar.gz Libraries
+          
+      - name: Upload Libraries
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Libraries
+          path: Libraries.tar.gz
