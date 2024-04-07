@@ -1252,6 +1252,8 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     struct d2d_effect *effect = properties->effect;
     UINT32 actual_size;
 
+    memset(value, 0, size);
+
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
     if (prop->type != D2D1_PROPERTY_TYPE_STRING && prop->size != size) return E_INVALIDARG;
 

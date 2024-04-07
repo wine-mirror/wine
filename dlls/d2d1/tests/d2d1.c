@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <math.h>
 #include <float.h>
+#include <stdint.h>
 #include "d3dcompiler.h"
 #include "d2d1_3.h"
 #include "d2d1effectauthor.h"
@@ -11707,6 +11708,19 @@ static void test_effect_context(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+#define check_zero_buffer(a, b) check_zero_buffer_(a, b, __LINE__)
+static void check_zero_buffer_(const void *buffer, size_t size, unsigned int line)
+{
+    const uint32_t *ptr = buffer;
+    const uint8_t *ptr2 = buffer;
+    size_t i;
+
+    for (i = 0; i < size / sizeof(*ptr); ++i)
+        ok_(__FILE__, line)(!ptr[i], "Expected zero value %#x.\n", ptr[i]);
+    for (i = 0; i < size % sizeof(*ptr); ++i)
+        ok_(__FILE__, line)(!ptr2[size - i - 1], "Expected zero value %#x.\n", ptr2[i]);
+}
+
 static void test_effect_properties(BOOL d3d11)
 {
     UINT32 i, min_inputs, max_inputs, integer, index, size;
@@ -11720,6 +11734,7 @@ static void test_effect_properties(BOOL d3d11)
     ID2D1Effect *effect;
     UINT32 count, data;
     WCHAR buffer[128];
+    BYTE value[128];
     float mat[20];
     INT32 val;
     CLSID clsid;
@@ -12077,55 +12092,84 @@ static void test_effect_properties(BOOL d3d11)
     index = ID2D1Effect_GetPropertyIndex(effect, L"Integer");
     ok(index == 1, "Got unexpected index %u.\n", index);
 
-    effect_context = (ID2D1EffectContext *)0xdeadbeef;
-    hr = ID2D1Effect_GetValueByName(effect,
-            L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context) - 1);
+    /* On type mismatch output buffer is zeroed. */
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValueByName(effect, L"Context", D2D1_PROPERTY_TYPE_UINT32, value, sizeof(void *));
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Effect_GetValueByName(effect,
-            L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context) + 1);
+    check_zero_buffer(value, sizeof(void *));
+
+    /* On size mismatch output buffer is zeroed. */
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValueByName(effect, L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, value, sizeof(void *) - 1);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    check_zero_buffer(value, sizeof(void *) - 1);
+
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValueByName(effect, L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, value, sizeof(void *) + 1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    check_zero_buffer(value, sizeof(void *) + 1);
+
+    effect_context = NULL;
     hr = ID2D1Effect_GetValueByName(effect,
             L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
-       "Got unexpected effect context %p.\n", effect_context);
+    ok(!!effect_context, "Got unexpected effect context %p.\n", effect_context);
 
-    effect_context = (ID2D1EffectContext *)0xdeadbeef;
-    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context) - 1);
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, value, sizeof(void *) - 1);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context) + 1);
+    check_zero_buffer(value, sizeof(void *) - 1);
+
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, value, sizeof(void *) + 1);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    check_zero_buffer(value, sizeof(void *) + 1);
+
+    effect_context = NULL;
     hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
-       "Got unexpected effect context %p.\n", effect_context);
+    ok(!!effect_context, "Got unexpected effect context %p.\n", effect_context);
 
     hr = ID2D1Effect_SetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
-    integer = 0xdeadbeef;
-    hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) - 1);
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, value, 3);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) + 1);
+    check_zero_buffer(value, 3);
+
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, value, 5);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    check_zero_buffer(value, 5);
+
+    integer = 0;
     hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(integer == 10, "Got unexpected integer %u.", integer);
 
-    integer = 0xdeadbeef;
-    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) - 1);
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, value, 3);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) + 1);
+    check_zero_buffer(value, 3);
+
+    memset(value, 0xcc, sizeof(value));
+    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, value, 5);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    check_zero_buffer(value, 5);
+
+    integer = 0;
     hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(integer == 10, "Got unexpected integer %u.", integer);
 
+    memset(value, 0, sizeof(value));
+    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, value, 3);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, value, 5);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
     integer = 20;
-    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) - 1);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer) + 1);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     integer = 0xdeadbeef;
