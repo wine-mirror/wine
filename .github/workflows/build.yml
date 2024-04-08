@@ -317,11 +317,13 @@ jobs:
 
           update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so "@rpath/"
 
-          sudo xattr -rd com.apple.quarantine Libraries/Wine
-
       - name: Install GPTK
         run: |
           ditto GPTK/redist/lib/ Libraries/Wine/lib/
+
+      - name: Copy Version .plist
+        run: |
+          cp -a GPTKVersion.plist Libraries/
 
       - name: Upload config64.log
         if: failure()
