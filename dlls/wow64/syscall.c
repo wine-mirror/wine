@@ -197,17 +197,12 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
                 ULONG              context_ptr;   /* 004 */
                 EXCEPTION_RECORD32 rec;           /* 008 */
                 I386_CONTEXT       context;       /* 058 */
-                CONTEXT_EX32       context_ex;    /* 324 */
-                BYTE xstate[sizeof(XSTATE)+64];   /* 33c */
-                DWORD             align;          /* 4bc */
             } *stack;
             I386_CONTEXT ctx = { CONTEXT_I386_ALL };
             CONTEXT_EX *context_ex, *src_ex = NULL;
-            ULONG flags;
+            ULONG flags, context_length;
 
             C_ASSERT( offsetof(struct exc_stack_layout32, context) == 0x58 );
-            C_ASSERT( offsetof(struct exc_stack_layout32, xstate) == 0x33c );
-            C_ASSERT( sizeof(struct exc_stack_layout32) == 0x4c0 );
 
             pBTCpuGetContext( GetCurrentThread(), GetCurrentProcess(), NULL, &ctx );
 
@@ -231,28 +226,19 @@ static void __attribute__((used)) call_user_exception_dispatcher( EXCEPTION_RECO
             flags = ctx.ContextFlags;
             if (src_ex) flags |= CONTEXT_I386_XSTATE;
 
-            stack = (struct exc_stack_layout32 *)ULongToPtr( ctx.Esp & ~3 ) - 1;
+            RtlGetExtendedContextLength( flags, &context_length );
+
+            stack = (struct exc_stack_layout32 *)ULongToPtr( (ctx.Esp - offsetof(struct exc_stack_layout32, context) - context_length) & ~3 );
             stack->rec_ptr     = PtrToUlong( &stack->rec );
             stack->context_ptr = PtrToUlong( &stack->context );
             stack->rec         = *rec;
             stack->context     = ctx;
             RtlInitializeExtendedContext( &stack->context, flags, &context_ex );
+            if (src_ex) RtlCopyExtendedContext( context_ex, WOW64_CONTEXT_XSTATE, src_ex );
+
             /* adjust Eip for breakpoints in software emulation (hardware exceptions already adjust Rip) */
             if (rec->ExceptionCode == EXCEPTION_BREAKPOINT && (wow64info->CpuFlags & WOW64_CPUFLAGS_SOFTWARE))
                 stack->context.Eip--;
-
-            if (src_ex)
-            {
-                XSTATE *src_xs = (XSTATE *)((char *)src_ex + src_ex->XState.Offset);
-                XSTATE *dst_xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
-
-                dst_xs->Mask = src_xs->Mask & ~(ULONG64)3;
-                dst_xs->CompactionMask = src_xs->CompactionMask;
-                if ((dst_xs->Mask & 4) &&
-                    src_ex->XState.Length >= sizeof(XSTATE) &&
-                    context_ex->XState.Length >= sizeof(XSTATE))
-                    memcpy( &dst_xs->YmmContext, &src_xs->YmmContext, sizeof(dst_xs->YmmContext) );
-            }
 
             ctx.Esp = PtrToUlong( stack );
             ctx.Eip = pLdrSystemDllInitBlock->pKiUserExceptionDispatcher;
