@@ -1450,7 +1450,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
     struct exc_stack_layout *stack;
     size_t stack_size;
     unsigned int xstate_size;
-    NTSTATUS status = send_debug_event( rec, context, TRUE );
+    NTSTATUS status = send_debug_event( rec, context, TRUE, TRUE );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
     {

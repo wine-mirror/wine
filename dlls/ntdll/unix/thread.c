@@ -1506,7 +1506,7 @@ void wait_suspend( CONTEXT *context )
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
-NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance, BOOL exception )
 {
     unsigned int ret;
     DWORD i;
@@ -1543,6 +1543,8 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
         select_op.wait.handles[0] = handle;
 
         contexts_to_server( server_contexts, context );
+        server_contexts[0].flags |= SERVER_CTX_EXEC_SPACE;
+        server_contexts[0].exec_space.space.space = exception ? EXEC_SPACE_EXCEPTION : EXEC_SPACE_SYSCALL;
         server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
                        TIMEOUT_INFINITE, server_contexts, NULL );
 
@@ -1565,7 +1567,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
  */
 NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
-    NTSTATUS status = send_debug_event( rec, context, first_chance );
+    NTSTATUS status = send_debug_event( rec, context, first_chance, !(is_win64 || is_wow64() || is_old_wow64()) );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
         return NtContinue( context, FALSE );
