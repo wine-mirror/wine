@@ -19,7 +19,7 @@
 @ stdcall CPImportKey(ptr ptr long ptr long ptr)
 @ stdcall CPReleaseContext(ptr long)
 @ stdcall CPSetHashParam(ptr ptr long ptr long)
-@ stub CPSetKeyParam
+@ stdcall CPSetKeyParam(ptr ptr long ptr long)
 @ stub CPSetProvParam
 @ stdcall CPSignHash(ptr ptr long wstr long ptr ptr)
 @ stdcall CPVerifySignature(ptr ptr ptr long ptr wstr long)
