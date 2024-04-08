@@ -1376,33 +1376,39 @@ done:
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
 
-struct passthrough_mft
+struct test_transform
 {
     IMFTransform IMFTransform_iface;
     LONG refcount;
 
-    IMFMediaType *media_type_in, *media_type_out;
-    IMFSample *sample;
-    LONG processing_count;
-    UINT32 index;
+    IMFAttributes *attributes;
 
-    CRITICAL_SECTION cs;
+    UINT input_count;
+    IMFMediaType **input_types;
+    IMFMediaType *input_type;
+
+    UINT output_count;
+    IMFMediaType **output_types;
+    IMFMediaType *output_type;
+
+    IMFSample *sample;
+    UINT sample_count;
 };
 
-static struct passthrough_mft *impl_from_IMFTransform(IMFTransform *iface)
+static struct test_transform *test_transform_from_IMFTransform(IMFTransform *iface)
 {
-    return CONTAINING_RECORD(iface, struct passthrough_mft, IMFTransform_iface);
+    return CONTAINING_RECORD(iface, struct test_transform, IMFTransform_iface);
 }
 
-static HRESULT WINAPI passthrough_mft_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
+static HRESULT WINAPI test_transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
 
-    if (IsEqualGUID(iid, &IID_IUnknown) ||
-        IsEqualGUID(iid, &IID_IMFTransform))
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IMFTransform))
     {
-        *out = &impl->IMFTransform_iface;
-        IUnknown_AddRef((IUnknown *)*out);
+        IMFTransform_AddRef(&transform->IMFTransform_iface);
+        *out = &transform->IMFTransform_iface;
         return S_OK;
     }
 
@@ -1410,389 +1416,313 @@ static HRESULT WINAPI passthrough_mft_QueryInterface(IMFTransform *iface, REFIID
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI passthrough_mft_AddRef(IMFTransform *iface)
+static ULONG WINAPI test_transform_AddRef(IMFTransform *iface)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    ULONG refcount = InterlockedIncrement(&impl->refcount);
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    ULONG refcount = InterlockedIncrement(&transform->refcount);
     return refcount;
 }
 
-static ULONG WINAPI passthrough_mft_Release(IMFTransform *iface)
+static ULONG WINAPI test_transform_Release(IMFTransform *iface)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    ULONG refcount = InterlockedDecrement(&impl->refcount);
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    ULONG refcount = InterlockedDecrement(&transform->refcount);
 
     if (!refcount)
     {
-        if (impl->media_type_out) IMFMediaType_Release(impl->media_type_out);
-        if (impl->media_type_in) IMFMediaType_Release(impl->media_type_in);
-        DeleteCriticalSection(&impl->cs);
-        free(impl);
+        if (transform->input_type)
+            IMFMediaType_Release(transform->input_type);
+        if (transform->output_type)
+            IMFMediaType_Release(transform->output_type);
+        free(transform);
     }
 
     return refcount;
 }
 
-static HRESULT WINAPI passthrough_mft_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
+static HRESULT WINAPI test_transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
         DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
 {
-    *input_minimum = *input_maximum = *output_minimum = *output_maximum = 1;
-    return S_OK;
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
+static HRESULT WINAPI test_transform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
 {
     *inputs = *outputs = 1;
     return S_OK;
 }
 
-static HRESULT WINAPI passthrough_mft_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
+static HRESULT WINAPI test_transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
         DWORD output_size, DWORD *outputs)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
+static HRESULT WINAPI test_transform_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 {
+    ok(0, "Unexpected %s call.\n", __func__);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
+static HRESULT WINAPI test_transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    info->dwFlags =
-        MFT_OUTPUT_STREAM_PROVIDES_SAMPLES |
-        MFT_OUTPUT_STREAM_WHOLE_SAMPLES |
-        MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE |
-        MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER;
-
-    info->cbAlignment = 0;
-    info->cbSize = 0;
+    memset(info, 0, sizeof(*info));
     return S_OK;
 }
 
-static HRESULT WINAPI passthrough_mft_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+static HRESULT WINAPI test_transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*attributes = transform->attributes))
+        return E_NOTIMPL;
+    IMFAttributes_AddRef(*attributes);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+static HRESULT WINAPI test_transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
 {
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+static HRESULT WINAPI test_transform_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
+    ok(0, "Unexpected %s call.\n", __func__);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_DeleteInputStream(IMFTransform *iface, DWORD id)
+static HRESULT WINAPI test_transform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
 {
+    ok(0, "Unexpected %s call.\n", __func__);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI passthrough_mft_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI passthrough_mft_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+static HRESULT WINAPI test_transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    static const GUID *types[] = { &MFMediaType_Video, &MFMediaType_Audio };
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    if (index >= transform->input_count)
+    {
+        *type = NULL;
+        return MF_E_NO_MORE_TYPES;
+    }
+
+    *type = transform->input_types[index];
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
+        DWORD index, IMFMediaType **type)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    if (index >= transform->output_count)
+    {
+        *type = NULL;
+        return MF_E_NO_MORE_TYPES;
+    }
+
+    *type = transform->output_types[index];
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    GUID subtype, desired;
     HRESULT hr;
 
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    if (index > ARRAY_SIZE(types) - 1)
-        return MF_E_NO_MORE_TYPES;
-
-    if (SUCCEEDED(hr = MFCreateMediaType(type)))
-        hr = IMFMediaType_SetGUID(*type, &MF_MT_MAJOR_TYPE, types[index]);
-
-    return hr;
-}
-
-static HRESULT WINAPI passthrough_mft_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
-        IMFMediaType **type)
-{
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
-
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-
-    if (index)
+    if (type)
     {
-        hr = MF_E_NO_MORE_TYPES;
-    }
-    else if (impl->media_type_out)
-    {
-        *type = impl->media_type_out;
-        IMFMediaType_AddRef(*type);
-    }
-    else if (impl->media_type_in)
-    {
-        *type = impl->media_type_in;
-        IMFMediaType_AddRef(*type);
-    }
-    else
-    {
-        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+        hr = IMFMediaType_GetGUID(transform->input_types[0], &MF_MT_SUBTYPE, &subtype);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &desired);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (!IsEqualGUID(&subtype, &desired))
+            return MF_E_INVALIDMEDIATYPE;
     }
 
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
-}
-
-static HRESULT WINAPI passthrough_mft_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
-{
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
-
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-
-    if (!(flags & MFT_SET_TYPE_TEST_ONLY))
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
     {
-        if (impl->media_type_in)
-            IMFMediaType_Release(impl->media_type_in);
-
-        impl->media_type_in = type;
-        IMFMediaType_AddRef(impl->media_type_in);
+        todo_wine ok(0, "Unexpected %s call.\n", __func__);
+        return winetest_platform_is_wine ? S_OK : E_NOTIMPL;
     }
-
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
-}
-
-static HRESULT WINAPI passthrough_mft_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
-{
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-
-    if (impl->media_type_out)
-        IMFMediaType_Release(impl->media_type_out);
-
-    impl->media_type_out = type;
-    IMFMediaType_AddRef(impl->media_type_out);
-
-    LeaveCriticalSection(&impl->cs);
-
+    if (transform->input_type)
+        IMFMediaType_Release(transform->input_type);
+    if ((transform->input_type = type))
+        IMFMediaType_AddRef(transform->input_type);
     return S_OK;
 }
 
-static HRESULT WINAPI passthrough_mft_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+static HRESULT WINAPI test_transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    GUID subtype, desired;
+    HRESULT hr;
 
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-    if (impl->media_type_in)
+    if (type)
     {
-        *type = impl->media_type_in;
-        IMFMediaType_AddRef(*type);
-    }
-    else
-    {
-        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
-    }
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
-}
-
-static HRESULT WINAPI passthrough_mft_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
-{
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
-
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-
-    if (impl->media_type_out)
-    {
-        *type = impl->media_type_out;
-        IMFMediaType_AddRef(*type);
-    }
-    else
-    {
-        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+        hr = IMFMediaType_GetGUID(transform->output_types[0], &MF_MT_SUBTYPE, &subtype);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &desired);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (!IsEqualGUID(&subtype, &desired))
+            return MF_E_INVALIDMEDIATYPE;
     }
 
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
-}
-
-static HRESULT WINAPI passthrough_mft_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI passthrough_mft_GetOutputStatus(IMFTransform *iface, DWORD *flags)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI passthrough_mft_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI passthrough_mft_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI passthrough_mft_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
-{
-    if (message == MFT_MESSAGE_COMMAND_FLUSH)
-        return E_NOTIMPL;
-
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+    {
+        todo_wine ok(0, "Unexpected %s call.\n", __func__);
+        return winetest_platform_is_wine ? S_OK : E_NOTIMPL;
+    }
+    if (transform->output_type)
+        IMFMediaType_Release(transform->output_type);
+    if ((transform->output_type = type))
+        IMFMediaType_AddRef(transform->output_type);
     return S_OK;
 }
 
-static HRESULT WINAPI passthrough_mft_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+static HRESULT WINAPI test_transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
-
-    if (id)
-        return MF_E_INVALIDSTREAMNUMBER;
-
-    EnterCriticalSection(&impl->cs);
-    if (impl->sample)
-    {
-        hr = MF_E_NOTACCEPTING;
-    }
-    else
-    {
-        impl->sample = sample;
-        IMFSample_AddRef(impl->sample);
-    }
-
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*type = transform->input_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
 }
 
-static HRESULT WINAPI passthrough_mft_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
-        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
+static HRESULT WINAPI test_transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    struct passthrough_mft *impl = impl_from_IMFTransform(iface);
-    HRESULT hr = S_OK;
-    UINT32 val = 41;
-
-    if (count != 1)
-        return E_INVALIDARG;
-
-    EnterCriticalSection(&impl->cs);
-
-    if (impl->sample)
-    {
-        hr = IMFSample_GetUINT32(impl->sample, &IID_IMFSample, &val);
-
-        if (impl->index > 0)
-        {
-            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-            ok(val == impl->index, "Got unexpected value %u.\n", val);
-        }
-        else
-        {
-            ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
-        }
-
-        IMFSample_SetUINT32(impl->sample, &IID_IMFSample, impl->index + 1);
-
-        samples->pSample = impl->sample;
-        *status = samples[0].dwStatus = 0;
-        impl->processing_count++;
-
-        impl->sample = NULL;
-
-        hr = S_OK;
-    }
-    else
-    {
-        hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
-    }
-
-    LeaveCriticalSection(&impl->cs);
-
-    return hr;
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*type = transform->output_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
 }
 
-static const IMFTransformVtbl passthrough_mft_vtbl =
+static HRESULT WINAPI test_transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
 {
-    passthrough_mft_QueryInterface,
-    passthrough_mft_AddRef,
-    passthrough_mft_Release,
-    passthrough_mft_GetStreamLimits,
-    passthrough_mft_GetStreamCount,
-    passthrough_mft_GetStreamIDs,
-    passthrough_mft_GetInputStreamInfo,
-    passthrough_mft_GetOutputStreamInfo,
-    passthrough_mft_GetAttributes,
-    passthrough_mft_GetInputStreamAttributes,
-    passthrough_mft_GetOutputStreamAttributes,
-    passthrough_mft_DeleteInputStream,
-    passthrough_mft_AddInputStreams,
-    passthrough_mft_GetInputAvailableType,
-    passthrough_mft_GetOutputAvailableType,
-    passthrough_mft_SetInputType,
-    passthrough_mft_SetOutputType,
-    passthrough_mft_GetInputCurrentType,
-    passthrough_mft_GetOutputCurrentType,
-    passthrough_mft_GetInputStatus,
-    passthrough_mft_GetOutputStatus,
-    passthrough_mft_SetOutputBounds,
-    passthrough_mft_ProcessEvent,
-    passthrough_mft_ProcessMessage,
-    passthrough_mft_ProcessInput,
-    passthrough_mft_ProcessOutput,
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (transform->sample)
+        return MF_E_NOTACCEPTING;
+    transform->sample = sample;
+    IMFSample_AddRef(transform->sample);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *data, DWORD *status)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!transform->sample)
+        return MF_E_TRANSFORM_NEED_MORE_INPUT;
+    transform->sample_count++;
+    data->pSample = transform->sample;
+    transform->sample = NULL;
+    *status = 0;
+    return S_OK;
+}
+
+static UINT test_transform_get_sample_count(IMFTransform *iface)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    return transform->sample_count;
+}
+
+static const IMFTransformVtbl test_transform_vtbl =
+{
+    test_transform_QueryInterface,
+    test_transform_AddRef,
+    test_transform_Release,
+    test_transform_GetStreamLimits,
+    test_transform_GetStreamCount,
+    test_transform_GetStreamIDs,
+    test_transform_GetInputStreamInfo,
+    test_transform_GetOutputStreamInfo,
+    test_transform_GetAttributes,
+    test_transform_GetInputStreamAttributes,
+    test_transform_GetOutputStreamAttributes,
+    test_transform_DeleteInputStream,
+    test_transform_AddInputStreams,
+    test_transform_GetInputAvailableType,
+    test_transform_GetOutputAvailableType,
+    test_transform_SetInputType,
+    test_transform_SetOutputType,
+    test_transform_GetInputCurrentType,
+    test_transform_GetOutputCurrentType,
+    test_transform_GetInputStatus,
+    test_transform_GetOutputStatus,
+    test_transform_SetOutputBounds,
+    test_transform_ProcessEvent,
+    test_transform_ProcessMessage,
+    test_transform_ProcessInput,
+    test_transform_ProcessOutput,
 };
 
-HRESULT passthrough_mft_create(UINT32 index, struct passthrough_mft **out)
+static HRESULT WINAPI test_transform_create(UINT input_count, IMFMediaType **input_types,
+        UINT output_count, IMFMediaType **output_types, IMFTransform **out)
 {
-    struct passthrough_mft *impl;
+    struct test_transform *transform;
 
-    *out = NULL;
-
-    if (!(impl = calloc(1, sizeof(*impl))))
+    if (!(transform = calloc(1, sizeof(*transform))))
         return E_OUTOFMEMORY;
+    transform->IMFTransform_iface.lpVtbl = &test_transform_vtbl;
+    transform->refcount = 1;
 
-    impl->IMFTransform_iface.lpVtbl = &passthrough_mft_vtbl;
-    impl->index = index;
-    impl->refcount = 1;
+    transform->input_count = input_count;
+    transform->input_types = input_types;
+    transform->input_type = input_types[0];
+    IMFMediaType_AddRef(transform->input_type);
+    transform->output_count = output_count;
+    transform->output_types = output_types;
+    transform->output_type = output_types[0];
+    IMFMediaType_AddRef(transform->output_type);
 
-    InitializeCriticalSection(&impl->cs);
-
-    *out = impl;
+    *out = &transform->IMFTransform_iface;
     return S_OK;
 }
 
 static void test_effect(void)
 {
-    struct passthrough_mft *video_effect = NULL, *video_effect2 = NULL, *audio_effect = NULL, *audio_effect2 = NULL;
+    IMFTransform *video_effect = NULL, *video_effect2 = NULL, *audio_effect = NULL, *audio_effect2 = NULL;
+    IMFMediaType *video_i420, *video_rgb32, *audio_pcm;
     IMFMediaEngineEx *media_engine = NULL;
     struct test_transfer_notify *notify;
     ID3D11Texture2D *texture = NULL;
@@ -1801,8 +1731,8 @@ static void test_effect(void)
     D3D11_TEXTURE2D_DESC desc;
     IMFByteStream *stream;
     IMFMediaSink *sink;
+    UINT token, count;
     RECT dst_rect;
-    UINT token;
     HRESULT hr;
     DWORD res;
     BSTR url;
@@ -1810,6 +1740,42 @@ static void test_effect(void)
     stream = load_resource(L"i420-64x64.avi", L"video/avi");
 
     notify = create_transfer_notify();
+
+    hr = MFCreateMediaType(&video_i420);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(video_i420, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(video_i420, &MF_MT_SUBTYPE, &MFVideoFormat_I420);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(video_i420, &MF_MT_FRAME_SIZE, (UINT64)64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&video_rgb32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(video_rgb32, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(video_rgb32, &MF_MT_SUBTYPE, &MFVideoFormat_ARGB32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT64(video_rgb32, &MF_MT_FRAME_SIZE, (UINT64)64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&audio_pcm);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(audio_pcm, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(audio_pcm, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(audio_pcm, &MF_MT_AUDIO_NUM_CHANNELS, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_pcm, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_pcm, &MF_MT_AUDIO_BITS_PER_SAMPLE, 32);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_pcm, &MF_MT_AUDIO_BLOCK_ALIGNMENT, 8);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(audio_pcm, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 352800);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     if (!(device = create_d3d11_device()))
     {
@@ -1824,11 +1790,8 @@ static void test_effect(void)
 
     create_media_engine(&notify->IMFMediaEngineNotify_iface, manager, DXGI_FORMAT_B8G8R8X8_UNORM,
             &IID_IMFMediaEngineEx, (void **)&media_engine);
-
     IMFDXGIDeviceManager_Release(manager);
-
-    if (!(notify->media_engine = media_engine))
-        goto done;
+    notify->media_engine = media_engine;
 
     memset(&desc, 0, sizeof(desc));
     desc.Width = 64;
@@ -1843,46 +1806,44 @@ static void test_effect(void)
     hr = IMFMediaEngineEx_RemoveAllEffects(media_engine);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = passthrough_mft_create(0, &video_effect);
+    hr = test_transform_create(1, &video_rgb32, 1, &video_rgb32, &video_effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = test_transform_create(1, &video_i420, 1, &video_i420, &video_effect2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = passthrough_mft_create(1, &video_effect2);
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)video_effect, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(video_effect, 2);
 
-    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)&video_effect->IMFTransform_iface, FALSE);
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)video_effect2, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&video_effect->IMFTransform_iface, 2);
-
-    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
+    EXPECT_REF(video_effect2, 2);
 
     hr = IMFMediaEngineEx_RemoveAllEffects(media_engine);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&video_effect->IMFTransform_iface, 1);
-    EXPECT_REF(&video_effect2->IMFTransform_iface, 1);
+    EXPECT_REF(video_effect, 1);
+    EXPECT_REF(video_effect2, 1);
 
-    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)&video_effect->IMFTransform_iface, FALSE);
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)video_effect, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&video_effect->IMFTransform_iface, 2);
+    EXPECT_REF(video_effect, 2);
 
-    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
+    hr = IMFMediaEngineEx_InsertVideoEffect(media_engine, (IUnknown *)video_effect2, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
+    EXPECT_REF(video_effect2, 2);
 
-    hr = passthrough_mft_create(0, &audio_effect);
+    hr = test_transform_create(1, &audio_pcm, 1, &audio_pcm, &audio_effect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = test_transform_create(1, &audio_pcm, 1, &audio_pcm, &audio_effect2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = passthrough_mft_create(1, &audio_effect2);
+    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine, (IUnknown *)audio_effect, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(audio_effect, 2);
 
-    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine, (IUnknown *)&audio_effect->IMFTransform_iface, FALSE);
+    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine, (IUnknown *)audio_effect2, FALSE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&audio_effect->IMFTransform_iface, 2);
-
-    hr = IMFMediaEngineEx_InsertAudioEffect(media_engine, (IUnknown *)&audio_effect2->IMFTransform_iface, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    EXPECT_REF(&audio_effect2->IMFTransform_iface, 2);
+    EXPECT_REF(audio_effect2, 2);
 
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine, stream, url);
@@ -1898,47 +1859,47 @@ static void test_effect(void)
     hr = IMFMediaEngineEx_TransferVideoFrame(notify->media_engine, (IUnknown *)texture, NULL, &dst_rect, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    ok(video_effect->processing_count > 0, "Unexpected processing count %lu.\n", video_effect->processing_count);
-    ok(video_effect2->processing_count > 0, "Unexpected processing count %lu.\n", video_effect2->processing_count);
+    count = test_transform_get_sample_count(video_effect);
+    ok(count > 0, "Unexpected processing count %u.\n", count);
+    count = test_transform_get_sample_count(video_effect2);
+    ok(count > 0, "Unexpected processing count %u.\n", count);
 
     if (SUCCEEDED(hr = MFCreateAudioRenderer(NULL, &sink)))
     {
-        ok(audio_effect->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect->processing_count);
-        ok(audio_effect2->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect2->processing_count);
+        count = test_transform_get_sample_count(audio_effect);
+        ok(count > 0, "Unexpected processing count %u.\n", count);
+        count = test_transform_get_sample_count(audio_effect2);
+        ok(count > 0, "Unexpected processing count %u.\n", count);
 
         IMFMediaSink_Release(sink);
     }
     else if (hr == MF_E_NO_AUDIO_PLAYBACK_DEVICE)
     {
-        ok(!audio_effect->processing_count, "Unexpected processing count %lu.\n", audio_effect->processing_count);
-        ok(!audio_effect2->processing_count, "Unexpected processing count %lu.\n", audio_effect2->processing_count);
+        count = test_transform_get_sample_count(audio_effect);
+        ok(!count, "Unexpected processing count %u.\n", count);
+        count = test_transform_get_sample_count(audio_effect2);
+        ok(!count, "Unexpected processing count %u.\n", count);
     }
+
+    hr = IMFMediaEngineEx_Shutdown(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaEngineEx_RemoveAllEffects(media_engine);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    IMFMediaEngineEx_Release(media_engine);
+
+    ID3D11Texture2D_Release(texture);
+
+    IMFTransform_Release(audio_effect2);
+    IMFTransform_Release(audio_effect);
+    IMFTransform_Release(video_effect2);
+    IMFTransform_Release(video_effect);
+
+    ID3D11Device_Release(device);
 
 done:
-    if (media_engine)
-    {
-        IMFMediaEngineEx_Shutdown(media_engine);
-
-        hr = IMFMediaEngineEx_RemoveAllEffects(media_engine);
-        ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
-
-        IMFMediaEngineEx_Release(media_engine);
-    }
-
-    if (texture)
-        ID3D11Texture2D_Release(texture);
-    if (device)
-        ID3D11Device_Release(device);
-
-    if (audio_effect2)
-        IMFTransform_Release(&audio_effect2->IMFTransform_iface);
-    if (audio_effect)
-        IMFTransform_Release(&audio_effect->IMFTransform_iface);
-
-    if (video_effect2)
-        IMFTransform_Release(&video_effect2->IMFTransform_iface);
-    if (video_effect)
-        IMFTransform_Release(&video_effect->IMFTransform_iface);
+    IMFMediaType_Release(audio_pcm);
+    IMFMediaType_Release(video_rgb32);
+    IMFMediaType_Release(video_i420);
 
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);
 }
