@@ -306,6 +306,7 @@ jobs:
                       echo "Updating $path to $new_path"
                       # Use install_name_tool to change the path
                       install_name_tool -change "$path" "$new_path" "$dylib_file"
+                      codesign -fs- "$dylib_file"
                   fi
               done
           }
