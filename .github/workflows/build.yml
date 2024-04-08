@@ -322,6 +322,7 @@ jobs:
 
           update_dylib_paths() {
               local dylib_file="$1"
+              local path_prefix="$2"
               echo "Processing $dylib_file..."
 
               # Extract LC_LOAD_DYLIB paths using otool
@@ -331,7 +332,7 @@ jobs:
                   if [[ $path != /usr/lib* && $path != /System/* ]]; then
                       # For paths not excluded, replace the prefix with @loader_path/
                       local lib_name="${path##*/}"
-                      local new_path="@loader_path/${lib_name}"
+                      local new_path="${path_prefix}${lib_name}"
                       echo "Updating $path to $new_path"
                       # Use install_name_tool to change the path
                       install_name_tool -change "$path" "$new_path" "$dylib_file"
@@ -341,52 +342,10 @@ jobs:
 
           export -f update_dylib_paths
 
-          gstreamer_update_dylib_paths() {
-              local dylib_file="$1"
-              echo "Processing $dylib_file..."
+          find Libraries/Wine/lib -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'update_dylib_paths "$0" "@loader_path/"' {} \;
+          find Libraries/Wine/lib/gstreamer-1.0 -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'gstreamer_update_dylib_paths "$0" "@loader_path/../"' {} \;
 
-              # Extract LC_LOAD_DYLIB paths using otool
-              local load_dylibs=$(otool -L "$dylib_file" | grep -v "$dylib_file" | awk '{print $1}')
-
-              for path in $load_dylibs; do
-                  if [[ $path != /usr/lib* && $path != /System/* ]]; then
-                      # For paths not excluded, replace the prefix with @loader_path/
-                      local lib_name="${path##*/}"
-                      local new_path="@loader_path/../${lib_name}"
-                      echo "Updating $path to $new_path"
-                      # Use install_name_tool to change the path
-                      install_name_tool -change "$path" "$new_path" "$dylib_file"
-                  fi
-              done
-          }
-
-          export -f gstreamer_update_dylib_paths
-
-          wine_update_dylib_paths() {
-              local dylib_file="$1"
-              echo "Processing $dylib_file..."
-
-              # Extract LC_LOAD_DYLIB paths using otool
-              local load_dylibs=$(otool -L "$dylib_file" | grep -v "$dylib_file" | awk '{print $1}')
-
-              for path in $load_dylibs; do
-                  if [[ $path != /usr/lib* && $path != /System/* ]]; then
-                      # For paths not excluded, replace the prefix with @loader_path/
-                      local lib_name="${path##*/}"
-                      local new_path="@rpath/${lib_name}"
-                      echo "Updating $path to $new_path"
-                      # Use install_name_tool to change the path
-                      install_name_tool -change "$path" "$new_path" "$dylib_file"
-                  fi
-              done
-          }
-
-          export -f wine_update_dylib_paths
-
-          find Libraries/Wine/lib -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'update_dylib_paths "$0"' {} \;
-          find Libraries/Wine/lib/gstreamer-1.0 -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'gstreamer_update_dylib_paths "$0"' {} \;
-
-          wine_update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so
+          wine_update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so "@rpath/"
 
           sudo xattr -rd com.apple.quarantine Libraries/Wine
 
