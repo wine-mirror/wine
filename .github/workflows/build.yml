@@ -343,9 +343,9 @@ jobs:
           export -f update_dylib_paths
 
           find Libraries/Wine/lib -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'update_dylib_paths "$0" "@loader_path/"' {} \;
-          find Libraries/Wine/lib/gstreamer-1.0 -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'gstreamer_update_dylib_paths "$0" "@loader_path/../"' {} \;
+          find Libraries/Wine/lib/gstreamer-1.0 -maxdepth 1 -type f -name '*.dylib' -exec bash -c 'update_dylib_paths "$0" "@loader_path/../"' {} \;
 
-          wine_update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so "@rpath/"
+          update_dylib_paths Libraries/Wine/lib/wine/x86_64-unix/winegstreamer.so "@rpath/"
 
           sudo xattr -rd com.apple.quarantine Libraries/Wine
 
