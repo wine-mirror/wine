@@ -573,7 +573,7 @@ static inline const char *get_arch_dir( struct target target )
         [CPU_x86_64]  = "x86_64",
         [CPU_ARM]     = "arm",
         [CPU_ARM64]   = "aarch64",
-        [CPU_ARM64EC] = "arm64ec",
+        [CPU_ARM64EC] = "aarch64",
     };
 
     if (!cpu_names[target.cpu]) return "";

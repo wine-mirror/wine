@@ -172,6 +172,9 @@ static struct strarray target_flags[MAX_ARCHS];
 static struct strarray extra_cflags[MAX_ARCHS];
 static struct strarray extra_cflags_extlib[MAX_ARCHS];
 static struct strarray disabled_dirs[MAX_ARCHS];
+static unsigned int native_archs[MAX_ARCHS];
+static unsigned int hybrid_archs[MAX_ARCHS];
+static struct strarray hybrid_target_flags[MAX_ARCHS];
 
 struct makefile
 {
@@ -587,6 +590,20 @@ static int is_native_arch_disabled( struct makefile *make )
         if (make->disabled[arch] && !strcmp( archs.str[0], archs.str[arch] ))
             return 1;
     return 0;
+}
+
+
+/*******************************************************************
+ *         get_link_arch
+ */
+static int get_link_arch( struct makefile *make, unsigned int arch, unsigned int *link_arch )
+{
+    unsigned int hybrid_arch = hybrid_archs[arch];
+    if (native_archs[arch]) return 0;
+    if (hybrid_arch && make->disabled[hybrid_arch]) hybrid_arch = 0;
+    if (make->disabled[arch] && !hybrid_arch) return 0;
+    *link_arch = hybrid_arch ? hybrid_arch : arch;
+    return 1;
 }
 
 
@@ -2270,6 +2287,8 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
     struct strarray ret = empty_strarray;
     unsigned int i;
 
+    if (native_archs[arch]) arch = native_archs[arch];
+
     for (i = 0; i < imports.count; i++)
     {
         const char *name = imports.str[i];
@@ -2414,6 +2433,8 @@ static void output_winegcc_command( struct makefile *make, unsigned int arch )
         output_filename( tools_path( make, "winebuild" ));
     }
     output_filenames( target_flags[arch] );
+    if (native_archs[arch] && !make->disabled[native_archs[arch]])
+        output_filenames( hybrid_target_flags[arch] );
     if (arch) return;
     output_filename( "-mno-cygwin" );
     output_filenames( lddll_flags );
@@ -2889,8 +2910,9 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
             output( ":" );
             for (i = 0; i < source->importlibdeps.count; i++)
             {
+                int native_arch = native_archs[arch] ? native_archs[arch] : arch;
                 struct makefile *submake = find_importlib_module( source->importlibdeps.str[i] );
-                const char *module = strmake( "%s%s", arch_pe_dirs[arch], submake->module );
+                const char *module = strmake( "%s%s", arch_pe_dirs[native_arch], submake->module );
                 output_filename( obj_dir_path( submake, module ));
             }
             output( "\n" );
@@ -3077,7 +3099,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     struct strarray all_libs, dep_libs;
     const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file, *ext = ".dll";
     struct incl_file *spec_file = find_src_file( make, strmake( "%s.spec", obj ));
-    unsigned int arch;
+    unsigned int arch, link_arch;
 
     if (!imports.count) imports = make->imports;
     strarray_addall( &dll_flags, make->extradllflags );
@@ -3087,13 +3109,18 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
 
     for (arch = 0; arch < archs.count; arch++)
     {
-        if (!is_multiarch( arch )) continue;
+        const char *hybrid_obj_name = NULL;
+
+        if (!is_multiarch( arch ) || !get_link_arch( make, arch, &link_arch)) continue;
+
         all_libs = dep_libs = empty_strarray;
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ) );
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
         if (!arch) strarray_addall( &all_libs, libs );
         dll_name = arch_module_name( strmake( "%s%s", obj, ext ), arch );
         obj_name = obj_dir_path( make, strmake( "%s%s.o", arch_dirs[arch], obj ));
+        if (link_arch != arch)
+            hybrid_obj_name = obj_dir_path( make, strmake( "%s%s.o", arch_dirs[link_arch], obj ));
         output_file = obj_dir_path( make, dll_name );
         output_rsrc = strmake( "%s.res", dll_name );
 
@@ -3112,23 +3139,25 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
         output( "%s:", output_file );
         if (spec_file) output_filename( spec_file->filename );
         output_filename( obj_name );
+        if (hybrid_obj_name) output_filename( hybrid_obj_name );
         if (res_name) output_filename( res_name );
         output_filenames( dep_libs );
         output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
-        output_winegcc_command( make, arch );
+        output_winegcc_command( make, link_arch );
         output_filename( "-s" );
         output_filenames( dll_flags );
-        if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", arch ));
+        if (link_arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", link_arch ));
         if (!strcmp( ext, ".dll" )) output_filename( "-shared" );
         if (spec_file) output_filename( spec_file->filename );
         output_filename( obj_name );
+        if (hybrid_obj_name) output_filename( hybrid_obj_name );
         if (res_name) output_filename( res_name );
-        if ((debug_file = get_debug_file( make, dll_name, arch )))
+        if ((debug_file = get_debug_file( make, dll_name, link_arch )))
             output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
         output_filenames( all_libs );
-        output_filename( arch_make_variable( "LDFLAGS", arch ));
+        output_filename( arch_make_variable( "LDFLAGS", link_arch ));
         output( "\n" );
     }
 }
@@ -3340,9 +3369,9 @@ static void output_module( struct makefile *make, unsigned int arch )
     const char *module_name;
     const char *debug_file;
     char *spec_file = NULL;
-    unsigned int i;
+    unsigned int i, link_arch;
 
-    if (make->disabled[arch]) return;
+    if (!get_link_arch( make, arch, &link_arch )) return;
 
     if (!make->is_exe)
     {
@@ -3389,23 +3418,25 @@ static void output_module( struct makefile *make, unsigned int arch )
     output( "%s:", obj_dir_path( make, module_name ));
     if (spec_file) output_filename( spec_file );
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (link_arch != arch) output_filenames_obj_dir( make, make->object_files[link_arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
     output_filename( tools_path( make, "winegcc" ));
     output( "\n" );
-    output_winegcc_command( make, arch );
+    output_winegcc_command( make, link_arch );
     if (arch) output_filename( "-Wl,--wine-builtin" );
     if (!make->is_exe) output_filename( "-shared" );
     if (spec_file) output_filename( spec_file );
     output_filenames( make->extradllflags );
-    if (arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", arch ));
+    if (link_arch) output_filenames( get_expanded_arch_var_array( make, "EXTRADLLFLAGS", link_arch ));
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (link_arch != arch) output_filenames_obj_dir( make, make->object_files[link_arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
-    debug_file = get_debug_file( make, module_name, arch );
+    debug_file = get_debug_file( make, module_name, link_arch );
     if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
-    output_filename( arch_make_variable( "LDFLAGS", arch ));
+    output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
 
     if (!make->data_only && !arch && unix_lib_supported) output_fake_module( make, spec_file );
@@ -3419,6 +3450,9 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
 {
     char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
     const char *name = strmake( "%slib%s.a", arch_dirs[arch], make->importlib );
+    unsigned int hybrid_arch = hybrid_archs[arch];
+
+    if (native_archs[arch]) return;
 
     strarray_add( &make->clean_files, name );
     if (needs_delay_lib( make, arch ))
@@ -3429,14 +3463,17 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
     }
     output( "%s: %s %s", obj_dir_path( make, name ), tools_path( make, "winebuild" ), spec_file );
     output_filenames_obj_dir( make, make->implib_files[arch] );
+    if (hybrid_arch) output_filenames_obj_dir( make, make->implib_files[hybrid_arch] );
     output( "\n" );
     output( "\t%s%s -w --implib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ) );
     if (!delay_load_flags[arch]) output_filename( "--without-dlltool" );
-    output_filenames( target_flags[arch] );
+    output_filenames( target_flags[hybrid_arch ? hybrid_arch : arch] );
     if (make->is_win16) output_filename( "-m16" );
+    if (hybrid_arch) output_filenames( hybrid_target_flags[hybrid_arch] );
     output_filename( "--export" );
     output_filename( spec_file );
     output_filenames_obj_dir( make, make->implib_files[arch] );
+    if (hybrid_arch) output_filenames_obj_dir( make, make->implib_files[hybrid_arch] );
     output( "\n" );
 
     add_install_rule( make, make->importlib, arch, name,
@@ -3477,15 +3514,20 @@ static void output_unix_lib( struct makefile *make )
 static void output_static_lib( struct makefile *make, unsigned int arch )
 {
     const char *name = strmake( "%s%s", arch_dirs[arch], make->staticlib );
+    unsigned int hybrid_arch = hybrid_archs[arch];
+
+    if (native_archs[arch]) return;
 
     strarray_add( &make->clean_files, name );
     output( "%s: %s", obj_dir_path( make, name ), tools_path( make, "winebuild" ));
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (hybrid_arch) output_filenames_obj_dir( make, make->object_files[hybrid_arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
     output( "\t%s%s -w --staticlib -o $@", cmd_prefix( "BUILD" ), tools_path( make, "winebuild" ));
-    output_filenames( target_flags[arch] );
+    output_filenames( target_flags[hybrid_arch ? hybrid_arch : arch] );
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (hybrid_arch) output_filenames_obj_dir( make, make->object_files[hybrid_arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
     if (!make->extlib)
@@ -3507,6 +3549,9 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     struct strarray all_libs = empty_strarray;
     struct makefile *parent = get_parent_makefile( make );
     const char *debug_file;
+    unsigned int link_arch;
+
+    if (!get_link_arch( make, arch, &link_arch )) return;
 
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, IMPORT_TYPE_DIRECT, arch ) );
     strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
@@ -3514,27 +3559,30 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     strarray_add( &make->all_targets[arch], testmodule );
     strarray_add( &make->clean_files, stripped );
     output( "%s:\n", obj_dir_path( make, testmodule ));
-    output_winegcc_command( make, arch );
+    output_winegcc_command( make, link_arch );
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (link_arch != arch) output_filenames_obj_dir( make, make->object_files[link_arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     if ((debug_file = get_debug_file( make, testmodule, arch )))
         output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
-    output_filename( arch_make_variable( "LDFLAGS", arch ));
+    output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
     output( "%s:\n", obj_dir_path( make, stripped ));
-    output_winegcc_command( make, arch );
+    output_winegcc_command( make, link_arch );
     output_filename( "-s" );
     output_filename( strmake( "-Wb,-F,%s_test.exe", basemodule ));
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (link_arch != arch) output_filenames_obj_dir( make, make->object_files[link_arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( all_libs );
-    output_filename( arch_make_variable( "LDFLAGS", arch ));
+    output_filename( arch_make_variable( "LDFLAGS", link_arch ));
     output( "\n" );
     output( "%s %s:", obj_dir_path( make, testmodule ), obj_dir_path( make, stripped ));
     output_filenames_obj_dir( make, make->object_files[arch] );
+    if (link_arch != arch) output_filenames_obj_dir( make, make->object_files[link_arch] );
     output_filenames_obj_dir( make, make->res_files[arch] );
     output_filenames( dep_libs );
     output_filename( tools_path( make, "winebuild" ));
@@ -4348,13 +4396,24 @@ static int parse_option( const char *opt )
 
 
 /*******************************************************************
+ *         find_pe_arch
+ */
+static unsigned int find_pe_arch( const char *arch )
+{
+    unsigned int i;
+    for (i = 1; i < archs.count; i++) if (!strcmp( archs.str[i], arch )) return i;
+    return 0;
+}
+
+
+/*******************************************************************
  *         main
  */
 int main( int argc, char *argv[] )
 {
     const char *makeflags = getenv( "MAKEFLAGS" );
     const char *target;
-    unsigned int i, j, arch;
+    unsigned int i, j, arch, ec_arch;
 
     if (makeflags) parse_makeflags( makeflags );
 
@@ -4433,6 +4492,14 @@ int main( int argc, char *argv[] )
 
     strarray_add( &archs, get_expanded_make_variable( top_makefile, "HOST_ARCH" ));
     strarray_addall( &archs, get_expanded_make_var_array( top_makefile, "PE_ARCHS" ));
+
+    /* check for ARM64X setup */
+    if ((ec_arch = find_pe_arch( "arm64ec" )) && (arch = find_pe_arch( "aarch64" )))
+    {
+        native_archs[ec_arch] = arch;
+        hybrid_archs[arch] = ec_arch;
+        strarray_add( &hybrid_target_flags[ec_arch], "-marm64x" );
+    }
 
     arch_dirs[0] = "";
     arch_pe_dirs[0] = strmake( "%s-windows/", archs.str[0] );
