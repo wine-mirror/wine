@@ -728,10 +728,25 @@ struct d2d_transform
     UINT32 input_count;
 };
 
+enum d2d_render_info_mask
+{
+    D2D_RENDER_INFO_PIXEL_SHADER = 0x1,
+};
+
+struct d2d_render_info
+{
+    ID2D1DrawInfo ID2D1DrawInfo_iface;
+    LONG refcount;
+
+    unsigned int mask;
+    GUID pixel_shader;
+};
+
 struct d2d_transform_node
 {
     struct list entry;
     ID2D1TransformNode *object;
+    struct d2d_render_info *render_info;
 };
 
 struct d2d_transform_node_connection
