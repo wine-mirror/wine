@@ -36,6 +36,7 @@
 int UsePIC = 0;
 int nb_errors = 0;
 int display_warnings = 0;
+int native_arch = -1;
 int kill_at = 0;
 int verbose = 0;
 int link_ext_symbols = 0;
@@ -386,6 +387,7 @@ static void option_callback( int optc, char *optarg )
         else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
         else if (!strcmp( optarg, "unicode" )) main_spec->unicode_app = 1;
+        else if (!strcmp( optarg, "arm64x" )) native_arch = CPU_ARM64;
         else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
         else if (!strncmp( optarg, "fpu=", 4 )) fpu_option = xstrdup( optarg + 4 );
         else if (!strncmp( optarg, "arch=", 5 )) arch_option = xstrdup( optarg + 5 );
@@ -648,7 +650,7 @@ int main(int argc, char **argv)
         if (!spec_file_name) fatal_error( "missing .spec file\n" );
         if (!parse_input_file( spec )) break;
         open_output_file();
-        output_def_file( spec, 0 );
+        output_def_file( spec, &spec->exports, 0 );
         close_output_file();
         break;
     case MODE_IMPLIB:

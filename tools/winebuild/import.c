@@ -1377,12 +1377,19 @@ void output_static_lib( const char *output_name, struct strarray files, int crea
 /* create a Windows-style import library using dlltool */
 static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
+    const char *def_file, *native_def_file = NULL;
     struct strarray args;
-    char *def_file;
 
     def_file = open_temp_output_file( ".def" );
-    output_def_file( spec, 1 );
+    output_def_file( spec, &spec->exports, 1 );
     fclose( output_file );
+
+    if (native_arch != -1)
+    {
+        native_def_file = open_temp_output_file( ".def" );
+        output_def_file( spec, &spec->native_exports, 1 );
+        fclose( output_file );
+    }
 
     args = find_tool( "dlltool", NULL );
     strarray_add( &args, "-k" );
@@ -1390,6 +1397,11 @@ static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struc
     strarray_add( &args, lib_name );
     strarray_add( &args, "-d" );
     strarray_add( &args, def_file );
+    if (native_def_file)
+    {
+        strarray_add( &args, "-N" );
+        strarray_add( &args, native_def_file );
+    }
 
     switch (target.cpu)
     {

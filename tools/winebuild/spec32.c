@@ -1343,9 +1343,8 @@ void output_data_module( DLLSPEC *spec )
  *
  * Build a Win32 def file from a spec file.
  */
-void output_def_file( DLLSPEC *spec, int import_only )
+void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only )
 {
-    struct exports *exports;
     DLLSPEC *spec32 = NULL;
     const char *name;
     int i, total;
@@ -1355,8 +1354,8 @@ void output_def_file( DLLSPEC *spec, int import_only )
         spec32 = alloc_dll_spec();
         add_16bit_exports( spec32, spec );
         spec = spec32;
+        exports = &spec->exports;
     }
-    exports = &spec->exports;
 
     if (spec_file_name)
         output( "; File generated automatically from %s; do not edit!\n\n",

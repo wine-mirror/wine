@@ -162,6 +162,7 @@ typedef struct
     int              unicode_app;        /* default to unicode entry point */
     ORDDEF          *entry_points;       /* spec entry points */
     struct exports   exports;            /* dll exports */
+    struct exports   native_exports;     /* dll native exports */
     struct resource *resources;          /* array of dll resources (format differs between Win16/Win32) */
     struct apiset    apiset;             /* list of defined api sets */
 } DLLSPEC;
@@ -327,7 +328,7 @@ extern void output_bin_resources( DLLSPEC *spec, unsigned int start_rva );
 extern void output_spec32_file( DLLSPEC *spec );
 extern void output_fake_module( DLLSPEC *spec );
 extern void output_data_module( DLLSPEC *spec );
-extern void output_def_file( DLLSPEC *spec, int import_only );
+extern void output_def_file( DLLSPEC *spec, struct exports *exports, int import_only );
 extern void output_apiset_lib( DLLSPEC *spec, const struct apiset *apiset );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
@@ -372,6 +373,7 @@ extern int force_pointer_size;
 extern int unwind_tables;
 extern int use_dlltool;
 extern int use_msvcrt;
+extern int native_arch;
 extern int safe_seh;
 extern int prefer_native;
 extern int data_only;

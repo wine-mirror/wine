@@ -943,16 +943,15 @@ static void assign_ordinals( struct exports *exports )
 }
 
 
-static void assign_exports( DLLSPEC *spec )
+static void assign_exports( DLLSPEC *spec, unsigned int cpu, struct exports *exports )
 {
-    struct exports *exports = &spec->exports;
     unsigned int i;
 
     exports->entry_points = xmalloc( spec->nb_entry_points * sizeof(*exports->entry_points) );
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *entry = &spec->entry_points[i];
-        if ((entry->flags & FLAG_CPU_MASK) && !(entry->flags & FLAG_CPU(target.cpu)))
+        if ((entry->flags & FLAG_CPU_MASK) && !(entry->flags & FLAG_CPU(cpu)))
             continue;
         exports->entry_points[exports->nb_entry_points++] = entry;
     }
@@ -1018,7 +1017,7 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
                                              odp->u.func.nb_args * sizeof(odp->u.func.args[0]) );
     }
 
-    assign_exports( spec32 );
+    assign_exports( spec32, target.cpu, &spec32->exports );
 }
 
 
@@ -1061,7 +1060,8 @@ int parse_spec_file( FILE *file, DLLSPEC *spec )
     }
 
     current_line = 0;  /* no longer parsing the input file */
-    assign_exports( spec );
+    assign_exports( spec, target.cpu, &spec->exports );
+    if (native_arch != -1) assign_exports( spec, native_arch, &spec->native_exports );
     return !nb_errors;
 }
 
@@ -1303,6 +1303,6 @@ int parse_def_file( FILE *file, DLLSPEC *spec )
     }
 
     current_line = 0;  /* no longer parsing the input file */
-    assign_exports( spec );
+    assign_exports( spec, target.cpu, &spec->exports );
     return !nb_errors;
 }

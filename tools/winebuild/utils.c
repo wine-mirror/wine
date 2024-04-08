@@ -615,6 +615,7 @@ DLLSPEC *alloc_dll_spec(void)
     spec->subsystem_minor    = 0;
     spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT | IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
     spec->exports.base        = MAX_ORDINALS;
+    spec->native_exports.base = MAX_ORDINALS;
     return spec;
 }
 
@@ -644,6 +645,7 @@ void free_dll_spec( DLLSPEC *spec )
         free( odp->link_name );
     }
     free_exports( &spec->exports );
+    free_exports( &spec->native_exports );
     free( spec->file_name );
     free( spec->dll_name );
     free( spec->c_name );
