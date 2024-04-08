@@ -324,7 +324,7 @@ jobs:
 
       - name: Copy Version .plist
         run: |
-          cp -a GPTKVersion.plist Libraries/
+          cp -a WhiskyWineVersion.plist Libraries/
 
       - name: Upload config64.log
         if: failure()
@@ -362,6 +362,5 @@ jobs:
           RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_ENDPOINT }}
         run: |
           brew install rclone
-          zip Libraries.zip Libraries.tar.gz
-          rclone copy Libraries.zip r2:whisky-bucket/Wine
-          rclone copy GPTKVersion.plist r2:whisky-bucket/Wine
+          rclone copy Libraries.tar.gz r2:whisky-bucket/Wine
+          rclone copy WhiskyWineVersion.plist r2:whisky-bucket/Wine
