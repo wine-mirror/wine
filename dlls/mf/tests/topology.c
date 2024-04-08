@@ -26,6 +26,9 @@
 
 #include "uuids.h"
 #include "wmcodecdsp.h"
+#include "d3d9.h"
+#include "evr9.h"
+#include "d3d11_4.h"
 
 #include "mferror.h"
 
@@ -78,6 +81,21 @@ static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
             expected_refcount);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -86,6 +104,27 @@ static HWND create_window(void)
 
     return CreateWindowA("static", "mf_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
+static IDirect3DDevice9 *create_d3d9_device(IDirect3D9 *d3d9, HWND focus_window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device = NULL;
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+
+    IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+
+    return device;
 }
 
 static IMFSample *create_sample(const BYTE *data, ULONG size)
@@ -197,6 +236,7 @@ struct test_transform
     LONG refcount;
 
     IMFAttributes *attributes;
+    const MFT_OUTPUT_STREAM_INFO *output_stream_info;
 
     UINT input_count;
     IMFMediaType **input_types;
@@ -205,6 +245,11 @@ struct test_transform
     UINT output_count;
     IMFMediaType **output_types;
     IMFMediaType *output_type;
+
+    IDirect3DDeviceManager9 *expect_d3d9_device_manager;
+    BOOL got_d3d9_device_manager;
+    IMFDXGIDeviceManager *expect_dxgi_device_manager;
+    BOOL got_dxgi_device_manager;
 };
 
 static struct test_transform *test_transform_from_IMFTransform(IMFTransform *iface)
@@ -279,10 +324,22 @@ static HRESULT WINAPI test_transform_GetInputStreamInfo(IMFTransform *iface, DWO
     return E_NOTIMPL;
 }
 
+static void test_transform_set_output_stream_info(IMFTransform *iface, const MFT_OUTPUT_STREAM_INFO *info)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    transform->output_stream_info = info;
+}
+
 static HRESULT WINAPI test_transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    ok(0, "Unexpected %s call.\n", __func__);
-    return E_NOTIMPL;
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    ok(!!transform->output_stream_info, "Unexpected %s iface %p call.\n", __func__, iface);
+    if (!transform->output_stream_info)
+        return E_NOTIMPL;
+
+    *info = *transform->output_stream_info;
+    return S_OK;
 }
 
 static HRESULT WINAPI test_transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
@@ -414,10 +471,75 @@ static HRESULT WINAPI test_transform_ProcessEvent(IMFTransform *iface, DWORD id,
     return E_NOTIMPL;
 }
 
+static void test_transform_set_expect_d3d9_device_manager(IMFTransform *iface, IDirect3DDeviceManager9 *manager)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    transform->expect_d3d9_device_manager = manager;
+}
+
+static void test_transform_set_expect_dxgi_device_manager(IMFTransform *iface, IMFDXGIDeviceManager *manager)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    transform->expect_dxgi_device_manager = manager;
+}
+
 static HRESULT WINAPI test_transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    ok(0, "Unexpected %s call.\n", __func__);
-    return E_NOTIMPL;
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    switch (message)
+    {
+    case MFT_MESSAGE_SET_D3D_MANAGER:
+        ok(!!param, "Unexpected param.\n");
+        ok(transform->expect_d3d9_device_manager || transform->expect_dxgi_device_manager, "Unexpected %s call.\n", __func__);
+
+        if (transform->expect_d3d9_device_manager)
+        {
+            IDirect3DDeviceManager9 *manager;
+            HRESULT hr;
+
+            check_interface((IUnknown *)param, &IID_IMFDXGIDeviceManager, FALSE);
+            hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IDirect3DDeviceManager9, (void **)&manager);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(manager == transform->expect_d3d9_device_manager, "got manager %p\n", manager);
+            IDirect3DDeviceManager9_Release(manager);
+
+            transform->got_d3d9_device_manager = TRUE;
+        }
+        if (transform->expect_dxgi_device_manager)
+        {
+            IMFDXGIDeviceManager *manager;
+            HRESULT hr;
+
+            check_interface((IUnknown *)param, &IID_IDirect3DDeviceManager9, FALSE);
+            hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IMFDXGIDeviceManager, (void **)&manager);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(manager == transform->expect_dxgi_device_manager, "got manager %p\n", manager);
+            if (manager) IMFDXGIDeviceManager_Release(manager);
+
+            transform->got_dxgi_device_manager = TRUE;
+        }
+        return S_OK;
+
+    default:
+        ok(0, "Unexpected %s call.\n", __func__);
+        return E_NOTIMPL;
+    }
+}
+
+static BOOL test_transform_got_d3d9_device_manager(IMFTransform *iface)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    BOOL ret = transform->got_d3d9_device_manager;
+    transform->got_d3d9_device_manager = FALSE;
+    return ret;
+}
+
+static BOOL test_transform_got_dxgi_device_manager(IMFTransform *iface)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    BOOL ret = transform->got_dxgi_device_manager;
+    transform->got_dxgi_device_manager = FALSE;
+    return ret;
 }
 
 static HRESULT WINAPI test_transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
@@ -1695,10 +1817,12 @@ static const struct test_handler test_handler = {.IMFMediaTypeHandler_iface.lpVt
 struct test_stream_sink
 {
     IMFStreamSink IMFStreamSink_iface;
+    IMFGetService IMFGetService_iface;
     IMFMediaTypeHandler *handler;
     IMFMediaSink *media_sink;
 
     IMFAttributes *attributes;
+    IUnknown *device_manager;
 };
 
 static struct test_stream_sink *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -1721,6 +1845,13 @@ static HRESULT WINAPI test_stream_sink_QueryInterface(IMFStreamSink *iface, REFI
     if (IsEqualIID(riid, &IID_IMFAttributes) && impl->attributes)
     {
         IMFAttributes_AddRef((*obj = impl->attributes));
+        return S_OK;
+    }
+
+    if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &impl->IMFGetService_iface;
+        IMFGetService_AddRef(&impl->IMFGetService_iface);
         return S_OK;
     }
 
@@ -1835,7 +1966,52 @@ static const IMFStreamSinkVtbl test_stream_sink_vtbl =
     test_stream_sink_Flush,
 };
 
-static const struct test_stream_sink test_stream_sink = {.IMFStreamSink_iface.lpVtbl = &test_stream_sink_vtbl};
+static struct test_stream_sink *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_stream_sink, IMFGetService_iface);
+}
+
+static HRESULT WINAPI test_stream_sink_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct test_stream_sink *stream = impl_from_IMFGetService(iface);
+    return IMFStreamSink_QueryInterface(&stream->IMFStreamSink_iface, riid, obj);
+}
+
+static ULONG WINAPI test_stream_sink_get_service_AddRef(IMFGetService *iface)
+{
+    struct test_stream_sink *stream = impl_from_IMFGetService(iface);
+    return IMFStreamSink_AddRef(&stream->IMFStreamSink_iface);
+}
+
+static ULONG WINAPI test_stream_sink_get_service_Release(IMFGetService *iface)
+{
+    struct test_stream_sink *stream = impl_from_IMFGetService(iface);
+    return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
+}
+
+static HRESULT WINAPI test_stream_sink_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    struct test_stream_sink *stream = impl_from_IMFGetService(iface);
+
+    if (IsEqualGUID(service, &MR_VIDEO_ACCELERATION_SERVICE) && stream->device_manager)
+        return IUnknown_QueryInterface(stream->device_manager, riid, obj);
+
+    return E_NOINTERFACE;
+}
+
+static const IMFGetServiceVtbl test_stream_sink_get_service_vtbl =
+{
+    test_stream_sink_get_service_QueryInterface,
+    test_stream_sink_get_service_AddRef,
+    test_stream_sink_get_service_Release,
+    test_stream_sink_get_service_GetService,
+};
+
+static const struct test_stream_sink test_stream_sink =
+{
+    .IMFStreamSink_iface.lpVtbl = &test_stream_sink_vtbl,
+    .IMFGetService_iface.lpVtbl = &test_stream_sink_get_service_vtbl,
+};
 
 enum object_state
 {
@@ -3161,6 +3337,433 @@ static void test_topology_loader_d3d(void)
     winetest_pop_context();
 }
 
+static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
+{
+    static const media_type_desc video_media_type_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+
+    struct test_stream_sink stream_sink = test_stream_sink;
+    MFT_OUTPUT_STREAM_INFO output_stream_info = {0};
+    struct test_handler handler = test_handler;
+    IMFTopology *topology, *full_topology;
+    IDirect3DDeviceManager9 *d3d9_manager;
+    IMFPresentationDescriptor *pd;
+    IDirect3DDevice9 *d3d9_device;
+    IMFTransform *transforms[4];
+    IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
+    IMFMediaSource *source;
+    IMFTopoLoader *loader;
+    IDirect3D9 *d3d9;
+    UINT token;
+    HRESULT hr;
+    WORD count;
+    HWND hwnd;
+    BOOL ret;
+    LONG ref;
+
+    winetest_push_context("d3d9 mode %d", mode);
+
+    hwnd = create_window();
+
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D9 object, skipping tests.\n");
+        goto skip_d3d9;
+    }
+    if (!(d3d9_device = create_d3d9_device(d3d9, hwnd)))
+    {
+        skip("Failed to create a D3D9 device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        goto skip_d3d9;
+    }
+    IDirect3D9_Release(d3d9);
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &d3d9_manager);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDeviceManager9_ResetDevice(d3d9_manager, d3d9_device, token);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IDirect3DDevice9_Release(d3d9_device);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    init_media_type(media_type, video_media_type_desc, -1);
+
+    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
+    hr = MFCreateAttributes(&stream_sink.attributes, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(stream_sink.attributes, &MF_SA_D3D_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    stream_sink.device_manager = (IUnknown *)d3d9_manager;
+
+    handler.media_types_count = 1;
+    handler.media_types = &media_type;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_DXVA_MODE, mode);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    create_descriptors(1, &media_type, &video_media_type_desc, &pd, &sd);
+    hr = IMFStreamDescriptor_SetUINT32(sd, &MF_SA_D3D_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    source = create_test_source(pd);
+
+
+    /* D3D aware transforms connected to downstream non-D3D-aware transforms don't receive a device manager */
+
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[0]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[1]);
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[2]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[3]);
+
+    test_topology_loader_d3d_init(topology, source, pd, sd, 4, transforms, &stream_sink.IMFStreamSink_iface);
+
+    IMFMediaSource_Release(source);
+    IMFPresentationDescriptor_Release(pd);
+    IMFStreamDescriptor_Release(sd);
+
+    test_transform_set_output_stream_info(transforms[3], &output_stream_info);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        test_transform_set_expect_d3d9_device_manager(transforms[1], d3d9_manager);
+        test_transform_set_expect_d3d9_device_manager(transforms[3], d3d9_manager);
+    }
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    todo_wine ok(count == 6, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_d3d9_device_manager(transforms[0]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[1]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[2]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[3]);
+        todo_wine ok(!!ret, "got d3d9 device manager\n");
+    }
+
+    /* copier is inserted before the sink if preceding node may allocate samples without a device manager */
+
+    output_stream_info.dwFlags = MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES;
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (mode == MFTOPOLOGY_DXVA_NONE || mode == MFTOPOLOGY_DXVA_FULL)
+        todo_wine ok(count == 6, "got count %u.\n", count);
+    else
+        ok(count == 7, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_d3d9_device_manager(transforms[0]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[1]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[2]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[3]);
+        todo_wine ok(!!ret, "got d3d9 device manager\n");
+    }
+
+    output_stream_info.dwFlags = MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (mode == MFTOPOLOGY_DXVA_NONE || mode == MFTOPOLOGY_DXVA_FULL)
+        todo_wine ok(count == 6, "got count %u.\n", count);
+    else
+        ok(count == 7, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_d3d9_device_manager(transforms[0]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[1]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[2]);
+        ok(!ret, "got d3d9 device manager\n");
+        ret = test_transform_got_d3d9_device_manager(transforms[3]);
+        todo_wine ok(!!ret, "got d3d9 device manager\n");
+    }
+
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopoLoader_Release(loader);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    IMFTransform_Release(transforms[0]);
+    IMFTransform_Release(transforms[1]);
+    IMFTransform_Release(transforms[2]);
+    IMFTransform_Release(transforms[3]);
+
+
+    IMFAttributes_Release(stream_sink.attributes);
+    IMFMediaType_Release(media_type);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
+
+    IDirect3DDeviceManager9_Release(d3d9_manager);
+
+skip_d3d9:
+    DestroyWindow(hwnd);
+
+    winetest_pop_context();
+}
+
+static void test_topology_loader_d3d11(MFTOPOLOGY_DXVA_MODE mode)
+{
+    static const media_type_desc video_media_type_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+
+    struct test_stream_sink stream_sink = test_stream_sink;
+    MFT_OUTPUT_STREAM_INFO output_stream_info = {0};
+    struct test_handler handler = test_handler;
+    IMFTopology *topology, *full_topology;
+    IMFDXGIDeviceManager *dxgi_manager;
+    ID3D11Multithread *multithread;
+    IMFPresentationDescriptor *pd;
+    IMFTransform *transforms[4];
+    IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
+    IMFMediaSource *source;
+    IMFTopoLoader *loader;
+    ID3D11Device *d3d11;
+    UINT token;
+    HRESULT hr;
+    WORD count;
+    BOOL ret;
+    LONG ref;
+
+    winetest_push_context("d3d11 mode %d", mode);
+
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT, NULL, 0,
+            D3D11_SDK_VERSION, &d3d11, NULL, NULL);
+    if (FAILED(hr))
+    {
+        skip("D3D11 device creation failed, skipping tests.\n");
+        goto skip_d3d11;
+    }
+
+    hr = ID3D11Device_QueryInterface(d3d11, &IID_ID3D11Multithread, (void **)&multithread);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ID3D11Multithread_SetMultithreadProtected(multithread, TRUE);
+    ID3D11Multithread_Release(multithread);
+
+    hr = pMFCreateDXGIDeviceManager(&token, &dxgi_manager);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFDXGIDeviceManager_ResetDevice(dxgi_manager, (IUnknown *)d3d11, token);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ID3D11Device_Release(d3d11);
+
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    init_media_type(media_type, video_media_type_desc, -1);
+
+    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
+    hr = MFCreateAttributes(&stream_sink.attributes, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(stream_sink.attributes, &MF_SA_D3D11_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    stream_sink.device_manager = (IUnknown *)dxgi_manager;
+
+    handler.media_types_count = 1;
+    handler.media_types = &media_type;
+
+    create_descriptors(1, &media_type, &video_media_type_desc, &pd, &sd);
+    hr = IMFStreamDescriptor_SetUINT32(sd, &MF_SA_D3D11_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    source = create_test_source(pd);
+
+
+    /* D3D aware transforms connected to downstream non-D3D-aware transforms don't receive a device manager */
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_DXVA_MODE, mode);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[0]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[1]);
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[2]);
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[3]);
+
+    test_topology_loader_d3d_init(topology, source, pd, sd, 4, transforms, &stream_sink.IMFStreamSink_iface);
+
+    test_transform_set_output_stream_info(transforms[3], &output_stream_info);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        test_transform_set_expect_dxgi_device_manager(transforms[2], dxgi_manager);
+        test_transform_set_expect_dxgi_device_manager(transforms[3], dxgi_manager);
+    }
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(count == 6, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_dxgi_device_manager(transforms[0]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[1]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[2]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[3]);
+        ok(!ret, "got dxgi device manager\n");
+    }
+
+    /* copier is never needed in MFTOPOLOGY_DXVA_NONE mode */
+
+    output_stream_info.dwFlags = MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES;
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (mode == MFTOPOLOGY_DXVA_NONE)
+        ok(count == 6, "got count %u.\n", count);
+    else
+        todo_wine ok(count == 7, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_dxgi_device_manager(transforms[0]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[1]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[2]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[3]);
+        ok(!ret, "got dxgi device manager\n");
+    }
+
+    output_stream_info.dwFlags = 0;
+
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopoLoader_Release(loader);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    IMFTransform_Release(transforms[0]);
+    IMFTransform_Release(transforms[1]);
+    IMFTransform_Release(transforms[2]);
+    IMFTransform_Release(transforms[3]);
+
+
+    /* D3D aware transforms connected together to downstream D3D-aware sink receive a device manager */
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_DXVA_MODE, mode);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[0]);
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[1]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[2]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[3]);
+
+    test_topology_loader_d3d_init(topology, source, pd, sd, 4, transforms, &stream_sink.IMFStreamSink_iface);
+
+    test_transform_set_output_stream_info(transforms[3], &output_stream_info);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        test_transform_set_expect_dxgi_device_manager(transforms[2], dxgi_manager);
+        test_transform_set_expect_dxgi_device_manager(transforms[3], dxgi_manager);
+    }
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(count == 6, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    if (mode == MFTOPOLOGY_DXVA_FULL)
+    {
+        ret = test_transform_got_dxgi_device_manager(transforms[0]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[1]);
+        ok(!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[2]);
+        todo_wine ok(!!ret, "got dxgi device manager\n");
+        ret = test_transform_got_dxgi_device_manager(transforms[3]);
+        todo_wine ok(!!ret, "got dxgi device manager\n");
+    }
+
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopoLoader_Release(loader);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    IMFTransform_Release(transforms[0]);
+    IMFTransform_Release(transforms[1]);
+    IMFTransform_Release(transforms[2]);
+    IMFTransform_Release(transforms[3]);
+
+
+    IMFMediaSource_Release(source);
+    IMFPresentationDescriptor_Release(pd);
+    IMFStreamDescriptor_Release(sd);
+
+    IMFAttributes_Release(stream_sink.attributes);
+    IMFMediaType_Release(media_type);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
+
+    IMFDXGIDeviceManager_Release(dxgi_manager);
+
+skip_d3d11:
+    winetest_pop_context();
+}
+
 START_TEST(topology)
 {
     init_functions();
@@ -3170,4 +3773,10 @@ START_TEST(topology)
     test_topology_loader();
     test_topology_loader_evr();
     test_topology_loader_d3d();
+    test_topology_loader_d3d9(MFTOPOLOGY_DXVA_DEFAULT);
+    test_topology_loader_d3d9(MFTOPOLOGY_DXVA_NONE);
+    test_topology_loader_d3d9(MFTOPOLOGY_DXVA_FULL);
+    test_topology_loader_d3d11(MFTOPOLOGY_DXVA_DEFAULT);
+    test_topology_loader_d3d11(MFTOPOLOGY_DXVA_NONE);
+    test_topology_loader_d3d11(MFTOPOLOGY_DXVA_FULL);
 }
