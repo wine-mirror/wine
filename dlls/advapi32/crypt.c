@@ -1979,7 +1979,7 @@ BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, const BYTE *pbData,
 	if (!(key = key_from_handle(hKey)))
 		return FALSE;
 
-	if (!pbData || !key->pProvider || key->pProvider->dwMagic != MAGIC_CRYPTPROV)
+	if (!key->pProvider || key->pProvider->dwMagic != MAGIC_CRYPTPROV)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
