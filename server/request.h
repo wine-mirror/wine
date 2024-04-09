@@ -706,7 +706,7 @@ C_ASSERT( sizeof(async_data_t) == 40 );
 C_ASSERT( sizeof(atom_t) == 4 );
 C_ASSERT( sizeof(char) == 1 );
 C_ASSERT( sizeof(client_ptr_t) == 8 );
-C_ASSERT( sizeof(context_t) == 1720 );
+C_ASSERT( sizeof(context_t) == 1728 );
 C_ASSERT( sizeof(cursor_pos_t) == 24 );
 C_ASSERT( sizeof(data_size_t) == 4 );
 C_ASSERT( sizeof(debug_event_t) == 160 );

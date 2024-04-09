@@ -751,7 +751,11 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 
     if (ret == STATUS_USER_APC) *user_apc = reply_data.call.user;
     if (reply_size > sizeof(reply_data.call))
+    {
         memcpy( context, reply_data.context, reply_size - sizeof(reply_data.call) );
+        context[0].flags &= ~SERVER_CTX_EXEC_SPACE;
+        context[1].flags &= ~SERVER_CTX_EXEC_SPACE;
+    }
     return ret;
 }
 

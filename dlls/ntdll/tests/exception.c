@@ -247,7 +247,7 @@ static void check_context_exception_request_( DWORD flags, BOOL hardware_excepti
 
     if (!(flags & CONTEXT_EXCEPTION_REPORTING)) return;
     expected_flags |= hardware_exception ? CONTEXT_EXCEPTION_ACTIVE : CONTEXT_SERVICE_ACTIVE;
-    ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags, "got %#lx, expected %#lx.\n",
+    todo_wine ok_(__FILE__, line)( (flags & exception_reporting_flags) == expected_flags, "got %#lx, expected %#lx.\n",
                          flags, expected_flags );
 }
 #endif
@@ -1120,7 +1120,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
             ctx.ContextFlags = CONTEXT_FULL | CONTEXT_EXTENDED_REGISTERS | CONTEXT_EXCEPTION_REQUEST;
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%lx\n", status);
-            todo_wine ok(ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING
+            ok(ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING
                     || broken( !(ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING) ) /* Win7 WoW64 */,
                     "got %#lx.\n", ctx.ContextFlags);
 
@@ -3593,7 +3593,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
             ctx.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS | CONTEXT_EXCEPTION_REQUEST;
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%lx\n", status);
-            todo_wine ok(ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING, "got %#lx.\n", ctx.ContextFlags);
+            ok(ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING, "got %#lx.\n", ctx.ContextFlags);
 
             trace("exception 0x%lx at %p firstchance=%ld Rip=%p, Rax=%p\n",
                   de.u.Exception.ExceptionRecord.ExceptionCode,
@@ -4356,7 +4356,7 @@ static void test_wow64_context(void)
         ctx.ContextFlags = WOW64_CONTEXT_ALL | CONTEXT_EXCEPTION_REQUEST;
         ret = pRtlWow64GetThreadContext( pi.hThread, &ctx );
         ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-        todo_wine ok( (ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING) || broken( ctx.ContextFlags == WOW64_CONTEXT_ALL ) /*Win 7*/,
+        ok( (ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING) || broken( ctx.ContextFlags == WOW64_CONTEXT_ALL ) /*Win 7*/,
             "got context flags %#lx\n", ctx.ContextFlags );
 
         if (context.SegCs == cs32)
@@ -4444,7 +4444,7 @@ static void test_wow64_context(void)
         {
             trace( "in 64-bit mode %04x\n", context.SegCs );
             if (ctx.ContextFlags & CONTEXT_EXCEPTION_REPORTING)
-                ok( ctx.ContextFlags == (WOW64_CONTEXT_ALL | CONTEXT_EXCEPTION_REQUEST
+                todo_wine ok( ctx.ContextFlags == (WOW64_CONTEXT_ALL | CONTEXT_EXCEPTION_REQUEST
                     | CONTEXT_EXCEPTION_REPORTING | CONTEXT_SERVICE_ACTIVE)
                     || ctx.ContextFlags == (WOW64_CONTEXT_ALL | CONTEXT_EXCEPTION_REQUEST
                     | CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE),
@@ -11204,13 +11204,13 @@ static void test_context_exception_request(void)
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST;
     ret = GetThreadContext( thread, &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
 
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING | CONTEXT_SERVICE_ACTIVE
                      | CONTEXT_EXCEPTION_ACTIVE;
     ret = GetThreadContext( thread, &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
 
     ResumeThread(thread);
     WriteRelease( &p.sync, 2 );
@@ -11260,13 +11260,13 @@ static void test_context_exception_request(void)
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST;
     ret = GetThreadContext( thread, &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
 
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING | CONTEXT_SERVICE_ACTIVE
                      | CONTEXT_EXCEPTION_ACTIVE;
     ret = GetThreadContext( thread, &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
 
     WriteRelease( &p.sync, 6 );
 

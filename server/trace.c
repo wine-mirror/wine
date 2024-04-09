@@ -822,6 +822,19 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         fprintf( stderr, "%s{machine=%04x", prefix, ctx.machine );
         break;
     }
+    if (ctx.flags & SERVER_CTX_EXEC_SPACE)
+    {
+        const char *space;
+
+        switch (ctx.exec_space.space.space)
+        {
+        case EXEC_SPACE_USERMODE:  space = "user"; break;
+        case EXEC_SPACE_SYSCALL:   space = "syscall"; break;
+        case EXEC_SPACE_EXCEPTION: space = "exception"; break;
+        default:                   space = "invalid"; break;
+        }
+        fprintf( stderr, ",exec_space=%s", space );
+    }
     fputc( '}', stderr );
     remove_data( size );
 }

@@ -126,6 +126,14 @@ typedef union
     } unload_dll;
 } debug_event_t;
 
+
+enum context_exec_space
+{
+    EXEC_SPACE_USERMODE,
+    EXEC_SPACE_SYSCALL,
+    EXEC_SPACE_EXCEPTION,
+};
+
 /* context data */
 typedef struct
 {
@@ -173,6 +181,10 @@ typedef struct
     } ext;                       /* selected by SERVER_CTX_EXTENDED_REGISTERS */
     union
     {
+        struct { enum context_exec_space space; int __pad; } space;
+    } exec_space;                /* selected by SERVER_CTX_EXEC_SPACE */
+    union
+    {
         struct { struct { unsigned __int64 low, high; } ymm_high[16]; } regs;
     } ymm;                       /* selected by SERVER_CTX_YMM_REGISTERS */
 } context_t;
@@ -184,6 +196,7 @@ typedef struct
 #define SERVER_CTX_DEBUG_REGISTERS    0x10
 #define SERVER_CTX_EXTENDED_REGISTERS 0x20
 #define SERVER_CTX_YMM_REGISTERS      0x40
+#define SERVER_CTX_EXEC_SPACE         0x80
 
 /* structure used in sending an fd from client to server */
 struct send_fd

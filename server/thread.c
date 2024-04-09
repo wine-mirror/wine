@@ -1303,6 +1303,7 @@ static void copy_context( context_t *to, const context_t *from, unsigned int fla
     if (flags & SERVER_CTX_DEBUG_REGISTERS) to->debug = from->debug;
     if (flags & SERVER_CTX_EXTENDED_REGISTERS) to->ext = from->ext;
     if (flags & SERVER_CTX_YMM_REGISTERS) to->ymm = from->ymm;
+    if (flags & SERVER_CTX_EXEC_SPACE) to->exec_space = from->exec_space;
 }
 
 /* gets the current impersonation token */
@@ -1941,14 +1942,14 @@ DECL_HANDLER(set_thread_context)
             /* If context is in a pending state, we don't know if we will use WoW or native
              * context, so store both and discard irrevelant one in select request. */
             const int is_pending = thread->context->status == STATUS_PENDING;
-            unsigned int native_flags = contexts[CTX_NATIVE].flags;
+            unsigned int native_flags = contexts[CTX_NATIVE].flags & ~SERVER_CTX_EXEC_SPACE;
 
             if (ctx_count == 2 && (is_pending || thread->context->regs[CTX_WOW].machine))
             {
                 context_t *ctx = &thread->context->regs[CTX_WOW];
 
                 /* some regs are always set from the native context */
-                flags = contexts[CTX_WOW].flags & ~req->native_flags;
+                flags = contexts[CTX_WOW].flags & ~(req->native_flags | SERVER_CTX_EXEC_SPACE);
                 if (is_pending) ctx->machine = contexts[CTX_WOW].machine;
                 else native_flags &= req->native_flags;
 
