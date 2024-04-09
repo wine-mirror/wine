@@ -1372,7 +1372,7 @@ static ULONG STDMETHODCALLTYPE d2d_effect_context_Release(ID2D1EffectContext *if
 
     if (!refcount)
     {
-        ID2D1DeviceContext1_Release(&effect_context->device_context->ID2D1DeviceContext1_iface);
+        ID2D1DeviceContext6_Release(&effect_context->device_context->ID2D1DeviceContext6_iface);
         free(effect_context);
     }
 
@@ -1385,7 +1385,7 @@ static void STDMETHODCALLTYPE d2d_effect_context_GetDpi(ID2D1EffectContext *ifac
 
     TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
 
-    ID2D1DeviceContext1_GetDpi(&effect_context->device_context->ID2D1DeviceContext1_iface, dpi_x, dpi_y);
+    ID2D1DeviceContext6_GetDpi(&effect_context->device_context->ID2D1DeviceContext6_iface, dpi_x, dpi_y);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateEffect(ID2D1EffectContext *iface,
@@ -1395,7 +1395,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateEffect(ID2D1EffectCont
 
     TRACE("iface %p, clsid %s, effect %p.\n", iface, debugstr_guid(clsid), effect);
 
-    return ID2D1DeviceContext1_CreateEffect(&effect_context->device_context->ID2D1DeviceContext1_iface,
+    return ID2D1DeviceContext6_CreateEffect(&effect_context->device_context->ID2D1DeviceContext6_iface,
             clsid, effect);
 }
 
@@ -1578,7 +1578,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContext(ID2D1Effe
     TRACE("iface %p, space %#x, profile %p, profile_size %u, color_context %p.\n",
             iface, space, profile, profile_size, color_context);
 
-    return ID2D1DeviceContext1_CreateColorContext(&effect_context->device_context->ID2D1DeviceContext1_iface,
+    return ID2D1DeviceContext6_CreateColorContext(&effect_context->device_context->ID2D1DeviceContext6_iface,
             space, profile, profile_size, color_context);
 }
 
@@ -1589,7 +1589,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContextFromFilena
 
     TRACE("iface %p, filename %s, color_context %p.\n", iface, debugstr_w(filename), color_context);
 
-    return ID2D1DeviceContext1_CreateColorContextFromFilename(&effect_context->device_context->ID2D1DeviceContext1_iface,
+    return ID2D1DeviceContext6_CreateColorContextFromFilename(&effect_context->device_context->ID2D1DeviceContext6_iface,
             filename, color_context);
 }
 
@@ -1600,7 +1600,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContextFromWicCol
 
     TRACE("iface %p, wic_color_context %p, color_context %p.\n", iface, wic_color_context, color_context);
 
-    return ID2D1DeviceContext1_CreateColorContextFromWicColorContext(&effect_context->device_context->ID2D1DeviceContext1_iface,
+    return ID2D1DeviceContext6_CreateColorContextFromWicColorContext(&effect_context->device_context->ID2D1DeviceContext6_iface,
             wic_color_context, color_context);
 }
 
@@ -1633,7 +1633,7 @@ static BOOL STDMETHODCALLTYPE d2d_effect_context_IsBufferPrecisionSupported(ID2D
 
     TRACE("iface %p, precision %u.\n", iface, precision);
 
-    return ID2D1DeviceContext1_IsBufferPrecisionSupported(&effect_context->device_context->ID2D1DeviceContext1_iface,
+    return ID2D1DeviceContext6_IsBufferPrecisionSupported(&effect_context->device_context->ID2D1DeviceContext6_iface,
             precision);
 }
 
@@ -1670,7 +1670,7 @@ void d2d_effect_context_init(struct d2d_effect_context *effect_context, struct d
     effect_context->ID2D1EffectContext_iface.lpVtbl = &d2d_effect_context_vtbl;
     effect_context->refcount = 1;
     effect_context->device_context = device_context;
-    ID2D1DeviceContext1_AddRef(&device_context->ID2D1DeviceContext1_iface);
+    ID2D1DeviceContext6_AddRef(&device_context->ID2D1DeviceContext6_iface);
 }
 
 static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)

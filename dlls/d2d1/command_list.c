@@ -551,7 +551,7 @@ static void d2d_command_list_reference_object(struct d2d_command_list *command_l
 static HRESULT d2d_command_list_create_brush(struct d2d_command_list *command_list,
         const struct d2d_device_context *ctx, ID2D1Brush *orig_brush, ID2D1Brush **ret)
 {
-    ID2D1DeviceContext *context = (ID2D1DeviceContext *)&ctx->ID2D1DeviceContext1_iface;
+    ID2D1DeviceContext *context = (ID2D1DeviceContext *)&ctx->ID2D1DeviceContext6_iface;
     struct d2d_brush *brush = unsafe_impl_from_ID2D1Brush(orig_brush);
     D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES linear_properties;
     D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radial_properties;

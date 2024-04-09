@@ -161,7 +161,7 @@ enum d2d_device_context_target_type
 
 struct d2d_device_context
 {
-    ID2D1DeviceContext1 ID2D1DeviceContext1_iface;
+    ID2D1DeviceContext6 ID2D1DeviceContext6_iface;
     ID2D1GdiInteropRenderTarget ID2D1GdiInteropRenderTarget_iface;
     IDWriteTextRenderer IDWriteTextRenderer_iface;
     IUnknown IUnknown_iface;
