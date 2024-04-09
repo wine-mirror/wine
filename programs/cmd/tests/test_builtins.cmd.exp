@@ -1537,6 +1537,8 @@ foo created
 Should expand foobaz
 batfile
 robinfile
+0
+@todo_wine@1
 1
 1
 non-builtin dir
@@ -1545,6 +1547,15 @@ Line two
 Get if
 ... and else!
 passed
+--- mixing batch and builtins
+bar@space@
+@todo_wine@foo
+foo
+foo
+bar@space@
+bat bar@space@
+bar@space@
+bat bar@space@
 ------------ Testing SHIFT ------------
 'p1' 'p2' 'p3' 'p4' 'p5'
 'p2' 'p3' 'p4' 'p5' ''

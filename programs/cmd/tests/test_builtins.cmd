@@ -2711,7 +2711,13 @@ echo>robinfile
 if 1==1 call del batfile
 dir /b
 if exist batfile echo batfile shouldn't exist
+rem arcane command, first resets errorlevel, second sets it to one
+(call )
+echo %ErrorLevel%
+(call)
+echo %ErrorLevel%
 rem ... but not for 'if' or 'for'
+call :setError 0
 call if 1==1 echo bar 2> nul
 echo %ErrorLevel%
 call :setError 0
@@ -2737,6 +2743,20 @@ call if 1==1 (
 )
 call call call echo passed
 cd .. & rd /s/q foobar
+
+echo --- mixing batch and builtins
+erase /q echo.bat test.bat 2> NUL
+echo @echo foo> echo.bat
+echo @echo bar> test.bat & call test.bat
+echo @echo.bat bar> test.bat & call test.bat
+echo @call echo bar> test.bat & call test.bat
+echo @call echo.bat bar> test.bat & call test.bat
+erase /q echo.bat 2> NUL
+echo @echo bar> test.bat & call test.bat
+echo @echo.bat bar> test.bat & call test.bat
+echo @call echo bar> test.bat & call test.bat
+echo @call echo.bat bar> test.bat & call test.bat
+erase /q test.bat 2> NUL
 
 echo ------------ Testing SHIFT ------------
 
