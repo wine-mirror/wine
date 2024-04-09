@@ -1319,11 +1319,10 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     while (IsCharAlphaNumericW(whichcmd[count])) {
       count++;
     }
-    for (i=0; i<=WCMD_EXIT; i++) {
+    for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-        whichcmd, count, inbuilt[i], -1) == CSTR_EQUAL) break;
+        whichcmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
     }
-    cmd_index = i;
     parms_start = WCMD_skip_leading_spaces (&whichcmd[count]);
 
     /* If the next command is a pipe then we implement pipes by redirecting
@@ -1491,15 +1490,15 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     WCMD_parse (parms_start, quals, param1, param2);
     WINE_TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 
-    if (i <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?')) {
+    if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?')) {
       /* this is a help request for a builtin program */
-      i = WCMD_HELP;
+      cmd_index = WCMD_HELP;
       memcpy(parms_start, whichcmd, count * sizeof(WCHAR));
       parms_start[count] = '\0';
 
     }
 
-    switch (i) {
+    switch (cmd_index) {
 
       case WCMD_CALL:
         WCMD_call (parms_start);
@@ -1633,8 +1632,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
            these two commands, neither 'for' nor 'if' is supported when called,
            i.e. 'call if 1==1...' will fail.                                    */
         if (!retrycall) {
-          if (i==WCMD_FOR) WCMD_for (parms_start, cmdList);
-          else if (i==WCMD_IF) WCMD_if (parms_start, cmdList);
+          if (cmd_index==WCMD_FOR) WCMD_for (parms_start, cmdList);
+          else if (cmd_index==WCMD_IF) WCMD_if (parms_start, cmdList);
           break;
         }
         /* else: drop through */
