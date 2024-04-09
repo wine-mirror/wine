@@ -2197,6 +2197,12 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char okmsg_length0[] =
+"HTTP/1.1 200 OK\r\n"
+"Server: winetest\r\n"
+"Content-length: 0\r\n"
+"\r\n";
+
 static const char notokmsg[] =
 "HTTP/1.1 400 Bad Request\r\n"
 "\r\n";
@@ -2324,6 +2330,24 @@ static void create_websocket_accept(const char *key, char *buf, unsigned int buf
     CryptBinaryToStringA( (BYTE *)sha1, sizeof(sha1), CRYPT_STRING_BASE64, buf, &len);
 }
 
+static int server_receive_request(int c, char *buffer, size_t buffer_size)
+{
+    int i, r;
+
+    memset(buffer, 0, buffer_size);
+    for(i = 0; i < buffer_size - 1; i++)
+    {
+        r = recv(c, &buffer[i], 1, 0);
+        if (r != 1)
+            break;
+        if (i < 4) continue;
+        if (buffer[i - 2] == '\n' && buffer[i] == '\n' &&
+            buffer[i - 3] == '\r' && buffer[i - 1] == '\r')
+            break;
+    }
+    return r;
+}
+
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
@@ -2357,18 +2381,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     do
     {
         if (c == -1) c = accept(s, NULL, NULL);
-
-        memset(buffer, 0, sizeof buffer);
-        for(i = 0; i < sizeof buffer - 1; i++)
-        {
-            r = recv(c, &buffer[i], 1, 0);
-            if (r != 1)
-                break;
-            if (i < 4) continue;
-            if (buffer[i - 2] == '\n' && buffer[i] == '\n' &&
-                buffer[i - 3] == '\r' && buffer[i - 1] == '\r')
-                break;
-        }
+        server_receive_request(c, buffer, sizeof(buffer));
         if (strstr(buffer, "GET /basic"))
         {
             send(c, okmsg, sizeof okmsg - 1, 0);
@@ -2568,6 +2581,23 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 ok(!!strstr(buffer, "Content-Length: 0\r\n"), "Header missing from request %s.\n", debugstr_a(buffer));
             }
             send(c, okmsg, sizeof(okmsg) - 1, 0);
+        }
+
+        if (strstr(buffer, "GET /cached"))
+        {
+            send(c, okmsg_length0, sizeof okmsg_length0 - 1, 0);
+            r = server_receive_request(c, buffer, sizeof(buffer));
+            ok(r > 0, "got %d.\n", r);
+            ok(!!strstr(buffer, "GET /cached"), "request not found.\n");
+            send(c, okmsg_length0, sizeof okmsg_length0 - 1, 0);
+            r = server_receive_request(c, buffer, sizeof(buffer));
+            todo_wine ok(!r, "got %d, buffer[0] %d.\n", r, buffer[0]);
+        }
+        if (strstr(buffer, "GET /notcached"))
+        {
+            send(c, okmsg, sizeof okmsg - 1, 0);
+            r = server_receive_request(c, buffer, sizeof(buffer));
+            ok(!r, "got %d, buffer[0] %d.\n", r, buffer[0] );
         }
         shutdown(c, 2);
         closesocket(c);
@@ -5884,6 +5914,65 @@ static void test_client_cert_authentication(void)
     WinHttpCloseHandle( ses );
 }
 
+static void test_connection_cache(int port)
+{
+    HINTERNET ses, con, req;
+    DWORD status, size;
+    char buffer[256];
+    BOOL ret;
+
+    ses = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %lu\n", GetLastError());
+
+    con = WinHttpConnect(ses, L"localhost", port, 0);
+    ok(con != NULL, "failed to open a connection %lu\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, L"GET", L"/cached", NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %lu\n", GetLastError());
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %lu\n", GetLastError());
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %lu\n", GetLastError());
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %lu\n", GetLastError());
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %lu\n", status);
+    ret = WinHttpReadData(req, buffer, sizeof buffer, &size);
+    ok(ret, "failed to read data %lu\n", GetLastError());
+    ok(!size, "got size %lu.\n", size);
+    WinHttpCloseHandle(req);
+
+    req = WinHttpOpenRequest(con, L"GET", L"/cached", NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %lu\n", GetLastError());
+    ret = WinHttpSendRequest(req, L"Connection: close", ~0ul, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %lu\n", GetLastError());
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %lu\n", GetLastError());
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %lu\n", GetLastError());
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %lu\n", status);
+    ret = WinHttpReadData(req, buffer, sizeof buffer, &size);
+    ok(ret, "failed to read data %lu\n", GetLastError());
+    ok(!size, "got size %lu.\n", size);
+    WinHttpCloseHandle(req);
+
+    req = WinHttpOpenRequest(con, L"GET", L"/notcached", NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %lu\n", GetLastError());
+    ret = WinHttpSendRequest(req, L"Connection: close", ~0ul, NULL, 0, 0, 0);
+    ok(ret, "failed to send request %lu\n", GetLastError());
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "failed to receive response %lu\n", GetLastError());
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
+    ok(ret, "failed to query status code %lu\n", GetLastError());
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %lu\n", status);
+    WinHttpCloseHandle(req);
+
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
 START_TEST (winhttp)
 {
     struct server_info si;
@@ -5951,6 +6040,7 @@ START_TEST (winhttp)
     test_websocket(si.port);
     test_redirect(si.port);
     test_WinHttpGetProxyForUrl(si.port);
+    test_connection_cache(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, NULL, L"/quit");
