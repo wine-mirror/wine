@@ -191,6 +191,309 @@ static void init_sink_node(IMFStreamSink *stream_sink, MF_CONNECT_METHOD method,
     }
 }
 
+struct test_transform
+{
+    IMFTransform IMFTransform_iface;
+    LONG refcount;
+
+    IMFAttributes *attributes;
+
+    UINT input_count;
+    IMFMediaType **input_types;
+    IMFMediaType *input_type;
+
+    UINT output_count;
+    IMFMediaType **output_types;
+    IMFMediaType *output_type;
+};
+
+static struct test_transform *test_transform_from_IMFTransform(IMFTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_transform, IMFTransform_iface);
+}
+
+static HRESULT WINAPI test_transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IMFTransform))
+    {
+        IMFTransform_AddRef(&transform->IMFTransform_iface);
+        *out = &transform->IMFTransform_iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_transform_AddRef(IMFTransform *iface)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    ULONG refcount = InterlockedIncrement(&transform->refcount);
+    return refcount;
+}
+
+static ULONG WINAPI test_transform_Release(IMFTransform *iface)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    ULONG refcount = InterlockedDecrement(&transform->refcount);
+
+    if (!refcount)
+    {
+        if (transform->input_type)
+            IMFMediaType_Release(transform->input_type);
+        if (transform->output_type)
+            IMFMediaType_Release(transform->output_type);
+        if (transform->attributes)
+            IMFAttributes_Release(transform->attributes);
+        free(transform);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI test_transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
+        DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
+{
+    *inputs = *outputs = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
+        DWORD output_size, DWORD *outputs)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*attributes = transform->attributes))
+        return E_NOTIMPL;
+    IMFAttributes_AddRef(*attributes);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_DeleteInputStream(IMFTransform *iface, DWORD id)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    if (index >= transform->input_count)
+    {
+        *type = NULL;
+        return MF_E_NO_MORE_TYPES;
+    }
+
+    *type = transform->input_types[index];
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
+        DWORD index, IMFMediaType **type)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+
+    if (index >= transform->output_count)
+    {
+        *type = NULL;
+        return MF_E_NO_MORE_TYPES;
+    }
+
+    *type = transform->output_types[index];
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+    if (transform->input_type)
+        IMFMediaType_Release(transform->input_type);
+    if ((transform->input_type = type))
+        IMFMediaType_AddRef(transform->input_type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+    if (transform->output_type)
+        IMFMediaType_Release(transform->output_type);
+    if ((transform->output_type = type))
+        IMFMediaType_AddRef(transform->output_type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*type = transform->input_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
+{
+    struct test_transform *transform = test_transform_from_IMFTransform(iface);
+    if (!(*type = transform->output_type))
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+    IMFMediaType_AddRef(*type);
+    return S_OK;
+}
+
+static HRESULT WINAPI test_transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *data, DWORD *status)
+{
+    ok(0, "Unexpected %s call.\n", __func__);
+    return E_NOTIMPL;
+}
+
+static const IMFTransformVtbl test_transform_vtbl =
+{
+    test_transform_QueryInterface,
+    test_transform_AddRef,
+    test_transform_Release,
+    test_transform_GetStreamLimits,
+    test_transform_GetStreamCount,
+    test_transform_GetStreamIDs,
+    test_transform_GetInputStreamInfo,
+    test_transform_GetOutputStreamInfo,
+    test_transform_GetAttributes,
+    test_transform_GetInputStreamAttributes,
+    test_transform_GetOutputStreamAttributes,
+    test_transform_DeleteInputStream,
+    test_transform_AddInputStreams,
+    test_transform_GetInputAvailableType,
+    test_transform_GetOutputAvailableType,
+    test_transform_SetInputType,
+    test_transform_SetOutputType,
+    test_transform_GetInputCurrentType,
+    test_transform_GetOutputCurrentType,
+    test_transform_GetInputStatus,
+    test_transform_GetOutputStatus,
+    test_transform_SetOutputBounds,
+    test_transform_ProcessEvent,
+    test_transform_ProcessMessage,
+    test_transform_ProcessInput,
+    test_transform_ProcessOutput,
+};
+
+static HRESULT WINAPI test_transform_create(UINT input_count, IMFMediaType **input_types,
+        UINT output_count, IMFMediaType **output_types, BOOL d3d_aware, IMFTransform **out)
+{
+    struct test_transform *transform;
+    HRESULT hr;
+
+    if (!(transform = calloc(1, sizeof(*transform))))
+        return E_OUTOFMEMORY;
+    transform->IMFTransform_iface.lpVtbl = &test_transform_vtbl;
+    transform->refcount = 1;
+
+    transform->input_count = input_count;
+    transform->input_types = input_types;
+    transform->input_type = input_types[0];
+    IMFMediaType_AddRef(transform->input_type);
+    transform->output_count = output_count;
+    transform->output_types = output_types;
+    transform->output_type = output_types[0];
+    IMFMediaType_AddRef(transform->output_type);
+
+    hr = MFCreateAttributes(&transform->attributes, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(transform->attributes, &MF_SA_D3D_AWARE, d3d_aware);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(transform->attributes, &MF_SA_D3D11_AWARE, d3d_aware);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    *out = &transform->IMFTransform_iface;
+    return S_OK;
+}
+
 DEFINE_EXPECT(test_source_BeginGetEvent);
 DEFINE_EXPECT(test_source_QueueEvent);
 DEFINE_EXPECT(test_source_Start);
@@ -2677,6 +2980,187 @@ static void test_topology_loader_evr(void)
     CoUninitialize();
 }
 
+static void test_topology_loader_d3d_init(IMFTopology *topology, IMFMediaSource *source, IMFPresentationDescriptor *pd, IMFStreamDescriptor *sd,
+            UINT transform_count, IMFTransform **transforms, IMFStreamSink *sink)
+{
+    IMFTopologyNode *prev_node, *node;
+    HRESULT hr;
+    UINT i;
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    init_source_node(source, MF_CONNECT_DIRECT, node, pd, sd);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    prev_node = node;
+
+    for (i = 0; i < transform_count; i++)
+    {
+        hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopologyNode_SetObject(node, (IUnknown *)transforms[i]);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopology_AddNode(topology, node);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFTopologyNode_ConnectOutput(prev_node, 0, node, 0);
+        ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+        IMFTopologyNode_Release(prev_node);
+        prev_node = node;
+    }
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    init_sink_node(sink, MF_CONNECT_DIRECT, node);
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFTopologyNode_ConnectOutput(prev_node, 0, node, 0);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#lx.\n", hr);
+    IMFTopologyNode_Release(prev_node);
+    IMFTopologyNode_Release(node);
+}
+
+static void test_topology_loader_d3d(void)
+{
+    static const media_type_desc video_media_type_desc =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 1280, 720),
+    };
+
+    struct test_stream_sink stream_sink = test_stream_sink;
+    struct test_handler handler = test_handler;
+    IMFTopology *topology, *full_topology;
+    IMFPresentationDescriptor *pd;
+    IMFTransform *transforms[4];
+    IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
+    IMFMediaSource *source;
+    IMFTopoLoader *loader;
+    HRESULT hr;
+    WORD count;
+    LONG ref;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    init_media_type(media_type, video_media_type_desc, -1);
+
+    stream_sink.handler = &handler.IMFMediaTypeHandler_iface;
+    hr = MFCreateAttributes(&stream_sink.attributes, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    handler.media_types_count = 1;
+    handler.media_types = &media_type;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    create_descriptors(1, &media_type, &video_media_type_desc, &pd, &sd);
+    source = create_test_source(pd);
+
+    test_topology_loader_d3d_init(topology, source, pd, sd, 0, NULL, &stream_sink.IMFStreamSink_iface);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(count == 2, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    /* sink D3D aware attribute doesn't change the resolved topology */
+
+    hr = IMFAttributes_SetUINT32(stream_sink.attributes, &MF_SA_D3D11_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFAttributes_SetUINT32(stream_sink.attributes, &MF_SA_D3D_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    todo_wine ok(count == 2, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    /* source D3D aware attribute doesn't change the resolved topology */
+
+    hr = IMFStreamDescriptor_SetUINT32(sd, &MF_SA_D3D11_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IMFStreamDescriptor_SetUINT32(sd, &MF_SA_D3D_AWARE, 1);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    todo_wine ok(count == 2, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopoLoader_Release(loader);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    /* transform D3D aware attribute doesn't change the resolved topology */
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[0]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[1]);
+    test_transform_create(1, &media_type, 1, &media_type, FALSE, &transforms[2]);
+    test_transform_create(1, &media_type, 1, &media_type, TRUE, &transforms[3]);
+
+    test_topology_loader_d3d_init(topology, source, pd, sd, 4, transforms, &stream_sink.IMFStreamSink_iface);
+
+    IMFTransform_Release(transforms[0]);
+    IMFTransform_Release(transforms[1]);
+    IMFTransform_Release(transforms[2]);
+    IMFTransform_Release(transforms[3]);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ref = IMFTopology_GetNodeCount(full_topology, &count);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    todo_wine ok(count == 6, "got count %u.\n", count);
+    ref = IMFTopology_Release(full_topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    ref = IMFTopology_Release(topology);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFTopoLoader_Release(loader);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+
+    ref = IMFMediaSource_Release(source);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFPresentationDescriptor_Release(pd);
+    ok(ref == 0, "Release returned %ld\n", ref);
+    ref = IMFStreamDescriptor_Release(sd);
+    ok(ref == 0, "Release returned %ld\n", ref);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#lx.\n", hr);
+
+
+    IMFAttributes_Release(stream_sink.attributes);
+    IMFMediaType_Release(media_type);
+
+    winetest_pop_context();
+}
+
 START_TEST(topology)
 {
     init_functions();
@@ -2685,4 +3169,5 @@ START_TEST(topology)
     test_topology_tee_node();
     test_topology_loader();
     test_topology_loader_evr();
+    test_topology_loader_d3d();
 }
