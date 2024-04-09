@@ -680,7 +680,7 @@ struct d2d_effect_registration
 
 struct d2d_factory
 {
-    ID2D1Factory3 ID2D1Factory3_iface;
+    ID2D1Factory7 ID2D1Factory7_iface;
     ID2D1Multithread ID2D1Multithread_iface;
     LONG refcount;
 
@@ -698,7 +698,7 @@ struct d2d_factory
 
 static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *iface)
 {
-    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory3_iface);
+    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory7_iface);
 }
 
 void d2d_effects_init_builtins(struct d2d_factory *factory);
