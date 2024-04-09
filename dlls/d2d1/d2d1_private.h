@@ -602,7 +602,7 @@ struct d2d_shader
 
 struct d2d_device
 {
-    ID2D1Device1 ID2D1Device1_iface;
+    ID2D1Device6 ID2D1Device6_iface;
     LONG refcount;
     ID2D1Factory1 *factory;
     IDXGIDevice *dxgi_device;
@@ -615,7 +615,6 @@ struct d2d_device
     } shaders;
 };
 
-void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device);
 struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
 HRESULT d2d_device_add_shader(struct d2d_device *device, REFGUID shader_id, IUnknown *shader);
 BOOL d2d_device_is_shader_loaded(struct d2d_device *device, REFGUID shader_id);
@@ -708,6 +707,7 @@ void d2d_factory_register_effect(struct d2d_factory *factory,
         struct d2d_effect_registration *effect);
 HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
         const struct d2d_effect_property *prop, UINT32 *value);
+void d2d_device_init(struct d2d_device *device, struct d2d_factory *factory, IDXGIDevice *dxgi_device);
 
 struct d2d_transform
 {
