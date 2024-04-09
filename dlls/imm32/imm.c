@@ -3322,3 +3322,13 @@ LRESULT WINAPI __wine_ime_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     else
         return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
+
+/***********************************************************************
+ *      CtfImmIsCiceroEnabled (IMM32.@)
+ */
+BOOL WINAPI CtfImmIsCiceroEnabled(void)
+{
+    FIXME("(): stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
