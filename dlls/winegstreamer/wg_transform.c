@@ -716,25 +716,14 @@ NTSTATUS wg_transform_push_data(void *args)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_align,
-        struct wg_sample *sample, gsize *total_size)
+static NTSTATUS copy_video_buffer(GstBuffer *buffer, const GstVideoInfo *src_video_info,
+        const GstVideoInfo *dst_video_info, struct wg_sample *sample, gsize *total_size)
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstVideoFrame src_frame, dst_frame;
-    GstVideoInfo src_info, dst_info;
-    GstVideoAlignment align;
     GstBuffer *dst_buffer;
 
-    if (!gst_video_info_from_caps(&src_info, caps))
-    {
-        GST_ERROR("Failed to get video info from caps.");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-    dst_info = src_info;
-    align_video_info_planes(plane_align, &dst_info, &align);
-
-    if (sample->max_size < dst_info.size)
+    if (sample->max_size < dst_video_info->size)
     {
         GST_ERROR("Output buffer is too small.");
         return STATUS_BUFFER_TOO_SMALL;
@@ -746,14 +735,14 @@ static NTSTATUS copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_
         GST_ERROR("Failed to wrap wg_sample into GstBuffer");
         return STATUS_UNSUCCESSFUL;
     }
-    gst_buffer_set_size(dst_buffer, dst_info.size);
-    *total_size = sample->size = dst_info.size;
+    gst_buffer_set_size(dst_buffer, dst_video_info->size);
+    *total_size = sample->size = dst_video_info->size;
 
-    if (!gst_video_frame_map(&src_frame, &src_info, buffer, GST_MAP_READ))
+    if (!gst_video_frame_map(&src_frame, src_video_info, buffer, GST_MAP_READ))
         GST_ERROR("Failed to map source frame.");
     else
     {
-        if (!gst_video_frame_map(&dst_frame, &dst_info, dst_buffer, GST_MAP_WRITE))
+        if (!gst_video_frame_map(&dst_frame, dst_video_info, dst_buffer, GST_MAP_WRITE))
             GST_ERROR("Failed to map destination frame.");
         else
         {
@@ -770,8 +759,7 @@ static NTSTATUS copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_
     return status;
 }
 
-static NTSTATUS copy_buffer(GstBuffer *buffer, struct wg_sample *sample,
-        gsize *total_size)
+static NTSTATUS copy_buffer(GstBuffer *buffer, struct wg_sample *sample, gsize *total_size)
 {
     GstMapInfo info;
 
@@ -840,7 +828,7 @@ static bool sample_needs_buffer_copy(struct wg_sample *sample, GstBuffer *buffer
 }
 
 static NTSTATUS read_transform_output_video(struct wg_sample *sample, GstBuffer *buffer,
-        GstCaps *caps, gsize plane_align)
+        const GstVideoInfo *src_video_info, const GstVideoInfo *dst_video_info)
 {
     gsize total_size;
     NTSTATUS status;
@@ -849,7 +837,7 @@ static NTSTATUS read_transform_output_video(struct wg_sample *sample, GstBuffer 
     if (!(needs_copy = sample_needs_buffer_copy(sample, buffer, &total_size)))
         status = STATUS_SUCCESS;
     else
-        status = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
+        status = copy_video_buffer(buffer, src_video_info, dst_video_info, sample, &total_size);
 
     if (status)
     {
@@ -924,8 +912,10 @@ NTSTATUS wg_transform_read_data(void *args)
 {
     struct wg_transform_read_data_params *params = args;
     struct wg_transform *transform = get_transform(params->transform);
+    GstVideoInfo src_video_info, dst_video_info;
     struct wg_sample *sample = params->sample;
     struct wg_format *format = params->format;
+    GstVideoAlignment align = {0};
     GstBuffer *output_buffer;
     GstCaps *output_caps;
     bool discard_data;
@@ -943,6 +933,18 @@ NTSTATUS wg_transform_read_data(void *args)
     output_buffer = gst_sample_get_buffer(transform->output_sample);
     output_caps = gst_sample_get_caps(transform->output_sample);
 
+    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO)
+    {
+        gsize plane_align = transform->attrs.output_plane_align;
+
+        if (!gst_video_info_from_caps(&src_video_info, output_caps))
+            GST_ERROR("Failed to get video info from %"GST_PTR_FORMAT, output_caps);
+        dst_video_info = src_video_info;
+
+        /* set the desired output buffer alignment on the dest video info */
+        align_video_info_planes(plane_align, &dst_video_info, &align);
+    }
+
     if (GST_MINI_OBJECT_FLAG_IS_SET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED))
     {
         GST_MINI_OBJECT_FLAG_UNSET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
@@ -951,17 +953,10 @@ NTSTATUS wg_transform_read_data(void *args)
 
         if (format)
         {
-            gsize plane_align = transform->attrs.output_plane_align;
-            GstVideoAlignment align;
-            GstVideoInfo info;
-
             wg_format_from_caps(format, output_caps);
 
-            if (format->major_type == WG_MAJOR_TYPE_VIDEO
-                    && gst_video_info_from_caps(&info, output_caps))
+            if (format->major_type == WG_MAJOR_TYPE_VIDEO)
             {
-                align_video_info_planes(plane_align, &info, &align);
-
                 GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
                         align.padding_top, align.padding_right, align.padding_bottom);
 
@@ -983,8 +978,8 @@ NTSTATUS wg_transform_read_data(void *args)
     }
 
     if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO)
-        status = read_transform_output_video(sample, output_buffer, output_caps,
-                transform->attrs.output_plane_align);
+        status = read_transform_output_video(sample, output_buffer,
+                &src_video_info, &dst_video_info);
     else
         status = read_transform_output(sample, output_buffer);
 
