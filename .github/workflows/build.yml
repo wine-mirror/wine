@@ -243,7 +243,7 @@ jobs:
               "libp11-kit.0"
               "libpcre2-8.0"
               "libpng16.16"
-              "libSDL2"
+              "libSDL2-2.0.0"
               "libtasn1.6"
               "libunistring.5"
               "libXau.6"
