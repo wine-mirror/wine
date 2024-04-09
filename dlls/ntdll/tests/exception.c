@@ -11146,8 +11146,8 @@ static void test_context_exception_request(void)
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST;
     ret = GetThreadContext( GetCurrentThread(), &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags || broken( c.ContextFlags == 0x10001 ) /* Win7 WoW64 */,
-                  "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags || broken( c.ContextFlags == 0x10001 ) /* Win7 WoW64 */,
+        "got %#lx.\n", c.ContextFlags );
     if (c.ContextFlags == 0x10001)
     {
         win_skip( "Old WoW64 behaviour, skipping tests.\n" );
@@ -11161,14 +11161,14 @@ static void test_context_exception_request(void)
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST;
     ret = GetThreadContext( thread, &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
     CloseHandle( thread );
 
     c.ContextFlags = CONTEXT_CONTROL | CONTEXT_EXCEPTION_REQUEST | CONTEXT_EXCEPTION_REPORTING | CONTEXT_SERVICE_ACTIVE
                      | CONTEXT_EXCEPTION_ACTIVE;
     ret = GetThreadContext( GetCurrentThread(), &c );
     ok( ret, "got error %lu.\n", GetLastError() );
-    todo_wine ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
+    ok( c.ContextFlags == expected_flags, "got %#lx.\n", c.ContextFlags );
 
     p.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     thread = CreateThread( NULL, 0, test_context_exception_request_thread, &p, CREATE_SUSPENDED, NULL );

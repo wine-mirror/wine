@@ -433,6 +433,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
     }
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
+    set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
     return STATUS_SUCCESS;
 }
 
@@ -640,6 +641,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
             context->Dr7 = wow_frame->Dr7;
         }
         /* FIXME: CONTEXT_I386_XSTATE */
+        set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
         break;
     }
 
@@ -679,6 +681,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
             memcpy( context->D, wow_frame->D, sizeof(wow_frame->D) );
             context->ContextFlags |= CONTEXT_FLOATING_POINT;
         }
+        set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
         break;
     }
 

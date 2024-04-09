@@ -215,6 +215,17 @@ extern int server_pipe( int fd[2] );
 extern void fpux_to_fpu( I386_FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux );
 extern void fpu_to_fpux( XSAVE_FORMAT *fpux, const I386_FLOATING_SAVE_AREA *fpu );
 
+static inline void set_context_exception_reporting_flags( DWORD *context_flags, DWORD reporting_flag )
+{
+    if (!(*context_flags & CONTEXT_EXCEPTION_REQUEST))
+    {
+        *context_flags &= ~(CONTEXT_EXCEPTION_REPORTING | CONTEXT_SERVICE_ACTIVE | CONTEXT_EXCEPTION_ACTIVE);
+        return;
+    }
+    *context_flags = (*context_flags & ~(CONTEXT_SERVICE_ACTIVE | CONTEXT_EXCEPTION_ACTIVE))
+                     | CONTEXT_EXCEPTION_REPORTING | reporting_flag;
+}
+
 extern BOOL xstate_compaction_enabled;
 extern UINT64 xstate_supported_features_mask;
 extern UINT64 xstate_features_size;
