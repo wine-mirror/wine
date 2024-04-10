@@ -2130,7 +2130,7 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyNameLength(ID2D
     if (!(prop = d2d_effect_properties_get_property_by_index(properties, index)))
         return D2DERR_INVALID_PROPERTY;
 
-    return wcslen(prop->name) + 1;
+    return wcslen(prop->name);
 }
 
 static D2D1_PROPERTY_TYPE STDMETHODCALLTYPE d2d_effect_properties_GetType(ID2D1Properties *iface,

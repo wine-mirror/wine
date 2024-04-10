@@ -10862,6 +10862,7 @@ static void check_system_properties_(unsigned int line, ID2D1Effect *effect)
     UINT i, value_size, str_size;
     WCHAR name[32], buffer[256];
     D2D1_PROPERTY_TYPE type;
+    UINT32 count;
     HRESULT hr;
 
     static const struct system_property_test
@@ -10898,7 +10899,7 @@ static void check_system_properties_(unsigned int line, ID2D1Effect *effect)
         winetest_push_context("Property %u", i);
 
         name[0] = 0;
-        hr = ID2D1Effect_GetPropertyName(effect, test->index, name, sizeof(name));
+        hr = ID2D1Effect_GetPropertyName(effect, test->index, name, ARRAY_SIZE(name));
         ok_(__FILE__, line)(hr == S_OK, "Failed to get property name, hr %#lx\n", hr);
         if (hr == D2DERR_INVALID_PROPERTY)
         {
@@ -10907,6 +10908,16 @@ static void check_system_properties_(unsigned int line, ID2D1Effect *effect)
         }
         ok_(__FILE__, line)(!wcscmp(name, test->name), "Got unexpected property name %s, expected %s.\n",
                 debugstr_w(name), debugstr_w(test->name));
+        count = ID2D1Effect_GetPropertyNameLength(effect, test->index);
+        ok_(__FILE__, line)(wcslen(name) == count, "Got unexpected property name length %u.\n", count);
+
+        name[0] = 0;
+        hr = ID2D1Effect_GetPropertyName(effect, test->index, name, count);
+        ok_(__FILE__, line)(hr == D2DERR_INSUFFICIENT_BUFFER, "Failed to get property name, hr %#lx\n", hr);
+
+        name[0] = 0;
+        hr = ID2D1Effect_GetPropertyName(effect, test->index, name, count + 1);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get property name, hr %#lx\n", hr);
 
         type = ID2D1Effect_GetType(effect, test->index);
         ok_(__FILE__, line)(type == test->type, "Got unexpected property type %#x, expected %#x.\n",
@@ -14750,7 +14761,6 @@ static void test_get_effect_properties(BOOL d3d11)
     ok(!wcscmp(buffW, L"Rect"), "Unexpected name %s.\n", debugstr_w(buffW));
 
     count = ID2D1Properties_GetPropertyNameLength(properties, 0);
-    todo_wine
     ok(count == 4, "Unexpected name length %u.\n", count);
 
     type = ID2D1Properties_GetType(properties, 0);
