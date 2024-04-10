@@ -235,7 +235,7 @@ static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysical
     return VK_TRUE;
 }
 
-static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
+static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces)
 {
     TRACE("%p, %p\n", queue, present_info);
     return pvkQueuePresentKHR(queue, present_info);

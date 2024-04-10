@@ -21,7 +21,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 23
+#define WINE_VULKAN_DRIVER_VERSION 24
 
 struct vulkan_funcs
 {
@@ -36,7 +36,7 @@ struct vulkan_funcs
     void * (*p_vkGetDeviceProcAddr)(VkDevice, const char *);
     void * (*p_vkGetInstanceProcAddr)(VkInstance, const char *);
     VkBool32 (*p_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice, uint32_t);
-    VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
+    VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *, HWND *surfaces);
 
     /* winevulkan specific functions */
     const char *(*p_get_host_surface_extension)(void);

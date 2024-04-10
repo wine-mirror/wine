@@ -365,7 +365,7 @@ static VkBool32 wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysica
                                                              process_wayland.wl_display);
 }
 
-static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
+static VkResult wayland_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces)
 {
     VkResult res;
 

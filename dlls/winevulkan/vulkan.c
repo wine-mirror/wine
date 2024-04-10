@@ -1740,25 +1740,31 @@ void wine_vkDestroySwapchainKHR(VkDevice device_handle, VkSwapchainKHR swapchain
 VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *present_info)
 {
     VkSwapchainKHR swapchains_buffer[16], *swapchains = swapchains_buffer;
+    HWND surfaces_buffer[ARRAY_SIZE(swapchains_buffer)], *surfaces = surfaces_buffer;
     struct wine_queue *queue = wine_queue_from_handle(queue_handle);
     VkPresentInfoKHR present_info_host = *present_info;
-    struct wine_device *device = queue->device;
     VkResult res;
     UINT i;
 
     if (present_info->swapchainCount > ARRAY_SIZE(swapchains_buffer) &&
-        !(swapchains = malloc(present_info->swapchainCount * sizeof(*swapchains))))
+        (!(swapchains = malloc(present_info->swapchainCount * sizeof(*swapchains))) ||
+         !(surfaces = malloc(present_info->swapchainCount * sizeof(*surfaces)))))
+    {
+        free(swapchains);
         return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
 
     for (i = 0; i < present_info->swapchainCount; i++)
     {
         struct wine_swapchain *swapchain = wine_swapchain_from_handle(present_info->pSwapchains[i]);
+        struct wine_surface *surface = swapchain->surface;
         swapchains[i] = swapchain->host_swapchain;
+        surfaces[i] = surface->hwnd;
     }
 
     present_info_host.pSwapchains = swapchains;
 
-    res = device->funcs.p_vkQueuePresentKHR(queue->host_queue, &present_info_host);
+    res = vk_funcs->p_vkQueuePresentKHR(queue->host_queue, &present_info_host, surfaces);
 
     for (i = 0; i < present_info->swapchainCount; i++)
     {
@@ -1786,6 +1792,7 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
     }
 
     if (swapchains != swapchains_buffer) free(swapchains);
+    if (surfaces != surfaces_buffer) free(surfaces);
 
     if (TRACE_ON(fps))
     {

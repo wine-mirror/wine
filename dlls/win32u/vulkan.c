@@ -43,8 +43,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 static void *vulkan_handle;
 static struct vulkan_funcs vulkan_funcs;
 
+static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *, HWND *);
 static void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
 static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
+
+static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces )
+{
+    VkPresentInfoKHR host_present_info = *present_info;
+
+    TRACE( "queue %p, present_info %p\n", queue, present_info );
+
+    return p_vkQueuePresentKHR( queue, &host_present_info, surfaces );
+}
 
 static void *win32u_vkGetDeviceProcAddr( VkDevice device, const char *name )
 {
@@ -112,6 +122,9 @@ static void vulkan_init(void)
 
     vulkan_funcs.p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr;
     vulkan_funcs.p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr;
+
+    p_vkQueuePresentKHR = vulkan_funcs.p_vkQueuePresentKHR;
+    vulkan_funcs.p_vkQueuePresentKHR = win32u_vkQueuePresentKHR;
 }
 
 /***********************************************************************

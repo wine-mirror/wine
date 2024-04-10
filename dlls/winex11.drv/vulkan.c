@@ -252,7 +252,7 @@ static VkBool32 X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysical
             default_visual.visual->visualid);
 }
 
-static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info)
+static VkResult X11DRV_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces)
 {
     TRACE("%p, %p\n", queue, present_info);
     return pvkQueuePresentKHR(queue, present_info);
