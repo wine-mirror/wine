@@ -326,6 +326,10 @@ jobs:
         run: |
           cp -a WhiskyWineVersion.plist Libraries/
 
+      - name: Build Checksum
+        run: |
+          find ./Libraries -type f -exec shasum "{}" + > SUMS.sha
+
       - name: Upload config64.log
         if: failure()
         uses: actions/upload-artifact@v4
@@ -352,6 +356,13 @@ jobs:
           name: Libraries
           path: Libraries.tar.gz
 
+      - name: Upload SUMS
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SUMS
+          path: SUMS.sha
+
       - name: Upload Libraries to WhiskyBucket
         env:
           RCLONE_CONFIG_R2_TYPE: s3
@@ -364,3 +375,4 @@ jobs:
           brew install rclone
           rclone copy Libraries.tar.gz r2:whisky-bucket/Wine
           rclone copy WhiskyWineVersion.plist r2:whisky-bucket/Wine
+          rclone copy SUMS.sha r2:whisky-bucket/Wine
