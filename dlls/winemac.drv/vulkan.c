@@ -81,7 +81,6 @@ static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCrea
 static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static void (*pvkDestroySwapchainKHR)(VkDevice, VkSwapchainKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
-static VkResult (*pvkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 
 static const struct vulkan_funcs vulkan_funcs;
 
@@ -235,12 +234,6 @@ static VkBool32 macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysical
     return VK_TRUE;
 }
 
-static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces)
-{
-    TRACE("%p, %p\n", queue, present_info);
-    return pvkQueuePresentKHR(queue, present_info);
-}
-
 static const char *macdrv_get_host_surface_extension(void)
 {
     return pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
@@ -268,7 +261,7 @@ static const struct vulkan_funcs vulkan_funcs =
     NULL,
     NULL,
     macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
-    macdrv_vkQueuePresentKHR,
+    NULL,
 
     macdrv_get_host_surface_extension,
     macdrv_wine_get_host_surface,
@@ -289,7 +282,6 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *d
     LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
     LOAD_FUNCPTR(vkDestroySurfaceKHR)
     LOAD_FUNCPTR(vkDestroySwapchainKHR)
-    LOAD_FUNCPTR(vkQueuePresentKHR)
 #undef LOAD_FUNCPTR
 
     *driver_funcs = vulkan_funcs;

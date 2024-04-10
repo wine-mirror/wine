@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 static void *vulkan_handle;
 static struct vulkan_funcs vulkan_funcs;
 
-static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *, HWND *);
+static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 static void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
 static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
 
@@ -55,7 +55,7 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR 
 
     TRACE( "queue %p, present_info %p\n", queue, present_info );
 
-    res = p_vkQueuePresentKHR( queue, &host_present_info, surfaces );
+    res = p_vkQueuePresentKHR( queue, &host_present_info );
 
     for (i = 0; i < present_info->swapchainCount; i++)
     {
@@ -128,12 +128,11 @@ static void vulkan_init(void)
 
     LOAD_FUNCPTR( vkGetDeviceProcAddr );
     LOAD_FUNCPTR( vkGetInstanceProcAddr );
+    LOAD_FUNCPTR( vkQueuePresentKHR );
 #undef LOAD_FUNCPTR
 
     vulkan_funcs.p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr;
     vulkan_funcs.p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr;
-
-    p_vkQueuePresentKHR = vulkan_funcs.p_vkQueuePresentKHR;
     vulkan_funcs.p_vkQueuePresentKHR = win32u_vkQueuePresentKHR;
 }
 
