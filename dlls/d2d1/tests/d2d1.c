@@ -482,6 +482,14 @@ static void set_rect(D2D1_RECT_F *rect, float left, float top, float right, floa
     rect->bottom = bottom;
 }
 
+static void set_vec4(D2D_VECTOR_4F *vec, float x, float y, float z, float w)
+{
+    vec->x = x;
+    vec->y = y;
+    vec->z = z;
+    vec->w = w;
+}
+
 static void set_rounded_rect(D2D1_ROUNDED_RECT *rect, float left, float top, float right, float bottom,
         float radius_x, float radius_y)
 {
@@ -14696,6 +14704,88 @@ static void test_effect_custom_pixel_shader(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_get_effect_properties(BOOL d3d11)
+{
+    ID2D1Properties *properties, *properties2;
+    struct d2d1_test_context ctx;
+    D2D_VECTOR_4F rect, rect2;
+    D2D1_PROPERTY_TYPE type;
+    ID2D1Factory1 *factory;
+    UINT32 count, index;
+    WCHAR buffW[64];
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1Factory1_GetEffectProperties(factory, &GUID_NULL, &properties);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Factory1_GetEffectProperties(factory, &CLSID_D2D1Crop, &properties);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    refcount = get_refcount(properties);
+    ok(refcount == 2, "Unexpected refcount %lu.\n", refcount);
+
+    hr = ID2D1Factory1_GetEffectProperties(factory, &CLSID_D2D1Crop, &properties2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(properties == properties2, "Unexpected instance.\n");
+    refcount = get_refcount(properties);
+    ok(refcount == 3, "Unexpected refcount %lu.\n", refcount);
+    ID2D1Properties_Release(properties2);
+
+    count = ID2D1Properties_GetPropertyCount(properties);
+    todo_wine
+    ok(count == 2, "Unexpected property count %u.\n", count);
+
+    hr = ID2D1Properties_GetPropertyName(properties, 0, buffW, ARRAY_SIZE(buffW));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!wcscmp(buffW, L"Rect"), "Unexpected name %s.\n", debugstr_w(buffW));
+
+    count = ID2D1Properties_GetPropertyNameLength(properties, 0);
+    todo_wine
+    ok(count == 4, "Unexpected name length %u.\n", count);
+
+    type = ID2D1Properties_GetType(properties, 0);
+    todo_wine
+    ok(type == D2D1_PROPERTY_TYPE_VECTOR4, "Unexpected property type %u.\n", type);
+
+    index = ID2D1Properties_GetPropertyIndex(properties, L"prop");
+    ok(index == ~0u, "Unexpected index %u.\n", index);
+
+    set_vec4(&rect, 0.0f, 2.0f, 10.0f, 20.0f);
+    hr = ID2D1Properties_SetValue(properties, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
+            (const BYTE *)&rect, sizeof(rect));
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Properties_SetValue(properties, 1000, D2D1_PROPERTY_TYPE_VECTOR4,
+            (const BYTE *)&rect, sizeof(rect));
+    ok(hr == D2DERR_INVALID_PROPERTY, "Unexpected hr %#lx.\n", hr);
+
+    set_vec4(&rect2, 1.0f, 2.0f, 3.0f, 4.0f);
+    set_vec4(&rect, 0.0f, .0f, 0.0f, 0.0f);
+    hr = ID2D1Properties_GetValue(properties, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
+            (BYTE *)&rect2, sizeof(rect2));
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!memcmp(&rect, &rect2, sizeof(rect)), "Unexpected value.\n");
+
+    ID2D1Properties_Release(properties);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -14787,6 +14877,7 @@ START_TEST(d2d1)
     queue_test(test_bitmap_map);
     queue_test(test_bitmap_create);
     queue_test(test_effect_custom_pixel_shader);
+    queue_test(test_get_effect_properties);
 
     run_queued_tests();
 }

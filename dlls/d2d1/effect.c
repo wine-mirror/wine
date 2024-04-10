@@ -1150,19 +1150,14 @@ HRESULT d2d_effect_subproperties_add(struct d2d_effect_properties *props, const 
     return d2d_effect_properties_internal_add(props, name, index, TRUE, type, value);
 }
 
-static HRESULT d2d_effect_duplicate_properties(struct d2d_effect_properties *dst,
-        const struct d2d_effect_properties *src)
+static HRESULT d2d_effect_duplicate_properties(struct d2d_effect *effect,
+        struct d2d_effect_properties *dst, const struct d2d_effect_properties *src)
 {
     HRESULT hr;
     size_t i;
 
-    memset(dst, 0, sizeof(*dst));
-    dst->offset = src->offset;
-    dst->size = src->count;
-    dst->count = src->count;
-    dst->custom_count = src->custom_count;
-    dst->data.size = src->data.count;
-    dst->data.count = src->data.count;
+    *dst = *src;
+    dst->effect = effect;
 
     if (!(dst->data.ptr = malloc(dst->data.size)))
         return E_OUTOFMEMORY;
@@ -1185,7 +1180,7 @@ static HRESULT d2d_effect_duplicate_properties(struct d2d_effect_properties *dst
         {
             if (!(d->subproperties = calloc(1, sizeof(*d->subproperties))))
                 return E_OUTOFMEMORY;
-            if (FAILED(hr = d2d_effect_duplicate_properties(d->subproperties, s->subproperties)))
+            if (FAILED(hr = d2d_effect_duplicate_properties(effect, d->subproperties, s->subproperties)))
                 return hr;
         }
     }
@@ -1289,7 +1284,7 @@ static HRESULT d2d_effect_property_set_value(struct d2d_effect_properties *prope
         struct d2d_effect_property *prop, D2D1_PROPERTY_TYPE type, const BYTE *value, UINT32 size)
 {
     struct d2d_effect *effect = properties->effect;
-    if (prop->readonly) return E_INVALIDARG;
+    if (prop->readonly || !effect) return E_INVALIDARG;
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
     if (prop->get_function && !prop->set_function) return E_INVALIDARG;
     if (prop->index < 0x80000000 && !prop->set_function) return E_INVALIDARG;
@@ -1695,7 +1690,7 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
     if (effect->graph)
         ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
-    d2d_effect_properties_cleanup(&effect->properties);
+    //d2d_effect_properties_cleanup(&effect->properties);
     if (effect->impl)
         ID2D1EffectImpl_Release(effect->impl);
 }
@@ -2074,13 +2069,30 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_properties_QueryInterface(ID2D1Prope
 static ULONG STDMETHODCALLTYPE d2d_effect_properties_AddRef(ID2D1Properties *iface)
 {
     struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
-    return ID2D1Effect_AddRef(&properties->effect->ID2D1Effect_iface);
+
+    if (properties->effect)
+        return ID2D1Effect_AddRef(&properties->effect->ID2D1Effect_iface);
+
+    return InterlockedIncrement(&properties->refcount);
 }
 
 static ULONG STDMETHODCALLTYPE d2d_effect_properties_Release(ID2D1Properties *iface)
 {
     struct d2d_effect_properties *properties = impl_from_ID2D1Properties(iface);
-    return ID2D1Effect_Release(&properties->effect->ID2D1Effect_iface);
+    ULONG refcount;
+
+    if (properties->effect)
+        return ID2D1Effect_Release(&properties->effect->ID2D1Effect_iface);
+
+    refcount = InterlockedDecrement(&properties->refcount);
+
+    if (!refcount)
+    {
+        d2d_effect_properties_cleanup(properties);
+        free(properties);
+    }
+
+    return refcount;
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_effect_properties_GetPropertyCount(ID2D1Properties *iface)
@@ -2252,20 +2264,12 @@ static const ID2D1PropertiesVtbl d2d_effect_properties_vtbl =
     d2d_effect_properties_GetSubProperties,
 };
 
-static void d2d_effect_init_properties_vtbls(struct d2d_effect *effect)
+void d2d_effect_init_properties(struct d2d_effect *effect,
+        struct d2d_effect_properties *properties)
 {
-    unsigned int i;
-
-    effect->properties.ID2D1Properties_iface.lpVtbl = &d2d_effect_properties_vtbl;
-    effect->properties.effect = effect;
-
-    for (i = 0; i < effect->properties.count; ++i)
-    {
-        struct d2d_effect_property *prop = &effect->properties.properties[i];
-        if (!prop->subproperties) continue;
-        prop->subproperties->ID2D1Properties_iface.lpVtbl = &d2d_effect_properties_vtbl;
-        prop->subproperties->effect = effect;
-    }
+    properties->ID2D1Properties_iface.lpVtbl = &d2d_effect_properties_vtbl;
+    properties->effect = effect;
+    properties->refcount = 1;
 }
 
 static struct d2d_render_info *impl_from_ID2D1DrawInfo(ID2D1DrawInfo *iface)
@@ -2512,13 +2516,12 @@ HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effec
     object->effect_context = effect_context;
 
     /* Create properties */
-    d2d_effect_duplicate_properties(&object->properties, &reg->properties);
+    d2d_effect_duplicate_properties(object, &object->properties, reg->properties);
 
     StringFromGUID2(effect_id, clsidW, ARRAY_SIZE(clsidW));
     d2d_effect_properties_add(&object->properties, L"CLSID", D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, clsidW);
     d2d_effect_properties_add(&object->properties, L"Cached", D2D1_PROPERTY_CACHED, D2D1_PROPERTY_TYPE_BOOL, L"false");
     d2d_effect_properties_add(&object->properties, L"Precision", D2D1_PROPERTY_PRECISION, D2D1_PROPERTY_TYPE_ENUM, L"0");
-    d2d_effect_init_properties_vtbls(object);
 
     /* Sync instance input count with default input count from the description. */
     d2d_effect_get_value(object, D2D1_PROPERTY_INPUTS, D2D1_PROPERTY_TYPE_ARRAY, (BYTE *)&input_count, sizeof(input_count));

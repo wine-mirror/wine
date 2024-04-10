@@ -651,6 +651,7 @@ struct d2d_effect_property
 struct d2d_effect_properties
 {
     ID2D1Properties ID2D1Properties_iface;
+    LONG refcount;
     struct d2d_effect *effect;
 
     struct d2d_effect_property *properties;
@@ -674,7 +675,7 @@ struct d2d_effect_registration
     BOOL builtin;
     CLSID id;
 
-    struct d2d_effect_properties properties;
+    struct d2d_effect_properties *properties;
 };
 
 struct d2d_factory
@@ -785,6 +786,7 @@ struct d2d_effect
 
 HRESULT d2d_effect_create(struct d2d_device_context *context, const CLSID *effect_id,
         ID2D1Effect **effect);
+void d2d_effect_init_properties(struct d2d_effect *effect, struct d2d_effect_properties *properties);
 HRESULT d2d_effect_properties_add(struct d2d_effect_properties *props, const WCHAR *name,
         UINT32 index, D2D1_PROPERTY_TYPE type, const WCHAR *value);
 HRESULT d2d_effect_subproperties_add(struct d2d_effect_properties *props, const WCHAR *name,
