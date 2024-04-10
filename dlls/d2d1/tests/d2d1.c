@@ -14746,17 +14746,14 @@ static void test_get_effect_properties(BOOL d3d11)
     ok(count == 2, "Unexpected property count %u.\n", count);
 
     hr = ID2D1Properties_GetPropertyName(properties, 0, buffW, ARRAY_SIZE(buffW));
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!wcscmp(buffW, L"Rect"), "Unexpected name %s.\n", debugstr_w(buffW));
+    ok(!wcscmp(buffW, L"Rect"), "Unexpected name %s.\n", debugstr_w(buffW));
 
     count = ID2D1Properties_GetPropertyNameLength(properties, 0);
     todo_wine
     ok(count == 4, "Unexpected name length %u.\n", count);
 
     type = ID2D1Properties_GetType(properties, 0);
-    todo_wine
     ok(type == D2D1_PROPERTY_TYPE_VECTOR4, "Unexpected property type %u.\n", type);
 
     index = ID2D1Properties_GetPropertyIndex(properties, L"prop");
@@ -14765,7 +14762,6 @@ static void test_get_effect_properties(BOOL d3d11)
     set_vec4(&rect, 0.0f, 2.0f, 10.0f, 20.0f);
     hr = ID2D1Properties_SetValue(properties, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
             (const BYTE *)&rect, sizeof(rect));
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Properties_SetValue(properties, 1000, D2D1_PROPERTY_TYPE_VECTOR4,
@@ -14776,10 +14772,8 @@ static void test_get_effect_properties(BOOL d3d11)
     set_vec4(&rect, 0.0f, .0f, 0.0f, 0.0f);
     hr = ID2D1Properties_GetValue(properties, D2D1_CROP_PROP_RECT, D2D1_PROPERTY_TYPE_VECTOR4,
             (BYTE *)&rect2, sizeof(rect2));
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(!memcmp(&rect, &rect2, sizeof(rect)), "Unexpected value.\n");
+    ok(!memcmp(&rect, &rect2, sizeof(rect)), "Unexpected value.\n");
 
     ID2D1Properties_Release(properties);
 

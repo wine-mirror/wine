@@ -904,6 +904,7 @@ L"<?xml version='1.0'?>                                                   \
     <Inputs >                                                             \
       <Input name='Source'/>                                              \
     </Inputs>                                                             \
+    <Property name='Rect' type='vector4' />                               \
   </Effect>";
 
 static const WCHAR shadow_description[] =
