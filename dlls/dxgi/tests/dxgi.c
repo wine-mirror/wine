@@ -4329,13 +4329,13 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
     present_queue[1] = device;
     if (IDXGISwapChain_QueryInterface(swapchain, &IID_IDXGISwapChain3, (void **)&swapchain3) == E_NOINTERFACE)
     {
-        skip("IDXGISwapChain3 is not supported.\n");
+        win_skip("IDXGISwapChain3 is not supported.\n");
     }
     else if (!is_d3d12)
     {
         hr = IDXGISwapChain3_ResizeBuffers1(swapchain3, 2, 320, 240,
                 DXGI_FORMAT_B8G8R8A8_UNORM, 0, node_mask, present_queue);
-        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
+        todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
         IDXGISwapChain3_Release(swapchain3);
     }
     else

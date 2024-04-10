@@ -172,7 +172,7 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface);
 /* IDXGISwapChain */
 struct d3d11_swapchain
 {
-    IDXGISwapChain2 IDXGISwapChain2_iface;
+    IDXGISwapChain3 IDXGISwapChain3_iface;
     LONG refcount;
     struct wined3d_private_store private_store;
     struct wined3d_swapchain *wined3d_swapchain;
