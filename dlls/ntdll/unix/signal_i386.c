@@ -2130,7 +2130,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             ERR_(seh)( "kernel stack overflow.\n" );
             return;
         }
-        context->c.ContextFlags = CONTEXT_FULL;
+        context->c.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context->c );
         if (xstate_extended_features())
         {
@@ -2153,6 +2153,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         struct xcontext context;
 
         save_context( &context, ucontext );
+        context.c.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
         wait_suspend( &context.c );
         restore_context( &context, ucontext );
     }
@@ -2514,7 +2515,11 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
     if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
 
-    if (suspend) wait_suspend( &context );
+    if (suspend)
+    {
+        context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
+        wait_suspend( &context );
+    }
 
     ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~3) - 1;
     *ctx = context;

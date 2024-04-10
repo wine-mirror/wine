@@ -2172,7 +2172,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             ERR_(seh)( "kernel stack overflow.\n" );
             return;
         }
-        context->c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS;
+        context->c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context->c );
         if (xstate_extended_features())
         {
@@ -2195,6 +2195,8 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         struct xcontext context;
 
         save_context( &context, ucontext );
+        context.c.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
+        if (is_wow64() && context.c.SegCs == cs64_sel) context.c.ContextFlags |= CONTEXT_EXCEPTION_ACTIVE;
         wait_suspend( &context.c );
         restore_context( &context, ucontext );
     }
@@ -2536,7 +2538,7 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
 # error Please define setting %gs for your architecture
 #endif
 
-    context.ContextFlags = CONTEXT_ALL;
+    context.ContextFlags = CONTEXT_ALL | CONTEXT_EXCEPTION_REPORTING | CONTEXT_EXCEPTION_ACTIVE;
     context.Rcx    = (ULONG_PTR)entry;
     context.Rdx    = (ULONG_PTR)arg;
     context.Rsp    = (ULONG_PTR)teb->Tib.StackBase - 0x28;
