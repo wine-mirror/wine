@@ -681,6 +681,7 @@ static void check_mft_set_input_type_required_(int line, IMFTransform *transform
         hr = IMFMediaType_DeleteItem(media_type, attr->key);
         ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
         hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+        todo_wine_if(attr->todo)
         ok_(__FILE__, line)(FAILED(hr) == attr->required, "SetInputType returned %#lx.\n", hr);
         hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
         ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
@@ -1285,7 +1286,7 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     timestamp = 0xdeadbeef;
     hr = IMFSample_GetSampleDuration(sample, &timestamp);
     ok_(file, line)(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    todo_wine_if(expect->todo_duration && expect->todo_duration == timestamp)
+    todo_wine_if(expect->todo_duration)
     ok_(file, line)(llabs(timestamp - expect->sample_duration) <= 1,
             "got sample duration %I64d\n", timestamp);
 
@@ -5602,7 +5603,7 @@ static void test_wmv_decoder(void)
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
         ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
-        ATTR_UINT32(MF_MT_INTERLACE_MODE, 2),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo_value = TRUE),
         {0},
     };
     const media_type_desc expect_available_outputs[] =
@@ -5714,7 +5715,7 @@ static void test_wmv_decoder(void)
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1, .required = TRUE),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE, .todo = TRUE),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
@@ -5760,7 +5761,7 @@ static void test_wmv_decoder(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
-        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1, .todo = TRUE),
         {0},
     };
     const struct attribute_desc expect_output_type_desc[] =
@@ -5828,6 +5829,7 @@ static void test_wmv_decoder(void)
         .cbSize = 0x9000,
         .cbAlignment = 1,
     };
+    const MFT_INPUT_STREAM_INFO empty_input_info = {0};
 
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -5849,12 +5851,21 @@ static void test_wmv_decoder(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+        .todo_duration = TRUE,
+    };
+    const struct sample_desc output_sample_desc_nv12_todo_time =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+        .todo_time = TRUE, .todo_duration = TRUE,
     };
     const struct sample_desc output_sample_desc_rgb =
     {
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
+        .todo_time = TRUE, .todo_duration = TRUE,
     };
 
     const struct transform_desc
@@ -5886,7 +5897,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc,
             .expect_input_info = &expect_input_info,
             .expect_output_info = &expect_output_info,
-            .output_sample_desc = &output_sample_desc_nv12,
+            .output_sample_desc = &output_sample_desc_nv12_todo_time,
             .result_bitmap = L"nv12frame.bmp",
             .delta = 0,
         },
@@ -5929,6 +5940,8 @@ static void test_wmv_decoder(void)
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_WMV1};
     IMFSample *input_sample, *output_sample;
+    MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_INPUT_STREAM_INFO input_info;
     IMFCollection *output_samples;
     IMFMediaType *media_type;
     IMFTransform *transform;
@@ -5965,13 +5978,27 @@ static void test_wmv_decoder(void)
 
     check_mft_optional_methods(transform, 1);
     check_mft_get_attributes(transform, expect_attributes, TRUE);
+
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
     todo_wine
-    check_mft_get_input_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, NULL);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#lx\n", hr);
+    check_member(input_info, empty_input_info, "%I64d", hnsMaxLatency);
+    check_member(input_info, empty_input_info, "%#lx",  dwFlags);
+    check_member(input_info, empty_input_info, "%#lx",  cbSize);
+    check_member(input_info, empty_input_info, "%#lx",  cbMaxLookahead);
+    check_member(input_info, empty_input_info, "%#lx",  cbAlignment);
+
+    memset(&output_info, 0xcd, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     todo_wine
-    check_mft_get_output_stream_info(transform, MF_E_TRANSFORM_TYPE_NOT_SET, &empty_output_info);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#lx\n", hr);
+    todo_wine
+    check_member(output_info, empty_output_info, "%#lx",  dwFlags);
+    check_member(output_info, empty_output_info, "%#lx",  cbSize);
+    check_member(output_info, empty_output_info, "%#lx",  cbAlignment);
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
 
     i = -1;
@@ -5985,9 +6012,7 @@ static void test_wmv_decoder(void)
         ok(!ret, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == ARRAY_SIZE(expect_available_inputs), "%lu input media types\n", i);
 
     if (hr == E_NOTIMPL)
@@ -6021,10 +6046,28 @@ static void test_wmv_decoder(void)
 
         check_mft_set_output_type_required(transform, transform_tests[j].output_type_desc);
         check_mft_set_output_type(transform, transform_tests[j].output_type_desc, S_OK);
-        check_mft_get_output_current_type_(__LINE__, transform, transform_tests[j].expect_output_type_desc, FALSE, FALSE);
+        check_mft_get_output_current_type_(__LINE__, transform, transform_tests[j].expect_output_type_desc, FALSE, TRUE);
 
-        check_mft_get_input_stream_info(transform, S_OK, transform_tests[j].expect_input_info);
-        check_mft_get_output_stream_info(transform, S_OK, transform_tests[j].expect_output_info);
+        memset(&input_info, 0xcd, sizeof(input_info));
+        hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+        ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
+        check_member(input_info, *transform_tests[j].expect_input_info, "%I64d", hnsMaxLatency);
+        check_member(input_info, *transform_tests[j].expect_input_info, "%#lx",  dwFlags);
+        todo_wine
+        check_member(input_info, *transform_tests[j].expect_input_info, "%#lx",  cbSize);
+        check_member(input_info, *transform_tests[j].expect_input_info, "%#lx",  cbMaxLookahead);
+        todo_wine
+        check_member(input_info, *transform_tests[j].expect_input_info, "%#lx",  cbAlignment);
+
+        memset(&output_info, 0xcd, sizeof(output_info));
+        hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+        ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+        todo_wine
+        check_member(output_info, *transform_tests[j].expect_output_info, "%#lx",  dwFlags);
+        todo_wine_if(transform_tests[j].expect_output_info == &expect_output_info)
+        check_member(output_info, *transform_tests[j].expect_output_info, "%#lx",  cbSize);
+        todo_wine
+        check_member(output_info, *transform_tests[j].expect_output_info, "%#lx",  cbAlignment);
 
         load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
 
