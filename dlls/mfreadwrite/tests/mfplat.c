@@ -48,6 +48,7 @@ DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #include "wine/test.h"
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_TEST,MAKEFOURCC('T','E','S','T'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32,D3DFMT_A8B8G8R8);
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
 static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
@@ -2503,7 +2504,8 @@ static HRESULT WINAPI test_decoder_SetOutputType(IMFTransform *iface, DWORD id, 
     HRESULT hr;
 
     if (type && SUCCEEDED(hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype))
-            && IsEqualGUID(&subtype, &MFVideoFormat_RGB32))
+            && (IsEqualGUID(&subtype, &MFVideoFormat_RGB32)
+            || IsEqualGUID(&subtype, &MFVideoFormat_ABGR32)))
         return MF_E_INVALIDMEDIATYPE;
 
     if (flags & MFT_SET_TYPE_TEST_ONLY)
@@ -3101,6 +3103,12 @@ static void test_source_reader_transforms_d3d9(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value == 0, "got %u.\n", value);
     IMFAttributes_Release(attributes);
+
+    hr = IMFTransform_GetOutputCurrentType(video_processor, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_media_type(media_type, rgb32_expect_desc, -1);
+    IMFMediaType_Release(media_type);
+
     IMFTransform_Release(video_processor);
 
     hr = IMFSourceReaderEx_GetTransformForStream(reader_ex, 0, 0, NULL, &test_decoder);
@@ -3281,6 +3289,22 @@ static void test_source_reader_transforms_d3d11(void)
         ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo = TRUE),
         {0},
     };
+    static const struct attribute_desc abgr32_stream_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ABGR32),
+        {0},
+    };
+    static const struct attribute_desc abgr32_expect_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ABGR32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
+        ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        ATTR_UINT32(MF_MT_COMPRESSED, 0, .todo = TRUE),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, 2, .todo = TRUE),
+        {0},
+    };
     const MFT_REGISTER_TYPE_INFO output_info[] =
     {
         {MFMediaType_Video, MFVideoFormat_NV12},
@@ -3388,6 +3412,21 @@ static void test_source_reader_transforms_d3d11(void)
     check_media_type(media_type, test_stream_type_desc, -1);
     IMFMediaType_Release(media_type);
     ok(!test_decoder_got_d3d_manager, "d3d manager received\n");
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    init_media_type(media_type, abgr32_stream_type_desc, -1);
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    todo_wine ok(hr == S_OK || broken(hr == MF_E_INVALIDMEDIATYPE) /* needs a GPU */, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    if (hr == S_OK)
+    {
+        hr = IMFSourceReader_GetCurrentMediaType(reader, 0, &media_type);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_media_type(media_type, abgr32_expect_desc, -1);
+        IMFMediaType_Release(media_type);
+    }
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
