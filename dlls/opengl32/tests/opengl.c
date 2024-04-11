@@ -1415,7 +1415,6 @@ static void test_framebuffer(void)
     pglBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     status = pglCheckFramebufferStatus(GL_FRAMEBUFFER);
-    todo_wine_if(status == GL_FRAMEBUFFER_UNDEFINED) /* macOS */
     ok(status == GL_FRAMEBUFFER_COMPLETE, "Expected %#x, got %#x.\n", GL_FRAMEBUFFER_COMPLETE, status);
 
     ret = wglMakeCurrent(NULL, NULL);
