@@ -1699,7 +1699,7 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
                      WCHAR *redirs,  int *redirLen,
                      WCHAR **copyTo, int **copyToLen,
                      CMD_DELIMITERS prevDelim, int curDepth,
-                     CMD_LIST **lastEntry, CMD_LIST **output) {
+                     CMD_LIST **output) {
 
     CMD_LIST *thisEntry = NULL;
 
@@ -1734,12 +1734,9 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
     thisEntry->nextcommand = NULL;
     thisEntry->prevDelim = prevDelim;
     thisEntry->bracketDepth = curDepth;
-    if (*lastEntry) {
-        (*lastEntry)->nextcommand = thisEntry;
-    } else {
-        *output = thisEntry;
-    }
-    *lastEntry = thisEntry;
+
+    for (; *output; output = &((*output)->nextcommand)) {}
+    *output = thisEntry;
 }
 
 
@@ -1822,7 +1819,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     WCHAR    *curCopyTo;
     int      *curLen;
     int       curDepth = 0;
-    CMD_LIST *lastEntry = NULL;
     CMD_DELIMITERS prevDelim = CMD_NONE;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      inOneLine = FALSE;
@@ -1842,6 +1838,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     int       lineCurDepth;                  /* Bracket depth when line was read in */
     BOOL      resetAtEndOfLine = FALSE;      /* Do we need to reset curdepth at EOL */
 
+    *output = NULL;
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
         extraSpace = xalloc((MAXSTRING + 1) * sizeof(WCHAR));
@@ -2093,7 +2090,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                           curRedirs, &curRedirsLen,
                           &curCopyTo, &curLen,
                           prevDelim, curDepth,
-                          &lastEntry, output);
+                          output);
 
                   }
 
@@ -2167,7 +2164,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                                   curRedirs, &curRedirsLen,
                                   &curCopyTo, &curLen,
                                   prevDelim, curDepth,
-                                  &lastEntry, output);
+                                  output);
 
                   curDepth++;
                 } else {
@@ -2198,7 +2195,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                           curRedirs, &curRedirsLen,
                           &curCopyTo, &curLen,
                           prevDelim, curDepth,
-                          &lastEntry, output);
+                          output);
 
                   }
 
@@ -2231,7 +2228,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                             curRedirs, &curRedirsLen,
                             &curCopyTo, &curLen,
                             prevDelim, curDepth,
-                            &lastEntry, output);
+                            output);
                   }
 
                   /* Add an empty entry to the command list */
@@ -2240,7 +2237,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                         curRedirs, &curRedirsLen,
                         &curCopyTo, &curLen,
                         prevDelim, curDepth,
-                        &lastEntry, output);
+                        output);
                   curDepth--;
 
                   /* Leave inIn if necessary */
@@ -2276,7 +2273,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                 curRedirs, &curRedirsLen,
                 &curCopyTo, &curLen,
                 prevDelim, curDepth,
-                &lastEntry, output);
+                output);
 
           /* If we had a single line if or else, and we pretended to add
              brackets, end them now                                      */
