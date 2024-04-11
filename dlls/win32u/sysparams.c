@@ -1280,6 +1280,7 @@ static BOOL write_source_to_registry( const struct source *source, HKEY *source_
     NtClose( hkey );
 
     /* Following information is Wine specific, it doesn't really exist on Windows. */
+    if (*source_key) NtClose( *source_key );
     *source_key = reg_create_ascii_key( NULL, source->path, REG_OPTION_VOLATILE, NULL );
     set_reg_ascii_value( *source_key, "GPUID", gpu->path );
     set_reg_value( *source_key, state_flagsW, REG_DWORD, &source->state_flags,
@@ -1301,12 +1302,6 @@ static void add_source( const char *name, UINT state_flags, void *param )
     struct device_manager_ctx *ctx = param;
 
     TRACE( "name %s, state_flags %#x\n", name, state_flags );
-
-    if (ctx->source_key)
-    {
-        NtClose( ctx->source_key );
-        ctx->source_key = NULL;
-    }
 
     memset( &ctx->source, 0, sizeof(ctx->source) );
     ctx->source.gpu = &ctx->gpu;
