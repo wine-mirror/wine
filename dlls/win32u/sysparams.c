@@ -416,6 +416,18 @@ static void get_monitor_info_from_edid( struct edid_monitor_info *info, const un
     }
 }
 
+static const char *debugstr_devmodew( const DEVMODEW *devmode )
+{
+    char position[32] = {0};
+    if (devmode->dmFields & DM_POSITION) snprintf( position, sizeof(position), " at %s", wine_dbgstr_point( (POINT *)&devmode->dmPosition ) );
+    return wine_dbg_sprintf( "%ux%u %ubits %uHz rotated %u degrees %sstretched %sinterlaced%s",
+                             (UINT)devmode->dmPelsWidth, (UINT)devmode->dmPelsHeight, (UINT)devmode->dmBitsPerPel,
+                             (UINT)devmode->dmDisplayFrequency, (UINT)devmode->dmDisplayOrientation * 90,
+                             devmode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un",
+                             devmode->dmDisplayFlags & DM_INTERLACED ? "" : "non-",
+                             position );
+}
+
 static BOOL write_source_mode( HKEY hkey, UINT index, const DEVMODEW *mode )
 {
     WCHAR bufferW[MAX_PATH] = {0};
@@ -1432,27 +1444,24 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     }
 }
 
-static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
+static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    DEVMODEW nopos_mode;
+    const DEVMODEW *mode;
+    DEVMODEW dummy;
 
-    nopos_mode = *mode;
-    nopos_mode.dmPosition.x = 0;
-    nopos_mode.dmPosition.y = 0;
-    nopos_mode.dmFields &= ~DM_POSITION;
+    TRACE( "current %s, modes_count %u, modes %p, param %p\n", debugstr_devmodew( current ), modes_count, modes, param );
 
-    if (write_source_mode( ctx->source_key, ctx->source.mode_count, &nopos_mode ))
+    if (!read_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, &dummy ))
+        write_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, current );
+    write_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, current );
+
+    for (mode = modes; modes_count; mode = NEXT_DEVMODEW(mode), modes_count--)
     {
-        ctx->source.mode_count++;
-        set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &ctx->source.mode_count, sizeof(ctx->source.mode_count) );
-        if (current)
-        {
-            if (!read_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, &nopos_mode ))
-                write_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, mode );
-            write_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, mode );
-        }
+        TRACE( "mode: %s\n", debugstr_devmodew( mode ) );
+        if (write_source_mode( ctx->source_key, ctx->source.mode_count, mode )) ctx->source.mode_count++;
     }
+    set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &ctx->source.mode_count, sizeof(ctx->source.mode_count) );
 }
 
 static const struct gdi_device_manager device_manager =
@@ -1460,7 +1469,7 @@ static const struct gdi_device_manager device_manager =
     add_gpu,
     add_source,
     add_monitor,
-    add_mode,
+    add_modes,
 };
 
 static void reset_display_manager_ctx( struct device_manager_ctx *ctx )
@@ -1711,15 +1720,6 @@ static BOOL update_display_cache_from_registry(void)
     return ret;
 }
 
-static BOOL is_same_devmode( const DEVMODEW *a, const DEVMODEW *b )
-{
-    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
-           a->dmBitsPerPel == b->dmBitsPerPel &&
-           a->dmPelsWidth == b->dmPelsWidth &&
-           a->dmPelsHeight == b->dmPelsHeight &&
-           a->dmDisplayFrequency == b->dmDisplayFrequency;
-}
-
 static BOOL default_update_display_devices( const struct gdi_device_manager *manager, BOOL force, struct device_manager_ctx *ctx )
 {
     /* default implementation: expose an adapter and a monitor with a few standard modes,
@@ -1744,7 +1744,6 @@ static BOOL default_update_display_devices( const struct gdi_device_manager *man
     static const struct gdi_gpu gpu;
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {{0}};
-    UINT i;
 
     if (!force) return TRUE;
 
@@ -1762,11 +1761,7 @@ static BOOL default_update_display_devices( const struct gdi_device_manager *man
     monitor.rc_work.bottom = mode.dmPelsHeight;
 
     manager->add_monitor( &monitor, ctx );
-    for (i = 0; i < ARRAY_SIZE(modes); ++i)
-    {
-        if (is_same_devmode( modes + i, &mode )) manager->add_mode( &mode, TRUE, ctx );
-        else manager->add_mode( modes + i, FALSE, ctx );
-    }
+    manager->add_modes( &mode, ARRAY_SIZE(modes), modes, ctx );
 
     return TRUE;
 }
@@ -1823,10 +1818,10 @@ static void desktop_add_monitor( const struct gdi_monitor *monitor, void *param 
 {
 }
 
-static void desktop_add_mode( const DEVMODEW *mode, BOOL current, void *param )
+static void desktop_add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    if (ctx->is_primary && current) ctx->primary = *mode;
+    if (ctx->is_primary) ctx->primary = *current;
 }
 
 static const struct gdi_device_manager desktop_device_manager =
@@ -1834,7 +1829,7 @@ static const struct gdi_device_manager desktop_device_manager =
     desktop_add_gpu,
     desktop_add_source,
     desktop_add_monitor,
-    desktop_add_mode,
+    desktop_add_modes,
 };
 
 static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ctx *ctx )
@@ -1881,9 +1876,9 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     };
 
     struct device_manager_ctx desktop_ctx = {0};
-    UINT screen_width, screen_height, max_width, max_height;
+    UINT screen_width, screen_height, max_width, max_height, modes_count;
     unsigned int depths[] = {8, 16, 0};
-    DEVMODEW current;
+    DEVMODEW current, *modes;
     UINT i, j;
 
     if (!force) return TRUE;
@@ -1915,7 +1910,9 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     monitor.rc_work.bottom = current.dmPelsHeight;
     add_monitor( &monitor, ctx );
 
-    for (i = 0; i < ARRAY_SIZE(depths); ++i)
+    if (!(modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) ))) return FALSE;
+
+    for (modes_count = i = 0; i < ARRAY_SIZE(depths); ++i)
     {
         DEVMODEW mode =
         {
@@ -1932,24 +1929,23 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
             if (mode.dmPelsWidth > max_width || mode.dmPelsHeight > max_height) continue;
             if (mode.dmPelsWidth == max_width && mode.dmPelsHeight == max_height) continue;
             if (mode.dmPelsWidth == screen_width && mode.dmPelsHeight == screen_height) continue;
-
-            if (is_same_devmode( &mode, &current )) add_mode( &current, TRUE, ctx );
-            else add_mode( &mode, FALSE, ctx );
+            modes[modes_count++] = mode;
         }
 
         mode.dmPelsWidth = screen_width;
         mode.dmPelsHeight = screen_height;
-        if (is_same_devmode( &mode, &current )) add_mode( &current, TRUE, ctx );
-        else add_mode( &mode, FALSE, ctx );
+        modes[modes_count++] = mode;
 
         if (max_width != screen_width || max_height != screen_height)
         {
             mode.dmPelsWidth = max_width;
             mode.dmPelsHeight = max_height;
-            if (is_same_devmode( &mode, &current )) add_mode( &current, TRUE, ctx );
-            else add_mode( &mode, FALSE, ctx );
+            modes[modes_count++] = mode;
         }
     }
+
+    add_modes( &current, modes_count, modes, ctx );
+    free( modes );
 
     return TRUE;
 }

@@ -494,25 +494,6 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
 
 static BOOL force_display_devices_refresh;
 
-static const char *debugstr_devmodew( const DEVMODEW *devmode )
-{
-    char position[32] = {0};
-
-    if (devmode->dmFields & DM_POSITION)
-    {
-        snprintf( position, sizeof(position), " at (%d,%d)",
-                 (int)devmode->dmPosition.x, (int)devmode->dmPosition.y );
-    }
-
-    return wine_dbg_sprintf( "%ux%u %ubits %uHz rotated %u degrees%s",
-                             (unsigned int)devmode->dmPelsWidth,
-                             (unsigned int)devmode->dmPelsHeight,
-                             (unsigned int)devmode->dmBitsPerPel,
-                             (unsigned int)devmode->dmDisplayFrequency,
-                             (unsigned int)devmode->dmDisplayOrientation * 90,
-                             position );
-}
-
 BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct x11drv_adapter *adapters;
@@ -520,7 +501,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct gdi_gpu *gpus;
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
-    DEVMODEW *modes, *mode;
+    DEVMODEW *modes;
     UINT mode_count;
 
     if (!force && !force_display_devices_refresh) return TRUE;
@@ -566,25 +547,11 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
             settings_handler.get_current_mode( settings_id, &current_mode );
-            if (!settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
-                continue;
-
-            for (mode = modes; mode_count; mode_count--)
+            if (settings_handler.get_modes( settings_id, EDS_ROTATEDMODE, &modes, &mode_count ))
             {
-                if (is_same_devmode( mode, &current_mode ))
-                {
-                    TRACE( "current mode: %s\n", debugstr_devmodew( &current_mode ) );
-                    device_manager->add_mode( &current_mode, TRUE, param );
-                }
-                else
-                {
-                    TRACE( "mode: %s\n", debugstr_devmodew( mode ) );
-                    device_manager->add_mode( mode, FALSE, param );
-                }
-                mode = (DEVMODEW *)((char *)mode + sizeof(*modes) + modes[0].dmDriverExtra);
+                device_manager->add_modes( &current_mode, mode_count, modes, param );
+                settings_handler.free_modes( modes );
             }
-
-            settings_handler.free_modes( modes );
         }
 
         host_handler.free_adapters( adapters );

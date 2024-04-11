@@ -142,6 +142,7 @@ struct wayland_output_mode
 
 struct wayland_output_state
 {
+    int modes_count;
     struct rb_tree modes;
     struct wayland_output_mode *current_mode;
     char *name;

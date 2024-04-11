@@ -251,22 +251,28 @@ static void populate_devmode(struct wayland_output_mode *output_mode, DEVMODEW *
 static void wayland_add_device_modes(const struct gdi_device_manager *device_manager,
                                      void *param, struct output_info *output_info)
 {
+    DEVMODEW *modes, current = {.dmSize = sizeof(current)};
     struct wayland_output_mode *output_mode;
+    int modes_count = 0;
+
+    if (!(modes = malloc(output_info->output->modes_count * sizeof(*modes))))
+        return;
+
+    populate_devmode(output_info->output->current_mode, &current);
+    current.dmFields |= DM_POSITION;
+    current.dmPosition.x = output_info->x;
+    current.dmPosition.y = output_info->y;
 
     RB_FOR_EACH_ENTRY(output_mode, &output_info->output->modes,
                       struct wayland_output_mode, entry)
     {
         DEVMODEW mode = {.dmSize = sizeof(mode)};
-        BOOL mode_is_current = output_mode == output_info->output->current_mode;
         populate_devmode(output_mode, &mode);
-        if (mode_is_current)
-        {
-            mode.dmFields |= DM_POSITION;
-            mode.dmPosition.x = output_info->x;
-            mode.dmPosition.y = output_info->y;
-        }
-        device_manager->add_mode(&mode, mode_is_current, param);
+        modes[modes_count++] = mode;
     }
+
+    device_manager->add_modes(&current, modes_count, modes, param);
+    free(modes);
 }
 
 /***********************************************************************
