@@ -1519,11 +1519,11 @@ void WCMD_echo (const WCHAR *args)
  * first command to be executed may not be at the front of the
  * commands->thiscommand string (eg. it may point after a DO or ELSE)
  */
-static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
+static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
                               BOOL isIF, BOOL executecmds)
 {
-  CMD_LIST *curPosition = *cmdList;
-  int myDepth = (*cmdList)->bracketDepth;
+  CMD_NODE *curPosition = *cmdList;
+  int myDepth = (*cmdList)->single->bracketDepth;
 
   WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d), isIF(%d)\n", cmdList,
                 wine_dbgstr_w(firstcmd), executecmds, isIF);
@@ -1534,7 +1534,7 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
   /* Process the first command, if there is one */
   if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = xstrdupW(firstcmd);
-    WCMD_execute (firstcmd, (*cmdList)->redirects, cmdList, FALSE);
+    WCMD_execute (firstcmd, (*cmdList)->single->redirects, cmdList, FALSE);
     free(command);
   }
 
@@ -1552,23 +1552,23 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
 
       WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d) processThese(%d)\n",
                  *cmdList,
-                 (*cmdList)->prevDelim,
-                 (*cmdList)->bracketDepth,
+                 (*cmdList)->single->prevDelim,
+                 (*cmdList)->single->bracketDepth,
                  myDepth,
                  processThese);
 
       /* Execute any statements appended to the line */
       /* FIXME: Only if previous call worked for && or failed for || */
-      if ((*cmdList)->prevDelim == CMD_ONFAILURE ||
-          (*cmdList)->prevDelim == CMD_ONSUCCESS) {
-        if (processThese && (*cmdList)->command) {
-          WCMD_execute ((*cmdList)->command, (*cmdList)->redirects,
+      if ((*cmdList)->single->prevDelim == CMD_ONFAILURE ||
+          (*cmdList)->single->prevDelim == CMD_ONSUCCESS) {
+        if (processThese && (*cmdList)->single->command) {
+          WCMD_execute ((*cmdList)->single->command, (*cmdList)->single->redirects,
                         cmdList, FALSE);
         }
         if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
 
       /* Execute any appended to the statement with (...) */
-      } else if ((*cmdList)->bracketDepth > myDepth) {
+      } else if ((*cmdList)->single->bracketDepth > myDepth) {
         if (processThese) {
           *cmdList = WCMD_process_commands(*cmdList, TRUE, FALSE);
         } else {
@@ -1578,19 +1578,19 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
 
       /* End of the command - does 'ELSE ' follow as the next command? */
       } else {
-        if (isIF && WCMD_keyword_ws_found(L"else", (*cmdList)->command)) {
+        if (isIF && WCMD_keyword_ws_found(L"else", (*cmdList)->single->command)) {
           /* Swap between if and else processing */
           processThese = !executecmds;
 
           /* Process the ELSE part */
           if (processThese) {
             const int keyw_len = lstrlenW(L"else") + 1;
-            WCHAR *cmd = ((*cmdList)->command) + keyw_len;
+            WCHAR *cmd = ((*cmdList)->single->command) + keyw_len;
 
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
             if (*cmd) {
-              WCMD_execute (cmd, (*cmdList)->redirects, cmdList, FALSE);
+              WCMD_execute (cmd, (*cmdList)->single->redirects, cmdList, FALSE);
             }
           } else {
               /* Loop skipping all commands until we get back to the current
@@ -1599,8 +1599,8 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
               do {
                 *cmdList = (*cmdList)->nextcommand;
               } while (*cmdList &&
-                      ((*cmdList)->bracketDepth > myDepth ||
-                      (*cmdList)->prevDelim));
+                      ((*cmdList)->single->bracketDepth > myDepth ||
+                      (*cmdList)->single->prevDelim));
 
               /* After the else is complete, we need to now process subsequent commands */
               processThese = TRUE;
@@ -1610,8 +1610,8 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
         /* If we were in an IF statement and we didn't find an else and yet we get back to
            the same bracket depth as the IF, then the IF statement is over. This is required
            to handle nested ifs properly                                                     */
-        } else if (isIF && (*cmdList)->bracketDepth == myDepth) {
-          if (WCMD_keyword_ws_found(L"do", (*cmdList)->command)) {
+        } else if (isIF && (*cmdList)->single->bracketDepth == myDepth) {
+          if (WCMD_keyword_ws_found(L"do", (*cmdList)->single->command)) {
               WINE_TRACE("Still inside FOR-loop, not an end of IF statement\n");
               *cmdList = (*cmdList)->nextcommand;
           } else {
@@ -1935,9 +1935,9 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
  *  forf_delims  [I]    - The delimiters to use when breaking the string apart
  *  forf_tokens  [I]    - The tokens to use when breaking the string apart
  */
-static void WCMD_parse_line(CMD_LIST    *cmdStart,
+static void WCMD_parse_line(CMD_NODE    *cmdStart,
                             const WCHAR *firstCmd,
-                            CMD_LIST   **cmdEnd,
+                            CMD_NODE   **cmdEnd,
                             const WCHAR  variable,
                             WCHAR       *buffer,
                             BOOL        *doExecuted,
@@ -2024,7 +2024,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
 
   /* Execute the body of the foor loop with these values */
   if (varidx >= 0 && forloopcontext.variable[varidx] && forloopcontext.variable[varidx][0] != forf_eol) {
-    CMD_LIST *thisCmdStart = cmdStart;
+    CMD_NODE *thisCmdStart = cmdStart;
     *doExecuted = TRUE;
     WCMD_part_execute(&thisCmdStart, firstCmd, FALSE, TRUE);
     *cmdEnd = thisCmdStart;
@@ -2108,13 +2108,13 @@ static FILE* WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd)
  *
  */
 
-void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
+void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
 
   WIN32_FIND_DATAW fd;
   HANDLE hff;
   int i;
   const int in_len = lstrlenW(L"in");
-  CMD_LIST *setStart, *thisSet, *cmdStart, *cmdEnd;
+  CMD_NODE *setStart, *thisSet, *cmdStart, *cmdEnd;
   WCHAR variable[4];
   int   varidx = -1;
   WCHAR *oldvariablevalue;
@@ -2129,7 +2129,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   BOOL   doExecuted  = FALSE;  /* Has the 'do' part been executed */
   LONG   numbers[3] = {0,0,0}; /* Defaults to 0 in native */
   int    itemNum;
-  CMD_LIST *thisCmdStart;
+  CMD_NODE *thisCmdStart;
   int    parameterNo = 0;
   WCHAR  forf_eol = 0;
   int    forf_skip = 0;
@@ -2219,15 +2219,15 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   }
 
   /* Save away where the set of data starts and the variable */
-  thisDepth = (*cmdList)->bracketDepth;
+  thisDepth = (*cmdList)->single->bracketDepth;
   *cmdList = (*cmdList)->nextcommand;
   setStart = (*cmdList);
 
   /* Skip until the close bracket */
   WINE_TRACE("Searching %p as the set\n", *cmdList);
   while (*cmdList &&
-         (*cmdList)->command != NULL &&
-         (*cmdList)->bracketDepth > thisDepth) {
+         (*cmdList)->single->command != NULL &&
+         (*cmdList)->single->bracketDepth > thisDepth) {
     WINE_TRACE("Skipping %p which is part of the set\n", *cmdList);
     *cmdList = (*cmdList)->nextcommand;
   }
@@ -2238,7 +2238,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   /* Syntax error if missing close bracket, or nothing following it
      and once we have the complete set, we expect a DO              */
   WINE_TRACE("Looking for 'do ' in %p\n", *cmdList);
-  if ((*cmdList == NULL) || !WCMD_keyword_ws_found(L"do", (*cmdList)->command)) {
+  if ((*cmdList == NULL) || !WCMD_keyword_ws_found(L"do", (*cmdList)->single->command)) {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
@@ -2252,7 +2252,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
     /* Save away the starting position for the commands (and offset for the
        first one)                                                           */
     cmdStart = *cmdList;
-    firstCmd = (*cmdList)->command + 3; /* Skip 'do ' */
+    firstCmd = (*cmdList)->single->command + 3; /* Skip 'do ' */
     itemNum  = 0;
 
     /* If we are recursing directories (ie /R), add all sub directories now, then
@@ -2262,8 +2262,8 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
     thisSet = setStart;
     /* Loop through all set entries */
     while (thisSet &&
-           thisSet->command != NULL &&
-           thisSet->bracketDepth >= thisDepth) {
+           thisSet->single->command != NULL &&
+           thisSet->single->bracketDepth >= thisDepth) {
 
       /* Loop through all entries on the same line */
       WCHAR *staticitem;
@@ -2272,7 +2272,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
       WINE_TRACE("Processing for set %p\n", thisSet);
       i = 0;
-      while (*(staticitem = WCMD_parameter (thisSet->command, i, &itemStart, TRUE, FALSE))) {
+      while (*(staticitem = WCMD_parameter (thisSet->single->command, i, &itemStart, TRUE, FALSE))) {
 
         /*
          * If the parameter within the set has a wildcard then search for matching files
@@ -2516,7 +2516,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
      value needs to be the NEXT command to execute, which it either is, or
      we need to step over the closing bracket                                  */
   *cmdList = cmdEnd;
-  if (cmdEnd && cmdEnd->command == NULL) *cmdList = cmdEnd->nextcommand;
+  if (cmdEnd && cmdEnd->single->command == NULL) *cmdList = cmdEnd->nextcommand;
 }
 
 /**************************************************************************
@@ -2567,7 +2567,7 @@ void WCMD_give_help (const WCHAR *args)
  * FIXME: DOS is supposed to allow labels with spaces - we don't.
  */
 
-void WCMD_goto (CMD_LIST **cmdList) {
+void WCMD_goto (CMD_NODE **cmdList) {
 
   WCHAR string[MAX_PATH];
   WCHAR *labelend = NULL;
@@ -2903,7 +2903,7 @@ syntax_err:
  *
  * FIXME: Much more syntax checking needed!
  */
-void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
+void WCMD_if (WCHAR *p, CMD_NODE **cmdList)
 {
   int negate; /* Negate condition */
   int test;   /* Condition evaluation result */
@@ -4761,7 +4761,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
  *
  */
 
-void WCMD_exit (CMD_LIST **cmdList) {
+void WCMD_exit (CMD_NODE **cmdList) {
     int rc = wcstol(param1, NULL, 10); /* Note: wcstol of empty parameter is 0 */
 
     if (context && lstrcmpiW(quals, L"/B") == 0) {

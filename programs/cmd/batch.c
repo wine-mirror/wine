@@ -86,7 +86,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  */
 
   while (context -> skip_rest == FALSE) {
-      CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
+      CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
       if (!WCMD_ReadAndParseLine(NULL, &toExecute, h))
         break;
       /* Note: although this batch program itself may be called, we are not retrying

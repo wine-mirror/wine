@@ -45,14 +45,20 @@ typedef enum _CMDdelimiters {
 
 /* Data structure to hold commands to be processed */
 
-typedef struct _CMD_LIST {
+typedef struct _CMD_COMMAND
+{
   WCHAR              *command;     /* Command string to execute                */
   WCHAR              *redirects;   /* Redirects in place                       */
-  struct _CMD_LIST   *nextcommand; /* Next command string to execute           */
   CMD_DELIMITERS      prevDelim;   /* Previous delimiter                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
   WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
-} CMD_LIST;
+} CMD_COMMAND;
+
+typedef struct _CMD_NODE
+{
+    CMD_COMMAND      *single;
+    struct _CMD_NODE *nextcommand; /* Next command string to execute           */
+} CMD_NODE;
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);
@@ -68,12 +74,12 @@ void WCMD_directory (WCHAR *);
 void WCMD_echo (const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
-void WCMD_exit (CMD_LIST **cmdList);
-void WCMD_for (WCHAR *, CMD_LIST **cmdList);
+void WCMD_exit (CMD_NODE **cmdList);
+void WCMD_for (WCHAR *, CMD_NODE **cmdList);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 void WCMD_give_help (const WCHAR *args);
-void WCMD_goto (CMD_LIST **cmdList);
-void WCMD_if (WCHAR *, CMD_LIST **cmdList);
+void WCMD_goto (CMD_NODE **cmdList);
+void WCMD_if (WCHAR *, CMD_NODE **cmdList);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);
 void WCMD_move (void);
@@ -118,11 +124,11 @@ WCHAR *WCMD_LoadMessage(UINT id);
 void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
-WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
-CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket, BOOL retrycall);
-void      WCMD_free_commands(CMD_LIST *cmds);
+WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
+CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket, BOOL retrycall);
+void      WCMD_free_commands(CMD_NODE *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
-                        CMD_LIST **cmdList, BOOL retrycall);
+                        CMD_NODE **cmdList, BOOL retrycall);
 
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
@@ -163,7 +169,7 @@ typedef struct _BATCH_CONTEXT {
   int shift_count[10];	/* Offset in terms of shifts for %0 - %9 */
   struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
-  CMD_LIST *toExecute;  /* Commands left to be executed */
+  CMD_NODE *toExecute;  /* Commands left to be executed */
 } BATCH_CONTEXT;
 
 /* Data structure to handle building lists during recursive calls */
