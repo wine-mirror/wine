@@ -4310,7 +4310,7 @@ static void WINAPI d2d_device_GetFactory(ID2D1Device6 *iface, ID2D1Factory **fac
 }
 
 static HRESULT d2d_device_create_device_context(struct d2d_device *device,
-        D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext1 **context)
+        D2D1_DEVICE_CONTEXT_OPTIONS options, REFIID iid, void **context)
 {
     struct d2d_device_context *object;
     HRESULT hr;
@@ -4329,9 +4329,11 @@ static HRESULT d2d_device_create_device_context(struct d2d_device *device,
     }
 
     TRACE("Created device context %p.\n", object);
-    *context = (ID2D1DeviceContext1 *)&object->ID2D1DeviceContext6_iface;
 
-    return S_OK;
+    hr = ID2D1DeviceContext6_QueryInterface(&object->ID2D1DeviceContext6_iface, iid, context);
+    ID2D1DeviceContext6_Release(&object->ID2D1DeviceContext6_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device6 *iface, D2D1_DEVICE_CONTEXT_OPTIONS options,
@@ -4341,7 +4343,7 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext(ID2D1Device6 *iface, D2D1_D
 
     TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
-    return d2d_device_create_device_context(device, options, (ID2D1DeviceContext1 **)context);
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext, (void **)context);
 }
 
 static HRESULT WINAPI d2d_device_CreatePrintControl(ID2D1Device6 *iface, IWICImagingFactory *wic_factory,
@@ -4392,15 +4394,17 @@ static HRESULT WINAPI d2d_device_CreateDeviceContext1(ID2D1Device6 *iface, D2D1_
 
     TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
 
-    return d2d_device_create_device_context(device, options, context);
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext1, (void **)context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device2_CreateDeviceContext(ID2D1Device6 *iface,
         D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext2 **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext2, (void **)context);
 }
 
 static void STDMETHODCALLTYPE d2d_device_FlushDeviceContexts(ID2D1Device6 *iface,
@@ -4420,17 +4424,21 @@ static HRESULT STDMETHODCALLTYPE d2d_device_GetDxgiDevice(ID2D1Device6 *iface,
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device3_CreateDeviceContext(ID2D1Device6 *iface,
         D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext3 **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext3, (void **)context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device4_CreateDeviceContext(ID2D1Device6 *iface,
         D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext4 **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext4, (void **)context);
 }
 
 static void STDMETHODCALLTYPE d2d_device_SetMaximumColorGlyphCacheMemory(ID2D1Device6 *iface,
@@ -4449,17 +4457,21 @@ static UINT64 STDMETHODCALLTYPE d2d_device_GetMaximumColorGlyphCacheMemory(ID2D1
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device5_CreateDeviceContext(ID2D1Device6 *iface,
         D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext5 **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext5, (void **)context);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device6_CreateDeviceContext(ID2D1Device6 *iface,
         D2D1_DEVICE_CONTEXT_OPTIONS options, ID2D1DeviceContext6 **context)
 {
-    FIXME("iface %p, options %#x, context %p stub!\n", iface, options, context);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, context %p.\n", iface, options, context);
+
+    return d2d_device_create_device_context(device, options, &IID_ID2D1DeviceContext6, (void **)context);
 }
 
 static const struct ID2D1Device6Vtbl d2d_device_vtbl =
