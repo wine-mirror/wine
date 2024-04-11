@@ -67,6 +67,7 @@ static const WCHAR device_descW[] = {'D','e','v','i','c','e','D','e','s','c',0};
 static const WCHAR driver_descW[] = {'D','r','i','v','e','r','D','e','s','c',0};
 static const WCHAR yesW[] = {'Y','e','s',0};
 static const WCHAR noW[] = {'N','o',0};
+static const WCHAR modesW[] = {'M','o','d','e','s',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
@@ -431,10 +432,13 @@ static const char *debugstr_devmodew( const DEVMODEW *devmode )
 static BOOL write_source_mode( HKEY hkey, UINT index, const DEVMODEW *mode )
 {
     WCHAR bufferW[MAX_PATH] = {0};
-    char buffer[MAX_PATH];
 
-    snprintf( buffer, sizeof(buffer), "Modes\\%08X", index );
-    asciiz_to_unicode( bufferW, buffer );
+    assert( index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS );
+
+    if (index == ENUM_CURRENT_SETTINGS) asciiz_to_unicode( bufferW, "Current" );
+    else if (index == ENUM_REGISTRY_SETTINGS) asciiz_to_unicode( bufferW, "Registry" );
+    else return FALSE;
+
     return set_reg_value( hkey, bufferW, REG_BINARY, &mode->dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
 }
 
@@ -442,11 +446,15 @@ static BOOL read_source_mode( HKEY hkey, UINT index, DEVMODEW *mode )
 {
     char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(*mode)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
-    char buffer[MAX_PATH];
+    const char *key;
 
-    snprintf( buffer, sizeof(buffer), "Modes\\%08X", index );
-    if (!query_reg_ascii_value( hkey, buffer, value, sizeof(value_buf) )) return FALSE;
+    assert( index == ENUM_CURRENT_SETTINGS || index == ENUM_REGISTRY_SETTINGS );
 
+    if (index == ENUM_CURRENT_SETTINGS) key = "Current";
+    else if (index == ENUM_REGISTRY_SETTINGS) key = "Registry";
+    else return FALSE;
+
+    if (!query_reg_ascii_value( hkey, key, value, sizeof(value_buf) )) return FALSE;
     memcpy( &mode->dmFields, value->Data, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
     return TRUE;
 }
@@ -620,7 +628,6 @@ static BOOL reade_source_from_registry( unsigned int index, struct source *sourc
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     WCHAR *value_str = (WCHAR *)value->Data;
-    DEVMODEW *mode;
     DWORD i, size;
     HKEY hkey;
 
@@ -646,19 +653,18 @@ static BOOL reade_source_from_registry( unsigned int index, struct source *sourc
     if (query_reg_ascii_value( hkey, "ModeCount", value, sizeof(buffer) ) && value->Type == REG_DWORD)
         source->mode_count = *(const DWORD *)value->Data;
 
-    /* Modes, allocate an extra mode for easier iteration */
-    if ((source->modes = calloc( source->mode_count + 1, sizeof(DEVMODEW) )))
+    /* Modes */
+    size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data[(source->mode_count + 1) * sizeof(*source->modes)] );
+    if (!(value = malloc( size )) || !query_reg_ascii_value( hkey, "Modes", value, size )) free( value );
+    else
     {
-        for (i = 0, mode = source->modes; i < source->mode_count; i++)
-        {
-            mode->dmSize = offsetof(DEVMODEW, dmICMMethod);
-            if (!read_source_mode( hkey, i, mode )) break;
-            mode = NEXT_DEVMODEW(mode);
-        }
-        source->mode_count = i;
-
-        qsort(source->modes, source->mode_count, sizeof(*source->modes) + source->modes->dmDriverExtra, mode_compare);
+        source->modes = (DEVMODEW *)value;
+        source->mode_count = value->DataLength / sizeof(*source->modes);
+        memmove( source->modes, value->Data, value->DataLength );
+        memset( source->modes + source->mode_count, 0, sizeof(*source->modes) ); /* extra empty mode for easier iteration */
+        qsort( source->modes, source->mode_count, sizeof(*source->modes), mode_compare );
     }
+    value = (void *)buffer;
 
     /* DeviceID */
     size = query_reg_ascii_value( hkey, "GPUID", value, sizeof(buffer) );
@@ -1451,7 +1457,6 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
 static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    const DEVMODEW *mode;
     DEVMODEW dummy, detached = *current;
 
     TRACE( "current %s, modes_count %u, modes %p, param %p\n", debugstr_devmodew( current ), modes_count, modes, param );
@@ -1466,12 +1471,10 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
         write_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, current );
     write_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, current );
 
-    for (mode = modes; modes_count; mode = NEXT_DEVMODEW(mode), modes_count--)
-    {
-        TRACE( "mode: %s\n", debugstr_devmodew( mode ) );
-        if (write_source_mode( ctx->source_key, ctx->source.mode_count, mode )) ctx->source.mode_count++;
-    }
-    set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &ctx->source.mode_count, sizeof(ctx->source.mode_count) );
+    assert( !modes_count || modes->dmDriverExtra == 0 );
+    set_reg_value( ctx->source_key, modesW, REG_BINARY, modes, modes_count * sizeof(*modes) );
+    set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &modes_count, sizeof(modes_count) );
+    ctx->source.mode_count = modes_count;
 }
 
 static const struct gdi_device_manager device_manager =
