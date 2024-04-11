@@ -924,9 +924,7 @@ struct device_manager_ctx
     HKEY source_key;
     /* for the virtual desktop settings */
     BOOL is_primary;
-    UINT primary_bpp;
-    UINT primary_width;
-    UINT primary_height;
+    DEVMODEW primary;
 };
 
 static void link_device( const char *instance, const char *class )
@@ -1828,13 +1826,7 @@ static void desktop_add_monitor( const struct gdi_monitor *monitor, void *param 
 static void desktop_add_mode( const DEVMODEW *mode, BOOL current, void *param )
 {
     struct device_manager_ctx *ctx = param;
-
-    if (ctx->is_primary && current)
-    {
-        ctx->primary_bpp = mode->dmBitsPerPel;
-        ctx->primary_width = mode->dmPelsWidth;
-        ctx->primary_height = mode->dmPelsHeight;
-    }
+    if (ctx->is_primary && current) ctx->primary = *mode;
 }
 
 static const struct gdi_device_manager desktop_device_manager =
@@ -1891,20 +1883,16 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     struct device_manager_ctx desktop_ctx = {0};
     UINT screen_width, screen_height, max_width, max_height;
     unsigned int depths[] = {8, 16, 0};
-    DEVMODEW current, mode =
-    {
-        .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-        .dmDisplayFrequency = 60,
-    };
+    DEVMODEW current;
     UINT i, j;
 
     if (!force) return TRUE;
     /* in virtual desktop mode, read the device list from the user driver but expose virtual devices */
     if (!update_display_devices( &desktop_device_manager, TRUE, &desktop_ctx )) return FALSE;
 
-    max_width = desktop_ctx.primary_width;
-    max_height = desktop_ctx.primary_height;
-    depths[ARRAY_SIZE(depths) - 1] = desktop_ctx.primary_bpp;
+    max_width = desktop_ctx.primary.dmPelsWidth;
+    max_height = desktop_ctx.primary.dmPelsHeight;
+    depths[ARRAY_SIZE(depths) - 1] = desktop_ctx.primary.dmBitsPerPel;
 
     if (!get_default_desktop_size( &screen_width, &screen_height ))
     {
@@ -1916,9 +1904,7 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     add_source( "Default", source_flags, ctx );
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &current ))
     {
-        current = mode;
-        current.dmFields |= DM_POSITION;
-        current.dmBitsPerPel = desktop_ctx.primary_bpp;
+        current = desktop_ctx.primary;
         current.dmPelsWidth = screen_width;
         current.dmPelsHeight = screen_height;
     }
@@ -1931,7 +1917,12 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
 
     for (i = 0; i < ARRAY_SIZE(depths); ++i)
     {
-        mode.dmBitsPerPel = depths[i];
+        DEVMODEW mode =
+        {
+            .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+            .dmDisplayFrequency = 60,
+            .dmBitsPerPel = depths[i],
+        };
 
         for (j = 0; j < ARRAY_SIZE(screen_sizes); ++j)
         {
