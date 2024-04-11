@@ -640,8 +640,15 @@ case $host_os in
     WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     case $HOST_ARCH in
-      i386|x86_64) wine_use_preloader=yes ;;
-      *)           wine_use_preloader=no ;;
+      i386) wine_use_preloader=yes ;;
+      x86_64)
+        dnl If the -no_huge linker option is present (added in Xcode 15.3), use zerofill sections instead of the preloader
+        WINE_TRY_CFLAGS([-Wl,-no_huge],
+           [wine_use_preloader=no
+            WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-no_pie,-image_base,0x200000000,-no_huge,-no_fixup_chains,-segalign,0x1000,-segaddr,WINE_RESERVE,0x1000,-segaddr,WINE_TOP_DOWN,0x7ff000000000"],
+           [wine_use_preloader=yes])
+        ;;
+      *)    wine_use_preloader=no ;;
     esac
 
     if test "$wine_use_preloader" = "yes"

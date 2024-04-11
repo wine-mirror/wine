@@ -9534,8 +9534,41 @@ fi
     WINELOADER_LDFLAGS="-Wl,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     case $HOST_ARCH in
-      i386|x86_64) wine_use_preloader=yes ;;
-      *)           wine_use_preloader=no ;;
+      i386) wine_use_preloader=yes ;;
+      x86_64)
+                { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_huge" >&5
+printf %s "checking whether the compiler supports -Wl,-no_huge... " >&6; }
+if test ${ac_cv_cflags__Wl__no_huge+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-no_huge"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__no_huge=yes
+else $as_nop
+  ac_cv_cflags__Wl__no_huge=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_huge" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__no_huge" >&6; }
+if test "x$ac_cv_cflags__Wl__no_huge" = xyes
+then :
+  wine_use_preloader=no
+            WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-no_pie,-image_base,0x200000000,-no_huge,-no_fixup_chains,-segalign,0x1000,-segaddr,WINE_RESERVE,0x1000,-segaddr,WINE_TOP_DOWN,0x7ff000000000"
+else $as_nop
+  wine_use_preloader=yes
+fi
+        ;;
+      *)    wine_use_preloader=no ;;
     esac
 
     if test "$wine_use_preloader" = "yes"

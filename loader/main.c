@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -38,8 +39,50 @@
 
 extern char **environ;
 
+#if defined(__APPLE__) && defined(__x86_64__) && !defined(HAVE_WINE_PRELOADER)
+
+/* Not using the preloader on x86_64:
+ * Reserve the same areas as the preloader does, but using zero-fill sections
+ * (the only way to prevent system frameworks from using them, including allocations
+ * before main() runs).
+ */
+__asm__(".zerofill WINE_RESERVE,WINE_RESERVE");
+static char __wine_reserve[0x1fffff000] __attribute__((section("WINE_RESERVE, WINE_RESERVE")));
+
+__asm__(".zerofill WINE_TOP_DOWN,WINE_TOP_DOWN");
+static char __wine_top_down[0x001ff0000] __attribute__((section("WINE_TOP_DOWN, WINE_TOP_DOWN")));
+
+static const struct wine_preload_info preload_info[] =
+{
+    { __wine_reserve,  sizeof(__wine_reserve)  }, /*         0x1000 -    0x200000000: low 8GB */
+    { __wine_top_down, sizeof(__wine_top_down) }, /* 0x7ff000000000 - 0x7ff001ff0000: top-down allocations + virtual heap */
+    { 0, 0 }                                      /* end of list */
+};
+
+const __attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = preload_info;
+
+static void init_reserved_areas(void)
+{
+    int i;
+
+    for (i = 0; wine_main_preload_info[i].size != 0; i++)
+    {
+        /* Match how the preloader maps reserved areas: */
+        mmap(wine_main_preload_info[i].addr, wine_main_preload_info[i].size, PROT_NONE,
+             MAP_FIXED | MAP_NORESERVE | MAP_PRIVATE | MAP_ANON, -1, 0);
+    }
+}
+
+#else
+
 /* the preloader will set this variable */
 const __attribute((visibility("default"))) struct wine_preload_info *wine_main_preload_info = NULL;
+
+static void init_reserved_areas(void)
+{
+}
+
+#endif
 
 /* canonicalize path and return its directory name */
 static char *realpath_dirname( const char *name )
@@ -176,6 +219,8 @@ static void *load_ntdll( char *argv0 )
 int main( int argc, char *argv[] )
 {
     void *handle;
+
+    init_reserved_areas();
 
     if ((handle = load_ntdll( argv[0] )))
     {
