@@ -21,7 +21,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 24
+#define WINE_VULKAN_DRIVER_VERSION 25
 
 struct vulkan_funcs
 {
@@ -41,6 +41,8 @@ struct vulkan_funcs
     /* winevulkan specific functions */
     const char *(*p_get_host_surface_extension)(void);
     VkSurfaceKHR (*p_wine_get_host_surface)(VkSurfaceKHR);
+
+    void (*p_vulkan_surface_presented)(HWND, VkResult);
 };
 
 #endif /* __WINE_VULKAN_DRIVER_H */

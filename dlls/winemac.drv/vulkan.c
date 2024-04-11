@@ -255,6 +255,10 @@ static VkSurfaceKHR macdrv_wine_get_host_surface(VkSurfaceKHR surface)
     return mac_surface->host_surface;
 }
 
+static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
+{
+}
+
 static const struct vulkan_funcs vulkan_funcs =
 {
     macdrv_vkCreateSwapchainKHR,
@@ -268,6 +272,7 @@ static const struct vulkan_funcs vulkan_funcs =
 
     macdrv_get_host_surface_extension,
     macdrv_wine_get_host_surface,
+    macdrv_vulkan_surface_presented,
 };
 
 UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs)

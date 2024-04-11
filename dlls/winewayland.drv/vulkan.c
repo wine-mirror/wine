@@ -171,17 +171,6 @@ static VkResult check_queue_present(const VkPresentInfoKHR *present_info,
             int client_height = wayland_surface->window.client_rect.bottom -
                                 wayland_surface->window.client_rect.top;
 
-            wayland_surface_ensure_contents(wayland_surface);
-
-            /* Handle any processed configure request, to ensure the related
-             * surface state is applied by the compositor. */
-            if (wayland_surface->processing.serial &&
-                wayland_surface->processing.processed &&
-                wayland_surface_reconfigure(wayland_surface))
-            {
-                wl_surface_commit(wayland_surface->wl_surface);
-            }
-
             pthread_mutex_unlock(&wayland_surface->mutex);
 
             if (client_width == wine_vk_swapchain->extent.width &&
@@ -386,6 +375,27 @@ static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
     return wine_vk_surface_from_handle(surface)->host_surface;
 }
 
+static void wayland_vulkan_surface_presented(HWND hwnd, VkResult result)
+{
+    struct wayland_surface *wayland_surface;
+
+    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
+    {
+        wayland_surface_ensure_contents(wayland_surface);
+
+        /* Handle any processed configure request, to ensure the related
+         * surface state is applied by the compositor. */
+        if (wayland_surface->processing.serial &&
+            wayland_surface->processing.processed &&
+            wayland_surface_reconfigure(wayland_surface))
+        {
+            wl_surface_commit(wayland_surface->wl_surface);
+        }
+
+        pthread_mutex_unlock(&wayland_surface->mutex);
+    }
+}
+
 static const struct vulkan_funcs vulkan_funcs =
 {
     .p_vkCreateSwapchainKHR = wayland_vkCreateSwapchainKHR,
@@ -396,6 +406,7 @@ static const struct vulkan_funcs vulkan_funcs =
     .p_vkQueuePresentKHR = wayland_vkQueuePresentKHR,
     .p_get_host_surface_extension = wayland_get_host_surface_extension,
     .p_wine_get_host_surface = wayland_wine_get_host_surface,
+    .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 };
 
 /**********************************************************************

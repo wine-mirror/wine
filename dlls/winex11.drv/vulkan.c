@@ -272,6 +272,10 @@ static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
     return x11_surface->host_surface;
 }
 
+static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
+{
+}
+
 static const struct vulkan_funcs vulkan_funcs =
 {
     X11DRV_vkCreateSwapchainKHR,
@@ -285,6 +289,7 @@ static const struct vulkan_funcs vulkan_funcs =
 
     X11DRV_get_host_surface_extension,
     X11DRV_wine_get_host_surface,
+    X11DRV_vulkan_surface_presented,
 };
 
 UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, struct vulkan_funcs *driver_funcs )
