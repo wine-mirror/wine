@@ -1439,13 +1439,6 @@ static void add_mode( const DEVMODEW *mode, BOOL current, void *param )
     struct device_manager_ctx *ctx = param;
     DEVMODEW nopos_mode;
 
-    if (!ctx->gpu.source_count)
-    {
-        static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
-        TRACE( "adding default fake source\n" );
-        add_source( "Default", source_flags, ctx );
-    }
-
     nopos_mode = *mode;
     nopos_mode.dmPosition.x = 0;
     nopos_mode.dmPosition.y = 0;
