@@ -91,10 +91,10 @@ static BOOL xf86vm_get_id(const WCHAR *device_name, BOOL is_primary, x11drv_sett
     return TRUE;
 }
 
-static void add_xf86vm_mode(DEVMODEW *mode, DWORD depth, const XF86VidModeModeInfo *mode_info)
+static void add_xf86vm_mode( DEVMODEW *mode, DWORD depth, const XF86VidModeModeInfo *mode_info, BOOL full )
 {
     mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = sizeof(mode_info);
+    mode->dmDriverExtra = full ? sizeof(mode_info) : 0;
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (mode_info->htotal && mode_info->vtotal)
     {
@@ -106,10 +106,10 @@ static void add_xf86vm_mode(DEVMODEW *mode, DWORD depth, const XF86VidModeModeIn
     mode->dmPelsWidth = mode_info->hdisplay;
     mode->dmPelsHeight = mode_info->vdisplay;
     mode->dmDisplayFlags = 0;
-    memcpy((BYTE *)mode + sizeof(*mode), &mode_info, sizeof(mode_info));
+    if (full) memcpy( mode + 1, &mode_info, sizeof(mode_info) );
 }
 
-static BOOL xf86vm_get_modes(x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count)
+static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count, BOOL full )
 {
     INT xf86vm_mode_idx, xf86vm_mode_count;
     XF86VidModeModeInfo **xf86vm_modes;
@@ -139,12 +139,12 @@ static BOOL xf86vm_get_modes(x11drv_settings_id id, DWORD flags, DEVMODEW **new_
     memcpy(ptr, &xf86vm_modes, sizeof(xf86vm_modes));
     modes = (DEVMODEW *)(ptr + sizeof(xf86vm_modes));
 
-    for (depth_idx = 0; depth_idx < DEPTH_COUNT; ++depth_idx)
+    for (depth_idx = 0, mode = modes; depth_idx < DEPTH_COUNT; ++depth_idx)
     {
         for (xf86vm_mode_idx = 0; xf86vm_mode_idx < xf86vm_mode_count; ++xf86vm_mode_idx)
         {
-            mode = (DEVMODEW *)((BYTE *)modes + (sizeof(DEVMODEW) + sizeof(XF86VidModeModeInfo *)) * mode_idx++);
-            add_xf86vm_mode(mode, depths[depth_idx], xf86vm_modes[xf86vm_mode_idx]);
+            add_xf86vm_mode( mode, depths[depth_idx], xf86vm_modes[xf86vm_mode_idx], full );
+            mode = NEXT_DEVMODEW( mode );
         }
     }
 

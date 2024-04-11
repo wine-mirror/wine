@@ -726,7 +726,7 @@ struct x11drv_settings_handler
      * dmDisplayFlags and dmDisplayFrequency
      *
      * Return FALSE on failure with parameters unchanged and error code set. Return TRUE on success */
-    BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, DEVMODEW **modes, UINT *mode_count);
+    BOOL (*get_modes)(x11drv_settings_id id, DWORD flags, DEVMODEW **modes, UINT *mode_count, BOOL full);
 
     /* free_modes() will be called to free the mode list returned from get_modes() */
     void (*free_modes)(DEVMODEW *modes);
@@ -746,6 +746,8 @@ struct x11drv_settings_handler
      * Return DISP_CHANGE_*, same as ChangeDisplaySettingsExW() return values */
     LONG (*set_current_mode)(x11drv_settings_id id, const DEVMODEW *mode);
 };
+
+#define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
 extern void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *handler);
 

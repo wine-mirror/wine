@@ -152,10 +152,10 @@ static BOOL xrandr10_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
 }
 
 static void add_xrandr10_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD height,
-                               DWORD frequency, SizeID size_id )
+                               DWORD frequency, SizeID size_id, BOOL full )
 {
     mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = sizeof(SizeID);
+    mode->dmDriverExtra = full ? sizeof(SizeID) : 0;
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
                      DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (frequency)
@@ -168,10 +168,10 @@ static void add_xrandr10_mode( DEVMODEW *mode, DWORD depth, DWORD width, DWORD h
     mode->dmPelsWidth = width;
     mode->dmPelsHeight = height;
     mode->dmDisplayFlags = 0;
-    memcpy( (BYTE *)mode + sizeof(*mode), &size_id, sizeof(size_id) );
+    if (full) memcpy( mode + 1, &size_id, sizeof(size_id) );
 }
 
-static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *new_mode_count )
+static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *new_mode_count, BOOL full )
 {
     INT size_idx, depth_idx, rate_idx, mode_idx = 0;
     INT size_count, rate_count, mode_count = 0;
@@ -201,24 +201,24 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
         return FALSE;
     }
 
-    for (size_idx = 0; size_idx < size_count; ++size_idx)
+    for (size_idx = 0, mode = modes; size_idx < size_count; ++size_idx)
     {
         for (depth_idx = 0; depth_idx < DEPTH_COUNT; ++depth_idx)
         {
             rates = pXRRRates( gdi_display, DefaultScreen( gdi_display ), size_idx, &rate_count );
             if (!rate_count)
             {
-                mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*mode) + sizeof(SizeID)) * mode_idx++);
                 add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
-                                   sizes[size_idx].height, 0, size_idx );
+                                   sizes[size_idx].height, 0, size_idx, full );
+                mode = NEXT_DEVMODEW( mode );
                 continue;
             }
 
             for (rate_idx = 0; rate_idx < rate_count; ++rate_idx)
             {
-                mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*mode) + sizeof(SizeID)) * mode_idx++);
                 add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
-                                   sizes[size_idx].height, rates[rate_idx], size_idx );
+                                   sizes[size_idx].height, rates[rate_idx], size_idx, full );
+                mode = NEXT_DEVMODEW( mode );
             }
         }
     }
@@ -1316,10 +1316,10 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
 }
 
 static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, DWORD frequency,
-                               DWORD orientation )
+                               DWORD orientation, BOOL full )
 {
     mode->dmSize = sizeof(*mode);
-    mode->dmDriverExtra = sizeof(RRMode);
+    mode->dmDriverExtra = full ? sizeof(RRMode) : 0;
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH |
                      DM_PELSHEIGHT | DM_DISPLAYFLAGS;
     if (frequency)
@@ -1340,10 +1340,10 @@ static void add_xrandr14_mode( DEVMODEW *mode, XRRModeInfo *info, DWORD depth, D
     mode->dmDisplayOrientation = orientation;
     mode->dmBitsPerPel = depth;
     mode->dmDisplayFlags = 0;
-    memcpy( (BYTE *)mode + sizeof(*mode), &info->id, sizeof(info->id) );
+    if (full) memcpy( mode + 1, &info->id, sizeof(info->id) );
 }
 
-static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count )
+static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new_modes, UINT *mode_count, BOOL full )
 {
     DWORD frequency, orientation, orientation_count;
     XRRScreenResources *screen_resources;
@@ -1415,7 +1415,7 @@ static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
     if (!modes)
         goto done;
 
-    for (i = 0; i < output_info->nmode; ++i)
+    for (i = 0, mode = modes; i < output_info->nmode; ++i)
     {
         for (j = 0; j < screen_resources->nmode; ++j)
         {
@@ -1432,8 +1432,8 @@ static BOOL xrandr14_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
                     if (!((1 << orientation) & rotations))
                         continue;
 
-                    mode = (DEVMODEW *)((BYTE *)modes + (sizeof(*modes) + sizeof(RRMode)) * mode_idx);
-                    add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency, orientation );
+                    add_xrandr14_mode( mode, mode_info, depths[depth_idx], frequency, orientation, full );
+                    mode = NEXT_DEVMODEW( mode );
                     ++mode_idx;
                 }
             }
