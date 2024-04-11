@@ -1140,7 +1140,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
  * Copy bits from a window surface; helper for move_window_bits and move_window_bits_parent.
  */
 static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
-                                    const RECT *dst, const RECT *src )
+                                    const RECT *dst, const RECT *src, BOOL same )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -1149,13 +1149,23 @@ static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
     HRGN rgn = get_update_region( hwnd, &flags, NULL );
     HDC hdc = NtUserGetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
 
-    bits = surface->funcs->get_info( surface, info );
-    surface->funcs->lock( surface );
-    NtGdiSetDIBitsToDeviceInternal( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
-                                    src->left - surface->rect.left, surface->rect.bottom - src->bottom,
-                                    0, surface->rect.bottom - surface->rect.top,
-                                    bits, info, DIB_RGB_COLORS, 0, 0, FALSE, NULL );
-    surface->funcs->unlock( surface );
+    if (same)
+    {
+        RECT rect = *src;
+        NtGdiStretchBlt( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
+                         hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SRCCOPY, 0 );
+    }
+    else
+    {
+        bits = surface->funcs->get_info( surface, info );
+        surface->funcs->lock( surface );
+        NtGdiSetDIBitsToDeviceInternal( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
+                                        src->left - surface->rect.left, surface->rect.bottom - src->bottom,
+                                        0, surface->rect.bottom - surface->rect.top,
+                                        bits, info, DIB_RGB_COLORS, 0, 0, FALSE, NULL );
+        surface->funcs->unlock( surface );
+    }
+
     NtUserReleaseDC( hwnd, hdc );
 }
 
@@ -1177,9 +1187,10 @@ void move_window_bits( HWND hwnd, struct window_surface *old_surface,
         src.top - old_visible_rect->top != dst.top - visible_rect->top)
     {
         TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
-        OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
+        if (new_surface != old_surface) OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
+        else OffsetRect( &src, -window_rect->left, -window_rect->top );
         OffsetRect( &dst, -window_rect->left, -window_rect->top );
-        copy_bits_from_surface( hwnd, old_surface, &dst, &src );
+        copy_bits_from_surface( hwnd, old_surface, &dst, &src, new_surface == old_surface );
     }
 }
 
@@ -1208,13 +1219,12 @@ void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, c
 
     TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
     map_window_points( NtUserGetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2, get_thread_dpi() );
-    OffsetRect( &src, win->client_rect.left - win->visible_rect.left,
-                win->client_rect.top - win->visible_rect.top );
+    OffsetRect( &src, -window_rect->left, -window_rect->top );
     OffsetRect( &dst, -window_rect->left, -window_rect->top );
     window_surface_add_ref( surface );
     release_win_ptr( win );
 
-    copy_bits_from_surface( hwnd, surface, &dst, &src );
+    copy_bits_from_surface( hwnd, surface, &dst, &src, TRUE );
     window_surface_release( surface );
 }
 
