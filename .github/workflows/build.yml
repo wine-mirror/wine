@@ -2,8 +2,6 @@ name: Build Wine
 
 on:
   push:
-    branches:
-      - '7.7'
   workflow_dispatch:
 
 env: 
@@ -372,6 +370,7 @@ jobs:
           path: SUMS.sha
 
       - name: Upload Libraries to WhiskyBucket
+        if: ${{ github.ref == 'refs/heads/7.7' }}
         env:
           RCLONE_CONFIG_R2_TYPE: s3
           RCLONE_CONFIG_R2_PROVIDER: Cloudflare
