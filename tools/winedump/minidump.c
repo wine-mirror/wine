@@ -2,6 +2,7 @@
  *	MiniDump dumping utility
  *
  * 	Copyright 2005 Eric Pouech
+ * 	          2024 Eric Pouech for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -66,12 +67,13 @@ void mdmp_dump(void)
         return;
     }
 
-    printf("Signature: %#x (%.4s)\n", hdr->Signature, (const char*)&hdr->Signature);
-    printf("Version: %#x\n", hdr->Version);
-    printf("NumberOfStreams: %u\n", hdr->NumberOfStreams);
-    printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
-    printf("CheckSum: %#x (%u)\n", hdr->CheckSum, hdr->CheckSum);
-    printf("TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
+    printf("Header\n");
+    printf("  Signature: %#x (%.4s)\n", hdr->Signature, (const char*)&hdr->Signature);
+    printf("  Version: %#x\n", hdr->Version);
+    printf("  NumberOfStreams: %u\n", hdr->NumberOfStreams);
+    printf("  StreamDirectoryRva: %#x\n", (UINT)hdr->StreamDirectoryRva);
+    printf("  CheckSum: %#x (%u)\n", hdr->CheckSum, hdr->CheckSum);
+    printf("  TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
     printf("Flags: %s\n", get_hexint64_str(hdr->Flags));
 
     for (idx = 0; idx < hdr->NumberOfStreams; ++idx)
@@ -81,29 +83,32 @@ void mdmp_dump(void)
 
         stream = PRD(dir->Location.Rva, dir->Location.DataSize);
 
-        printf("Stream [%u]: ", idx);
         switch (dir->StreamType)
         {
+        case UnusedStream:
+            printf("Stream [%u]: Unused:\n", idx);
+            break;
         case ThreadListStream:
             if (globals_dump_sect("thread"))
             {
                 const MINIDUMP_THREAD_LIST *mtl = stream;
                 const MINIDUMP_THREAD *mt = mtl->Threads;
 
-                printf("Threads: %u\n", (UINT)mtl->NumberOfThreads);
+                printf("Stream [%u]: Threads:\n", idx);
+                printf("  NumberOfThreads: %u\n", mtl->NumberOfThreads);
                 for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
                 {
-                    printf("Thread: #%d\n", i);
-                    printf("  ThreadId: %u\n", mt->ThreadId);
-                    printf("  SuspendCount: %u\n", mt->SuspendCount);
-                    printf("  PriorityClass: %u\n", mt->PriorityClass);
-                    printf("  Priority: %u\n", mt->Priority);
+                    printf("  Thread: #%d\n", i);
+                    printf("    ThreadId: %#x\n", mt->ThreadId);
+                    printf("    SuspendCount: %u\n", mt->SuspendCount);
+                    printf("    PriorityClass: %u\n", mt->PriorityClass);
+                    printf("    Priority: %u\n", mt->Priority);
                     printf("  Teb: %s\n", get_hexint64_str(mt->Teb));
                     printf("  Stack: %s +%#x\n", get_hexint64_str(mt->Stack.StartOfMemoryRange), mt->Stack.Memory.DataSize);
                     if (globals_dump_sect("content"))
-                        dump_mdmp_data(&mt->Stack.Memory, "    ");
+                        dump_mdmp_data(&mt->Stack.Memory, "      ");
                     printf("    ThreadContext:\n");
-                    dump_mdmp_data(&mt->ThreadContext, "    ");
+                    dump_mdmp_data(&mt->ThreadContext, "      ");
                 }
             }
             break;
@@ -116,9 +121,9 @@ void mdmp_dump(void)
                 const char*                 p1;
                 const char*                 p2;
 
-                printf("Modules (%s): %u\n",
-                       dir->StreamType == ModuleListStream ? "PE" : "ELF",
-                       mml->NumberOfModules);
+                printf("Stream [%u]: Modules (%s):\n", idx,
+                       dir->StreamType == ModuleListStream ? "PE" : "ELF");
+                printf("  NumberOfModules: %u\n", mml->NumberOfModules);
                 for (i = 0; i < mml->NumberOfModules; i++, mm++)
                 {
                     printf("  Module #%d:\n", i);
@@ -188,10 +193,10 @@ void mdmp_dump(void)
                            (UINT)mm->VersionInfo.dwFileDateMS, (UINT)mm->VersionInfo.dwFileDateLS);
                     printf("    CvRecord: <%u>\n", (UINT)mm->CvRecord.DataSize);
                     if (globals_dump_sect("content"))
-                        dump_mdmp_data(&mm->CvRecord, "    ");
+                        dump_mdmp_data(&mm->CvRecord, "      ");
                     printf("    MiscRecord: <%u>\n", (UINT)mm->MiscRecord.DataSize);
                     if (globals_dump_sect("content"))
-                        dump_mdmp_data(&mm->MiscRecord, "    ");
+                        dump_mdmp_data(&mm->MiscRecord, "      ");
                     printf("    Reserved0: %s\n", get_hexint64_str(mm->Reserved0));
                     printf("    Reserved1: %s\n", get_hexint64_str(mm->Reserved1));
                 }
@@ -203,14 +208,15 @@ void mdmp_dump(void)
                 const MINIDUMP_MEMORY_LIST *mml = stream;
                 const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = mml->MemoryRanges;
 
-                printf("Memory Ranges: %u\n", mml->NumberOfMemoryRanges);
+                printf("Stream [%u]: Memory Ranges:\n", idx);
+                printf("  NumberOfMemoryRanges: %u\n", mml->NumberOfMemoryRanges);
                 for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
                 {
                     printf("  Memory Range #%d:\n", i);
                     dump_mdmp_data(&mmd->Memory, "    ");
                     printf("    Range: %s +%#x\n", get_hexint64_str(mmd->StartOfMemoryRange), mmd->Memory.DataSize);
                     if (globals_dump_sect("content"))
-                        dump_mdmp_data(&mmd->Memory, "    ");
+                        dump_mdmp_data(&mmd->Memory, "      ");
                 }
             }
             break;
@@ -221,7 +227,7 @@ void mdmp_dump(void)
                 const char*                 str;
                 char                        tmp[128];
 
-                printf("System Information:\n");
+                printf("Stream [%u]: System Information:\n", idx);
                 switch (msi->ProcessorArchitecture)
                 {
                 case PROCESSOR_ARCHITECTURE_UNKNOWN:
@@ -400,7 +406,7 @@ void mdmp_dump(void)
             {
                 const MINIDUMP_EXCEPTION_STREAM *mes = stream;
 
-                printf("Exception:\n");
+                printf("Stream [%u]: Exception:\n", idx);
                 printf("  ThreadId: %#x\n", mes->ThreadId);
                 printf("  ExceptionRecord:\n");
                 printf("  ExceptionCode: %#x\n", mes->ExceptionRecord.ExceptionCode);
@@ -421,7 +427,7 @@ void mdmp_dump(void)
             {
                 const MINIDUMP_HANDLE_DATA_STREAM *mhd = stream;
 
-                printf("Handle data:\n");
+                printf("Stream [%u]: Handle data:\n", idx);
                 printf("  SizeOfHeader: %u\n", mhd->SizeOfHeader);
                 printf("  SizeOfDescriptor: %u\n", mhd->SizeOfDescriptor);
                 printf("  NumberOfDescriptors: %u\n", mhd->NumberOfDescriptors);
@@ -455,7 +461,7 @@ void mdmp_dump(void)
             {
                 const MINIDUMP_THREAD_INFO_LIST *til = stream;
 
-                printf("Thread Info List:\n");
+                printf("Stream [%u]: Thread Info List:\n", idx);
                 printf("  SizeOfHeader: %u\n", (UINT)til->SizeOfHeader);
                 printf("  SizeOfEntry: %u\n", (UINT)til->SizeOfEntry);
                 printf("  NumberOfEntries: %u\n", (UINT)til->NumberOfEntries);
@@ -466,7 +472,7 @@ void mdmp_dump(void)
                     const MINIDUMP_THREAD_INFO *ti = (void *)ptr;
 
                     printf("  Thread [%u]:\n", i);
-                    printf("    ThreadId: %u\n", ti->ThreadId);
+                    printf("    ThreadId: %#x\n", ti->ThreadId);
                     printf("    DumpFlags: %#x\n", ti->DumpFlags);
                     printf("    DumpError: %u\n", ti->DumpError);
                     printf("    ExitStatus: %u\n", ti->ExitStatus);
@@ -486,7 +492,7 @@ void mdmp_dump(void)
             {
                 const MINIDUMP_UNLOADED_MODULE_LIST *uml = stream;
 
-                printf("Unloaded module list:\n");
+                printf("Stream [%u]: Unloaded module list:\n", idx);
                 printf("  SizeOfHeader: %u\n", uml->SizeOfHeader);
                 printf("  SizeOfEntry: %u\n", uml->SizeOfEntry);
                 printf("  NumberOfEntries: %u\n", uml->NumberOfEntries);
@@ -508,8 +514,8 @@ void mdmp_dump(void)
             }
             break;
         default:
-            printf("NIY %d\n", dir->StreamType);
-            printf("  RVA: %u\n", (UINT)dir->Location.Rva);
+            printf("Stream [%u]: NIY %d\n", idx, dir->StreamType);
+            printf("  RVA: %#x\n", (UINT)dir->Location.Rva);
             printf("  Size: %u\n", dir->Location.DataSize);
             if (globals_dump_sect("content"))
                 dump_mdmp_data(&dir->Location, "    ");
