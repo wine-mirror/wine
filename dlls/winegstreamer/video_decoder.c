@@ -831,13 +831,6 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
     decoder->output_type_count = output_type_count;
     decoder->output_types = output_types;
 
-    decoder->input_info.dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
-            | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
-    decoder->input_info.cbSize = 0x1000;
-    decoder->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
-            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
-    decoder->output_info.cbSize = 1920 * 1088 * 2;
-
     if (FAILED(hr = MFCreateMediaType(&decoder->stream_type)))
         goto failed;
     if (FAILED(hr = MFCreateAttributes(&decoder->attributes, 16)))
@@ -897,6 +890,7 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     };
     static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_VIDEO_H264};
     struct wg_transform_attrs attrs = {0};
+    struct video_decoder *decoder;
     wg_transform_t transform;
     IMFTransform *iface;
     HRESULT hr;
@@ -913,6 +907,14 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     if (FAILED(hr = video_decoder_create_with_types(h264_decoder_input_types, ARRAY_SIZE(h264_decoder_input_types),
             video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), &iface)))
         return hr;
+    decoder = impl_from_IMFTransform(iface);
+
+    decoder->input_info.dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
+    decoder->input_info.cbSize = 0x1000;
+    decoder->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
+            | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
+    decoder->output_info.cbSize = 1920 * 1088 * 2;
 
     hr = IMFTransform_QueryInterface(iface, riid, out);
     IMFTransform_Release(iface);
