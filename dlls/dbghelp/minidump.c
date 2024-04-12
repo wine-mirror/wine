@@ -772,6 +772,60 @@ static  unsigned        dump_threads(struct dump_context* dc)
 }
 
 /******************************************************************
+ *		dump_threads_names
+ *
+ * Dumps into File the information about threads's name
+ */
+static  unsigned        dump_threads_names(struct dump_context* dc)
+{
+    MINIDUMP_THREAD_NAME        md_thread_name;
+    MINIDUMP_THREAD_NAME_LIST   md_thread_name_list;
+    unsigned                    i, sz;
+    RVA                         rva_base;
+
+    /* FIXME this could be optimized
+     * (we use dc->num_threads disk space, could be optimized to the number of threads with name)
+     */
+
+    rva_base = dc->rva;
+    dc->rva += sz = offsetof(MINIDUMP_THREAD_NAME_LIST, ThreadNames[dc->num_threads]);
+
+    md_thread_name_list.NumberOfThreadNames = 0;
+
+    for (i = 0; i < dc->num_threads; i++)
+    {
+        HANDLE  thread;
+        WCHAR  *thread_name;
+
+        if ((thread = OpenThread(THREAD_ALL_ACCESS, FALSE, dc->threads[i].tid)) != NULL)
+        {
+            if (GetThreadDescription(thread, &thread_name))
+            {
+                MINIDUMP_STRING md_string;
+
+                md_thread_name.ThreadId = dc->threads[i].tid;
+                md_thread_name.RvaOfThreadName = dc->rva;
+
+                md_string.Length = wcslen(thread_name) * sizeof(WCHAR);
+                append(dc, &md_string.Length, sizeof(md_string.Length));
+                append(dc, thread_name, md_string.Length);
+
+                writeat(dc,
+                        rva_base + offsetof(MINIDUMP_THREAD_NAME_LIST, ThreadNames[md_thread_name_list.NumberOfThreadNames]),
+                        &md_thread_name, sizeof(md_thread_name));
+                md_thread_name_list.NumberOfThreadNames++;
+                LocalFree(thread_name);
+            }
+            CloseHandle(thread);
+        }
+    }
+    if (!md_thread_name_list.NumberOfThreadNames) return 0;
+
+    writeat(dc, rva_base, &md_thread_name_list.NumberOfThreadNames, sizeof(md_thread_name_list.NumberOfThreadNames));
+    return sz;
+}
+
+/******************************************************************
  *		dump_memory_info
  *
  * dumps information about the memory of the process (stack of the threads)
@@ -896,7 +950,7 @@ static DWORD CALLBACK write_minidump(void *_args)
     fetch_modules_info(dc);
 
     /* 1) init */
-    nStreams = 6 + (dc->except_param ? 1 : 0) +
+    nStreams = 7 + (dc->except_param ? 1 : 0) +
         (dc->user_stream ? dc->user_stream->UserStreamCount : 0);
 
     /* pad the directory size to a multiple of 4 for alignment purposes */
@@ -930,6 +984,12 @@ static DWORD CALLBACK write_minidump(void *_args)
     mdDir.Location.DataSize = dump_threads(dc);
     writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
             &mdDir, sizeof(mdDir));
+
+    mdDir.StreamType = ThreadNamesStream;
+    mdDir.Location.Rva = dc->rva;
+    if ((mdDir.Location.DataSize = dump_threads_names(dc)))
+        writeat(dc, mdHead.StreamDirectoryRva + idx_stream++ * sizeof(mdDir),
+                &mdDir, sizeof(mdDir));
 
     mdDir.StreamType = ModuleListStream;
     mdDir.Location.Rva = dc->rva;

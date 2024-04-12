@@ -105,7 +105,7 @@ typedef DWORD64 stream_mask_t;
      STREAM2MASK(ProcessVmCountersStream))
 /* streams added in Win8 & Win10... */
 #define BASIC_STREAM_BROKEN_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream))
-#define BASIC_STREAM_TODO_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream) | STREAM2MASK(ThreadNamesStream))
+#define BASIC_STREAM_TODO_MASK (STREAM2MASK(SystemMemoryInfoStream) | STREAM2MASK(ProcessVmCountersStream))
 static void test_minidump_contents(void)
 {
     static const struct minidump_streams
@@ -234,9 +234,7 @@ static void minidump_check_threads_name(void *data, DWORD tid, const WCHAR* name
     if (!pSetThreadDescription) return;
 
     ret = MiniDumpReadDumpStream(data, ThreadNamesStream, NULL, (void**)&thread_name_list, &stream_size);
-    todo_wine
     ok(ret && thread_name_list, "Couldn't find thread-name-list stream\n");
-    if (!ret) return; /* temp */
     ok(stream_size == sizeof(thread_name_list->NumberOfThreadNames) + thread_name_list->NumberOfThreadNames * sizeof(thread_name_list->ThreadNames[0]),
        "Unexpected size\n");
     for (i = 0; i < thread_name_list->NumberOfThreadNames; i++)
