@@ -5,11 +5,11 @@
 	<key>version</key>
 	<dict>
 		<key>build</key>
-		<string>1</string>
+		<string>0</string>
 		<key>major</key>
 		<integer>2</integer>
 		<key>minor</key>
-		<integer>0</integer>
+		<integer>1</integer>
 		<key>patch</key>
 		<integer>0</integer>
 		<key>preRelease</key>

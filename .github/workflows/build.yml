@@ -18,6 +18,7 @@ env:
   WINE_CONFIGURE: $GITHUB_WORKSPACE/configure
   BUILDROOT: $GITHUB_WORKSPACE/build
   WINE_INSTALLROOT: install
+  WINE_MONO: https://github.com/madewokherd/wine-mono/releases/download/wine-mono-7.4.1/wine-mono-7.4.1-x86.tar.xz
 
 jobs:
   build:
@@ -325,6 +326,13 @@ jobs:
       - name: Copy Version .plist
         run: |
           cp -a WhiskyWineVersion.plist Libraries/
+
+      - name: Install WineMono
+        run: |
+          mkdir Libraries/Wine/share/wine/mono
+
+          curl -L -o mono.tar.xz ${{ env.WINE_MONO }}
+          tar -xzf mono.tar.xz -C Libraries/Wine/share/wine/mono
 
       - name: Build Checksum
         run: |
