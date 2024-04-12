@@ -2069,7 +2069,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,cryptnet.dll,1
 11,,devenum.dll,1
 11,,mp3dmod.dll,1
-;(cw)11,,mscoree.dll,1
+11,,mscoree.dll,1
 11,,mshtml.dll,1
 11,,msisip.dll,1
 11,,qcap.dll,1
