@@ -74,7 +74,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR
 } VkXlibSurfaceCreateInfoKHR;
 
 static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
@@ -190,13 +189,12 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
     return VK_SUCCESS;
 }
 
-static void X11DRV_vulkan_surface_destroy( HWND hwnd, VkInstance instance, VkSurfaceKHR surface )
+static void X11DRV_vulkan_surface_destroy( HWND hwnd, VkSurfaceKHR surface )
 {
     struct wine_vk_surface *x11_surface = surface_from_handle(surface);
 
-    TRACE( "%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface) );
+    TRACE( "%p 0x%s\n", hwnd, wine_dbgstr_longlong(surface) );
 
-    pvkDestroySurfaceKHR( instance, x11_surface->host_surface, NULL /* allocator */ );
     wine_vk_surface_release(x11_surface);
 }
 
@@ -250,7 +248,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_d
 
 #define LOAD_FUNCPTR( f ) if (!(p##f = dlsym( vulkan_handle, #f ))) return STATUS_PROCEDURE_NOT_FOUND;
     LOAD_FUNCPTR( vkCreateXlibSurfaceKHR );
-    LOAD_FUNCPTR( vkDestroySurfaceKHR );
     LOAD_FUNCPTR( vkGetPhysicalDeviceXlibPresentationSupportKHR );
 #undef LOAD_FUNCPTR
 

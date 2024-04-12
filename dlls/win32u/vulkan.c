@@ -44,6 +44,7 @@ static void *vulkan_handle;
 static const struct vulkan_driver_funcs *driver_funcs;
 static struct vulkan_funcs vulkan_funcs;
 
+static void (*p_vkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 static void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
 static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
@@ -94,7 +95,8 @@ static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle
     TRACE( "instance %p, handle 0x%s, allocator %p\n", instance, wine_dbgstr_longlong(handle), allocator );
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
-    driver_funcs->p_vulkan_surface_destroy( surface->hwnd, instance, surface->driver_surface );
+    p_vkDestroySurfaceKHR( instance, surface->host_surface, NULL /* allocator */ );
+    driver_funcs->p_vulkan_surface_destroy( surface->hwnd, surface->driver_surface );
     free( surface );
 }
 
@@ -168,7 +170,7 @@ static VkResult nulldrv_vulkan_surface_create( HWND hwnd, VkInstance instance, V
     return VK_ERROR_INCOMPATIBLE_DRIVER;
 }
 
-static void nulldrv_vulkan_surface_destroy( HWND hwnd, VkInstance instance, VkSurfaceKHR surface )
+static void nulldrv_vulkan_surface_destroy( HWND hwnd, VkSurfaceKHR surface )
 {
 }
 
@@ -237,9 +239,10 @@ static void vulkan_init(void)
         return;                                                                                    \
     }
 
+    LOAD_FUNCPTR( vkDestroySurfaceKHR );
+    LOAD_FUNCPTR( vkQueuePresentKHR );
     LOAD_FUNCPTR( vkGetDeviceProcAddr );
     LOAD_FUNCPTR( vkGetInstanceProcAddr );
-    LOAD_FUNCPTR( vkQueuePresentKHR );
 #undef LOAD_FUNCPTR
 }
 

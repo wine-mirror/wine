@@ -54,7 +54,6 @@ typedef struct VkWaylandSurfaceCreateInfoKHR
 } VkWaylandSurfaceCreateInfoKHR;
 
 static VkResult (*pvkCreateWaylandSurfaceKHR)(VkInstance, const VkWaylandSurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkBool32 (*pvkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice, uint32_t, struct wl_display *);
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs;
@@ -156,13 +155,12 @@ err:
     return res;
 }
 
-static void wayland_vulkan_surface_destroy(HWND hwnd, VkInstance instance, VkSurfaceKHR surface)
+static void wayland_vulkan_surface_destroy(HWND hwnd, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
 
-    TRACE("%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface));
+    TRACE("%p 0x%s\n", hwnd, wine_dbgstr_longlong(surface));
 
-    pvkDestroySurfaceKHR(instance, wine_vk_surface->host_surface, NULL /* allocator */);
     wine_vk_surface_destroy(wine_vk_surface);
 }
 
@@ -230,7 +228,6 @@ UINT WAYLAND_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_d
 
 #define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) return STATUS_PROCEDURE_NOT_FOUND;
     LOAD_FUNCPTR(vkCreateWaylandSurfaceKHR);
-    LOAD_FUNCPTR(vkDestroySurfaceKHR);
     LOAD_FUNCPTR(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
 #undef LOAD_FUNCPTR
 

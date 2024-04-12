@@ -77,7 +77,6 @@ typedef struct VkMetalSurfaceCreateInfoEXT
 
 static VkResult (*pvkCreateMacOSSurfaceMVK)(VkInstance, const VkMacOSSurfaceCreateInfoMVK*, const VkAllocationCallbacks *, VkSurfaceKHR *);
 static VkResult (*pvkCreateMetalSurfaceEXT)(VkInstance, const VkMetalSurfaceCreateInfoEXT*, const VkAllocationCallbacks *, VkSurfaceKHR *);
-static void (*pvkDestroySurfaceKHR)(VkInstance, VkSurfaceKHR, const VkAllocationCallbacks *);
 static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs;
@@ -87,10 +86,8 @@ static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
     return (struct wine_vk_surface *)(uintptr_t)handle;
 }
 
-static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface *surface)
+static void wine_vk_surface_destroy(struct wine_vk_surface *surface)
 {
-    pvkDestroySurfaceKHR(instance, surface->host_surface, NULL /* allocator */);
-
     if (surface->view)
         macdrv_view_release_metal_view(surface->view);
 
@@ -173,18 +170,18 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
     return VK_SUCCESS;
 
 err:
-    wine_vk_surface_destroy(instance, mac_surface);
+    wine_vk_surface_destroy(mac_surface);
     release_win_data(data);
     return res;
 }
 
-static void macdrv_vulkan_surface_destroy(HWND hwnd, VkInstance instance, VkSurfaceKHR surface)
+static void macdrv_vulkan_surface_destroy(HWND hwnd, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *mac_surface = surface_from_handle(surface);
 
-    TRACE("%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface));
+    TRACE("%p 0x%s\n", hwnd, wine_dbgstr_longlong(surface));
 
-    wine_vk_surface_destroy(instance, mac_surface);
+    wine_vk_surface_destroy(mac_surface);
 }
 
 static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
@@ -235,7 +232,6 @@ UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_dr
 #define LOAD_FUNCPTR(f) if ((p##f = dlsym(vulkan_handle, #f)) == NULL) return STATUS_PROCEDURE_NOT_FOUND;
     LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
     LOAD_FUNCPTR(vkCreateMetalSurfaceEXT)
-    LOAD_FUNCPTR(vkDestroySurfaceKHR)
 #undef LOAD_FUNCPTR
 
     *driver_funcs = &macdrv_vulkan_driver_funcs;
