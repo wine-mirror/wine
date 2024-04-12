@@ -867,14 +867,14 @@ static HRESULT check_mft_process_output_(int line, IMFTransform *transform, IMFS
     return ret;
 }
 
-DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_nv12(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD x, y, data_size, diff = 0, width = size->cx, height = size->cy;
 
     /* skip BMP header and RGB data from the dump */
-    size = *(DWORD *)(expect + 2);
-    *length = *length + size;
-    expect = expect + size;
+    data_size = *(DWORD *)(expect + 2);
+    *length = *length + data_size;
+    expect = expect + data_size;
 
     for (y = 0; y < height; y++, data += width, expect += width)
     {
@@ -897,18 +897,18 @@ DWORD compare_nv12(const BYTE *data, DWORD *length, const RECT *rect, const BYTE
         }
     }
 
-    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
-    return diff * 100 / 256 / size;
+    data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
+    return diff * 100 / 256 / data_size;
 }
 
-DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_i420(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    DWORD i, x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD i, x, y, data_size, diff = 0, width = size->cx, height = size->cy;
 
     /* skip BMP header and RGB data from the dump */
-    size = *(DWORD *)(expect + 2);
-    *length = *length + size;
-    expect = expect + size;
+    data_size = *(DWORD *)(expect + 2);
+    *length = *length + data_size;
+    expect = expect + data_size;
 
     for (y = 0; y < height; y++, data += width, expect += width)
     {
@@ -930,18 +930,18 @@ DWORD compare_i420(const BYTE *data, DWORD *length, const RECT *rect, const BYTE
         }
     }
 
-    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
-    return diff * 100 / 256 / size;
+    data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
+    return diff * 100 / 256 / data_size;
 }
 
-static DWORD compare_rgb(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect, UINT bits)
+static DWORD compare_rgb(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect, UINT bits)
 {
-    DWORD x, y, step = bits / 8, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD x, y, step = bits / 8, data_size, diff = 0, width = size->cx, height = size->cy;
 
     /* skip BMP header from the dump */
-    size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
-    *length = *length + size;
-    expect = expect + size;
+    data_size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + data_size;
+    expect = expect + data_size;
 
     for (y = 0; y < height; y++, data += width * step, expect += width * step)
     {
@@ -955,49 +955,49 @@ static DWORD compare_rgb(const BYTE *data, DWORD *length, const RECT *rect, cons
         }
     }
 
-    size = (rect->right - rect->left) * (rect->bottom - rect->top) * min(step, 3);
-    return diff * 100 / 256 / size;
+    data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * min(step, 3);
+    return diff * 100 / 256 / data_size;
 }
 
-DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_rgb32(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    return compare_rgb(data, length, rect, expect, 32);
+    return compare_rgb(data, length, size, rect, expect, 32);
 }
 
-DWORD compare_rgb24(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_rgb24(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    return compare_rgb(data, length, rect, expect, 24);
+    return compare_rgb(data, length, size, rect, expect, 24);
 }
 
-DWORD compare_rgb16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_rgb16(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    return compare_rgb(data, length, rect, expect, 16);
+    return compare_rgb(data, length, size, rect, expect, 16);
 }
 
-DWORD compare_pcm16(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+DWORD compare_pcm16(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
     const INT16 *data_pcm = (INT16 *)data, *expect_pcm = (INT16 *)expect;
-    DWORD i, size = *length / 2, diff = 0;
+    DWORD i, data_size = *length / 2, diff = 0;
 
-    for (i = 0; i < size; i++)
+    for (i = 0; i < data_size; i++)
         diff += abs((int)*expect_pcm++ - (int)*data_pcm++);
 
-    return diff * 100 / 65536 / size;
+    return diff * 100 / 65536 / data_size;
 }
 
-static DWORD compare_bytes(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+static DWORD compare_bytes(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    DWORD i, size = *length, diff = 0;
+    DWORD i, data_size = *length, diff = 0;
 
-    for (i = 0; i < size; i++)
+    for (i = 0; i < data_size; i++)
         diff += abs((int)*expect++ - (int)*data++);
 
-    return diff * 100 / 256 / size;
+    return diff * 100 / 256 / data_size;
 }
 
-static void dump_rgb(const BYTE *data, DWORD length, const RECT *rect, HANDLE output, UINT bits)
+static void dump_rgb(const BYTE *data, DWORD length, const SIZE *size, HANDLE output, UINT bits)
 {
-    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD width = size->cx, height = size->cy;
     static const char magic[2] = "BM";
     struct
     {
@@ -1028,24 +1028,24 @@ static void dump_rgb(const BYTE *data, DWORD length, const RECT *rect, HANDLE ou
     ok(written == length, "written %lu bytes\n", written);
 }
 
-void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_rgb32(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
-    return dump_rgb(data, length, rect, output, 32);
+    return dump_rgb(data, length, size, output, 32);
 }
 
-void dump_rgb24(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_rgb24(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
-    return dump_rgb(data, length, rect, output, 24);
+    return dump_rgb(data, length, size, output, 24);
 }
 
-void dump_rgb16(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_rgb16(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
-    return dump_rgb(data, length, rect, output, 16);
+    return dump_rgb(data, length, size, output, 16);
 }
 
-void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_nv12(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
-    DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD written, x, y, width = size->cx, height = size->cy;
     BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
     BOOL ret;
 
@@ -1057,7 +1057,7 @@ void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
         *rgb32++ = 0xff;
     }
 
-    dump_rgb32(rgb32_data, width * height * 4, rect, output);
+    dump_rgb32(rgb32_data, width * height * 4, size, output);
     free(rgb32_data);
 
     ret = WriteFile(output, data, length, &written, NULL);
@@ -1065,9 +1065,9 @@ void dump_nv12(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
     ok(written == length, "written %lu bytes\n", written);
 }
 
-void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+void dump_i420(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
-    DWORD written, x, y, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD written, x, y, width = size->cx, height = size->cy;
     BYTE *rgb32_data = malloc(width * height * 4), *rgb32 = rgb32_data;
     BOOL ret;
 
@@ -1079,7 +1079,7 @@ void dump_i420(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
         *rgb32++ = 0xff;
     }
 
-    dump_rgb32(rgb32_data, width * height * 4, rect, output);
+    dump_rgb32(rgb32_data, width * height * 4, size, output);
     free(rgb32_data);
 
     ret = WriteFile(output, data, length, &written, NULL);
@@ -1152,7 +1152,7 @@ static void dump_mf_media_buffer(IMFMediaBuffer *buffer, const struct buffer_des
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
 
     if (buffer_desc->dump)
-        buffer_desc->dump(data, length, &buffer_desc->rect, output);
+        buffer_desc->dump(data, length, &buffer_desc->size, output);
     else
     {
         if (buffer_desc->length == -1)
@@ -1220,9 +1220,9 @@ static DWORD check_mf_media_buffer_(const char *file, int line, IMFMediaBuffer *
             todo_wine_if(expect->todo_length)
             ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
         else if (!expect->compare)
-            diff = compare_bytes(data, &length, NULL, *expect_data);
+            diff = compare_bytes(data, &length, NULL, NULL, *expect_data);
         else
-            diff = expect->compare(data, &length, &expect->rect, *expect_data);
+            diff = expect->compare(data, &length, &expect->size, &expect->compare_rect, *expect_data);
     }
 
     hr = IMFMediaBuffer_Unlock(buffer);
@@ -1454,9 +1454,9 @@ static DWORD check_dmo_output_data_buffer_(int line, DMO_OUTPUT_DATA_BUFFER *out
     if (data_length < buffer_length)
         ok_(__FILE__, line)(0, "Missing %#lx bytes\n", buffer_length - data_length);
     else if (!buffer_desc->compare)
-        diff = compare_bytes(buffer, &buffer_length, NULL, data);
+        diff = compare_bytes(buffer, &buffer_length, NULL, NULL, data);
     else
-        diff = buffer_desc->compare(buffer, &buffer_length, &buffer_desc->rect, data);
+        diff = buffer_desc->compare(buffer, &buffer_length, &buffer_desc->size, &buffer_desc->compare_rect, data);
 
     return diff;
 }
@@ -4192,7 +4192,8 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_nv12, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_nv12, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
@@ -4203,7 +4204,8 @@ static void test_h264_decoder(void)
     const struct buffer_desc output_buffer_desc_i420 =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_i420, .dump = dump_i420, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_i420, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_i420, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc expect_output_sample_i420 =
     {
@@ -5839,12 +5841,14 @@ static void test_wmv_decoder(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_nv12, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_nv12, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct buffer_desc output_buffer_desc_rgb =
     {
         .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_rgb32, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_rgb32, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
@@ -6629,7 +6633,8 @@ static void test_wmv_decoder_media_object(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = data_width * data_height * 3 / 2,
-        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_nv12, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_nv12, .size = {.cx = data_width, .cy = data_height},
     };
     DWORD in_count, out_count, size, alignment, wmv_data_length, status, expected_status, diff;
     struct media_buffer *input_media_buffer = NULL, *output_media_buffer = NULL;
@@ -7023,7 +7028,8 @@ static void test_color_convert(void)
     const struct buffer_desc output_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 82, .bottom = 84},
+        .compare = compare_rgb32, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_rgb32, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -7439,7 +7445,8 @@ static void test_video_processor(void)
     const struct buffer_desc rgb32_buffer_desc =
     {
         .length = actual_width * actual_height * 4,
-        .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.top = 12, .right = 82, .bottom = 96},
+        .compare = compare_rgb32, .compare_rect = {.top = 12, .right = 82, .bottom = 96},
+        .dump = dump_rgb32, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc rgb32_sample_desc =
     {
@@ -7451,7 +7458,8 @@ static void test_video_processor(void)
     const struct buffer_desc rgb555_buffer_desc =
     {
         .length = actual_width * actual_height * 2,
-        .compare = compare_rgb16, .dump = dump_rgb16, .rect = {.top = 12, .right = 82, .bottom = 96},
+        .compare = compare_rgb16, .compare_rect = {.top = 12, .right = 82, .bottom = 96},
+        .dump = dump_rgb16, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc rgb555_sample_desc =
     {
@@ -7463,7 +7471,8 @@ static void test_video_processor(void)
     const struct buffer_desc nv12_buffer_desc =
     {
         .length = actual_width * actual_height * 3 / 2,
-        .compare = compare_nv12, .dump = dump_nv12, .rect = {.top = 12, .right = 82, .bottom = 96},
+        .compare = compare_nv12, .compare_rect = {.top = 12, .right = 82, .bottom = 96},
+        .dump = dump_nv12, .size = {.cx = actual_width, .cy = actual_height},
     };
     const struct sample_desc nv12_sample_desc =
     {
@@ -8404,7 +8413,8 @@ static void test_h264_with_dxgi_manager(void)
     const struct buffer_desc output_buffer_desc_nv12 =
     {
         .length = aligned_width * aligned_height * 3 / 2,
-        .compare = compare_nv12, .dump = dump_nv12, .rect = {.top=0, .left=0, .right = set_width, .bottom = set_height},
+        .compare = compare_nv12, .compare_rect = {.right = set_width, .bottom = set_height},
+        .dump = dump_nv12, .size = {.cx = aligned_width, .cy = aligned_height},
     };
     const struct sample_desc output_sample_desc_nv12 =
     {
@@ -8820,8 +8830,9 @@ static void test_iv50_decoder(void)
     };
     const struct buffer_desc rgb_buffer_desc =
     {
-        .length = 96 * 96 * 3, .compare = compare_rgb24, .dump = dump_rgb24,
-        .rect = {.right = 82, .bottom = 84},
+        .length = 96 * 96 * 3,
+        .compare = compare_rgb24, .compare_rect = {.right = 82, .bottom = 84},
+        .dump = dump_rgb24, .size = {.cx = 96, .cy = 96},
     };
     const struct sample_desc rgb_sample_desc =
     {

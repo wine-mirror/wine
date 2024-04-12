@@ -3918,7 +3918,9 @@ static void test_sample_grabber_orientation(GUID subtype)
     {
         const struct buffer_desc buffer_desc_rgb32 =
         {
-            .length = 64 * 64 * 4, .compare = compare_rgb32, .dump = dump_rgb32, .rect = {.right = 64, .bottom = 64},
+            .length = 64 * 64 * 4,
+            .compare = compare_rgb32, .compare_rect = {.right = 64, .bottom = 64},
+            .dump = dump_rgb32, .size = {.cx = 64, .cy = 64},
         };
         const struct sample_desc sample_desc_rgb32 =
         {
@@ -3930,7 +3932,9 @@ static void test_sample_grabber_orientation(GUID subtype)
     {
         const struct buffer_desc buffer_desc_nv12 =
         {
-            .length = 64 * 64 * 3 / 2, .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 64, .bottom = 64},
+            .length = 64 * 64 * 3 / 2,
+            .compare = compare_nv12, .compare_rect = {.right = 64, .bottom = 64},
+            .dump = dump_nv12, .size = {.cx = 64, .cy = 64},
         };
         const struct sample_desc sample_desc_nv12 =
         {
