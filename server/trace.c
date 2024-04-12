@@ -1543,6 +1543,7 @@ static void dump_get_process_debug_info_reply( const struct get_process_debug_in
 static void dump_get_process_image_name_request( const struct get_process_image_name_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", pid=%04x", req->pid );
     fprintf( stderr, ", win32=%d", req->win32 );
 }
 

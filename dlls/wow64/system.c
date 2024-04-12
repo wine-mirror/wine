@@ -406,6 +406,24 @@ NTSTATUS WINAPI wow64_NtQuerySystemInformation( UINT *args )
         }
         return status;
 
+    case SystemProcessIdInformation:  /* SYSTEM_PROCESS_ID_INFORMATION */
+    {
+        SYSTEM_PROCESS_ID_INFORMATION32 *info32 = ptr;
+        SYSTEM_PROCESS_ID_INFORMATION info;
+
+        if (retlen) *retlen = sizeof(*info32);
+        if (len < sizeof(*info32)) return STATUS_INFO_LENGTH_MISMATCH;
+
+        info.ProcessId = info32->ProcessId;
+        unicode_str_32to64( &info.ImageName, &info32->ImageName );
+        if (!(status = NtQuerySystemInformation( class, &info, sizeof(info), NULL )))
+        {
+            info32->ImageName.MaximumLength = info.ImageName.MaximumLength;
+            info32->ImageName.Length = info.ImageName.Length;
+        }
+        return status;
+    }
+
     case SystemHandleInformation:  /* SYSTEM_HANDLE_INFORMATION */
         if (len >= sizeof(SYSTEM_HANDLE_INFORMATION32))
         {

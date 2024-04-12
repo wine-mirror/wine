@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "winnls.h"
 #include "ddk/ntddk.h"
+#include "psapi.h"
 #include "wine/test.h"
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
@@ -3892,6 +3893,133 @@ static void test_process_token(int argc, char **argv)
     CloseHandle( token );
 }
 
+static void test_process_id(void)
+{
+    char image_name_buffer[1024 * sizeof(WCHAR)];
+    UNICODE_STRING *image_name = (UNICODE_STRING *)image_name_buffer;
+    SYSTEM_PROCESS_ID_INFORMATION info;
+    unsigned int i, length;
+    DWORD pids[2048];
+    WCHAR name[2048];
+    NTSTATUS status;
+    HANDLE process;
+    ULONG len;
+    BOOL bret;
+
+    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, image_name,
+                                        sizeof(image_name_buffer), NULL );
+    ok( !status, "got %#lx.\n", status );
+    length = image_name->Length;
+    image_name->Buffer[length] = 0;
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, NULL, 0, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH || (is_wow64 && status == STATUS_ACCESS_VIOLATION), "got %#lx.\n", status );
+    ok( len == sizeof(info) || (is_wow64 && len == 0xdeadbeef), "got %#lx.\n", len );
+
+    info.ProcessId = 0xdeadbeef;
+    info.ImageName.Length = info.ImageName.MaximumLength = 0;
+    info.ImageName.Buffer = NULL;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_CID, "got %#lx.\n", status );
+    ok( !info.ImageName.Length, "got %#x.\n", info.ImageName.Length );
+    ok( !info.ImageName.MaximumLength, "got %#x.\n", info.ImageName.MaximumLength );
+
+    info.ProcessId = GetCurrentProcessId();
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status );
+    ok( len == sizeof(info), "got %#lx.\n", len );
+    ok( !info.ImageName.Length, "got %#x.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == length + 2 || (is_wow64 && !info.ImageName.MaximumLength),
+        "got %#x.\n", info.ImageName.MaximumLength );
+
+    info.ImageName.MaximumLength = sizeof(name);
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status );
+    ok( len == sizeof(info), "got %#lx.\n", len );
+    ok( info.ImageName.Length == length || (is_wow64 && !info.ImageName.Length),
+        "got %u.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == length + 2 || (is_wow64 && !info.ImageName.Length),
+        "got %#x.\n", info.ImageName.MaximumLength );
+
+    info.ProcessId = 0xdeadbeef;
+    info.ImageName.MaximumLength = sizeof(name);
+    info.ImageName.Buffer = name;
+    info.ImageName.Length = 0;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_CID, "got %#lx.\n", status );
+    ok( !info.ImageName.Length, "got %#x.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == sizeof(name), "got %#x.\n", info.ImageName.MaximumLength );
+    ok( info.ImageName.Buffer == name, "got %p, %p.\n", info.ImageName.Buffer, name );
+
+    info.ProcessId = 0;
+    info.ImageName.MaximumLength = sizeof(name);
+    info.ImageName.Buffer = name;
+    info.ImageName.Length = 0;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_CID, "got %#lx.\n", status );
+    ok( !info.ImageName.Length, "got %#x.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == sizeof(name), "got %#x.\n", info.ImageName.MaximumLength );
+    ok( info.ImageName.Buffer == name, "got non NULL.\n" );
+
+    info.ProcessId = 0;
+    info.ImageName.MaximumLength = sizeof(name);
+    info.ImageName.Buffer = name;
+    info.ImageName.Length = 4;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    ok( info.ImageName.Length == 4, "got %#x.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == sizeof(name), "got %#x.\n", info.ImageName.MaximumLength );
+    ok( info.ImageName.Buffer == name, "got non NULL.\n" );
+
+    info.ProcessId = GetCurrentProcessId();
+    info.ImageName.MaximumLength = sizeof(name);
+    info.ImageName.Buffer = name;
+    info.ImageName.Length = 4;
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "got %#lx.\n", status );
+    ok( info.ImageName.Length == 4, "got %#x.\n", info.ImageName.Length );
+    ok( info.ImageName.MaximumLength == sizeof(name), "got %#x.\n", info.ImageName.MaximumLength );
+
+    info.ImageName.Length = 0;
+    memset( name, 0xcc, sizeof(name) );
+    status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+    ok( !status, "got %#lx.\n", status );
+    ok( info.ImageName.Length == length, "got %#x.\n", info.ImageName.Length );
+    ok( len == sizeof(info), "got %#lx.\n", len );
+    ok( info.ImageName.MaximumLength == info.ImageName.Length + 2, "got %#x.\n", info.ImageName.MaximumLength );
+    ok( !name[info.ImageName.Length / 2], "got %#x.\n", name[info.ImageName.Length / 2] );
+
+    ok( info.ImageName.Length == image_name->Length, "got %#x, %#x.\n", info.ImageName.Length, image_name->Length );
+    ok( !wcscmp( name, image_name->Buffer ), "got %s, %s.\n", debugstr_w(name), debugstr_w(image_name->Buffer) );
+
+    bret = EnumProcesses( pids, sizeof(pids), &len );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    for (i = 0; i < len / sizeof(*pids); ++i)
+    {
+        process = OpenProcess( PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pids[i] );
+        if (pids[i] && !process && GetLastError() != ERROR_ACCESS_DENIED)
+        {
+            /* process is gone already. */
+            continue;
+        }
+        info.ProcessId = pids[i];
+        info.ImageName.Length = 0;
+        info.ImageName.MaximumLength = sizeof(name);
+        info.ImageName.Buffer = name;
+        status = pNtQuerySystemInformation( SystemProcessIdInformation, &info, sizeof(info), &len );
+        ok( info.ImageName.Buffer == name || (!info.ImageName.MaximumLength && !info.ImageName.Length),
+            "got %p, %p, pid %lu, lengh %u / %u.\n", info.ImageName.Buffer, name, pids[i],
+            info.ImageName.Length, info.ImageName.MaximumLength );
+        if (pids[i])
+            ok( !status, "got %#lx, pid %lu.\n", status, pids[i] );
+        else
+            ok( status == STATUS_INVALID_CID, "got %#lx, pid %lu.\n", status, pids[i] );
+        if (process) CloseHandle( process );
+    }
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -3970,4 +4098,5 @@ START_TEST(info)
     test_process_instrumentation_callback();
     test_system_debug_control();
     test_process_token(argc, argv);
+    test_process_id();
 }

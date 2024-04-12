@@ -526,6 +526,12 @@ typedef struct
 
 typedef struct
 {
+    ULONG ProcessId;
+    UNICODE_STRING32 ImageName;
+} SYSTEM_PROCESS_ID_INFORMATION32;
+
+typedef struct
+{
     ULONG  OwnerPid;
     BYTE   ObjectType;
     BYTE   HandleFlags;

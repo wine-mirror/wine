@@ -1089,8 +1089,8 @@ struct get_process_image_name_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    process_id_t pid;
     int          win32;
-    char __pad_20[4];
 };
 struct get_process_image_name_reply
 {
@@ -6522,7 +6522,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 799
+#define SERVER_PROTOCOL_VERSION 800
 
 /* ### protocol_version end ### */
 

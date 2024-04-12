@@ -3289,6 +3289,45 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemProcessIdInformation: /* 88 */
+    {
+        SYSTEM_PROCESS_ID_INFORMATION *id = info;
+        UNICODE_STRING *str = &id->ImageName;
+        ULONG name_len = 0;
+        void *buffer;
+
+        len = sizeof(*id);
+        if (ret_size) *ret_size = len;
+
+        if (len > size)                ret = STATUS_INFO_LENGTH_MISMATCH;
+        else if (id->ImageName.Length) ret = STATUS_INVALID_PARAMETER;
+        else if (!id->ProcessId)       ret = STATUS_INVALID_CID;
+
+        if (ret) return ret;
+
+        buffer = malloc( str->MaximumLength );
+        SERVER_START_REQ( get_process_image_name )
+        {
+            req->pid = id->ProcessId;
+            wine_server_set_reply( req, buffer, str->MaximumLength );
+            ret = wine_server_call( req );
+            name_len = reply->len;
+        }
+        SERVER_END_REQ;
+
+        if (ret == STATUS_BUFFER_TOO_SMALL) ret = STATUS_INFO_LENGTH_MISMATCH;
+        if (!ret && name_len + sizeof(WCHAR) > str->MaximumLength) ret = STATUS_INFO_LENGTH_MISMATCH;
+        if (!ret || ret == STATUS_INFO_LENGTH_MISMATCH) str->MaximumLength = name_len + sizeof(WCHAR);
+        if (!ret)
+        {
+            str->Length = name_len;
+            memcpy( str->Buffer, buffer, str->Length );
+            str->Buffer[str->Length / sizeof(WCHAR)] = 0;
+        }
+        free( buffer );
+        return ret;
+    }
+
     case SystemDynamicTimeZoneInformation:  /* 102 */
     {
         RTL_DYNAMIC_TIME_ZONE_INFORMATION tz;

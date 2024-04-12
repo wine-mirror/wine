@@ -1034,6 +1034,7 @@ typedef struct
 /* Fetch the name of the process image */
 @REQ(get_process_image_name)
     obj_handle_t handle;           /* process handle */
+    process_id_t pid;              /* process id */
     int          win32;            /* return a win32 filename? */
 @REPLY
     data_size_t  len;              /* len in bytes required to store filename */
