@@ -107,24 +107,6 @@ void destroy_vk_surface( HWND hwnd )
     pthread_mutex_unlock( &vulkan_mutex );
 }
 
-void vulkan_thread_detach(void)
-{
-    struct wine_vk_surface *surface, *next;
-    DWORD thread_id = GetCurrentThreadId();
-
-    pthread_mutex_lock(&vulkan_mutex);
-    LIST_FOR_EACH_ENTRY_SAFE(surface, next, &surface_list, struct wine_vk_surface, entry)
-    {
-        if (surface->hwnd_thread_id != thread_id)
-            continue;
-
-        TRACE("Detaching surface %p, hwnd %p.\n", surface, surface->hwnd);
-        XReparentWindow(gdi_display, surface->window, get_dummy_parent(), 0, 0);
-        XSync(gdi_display, False);
-    }
-    pthread_mutex_unlock(&vulkan_mutex);
-}
-
 static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
 {
     VkResult res;
@@ -192,6 +174,20 @@ static void X11DRV_vulkan_surface_destroy( HWND hwnd, void *private )
     wine_vk_surface_release(x11_surface);
 }
 
+static void X11DRV_vulkan_surface_detach( HWND hwnd, void *private )
+{
+    struct wine_vk_surface *x11_surface = private;
+    struct x11drv_win_data *data;
+
+    TRACE( "%p %p\n", hwnd, private );
+
+    if ((data = get_win_data( hwnd )))
+    {
+        detach_client_window( data, x11_surface->window );
+        release_win_data( data );
+    }
+}
+
 static void X11DRV_vulkan_surface_presented(HWND hwnd, VkResult result)
 {
 }
@@ -214,6 +210,7 @@ static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
     .p_vulkan_surface_destroy = X11DRV_vulkan_surface_destroy,
+    .p_vulkan_surface_detach = X11DRV_vulkan_surface_detach,
     .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
@@ -245,14 +242,6 @@ UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_d
 {
     ERR( "Wine was built without Vulkan support.\n" );
     return STATUS_NOT_IMPLEMENTED;
-}
-
-void destroy_vk_surface( HWND hwnd )
-{
-}
-
-void vulkan_thread_detach(void)
-{
 }
 
 #endif /* SONAME_LIBVULKAN */

@@ -1604,7 +1604,7 @@ static void client_window_events_disable( struct x11drv_win_data *data, Window c
 /**********************************************************************
  *		detach_client_window
  */
-static void detach_client_window( struct x11drv_win_data *data, Window client_window )
+void detach_client_window( struct x11drv_win_data *data, Window client_window )
 {
     if (data->client_window != client_window || !client_window) return;
 
@@ -1940,7 +1940,6 @@ void X11DRV_DestroyWindow( HWND hwnd )
     release_win_data( data );
     free( data );
     destroy_gl_drawable( hwnd );
-    destroy_vk_surface( hwnd );
 }
 
 

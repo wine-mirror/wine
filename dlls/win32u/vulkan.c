@@ -185,6 +185,10 @@ static void nulldrv_vulkan_surface_destroy( HWND hwnd, void *private )
 {
 }
 
+static void nulldrv_vulkan_surface_detach( HWND hwnd, void *private )
+{
+}
+
 static void nulldrv_vulkan_surface_presented( HWND hwnd, VkResult result )
 {
 }
@@ -203,6 +207,7 @@ static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
     .p_vulkan_surface_destroy = nulldrv_vulkan_surface_destroy,
+    .p_vulkan_surface_detach = nulldrv_vulkan_surface_detach,
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
@@ -257,6 +262,7 @@ void vulkan_detach_surfaces( struct list *surfaces )
 
     LIST_FOR_EACH_ENTRY( surface, surfaces, struct surface, entry )
     {
+        driver_funcs->p_vulkan_surface_detach( surface->hwnd, surface->driver_private );
         list_remove( &surface->entry );
         list_init( &surface->entry );
     }
