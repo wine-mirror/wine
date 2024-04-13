@@ -271,7 +271,8 @@ static void draw_launchers( HDC hdc, RECT update_rect )
                        DT_CENTER|DT_WORDBREAK|DT_EDITCONTROL|DT_END_ELLIPSIS );
     }
 
-    SelectObject( hdc, font );
+    font = SelectObject( hdc, font );
+    DeleteObject( font );
     SetTextColor( hdc, color );
     SetBkMode( hdc, mode );
 }
@@ -433,7 +434,8 @@ static BOOL get_icon_text_metrics( HWND hwnd, TEXTMETRICW *tm )
     SystemParametersInfoW( SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0 );
     hfont = SelectObject( hdc, CreateFontIndirectW( &lf ) );
     ret = GetTextMetricsW( hdc, tm );
-    SelectObject( hdc, hfont );
+    hfont = SelectObject( hdc, hfont );
+    DeleteObject( hfont );
     ReleaseDC( hwnd, hdc );
     return ret;
 }
