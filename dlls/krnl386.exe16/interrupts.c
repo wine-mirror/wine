@@ -549,6 +549,8 @@ static void WINAPI DOSVM_Int1aHandler( CONTEXT *context )
     case 0x00: /* GET SYSTEM TIME */
         {
             BIOSDATA *data = DOSVM_BiosData();
+
+            DOSVM_start_bios_timer();
             SET_CX( context, HIWORD(data->Ticks) );
             SET_DX( context, LOWORD(data->Ticks) );
             SET_AL( context, 0 ); /* FIXME: midnight flag is unsupported */
