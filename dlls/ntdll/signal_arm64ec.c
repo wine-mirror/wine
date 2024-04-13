@@ -1013,6 +1013,13 @@ NTSTATUS SYSCALL_API NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR
     SYSCALL_FUNC( NtQueueApcThread );
 }
 
+NTSTATUS SYSCALL_API NtQueueApcThreadEx( HANDLE handle, HANDLE reserve_handle, PNTAPCFUNC func,
+                                         ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    SYSCALL_FUNC( NtQueueApcThreadEx );
+}
+
+
 static NTSTATUS SYSCALL_API syscall_NtRaiseException( EXCEPTION_RECORD *rec, ARM64_NT_CONTEXT *context, BOOL first_chance )
 {
     __ASM_SYSCALL_FUNC( __id_NtRaiseException, syscall_NtRaiseException );

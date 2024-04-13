@@ -1689,6 +1689,17 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 }
 
 
+/******************************************************************************
+ *              NtQueueApcThreadEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueueApcThreadEx( HANDLE handle, HANDLE reserve_handle, PNTAPCFUNC func,
+                                    ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    FIXME( "reserve handle should be used: %p\n", reserve_handle );
+    return NtQueueApcThread( handle, func, arg1, arg2, arg3 );
+}
+
+
 /***********************************************************************
  *              set_thread_context
  */
