@@ -499,8 +499,26 @@ void mdmp_dump(void)
 
                     if (mhd->SizeOfDescriptor >= sizeof(MINIDUMP_HANDLE_DESCRIPTOR_2))
                     {
-                        printf("    ObjectInfo: %s\n", get_mdmp_str(hd->ObjectInfoRva));
+                        MINIDUMP_HANDLE_OBJECT_INFORMATION *obj_info;
+                        unsigned link_count = 0;
+
+                        printf("    ObjectInfo: %#x\n", (UINT)hd->ObjectInfoRva);
                         printf("    Reserved0: %#x\n", hd->Reserved0);
+
+                        if (hd->ObjectInfoRva)
+                        {
+                            for (obj_info = (void*)PRD(hd->ObjectInfoRva, sizeof(*obj_info));
+                                 obj_info;
+                                 obj_info = obj_info->NextInfoRva ? (void*)PRD(obj_info->NextInfoRva, sizeof(*obj_info)) : NULL)
+                            {
+                                printf("    Information[%u]\n", link_count++);
+                                printf("      NextInfoRva: %#x\n", (UINT)obj_info->NextInfoRva);
+                                printf("      InfoType: %u\n", obj_info->InfoType);
+                                printf("      SizeOfInfo: %u\n", obj_info->SizeOfInfo);
+                                if (globals_dump_sect("content"))
+                                    dump_data((const BYTE*)(obj_info + 1), obj_info->SizeOfInfo, "        ");
+                            }
+                        }
                     }
 
                     ptr += mhd->SizeOfDescriptor;
