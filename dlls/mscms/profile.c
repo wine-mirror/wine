@@ -1458,6 +1458,18 @@ BOOL WINAPI WcsEnumColorProfilesSize( WCS_PROFILE_MANAGEMENT_SCOPE scope, ENUMTY
 }
 
 /******************************************************************************
+ * WcsGetDefaultColorProfile         [MSCMS.@]
+ */
+BOOL WINAPI WcsGetDefaultColorProfile( WCS_PROFILE_MANAGEMENT_SCOPE scope, PCWSTR device_name,
+                                       COLORPROFILETYPE type, COLORPROFILESUBTYPE subtype,
+                                       DWORD profile_id, DWORD size, LPWSTR name )
+{
+    FIXME( "%d, %s, %d, %d, %lu, %lu, %p\n", scope, debugstr_w(device_name), type, subtype, profile_id, size, name );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+/******************************************************************************
  * WcsGetDefaultColorProfileSize     [MSCMS.@]
  */
 BOOL WINAPI WcsGetDefaultColorProfileSize( WCS_PROFILE_MANAGEMENT_SCOPE scope, PCWSTR device_name,
