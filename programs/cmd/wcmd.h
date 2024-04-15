@@ -36,12 +36,14 @@
 
 /* Data structure to hold commands delimiters/separators */
 
-typedef enum _CMDdelimiters {
-  CMD_NONE,        /* End of line or single & */
-  CMD_ONFAILURE,   /* ||                      */
-  CMD_ONSUCCESS,   /* &&                      */
-  CMD_PIPE,        /* Single |                */
-} CMD_DELIMITERS;
+typedef enum _CMD_OPERATOR
+{
+    CMD_SINGLE,      /* single command          */
+    CMD_CONCAT,      /* &                       */
+    CMD_ONFAILURE,   /* ||                      */
+    CMD_ONSUCCESS,   /* &&                      */
+    CMD_PIPE,        /* Single |                */
+} CMD_OPERATOR;
 
 /* Data structure to hold commands to be processed */
 
@@ -49,30 +51,39 @@ typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
   WCHAR              *redirects;   /* Redirects in place                       */
-  CMD_DELIMITERS      prevDelim;   /* Previous delimiter                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
   WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_COMMAND;
 
 typedef struct _CMD_NODE
 {
-    CMD_COMMAND      *single;
-    struct _CMD_NODE *nextcommand; /* Next command string to execute           */
+    CMD_OPERATOR      op;            /* operator */
+    union
+    {
+        CMD_COMMAND  *command;       /* CMD_SINGLE */
+        struct                       /* binary operator (CMD_CONCAT, ONFAILURE, ONSUCCESS, PIPE) */
+        {
+            struct _CMD_NODE *left;
+            struct _CMD_NODE *right;
+        };
+    };
 } CMD_NODE;
-
 /* temporary helpers to fake a list into a tree */
 /* Note: for binary op, left should be a CMD_SINGLE node */
 static inline CMD_COMMAND *CMD_node_get_command(const CMD_NODE *node)
 {
-    return node->single;
+    if (node->op == CMD_SINGLE) return node->command;
+    /* assert(node->left && node->left->op == CMD_SINGLE); */
+    return node->left->command;
 }
 static inline CMD_NODE *CMD_node_next(const CMD_NODE *node)
 {
-    return node->nextcommand;
+    return (node->op == CMD_SINGLE) ? NULL : node->right;
 }
 static inline int CMD_node_get_depth(const CMD_NODE *node)
 {
-    return node->single->bracketDepth;
+    CMD_COMMAND *cmd = CMD_node_get_command(node);
+    return cmd->bracketDepth;
 }
 /* end temporary */
 

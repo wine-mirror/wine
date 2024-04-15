@@ -1524,6 +1524,7 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
 {
   CMD_NODE *curPosition = *cmdList;
   int myDepth = CMD_node_get_depth(*cmdList);
+  CMD_OPERATOR prev_op = CMD_CONCAT;
 
   WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d), isIF(%d)\n", cmdList,
                 wine_dbgstr_w(firstcmd), executecmds, isIF);
@@ -1550,31 +1551,40 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
       /* execute all appropriate commands */
       curPosition = *cmdList;
 
-      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d) processThese(%d)\n",
+      WINE_TRACE("Processing cmdList(%p) - operator(%d) bd(%d / %d) processThese(%d)\n",
                  *cmdList,
-                 CMD_node_get_command(*cmdList)->prevDelim,
+                 prev_op,
                  CMD_node_get_depth(*cmdList),
                  myDepth,
                  processThese);
 
       /* Execute any statements appended to the line */
       /* FIXME: Only if previous call worked for && or failed for || */
-      if (CMD_node_get_command(*cmdList)->prevDelim == CMD_ONFAILURE ||
-          CMD_node_get_command(*cmdList)->prevDelim == CMD_ONSUCCESS) {
+      if (prev_op == CMD_ONFAILURE ||
+          prev_op == CMD_ONSUCCESS) {
         if (processThese && CMD_node_get_command(*cmdList)->command) {
           WCMD_execute (CMD_node_get_command(*cmdList)->command, CMD_node_get_command(*cmdList)->redirects,
                         cmdList, FALSE);
         }
-        if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
+        if (curPosition == *cmdList)
+        {
+            prev_op = (*cmdList)->op;
+            *cmdList = CMD_node_next(*cmdList);
+        }
 
       /* Execute any appended to the statement with (...) */
       } else if (CMD_node_get_depth(*cmdList) > myDepth) {
         if (processThese) {
+          /* FIXME this is wrong, we don't recompute prev_op */
           *cmdList = WCMD_process_commands(*cmdList, TRUE, FALSE);
         } else {
           WINE_TRACE("Skipping command %p due to stack depth\n", *cmdList);
         }
-        if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
+        if (curPosition == *cmdList)
+        {
+            prev_op = (*cmdList)->op;
+            *cmdList = CMD_node_next(*cmdList);
+        }
 
       /* End of the command - does 'ELSE ' follow as the next command? */
       } else {
@@ -1597,15 +1607,20 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
                  depth, including skipping commands and their subsequent
                  pipes (eg cmd | prog)                                       */
               do {
+                  prev_op = (*cmdList)->op;
                   *cmdList = CMD_node_next(*cmdList);
               } while (*cmdList &&
                       (CMD_node_get_depth(*cmdList) > myDepth ||
-                      CMD_node_get_command(*cmdList)->prevDelim));
+                       (prev_op != CMD_SINGLE && prev_op != CMD_CONCAT)));
 
               /* After the else is complete, we need to now process subsequent commands */
               processThese = TRUE;
           }
-          if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
+          if (curPosition == *cmdList)
+          {
+              prev_op = (*cmdList)->op;
+              *cmdList = CMD_node_next(*cmdList);
+          }
 
         /* If we were in an IF statement and we didn't find an else and yet we get back to
            the same bracket depth as the IF, then the IF statement is over. This is required
@@ -1613,6 +1628,7 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
         } else if (isIF && CMD_node_get_depth(*cmdList) == myDepth) {
           if (WCMD_keyword_ws_found(L"do", CMD_node_get_command(*cmdList)->command)) {
               WINE_TRACE("Still inside FOR-loop, not an end of IF statement\n");
+              prev_op = (*cmdList)->op;
               *cmdList = CMD_node_next(*cmdList);
           } else {
               WINE_TRACE("Found end of this nested IF statement, ending this if\n");
@@ -1628,7 +1644,6 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
       }
     }
   }
-  return;
 }
 
 static BOOL option_equals(WCHAR **haystack, const WCHAR *needle)
