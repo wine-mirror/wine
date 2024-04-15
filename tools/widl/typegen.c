@@ -434,7 +434,7 @@ static unsigned int get_stack_size( const var_t *var, int *by_value )
         switch (target.cpu)
         {
         case CPU_x86_64:
-            by_val = (stack_size <= pointer_size);
+            by_val = (stack_size == 1 || stack_size == 2 || stack_size == 4 || stack_size == 8);
             break;
         case CPU_ARM64:
             by_val = (stack_size <= 2 * pointer_size);
