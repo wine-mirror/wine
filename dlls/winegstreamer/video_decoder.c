@@ -64,6 +64,7 @@ struct video_decoder
     IMFMediaType *stream_type;
 
     wg_transform_t wg_transform;
+    struct wg_transform_attrs wg_transform_attrs;
     struct wg_sample_queue *wg_sample_queue;
 
     IMFVideoSampleAllocatorEx *allocator;
@@ -84,12 +85,6 @@ static HRESULT try_create_wg_transform(struct video_decoder *decoder)
      * transform to be able to queue its input buffers. We need to use a buffer list
      * to match its expectations.
      */
-    struct wg_transform_attrs attrs =
-    {
-        .output_plane_align = 15,
-        .input_queue_length = 15,
-        .allow_size_change = TRUE,
-    };
     struct wg_format input_format;
     struct wg_format output_format;
     UINT32 low_latency;
@@ -107,9 +102,9 @@ static HRESULT try_create_wg_transform(struct video_decoder *decoder)
         return MF_E_INVALIDMEDIATYPE;
 
     if (SUCCEEDED(IMFAttributes_GetUINT32(decoder->attributes, &MF_LOW_LATENCY, &low_latency)))
-        attrs.low_latency = !!low_latency;
+        decoder->wg_transform_attrs.low_latency = !!low_latency;
 
-    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format, &decoder->wg_transform_attrs)))
     {
         ERR("Failed to create transform with input major_type %u.\n", input_format.major_type);
         return E_FAIL;
@@ -851,6 +846,9 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
     if (FAILED(hr = MFCreateSampleCopierMFT(&decoder->copier)))
         goto failed;
 
+    decoder->wg_transform_attrs.output_plane_align = 15;
+    decoder->wg_transform_attrs.input_queue_length = 15;
+
     *ret = &decoder->IMFTransform_iface;
     TRACE("Created decoder %p\n", *ret);
     return S_OK;
@@ -921,6 +919,8 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     decoder->output_info.dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
             | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     decoder->output_info.cbSize = 1920 * 1088 * 2;
+
+    decoder->wg_transform_attrs.allow_size_change = TRUE;
 
     hr = IMFTransform_QueryInterface(iface, riid, out);
     IMFTransform_Release(iface);
