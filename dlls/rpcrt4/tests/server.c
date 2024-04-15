@@ -68,6 +68,20 @@ static hyper (__cdecl *sum_hyper)(hyper x, hyper y);
 static int (__cdecl *sum_hyper_int)(hyper x, hyper y);
 static int (__cdecl *sum_char_hyper)(signed char x, hyper y);
 static void (__cdecl *square_out)(int x, int *y);
+static int (__cdecl *sum_chars)(int a, chars_t x, chars_t y);
+static int (__cdecl *sum_ints)(int a, ints_t x, ints_t y);
+static int (__cdecl *sum_flts)(int a, flts_t x, flts_t y);
+static int (__cdecl *sum_dbls)(int a, dbls_t x, dbls_t y);
+static int (__cdecl *sum_iiff)(int x0, int y0, float x1, float y1);
+static int (__cdecl *sum_ifif)(int x0, float y0, int x1, float y1);
+static int (__cdecl *sum_iidd)(int x0, int y0, double x1, double y1);
+static int (__cdecl *sum_idid)(int x0, double y0, int x1, double y1);
+static int (__cdecl *sum_ififififififif)(int x0, float y0, int x1, float y1, int x2, float y2, int x3, float y3, int x4, float y4, int x5, float y5, int x6, float y6);
+static int (__cdecl *sum_ididididididid)(int x0, double y0, int x1, double y1, int x2, double y2, int x3, double y3, int x4, double y4, int x5, double y5, int x6, double y6);
+static int (__cdecl *sum_idfdifdfifdfidifdidf)(int x0, double y0, float z0, double y1, int x1, float z1, double y2, float z2, int x2, float z3, double y3, float z4, int x3, double y4, int x4, float z5, double y5, int x5, double y6, float z6);
+static int (__cdecl *sum_ididididididididididid)(int x0, double y0, int x1, double y1, int x2, double y2, int x3, double y3, int x4, double y4, int x5, double y5, int x6, double y6, int x7, double y7, int x8, double y8);
+static int (__cdecl *sum_iidiidiidiidiidiidiidiidiidiidiid)(int x0, int x1, double y0, int x2, int x3, double y1, int x4, int x5, double y2, int x6, int x7, double y3, int x8, int x9, double y4, int x10, int x11, double y5, int x12, int x13, double y6, int x14, int x15, double y7, int x16, int x17, double y8);
+static int (__cdecl *sum_iyiy)(int x0, hyper y0, int x1, hyper y1);
 static void (__cdecl *square_ref)(int *x);
 static int (__cdecl *str_length)(const char *s);
 static int (__cdecl *str_t_length)(str_t s);
@@ -162,6 +176,20 @@ static void (__cdecl *test_I_RpcBindingInqLocalClientPID)(unsigned int protseq, 
     X(sum_hyper) \
     X(sum_hyper_int) \
     X(sum_char_hyper) \
+    X(sum_chars) \
+    X(sum_ints) \
+    X(sum_flts) \
+    X(sum_dbls) \
+    X(sum_iiff) \
+    X(sum_ifif) \
+    X(sum_iidd) \
+    X(sum_idid) \
+    X(sum_ififififififif) \
+    X(sum_ididididididid) \
+    X(sum_idfdifdfifdfidifdidf) \
+    X(sum_ididididididididididid) \
+    X(sum_iidiidiidiidiidiidiidiidiidiidiid) \
+    X(sum_iyiy) \
     X(square_out) \
     X(square_ref) \
     X(str_length) \
@@ -336,6 +364,76 @@ int __cdecl s_sum_hyper_int(hyper x, hyper y)
 int __cdecl s_sum_char_hyper(signed char x, hyper y)
 {
     return x + y;
+}
+
+int __cdecl s_sum_chars(int a, chars_t x, chars_t y)
+{
+    return a * (x.a + x.b + x.c + x.d + x.e + y.a + y.b + y.c + y.d + y.e);
+}
+
+int __cdecl s_sum_ints(int a, ints_t x, ints_t y)
+{
+    return a * (x.i + x.j + y.i + y.j);
+}
+
+int __cdecl s_sum_flts(int a, flts_t x, flts_t y)
+{
+    return a * (x.i + x.f + y.i + y.f);
+}
+
+int __cdecl s_sum_dbls(int a, dbls_t x, dbls_t y)
+{
+    return a * (x.i + x.d + y.i + y.d);
+}
+
+int __cdecl s_sum_iiff(int x0, int y0, float x1, float y1)
+{
+    return x0 + y0 + x1 + y1;
+}
+
+int __cdecl s_sum_ifif(int x0, float y0, int x1, float y1)
+{
+    return x0 + y0 + x1 + y1;
+}
+
+int __cdecl s_sum_iidd(int x0, int y0, double x1, double y1)
+{
+    return x0 + y0 + x1 + y1;
+}
+
+int __cdecl s_sum_idid(int x0, double y0, int x1, double y1)
+{
+    return x0 + y0 + x1 + y1;
+}
+
+int __cdecl s_sum_ififififififif(int x0, float y0, int x1, float y1, int x2, float y2, int x3, float y3, int x4, float y4, int x5, float y5, int x6, float y6)
+{
+    return x0 + y0 + x1 + y1 + x2 + y2 + x3 + y3 + x4 + y4 + x5 + y5 + x6 + y6;
+}
+
+int __cdecl s_sum_ididididididid(int x0, double y0, int x1, double y1, int x2, double y2, int x3, double y3, int x4, double y4, int x5, double y5, int x6, double y6)
+{
+    return x0 + y0 + x1 + y1 + x2 + y2 + x3 + y3 + x4 + y4 + x5 + y5 + x6 + y6;
+}
+
+int __cdecl s_sum_idfdifdfifdfidifdidf(int x0, double y0, float z0, double y1, int x1, float z1, double y2, float z2, int x2, float z3, double y3, float z4, int x3, double y4, int x4, float z5, double y5, int x5, double y6, float z6)
+{
+    return x0 + y0 + z0 + x1 + y1 + z1 + x2 + y2 + z2 + x3 + y3 + z3 + x4 + y4 + z4 + x5 + y5 + z5 + y6 + z6;
+}
+
+int __cdecl s_sum_ididididididididididid(int x0, double y0, int x1, double y1, int x2, double y2, int x3, double y3, int x4, double y4, int x5, double y5, int x6, double y6, int x7, double y7, int x8, double y8)
+{
+    return x0 + y0 + x1 + y1 + x2 + y2 + x3 + y3 + x4 + y4 + x5 + y5 + x6 + y6 + x7 + y7 + x8 + y8;
+}
+
+int __cdecl s_sum_iidiidiidiidiidiidiidiidiidiidiid(int x0, int x1, double y0, int x2, int x3, double y1, int x4, int x5, double y2, int x6, int x7, double y3, int x8, int x9, double y4, int x10, int x11, double y5, int x12, int x13, double y6, int x14, int x15, double y7, int x16, int x17, double y8)
+{
+    return x0 + x1 + y0 + x2 + x3 + y1 + x4 + x5 + y2 + x6 + x7 + y3 + x8 + x9 + y4 + x10 + x11 + y5 + x12 + x13 + y6 + x14 + x15 + y7 + x16 + x17 + y8;
+}
+
+int __cdecl s_sum_iyiy(int x0, hyper y0, int x1, hyper y1)
+{
+    return x0 + y0 + x1 + y1;
 }
 
 void __cdecl s_square_out(int x, int *y)
@@ -1271,6 +1369,10 @@ basic_tests(void)
   str_t str;
   se_t se;
   renum_t re;
+  chars_t cs1 = { 2, 4, 6, 8, 10 }, cs2 = { -1, -2, -3, -4, -5 };
+  ints_t is1 = { 2, 4 }, is2 = { 5, 8 };
+  flts_t fs1 = { 3, 5.5 }, fs2 = { 8, 2.3 };
+  dbls_t ds1 = { 9, -2.5 }, ds2 = { 2, -4.2 };
 
   ok(int_return() == INT_CODE, "RPC int_return\n");
 
@@ -1291,6 +1393,35 @@ basic_tests(void)
   ok(x == 0x12120000, "RPC hyper_int got 0x%x\n", x);
   x = sum_char_hyper( 12, ((hyper)0x42424242 << 32) | 0x33334444 );
   ok(x == 0x33334450, "RPC char_hyper got 0x%x\n", x);
+  x = sum_chars( 4, cs1, cs2 );
+  ok(x == 60, "got %d\n", x);
+  x = sum_ints( 2, is1, is2 );
+  ok(x == 38, "got %d\n", x);
+  x = sum_flts( 3, fs1, fs2 );
+  ok(x == 56, "got %d\n", x);
+  x = sum_dbls( 7, ds1, ds2 );
+  ok(x == 30, "got %d\n", x);
+  x = sum_iiff( 12, 23, 3.4, 4.7 );
+  ok(x == 43, "got %d\n", x);
+  x = sum_ifif( 12, 11.2, 23, 34.5 );
+  ok(x == 80, "got %d\n", x);
+  x = sum_iidd( 6, 5, 4.3, 2.1 );
+  ok(x == 17, "got %d\n", x);
+  x = sum_idid( 55, 44.55, 33, 22.44 );
+  ok(x == 154, "got %d\n", x);
+  x = sum_ififififififif( 1, 2.1, 3, 4.2, 5, 6.3, 7, 8.4, 9, 10.5, 11, 12.2, 13, 14.9 );
+  ok(x == 107, "got %d\n", x);
+  x = sum_ididididididid( -1, -2.1, -3, -4, -5, -6.7, -8, -9.1, -11, -12.3, -13, -14.2, -15, -16.3 );
+  ok(x == -120, "got %d\n", x);
+  x = sum_idfdifdfifdfidifdidf( 2, 1.2, 2.1, 2.3, 4, 3.2, 4.5, 5.5, -3, -2.2, -4.4, -5.5, 6, 6.4, -3, 8.1, 9.2, 7, -10.3, 12.4 );
+  ok(x == 45, "got %d\n", x);
+  x = sum_ididididididididididid( 2, 3, 4, 5, 6, 7, 8, 9, -1, -2, -3, -4, -5, -6, -7, -8, -9, 5 );
+  ok(x == 4, "got %d\n", x);
+  x = sum_iidiidiidiidiidiidiidiidiidiidiid( 11, 22, 33.1, 44, 55, 66.1, 77, 88, 99.1, 111, 222, 333.1, 444,
+                                             555, 666.1, 777, 888, 999.1, 1, 2, 3.1, 4, 5, 6.1, 7, 8, 9.1 );
+  ok(x == 5535, "got %d\n", x);
+  x = sum_iyiy( 1, 1234567890, 2, -1234567800 );
+  ok(x == 93, "got %d\n", x);
 
   x = 0;
   square_out(11, &x);
