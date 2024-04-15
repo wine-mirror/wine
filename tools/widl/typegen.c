@@ -5063,7 +5063,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
     int len, needs_params = 0;
 
     /* we need a param structure if we have more than one arg */
-    if (pointer_size == 4 && args) needs_params = is_object( iface ) || list_count( args ) > 1;
+    if (target.cpu == CPU_i386 && args) needs_params = is_object( iface ) || list_count( args ) > 1;
 
     print_file( file, 0, "{\n");
     if (needs_params)
@@ -5086,7 +5086,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
     {
         fprintf( file, ",\n%*s&__params", len, "" );
     }
-    else if (pointer_size == 8)
+    else if (target.cpu != CPU_i386)
     {
         if (is_object( iface )) fprintf( file, ",\n%*sThis", len, "" );
         if (args)
@@ -5107,7 +5107,7 @@ void write_client_call_routine( FILE *file, const type_t *iface, const var_t *fu
     {
         print_file( file, 1, "return (" );
         write_type_decl_left(file, rettype);
-        fprintf( file, ")%s;\n", pointer_size == 8 ? "_RetVal.Simple" : "*(LONG_PTR *)&_RetVal" );
+        fprintf( file, ")%s;\n", target.cpu != CPU_i386 ? "_RetVal.Simple" : "*(LONG_PTR *)&_RetVal" );
     }
     print_file( file, 0, "}\n\n");
 }
