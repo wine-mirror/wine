@@ -2409,6 +2409,438 @@ static void test_import_resolution(void)
     }
 }
 
+static HANDLE gen_forward_chain_testdll( char testdll_path[MAX_PATH],
+                                         const char source_dll[MAX_PATH],
+                                         BOOL is_export, BOOL is_import,
+                                         DWORD *exp_func_base_rva,
+                                         DWORD *imp_thunk_base_rva )
+{
+    DWORD text_rva = page_size;  /* assumes that the PE/COFF headers fit in a page */
+    DWORD text_size = page_size;
+    DWORD edata_rva = text_rva + text_size;
+    DWORD edata_size = page_size;
+    DWORD idata_rva = edata_rva + text_size;
+    DWORD idata_size = page_size;
+    DWORD eof_rva = idata_rva + edata_size;
+    const IMAGE_SECTION_HEADER sections[3] = {
+        {
+            .Name = ".text",
+            .Misc = { .VirtualSize = text_size },
+            .VirtualAddress   = text_rva,
+            .SizeOfRawData    = text_size,
+            .PointerToRawData = text_rva,
+            .Characteristics  = IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_EXECUTE,
+        },
+        {
+            .Name = ".edata",
+            .Misc = { .VirtualSize = edata_size },
+            .VirtualAddress   = edata_rva,
+            .SizeOfRawData    = edata_size,
+            .PointerToRawData = edata_rva,
+            .Characteristics  = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ,
+        },
+        {
+            .Name = ".idata",
+            .Misc = { .VirtualSize = edata_size },
+            .VirtualAddress   = idata_rva,
+            .SizeOfRawData    = idata_size,
+            .PointerToRawData = idata_rva,
+            .Characteristics  = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE,
+        },
+    };
+    struct expdesc
+    {
+        IMAGE_EXPORT_DIRECTORY dir;
+        DWORD functions[2];
+        DWORD names[2];
+        WORD name_ords[2];
+        char str_forward_test_func[32];
+        char str_forward_test_func2[32];
+        char dll_name[MAX_PATH];
+        char strpool[2][MAX_PATH + 16];
+    } expdesc = {
+        .dir = {
+            .Characteristics       = 0,
+            .TimeDateStamp         = 0x12345678,
+            .Name                  = edata_rva + offsetof(struct expdesc, dll_name),
+            .Base                  = 1,
+            .NumberOfFunctions     = ARRAY_SIZE(expdesc.functions),
+            .NumberOfNames         = ARRAY_SIZE(expdesc.names),
+            .AddressOfFunctions    = edata_rva + offsetof(struct expdesc, functions),
+            .AddressOfNames        = edata_rva + offsetof(struct expdesc, names),
+            .AddressOfNameOrdinals = edata_rva + offsetof(struct expdesc, name_ords),
+        },
+        .functions = {
+            text_rva + 0x4,
+            text_rva + 0x8,
+        },
+        .names = {
+            edata_rva + offsetof(struct expdesc, str_forward_test_func),
+            edata_rva + offsetof(struct expdesc, str_forward_test_func2),
+        },
+        .name_ords = {
+            0,
+            1,
+        },
+        .str_forward_test_func = "forward_test_func",
+        .str_forward_test_func2 = "forward_test_func2",
+    };
+    struct impdesc
+    {
+        IMAGE_IMPORT_DESCRIPTOR descr[2];
+        IMAGE_THUNK_DATA original_thunks[3];
+        IMAGE_THUNK_DATA thunks[3];
+        struct { WORD hint; char name[32]; } impname_forward_test_func;
+        char module[MAX_PATH];
+    } impdesc = {
+        .descr = {
+            {
+                .OriginalFirstThunk = idata_rva + offsetof(struct impdesc, original_thunks),
+                .TimeDateStamp      = 0,
+                .ForwarderChain     = -1,
+                .Name               = idata_rva + offsetof(struct impdesc, module),
+                .FirstThunk         = idata_rva + offsetof(struct impdesc, thunks),
+            },
+            {{ 0 }},
+        },
+        .original_thunks = {
+            {{ idata_rva + offsetof(struct impdesc, impname_forward_test_func) }},
+            {{ IMAGE_ORDINAL_FLAG | 2 }},
+            {{ 0 }},
+        },
+        .thunks = {
+            {{ idata_rva + offsetof(struct impdesc, impname_forward_test_func) }},
+            {{ IMAGE_ORDINAL_FLAG | 2 }},
+            {{ 0 }},
+        },
+        .impname_forward_test_func = { 0, "forward_test_func" },
+    };
+    IMAGE_NT_HEADERS nt_header;
+    char temp_path[MAX_PATH];
+    HANDLE file, file_w;
+    LARGE_INTEGER qpc;
+    DWORD outlen;
+    BOOL ret;
+    int res;
+
+    QueryPerformanceCounter( &qpc );
+    res = snprintf( expdesc.dll_name, ARRAY_SIZE(expdesc.dll_name),
+                    "ldr%05lx.dll", qpc.LowPart & 0xfffffUL );
+    ok( res > 0 && res < ARRAY_SIZE(expdesc.dll_name), "snprintf failed\n" );
+
+    if (source_dll)
+    {
+        const char *export_names[2] = {
+            "forward_test_func",
+            "#2",
+        };
+        const char *backslash = strrchr( source_dll, '\\' );
+        const char *dllname = backslash ? backslash + 1 : source_dll;
+        const char *dot = strrchr( dllname, '.' );
+        size_t ext_start = dot ? dot - dllname : strlen(dllname);
+        size_t i;
+
+        res = snprintf( impdesc.module, ARRAY_SIZE(impdesc.module), "%s", dllname );
+        ok( res > 0 && res < ARRAY_SIZE(impdesc.module), "snprintf() failed\n" );
+
+        for (i = 0; i < ARRAY_SIZE(export_names); i++)
+        {
+            char *buf;
+            size_t buf_size;
+
+            assert( i < ARRAY_SIZE(expdesc.strpool) );
+            buf = expdesc.strpool[i];
+            buf_size = ARRAY_SIZE(expdesc.strpool[i]);
+
+            assert( ext_start < buf_size );
+            memcpy( buf, dllname, ext_start );
+            buf += ext_start;
+            buf_size -= ext_start;
+
+            res = snprintf( buf, buf_size, ".%s", export_names[i] );
+            ok( res > 0 && res < buf_size, "snprintf() failed\n" );
+
+            assert( i < ARRAY_SIZE(expdesc.functions) );
+            expdesc.functions[i] = edata_rva + (expdesc.strpool[i] - (char *)&expdesc);
+        }
+    }
+
+    nt_header = nt_header_template;
+    nt_header.FileHeader.TimeDateStamp = 0x12345678;
+    nt_header.FileHeader.NumberOfSections = ARRAY_SIZE(sections);
+    nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+
+    nt_header.OptionalHeader.SizeOfCode = text_size;
+    nt_header.OptionalHeader.SectionAlignment = page_size;
+    nt_header.OptionalHeader.FileAlignment = page_size;
+    nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(sections);
+    nt_header.OptionalHeader.SizeOfImage = eof_rva;
+    if (is_export)
+    {
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress = edata_rva;
+        nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size = sizeof(expdesc);
+    }
+    /* Always have an import descriptor (even if empty) just like a real DLL */
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress = idata_rva;
+    nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size = is_import ? sizeof(impdesc) : sizeof(IMAGE_IMPORT_DESCRIPTOR);
+
+    ok( nt_header.OptionalHeader.SizeOfHeaders <= text_rva,
+        "headers (size %#lx) should not overlap with text area (RVA %#lx)\n",
+        nt_header.OptionalHeader.SizeOfHeaders, text_rva );
+
+    outlen = GetTempPathA( ARRAY_SIZE(temp_path), temp_path );
+    ok( outlen > 0 && outlen < ARRAY_SIZE(temp_path), "GetTempPathA() err=%lu\n", GetLastError() );
+
+    res = snprintf( testdll_path, MAX_PATH, "%s\\%s", temp_path, expdesc.dll_name );
+    ok( res > 0 && res < MAX_PATH, "snprintf failed\n" );
+
+    /* Open file handle that will be deleted on close or process termination */
+    file = CreateFileA( testdll_path,
+                        DELETE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL,
+                        CREATE_NEW,
+                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
+                        NULL );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile(%s) for delete returned error %lu\n",
+        wine_dbgstr_a( testdll_path ), GetLastError() );
+
+    /* Open file again with write access */
+    file_w = CreateFileA( testdll_path,
+                          GENERIC_WRITE,
+                          FILE_SHARE_READ | FILE_SHARE_DELETE,
+                          NULL,
+                          OPEN_EXISTING,
+                          FILE_ATTRIBUTE_NORMAL,
+                          NULL );
+    ok( file_w != INVALID_HANDLE_VALUE, "CreateFile(%s) for write returned error %lu\n",
+        wine_dbgstr_a( testdll_path ), GetLastError() );
+
+    ret = WriteFile( file_w, &dos_header, sizeof(dos_header), &outlen, NULL );
+    ok( ret && outlen == sizeof(dos_header), "write dos_header: err=%lu outlen=%lu\n", GetLastError(), outlen );
+
+    ret = WriteFile( file_w, &nt_header, sizeof(nt_header), &outlen, NULL );
+    ok( ret && outlen == sizeof(nt_header), "write nt_header: err=%lu outlen=%lu\n", GetLastError(), outlen );
+
+    ret = WriteFile( file_w, sections, sizeof(sections), &outlen, NULL );
+    ok( ret && outlen == sizeof(sections), "write sections: err=%lu outlen=%lu\n", GetLastError(), outlen );
+
+    if (is_export)
+    {
+        SetFilePointer( file_w, edata_rva, NULL, FILE_BEGIN );
+        ret = WriteFile( file_w, &expdesc, sizeof(expdesc), &outlen, NULL );
+        ok( ret && outlen == sizeof(expdesc), "write expdesc: err=%lu outlen=%lu\n", GetLastError(), outlen );
+    }
+
+    if (is_import)
+    {
+        SetFilePointer( file_w, idata_rva, NULL, FILE_BEGIN );
+        ret = WriteFile( file_w, &impdesc, sizeof(impdesc), &outlen, NULL );
+        ok( ret && outlen == sizeof(impdesc), "write impdesc: err=%lu outlen=%lu\n", GetLastError(), outlen );
+    }
+
+    ret = SetFilePointer( file_w, eof_rva, NULL, FILE_BEGIN );
+    ok( ret, "%lu\n", GetLastError() );
+    ret = SetEndOfFile( file_w );
+    ok( ret, "%lu\n", GetLastError() );
+
+    ret = CloseHandle( file_w );
+    ok( ret, "%lu\n", GetLastError() );
+
+    if (exp_func_base_rva)
+    {
+        *exp_func_base_rva = is_export ? edata_rva + ((char *)&expdesc.functions - (char *)&expdesc) : 0;
+    }
+
+    if (imp_thunk_base_rva)
+    {
+        *imp_thunk_base_rva = is_import ? idata_rva + ((char *)&impdesc.thunks - (char *)&impdesc) : 0;
+    }
+
+    return file;
+}
+
+static void subtest_export_forwarder_dep_chain( size_t num_chained_export_modules,
+                                                size_t exporter_index,
+                                                BOOL test_static_import )
+{
+    size_t num_modules = num_chained_export_modules + !!test_static_import;
+    size_t importer_index = test_static_import ? num_modules - 1 : 0;
+    DWORD imp_thunk_base_rva, exp_func_base_rva;
+    size_t ultimate_depender_index = 0; /* latest module depending on modules earlier in chain */
+    char temp_paths[4][MAX_PATH];
+    HANDLE temp_files[4];
+    UINT_PTR exports[2];
+    HMODULE modules[4];
+    BOOL res;
+    size_t i;
+
+    assert(exporter_index < num_chained_export_modules);
+    assert(num_modules > 1);
+    assert(num_modules <= ARRAY_SIZE(temp_paths));
+    assert(num_modules <= ARRAY_SIZE(temp_files));
+    assert(num_modules <= ARRAY_SIZE(modules));
+
+    if (winetest_debug > 1)
+        trace( "Generate a chain of test DLL fixtures\n" );
+
+    for (i = 0; i < num_modules; i++)
+    {
+        temp_files[i] = gen_forward_chain_testdll( temp_paths[i],
+                                                   i >= 1 ? temp_paths[i - 1] : NULL,
+                                                   i < num_chained_export_modules,
+                                                   importer_index && i == importer_index,
+                                                   i == 0 ? &exp_func_base_rva : NULL,
+                                                   i == importer_index ? &imp_thunk_base_rva : NULL );
+    }
+
+    if (winetest_debug > 1)
+        trace( "Load the entire test DLL chain\n" );
+
+    for (i = 0; i < num_modules; i++)
+    {
+        HMODULE module;
+
+        ok( !GetModuleHandleA( temp_paths[i] ), "%s already loaded\n",
+            wine_dbgstr_a( temp_paths[i] ) );
+
+        modules[i] = LoadLibraryA( temp_paths[i] );
+        ok( !!modules[i], "LoadLibraryA(temp_paths[%Iu] = %s) err=%lu\n",
+            i, wine_dbgstr_a( temp_paths[i] ), GetLastError() );
+
+        if (i == importer_index)
+        {
+            /* Statically importing export forwarder introduces a load-time dependency */
+            ultimate_depender_index = max( ultimate_depender_index, importer_index );
+        }
+
+        module = GetModuleHandleA( temp_paths[i] );
+        ok( module == modules[i], "modules[%Iu] expected %p, got %p err=%lu\n",
+            i, modules[i], module, GetLastError() );
+    }
+
+    if (winetest_debug > 1)
+        trace( "Get address of exported functions from the source module\n" );
+
+    for (i = 0; i < ARRAY_SIZE(exports); i++)
+    {
+        char *mod_base = (char *)modules[0];  /* source (non-forward) DLL */
+        exports[i] = (UINT_PTR)(mod_base + ((DWORD *)(mod_base + exp_func_base_rva))[i]);
+    }
+
+    if (winetest_debug > 1)
+        trace( "Check import address table of the importer DLL, if any\n" );
+
+    if (importer_index)
+    {
+        UINT_PTR *imp_thunk_base = (UINT_PTR *)((char *)modules[importer_index] + imp_thunk_base_rva);
+        for (i = 0; i < ARRAY_SIZE(exports); i++)
+        {
+            ok( imp_thunk_base[i] == exports[i], "import thunk mismatch [%Iu]: (%#Ix, %#Ix)\n",
+                i, imp_thunk_base[i], exports[i] );
+        }
+    }
+
+    if (winetest_debug > 1)
+        trace( "Call GetProcAddress() on the exporter DLL, if any\n" );
+
+    if (exporter_index)
+    {
+        UINT_PTR proc;
+
+        proc = (UINT_PTR)GetProcAddress( modules[exporter_index], "forward_test_func" );
+        ok( proc == exports[0], "GetProcAddress mismatch [0]: (%#Ix, %#Ix)\n", proc, exports[0] );
+
+        proc = (UINT_PTR)GetProcAddress( modules[exporter_index], (LPSTR)2 );
+        ok( proc == exports[1], "GetProcAddress mismatch [1]: (%#Ix, %#Ix)\n", proc, exports[1] );
+
+        /* Dynamically importing export forwarder introduces a runtime dependency */
+        ultimate_depender_index = max( ultimate_depender_index, exporter_index );
+    }
+
+    if (winetest_debug > 1)
+        trace( "Unreference modules except the ultimate dependant DLL\n" );
+
+    for (i = 0; i < ultimate_depender_index; i++)
+    {
+        HMODULE module;
+
+        res = FreeLibrary( modules[i] );
+        ok( res, "FreeLibrary(modules[%Iu]) err=%lu\n", i, GetLastError() );
+
+        /* FreeLibrary() should *not* unload the DLL immediately */
+        module = GetModuleHandleA( temp_paths[i] );
+        todo_wine_if(i < ultimate_depender_index && i + 1 != importer_index)
+        ok( module == modules[i], "modules[%Iu] expected %p, got %p (unloaded?) err=%lu\n",
+            i, modules[i], module, GetLastError() );
+    }
+
+    if (winetest_debug > 1)
+        trace( "The ultimate dependant DLL should keep other DLLs from being unloaded\n" );
+
+    for (i = 0; i < num_modules; i++)
+    {
+        HMODULE module = GetModuleHandleA( temp_paths[i] );
+
+        todo_wine_if(i < ultimate_depender_index && i + 1 != importer_index)
+        ok( module == modules[i], "modules[%Iu] expected %p, got %p (unloaded?) err=%lu\n",
+            i, modules[i], module, GetLastError() );
+    }
+
+    if (winetest_debug > 1)
+        trace( "Unreference the remaining modules (including the dependant DLL)\n" );
+
+    for (i = ultimate_depender_index; i < num_modules; i++)
+    {
+        res = FreeLibrary( modules[i] );
+        ok( res, "FreeLibrary(modules[%Iu]) err=%lu\n", i, GetLastError() );
+
+        /* FreeLibrary() should unload the DLL immediately */
+        ok( !GetModuleHandleA( temp_paths[i] ), "modules[%Iu] should not be kept loaded (2)\n", i );
+    }
+
+    if (winetest_debug > 1)
+        trace( "All modules should be unloaded; the unloading process should not reload any DLL\n" );
+
+    for (i = 0; i < num_modules; i++)
+    {
+        ok( !GetModuleHandleA( temp_paths[i] ), "modules[%Iu] should not be kept loaded (3)\n", i );
+    }
+
+    if (winetest_debug > 1)
+        trace( "Close and delete temp files\n" );
+
+    for (i = 0; i < num_modules; i++)
+    {
+        /* handles should be delete-on-close */
+        CloseHandle( temp_files[i] );
+    }
+}
+
+static void test_export_forwarder_dep_chain(void)
+{
+    winetest_push_context( "no import" );
+    /* export forwarder does not introduce a dependency on its own */
+    subtest_export_forwarder_dep_chain( 2, FALSE, 0 );
+    winetest_pop_context();
+
+    winetest_push_context( "static import of export forwarder" );
+    subtest_export_forwarder_dep_chain( 2, TRUE, 0 );
+    winetest_pop_context();
+
+    winetest_push_context( "static import of chained export forwarder" );
+    subtest_export_forwarder_dep_chain( 3, TRUE, 0 );
+    winetest_pop_context();
+
+    winetest_push_context( "dynamic import of export forwarder" );
+    subtest_export_forwarder_dep_chain( 2, FALSE, 1 );
+    winetest_pop_context();
+
+    winetest_push_context( "dynamic import of chained export forwarder" );
+    subtest_export_forwarder_dep_chain( 3, FALSE, 2 );
+    winetest_pop_context();
+}
+
 #define MAX_COUNT 10
 static HANDLE attached_thread[MAX_COUNT];
 static DWORD attached_thread_count;
@@ -4282,6 +4714,7 @@ START_TEST(loader)
     test_ImportDescriptors();
     test_section_access();
     test_import_resolution();
+    test_export_forwarder_dep_chain();
     test_ExitProcess();
     test_InMemoryOrderModuleList();
     test_LoadPackagedLibrary();
