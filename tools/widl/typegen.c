@@ -431,7 +431,18 @@ static unsigned int get_stack_size( const var_t *var, int *by_value )
     case TGT_UNION:
     case TGT_USER_TYPE:
         stack_size = type_memsize( var->declspec.type );
-        by_val = (pointer_size < 8 || stack_size <= pointer_size); /* FIXME: should be platform-specific */
+        switch (target.cpu)
+        {
+        case CPU_x86_64:
+            by_val = (stack_size <= pointer_size);
+            break;
+        case CPU_ARM64:
+            by_val = (stack_size <= 2 * pointer_size);
+            break;
+        default:
+            by_val = 1;
+            break;
+        }
         break;
     default:
         by_val = 0;

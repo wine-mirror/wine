@@ -71,6 +71,7 @@ extern const char *prefix_client;
 extern const char *prefix_server;
 extern unsigned int packing;
 extern unsigned int pointer_size;
+extern struct target target;
 extern time_t now;
 
 extern int open_typelib( const char *name );
