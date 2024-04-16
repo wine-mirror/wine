@@ -1987,6 +1987,7 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *cont_type,
                     break;
                 }
                 offset += size;
+                if (offset > baseoff) robust_flags &= ~RobustEarly;
             }
         }
 
