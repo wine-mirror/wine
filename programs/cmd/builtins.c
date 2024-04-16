@@ -1523,7 +1523,7 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
                               BOOL isIF, BOOL executecmds)
 {
   CMD_NODE *curPosition = *cmdList;
-  int myDepth = (*cmdList)->single->bracketDepth;
+  int myDepth = CMD_node_get_depth(*cmdList);
 
   WINE_TRACE("cmdList(%p), firstCmd(%s), doIt(%d), isIF(%d)\n", cmdList,
                 wine_dbgstr_w(firstcmd), executecmds, isIF);
@@ -1534,13 +1534,13 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
   /* Process the first command, if there is one */
   if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = xstrdupW(firstcmd);
-    WCMD_execute (firstcmd, (*cmdList)->single->redirects, cmdList, FALSE);
+    WCMD_execute (firstcmd, CMD_node_get_command(*cmdList)->redirects, cmdList, FALSE);
     free(command);
   }
 
 
   /* If it didn't move the position, step to next command */
-  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+  if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
 
   /* Process any other parts of the command */
   if (*cmdList) {
@@ -1552,74 +1552,74 @@ static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
 
       WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d) processThese(%d)\n",
                  *cmdList,
-                 (*cmdList)->single->prevDelim,
-                 (*cmdList)->single->bracketDepth,
+                 CMD_node_get_command(*cmdList)->prevDelim,
+                 CMD_node_get_depth(*cmdList),
                  myDepth,
                  processThese);
 
       /* Execute any statements appended to the line */
       /* FIXME: Only if previous call worked for && or failed for || */
-      if ((*cmdList)->single->prevDelim == CMD_ONFAILURE ||
-          (*cmdList)->single->prevDelim == CMD_ONSUCCESS) {
-        if (processThese && (*cmdList)->single->command) {
-          WCMD_execute ((*cmdList)->single->command, (*cmdList)->single->redirects,
+      if (CMD_node_get_command(*cmdList)->prevDelim == CMD_ONFAILURE ||
+          CMD_node_get_command(*cmdList)->prevDelim == CMD_ONSUCCESS) {
+        if (processThese && CMD_node_get_command(*cmdList)->command) {
+          WCMD_execute (CMD_node_get_command(*cmdList)->command, CMD_node_get_command(*cmdList)->redirects,
                         cmdList, FALSE);
         }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
 
       /* Execute any appended to the statement with (...) */
-      } else if ((*cmdList)->single->bracketDepth > myDepth) {
+      } else if (CMD_node_get_depth(*cmdList) > myDepth) {
         if (processThese) {
           *cmdList = WCMD_process_commands(*cmdList, TRUE, FALSE);
         } else {
           WINE_TRACE("Skipping command %p due to stack depth\n", *cmdList);
         }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
 
       /* End of the command - does 'ELSE ' follow as the next command? */
       } else {
-        if (isIF && WCMD_keyword_ws_found(L"else", (*cmdList)->single->command)) {
+        if (isIF && WCMD_keyword_ws_found(L"else", CMD_node_get_command(*cmdList)->command)) {
           /* Swap between if and else processing */
           processThese = !executecmds;
 
           /* Process the ELSE part */
           if (processThese) {
             const int keyw_len = lstrlenW(L"else") + 1;
-            WCHAR *cmd = ((*cmdList)->single->command) + keyw_len;
+            WCHAR *cmd = (CMD_node_get_command(*cmdList)->command) + keyw_len;
 
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
             if (*cmd) {
-              WCMD_execute (cmd, (*cmdList)->single->redirects, cmdList, FALSE);
+              WCMD_execute (cmd, CMD_node_get_command(*cmdList)->redirects, cmdList, FALSE);
             }
           } else {
               /* Loop skipping all commands until we get back to the current
                  depth, including skipping commands and their subsequent
                  pipes (eg cmd | prog)                                       */
               do {
-                *cmdList = (*cmdList)->nextcommand;
+                  *cmdList = CMD_node_next(*cmdList);
               } while (*cmdList &&
-                      ((*cmdList)->single->bracketDepth > myDepth ||
-                      (*cmdList)->single->prevDelim));
+                      (CMD_node_get_depth(*cmdList) > myDepth ||
+                      CMD_node_get_command(*cmdList)->prevDelim));
 
               /* After the else is complete, we need to now process subsequent commands */
               processThese = TRUE;
           }
-          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+          if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
 
         /* If we were in an IF statement and we didn't find an else and yet we get back to
            the same bracket depth as the IF, then the IF statement is over. This is required
            to handle nested ifs properly                                                     */
-        } else if (isIF && (*cmdList)->single->bracketDepth == myDepth) {
-          if (WCMD_keyword_ws_found(L"do", (*cmdList)->single->command)) {
+        } else if (isIF && CMD_node_get_depth(*cmdList) == myDepth) {
+          if (WCMD_keyword_ws_found(L"do", CMD_node_get_command(*cmdList)->command)) {
               WINE_TRACE("Still inside FOR-loop, not an end of IF statement\n");
-              *cmdList = (*cmdList)->nextcommand;
+              *cmdList = CMD_node_next(*cmdList);
           } else {
               WINE_TRACE("Found end of this nested IF statement, ending this if\n");
               break;
           }
         } else if (!processThese) {
-          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+          if (curPosition == *cmdList) *cmdList = CMD_node_next(*cmdList);
           WINE_TRACE("Skipping this command, as in not process mode (next = %p)\n", *cmdList);
         } else {
           WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
@@ -2219,26 +2219,26 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
   }
 
   /* Save away where the set of data starts and the variable */
-  thisDepth = (*cmdList)->single->bracketDepth;
-  *cmdList = (*cmdList)->nextcommand;
+  thisDepth = CMD_node_get_depth(*cmdList);
+  *cmdList = CMD_node_next(*cmdList);
   setStart = (*cmdList);
 
   /* Skip until the close bracket */
   WINE_TRACE("Searching %p as the set\n", *cmdList);
   while (*cmdList &&
-         (*cmdList)->single->command != NULL &&
-         (*cmdList)->single->bracketDepth > thisDepth) {
+         CMD_node_get_command(*cmdList)->command != NULL &&
+         CMD_node_get_depth(*cmdList) > thisDepth) {
     WINE_TRACE("Skipping %p which is part of the set\n", *cmdList);
-    *cmdList = (*cmdList)->nextcommand;
+    *cmdList = CMD_node_next(*cmdList);
   }
 
   /* Skip the close bracket, if there is one */
-  if (*cmdList) *cmdList = (*cmdList)->nextcommand;
+  if (*cmdList) *cmdList = CMD_node_next(*cmdList);
 
   /* Syntax error if missing close bracket, or nothing following it
      and once we have the complete set, we expect a DO              */
   WINE_TRACE("Looking for 'do ' in %p\n", *cmdList);
-  if ((*cmdList == NULL) || !WCMD_keyword_ws_found(L"do", (*cmdList)->single->command)) {
+  if ((*cmdList == NULL) || !WCMD_keyword_ws_found(L"do", CMD_node_get_command(*cmdList)->command)) {
       WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
@@ -2252,7 +2252,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
     /* Save away the starting position for the commands (and offset for the
        first one)                                                           */
     cmdStart = *cmdList;
-    firstCmd = (*cmdList)->single->command + 3; /* Skip 'do ' */
+    firstCmd = CMD_node_get_command(*cmdList)->command + 3; /* Skip 'do ' */
     itemNum  = 0;
 
     /* If we are recursing directories (ie /R), add all sub directories now, then
@@ -2262,8 +2262,8 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
     thisSet = setStart;
     /* Loop through all set entries */
     while (thisSet &&
-           thisSet->single->command != NULL &&
-           thisSet->single->bracketDepth >= thisDepth) {
+           CMD_node_get_command(thisSet)->command != NULL &&
+           CMD_node_get_depth(thisSet) >= thisDepth) {
 
       /* Loop through all entries on the same line */
       WCHAR *staticitem;
@@ -2272,7 +2272,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
 
       WINE_TRACE("Processing for set %p\n", thisSet);
       i = 0;
-      while (*(staticitem = WCMD_parameter (thisSet->single->command, i, &itemStart, TRUE, FALSE))) {
+      while (*(staticitem = WCMD_parameter (CMD_node_get_command(thisSet)->command, i, &itemStart, TRUE, FALSE))) {
 
         /*
          * If the parameter within the set has a wildcard then search for matching files
@@ -2455,7 +2455,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
       }
 
       /* Move onto the next set line */
-      if (thisSet) thisSet = thisSet->nextcommand;
+      if (thisSet) thisSet = CMD_node_next(thisSet);
     }
 
     /* If /L is provided, now run the for loop */
@@ -2516,7 +2516,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
      value needs to be the NEXT command to execute, which it either is, or
      we need to step over the closing bracket                                  */
   *cmdList = cmdEnd;
-  if (cmdEnd && cmdEnd->single->command == NULL) *cmdList = cmdEnd->nextcommand;
+  if (cmdEnd && CMD_node_get_command(cmdEnd)->command == NULL) *cmdList = CMD_node_next(cmdEnd);
 }
 
 /**************************************************************************

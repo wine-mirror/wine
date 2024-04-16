@@ -40,7 +40,7 @@ typedef enum _CMDdelimiters {
   CMD_NONE,        /* End of line or single & */
   CMD_ONFAILURE,   /* ||                      */
   CMD_ONSUCCESS,   /* &&                      */
-  CMD_PIPE         /* Single |                */
+  CMD_PIPE,        /* Single |                */
 } CMD_DELIMITERS;
 
 /* Data structure to hold commands to be processed */
@@ -59,6 +59,22 @@ typedef struct _CMD_NODE
     CMD_COMMAND      *single;
     struct _CMD_NODE *nextcommand; /* Next command string to execute           */
 } CMD_NODE;
+
+/* temporary helpers to fake a list into a tree */
+/* Note: for binary op, left should be a CMD_SINGLE node */
+static inline CMD_COMMAND *CMD_node_get_command(const CMD_NODE *node)
+{
+    return node->single;
+}
+static inline CMD_NODE *CMD_node_next(const CMD_NODE *node)
+{
+    return node->nextcommand;
+}
+static inline int CMD_node_get_depth(const CMD_NODE *node)
+{
+    return node->single->bracketDepth;
+}
+/* end temporary */
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);

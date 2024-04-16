@@ -1334,8 +1334,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
        process has to finish before the next one can start but this requires
        a change to not wait for the first app to finish but rather the pipe  */
     if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF) &&
-        cmdList && (*cmdList)->nextcommand &&
-        (*cmdList)->nextcommand->single->prevDelim == CMD_PIPE) {
+        cmdList && CMD_node_next(*cmdList) &&
+        CMD_node_get_command(CMD_node_next(*cmdList))->prevDelim == CMD_PIPE) {
 
         WCHAR temp_path[MAX_PATH];
 
@@ -1345,14 +1345,14 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
         /* Generate a unique temporary filename */
         GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
-        GetTempFileNameW(temp_path, L"CMD", 0, (*cmdList)->nextcommand->single->pipeFile);
+        GetTempFileNameW(temp_path, L"CMD", 0, CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile);
         WINE_TRACE("Using temporary file of %s\n",
-                   wine_dbgstr_w((*cmdList)->nextcommand->single->pipeFile));
+                   wine_dbgstr_w(CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile));
     }
 
     /* If piped output, send stdout to the pipe by appending >filename to redirects */
     if (piped) {
-        wsprintfW (new_redir, L"%s > %s", redirects, (*cmdList)->nextcommand->single->pipeFile);
+        wsprintfW (new_redir, L"%s > %s", redirects, CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile);
         WINE_TRACE("Redirects now %s\n", wine_dbgstr_w(new_redir));
     } else {
         lstrcpyW(new_redir, redirects);
@@ -1404,9 +1404,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
      */
     if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF)) {
       /* STDIN could come from a preceding pipe, so delete on close if it does */
-      if (cmdList && (*cmdList)->single->pipeFile[0] != 0x00) {
-          WINE_TRACE("Input coming from %s\n", wine_dbgstr_w((*cmdList)->single->pipeFile));
-          h = CreateFileW((*cmdList)->single->pipeFile, GENERIC_READ,
+      if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00) {
+          WINE_TRACE("Input coming from %s\n", wine_dbgstr_w(CMD_node_get_command(*cmdList)->pipeFile));
+          h = CreateFileW(CMD_node_get_command(*cmdList)->pipeFile, GENERIC_READ,
                     FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
           if (h == INVALID_HANDLE_VALUE) {
@@ -1418,7 +1418,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
           SetStdHandle (STD_INPUT_HANDLE, h);
 
           /* No need to remember the temporary name any longer once opened */
-          (*cmdList)->single->pipeFile[0] = 0x00;
+          CMD_node_get_command(*cmdList)->pipeFile[0] = 0x00;
 
       /* Otherwise STDIN could come from a '<' redirect */
       } else if ((pos = wcschr(new_redir,'<')) != NULL) {
@@ -1681,12 +1681,12 @@ static void WCMD_DumpCommands(CMD_NODE *commands) {
     while (thisCmd != NULL) {
       WINE_TRACE("%p %d %2.2d %p %s Redir:%s\n",
                thisCmd,
-               thisCmd->single->prevDelim,
-               thisCmd->single->bracketDepth,
-               thisCmd->nextcommand,
-               wine_dbgstr_w(thisCmd->single->command),
-               wine_dbgstr_w(thisCmd->single->redirects));
-      thisCmd = thisCmd->nextcommand;
+               CMD_node_get_command(thisCmd)->prevDelim,
+               CMD_node_get_depth(thisCmd),
+               CMD_node_next(thisCmd),
+               wine_dbgstr_w(CMD_node_get_command(thisCmd)->command),
+                 wine_dbgstr_w(CMD_node_get_command(thisCmd)->redirects));
+      thisCmd = CMD_node_next(thisCmd);
     }
 }
 
@@ -2369,7 +2369,7 @@ CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket,
 
     int bdepth = -1;
 
-    if (thisCmd && oneBracket) bdepth = thisCmd->single->bracketDepth;
+    if (thisCmd && oneBracket) bdepth = CMD_node_get_depth(thisCmd);
 
     /* Loop through the commands, processing them one by one */
     while (thisCmd) {
@@ -2378,23 +2378,23 @@ CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket,
 
       /* If processing one bracket only, and we find the end bracket
          entry (or less), return                                    */
-      if (oneBracket && !thisCmd->single->command &&
-          bdepth <= thisCmd->single->bracketDepth) {
+      if (oneBracket && !CMD_node_get_command(thisCmd)->command &&
+          bdepth <= CMD_node_get_depth(thisCmd)) {
         WINE_TRACE("Finished bracket @ %p, next command is %p\n",
-                   thisCmd, thisCmd->nextcommand);
-        return thisCmd->nextcommand;
+                   thisCmd, CMD_node_next(thisCmd));
+        return CMD_node_next(thisCmd);
       }
 
       /* Ignore the NULL entries a ')' inserts (Only 'if' cares
          about them and it will be handled in there)
          Also, skip over any batch labels (eg. :fred)          */
-      if (thisCmd->single->command && thisCmd->single->command[0] != ':') {
-        WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(thisCmd->single->command));
-        WCMD_execute (thisCmd->single->command, thisCmd->single->redirects, &thisCmd, retrycall);
+      if (CMD_node_get_command(thisCmd)->command && CMD_node_get_command(thisCmd)->command[0] != ':') {
+        WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(CMD_node_get_command(thisCmd)->command));
+        WCMD_execute (CMD_node_get_command(thisCmd)->command, CMD_node_get_command(thisCmd)->redirects, &thisCmd, retrycall);
       }
 
       /* Step on unless the command itself already stepped on */
-      if (thisCmd == origCmd) thisCmd = thisCmd->nextcommand;
+      if (thisCmd == origCmd) thisCmd = CMD_node_next(thisCmd);
     }
     return NULL;
 }
@@ -2419,8 +2419,8 @@ void WCMD_free_commands(CMD_NODE *cmds) {
     /* Loop through the commands, freeing them one by one */
     while (cmds) {
       CMD_NODE *thisCmd = cmds;
-      cmds = cmds->nextcommand;
-      WCMD_free_command(thisCmd->single);
+      cmds = CMD_node_next(cmds);
+      WCMD_free_command(CMD_node_get_command(thisCmd));
       free(thisCmd);
     }
 }
