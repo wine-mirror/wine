@@ -226,7 +226,6 @@ void mdmp_dump(void)
                 for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
                 {
                     printf("  Memory Range #%d:\n", i);
-                    dump_mdmp_data(&mmd->Memory, "    ");
                     printf("    Range: %s +%#x\n", get_hexint64_str(mmd->StartOfMemoryRange), mmd->Memory.DataSize);
                     if (globals_dump_sect("content"))
                         dump_mdmp_data(&mmd->Memory, "      ");
