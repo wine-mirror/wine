@@ -2403,35 +2403,45 @@ LONG_PTR CDECL ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
     return 0;
 }
 
-#ifdef __x86_64__
-
+#ifdef __aarch64__
+__ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
+                   "stp x29, x30, [sp, #-0x40]!\n\t"
+                   ".seh_save_fplr_x 0x40\n\t"
+                   ".seh_endprologue\n\t"
+                   "str x3, [sp, #0x18]\n\t"
+                   "stp x4, x5, [sp, #0x20]\n\t"
+                   "stp x6, x7, [sp, #0x30]\n\t"
+                   "add x3, sp, #0x18\n\t"   /* stack */
+                   "mov x4, #0\n\t"          /* fpu_stack */
+                   "bl ndr64_async_client_call\n\t"
+                   "ldp x29, x30, [sp], #0x40\n\t"
+                   "ret" )
+#elif defined(__arm64ec__)
+CLIENT_CALL_RETURN __attribute__((naked)) Ndr64AsyncClientCall( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
+{
+    asm( ".seh_proc \"#Ndr64AsyncClientCall\"\n\t"
+         "stp x29, x30, [sp, #-0x10]!\n\t"
+         ".seh_save_fplr_x 0x10\n\t"
+         ".seh_endprologue\n\t"
+         "str x3, [x4, #-0x8]!\n\t"
+         "mov x3, x4\n\t"          /* stack */
+         "mov x4, #0\n\t"          /* fpu_stack */
+         "bl \"#ndr64_async_client_call\"\n\t"
+         "ldp x29, x30, [sp], #0x10\n\t"
+         "ret\n\t"
+         ".seh_endproc" );
+}
+#elif defined(__x86_64__)
 __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
                    "subq $0x28,%rsp\n\t"
                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
                    __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "movq %r9,0x48(%rsp)\n\t"
-                   "leaq 0x48(%rsp),%r9\n\t"
-                   "movq $0,0x20(%rsp)\n\t"
+                   "leaq 0x48(%rsp),%r9\n\t" /* stack */
+                   "movq $0,0x20(%rsp)\n\t"  /* fpu_stack */
                    "call " __ASM_NAME("ndr64_async_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
-                   "ret" );
-
-#elif defined(_WIN64)
-
-/***********************************************************************
- *            Ndr64AsyncClientCall [RPCRT4.@]
- */
-CLIENT_CALL_RETURN WINAPIV Ndr64AsyncClientCall( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
-{
-    va_list args;
-    LONG_PTR ret;
-
-    va_start( args, retval );
-    ret = ndr64_async_client_call( info, proc, retval, va_arg( args, void ** ), NULL );
-    va_end( args );
-    return *(CLIENT_CALL_RETURN *)&ret;
-}
-
+                   "ret" )
 #endif
