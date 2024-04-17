@@ -2821,23 +2821,23 @@ static void test_export_forwarder_dep_chain(void)
 {
     winetest_push_context( "no import" );
     /* export forwarder does not introduce a dependency on its own */
-    subtest_export_forwarder_dep_chain( 2, FALSE, 0 );
+    subtest_export_forwarder_dep_chain( 2, 0, FALSE );
     winetest_pop_context();
 
     winetest_push_context( "static import of export forwarder" );
-    subtest_export_forwarder_dep_chain( 2, TRUE, 0 );
+    subtest_export_forwarder_dep_chain( 2, 0, TRUE );
     winetest_pop_context();
 
     winetest_push_context( "static import of chained export forwarder" );
-    subtest_export_forwarder_dep_chain( 3, TRUE, 0 );
+    subtest_export_forwarder_dep_chain( 3, 0, TRUE );
     winetest_pop_context();
 
     winetest_push_context( "dynamic import of export forwarder" );
-    subtest_export_forwarder_dep_chain( 2, FALSE, 1 );
+    subtest_export_forwarder_dep_chain( 2, 1, FALSE );
     winetest_pop_context();
 
     winetest_push_context( "dynamic import of chained export forwarder" );
-    subtest_export_forwarder_dep_chain( 3, FALSE, 2 );
+    subtest_export_forwarder_dep_chain( 3, 2, FALSE );
     winetest_pop_context();
 }
 
