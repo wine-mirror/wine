@@ -3930,8 +3930,8 @@ static GpStatus decode_frame_wic(IWICBitmapDecoder *decoder, BOOL force_conversi
             }
 
             palette = get_palette(frame, palette_type);
-            IWICBitmapFrameDecode_Release(frame);
         }
+        IWICBitmapFrameDecode_Release(frame);
     }
 
     if (FAILED(hr) && status == Ok) status = hresult_to_status(hr);
