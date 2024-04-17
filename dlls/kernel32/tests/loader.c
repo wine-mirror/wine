@@ -2450,14 +2450,17 @@ static HANDLE gen_forward_chain_testdll( char testdll_path[MAX_PATH],
     };
     struct expdesc
     {
-        IMAGE_EXPORT_DIRECTORY dir;
+        const IMAGE_EXPORT_DIRECTORY dir;
+
         DWORD functions[2];
-        DWORD names[2];
-        WORD name_ords[2];
-        char str_forward_test_func[32];
-        char str_forward_test_func2[32];
-        char dll_name[MAX_PATH];
-        char strpool[2][MAX_PATH + 16];
+
+        const DWORD names[2];
+        const WORD name_ords[2];
+        const char str_forward_test_func[32];
+        const char str_forward_test_func2[32];
+
+        char dll_name[MAX_PATH];         /* dynamically populated */
+        char strpool[2][MAX_PATH + 16];  /* for names of export forwarders */
     } expdesc = {
         .dir = {
             .Characteristics       = 0,
@@ -2471,8 +2474,8 @@ static HANDLE gen_forward_chain_testdll( char testdll_path[MAX_PATH],
             .AddressOfNameOrdinals = edata_rva + offsetof(struct expdesc, name_ords),
         },
         .functions = {
-            text_rva + 0x4,
-            text_rva + 0x8,
+            text_rva + 0x4,  /* may be overwritten */
+            text_rva + 0x8,  /* may be overwritten */
         },
         .names = {
             edata_rva + offsetof(struct expdesc, str_forward_test_func),
@@ -2487,11 +2490,12 @@ static HANDLE gen_forward_chain_testdll( char testdll_path[MAX_PATH],
     };
     struct impdesc
     {
-        IMAGE_IMPORT_DESCRIPTOR descr[2];
-        IMAGE_THUNK_DATA original_thunks[3];
-        IMAGE_THUNK_DATA thunks[3];
-        struct { WORD hint; char name[32]; } impname_forward_test_func;
-        char module[MAX_PATH];
+        const IMAGE_IMPORT_DESCRIPTOR descr[2];
+        const IMAGE_THUNK_DATA original_thunks[3];
+        const IMAGE_THUNK_DATA thunks[3];
+        const struct { WORD hint; char name[32]; } impname_forward_test_func;
+
+        char module[MAX_PATH];  /* dynamically populated */
     } impdesc = {
         .descr = {
             {
