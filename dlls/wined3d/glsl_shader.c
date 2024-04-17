@@ -7661,13 +7661,14 @@ static void shader_glsl_generate_ps_epilogue(const struct wined3d_gl_info *gl_in
 
 /* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_gl *context_gl,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        const struct wined3d_shader *shader, const struct ps_compile_args *args,
-        struct ps_np2fixup_info *np2fixup_info)
+        struct shader_glsl_priv *priv, const struct wined3d_shader *shader,
+        const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
     const struct wined3d_shader_version *version = &reg_maps->shader_version;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     const char *prefix = shader_glsl_get_prefix(version->type);
     BOOL legacy_syntax = needs_legacy_glsl_syntax(gl_info);
     unsigned int i, extra_constants_needed = 0;
@@ -8537,8 +8538,7 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context_g
 }
 
 static GLuint find_glsl_fragment_shader(const struct wined3d_context_gl *context_gl,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        struct wined3d_shader *shader,
+        struct shader_glsl_priv *priv, struct wined3d_shader *shader,
         const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
     struct glsl_ps_compiled_shader *gl_shaders, *new_array;
@@ -8602,8 +8602,8 @@ static GLuint find_glsl_fragment_shader(const struct wined3d_context_gl *context
     memset(np2fixup, 0, sizeof(*np2fixup));
     *np2fixup_info = args->np2_fixup ? np2fixup : NULL;
 
-    string_buffer_clear(buffer);
-    ret = shader_glsl_generate_fragment_shader(context_gl, buffer, string_buffers, shader, args, np2fixup);
+    string_buffer_clear(&priv->shader_buffer);
+    ret = shader_glsl_generate_fragment_shader(context_gl, priv, shader, args, np2fixup);
     gl_shaders[shader_data->num_gl_shaders++].id = ret;
 
     return ret;
@@ -10368,8 +10368,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         find_ps_compile_args(state, pshader, context_gl->c.stream_info.position_transformed,
                 &ps_compile_args, &context_gl->c);
-        ps_id = find_glsl_fragment_shader(context_gl, &priv->shader_buffer, &priv->string_buffers,
-                pshader, &ps_compile_args, &np2fixup_info);
+        ps_id = find_glsl_fragment_shader(context_gl, priv, pshader, &ps_compile_args, &np2fixup_info);
         ps_list = &pshader->linked_programs;
     }
     else if (priv->fragment_pipe == &glsl_fragment_pipe
