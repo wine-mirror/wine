@@ -45,7 +45,9 @@ static const GUID *const video_decoder_output_types[] =
 
 struct video_decoder
 {
+    IUnknown IUnknown_inner;
     IMFTransform IMFTransform_iface;
+    IUnknown *outer;
     LONG refcount;
 
     IMFAttributes *attributes;
@@ -71,6 +73,79 @@ struct video_decoder
     BOOL allocator_initialized;
     IMFTransform *copier;
     IMFMediaBuffer *temp_buffer;
+};
+
+static inline struct video_decoder *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_decoder, IUnknown_inner);
+}
+
+static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID iid, void **out)
+{
+    struct video_decoder *decoder = impl_from_IUnknown(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown))
+        *out = &decoder->IUnknown_inner;
+    else if (IsEqualGUID(iid, &IID_IMFTransform))
+        *out = &decoder->IMFTransform_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI unknown_AddRef(IUnknown *iface)
+{
+    struct video_decoder *decoder = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&decoder->refcount);
+
+    TRACE("iface %p increasing refcount to %lu.\n", decoder, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI unknown_Release(IUnknown *iface)
+{
+    struct video_decoder *decoder = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&decoder->refcount);
+
+    TRACE("iface %p decreasing refcount to %lu.\n", decoder, refcount);
+
+    if (!refcount)
+    {
+        IMFTransform_Release(decoder->copier);
+        IMFVideoSampleAllocatorEx_Release(decoder->allocator);
+        if (decoder->temp_buffer)
+            IMFMediaBuffer_Release(decoder->temp_buffer);
+        if (decoder->wg_transform)
+            wg_transform_destroy(decoder->wg_transform);
+        if (decoder->input_type)
+            IMFMediaType_Release(decoder->input_type);
+        if (decoder->output_type)
+            IMFMediaType_Release(decoder->output_type);
+        if (decoder->output_attributes)
+            IMFAttributes_Release(decoder->output_attributes);
+        if (decoder->attributes)
+            IMFAttributes_Release(decoder->attributes);
+        wg_sample_queue_destroy(decoder->wg_sample_queue);
+        free(decoder);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl unknown_vtbl =
+{
+    unknown_QueryInterface,
+    unknown_AddRef,
+    unknown_Release,
 };
 
 static struct video_decoder *impl_from_IMFTransform(IMFTransform *iface)
@@ -230,62 +305,17 @@ static void uninit_allocator(struct video_decoder *decoder)
 
 static HRESULT WINAPI transform_QueryInterface(IMFTransform *iface, REFIID iid, void **out)
 {
-    struct video_decoder *decoder = impl_from_IMFTransform(iface);
-
-    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
-
-    if (IsEqualGUID(iid, &IID_IUnknown) ||
-            IsEqualGUID(iid, &IID_IMFTransform))
-        *out = &decoder->IMFTransform_iface;
-    else
-    {
-        *out = NULL;
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
+    return IUnknown_QueryInterface(impl_from_IMFTransform(iface)->outer, iid, out);
 }
 
 static ULONG WINAPI transform_AddRef(IMFTransform *iface)
 {
-    struct video_decoder *decoder = impl_from_IMFTransform(iface);
-    ULONG refcount = InterlockedIncrement(&decoder->refcount);
-
-    TRACE("iface %p increasing refcount to %lu.\n", decoder, refcount);
-
-    return refcount;
+    return IUnknown_AddRef(impl_from_IMFTransform(iface)->outer);
 }
 
 static ULONG WINAPI transform_Release(IMFTransform *iface)
 {
-    struct video_decoder *decoder = impl_from_IMFTransform(iface);
-    ULONG refcount = InterlockedDecrement(&decoder->refcount);
-
-    TRACE("iface %p decreasing refcount to %lu.\n", decoder, refcount);
-
-    if (!refcount)
-    {
-        IMFTransform_Release(decoder->copier);
-        IMFVideoSampleAllocatorEx_Release(decoder->allocator);
-        if (decoder->temp_buffer)
-            IMFMediaBuffer_Release(decoder->temp_buffer);
-        if (decoder->wg_transform)
-            wg_transform_destroy(decoder->wg_transform);
-        if (decoder->input_type)
-            IMFMediaType_Release(decoder->input_type);
-        if (decoder->output_type)
-            IMFMediaType_Release(decoder->output_type);
-        if (decoder->output_attributes)
-            IMFAttributes_Release(decoder->output_attributes);
-        if (decoder->attributes)
-            IMFAttributes_Release(decoder->attributes);
-        wg_sample_queue_destroy(decoder->wg_sample_queue);
-        free(decoder);
-    }
-
-    return refcount;
+    return IUnknown_Release(impl_from_IMFTransform(iface)->outer);
 }
 
 static HRESULT WINAPI transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
@@ -810,7 +840,7 @@ static const IMFTransformVtbl transform_vtbl =
 };
 
 static HRESULT video_decoder_create_with_types(const GUID *const *input_types, UINT input_type_count,
-        const GUID *const *output_types, UINT output_type_count, IMFTransform **ret)
+        const GUID *const *output_types, UINT output_type_count, IUnknown *outer, IMFTransform **ret)
 {
     struct video_decoder *decoder;
     HRESULT hr;
@@ -818,8 +848,10 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
 
+    decoder->IUnknown_inner.lpVtbl = &unknown_vtbl;
     decoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
     decoder->refcount = 1;
+    decoder->outer = outer ? outer : &decoder->IUnknown_inner;
 
     decoder->input_type_count = input_type_count;
     decoder->input_types = input_types;
@@ -903,7 +935,7 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     wg_transform_destroy(transform);
 
     if (FAILED(hr = video_decoder_create_with_types(h264_decoder_input_types, ARRAY_SIZE(h264_decoder_input_types),
-            video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), &iface)))
+            video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), NULL, &iface)))
         return hr;
     decoder = impl_from_IMFTransform(iface);
 
@@ -953,5 +985,5 @@ HRESULT WINAPI winegstreamer_create_video_decoder(IMFTransform **out)
         return E_FAIL;
 
     return video_decoder_create_with_types(iv50_decoder_input_types, ARRAY_SIZE(iv50_decoder_input_types),
-            iv50_decoder_output_types, ARRAY_SIZE(iv50_decoder_output_types), out);
+            iv50_decoder_output_types, ARRAY_SIZE(iv50_decoder_output_types), NULL, out);
 }
