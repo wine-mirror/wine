@@ -66,16 +66,17 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "movzwl 4(%edx,%eax),%eax\n\t"  /* arguments size */
                   "pushl %eax\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "leal 8(%esp),%eax\n\t"         /* &This */
+                  "pushl $0\n\t"                  /* fpu_stack */
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  "leal 12(%esp),%eax\n\t"        /* &This */
                   "pushl %eax\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "pushl %edx\n\t"                /* format string */
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "pushl (%ecx)\n\t"              /* info->pStubDesc */
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "call " __ASM_NAME("ndr_client_call") "\n\t"
-                  "leal 12(%esp),%esp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset -12\n\t")
+                  "call " __ASM_STDCALL("NdrpClientCall2",16) "\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -16\n\t")
                   "popl %edx\n\t"                 /* arguments size */
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "movl (%esp),%ecx\n\t"  /* return address */
@@ -113,7 +114,7 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "movq %xmm2,0x28(%rsp)\n\t"
                   "movq %xmm3,0x30(%rsp)\n\t"
                   "leaq 0x18(%rsp),%r9\n\t"       /* fpu_args */
-                  "call " __ASM_NAME("ndr_client_call") "\n\t"
+                  "call " __ASM_NAME("NdrpClientCall2") "\n\t"
                   "addq $0x38,%rsp\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset -0x38\n\t")
                   "ret" );
@@ -131,9 +132,12 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
                   "push {r0-r3}\n\t"
-                  "mov r2, sp\n\t"              /* stack_top */
+                  ".seh_save_regs {r0-r3}\n\t"
                   "push {fp,lr}\n\t"
+                  ".seh_save_regs_w {fp,lr}\n\t"
                   "mov fp, sp\n\t"
+                  ".seh_save_sp fp\n\t"
+                  ".seh_endprologue\n\t"
                   "ldr r0, [r0]\n\t"            /* This->lpVtbl */
                   "ldr r0, [r0,#-8]\n\t"        /* MIDL_STUBLESS_PROXY_INFO */
                   "ldr r1, [r0,#8]\n\t"         /* info->FormatStringOffset */
@@ -141,13 +145,10 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "ldr ip, [r0,#4]\n\t"         /* info->ProcFormatString */
                   "add r1, ip\n\t"              /* info->ProcFormatString + offset */
                   "ldr r0, [r0]\n\t"            /* info->pStubDesc */
-#ifdef __SOFTFP__
-                  "mov r3, #0\n\t"
-#else
+                  "add r2, sp, #8\n\t"          /* stack_top */
                   "vpush {s0-s15}\n\t"          /* store the s0-s15/d0-d7 arguments */
                   "mov r3, sp\n\t"              /* fpu_stack */
-#endif
-                  "bl " __ASM_NAME("ndr_client_call") "\n\t"
+                  "bl NdrpClientCall2\n\t"
                   "mov sp, fp\n\t"
                   "pop {fp,lr}\n\t"
                   "add sp, #16\n\t"
@@ -164,10 +165,10 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC( call_stubless_func,
                    "stp x29, x30, [sp, #-0x90]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 0x90\n\t")
+                   ".seh_save_fplr_x 0x90\n\t"
                    "mov x29, sp\n\t"
-                   __ASM_SEH(".seh_set_fp\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
                    "stp d0, d1, [sp, #0x10]\n\t"
                    "stp d2, d3, [sp, #0x20]\n\t"
                    "stp d4, d5, [sp, #0x30]\n\t"
@@ -184,7 +185,7 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
                    "ldr x0, [x0]\n\t"                /* info->pStubDesc */
                    "add x2, sp, #0x50\n\t"           /* stack */
                    "add x3, sp, #0x10\n\t"           /* fpu_stack */
-                   "bl " __ASM_NAME("ndr_client_call") "\n\t"
+                   "bl NdrpClientCall2\n\t"
                    "ldp x29, x30, [sp], #0x90\n\t"
                    "ret" )
 
