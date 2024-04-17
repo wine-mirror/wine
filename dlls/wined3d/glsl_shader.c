@@ -8496,12 +8496,13 @@ static void shader_glsl_generate_shader_epilogue(const struct wined3d_shader_con
 
 /* Context activation is done by the caller. */
 static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context_gl *context_gl,
-        struct wined3d_string_buffer *buffer, struct wined3d_string_buffer_list *string_buffers,
-        const struct wined3d_shader *shader)
+        struct shader_glsl_priv *priv, const struct wined3d_shader *shader)
 {
     const struct wined3d_shader_thread_group_size *thread_group_size = &shader->u.cs.thread_group_size;
+    struct wined3d_string_buffer_list *string_buffers = &priv->string_buffers;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
     unsigned int i;
@@ -10177,7 +10178,7 @@ static HRESULT shader_glsl_compile_compute_shader(struct shader_glsl_priv *priv,
     TRACE("Compiling compute shader %p.\n", shader);
 
     string_buffer_clear(buffer);
-    shader_id = shader_glsl_generate_compute_shader(context_gl, buffer, &priv->string_buffers, shader);
+    shader_id = shader_glsl_generate_compute_shader(context_gl, priv, shader);
     gl_shaders[shader_data->num_gl_shaders++].id = shader_id;
 
     program_id = GL_EXTCALL(glCreateProgram());
