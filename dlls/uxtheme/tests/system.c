@@ -2699,7 +2699,6 @@ static void test_theme(BOOL v6)
 
     white_percent = white_count * 100 / (scrollbar_width * scrollbar_height);
     if (v6)
-        todo_wine
         ok(white_percent < 4, "Expected #ffffff pixels less than 4%%.\n");
     else
         ok(white_percent < 50, "Expected #ffffff pixels less than 50%%.\n");
