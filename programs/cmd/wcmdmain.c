@@ -1295,6 +1295,83 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
 }
 
+static BOOL set_std_redirections(WCHAR *new_redir, WCHAR *in_pipe)
+{
+    SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
+    WCHAR *pos, *redir;
+    HANDLE h;
+
+    /* STDIN could come from a preceding pipe, so delete on close if it does */
+    if (in_pipe)
+    {
+        TRACE("Input coming from %s\n", wine_dbgstr_w(in_pipe));
+        h = CreateFileW(in_pipe, GENERIC_READ,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
+                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        if (h == INVALID_HANDLE_VALUE) return FALSE;
+        SetStdHandle(STD_INPUT_HANDLE, h);
+        /* Otherwise STDIN could come from a '<' redirect */
+    }
+    else if ((pos = wcschr(new_redir,'<')) != NULL)
+    {
+        h = CreateFileW(WCMD_parameter(++pos, 0, NULL, FALSE, FALSE), GENERIC_READ, FILE_SHARE_READ,
+                        &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE) return FALSE;
+        SetStdHandle(STD_INPUT_HANDLE, h);
+    }
+
+    redir = new_redir;
+    /* Scan the whole command looking for > and 2> */
+    while (redir != NULL && ((pos = wcschr(redir,'>')) != NULL))
+    {
+        DWORD disposition;
+        int std_idx;
+
+        if (pos > redir && (*(pos-1)=='2'))
+            std_idx = STD_ERROR_HANDLE;
+        else
+            /* FIXME what if a number different from 1 & 2 is present? */
+            std_idx = STD_OUTPUT_HANDLE;
+
+        pos++;
+        if ('>' == *pos)
+        {
+            disposition = OPEN_ALWAYS;
+            pos++;
+        }
+        else
+            disposition = CREATE_ALWAYS;
+
+        /* Add support for 2>&1 */
+        redir = pos;
+        if (*pos == '&')
+        {
+            int idx = *(pos+1) - '0';
+
+            /* FIXME what if a number different from 1 & 2 is present? */
+            if (!DuplicateHandle(GetCurrentProcess(),
+                                 GetStdHandle(idx == 2 ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE),
+                                 GetCurrentProcess(),
+                                 &h,
+                                 0, TRUE, DUPLICATE_SAME_ACCESS))
+            {
+                FIXME("Duplicating handle failed with gle %ld\n", GetLastError());
+            }
+        }
+        else
+        {
+            WCHAR *param = WCMD_parameter(pos, 0, NULL, FALSE, FALSE);
+            h = CreateFileW(param, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                            &sa, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (h == INVALID_HANDLE_VALUE) return FALSE;
+            if (SetFilePointer(h, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
+                WCMD_print_error();
+        }
+        SetStdHandle(std_idx, h);
+    }
+    return TRUE;
+}
+
 /*****************************************************************************
  * Process one command. If the command is EXIT this routine does not return.
  * We will recurse through here executing batch files.
@@ -1305,21 +1382,16 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                    CMD_NODE **cmdList, BOOL retrycall)
 {
-    WCHAR *cmd, *parms_start, *redir;
-    WCHAR *pos;
+    WCHAR *cmd, *parms_start;
     int status, i, cmd_index;
-    DWORD count, creationDisposition;
-    HANDLE h;
+    DWORD count;
     WCHAR *whichcmd;
-    SECURITY_ATTRIBUTES sa;
     WCHAR *new_cmd = NULL;
     WCHAR *new_redir = NULL;
     HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
                                 GetStdHandle (STD_OUTPUT_HANDLE),
                                 GetStdHandle (STD_ERROR_HANDLE)};
-    DWORD  idx_stdhandles[3] = {STD_INPUT_HANDLE,
-                                STD_OUTPUT_HANDLE,
-                                STD_ERROR_HANDLE};
+    static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
     BOOL prev_echo_mode, piped = FALSE;
 
     WINE_TRACE("command on entry:%s (%p)\n",
@@ -1332,7 +1404,6 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* Move copy of the redirects onto the heap so it can be expanded */
     new_redir = xalloc(MAXSTRING * sizeof(WCHAR));
-    redir = new_redir;
 
     /* Strip leading whitespaces, and a '@' if supplied */
     whichcmd = WCMD_skip_leading_spaces(cmd);
@@ -1381,7 +1452,6 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     } else {
         lstrcpyW(new_redir, redirects);
     }
-
     /* Expand variables in command line mode only (batch mode will
        be expanded as the line is read in, except for 'for' loops) */
     handleExpansion(new_cmd, (context != NULL), delayedsubst);
@@ -1417,97 +1487,24 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       return;
     }
 
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-
     /*
      *  Redirect stdin, stdout and/or stderr if required.
      *  Note: Do not do this for a for or if statement as the pipe is for
      *  the individual statements, not the for or if itself.
      */
     if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF)) {
-      /* STDIN could come from a preceding pipe, so delete on close if it does */
-      if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00) {
-          WINE_TRACE("Input coming from %s\n", wine_dbgstr_w(CMD_node_get_command(*cmdList)->pipeFile));
-          h = CreateFileW(CMD_node_get_command(*cmdList)->pipeFile, GENERIC_READ,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
-                    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
-          if (h == INVALID_HANDLE_VALUE) {
-            WCMD_print_error ();
-            free(cmd);
-            free(new_redir);
-            return;
-          }
-          SetStdHandle (STD_INPUT_HANDLE, h);
-
-          /* No need to remember the temporary name any longer once opened */
-          CMD_node_get_command(*cmdList)->pipeFile[0] = 0x00;
-
-      /* Otherwise STDIN could come from a '<' redirect */
-      } else if ((pos = wcschr(new_redir,'<')) != NULL) {
-        h = CreateFileW(WCMD_parameter(++pos, 0, NULL, FALSE, FALSE), GENERIC_READ, FILE_SHARE_READ,
-                        &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (h == INVALID_HANDLE_VALUE) {
-          WCMD_print_error ();
-          free(cmd);
-          free(new_redir);
-          return;
-        }
-        SetStdHandle (STD_INPUT_HANDLE, h);
+      WCHAR *in_pipe = NULL;
+      if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00)
+        in_pipe = CMD_node_get_command(*cmdList)->pipeFile;
+      if (!set_std_redirections(new_redir, in_pipe)) {
+        WCMD_print_error ();
+        free(cmd);
+        free(new_redir);
+        return;
       }
-
-      /* Scan the whole command looking for > and 2> */
-      while (redir != NULL && ((pos = wcschr(redir,'>')) != NULL)) {
-        int handle = 0;
-
-        if (pos > redir && (*(pos-1)=='2'))
-          handle = 2;
-        else
-          handle = 1;
-
-        pos++;
-        if ('>' == *pos) {
-          creationDisposition = OPEN_ALWAYS;
-          pos++;
-        }
-        else {
-          creationDisposition = CREATE_ALWAYS;
-        }
-
-        /* Add support for 2>&1 */
-        redir = pos;
-        if (*pos == '&') {
-          int idx = *(pos+1) - '0';
-
-          if (DuplicateHandle(GetCurrentProcess(),
-                          GetStdHandle(idx_stdhandles[idx]),
-                          GetCurrentProcess(),
-                          &h,
-                          0, TRUE, DUPLICATE_SAME_ACCESS) == 0) {
-            WINE_FIXME("Duplicating handle failed with gle %ld\n", GetLastError());
-          }
-          WINE_TRACE("Redirect %d (%p) to %d (%p)\n", handle, GetStdHandle(idx_stdhandles[idx]), idx, h);
-
-        } else {
-          WCHAR *param = WCMD_parameter(pos, 0, NULL, FALSE, FALSE);
-          h = CreateFileW(param, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
-                          &sa, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
-          if (h == INVALID_HANDLE_VALUE) {
-            WCMD_print_error ();
-            free(cmd);
-            free(new_redir);
-            return;
-          }
-          if (SetFilePointer (h, 0, NULL, FILE_END) ==
-                INVALID_SET_FILE_POINTER) {
-            WCMD_print_error ();
-          }
-          WINE_TRACE("Redirect %d to '%s' (%p)\n", handle, wine_dbgstr_w(param), h);
-        }
-
-        SetStdHandle (idx_stdhandles[handle], h);
-      }
+      if (in_pipe)
+        /* No need to remember the temporary name any longer once opened */
+        in_pipe[0] = 0x00;
     } else {
       WINE_TRACE("Not touching redirects for a FOR or IF command\n");
     }
