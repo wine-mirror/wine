@@ -353,6 +353,11 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
         if (!get_config_key(hkey, appkey, env, "shader_backend", buffer, size))
         {
+            if (!stricmp(buffer, "glsl-vkd3d"))
+            {
+                ERR_(winediag)("Using the vkd3d-shader GLSL shader backend.\n");
+                wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_GLSL_VKD3D;
+            }
             if (!stricmp(buffer, "glsl"))
             {
                 ERR_(winediag)("Using the GLSL shader backend.\n");

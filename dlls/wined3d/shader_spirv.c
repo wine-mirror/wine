@@ -116,28 +116,6 @@ struct wined3d_shader_spirv_shader_interface
     struct vkd3d_shader_transform_feedback_info xfb_info;
 };
 
-static enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type)
-{
-    switch (shader_type)
-    {
-        case WINED3D_SHADER_TYPE_VERTEX:
-            return VKD3D_SHADER_VISIBILITY_VERTEX;
-        case WINED3D_SHADER_TYPE_HULL:
-            return VKD3D_SHADER_VISIBILITY_HULL;
-        case WINED3D_SHADER_TYPE_DOMAIN:
-            return VKD3D_SHADER_VISIBILITY_DOMAIN;
-        case WINED3D_SHADER_TYPE_GEOMETRY:
-            return VKD3D_SHADER_VISIBILITY_GEOMETRY;
-        case WINED3D_SHADER_TYPE_PIXEL:
-            return VKD3D_SHADER_VISIBILITY_PIXEL;
-        case WINED3D_SHADER_TYPE_COMPUTE:
-            return VKD3D_SHADER_VISIBILITY_COMPUTE;
-        default:
-            ERR("Invalid shader type %s.\n", debug_shader_type(shader_type));
-            return VKD3D_SHADER_VISIBILITY_ALL;
-    }
-}
-
 static void shader_spirv_handle_instruction(const struct wined3d_shader_instruction *ins)
 {
 }

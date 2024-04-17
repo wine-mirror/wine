@@ -466,6 +466,7 @@ enum wined3d_shader_backend
 {
     WINED3D_SHADER_BACKEND_AUTO,
     WINED3D_SHADER_BACKEND_GLSL,
+    WINED3D_SHADER_BACKEND_GLSL_VKD3D,
 };
 
 #define WINED3D_CSMT_ENABLE    0x00000001
@@ -4329,6 +4330,8 @@ HRESULT shader_generate_code(const struct wined3d_shader *shader, struct wined3d
         const struct wined3d_shader_reg_maps *reg_maps, void *backend_ctx,
         const DWORD *start, const DWORD *end);
 BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage usage);
+
+enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type);
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 {

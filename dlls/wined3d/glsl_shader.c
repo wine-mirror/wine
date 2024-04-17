@@ -125,6 +125,8 @@ struct constant_heap
 /* GLSL shader private data */
 struct shader_glsl_priv
 {
+    bool use_vkd3d;
+
     struct wined3d_string_buffer shader_buffer;
     struct wined3d_string_buffer_list string_buffers;
     struct wine_rb_tree program_lookup;
@@ -632,6 +634,202 @@ void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint pro
     }
 
     print_glsl_info_log(gl_info, program, TRUE);
+}
+
+static struct vkd3d_shader_resource_binding *create_resource_bindings(const struct wined3d_gl_info *gl_info,
+        enum wined3d_shader_type shader_type, unsigned int *count)
+{
+    struct vkd3d_shader_resource_binding *bindings;
+    enum vkd3d_shader_visibility visibility;
+    unsigned int base, i;
+
+    wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, shader_type, &base, count);
+    if (!(bindings = calloc(*count, sizeof(*bindings))))
+        return NULL;
+
+    visibility = vkd3d_shader_visibility_from_wined3d(shader_type);
+    for (i = 0; i < *count; ++i)
+    {
+        bindings[i].type = VKD3D_SHADER_DESCRIPTOR_TYPE_CBV;
+        bindings[i].register_space = 0;
+        bindings[i].register_index = i;
+        bindings[i].shader_visibility = visibility;
+        bindings[i].flags = VKD3D_SHADER_BINDING_FLAG_BUFFER;
+        bindings[i].binding.set = 0;
+        bindings[i].binding.binding = base + i;
+        bindings[i].binding.count = 1;
+    }
+
+    return bindings;
+}
+
+static struct vkd3d_shader_combined_resource_sampler *create_combined_resource_sampler_bindings(
+        const struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader, unsigned int *count)
+{
+    struct vkd3d_shader_combined_resource_sampler *bindings;
+    unsigned int bind_idx, shader_sampler_count, base, i;
+    struct wined3d_shader_sampler_map_entry *entry;
+    enum vkd3d_shader_visibility visibility;
+    const unsigned int *tex_unit_map;
+
+    tex_unit_map = wined3d_context_gl_get_tex_unit_mapping(context_gl,
+            &shader->reg_maps.shader_version, &base, count);
+
+    shader_sampler_count = shader->reg_maps.sampler_map.count;
+    if (shader_sampler_count > *count)
+    {
+        FIXME("Shader %p needs %u samplers, but only %u are supported.\n",
+                shader, shader_sampler_count, *count);
+        return NULL;
+    }
+    *count = min(shader_sampler_count, *count);
+
+    if (!(bindings = calloc(*count, sizeof(*bindings))))
+        return NULL;
+
+    visibility = vkd3d_shader_visibility_from_wined3d(shader->reg_maps.shader_version.type);
+    for (i = 0; i < *count; ++i)
+    {
+        entry = &shader->reg_maps.sampler_map.entries[i];
+        bind_idx = base + entry->bind_idx;
+        if (tex_unit_map)
+            bind_idx = tex_unit_map[bind_idx];
+
+        bindings[i].resource_space = 0;
+        bindings[i].resource_index = entry->resource_idx;
+        bindings[i].sampler_space = 0;
+        bindings[i].sampler_index = entry->sampler_idx;
+        bindings[i].shader_visibility = visibility;
+        bindings[i].flags = VKD3D_SHADER_BINDING_FLAG_IMAGE;
+        bindings[i].binding.set = 0;
+        bindings[i].binding.binding = bind_idx;
+        bindings[i].binding.count = 1;
+    }
+
+    return bindings;
+}
+
+static GLuint shader_glsl_generate_vkd3d_shader(const struct wined3d_context_gl *context_gl,
+        struct shader_glsl_priv *priv, const struct wined3d_shader *shader, GLenum gl_shader_type)
+{
+    const struct wined3d_shader_version *version = &shader->reg_maps.shader_version;
+    struct vkd3d_shader_combined_resource_sampler *combined_samplers;
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct vkd3d_shader_transform_feedback_info xfb_info;
+    unsigned int binding_count, combined_sampler_count;
+    struct vkd3d_shader_interface_info interface_info;
+    const struct wined3d_stream_output_desc *so_desc;
+    struct vkd3d_shader_resource_binding *bindings;
+    struct vkd3d_shader_compile_info info;
+    struct vkd3d_shader_code glsl;
+    GLuint shader_id;
+    char *messages;
+    int ret;
+
+    static const struct vkd3d_shader_compile_option compile_options[] =
+    {
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_6},
+    };
+
+    if (version->type == WINED3D_SHADER_TYPE_GEOMETRY && (so_desc = shader->u.gs.so_desc))
+    {
+        xfb_info.type = VKD3D_SHADER_STRUCTURE_TYPE_TRANSFORM_FEEDBACK_INFO;
+        xfb_info.next = NULL;
+        xfb_info.elements = (const struct vkd3d_shader_transform_feedback_element *)so_desc->elements;
+        xfb_info.element_count = so_desc->element_count;
+        xfb_info.buffer_strides = so_desc->buffer_strides;
+        xfb_info.buffer_stride_count = so_desc->buffer_stride_count;
+
+        interface_info.next = &xfb_info;
+    }
+    else
+    {
+        interface_info.next = NULL;
+    }
+
+    if (!(bindings = create_resource_bindings(gl_info, version->type, &binding_count)))
+    {
+        ERR("Failed to create resource bindings.\n");
+        return 0;
+    }
+
+    if (!(combined_samplers = create_combined_resource_sampler_bindings(context_gl, shader, &combined_sampler_count)))
+    {
+        ERR("Failed to create combined sampler bindings.\n");
+        free(bindings);
+        return 0;
+    }
+
+    interface_info.type = VKD3D_SHADER_STRUCTURE_TYPE_INTERFACE_INFO;
+    interface_info.bindings = bindings;
+    interface_info.binding_count = binding_count;
+    interface_info.push_constant_buffers = NULL;
+    interface_info.push_constant_buffer_count = 0;
+    interface_info.combined_samplers = combined_samplers;
+    interface_info.combined_sampler_count = combined_sampler_count;
+    interface_info.uav_counters = NULL;
+    interface_info.uav_counter_count = 0;
+
+    info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
+    info.next = &interface_info;
+    if (shader->source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
+    {
+        info.source.code = shader->function;
+        info.source.size = shader->functionLength;
+    }
+    else
+    {
+        info.source.code = shader->byte_code;
+        info.source.size = shader->byte_code_size;
+    }
+    info.source_type = shader->source_type;
+    info.target_type = VKD3D_SHADER_TARGET_GLSL;
+    info.options = compile_options;
+    info.option_count = ARRAY_SIZE(compile_options);
+    info.log_level = VKD3D_SHADER_LOG_WARNING;
+    info.source_name = NULL;
+
+    ret = vkd3d_shader_compile(&info, &glsl, &messages);
+    if (messages && *messages && FIXME_ON(d3d_shader))
+    {
+        const char *ptr, *end, *line;
+
+        FIXME("Shader log:\n");
+        ptr = messages;
+        end = ptr + strlen(ptr);
+        while ((line = wined3d_get_line(&ptr, end)))
+        {
+            FIXME("    %.*s", (int)(ptr - line), line);
+        }
+        FIXME("\n");
+    }
+    vkd3d_shader_free_messages(messages);
+    free(combined_samplers);
+    free(bindings);
+
+    if (ret < 0)
+    {
+        ERR("Failed to compile shader, ret %d.\n", ret);
+        return 0;
+    }
+
+    if (!(shader_id = GL_EXTCALL(glCreateShader(gl_shader_type))))
+    {
+        ERR("Failed to create shader.\n");
+        vkd3d_shader_free_shader_code(&glsl);
+        return 0;
+    }
+
+    TRACE("Compiling shader object %u.\n", shader_id);
+    GL_EXTCALL(glShaderSource(shader_id, 1, (const GLchar **)&glsl.code, (const GLint *)&glsl.size));
+    checkGLcall("glShaderSource");
+    GL_EXTCALL(glCompileShader(shader_id));
+    checkGLcall("glCompileShader");
+    print_glsl_info_log(gl_info, shader_id, FALSE);
+
+    vkd3d_shader_free_shader_code(&glsl);
+
+    return shader_id;
 }
 
 static BOOL shader_glsl_use_layout_qualifier(const struct wined3d_gl_info *gl_info)
@@ -7676,6 +7874,9 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
     GLuint shader_id;
     uint32_t map;
 
+    if (priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_FRAGMENT_SHADER);
+
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
     priv_ctx.cur_ps_args = args;
@@ -8041,6 +8242,9 @@ static GLuint shader_glsl_generate_vertex_shader(const struct wined3d_context_gl
     GLuint shader_id;
     unsigned int i;
 
+    if (priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_VERTEX_SHADER);
+
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
     priv_ctx.cur_vs_args = args;
@@ -8186,6 +8390,9 @@ static GLuint shader_glsl_generate_hull_shader(const struct wined3d_context_gl *
     GLuint shader_id;
     unsigned int i;
 
+    if (priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_TESS_CONTROL_SHADER);
+
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
     priv_ctx.string_buffers = string_buffers;
@@ -8279,6 +8486,9 @@ static GLuint shader_glsl_generate_domain_shader(const struct wined3d_context_gl
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
+
+    if (priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_TESS_EVALUATION_SHADER);
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
@@ -8378,6 +8588,9 @@ static GLuint shader_glsl_generate_geometry_shader(const struct wined3d_context_
     unsigned int max_vertices;
     unsigned int i, j;
     GLuint shader_id;
+
+    if (shader->function && priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_GEOMETRY_SHADER);
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
@@ -8506,6 +8719,9 @@ static GLuint shader_glsl_generate_compute_shader(const struct wined3d_context_g
     struct shader_glsl_ctx_priv priv_ctx;
     GLuint shader_id;
     unsigned int i;
+
+    if (priv->use_vkd3d)
+        return shader_glsl_generate_vkd3d_shader(context_gl, priv, shader, GL_COMPUTE_SHADER);
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.gl_info = gl_info;
@@ -11155,6 +11371,12 @@ static HRESULT shader_glsl_alloc(struct wined3d_device *device, const struct win
 
     if (!(priv = calloc(1, sizeof(*priv))))
         return E_OUTOFMEMORY;
+
+    if (wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_GLSL_VKD3D)
+    {
+        TRACE("Using %s.\n", vkd3d_shader_get_version(NULL, NULL));
+        priv->use_vkd3d = true;
+    }
 
     string_buffer_list_init(&priv->string_buffers);
 

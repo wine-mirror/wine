@@ -306,6 +306,28 @@ const char *debug_d3dshaderinstructionhandler(enum WINED3D_SHADER_INSTRUCTION_HA
     return shader_opcode_names[handler_idx];
 }
 
+enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type)
+{
+    switch (shader_type)
+    {
+        case WINED3D_SHADER_TYPE_VERTEX:
+            return VKD3D_SHADER_VISIBILITY_VERTEX;
+        case WINED3D_SHADER_TYPE_HULL:
+            return VKD3D_SHADER_VISIBILITY_HULL;
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            return VKD3D_SHADER_VISIBILITY_DOMAIN;
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            return VKD3D_SHADER_VISIBILITY_GEOMETRY;
+        case WINED3D_SHADER_TYPE_PIXEL:
+            return VKD3D_SHADER_VISIBILITY_PIXEL;
+        case WINED3D_SHADER_TYPE_COMPUTE:
+            return VKD3D_SHADER_VISIBILITY_COMPUTE;
+        default:
+            ERR("Invalid shader type %s.\n", debug_shader_type(shader_type));
+            return VKD3D_SHADER_VISIBILITY_ALL;
+    }
+}
+
 static const char *shader_semantic_name_from_usage(enum wined3d_decl_usage usage)
 {
     if (usage >= ARRAY_SIZE(semantic_names))
