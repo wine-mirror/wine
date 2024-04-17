@@ -253,8 +253,6 @@ enum stubless_phase
     STUBLESS_FREE
 };
 
-LONG_PTR CDECL ndr_async_client_call( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
-                                      void **stack_top );
 void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
                      void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal );
 PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,

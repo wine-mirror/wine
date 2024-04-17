@@ -1949,8 +1949,48 @@ cleanup:
     return status;
 }
 
-#ifdef __x86_64__
-
+#ifdef __aarch64__
+__ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   "stp x29, x30, [sp, #-0x40]!\n\t"
+                   ".seh_save_fplr_x 0x40\n\t"
+                   ".seh_endprologue\n\t"
+                   "stp x2, x3, [sp, #0x10]\n\t"
+                   "stp x4, x5, [sp, #0x20]\n\t"
+                   "stp x6, x7, [sp, #0x30]\n\t"
+                   "add x2, sp, #0x10\n\t"   /* stack */
+                   "mov x3, #0\n\t"          /* fpu_stack */
+                   "bl ndr_async_client_call\n\t"
+                   "ldp x29, x30, [sp], #0x40\n\t"
+                   "ret" )
+#elif defined(__arm64ec__)
+CLIENT_CALL_RETURN __attribute__((naked)) NdrAsyncClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING fmt, ... )
+{
+    asm( ".seh_proc \"#NdrAsyncClientCall\"\n\t"
+         "stp x29, x30, [sp, #-0x10]!\n\t"
+         ".seh_save_fplr_x 0x10\n\t"
+         ".seh_endprologue\n\t"
+         "stp x2, x3, [x4, #-0x10]!\n\t"
+         "mov x2, x4\n\t"          /* stack */
+         "mov x3, #0\n\t"          /* fpu_stack */
+         "bl \"#ndr_async_client_call\"\n\t"
+         "ldp x29, x30, [sp], #0x10\n\t"
+         "ret\n\t"
+         ".seh_endproc" );
+}
+#elif defined(__arm__)
+__ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   "push {r2-r3}\n\t"
+                   ".seh_save_regs {r2,r3}\n\t"
+                   "push {fp,lr}\n\t"
+                   ".seh_save_regs_w {fp,lr}\n\t"
+                   ".seh_endprologue\n\t"
+                   "add r2, sp, #8\n\t"      /* stack */
+                   "mov r3, #0\n\t"          /* fpu_stack */
+                   "bl ndr_async_client_call\n\t"
+                   "pop {fp,lr}\n\t"
+                   "add sp, #8\n\t"
+                   "bx lr" )
+#elif defined(__x86_64__)
 __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
                    "subq $0x28,%rsp\n\t"
                    __ASM_SEH(".seh_stackalloc 0x28\n\t")
@@ -1958,29 +1998,29 @@ __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "movq %r8,0x40(%rsp)\n\t"
                    "movq %r9,0x48(%rsp)\n\t"
-                   "leaq 0x40(%rsp),%r8\n\t"
+                   "leaq 0x40(%rsp),%r8\n\t" /* stack */
+                   "xorq %r9,%r9\n\t"        /* fpu_stack */
                    "call " __ASM_NAME("ndr_async_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
-                   "ret" );
-
-#else  /* __x86_64__ */
-
-/***********************************************************************
- *            NdrAsyncClientCall [RPCRT4.@]
- */
-CLIENT_CALL_RETURN WINAPIV NdrAsyncClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING format, ... )
-{
-    va_list args;
-    LONG_PTR ret;
-
-    va_start( args, format );
-    ret = ndr_async_client_call( desc, format, va_arg( args, void ** ));
-    va_end( args );
-    return *(CLIENT_CALL_RETURN *)&ret;
-}
-
-#endif  /* __x86_64__ */
+                   "ret" )
+#elif defined(__i386__)
+__ASM_GLOBAL_FUNC( NdrAsyncClientCall,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "push $0\n\t"             /* fpu_stack */
+                   "push 16(%ebp)\n\t"       /* stack */
+                   "push 12(%ebp)\n\t"       /* format */
+                   "push 8(%ebp)\n\t"        /* desc */
+                   "call " __ASM_NAME("ndr_async_client_call") "\n\t"
+                   "leave\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
+#endif
 
 RPCRTAPI LONG RPC_ENTRY NdrAsyncStubCall(struct IRpcStubBuffer* pThis,
     struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg,
