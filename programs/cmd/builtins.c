@@ -2062,47 +2062,38 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
  *
  * Returns a file handle which can be used to read the input lines from.
  */
-static FILE* WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd) {
-  WCHAR  temp_str[MAX_PATH];
-  WCHAR  temp_file[MAX_PATH];
-  WCHAR  temp_cmd[MAXSTRING];
-  WCHAR *trimmed = NULL;
-  FILE*  ret;
+static FILE* WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd)
+{
+    WCHAR *trimmed = NULL;
+    FILE*  ret;
 
-  /* Remove leading and trailing character (but there may be trailing whitespace too) */
-  if ((iscmd && (itemstr[0] == '`' && usebackq)) ||
-      (iscmd && (itemstr[0] == '\'' && !usebackq)) ||
-      (!iscmd && (itemstr[0] == '"' && usebackq)))
-  {
-    trimmed = WCMD_strtrim(itemstr);
-    if (trimmed) {
-      itemstr = trimmed;
+    /* Remove leading and trailing character (but there may be trailing whitespace too) */
+    if ((iscmd && (itemstr[0] == '`' && usebackq)) ||
+        (iscmd && (itemstr[0] == '\'' && !usebackq)) ||
+        (!iscmd && (itemstr[0] == '"' && usebackq)))
+    {
+        trimmed = WCMD_strtrim(itemstr);
+        if (trimmed)
+            itemstr = trimmed;
+        itemstr[lstrlenW(itemstr)-1] = 0x00;
+        itemstr++;
     }
-    itemstr[lstrlenW(itemstr)-1] = 0x00;
-    itemstr++;
-  }
 
-  if (iscmd) {
-    /* Get temp filename */
-    GetTempPathW(ARRAY_SIZE(temp_str), temp_str);
-    GetTempFileNameW(temp_str, L"CMD", 0, temp_file);
-
-    /* Redirect output to the temporary file */
-    wsprintfW(temp_str, L">%s", temp_file);
-    wsprintfW(temp_cmd, L"CMD.EXE /C %s", itemstr);
-    WINE_TRACE("Issuing '%s' with redirs '%s'\n",
-               wine_dbgstr_w(temp_cmd), wine_dbgstr_w(temp_str));
-    WCMD_execute (temp_cmd, temp_str, NULL, FALSE);
-
-    /* Open the file, read line by line and process */
-    ret = _wfopen(temp_file, L"rt,ccs=unicode");
-  } else {
-    /* Open the file, read line by line and process */
-    WINE_TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(itemstr));
-    ret = _wfopen(itemstr, L"rt,ccs=unicode");
-  }
-  free(trimmed);
-  return ret;
+    if (iscmd)
+    {
+        WCHAR  temp_cmd[MAXSTRING];
+        wsprintfW(temp_cmd, L"CMD.EXE /C %s", itemstr);
+        WINE_TRACE("Reading output of '%s'\n", wine_dbgstr_w(temp_cmd));
+        ret = _wpopen(temp_cmd, L"rt,ccs=unicode");
+    }
+    else
+    {
+        /* Open the file, read line by line and process */
+        WINE_TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(itemstr));
+        ret = _wfopen(itemstr, L"rt,ccs=unicode");
+    }
+    free(trimmed);
+    return ret;
 }
 
 /**************************************************************************
