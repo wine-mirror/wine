@@ -420,7 +420,7 @@ static int get_padding(const var_list_t *fields)
 static unsigned int get_stack_size( const var_t *var, unsigned int *stack_align, int *by_value )
 {
     unsigned int stack_size, align = 0;
-    int by_val;
+    int by_val = 0;
 
     switch (typegen_detect_type( var->declspec.type, var->attrs, TDT_ALL_TYPES ))
     {
@@ -449,6 +449,7 @@ static unsigned int get_stack_size( const var_t *var, unsigned int *stack_align,
         switch (target.cpu)
         {
         case CPU_x86_64:
+        case CPU_ARM64EC:
             by_val = (stack_size == 1 || stack_size == 2 || stack_size == 4 || stack_size == 8);
             break;
         case CPU_ARM64:
@@ -457,14 +458,13 @@ static unsigned int get_stack_size( const var_t *var, unsigned int *stack_align,
         case CPU_ARM:
             by_val = 1;
             break;
-        default:
+        case CPU_i386:
             align = pointer_size;
             by_val = 1;
             break;
         }
         break;
     default:
-        by_val = 0;
         break;
     }
     if (align < pointer_size) align = pointer_size;
@@ -1607,6 +1607,7 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
     switch (target.cpu)
     {
     case CPU_x86_64:
+    case CPU_ARM64EC:
     {
         unsigned short pos = 0, fpu_mask = 0;
 
@@ -1657,7 +1658,6 @@ static void write_proc_func_interp( FILE *file, int indent, const type_t *iface,
         break;
     }
     case CPU_i386:
-    default:
         print_file( file, indent, "0x%02x,\n", extra_size );
         print_file( file, indent, "0x%02x,\n", ext_flags );
         print_file( file, indent, "NdrFcShort(0x0),\n" );  /* server corr hint */
