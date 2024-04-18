@@ -488,7 +488,7 @@ void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum s
         unsigned char *pArg = pStubMsg->StackTop + params[i].stack_offset;
         PFORMAT_STRING pTypeFormat = (PFORMAT_STRING)&pStubMsg->StubDesc->pFormatTypes[params[i].u.type_offset];
 
-#ifdef __x86_64__  /* floats are passed as doubles through varargs functions */
+#ifndef __i386__  /* floats are passed as doubles through varargs functions */
         float f;
 
         if (params[i].attr.IsBasetype &&
@@ -1073,11 +1073,41 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
                    "ret" )
 #endif
 
+#if defined(__aarch64__) || defined(__arm__)
+static void __attribute__((used)) assign_args( ULONG_PTR *args, ULONG_PTR *regs, ULONG_PTR *stack,
+                                               const NDR_PROC_HEADER_EXTS *ext)
+{
+    unsigned int i, size, count;
+    unsigned char *data;
+
+    if (!ext) return;
+    if (ext->Size < sizeof(*ext) + 3) return;
+    data = (unsigned char *)(ext + 1);
+    size = min( ext->Size - sizeof(*ext) - 3, data[2] );
+    data += 3;
+    for (i = 0; i < size; i++)
+    {
+        if (data[i] < 0x80) continue;
+        else if (data[i] < 0x94) regs[data[i] - 0x80] = args[i];
+        else if (data[i] == 0x9d) /* repeat */
+        {
+            if (i + 3 >= size) break;
+            count = data[i + 2] + (data[i + 3] << 8);
+            memcpy( &stack[i + (signed char)data[i + 1]], &args[i], count * sizeof(*args) );
+            i += 3;
+        }
+        else if (data[i] < 0xa0) continue;
+        else stack[i + (signed char)data[i]] = args[i];
+    }
+}
+#endif
+
 /* Calls a function with the specified arguments, restoring the stack
  * properly afterwards as we don't know the calling convention of the
  * function */
 #if defined __i386__ && defined _MSC_VER
-__declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size)
+__declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
+                                                    const NDR_PROC_HEADER_EXTS *ext)
 {
     __asm
     {
@@ -1103,7 +1133,8 @@ __declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigne
     }
 }
 #elif defined __i386__ && defined __GNUC__
-LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size);
+LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
+                                  const NDR_PROC_HEADER_EXTS *ext);
 __ASM_GLOBAL_FUNC(call_server_func,
     "pushl %ebp\n\t"
     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1134,7 +1165,8 @@ __ASM_GLOBAL_FUNC(call_server_func,
     __ASM_CFI(".cfi_same_value %ebp\n\t")
     "ret" )
 #elif defined __x86_64__
-LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size);
+LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
+                                  const NDR_PROC_HEADER_EXTS *ext);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "pushq %rbp\n\t"
                    __ASM_SEH(".seh_pushreg %rbp\n\t")
@@ -1181,74 +1213,64 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 #elif defined __arm__
-LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size);
+LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size,
+                                  const NDR_PROC_HEADER_EXTS *ext);
 __ASM_GLOBAL_FUNC( call_server_func,
-                   "push {r4, r5, LR}\n\t"
-                   "mov r4, r0\n\t"
-                   "mov r5, SP\n\t"
-                   "lsr r3, r2, #2\n\t"
-                   "cmp r3, #0\n\t"
-                   "beq 5f\n\t"
-                   "sub SP, SP, r2\n\t"
-                   "tst r3, #1\n\t"
-                   "it eq\n\t"
-                   "subeq SP, SP, #4\n\t"
-                   "1:\tsub r2, r2, #4\n\t"
-                   "ldr r0, [r1, r2]\n\t"
-                   "str r0, [SP, r2]\n\t"
-                   "cmp r2, #0\n\t"
-                   "bgt 1b\n\t"
-                   "cmp r3, #1\n\t"
-                   "bgt 2f\n\t"
-                   "pop {r0}\n\t"
-                   "b 5f\n\t"
-                   "2:\tcmp r3, #2\n\t"
-                   "bgt 3f\n\t"
-                   "pop {r0-r1}\n\t"
-                   "b 5f\n\t"
-                   "3:\tcmp r3, #3\n\t"
-                   "bgt 4f\n\t"
-                   "pop {r0-r2}\n\t"
-                   "b 5f\n\t"
-                   "4:\tpop {r0-r3}\n\t"
-                   "5:\tblx r4\n\t"
-                   "mov SP, r5\n\t"
-                   "pop {r4, r5, PC}" )
+                   "push {r4,r5,fp,lr}\n\t"
+                   ".seh_save_regs_w {r4,r5,fp,lr}\n\t"
+                   "mov fp, sp\n\t"
+                   ".seh_save_sp fp\n\t"
+                   ".seh_endprologue\n\t"
+                   "add r2, r2, #20*4+8+4\n\t"
+                   "and r2, r2, #~7\n\t"
+                   "sub sp, sp, r2\n\t"
+                   "mov r4, r0\n\t"        /* func */
+                   "mov r0, r1\n\t"        /* args */
+                   "add r1, sp, #8\n\t"    /* regs */
+                   "add r2, r1, #20*4\n\t" /* stack */
+                   "bl assign_args\n\t"
+                   "add sp, sp, #8\n\t"
+                   "pop {r0-r3}\n\t"
+                   "vpop {s0-s15}\n\t"
+                   "blx r4\n\t"
+                   "mov sp, fp\n\t"
+                   "pop {r4,r5,fp,pc}" )
 #elif defined __aarch64__
-LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size);
+LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size,
+                                  const NDR_PROC_HEADER_EXTS *ext);
 __ASM_GLOBAL_FUNC( call_server_func,
-                   "stp x29, x30, [sp, #-16]!\n\t"
-                   __ASM_SEH(".seh_save_fplr_x 16\n\t")
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   ".seh_save_fplr_x 0x20\n\t"
+                   "stp x19, x20, [sp, #0x10]\n\t"
+                   ".seh_save_regp x19, 0x10\n\t"
                    "mov x29, sp\n\t"
-                   __ASM_SEH(".seh_set_fp\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   "add x9, x2, #15\n\t"
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
+                   "add x9, x2, #16*8+15\n\t"
                    "lsr x9, x9, #4\n\t"
                    "sub sp, sp, x9, lsl #4\n\t"
-                   "cbz x2, 2f\n"
-                   "1:\tsub x2, x2, #8\n\t"
-                   "ldr x4, [x1, x2]\n\t"
-                   "str x4, [sp, x2]\n\t"
-                   "cbnz x2, 1b\n"
-                   "2:\tmov x8, x0\n\t"
-                   "cbz x9, 3f\n\t"
-                   "ldp x0, x1, [sp], #16\n\t"
-                   "cmp x9, #1\n\t"
-                   "b.le 3f\n\t"
-                   "ldp x2, x3, [sp], #16\n\t"
-                   "cmp x9, #2\n\t"
-                   "b.le 3f\n\t"
-                   "ldp x4, x5, [sp], #16\n\t"
-                   "cmp x9, #3\n\t"
-                   "b.le 3f\n\t"
-                   "ldp x6, x7, [sp], #16\n"
-                   "3:\tblr x8\n\t"
+                   "mov x19, x0\n\t"       /* func */
+                   "mov x0, x1\n\t"        /* args */
+                   "mov x1, sp\n\t"        /* regs */
+                   "add x2, sp, #16*8\n\t" /* stack */
+                   "bl assign_args\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldp d0, d1, [sp, #0x40]\n\t"
+                   "ldp d2, d3, [sp, #0x50]\n\t"
+                   "ldp d4, d5, [sp, #0x60]\n\t"
+                   "ldp d6, d7, [sp, #0x70]\n\t"
+                   "ldp x0, x1, [sp], #0x80\n\t"
+                   "blr x19\n\t"
                    "mov sp, x29\n\t"
-                   "ldp x29, x30, [sp], #16\n\t"
+                   "ldp x19, x20, [sp, #0x10]\n\t"
+                   "ldp x29, x30, [sp], #0x20\n\t"
                    "ret" )
 #else
 #warning call_server_func not implemented for your architecture
-LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned short stack_size)
+LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned short stack_size,
+                                  const NDR_PROC_HEADER_EXTS *ext)
 {
     FIXME("Not implemented for your architecture\n");
     return 0;
@@ -1369,6 +1391,7 @@ LONG WINAPI NdrStubCall2(
     enum stubless_phase phase;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
+    const NDR_PROC_HEADER_EXTS *extensions = NULL;
     /* location to put retval into */
     LONG_PTR *retval_ptr = NULL;
     /* correlation cache */
@@ -1385,23 +1408,6 @@ LONG WINAPI NdrStubCall2(
     pFormat = pServerInfo->ProcString + pServerInfo->FmtStringOffset[pRpcMsg->ProcNum];
     pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
 
-    TRACE("NDR Version: 0x%lx\n", pStubDesc->Version);
-
-    if (pProcHeader->Oi_flags & Oi_HAS_RPCFLAGS)
-    {
-        const NDR_PROC_HEADER_RPC *header_rpc = (const NDR_PROC_HEADER_RPC *)&pFormat[0];
-        stack_size = header_rpc->stack_size;
-        pFormat += sizeof(NDR_PROC_HEADER_RPC);
-
-    }
-    else
-    {
-        stack_size = pProcHeader->stack_size;
-        pFormat += sizeof(NDR_PROC_HEADER);
-    }
-
-    TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
-
     if (pProcHeader->Oi_flags & Oi_OBJECT_PROC)
         NdrStubInitialize(pRpcMsg, &stubMsg, pStubDesc, pChannel);
     else
@@ -1411,9 +1417,18 @@ LONG WINAPI NdrStubCall2(
     if (pProcHeader->Oi_flags & Oi_FULL_PTR_USED)
         stubMsg.FullPtrXlatTables = NdrFullPointerXlatInit(0,XLAT_SERVER);
 
-    /* store the RPC flags away */
     if (pProcHeader->Oi_flags & Oi_HAS_RPCFLAGS)
-        pRpcMsg->RpcFlags = ((const NDR_PROC_HEADER_RPC *)pProcHeader)->rpc_flags;
+    {
+        const NDR_PROC_HEADER_RPC *header_rpc = (const NDR_PROC_HEADER_RPC *)pFormat;
+        pRpcMsg->RpcFlags = header_rpc->rpc_flags;
+        stack_size = header_rpc->stack_size;
+        pFormat += sizeof(NDR_PROC_HEADER_RPC);
+    }
+    else
+    {
+        stack_size = pProcHeader->stack_size;
+        pFormat += sizeof(NDR_PROC_HEADER);
+    }
 
     /* use alternate memory allocation routines */
     if (pProcHeader->Oi_flags & Oi_RPCSS_ALLOC_USED)
@@ -1423,7 +1438,8 @@ LONG WINAPI NdrStubCall2(
           FIXME("Set RPCSS memory allocation routines\n");
 #endif
 
-    TRACE("allocating memory for stack of size %x\n", stack_size);
+    TRACE("version 0x%lx, Oi_flags %02x, stack size %x, format %p\n",
+          pStubDesc->Version, pProcHeader->Oi_flags, stack_size, pFormat);
 
     args = calloc(1, stack_size);
     stubMsg.StackTop = args; /* used by conformance of top-level objects */
@@ -1484,9 +1500,9 @@ LONG WINAPI NdrStubCall2(
 
         if (Oif_flags.HasExtensions)
         {
-            const NDR_PROC_HEADER_EXTS *pExtensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
-            ext_flags = pExtensions->Flags2;
-            pFormat += pExtensions->Size;
+            extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            ext_flags = extensions->Flags2;
+            pFormat += extensions->Size;
         }
 
         if (Oif_flags.HasPipes)
@@ -1539,8 +1555,7 @@ LONG WINAPI NdrStubCall2(
                 else
                     func = pServerInfo->DispatchTable[pRpcMsg->ProcNum];
 
-                /* FIXME: what happens with return values that don't fit into a single register on x86? */
-                retval = call_server_func(func, args, stack_size);
+                retval = call_server_func(func, args, stack_size, extensions);
 
                 if (retval_ptr)
                 {
@@ -2039,6 +2054,7 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
     unsigned char *args;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
+    const NDR_PROC_HEADER_EXTS *extensions = NULL;
     struct async_call_data *async_call_data;
     PRPC_ASYNC_STATE pAsync;
     RPC_STATUS status;
@@ -2161,9 +2177,9 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
 
         if (Oif_flags.HasExtensions)
         {
-            const NDR_PROC_HEADER_EXTS *pExtensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
-            ext_flags = pExtensions->Flags2;
-            pFormat += pExtensions->Size;
+            extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            ext_flags = extensions->Flags2;
+            pFormat += extensions->Size;
         }
 
         if (Oif_flags.HasPipes)
@@ -2209,7 +2225,8 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
     if (pServerInfo->ThunkTable && pServerInfo->ThunkTable[pRpcMsg->ProcNum])
         pServerInfo->ThunkTable[pRpcMsg->ProcNum](async_call_data->pStubMsg);
     else
-        call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, async_call_data->stack_size);
+        call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, async_call_data->stack_size,
+                         extensions);
 }
 
 RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
