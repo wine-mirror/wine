@@ -954,7 +954,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
 
     if (wm->ldr.DdagNode != node_ntdll && wm->ldr.DdagNode != node_kernel32)
     {
-        if (!imports_fixup_done && importer)
+        if (importer)
         {
             /* Prepare for the callee stealing the reference */
             if (!wm_loaded && wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
