@@ -1017,14 +1017,14 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
 CLIENT_CALL_RETURN __attribute__((naked)) NdrClientCall2( PMIDL_STUB_DESC desc, PFORMAT_STRING fmt, ... )
 {
     asm( ".seh_proc \"#NdrClientCall2\"\n\t"
-         "stp x29, x30, [sp, #-0x10]!\n\t"
-         ".seh_save_fplr_x 0x10\n\t"
+         "stp x29, x30, [sp, #-0x20]!\n\t"
+         ".seh_save_fplr_x 0x20\n\t"
          ".seh_endprologue\n\t"
          "stp x2, x3, [x4, #-0x10]!\n\t"
          "mov x2, x4\n\t"          /* stack */
          "mov x3, #0\n\t"          /* fpu_stack */
          "bl \"#NdrpClientCall2\"\n\t"
-         "ldp x29, x30, [sp], #0x10\n\t"
+         "ldp x29, x30, [sp], #0x20\n\t"
          "ret\n\t"
          ".seh_endproc" );
 }
@@ -1981,14 +1981,14 @@ __ASM_GLOBAL_FUNC( NdrAsyncClientCall,
 CLIENT_CALL_RETURN __attribute__((naked)) NdrAsyncClientCall( PMIDL_STUB_DESC desc, PFORMAT_STRING fmt, ... )
 {
     asm( ".seh_proc \"#NdrAsyncClientCall\"\n\t"
-         "stp x29, x30, [sp, #-0x10]!\n\t"
-         ".seh_save_fplr_x 0x10\n\t"
+         "stp x29, x30, [sp, #-0x20]!\n\t"
+         ".seh_save_fplr_x 0x20\n\t"
          ".seh_endprologue\n\t"
          "stp x2, x3, [x4, #-0x10]!\n\t"
          "mov x2, x4\n\t"          /* stack */
          "mov x3, #0\n\t"          /* fpu_stack */
          "bl \"#ndr_async_client_call\"\n\t"
-         "ldp x29, x30, [sp], #0x10\n\t"
+         "ldp x29, x30, [sp], #0x20\n\t"
          "ret\n\t"
          ".seh_endproc" );
 }
@@ -2365,14 +2365,14 @@ __ASM_GLOBAL_FUNC( NdrClientCall3,
 CLIENT_CALL_RETURN __attribute__((naked)) NdrClientCall3( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
 {
     asm( ".seh_proc \"#NdrClientCall3\"\n\t"
-         "stp x29, x30, [sp, #-0x10]!\n\t"
-         ".seh_save_fplr_x 0x10\n\t"
+         "stp x29, x30, [sp, #-0x20]!\n\t"
+         ".seh_save_fplr_x 0x20\n\t"
          ".seh_endprologue\n\t"
          "str x3, [x4, #-0x8]!\n\t"
          "mov x3, x4\n\t"          /* stack */
          "mov x4, #0\n\t"          /* fpu_stack */
          "bl \"#ndr64_client_call\"\n\t"
-         "ldp x29, x30, [sp], #0x10\n\t"
+         "ldp x29, x30, [sp], #0x20\n\t"
          "ret\n\t"
          ".seh_endproc" );
 }
@@ -2437,14 +2437,14 @@ __ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
 CLIENT_CALL_RETURN __attribute__((naked)) Ndr64AsyncClientCall( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
 {
     asm( ".seh_proc \"#Ndr64AsyncClientCall\"\n\t"
-         "stp x29, x30, [sp, #-0x10]!\n\t"
-         ".seh_save_fplr_x 0x10\n\t"
+         "stp x29, x30, [sp, #-0x20]!\n\t"
+         ".seh_save_fplr_x 0x20\n\t"
          ".seh_endprologue\n\t"
          "str x3, [x4, #-0x8]!\n\t"
          "mov x3, x4\n\t"          /* stack */
          "mov x4, #0\n\t"          /* fpu_stack */
          "bl \"#ndr64_async_client_call\"\n\t"
-         "ldp x29, x30, [sp], #0x10\n\t"
+         "ldp x29, x30, [sp], #0x20\n\t"
          "ret\n\t"
          ".seh_endproc" );
 }
