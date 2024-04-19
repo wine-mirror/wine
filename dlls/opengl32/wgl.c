@@ -42,6 +42,11 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
+#define WINE_GL_RESERVED_FORMATS_HDC      2
+#define WINE_GL_RESERVED_FORMATS_PTR      3
+#define WINE_GL_RESERVED_FORMATS_NUM      4
+#define WINE_GL_RESERVED_FORMATS_ONSCREEN 5
+
 #ifndef _WIN64
 
 static char **wow64_strings;
@@ -299,7 +304,15 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
                                                    UINT *num_onscreen_formats )
 {
     struct get_pixel_formats_params args = { .teb = NtCurrentTeb(), .hdc = hdc };
+    PVOID *glReserved = NtCurrentTeb()->glReserved1;
     NTSTATUS status;
+
+    if (glReserved[WINE_GL_RESERVED_FORMATS_HDC] == hdc)
+    {
+        *num_formats = PtrToUlong( glReserved[WINE_GL_RESERVED_FORMATS_NUM] );
+        *num_onscreen_formats = PtrToUlong( glReserved[WINE_GL_RESERVED_FORMATS_ONSCREEN] );
+        return glReserved[WINE_GL_RESERVED_FORMATS_PTR];
+    }
 
     if ((status = UNIX_CALL( get_pixel_formats, &args ))) goto error;
     if (!(args.formats = malloc( sizeof(*args.formats) * args.num_formats ))) goto error;
@@ -308,6 +321,13 @@ static struct wgl_pixel_format *get_pixel_formats( HDC hdc, UINT *num_formats,
 
     *num_formats = args.num_formats;
     *num_onscreen_formats = args.num_onscreen_formats;
+
+    free( glReserved[WINE_GL_RESERVED_FORMATS_PTR] );
+    glReserved[WINE_GL_RESERVED_FORMATS_HDC] = hdc;
+    glReserved[WINE_GL_RESERVED_FORMATS_PTR] = args.formats;
+    glReserved[WINE_GL_RESERVED_FORMATS_NUM] = ULongToPtr( args.num_formats );
+    glReserved[WINE_GL_RESERVED_FORMATS_ONSCREEN] = ULongToPtr( args.num_onscreen_formats );
+
     return args.formats;
 
 error:
@@ -333,7 +353,6 @@ INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDES
 
         *ppfd = formats[index - 1].pfd;
 
-        free( formats );
         return num_onscreen_formats;
     }
 
@@ -1374,6 +1393,9 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #ifndef _WIN64
         cleanup_wow64_strings();
 #endif
+        /* fallthrough */
+    case DLL_THREAD_DETACH:
+        free( NtCurrentTeb()->glReserved1[WINE_GL_RESERVED_FORMATS_PTR] );
         return TRUE;
     }
     return TRUE;
