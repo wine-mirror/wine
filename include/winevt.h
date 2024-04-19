@@ -144,6 +144,8 @@ typedef struct _EVT_VARIANT {
 
 typedef DWORD (WINAPI *EVT_SUBSCRIBE_CALLBACK)(EVT_SUBSCRIBE_NOTIFY_ACTION Action,
                                                PVOID UserContext, EVT_HANDLE Event);
+EVT_HANDLE WINAPI EvtCreateBookmark(LPCWSTR);
+EVT_HANDLE WINAPI EvtCreateRenderContext(DWORD,LPCWSTR*,DWORD);
 BOOL WINAPI EvtClose(EVT_HANDLE);
 BOOL WINAPI EvtExportLog(EVT_HANDLE session, const WCHAR *path, const WCHAR *query,
                          const WCHAR *file, DWORD flags);
@@ -159,7 +161,7 @@ EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR C
                                LPCWSTR Query, EVT_HANDLE Bookmark, PVOID context,
                                EVT_SUBSCRIBE_CALLBACK Callback, DWORD Flags);
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags);
-BOOL WINAPI EvtSaveChannelConfig(EVT_HANDLE, DWORD);
+BOOL WINAPI EvtSaveChannelConfig(EVT_HANDLE,DWORD);
 
 #ifdef __cplusplus
 } /* extern "C" */
