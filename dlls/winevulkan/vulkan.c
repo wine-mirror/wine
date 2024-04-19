@@ -1993,7 +1993,7 @@ VkResult wine_vkMapMemory2KHR(VkDevice handle, const VkMemoryMapInfoKHR *map_inf
         info.flags |=  VK_MEMORY_MAP_PLACED_BIT_EXT;
 
         if (NtAllocateVirtualMemory(GetCurrentProcess(), &placed_info.pPlacedAddress, zero_bits, &alloc_size,
-                                    MEM_RESERVE, PAGE_READWRITE))
+                                    MEM_COMMIT, PAGE_READWRITE))
         {
             ERR("NtAllocateVirtualMemory failed\n");
             return VK_ERROR_OUT_OF_HOST_MEMORY;
