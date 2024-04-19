@@ -2031,12 +2031,11 @@ static void test_get_inf_class(void)
         WritePrivateProfileStringA("Strings", "ClassGuid", "{deadbeef-dead-beef-dead-beefdeadbeef}", filename);
         count = 0xdeadbeef;
         retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-todo_wine {
         ok(retval, "expected SetupDiGetINFClassA to succeed! error %lu\n", GetLastError());
         ok(count == lstrlenA(deadbeef_class_name) + 1, "expected count=%d, got %lu\n", lstrlenA(deadbeef_class_name) + 1, count);
         ok(!lstrcmpA(deadbeef_class_name, cn), "expected class_name='%s', got '%s'\n", deadbeef_class_name, cn);
         ok(IsEqualGUID(&deadbeef_class_guid, &guid), "expected ClassGUID to be deadbeef-dead-beef-dead-beefdeadbeef\n");
-}
+
         DeleteFileA(filename);
     }
 }
