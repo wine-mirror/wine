@@ -415,6 +415,39 @@ fail:
     return hr;
 }
 
+static HRESULT BmpFrameDecode_ReadABGRasBGR(BmpDecoder* This)
+{
+    UINT x, y, width, height;
+    BYTE *pixel;
+    HRESULT hr;
+
+    hr = IWICBitmapFrameDecode_GetSize(&This->IWICBitmapFrameDecode_iface, &width, &height);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = BmpFrameDecode_ReadUncompressed(This);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        for (y = 0; y < height; y++)
+        {
+            pixel = This->imagedatastart + This->stride * y;
+
+            for (x = 0; x < width; x++)
+            {
+                pixel[0] = pixel[1];
+                pixel[1] = pixel[2];
+                pixel[2] = pixel[3];
+                pixel[3] = 0;
+                pixel += 4;
+            }
+        }
+    }
+
+    return hr;
+}
+
 static HRESULT BmpFrameDecode_ReadRGB8(BmpDecoder* This)
 {
     HRESULT hr;
@@ -742,6 +775,7 @@ static const struct bitfields_format bitfields_formats[] = {
     {16,0xf800,0x7e0,0x1f,0,&GUID_WICPixelFormat16bppBGR565,BmpFrameDecode_ReadUncompressed},
     {32,0xff0000,0xff00,0xff,0,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadUncompressed},
     {32,0xff0000,0xff00,0xff,0xff000000,&GUID_WICPixelFormat32bppBGRA,BmpFrameDecode_ReadUncompressed},
+    {32,0xff000000,0xff0000,0xff00,0xff,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadABGRasBGR},
     {32,0xff,0xff00,0xff0000,0,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadRGB8},
     {0}
 };
