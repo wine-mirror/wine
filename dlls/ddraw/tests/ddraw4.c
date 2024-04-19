@@ -19506,6 +19506,76 @@ static void test_enum_devices(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_vb_desc(void)
+{
+    IDirect3DVertexBuffer *vb;
+    D3DVERTEXBUFFERDESC desc;
+    IDirectDraw4 *ddraw;
+    IDirect3D3 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const DWORD caps_tests[] =
+    {
+        0,
+        D3DVBCAPS_WRITEONLY,
+        D3DVBCAPS_SYSTEMMEMORY,
+        D3DVBCAPS_SYSTEMMEMORY | D3DVBCAPS_WRITEONLY
+    };
+
+    static const DWORD fvf_tests[] = {D3DFVF_XYZ, D3DFVF_XYZRHW};
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#lx.\n", hr);
+
+    hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d);
+    if (FAILED(hr))
+    {
+        skip("D3D interface is not available, skipping test.\n");
+        IDirectDraw4_Release(ddraw);
+        return;
+    }
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(caps_tests); ++i)
+    {
+        for (unsigned int j = 0; j < ARRAY_SIZE(fvf_tests); ++j)
+        {
+            winetest_push_context("caps %#lx, fvf %#lx", caps_tests[i], fvf_tests[j]);
+
+            desc.dwSize = sizeof(desc);
+            desc.dwCaps = caps_tests[i];
+            desc.dwFVF = fvf_tests[j];
+            desc.dwNumVertices = 256;
+
+            hr = IDirect3D3_CreateVertexBuffer(d3d, &desc, &vb, 0, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            memset(&desc, 0, sizeof(desc));
+            hr = IDirect3DVertexBuffer_GetVertexBufferDesc(vb, &desc);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            ok(!desc.dwSize, "Got size %lu.\n", desc.dwSize);
+            ok(desc.dwCaps == caps_tests[i], "Got caps %#lx.\n", desc.dwCaps);
+            ok(desc.dwFVF == fvf_tests[j], "Got FVF %#lx.\n", desc.dwFVF);
+            ok(desc.dwNumVertices == 256, "Got %lu vertices.\n", desc.dwNumVertices);
+
+            IDirect3DVertexBuffer_Release(vb);
+
+            winetest_pop_context();
+        }
+    }
+
+    IDirect3D3_Release(d3d);
+    DestroyWindow(window);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -19647,4 +19717,5 @@ START_TEST(ddraw4)
     run_for_each_device_type(test_texture_wrong_caps);
     test_filling_convention();
     test_enum_devices();
+    test_vb_desc();
 }
