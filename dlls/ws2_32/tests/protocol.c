@@ -43,6 +43,7 @@ static const char *(WINAPI *p_inet_ntop)(int family, void *addr, char *string, U
 static const WCHAR *(WINAPI *pInetNtopW)(int family, void *addr, WCHAR *string, ULONG size);
 static int (WINAPI *p_inet_pton)(int family, const char *string, void *addr);
 static int (WINAPI *pInetPtonW)(int family, WCHAR *string, void *addr);
+static int (WINAPI *pWSCGetApplicationCategory)(LPCWSTR path, DWORD path_len, LPCWSTR extra, DWORD extra_len, DWORD *category, INT *err);
 static int (WINAPI *pWSCGetProviderInfo)(GUID *provider, WSC_PROVIDER_INFO_TYPE type, BYTE *info, size_t *size, DWORD flags, INT *err);
 
 /* TCP and UDP over IP fixed set of service flags */
@@ -2874,6 +2875,44 @@ static void test_WSAEnumNameSpaceProvidersW(void)
     free(name);
 }
 
+static void test_WSCGetApplicationCategory(void)
+{
+    int ret;
+    int errcode;
+    DWORD category;
+
+    if (!pWSCGetApplicationCategory)
+    {
+        win_skip("WSCGetApplicationCategory is not available.\n");
+        return;
+    }
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetApplicationCategory(NULL, 0, NULL, 0, NULL, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSAEINVAL, "got %d, expected WSAEINVAL\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetApplicationCategory(L"", 0, NULL, 0, NULL, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    todo_wine ok(errcode == WSAEINVAL, "got %d, expected WSAEINVAL\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetApplicationCategory(L"", 0, L"", 0, NULL, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    todo_wine ok(errcode == WSAEINVAL, "got %d, expected WSAEINVAL\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetApplicationCategory(L"", 0, NULL, 0, &category, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    todo_wine ok(errcode == WSAEINVAL, "got %d, expected WSAEINVAL\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetApplicationCategory(L"", 0, L"", 0, &category, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    todo_wine ok(errcode == WSAEINVAL, "got %d, expected WSAEINVAL\n", errcode);
+}
+
 static void test_WSCGetProviderInfo(void)
 {
     int ret;
@@ -3054,6 +3093,7 @@ START_TEST( protocol )
     pInetNtopW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetNtopW");
     p_inet_pton = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_pton");
     pInetPtonW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetPtonW");
+    pWSCGetApplicationCategory = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "WSCGetApplicationCategory");
     pWSCGetProviderInfo = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "WSCGetProviderInfo");
 
     ret = WSAStartup(0x202, &data);
@@ -3086,6 +3126,7 @@ START_TEST( protocol )
 
     test_WSAEnumNameSpaceProvidersA();
     test_WSAEnumNameSpaceProvidersW();
+    test_WSCGetApplicationCategory();
     test_WSCGetProviderInfo();
     test_WSCGetProviderPath();
 

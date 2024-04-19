@@ -2191,6 +2191,26 @@ int WINAPI WSCEnableNSProvider( GUID *provider, BOOL enable )
 
 
 /***********************************************************************
+ *      WSCGetApplicationCategory   (ws2_32.@)
+ */
+int WINAPI WSCGetApplicationCategory( const WCHAR *path, DWORD path_len, const WCHAR *extra,
+		                      DWORD extra_len, DWORD *category, int *errcode )
+{
+    FIXME( "(%s %lu %s %lu %p %p) Stub!\n",
+           debugstr_w(path), path_len, debugstr_w(extra), extra_len, category, errcode );
+
+    if (!path)
+    {
+        *errcode = WSAEINVAL;
+        return -1;
+    }
+
+    *errcode = WSANO_RECOVERY;
+    return -1;
+}
+
+
+/***********************************************************************
  *      WSCGetProviderInfo   (ws2_32.@)
  */
 int WINAPI WSCGetProviderInfo( GUID *provider, WSC_PROVIDER_INFO_TYPE info_type,
