@@ -43,15 +43,6 @@ BOOL WINAPI wglDeleteContext( HGLRC oldContext )
     return args.ret;
 }
 
-int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd )
-{
-    struct wglDescribePixelFormat_params args = { .teb = NtCurrentTeb(), .hdc = hdc, .ipfd = ipfd, .cjpfd = cjpfd, .ppfd = ppfd };
-    NTSTATUS status;
-    TRACE( "hdc %p, ipfd %d, cjpfd %u, ppfd %p\n", hdc, ipfd, cjpfd, ppfd );
-    if ((status = UNIX_CALL( wglDescribePixelFormat, &args ))) WARN( "wglDescribePixelFormat returned %#lx\n", status );
-    return args.ret;
-}
-
 BOOL WINAPI wglMakeCurrent( HDC hDc, HGLRC newContext )
 {
     struct wglMakeCurrent_params args = { .teb = NtCurrentTeb(), .hDc = hDc, .newContext = newContext };

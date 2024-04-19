@@ -25331,10 +25331,21 @@ struct wglSwapIntervalEXT_params
     BOOL ret;
 };
 
+struct get_pixel_formats_params
+{
+    TEB *teb;
+    HDC hdc;
+    struct wgl_pixel_format *formats;
+    unsigned int max_formats;
+    unsigned int num_formats;
+    unsigned int num_onscreen_formats;
+};
+
 enum unix_funcs
 {
     unix_thread_attach,
     unix_process_detach,
+    unix_get_pixel_formats,
     unix_wglCopyContext,
     unix_wglCreateContext,
     unix_wglDeleteContext,

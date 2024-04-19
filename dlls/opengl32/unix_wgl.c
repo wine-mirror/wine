@@ -1157,6 +1157,16 @@ NTSTATUS process_detach( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS get_pixel_formats( void *args )
+{
+    struct get_pixel_formats_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
+    if (!funcs || !funcs->wgl.p_get_pixel_formats) return STATUS_NOT_IMPLEMENTED;
+    funcs->wgl.p_get_pixel_formats( params->formats, params->max_formats,
+                                    &params->num_formats, &params->num_onscreen_formats );
+    return STATUS_SUCCESS;
+}
+
 #ifdef _WIN64
 
 typedef ULONG PTR32;
@@ -2237,6 +2247,31 @@ NTSTATUS wow64_process_detach( void *args )
     wow64_strings_count = 0;
 
     return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_get_pixel_formats( void *args )
+{
+    struct
+    {
+        PTR32 teb;
+        PTR32 hdc;
+        PTR32 formats;
+        UINT max_formats;
+        UINT num_formats;
+        UINT num_onscreen_formats;
+    } *params32 = args;
+    struct get_pixel_formats_params params =
+    {
+        .teb = get_teb64(params32->teb),
+        .hdc = ULongToPtr(params32->hdc),
+        .formats = ULongToPtr(params32->formats),
+        .max_formats = params32->max_formats,
+    };
+    NTSTATUS status;
+    status = get_pixel_formats( &params );
+    params32->num_formats = params.num_formats;
+    params32->num_onscreen_formats = params.num_onscreen_formats;
+    return status;
 }
 
 #endif

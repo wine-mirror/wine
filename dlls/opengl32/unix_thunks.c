@@ -24,6 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 extern NTSTATUS thread_attach( void *args );
 extern NTSTATUS process_detach( void *args );
+extern NTSTATUS get_pixel_formats( void *args );
 extern NTSTATUS wgl_wglCopyContext( void *args );
 extern NTSTATUS wgl_wglCreateContext( void *args );
 extern NTSTATUS wgl_wglDeleteContext( void *args );
@@ -24206,6 +24207,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     &thread_attach,
     &process_detach,
+    &get_pixel_formats,
     &wgl_wglCopyContext,
     &wgl_wglCreateContext,
     &wgl_wglDeleteContext,
@@ -27254,6 +27256,7 @@ typedef ULONG PTR32;
 
 extern NTSTATUS wow64_thread_attach( void *args );
 extern NTSTATUS wow64_process_detach( void *args );
+extern NTSTATUS wow64_get_pixel_formats( void *args );
 
 static NTSTATUS wow64_wgl_wglCopyContext( void *args )
 {
@@ -92326,6 +92329,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_thread_attach,
     wow64_process_detach,
+    wow64_get_pixel_formats,
     wow64_wgl_wglCopyContext,
     wow64_wgl_wglCreateContext,
     wow64_wgl_wglDeleteContext,
