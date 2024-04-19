@@ -148,3 +148,10 @@ EVT_HANDLE WINAPI EvtCreateBookmark(const WCHAR *bookmark_xml)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
+
+EVT_HANDLE WINAPI EvtCreateRenderContext(DWORD pathcount, const WCHAR **paths, DWORD flags)
+{
+    FIXME("(%lu %p %#lx) stub!\n", pathcount, paths, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
