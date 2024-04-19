@@ -214,11 +214,84 @@ HCATINFO WINAPI CryptCATAdminAddCatalog(HCATADMIN catAdmin, PWSTR catalogFile,
     return ci;
 }
 
+static BOOL pe_image_hash( HANDLE file, HCRYPTHASH hash )
+{
+    UINT32 size, offset, file_size, sig_pos;
+    HANDLE mapping;
+    BYTE *view;
+    IMAGE_NT_HEADERS *nt;
+    BOOL ret = FALSE;
+
+    if ((file_size = GetFileSize( file, NULL )) == INVALID_FILE_SIZE) return FALSE;
+
+    if ((mapping = CreateFileMappingW( file, NULL, PAGE_READONLY, 0, 0, NULL )) == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    if (!(view = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 )) || !(nt = ImageNtHeader( view ))) goto done;
+
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_NT_HEADERS64 *nt64 = (const IMAGE_NT_HEADERS64 *)nt;
+
+        /* offset from start of file to checksum */
+        offset = (BYTE *)&nt64->OptionalHeader.CheckSum - view;
+
+        /* area between checksum and security directory entry */
+        size = FIELD_OFFSET( IMAGE_OPTIONAL_HEADER64, DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY] ) -
+               FIELD_OFFSET( IMAGE_OPTIONAL_HEADER64, Subsystem );
+
+        if (nt64->OptionalHeader.NumberOfRvaAndSizes < IMAGE_FILE_SECURITY_DIRECTORY + 1) goto done;
+        sig_pos = nt64->OptionalHeader.DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY].VirtualAddress;
+    }
+    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        const IMAGE_NT_HEADERS32 *nt32 = (const IMAGE_NT_HEADERS32 *)nt;
+
+        /* offset from start of file to checksum */
+        offset = (BYTE *)&nt32->OptionalHeader.CheckSum - view;
+
+        /* area between checksum and security directory entry */
+        size = FIELD_OFFSET( IMAGE_OPTIONAL_HEADER32, DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY] ) -
+               FIELD_OFFSET( IMAGE_OPTIONAL_HEADER32, Subsystem );
+
+        if (nt32->OptionalHeader.NumberOfRvaAndSizes < IMAGE_FILE_SECURITY_DIRECTORY + 1) goto done;
+        sig_pos = nt32->OptionalHeader.DataDirectory[IMAGE_FILE_SECURITY_DIRECTORY].VirtualAddress;
+    }
+    else goto done;
+
+    if (!CryptHashData( hash, view, offset, 0 )) goto done;
+    offset += sizeof(DWORD); /* skip checksum */
+    if (!CryptHashData( hash, view + offset, size, 0 )) goto done;
+
+    offset += size + sizeof(IMAGE_DATA_DIRECTORY); /* skip security entry */
+    if (offset > file_size) goto done;
+    if (sig_pos)
+    {
+        if (sig_pos < offset) goto done;
+        if (sig_pos > file_size) goto done;
+        size = sig_pos - offset; /* exclude signature */
+    }
+    else size = file_size - offset;
+
+    if (!CryptHashData( hash, view + offset, size, 0 )) goto done;
+    ret = TRUE;
+
+    if (!sig_pos && (size = file_size % 8))
+    {
+        static const BYTE pad[7];
+        ret = CryptHashData( hash, pad, 8 - size, 0 );
+    }
+
+done:
+    UnmapViewOfFile( view );
+    CloseHandle( mapping );
+    return ret;
+}
+
 /***********************************************************************
  *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
  */
-BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
-                                                BYTE* pbHash, DWORD dwFlags )
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BYTE *pbHash, DWORD dwFlags)
 {
     BOOL ret = FALSE;
 
@@ -262,9 +335,13 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
             CryptReleaseContext(prov, 0);
             return FALSE;
         }
-        while ((ret = ReadFile(hFile, buffer, 4096, &bytes_read, NULL)) && bytes_read)
+
+        if (!(ret = pe_image_hash(hFile, hash)))
         {
-            CryptHashData(hash, buffer, bytes_read, 0);
+            while ((ret = ReadFile(hFile, buffer, 4096, &bytes_read, NULL)) && bytes_read)
+            {
+                CryptHashData(hash, buffer, bytes_read, 0);
+            }
         }
         if (ret) ret = CryptGetHashParam(hash, HP_HASHVAL, pbHash, pcbHash, 0);
 

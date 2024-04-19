@@ -1892,6 +1892,39 @@ static void test_multiple_signatures(void)
     DeleteFileW(pathW);
 }
 
+static BOOL (WINAPI *pCryptCATAdminCalcHashFromFileHandle)(HANDLE,DWORD*,BYTE*,DWORD);
+
+static void test_pe_image_hash(void)
+{
+    static const char expected[] =
+        {0x8a,0xd5,0x45,0x53,0x3d,0x67,0xdf,0x2f,0x78,0xe0,0x55,0x0a,0xe0,0xd9,0x7a,0x28,0x3e,0xbf,0x45,0x2b};
+    WCHAR path[MAX_PATH];
+    HANDLE file;
+    BYTE sha1[20];
+    DWORD size, count;
+    HMODULE wintrust = GetModuleHandleA("wintrust.dll");
+    BOOL ret;
+
+    pCryptCATAdminCalcHashFromFileHandle = (void *)GetProcAddress(wintrust, "CryptCATAdminCalcHashFromFileHandle");
+    if (!pCryptCATAdminCalcHashFromFileHandle)
+    {
+        win_skip("hash function missing\n");
+        return;
+    }
+
+    file = create_temp_file(path);
+    WriteFile(file, &bin, sizeof(bin), &count, NULL);
+
+    size = sizeof(sha1);
+    memset(sha1, 0, sizeof(sha1));
+    ret = pCryptCATAdminCalcHashFromFileHandle(file, &size, sha1, 0);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(!memcmp(sha1, expected, sizeof(sha1)), "wrong hash\n");
+
+    CloseHandle(file);
+    DeleteFileW(path);
+}
+
 START_TEST(softpub)
 {
     InitFunctionPtrs();
@@ -1901,4 +1934,5 @@ START_TEST(softpub)
     test_wintrust_digest();
     test_get_known_usages();
     test_multiple_signatures();
+    test_pe_image_hash();
 }
