@@ -1876,6 +1876,8 @@ static void test_get_inf_class(void)
     static const char inffile[] = "winetest.inf";
     static const char content[] = "[Version]\r\n\r\n";
     static const char* signatures[] = {"\"$CHICAGO$\"", "\"$Windows NT$\""};
+    static const GUID deadbeef_class_guid = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+    static const char deadbeef_class_name[] = "DeadBeef";
 
     char cn[MAX_PATH];
     char filename[MAX_PATH];
@@ -2014,6 +2016,27 @@ static void test_get_inf_class(void)
         todo_wine
         ok(count == 4, "expected count==4, got %lu(%s)\n", count, cn);
 
+        /* Test Strings substitution */
+        WritePrivateProfileStringA("Version", "Class", "%ClassName%", filename);
+        WritePrivateProfileStringA("Version", "ClassGUID", "%ClassGuid%", filename);
+
+        /* Without Strings section the ClassGUID is invalid (has non-substituted strkey token) */
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, NULL);
+        ok(!retval, "expected SetupDiGetINFClassA to fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "expected error ERROR_INVALID_PARAMETER, got %lu\n", GetLastError());
+
+        /* With Strings section the ClassGUID and Class should be substituted */
+        WritePrivateProfileStringA("Strings", "ClassName", deadbeef_class_name, filename);
+        WritePrivateProfileStringA("Strings", "ClassGuid", "{deadbeef-dead-beef-dead-beefdeadbeef}", filename);
+        count = 0xdeadbeef;
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+todo_wine {
+        ok(retval, "expected SetupDiGetINFClassA to succeed! error %lu\n", GetLastError());
+        ok(count == lstrlenA(deadbeef_class_name) + 1, "expected count=%d, got %lu\n", lstrlenA(deadbeef_class_name) + 1, count);
+        ok(!lstrcmpA(deadbeef_class_name, cn), "expected class_name='%s', got '%s'\n", deadbeef_class_name, cn);
+        ok(IsEqualGUID(&deadbeef_class_guid, &guid), "expected ClassGUID to be deadbeef-dead-beef-dead-beefdeadbeef\n");
+}
         DeleteFileA(filename);
     }
 }
