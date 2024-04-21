@@ -1035,6 +1035,151 @@ static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
     return new;
 }
 
+void if_condition_dispose(CMD_IF_CONDITION *cond)
+{
+    switch (cond->op)
+    {
+    case CMD_IF_ERRORLEVEL:
+        break;
+    case CMD_IF_EXIST:
+    case CMD_IF_DEFINED:
+        free((void*)cond->operand);
+        break;
+    case CMD_IF_BINOP_EQUAL:
+    case CMD_IF_BINOP_LSS:
+    case CMD_IF_BINOP_LEQ:
+    case CMD_IF_BINOP_EQU:
+    case CMD_IF_BINOP_NEQ:
+    case CMD_IF_BINOP_GEQ:
+    case CMD_IF_BINOP_GTR:
+        free((void*)cond->left);
+        free((void*)cond->right);
+        break;
+    }
+}
+
+BOOL if_condition_create(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond)
+{
+    WCHAR *param_start;
+    const WCHAR *param_copy;
+    int narg = 0;
+
+    if (cond) memset(cond, 0, sizeof(*cond));
+    param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+    /* /I is the only option supported */
+    if (!wcsicmp(param_copy, L"/I"))
+    {
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        if (cond) cond->case_insensitive = 1;
+    }
+    if (!wcsicmp(param_copy, L"NOT"))
+    {
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        if (cond) cond->negated = 1;
+    }
+    if (!wcsicmp(param_copy, L"errorlevel"))
+    {
+        WCHAR *endptr;
+        int level;
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        if (cond) cond->op = CMD_IF_ERRORLEVEL;
+        level = wcstol(param_copy, &endptr, 10);
+        if (*endptr) return FALSE;
+        if (cond) cond->level = level;
+    }
+    else if (!wcsicmp(param_copy, L"exist"))
+    {
+        param_copy = WCMD_parameter(start, narg++, &param_start, FALSE, FALSE);
+        if (cond) cond->op = CMD_IF_EXIST;
+        if (cond) cond->operand = wcsdup(param_copy);
+    }
+    else if (!wcsicmp(param_copy, L"defined"))
+    {
+        param_copy = WCMD_parameter(start, narg++, &param_start, TRUE, FALSE);
+        if (cond) cond->op = CMD_IF_DEFINED;
+        if (cond) cond->operand = wcsdup(param_copy);
+    }
+    else /* comparison operation */
+    {
+        if (*param_copy == L'\0') return FALSE;
+        param_copy = WCMD_parameter(start, narg - 1, &param_start, TRUE, FALSE);
+        if (cond) cond->left = wcsdup(param_copy);
+
+        start = WCMD_skip_leading_spaces(param_start + wcslen(param_copy));
+
+        /* Note: '==' can't be returned by WCMD_parameter since '=' is a separator */
+        if (start[0] == L'=' && start[1] == L'=')
+        {
+            start += 2; /* == */
+            if (cond) cond->op = CMD_IF_BINOP_EQUAL;
+        }
+        else
+        {
+            static struct
+            {
+                const WCHAR *name;
+                enum cond_operator binop;
+            }
+            allowed_operators[] = {{L"lss", CMD_IF_BINOP_LSS},
+                                   {L"leq", CMD_IF_BINOP_LEQ},
+                                   {L"equ", CMD_IF_BINOP_EQU},
+                                   {L"neq", CMD_IF_BINOP_NEQ},
+                                   {L"geq", CMD_IF_BINOP_GEQ},
+                                   {L"gtr", CMD_IF_BINOP_GTR},
+            };
+            int i;
+
+            param_copy = WCMD_parameter(start, 0, &param_start, FALSE, FALSE);
+            for (i = 0; i < ARRAY_SIZE(allowed_operators); i++)
+                if (!wcsicmp(param_copy, allowed_operators[i].name)) break;
+            if (i == ARRAY_SIZE(allowed_operators))
+            {
+                if (cond) free((void*)cond->left);
+                return FALSE;
+            }
+            if (cond) cond->op = allowed_operators[i].binop;
+            start += wcslen(param_copy);
+        }
+
+        param_copy = WCMD_parameter(start, 0, &param_start, TRUE, FALSE);
+        if (*param_copy == L'\0')
+        {
+            if (cond) free((void*)cond->left);
+            return FALSE;
+        }
+        if (cond) cond->right = wcsdup(param_copy);
+
+        start = param_start + wcslen(param_copy);
+        narg = 0;
+    }
+    /* check all remaning args are present, and compute pointer to end of condition */
+    param_copy = WCMD_parameter(start, narg, end, TRUE, FALSE);
+    return cond || *param_copy != L'\0';
+}
+
+const char *debugstr_if_condition(const CMD_IF_CONDITION *cond)
+{
+    const char *header = wine_dbg_sprintf("{{%s%s", cond->negated ? "not " : "", cond->case_insensitive ? "nocase " : "");
+
+    switch (cond->op)
+    {
+    case CMD_IF_ERRORLEVEL:   return wine_dbg_sprintf("%serrorlevel %d}}", header, cond->level);
+    case CMD_IF_EXIST:        return wine_dbg_sprintf("%sexist %ls}}", header, cond->operand);
+    case CMD_IF_DEFINED:      return wine_dbg_sprintf("%sdefined %ls}}", header, cond->operand);
+    case CMD_IF_BINOP_EQUAL:  return wine_dbg_sprintf("%s%ls == %ls}}", header, cond->left, cond->right);
+
+    case CMD_IF_BINOP_LSS:    return wine_dbg_sprintf("%s%ls LSS %ls}}", header, cond->left, cond->right);
+    case CMD_IF_BINOP_LEQ:    return wine_dbg_sprintf("%s%ls LEQ %ls}}", header, cond->left, cond->right);
+    case CMD_IF_BINOP_EQU:    return wine_dbg_sprintf("%s%ls EQU %ls}}", header, cond->left, cond->right);
+    case CMD_IF_BINOP_NEQ:    return wine_dbg_sprintf("%s%ls NEQ %ls}}", header, cond->left, cond->right);
+    case CMD_IF_BINOP_GEQ:    return wine_dbg_sprintf("%s%ls GEQ %ls}}", header, cond->left, cond->right);
+    case CMD_IF_BINOP_GTR:    return wine_dbg_sprintf("%s%ls GTR %ls}}", header, cond->left, cond->right);
+    default:
+        FIXME("Unexpected condition operator %u\n", cond->op);
+        return "{{}}";
+    }
+}
+
 static void init_msvcrt_io_block(STARTUPINFOW* st)
 {
     STARTUPINFOW st_p;
@@ -2092,20 +2237,12 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
            To be able to handle ('s in the condition part take as much as evaluate_if_condition
            would take and skip parsing it here. */
         } else if (WCMD_keyword_ws_found(L"if", curPos)) {
-          int negate; /* Negate condition */
-          int test;   /* Condition evaluation result */
           WCHAR *p, *command;
 
           inIf = TRUE;
 
-          p = curPos+(lstrlenW(L"if"));
-          while (*p == ' ' || *p == '\t')
-            p++;
-          WCMD_parse (p, quals, param1, param2);
-
-          /* Function evaluate_if_condition relies on the global variables quals, param1 and param2
-             set in a call to WCMD_parse before */
-          if (evaluate_if_condition(p, &command, &test, &negate) != -1)
+          p = WCMD_skip_leading_spaces(curPos + 2); /* "if" */
+          if (if_condition_create(p, &command, NULL))
           {
               int if_condition_len = command - curPos;
               WINE_TRACE("p: %s, quals: %s, param1: %s, param2: %s, command: %s, if_condition_len: %d\n",
@@ -2115,7 +2252,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
               (*curLen)+=if_condition_len;
               curPos+=if_condition_len;
           }
-
           if (WCMD_keyword_ws_found(L"set", curPos))
               ignoreBracket = TRUE;
 
@@ -2501,6 +2637,77 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     }
 
     return extraSpace;
+}
+
+BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
+{
+    int (WINAPI *cmp)(const WCHAR*, const WCHAR*) = cond->case_insensitive ? lstrcmpiW : lstrcmpW;
+
+    TRACE("About to evaluate condition %s\n", debugstr_if_condition(cond));
+    *test = 0;
+    switch (cond->op)
+    {
+    case CMD_IF_ERRORLEVEL:
+        *test = errorlevel >= cond->level;
+        break;
+    case CMD_IF_EXIST:
+        {
+            WIN32_FIND_DATAW fd;
+            HANDLE hff;
+            size_t len = wcslen(cond->operand);
+
+            if (len)
+            {
+                /* FindFirstFile does not like a directory path ending in '\' or '/', so append a '.' */
+                if (cond->operand[len - 1] == '\\' || cond->operand[len - 1] == '/')
+                {
+                    WCHAR *new = xrealloc((void*)cond->operand, (wcslen(cond->operand) + 2) * sizeof(WCHAR));
+                    wcscat(new, L".");
+                    cond->operand = new;
+                }
+                hff = FindFirstFileW(cond->operand, &fd);
+                *test = (hff != INVALID_HANDLE_VALUE);
+                if (*test) FindClose(hff);
+            }
+        }
+        break;
+    case CMD_IF_DEFINED:
+        *test = GetEnvironmentVariableW(cond->operand, NULL, 0) > 0;
+        break;
+    case CMD_IF_BINOP_EQUAL:
+        /* == is a special case, as it always compares strings */
+        *test = (*cmp)(cond->left, cond->right) == 0;
+        break;
+    default:
+        {
+            int left_int, right_int;
+            WCHAR *end_left, *end_right;
+            int cmp_val;
+
+            /* Check if we have plain integers (in decimal, octal or hexadecimal notation) */
+            left_int = wcstol(cond->left, &end_left, 0);
+            right_int = wcstol(cond->right, &end_right, 0);
+            if (end_left > cond->left && !*end_left && end_right > cond->right && !*end_right)
+                cmp_val = left_int - right_int;
+            else
+                cmp_val = (*cmp)(cond->left, cond->right);
+            switch (cond->op)
+            {
+            case CMD_IF_BINOP_LSS: *test = cmp_val <  0; break;
+            case CMD_IF_BINOP_LEQ: *test = cmp_val <= 0; break;
+            case CMD_IF_BINOP_EQU: *test = cmp_val == 0; break;
+            case CMD_IF_BINOP_NEQ: *test = cmp_val != 0; break;
+            case CMD_IF_BINOP_GEQ: *test = cmp_val >= 0; break;
+            case CMD_IF_BINOP_GTR: *test = cmp_val >  0; break;
+            default:
+                FIXME("Unexpected comparison operator %u\n", cond->op);
+                return FALSE;
+            }
+        }
+        break;
+    }
+    if (cond->negated) *test ^= 1;
+    return TRUE;
 }
 
 /***************************************************************************

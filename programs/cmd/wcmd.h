@@ -60,6 +60,29 @@ typedef enum _CMD_OPERATOR
 
 /* Data structure to hold commands to be processed */
 
+enum cond_operator {CMD_IF_ERRORLEVEL, CMD_IF_EXIST, CMD_IF_DEFINED,
+                    CMD_IF_BINOP_EQUAL /* == */, CMD_IF_BINOP_LSS, CMD_IF_BINOP_LEQ, CMD_IF_BINOP_EQU,
+                    CMD_IF_BINOP_NEQ, CMD_IF_BINOP_GEQ, CMD_IF_BINOP_GTR};
+typedef struct _CMD_IF_CONDITION
+{
+    unsigned case_insensitive : 1,
+             negated : 1,
+             op;
+    union
+    {
+        /* CMD_IF_ERRORLEVEL */
+        int level;
+        /* CMD_IF_EXIST, CMD_IF_DEFINED */
+        const WCHAR *operand;
+        /* CMD_BINOP_EQUAL, CMD_BINOP_LSS, CMD_BINOP_LEQ, CMD_BINOP_EQU, CMD_BINOP_NEQ, CMD_BINOP_GEQ, CMD_BINOP_GTR */
+        struct
+        {
+            const WCHAR *left;
+            const WCHAR *right;
+        };
+    };
+} CMD_IF_CONDITION;
+
 typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
@@ -99,6 +122,12 @@ static inline int CMD_node_get_depth(const CMD_NODE *node)
     return cmd->bracketDepth;
 }
 /* end temporary */
+
+/* temporary helpers for parsing transition */
+BOOL if_condition_create(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond);
+void if_condition_dispose(CMD_IF_CONDITION *);
+BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test);
+const char *debugstr_if_condition(const CMD_IF_CONDITION *cond);
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);

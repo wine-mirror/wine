@@ -2739,171 +2739,6 @@ void WCMD_popd (void) {
     LocalFree (temp);
 }
 
-/*******************************************************************
- * evaluate_if_comparison
- *
- * Evaluates an "if" comparison operation
- *
- * PARAMS
- *  leftOperand     [I] left operand, non NULL
- *  operator        [I] "if" binary comparison operator, non NULL
- *  rightOperand    [I] right operand, non NULL
- *  caseInsensitive [I] 0 for case sensitive comparison, anything else for insensitive
- *
- * RETURNS
- *  Success:  1 if operator applied to the operands evaluates to TRUE
- *            0 if operator applied to the operands evaluates to FALSE
- *  Failure: -1 if operator is not recognized
- */
-static int evaluate_if_comparison(const WCHAR *leftOperand, const WCHAR *operator,
-                                  const WCHAR *rightOperand, int caseInsensitive)
-{
-    WCHAR *endptr_leftOp, *endptr_rightOp;
-    long int leftOperand_int, rightOperand_int;
-    BOOL int_operands;
-
-    /* == is a special case, as it always compares strings */
-    if (!lstrcmpiW(operator, L"=="))
-        return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) == 0
-                               : lstrcmpW (leftOperand, rightOperand) == 0;
-
-    /* Check if we have plain integers (in decimal, octal or hexadecimal notation) */
-    leftOperand_int = wcstol(leftOperand, &endptr_leftOp, 0);
-    rightOperand_int = wcstol(rightOperand, &endptr_rightOp, 0);
-    int_operands = (!*endptr_leftOp) && (!*endptr_rightOp);
-
-    /* Perform actual (integer or string) comparison */
-    if (!lstrcmpiW(operator, L"lss")) {
-        if (int_operands)
-            return leftOperand_int < rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) < 0
-                                   : lstrcmpW (leftOperand, rightOperand) < 0;
-    }
-
-    if (!lstrcmpiW(operator, L"leq")) {
-        if (int_operands)
-            return leftOperand_int <= rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) <= 0
-                                   : lstrcmpW (leftOperand, rightOperand) <= 0;
-    }
-
-    if (!lstrcmpiW(operator, L"equ")) {
-        if (int_operands)
-            return leftOperand_int == rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) == 0
-                                   : lstrcmpW (leftOperand, rightOperand) == 0;
-    }
-
-    if (!lstrcmpiW(operator, L"neq")) {
-        if (int_operands)
-            return leftOperand_int != rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) != 0
-                                   : lstrcmpW (leftOperand, rightOperand) != 0;
-    }
-
-    if (!lstrcmpiW(operator, L"geq")) {
-        if (int_operands)
-            return leftOperand_int >= rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) >= 0
-                                   : lstrcmpW (leftOperand, rightOperand) >= 0;
-    }
-
-    if (!lstrcmpiW(operator, L"gtr")) {
-        if (int_operands)
-            return leftOperand_int > rightOperand_int;
-        else
-            return caseInsensitive ? lstrcmpiW(leftOperand, rightOperand) > 0
-                                   : lstrcmpW (leftOperand, rightOperand) > 0;
-    }
-
-    return -1;
-}
-
-int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
-{
-  WCHAR condition[MAX_PATH];
-  int caseInsensitive = (wcsstr(quals, L"/I") != NULL);
-
-  *negate = !lstrcmpiW(param1,L"not");
-  lstrcpyW(condition, (*negate ? param2 : param1));
-  WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
-
-  if (!lstrcmpiW(condition, L"errorlevel")) {
-    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
-    WCHAR *endptr;
-    int param_int = wcstol(param, &endptr, 10);
-    if (endptr == param || *endptr) goto syntax_err;
-    *test = (errorlevel >= param_int);
-    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
-  }
-  else if (!lstrcmpiW(condition, L"exist")) {
-    WIN32_FIND_DATAW fd;
-    HANDLE hff;
-    WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
-    int    len = lstrlenW(param);
-
-    if (!len) {
-        *test = FALSE;
-    } else {
-        /* FindFirstFile does not like a directory path ending in '\' or '/', so append a '.' */
-        if (param[len-1] == '\\' || param[len-1] == '/') wcscat(param, L".");
-
-        hff = FindFirstFileW(param, &fd);
-        *test = (hff != INVALID_HANDLE_VALUE);
-        if (*test) FindClose(hff);
-    }
-
-    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
-  }
-  else if (!lstrcmpiW(condition, L"defined")) {
-    *test = (GetEnvironmentVariableW(WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE),
-                                    NULL, 0) > 0);
-    WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
-  }
-  else { /* comparison operation */
-    WCHAR leftOperand[MAXSTRING], rightOperand[MAXSTRING], operator[MAXSTRING];
-    WCHAR *paramStart;
-
-    lstrcpyW(leftOperand, WCMD_parameter(p, (*negate)+caseInsensitive, &paramStart, TRUE, FALSE));
-    if (!*leftOperand)
-      goto syntax_err;
-
-    /* Note: '==' can't be returned by WCMD_parameter since '=' is a separator */
-    p = paramStart + lstrlenW(leftOperand);
-    while (*p == ' ' || *p == '\t')
-      p++;
-
-    if (!wcsncmp(p, L"==", lstrlenW(L"==")))
-      lstrcpyW(operator, L"==");
-    else {
-      lstrcpyW(operator, WCMD_parameter(p, 0, &paramStart, FALSE, FALSE));
-      if (!*operator) goto syntax_err;
-    }
-    p += lstrlenW(operator);
-
-    lstrcpyW(rightOperand, WCMD_parameter(p, 0, &paramStart, TRUE, FALSE));
-    if (!*rightOperand)
-      goto syntax_err;
-
-    *test = evaluate_if_comparison(leftOperand, operator, rightOperand, caseInsensitive);
-    if (*test == -1)
-      goto syntax_err;
-
-    p = paramStart + lstrlenW(rightOperand);
-    WCMD_parameter(p, 0, command, FALSE, FALSE);
-  }
-
-  return 1;
-
-syntax_err:
-  return -1;
-}
-
 /****************************************************************************
  * WCMD_if
  *
@@ -2920,26 +2755,28 @@ syntax_err:
  */
 void WCMD_if (WCHAR *p, CMD_NODE **cmdList)
 {
-  int negate; /* Negate condition */
-  int test;   /* Condition evaluation result */
-  WCHAR *command;
+    CMD_IF_CONDITION if_cond;
+    WCHAR *command;
+    int test;
 
-  /* Function evaluate_if_condition relies on the global variables quals, param1 and param2
-     set in a call to WCMD_parse before */
-  if (evaluate_if_condition(p, &command, &test, &negate) == -1)
-      goto syntax_err;
+    if (if_condition_create(p, &command, &if_cond))
+    {
+        TRACE("%s\n", debugstr_if_condition(&if_cond));
+        if (if_condition_evaluate(&if_cond, &test))
+        {
+            WINE_TRACE("p: %s, quals: %s, param1: %s, param2: %s, command: %s\n",
+                       wine_dbgstr_w(p), wine_dbgstr_w(quals), wine_dbgstr_w(param1),
+                       wine_dbgstr_w(param2), wine_dbgstr_w(command));
 
-  WINE_TRACE("p: %s, quals: %s, param1: %s, param2: %s, command: %s\n",
-             wine_dbgstr_w(p), wine_dbgstr_w(quals), wine_dbgstr_w(param1),
-             wine_dbgstr_w(param2), wine_dbgstr_w(command));
+            /* Process rest of IF statement which is on the same line
+               Note: This may process all or some of the cmdList (eg a GOTO) */
+            WCMD_part_execute(cmdList, command, TRUE, test);
+        }
+        if_condition_dispose(&if_cond);
+        return;
+    }
 
-  /* Process rest of IF statement which is on the same line
-     Note: This may process all or some of the cmdList (eg a GOTO) */
-  WCMD_part_execute(cmdList, command, TRUE, (test != negate));
-  return;
-
-syntax_err:
-  WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
 }
 
 /****************************************************************************
