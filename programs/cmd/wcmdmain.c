@@ -423,12 +423,12 @@ static void WCMD_show_prompt (BOOL newLine) {
   WCMD_output_asis (out_string);
 }
 
-void *xalloc(size_t size)
+void *xrealloc(void *ptr, size_t size)
 {
     void *ret;
 
-    ret = malloc(size);
-    if(!ret) {
+    if (!(ret = realloc(ptr, size)))
+    {
         ERR("Out of memory\n");
         ExitProcess(1);
     }
