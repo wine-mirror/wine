@@ -204,8 +204,7 @@ static void wayland_add_device_gpu(const struct gdi_device_manager *device_manag
     struct gdi_gpu gpu = {0};
     lstrcpyW(gpu.name, wayland_gpuW);
 
-    TRACE("id=0x%s name=%s\n",
-          wine_dbgstr_longlong(gpu.id), wine_dbgstr_w(gpu.name));
+    TRACE("name=%s\n", wine_dbgstr_w(gpu.name));
 
     device_manager->add_gpu(&gpu, param);
 }

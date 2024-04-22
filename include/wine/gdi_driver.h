@@ -247,7 +247,6 @@ struct pci_id
 
 struct gdi_gpu
 {
-    ULONG_PTR id;
     WCHAR name[128];
     struct pci_id pci_id;
     GUID vulkan_uuid;     /* Vulkan device UUID */

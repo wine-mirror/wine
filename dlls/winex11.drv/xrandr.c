@@ -627,8 +627,8 @@ static BOOL is_crtc_primary( RECT primary, const XRRCrtcInfo *crtc )
 
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDisplayKHR)
 
-static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProviderInfo *provider_info,
-                                            struct gdi_gpu *prev_gpus, int prev_gpu_count )
+static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRProviderInfo *provider_info,
+                                            struct x11drv_gpu *prev_gpus, int prev_gpu_count )
 {
     static const char *extensions[] =
     {
@@ -768,10 +768,10 @@ done:
 
 /* Get a list of GPUs reported by XRandR 1.4. Set get_properties to FALSE if GPU properties are
  * not needed to avoid unnecessary querying */
-static BOOL xrandr14_get_gpus( struct gdi_gpu **new_gpus, int *count, BOOL get_properties )
+static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL get_properties )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
-    struct gdi_gpu *gpus = NULL;
+    struct x11drv_gpu *gpus = NULL;
     XRRScreenResources *screen_resources = NULL;
     XRRProviderResources *provider_resources = NULL;
     XRRProviderInfo *provider_info = NULL;
@@ -844,7 +844,7 @@ static BOOL xrandr14_get_gpus( struct gdi_gpu **new_gpus, int *count, BOOL get_p
     /* Make primary GPU the first */
     if (primary_provider > 0)
     {
-        struct gdi_gpu tmp = gpus[0];
+        struct x11drv_gpu tmp = gpus[0];
         gpus[0] = gpus[primary_provider];
         gpus[primary_provider] = tmp;
     }
@@ -865,7 +865,7 @@ done:
     return ret;
 }
 
-static void xrandr14_free_gpus( struct gdi_gpu *gpus )
+static void xrandr14_free_gpus( struct x11drv_gpu *gpus )
 {
     free( gpus );
 }
@@ -1253,7 +1253,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
     INT gpu_count, adapter_count, new_current_mode_count = 0;
     INT gpu_idx, adapter_idx, display_idx;
     struct x11drv_adapter *adapters;
-    struct gdi_gpu *gpus;
+    struct x11drv_gpu *gpus;
     WCHAR *end;
 
     /* Parse \\.\DISPLAY%d */

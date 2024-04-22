@@ -395,7 +395,7 @@ POINT root_to_virtual_screen(INT x, INT y)
 RECT get_host_primary_monitor_rect(void)
 {
     INT gpu_count, adapter_count, monitor_count;
-    struct gdi_gpu *gpus = NULL;
+    struct x11drv_gpu *gpus = NULL;
     struct x11drv_adapter *adapters = NULL;
     struct gdi_monitor *monitors = NULL;
     RECT rect = {0};
@@ -497,7 +497,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 {
     struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
-    struct gdi_gpu *gpus;
+    struct x11drv_gpu *gpus;
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
     DEVMODEW *modes;
@@ -514,7 +514,14 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
-        device_manager->add_gpu( &gpus[gpu], param );
+        struct gdi_gpu gdi_gpu =
+        {
+            .pci_id = gpus[gpu].pci_id,
+            .vulkan_uuid = gpus[gpu].vulkan_uuid,
+            .memory_size = gpus[gpu].memory_size,
+        };
+        memcpy( gdi_gpu.name, gpus[gpu].name, sizeof(gdi_gpu.name) );
+        device_manager->add_gpu( &gdi_gpu, param );
 
         /* Initialize adapters */
         if (!host_handler.get_adapters( gpus[gpu].id, &adapters, &adapter_count )) break;

@@ -764,6 +764,15 @@ void init_user_driver(void);
 
 /* X11 display device handler. Used to initialize display device registry data */
 
+struct x11drv_gpu
+{
+    ULONG_PTR id;
+    WCHAR name[128];
+    struct pci_id pci_id;
+    GUID vulkan_uuid;
+    ULONGLONG memory_size;
+};
+
 struct x11drv_adapter
 {
     ULONG_PTR id;
@@ -782,7 +791,7 @@ struct x11drv_display_device_handler
     /* get_gpus will be called to get a list of GPUs. First GPU has to be where the primary adapter is.
      *
      * Return FALSE on failure with parameters unchanged */
-    BOOL (*get_gpus)(struct gdi_gpu **gpus, int *count, BOOL get_properties);
+    BOOL (*get_gpus)(struct x11drv_gpu **gpus, int *count, BOOL get_properties);
 
     /* get_adapters will be called to get a list of adapters in EnumDisplayDevices context under a GPU.
      * The first adapter has to be primary if GPU is primary.
@@ -797,7 +806,7 @@ struct x11drv_display_device_handler
     BOOL (*get_monitors)(ULONG_PTR adapter_id, struct gdi_monitor **monitors, int *count);
 
     /* free_gpus will be called to free a GPU list from get_gpus */
-    void (*free_gpus)(struct gdi_gpu *gpus);
+    void (*free_gpus)(struct x11drv_gpu *gpus);
 
     /* free_adapters will be called to free an adapter list from get_adapters */
     void (*free_adapters)(struct x11drv_adapter *adapters);

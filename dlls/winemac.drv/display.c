@@ -1141,7 +1141,6 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     {
         struct gdi_gpu gdi_gpu =
         {
-            .id = gpu->id,
             .pci_id =
             {
                 .vendor = gpu->vendor_id,
