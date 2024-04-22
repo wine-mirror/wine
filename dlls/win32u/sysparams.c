@@ -1183,16 +1183,17 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     return TRUE;
 }
 
-static void add_gpu( const struct gdi_gpu *gpu, void *param )
+static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid,
+                     ULONGLONG memory_size, void *param )
 {
-    const struct pci_id *pci_id = &gpu->pci_id;
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     unsigned int i;
     HKEY hkey, subkey;
+    DWORD len;
 
-    TRACE( "%s %04X %04X %08X %02X\n", debugstr_w( gpu->name ), pci_id->vendor, pci_id->device,
+    TRACE( "%s %04X %04X %08X %02X\n", debugstr_a( name ), pci_id->vendor, pci_id->device,
            pci_id->subsystem, pci_id->revision );
 
     if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
@@ -1207,8 +1208,8 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     memset( &ctx->gpu, 0, sizeof(ctx->gpu) );
     ctx->gpu.index = ctx->gpu_count;
-    lstrcpyW( ctx->gpu.name, gpu->name );
-    ctx->gpu.vulkan_uuid = gpu->vulkan_uuid;
+    if (vulkan_uuid) ctx->gpu.vulkan_uuid = *vulkan_uuid;
+    if (name) RtlUTF8ToUnicodeN( ctx->gpu.name, sizeof(ctx->gpu.name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
     snprintf( ctx->gpu.path, sizeof(ctx->gpu.path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
               pci_id->vendor, pci_id->device, pci_id->subsystem, pci_id->revision, ctx->gpu.index );
@@ -1251,7 +1252,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( &ctx->gpu, pci_id, gpu->memory_size ))
+    if (!write_gpu_to_registry( &ctx->gpu, pci_id, memory_size ))
         WARN( "Failed to write gpu to registry\n" );
     else
         ctx->gpu_count++;
@@ -1731,13 +1732,13 @@ static BOOL default_update_display_devices( BOOL force, struct device_manager_ct
           .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
     };
     static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
-    static const struct gdi_gpu gpu;
+    struct pci_id pci_id = {0};
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {{0}};
 
     if (!force) return TRUE;
 
-    add_gpu( &gpu, ctx );
+    add_gpu( "Default GPU", &pci_id, NULL, 0, ctx );
     add_source( "Default", source_flags, ctx );
 
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &mode ))

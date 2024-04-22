@@ -406,7 +406,7 @@ RECT get_host_primary_monitor_rect(void)
         host_handler.get_monitors(adapters[0].id, &monitors, &monitor_count) && monitor_count)
         rect = monitors[0].rc_monitor;
 
-    if (gpus) host_handler.free_gpus(gpus);
+    if (gpus) host_handler.free_gpus( gpus, gpu_count );
     if (adapters) host_handler.free_adapters(adapters);
     if (monitors) host_handler.free_monitors(monitors, monitor_count);
     return rect;
@@ -514,18 +514,12 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
-        struct gdi_gpu gdi_gpu =
-        {
-            .pci_id = gpus[gpu].pci_id,
-            .vulkan_uuid = gpus[gpu].vulkan_uuid,
-            .memory_size = gpus[gpu].memory_size,
-        };
-        memcpy( gdi_gpu.name, gpus[gpu].name, sizeof(gdi_gpu.name) );
-        device_manager->add_gpu( &gdi_gpu, param );
+        device_manager->add_gpu( gpus[gpu].name, &gpus[gpu].pci_id, &gpus[gpu].vulkan_uuid,
+                                 gpus[gpu].memory_size, param );
 
         /* Initialize adapters */
         if (!host_handler.get_adapters( gpus[gpu].id, &adapters, &adapter_count )) break;
-        TRACE("GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, wine_dbgstr_w(gpus[gpu].name), adapter_count);
+        TRACE( "GPU: %#lx %s, adapter count: %d\n", gpus[gpu].id, debugstr_a( gpus[gpu].name ), adapter_count );
 
         for (adapter = 0; adapter < adapter_count; adapter++)
         {
@@ -563,7 +557,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
         host_handler.free_adapters( adapters );
     }
 
-    host_handler.free_gpus( gpus );
+    host_handler.free_gpus( gpus, gpu_count );
     return TRUE;
 }
 

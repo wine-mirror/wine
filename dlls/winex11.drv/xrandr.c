@@ -653,7 +653,6 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     VkPhysicalDeviceIDProperties id;
     VkInstance vk_instance = NULL;
     VkDisplayKHR vk_display;
-    DWORD len;
     BOOL ret = FALSE;
     VkResult vr;
 
@@ -740,8 +739,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
                 gpu->pci_id.vendor = properties2.properties.vendorID;
                 gpu->pci_id.device = properties2.properties.deviceID;
             }
-            RtlUTF8ToUnicodeN( gpu->name, sizeof(gpu->name), &len, properties2.properties.deviceName,
-                               strlen( properties2.properties.deviceName ) + 1 );
+            gpu->name = strdup( properties2.properties.deviceName );
 
             pvkGetPhysicalDeviceMemoryProperties( vk_physical_devices[device_idx], &mem_properties );
             for (heap_idx = 0; heap_idx < mem_properties.memoryHeapCount; heap_idx++)
@@ -770,7 +768,6 @@ done:
  * not needed to avoid unnecessary querying */
 static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL get_properties )
 {
-    static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
     struct x11drv_gpu *gpus = NULL;
     XRRScreenResources *screen_resources = NULL;
     XRRProviderResources *provider_resources = NULL;
@@ -779,7 +776,6 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
     INT primary_provider = -1;
     RECT primary_rect;
     BOOL ret = FALSE;
-    DWORD len;
     INT i, j;
 
     screen_resources = xrandr_get_screen_resources();
@@ -799,7 +795,7 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
     if (!provider_resources->nproviders)
     {
         WARN("XRandR implementation doesn't report any providers, faking one.\n");
-        lstrcpyW( gpus[0].name, wine_adapterW );
+        gpus[0].name = strdup( "Xrandr GPU" );
         *new_gpus = gpus;
         *count = 1;
         ret = TRUE;
@@ -834,8 +830,7 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
         if (get_properties)
         {
             if (!get_gpu_properties_from_vulkan( &gpus[i], provider_info, gpus, i ))
-                RtlUTF8ToUnicodeN( gpus[i].name, sizeof(gpus[i].name), &len, provider_info->name,
-                                   strlen( provider_info->name ) + 1 );
+                gpus[i].name = strdup( provider_info->name );
             /* FIXME: Add an alternate method of getting PCI IDs, for systems that don't support Vulkan */
         }
         pXRRFreeProviderInfo( provider_info );
@@ -865,8 +860,9 @@ done:
     return ret;
 }
 
-static void xrandr14_free_gpus( struct x11drv_gpu *gpus )
+static void xrandr14_free_gpus( struct x11drv_gpu *gpus, int count )
 {
+    while (count--) free( gpus[count].name );
     free( gpus );
 }
 
@@ -1294,7 +1290,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, BOOL is_primary, x11drv_s
             new_current_mode_count += adapter_count;
             xrandr14_free_adapters( adapters );
         }
-        xrandr14_free_gpus( gpus );
+        xrandr14_free_gpus( gpus, gpu_count );
 
         if (new_current_modes)
         {

@@ -767,7 +767,7 @@ void init_user_driver(void);
 struct x11drv_gpu
 {
     ULONG_PTR id;
-    WCHAR name[128];
+    char *name;
     struct pci_id pci_id;
     GUID vulkan_uuid;
     ULONGLONG memory_size;
@@ -806,7 +806,7 @@ struct x11drv_display_device_handler
     BOOL (*get_monitors)(ULONG_PTR adapter_id, struct gdi_monitor **monitors, int *count);
 
     /* free_gpus will be called to free a GPU list from get_gpus */
-    void (*free_gpus)(struct x11drv_gpu *gpus);
+    void (*free_gpus)(struct x11drv_gpu *gpus, int count);
 
     /* free_adapters will be called to free an adapter list from get_adapters */
     void (*free_adapters)(struct x11drv_adapter *adapters);

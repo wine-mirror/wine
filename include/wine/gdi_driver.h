@@ -245,14 +245,6 @@ struct pci_id
     UINT16 revision;
 };
 
-struct gdi_gpu
-{
-    WCHAR name[128];
-    struct pci_id pci_id;
-    GUID vulkan_uuid;     /* Vulkan device UUID */
-    ULONGLONG memory_size;
-};
-
 struct gdi_monitor
 {
     RECT rc_monitor;      /* RcMonitor in MONITORINFO struct */
@@ -263,7 +255,7 @@ struct gdi_monitor
 
 struct gdi_device_manager
 {
-    void (*add_gpu)( const struct gdi_gpu *gpu, void *param );
+    void (*add_gpu)( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, ULONGLONG memory_size, void *param );
     void (*add_source)( const char *name, UINT state_flags, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_modes)( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param );
