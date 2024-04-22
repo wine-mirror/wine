@@ -1485,21 +1485,6 @@ static const struct gdi_device_manager device_manager =
     add_modes,
 };
 
-static void reset_display_manager_ctx( struct device_manager_ctx *ctx )
-{
-    HANDLE mutex = ctx->mutex;
-
-    if (ctx->source_key)
-    {
-        NtClose( ctx->source_key );
-        last_query_display_time = 0;
-    }
-    if (ctx->gpu_count) cleanup_devices();
-
-    memset( ctx, 0, sizeof(*ctx) );
-    if ((ctx->mutex = mutex)) prepare_devices();
-}
-
 static void release_display_manager_ctx( struct device_manager_ctx *ctx )
 {
     if (ctx->mutex)
@@ -1508,7 +1493,13 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
         release_display_device_init_mutex( ctx->mutex );
         ctx->mutex = 0;
     }
-    reset_display_manager_ctx( ctx );
+
+    if (ctx->source_key)
+    {
+        NtClose( ctx->source_key );
+        last_query_display_time = 0;
+    }
+    if (ctx->gpu_count) cleanup_devices();
 }
 
 static void clear_display_devices(void)
