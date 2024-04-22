@@ -14581,6 +14581,12 @@ msgstr ""
 "Blogai sudarytas skaičius – privalo būti dešimtainis (12),\n"
 " šešioliktainis (0x34) arba aštuntainis (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Sintaksės klaida\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Žymeklio dydis"

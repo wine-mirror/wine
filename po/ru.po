@@ -15012,6 +15012,12 @@ msgstr ""
 "Неверный формат числа - должен быть десятичный (12),\n"
 " шестнадцатеричный (0x34) или восьмеричный (056) формат.\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Синтаксическая ошибка\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

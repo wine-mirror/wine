@@ -14532,6 +14532,12 @@ msgstr ""
 "잘못된 형식의 숫자 - 10진수(12)나,\n"
 "16진수(0x34)나 8진수(056)중의 하나이어야 합니다.\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "문법 오류\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"

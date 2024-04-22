@@ -14601,6 +14601,12 @@ msgstr ""
 "Hatalı numara biçimi - ondalık (12), onaltılı (0x34) veya sekizli (056) "
 "olmalıdır.\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Sözdizimi hatası\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "İmleç boyutu"

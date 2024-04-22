@@ -14575,6 +14575,12 @@ msgstr ""
 "数値の形式に誤りがあります - 10 進数 (12)、16 進数 (0x34)、\n"
 "8 進数 (056) のいずれかとする必要があります。\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "構文エラー\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"

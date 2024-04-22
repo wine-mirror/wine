@@ -14435,6 +14435,12 @@ msgstr ""
 "錯誤的數字形式 - 必須是十進位 (12)、\n"
 " 十六進位 (0x34) 或八進位 (056) 之一。\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "語法錯誤\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "游標大小"

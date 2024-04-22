@@ -15398,6 +15398,12 @@ msgstr ""
 "Špatný formát čísla – musí být desítkové (12),\n"
 "šestnáctkové (0x34) či osmičkové (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Chyba syntaxe\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kurzoru"

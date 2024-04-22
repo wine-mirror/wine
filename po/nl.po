@@ -14630,6 +14630,12 @@ msgstr ""
 "Misvormd nummer - moet of decimaal (12),\n"
 " hexadecimaal (0x34) of octaal (056) zijn.\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Formuleringsfout\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursorgrootte"

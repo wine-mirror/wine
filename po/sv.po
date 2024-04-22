@@ -15509,6 +15509,12 @@ msgstr ""
 "Felaktigt talformat - måste vara en av decimal (12),\n"
 " hexadecimal (0x34) eller oktal (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Syntaxfel\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Markörstorlek"

@@ -2125,23 +2125,6 @@ static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
     return thisEntry;
 }
 
-static void WCMD_appendCommand(CMD_OPERATOR op, CMD_COMMAND *command, CMD_NODE **node)
-{
-    /* append as left to right operators */
-    if (*node)
-    {
-        CMD_NODE **last = node;
-        while ((*last)->op != CMD_SINGLE)
-            last = &(*last)->right;
-
-        *last = node_create_binary(op, *last, node_create_single(command));
-    }
-    else
-    {
-        *node = node_create_single(command);
-    }
-}
-
 /***************************************************************************
  * WCMD_IsEndQuote
  *
@@ -2377,6 +2360,190 @@ syntax_error:
     return NULL;
 }
 
+/* used to store additional information dedicated a given token */
+union token_parameter
+{
+    CMD_COMMAND *command;
+    void *none;
+};
+
+struct node_builder
+{
+    unsigned num;
+    unsigned allocated;
+    struct token
+    {
+        enum builder_token
+        {
+            TKN_EOL, TKN_AMP, TKN_BARBAR, TKN_AMPAMP, TKN_BAR, TKN_COMMAND,
+        } token;
+        union token_parameter parameter;
+    } *stack;
+    unsigned pos;
+};
+
+static const char* debugstr_token(enum builder_token tkn, union token_parameter tkn_pmt)
+{
+    static const char *tokens[] = {"EOL", "&", "||", "&&", "|", "CMD"};
+
+    if (tkn >= ARRAY_SIZE(tokens)) return "<<<>>>";
+    switch (tkn)
+    {
+    case TKN_COMMAND: return wine_dbg_sprintf("%s {{%ls}}", tokens[tkn], tkn_pmt.command->command);
+    default:          return wine_dbg_sprintf("%s", tokens[tkn]);
+    }
+}
+
+static void node_builder_init(struct node_builder *builder)
+{
+    memset(builder, 0, sizeof(*builder));
+}
+
+static void node_builder_dispose(struct node_builder *builder)
+{
+    free(builder->stack);
+}
+
+static void node_builder_push_token_parameter(struct node_builder *builder, enum builder_token tkn, union token_parameter pmt)
+{
+    if (builder->allocated <= builder->num)
+    {
+        unsigned sz = builder->allocated ? 2 * builder->allocated : 64;
+        builder->stack = xrealloc(builder->stack, sz * sizeof(builder->stack[0]));
+        builder->allocated = sz;
+    }
+    builder->stack[builder->num].token = tkn;
+    builder->stack[builder->num].parameter = pmt;
+    builder->num++;
+}
+
+static void node_builder_push_token(struct node_builder *builder, enum builder_token tkn)
+{
+    union token_parameter pmt = {.none = NULL};
+    node_builder_push_token_parameter(builder, tkn, pmt);
+}
+
+static enum builder_token node_builder_peek_next_token(struct node_builder *builder, union token_parameter *pmt)
+{
+    enum builder_token tkn;
+
+    if (builder->pos >= builder->num)
+    {
+        tkn = TKN_EOL;
+        if (pmt) pmt->none = NULL;
+    }
+    else
+    {
+        tkn = builder->stack[builder->pos].token;
+        if (pmt)
+            *pmt = builder->stack[builder->pos].parameter;
+    }
+    return tkn;
+}
+
+static void node_builder_consume(struct node_builder *builder)
+{
+    builder->stack[builder->pos].parameter.none = NULL;
+    builder->pos++;
+}
+
+static void WCMD_appendCommand(CMD_OPERATOR op, CMD_COMMAND *command, CMD_NODE **node)
+{
+    /* append as left to right operators */
+    if (*node)
+    {
+        CMD_NODE **last = node;
+        while ((*last)->op != CMD_SINGLE)
+            last = &(*last)->right;
+
+        *last = node_create_binary(op, *last, node_create_single(command));
+    }
+    else
+    {
+        *node = node_create_single(command);
+    }
+}
+
+static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
+{
+    unsigned bogus_line;
+    CMD_NODE *left = NULL;
+    union token_parameter pmt;
+    enum builder_token tkn;
+    BOOL done;
+
+#define ERROR_IF(x) if (x) {bogus_line = __LINE__; goto error_handling;}
+
+    for (;;)
+    {
+        CMD_OPERATOR cmd_op;
+
+        done = FALSE;
+        /* we always get a pair of OP CMMAND */
+        tkn = node_builder_peek_next_token(builder, &pmt);
+        switch (tkn)
+        {
+        case TKN_EOL:     done = TRUE; break;
+        case TKN_AMP:     cmd_op = CMD_CONCAT; break;
+        case TKN_AMPAMP:  cmd_op = CMD_ONSUCCESS; break;
+        case TKN_BAR:     cmd_op = CMD_PIPE; break;
+        case TKN_BARBAR:  cmd_op = CMD_ONFAILURE; break;
+        case TKN_COMMAND: ERROR_IF(TRUE);
+        default:          ERROR_IF(TRUE);
+        }
+        if (done) break;
+        node_builder_consume(builder);
+
+        tkn = node_builder_peek_next_token(builder, &pmt);
+        ERROR_IF(tkn != TKN_COMMAND)
+        node_builder_consume(builder);
+
+        WCMD_appendCommand(cmd_op, pmt.command, &left);
+    } while (!done);
+#undef ERROR_IF
+    *result = left;
+    return TRUE;
+error_handling:
+    TRACE("Parser failed at line %u:token %s\n", bogus_line, debugstr_token(tkn, pmt));
+    node_dispose_tree(left);
+
+    return FALSE;
+}
+
+static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
+{
+    union token_parameter tkn_pmt;
+    enum builder_token tkn;
+
+    if (node_builder_parse(builder, node) &&
+        builder->pos + 1 >= builder->num) /* consumed all tokens? */
+        return TRUE;
+    /* print error on first unused token */
+    if (builder->pos < builder->num)
+    {
+        tkn = node_builder_peek_next_token(builder, &tkn_pmt);
+        switch (tkn)
+        {
+        case TKN_COMMAND:
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADTOKEN), tkn_pmt.command->command);
+            break;
+        default:
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADTOKEN), debugstr_token(tkn, tkn_pmt));
+        }
+    }
+    /* free remaining tokens */
+    for (;;)
+    {
+        tkn = node_builder_peek_next_token(builder, &tkn_pmt);
+        if (tkn == TKN_EOL) break;
+        if (tkn == TKN_COMMAND) command_dispose(tkn_pmt.command);
+        node_builder_consume(builder);
+    }
+
+    *node = NULL;
+    return FALSE;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -2402,8 +2569,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     WCHAR    *curCopyTo;
     int      *curLen;
     int       curDepth = 0;
-    CMD_COMMAND *single_cmd = NULL;
-    CMD_OPERATOR cmd_op = CMD_CONCAT;
+    union token_parameter tkn_pmt;
+    enum builder_token cmd_tkn = TKN_AMP;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      inOneLine = FALSE;
     BOOL      inFor = FALSE;
@@ -2421,6 +2588,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                                              /* handling brackets as a normal character */
     int       lineCurDepth;                  /* Bracket depth when line was read in */
     BOOL      resetAtEndOfLine = FALSE;      /* Do we need to reset curdepth at EOL */
+    struct node_builder builder;
+    BOOL      ret;
 
     *output = NULL;
     /* Allocate working space for a command read from keyboard, file etc */
@@ -2444,6 +2613,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     }
     curPos = extraSpace;
     TRACE("About to parse line (%ls)\n", extraSpace);
+
+    node_builder_init(&builder);
 
     /* Handle truncated input - issue warning */
     if (lstrlenW(extraSpace) == MAXSTRING -1) {
@@ -2662,19 +2833,20 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                   /* Add an entry to the command list */
                   if (curStringLen > 0) {
 
+                    node_builder_push_token(&builder, cmd_tkn);
                     /* Add the current command */
-                    single_cmd = WCMD_createCommand(curString, &curStringLen,
-                                                    curRedirs, &curRedirsLen,
-                                                    &curCopyTo, &curLen,
-                                                    curDepth);
-                    WCMD_appendCommand(cmd_op, single_cmd, output);
+                    tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                                                         curRedirs, &curRedirsLen,
+                                                         &curCopyTo, &curLen,
+                                                         curDepth);
+                    node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
                   }
 
                   if (*(curPos+1) == '|') {
                     curPos++; /* Skip other | */
-                    cmd_op = CMD_ONFAILURE;
+                    cmd_tkn = TKN_BARBAR;
                   } else {
-                    cmd_op = CMD_PIPE;
+                    cmd_tkn = TKN_BAR;
                   }
 
                   /* If in an IF or ELSE statement, put subsequent chained
@@ -2735,12 +2907,13 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                     inIn = TRUE;
                   }
 
+                  node_builder_push_token(&builder, cmd_tkn);
                   /* Add the current command */
-                  single_cmd = WCMD_createCommand(curString, &curStringLen,
-                                                  curRedirs, &curRedirsLen,
-                                                  &curCopyTo, &curLen,
-                                                  curDepth);
-                  WCMD_appendCommand(cmd_op, single_cmd, output);
+                  tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                                                       curRedirs, &curRedirsLen,
+                                                       &curCopyTo, &curLen,
+                                                       curDepth);
+                  node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
 
                   curDepth++;
                 } else {
@@ -2766,19 +2939,20 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                   /* Add an entry to the command list */
                   if (curStringLen > 0) {
 
+                    node_builder_push_token(&builder, cmd_tkn);
                     /* Add the current command */
-                    single_cmd = WCMD_createCommand(curString, &curStringLen,
-                                                    curRedirs, &curRedirsLen,
-                                                    &curCopyTo, &curLen,
-                                                    curDepth);
-                    WCMD_appendCommand(cmd_op, single_cmd, output);
+                    tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                                                         curRedirs, &curRedirsLen,
+                                                         &curCopyTo, &curLen,
+                                                         curDepth);
+                    node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
                   }
 
                   if (*(curPos+1) == '&') {
                     curPos++; /* Skip other & */
-                    cmd_op = CMD_ONSUCCESS;
+                    cmd_tkn = TKN_AMPAMP;
                   } else {
-                    cmd_op = CMD_CONCAT;
+                    cmd_tkn = TKN_AMP;
                   }
                   /* If in an IF or ELSE statement, put subsequent chained
                      commands at a higher depth as if brackets were supplied
@@ -2798,21 +2972,23 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                   /* Add the current command if there is one */
                   if (curStringLen) {
 
+                      node_builder_push_token(&builder, cmd_tkn);
                       /* Add the current command */
-                      single_cmd = WCMD_createCommand(curString, &curStringLen,
-                                                      curRedirs, &curRedirsLen,
-                                                      &curCopyTo, &curLen,
-                                                      curDepth);
-                      WCMD_appendCommand(cmd_op, single_cmd, output);
+                      tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                                                           curRedirs, &curRedirsLen,
+                                                           &curCopyTo, &curLen,
+                                                           curDepth);
+                      node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
                   }
 
                   /* Add an empty entry to the command list */
-                  cmd_op = CMD_CONCAT;
-                  single_cmd = WCMD_createCommand(NULL, &curStringLen,
-                                                  curRedirs, &curRedirsLen,
-                                                  &curCopyTo, &curLen,
-                                                  curDepth);
-                  WCMD_appendCommand(cmd_op, single_cmd, output);
+                  cmd_tkn = TKN_AMP;
+                  node_builder_push_token(&builder, cmd_tkn);
+                  tkn_pmt.command = WCMD_createCommand(NULL, &curStringLen,
+                                                       curRedirs, &curRedirsLen,
+                                                       &curCopyTo, &curLen,
+                                                       curDepth);
+                  node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
 
                   curDepth--;
 
@@ -2844,12 +3020,13 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
          Do not add command to list if escape char ^ was last */
       if (*curPos == 0x00 && !lastWasCaret && *curLen > 0) {
 
+          node_builder_push_token(&builder, cmd_tkn);
           /* Add an entry to the command list */
-          single_cmd = WCMD_createCommand(curString, &curStringLen,
-                                          curRedirs, &curRedirsLen,
-                                          &curCopyTo, &curLen,
-                                          curDepth);
-          WCMD_appendCommand(cmd_op, single_cmd, output);
+          tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                                               curRedirs, &curRedirsLen,
+                                               &curCopyTo, &curLen,
+                                               curDepth);
+          node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
 
           /* If we had a single line if or else, and we pretended to add
              brackets, end them now                                      */
@@ -2869,7 +3046,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
         WINE_TRACE("Need to read more data as outstanding brackets or carets\n");
         inOneLine = FALSE;
         ignoreBracket = FALSE;
-        cmd_op = CMD_CONCAT;
+        cmd_tkn = TKN_AMP;
         inQuotes = 0;
         memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
         extraData = extraSpace;
@@ -2913,10 +3090,12 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
       }
     }
 
-    if (curDepth > lineCurDepth) {
+    *output = NULL;
+    ret = curDepth <= lineCurDepth && node_builder_generate(&builder, output);
+    node_builder_dispose(&builder);
+    if (!ret)
+    {
         WINE_TRACE("Brackets do not match, error out without executing.\n");
-        node_dispose_tree(*output);
-        *output = NULL;
         errorlevel = 255;
     }
 

@@ -15884,6 +15884,12 @@ msgstr ""
 "صيغة الرقم غير سليمة حيث أنها يمكن أن تكون عشرية (12),\n"
 " أو ست عشرية (0x34) أو ثماني (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "خطأ بنيوي\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "حجم المؤشر"

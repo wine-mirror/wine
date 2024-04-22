@@ -14663,6 +14663,12 @@ msgstr ""
 "Zahl ungültig formatiert - muss dezimal (12),\n"
 " hexadezimal (0x34) oder oktal (056) sein.\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Syntaxfehler\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursorgröße"

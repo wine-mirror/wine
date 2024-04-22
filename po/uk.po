@@ -14874,6 +14874,12 @@ msgstr ""
 "Неправильно сформоване число - має бути або десятковим (12),\n"
 " або шістнадцятковим (0x34), або вісімковим (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Синтаксична помилка\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Розмір курсора"

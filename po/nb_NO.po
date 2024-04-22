@@ -15380,6 +15380,12 @@ msgstr ""
 "Ugyldig tallformat - må være enten desimal (12),\n"
 "heksadesimal (0x34) eller oktal (056).\n"
 
+#: programs/cmd/cmd.rc:411
+#, fuzzy
+#| msgid "Syntax error\n"
+msgid "Syntax error: unexpected %1\n"
+msgstr "Syntaksfeil\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Pekerstørrelse"
