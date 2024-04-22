@@ -1722,7 +1722,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x4b */
         .id         = &FOLDERID_ImplicitAppShortcuts,
-        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .type       = CSIDL_Type_User,
         .category   = KF_CATEGORY_PERUSER,
         .name       = L"ImplicitAppShortcuts",
         .parent     = &FOLDERID_UserPinned,
@@ -1878,7 +1878,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x5b */
         .id         = &FOLDERID_QuickLaunch,
-        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .type       = CSIDL_Type_User,
         .category   = KF_CATEGORY_PERUSER,
         .name       = L"Quick Launch",
         .parent     = &FOLDERID_RoamingAppData,
@@ -2024,7 +2024,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x6c */
         .id         = &FOLDERID_UserPinned,
-        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .type       = CSIDL_Type_User,
         .category   = KF_CATEGORY_PERUSER,
         .name       = L"User Pinned",
         .parent     = &FOLDERID_QuickLaunch,
