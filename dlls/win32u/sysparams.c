@@ -1184,12 +1184,36 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     return TRUE;
 }
 
+static struct vulkan_gpu *find_vulkan_gpu_from_uuid( const struct device_manager_ctx *ctx, const GUID *uuid )
+{
+    struct vulkan_gpu *gpu;
+
+    if (!uuid) return NULL;
+
+    LIST_FOR_EACH_ENTRY( gpu, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+        if (!memcmp( &gpu->uuid, uuid, sizeof(*uuid) )) return gpu;
+
+    return NULL;
+}
+
+static struct vulkan_gpu *find_vulkan_gpu_from_pci_id( const struct device_manager_ctx *ctx, const struct pci_id *pci_id )
+{
+    struct vulkan_gpu *gpu;
+
+    LIST_FOR_EACH_ENTRY( gpu, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+        if (gpu->pci_id.vendor == pci_id->vendor && gpu->pci_id.device == pci_id->device) return gpu;
+
+    return NULL;
+}
+
 static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid,
                      ULONGLONG memory_size, void *param )
 {
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    struct vulkan_gpu *vulkan_gpu = NULL;
+    struct list *ptr;
     unsigned int i;
     HKEY hkey, subkey;
     DWORD len;
@@ -1209,7 +1233,24 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
 
     memset( &ctx->gpu, 0, sizeof(ctx->gpu) );
     ctx->gpu.index = ctx->gpu_count;
+
+    if ((vulkan_gpu = find_vulkan_gpu_from_uuid( ctx, vulkan_uuid )))
+        TRACE( "Found vulkan GPU matching uuid %s, pci_id %#04x:%#04x, name %s\n", debugstr_guid(&vulkan_gpu->uuid),
+               pci_id->vendor, pci_id->device, debugstr_a(vulkan_gpu->name));
+    else if ((vulkan_gpu = find_vulkan_gpu_from_pci_id( ctx, pci_id )))
+        TRACE( "Found vulkan GPU matching pci_id %#04x:%#04x, uuid %s, name %s\n", pci_id->vendor, pci_id->device,
+               debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
+    else if ((ptr = list_head( &ctx->vulkan_gpus )))
+    {
+        vulkan_gpu = LIST_ENTRY( ptr, struct vulkan_gpu, entry );
+        WARN( "Using vulkan GPU pci_id %#04x:%#04x, uuid %s, name %s\n", pci_id->vendor, pci_id->device,
+               debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
+    }
+
     if (vulkan_uuid) ctx->gpu.vulkan_uuid = *vulkan_uuid;
+    else if (vulkan_gpu) ctx->gpu.vulkan_uuid = vulkan_gpu->uuid;
+
+    if (!name && vulkan_gpu) name = vulkan_gpu->name;
     if (name) RtlUTF8ToUnicodeN( ctx->gpu.name, sizeof(ctx->gpu.name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
     snprintf( ctx->gpu.path, sizeof(ctx->gpu.path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
@@ -1257,6 +1298,12 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
         WARN( "Failed to write gpu to registry\n" );
     else
         ctx->gpu_count++;
+
+    if (vulkan_gpu)
+    {
+        list_remove( &vulkan_gpu->entry );
+        free_vulkan_gpu( vulkan_gpu );
+    }
 }
 
 static BOOL write_source_to_registry( const struct source *source, HKEY *source_key )
