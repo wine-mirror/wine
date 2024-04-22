@@ -255,7 +255,7 @@ struct gdi_monitor
 
 struct gdi_device_manager
 {
-    void (*add_gpu)( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, ULONGLONG memory_size, void *param );
+    void (*add_gpu)( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, void *param );
     void (*add_source)( const char *name, UINT state_flags, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_modes)( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param );

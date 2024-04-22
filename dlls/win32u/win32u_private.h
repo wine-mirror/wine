@@ -198,6 +198,7 @@ struct vulkan_gpu
     struct pci_id pci_id;
     char *name;
     GUID uuid;
+    ULONGLONG memory;
 };
 
 extern BOOL get_vulkan_gpus( struct list *gpus );

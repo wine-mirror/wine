@@ -206,7 +206,7 @@ static void wayland_add_device_gpu(const struct gdi_device_manager *device_manag
 
     TRACE("\n");
 
-    device_manager->add_gpu("Wayland GPU", &pci_id, NULL, 0, param);
+    device_manager->add_gpu("Wayland GPU", &pci_id, NULL, param);
 }
 
 static void wayland_add_device_source(const struct gdi_device_manager *device_manager,

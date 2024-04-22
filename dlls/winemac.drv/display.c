@@ -1155,7 +1155,7 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             .subsystem = gpu->subsys_id,
             .revision = gpu->revision_id,
         };
-        device_manager->add_gpu(gpu->name, &pci_id, NULL, 0, param);
+        device_manager->add_gpu(gpu->name, &pci_id, NULL, param);
 
         /* Initialize adapters */
         if (macdrv_get_adapters(gpu->id, &adapters, &adapter_count)) break;

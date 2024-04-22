@@ -61,6 +61,7 @@ static struct list d3dkmt_vidpn_sources = LIST_INIT( d3dkmt_vidpn_sources );   /
 
 static VkInstance d3dkmt_vk_instance; /* Vulkan instance for D3DKMT functions */
 static PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
+static PFN_vkGetPhysicalDeviceMemoryProperties pvkGetPhysicalDeviceMemoryProperties;
 static PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
 static PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
 static const struct vulkan_funcs *vulkan_funcs;
@@ -107,6 +108,7 @@ static void d3dkmt_init_vulkan(void)
     }
     LOAD_VK_FUNC( vkEnumeratePhysicalDevices )
     LOAD_VK_FUNC( vkGetPhysicalDeviceProperties2KHR )
+    LOAD_VK_FUNC( vkGetPhysicalDeviceMemoryProperties )
     LOAD_VK_FUNC( vkGetPhysicalDeviceMemoryProperties2KHR )
 #undef LOAD_VK_FUNC
 }
@@ -570,6 +572,7 @@ BOOL get_vulkan_gpus( struct list *gpus )
     {
         VkPhysicalDeviceIDProperties id = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
         VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
+        VkPhysicalDeviceMemoryProperties mem_properties;
         struct vulkan_gpu *gpu;
 
         if (!(gpu = calloc( 1, sizeof(*gpu) ))) break;
@@ -578,6 +581,14 @@ BOOL get_vulkan_gpus( struct list *gpus )
         gpu->name = strdup( properties2.properties.deviceName );
         gpu->pci_id.vendor = properties2.properties.vendorID;
         gpu->pci_id.device = properties2.properties.deviceID;
+
+        pvkGetPhysicalDeviceMemoryProperties( devices[i], &mem_properties );
+        for (i = 0; i < mem_properties.memoryHeapCount; i++)
+        {
+            if (mem_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                gpu->memory += mem_properties.memoryHeaps[i].size;
+        }
+
         list_add_tail( gpus, &gpu->entry );
     }
 

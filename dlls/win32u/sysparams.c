@@ -1206,8 +1206,7 @@ static struct vulkan_gpu *find_vulkan_gpu_from_pci_id( const struct device_manag
     return NULL;
 }
 
-static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid,
-                     ULONGLONG memory_size, void *param )
+static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, void *param )
 {
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
@@ -1294,7 +1293,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( &ctx->gpu, pci_id, memory_size ))
+    if (!write_gpu_to_registry( &ctx->gpu, pci_id, vulkan_gpu ? vulkan_gpu->memory : 0 ))
         WARN( "Failed to write gpu to registry\n" );
     else
         ctx->gpu_count++;
@@ -1799,7 +1798,7 @@ static NTSTATUS default_update_display_devices( BOOL force, struct device_manage
 
     if (!force) return STATUS_ALREADY_COMPLETE;
 
-    add_gpu( "Default GPU", &pci_id, NULL, 0, ctx );
+    add_gpu( "Default GPU", &pci_id, NULL, ctx );
     add_source( "Default", source_flags, ctx );
 
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &mode ))

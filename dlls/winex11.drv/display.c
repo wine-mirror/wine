@@ -517,8 +517,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
     for (gpu = 0; gpu < gpu_count; gpu++)
     {
-        device_manager->add_gpu( gpus[gpu].name, &gpus[gpu].pci_id, &gpus[gpu].vulkan_uuid,
-                                 gpus[gpu].memory_size, param );
+        device_manager->add_gpu( gpus[gpu].name, &gpus[gpu].pci_id, &gpus[gpu].vulkan_uuid, param );
 
         /* Initialize adapters */
         if (!host_handler.get_adapters( gpus[gpu].id, &adapters, &adapter_count )) break;

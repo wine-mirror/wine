@@ -770,7 +770,6 @@ struct x11drv_gpu
     char *name;
     struct pci_id pci_id;
     GUID vulkan_uuid;
-    ULONGLONG memory_size;
 };
 
 struct x11drv_adapter
