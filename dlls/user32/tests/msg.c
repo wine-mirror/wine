@@ -148,7 +148,8 @@ typedef enum {
     hook=0x100,
     winevent_hook=0x200,
     kbd_hook=0x400,
-    winevent_hook_todo=0x800
+    winevent_hook_todo=0x800,
+    wine_only=0x1000
 } msg_flags_t;
 
 struct message {
@@ -1314,15 +1315,14 @@ static const struct message WmFirstDrawSetWindowPosSeq3[] = {
     { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_SIZE, sent|wparam, SIZE_RESTORED },
     { WM_MOVE, sent },
-    /* These happen only on Wine: */
-    { EVENT_OBJECT_SHOW, winevent_hook|optional },
-    { HCBT_ACTIVATE, hook|optional },
-    { WM_QUERYNEWPALETTE, sent|optional },
-    { WM_ACTIVATEAPP, sent|optional },
-    { WM_NCACTIVATE, sent|optional },
-    { WM_ACTIVATE, sent|optional },
-    { HCBT_SETFOCUS, hook|optional },
-    { WM_SETFOCUS, sent|defwinproc|optional },
+    { EVENT_OBJECT_SHOW, winevent_hook|wine_only },
+    { HCBT_ACTIVATE, hook|wine_only },
+    { WM_QUERYNEWPALETTE, sent|wine_only },
+    { WM_ACTIVATEAPP, sent|wine_only },
+    { WM_NCACTIVATE, sent|wine_only },
+    { WM_ACTIVATE, sent|wine_only },
+    { HCBT_SETFOCUS, hook|wine_only },
+    { WM_SETFOCUS, sent|defwinproc|wine_only },
     { 0 }
 };
 static const struct message WmFirstDrawSetWindowPosSeq4[] = {
@@ -1515,8 +1515,6 @@ static const struct message WmShowChildInvisibleParentSeq_1[] = {
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
-    /* FIXME: Wine creates an icon/title window while Windows doesn't */
-    { WM_PARENTNOTIFY, sent|parent|wparam|optional, WM_CREATE },
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
@@ -1555,8 +1553,6 @@ static const struct message WmShowChildInvisibleParentSeq_3[] = {
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
-    /* FIXME: Wine creates an icon/title window while Windows doesn't */
-    { WM_PARENTNOTIFY, sent|parent|wparam|optional, WM_CREATE },
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
@@ -1577,7 +1573,6 @@ static const struct message WmShowChildInvisibleParentSeq_4[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     /* FIXME: Wine creates an icon/title window while Windows doesn't */
-    { WM_PARENTNOTIFY, sent|parent|wparam|optional, WM_CREATE },
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
@@ -2655,16 +2650,23 @@ static BOOL messages_equal(const struct message *expected, const struct recvd_me
     BOOL expect_equal, const char* file, int line)
 {
     int todo = (expected->flags & winevent_hook_todo) != 0;
+    int msg_wine_only = (expected->flags & wine_only) != 0;
     const int message_type_flags = hook|winevent_hook|kbd_hook;
     static int todo_reported;
 
     if (!todo && can_skip_message(expected))
         expect_equal = FALSE;
 
+    if (msg_wine_only && strcmp(winetest_platform, "wine"))
+    {
+        /* Ignore Wine-only message records on Windows. */
+        return FALSE;
+    }
+
     if (!expected->message || !actual->message) {
         if (expect_equal && (!todo || !todo_reported++))
-            todo_wine_if(todo)
-            ok_( file, line) (FALSE, "the msg sequence is not complete: expected %s %04x - actual %s %04x\n",
+            todo_wine_if(todo || msg_wine_only)
+            ok_( file, line) (msg_wine_only, "the msg sequence is not complete: expected %s %04x - actual %s %04x\n",
                               message_type_name(expected->flags), expected->message, message_type_name(actual->flags), actual->message);
         return FALSE;
     }
@@ -2673,8 +2675,8 @@ static BOOL messages_equal(const struct message *expected, const struct recvd_me
         (expected->flags & message_type_flags) != (actual->flags & message_type_flags))
     {
         if (expect_equal && (!todo || !todo_reported++))
-            todo_wine_if(todo)
-            ok_( file, line) (FALSE, "the %s 0x%04x was expected, but got %s 0x%04x instead\n",
+            todo_wine_if(todo || msg_wine_only)
+            ok_( file, line) (msg_wine_only, "the %s 0x%04x was expected, but got %s 0x%04x instead\n",
                               message_type_name(expected->flags), expected->message, message_type_name(actual->flags), actual->message);
         return FALSE;
     }
@@ -2690,8 +2692,8 @@ static BOOL messages_equal(const struct message *expected, const struct recvd_me
     }
 
     if (expect_equal)
-        todo_wine_if(todo)
-        ok_( file, line) (TRUE, "got %s 0x%04x as expected\n",
+        todo_wine_if(todo || msg_wine_only)
+        ok_( file, line) (!msg_wine_only, "got %s 0x%04x as expected\n",
                           message_type_name(expected->flags), expected->message);
 
     return TRUE;
@@ -3245,8 +3247,6 @@ static const struct message WmDestroyMDIchildInvisibleSeq[] = {
     { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
-    /* FIXME: Wine destroys an icon/title window while Windows doesn't */
-    { WM_PARENTNOTIFY, sent|wparam|optional, WM_DESTROY }, /* MDI client */
     { 0 }
 };
 /* CreateWindow for the 1st MDI child window, initially visible and maximized */
@@ -3984,8 +3984,6 @@ static const struct message WmMinimizeMDIchildVisibleSeq[] = {
     { WM_CHILDACTIVATE, sent|wparam|lparam|defwinproc, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI child */
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|winevent_hook_todo, 0, 0 }, /* MDI child */
-    /* FIXME: Wine creates an icon/title window while Windows doesn't */
-    { WM_PARENTNOTIFY, sent|parent|wparam|optional, WM_CREATE }, /* MDI client */
     { 0 }
 };
 /* ShowWindow(SW_RESTORE) for a not visible MDI child window */
@@ -6514,7 +6512,15 @@ static const struct message WmSetFontButtonSeq[] =
     { WM_PAINT, sent },
     { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_CTLCOLORBTN, sent|defwinproc },
-    { WM_CTLCOLORBTN, sent|defwinproc|optional }, /* FIXME: Wine sends it twice for BS_OWNERDRAW */
+    { 0 }
+};
+static const struct message WmSetFontOwnerdrawSeq[] =
+{
+    { WM_SETFONT, sent },
+    { WM_PAINT, sent },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { WM_CTLCOLORBTN, sent|defwinproc|wine_only }, /* FIXME: Wine sends it twice for BS_OWNERDRAW */
     { 0 }
 };
 static const struct message WmSetFontStaticSeq[] =
@@ -6564,7 +6570,6 @@ static const struct message WmSetStyleButtonSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
     { 0 }
@@ -6575,7 +6580,6 @@ static const struct message WmSetStyleStaticSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORSTATIC, sent|parent },
     { 0 }
@@ -6586,7 +6590,7 @@ static const struct message WmSetStyleUserSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
+    { WM_NCPAINT, sent|defwinproc|wine_only }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_PAINT) },
@@ -6598,7 +6602,6 @@ static const struct message WmSetStyleOwnerdrawSeq[] =
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|winevent_hook_todo, OBJID_CLIENT, 0 },
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
-    { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
     { WM_CTLCOLORBTN, sent|parent|optional }, /* Win9x doesn't send it */
@@ -6833,7 +6836,7 @@ static void test_button_messages(void)
         { BS_OWNERDRAW, DLGC_BUTTON,
           WmSetFocusOwnerdrawSeq, WmKillFocusOwnerdrawSeq, WmSetStyleOwnerdrawSeq,
           WmSetStateOwnerdrawSeq, WmClearStateOwnerdrawSeq, WmSetCheckIgnoredSeq,
-          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontButtonSeq,
+          WmLButtonDownSeq, WmLButtonUpSeq, WmSetFontOwnerdrawSeq,
           WmSetTextButtonSeq },
     };
     LOGFONTA logfont = { 0 };
