@@ -191,6 +191,17 @@ extern BOOL update_display_cache( BOOL force );
 extern void user_lock(void);
 extern void user_unlock(void);
 extern void user_check_not_lock(void);
+
+struct vulkan_gpu
+{
+    struct list entry;
+    struct pci_id pci_id;
+    char *name;
+    GUID uuid;
+};
+
+extern BOOL get_vulkan_gpus( struct list *gpus );
+extern void free_vulkan_gpu( struct vulkan_gpu *gpu );
 extern BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid );
 
 /* winstation.c */

@@ -932,6 +932,7 @@ struct device_manager_ctx
     struct gpu gpu;
     struct source source;
     HKEY source_key;
+    struct list vulkan_gpus;
     /* for the virtual desktop settings */
     BOOL is_primary;
     DEVMODEW primary;
@@ -1487,6 +1488,13 @@ static void release_display_manager_ctx( struct device_manager_ctx *ctx )
         last_query_display_time = 0;
     }
     if (ctx->gpu_count) cleanup_devices();
+
+    while (!list_empty( &ctx->vulkan_gpus ))
+    {
+        struct vulkan_gpu *gpu = LIST_ENTRY( list_head( &ctx->vulkan_gpus ), struct vulkan_gpu, entry );
+        list_remove( &gpu->entry );
+        free_vulkan_gpu( gpu );
+    }
 }
 
 static void clear_display_devices(void)
@@ -1945,7 +1953,7 @@ BOOL update_display_cache( BOOL force )
     static const WCHAR wine_service_station_name[] =
         {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
     HWINSTA winstation = NtUserGetProcessWindowStation();
-    struct device_manager_ctx ctx = {0};
+    struct device_manager_ctx ctx = {.vulkan_gpus = LIST_INIT(ctx.vulkan_gpus)};
     UINT status;
     WCHAR name[MAX_PATH];
 
@@ -1959,6 +1967,8 @@ BOOL update_display_cache( BOOL force )
         pthread_mutex_unlock( &display_lock );
         return TRUE;
     }
+
+    if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
 
     status = update_display_devices( force, &ctx );
 
