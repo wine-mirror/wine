@@ -2152,7 +2152,7 @@ static void test_no_acceptable_type(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, source, sink, NULL);
-    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#lx.\n", hr);
 
     IPin_Release(source);
     IPin_Release(sink);
