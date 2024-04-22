@@ -237,14 +237,19 @@ static inline ULONG window_surface_release( struct window_surface *surface )
 
 /* display manager interface, used to initialize display device registry data */
 
+struct pci_id
+{
+    UINT16 vendor;
+    UINT16 device;
+    UINT16 subsystem;
+    UINT16 revision;
+};
+
 struct gdi_gpu
 {
     ULONG_PTR id;
-    WCHAR name[128];      /* name */
-    UINT vendor_id;       /* PCI ID */
-    UINT device_id;
-    UINT subsys_id;
-    UINT revision_id;
+    WCHAR name[128];
+    struct pci_id pci_id;
     GUID vulkan_uuid;     /* Vulkan device UUID */
     ULONGLONG memory_size;
 };

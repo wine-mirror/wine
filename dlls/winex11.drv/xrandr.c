@@ -737,8 +737,8 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
             /* Ignore Khronos vendor IDs */
             if (properties2.properties.vendorID < 0x10000)
             {
-                gpu->vendor_id = properties2.properties.vendorID;
-                gpu->device_id = properties2.properties.deviceID;
+                gpu->pci_id.vendor = properties2.properties.vendorID;
+                gpu->pci_id.device = properties2.properties.deviceID;
             }
             RtlUTF8ToUnicodeN( gpu->name, sizeof(gpu->name), &len, properties2.properties.deviceName,
                                strlen( properties2.properties.deviceName ) + 1 );

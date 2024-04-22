@@ -1142,10 +1142,13 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
         struct gdi_gpu gdi_gpu =
         {
             .id = gpu->id,
-            .vendor_id = gpu->vendor_id,
-            .device_id = gpu->device_id,
-            .subsys_id = gpu->subsys_id,
-            .revision_id = gpu->revision_id,
+            .pci_id =
+            {
+                .vendor = gpu->vendor_id,
+                .device = gpu->device_id,
+                .subsystem = gpu->subsys_id,
+                .revision = gpu->revision_id,
+            },
         };
         RtlUTF8ToUnicodeN(gdi_gpu.name, sizeof(gdi_gpu.name), &len, gpu->name, strlen(gpu->name));
         device_manager->add_gpu(&gdi_gpu, param);

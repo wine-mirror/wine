@@ -85,14 +85,6 @@ static const char guid_devinterface_monitorA[] = "{E6F07B5F-EE97-4A90-B076-33F57
 
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
-struct pci_id
-{
-    UINT16 vendor;
-    UINT16 device;
-    UINT16 subsystem;
-    UINT16 revision;
-};
-
 struct gpu
 {
     LONG refcount;
@@ -1193,21 +1185,15 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
 
 static void add_gpu( const struct gdi_gpu *gpu, void *param )
 {
-    const struct pci_id pci_id =
-    {
-        .vendor = gpu->vendor_id,
-        .device = gpu->device_id,
-        .subsystem = gpu->subsys_id,
-        .revision = gpu->revision_id,
-    };
+    const struct pci_id *pci_id = &gpu->pci_id;
     struct device_manager_ctx *ctx = param;
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     unsigned int i;
     HKEY hkey, subkey;
 
-    TRACE( "%s %04X %04X %08X %02X\n", debugstr_w(gpu->name),
-           gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id );
+    TRACE( "%s %04X %04X %08X %02X\n", debugstr_w( gpu->name ), pci_id->vendor, pci_id->device,
+           pci_id->subsystem, pci_id->revision );
 
     if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
         return;
@@ -1225,7 +1211,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
     ctx->gpu.vulkan_uuid = gpu->vulkan_uuid;
 
     snprintf( ctx->gpu.path, sizeof(ctx->gpu.path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
-              gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, ctx->gpu.index );
+              pci_id->vendor, pci_id->device, pci_id->subsystem, pci_id->revision, ctx->gpu.index );
     if (!(hkey = reg_create_ascii_key( enum_key, ctx->gpu.path, 0, NULL ))) return;
 
     if ((subkey = reg_create_ascii_key( hkey, "Device Parameters", 0, NULL )))
@@ -1265,7 +1251,7 @@ static void add_gpu( const struct gdi_gpu *gpu, void *param )
 
     NtClose( hkey );
 
-    if (!write_gpu_to_registry( &ctx->gpu, &pci_id, gpu->memory_size ))
+    if (!write_gpu_to_registry( &ctx->gpu, pci_id, gpu->memory_size ))
         WARN( "Failed to write gpu to registry\n" );
     else
         ctx->gpu_count++;
