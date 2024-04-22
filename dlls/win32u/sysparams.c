@@ -1777,7 +1777,7 @@ static BOOL default_update_display_devices( BOOL force, struct device_manager_ct
 }
 
 /* parse the desktop size specification */
-static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *height )
+static BOOL parse_size( const WCHAR *size, DWORD *width, DWORD *height )
 {
     WCHAR *end;
 
@@ -1790,7 +1790,7 @@ static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *he
 }
 
 /* retrieve the default desktop size from the registry */
-static BOOL get_default_desktop_size( unsigned int *width, unsigned int *height )
+static BOOL get_default_desktop_size( DWORD *width, DWORD *height )
 {
     WCHAR buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -1808,9 +1808,9 @@ static BOOL get_default_desktop_size( unsigned int *width, unsigned int *height 
     return TRUE;
 }
 
-static BOOL add_virtual_source( struct device_manager_ctx *ctx )
+static void add_virtual_modes( struct device_manager_ctx *ctx, const DEVMODEW *current,
+                               const DEVMODEW *initial, const DEVMODEW *maximum )
 {
-    struct gdi_monitor monitor = {0};
     static struct screen_size
     {
         unsigned int width;
@@ -1848,57 +1848,10 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
         {1920, 1200},
         {2560, 1600}
     };
+    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, modes_count;
+    DEVMODEW *modes;
 
-    UINT screen_width, screen_height, max_width, max_height, modes_count;
-    unsigned int depths[] = {8, 16, 0};
-    struct source virtual_source =
-    {
-        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
-        .id = ctx->source_count,
-        .gpu = &ctx->gpu,
-    };
-    DEVMODEW current, *modes;
-    UINT i, j;
-
-    /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
-    snprintf( virtual_source.path, sizeof(virtual_source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
-              control_keyA + strlen( "\\Registry\\Machine" ), virtual_source.gpu->guid, "Virtual" );
-
-    if (!write_source_to_registry( &virtual_source, &ctx->source_key ))
-    {
-        WARN( "Failed to write source to registry\n" );
-        return FALSE;
-    }
-
-    ctx->source = virtual_source;
-    ctx->gpu.source_count++;
-    ctx->source_count++;
-
-    max_width = ctx->primary.dmPelsWidth;
-    max_height = ctx->primary.dmPelsHeight;
-    depths[ARRAY_SIZE(depths) - 1] = ctx->primary.dmBitsPerPel;
-
-    if (!get_default_desktop_size( &screen_width, &screen_height ))
-    {
-        screen_width = max_width;
-        screen_height = max_height;
-    }
-
-    if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &current ))
-    {
-        current = ctx->primary;
-        current.dmDisplayFrequency = 60;
-        current.dmPelsWidth = screen_width;
-        current.dmPelsHeight = screen_height;
-    }
-
-    monitor.rc_monitor.right = current.dmPelsWidth;
-    monitor.rc_monitor.bottom = current.dmPelsHeight;
-    monitor.rc_work.right = current.dmPelsWidth;
-    monitor.rc_work.bottom = current.dmPelsHeight;
-    add_monitor( &monitor, ctx );
-
-    if (!(modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) ))) return FALSE;
+    if (!(modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) ))) return;
 
     for (modes_count = i = 0; i < ARRAY_SIZE(depths); ++i)
     {
@@ -1914,26 +1867,73 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
             mode.dmPelsWidth = screen_sizes[j].width;
             mode.dmPelsHeight = screen_sizes[j].height;
 
-            if (mode.dmPelsWidth > max_width || mode.dmPelsHeight > max_height) continue;
-            if (mode.dmPelsWidth == max_width && mode.dmPelsHeight == max_height) continue;
-            if (mode.dmPelsWidth == screen_width && mode.dmPelsHeight == screen_height) continue;
+            if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsWidth) continue;
+            if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsWidth) continue;
+            if (mode.dmPelsWidth == initial->dmPelsWidth && mode.dmPelsHeight == initial->dmPelsHeight) continue;
             modes[modes_count++] = mode;
         }
 
-        mode.dmPelsWidth = screen_width;
-        mode.dmPelsHeight = screen_height;
+        mode.dmPelsWidth = initial->dmPelsWidth;
+        mode.dmPelsHeight = initial->dmPelsHeight;
         modes[modes_count++] = mode;
 
-        if (max_width != screen_width || max_height != screen_height)
+        if (maximum->dmPelsWidth != initial->dmPelsWidth || maximum->dmPelsWidth != initial->dmPelsHeight)
         {
-            mode.dmPelsWidth = max_width;
-            mode.dmPelsHeight = max_height;
+            mode.dmPelsWidth = maximum->dmPelsWidth;
+            mode.dmPelsHeight = maximum->dmPelsHeight;
             modes[modes_count++] = mode;
         }
     }
 
-    add_modes( &current, modes_count, modes, ctx );
+    add_modes( current, modes_count, modes, ctx );
     free( modes );
+}
+
+static BOOL add_virtual_source( struct device_manager_ctx *ctx )
+{
+    DEVMODEW current, initial = ctx->primary, maximum = ctx->primary;
+    struct source virtual_source =
+    {
+        .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
+        .id = ctx->source_count,
+        .gpu = &ctx->gpu,
+    };
+    struct gdi_monitor monitor = {0};
+
+    /* Wine specific config key where source settings will be held, symlinked with the logically indexed config key */
+    snprintf( virtual_source.path, sizeof(virtual_source.path), "%s\\%s\\Video\\%s\\Sources\\%s", config_keyA,
+              control_keyA + strlen( "\\Registry\\Machine" ), virtual_source.gpu->guid, "Virtual" );
+
+    if (!write_source_to_registry( &virtual_source, &ctx->source_key ))
+    {
+        WARN( "Failed to write source to registry\n" );
+        return FALSE;
+    }
+
+    ctx->source = virtual_source;
+    ctx->gpu.source_count++;
+    ctx->source_count++;
+
+    if (!get_default_desktop_size( &initial.dmPelsWidth, &initial.dmPelsHeight ))
+    {
+        initial.dmPelsWidth = maximum.dmPelsWidth;
+        initial.dmPelsHeight = maximum.dmPelsHeight;
+    }
+
+    if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &current ))
+    {
+        current = ctx->primary;
+        current.dmDisplayFrequency = 60;
+        current.dmPelsWidth = initial.dmPelsWidth;
+        current.dmPelsHeight = initial.dmPelsHeight;
+    }
+
+    monitor.rc_monitor.right = current.dmPelsWidth;
+    monitor.rc_monitor.bottom = current.dmPelsHeight;
+    monitor.rc_work.right = current.dmPelsWidth;
+    monitor.rc_work.bottom = current.dmPelsHeight;
+    add_monitor( &monitor, ctx );
+    add_virtual_modes( ctx, &current, &initial, &maximum );
 
     return TRUE;
 }
