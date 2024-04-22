@@ -2120,6 +2120,49 @@ static void test_video_file(void)
     ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
 }
 
+static void test_no_acceptable_type(void)
+{
+    const WCHAR *filename = load_resource(L"test.wav");
+    IBaseFilter *splitter = create_mpeg_splitter();
+    IFileSourceFilter *filesource;
+    IFilterGraph2 *graph;
+    IBaseFilter *reader;
+    IPin *source, *sink;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&reader);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_QueryInterface(reader, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFileSourceFilter_Load(filesource, filename, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, reader, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, splitter, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_FindPin(splitter, L"Input", &sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_FindPin(reader, L"Output", &source);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, sink, NULL);
+    todo_wine ok(hr == VFW_E_NO_ACCEPTABLE_TYPES, "Got hr %#lx.\n", hr);
+
+    IPin_Release(source);
+    IPin_Release(sink);
+    IBaseFilter_Release(reader);
+    IBaseFilter_Release(splitter);
+    IFileSourceFilter_Release(filesource);
+    IFilterGraph2_Release(graph);
+    DeleteFileW(filename);
+}
+
 START_TEST(mpegsplit)
 {
     IBaseFilter *filter;
@@ -2147,6 +2190,7 @@ START_TEST(mpegsplit)
     test_streaming();
     test_large_file();
     test_video_file();
+    test_no_acceptable_type();
 
     CoUninitialize();
 }
