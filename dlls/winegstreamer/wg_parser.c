@@ -576,24 +576,20 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
     switch (event->type)
     {
         case GST_EVENT_SEGMENT:
-            pthread_mutex_lock(&parser->mutex);
-            if (stream->enabled)
+        {
+            const GstSegment *segment;
+
+            gst_event_parse_segment(event, &segment);
+            if (segment->format != GST_FORMAT_TIME)
             {
-                const GstSegment *segment;
-
-                gst_event_parse_segment(event, &segment);
-
-                if (segment->format != GST_FORMAT_TIME)
-                {
-                    pthread_mutex_unlock(&parser->mutex);
-                    GST_FIXME("Unhandled format \"%s\".", gst_format_get_name(segment->format));
-                    break;
-                }
-
-                gst_segment_copy_into(segment, &stream->segment);
+                GST_FIXME("Unhandled format \"%s\".", gst_format_get_name(segment->format));
+                break;
             }
+            pthread_mutex_lock(&parser->mutex);
+            gst_segment_copy_into(segment, &stream->segment);
             pthread_mutex_unlock(&parser->mutex);
             break;
+        }
 
         case GST_EVENT_EOS:
             pthread_mutex_lock(&parser->mutex);
