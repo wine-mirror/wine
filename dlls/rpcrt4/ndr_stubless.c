@@ -913,19 +913,6 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
             const NDR_PROC_HEADER_EXTS *pExtensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
             ext_flags = pExtensions->Flags2;
             pFormat += pExtensions->Size;
-#ifdef __x86_64__
-            if (pExtensions->Size > sizeof(*pExtensions) && fpu_stack)
-            {
-                int i;
-                unsigned short fpu_mask = *(unsigned short *)(pExtensions + 1);
-                for (i = 0; i < 4; i++, fpu_mask >>= 2)
-                    switch (fpu_mask & 3)
-                    {
-                    case 1: *(float *)&stack_top[i] = *(float *)&fpu_stack[i]; break;
-                    case 2: *(double *)&stack_top[i] = *(double *)&fpu_stack[i]; break;
-                    }
-            }
-#endif
         }
     }
     else
@@ -1284,6 +1271,25 @@ LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void 
     const void **vtbl = *this;
     const MIDL_STUBLESS_PROXY_INFO *proxy_info = vtbl[-2];
     const unsigned char *format = proxy_info->ProcFormatString + proxy_info->FormatStringOffset[index];
+    const NDR_PROC_HEADER *proc = (const NDR_PROC_HEADER *)format;
+
+    if (is_oicf_stubdesc( proxy_info->pStubDesc ))
+    {
+        unsigned int hdr_size = (proc->Oi_flags & Oi_HAS_RPCFLAGS) ? sizeof(NDR_PROC_HEADER_RPC) : sizeof(NDR_PROC_HEADER);
+        const NDR_PROC_PARTIAL_OIF_HEADER *hdr = (const NDR_PROC_PARTIAL_OIF_HEADER *)(format + hdr_size);
+
+        if (hdr->Oi2Flags.HasExtensions)
+        {
+            const NDR_PROC_HEADER_EXTS *ext = (const NDR_PROC_HEADER_EXTS *)(hdr + 1);
+            if (ext->Size > sizeof(*ext))
+            {
+#ifdef __x86_64__
+                unsigned short fpu_mask = *(unsigned short *)(ext + 1);
+                for (int i = 0; i < 4; i++, fpu_mask >>= 2) if (fpu_mask & 3) args[i] = fpu_regs[i];
+#endif
+            }
+        }
+    }
 
     return NdrpClientCall2( proxy_info->pStubDesc, format, args, fpu_regs );
 }
