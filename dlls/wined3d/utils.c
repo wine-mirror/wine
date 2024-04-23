@@ -3059,7 +3059,7 @@ static void query_view_class(struct wined3d_format_gl *format)
 
 static void query_internal_format(struct wined3d_adapter *adapter,
         struct wined3d_format_gl *format, const struct wined3d_format_texture_info *texture_info,
-        struct wined3d_gl_info *gl_info, BOOL srgb_write_supported, BOOL srgb_format)
+        struct wined3d_gl_info *gl_info, BOOL srgb_format)
 {
     GLint count, multisample_types[8];
     unsigned int i, max_log2;
@@ -3078,12 +3078,8 @@ static void query_internal_format(struct wined3d_adapter *adapter,
         {
             query_format_cap(gl_info, format, format->srgb_internal, GL_SRGB_READ,
                     WINED3D_FORMAT_CAP_SRGB_READ, "sRGB read");
-
-            if (srgb_write_supported)
-                query_format_cap(gl_info, format, format->srgb_internal, GL_SRGB_WRITE,
-                        WINED3D_FORMAT_CAP_SRGB_WRITE, "sRGB write");
-            else
-                format_clear_caps(&format->f, WINED3D_FORMAT_CAP_SRGB_WRITE);
+            query_format_cap(gl_info, format, format->srgb_internal, GL_SRGB_WRITE,
+                    WINED3D_FORMAT_CAP_SRGB_WRITE, "sRGB write");
 
             if (!(format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D]
                     & (WINED3D_FORMAT_CAP_SRGB_READ | WINED3D_FORMAT_CAP_SRGB_WRITE)))
@@ -3115,9 +3111,6 @@ static void query_internal_format(struct wined3d_adapter *adapter,
                 format->internal = format->srgb_internal;
             }
         }
-
-        if ((format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_SRGB_WRITE) && !srgb_write_supported)
-            format_clear_caps(&format->f, WINED3D_FORMAT_CAP_SRGB_WRITE);
     }
 
     if (!gl_info->supported[ARB_DEPTH_TEXTURE] && (format->f.depth_size || format->f.stencil_size))
@@ -3170,11 +3163,9 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
     unsigned int i, j;
-    BOOL srgb_write;
 
     adapter->fragment_pipe->get_caps(adapter, &fragment_caps);
     adapter->shader_backend->shader_get_caps(adapter, &shader_caps);
-    srgb_write = (!shader_caps.ps_version || (shader_caps.wined3d_caps & WINED3D_SHADER_CAP_SRGB_WRITE));
 
     for (i = 0; i < ARRAY_SIZE(format_texture_info); ++i)
     {
@@ -3229,7 +3220,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         if (!gl_info->supported[ARB_SHADOW] && (format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_SHADOW))
             format_clear_caps(&format->f, WINED3D_FORMAT_CAP_TEXTURE);
 
-        query_internal_format(adapter, format, &format_texture_info[i], gl_info, srgb_write, FALSE);
+        query_internal_format(adapter, format, &format_texture_info[i], gl_info, FALSE);
 
         /* Texture conversion stuff */
         format->f.conv_byte_count = format_texture_info[i].conv_byte_count;
@@ -3257,7 +3248,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
             srgb_format->internal = format_texture_info[i].gl_srgb_internal;
             srgb_format->srgb_internal = format_texture_info[i].gl_srgb_internal;
             format_set_caps(&srgb_format->f, WINED3D_FORMAT_CAP_SRGB_READ | WINED3D_FORMAT_CAP_SRGB_WRITE);
-            query_internal_format(adapter, srgb_format, &format_texture_info[i], gl_info, srgb_write, TRUE);
+            query_internal_format(adapter, srgb_format, &format_texture_info[i], gl_info, TRUE);
         }
     }
 

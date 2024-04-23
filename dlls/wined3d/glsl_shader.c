@@ -11368,7 +11368,6 @@ static void shader_glsl_get_caps(const struct wined3d_adapter *adapter, struct s
     /* Ideally we'd only set caps like sRGB writes here if supported by both
      * the shader backend and the fragment pipe, but we can get called before
      * shader_glsl_alloc(). */
-    caps->wined3d_caps = WINED3D_SHADER_CAP_SRGB_WRITE;
     if (needs_interpolation_qualifiers_for_shader_outputs(gl_info))
         caps->wined3d_caps |= WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION;
     if (shader_glsl_full_ffp_varyings(gl_info))

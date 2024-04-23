@@ -1401,7 +1401,6 @@ BOOL shader_get_stream_output_register_info(const struct wined3d_shader *shader,
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
-#define WINED3D_SHADER_CAP_SRGB_WRITE               0x00000002u
 #define WINED3D_SHADER_CAP_DOUBLE_PRECISION         0x00000004u
 #define WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION     0x00000008u
 #define WINED3D_SHADER_CAP_FULL_FFP_VARYINGS        0x00000010u
