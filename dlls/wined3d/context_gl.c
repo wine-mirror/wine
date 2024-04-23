@@ -4874,18 +4874,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     TRACE("Draw completed.\n");
 }
 
-void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *context_gl)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    unsigned int texture_idx;
-
-    for (texture_idx = 0; texture_idx < gl_info->limits.texture_coords; ++texture_idx)
-    {
-        gl_info->gl_ops.ext.p_glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx);
-        gl_info->gl_ops.gl.p_glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
-}
-
 static const void *get_vertex_attrib_pointer(const struct wined3d_stream_info_element *element,
         const struct wined3d_state *state)
 {
@@ -4894,22 +4882,6 @@ static const void *get_vertex_attrib_pointer(const struct wined3d_stream_info_el
     if (element->data.buffer_object)
         offset += element->data.buffer_object->buffer_offset;
     return offset;
-}
-
-/* This should match any arrays loaded in wined3d_context_gl_load_vertex_data(). */
-static void wined3d_context_gl_unload_vertex_data(struct wined3d_context_gl *context_gl)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-
-    if (!context_gl->c.namedArraysLoaded)
-        return;
-    gl_info->gl_ops.gl.p_glDisableClientState(GL_VERTEX_ARRAY);
-    gl_info->gl_ops.gl.p_glDisableClientState(GL_NORMAL_ARRAY);
-    gl_info->gl_ops.gl.p_glDisableClientState(GL_COLOR_ARRAY);
-    if (gl_info->supported[EXT_SECONDARY_COLOR])
-        gl_info->gl_ops.gl.p_glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-    wined3d_context_gl_unload_tex_coords(context_gl);
-    context_gl->c.namedArraysLoaded = FALSE;
 }
 
 static void wined3d_context_gl_unload_numbered_array(struct wined3d_context_gl *context_gl, unsigned int i)
@@ -5164,7 +5136,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state)
 {
-    wined3d_context_gl_unload_vertex_data(context_gl);
     wined3d_context_gl_load_numbered_arrays(context_gl, &context_gl->c.stream_info, state);
 }
 
@@ -5243,7 +5214,6 @@ void wined3d_context_gl_draw_shaded_quad(struct wined3d_context_gl *context_gl, 
             GL_EXTCALL(glGenBuffers(1, &context_gl->blit_vbo));
         GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, context_gl->blit_vbo));
 
-        wined3d_context_gl_unload_vertex_data(context_gl);
         wined3d_context_gl_unload_numbered_arrays(context_gl);
 
         GL_EXTCALL(glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STREAM_DRAW));

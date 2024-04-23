@@ -762,7 +762,6 @@ BOOL wined3d_context_gl_set_current(struct wined3d_context_gl *context_gl);
 void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_gl);
 void wined3d_context_gl_texture_update(struct wined3d_context_gl *context_gl,
         const struct wined3d_texture_gl *texture_gl);
-void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *context_gl);
 void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, const struct wined3d_bo_address *data,
         unsigned int range_count, const struct wined3d_range *ranges);
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl, const struct wined3d_state *state);

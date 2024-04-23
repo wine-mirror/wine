@@ -1930,11 +1930,10 @@ struct wined3d_context
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
-    DWORD namedArraysLoaded : 1;
     DWORD update_primitive_type : 1;
     DWORD update_patch_vertex_count : 1;
     DWORD update_multisample_state : 1;
-    DWORD padding : 13;
+    DWORD padding : 14;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
