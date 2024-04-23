@@ -1681,27 +1681,6 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd,
   return nb_onscreen_formats;
 }
 
-/**
- * glxdrv_DescribePixelFormat
- *
- * Get the pixel-format descriptor associated to the given id
- */
-static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
-                                          UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
-{
-  TRACE("(%p,%d,%d,%p)\n", hdc, iPixelFormat, nBytes, ppfd);
-
-  if (!ppfd) return nb_onscreen_formats;
-
-  if (nBytes < sizeof(PIXELFORMATDESCRIPTOR))
-  {
-    ERR("Wrong structure size !\n");
-    /* Should set error */
-    return 0;
-  }
-
-  return describe_pixel_format(iPixelFormat, ppfd, FALSE);
-}
 
 /***********************************************************************
  *		glxdrv_wglGetPixelFormat
@@ -3428,19 +3407,40 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     return TRUE;
 }
 
+static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
+                                      UINT max_formats, UINT *num_formats,
+                                      UINT *num_onscreen_formats )
+{
+    UINT i;
+
+    if (!has_opengl())
+    {
+        *num_formats = *num_onscreen_formats = 0;
+        return;
+    }
+    if (formats)
+    {
+        for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
+            describe_pixel_format( i + 1, &formats[i].pfd, TRUE );
+    }
+    *num_formats = nb_pixel_formats;
+    *num_onscreen_formats = nb_onscreen_formats;
+}
+
 static struct opengl_funcs opengl_funcs =
 {
     {
         glxdrv_wglCopyContext,              /* p_wglCopyContext */
         glxdrv_wglCreateContext,            /* p_wglCreateContext */
         glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
-        glxdrv_wglDescribePixelFormat,      /* p_wglDescribePixelFormat */
+        NULL,                               /* p_wglDescribePixelFormat */
         glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
         glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
         glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
         glxdrv_wglSetPixelFormat,           /* p_wglSetPixelFormat */
         glxdrv_wglShareLists,               /* p_wglShareLists */
         glxdrv_wglSwapBuffers,              /* p_wglSwapBuffers */
+        glxdrv_get_pixel_formats,           /* p_get_pixel_formats */
     }
 };
 
