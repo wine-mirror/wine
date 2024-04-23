@@ -1906,17 +1906,16 @@ struct wined3d_context
     DWORD update_compute_shader_resource_bindings : 1;
     DWORD update_unordered_access_view_bindings : 1;
     DWORD update_compute_unordered_access_view_bindings : 1;
+    DWORD update_primitive_type : 1;
+    DWORD update_patch_vertex_count : 1;
     DWORD last_was_rhw : 1; /* True iff last draw_primitive was in xyzrhw mode. */
-    DWORD last_was_pshader : 1;
     DWORD last_was_vshader : 1;
     DWORD last_was_diffuse : 1;
     DWORD last_was_specular : 1;
     DWORD last_was_normal : 1;
     DWORD last_was_ffp_blit : 1;
     DWORD last_was_blit : 1;
-    DWORD last_was_ckey : 1;
     DWORD last_was_dual_source_blend : 1;
-    DWORD texShaderBumpMap : 8;         /* WINED3D_MAX_FFP_TEXTURES, 8 */
     DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_FFP_TEXTURES, 8 */
 
     DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_FFP_TEXTURES, 8 */
@@ -1927,10 +1926,8 @@ struct wined3d_context
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
-    DWORD update_primitive_type : 1;
-    DWORD update_patch_vertex_count : 1;
     DWORD update_multisample_state : 1;
-    DWORD padding : 14;
+    DWORD padding : 24;
 
     DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
@@ -1940,7 +1937,6 @@ struct wined3d_context
 
 
     void *shader_backend_data;
-    void *fragment_pipe_data;
 
     struct wined3d_stream_info stream_info;
 
