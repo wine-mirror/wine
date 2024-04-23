@@ -723,8 +723,7 @@ BOOL WINAPI IsTouchWindow( HWND hwnd, ULONG *flags )
 BOOL WINAPI RegisterTouchWindow( HWND hwnd, ULONG flags )
 {
     FIXME( "hwnd %p, flags %#lx stub!\n", hwnd, flags );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    return TRUE;
 }
 
 /*****************************************************************************
