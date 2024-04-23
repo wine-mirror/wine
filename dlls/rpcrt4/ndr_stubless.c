@@ -1061,10 +1061,10 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
 #endif
 
 #if defined(__aarch64__) || defined(__arm__)
-static void __attribute__((used)) assign_args( ULONG_PTR *args, ULONG_PTR *regs, ULONG_PTR *stack,
-                                               const NDR_PROC_HEADER_EXTS *ext)
+static void __attribute__((used)) args_stack_to_regs( void **args, void **regs, void **stack,
+                                                      const NDR_PROC_HEADER_EXTS *ext )
 {
-    unsigned int i, size, count;
+    unsigned int i, size, count, pos;
     unsigned char *data;
 
     if (!ext) return;
@@ -1072,20 +1072,53 @@ static void __attribute__((used)) assign_args( ULONG_PTR *args, ULONG_PTR *regs,
     data = (unsigned char *)(ext + 1);
     size = min( ext->Size - sizeof(*ext) - 3, data[2] );
     data += 3;
-    for (i = 0; i < size; i++)
+    for (i = pos = 0; i < size; i++, pos++)
     {
         if (data[i] < 0x80) continue;
-        else if (data[i] < 0x94) regs[data[i] - 0x80] = args[i];
+        else if (data[i] < 0x94) regs[data[i] - 0x80] = args[pos];
         else if (data[i] == 0x9d) /* repeat */
         {
             if (i + 3 >= size) break;
             count = data[i + 2] + (data[i + 3] << 8);
-            memcpy( &stack[i + (signed char)data[i + 1]], &args[i], count * sizeof(*args) );
+            memcpy( &stack[pos + (signed char)data[i + 1]], &args[pos], count * sizeof(*args) );
+            pos += count - 1;
             i += 3;
         }
         else if (data[i] < 0xa0) continue;
-        else stack[i + (signed char)data[i]] = args[i];
+        else stack[pos + (signed char)data[i]] = args[pos];
     }
+}
+
+static void **args_regs_to_stack( void **regs, void **fpu_regs, const NDR_PROC_HEADER_EXTS *ext )
+{
+    static const unsigned int nb_gpregs = sizeof(void *); /* 4 gpregs on arm32, 8 on arm64 */
+    unsigned int i, size, count, pos, params;
+    unsigned char *data;
+    void **stack, **args = regs + nb_gpregs;
+
+    if (ext->Size < sizeof(*ext) + 3) return NULL;
+    data = (unsigned char *)(ext + 1);
+    params = data[0] + (data[1] << 8);
+    if (!(stack = malloc( params * sizeof(*stack) ))) return NULL;
+    size = min( ext->Size - sizeof(*ext) - 3, data[2] );
+    data += 3;
+    for (i = pos = 0; i < size; i++, pos++)
+    {
+        if (data[i] < 0x80) continue;
+        else if (data[i] < 0x80 + nb_gpregs) stack[pos] = regs[data[i] - 0x80];
+        else if (data[i] < 0x94) stack[pos] = fpu_regs[data[i] - 0x80 - nb_gpregs];
+        else if (data[i] == 0x9d) /* repeat */
+        {
+            if (i + 3 >= size) break;
+            count = data[i + 2] + (data[i + 3] << 8);
+            memcpy( &stack[pos], &args[pos + (signed char)data[i + 1]], count * sizeof(*args) );
+            pos += count - 1;
+            i += 3;
+        }
+        else if (data[i] < 0xa0) continue;
+        else stack[pos] = args[pos + (signed char)data[i]];
+    }
+    return stack;
 }
 #endif
 
@@ -1215,7 +1248,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "mov r0, r1\n\t"        /* args */
                    "add r1, sp, #8\n\t"    /* regs */
                    "add r2, r1, #20*4\n\t" /* stack */
-                   "bl assign_args\n\t"
+                   "bl args_stack_to_regs\n\t"
                    "add sp, sp, #8\n\t"
                    "pop {r0-r3}\n\t"
                    "vpop {s0-s15}\n\t"
@@ -1240,7 +1273,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "mov x0, x1\n\t"        /* args */
                    "mov x1, sp\n\t"        /* regs */
                    "add x2, sp, #16*8\n\t" /* stack */
-                   "bl assign_args\n\t"
+                   "bl args_stack_to_regs\n\t"
                    "ldp x2, x3, [sp, #0x10]\n\t"
                    "ldp x4, x5, [sp, #0x20]\n\t"
                    "ldp x6, x7, [sp, #0x30]\n\t"
@@ -1272,6 +1305,8 @@ LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void 
     const MIDL_STUBLESS_PROXY_INFO *proxy_info = vtbl[-2];
     const unsigned char *format = proxy_info->ProcFormatString + proxy_info->FormatStringOffset[index];
     const NDR_PROC_HEADER *proc = (const NDR_PROC_HEADER *)format;
+    void **stack_top = args;
+    LONG_PTR ret;
 
     if (is_oicf_stubdesc( proxy_info->pStubDesc ))
     {
@@ -1286,12 +1321,16 @@ LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void 
 #ifdef __x86_64__
                 unsigned short fpu_mask = *(unsigned short *)(ext + 1);
                 for (int i = 0; i < 4; i++, fpu_mask >>= 2) if (fpu_mask & 3) args[i] = fpu_regs[i];
+#else
+                stack_top = args_regs_to_stack( args, fpu_regs, ext );
 #endif
             }
         }
     }
 
-    return NdrpClientCall2( proxy_info->pStubDesc, format, args, fpu_regs );
+    ret = NdrpClientCall2( proxy_info->pStubDesc, format, stack_top, fpu_regs );
+    if (stack_top != args) free( stack_top );
+    return ret;
 }
 #endif  /* __i386__ */
 
