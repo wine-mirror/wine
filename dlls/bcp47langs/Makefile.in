@@ -1,0 +1,2 @@
+MODULE    = bcp47langs.dll
+IMPORTLIB = bcp47langs
