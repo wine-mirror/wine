@@ -487,14 +487,14 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
     case MES_ENCODE:
         pEsMsg->StubMsg.BufferLength = mes_proc_header_buffer_size();
 
-        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_CALCSIZE, NULL, number_of_params, NULL );
+        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_CALCSIZE, FALSE, number_of_params, NULL );
 
         pEsMsg->ByteCount = pEsMsg->StubMsg.BufferLength - mes_proc_header_buffer_size();
         es_data_alloc(pEsMsg, pEsMsg->StubMsg.BufferLength);
 
         mes_proc_header_marshal(pEsMsg);
 
-        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_MARSHAL, NULL, number_of_params, NULL );
+        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_MARSHAL, FALSE, number_of_params, NULL );
 
         es_data_write(pEsMsg, pEsMsg->ByteCount);
         break;
@@ -503,7 +503,7 @@ void WINAPIV NdrMesProcEncodeDecode(handle_t Handle, const MIDL_STUB_DESC * pStu
 
         es_data_read(pEsMsg, pEsMsg->ByteCount);
 
-        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_UNMARSHAL, NULL, number_of_params, NULL );
+        client_do_args( &pEsMsg->StubMsg, pFormat, STUBLESS_UNMARSHAL, FALSE, number_of_params, NULL );
         break;
     default:
         RpcRaiseException(RPC_S_INTERNAL_ERROR);

@@ -478,7 +478,7 @@ static size_t basetype_arg_size( unsigned char fc )
 }
 
 void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
-                     void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal )
+                     BOOLEAN fpu_args, unsigned short number_of_params, unsigned char *pRetVal )
 {
     const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)pFormat;
     unsigned int i;
@@ -703,7 +703,7 @@ static void CALLBACK ndr_client_call_finally(BOOL normal, void *arg)
 /* Helper for NdrpClientCall2, to factor out the part that may or may not be
  * guarded by a try/except block. */
 static LONG_PTR ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_STRING format,
-        const PFORMAT_STRING handle_format, void **stack_top, void **fpu_stack, MIDL_STUB_MESSAGE *stub_msg,
+        const PFORMAT_STRING handle_format, void **stack_top, BOOLEAN fpu_args, MIDL_STUB_MESSAGE *stub_msg,
         unsigned short procedure_number, unsigned short stack_size, unsigned int number_of_params,
         INTERPRETER_OPT_FLAGS Oif_flags, INTERPRETER_OPT_FLAGS2 ext_flags, const NDR_PROC_HEADER *proc_header )
 {
@@ -786,13 +786,13 @@ static LONG_PTR ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_
         if (proc_header->Oi_flags & Oi_OBJECT_PROC)
         {
             TRACE( "INITOUT\n" );
-            client_do_args(stub_msg, format, STUBLESS_INITOUT, fpu_stack,
+            client_do_args(stub_msg, format, STUBLESS_INITOUT, fpu_args,
                            number_of_params, (unsigned char *)&retval);
         }
 
         /* 2. CALCSIZE */
         TRACE( "CALCSIZE\n" );
-        client_do_args(stub_msg, format, STUBLESS_CALCSIZE, fpu_stack,
+        client_do_args(stub_msg, format, STUBLESS_CALCSIZE, fpu_args,
                        number_of_params, (unsigned char *)&retval);
 
         /* 3. GETBUFFER */
@@ -812,7 +812,7 @@ static LONG_PTR ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_
 
         /* 4. MARSHAL */
         TRACE( "MARSHAL\n" );
-        client_do_args(stub_msg, format, STUBLESS_MARSHAL, fpu_stack,
+        client_do_args(stub_msg, format, STUBLESS_MARSHAL, fpu_args,
                        number_of_params, (unsigned char *)&retval);
 
         /* 5. SENDRECEIVE */
@@ -838,7 +838,7 @@ static LONG_PTR ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_
 
         /* 6. UNMARSHAL */
         TRACE( "UNMARSHAL\n" );
-        client_do_args(stub_msg, format, STUBLESS_UNMARSHAL, fpu_stack,
+        client_do_args(stub_msg, format, STUBLESS_UNMARSHAL, fpu_args,
                        number_of_params, (unsigned char *)&retval);
     }
     __FINALLY_CTX(ndr_client_call_finally, &finally_ctx)
@@ -847,7 +847,7 @@ static LONG_PTR ndr_client_call( const MIDL_STUB_DESC *stub_desc, const PFORMAT_
 }
 
 LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat,
-                                 void **stack_top, void **fpu_stack )
+                                 void **stack_top, BOOLEAN fpu_args )
 {
     /* pointer to start of stack where arguments start */
     MIDL_STUB_MESSAGE stubMsg;
@@ -927,7 +927,7 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
         __TRY
         {
             RetVal = ndr_client_call(pStubDesc, pFormat, pHandleFormat,
-                                     stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                                     stack_top, fpu_args, &stubMsg, procedure_number, stack_size,
                                      number_of_params, Oif_flags, ext_flags, pProcHeader);
         }
         __EXCEPT_ALL
@@ -935,7 +935,7 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
             /* 7. FREE */
             TRACE( "FREE\n" );
             stubMsg.StackTop = (unsigned char *)stack_top;
-            client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_stack,
+            client_do_args(&stubMsg, pFormat, STUBLESS_FREE, fpu_args,
                            number_of_params, (unsigned char *)&RetVal);
             RetVal = NdrProxyErrorHandler(GetExceptionCode());
         }
@@ -946,7 +946,7 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
         __TRY
         {
             RetVal = ndr_client_call(pStubDesc, pFormat, pHandleFormat,
-                                     stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                                     stack_top, fpu_args, &stubMsg, procedure_number, stack_size,
                                      number_of_params, Oif_flags, ext_flags, pProcHeader);
         }
         __EXCEPT_ALL
@@ -979,7 +979,7 @@ LONG_PTR WINAPI NdrpClientCall2( PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForm
     else
     {
         RetVal = ndr_client_call(pStubDesc, pFormat, pHandleFormat,
-                                 stack_top, fpu_stack, &stubMsg, procedure_number, stack_size,
+                                 stack_top, fpu_args, &stubMsg, procedure_number, stack_size,
                                  number_of_params, Oif_flags, ext_flags, pProcHeader);
     }
 
@@ -1328,7 +1328,7 @@ LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void 
         }
     }
 
-    ret = NdrpClientCall2( proxy_info->pStubDesc, format, stack_top, fpu_regs );
+    ret = NdrpClientCall2( proxy_info->pStubDesc, format, stack_top, TRUE );
     if (stack_top != args) free( stack_top );
     return ret;
 }
@@ -1860,7 +1860,7 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
 
     /* 1. CALCSIZE */
     TRACE( "CALCSIZE\n" );
-    client_do_args(pStubMsg, pFormat, STUBLESS_CALCSIZE, NULL, async_call_data->number_of_params, NULL);
+    client_do_args(pStubMsg, pFormat, STUBLESS_CALCSIZE, FALSE, async_call_data->number_of_params, NULL);
 
     /* 2. GETBUFFER */
     TRACE( "GETBUFFER\n" );
@@ -1885,7 +1885,7 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
 
     /* 3. MARSHAL */
     TRACE( "MARSHAL\n" );
-    client_do_args(pStubMsg, pFormat, STUBLESS_MARSHAL, NULL, async_call_data->number_of_params, NULL);
+    client_do_args(pStubMsg, pFormat, STUBLESS_MARSHAL, FALSE, async_call_data->number_of_params, NULL);
 
     /* 4. SENDRECEIVE */
     TRACE( "SEND\n" );
@@ -1997,7 +1997,7 @@ RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply)
     /* 2. UNMARSHAL */
     TRACE( "UNMARSHAL\n" );
     client_do_args(pStubMsg, async_call_data->pParamFormat, STUBLESS_UNMARSHAL,
-                   NULL, async_call_data->number_of_params, Reply);
+                   FALSE, async_call_data->number_of_params, Reply);
 
 cleanup:
     if (pStubMsg->fHasNewCorrDesc)
@@ -2377,12 +2377,11 @@ static const RPC_SYNTAX_IDENTIFIER ndr_syntax_id =
     {{0x8a885d04, 0x1ceb, 0x11c9, {0x9f, 0xe8, 0x08, 0x00, 0x2b, 0x10, 0x48, 0x60}}, {2, 0}};
 
 LONG_PTR CDECL ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
-        ULONG proc, void *retval, void **stack_top, void **fpu_stack )
+        ULONG proc, void *retval, void **stack_top )
 {
     ULONG_PTR i;
 
-    TRACE("info %p, proc %lu, retval %p, stack_top %p, fpu_stack %p\n",
-            info, proc, retval, stack_top, fpu_stack);
+    TRACE("info %p, proc %lu, retval %p, stack_top %p\n", info, proc, retval, stack_top);
 
     for (i = 0; i < info->nCount; ++i)
     {
@@ -2397,7 +2396,7 @@ LONG_PTR CDECL ndr64_client_call( MIDL_STUBLESS_PROXY_INFO *info,
                 FIXME("Complex return types are not supported.\n");
 
             return NdrpClientCall2( info->pStubDesc,
-                    syntax_info->ProcString + syntax_info->FmtStringOffset[proc], stack_top, fpu_stack );
+                    syntax_info->ProcString + syntax_info->FmtStringOffset[proc], stack_top, FALSE );
         }
     }
 
@@ -2414,7 +2413,6 @@ __ASM_GLOBAL_FUNC( NdrClientCall3,
                    "stp x4, x5, [sp, #0x20]\n\t"
                    "stp x6, x7, [sp, #0x30]\n\t"
                    "add x3, sp, #0x18\n\t"   /* stack */
-                   "mov x4, #0\n\t"          /* fpu_stack */
                    "bl ndr64_client_call\n\t"
                    "ldp x29, x30, [sp], #0x40\n\t"
                    "ret" )
@@ -2427,7 +2425,6 @@ CLIENT_CALL_RETURN __attribute__((naked)) NdrClientCall3( MIDL_STUBLESS_PROXY_IN
          ".seh_endprologue\n\t"
          "str x3, [x4, #-0x8]!\n\t"
          "mov x3, x4\n\t"          /* stack */
-         "mov x4, #0\n\t"          /* fpu_stack */
          "bl \"#ndr64_client_call\"\n\t"
          "ldp x29, x30, [sp], #0x20\n\t"
          "ret\n\t"
@@ -2441,7 +2438,6 @@ __ASM_GLOBAL_FUNC( NdrClientCall3,
                    __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
                    "movq %r9,0x48(%rsp)\n\t"
                    "leaq 0x48(%rsp),%r9\n\t" /* stack */
-                   "movq $0,0x20(%rsp)\n\t"  /* fpu_stack */
                    "call " __ASM_NAME("ndr64_client_call") "\n\t"
                    "addq $0x28,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")

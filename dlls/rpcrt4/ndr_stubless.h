@@ -254,7 +254,7 @@ enum stubless_phase
 };
 
 void client_do_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, enum stubless_phase phase,
-                     void **fpu_args, unsigned short number_of_params, unsigned char *pRetVal );
+                     BOOLEAN fpu_args, unsigned short number_of_params, unsigned char *pRetVal );
 PFORMAT_STRING convert_old_args( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat,
                                  unsigned int stack_size, BOOL object_proc,
                                  void *buffer, unsigned int size, unsigned int *count );
