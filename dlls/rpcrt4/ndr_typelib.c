@@ -1115,14 +1115,128 @@ static HRESULT write_param_fs(ITypeInfo *typeinfo, unsigned char *type,
     return hr;
 }
 
+#if defined __arm__ || defined __aarch64__
+
+/* replace consecutive params code by a repeat sequence: 0x9d code<1> repeat_count<2> */
+static unsigned int compress_params_array( unsigned char *params, unsigned int count )
+{
+    unsigned int i, j;
+
+    for (i = 0; i + 4 <= count; i++)
+    {
+        for (j = 1; i + j < count; j++) if (params[i + j] != params[i]) break;
+        if (j < 4) continue;
+        params[i] = 0x9d;
+        params[i + 2] = j & 0xff;
+        params[i + 3] = j >> 8;
+        memmove( params + i + 4, params + i + j, count - (i + j) );
+        count -= j - 4;
+        i += 3;
+    }
+    return count;
+}
+
+/* fill the parameters array for the procedure extra data on ARM platforms */
+static unsigned int fill_params_array( ITypeInfo *typeinfo, FUNCDESC *desc,
+                                       unsigned char *params, unsigned int count )
+{
+    static const unsigned int pointer_size = sizeof(void *);
+    unsigned int reg_count = 0, float_count = 0, double_count = 0, stack_pos = 0, offset = 0;
+    unsigned int i, size, pos, align;
+
+    memset( params, 0x9f /* padding */, count );
+
+    /* This pointer */
+    params[0] = 0x80 + reg_count++;
+    offset += pointer_size;
+
+    for (i = 0; i < desc->cParams; i++)
+    {
+        unsigned char basetype = get_basetype( typeinfo, &desc->lprgelemdescParam[i].tdesc );
+
+        size = get_stack_size( typeinfo, &desc->lprgelemdescParam[i].tdesc, &align, NULL );
+        offset = ROUND_SIZE( offset, align );
+        pos = offset / pointer_size;
+
+#ifdef __aarch64__
+        switch (basetype)
+        {
+        case FC_FLOAT:
+        case FC_DOUBLE:
+            if (double_count >= 8) break;
+            params[pos] = 0x88 + double_count++;
+            offset += size;
+            continue;
+
+        default:
+            reg_count = ROUND_SIZE( reg_count, align / pointer_size );
+            if (reg_count > 8 - size / pointer_size) break;
+            while (size)
+            {
+                params[pos++] = 0x80 + reg_count++;
+                offset += pointer_size;
+                size -= pointer_size;
+            }
+            continue;
+        }
+        (void)float_count; /* unused on arm64 */
+#else
+        switch (basetype)
+        {
+        case FC_FLOAT:
+            if (!(float_count % 2)) float_count = max( float_count, double_count * 2 );
+            if (float_count >= 16)
+            {
+                stack_pos = ROUND_SIZE( stack_pos, align );
+                params[pos] = 0x100 - (offset - stack_pos) / pointer_size;
+                stack_pos += size;
+            }
+            else
+            {
+                params[pos] = 0x84 + float_count++;
+            }
+            offset += size;
+            continue;
+
+        case FC_DOUBLE:
+            double_count = max( double_count, (float_count + 1) / 2 );
+            if (double_count >= 8) break;
+            params[pos] = 0x84 + 2 * double_count;
+            params[pos + 1] = 0x84 + 2 * double_count + 1;
+            double_count++;
+            offset += size;
+            continue;
+
+        default:
+            reg_count = ROUND_SIZE( reg_count, align / pointer_size );
+            if (reg_count <= 4 - size / pointer_size || !stack_pos)
+            {
+                while (size && reg_count < 4)
+                {
+                    params[pos++] = 0x80 + reg_count++;
+                    offset += pointer_size;
+                    size -= pointer_size;
+                }
+            }
+            break;
+        }
+#endif
+        stack_pos = ROUND_SIZE( stack_pos, align );
+        memset( params + pos, 0x100 - (offset - stack_pos) / pointer_size, size / pointer_size );
+        stack_pos += size;
+        offset += size;
+    }
+
+    while (count && params[count - 1] == 0x9f) count--;
+    return count;
+}
+
+#endif  /* __arm__ || __aarch64__ */
+
 static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
         WORD proc_idx, unsigned char *proc, size_t *proclen)
 {
     unsigned int i, align, size, stack_size = sizeof(void *); /* This */
-#ifdef __x86_64__
-    unsigned short float_mask = 0;
-    unsigned char basetype;
-#endif
 
     for (i = 0; i < desc->cParams; i++)
     {
@@ -1141,23 +1255,48 @@ static void write_proc_func_header(ITypeInfo *typeinfo, FUNCDESC *desc,
     WRITE_SHORT(proc, *proclen, 0); /* constant_server_buffer_size */
     WRITE_CHAR (proc, *proclen, 0x47);  /* HasExtensions | HasReturn | ClientMustSize | ServerMustSize */
     WRITE_CHAR (proc, *proclen, desc->cParams + 1); /* incl. return value */
-#ifdef __x86_64__
-    WRITE_CHAR (proc, *proclen, 10); /* extension size */
-#else
+
+#ifdef __i386__
     WRITE_CHAR (proc, *proclen, 8);  /* extension size */
-#endif
     WRITE_CHAR (proc, *proclen, 1);  /* HasNewCorrDesc */
     WRITE_SHORT(proc, *proclen, 0);  /* ClientCorrHint */
     WRITE_SHORT(proc, *proclen, 0);  /* ServerCorrHint */
     WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
-#ifdef __x86_64__
-    for (i = 0; i < desc->cParams && i < 3; i++)
+#elif defined __x86_64__
     {
-        basetype = get_basetype(typeinfo, &desc->lprgelemdescParam[i].tdesc);
-        if (basetype == FC_FLOAT) float_mask |= (1 << ((i + 1) * 2));
-        else if (basetype == FC_DOUBLE) float_mask |= (2 << ((i + 1) * 2));
+        unsigned short float_mask = 0;
+
+        for (i = 0; i < desc->cParams && i < 3; i++)
+        {
+            unsigned char basetype = get_basetype(typeinfo, &desc->lprgelemdescParam[i].tdesc);
+            if (basetype == FC_FLOAT) float_mask |= (1 << ((i + 1) * 2));
+            else if (basetype == FC_DOUBLE) float_mask |= (2 << ((i + 1) * 2));
+        }
+        WRITE_CHAR (proc, *proclen, 10); /* extension size */
+        WRITE_CHAR (proc, *proclen, 1);  /* HasNewCorrDesc */
+        WRITE_SHORT(proc, *proclen, 0);  /* ClientCorrHint */
+        WRITE_SHORT(proc, *proclen, 0);  /* ServerCorrHint */
+        WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
+        WRITE_SHORT(proc, *proclen, float_mask);
     }
-    WRITE_SHORT(proc, *proclen, float_mask);
+#else
+    {
+        unsigned int len, count = stack_size / sizeof(void *);
+        unsigned char *params = malloc( count );
+
+        count = fill_params_array( typeinfo, desc, params, count );
+        len = compress_params_array( params, count );
+        WRITE_CHAR (proc, *proclen, 8 + 3 + len + !(len % 2) ); /* extension size */
+        WRITE_CHAR (proc, *proclen, 1);  /* HasNewCorrDesc */
+        WRITE_SHORT(proc, *proclen, 0);  /* ClientCorrHint */
+        WRITE_SHORT(proc, *proclen, 0);  /* ServerCorrHint */
+        WRITE_SHORT(proc, *proclen, 0);  /* NotifyIndex */
+        WRITE_SHORT(proc, *proclen, count);
+        WRITE_CHAR (proc, *proclen, len);
+        for (i = 0; i < len; i++) WRITE_CHAR (proc, *proclen, params[i]);
+        if (!(len % 2)) WRITE_CHAR (proc, *proclen, 0);
+        free( params );
+    }
 #endif
 }
 
