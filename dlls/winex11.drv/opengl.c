@@ -1557,7 +1557,7 @@ void destroy_gl_drawable( HWND hwnd )
  *
  * Get the pixel-format descriptor associated to the given id
  */
-static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd, BOOL allow_offscreen )
+static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd )
 {
   /*XVisualInfo *vis;*/
   int value;
@@ -1567,7 +1567,7 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd,
   if (!has_opengl()) return 0;
 
   /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
-  fmt = get_pixel_format(gdi_display, iPixelFormat, allow_offscreen);
+  fmt = get_pixel_format(gdi_display, iPixelFormat, TRUE /* Offscreen */);
   if (!fmt) {
       WARN("unexpected format %d\n", iPixelFormat);
       return 0;
@@ -2653,7 +2653,7 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
         format->original_index = it;
 
         memset(&format->pfd, 0, sizeof(format->pfd));
-        if (!describe_pixel_format(format->format, &format->pfd, TRUE))
+        if (!describe_pixel_format(format->format, &format->pfd))
             ERR("describe_pixel_format failed, format %d.\n", format->format);
 
         format->depth = format->pfd.cDepthBits;
@@ -3421,7 +3421,7 @@ static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
     if (formats)
     {
         for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
-            describe_pixel_format( i + 1, &formats[i].pfd, TRUE );
+            describe_pixel_format( i + 1, &formats[i].pfd );
     }
     *num_formats = nb_pixel_formats;
     *num_onscreen_formats = nb_onscreen_formats;
