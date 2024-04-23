@@ -103,18 +103,13 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "movq %rdx,0x48(%rsp)\n\t"
                   "movq %r8,0x50(%rsp)\n\t"
                   "movq %r9,0x58(%rsp)\n\t"
-                  "leaq 0x40(%rsp),%r8\n\t"       /* &This */
-                  "movq (%rcx),%rcx\n\t"          /* This->lpVtbl */
-                  "movq -0x10(%rcx),%rcx\n\t"     /* MIDL_STUBLESS_PROXY_INFO */
-                  "movq 0x10(%rcx),%rdx\n\t"      /* info->FormatStringOffset */
-                  "movzwq (%rdx,%r10,2),%rdx\n\t" /* FormatStringOffset[index] */
-                  "addq 8(%rcx),%rdx\n\t"         /* info->ProcFormatString + offset */
-                  "movq (%rcx),%rcx\n\t"          /* info->pStubDesc */
+                  "leaq 0x40(%rsp),%rdx\n\t"    /* args */
                   "movq %xmm1,0x20(%rsp)\n\t"
                   "movq %xmm2,0x28(%rsp)\n\t"
                   "movq %xmm3,0x30(%rsp)\n\t"
-                  "leaq 0x18(%rsp),%r9\n\t"       /* fpu_args */
-                  "call " __ASM_NAME("NdrpClientCall2") "\n\t"
+                  "leaq 0x18(%rsp),%r8\n\t"     /* fpu_regs */
+                  "movl %r10d,%ecx\n\t"         /* index */
+                  "call " __ASM_NAME("ndr_stubless_client_call") "\n\t"
                   "addq $0x38,%rsp\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset -0x38\n\t")
                   "ret" );
@@ -138,17 +133,11 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
                   "mov fp, sp\n\t"
                   ".seh_save_sp fp\n\t"
                   ".seh_endprologue\n\t"
-                  "ldr r0, [r0]\n\t"            /* This->lpVtbl */
-                  "ldr r0, [r0,#-8]\n\t"        /* MIDL_STUBLESS_PROXY_INFO */
-                  "ldr r1, [r0,#8]\n\t"         /* info->FormatStringOffset */
-                  "ldrh r1, [r1,ip]\n\t"        /* info->FormatStringOffset[index] */
-                  "ldr ip, [r0,#4]\n\t"         /* info->ProcFormatString */
-                  "add r1, ip\n\t"              /* info->ProcFormatString + offset */
-                  "ldr r0, [r0]\n\t"            /* info->pStubDesc */
-                  "add r2, sp, #8\n\t"          /* stack_top */
+                  "mov r0, ip\n\t"              /* index */
+                  "add r1, sp, #8\n\t"          /* args */
                   "vpush {s0-s15}\n\t"          /* store the s0-s15/d0-d7 arguments */
-                  "mov r3, sp\n\t"              /* fpu_stack */
-                  "bl NdrpClientCall2\n\t"
+                  "mov r2, sp\n\t"              /* fpu_regs */
+                  "bl ndr_stubless_client_call\n\t"
                   "mov sp, fp\n\t"
                   "pop {fp,lr}\n\t"
                   "add sp, #16\n\t"
@@ -177,15 +166,10 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
                    "stp x2, x3, [sp, #0x60]\n\t"
                    "stp x4, x5, [sp, #0x70]\n\t"
                    "stp x6, x7, [sp, #0x80]\n\t"
-                   "ldr x0, [x0]\n\t"                /* This->lpVtbl */
-                   "ldr x0, [x0, #-16]\n\t"          /* MIDL_STUBLESS_PROXY_INFO */
-                   "ldp x1, x4, [x0, #8]\n\t"        /* info->ProcFormatString, FormatStringOffset */
-                   "ldrh w4, [x4, x16, lsl #1]\n\t"  /* info->FormatStringOffset[index] */
-                   "add x1, x1, x4\n\t"              /* info->ProcFormatString + offset */
-                   "ldr x0, [x0]\n\t"                /* info->pStubDesc */
-                   "add x2, sp, #0x50\n\t"           /* stack */
-                   "add x3, sp, #0x10\n\t"           /* fpu_stack */
-                   "bl NdrpClientCall2\n\t"
+                   "mov w0, w16\n\t"            /* index */
+                   "add x1, sp, #0x50\n\t"      /* args */
+                   "add x2, sp, #0x10\n\t"      /* fpu_regs */
+                   "bl ndr_stubless_client_call\n\t"
                    "ldp x29, x30, [sp], #0x90\n\t"
                    "ret" )
 

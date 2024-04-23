@@ -1277,6 +1277,18 @@ LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, uns
 }
 #endif
 
+#ifndef __i386__
+LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void **fpu_regs )
+{
+    void **this = args[0];
+    const void **vtbl = *this;
+    const MIDL_STUBLESS_PROXY_INFO *proxy_info = vtbl[-2];
+    const unsigned char *format = proxy_info->ProcFormatString + proxy_info->FormatStringOffset[index];
+
+    return NdrpClientCall2( proxy_info->pStubDesc, format, args, fpu_regs );
+}
+#endif  /* __i386__ */
+
 static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
                               PFORMAT_STRING pFormat, enum stubless_phase phase,
                               unsigned short number_of_params)
