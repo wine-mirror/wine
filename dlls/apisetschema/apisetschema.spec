@@ -1,3 +1,4 @@
+apiset api-ms-win-appmodel-runtime-internal-l1-1-1 = kernelbase.dll
 apiset api-ms-win-appmodel-runtime-l1-1-2 = kernelbase.dll
 apiset api-ms-win-base-bootconfig-l1-1-0 = advapi32.dll
 apiset api-ms-win-base-util-l1-1-0 = advapi32.dll
