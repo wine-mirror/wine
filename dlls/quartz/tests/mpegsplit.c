@@ -1084,6 +1084,7 @@ struct testfilter
     HANDLE eos_event;
     unsigned int sample_count, eos_count, new_segment_count, byte_count;
     REFERENCE_TIME segment_start, segment_end_min, segment_end_max, seek_start, seek_end;
+    LONGLONG read_position;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1318,7 +1319,9 @@ static HRESULT WINAPI async_reader_SyncReadAligned(IAsyncReader *iface, IMediaSa
 
 static HRESULT WINAPI async_reader_SyncRead(IAsyncReader *iface, LONGLONG position, LONG length, BYTE *buffer)
 {
-    return IAsyncReader_SyncRead(impl_from_IAsyncReader(iface)->reader, position, length, buffer);
+    struct testfilter *filter = impl_from_IAsyncReader(iface);
+    filter->read_position = position + length;
+    return IAsyncReader_SyncRead(filter->reader, position, length, buffer);
 }
 
 static HRESULT WINAPI async_reader_Length(IAsyncReader *iface, LONGLONG *total, LONGLONG *available)
@@ -2148,6 +2151,50 @@ static void test_no_acceptable_type(void)
     DeleteFileW(filename);
 }
 
+static void test_video_read_position(void)
+{
+    IBaseFilter *filter = create_mpeg_splitter(), *reader;
+    const WCHAR *filename = load_resource(L"test2.mpg");
+    struct IFileSourceFilter *filesource;
+    struct testfilter testsource;
+    LONGLONG total, avail;
+    IFilterGraph2 *graph;
+    IPin *sink, *source;
+    HRESULT hr;
+    BOOL ret;
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    testfilter_init(&testsource);
+    IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"splitter");
+    hr = IBaseFilter_FindPin(filter, L"Input", &sink);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    CoCreateInstance(&CLSID_AsyncReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&reader);
+    IBaseFilter_QueryInterface(reader, &IID_IFileSourceFilter, (void **)&filesource);
+    IFileSourceFilter_Load(filesource, filename, NULL);
+    IFileSourceFilter_Release(filesource);
+    IBaseFilter_FindPin(reader, L"Output", &source);
+    IPin_QueryInterface(source, &IID_IAsyncReader, (void **)&testsource.reader);
+    IAsyncReader_Length(testsource.reader, &total, &avail);
+    IPin_Release(source);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(testsource.read_position == total, "Got 0x%s, expected 0x%s.\n", wine_dbgstr_longlong(testsource.read_position), wine_dbgstr_longlong(total));
+
+    IAsyncReader_Release(testsource.reader);
+    IPin_Release(sink);
+    IFilterGraph2_Release(graph);
+    IBaseFilter_Release(reader);
+    IBaseFilter_Release(filter);
+    IBaseFilter_Release(&testsource.filter.IBaseFilter_iface);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %lu.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     IBaseFilter *filter;
@@ -2176,6 +2223,7 @@ START_TEST(mpegsplit)
     test_large_file();
     test_video_file();
     test_no_acceptable_type();
+    test_video_read_position();
 
     CoUninitialize();
 }
