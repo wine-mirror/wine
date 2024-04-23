@@ -1553,8 +1553,6 @@ extern const struct wined3d_shader_backend_ops none_shader_backend;
 
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void);
 
-#define GL_EXTCALL(f) (gl_info->gl_ops.ext.p_##f)
-
 #define D3DCOLOR_B_R(dw) (((dw) >> 16) & 0xff)
 #define D3DCOLOR_B_G(dw) (((dw) >>  8) & 0xff)
 #define D3DCOLOR_B_B(dw) (((dw) >>  0) & 0xff)
