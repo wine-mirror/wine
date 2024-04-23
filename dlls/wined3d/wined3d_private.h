@@ -2080,8 +2080,6 @@ struct wined3d_light_info
     /* Converted parms to speed up swapping lights */
     struct wined3d_vec4 position;
     struct wined3d_vec4 direction;
-    float exponent;
-    float cutoff;
 
     struct rb_entry entry;
     struct list changed_entry;

@@ -2325,7 +2325,6 @@ static void wined3d_device_context_set_light(struct wined3d_device_context *cont
         unsigned int light_idx, const struct wined3d_light *light)
 {
     struct wined3d_light_info *object = NULL;
-    float rho;
 
     if (FAILED(wined3d_light_state_set_light(&context->state->light_state, light_idx, light, &object)))
         return;
@@ -2348,7 +2347,6 @@ static void wined3d_device_context_set_light(struct wined3d_device_context *cont
             object->position.y = light->position.y;
             object->position.z = light->position.z;
             object->position.w = 1.0f;
-            object->cutoff = 180.0f;
             /* FIXME: Range */
             break;
 
@@ -2358,8 +2356,6 @@ static void wined3d_device_context_set_light(struct wined3d_device_context *cont
             object->direction.y = -light->direction.y;
             object->direction.z = -light->direction.z;
             object->direction.w = 0.0f;
-            object->exponent = 0.0f;
-            object->cutoff = 180.0f;
             break;
 
         case WINED3D_LIGHT_SPOT:
@@ -2375,33 +2371,6 @@ static void wined3d_device_context_set_light(struct wined3d_device_context *cont
             object->direction.z = light->direction.z;
             object->direction.w = 0.0f;
 
-            /* opengl-ish and d3d-ish spot lights use too different models
-             * for the light "intensity" as a function of the angle towards
-             * the main light direction, so we only can approximate very
-             * roughly. However, spot lights are rather rarely used in games
-             * (if ever used at all). Furthermore if still used, probably
-             * nobody pays attention to such details. */
-            if (!light->falloff)
-            {
-                /* Falloff = 0 is easy, because d3d's and opengl's spot light
-                 * equations have the falloff resp. exponent parameter as an
-                 * exponent, so the spot light lighting will always be 1.0 for
-                 * both of them, and we don't have to care for the rest of the
-                 * rather complex calculation. */
-                object->exponent = 0.0f;
-            }
-            else
-            {
-                rho = light->theta + (light->phi - light->theta) / (2 * light->falloff);
-                if (rho < 0.0001f)
-                    rho = 0.0001f;
-                object->exponent = -0.3f / logf(cosf(rho / 2));
-            }
-
-            if (object->exponent > 128.0f)
-                object->exponent = 128.0f;
-
-            object->cutoff = (float)(light->phi * 90 / M_PI);
             /* FIXME: Range */
             break;
 
