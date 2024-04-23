@@ -1728,11 +1728,11 @@ static void test_common_stub_data( const char *prefix, const MIDL_STUB_MESSAGE *
     ok(stubMsg->fBufferValid == 0,
        "%s: fBufferValid should have been set to 0 instead of %d\n", prefix, stubMsg->fBufferValid);
     TEST_ZERO(fNeedMCCP, "%d");
-    ok(stubMsg->fUnused == 0 ||
-       stubMsg->fUnused == -2, /* Vista */
-       "%s: fUnused should have been set to 0 or -2 instead of %d\n", prefix, stubMsg->fUnused);
-    ok(stubMsg->fUnused2 == 0xffffcccc, "%s: fUnused2 should have been 0xffffcccc instead of 0x%x\n",
-       prefix, stubMsg->fUnused2);
+    ok(stubMsg->fUnused2 == 0 ||
+       stubMsg->fUnused2 == -2, /* Vista */
+       "%s: fUnused2 should have been set to 0 or -2 instead of %d\n", prefix, stubMsg->fUnused2);
+    ok(stubMsg->fUnused3 == 0xffffcccc, "%s: fUnused3 should have been 0xffffcccc instead of 0x%x\n",
+       prefix, stubMsg->fUnused3);
     ok(stubMsg->dwDestContext == MSHCTX_DIFFERENTMACHINE,
        "%s: dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %ld\n",
        prefix, stubMsg->dwDestContext);

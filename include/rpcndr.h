@@ -71,6 +71,11 @@ typedef INT64 hyper;
 typedef UINT64 MIDL_uhyper;
 typedef unsigned char boolean;
 
+#ifndef _ERROR_STATUS_T_DEFINED
+typedef ULONG error_status_t;
+#define _ERROR_STATUS_T_DEFINED
+#endif
+
 #define __RPC_CALLEE WINAPI
 #define RPC_VAR_ENTRY WINAPIV
 #define NDR_SHAREABLE static
@@ -179,7 +184,7 @@ typedef struct _MIDL_STUB_MESSAGE
   ULONG PointerLength;
   unsigned int fInDontFree:1;
   unsigned int fDontCallFreeInst:1;
-  unsigned int fInOnlyParam:1;
+  unsigned int fUnused1 :1;
   unsigned int fHasReturn:1;
   unsigned int fHasExtensions:1;
   unsigned int fHasNewCorrDesc:1;
@@ -190,8 +195,8 @@ typedef struct _MIDL_STUB_MESSAGE
   unsigned int fHasMemoryValidateCallback:1;
   unsigned int fInFree:1;
   unsigned int fNeedMCCP:1;
-  int fUnused:3;
-  int fUnused2:16;
+  int fUnused2:3;
+  int fUnused3:16;
   DWORD dwDestContext;
   void *pvDestContext;
   NDR_SCONTEXT *SavedContextHandles;
@@ -303,6 +308,39 @@ typedef struct _COMM_FAULT_OFFSETS
   short FaultOffset;
 } COMM_FAULT_OFFSETS;
 
+typedef enum _IDL_CS_CONVERT
+{
+    IDL_CS_NO_CONVERT,
+    IDL_CS_IN_PLACE_CONVERT,
+    IDL_CS_NEW_BUFFER_CONVERT
+} IDL_CS_CONVERT;
+
+typedef void (__RPC_USER * CS_TYPE_NET_SIZE_ROUTINE)(RPC_BINDING_HANDLE,ULONG,ULONG,IDL_CS_CONVERT*,ULONG*,error_status_t*);
+typedef void (__RPC_USER * CS_TYPE_TO_NETCS_ROUTINE)(RPC_BINDING_HANDLE,ULONG,void*,ULONG,byte*,ULONG*,error_status_t*);
+typedef void (__RPC_USER * CS_TYPE_LOCAL_SIZE_ROUTINE)(RPC_BINDING_HANDLE,ULONG,ULONG,IDL_CS_CONVERT*,ULONG*,error_status_t*);
+typedef void (__RPC_USER * CS_TYPE_FROM_NETCS_ROUTINE)(RPC_BINDING_HANDLE,ULONG,byte*,ULONG,ULONG,void*,ULONG*,error_status_t*);
+typedef void (__RPC_USER * CS_TAG_GETTING_ROUTINE)(RPC_BINDING_HANDLE,int,ULONG*,ULONG*,ULONG*,error_status_t*);
+
+typedef struct _NDR_CS_SIZE_CONVERT_ROUTINES
+{
+    CS_TYPE_NET_SIZE_ROUTINE   pfnNetSize;
+    CS_TYPE_TO_NETCS_ROUTINE   pfnToNetCs;
+    CS_TYPE_LOCAL_SIZE_ROUTINE pfnLocalSize;
+    CS_TYPE_FROM_NETCS_ROUTINE pfnFromNetCs;
+} NDR_CS_SIZE_CONVERT_ROUTINES;
+
+typedef struct _NDR_CS_ROUTINES
+{
+    NDR_CS_SIZE_CONVERT_ROUTINES *pSizeConvertRoutines;
+    CS_TAG_GETTING_ROUTINE       *pTagGettingRoutines;
+} NDR_CS_ROUTINES;
+
+typedef struct _NDR_EXPR_DESC
+{
+    const unsigned short *pOffset;
+    PFORMAT_STRING        pFormatExpr;
+} NDR_EXPR_DESC;
+
 typedef struct _MIDL_STUB_DESC
 {
   void *RpcInterfaceInformation;
@@ -326,21 +364,35 @@ typedef struct _MIDL_STUB_DESC
   const USER_MARSHAL_ROUTINE_QUADRUPLE *aUserMarshalQuadruple;
   const NDR_NOTIFY_ROUTINE *NotifyRoutineTable;
   ULONG_PTR mFlags;
-  ULONG_PTR Reserved3;
-  ULONG_PTR Reserved4;
-  ULONG_PTR Reserved5;
+  const NDR_CS_ROUTINES *CsRoutineTables;
+  void *ProxyServerInfo;
+  const NDR_EXPR_DESC *pExprInfo;
 } MIDL_STUB_DESC;
 typedef const MIDL_STUB_DESC *PMIDL_STUB_DESC;
 
 typedef struct _MIDL_FORMAT_STRING
 {
   short Pad;
-#if defined(__GNUC__)
-  unsigned char Format[0];
-#else
-  unsigned char Format[1];
-#endif
+  unsigned char Format[];
 } MIDL_FORMAT_STRING;
+
+typedef struct _MIDL_METHOD_PROPERTY
+{
+    ULONG     Id;
+    ULONG_PTR Value;
+} MIDL_METHOD_PROPERTY, *PMIDL_METHOD_PROPERTY;
+
+typedef struct _MIDL_METHOD_PROPERTY_MAP
+{
+    ULONG                       Count;
+    const MIDL_METHOD_PROPERTY *Properties;
+} MIDL_METHOD_PROPERTY_MAP, *PMIDL_METHOD_PROPERTY_MAP;
+
+typedef struct _MIDL_INTERFACE_METHOD_PROPERTIES
+{
+    unsigned short MethodCount;
+    const MIDL_METHOD_PROPERTY_MAP * const *MethodProperties;
+} MIDL_INTERFACE_METHOD_PROPERTIES;
 
 typedef struct _MIDL_SYNTAX_INFO
 {
@@ -350,7 +402,7 @@ typedef struct _MIDL_SYNTAX_INFO
   const unsigned short* FmtStringOffset;
   PFORMAT_STRING TypeString;
   const void* aUserMarshalQuadruple;
-  ULONG_PTR pReserved1;
+  const MIDL_INTERFACE_METHOD_PROPERTIES *pMethodProperties;
   ULONG_PTR pReserved2;
 } MIDL_SYNTAX_INFO, *PMIDL_SYNTAX_INFO;
 
@@ -442,11 +494,6 @@ typedef struct _FULL_PTR_XLAT_TABLES {
 } FULL_PTR_XLAT_TABLES,  *PFULL_PTR_XLAT_TABLES;
 
 struct IRpcStubBuffer;
-
-#ifndef _ERROR_STATUS_T_DEFINED
-typedef ULONG error_status_t;
-#define _ERROR_STATUS_T_DEFINED
-#endif
 
 typedef void  * NDR_CCONTEXT;
 
