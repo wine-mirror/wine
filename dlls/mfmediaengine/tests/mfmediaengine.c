@@ -72,34 +72,39 @@ static BOOL compare_double(double a, double b, double allowed_error)
     return fabs(a - b) <= allowed_error;
 }
 
-static DWORD compare_rgb32(const BYTE *data, DWORD *length, const RECT *rect, const BYTE *expect)
+static DWORD compare_rgb(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect, UINT bits)
 {
-    DWORD x, y, size, diff = 0, width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    DWORD x, y, step = bits / 8, data_size, diff = 0, width = size->cx, height = size->cy;
 
     /* skip BMP header from the dump */
-    size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
-    *length = *length + size;
-    expect = expect + size;
+    data_size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + data_size;
+    expect = expect + data_size;
 
-    for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
+    for (y = 0; y < height; y++, data += width * step, expect += width * step)
     {
         if (y < rect->top || y >= rect->bottom) continue;
         for (x = 0; x < width; x++)
         {
             if (x < rect->left || x >= rect->right) continue;
-            diff += abs((int)expect[4 * x + 0] - (int)data[4 * x + 0]);
-            diff += abs((int)expect[4 * x + 1] - (int)data[4 * x + 1]);
-            diff += abs((int)expect[4 * x + 2] - (int)data[4 * x + 2]);
+            diff += abs((int)expect[step * x + 0] - (int)data[step * x + 0]);
+            diff += abs((int)expect[step * x + 1] - (int)data[step * x + 1]);
+            if (step >= 3) diff += abs((int)expect[step * x + 2] - (int)data[step * x + 2]);
         }
     }
 
-    size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3;
-    return diff * 100 / 256 / size;
+    data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * min(step, 3);
+    return diff * 100 / 256 / data_size;
 }
 
-static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE output)
+static DWORD compare_rgb32(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
 {
-    DWORD width = (rect->right + 0xf) & ~0xf, height = (rect->bottom + 0xf) & ~0xf;
+    return compare_rgb(data, length, size, rect, expect, 32);
+}
+
+static void dump_rgb(const BYTE *data, DWORD length, const SIZE *size, HANDLE output, UINT bits)
+{
+    DWORD width = size->cx, height = size->cy;
     static const char magic[2] = "BM";
     struct
     {
@@ -113,7 +118,7 @@ static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE 
         .biHeader =
         {
             .biSize = sizeof(BITMAPINFOHEADER), .biWidth = width, .biHeight = height, .biPlanes = 1,
-            .biBitCount = 32, .biCompression = BI_RGB, .biSizeImage = width * height * 4,
+            .biBitCount = bits, .biCompression = BI_RGB, .biSizeImage = width * height * (bits / 8),
         },
     };
     DWORD written;
@@ -130,20 +135,25 @@ static void dump_rgb32(const BYTE *data, DWORD length, const RECT *rect, HANDLE 
     ok(written == length, "written %lu bytes\n", written);
 }
 
-#define check_rgb32_data(a, b, c, d) check_rgb32_data_(__LINE__, a, b, c, d)
-static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect)
+static void dump_rgb32(const BYTE *data, DWORD length, const SIZE *size, HANDLE output)
 {
+    return dump_rgb(data, length, size, output, 32);
+}
+
+#define check_rgb32_data(a, b, c, d) check_rgb32_data_(__LINE__, a, b, c, d)
+static DWORD check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data, DWORD length, const RECT *rect)
+{
+    SIZE size = {rect->right, rect->bottom};
     WCHAR output_path[MAX_PATH];
     const BYTE *expect_data;
     HRSRC resource;
     HANDLE output;
-    DWORD diff;
 
     GetTempPathW(ARRAY_SIZE(output_path), output_path);
     lstrcatW(output_path, filename);
     output = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(output != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
-    dump_rgb32(data, length, rect, output);
+    dump_rgb32(data, length, &size, output);
     trace("created %s\n", debugstr_w(output_path));
     CloseHandle(output);
 
@@ -151,8 +161,7 @@ static void check_rgb32_data_(int line, const WCHAR *filename, const BYTE *data,
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
     expect_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
 
-    diff = compare_rgb32(data, &length, rect, expect_data);
-    ok_(__FILE__, line)(diff == 0, "Unexpected %lu%% diff\n", diff);
+    return compare_rgb32(data, &length, &size, rect, expect_data);
 }
 
 static void init_functions(void)
@@ -1355,7 +1364,8 @@ static void test_TransferVideoFrame(void)
     ok(!!map_desc.pData, "got pData %p\n", map_desc.pData);
     ok(map_desc.DepthPitch == 16384, "got DepthPitch %u\n", map_desc.DepthPitch);
     ok(map_desc.RowPitch == desc.Width * 4, "got RowPitch %u\n", map_desc.RowPitch);
-    check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect);
+    res = check_rgb32_data(L"rgb32frame.bmp", map_desc.pData, map_desc.RowPitch * desc.Height, &dst_rect);
+    ok(res == 0, "Unexpected %lu%% diff\n", res);
     ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)rb_texture, 0);
 
     ID3D11DeviceContext_Release(context);
