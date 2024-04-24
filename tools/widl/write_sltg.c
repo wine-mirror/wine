@@ -767,7 +767,6 @@ static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data
             size_instance = NULL; /* don't account for element size */
         }
 
-
         append_data(data, array, size);
 
         desc_offset = data->size;
@@ -1618,8 +1617,10 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
 
     /* library block length includes helpstrings and name table */
     entry.length = sltg->blocks[sltg->block_count - 1].length + 0x40 /* pad after library block */ +
-                   sizeof(sltg->typeinfo_count) + sltg->typeinfo_size + 4 /* library block offset */ + 6 /* dummy help strings */ +
-                   12 /* name table header */ + 0x200 /* name table hash */ + sltg->name_table.size;
+                   sizeof(sltg->typeinfo_count) + sltg->typeinfo_size + 4 /* library block size */ + 6 /* dummy help strings */ +
+                   12 /* name table header */ + 0x200 /* name table hash */ +
+                   sizeof(sltg->name_table.size) + sltg->name_table.size +
+                   4 /* 0x01ffff01 */ + 4 /* 0 */;
     entry.index_string = sltg->blocks[sltg->block_count - 1].index_string;
     entry.next = 0;
     chat("sltg_write_header: writing library block entry %d: length %#x, index_string %#x, next %#x\n",
