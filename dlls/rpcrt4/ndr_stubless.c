@@ -1062,12 +1062,41 @@ __ASM_GLOBAL_FUNC( NdrClientCall2,
 
 #if defined(__aarch64__) || defined(__arm__)
 static void __attribute__((used)) args_stack_to_regs( void **args, void **regs, void **stack,
-                                                      const NDR_PROC_HEADER_EXTS *ext )
+                                                      const NDR_PROC_PARTIAL_OIF_HEADER *header )
 {
+    const NDR_PROC_HEADER_EXTS *ext = (const NDR_PROC_HEADER_EXTS *)(header + 1);
     unsigned int i, size, count, pos;
     unsigned char *data;
 
-    if (!ext) return;
+#ifdef __arm__
+    const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)((const char *)ext + ext->Size);
+
+    for (i = 0; i < header->number_of_params; i++)
+        if (params[i].attr.IsIn && params[i].attr.IsBasetype)
+        {
+            int *arg = (int *)((char *)args + params[i].stack_offset);
+
+            switch (params[i].u.type_format_char)
+            {
+            case FC_BYTE:
+            case FC_USMALL:
+                *arg = (unsigned char)*arg;
+                break;
+            case FC_CHAR:
+            case FC_SMALL:
+                *arg = (signed char)*arg;
+                break;
+            case FC_WCHAR:
+            case FC_USHORT:
+                *arg = (unsigned short)*arg;
+                break;
+            case FC_SHORT:
+                *arg = (short)*arg;
+                break;
+            }
+        }
+#endif
+
     if (ext->Size < sizeof(*ext) + 3) return;
     data = (unsigned char *)(ext + 1);
     size = min( ext->Size - sizeof(*ext) - 3, data[2] );
@@ -1089,9 +1118,10 @@ static void __attribute__((used)) args_stack_to_regs( void **args, void **regs, 
     }
 }
 
-static void **args_regs_to_stack( void **regs, void **fpu_regs, const NDR_PROC_HEADER_EXTS *ext )
+static void **args_regs_to_stack( void **regs, void **fpu_regs, const NDR_PROC_PARTIAL_OIF_HEADER *header )
 {
     static const unsigned int nb_gpregs = sizeof(void *); /* 4 gpregs on arm32, 8 on arm64 */
+    const NDR_PROC_HEADER_EXTS *ext = (const NDR_PROC_HEADER_EXTS *)(header + 1);
     unsigned int i, size, count, pos, params;
     unsigned char *data;
     void **stack, **args = regs + nb_gpregs;
@@ -1127,7 +1157,7 @@ static void **args_regs_to_stack( void **regs, void **fpu_regs, const NDR_PROC_H
  * function */
 #if defined __i386__ && defined _MSC_VER
 __declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
-                                                    const NDR_PROC_HEADER_EXTS *ext)
+                                                    const NDR_PROC_PARTIAL_OIF_HEADER *header )
 {
     __asm
     {
@@ -1154,7 +1184,7 @@ __declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigne
 }
 #elif defined __i386__ && defined __GNUC__
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
-                                  const NDR_PROC_HEADER_EXTS *ext);
+                                  const NDR_PROC_PARTIAL_OIF_HEADER *header);
 __ASM_GLOBAL_FUNC(call_server_func,
     "pushl %ebp\n\t"
     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1186,7 +1216,7 @@ __ASM_GLOBAL_FUNC(call_server_func,
     "ret" )
 #elif defined __x86_64__
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size,
-                                  const NDR_PROC_HEADER_EXTS *ext);
+                                  const NDR_PROC_PARTIAL_OIF_HEADER *header);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "pushq %rbp\n\t"
                    __ASM_SEH(".seh_pushreg %rbp\n\t")
@@ -1234,7 +1264,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "ret")
 #elif defined __arm__
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size,
-                                  const NDR_PROC_HEADER_EXTS *ext);
+                                  const NDR_PROC_PARTIAL_OIF_HEADER *header);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "push {r4,r5,fp,lr}\n\t"
                    ".seh_save_regs_w {r4,r5,fp,lr}\n\t"
@@ -1257,7 +1287,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "pop {r4,r5,fp,pc}" )
 #elif defined __aarch64__
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size,
-                                  const NDR_PROC_HEADER_EXTS *ext);
+                                  const NDR_PROC_PARTIAL_OIF_HEADER *header);
 __ASM_GLOBAL_FUNC( call_server_func,
                    "stp x29, x30, [sp, #-0x20]!\n\t"
                    ".seh_save_fplr_x 0x20\n\t"
@@ -1290,7 +1320,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
 #else
 #warning call_server_func not implemented for your architecture
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned short stack_size,
-                                  const NDR_PROC_HEADER_EXTS *ext)
+                                  const NDR_PROC_PARTIAL_OIF_HEADER *header)
 {
     FIXME("Not implemented for your architecture\n");
     return 0;
@@ -1322,7 +1352,7 @@ LONG_PTR WINAPI ndr_stubless_client_call( unsigned int index, void **args, void 
                 unsigned short fpu_mask = *(unsigned short *)(ext + 1);
                 for (int i = 0; i < 4; i++, fpu_mask >>= 2) if (fpu_mask & 3) args[i] = fpu_regs[i];
 #else
-                stack_top = args_regs_to_stack( args, fpu_regs, ext );
+                stack_top = args_regs_to_stack( args, fpu_regs, hdr );
 #endif
             }
         }
@@ -1448,7 +1478,7 @@ LONG WINAPI NdrStubCall2(
     enum stubless_phase phase;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
-    const NDR_PROC_HEADER_EXTS *extensions = NULL;
+    const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = NULL;
     /* location to put retval into */
     LONG_PTR *retval_ptr = NULL;
     /* correlation cache */
@@ -1546,8 +1576,7 @@ LONG WINAPI NdrStubCall2(
 
     if (is_oicf_stubdesc(pStubDesc))
     {
-        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
-
+        pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
         Oif_flags = pOIFHeader->Oi2Flags;
         number_of_params = pOIFHeader->number_of_params;
 
@@ -1557,7 +1586,7 @@ LONG WINAPI NdrStubCall2(
 
         if (Oif_flags.HasExtensions)
         {
-            extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            const NDR_PROC_HEADER_EXTS *extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
             ext_flags = extensions->Flags2;
             pFormat += extensions->Size;
         }
@@ -1612,7 +1641,7 @@ LONG WINAPI NdrStubCall2(
                 else
                     func = pServerInfo->DispatchTable[pRpcMsg->ProcNum];
 
-                retval = call_server_func(func, args, stack_size, extensions);
+                retval = call_server_func(func, args, stack_size, pOIFHeader);
 
                 if (retval_ptr)
                 {
@@ -2111,7 +2140,7 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
     unsigned char *args;
     /* header for procedure string */
     const NDR_PROC_HEADER *pProcHeader;
-    const NDR_PROC_HEADER_EXTS *extensions = NULL;
+    const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = NULL;
     struct async_call_data *async_call_data;
     PRPC_ASYNC_STATE pAsync;
     RPC_STATUS status;
@@ -2219,27 +2248,23 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
 
     if (is_oicf_stubdesc(pStubDesc))
     {
-        const NDR_PROC_PARTIAL_OIF_HEADER *pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
-        /* cache of Oif_flags from v2 procedure header */
-        INTERPRETER_OPT_FLAGS Oif_flags;
-        /* cache of extension flags from NDR_PROC_HEADER_EXTS */
         INTERPRETER_OPT_FLAGS2 ext_flags = { 0 };
 
-        Oif_flags = pOIFHeader->Oi2Flags;
+        pOIFHeader = (const NDR_PROC_PARTIAL_OIF_HEADER *)pFormat;
         async_call_data->number_of_params = pOIFHeader->number_of_params;
 
         pFormat += sizeof(NDR_PROC_PARTIAL_OIF_HEADER);
 
-        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(Oif_flags) );
+        TRACE("Oif_flags = %s\n", debugstr_INTERPRETER_OPT_FLAGS(pOIFHeader->Oi2Flags) );
 
-        if (Oif_flags.HasExtensions)
+        if (pOIFHeader->Oi2Flags.HasExtensions)
         {
-            extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
+            const NDR_PROC_HEADER_EXTS *extensions = (const NDR_PROC_HEADER_EXTS *)pFormat;
             ext_flags = extensions->Flags2;
             pFormat += extensions->Size;
         }
 
-        if (Oif_flags.HasPipes)
+        if (pOIFHeader->Oi2Flags.HasPipes)
         {
             FIXME("pipes not supported yet\n");
             RpcRaiseException(RPC_X_WRONG_STUB_VERSION); /* FIXME: remove when implemented */
@@ -2283,7 +2308,7 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
         pServerInfo->ThunkTable[pRpcMsg->ProcNum](async_call_data->pStubMsg);
     else
         call_server_func(pServerInfo->DispatchTable[pRpcMsg->ProcNum], args, async_call_data->stack_size,
-                         extensions);
+                         pOIFHeader);
 }
 
 RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
