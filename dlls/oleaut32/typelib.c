@@ -6618,9 +6618,7 @@ __ASM_GLOBAL_FUNC( call_method,
                     "bgt 2b\n\t"                    /* Loop till done */
 
                     "1:\n\t"
-#ifndef __SOFTFP__
                     "vldm r3!, {s0-s15}\n\t"        /* Load the s0-s15/d0-d7 arguments */
-#endif
                     "mov ip, r0\n\t"                /* Save the function call address to ip before we nuke r0 with arguments to pass */
                     "ldm r3, {r0-r3}\n\t"           /* Load the r0-r3 arguments */
 
@@ -6642,19 +6640,15 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     UINT i;
     DWORD *args;
     struct {
-#ifndef __SOFTFP__
         union {
             float s[16];
             double d[8];
         } sd;
-#endif
         DWORD r[4];
     } regs;
     int rcount;     /* 32-bit register index count */
-#ifndef __SOFTFP__
     int scount = 0; /* single-precision float register index count */
     int dcount = 0; /* double-precision float register index count */
-#endif
 
     TRACE("(%p, %Id, %d, %d, %d, %p, %p, %p (vt=%d))\n",
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
@@ -6702,11 +6696,8 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
 
         switch (prgvt[i])
         {
-        case VT_EMPTY:
-            break;
         case VT_R8:             /* these must be 8-byte aligned, and put in 'd' regs or stack, as they are double-floats */
         case VT_DATE:
-#ifndef __SOFTFP__
             dcount = max( (scount + 1) / 2, dcount );
             if (dcount < 8)
             {
@@ -6719,7 +6710,6 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
                 argspos += sizeof(V_R8(arg)) / sizeof(DWORD);
             }
             break;
-#endif
         case VT_I8:             /* these must be 8-byte aligned, and put in 'r' regs or stack, as they are long-longs */
         case VT_UI8:
         case VT_CY:
@@ -6757,26 +6747,37 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
                 --ntemp;
             }
             break;
-        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
-            if (rcount < 4)
-                regs.r[rcount++] = V_BOOL(arg);
-            else
-                args[argspos++] = V_BOOL(arg);
-            break;
         case VT_R4:             /* these must be 4-byte aligned, and put in 's' regs or stack, as they are single-floats */
-#ifndef __SOFTFP__
             if (!(scount % 2)) scount = max( scount, dcount * 2 );
             if (scount < 16)
                 regs.sd.s[scount++] = V_R4(arg);
             else
                 args[argspos++] = V_UI4(arg);
             break;
-#endif
+        /* extend parameters to 32 bits */
+        case VT_I1:
+            if (rcount < 4) regs.r[rcount++] = V_I1(arg);
+            else args[argspos++] = V_I1(arg);
+            break;
+        case VT_UI1:
+            if (rcount < 4) regs.r[rcount++] = V_UI1(arg);
+            else args[argspos++] = V_UI1(arg);
+            break;
+        case VT_I2:
+            if (rcount < 4) regs.r[rcount++] = V_I2(arg);
+            else args[argspos++] = V_I2(arg);
+            break;
+        case VT_UI2:
+            if (rcount < 4) regs.r[rcount++] = V_UI2(arg);
+            else args[argspos++] = V_UI2(arg);
+            break;
+        case VT_BOOL:
+            if (rcount < 4) regs.r[rcount++] = V_BOOL(arg);
+            else args[argspos++] = V_BOOL(arg);
+            break;
         default:
-            if (rcount < 4)
-                regs.r[rcount++] = V_UI4(arg);
-            else
-                args[argspos++] = V_UI4(arg);
+            if (rcount < 4) regs.r[rcount++] = V_UI4(arg);
+            else args[argspos++] = V_UI4(arg);
             break;
         }
         TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
@@ -6786,7 +6787,6 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
 
     switch (vtReturn)
     {
-    case VT_EMPTY:      /* EMPTY = no return value */
     case VT_DECIMAL:    /* DECIMAL and VARIANT already have a pointer argument passed (see above) */
     case VT_VARIANT:
         call_method( func, argspos, args, (DWORD*)&regs );

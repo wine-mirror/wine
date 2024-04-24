@@ -1188,7 +1188,11 @@ static int WINAPI int_func( int a0, int a1, int a2, int a3, int a4 )
 {
     ok( a0 == 1, "wrong arg0 %x\n", a0 );
     ok( a1 == -1, "wrong arg1 %x\n", a1 );
+#ifdef __arm__  /* parameters are extended on arm */
+    ok( a2 == 1234, "wrong arg2 %x\n", a2 );
+#else
     ok( a2 == (0x55550000 | 1234), "wrong arg2 %x\n", a2 );
+#endif
     ok( a3 == 0xdeadbeef, "wrong arg3 %x\n", a3 );
     ok( a4 == 0x555555fd, "wrong arg4 %x\n", a4 );
     return 4321;
@@ -1226,16 +1230,13 @@ static VARIANT WINAPI variant_func( int a0, BOOL a1, DECIMAL a2, VARIANT a3 )
 
 static int CDECL void_func( int a0, int a1 )
 {
-    if (is_win64)  /* VT_EMPTY is passed as real arg on win64 */
-    {
-        ok( a0 == 0x55555555, "wrong arg0 %x\n", a0 );
-        ok( a1 == 1111, "wrong arg1 %x\n", a1 );
-    }
-    else
-    {
-        ok( a0 == 1111, "wrong arg0 %x\n", a0 );
-        ok( a1 == 0, "wrong arg1 %x\n", a1 );
-    }
+#ifdef __i386__
+    ok( a0 == 1111, "wrong arg0 %x\n", a0 );
+    ok( a1 == 0, "wrong arg1 %x\n", a1 );
+#else  /* VT_EMPTY is passed as real arg on other platforms */
+    ok( a0 == 0x55555555, "wrong arg0 %x\n", a0 );
+    ok( a1 == 1111, "wrong arg1 %x\n", a1 );
+#endif
     return 12;
 }
 
@@ -1433,11 +1434,11 @@ static void test_DispCallFunc(void)
     res = DispCallFunc( NULL, (ULONG_PTR)void_func, CC_CDECL, VT_EMPTY, 5, types, pargs, &result );
     ok( res == S_OK, "DispCallFunc failed %lx\n", res );
     ok( V_VT(&result) == VT_EMPTY, "wrong result type %d\n", V_VT(&result) );
-    if (is_win64)
-        ok( V_UI4(&result) == 12, "wrong result %08lx\n", V_UI4(&result) );
-    else
-        ok( V_UI4(&result) == 0xcccccccc, "wrong result %08lx\n", V_UI4(&result) );
-
+#ifdef __i386__
+    ok( V_UI4(&result) == 0xcccccccc, "wrong result %08lx\n", V_UI4(&result) );
+#else
+    ok( V_UI4(&result) == 12, "wrong result %08lx\n", V_UI4(&result) );
+#endif
     memset( args, 0x55, sizeof(args) );
     types[0] = VT_I4;
     V_I4(&args[0]) = 3;
