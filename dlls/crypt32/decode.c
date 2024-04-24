@@ -6254,13 +6254,26 @@ static BOOL CRYPT_AsnDecodeOCSPSignatureInfoCertEncoded(const BYTE *pbEncoded,
  DWORD *pcbDecoded)
 {
     BOOL ret;
-    struct AsnArrayDescriptor arrayDesc = { 0,
+    DWORD data_len, len_bytes;
+    struct AsnArrayDescriptor arrayDesc = { ASN_SEQUENCE,
      offsetof(OCSP_SIGNATURE_INFO, cCertEncoded), offsetof(OCSP_SIGNATURE_INFO, rgCertEncoded),
      FINALMEMBERSIZE(OCSP_SIGNATURE_INFO, cCertEncoded), verify_and_copy_certificate,
      sizeof(CRYPT_DER_BLOB), TRUE, offsetof(CRYPT_DER_BLOB, pbData) };
 
-    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded, cbEncoded,
+    if (pbEncoded[0] != (ASN_CONTEXT | ASN_CONSTRUCTOR))
+    {
+        WARN("Unexpected tag %#x.\n", pbEncoded[0]);
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+
+    if (!(ret = CRYPT_GetLen(pbEncoded, cbEncoded, &data_len))) return FALSE;
+    len_bytes = GET_LEN_BYTES(pbEncoded[1]);
+
+    ret = CRYPT_AsnDecodeArray(&arrayDesc, pbEncoded + 1 + len_bytes, cbEncoded - 1 - len_bytes,
      dwFlags, NULL, pvStructInfo, pcbStructInfo, pcbDecoded);
+    if (pcbDecoded)
+        *pcbDecoded = 1 + len_bytes + data_len;
     return ret;
 }
 
