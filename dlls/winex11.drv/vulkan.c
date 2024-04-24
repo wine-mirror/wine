@@ -132,18 +132,13 @@ void vulkan_thread_detach(void)
     pthread_mutex_unlock(&vulkan_mutex);
 }
 
-static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
-        const VkWin32SurfaceCreateInfoKHR *create_info,
-        const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
+static VkResult X11DRV_vulkan_surface_create( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *create_info, VkSurfaceKHR *surface )
 {
     VkResult res;
     VkXlibSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *x11_surface;
 
-    TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE( "%p %p %p\n", instance, create_info, surface );
 
     /* TODO: support child window rendering. */
     if (NtUserGetAncestor( create_info->hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
@@ -195,15 +190,11 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     return VK_SUCCESS;
 }
 
-static void X11DRV_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
-        const VkAllocationCallbacks *allocator)
+static void X11DRV_vulkan_surface_destroy( VkInstance instance, VkSurfaceKHR surface )
 {
     struct wine_vk_surface *x11_surface = surface_from_handle(surface);
 
-    TRACE("%p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE( "%p 0x%s\n", instance, wine_dbgstr_longlong(surface) );
 
     pvkDestroySurfaceKHR( instance, x11_surface->host_surface, NULL /* allocator */ );
     wine_vk_surface_release(x11_surface);
@@ -238,8 +229,8 @@ static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
-    .p_vkCreateWin32SurfaceKHR = X11DRV_vkCreateWin32SurfaceKHR,
-    .p_vkDestroySurfaceKHR = X11DRV_vkDestroySurfaceKHR,
+    .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
+    .p_vulkan_surface_destroy = X11DRV_vulkan_surface_destroy,
     .p_vulkan_surface_presented = X11DRV_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,

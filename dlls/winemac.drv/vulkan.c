@@ -100,18 +100,14 @@ static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface 
     free(surface);
 }
 
-static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
-        const VkWin32SurfaceCreateInfoKHR *create_info,
-        const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
+static VkResult macdrv_vulkan_surface_create(VkInstance instance,
+        const VkWin32SurfaceCreateInfoKHR *create_info, VkSurfaceKHR *surface)
 {
     VkResult res;
     struct wine_vk_surface *mac_surface;
     struct macdrv_win_data *data;
 
-    TRACE("%p %p %p %p\n", instance, create_info, allocator, surface);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE("%p %p %p\n", instance, create_info, surface);
 
     if (!(data = get_win_data(create_info->hwnd)))
     {
@@ -183,15 +179,11 @@ err:
     return res;
 }
 
-static void macdrv_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
-        const VkAllocationCallbacks *allocator)
+static void macdrv_vulkan_surface_destroy(VkInstance instance, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *mac_surface = surface_from_handle(surface);
 
-    TRACE("%p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE("%p 0x%s\n", instance, wine_dbgstr_longlong(surface));
 
     wine_vk_surface_destroy(instance, mac_surface);
 }
@@ -224,8 +216,8 @@ static VkSurfaceKHR macdrv_wine_get_host_surface(VkSurfaceKHR surface)
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
-    .p_vkCreateWin32SurfaceKHR = macdrv_vkCreateWin32SurfaceKHR,
-    .p_vkDestroySurfaceKHR = macdrv_vkDestroySurfaceKHR,
+    .p_vulkan_surface_create = macdrv_vulkan_surface_create,
+    .p_vulkan_surface_destroy = macdrv_vulkan_surface_destroy,
     .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,

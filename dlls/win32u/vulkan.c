@@ -75,7 +75,7 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
     if (!(surface = calloc( 1, sizeof(*surface) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    if ((res = driver_funcs->p_vkCreateWin32SurfaceKHR( instance, info, NULL /* allocator */, &surface->driver_surface )))
+    if ((res = driver_funcs->p_vulkan_surface_create( instance, info, &surface->driver_surface )))
     {
         free( surface );
         return res;
@@ -94,7 +94,7 @@ static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle
     TRACE( "instance %p, handle 0x%s, allocator %p\n", instance, wine_dbgstr_longlong(handle), allocator );
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
-    driver_funcs->p_vkDestroySurfaceKHR( instance, surface->driver_surface, NULL /* allocator */ );
+    driver_funcs->p_vulkan_surface_destroy( instance, surface->driver_surface );
     free( surface );
 }
 
@@ -162,14 +162,13 @@ static struct vulkan_funcs vulkan_funcs =
     .p_wine_get_host_surface = win32u_wine_get_host_surface,
 };
 
-static VkResult nulldrv_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *info,
-                                                 const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface )
+static VkResult nulldrv_vulkan_surface_create( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *info, VkSurfaceKHR *surface )
 {
     FIXME( "stub!\n" );
     return VK_ERROR_INCOMPATIBLE_DRIVER;
 }
 
-static void nulldrv_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks *allocator )
+static void nulldrv_vulkan_surface_destroy( VkInstance instance, VkSurfaceKHR surface )
 {
 }
 
@@ -194,8 +193,8 @@ static VkSurfaceKHR nulldrv_wine_get_host_surface( VkSurfaceKHR surface )
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
-    .p_vkCreateWin32SurfaceKHR = nulldrv_vkCreateWin32SurfaceKHR,
-    .p_vkDestroySurfaceKHR = nulldrv_vkDestroySurfaceKHR,
+    .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
+    .p_vulkan_surface_destroy = nulldrv_vulkan_surface_destroy,
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,

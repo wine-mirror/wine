@@ -94,20 +94,16 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
     free(wine_vk_surface);
 }
 
-static VkResult wayland_vkCreateWin32SurfaceKHR(VkInstance instance,
-                                                const VkWin32SurfaceCreateInfoKHR *create_info,
-                                                const VkAllocationCallbacks *allocator,
-                                                VkSurfaceKHR *vk_surface)
+static VkResult wayland_vulkan_surface_create(VkInstance instance,
+                                              const VkWin32SurfaceCreateInfoKHR *create_info,
+                                              VkSurfaceKHR *vk_surface)
 {
     VkResult res;
     VkWaylandSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *wine_vk_surface;
     struct wayland_surface *wayland_surface;
 
-    TRACE("%p %p %p %p\n", instance, create_info, allocator, vk_surface);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE("%p %p %p\n", instance, create_info, vk_surface);
 
     wine_vk_surface = calloc(1, sizeof(*wine_vk_surface));
     if (!wine_vk_surface)
@@ -162,15 +158,11 @@ err:
     return res;
 }
 
-static void wayland_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface,
-                                        const VkAllocationCallbacks *allocator)
+static void wayland_vulkan_surface_destroy(VkInstance instance, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
 
-    TRACE("%p 0x%s %p\n", instance, wine_dbgstr_longlong(surface), allocator);
-
-    if (allocator)
-        FIXME("Support for allocation callbacks not implemented yet\n");
+    TRACE("%p 0x%s\n", instance, wine_dbgstr_longlong(surface));
 
     pvkDestroySurfaceKHR(instance, wine_vk_surface->host_surface, NULL /* allocator */);
     wine_vk_surface_destroy(wine_vk_surface);
@@ -218,8 +210,8 @@ static VkSurfaceKHR wayland_wine_get_host_surface(VkSurfaceKHR surface)
 
 static const struct vulkan_driver_funcs wayland_vulkan_driver_funcs =
 {
-    .p_vkCreateWin32SurfaceKHR = wayland_vkCreateWin32SurfaceKHR,
-    .p_vkDestroySurfaceKHR = wayland_vkDestroySurfaceKHR,
+    .p_vulkan_surface_create = wayland_vulkan_surface_create,
+    .p_vulkan_surface_destroy = wayland_vulkan_surface_destroy,
     .p_vulkan_surface_presented = wayland_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = wayland_vkGetPhysicalDeviceWin32PresentationSupportKHR,
