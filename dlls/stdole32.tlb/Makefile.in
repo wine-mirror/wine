@@ -1,5 +1,6 @@
 MODULE    = stdole32.tlb
 
+EXTRAIDLFLAGS = --oldtlb --win32
 EXTRADLLFLAGS = -Wb,--data-only
 
 SOURCES = \
