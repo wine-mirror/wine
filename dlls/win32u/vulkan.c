@@ -48,6 +48,54 @@ static VkResult (*p_vkQueuePresentKHR)(VkQueue, const VkPresentInfoKHR *);
 static void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
 static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
 
+struct surface
+{
+    VkSurfaceKHR host_surface;
+    VkSurfaceKHR driver_surface;
+};
+
+static inline struct surface *surface_from_handle( VkSurfaceKHR handle )
+{
+    return (struct surface *)(uintptr_t)handle;
+}
+
+static inline VkSurfaceKHR surface_to_handle( struct surface *surface )
+{
+    return (VkSurfaceKHR)(uintptr_t)surface;
+}
+
+static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *info,
+                                                const VkAllocationCallbacks *allocator, VkSurfaceKHR *handle )
+{
+    struct surface *surface;
+    VkResult res;
+
+    TRACE( "instance %p, info %p, allocator %p, handle %p\n", instance, info, allocator, handle );
+    if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
+
+    if (!(surface = calloc( 1, sizeof(*surface) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
+    if ((res = driver_funcs->p_vkCreateWin32SurfaceKHR( instance, info, NULL /* allocator */, &surface->driver_surface )))
+    {
+        free( surface );
+        return res;
+    }
+
+    surface->host_surface = driver_funcs->p_wine_get_host_surface( surface->driver_surface );
+    *handle = surface_to_handle( surface );
+    return VK_SUCCESS;
+}
+
+static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle, const VkAllocationCallbacks *allocator )
+{
+    struct surface *surface = surface_from_handle( handle );
+
+    TRACE( "instance %p, handle 0x%s, allocator %p\n", instance, wine_dbgstr_longlong(handle), allocator );
+    if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
+
+    driver_funcs->p_vkDestroySurfaceKHR( instance, surface->driver_surface, NULL /* allocator */ );
+    free( surface );
+}
+
 static VkResult win32u_vkQueuePresentKHR( VkQueue queue, const VkPresentInfoKHR *present_info, HWND *surfaces )
 {
     VkPresentInfoKHR host_present_info = *present_info;
@@ -95,11 +143,20 @@ static void *win32u_vkGetInstanceProcAddr( VkInstance instance, const char *name
     return p_vkGetInstanceProcAddr( instance, name );
 }
 
+static VkSurfaceKHR win32u_wine_get_host_surface( VkSurfaceKHR handle )
+{
+    struct surface *surface = surface_from_handle( handle );
+    return surface->host_surface;
+}
+
 static struct vulkan_funcs vulkan_funcs =
 {
+    .p_vkCreateWin32SurfaceKHR = win32u_vkCreateWin32SurfaceKHR,
+    .p_vkDestroySurfaceKHR = win32u_vkDestroySurfaceKHR,
     .p_vkQueuePresentKHR = win32u_vkQueuePresentKHR,
     .p_vkGetDeviceProcAddr = win32u_vkGetDeviceProcAddr,
     .p_vkGetInstanceProcAddr = win32u_vkGetInstanceProcAddr,
+    .p_wine_get_host_surface = win32u_wine_get_host_surface,
 };
 
 static VkResult nulldrv_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *info,
@@ -165,11 +222,8 @@ static void vulkan_init(void)
         driver_funcs = &nulldrv_funcs;
     else
     {
-        vulkan_funcs.p_vkCreateWin32SurfaceKHR = driver_funcs->p_vkCreateWin32SurfaceKHR;
-        vulkan_funcs.p_vkDestroySurfaceKHR = driver_funcs->p_vkDestroySurfaceKHR;
         vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR = driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
         vulkan_funcs.p_get_host_surface_extension = driver_funcs->p_get_host_surface_extension;
-        vulkan_funcs.p_wine_get_host_surface = driver_funcs->p_wine_get_host_surface;
     }
 
 #define LOAD_FUNCPTR( f )                                                                          \
