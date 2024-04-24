@@ -132,16 +132,16 @@ void vulkan_thread_detach(void)
     pthread_mutex_unlock(&vulkan_mutex);
 }
 
-static VkResult X11DRV_vulkan_surface_create( VkInstance instance, const VkWin32SurfaceCreateInfoKHR *create_info, VkSurfaceKHR *surface )
+static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface )
 {
     VkResult res;
     VkXlibSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *x11_surface;
 
-    TRACE( "%p %p %p\n", instance, create_info, surface );
+    TRACE( "%p %p %p\n", hwnd, instance, surface );
 
     /* TODO: support child window rendering. */
-    if (NtUserGetAncestor( create_info->hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
+    if (NtUserGetAncestor( hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
     {
         FIXME("Application requires child window rendering, which is not implemented yet!\n");
         return VK_ERROR_INCOMPATIBLE_DRIVER;
@@ -152,13 +152,13 @@ static VkResult X11DRV_vulkan_surface_create( VkInstance instance, const VkWin32
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     x11_surface->ref = 1;
-    x11_surface->hwnd = create_info->hwnd;
-    x11_surface->window = create_client_window( create_info->hwnd, &default_visual, default_colormap );
+    x11_surface->hwnd = hwnd;
+    x11_surface->window = create_client_window( hwnd, &default_visual, default_colormap );
     x11_surface->hwnd_thread_id = NtUserGetWindowThread( x11_surface->hwnd, NULL );
 
     if (!x11_surface->window)
     {
-        ERR("Failed to allocate client window for hwnd=%p\n", create_info->hwnd);
+        ERR( "Failed to allocate client window for hwnd=%p\n", hwnd );
 
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
         free(x11_surface);
@@ -190,11 +190,11 @@ static VkResult X11DRV_vulkan_surface_create( VkInstance instance, const VkWin32
     return VK_SUCCESS;
 }
 
-static void X11DRV_vulkan_surface_destroy( VkInstance instance, VkSurfaceKHR surface )
+static void X11DRV_vulkan_surface_destroy( HWND hwnd, VkInstance instance, VkSurfaceKHR surface )
 {
     struct wine_vk_surface *x11_surface = surface_from_handle(surface);
 
-    TRACE( "%p 0x%s\n", instance, wine_dbgstr_longlong(surface) );
+    TRACE( "%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface) );
 
     pvkDestroySurfaceKHR( instance, x11_surface->host_surface, NULL /* allocator */ );
     wine_vk_surface_release(x11_surface);

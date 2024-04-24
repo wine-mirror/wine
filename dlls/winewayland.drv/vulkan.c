@@ -94,16 +94,14 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *wine_vk_surface)
     free(wine_vk_surface);
 }
 
-static VkResult wayland_vulkan_surface_create(VkInstance instance,
-                                              const VkWin32SurfaceCreateInfoKHR *create_info,
-                                              VkSurfaceKHR *vk_surface)
+static VkResult wayland_vulkan_surface_create(HWND hwnd, VkInstance instance, VkSurfaceKHR *vk_surface)
 {
     VkResult res;
     VkWaylandSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *wine_vk_surface;
     struct wayland_surface *wayland_surface;
 
-    TRACE("%p %p %p\n", instance, create_info, vk_surface);
+    TRACE("%p %p %p\n", hwnd, instance, vk_surface);
 
     wine_vk_surface = calloc(1, sizeof(*wine_vk_surface));
     if (!wine_vk_surface)
@@ -113,10 +111,10 @@ static VkResult wayland_vulkan_surface_create(VkInstance instance,
         goto err;
     }
 
-    wayland_surface = wayland_surface_lock_hwnd(create_info->hwnd);
+    wayland_surface = wayland_surface_lock_hwnd(hwnd);
     if (!wayland_surface)
     {
-        ERR("Failed to find wayland surface for hwnd=%p\n", create_info->hwnd);
+        ERR("Failed to find wayland surface for hwnd=%p\n", hwnd);
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
         goto err;
@@ -127,7 +125,7 @@ static VkResult wayland_vulkan_surface_create(VkInstance instance,
 
     if (!wine_vk_surface->client)
     {
-        ERR("Failed to create client surface for hwnd=%p\n", create_info->hwnd);
+        ERR("Failed to create client surface for hwnd=%p\n", hwnd);
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
         goto err;
@@ -158,11 +156,11 @@ err:
     return res;
 }
 
-static void wayland_vulkan_surface_destroy(VkInstance instance, VkSurfaceKHR surface)
+static void wayland_vulkan_surface_destroy(HWND hwnd, VkInstance instance, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *wine_vk_surface = wine_vk_surface_from_handle(surface);
 
-    TRACE("%p 0x%s\n", instance, wine_dbgstr_longlong(surface));
+    TRACE("%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface));
 
     pvkDestroySurfaceKHR(instance, wine_vk_surface->host_surface, NULL /* allocator */);
     wine_vk_surface_destroy(wine_vk_surface);

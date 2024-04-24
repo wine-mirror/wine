@@ -100,18 +100,17 @@ static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface 
     free(surface);
 }
 
-static VkResult macdrv_vulkan_surface_create(VkInstance instance,
-        const VkWin32SurfaceCreateInfoKHR *create_info, VkSurfaceKHR *surface)
+static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkSurfaceKHR *surface)
 {
     VkResult res;
     struct wine_vk_surface *mac_surface;
     struct macdrv_win_data *data;
 
-    TRACE("%p %p %p\n", instance, create_info, surface);
+    TRACE("%p %p %p\n", hwnd, instance, surface);
 
-    if (!(data = get_win_data(create_info->hwnd)))
+    if (!(data = get_win_data(hwnd)))
     {
-        FIXME("DC for window %p of other process: not implemented\n", create_info->hwnd);
+        FIXME("DC for window %p of other process: not implemented\n", hwnd);
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
@@ -125,7 +124,7 @@ static VkResult macdrv_vulkan_surface_create(VkInstance instance,
     mac_surface->device = macdrv_create_metal_device();
     if (!mac_surface->device)
     {
-        ERR("Failed to allocate Metal device for hwnd=%p\n", create_info->hwnd);
+        ERR("Failed to allocate Metal device for hwnd=%p\n", hwnd);
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
         goto err;
     }
@@ -133,7 +132,7 @@ static VkResult macdrv_vulkan_surface_create(VkInstance instance,
     mac_surface->view = macdrv_view_create_metal_view(data->client_cocoa_view, mac_surface->device);
     if (!mac_surface->view)
     {
-        ERR("Failed to allocate Metal view for hwnd=%p\n", create_info->hwnd);
+        ERR("Failed to allocate Metal view for hwnd=%p\n", hwnd);
 
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -179,11 +178,11 @@ err:
     return res;
 }
 
-static void macdrv_vulkan_surface_destroy(VkInstance instance, VkSurfaceKHR surface)
+static void macdrv_vulkan_surface_destroy(HWND hwnd, VkInstance instance, VkSurfaceKHR surface)
 {
     struct wine_vk_surface *mac_surface = surface_from_handle(surface);
 
-    TRACE("%p 0x%s\n", instance, wine_dbgstr_longlong(surface));
+    TRACE("%p %p 0x%s\n", hwnd, instance, wine_dbgstr_longlong(surface));
 
     wine_vk_surface_destroy(instance, mac_surface);
 }
