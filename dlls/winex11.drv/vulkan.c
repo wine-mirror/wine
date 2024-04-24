@@ -59,7 +59,6 @@ struct wine_vk_surface
     LONG ref;
     struct list entry;
     Window window;
-    VkSurfaceKHR host_surface;
     HWND hwnd;
     DWORD hwnd_thread_id;
 };
@@ -77,11 +76,6 @@ static VkResult (*pvkCreateXlibSurfaceKHR)(VkInstance, const VkXlibSurfaceCreate
 static VkBool32 (*pvkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice, uint32_t, Display *, VisualID);
 
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs;
-
-static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
-{
-    return (struct wine_vk_surface *)(uintptr_t)handle;
-}
 
 static void wine_vk_surface_release( struct wine_vk_surface *surface )
 {
@@ -131,13 +125,13 @@ void vulkan_thread_detach(void)
     pthread_mutex_unlock(&vulkan_mutex);
 }
 
-static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface )
+static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
 {
     VkResult res;
     VkXlibSurfaceCreateInfoKHR create_info_host;
     struct wine_vk_surface *x11_surface;
 
-    TRACE( "%p %p %p\n", hwnd, instance, surface );
+    TRACE( "%p %p %p %p\n", hwnd, instance, surface, private );
 
     /* TODO: support child window rendering. */
     if (NtUserGetAncestor( hwnd, GA_PARENT ) != NtUserGetDesktopWindow())
@@ -157,7 +151,7 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
 
     if (!x11_surface->window)
     {
-        ERR( "Failed to allocate client window for hwnd=%p\n", hwnd );
+        ERR("Failed to allocate client window for hwnd=%p\n", hwnd);
 
         /* VK_KHR_win32_surface only allows out of host and device memory as errors. */
         free(x11_surface);
@@ -170,7 +164,7 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
     create_info_host.dpy = gdi_display;
     create_info_host.window = x11_surface->window;
 
-    res = pvkCreateXlibSurfaceKHR( instance, &create_info_host, NULL /* allocator */, &x11_surface->host_surface );
+    res = pvkCreateXlibSurfaceKHR( instance, &create_info_host, NULL /* allocator */, surface );
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create Xlib surface, res=%d\n", res);
@@ -183,17 +177,17 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
     list_add_tail(&surface_list, &x11_surface->entry);
     pthread_mutex_unlock(&vulkan_mutex);
 
-    *surface = (uintptr_t)x11_surface;
+    *private = x11_surface;
 
-    TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
+    TRACE("Created surface 0x%s, private %p\n", wine_dbgstr_longlong(*surface), *private);
     return VK_SUCCESS;
 }
 
-static void X11DRV_vulkan_surface_destroy( HWND hwnd, VkSurfaceKHR surface )
+static void X11DRV_vulkan_surface_destroy( HWND hwnd, void *private )
 {
-    struct wine_vk_surface *x11_surface = surface_from_handle(surface);
+    struct wine_vk_surface *x11_surface = private;
 
-    TRACE( "%p 0x%s\n", hwnd, wine_dbgstr_longlong(surface) );
+    TRACE( "%p %p\n", hwnd, private );
 
     wine_vk_surface_release(x11_surface);
 }
@@ -216,15 +210,6 @@ static const char *X11DRV_get_host_surface_extension(void)
     return "VK_KHR_xlib_surface";
 }
 
-static VkSurfaceKHR X11DRV_wine_get_host_surface( VkSurfaceKHR surface )
-{
-    struct wine_vk_surface *x11_surface = surface_from_handle(surface);
-
-    TRACE("0x%s\n", wine_dbgstr_longlong(surface));
-
-    return x11_surface->host_surface;
-}
-
 static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = X11DRV_vulkan_surface_create,
@@ -233,7 +218,6 @@ static const struct vulkan_driver_funcs x11drv_vulkan_driver_funcs =
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = X11DRV_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = X11DRV_get_host_surface_extension,
-    .p_wine_get_host_surface = X11DRV_wine_get_host_surface,
 };
 
 UINT X11DRV_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

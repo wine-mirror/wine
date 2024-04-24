@@ -52,7 +52,7 @@ static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
 struct surface
 {
     VkSurfaceKHR host_surface;
-    VkSurfaceKHR driver_surface;
+    void *driver_private;
     HWND hwnd;
 };
 
@@ -76,14 +76,13 @@ static VkResult win32u_vkCreateWin32SurfaceKHR( VkInstance instance, const VkWin
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
     if (!(surface = calloc( 1, sizeof(*surface) ))) return VK_ERROR_OUT_OF_HOST_MEMORY;
-    if ((res = driver_funcs->p_vulkan_surface_create( info->hwnd, instance, &surface->driver_surface )))
+    if ((res = driver_funcs->p_vulkan_surface_create( info->hwnd, instance, &surface->host_surface, &surface->driver_private )))
     {
         free( surface );
         return res;
     }
 
     surface->hwnd = info->hwnd;
-    surface->host_surface = driver_funcs->p_wine_get_host_surface( surface->driver_surface );
     *handle = surface_to_handle( surface );
     return VK_SUCCESS;
 }
@@ -96,7 +95,7 @@ static void win32u_vkDestroySurfaceKHR( VkInstance instance, VkSurfaceKHR handle
     if (allocator) FIXME( "Support for allocation callbacks not implemented yet\n" );
 
     p_vkDestroySurfaceKHR( instance, surface->host_surface, NULL /* allocator */ );
-    driver_funcs->p_vulkan_surface_destroy( surface->hwnd, surface->driver_surface );
+    driver_funcs->p_vulkan_surface_destroy( surface->hwnd, surface->driver_private );
     free( surface );
 }
 
@@ -164,13 +163,13 @@ static struct vulkan_funcs vulkan_funcs =
     .p_wine_get_host_surface = win32u_wine_get_host_surface,
 };
 
-static VkResult nulldrv_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface )
+static VkResult nulldrv_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
 {
     FIXME( "stub!\n" );
     return VK_ERROR_INCOMPATIBLE_DRIVER;
 }
 
-static void nulldrv_vulkan_surface_destroy( HWND hwnd, VkSurfaceKHR surface )
+static void nulldrv_vulkan_surface_destroy( HWND hwnd, void *private )
 {
 }
 
@@ -188,11 +187,6 @@ static const char *nulldrv_get_host_surface_extension(void)
     return "VK_WINE_nulldrv_surface";
 }
 
-static VkSurfaceKHR nulldrv_wine_get_host_surface( VkSurfaceKHR surface )
-{
-    return surface;
-}
-
 static const struct vulkan_driver_funcs nulldrv_funcs =
 {
     .p_vulkan_surface_create = nulldrv_vulkan_surface_create,
@@ -200,7 +194,6 @@ static const struct vulkan_driver_funcs nulldrv_funcs =
     .p_vulkan_surface_presented = nulldrv_vulkan_surface_presented,
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
-    .p_wine_get_host_surface = nulldrv_wine_get_host_surface,
 };
 
 static void vulkan_init(void)

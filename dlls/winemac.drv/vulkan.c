@@ -56,7 +56,6 @@ struct wine_vk_surface
 {
     macdrv_metal_device device;
     macdrv_metal_view view;
-    VkSurfaceKHR host_surface; /* host surface */
 };
 
 typedef struct VkMacOSSurfaceCreateInfoMVK
@@ -81,11 +80,6 @@ static VkResult (*pvkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice,
 
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs;
 
-static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
-{
-    return (struct wine_vk_surface *)(uintptr_t)handle;
-}
-
 static void wine_vk_surface_destroy(struct wine_vk_surface *surface)
 {
     if (surface->view)
@@ -97,13 +91,13 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *surface)
     free(surface);
 }
 
-static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkSurfaceKHR *surface)
+static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private)
 {
     VkResult res;
     struct wine_vk_surface *mac_surface;
     struct macdrv_win_data *data;
 
-    TRACE("%p %p %p\n", hwnd, instance, surface);
+    TRACE("%p %p %p %p\n", hwnd, instance, surface, private);
 
     if (!(data = get_win_data(hwnd)))
     {
@@ -144,7 +138,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
         create_info_host.flags = 0; /* reserved */
         create_info_host.pLayer = macdrv_view_get_metal_layer(mac_surface->view);
 
-        res = pvkCreateMetalSurfaceEXT(instance, &create_info_host, NULL /* allocator */, &mac_surface->host_surface);
+        res = pvkCreateMetalSurfaceEXT(instance, &create_info_host, NULL /* allocator */, surface);
     }
     else
     {
@@ -154,7 +148,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
         create_info_host.flags = 0; /* reserved */
         create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
 
-        res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, &mac_surface->host_surface);
+        res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, surface);
     }
     if (res != VK_SUCCESS)
     {
@@ -162,11 +156,11 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
         goto err;
     }
 
-    *surface = (uintptr_t)mac_surface;
-
     release_win_data(data);
 
-    TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
+    *private = mac_surface;
+
+    TRACE("Created surface=0x%s, private=%p\n", wine_dbgstr_longlong(*surface), *private);
     return VK_SUCCESS;
 
 err:
@@ -175,11 +169,11 @@ err:
     return res;
 }
 
-static void macdrv_vulkan_surface_destroy(HWND hwnd, VkSurfaceKHR surface)
+static void macdrv_vulkan_surface_destroy(HWND hwnd, void *private)
 {
-    struct wine_vk_surface *mac_surface = surface_from_handle(surface);
+    struct wine_vk_surface *mac_surface = private;
 
-    TRACE("%p 0x%s\n", hwnd, wine_dbgstr_longlong(surface));
+    TRACE("%p %p\n", hwnd, private);
 
     wine_vk_surface_destroy(mac_surface);
 }
@@ -201,15 +195,6 @@ static const char *macdrv_get_host_surface_extension(void)
     return pvkCreateMetalSurfaceEXT ? "VK_EXT_metal_surface" : "VK_MVK_macos_surface";
 }
 
-static VkSurfaceKHR macdrv_wine_get_host_surface(VkSurfaceKHR surface)
-{
-    struct wine_vk_surface *mac_surface = surface_from_handle(surface);
-
-    TRACE("0x%s\n", wine_dbgstr_longlong(surface));
-
-    return mac_surface->host_surface;
-}
-
 static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 {
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
@@ -218,7 +203,6 @@ static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,
     .p_get_host_surface_extension = macdrv_get_host_surface_extension,
-    .p_wine_get_host_surface = macdrv_wine_get_host_surface,
 };
 
 UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs)
