@@ -1807,6 +1807,8 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
         context_vk->c.transform_feedback_active = 0;
     }
 
+    ++context_vk->command_buffer_work_count;
+
     context_release(&context_vk->c);
 }
 
@@ -1850,6 +1852,8 @@ static void adapter_vk_dispatch_compute(struct wined3d_device *device,
 
     VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, NULL, 0, NULL, 0, NULL));
+
+    ++context_vk->command_buffer_work_count;
 
     context_release(&context_vk->c);
 }
