@@ -3932,9 +3932,9 @@ static void test_h264_decoder(void)
     static const struct attribute_desc expect_transform_attributes[] =
     {
         ATTR_UINT32(MF_LOW_LATENCY, 0),
-        ATTR_UINT32(MF_SA_D3D_AWARE, 1, .todo = TRUE),
+        ATTR_UINT32(MF_SA_D3D_AWARE, 1),
         ATTR_UINT32(MF_SA_D3D11_AWARE, 1),
-        ATTR_UINT32(MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, 0, .todo = TRUE),
+        ATTR_UINT32(MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, 0),
         /* more H264 decoder specific attributes from CODECAPI */
         ATTR_UINT32(AVDecVideoAcceleration_H264, 1),
         {0},

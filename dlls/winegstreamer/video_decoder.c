@@ -835,11 +835,11 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
         goto failed;
     if (FAILED(hr = MFCreateAttributes(&decoder->attributes, 16)))
         goto failed;
-    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &MF_LOW_LATENCY, 0)))
-        goto failed;
-    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &MF_SA_D3D11_AWARE, TRUE)))
-        goto failed;
-    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &AVDecVideoAcceleration_H264, TRUE)))
+    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &MF_LOW_LATENCY, FALSE))
+            || FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &MF_SA_D3D_AWARE, TRUE))
+            || FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &MF_SA_D3D11_AWARE, TRUE))
+            || FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes,
+                    &MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, FALSE)))
         goto failed;
 
     if (FAILED(hr = MFCreateAttributes(&decoder->output_attributes, 0)))
@@ -908,6 +908,12 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
             video_decoder_output_types, ARRAY_SIZE(video_decoder_output_types), &iface)))
         return hr;
     decoder = impl_from_IMFTransform(iface);
+
+    if (FAILED(hr = IMFAttributes_SetUINT32(decoder->attributes, &AVDecVideoAcceleration_H264, TRUE)))
+    {
+        IMFTransform_Release(iface);
+        return hr;
+    }
 
     decoder->input_info.dwFlags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER
             | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
