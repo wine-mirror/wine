@@ -1680,6 +1680,27 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
             release_surface_readback(&surface_rb);
 
+            /*
+             * Our source and destination rectangles start on aligned
+             * boundaries, but the size is not the entire block.
+             */
+            SetRect(&rect, 4, 0, 6, 2);
+            SetRect(&destrect, 4, 0, 6, 2);
+            hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &destrect, dxt5_8_8,
+                    D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_NONE, 0);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+            get_surface_decompressed_readback(device, newsurf, &surface_rb);
+
+            check_readback_pixel_4bpp(&surface_rb, 4, 0, 0xff00ff00, FALSE); /* Green block, top left. */
+            /*
+             * Bottom left of green block, should still be black from prior
+             * operation.
+             */
+            check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff000000, TRUE);
+
+            release_surface_readback(&surface_rb);
+
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
         }
