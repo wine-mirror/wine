@@ -2,6 +2,7 @@ MODULE    = services.exe
 IMPORTS   = rpcrt4 advapi32 userenv setupapi
 
 EXTRADLLFLAGS = -mwindows
+EXTRAIDLFLAGS = -Oicf
 
 SOURCES = \
 	rpc.c \
