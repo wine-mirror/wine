@@ -1969,8 +1969,8 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
 
     /* Everything matches, simply copy the pixels. */
     if (src_desc->format == dst_desc->format
-            && dst_size.width == src_size.width
-            && dst_size.height == src_size.height
+            && (dst_size.width == src_size.width && !(dst_size.width % dst_desc->block_width))
+            && (dst_size.height == src_size.height && !(dst_size.height % dst_desc->block_height))
             && color_key == 0
             && !(src_rect->left & (src_desc->block_width - 1))
             && !(src_rect->top & (src_desc->block_height - 1))
