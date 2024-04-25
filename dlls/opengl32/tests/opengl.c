@@ -750,7 +750,8 @@ static void test_makecurrent(HDC winhdc)
 static void test_colorbits(HDC hdc)
 {
     const int iAttribList[] = { WGL_COLOR_BITS_ARB, WGL_RED_BITS_ARB, WGL_GREEN_BITS_ARB,
-                                WGL_BLUE_BITS_ARB, WGL_ALPHA_BITS_ARB };
+                                WGL_BLUE_BITS_ARB, WGL_ALPHA_BITS_ARB, WGL_BLUE_SHIFT_ARB, WGL_GREEN_SHIFT_ARB,
+                                WGL_RED_SHIFT_ARB, WGL_ALPHA_SHIFT_ARB, };
     int iAttribRet[ARRAY_SIZE(iAttribList)];
     const int iAttribs[] = { WGL_ALPHA_BITS_ARB, 1, 0 };
     unsigned int nFormats;
@@ -778,6 +779,11 @@ static void test_colorbits(HDC hdc)
         skip("wglGetPixelFormatAttribivARB failed\n");
         return;
     }
+    ok(!iAttribRet[5], "got %d.\n", iAttribRet[5]);
+    ok(iAttribRet[6] == iAttribRet[3], "got %d.\n", iAttribRet[6]);
+    ok(iAttribRet[7] == iAttribRet[6] + iAttribRet[2], "got %d.\n", iAttribRet[7]);
+    ok(iAttribRet[8] == iAttribRet[7] + iAttribRet[1], "got %d.\n", iAttribRet[8]);
+
     iAttribRet[1] += iAttribRet[2]+iAttribRet[3]+iAttribRet[4];
     ok(iAttribRet[0] == iAttribRet[1], "WGL_COLOR_BITS_ARB (%d) does not equal R+G+B+A (%d)!\n",
                                        iAttribRet[0], iAttribRet[1]);
