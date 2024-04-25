@@ -162,6 +162,8 @@ static void test_install_class(void)
      '1','1','d','b','-','b','7','0','4','-',
      '0','0','1','1','9','5','5','c','2','b','d','b','}',0};
     char tmpfile[MAX_PATH];
+    char buf[32];
+    DWORD size;
     BOOL ret;
 
     static const char inf_data[] =
@@ -195,11 +197,27 @@ static void test_install_class(void)
     ok(!ret, "Expected failure.\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Got unexpected error %#lx.\n", GetLastError());
 
+    size = 123;
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetClassDescriptionA(&guid, buf, sizeof(buf), &size);
+    ok(!ret, "Expected failure.\n");
+    ok(size == 123, "Expected 123, got %ld.\n", size);
+    todo_wine
+    ok(GetLastError() == ERROR_NOT_FOUND /* win7 */ || GetLastError() == ERROR_INVALID_CLASS /* win10 */,
+       "Got unexpected error %#lx.\n", GetLastError());
+
     /* The next call will succeed. Information is put into the registry but the
      * location(s) is/are depending on the Windows version.
      */
     ret = SetupDiInstallClassA(NULL, tmpfile, 0, NULL);
     ok(ret, "Failed to install class, error %#lx.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupDiGetClassDescriptionA(&guid, buf, sizeof(buf), &size);
+    ok(ret == TRUE, "Failed to get class description.\n");
+    ok(size == sizeof("Wine test devices"), "Expected %Iu, got %lu.\n", sizeof("Wine test devices"), size);
+    ok(!strcmp(buf, "Wine test devices"), "Got unexpected class description %s.\n", debugstr_a(buf));
+    todo_wine ok(!GetLastError(), "Got unexpected error %#lx.\n", GetLastError());
 
     ret = RegDeleteKeyW(HKEY_LOCAL_MACHINE, classKey);
     ok(!ret, "Failed to delete class key, error %lu.\n", GetLastError());
