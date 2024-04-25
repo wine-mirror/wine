@@ -946,6 +946,74 @@ static void WCMD_parse (const WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
 /*  Data structures for commands  */
 /* ============================== */
 
+static void redirection_dispose_list(CMD_REDIRECTION *redir)
+{
+    while (redir)
+    {
+        CMD_REDIRECTION *next = redir->next;
+        free(redir);
+        redir = next;
+    }
+}
+
+static CMD_REDIRECTION *redirection_create_file(enum CMD_REDIRECTION_KIND kind, unsigned fd, const WCHAR *file)
+{
+    size_t len = wcslen(file) + 1;
+    CMD_REDIRECTION *redir = xalloc(offsetof(CMD_REDIRECTION, file[len]));
+
+    redir->kind = kind;
+    redir->fd = fd;
+    memcpy(redir->file, file, len * sizeof(WCHAR));
+    redir->next = NULL;
+
+    return redir;
+}
+
+static CMD_REDIRECTION *redirection_create_clone(unsigned fd, unsigned fd_clone)
+{
+    CMD_REDIRECTION *redir = xalloc(sizeof(*redir));
+
+    redir->kind = REDIR_WRITE_CLONE;
+    redir->fd = fd;
+    redir->clone = fd_clone;
+    redir->next = NULL;
+
+    return redir;
+}
+
+static void command_dispose(CMD_COMMAND *cmd)
+{
+    if (cmd)
+    {
+        free(cmd->command);
+        redirection_dispose_list(cmd->redirects);
+        free(cmd);
+    }
+}
+
+/***************************************************************************
+ * node_dispose_tree
+ *
+ * Frees the storage held for a parsed command line
+ * - This is not done in the process_commands, as eventually the current
+ *   pointer will be modified within the commands, and hence a single free
+ *   routine is simpler
+ */
+void node_dispose_tree(CMD_NODE *cmds)
+{
+    /* Loop through the commands, freeing them one by one */
+    while (cmds)
+    {
+        CMD_NODE *thisCmd = cmds;
+        cmds = CMD_node_next(cmds);
+        if (thisCmd->op == CMD_SINGLE)
+            command_dispose(thisCmd->command);
+        else
+            node_dispose_tree(thisCmd->left);
+        free(thisCmd);
+    }
+}
+
 static CMD_NODE *node_create_single(CMD_COMMAND *c)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
@@ -1280,7 +1348,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     /* Parse the command string, without reading any more input */
     WCMD_ReadAndParseLine(command, &toExecute, INVALID_HANDLE_VALUE);
     WCMD_process_commands(toExecute, FALSE, called);
-    WCMD_free_commands(toExecute);
+    node_dispose_tree(toExecute);
     toExecute = NULL;
     return;
   }
@@ -1295,10 +1363,17 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
 }
 
-static BOOL set_std_redirections(WCHAR *new_redir, WCHAR *in_pipe)
+/* this is obviously wrong... will require more work to be fixed */
+static inline unsigned clamp_fd(unsigned fd)
 {
-    SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
-    WCHAR *pos, *redir;
+    return fd <= 2 ? fd : 1;
+}
+
+static BOOL set_std_redirections(CMD_REDIRECTION *redir, WCHAR *in_pipe)
+{
+    static DWORD std_index[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+    static SECURITY_ATTRIBUTES sa = {.nLength = sizeof(sa), .lpSecurityDescriptor = NULL, .bInheritHandle = TRUE};
+    WCHAR expanded_filename[MAXSTRING];
     HANDLE h;
 
     /* STDIN could come from a preceding pipe, so delete on close if it does */
@@ -1312,62 +1387,53 @@ static BOOL set_std_redirections(WCHAR *new_redir, WCHAR *in_pipe)
         SetStdHandle(STD_INPUT_HANDLE, h);
         /* Otherwise STDIN could come from a '<' redirect */
     }
-    else if ((pos = wcschr(new_redir,'<')) != NULL)
+    for (; redir; redir = redir->next)
     {
-        h = CreateFileW(WCMD_parameter(++pos, 0, NULL, FALSE, FALSE), GENERIC_READ, FILE_SHARE_READ,
-                        &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (h == INVALID_HANDLE_VALUE) return FALSE;
-        SetStdHandle(STD_INPUT_HANDLE, h);
-    }
-
-    redir = new_redir;
-    /* Scan the whole command looking for > and 2> */
-    while (redir != NULL && ((pos = wcschr(redir,'>')) != NULL))
-    {
-        DWORD disposition;
-        int std_idx;
-
-        if (pos > redir && (*(pos-1)=='2'))
-            std_idx = STD_ERROR_HANDLE;
-        else
-            /* FIXME what if a number different from 1 & 2 is present? */
-            std_idx = STD_OUTPUT_HANDLE;
-
-        pos++;
-        if ('>' == *pos)
+        switch (redir->kind)
         {
-            disposition = OPEN_ALWAYS;
-            pos++;
-        }
-        else
-            disposition = CREATE_ALWAYS;
-
-        /* Add support for 2>&1 */
-        redir = pos;
-        if (*pos == '&')
-        {
-            int idx = *(pos+1) - '0';
-
-            /* FIXME what if a number different from 1 & 2 is present? */
+        case REDIR_READ_FROM:
+            if (in_pipe) continue; /* give precedence to pipe */
+            wcscpy(expanded_filename, redir->file);
+            handleExpansion(expanded_filename, context != NULL, delayedsubst);
+            h = CreateFileW(expanded_filename, GENERIC_READ, FILE_SHARE_READ,
+                            &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (h == INVALID_HANDLE_VALUE)
+            {
+                WARN("Failed to open (%ls)\n", expanded_filename);
+                return FALSE;
+            }
+            TRACE("Open (%ls) => %p\n", expanded_filename, h);
+            break;
+        case REDIR_WRITE_TO:
+        case REDIR_WRITE_APPEND:
+            {
+                DWORD disposition = redir->kind == REDIR_WRITE_TO ? CREATE_ALWAYS : OPEN_ALWAYS;
+                wcscpy(expanded_filename, redir->file);
+                handleExpansion(expanded_filename, context != NULL, delayedsubst);
+                h = CreateFileW(expanded_filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                                &sa, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
+                if (h == INVALID_HANDLE_VALUE)
+                {
+                    WARN("Failed to open (%ls)\n", expanded_filename);
+                    return FALSE;
+                }
+                TRACE("Open %u (%ls) => %p\n", redir->fd, expanded_filename, h);
+                if (SetFilePointer(h, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
+                    WCMD_print_error();
+            }
+            break;
+        case REDIR_WRITE_CLONE:
             if (!DuplicateHandle(GetCurrentProcess(),
-                                 GetStdHandle(idx == 2 ? STD_ERROR_HANDLE : STD_OUTPUT_HANDLE),
+                                 GetStdHandle(std_index[clamp_fd(redir->clone)]),
                                  GetCurrentProcess(),
                                  &h,
                                  0, TRUE, DUPLICATE_SAME_ACCESS))
             {
-                FIXME("Duplicating handle failed with gle %ld\n", GetLastError());
+                WARN("Duplicating handle failed with gle %ld\n", GetLastError());
             }
+            break;
         }
-        else
-        {
-            WCHAR *param = WCMD_parameter(pos, 0, NULL, FALSE, FALSE);
-            h = CreateFileW(param, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
-                            &sa, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (h == INVALID_HANDLE_VALUE) return FALSE;
-            if (SetFilePointer(h, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
-                WCMD_print_error();
-        }
-        SetStdHandle(std_idx, h);
+        SetStdHandle(std_index[clamp_fd(redir->fd)], h);
     }
     return TRUE;
 }
@@ -1379,20 +1445,20 @@ static BOOL set_std_redirections(WCHAR *new_redir, WCHAR *in_pipe)
  *       try to run it as an internal command. 'retrycall' represents whether
  *       we are attempting this retry.
  */
-void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
-                   CMD_NODE **cmdList, BOOL retrycall)
+void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
+                  CMD_NODE **cmdList, BOOL retrycall)
 {
     WCHAR *cmd, *parms_start;
     int status, i, cmd_index;
     DWORD count;
     WCHAR *whichcmd;
     WCHAR *new_cmd = NULL;
-    WCHAR *new_redir = NULL;
     HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
                                 GetStdHandle (STD_OUTPUT_HANDLE),
                                 GetStdHandle (STD_ERROR_HANDLE)};
     static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
     BOOL prev_echo_mode, piped = FALSE;
+    CMD_REDIRECTION *piped_redir;
 
     WINE_TRACE("command on entry:%s (%p)\n",
                wine_dbgstr_w(command), cmdList);
@@ -1401,9 +1467,6 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     new_cmd = xalloc(MAXSTRING * sizeof(WCHAR));
     lstrcpyW(new_cmd, command);
     cmd = new_cmd;
-
-    /* Move copy of the redirects onto the heap so it can be expanded */
-    new_redir = xalloc(MAXSTRING * sizeof(WCHAR));
 
     /* Strip leading whitespaces, and a '@' if supplied */
     whichcmd = WCMD_skip_leading_spaces(cmd);
@@ -1447,15 +1510,15 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
     /* If piped output, send stdout to the pipe by appending >filename to redirects */
     if (piped) {
-        wsprintfW (new_redir, L"%s > %s", redirects, CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile);
-        WINE_TRACE("Redirects now %s\n", wine_dbgstr_w(new_redir));
+        const WCHAR *to = CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile;
+        piped_redir = redirection_create_file(REDIR_WRITE_TO, 1, to);
+        piped_redir->next = redirects;
     } else {
-        lstrcpyW(new_redir, redirects);
+        piped_redir = redirects;
     }
     /* Expand variables in command line mode only (batch mode will
        be expanded as the line is read in, except for 'for' loops) */
     handleExpansion(new_cmd, (context != NULL), delayedsubst);
-    handleExpansion(new_redir, (context != NULL), delayedsubst);
 
 /*
  * Changing default drive has to be handled as a special case, anything
@@ -1482,9 +1545,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
       status = SetCurrentDirectoryW(cmd);
       if (!status) WCMD_print_error ();
-      free(cmd);
-      free(new_redir);
-      return;
+      goto cleanup;
     }
 
     /*
@@ -1496,11 +1557,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       WCHAR *in_pipe = NULL;
       if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00)
         in_pipe = CMD_node_get_command(*cmdList)->pipeFile;
-      if (!set_std_redirections(new_redir, in_pipe)) {
+      if (!set_std_redirections(piped_redir, in_pipe)) {
         WCMD_print_error ();
-        free(cmd);
-        free(new_redir);
-        return;
+        goto cleanup;
       }
       if (in_pipe)
         /* No need to remember the temporary name any longer once opened */
@@ -1663,8 +1722,9 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_run_program (whichcmd, FALSE);
         echo_mode = prev_echo_mode;
     }
+cleanup:
     free(cmd);
-    free(new_redir);
+    if (piped_redir != redirects) free(piped_redir);
 
     /* Restore old handles */
     for (i=0; i<3; i++) {
@@ -1690,34 +1750,11 @@ WCHAR *WCMD_LoadMessage(UINT id) {
     return msg;
 }
 
-static const char *op2str(CMD_OPERATOR op)
+static WCHAR *find_chr(WCHAR *in, WCHAR *last, const WCHAR *delims)
 {
-    static const char* optable[] = {"op-single", "op-&", "op-||", "op-&&", "op-|"};
-    if (op < ARRAY_SIZE(optable)) return optable[op];
-    return "op-unk";
-}
-
-/***************************************************************************
- * WCMD_DumpCommands
- *
- *	Dumps out the parsed command line to ensure syntax is correct
- */
-static void WCMD_DumpCommands(CMD_NODE *commands)
-{
-    CMD_NODE *thisCmd = commands;
-
-    WINE_TRACE("Parsed line:\n");
-    while (thisCmd != NULL)
-    {
-        TRACE("%p %2.2d %p %s Redir:%s %s\n",
-              thisCmd,
-              CMD_node_get_depth(thisCmd),
-              CMD_node_next(thisCmd),
-              wine_dbgstr_w(CMD_node_get_command(thisCmd)->command),
-              wine_dbgstr_w(CMD_node_get_command(thisCmd)->redirects),
-              op2str(thisCmd->op));
-        thisCmd = CMD_node_next(thisCmd);
-    }
+    for (; in < last; in++)
+        if (wcschr(delims, *in)) return in;
+    return NULL;
 }
 
 /***************************************************************************
@@ -1737,15 +1774,52 @@ static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
 
     /* Copy in the command */
     if (command) {
+        WCHAR *pos;
+        WCHAR *last = redirs + *redirLen;
+        CMD_REDIRECTION **insrt;
+
         thisEntry->command = xalloc((*commandLen + 1) * sizeof(WCHAR));
         memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
         thisEntry->command[*commandLen] = 0x00;
 
-        /* Copy in the redirects */
-        thisEntry->redirects = xalloc((*redirLen + 1) * sizeof(WCHAR));
-        memcpy(thisEntry->redirects, redirs, *redirLen * sizeof(WCHAR));
-        thisEntry->redirects[*redirLen] = 0x00;
-        thisEntry->pipeFile[0] = 0x00;
+        if (redirs) redirs[*redirLen] = 0;
+        /* Create redirects, keeping order (eg "2>foo 1>&2") */
+        insrt = &thisEntry->redirects;
+        *insrt = NULL;
+        for (pos = redirs; pos; insrt = &(*insrt)->next)
+        {
+            WCHAR *p = find_chr(pos, last, L"<>");
+            WCHAR *filename;
+
+            if (!p) break;
+
+            if (*p == L'<')
+            {
+                filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
+                handleExpansion(filename, context != NULL, FALSE);
+                *insrt = redirection_create_file(REDIR_READ_FROM, 0, filename);
+            }
+            else
+            {
+                unsigned fd = 1;
+                unsigned op = REDIR_WRITE_TO;
+
+                if (p > redirs && p[-1] >= L'2' && p[-1] <= L'9') fd = p[-1] - L'0';
+                if (*++p == L'>') {p++; op = REDIR_WRITE_APPEND;}
+                if (*p == L'&' && (p[1] >= L'0' && p[1] <= L'9'))
+                {
+                    *insrt = redirection_create_clone(fd, p[1] - '0');
+                    p++;
+                }
+                else
+                {
+                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
+                    handleExpansion(filename, context != NULL, FALSE);
+                    *insrt = redirection_create_file(op, fd, filename);
+                }
+            }
+            pos = p + 1;
+        }
 
         /* Reset the lengths */
         *commandLen   = 0;
@@ -1756,10 +1830,10 @@ static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
     } else {
         thisEntry->command = NULL;
         thisEntry->redirects = NULL;
-        thisEntry->pipeFile[0] = 0x00;
     }
 
     /* Fill in other fields */
+    thisEntry->pipeFile[0] = 0x00;
     thisEntry->bracketDepth = curDepth;
     return thisEntry;
 }
@@ -1901,6 +1975,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
           return NULL;
     }
     curPos = extraSpace;
+    TRACE("About to parse line (%ls)\n", extraSpace);
 
     /* Handle truncated input - issue warning */
     if (lstrlenW(extraSpace) == MAXSTRING -1) {
@@ -2381,13 +2456,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
     if (curDepth > lineCurDepth) {
         WINE_TRACE("Brackets do not match, error out without executing.\n");
-        WCMD_free_commands(*output);
+        node_dispose_tree(*output);
         *output = NULL;
         errorlevel = 255;
     }
-
-    /* Dump out the parsed output */
-    WCMD_DumpCommands(*output);
 
     return extraSpace;
 }
@@ -2423,43 +2495,13 @@ CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket,
          Also, skip over any batch labels (eg. :fred)          */
       if (CMD_node_get_command(thisCmd)->command && CMD_node_get_command(thisCmd)->command[0] != ':') {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(CMD_node_get_command(thisCmd)->command));
-        WCMD_execute (CMD_node_get_command(thisCmd)->command, CMD_node_get_command(thisCmd)->redirects, &thisCmd, retrycall);
+        WCMD_execute(CMD_node_get_command(thisCmd)->command, CMD_node_get_command(thisCmd)->redirects, &thisCmd, retrycall);
       }
 
       /* Step on unless the command itself already stepped on */
       if (thisCmd == origCmd) thisCmd = CMD_node_next(thisCmd);
     }
     return NULL;
-}
-
-static void WCMD_free_command(CMD_COMMAND *cmd)
-{
-    free(cmd->command);
-    free(cmd->redirects);
-    free(cmd);
-}
-
-/***************************************************************************
- * WCMD_free_commands
- *
- * Frees the storage held for a parsed command line
- * - This is not done in the process_commands, as eventually the current
- *   pointer will be modified within the commands, and hence a single free
- *   routine is simpler
- */
-void WCMD_free_commands(CMD_NODE *cmds)
-{
-    /* Loop through the commands, freeing them one by one */
-    while (cmds)
-    {
-        CMD_NODE *thisCmd = cmds;
-        cmds = CMD_node_next(cmds);
-        if (thisCmd->op == CMD_SINGLE)
-            WCMD_free_command(thisCmd->command);
-        else
-            WCMD_free_commands(thisCmd->left);
-        free(thisCmd);
-    }
 }
 
 static BOOL WINAPI my_event_handler(DWORD ctrl)
@@ -2738,7 +2780,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
       WCMD_process_commands(toExecute, FALSE, FALSE);
-      WCMD_free_commands(toExecute);
+      node_dispose_tree(toExecute);
       toExecute = NULL;
 
       free(cmd);
@@ -2819,7 +2861,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       /* Parse the command string, without reading any more input */
       WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
       WCMD_process_commands(toExecute, FALSE, FALSE);
-      WCMD_free_commands(toExecute);
+      node_dispose_tree(toExecute);
       toExecute = NULL;
       free(cmd);
   }
@@ -2838,7 +2880,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
     if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
       break;
     WCMD_process_commands(toExecute, FALSE, FALSE);
-    WCMD_free_commands(toExecute);
+    node_dispose_tree(toExecute);
     promptNewLine = !!toExecute;
     toExecute = NULL;
   }

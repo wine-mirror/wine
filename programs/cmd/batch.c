@@ -93,7 +93,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
          the command as a result of a call failing to find a program, hence the
          retryCall parameter below is FALSE                                           */
       WCMD_process_commands(toExecute, FALSE, FALSE);
-      WCMD_free_commands(toExecute);
+      node_dispose_tree(toExecute);
       toExecute = NULL;
   }
   CloseHandle (h);

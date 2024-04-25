@@ -34,6 +34,19 @@
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
 
+/* Data structure to express a redirection */
+typedef struct _CMD_REDIRECTION
+{
+    enum CMD_REDIRECTION_KIND {REDIR_READ_FROM, REDIR_WRITE_TO, REDIR_WRITE_APPEND, REDIR_WRITE_CLONE} kind;
+    unsigned short fd;
+    struct _CMD_REDIRECTION *next;
+    union
+    {
+        unsigned short clone; /* only if kind is REDIR_WRITE_CLONE */
+        WCHAR file[1];        /* only if kind is READ_FROM, WRITE or WRITE_APPEND */
+    };
+} CMD_REDIRECTION;
+
 /* Data structure to hold commands delimiters/separators */
 
 typedef enum _CMD_OPERATOR
@@ -50,7 +63,7 @@ typedef enum _CMD_OPERATOR
 typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
-  WCHAR              *redirects;   /* Redirects in place                       */
+  CMD_REDIRECTION    *redirects;   /* Redirects in place                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
   WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_COMMAND;
@@ -153,9 +166,9 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
 CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket, BOOL retrycall);
-void      WCMD_free_commands(CMD_NODE *cmds);
-void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
-                        CMD_NODE **cmdList, BOOL retrycall);
+void      node_dispose_tree(CMD_NODE *cmds);
+void      WCMD_execute(const WCHAR *orig_command, CMD_REDIRECTION *redirects,
+                       CMD_NODE **cmdList, BOOL retrycall);
 
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
