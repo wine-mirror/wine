@@ -6201,13 +6201,13 @@ static void thread_detach(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
 
+    destroy_thread_windows();
     user_driver->pThreadDetach();
 
     free( thread_info->key_state );
     thread_info->key_state = 0;
     free( thread_info->rawinput );
 
-    destroy_thread_windows();
     cleanup_imm_thread();
     NtClose( thread_info->server_queue );
 
