@@ -7484,84 +7484,89 @@ static void test_video_processor(void)
     const struct transform_desc
     {
         const struct attribute_desc *input_type_desc;
+        const WCHAR *input_bitmap;
         const struct attribute_desc *output_type_desc;
         const struct sample_desc *output_sample_desc;
-        const WCHAR *result_bitmap;
+        const WCHAR *output_bitmap;
         ULONG delta;
         BOOL broken;
     }
     video_processor_tests[] =
     {
         {
-            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_default_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
+            .output_type_desc = rgb32_default_stride, .output_bitmap = L"rgb32frame-flip.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
         {
-            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_negative_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
+            .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame-flip.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
         {
-            .input_type_desc = nv12_default_stride, .output_type_desc = rgb32_positive_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
-            .delta = 6,
+            .input_type_desc = nv12_default_stride, .input_bitmap = L"nv12frame.bmp",
+            .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .delta = 6,
         },
         {
-            .input_type_desc = rgb32_default_stride, .output_type_desc = nv12_default_stride,
-            .output_sample_desc = &nv12_sample_desc, .result_bitmap = L"nv12frame-flip.bmp",
-            .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame-flip.bmp",
+            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
         {
-            .input_type_desc = rgb32_negative_stride, .output_type_desc = nv12_default_stride,
-            .output_sample_desc = &nv12_sample_desc, .result_bitmap = L"nv12frame-flip.bmp",
-            .delta = 2, /* Windows returns 0, Wine needs 2 */
+            .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame-flip.bmp",
+            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 0, Wine needs 2 */
         },
         {
-            .input_type_desc = rgb32_positive_stride, .output_type_desc = nv12_default_stride,
-            .output_sample_desc = &nv12_sample_desc, .result_bitmap = L"nv12frame.bmp",
-            .delta = 2, /* Windows returns 1, Wine needs 2 */
+            .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = nv12_default_stride, .output_bitmap = L"nv12frame.bmp",
+            .output_sample_desc = &nv12_sample_desc, .delta = 2, /* Windows returns 1, Wine needs 2 */
         },
         {
-            .input_type_desc = rgb32_negative_stride, .output_type_desc = rgb32_negative_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
+            .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame.bmp",
+            .output_sample_desc = &rgb32_sample_desc,
         },
         {
-            .input_type_desc = rgb32_negative_stride, .output_type_desc = rgb32_positive_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 3, /* Windows returns 3 */
+            .input_type_desc = rgb32_negative_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame-flip.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .delta = 3, /* Windows returns 3 */
         },
         {
-            .input_type_desc = rgb32_positive_stride, .output_type_desc = rgb32_negative_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 3, /* Windows returns 3 */
+            .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_negative_stride, .output_bitmap = L"rgb32frame-flip.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .delta = 3, /* Windows returns 3 */
         },
         {
-            .input_type_desc = rgb32_positive_stride, .output_type_desc = rgb32_positive_stride,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
+            .input_type_desc = rgb32_positive_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_positive_stride, .output_bitmap = L"rgb32frame.bmp",
+            .output_sample_desc = &rgb32_sample_desc,
         },
         {
-            .input_type_desc = rgb32_with_aperture, .output_type_desc = rgb32_with_aperture,
-            .output_sample_desc = &rgb32_sample_desc, .result_bitmap = L"rgb32frame.bmp",
-            .broken = TRUE /* old Windows version incorrectly rescale */
+            .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame.bmp",
+            .output_sample_desc = &rgb32_sample_desc, .broken = TRUE /* old Windows version incorrectly rescale */
         },
         {
-            .input_type_desc = rgb32_default_stride, .output_type_desc = rgb555_default_stride,
-            .output_sample_desc = &rgb555_sample_desc, .result_bitmap = L"rgb555frame.bmp",
+            .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb555_default_stride, .output_bitmap = L"rgb555frame.bmp",
+            .output_sample_desc = &rgb555_sample_desc,
         },
         {
-            .input_type_desc = rgb32_default_stride, .output_type_desc = rgb555_negative_stride,
-            .output_sample_desc = &rgb555_sample_desc, .result_bitmap = L"rgb555frame.bmp",
+            .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb555_negative_stride, .output_bitmap = L"rgb555frame.bmp",
+            .output_sample_desc = &rgb555_sample_desc,
         },
         {
-            .input_type_desc = rgb32_default_stride, .output_type_desc = rgb555_positive_stride,
-            .output_sample_desc = &rgb555_sample_desc, .result_bitmap = L"rgb555frame-flip.bmp",
-            .delta = 3, /* Windows returns 0, Wine needs 3 */
+            .input_type_desc = rgb32_default_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb555_positive_stride, .output_bitmap = L"rgb555frame-flip.bmp",
+            .output_sample_desc = &rgb555_sample_desc, .delta = 3, /* Windows returns 0, Wine needs 3 */
         },
         {
-            .input_type_desc = rgb555_default_stride, .output_type_desc = rgb555_positive_stride,
-            .output_sample_desc = &rgb555_sample_desc, .result_bitmap = L"rgb555frame-flip.bmp",
-            .delta = 4, /* Windows returns 0, Wine needs 4 */
+            .input_type_desc = rgb555_default_stride, .input_bitmap = L"rgb555frame.bmp",
+            .output_type_desc = rgb555_positive_stride, .output_bitmap = L"rgb555frame-flip.bmp",
+            .output_sample_desc = &rgb555_sample_desc, .delta = 4, /* Windows returns 0, Wine needs 4 */
         },
     };
 
@@ -7909,38 +7914,33 @@ static void test_video_processor(void)
         {
             input_info.cbSize = actual_width * actual_height * 3 / 2;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
-
-            load_resource(L"nv12frame.bmp", &input_data, &input_data_len);
-            /* skip BMP header and RGB data from the dump */
-            length = *(DWORD *)(input_data + 2);
-            input_data_len = input_data_len - length;
-            ok(input_data_len == 13824, "got length %lu\n", input_data_len);
-            input_data = input_data + length;
         }
         else if (test->input_type_desc == rgb555_default_stride)
         {
             input_info.cbSize = actual_width * actual_height * 2;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
-
-            load_resource(L"rgb555frame.bmp", &input_data, &input_data_len);
-            /* skip BMP header and RGB data from the dump */
-            length = *(DWORD *)(input_data + 2 + 2 * sizeof(DWORD));
-            input_data_len -= length;
-            ok(input_data_len == 18432, "got length %lu\n", input_data_len);
-            input_data += length;
         }
         else
         {
             input_info.cbSize = actual_width * actual_height * 4;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
+        }
 
-            load_resource(L"rgb32frame.bmp", &input_data, &input_data_len);
+        load_resource(test->input_bitmap, &input_data, &input_data_len);
+        if (test->input_type_desc == nv12_default_stride)
+        {
             /* skip BMP header and RGB data from the dump */
+            length = *(DWORD *)(input_data + 2);
+            input_data_len = input_data_len - length;
+        }
+        else
+        {
+            /* skip BMP header */
             length = *(DWORD *)(input_data + 2 + 2 * sizeof(DWORD));
             input_data_len -= length;
-            ok(input_data_len == 36864, "got length %lu\n", input_data_len);
-            input_data += length;
         }
+        ok(input_data_len == input_info.cbSize, "got length %lu\n", input_data_len);
+        input_data += length;
 
         input_sample = create_sample(input_data, input_data_len);
         hr = IMFSample_SetSampleTime(input_sample, 0);
@@ -7976,7 +7976,7 @@ static void test_video_processor(void)
             ref = IMFSample_Release(output_sample);
             ok(ref == 1, "Release returned %ld\n", ref);
 
-            ret = check_mf_sample_collection(output_samples, test->output_sample_desc, test->result_bitmap);
+            ret = check_mf_sample_collection(output_samples, test->output_sample_desc, test->output_bitmap);
             ok(ret <= test->delta || broken(test->broken), "got %lu%% diff\n", ret);
             IMFCollection_Release(output_samples);
 
