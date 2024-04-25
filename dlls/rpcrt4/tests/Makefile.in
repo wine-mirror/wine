@@ -1,8 +1,8 @@
 TESTDLL   = rpcrt4.dll
 IMPORTS   = oleaut32 ole32 rpcrt4 secur32 advapi32
-EXTRAIDLFLAGS = --prefix-server=s_
 EXTRADEFS = -DPROXY_DELEGATION
 
+EXTRAIDLFLAGS = -Oicf --prefix-server=s_
 server_EXTRAIDLFLAGS = -Os --prefix-client=mixed_
 server_interp_EXTRAIDLFLAGS = -Oicf --prefix-client=interp_
 
