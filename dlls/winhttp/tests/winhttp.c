@@ -5415,6 +5415,21 @@ static void test_WinHttpGetProxyForUrl(int port)
         GlobalFree( info.lpszProxyBypass );
     }
 
+    options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT|WINHTTP_AUTOPROXY_CONFIG_URL;
+    options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP|WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+    options.lpszAutoConfigUrl = L"http://wpad/wpad.dat";
+
+    SetLastError(0xdeadbeef);
+    memset( &info, 0, sizeof(info) );
+    ret = WinHttpGetProxyForUrl( session, L"http://winehq.org", &options, &info );
+    error = GetLastError();
+    ok( error != ERROR_INVALID_PARAMETER, "got ERROR_INVALID_PARAMETER\n" );
+    if (ret)
+    {
+        GlobalFree( info.lpszProxy );
+        GlobalFree( info.lpszProxyBypass );
+    }
+
     options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
     options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP|WINHTTP_AUTO_DETECT_TYPE_DNS_A;
 
