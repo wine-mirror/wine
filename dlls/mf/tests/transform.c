@@ -7357,6 +7357,15 @@ static void test_video_processor(void)
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
         {0},
     };
+    const struct attribute_desc rgb32_with_aperture_positive_stride[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        {0},
+    };
     const struct attribute_desc nv12_default_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
@@ -7419,17 +7428,19 @@ static void test_video_processor(void)
     };
     const struct attribute_desc nv12_with_aperture[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &actual_aperture, 16),
+        ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &actual_aperture, 16),
+        ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &actual_aperture, 16),
         {0},
     };
     const struct attribute_desc rgb32_no_aperture[] =
     {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
-        ATTR_RATIO(MF_MT_FRAME_SIZE, 82, 84),
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, 82, 84, .required = TRUE),
         {0},
     };
     const MFT_OUTPUT_STREAM_INFO initial_output_info = {0};
@@ -7453,6 +7464,19 @@ static void test_video_processor(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &rgb32_buffer_desc,
+    };
+
+    const struct buffer_desc rgb32_crop_buffer_desc =
+    {
+        .length = actual_aperture.Area.cx * actual_aperture.Area.cy * 4,
+        .compare = compare_rgb32, .compare_rect = {.right = actual_aperture.Area.cx, .bottom = actual_aperture.Area.cy},
+        .dump = dump_rgb32, .size = actual_aperture.Area,
+    };
+    const struct sample_desc rgb32_crop_sample_desc =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 10000000,
+        .buffer_count = 1, .buffers = &rgb32_crop_buffer_desc,
     };
 
     const struct buffer_desc rgb555_buffer_desc =
@@ -7567,6 +7591,26 @@ static void test_video_processor(void)
             .input_type_desc = rgb555_default_stride, .input_bitmap = L"rgb555frame.bmp",
             .output_type_desc = rgb555_positive_stride, .output_bitmap = L"rgb555frame-flip.bmp",
             .output_sample_desc = &rgb555_sample_desc, .delta = 4, /* Windows returns 0, Wine needs 4 */
+        },
+        {
+            .input_type_desc = nv12_with_aperture, .input_bitmap = L"nv12frame.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_sample_desc = &rgb32_crop_sample_desc,
+        },
+        {
+            .input_type_desc = rgb32_no_aperture, .input_bitmap = L"rgb32frame-crop.bmp",
+            .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame-flip.bmp",
+            .output_sample_desc = &rgb32_sample_desc,
+        },
+        {
+            .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame-flip.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_sample_desc = &rgb32_crop_sample_desc,
+        },
+        {
+            .input_type_desc = rgb32_with_aperture_positive_stride, .input_bitmap = L"rgb32frame.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_sample_desc = &rgb32_crop_sample_desc, .delta = 3, /* Windows returns 3 */
         },
     };
 
@@ -7890,6 +7934,23 @@ static void test_video_processor(void)
         check_mft_set_input_type(transform, test->input_type_desc);
         check_mft_get_input_current_type(transform, test->input_type_desc);
 
+        if (i >= 15)
+        {
+            IMFMediaType *media_type;
+            HRESULT hr;
+
+            hr = MFCreateMediaType(&media_type);
+            ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+            init_media_type(media_type, test->output_type_desc, -1);
+            hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+            todo_wine
+            ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+            IMFMediaType_Release(media_type);
+
+            if (hr != S_OK)
+                goto skip_test;
+        }
+
         check_mft_set_output_type_required(transform, test->output_type_desc);
         check_mft_set_output_type(transform, test->output_type_desc, S_OK);
         check_mft_get_output_current_type(transform, test->output_type_desc);
@@ -7904,13 +7965,18 @@ static void test_video_processor(void)
             output_info.cbSize = actual_width * actual_height * 2;
             check_mft_get_output_stream_info(transform, S_OK, &output_info);
         }
+        else if (test->output_sample_desc == &rgb32_crop_sample_desc)
+        {
+            output_info.cbSize = actual_aperture.Area.cx * actual_aperture.Area.cy * 4;
+            check_mft_get_output_stream_info(transform, S_OK, &output_info);
+        }
         else
         {
             output_info.cbSize = actual_width * actual_height * 4;
             check_mft_get_output_stream_info(transform, S_OK, &output_info);
         }
 
-        if (test->input_type_desc == nv12_default_stride)
+        if (test->input_type_desc == nv12_default_stride || test->input_type_desc == nv12_with_aperture)
         {
             input_info.cbSize = actual_width * actual_height * 3 / 2;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
@@ -7920,6 +7986,11 @@ static void test_video_processor(void)
             input_info.cbSize = actual_width * actual_height * 2;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
         }
+        else if (test->input_type_desc == rgb32_no_aperture)
+        {
+            input_info.cbSize = 82 * 84 * 4;
+            check_mft_get_input_stream_info(transform, S_OK, &input_info);
+        }
         else
         {
             input_info.cbSize = actual_width * actual_height * 4;
@@ -7927,7 +7998,7 @@ static void test_video_processor(void)
         }
 
         load_resource(test->input_bitmap, &input_data, &input_data_len);
-        if (test->input_type_desc == nv12_default_stride)
+        if (test->input_type_desc == nv12_default_stride || test->input_type_desc == nv12_with_aperture)
         {
             /* skip BMP header and RGB data from the dump */
             length = *(DWORD *)(input_data + 2);
@@ -7991,6 +8062,12 @@ static void test_video_processor(void)
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
+
+skip_test:
+        hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        hr = IMFTransform_SetOutputType(transform, 0, NULL, 0);
+        ok(hr == S_OK, "got %#lx\n", hr);
     }
 
     ret = IMFTransform_Release(transform);
