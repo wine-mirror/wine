@@ -184,6 +184,41 @@ static const shared_object_t *find_shared_session_object( obj_locator_t locator 
     return NULL;
 }
 
+NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **desktop_shm )
+{
+    struct session_thread_data *data = get_session_thread_data();
+    const shared_object_t *object;
+
+    TRACE( "lock %p, desktop_shm %p\n", lock, desktop_shm );
+
+    if (!(object = data->shared_desktop))
+    {
+        obj_locator_t locator;
+
+        SERVER_START_REQ( get_thread_desktop )
+        {
+            req->tid = GetCurrentThreadId();
+            wine_server_call( req );
+            locator = reply->locator;
+        }
+        SERVER_END_REQ;
+
+        data->shared_desktop = find_shared_session_object( locator );
+        if (!(object = data->shared_desktop)) return STATUS_INVALID_HANDLE;
+        memset( lock, 0, sizeof(*lock) );
+    }
+
+    if (!lock->id || !shared_object_release_seqlock( object, lock->seq ))
+    {
+        shared_object_acquire_seqlock( object, &lock->seq );
+        *desktop_shm = &object->shm.desktop;
+        lock->id = object->id;
+        return STATUS_PENDING;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 BOOL is_virtual_desktop(void)
 {
     HANDLE desktop = NtUserGetThreadDesktop( GetCurrentThreadId() );

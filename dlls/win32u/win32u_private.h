@@ -213,6 +213,14 @@ struct object_lock
 };
 #define OBJECT_LOCK_INIT {0}
 
+/* Get shared session object's data pointer, must be called in a loop while STATUS_PENDING
+ * is returned, lock must be initialized with OBJECT_LOCK_INIT.
+ *
+ * The data read from the objects may be transient and no logic should be executed based
+ * on it, within the loop, or after, unless the function has returned STATUS_SUCCESS.
+ */
+extern NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **desktop_shm );
+
 extern BOOL is_virtual_desktop(void);
 
 /* window.c */
