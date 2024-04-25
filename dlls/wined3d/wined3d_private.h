@@ -2678,8 +2678,8 @@ int wined3d_ffp_vertex_program_key_compare(const void *key, const struct wine_rb
 
 extern const struct wined3d_parent_ops wined3d_null_parent_ops;
 
-void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const struct wined3d_state *state,
-        struct ffp_frag_settings *settings, BOOL ignore_textype);
+void wined3d_ffp_get_fs_settings(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct ffp_frag_settings *settings);
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings);
 void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc);
