@@ -2116,8 +2116,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
         DWORD filter, D3DCOLOR color_key)
 {
+    RECT dst_rect_temp, dst_rect_aligned, dst_locked_rect, dst_locked_rect_aligned;
     const struct pixel_format_desc *srcformatdesc, *destformatdesc;
-    RECT dst_rect_temp, dst_rect_aligned;
     IDirect3DSurface9 *surface;
     D3DSURFACE_DESC surfdesc;
     D3DLOCKED_RECT lockrect;
@@ -2192,8 +2192,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lockrect, &surface, TRUE)))
         return hr;
 
-    hr = d3dx_load_image_from_memory(lockrect.pBits, lockrect.Pitch, destformatdesc, dst_palette, dst_rect,
-            &dst_rect_aligned, src_memory, src_pitch, srcformatdesc, src_palette, src_rect, filter, color_key);
+    dst_locked_rect_aligned = dst_rect_aligned;
+    dst_locked_rect = *dst_rect;
+    OffsetRect(&dst_locked_rect_aligned, -dst_rect_aligned.left, -dst_rect_aligned.top);
+    OffsetRect(&dst_locked_rect, -dst_rect_aligned.left, -dst_rect_aligned.top);
+    hr = d3dx_load_image_from_memory(lockrect.pBits, lockrect.Pitch, destformatdesc, dst_palette, &dst_locked_rect,
+            &dst_locked_rect_aligned, src_memory, src_pitch, srcformatdesc, src_palette, src_rect, filter, color_key);
     if (FAILED(hr))
         WARN("d3dx_load_image_from_memory failed with hr %#lx\n", hr);
 

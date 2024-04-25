@@ -1697,7 +1697,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
              * Bottom left of green block, should still be black from prior
              * operation.
              */
-            check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff000000, TRUE);
+            check_readback_pixel_4bpp(&surface_rb, 4, 3, 0xff000000, FALSE);
 
             release_surface_readback(&surface_rb);
 
