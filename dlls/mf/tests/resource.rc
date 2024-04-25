@@ -110,6 +110,14 @@ rgb32frame-flip.bmp RCDATA rgb32frame-flip.bmp
 rgb32frame-crop.bmp RCDATA rgb32frame-crop.bmp
 
 /* Generated from running the tests on Windows */
+/* @makedep: rgb32frame-crop-flip.bmp */
+rgb32frame-crop-flip.bmp RCDATA rgb32frame-crop-flip.bmp
+
+/* Generated from running the tests on Windows */
+/* @makedep: abgr32frame-crop.bmp */
+abgr32frame-crop.bmp RCDATA abgr32frame-crop.bmp
+
+/* Generated from running the tests on Windows */
 /* @makedep: rgb32frame-grabber.bmp */
 rgb32frame-grabber.bmp RCDATA rgb32frame-grabber.bmp
 

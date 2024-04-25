@@ -55,10 +55,10 @@ DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0
 DEFINE_GUID(DMOVideoFormat_RGB565,D3DFMT_R5G6B5,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_GUID(MFAudioFormat_RAW_AAC1,WAVE_FORMAT_RAW_AAC1,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(MFVideoFormat_ABGR32,0x00000020,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(MFVideoFormat_P208,0x38303250,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(MFVideoFormat_VC1S,0x53314356,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(MFVideoFormat_WMV_Unknown,0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0xb8,0xed,0x54,0x31,0x6b);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_ABGR32,D3DFMT_A8B8G8R8);
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_P208,MAKEFOURCC('P','2','0','8'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_VC1S,MAKEFOURCC('V','C','1','S'));
 DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_IV50,MAKEFOURCC('I','V','5','0'));
 
 DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
@@ -773,20 +773,23 @@ static void check_mft_set_output_type_required_(int line, IMFTransform *transfor
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 
-static void check_mft_set_output_type(IMFTransform *transform, const struct attribute_desc *attributes,
-        HRESULT expect_hr)
+#define check_mft_set_output_type(a, b, c) check_mft_set_output_type_(__LINE__, a, b, c, FALSE, FALSE)
+static void check_mft_set_output_type_(int line, IMFTransform *transform, const struct attribute_desc *attributes,
+        HRESULT expect_hr, BOOL todo_test, BOOL todo)
 {
     IMFMediaType *media_type;
     HRESULT hr;
 
     hr = MFCreateMediaType(&media_type);
-    ok(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "MFCreateMediaType returned hr %#lx.\n", hr);
     init_media_type(media_type, attributes, -1);
 
     hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-    ok(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
+    todo_wine_if(todo_test)
+    ok_(__FILE__, line)(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
 
     IMFMediaType_Release(media_type);
 }
@@ -931,6 +934,32 @@ DWORD compare_i420(const BYTE *data, DWORD *length, const SIZE *size, const RECT
     }
 
     data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * 3 / 2;
+    return diff * 100 / 256 / data_size;
+}
+
+static DWORD compare_abgr32(const BYTE *data, DWORD *length, const SIZE *size, const RECT *rect, const BYTE *expect)
+{
+    DWORD x, y, data_size, diff = 0, width = size->cx, height = size->cy;
+
+    /* skip BMP header from the dump */
+    data_size = *(DWORD *)(expect + 2 + 2 * sizeof(DWORD));
+    *length = *length + data_size;
+    expect = expect + data_size;
+
+    for (y = 0; y < height; y++, data += width * 4, expect += width * 4)
+    {
+        if (y < rect->top || y >= rect->bottom) continue;
+        for (x = 0; x < width; x++)
+        {
+            if (x < rect->left || x >= rect->right) continue;
+            diff += abs((int)expect[4 * x + 0] - (int)data[4 * x + 0]);
+            diff += abs((int)expect[4 * x + 1] - (int)data[4 * x + 1]);
+            diff += abs((int)expect[4 * x + 2] - (int)data[4 * x + 2]);
+            diff += abs((int)expect[4 * x + 3] - (int)data[4 * x + 3]);
+        }
+    }
+
+    data_size = (rect->right - rect->left) * (rect->bottom - rect->top) * 4;
     return diff * 100 / 256 / data_size;
 }
 
@@ -7595,22 +7624,22 @@ static void test_video_processor(void)
         },
         {
             .input_type_desc = nv12_with_aperture, .input_bitmap = L"nv12frame.bmp",
-            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_sample_desc = &rgb32_crop_sample_desc,
         },
         {
-            .input_type_desc = rgb32_no_aperture, .input_bitmap = L"rgb32frame-crop.bmp",
+            .input_type_desc = rgb32_no_aperture, .input_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame-flip.bmp",
             .output_sample_desc = &rgb32_sample_desc, .broken = TRUE /* old Windows version incorrectly rescale */
         },
         {
             .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame-flip.bmp",
-            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_sample_desc = &rgb32_crop_sample_desc,
         },
         {
             .input_type_desc = rgb32_with_aperture_positive_stride, .input_bitmap = L"rgb32frame.bmp",
-            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop.bmp",
+            .output_type_desc = rgb32_no_aperture, .output_bitmap = L"rgb32frame-crop-flip.bmp",
             .output_sample_desc = &rgb32_crop_sample_desc, .delta = 3, /* Windows returns 3 */
         },
     };
@@ -7924,6 +7953,22 @@ static void test_video_processor(void)
         winetest_pop_context();
     }
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
+
+    /* MFVideoFormat_ABGR32 isn't supported by the video processor in non-D3D mode */
+    check_mft_set_input_type(transform, nv12_default_stride);
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_ABGR32);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx\n", hr);
+    IMFMediaType_Release(media_type);
+
+    /* MFVideoFormat_RGB32 output format works */
+
+    check_mft_set_output_type(transform, rgb32_default_stride, S_OK);
+    check_mft_get_output_current_type(transform, rgb32_default_stride);
 
     for (i = 0; i < ARRAY_SIZE(video_processor_tests); i++)
     {
@@ -8597,6 +8642,17 @@ static void test_h264_with_dxgi_manager(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IMFMediaType_Release(type);
 
+    /* MFVideoFormat_ABGR32 output isn't supported by the D3D11-enabled decoder */
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_ABGR32);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
@@ -8985,6 +9041,32 @@ static void test_iv50_decoder(void)
     IMFCollection_Release(collection);
 }
 
+static IMFSample *create_d3d_sample(IMFVideoSampleAllocator *allocator, const void *data, ULONG size)
+{
+    IMFMediaBuffer *media_buffer;
+    IMFSample *sample;
+    BYTE *buffer;
+    HRESULT hr;
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFSample_GetBufferByIndex(sample, 0, &media_buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    if (!data) memset(buffer, 0xcd, size);
+    else memcpy(buffer, data, size);
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaBuffer_Release(media_buffer);
+
+    return sample;
+}
+
 static void test_video_processor_with_dxgi_manager(void)
 {
     static const unsigned int set_width = 82, set_height = 84, aligned_width = 96, aligned_height = 96;
@@ -9003,6 +9085,76 @@ static void test_video_processor_with_dxgi_manager(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 0,
         .buffer_count = 1, .buffers = &output_buffer_desc_rgb32,
+    };
+
+    const struct buffer_desc output_buffer_desc_rgb32_crop =
+    {
+        .length = set_width * set_height * 4,
+        .compare = compare_rgb32, .compare_rect = {.right = set_width, .bottom = set_height},
+        .dump = dump_rgb32, .size = {.cx = set_width, .cy = set_height},
+    };
+    const struct sample_desc output_sample_desc_rgb32_crop =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 0,
+        .buffer_count = 1, .buffers = &output_buffer_desc_rgb32_crop,
+    };
+
+    const struct buffer_desc output_buffer_desc_abgr32_crop =
+    {
+        .length = set_width * set_height * 4,
+        .compare = compare_abgr32, .compare_rect = {.right = set_width, .bottom = set_height},
+        .dump = dump_rgb32, .size = {.cx = set_width, .cy = set_height},
+    };
+    const struct sample_desc output_sample_desc_abgr32_crop =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 0,
+        .buffer_count = 1, .buffers = &output_buffer_desc_abgr32_crop,
+    };
+
+    const GUID expect_available_outputs[] =
+    {
+        MFVideoFormat_ARGB32,
+        MFVideoFormat_ABGR32,
+        MFVideoFormat_A2R10G10B10,
+        MFVideoFormat_A16B16G16R16F,
+        MFVideoFormat_NV12,
+        MFVideoFormat_P010,
+        MFVideoFormat_YUY2,
+        MFVideoFormat_L8,
+        MFVideoFormat_L16,
+        MFVideoFormat_D16,
+    };
+    static const media_type_desc expect_available_common =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+    };
+
+    static const MFVideoArea aperture = {.Area={set_width, set_height}};
+    const struct attribute_desc nv12_with_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, aligned_width, aligned_height),
+        ATTR_BLOB(MF_MT_MINIMUM_DISPLAY_APERTURE, &aperture, 16),
+        ATTR_BLOB(MF_MT_GEOMETRIC_APERTURE, &aperture, 16),
+        ATTR_BLOB(MF_MT_PAN_SCAN_APERTURE, &aperture, 16),
+        {0},
+    };
+    const struct attribute_desc rgb32_no_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, set_width, set_height),
+        {0},
+    };
+    const struct attribute_desc abgr32_no_aperture[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_ABGR32),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, set_width, set_height),
+        {0},
     };
 
     IMFVideoSampleAllocator *allocator = NULL;
@@ -9025,9 +9177,8 @@ static void test_video_processor_with_dxgi_manager(void)
     ID3D11Device *d3d11;
     IMFMediaType *type;
     DWORD status, val;
-    ULONG i, length;
+    ULONG i, j, length;
     UINT32 value;
-    BYTE *data;
     HRESULT hr;
     UINT token;
     DWORD ret;
@@ -9106,6 +9257,45 @@ static void test_video_processor_with_dxgi_manager(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     IMFMediaType_Release(type);
 
+    j = i = 0;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &type)))
+    {
+        GUID guid;
+        winetest_push_context("out %lu", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        check_media_type(type, expect_available_common, -1);
+
+        hr = IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &guid);
+        ok(hr == S_OK, "GetGUID returned %#lx\n", hr);
+
+        for (; j < ARRAY_SIZE(expect_available_outputs); j++)
+            if (IsEqualGUID(&expect_available_outputs[j], &guid))
+                break;
+        todo_wine_if(i >= 2)
+        ok(j < ARRAY_SIZE(expect_available_outputs), "got subtype %s\n", debugstr_guid(&guid));
+
+        ret = IMFMediaType_Release(type);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+
+
+    /* MFVideoFormat_ABGR32 is supported by the D3D11-enabled video processor */
+
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFVideoFormat_ABGR32);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, (UINT64)96 << 32 | 96);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, type, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    IMFMediaType_Release(type);
+
+
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &type);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
@@ -9130,23 +9320,8 @@ static void test_video_processor_with_dxgi_manager(void)
     nv12frame_data = nv12frame_data + length;
     ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
 
-
     /* native wants a dxgi buffer on input */
-
-    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &input_sample);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IMFSample_SetSampleTime(input_sample, 0);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IMFSample_SetSampleDuration(input_sample, 0);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IMFSample_GetBufferByIndex(input_sample, 0, &buffer);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    memcpy(data, nv12frame_data, nv12frame_data_len);
-    hr = IMFMediaBuffer_Unlock(buffer);
-    ok(hr == S_OK, "got %#lx\n", hr);
-    IMFMediaBuffer_Release(buffer);
+    input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
 
     hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
@@ -9266,6 +9441,143 @@ static void test_video_processor_with_dxgi_manager(void)
     if (output.pSample)
         IMFSample_Release(output.pSample);
 
+
+    /* check RGB32 output aperture cropping with D3D buffers */
+
+    check_mft_set_input_type(transform, nv12_with_aperture);
+    check_mft_set_output_type_(__LINE__, transform, rgb32_no_aperture, S_OK, FALSE, TRUE);
+
+    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+    /* skip BMP header and RGB data from the dump */
+    length = *(DWORD *)(nv12frame_data + 2);
+    nv12frame_data_len = nv12frame_data_len - length;
+    nv12frame_data = nv12frame_data + length;
+    ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+
+    input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
+
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
+
+    status = 0;
+    memset(&output, 0, sizeof(output));
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!output.pEvents, "got events\n");
+    todo_wine ok(!!output.pSample, "got no sample\n");
+    ok(output.dwStatus == 0, "got %#lx\n", output.dwStatus);
+    ok(status == 0, "got %#lx\n", status);
+    if (!output.pSample) goto skip_rgb32;
+
+    hr = IMFSample_GetBufferByIndex(output.pSample, 0, &buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&tex2d);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    memset(&desc, 0xcc, sizeof(desc));
+    ID3D11Texture2D_GetDesc(tex2d, &desc);
+    ok(desc.Format == DXGI_FORMAT_B8G8R8X8_UNORM, "got %#x.\n", desc.Format);
+    ok(!desc.Usage, "got %u.\n", desc.Usage);
+    ok(desc.BindFlags == (D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE), "got %#x.\n", desc.BindFlags);
+    ok(!desc.CPUAccessFlags, "got %#x.\n", desc.CPUAccessFlags);
+    ok(!desc.MiscFlags, "got %#x.\n", desc.MiscFlags);
+    ok(desc.MipLevels == 1, "git %u.\n", desc.MipLevels);
+    ok(desc.Width == set_width, "got %u.\n", desc.Width);
+    ok(desc.Height == set_height, "got %u.\n", desc.Height);
+
+    ID3D11Texture2D_Release(tex2d);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMFMediaBuffer_Release(buffer);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output.pSample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    IMFSample_Release(output.pSample);
+
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_rgb32_crop, L"rgb32frame-crop.bmp");
+    todo_wine /* FIXME: video process vertically flips the frame... */
+    ok(ret <= 5, "got %lu%% diff\n", ret);
+
+    IMFCollection_Release(output_samples);
+
+
+skip_rgb32:
+    /* check ABGR32 output with D3D buffers */
+
+    check_mft_set_input_type(transform, nv12_with_aperture);
+    check_mft_set_output_type_(__LINE__, transform, abgr32_no_aperture, S_OK, TRUE, TRUE);
+
+    load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
+    /* skip BMP header and RGB data from the dump */
+    length = *(DWORD *)(nv12frame_data + 2);
+    nv12frame_data_len = nv12frame_data_len - length;
+    nv12frame_data = nv12frame_data + length;
+    ok(nv12frame_data_len == 13824, "got length %lu\n", nv12frame_data_len);
+
+    input_sample = create_d3d_sample(allocator, nv12frame_data, nv12frame_data_len);
+
+    hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &info);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(info.dwFlags == MFT_OUTPUT_STREAM_PROVIDES_SAMPLES, "got %#lx.\n", info.dwFlags);
+
+    status = 0;
+    memset(&output, 0, sizeof(output));
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!output.pEvents, "got events\n");
+    todo_wine ok(!!output.pSample, "got no sample\n");
+    ok(output.dwStatus == 0, "got %#lx\n", output.dwStatus);
+    ok(status == 0, "got %#lx\n", status);
+    if (!output.pSample) goto skip_abgr32;
+
+    hr = IMFSample_GetBufferByIndex(output.pSample, 0, &buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&tex2d);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    memset(&desc, 0xcc, sizeof(desc));
+    ID3D11Texture2D_GetDesc(tex2d, &desc);
+    ok(desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM, "got %#x.\n", desc.Format);
+    ok(!desc.Usage, "got %u.\n", desc.Usage);
+    ok(desc.BindFlags == D3D11_BIND_RENDER_TARGET, "got %#x.\n", desc.BindFlags);
+    ok(!desc.CPUAccessFlags, "got %#x.\n", desc.CPUAccessFlags);
+    ok(!desc.MiscFlags, "got %#x.\n", desc.MiscFlags);
+    ok(desc.MipLevels == 1, "git %u.\n", desc.MipLevels);
+    ok(desc.Width == set_width, "got %u.\n", desc.Width);
+    ok(desc.Height == set_height, "got %u.\n", desc.Height);
+
+    ID3D11Texture2D_Release(tex2d);
+    IMFDXGIBuffer_Release(dxgi_buffer);
+    IMFMediaBuffer_Release(buffer);
+
+    hr = MFCreateCollection(&output_samples);
+    ok(hr == S_OK, "MFCreateCollection returned %#lx\n", hr);
+
+    hr = IMFCollection_AddElement(output_samples, (IUnknown *)output.pSample);
+    ok(hr == S_OK, "AddElement returned %#lx\n", hr);
+    IMFSample_Release(output.pSample);
+
+    ret = check_mf_sample_collection(output_samples, &output_sample_desc_abgr32_crop, L"abgr32frame-crop.bmp");
+    todo_wine /* FIXME: video process vertically flips the frame... */
+    ok(ret <= 8 /* NVIDIA needs 5, AMD needs 8 */, "got %lu%% diff\n", ret);
+
+    IMFCollection_Release(output_samples);
+
+
+skip_abgr32:
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
 
