@@ -3,6 +3,8 @@ IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
 DELAYIMPORTS = rpcrt4 setupapi
 
+EXTRAIDLFLAGS = -Oicf
+
 SOURCES = \
 	instr.c \
 	ntoskrnl.c \
