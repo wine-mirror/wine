@@ -1,6 +1,8 @@
 TESTDLL   = schedsvc.dll
 IMPORTS   = advapi32 rpcrt4 ole32
 
+EXTRAIDLFLAGS = -Oicf
+
 SOURCES = \
 	atsvc.idl \
 	atsvcapi.c \
