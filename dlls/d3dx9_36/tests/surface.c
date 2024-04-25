@@ -1173,6 +1173,24 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
     check_pixel_4bpp(&lockrect, 0, 0, 0x8dc32bf6);
     IDirect3DSurface9_UnlockRect(surf);
+
+    /*
+     * Test negative offsets in the source rectangle. Causes an access
+     * violation when run on 64-bit Windows.
+     */
+    if (sizeof(void *) != 8)
+    {
+        SetRect(&rect, 0, -1, 1, 0);
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, &pixdata_a8b8g8r8[2],
+                D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+        check_pixel_4bpp(&lockrect, 0, 0, pixdata_a8b8g8r8[0]);
+        IDirect3DSurface9_UnlockRect(surf);
+    }
+    else
+        skip("Skipping test for negative source rectangle values on 64-bit.\n");
+
     check_release((IUnknown *)surf, 0);
 
     /* test color conversion */
