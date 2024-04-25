@@ -18,10 +18,17 @@
  *
  */
 
-#include "ntdll_test.h"
-#include <winnls.h>
-#include <ddk/ntddk.h>
+#include <stdarg.h>
 #include <stdio.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "winnls.h"
+#include "ddk/ntddk.h"
+#include "wine/test.h"
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
@@ -2351,14 +2358,14 @@ static void test_query_process_image_file_name(void)
     status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, &image_file_name, sizeof(image_file_name), &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
-    buffer = heap_alloc(ReturnLength);
+    buffer = malloc(ReturnLength);
     status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileName, buffer, ReturnLength, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     todo_wine
     ok(!memcmp(buffer->Buffer, deviceW, sizeof(deviceW)),
         "Expected image name to begin with \\Device\\, got %s\n",
         wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));
-    heap_free(buffer);
+    free(buffer);
 
     status = NtQueryInformationProcess(NULL, ProcessImageFileNameWin32, &image_file_name, sizeof(image_file_name), NULL);
     if (status == STATUS_INVALID_INFO_CLASS)
@@ -2374,13 +2381,13 @@ static void test_query_process_image_file_name(void)
     status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileNameWin32, &image_file_name, sizeof(image_file_name), &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
-    buffer = heap_alloc(ReturnLength);
+    buffer = malloc(ReturnLength);
     status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageFileNameWin32, buffer, ReturnLength, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok(memcmp(buffer->Buffer, deviceW, sizeof(deviceW)),
         "Expected image name not to begin with \\Device\\, got %s\n",
         wine_dbgstr_wn(buffer->Buffer, buffer->Length / sizeof(WCHAR)));
-    heap_free(buffer);
+    free(buffer);
 }
 
 static void test_query_process_image_info(void)

@@ -23,9 +23,15 @@
 
 #include <stdlib.h>
 #include <limits.h>
+#include <stdarg.h>
 
-#include "ntdll_test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
 #include "winnls.h"
+#include "wine/test.h"
 
 
 /* Function ptrs for ntdll calls */

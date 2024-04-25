@@ -22,12 +22,18 @@
  *
  */
 
-#include "ntdll_test.h"
-#include "winternl.h"
-#include "stdio.h"
-#include "winnt.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winnls.h"
-#include "stdlib.h"
+#include "winternl.h"
+#include "wine/test.h"
 
 /* A test string */
 static const WCHAR stringW[] = {'s', 't', 'r', 'i', 'n', 'g', 'W', 0};

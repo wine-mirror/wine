@@ -19,7 +19,14 @@
  *
  */
 
-#include "ntdll_test.h"
+#include <stdarg.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "wine/test.h"
 
 static NTSTATUS (WINAPI *pNtCreateThreadEx)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *,
                                              HANDLE, PRTL_THREAD_START_ROUTINE, void *,

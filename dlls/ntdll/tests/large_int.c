@@ -22,8 +22,14 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 
-#include "ntdll_test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "wine/test.h"
 
 
 /* Function ptrs for ntdll calls */

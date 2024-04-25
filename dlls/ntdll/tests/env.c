@@ -19,8 +19,14 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 
-#include "ntdll_test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "wine/test.h"
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
