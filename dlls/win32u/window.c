@@ -1765,22 +1765,33 @@ static NTSTATUS get_window_region( HWND hwnd, BOOL surface, HRGN *region, RECT *
 static void update_surface_region( HWND hwnd )
 {
     WND *win = get_win_ptr( hwnd );
-    HRGN region;
+    HRGN region, shape = 0;
     RECT visible;
 
     if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
     if (!win->surface) goto done;
 
+    if (get_window_region( hwnd, FALSE, &shape, &visible )) goto done;
+    if (shape)
+    {
+        region = NtGdiCreateRectRgn( 0, 0, visible.right - visible.left, visible.bottom - visible.top );
+        NtGdiCombineRgn( shape, shape, region, RGN_AND );
+        if (win->dwExStyle & WS_EX_LAYOUTRTL) NtUserMirrorRgn( hwnd, shape );
+        NtGdiDeleteObjectApp( region );
+    }
+
     if (get_window_region( hwnd, TRUE, &region, &visible )) goto done;
-    if (!region) win->surface->funcs->set_region( win->surface, 0 );
+    if (!region) win->surface->funcs->set_region( win->surface, shape );
     else
     {
         NtGdiOffsetRgn( region, -visible.left, -visible.top );
+        if (shape) NtGdiCombineRgn( region, region, shape, RGN_AND );
         win->surface->funcs->set_region( win->surface, region );
         NtGdiDeleteObjectApp( region );
     }
 
 done:
+    if (shape) NtGdiDeleteObjectApp( shape );
     release_win_ptr( win );
 }
 
