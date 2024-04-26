@@ -1445,23 +1445,15 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir, WCHAR *in_pipe)
  *       try to run it as an internal command. 'retrycall' represents whether
  *       we are attempting this retry.
  */
-void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
-                  CMD_NODE **cmdList, BOOL retrycall)
+static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOOL retrycall)
 {
     WCHAR *cmd, *parms_start;
-    int status, i, cmd_index;
-    DWORD count;
+    int status, cmd_index, count;
     WCHAR *whichcmd;
     WCHAR *new_cmd = NULL;
-    HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
-                                GetStdHandle (STD_OUTPUT_HANDLE),
-                                GetStdHandle (STD_ERROR_HANDLE)};
-    static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
-    BOOL prev_echo_mode, piped = FALSE;
-    CMD_REDIRECTION *piped_redir;
+    BOOL prev_echo_mode;
 
-    WINE_TRACE("command on entry:%s (%p)\n",
-               wine_dbgstr_w(command), cmdList);
+    TRACE("command on entry:%s (%p)\n", wine_dbgstr_w(command), cmdList);
 
     /* Move copy of the command onto the heap so it can be expanded */
     new_cmd = xalloc(MAXSTRING * sizeof(WCHAR));
@@ -1470,7 +1462,7 @@ void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
 
     /* Strip leading whitespaces, and a '@' if supplied */
     whichcmd = WCMD_skip_leading_spaces(cmd);
-    WINE_TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
+    TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
     if (whichcmd[0] == '@') whichcmd++;
 
     /* Check if the command entered is internal, and identify which one */
@@ -1484,40 +1476,6 @@ void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
     }
     parms_start = WCMD_skip_leading_spaces (&whichcmd[count]);
 
-    /* If the next command is a pipe then we implement pipes by redirecting
-       the output from this command to a temp file and input into the
-       next command from that temp file.
-       Note: Do not do this for a for or if statement as the pipe is for
-       the individual statements, not the for or if itself.
-       FIXME: Use of named pipes would make more sense here as currently this
-       process has to finish before the next one can start but this requires
-       a change to not wait for the first app to finish but rather the pipe  */
-    if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF) &&
-        cmdList && (*cmdList)->op == CMD_PIPE) {
-
-        WCHAR temp_path[MAX_PATH];
-
-        /* Remember piping is in action */
-        WINE_TRACE("Output needs to be piped\n");
-        piped = TRUE;
-
-        /* Generate a unique temporary filename */
-        GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
-        GetTempFileNameW(temp_path, L"CMD", 0, CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile);
-        WINE_TRACE("Using temporary file of %s\n",
-                   wine_dbgstr_w(CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile));
-    }
-
-    /* If piped output, send stdout to the pipe by appending >filename to redirects */
-    if (piped) {
-        const WCHAR *to = CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile;
-        piped_redir = redirection_create_file(REDIR_WRITE_TO, 1, to);
-        piped_redir->next = redirects;
-    } else {
-        piped_redir = redirects;
-    }
-    /* Expand variables in command line mode only (batch mode will
-       be expanded as the line is read in, except for 'for' loops) */
     handleExpansion(new_cmd, (context != NULL), delayedsubst);
 
 /*
@@ -1548,27 +1506,8 @@ void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
       goto cleanup;
     }
 
-    /*
-     *  Redirect stdin, stdout and/or stderr if required.
-     *  Note: Do not do this for a for or if statement as the pipe is for
-     *  the individual statements, not the for or if itself.
-     */
-    if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF)) {
-      WCHAR *in_pipe = NULL;
-      if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00)
-        in_pipe = CMD_node_get_command(*cmdList)->pipeFile;
-      if (!set_std_redirections(piped_redir, in_pipe)) {
-        WCMD_print_error ();
-        goto cleanup;
-      }
-      if (in_pipe)
-        /* No need to remember the temporary name any longer once opened */
-        in_pipe[0] = 0x00;
-    } else {
-      WINE_TRACE("Not touching redirects for a FOR or IF command\n");
-    }
     WCMD_parse (parms_start, quals, param1, param2);
-    WINE_TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
+    TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 
     if (cmd_index <= WCMD_EXIT && (parms_start[0] == '/') && (parms_start[1] == '?')) {
       /* this is a help request for a builtin program */
@@ -1724,14 +1663,114 @@ void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
     }
 cleanup:
     free(cmd);
+}
+
+/*****************************************************************************
+ * Process one command. If the command is EXIT this routine does not return.
+ * We will recurse through here executing batch files.
+ * Note: If call is used to a non-existing program, we reparse the line and
+ *       try to run it as an internal command. 'retrycall' represents whether
+ *       we are attempting this retry.
+ */
+void WCMD_execute(const WCHAR *command, CMD_REDIRECTION *redirects,
+                  CMD_NODE **cmdList, BOOL retrycall)
+{
+    WCHAR *cmd;
+    int i, cmd_index, count;
+    WCHAR *whichcmd;
+    WCHAR *new_cmd = NULL;
+    HANDLE old_stdhandles[3] = {GetStdHandle (STD_INPUT_HANDLE),
+                                GetStdHandle (STD_OUTPUT_HANDLE),
+                                GetStdHandle (STD_ERROR_HANDLE)};
+    static DWORD idx_stdhandles[3] = {STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE};
+    CMD_REDIRECTION *piped_redir = redirects;
+
+    TRACE("command on entry:%s (%p)\n", wine_dbgstr_w(command), cmdList);
+
+    /* Move copy of the command onto the heap so it can be expanded */
+    new_cmd = xalloc(MAXSTRING * sizeof(WCHAR));
+    lstrcpyW(new_cmd, command);
+    cmd = new_cmd;
+
+    /* Strip leading whitespaces, and a '@' if supplied */
+    whichcmd = WCMD_skip_leading_spaces(cmd);
+    TRACE("Command: '%s'\n", wine_dbgstr_w(cmd));
+    if (whichcmd[0] == '@') whichcmd++;
+
+    /* Check if the command entered is internal, and identify which one */
+    count = 0;
+    while (IsCharAlphaNumericW(whichcmd[count])) {
+      count++;
+    }
+    for (cmd_index=0; cmd_index<=WCMD_EXIT; cmd_index++) {
+      if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+        whichcmd, count, inbuilt[cmd_index], -1) == CSTR_EQUAL) break;
+    }
+
+    /* If the next command is a pipe then we implement pipes by redirecting
+       the output from this command to a temp file and input into the
+       next command from that temp file.
+       Note: Do not do this for a for or if statement as the pipe is for
+       the individual statements, not the for or if itself.
+       FIXME: Use of named pipes would make more sense here as currently this
+       process has to finish before the next one can start but this requires
+       a change to not wait for the first app to finish but rather the pipe  */
+    /* FIXME this is wrong: we need to discriminate between redirection in individual
+     * commands in the blocks, vs redirection of the whole command.
+     */
+    if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF) &&
+        cmdList && (*cmdList)->op == CMD_PIPE)
+    {
+        const WCHAR *to;
+        WCHAR temp_path[MAX_PATH];
+
+        /* Remember piping is in action */
+        TRACE("Output needs to be piped\n");
+
+        /* Generate a unique temporary filename */
+        GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+        GetTempFileNameW(temp_path, L"CMD", 0, CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile);
+        TRACE("Using temporary file of %s\n",
+              wine_dbgstr_w(CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile));
+        /* send stdout to the pipe by appending >filename to redirects */
+        to = CMD_node_get_command(CMD_node_next(*cmdList))->pipeFile;
+        piped_redir = redirection_create_file(REDIR_WRITE_TO, 1, to);
+        piped_redir->next = redirects;
+    }
+
+    /*
+     *  Redirect stdin, stdout and/or stderr if required.
+     *  Note: Do not do this for a for or if statement as the pipe is for
+     *  the individual statements, not the for or if itself.
+     */
+    /* FIXME this is wrong (see above) */
+    if (!(cmd_index == WCMD_FOR || cmd_index == WCMD_IF)) {
+      WCHAR *in_pipe = NULL;
+      if (cmdList && CMD_node_get_command(*cmdList)->pipeFile[0] != 0x00)
+        in_pipe = CMD_node_get_command(*cmdList)->pipeFile;
+      if (!set_std_redirections(piped_redir, in_pipe)) {
+        WCMD_print_error ();
+        goto cleanup;
+      }
+      if (in_pipe)
+        /* No need to remember the temporary name any longer once opened */
+        in_pipe[0] = 0x00;
+    } else {
+      TRACE("Not touching redirects for a FOR or IF command\n");
+    }
+    execute_single_command(command, cmdList, retrycall);
+cleanup:
+    free(cmd);
     if (piped_redir != redirects) free(piped_redir);
 
     /* Restore old handles */
-    for (i=0; i<3; i++) {
-      if (old_stdhandles[i] != GetStdHandle(idx_stdhandles[i])) {
-        CloseHandle (GetStdHandle (idx_stdhandles[i]));
-        SetStdHandle (idx_stdhandles[i], old_stdhandles[i]);
-      }
+    for (i = 0; i < 3; i++)
+    {
+        if (old_stdhandles[i] != GetStdHandle(idx_stdhandles[i]))
+        {
+            CloseHandle(GetStdHandle (idx_stdhandles[i]));
+            SetStdHandle(idx_stdhandles[i], old_stdhandles[i]);
+        }
     }
 }
 
