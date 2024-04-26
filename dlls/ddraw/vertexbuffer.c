@@ -304,8 +304,7 @@ static HRESULT WINAPI d3d_vertex_buffer7_ProcessVertices(IDirect3DVertexBuffer7 
     wined3d_stateblock_set_stream_source(device_impl->state,
             0, src_buffer_impl->wined3d_buffer, 0, get_flexible_vertex_size(src_buffer_impl->fvf));
     wined3d_stateblock_set_vertex_declaration(device_impl->state, src_buffer_impl->wined3d_declaration);
-    wined3d_device_apply_stateblock(device_impl->wined3d_device, device_impl->state);
-    hr = wined3d_device_process_vertices(device_impl->wined3d_device, src_idx, dst_idx,
+    hr = wined3d_device_process_vertices(device_impl->wined3d_device, device_impl->state, src_idx, dst_idx,
             count, dst_buffer_impl->wined3d_buffer, NULL, flags, dst_buffer_impl->fvf);
 
     /* Restore the states if needed */

@@ -3610,7 +3610,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 }
 #undef copy_and_next
 
-HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device, struct wined3d_stateblock *stateblock,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
         const struct wined3d_vertex_declaration *declaration, uint32_t flags, uint32_t dst_fvf)
 {
@@ -3630,6 +3630,8 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 
     if (declaration)
         FIXME("Output vertex declaration not implemented yet.\n");
+
+    wined3d_device_apply_stateblock(device, stateblock);
 
     vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;

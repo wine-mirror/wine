@@ -311,10 +311,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                             wined3d_stateblock_set_vertex_declaration(device->state,
                                     ddraw_find_decl(device->ddraw, op == D3DPROCESSVERTICES_TRANSFORMLIGHT
                                     ? D3DFVF_VERTEX : D3DFVF_LVERTEX));
-                            wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                             d3d_device_sync_surfaces(device);
-                            wined3d_device_process_vertices(device->wined3d_device, ci->wStart, ci->wDest,
-                                    ci->dwCount, buffer->dst_vertex_buffer, NULL, 0, D3DFVF_TLVERTEX);
+                            wined3d_device_process_vertices(device->wined3d_device, device->state, ci->wStart,
+                                    ci->wDest, ci->dwCount, buffer->dst_vertex_buffer, NULL, 0, D3DFVF_TLVERTEX);
                             break;
 
                         case D3DPROCESSVERTICES_COPY:

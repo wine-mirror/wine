@@ -3391,8 +3391,7 @@ static HRESULT WINAPI d3d9_device_ProcessVertices(IDirect3DDevice9Ex *iface,
             ERR("Failed to set stream source.\n");
     }
 
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_process_vertices(device->wined3d_device, src_start_idx, dst_idx, vertex_count,
+    hr = wined3d_device_process_vertices(device->wined3d_device, device->state, src_start_idx, dst_idx, vertex_count,
             dst_impl->wined3d_buffer, decl_impl ? decl_impl->wined3d_declaration : NULL,
             flags, dst_impl->fvf);
 

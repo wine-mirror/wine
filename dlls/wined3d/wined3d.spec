@@ -73,7 +73,7 @@
 @ cdecl wined3d_device_get_swapchain_count(ptr)
 @ cdecl wined3d_device_get_wined3d(ptr)
 @ cdecl wined3d_device_incref(ptr)
-@ cdecl wined3d_device_process_vertices(ptr long long long ptr ptr long long)
+@ cdecl wined3d_device_process_vertices(ptr ptr long long long ptr ptr long long)
 @ cdecl wined3d_device_release_focus_window(ptr)
 @ cdecl wined3d_device_reset(ptr ptr ptr ptr long)
 @ cdecl wined3d_device_set_clip_status(ptr ptr)
