@@ -1575,10 +1575,6 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
         }
     }
 
-    if (op->shader_type == WINED3D_SHADER_TYPE_VERTEX)
-        device_invalidate_state(cs->c.device, STATE_SAMPLER(WINED3D_VERTEX_SAMPLER_OFFSET + op->bind_index));
-    else
-        device_invalidate_state(cs->c.device, STATE_SAMPLER(op->bind_index));
     device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     if (new_use_color_key != old_use_color_key)
@@ -1696,14 +1692,7 @@ static void wined3d_cs_exec_set_samplers(struct wined3d_cs *cs, const void *data
     unsigned int i;
 
     for (i = 0; i < op->count; ++i)
-    {
         cs->state.sampler[op->type][op->start_idx + i] = op->samplers[i];
-
-        if (op->type == WINED3D_SHADER_TYPE_PIXEL && i < WINED3D_MAX_FRAGMENT_SAMPLERS)
-            device_invalidate_state(cs->c.device, STATE_SAMPLER(i));
-        else if (op->type == WINED3D_SHADER_TYPE_VERTEX && i < WINED3D_MAX_VERTEX_SAMPLERS)
-            device_invalidate_state(cs->c.device, STATE_SAMPLER(WINED3D_VERTEX_SAMPLER_OFFSET + i));
-    }
 
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
         device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);

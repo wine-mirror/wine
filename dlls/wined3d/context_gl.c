@@ -3206,7 +3206,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
             context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + sampler));
             context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
         }
-        context_invalidate_state(context, STATE_SAMPLER(sampler));
     }
     context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
     context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
@@ -3319,7 +3318,6 @@ void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_
         {
             if (sampler < WINED3D_MAX_FFP_TEXTURES)
                 context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
-            context_invalidate_state(context, STATE_SAMPLER(sampler));
         }
     }
 
@@ -3708,7 +3706,6 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
             if (context_gl->tex_unit_map[i] != i)
             {
                 wined3d_context_gl_map_stage(context_gl, i, i);
-                context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
                 context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
                 context_invalidate_texture_stage(&context_gl->c, i);
             }
@@ -3724,7 +3721,6 @@ static void wined3d_context_gl_map_fixed_function_samplers(struct wined3d_contex
         if (context_gl->tex_unit_map[i] != tex)
         {
             wined3d_context_gl_map_stage(context_gl, i, tex);
-            context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
             context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
             context_invalidate_texture_stage(&context_gl->c, i);
         }
@@ -3745,7 +3741,6 @@ static void wined3d_context_gl_map_psamplers(struct wined3d_context_gl *context_
         if (resource_info[i].type && context_gl->tex_unit_map[i] != i)
         {
             wined3d_context_gl_map_stage(context_gl, i, i);
-            context_invalidate_state(&context_gl->c, STATE_SAMPLER(i));
             context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
             if (i < d3d_info->ffp_fragment_caps.max_blend_stages)
                 context_invalidate_texture_stage(&context_gl->c, i);
@@ -3808,7 +3803,6 @@ static void wined3d_context_gl_map_vsamplers(struct wined3d_context_gl *context_
                     if (context_gl->tex_unit_map[vsampler_idx] != start)
                     {
                         wined3d_context_gl_map_stage(context_gl, vsampler_idx, start);
-                        context_invalidate_state(&context_gl->c, STATE_SAMPLER(vsampler_idx));
                         context_invalidate_state(&context_gl->c, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
                     }
 
