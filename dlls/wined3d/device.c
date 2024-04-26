@@ -1819,14 +1819,6 @@ HRESULT CDECL wined3d_device_context_get_stream_source(const struct wined3d_devi
     return WINED3D_OK;
 }
 
-static void wined3d_device_get_transform(const struct wined3d_device *device,
-        enum wined3d_transform_state state, struct wined3d_matrix *matrix)
-{
-    TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
-
-    *matrix = device->cs->c.state->transforms[state];
-}
-
 HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device,
         const struct wined3d_clip_status *clip_status)
 {
@@ -2930,7 +2922,7 @@ static void wined3d_color_rgb_mul_add(struct wined3d_color *dst, const struct wi
 }
 
 static void init_transformed_lights(struct lights_settings *ls,
-        const struct wined3d_state *state, BOOL legacy_lighting, BOOL compute_lighting)
+        const struct wined3d_stateblock_state *state, BOOL legacy_lighting, BOOL compute_lighting)
 {
     const struct wined3d_light_info *lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
     const struct wined3d_light_info *light_info;
@@ -2943,12 +2935,12 @@ static void init_transformed_lights(struct lights_settings *ls,
     memset(ls, 0, sizeof(*ls));
 
     ls->lighting = !!compute_lighting;
-    ls->fog_mode = state->render_states[WINED3D_RS_FOGVERTEXMODE];
-    ls->fog_coord_mode = state->render_states[WINED3D_RS_RANGEFOGENABLE]
+    ls->fog_mode = state->rs[WINED3D_RS_FOGVERTEXMODE];
+    ls->fog_coord_mode = state->rs[WINED3D_RS_RANGEFOGENABLE]
             ? WINED3D_FFP_VS_FOG_RANGE : WINED3D_FFP_VS_FOG_DEPTH;
-    ls->fog_start = wined3d_get_float_state(state, WINED3D_RS_FOGSTART);
-    ls->fog_end = wined3d_get_float_state(state, WINED3D_RS_FOGEND);
-    ls->fog_density = wined3d_get_float_state(state, WINED3D_RS_FOGDENSITY);
+    ls->fog_start = int_to_float(state->rs[WINED3D_RS_FOGSTART]);
+    ls->fog_end = int_to_float(state->rs[WINED3D_RS_FOGEND]);
+    ls->fog_density = int_to_float(state->rs[WINED3D_RS_FOGDENSITY]);
 
     if (ls->fog_mode == WINED3D_FOG_NONE && !compute_lighting)
         return;
@@ -2961,13 +2953,13 @@ static void init_transformed_lights(struct lights_settings *ls,
 
     compute_normal_matrix(&ls->normal_matrix._11, legacy_lighting, &ls->modelview_matrix);
 
-    wined3d_color_from_d3dcolor(&ls->ambient_light, state->render_states[WINED3D_RS_AMBIENT]);
+    wined3d_color_from_d3dcolor(&ls->ambient_light, state->rs[WINED3D_RS_AMBIENT]);
     ls->legacy_lighting = !!legacy_lighting;
-    ls->normalise = !!state->render_states[WINED3D_RS_NORMALIZENORMALS];
-    ls->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
+    ls->normalise = !!state->rs[WINED3D_RS_NORMALIZENORMALS];
+    ls->localviewer = !!state->rs[WINED3D_RS_LOCALVIEWER];
 
     index = 0;
-    RB_FOR_EACH_ENTRY(light_iter, &state->light_state.lights_tree, struct wined3d_light_info, entry)
+    RB_FOR_EACH_ENTRY(light_iter, &state->light_state->lights_tree, struct wined3d_light_info, entry)
     {
         if (!light_iter->enabled)
             continue;
@@ -3290,13 +3282,14 @@ static void update_fog_factor(float *fog_factor, struct lights_settings *ls)
 
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
-static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
+static HRESULT process_vertices_strided(const struct wined3d_device *device,
+        const struct wined3d_stateblock_state *state, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, uint32_t flags, uint32_t dst_fvf)
 {
     enum wined3d_material_color_source diffuse_source, specular_source, ambient_source, emissive_source;
+    const struct wined3d_state *device_state = device->cs->c.state;
+    const struct wined3d_matrix *proj_mat, *view_mat, *world_mat;
     const struct wined3d_color *material_specular_state_colour;
-    struct wined3d_matrix mat, proj_mat, view_mat, world_mat;
-    const struct wined3d_state *state = device->cs->c.state;
     const struct wined3d_format *output_colour_format;
     static const struct wined3d_color black;
     struct wined3d_map_desc map_desc;
@@ -3304,6 +3297,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     struct wined3d_viewport vp;
     unsigned int texture_count;
     struct lights_settings ls;
+    struct wined3d_matrix mat;
     unsigned int vertex_size;
     BOOL do_clip, lighting;
     float min_z, max_z;
@@ -3317,7 +3311,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (state->render_states[WINED3D_RS_CLIPPING])
+    if (state->rs[WINED3D_RS_CLIPPING])
     {
         static BOOL warned = FALSE;
         /*
@@ -3348,44 +3342,44 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     }
     dest_ptr = map_desc.data;
 
-    wined3d_device_get_transform(device, WINED3D_TS_VIEW, &view_mat);
-    wined3d_device_get_transform(device, WINED3D_TS_PROJECTION, &proj_mat);
-    wined3d_device_get_transform(device, WINED3D_TS_WORLD_MATRIX(0), &world_mat);
+    view_mat = &state->transforms[WINED3D_TS_VIEW];
+    proj_mat = &state->transforms[WINED3D_TS_PROJECTION];
+    world_mat = &state->transforms[WINED3D_TS_WORLD];
 
     TRACE("View mat:\n");
-    TRACE("%.8e %.8e %.8e %.8e\n", view_mat._11, view_mat._12, view_mat._13, view_mat._14);
-    TRACE("%.8e %.8e %.8e %.8e\n", view_mat._21, view_mat._22, view_mat._23, view_mat._24);
-    TRACE("%.8e %.8e %.8e %.8e\n", view_mat._31, view_mat._32, view_mat._33, view_mat._34);
-    TRACE("%.8e %.8e %.8e %.8e\n", view_mat._41, view_mat._42, view_mat._43, view_mat._44);
+    TRACE("%.8e %.8e %.8e %.8e\n", view_mat->_11, view_mat->_12, view_mat->_13, view_mat->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", view_mat->_21, view_mat->_22, view_mat->_23, view_mat->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", view_mat->_31, view_mat->_32, view_mat->_33, view_mat->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", view_mat->_41, view_mat->_42, view_mat->_43, view_mat->_44);
 
     TRACE("Proj mat:\n");
-    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat._11, proj_mat._12, proj_mat._13, proj_mat._14);
-    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat._21, proj_mat._22, proj_mat._23, proj_mat._24);
-    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat._31, proj_mat._32, proj_mat._33, proj_mat._34);
-    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat._41, proj_mat._42, proj_mat._43, proj_mat._44);
+    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_11, proj_mat->_12, proj_mat->_13, proj_mat->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_21, proj_mat->_22, proj_mat->_23, proj_mat->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_31, proj_mat->_32, proj_mat->_33, proj_mat->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", proj_mat->_41, proj_mat->_42, proj_mat->_43, proj_mat->_44);
 
     TRACE("World mat:\n");
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat._11, world_mat._12, world_mat._13, world_mat._14);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat._21, world_mat._22, world_mat._23, world_mat._24);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat._31, world_mat._32, world_mat._33, world_mat._34);
-    TRACE("%.8e %.8e %.8e %.8e\n", world_mat._41, world_mat._42, world_mat._43, world_mat._44);
+    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_11, world_mat->_12, world_mat->_13, world_mat->_14);
+    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_21, world_mat->_22, world_mat->_23, world_mat->_24);
+    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_31, world_mat->_32, world_mat->_33, world_mat->_34);
+    TRACE("%.8e %.8e %.8e %.8e\n", world_mat->_41, world_mat->_42, world_mat->_43, world_mat->_44);
 
     /* Get the viewport */
     wined3d_device_context_get_viewports(&device->cs->c, NULL, &vp);
     TRACE("viewport x %.8e, y %.8e, width %.8e, height %.8e, min_z %.8e, max_z %.8e.\n",
           vp.x, vp.y, vp.width, vp.height, vp.min_z, vp.max_z);
 
-    multiply_matrix(&mat,&view_mat,&world_mat);
-    multiply_matrix(&mat,&proj_mat,&mat);
+    multiply_matrix(&mat, view_mat, world_mat);
+    multiply_matrix(&mat, proj_mat, &mat);
 
     texture_count = (dst_fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
 
-    lighting = state->render_states[WINED3D_RS_LIGHTING]
+    lighting = state->rs[WINED3D_RS_LIGHTING]
             && (dst_fvf & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
     wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
-            &ambient_source, &specular_source, state);
+            &ambient_source, &specular_source, device_state);
     output_colour_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, 0);
-    material_specular_state_colour = state->render_states[WINED3D_RS_SPECULARENABLE]
+    material_specular_state_colour = state->rs[WINED3D_RS_SPECULARENABLE]
             ? &state->material.specular : &black;
     init_transformed_lights(&ls, state, device->adapter->d3d_info.wined3d_creation_flags
             & WINED3D_LEGACY_FFP_LIGHTING, lighting);
@@ -3530,7 +3524,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
                 normal = NULL;
             }
             compute_light(&ambient, &diffuse, &specular, &ls, normal,
-                    state->render_states[WINED3D_RS_SPECULARENABLE] ? state->material.power : 0.0f);
+                    state->rs[WINED3D_RS_SPECULARENABLE] ? state->material.power : 0.0f);
         }
 
         if (dst_fvf & WINED3DFVF_DIFFUSE)
@@ -3614,7 +3608,8 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device, str
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
         const struct wined3d_vertex_declaration *declaration, uint32_t flags, uint32_t dst_fvf)
 {
-    struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_stateblock_state *state = wined3d_stateblock_get_state(stateblock);
+    struct wined3d_state *device_state = device->cs->c.state;
     struct wined3d_stream_info stream_info;
     struct wined3d_resource *resource;
     struct wined3d_box box = {0};
@@ -3633,10 +3628,10 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device, str
 
     wined3d_device_apply_stateblock(device, stateblock);
 
-    vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
-    state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
-    wined3d_stream_info_from_declaration(&stream_info, state, &device->adapter->d3d_info);
-    state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
+    vs = device_state->shader[WINED3D_SHADER_TYPE_VERTEX];
+    device_state->shader[WINED3D_SHADER_TYPE_VERTEX] = NULL;
+    wined3d_stream_info_from_declaration(&stream_info, device_state, &device->adapter->d3d_info);
+    device_state->shader[WINED3D_SHADER_TYPE_VERTEX] = vs;
 
     /* We can't convert FROM a VBO, and vertex buffers used to source into
      * process_vertices() are unlikely to ever be used for drawing. Release
@@ -3675,7 +3670,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device, str
         e->data.addr += (ULONG_PTR)map_desc.data;
     }
 
-    hr = process_vertices_strided(device, dst_idx, vertex_count,
+    hr = process_vertices_strided(device, state, dst_idx, vertex_count,
             &stream_info, dst_buffer, flags, dst_fvf);
 
     map = stream_info.use_map;
