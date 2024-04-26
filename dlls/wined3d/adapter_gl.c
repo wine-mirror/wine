@@ -1324,6 +1324,7 @@ cards_nvidia_binary[] =
     {"GTX 1660 Ti",                 CARD_NVIDIA_GEFORCE_GTX1660TI}, /* GeForce 1600 - highend */
     {"GTX 1660 SUPER",              CARD_NVIDIA_GEFORCE_GTX1660SUPER}, /* GeForce 1600 - highend */
     {"GTX 1650 SUPER",              CARD_NVIDIA_GEFORCE_GTX1650SUPER}, /* GeForce 1600 - midend high */
+    {"GTX 1650",                    CARD_NVIDIA_GEFORCE_GTX1650},   /* GeForce 1600 - midend high */
     {"TITAN V",                     CARD_NVIDIA_TITANV},            /* GeForce 1000 - highend */
     {"TITAN X (Pascal)",            CARD_NVIDIA_TITANX_PASCAL},     /* GeForce 1000 - highend */
     {"GTX 1080 Ti",                 CARD_NVIDIA_GEFORCE_GTX1080TI}, /* GeForce 1000 - highend */
