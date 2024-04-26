@@ -4303,21 +4303,9 @@ void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, cons
 }
 
 
-/**********************************************************************
- *              macdrv_wglDescribePixelFormat
- */
-static int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
+static void describe_pixel_format(const pixel_format *pf, PIXELFORMATDESCRIPTOR *descr)
 {
-    const pixel_format *pf;
     const struct color_mode *mode;
-
-    TRACE("hdc %p fmt %d size %u descr %p\n", hdc, fmt, size, descr);
-
-    if (!descr) return nb_displayable_formats;
-    if (size < sizeof(*descr)) return 0;
-
-    if (!(pf = get_pixel_format(fmt, FALSE)))
-        return 0;
 
     memset(descr, 0, sizeof(*descr));
     descr->nSize            = sizeof(*descr);
@@ -4365,9 +4353,6 @@ static int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMA
     descr->cStencilBits     = pf->stencil_bits;
     descr->cAuxBuffers      = pf->aux_buffers;
     descr->iLayerType       = PFD_MAIN_PLANE;
-
-    TRACE("%s\n", debugstr_pf(pf));
-    return nb_displayable_formats;
 }
 
 /***********************************************************************
@@ -4605,19 +4590,38 @@ static BOOL macdrv_wglSwapBuffers(HDC hdc)
     return TRUE;
 }
 
+/**********************************************************************
+ *              macdrv_get_pixel_formats
+ */
+static void macdrv_get_pixel_formats(struct wgl_pixel_format *formats,
+                                     UINT max_formats, UINT *num_formats,
+                                     UINT *num_onscreen_formats)
+{
+    UINT i;
+
+    if (formats)
+    {
+        for (i = 0; i < min(max_formats, nb_formats); ++i)
+            describe_pixel_format(&pixel_formats[i], &formats[i]);
+    }
+    *num_formats = nb_formats;
+    *num_onscreen_formats = nb_displayable_formats;
+}
+
 static struct opengl_funcs opengl_funcs =
 {
     {
         macdrv_wglCopyContext,          /* p_wglCopyContext */
         macdrv_wglCreateContext,        /* p_wglCreateContext */
         macdrv_wglDeleteContext,        /* p_wglDeleteContext */
-        macdrv_wglDescribePixelFormat,  /* p_wglDescribePixelFormat */
+        NULL,                           /* p_wglDescribePixelFormat */
         macdrv_wglGetPixelFormat,       /* p_wglGetPixelFormat */
         macdrv_wglGetProcAddress,       /* p_wglGetProcAddress */
         macdrv_wglMakeCurrent,          /* p_wglMakeCurrent */
         macdrv_wglSetPixelFormat,       /* p_wglSetPixelFormat */
         macdrv_wglShareLists,           /* p_wglShareLists */
         macdrv_wglSwapBuffers,          /* p_wglSwapBuffers */
+        macdrv_get_pixel_formats,       /* p_get_pixel_formats */
     }
 };
 
