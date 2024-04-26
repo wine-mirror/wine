@@ -736,8 +736,6 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
 void wined3d_context_gl_apply_fbo_state_explicit(struct wined3d_context_gl *context_gl, GLenum target,
         struct wined3d_resource *rt, unsigned int rt_sub_resource_idx,
         struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, uint32_t location);
-void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_gl,
-        const struct wined3d_device *device);
 void wined3d_context_gl_bind_bo(struct wined3d_context_gl *context_gl, GLenum binding, GLuint name);
 void wined3d_context_gl_bind_dummy_textures(const struct wined3d_context_gl *context_gl);
 void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl, GLenum target, GLuint name);
@@ -750,9 +748,6 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
 void wined3d_context_gl_draw_shaded_quad(struct wined3d_context_gl *context_gl, struct wined3d_texture_gl *texture_gl,
         unsigned int sub_resource_idx, const RECT *src_rect, const RECT *dst_rect,
         enum wined3d_texture_filter_type filter);
-void wined3d_context_gl_draw_textured_quad(struct wined3d_context_gl *context_gl,
-        struct wined3d_texture_gl *texture_gl, unsigned int sub_resource_idx,
-        const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter);
 void wined3d_context_gl_enable_clip_distances(struct wined3d_context_gl *context_gl, uint32_t mask);
 void wined3d_context_gl_end_transform_feedback(struct wined3d_context_gl *context_gl);
 void wined3d_context_gl_flush_bo_address(struct wined3d_context_gl *context_gl,

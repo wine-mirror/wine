@@ -5612,91 +5612,6 @@ static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
     free(blitter);
 }
 
-static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3d_context *context,
-        const struct wined3d_resource *src_resource, DWORD src_location,
-        const struct wined3d_resource *dst_resource, DWORD dst_location)
-{
-    const struct wined3d_format *src_format = src_resource->format;
-    const struct wined3d_format *dst_format = dst_resource->format;
-    bool decompress;
-
-    if (src_resource->type != WINED3D_RTYPE_TEXTURE_2D)
-        return false;
-
-    decompress = (src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
-            && !(dst_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED);
-    if (!decompress && !(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
-    {
-        TRACE("Source or destination resource is not GPU accessible.\n");
-        return false;
-    }
-
-    if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_format->id == src_format->id)
-    {
-        if (dst_format->depth_size || dst_format->stencil_size)
-            blit_op = WINED3D_BLIT_OP_DEPTH_BLIT;
-        else
-            blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
-    }
-
-    switch (blit_op)
-    {
-        case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
-            if (context->d3d_info->ffp_fragment_caps.color_key)
-            {
-                TRACE("Colour keying requires converted textures.\n");
-                return false;
-            }
-        case WINED3D_BLIT_OP_COLOR_BLIT:
-        case WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST:
-            if (!wined3d_context_gl_const(context)->gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
-                return false;
-
-            if (TRACE_ON(d3d))
-            {
-                TRACE("Checking support for fixup:\n");
-                dump_color_fixup_desc(src_format->color_fixup);
-            }
-
-            /* We only support identity conversions. */
-            if (!is_identity_fixup(src_format->color_fixup)
-                    || !is_identity_fixup(dst_format->color_fixup))
-            {
-                if (dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
-                {
-                    if (context->device->shader_backend == &none_shader_backend)
-                        WARN("Claiming fixup support because of no shader backend.\n");
-                    return true;
-                }
-                else
-                {
-                    TRACE("Fixups are not supported.\n");
-                    return false;
-                }
-            }
-
-            if (!(dst_resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
-            {
-                if (dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
-                {
-                    if (context->device->shader_backend == &none_shader_backend)
-                        WARN("Claiming !render_target support because of no shader backend.\n");
-                    return true;
-                }
-                else
-                {
-                    TRACE("Can only blit to render targets.\n");
-                    return false;
-                }
-            }
-            return true;
-
-        default:
-            TRACE("Unsupported blit operation %#x.\n", blit_op);
-            return false;
-    }
-}
-
 static bool is_full_clear(const struct wined3d_rendertarget_view *rtv, const RECT *draw_rect, const RECT *clear_rect)
 {
     unsigned int height = rtv->height;
@@ -6057,146 +5972,17 @@ static DWORD ffp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         const struct wined3d_color_key *colour_key, enum wined3d_texture_filter_type filter,
         const struct wined3d_format *resolve_format)
 {
-    struct wined3d_texture_gl *src_texture_gl = wined3d_texture_gl(src_texture);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_resource *src_resource, *dst_resource;
-    struct wined3d_texture *staging_texture = NULL;
-    struct wined3d_color_key old_blt_key;
-    struct wined3d_device *device;
     struct wined3d_blitter *next;
-    DWORD old_colour_key_flags;
-    RECT r;
 
-    src_resource = &src_texture->resource;
-    dst_resource = &dst_texture->resource;
-    device = dst_resource->device;
-
-    if (!ffp_blit_supported(op, context, src_resource, src_location, dst_resource, dst_location))
+    if (!(next = blitter->next))
     {
-        if ((next = blitter->next))
-            return next->ops->blitter_blit(next, op, context, src_texture, src_sub_resource_idx, src_location,
-                    src_rect, dst_texture, dst_sub_resource_idx, dst_location, dst_rect, colour_key, filter,
-                    resolve_format);
+        ERR("No blitter to handle blit op %#x.\n", op);
+        return dst_location;
     }
 
-    TRACE("Blt from texture %p, %u to rendertarget %p, %u.\n",
-            src_texture, src_sub_resource_idx, dst_texture, dst_sub_resource_idx);
-
-    old_blt_key = src_texture->async.src_blt_color_key;
-    old_colour_key_flags = src_texture->async.color_key_flags;
-    wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT, colour_key);
-
-    if (!(src_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
-    {
-        struct wined3d_resource_desc desc;
-        struct wined3d_box upload_box;
-        unsigned int src_level;
-        HRESULT hr;
-
-        TRACE("Source texture is not GPU accessible, creating a staging texture.\n");
-
-        src_level = src_sub_resource_idx % src_texture->level_count;
-        desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
-        desc.format = src_texture->resource.format->id;
-        desc.multisample_type = src_texture->resource.multisample_type;
-        desc.multisample_quality = src_texture->resource.multisample_quality;
-        desc.usage = WINED3DUSAGE_CS;
-        desc.bind_flags = 0;
-        desc.access = WINED3D_RESOURCE_ACCESS_GPU;
-        desc.width = wined3d_texture_get_level_width(src_texture, src_level);
-        desc.height = wined3d_texture_get_level_height(src_texture, src_level);
-        desc.depth = 1;
-        desc.size = 0;
-
-        if (FAILED(hr = wined3d_texture_create(device, &desc, 1, 1, 0,
-                NULL, NULL, &wined3d_null_parent_ops, &staging_texture)))
-        {
-            ERR("Failed to create staging texture, hr %#lx.\n", hr);
-            return dst_location;
-        }
-
-        wined3d_box_set(&upload_box, 0, 0, desc.width, desc.height, 0, desc.depth);
-        wined3d_texture_upload_from_texture(staging_texture, 0, 0, 0, 0,
-                src_texture, src_sub_resource_idx, &upload_box);
-
-        src_texture = staging_texture;
-        src_texture_gl = wined3d_texture_gl(src_texture);
-        src_sub_resource_idx = 0;
-    }
-    else
-    {
-        /* Make sure the surface is up-to-date. This should probably use
-         * surface_load_location() and worry about the destination surface
-         * too, unless we're overwriting it completely. */
-        wined3d_texture_load(src_texture, context, FALSE);
-    }
-
-    if (wined3d_texture_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, dst_rect))
-        wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
-    else
-        wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location);
-
-    context_gl_apply_texture_draw_state(context_gl, dst_texture, dst_sub_resource_idx, dst_location);
-    wined3d_context_gl_apply_ffp_blit_state(context_gl, device);
-
-    if (dst_location == WINED3D_LOCATION_DRAWABLE)
-    {
-        r = *dst_rect;
-        wined3d_texture_translate_drawable_coords(dst_texture, context_gl->window, &r);
-        dst_rect = &r;
-    }
-
-    gl_info->gl_ops.gl.p_glEnable(src_texture_gl->target);
-    checkGLcall("glEnable(target)");
-
-    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || colour_key)
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
-        checkGLcall("glEnable(GL_ALPHA_TEST)");
-    }
-
-    if (colour_key)
-    {
-        /* For P8 surfaces, the alpha component contains the palette index.
-         * Which means that the colourkey is one of the palette entries. In
-         * other cases pixels that should be masked away have alpha set to 0. */
-        if (src_texture->resource.format->id == WINED3DFMT_P8_UINT)
-            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
-                    (float)src_texture->async.src_blt_color_key.color_space_low_value / 255.0f);
-        else
-            gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL, 0.0f);
-        checkGLcall("glAlphaFunc");
-    }
-
-    wined3d_context_gl_draw_textured_quad(context_gl, src_texture_gl,
-            src_sub_resource_idx, src_rect, dst_rect, filter);
-
-    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST || colour_key)
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        checkGLcall("glDisable(GL_ALPHA_TEST)");
-    }
-
-    gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_2D);
-    checkGLcall("glDisable(GL_TEXTURE_2D)");
-    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
-    }
-
-    if (dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture)
-        gl_info->gl_ops.gl.p_glFlush();
-
-    /* Restore the colour key parameters */
-    wined3d_texture_set_color_key(src_texture, WINED3D_CKEY_SRC_BLT,
-            (old_colour_key_flags & WINED3D_CKEY_SRC_BLT) ? &old_blt_key : NULL);
-
-    if (staging_texture)
-        wined3d_texture_decref(staging_texture);
-
-    return dst_location;
+    return next->ops->blitter_blit(next, op, context, src_texture, src_sub_resource_idx, src_location,
+            src_rect, dst_texture, dst_sub_resource_idx, dst_location, dst_rect, colour_key, filter,
+            resolve_format);
 }
 
 static const struct wined3d_blitter_ops ffp_blitter_ops =
