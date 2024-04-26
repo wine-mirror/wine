@@ -186,6 +186,22 @@ static HRESULT create_output_media_type(struct video_decoder *decoder, const GUI
             goto done;
     }
 
+    if (SUCCEEDED(IMFMediaType_GetBlob(stream_type, &MF_MT_GEOMETRIC_APERTURE,
+            (BYTE *)&aperture, sizeof(aperture), &value)))
+    {
+        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_GEOMETRIC_APERTURE,
+                (BYTE *)&aperture, sizeof(aperture))))
+            goto done;
+    }
+
+    if (SUCCEEDED(IMFMediaType_GetBlob(stream_type, &MF_MT_PAN_SCAN_APERTURE,
+            (BYTE *)&aperture, sizeof(aperture), &value)))
+    {
+        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_PAN_SCAN_APERTURE,
+                (BYTE *)&aperture, sizeof(aperture))))
+            goto done;
+    }
+
 done:
     if (SUCCEEDED(hr))
         *media_type = (IMFMediaType *)video_type;

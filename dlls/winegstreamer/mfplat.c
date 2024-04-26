@@ -545,6 +545,10 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
 
                 IMFMediaType_SetBlob(type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
                         (BYTE *)&aperture, sizeof(aperture));
+                IMFMediaType_SetBlob(type, &MF_MT_GEOMETRIC_APERTURE,
+                        (BYTE *)&aperture, sizeof(aperture));
+                IMFMediaType_SetBlob(type, &MF_MT_PAN_SCAN_APERTURE,
+                        (BYTE *)&aperture, sizeof(aperture));
             }
 
             return type;
