@@ -89,6 +89,7 @@
 #define _Inout_
 #define _Inout_bytecap_x_(count)
 #define _Inout_cap_(count)
+#define _Inout_cap_c_(count)
 #define _Inout_opt_
 #define _Inout_opt_cap_c_(count)
 #define _Inout_opt_z_
