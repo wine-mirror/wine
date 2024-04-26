@@ -2485,7 +2485,8 @@ DECL_HANDLER(set_window_pos)
     if (is_visible( top ) && (top->paint_flags & PAINT_HAS_SURFACE))
     {
         reply->surface_win = top->handle;
-        reply->needs_update = !!(top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD));
+        reply->needs_update = !!(top->paint_flags & (PAINT_HAS_PIXEL_FORMAT | PAINT_PIXEL_FORMAT_CHILD)) ||
+                              !!top->win_region;
     }
 }
 
