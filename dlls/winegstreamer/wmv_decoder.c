@@ -81,18 +81,13 @@ struct wmv_decoder
     IUnknown *outer;
     LONG refcount;
 
-    struct wg_format input_format;
-    struct wg_format output_format;
+    DMO_MEDIA_TYPE input_type;
+    DMO_MEDIA_TYPE output_type;
     GUID output_subtype;
 
     wg_transform_t wg_transform;
     struct wg_sample_queue *wg_sample_queue;
 };
-
-static bool wg_format_is_set(struct wg_format *format)
-{
-    return format->major_type != WG_MAJOR_TYPE_UNKNOWN;
-}
 
 static inline struct wmv_decoder *impl_from_IUnknown(IUnknown *iface)
 {
@@ -428,6 +423,8 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
         DMO_MEDIA_TYPE *type)
 {
     struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    UINT64 frame_size, frame_rate;
+    IMFMediaType *media_type;
     VIDEOINFOHEADER *info;
     const GUID *subtype;
     LONG width, height;
@@ -442,15 +439,25 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
         return DMO_E_NO_MORE_ITEMS;
     if (!type)
         return S_OK;
-    if (!wg_format_is_set(&decoder->input_format))
+    if (IsEqualGUID(&decoder->input_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
 
-    width = decoder->input_format.u.video.width;
-    height = abs(decoder->input_format.u.video.height);
+    if (FAILED(hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION,
+            &decoder->input_type, &media_type)))
+        return hr;
+
+    if (FAILED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+        frame_size = 0;
+    if (FAILED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &frame_rate)))
+        frame_rate = (UINT64)1 << 32 | 1;
+
+    width = frame_size >> 32;
+    height = (UINT32)frame_size;
     subtype = wmv_decoder_output_types[type_index].subtype;
     if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &image_size)))
     {
         FIXME("Failed to get image size of subtype %s.\n", debugstr_guid(subtype));
+        IMFMediaType_Release(media_type);
         return hr;
     }
 
@@ -470,8 +477,7 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     info->rcSource.bottom = height;
     info->rcTarget.right  = width;
     info->rcTarget.bottom = height;
-    info->AvgTimePerFrame = MulDiv(10000000, decoder->input_format.u.video.fps_d,
-            decoder->input_format.u.video.fps_n);
+    info->AvgTimePerFrame = MulDiv(10000000, frame_rate >> 32, (UINT32)frame_rate);
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     info->bmiHeader.biWidth  = width;
     info->bmiHeader.biHeight = height;
@@ -480,6 +486,7 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
     info->bmiHeader.biCompression = wmv_decoder_output_types[type_index].compression;
     info->bmiHeader.biSizeImage = image_size;
 
+    IMFMediaType_Release(media_type);
     return S_OK;
 }
 
@@ -487,7 +494,7 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
     struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
-    struct wg_format wg_format;
+    IMFMediaType *media_type;
     unsigned int i;
 
     TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
@@ -499,7 +506,8 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
     {
         if (flags & DMO_SET_TYPEF_CLEAR)
         {
-            memset(&decoder->input_format, 0, sizeof(decoder->input_format));
+            FreeMediaType(&decoder->input_type);
+            memset(&decoder->input_type, 0, sizeof(decoder->input_type));
             if (decoder->wg_transform)
             {
                 wg_transform_destroy(decoder->wg_transform);
@@ -519,14 +527,16 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
     if (i == ARRAY_SIZE(wmv_decoder_input_types))
         return DMO_E_TYPE_NOT_ACCEPTED;
 
-    if (!amt_to_wg_format((const AM_MEDIA_TYPE *)type, &wg_format))
+    if (FAILED(MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION,
+            (void *)type, &media_type)))
         return DMO_E_TYPE_NOT_ACCEPTED;
-    assert(wg_format.major_type == WG_MAJOR_TYPE_VIDEO_WMV);
+    IMFMediaType_Release(media_type);
 
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
 
-    decoder->input_format = wg_format;
+    FreeMediaType(&decoder->input_type);
+    CopyMediaType(&decoder->input_type, type);
     if (decoder->wg_transform)
     {
         wg_transform_destroy(decoder->wg_transform);
@@ -541,8 +551,9 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
 {
     struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
     struct wg_transform_attrs attrs = {0};
-    struct wg_format wg_format;
+    IMFMediaType *media_type;
     unsigned int i;
+    HRESULT hr;
 
     TRACE("iface %p, index %lu, type %p, flags %#lx,\n", iface, index, type, flags);
 
@@ -553,7 +564,8 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     {
         if (flags & DMO_SET_TYPEF_CLEAR)
         {
-            memset(&decoder->output_format, 0, sizeof(decoder->output_format));
+            FreeMediaType(&decoder->output_type);
+            memset(&decoder->output_type, 0, sizeof(decoder->output_type));
             if (decoder->wg_transform)
             {
                 wg_transform_destroy(decoder->wg_transform);
@@ -564,7 +576,7 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         return E_POINTER;
     }
 
-    if (!wg_format_is_set(&decoder->input_format))
+    if (IsEqualGUID(&decoder->input_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
 
     if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Video))
@@ -576,15 +588,16 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     if (i == ARRAY_SIZE(wmv_decoder_output_types))
         return DMO_E_TYPE_NOT_ACCEPTED;
 
-    if (!amt_to_wg_format((const AM_MEDIA_TYPE *)type, &wg_format))
+    if (FAILED(MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION,
+            (void *)type, &media_type)))
         return DMO_E_TYPE_NOT_ACCEPTED;
-    assert(wg_format.major_type == WG_MAJOR_TYPE_VIDEO);
+    IMFMediaType_Release(media_type);
 
     if (flags & DMO_SET_TYPEF_TEST_ONLY)
         return S_OK;
 
-    decoder->output_subtype = type->subtype;
-    decoder->output_format = wg_format;
+    FreeMediaType(&decoder->output_type);
+    CopyMediaType(&decoder->output_type, type);
 
     /* Set up wg_transform. */
     if (decoder->wg_transform)
@@ -592,8 +605,9 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         wg_transform_destroy(decoder->wg_transform);
         decoder->wg_transform = 0;
     }
-    if (!(decoder->wg_transform = wg_transform_create(&decoder->input_format, &decoder->output_format, &attrs)))
-        return E_FAIL;
+    if (FAILED(hr = wg_transform_create_quartz(&decoder->input_type, type,
+            &attrs, &decoder->wg_transform)))
+        return hr;
 
     return S_OK;
 }
@@ -621,22 +635,22 @@ static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD i
 static HRESULT WINAPI media_object_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
     struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    IMFMediaType *media_type;
     HRESULT hr;
 
     TRACE("iface %p, index %lu, size %p, alignment %p.\n", iface, index, size, alignment);
 
     if (index > 0)
         return DMO_E_INVALIDSTREAMINDEX;
-    if (!wg_format_is_set(&decoder->output_format))
+    if (IsEqualGUID(&decoder->output_type.majortype, &GUID_NULL))
         return DMO_E_TYPE_NOT_SET;
 
-    if (FAILED(hr = MFCalculateImageSize(&decoder->output_subtype,
-            decoder->output_format.u.video.width, abs(decoder->output_format.u.video.height), (UINT32 *)size)))
-    {
-        FIXME("Failed to get image size of subtype %s.\n", debugstr_guid(&decoder->output_subtype));
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
         return hr;
-    }
-    *alignment = 1;
+    if (SUCCEEDED(hr = MFInitMediaTypeFromAMMediaType(media_type, &decoder->output_type))
+            && SUCCEEDED(hr = IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, (UINT32 *)size)))
+        *alignment = 1;
+    IMFMediaType_Release(media_type);
 
     return S_OK;
 }
