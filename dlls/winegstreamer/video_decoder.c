@@ -122,9 +122,9 @@ static HRESULT create_output_media_type(struct video_decoder *decoder, const GUI
         IMFMediaType *output_type, IMFMediaType **media_type)
 {
     IMFMediaType *default_type = decoder->output_type, *stream_type = output_type ? output_type : decoder->stream_type;
+    MFVideoArea default_aperture = {{0}}, aperture;
     IMFVideoMediaType *video_type;
     UINT32 value, width, height;
-    MFVideoArea aperture;
     UINT64 ratio;
     HRESULT hr;
 
@@ -137,6 +137,9 @@ static HRESULT create_output_media_type(struct video_decoder *decoder, const GUI
         goto done;
     width = ratio >> 32;
     height = ratio;
+
+    default_aperture.Area.cx = width;
+    default_aperture.Area.cy = height;
 
     if (FAILED(IMFMediaType_GetUINT64(stream_type, &MF_MT_FRAME_RATE, &ratio)))
         ratio = (UINT64)30000 << 32 | 1001;
@@ -178,29 +181,20 @@ static HRESULT create_output_media_type(struct video_decoder *decoder, const GUI
     if (FAILED(hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_FIXED_SIZE_SAMPLES, value)))
         goto done;
 
-    if (SUCCEEDED(IMFMediaType_GetBlob(stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
-            (BYTE *)&aperture, sizeof(aperture), &value)))
-    {
-        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
-                (BYTE *)&aperture, sizeof(aperture))))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetBlob(stream_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value)))
+        aperture = default_aperture;
+    if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture, sizeof(aperture))))
+        goto done;
 
-    if (SUCCEEDED(IMFMediaType_GetBlob(stream_type, &MF_MT_GEOMETRIC_APERTURE,
-            (BYTE *)&aperture, sizeof(aperture), &value)))
-    {
-        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_GEOMETRIC_APERTURE,
-                (BYTE *)&aperture, sizeof(aperture))))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetBlob(stream_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value)))
+        aperture = default_aperture;
+    if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_GEOMETRIC_APERTURE, (BYTE *)&aperture, sizeof(aperture))))
+        goto done;
 
-    if (SUCCEEDED(IMFMediaType_GetBlob(stream_type, &MF_MT_PAN_SCAN_APERTURE,
-            (BYTE *)&aperture, sizeof(aperture), &value)))
-    {
-        if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_PAN_SCAN_APERTURE,
-                (BYTE *)&aperture, sizeof(aperture))))
-            goto done;
-    }
+    if (FAILED(IMFMediaType_GetBlob(stream_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture), &value)))
+        aperture = default_aperture;
+    if (FAILED(hr = IMFVideoMediaType_SetBlob(video_type, &MF_MT_PAN_SCAN_APERTURE, (BYTE *)&aperture, sizeof(aperture))))
+        goto done;
 
 done:
     if (SUCCEEDED(hr))
