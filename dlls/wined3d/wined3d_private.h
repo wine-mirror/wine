@@ -3503,8 +3503,6 @@ bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const s
         struct wined3d_light_info *light_info, BOOL enable);
 struct wined3d_light_info *wined3d_light_state_get_light(const struct wined3d_light_state *state,
         unsigned int idx);
-HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD light_idx,
-        const struct wined3d_light *params, struct wined3d_light_info **light_info);
 
 enum wined3d_cs_queue_id
 {

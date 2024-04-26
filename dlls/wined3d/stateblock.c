@@ -655,7 +655,7 @@ static void set_light_changed(struct wined3d_stateblock *stateblock, struct wine
     stateblock->changed.lights = 1;
 }
 
-HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD light_idx,
+static HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, unsigned int light_idx,
         const struct wined3d_light *params, struct wined3d_light_info **light_info)
 {
     struct wined3d_light_info *object;
@@ -675,6 +675,62 @@ HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD l
     }
 
     object->OriginalParms = *params;
+
+    /* Initialize the object. */
+    TRACE("Light %u setting to type %#x, diffuse %s, specular %s, ambient %s, "
+            "position {%.8e, %.8e, %.8e}, direction {%.8e, %.8e, %.8e}, "
+            "range %.8e, falloff %.8e, theta %.8e, phi %.8e.\n",
+            light_idx, params->type, debug_color(&params->diffuse),
+            debug_color(&params->specular), debug_color(&params->ambient),
+            params->position.x, params->position.y, params->position.z,
+            params->direction.x, params->direction.y, params->direction.z,
+            params->range, params->falloff, params->theta, params->phi);
+
+    switch (params->type)
+    {
+        case WINED3D_LIGHT_POINT:
+            /* Position */
+            object->position.x = params->position.x;
+            object->position.y = params->position.y;
+            object->position.z = params->position.z;
+            object->position.w = 1.0f;
+            /* FIXME: Range */
+            break;
+
+        case WINED3D_LIGHT_DIRECTIONAL:
+            /* Direction */
+            object->direction.x = -params->direction.x;
+            object->direction.y = -params->direction.y;
+            object->direction.z = -params->direction.z;
+            object->direction.w = 0.0f;
+            break;
+
+        case WINED3D_LIGHT_SPOT:
+            /* Position */
+            object->position.x = params->position.x;
+            object->position.y = params->position.y;
+            object->position.z = params->position.z;
+            object->position.w = 1.0f;
+
+            /* Direction */
+            object->direction.x = params->direction.x;
+            object->direction.y = params->direction.y;
+            object->direction.z = params->direction.z;
+            object->direction.w = 0.0f;
+
+            /* FIXME: Range */
+            break;
+
+        case WINED3D_LIGHT_PARALLELPOINT:
+            object->position.x = params->position.x;
+            object->position.y = params->position.y;
+            object->position.z = params->position.z;
+            object->position.w = 1.0f;
+            break;
+
+        default:
+            FIXME("Unrecognized params type %#x.\n", params->type);
+    }
 
     *light_info = object;
     return WINED3D_OK;
@@ -2328,62 +2384,6 @@ static void wined3d_device_context_set_light(struct wined3d_device_context *cont
 
     if (FAILED(wined3d_light_state_set_light(&context->state->light_state, light_idx, light, &object)))
         return;
-
-    /* Initialize the object. */
-    TRACE("Light %u setting to type %#x, diffuse %s, specular %s, ambient %s, "
-            "position {%.8e, %.8e, %.8e}, direction {%.8e, %.8e, %.8e}, "
-            "range %.8e, falloff %.8e, theta %.8e, phi %.8e.\n",
-            light_idx, light->type, debug_color(&light->diffuse),
-            debug_color(&light->specular), debug_color(&light->ambient),
-            light->position.x, light->position.y, light->position.z,
-            light->direction.x, light->direction.y, light->direction.z,
-            light->range, light->falloff, light->theta, light->phi);
-
-    switch (light->type)
-    {
-        case WINED3D_LIGHT_POINT:
-            /* Position */
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-            /* FIXME: Range */
-            break;
-
-        case WINED3D_LIGHT_DIRECTIONAL:
-            /* Direction */
-            object->direction.x = -light->direction.x;
-            object->direction.y = -light->direction.y;
-            object->direction.z = -light->direction.z;
-            object->direction.w = 0.0f;
-            break;
-
-        case WINED3D_LIGHT_SPOT:
-            /* Position */
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-
-            /* Direction */
-            object->direction.x = light->direction.x;
-            object->direction.y = light->direction.y;
-            object->direction.z = light->direction.z;
-            object->direction.w = 0.0f;
-
-            /* FIXME: Range */
-            break;
-
-        case WINED3D_LIGHT_PARALLELPOINT:
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-            break;
-
-        default:
-            FIXME("Unrecognized light type %#x.\n", light->type);
-    }
 
     wined3d_device_context_emit_set_light(context, object);
 }
