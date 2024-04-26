@@ -3174,7 +3174,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
 {
     struct wined3d_context *context = &context_gl->c;
     const struct wined3d_gl_info *gl_info;
-    unsigned int sampler;
     SIZE rt_size;
 
     TRACE("Setting up context %p for blitting.\n", context);
@@ -3204,15 +3203,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
         GL_EXTCALL(glBindSampler(0, 0));
     wined3d_context_gl_active_texture(context_gl, gl_info, 0);
 
-    sampler = context_gl->rev_tex_unit_map[0];
-    if (sampler != WINED3D_UNMAPPED_STAGE)
-    {
-        if (sampler < WINED3D_MAX_FFP_TEXTURES)
-        {
-            context_invalidate_state(context, STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + sampler));
-            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
-        }
-    }
     context_invalidate_compute_state(context, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
     context_invalidate_state(context, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
