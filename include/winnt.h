@@ -6958,16 +6958,6 @@ static FORCEINLINE __int64 InterlockedAnd64( __int64 volatile *dest, __int64 val
 }
 #endif
 
-#if !defined(__i386__) || __has_builtin(_InterlockedDecrement64)
-#pragma intrinsic(_InterlockedDecrement64)
-__int64   _InterlockedDecrement64(__int64 volatile *);
-#else
-static FORCEINLINE __int64 InterlockedDecrement64( __int64 volatile *dest )
-{
-    return InterlockedExchangeAdd64( dest, -1 ) - 1;
-}
-#endif
-
 #if !defined(__i386__) || __has_builtin(_InterlockedExchangeAdd64)
 #pragma intrinsic(_InterlockedExchangeAdd64)
 __int64   _InterlockedExchangeAdd64(__int64 volatile *, __int64);
@@ -6977,6 +6967,16 @@ static FORCEINLINE __int64 InterlockedExchangeAdd64( __int64 volatile *dest, __i
     __int64 prev;
     do prev = *dest; while (InterlockedCompareExchange64( dest, prev + val, prev ) != prev);
     return prev;
+}
+#endif
+
+#if !defined(__i386__) || __has_builtin(_InterlockedDecrement64)
+#pragma intrinsic(_InterlockedDecrement64)
+__int64   _InterlockedDecrement64(__int64 volatile *);
+#else
+static FORCEINLINE __int64 InterlockedDecrement64( __int64 volatile *dest )
+{
+    return InterlockedExchangeAdd64( dest, -1 ) - 1;
 }
 #endif
 
