@@ -976,6 +976,110 @@ static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
     }
 }
 
+static HRESULT get_image_info_from_wic(const void *src_data, uint32_t src_data_size, D3DXIMAGE_INFO *info)
+{
+    IWICBitmapFrameDecode *bitmap_frame = NULL;
+    IWICBitmapDecoder *bitmap_decoder = NULL;
+    uint32_t src_image_size = src_data_size;
+    IWICImagingFactory *wic_factory = NULL;
+    const void *src_image = src_data;
+    WICPixelFormatGUID pixel_format;
+    IWICStream *wic_stream = NULL;
+    uint32_t frame_count = 0;
+    GUID container_format;
+    BOOL is_dib = FALSE;
+    HRESULT hr;
+
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &wic_factory);
+    if (FAILED(hr))
+        return hr;
+
+    is_dib = convert_dib_to_bmp(&src_image, &src_image_size);
+    hr = IWICImagingFactory_CreateStream(wic_factory, &wic_stream);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICStream_InitializeFromMemory(wic_stream, (BYTE *)src_image, src_image_size);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICImagingFactory_CreateDecoderFromStream(wic_factory, (IStream *)wic_stream, NULL, 0, &bitmap_decoder);
+    if (FAILED(hr))
+    {
+        if ((src_image_size >= 2) && (!memcmp(src_image, "P3", 2) || !memcmp(src_image, "P6", 2)))
+            FIXME("File type PPM is not supported yet.\n");
+        else if ((src_image_size >= 10) && !memcmp(src_image, "#?RADIANCE", 10))
+            FIXME("File type HDR is not supported yet.\n");
+        else if ((src_image_size >= 2) && (!memcmp(src_image, "PF", 2) || !memcmp(src_image, "Pf", 2)))
+            FIXME("File type PFM is not supported yet.\n");
+        goto exit;
+    }
+
+    hr = IWICBitmapDecoder_GetContainerFormat(bitmap_decoder, &container_format);
+    if (FAILED(hr))
+        goto exit;
+
+    info->ImageFileFormat = wic_container_guid_to_d3dx_file_format(&container_format);
+    if (is_dib && info->ImageFileFormat == D3DXIFF_BMP)
+    {
+        info->ImageFileFormat = D3DXIFF_DIB;
+    }
+    else if (info->ImageFileFormat == D3DXIFF_FORCE_DWORD)
+    {
+        WARN("Unsupported image file format %s.\n", debugstr_guid(&container_format));
+        hr = D3DXERR_INVALIDDATA;
+        goto exit;
+    }
+
+    TRACE("File type is %s.\n", debug_d3dx_image_file_format(info->ImageFileFormat));
+    hr = IWICBitmapDecoder_GetFrameCount(bitmap_decoder, &frame_count);
+    if (FAILED(hr) || (SUCCEEDED(hr) && !frame_count))
+    {
+        hr = D3DXERR_INVALIDDATA;
+        goto exit;
+    }
+
+    hr = IWICBitmapDecoder_GetFrame(bitmap_decoder, 0, &bitmap_frame);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapFrameDecode_GetSize(bitmap_frame, &info->Width, &info->Height);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(bitmap_frame, &pixel_format);
+    if (FAILED(hr))
+        goto exit;
+
+    if ((info->Format = wic_guid_to_d3dformat(&pixel_format)) == D3DFMT_UNKNOWN)
+    {
+        WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
+        hr = D3DXERR_INVALIDDATA;
+        goto exit;
+    }
+
+    if (image_is_argb(bitmap_frame, info))
+        info->Format = D3DFMT_A8R8G8B8;
+
+    info->Depth = 1;
+    info->MipLevels = 1;
+    info->ResourceType = D3DRTYPE_TEXTURE;
+
+exit:
+    if (is_dib)
+        free((void *)src_image);
+    if (bitmap_frame)
+        IWICBitmapFrameDecode_Release(bitmap_frame);
+    if (bitmap_decoder)
+        IWICBitmapDecoder_Release(bitmap_decoder);
+    if (wic_stream)
+        IWICStream_Release(wic_stream);
+    if (wic_factory)
+        IWICImagingFactory_Release(wic_factory);
+
+    return hr;
+}
+
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
  *
@@ -999,11 +1103,7 @@ static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
  */
 HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize, D3DXIMAGE_INFO *info)
 {
-    IWICImagingFactory *factory;
-    IWICBitmapDecoder *decoder = NULL;
-    IWICStream *stream;
     HRESULT hr;
-    BOOL dib;
 
     TRACE("(%p, %d, %p)\n", data, datasize, info);
 
@@ -1016,93 +1116,8 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
     if ((datasize >= 4) && !strncmp(data, "DDS ", 4)) {
         TRACE("File type is DDS\n");
         return get_image_info_from_dds(data, datasize, info);
-    }
-
-    /* In case of DIB file, convert it to BMP */
-    dib = convert_dib_to_bmp(&data, &datasize);
-
-    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
-
-    if (SUCCEEDED(hr)) {
-        IWICImagingFactory_CreateStream(factory, &stream);
-        IWICStream_InitializeFromMemory(stream, (BYTE*)data, datasize);
-        hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream*)stream, NULL, 0, &decoder);
-        IWICStream_Release(stream);
-        IWICImagingFactory_Release(factory);
-    }
-
-    if (FAILED(hr)) {
-        if ((datasize >= 2) && (!strncmp(data, "P3", 2) || !strncmp(data, "P6", 2)))
-            FIXME("File type PPM is not supported yet\n");
-        else if ((datasize >= 10) && !strncmp(data, "#?RADIANCE", 10))
-            FIXME("File type HDR is not supported yet\n");
-        else if ((datasize >= 2) && (!strncmp(data, "PF", 2) || !strncmp(data, "Pf", 2)))
-            FIXME("File type PFM is not supported yet\n");
-    }
-
-    if (SUCCEEDED(hr)) {
-        GUID container_format;
-        UINT frame_count;
-
-        hr = IWICBitmapDecoder_GetContainerFormat(decoder, &container_format);
-        if (SUCCEEDED(hr)) {
-            D3DXIMAGE_FILEFORMAT file_format = wic_container_guid_to_d3dx_file_format(&container_format);
-
-            if (dib && file_format == D3DXIFF_BMP)
-                file_format = D3DXIFF_DIB;
-            if (file_format == D3DXIFF_FORCE_DWORD) {
-                WARN("Unsupported image file format %s\n", debugstr_guid(&container_format));
-                hr = D3DXERR_INVALIDDATA;
-            }
-            else {
-                info->ImageFileFormat = file_format;
-                TRACE("File type is %s.\n", debug_d3dx_image_file_format(file_format));
-            }
-        }
-
-        if (SUCCEEDED(hr))
-            hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-        if (SUCCEEDED(hr) && !frame_count)
-            hr = D3DXERR_INVALIDDATA;
-
-        if (SUCCEEDED(hr)) {
-            IWICBitmapFrameDecode *frame = NULL;
-
-            hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
-
-            if (SUCCEEDED(hr))
-                hr = IWICBitmapFrameDecode_GetSize(frame, &info->Width, &info->Height);
-
-            if (SUCCEEDED(hr)) {
-                WICPixelFormatGUID pixel_format;
-
-                hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &pixel_format);
-                if (SUCCEEDED(hr)) {
-                    info->Format = wic_guid_to_d3dformat(&pixel_format);
-                    if (info->Format == D3DFMT_UNKNOWN) {
-                        WARN("Unsupported pixel format %s\n", debugstr_guid(&pixel_format));
-                        hr = D3DXERR_INVALIDDATA;
-                    }
-                }
-            }
-
-            if (SUCCEEDED(hr) && image_is_argb(frame, info))
-                info->Format = D3DFMT_A8R8G8B8;
-
-            if (frame)
-                 IWICBitmapFrameDecode_Release(frame);
-
-            info->Depth = 1;
-            info->MipLevels = 1;
-            info->ResourceType = D3DRTYPE_TEXTURE;
-        }
-    }
-
-    if (decoder)
-        IWICBitmapDecoder_Release(decoder);
-
-    if (dib)
-        free((void*)data);
+    } else
+        hr = get_image_info_from_wic(data, datasize, info);
 
     if (FAILED(hr)) {
         TRACE("Invalid or unsupported image file\n");
