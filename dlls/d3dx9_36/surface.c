@@ -923,6 +923,59 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, const D3DXIMAGE_INFO *in
     return FALSE;
 }
 
+struct d3dx_wic_file_format
+{
+    const GUID *wic_container_guid;
+    D3DXIMAGE_FILEFORMAT d3dx_file_format;
+};
+
+/* Sorted by GUID. */
+static const struct d3dx_wic_file_format file_formats[] =
+{
+    { &GUID_ContainerFormatBmp,     D3DXIFF_BMP },
+    { &GUID_WineContainerFormatTga, D3DXIFF_TGA },
+    { &GUID_ContainerFormatJpeg,    D3DXIFF_JPG },
+    { &GUID_ContainerFormatPng,     D3DXIFF_PNG },
+};
+
+static int __cdecl d3dx_wic_file_format_guid_compare(const void *a, const void *b)
+{
+    const struct d3dx_wic_file_format *format = b;
+    const GUID *guid = a;
+
+    return memcmp(guid, format->wic_container_guid, sizeof(*guid));
+}
+
+static D3DXIMAGE_FILEFORMAT wic_container_guid_to_d3dx_file_format(GUID *container_format)
+{
+    struct d3dx_wic_file_format *format;
+
+    if ((format = bsearch(container_format, file_formats, ARRAY_SIZE(file_formats), sizeof(*format),
+            d3dx_wic_file_format_guid_compare)))
+        return format->d3dx_file_format;
+    return D3DXIFF_FORCE_DWORD;
+}
+
+static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
+{
+    switch (format)
+    {
+#define FMT_TO_STR(format) case format: return #format
+        FMT_TO_STR(D3DXIFF_BMP);
+        FMT_TO_STR(D3DXIFF_JPG);
+        FMT_TO_STR(D3DXIFF_TGA);
+        FMT_TO_STR(D3DXIFF_PNG);
+        FMT_TO_STR(D3DXIFF_DDS);
+        FMT_TO_STR(D3DXIFF_PPM);
+        FMT_TO_STR(D3DXIFF_DIB);
+        FMT_TO_STR(D3DXIFF_HDR);
+        FMT_TO_STR(D3DXIFF_PFM);
+#undef FMT_TO_STR
+        default:
+            return "unrecognized";
+    }
+}
+
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
  *
@@ -993,26 +1046,17 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
 
         hr = IWICBitmapDecoder_GetContainerFormat(decoder, &container_format);
         if (SUCCEEDED(hr)) {
-            if (IsEqualGUID(&container_format, &GUID_ContainerFormatBmp)) {
-                if (dib) {
-                    TRACE("File type is DIB\n");
-                    info->ImageFileFormat = D3DXIFF_DIB;
-                } else {
-                    TRACE("File type is BMP\n");
-                    info->ImageFileFormat = D3DXIFF_BMP;
-                }
-            } else if (IsEqualGUID(&container_format, &GUID_ContainerFormatPng)) {
-                TRACE("File type is PNG\n");
-                info->ImageFileFormat = D3DXIFF_PNG;
-            } else if(IsEqualGUID(&container_format, &GUID_ContainerFormatJpeg)) {
-                TRACE("File type is JPG\n");
-                info->ImageFileFormat = D3DXIFF_JPG;
-            } else if(IsEqualGUID(&container_format, &GUID_WineContainerFormatTga)) {
-                TRACE("File type is TGA\n");
-                info->ImageFileFormat = D3DXIFF_TGA;
-            } else {
+            D3DXIMAGE_FILEFORMAT file_format = wic_container_guid_to_d3dx_file_format(&container_format);
+
+            if (dib && file_format == D3DXIFF_BMP)
+                file_format = D3DXIFF_DIB;
+            if (file_format == D3DXIFF_FORCE_DWORD) {
                 WARN("Unsupported image file format %s\n", debugstr_guid(&container_format));
                 hr = D3DXERR_INVALIDDATA;
+            }
+            else {
+                info->ImageFileFormat = file_format;
+                TRACE("File type is %s.\n", debug_d3dx_image_file_format(file_format));
             }
         }
 
