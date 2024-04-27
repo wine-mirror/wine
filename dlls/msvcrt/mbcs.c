@@ -900,6 +900,83 @@ unsigned char* CDECL _mbsncpy_l(unsigned char* dst, const unsigned char* src, si
     return ret;
 }
 
+#if _MSVCR_VER>=80
+errno_t CDECL _mbsncpy_s_l(unsigned char* dst, size_t maxsize, const unsigned char* src, size_t n, _locale_t locale)
+{
+    BOOL truncate = (n == _TRUNCATE);
+    unsigned char *start = dst, *last;
+    pthreadmbcinfo mbcinfo;
+    unsigned int curlen;
+
+    if (!dst && !maxsize && !n)
+        return 0;
+
+    if (!MSVCRT_CHECK_PMT(dst != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(maxsize != 0)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL))
+    {
+        *start = 0;
+        return EINVAL;
+    }
+
+    if (!n)
+    {
+        *start = 0;
+        return 0;
+    }
+
+    if (locale)
+        mbcinfo = locale->mbcinfo;
+    else
+        mbcinfo = get_mbcinfo();
+
+    curlen = 0;
+    last = dst;
+    while (*src && n && maxsize)
+    {
+        if (curlen)
+        {
+            --maxsize;
+            *dst++ = *src++;
+            if (!--curlen) --n;
+            continue;
+        }
+        last = dst;
+        if (!(mbcinfo->ismbcodepage && _ismbblead_l(*src, locale)))
+        {
+            curlen = 1;
+            continue;
+        }
+        curlen = 2;
+        if (!truncate && maxsize <= curlen) maxsize = 0;
+    }
+
+    if (!maxsize && truncate)
+    {
+        *last = 0;
+        return STRUNCATE;
+    }
+    if (!truncate && curlen && !src[curlen - 1])
+    {
+        *_errno() = EILSEQ;
+        *start = 0;
+        return EILSEQ;
+    }
+    if (!maxsize)
+    {
+        *start = 0;
+        if (!MSVCRT_CHECK_PMT_ERR(FALSE, ERANGE)) return ERANGE;
+    }
+    *dst = 0;
+    return 0;
+}
+
+errno_t CDECL _mbsncpy_s(unsigned char* dst, size_t maxsize, const unsigned char* src, size_t n)
+{
+    return _mbsncpy_s_l(dst, maxsize, src, n, NULL);
+}
+#endif
+
 /*********************************************************************
  *		_mbsncpy(MSVCRT.@)
  * REMARKS

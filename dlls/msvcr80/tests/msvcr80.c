@@ -37,7 +37,47 @@
 #define WX_TTY            0x40
 #define WX_TEXT           0x80
 
+#define _MB_CP_SBCS 0
+
 #define MSVCRT_FD_BLOCK_SIZE 32
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(invalid_parameter_handler);
+
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+        const wchar_t *function, const wchar_t *file,
+        unsigned line, uintptr_t arg)
+{
+    CHECK_EXPECT(invalid_parameter_handler);
+    ok(expression == NULL, "expression is not NULL\n");
+    ok(function == NULL, "function is not NULL\n");
+    ok(file == NULL, "file is not NULL\n");
+    ok(line == 0, "line = %u\n", line);
+    ok(arg == 0, "arg = %Ix\n", arg);
+}
 
 typedef struct
 {
@@ -57,6 +97,7 @@ typedef struct
 
 static ioinfo **__pioinfo;
 
+static _invalid_parameter_handler (__cdecl *p__set_invalid_parameter_handler)(_invalid_parameter_handler);
 static int (WINAPIV *p__open)(const char *, int, ...);
 static int (__cdecl *p__close)(int);
 static intptr_t (__cdecl *p__get_osfhandle)(int);
@@ -65,6 +106,10 @@ static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_dupenv_s)(char **, size_t *, const char *);
 static int (__cdecl *p_wdupenv_s)(wchar_t **, size_t *, const wchar_t *);
 static int* (__cdecl *p_errno)(void);
+static errno_t (__cdecl *p__mbsncpy_s)(unsigned char*,size_t,const unsigned char*,size_t);
+static int (__cdecl *p__ismbblead_l)(unsigned int,_locale_t);
+static int (__cdecl *p__getmbcp)(void);
+static int (__cdecl *p__setmbcp)(int);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -83,6 +128,8 @@ static BOOL init(void)
         return FALSE;
     }
 
+    SET(p__set_invalid_parameter_handler, "_set_invalid_parameter_handler");
+
     SET(__pioinfo, "__pioinfo");
     SET(p__open,"_open");
     SET(p__close,"_close");
@@ -93,7 +140,10 @@ static BOOL init(void)
     SET(p_dupenv_s, "_dupenv_s");
     SET(p_wdupenv_s, "_wdupenv_s");
     SET(p_errno, "_errno");
-
+    SET(p__mbsncpy_s, "_mbsncpy_s");
+    SET(p__ismbblead_l, "_ismbblead_l");
+    SET(p__getmbcp, "_getmbcp");
+    SET(p__setmbcp, "_setmbcp");
     return TRUE;
 }
 
@@ -222,13 +272,181 @@ static void test_wdupenv_s(void)
     ok( !tmp, "_wdupenv_s returned pointer is %p\n", tmp );
 }
 
+#define expect_bin(buf, value, len) { ok(memcmp((buf), value, len) == 0, \
+                                         "Binary buffer mismatch - expected %s, got %s\n", \
+                                         debugstr_an(value, len), debugstr_an((char *)(buf), len)); }
+
+static void test__mbsncpy_s(void)
+{
+    unsigned char *mbstring = (unsigned char *)"\xb0\xb1\xb2\xb3Q\xb4\xb5\x0";
+    unsigned char *mbstring2 = (unsigned char *)"\xb0\x0";
+    unsigned char buf[16];
+    errno_t err;
+    int oldcp;
+
+    oldcp = p__getmbcp();
+    if (p__setmbcp(936))
+    {
+        win_skip("Code page 936 is not available, skipping test.\n");
+        return;
+    }
+
+    errno = 0xdeadbeef;
+    memset(buf, 0xcc, sizeof(buf));
+    err = p__mbsncpy_s(NULL, 0, mbstring, 0);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+
+    errno = 0xdeadbeef;
+    memset(buf, 0xcc, sizeof(buf));
+    err = p__mbsncpy_s(buf, 6, mbstring, 1);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+    expect_bin(buf, "\xb0\xb1\0\xcc", 4);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 6, mbstring, 2);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+    expect_bin(buf, "\xb0\xb1\xb2\xb3\0\xcc", 6);
+
+    errno = 0xdeadbeef;
+    memset(buf, 0xcc, sizeof(buf));
+    err = p__mbsncpy_s(buf, 2, mbstring, _TRUNCATE);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(err == STRUNCATE, "got %d.\n", err);
+    expect_bin(buf, "\x00\xb1\xcc", 3);
+
+    memset(buf, 0xcc, sizeof(buf));
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 2, mbstring, 1);
+    ok(errno == err, "got %d.\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(err == ERANGE, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc\xcc", 3);
+
+    memset(buf, 0xcc, sizeof(buf));
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 2, mbstring, 3);
+    ok(errno == err, "got %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(err == ERANGE, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc\xcc", 3);
+
+    memset(buf, 0xcc, sizeof(buf));
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 1, mbstring, 3);
+    ok(errno == err, "got %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(err == ERANGE, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 0, mbstring, 3);
+    ok(errno == err, "got %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(err == EINVAL, "got %d.\n", err);
+    expect_bin(buf, "\xcc", 1);
+
+    memset(buf, 0xcc, sizeof(buf));
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 0, mbstring, 0);
+    ok(errno == err, "got %d\n", errno);
+    CHECK_CALLED(invalid_parameter_handler);
+    ok(err == EINVAL, "got %d.\n", err);
+    expect_bin(buf, "\xcc", 1);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, -1, mbstring, 0);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, -1, mbstring, 256);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+    expect_bin(buf, "\xb0\xb1\xb2\xb3Q\xb4\xb5\x0\xcc", 9);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 1, mbstring2, 4);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 2, mbstring2, 4);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 1, mbstring2, _TRUNCATE);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(err == STRUNCATE, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 2, mbstring2, _TRUNCATE);
+    ok(errno == 0xdeadbeef, "got %d\n", errno);
+    ok(!err, "got %d.\n", err);
+    expect_bin(buf, "\xb0\x0\xcc", 3);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 1, mbstring2, 1);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 2, mbstring2, 1);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 3, mbstring2, 1);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    memset(buf, 0xcc, sizeof(buf));
+    errno = 0xdeadbeef;
+    err = p__mbsncpy_s(buf, 3, mbstring2, 2);
+    ok(errno == err, "got %d\n", errno);
+    ok(err == EILSEQ, "got %d.\n", err);
+    expect_bin(buf, "\x0\xcc", 2);
+
+    p__setmbcp(oldcp);
+}
+
 START_TEST(msvcr80)
 {
     if(!init())
         return;
 
+    ok(p__set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
     test_ioinfo_flags();
     test_strcmp();
     test_dupenv_s();
     test_wdupenv_s();
+    test__mbsncpy_s();
 }

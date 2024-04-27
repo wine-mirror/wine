@@ -93,6 +93,8 @@ _ACRTIMP size_t         __cdecl _mbsnccnt(const unsigned char*,size_t);
 _ACRTIMP int            __cdecl _mbsncmp(const unsigned char*,const unsigned char*,size_t);
 _ACRTIMP int            __cdecl _mbsncoll(const unsigned char*,const unsigned char*,size_t);
 _ACRTIMP unsigned char* __cdecl _mbsncpy(unsigned char*,const unsigned char*,size_t);
+_ACRTIMP errno_t        __cdecl _mbsncpy_s(unsigned char*,size_t,const unsigned char*,size_t);
+_ACRTIMP errno_t        __cdecl _mbsncpy_s_l(unsigned char*,size_t,const unsigned char*,size_t,_locale_t);
 _ACRTIMP unsigned int   __cdecl _mbsnextc(const unsigned char*);
 _ACRTIMP unsigned int   __cdecl _mbsnextc_l(const unsigned char*,_locale_t);
 _ACRTIMP int            __cdecl _mbsnicmp(const unsigned char*,const unsigned char*,size_t);
