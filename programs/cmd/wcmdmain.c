@@ -807,10 +807,10 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
   WCHAR *normalp;
 
   /* Display the FOR variables in effect */
-  for (i=0;i<52;i++) {
+  for (i=0;i<MAX_FOR_VARIABLES;i++) {
     if (forloopcontext.variable[i]) {
       WINE_TRACE("FOR variable context: %c = '%s'\n",
-                 i<26?i+'a':(i-26)+'A',
+                 for_var_index_to_char(i),
                  wine_dbgstr_w(forloopcontext.variable[i]));
     }
   }
@@ -859,7 +859,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
         WCMD_strsubstW(p, p+2, NULL, 0);
 
     } else {
-      int forvaridx = FOR_VAR_IDX(*(p+1));
+      int forvaridx = for_var_char_to_index(*(p+1));
       if (startchar == '%' && forvaridx != -1 && forloopcontext.variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
         WCMD_strsubstW(p, p + 2, forloopcontext.variable[forvaridx], -1);

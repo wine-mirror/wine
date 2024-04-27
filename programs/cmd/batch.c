@@ -396,7 +396,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
       break;
 
     } else {
-      int foridx = FOR_VAR_IDX(*lastModifier);
+      int foridx = for_var_char_to_index(*lastModifier);
       /* Its a valid parameter identifier - OK */
       if ((foridx >= 0) && (forloopcontext.variable[foridx] != NULL)) break;
 
@@ -424,7 +424,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
                             NULL, FALSE, TRUE));
   } else {
-    int foridx = FOR_VAR_IDX(*lastModifier);
+    int foridx = for_var_char_to_index(*lastModifier);
     lstrcpyW(outputparam, forloopcontext.variable[foridx]);
   }
 

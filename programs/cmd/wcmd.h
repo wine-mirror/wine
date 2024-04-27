@@ -267,8 +267,26 @@ typedef struct _DIRECTORY_STACK
 /* Data structure to for loop variables during for body execution, bearing
    in mind that for loops can be nested                                    */
 #define MAX_FOR_VARIABLES 52
-#define FOR_VAR_IDX(c) (((c)>='a'&&(c)<='z')?((c)-'a'):\
-                        ((c)>='A'&&(c)<='Z')?(26+(c)-'A'):-1)
+
+static inline int for_var_char_to_index(WCHAR c)
+{
+    if (c >= L'a' && c <= L'z') return c - L'a';
+    if (c >= L'A' && c <= L'Z') return c - L'A' + 26;
+    return -1;
+}
+
+static inline WCHAR for_var_index_to_char(int var_idx)
+{
+    if (var_idx < 0 || var_idx >= MAX_FOR_VARIABLES) return L'?';
+    if (var_idx < 26) return L'a' + var_idx;
+    return L'A' + var_idx - 26;
+}
+
+/* check that the range [var_idx, var_idx + var_offset] is a contiguous range */
+static inline BOOL for_var_index_in_range(int var_idx, int var_offset)
+{
+    return for_var_char_to_index(for_var_index_to_char(var_idx) + var_offset) == var_idx + var_offset;
+}
 
 typedef struct _FOR_CONTEXT {
   WCHAR *variable[MAX_FOR_VARIABLES];	/* a-z then A-Z */

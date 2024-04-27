@@ -1953,7 +1953,7 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
 static void WCMD_parse_line(CMD_NODE    *cmdStart,
                             const WCHAR *firstCmd,
                             CMD_NODE   **cmdEnd,
-                            const WCHAR  variable,
+                            int          varidx,
                             WCHAR       *buffer,
                             BOOL        *doExecuted,
                             int         *forf_skip,
@@ -1963,7 +1963,7 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
 
   WCHAR *parm;
   FOR_CONTEXT oldcontext;
-  int varidx, varoffset;
+  int varoffset;
   int nexttoken, lasttoken = -1;
   BOOL starfound = FALSE;
   BOOL thisduplicate = FALSE;
@@ -1994,11 +1994,10 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
   lasttoken = -1;
   nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
                                  &starfound, &thisduplicate);
-  varidx = FOR_VAR_IDX(variable);
 
   /* Empty out variables */
   for (varoffset=0;
-       varidx >= 0 && varoffset<totalfound && (((varidx%26) + varoffset) < 26);
+       varidx >= 0 && varoffset<totalfound && for_var_index_in_range(varidx, varoffset);
        varoffset++) {
     forloopcontext.variable[varidx + varoffset] = emptyW;
   }
@@ -2011,6 +2010,8 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
   while (varidx >= 0 && (nexttoken > 0 && (nexttoken > lasttoken))) {
     anyduplicates |= thisduplicate;
 
+    if (!for_var_index_in_range(varidx, varoffset)) break;
+
     /* Extract the token number requested and set into the next variable context */
     parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, TRUE, FALSE, forf_delims);
     WINE_TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
@@ -2018,7 +2019,6 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
     if (varidx >=0) {
       if (parm) forloopcontext.variable[varidx + varoffset] = xstrdupW(parm);
       varoffset++;
-      if (((varidx%26)+varoffset) >= 26) break;
     }
 
     /* Find the next token */
@@ -2029,7 +2029,7 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
 
   /* If all the rest of the tokens were requested, and there is still space in
      the variable range, write them now                                        */
-  if (!anyduplicates && starfound && varidx >= 0 && (((varidx%26) + varoffset) < 26)) {
+  if (!anyduplicates && starfound && varidx >= 0 && for_var_index_in_range(varidx, varoffset)) {
     nexttoken++;
     WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
     WINE_TRACE("Parsed allremaining tokens (%d) as parameter %s\n",
@@ -2222,7 +2222,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
   /* Variable should follow */
   lstrcpyW(variable, thisArg);
   WINE_TRACE("Variable identified as %s\n", wine_dbgstr_w(variable));
-  varidx = FOR_VAR_IDX(variable[1]);
+  varidx = for_var_char_to_index(variable[1]);
 
   /* Ensure line continues with IN */
   thisArg = WCMD_parameter(p, parameterNo++, NULL, FALSE, FALSE);
@@ -2429,7 +2429,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
                     break;
                 while (len && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
                     buffer[--len] = L'\0';
-                WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable[1], buffer, &doExecuted,
+                WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, for_var_char_to_index(variable[1]), buffer, &doExecuted,
                                 &forf_skip, forf_eol, forf_delims, forf_tokens);
                 buffer[0] = 0;
               }
@@ -2457,7 +2457,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
 
           /* Copy the item away from the global buffer used by WCMD_parameter */
           lstrcpyW(buffer, itemStart);
-          WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, variable[1], buffer, &doExecuted,
+          WCMD_parse_line(cmdStart, firstCmd, &cmdEnd, for_var_char_to_index(variable[1]), buffer, &doExecuted,
                             &forf_skip, forf_eol, forf_delims, forf_tokens);
 
           /* Only one string can be supplied in the whole set, abort future set processing */
