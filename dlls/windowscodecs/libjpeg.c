@@ -248,6 +248,10 @@ static HRESULT CDECL jpeg_decoder_initialize(struct decoder* iface, IStream *str
     This->stride = (This->frame.bpp * This->cinfo.output_width + 7) / 8;
     data_size = This->stride * This->cinfo.output_height;
 
+    if (data_size / This->stride < This->cinfo.output_height)
+        /* overflow in multiplication */
+        return E_OUTOFMEMORY;
+
     This->image_data = malloc(data_size);
     if (!This->image_data)
         return E_OUTOFMEMORY;
