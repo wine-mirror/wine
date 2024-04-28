@@ -56,8 +56,6 @@ struct winstation
 
 struct global_cursor
 {
-    int                  x;                /* cursor position */
-    int                  y;
     rectangle_t          clip;             /* cursor clip rectangle */
     unsigned int         clip_flags;       /* last cursor clip flags */
     unsigned int         last_change;      /* time of last position change */

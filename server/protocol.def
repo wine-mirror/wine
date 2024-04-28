@@ -899,9 +899,15 @@ struct directory_entry
 /****************************************************************/
 /* shared session mapping structures */
 
+struct shared_cursor
+{
+    int                  x;                /* cursor position */
+    int                  y;
+};
+
 typedef volatile struct
 {
-    char placeholder;
+    struct shared_cursor cursor;           /* global cursor information */
 } desktop_shm_t;
 
 typedef volatile union

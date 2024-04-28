@@ -419,6 +419,7 @@ static void queue_cursor_message( struct desktop *desktop, user_handle_t win, un
                                   lparam_t wparam, lparam_t lparam )
 {
     static const struct hw_msg_source source = { IMDT_UNAVAILABLE, IMO_SYSTEM };
+    const desktop_shm_t *desktop_shm = desktop->shared;
     struct thread_input *input;
     struct message *msg;
 
@@ -427,8 +428,8 @@ static void queue_cursor_message( struct desktop *desktop, user_handle_t win, un
     msg->msg = message;
     msg->wparam = wparam;
     msg->lparam = lparam;
-    msg->x = desktop->cursor.x;
-    msg->y = desktop->cursor.y;
+    msg->x = desktop_shm->cursor.x;
+    msg->y = desktop_shm->cursor.y;
     if (!(msg->win = win) && (input = desktop->foreground_input)) msg->win = input->active;
     queue_hardware_message( desktop, msg, 1 );
 }
@@ -466,13 +467,20 @@ static int update_desktop_cursor_window( struct desktop *desktop, user_handle_t 
 
 static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win, int x, int y )
 {
+    const desktop_shm_t *desktop_shm = desktop->shared;
     int updated;
 
     x = max( min( x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
     y = max( min( y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
-    updated = (desktop->cursor.x != x || desktop->cursor.y != y);
-    desktop->cursor.x = x;
-    desktop->cursor.y = y;
+
+    SHARED_WRITE_BEGIN( desktop_shm, desktop_shm_t )
+    {
+        updated = shared->cursor.x != x || shared->cursor.y != y;
+        shared->cursor.x = x;
+        shared->cursor.y = y;
+    }
+    SHARED_WRITE_END;
+
     desktop->cursor.last_change = get_tick_count();
 
     if (!win || !is_window_visible( win ) || is_window_transparent( win ))
@@ -518,15 +526,17 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
 static void get_message_defaults( struct msg_queue *queue, int *x, int *y, unsigned int *time )
 {
     struct desktop *desktop = queue->input->desktop;
+    const desktop_shm_t *desktop_shm = desktop->shared;
 
-    *x = desktop->cursor.x;
-    *y = desktop->cursor.y;
+    *x = desktop_shm->cursor.x;
+    *y = desktop_shm->cursor.y;
     *time = get_tick_count();
 }
 
 /* set the cursor clip rectangle */
 void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsigned int flags, int reset )
 {
+    const desktop_shm_t *desktop_shm = desktop->shared;
     rectangle_t top_rect;
     unsigned int old_flags;
     int x, y;
@@ -548,9 +558,9 @@ void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsig
     desktop->cursor.clip_flags = flags;
 
     /* warp the mouse to be inside the clip rect */
-    x = max( min( desktop->cursor.x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
-    y = max( min( desktop->cursor.y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
-    if (x != desktop->cursor.x || y != desktop->cursor.y) set_cursor_pos( desktop, x, y );
+    x = max( min( desktop_shm->cursor.x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
+    y = max( min( desktop_shm->cursor.y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
+    if (x != desktop_shm->cursor.x || y != desktop_shm->cursor.y) set_cursor_pos( desktop, x, y );
 
     /* request clip cursor rectangle reset to the desktop thread */
     if (reset) post_desktop_message( desktop, WM_WINE_CLIPCURSOR, flags, FALSE );
@@ -1672,6 +1682,7 @@ static unsigned int get_rawinput_device_flags( struct process *process, struct m
 /* queue a hardware message into a given thread input */
 static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue )
 {
+    const desktop_shm_t *desktop_shm = desktop->shared;
     user_handle_t win;
     struct thread *thread;
     struct thread_input *input;
@@ -1705,8 +1716,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         if (desktop->keystate[VK_XBUTTON2] & 0x80) msg->wparam |= MK_XBUTTON2;
         break;
     }
-    msg->x = desktop->cursor.x;
-    msg->y = desktop->cursor.y;
+    msg->x = desktop_shm->cursor.x;
+    msg->y = desktop_shm->cursor.y;
 
     if (msg->win && (thread = get_window_thread( msg->win )))
     {
@@ -1982,6 +1993,7 @@ static void dispatch_rawinput_message( struct desktop *desktop, struct rawinput_
 static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
                                 unsigned int origin, struct msg_queue *sender )
 {
+    const desktop_shm_t *desktop_shm = desktop->shared;
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
     struct message *msg;
@@ -2020,19 +2032,19 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
             x = input->mouse.x;
             y = input->mouse.y;
             if (flags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE) &&
-                x == desktop->cursor.x && y == desktop->cursor.y)
+                x == desktop_shm->cursor.x && y == desktop_shm->cursor.y)
                 flags &= ~MOUSEEVENTF_MOVE;
         }
         else
         {
-            x = desktop->cursor.x + input->mouse.x;
-            y = desktop->cursor.y + input->mouse.y;
+            x = desktop_shm->cursor.x + input->mouse.x;
+            y = desktop_shm->cursor.y + input->mouse.y;
         }
     }
     else
     {
-        x = desktop->cursor.x;
-        y = desktop->cursor.y;
+        x = desktop_shm->cursor.x;
+        y = desktop_shm->cursor.y;
     }
 
     if ((foreground = get_foreground_thread( desktop, win )))
@@ -2043,7 +2055,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         raw_msg.time       = time;
         raw_msg.message    = WM_INPUT;
         raw_msg.flags      = flags;
-        rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, x - desktop->cursor.x, y - desktop->cursor.y,
+        rawmouse_init( &raw_msg.rawinput, &raw_msg.data.mouse, x - desktop_shm->cursor.x, y - desktop_shm->cursor.y,
                        raw_msg.flags, input->mouse.data, input->mouse.info );
 
         dispatch_rawinput_message( desktop, &raw_msg );
@@ -2293,6 +2305,7 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
     };
     struct hw_msg_source source = { IMDT_UNAVAILABLE, IMDT_TOUCH };
     struct desktop *desktop = pointer->desktop;
+    const desktop_shm_t *desktop_shm = desktop->shared;
     const hw_input_t *input = &pointer->input;
     unsigned int i, wparam = input->hw.wparam;
     timeout_t time = get_tick_count();
@@ -2315,8 +2328,8 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
         msg->msg       = messages[input->hw.msg - WM_POINTERUPDATE][i];
         msg->wparam    = wparam;
         msg->lparam    = MAKELONG(x, y);
-        msg->x         = desktop->cursor.x;
-        msg->y         = desktop->cursor.y;
+        msg->x         = desktop_shm->cursor.x;
+        msg->y         = desktop_shm->cursor.y;
 
         queue_hardware_message( desktop, msg, 1 );
     }
@@ -2371,6 +2384,7 @@ static struct pointer *find_pointer_from_id( struct desktop *desktop, unsigned i
 static void queue_custom_hardware_message( struct desktop *desktop, user_handle_t win,
                                            unsigned int origin, const hw_input_t *input )
 {
+    const desktop_shm_t *desktop_shm = desktop->shared;
     struct hw_msg_source source = { IMDT_UNAVAILABLE, origin };
     struct thread *foreground;
     struct pointer *pointer;
@@ -2415,8 +2429,8 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
     msg->msg       = input->hw.msg;
     msg->wparam    = input->hw.wparam;
     msg->lparam    = input->hw.lparam;
-    msg->x         = desktop->cursor.x;
-    msg->y         = desktop->cursor.y;
+    msg->x         = desktop_shm->cursor.x;
+    msg->y         = desktop_shm->cursor.y;
 
     queue_hardware_message( desktop, msg, 1 );
 }
@@ -2964,6 +2978,7 @@ DECL_HANDLER(send_hardware_message)
     struct desktop *desktop;
     unsigned int origin = (req->flags & SEND_HWMSG_INJECTED ? IMO_INJECTED : IMO_HARDWARE);
     struct msg_queue *sender = req->flags & SEND_HWMSG_INJECTED ? get_current_queue() : NULL;
+    const desktop_shm_t *desktop_shm;
     int wait = 0;
 
     if (!(desktop = get_hardware_input_desktop( req->win ))) return;
@@ -2974,9 +2989,10 @@ DECL_HANDLER(send_hardware_message)
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
+    desktop_shm = desktop->shared;
 
-    reply->prev_x = desktop->cursor.x;
-    reply->prev_y = desktop->cursor.y;
+    reply->prev_x = desktop_shm->cursor.x;
+    reply->prev_y = desktop_shm->cursor.y;
 
     switch (req->input.type)
     {
@@ -2994,8 +3010,8 @@ DECL_HANDLER(send_hardware_message)
     }
 
     reply->wait = sender ? wait : 0;
-    reply->new_x = desktop->cursor.x;
-    reply->new_y = desktop->cursor.y;
+    reply->new_x = desktop_shm->cursor.x;
+    reply->new_y = desktop_shm->cursor.y;
     release_object( desktop );
 }
 
@@ -3688,16 +3704,18 @@ DECL_HANDLER(set_cursor)
     user_handle_t prev_cursor, new_cursor;
     struct thread_input *input;
     struct desktop *desktop;
+    const desktop_shm_t *desktop_shm;
 
     if (!queue) return;
     input = queue->input;
     desktop = input->desktop;
+    desktop_shm = desktop->shared;
     prev_cursor = input->cursor_count < 0 ? 0 : input->cursor;
 
     reply->prev_handle = input->cursor;
     reply->prev_count  = input->cursor_count;
-    reply->prev_x      = desktop->cursor.x;
-    reply->prev_y      = desktop->cursor.y;
+    reply->prev_x      = desktop_shm->cursor.x;
+    reply->prev_y      = desktop_shm->cursor.y;
 
     if (req->flags & SET_CURSOR_HANDLE)
     {
@@ -3720,8 +3738,8 @@ DECL_HANDLER(set_cursor)
     new_cursor = input->cursor_count < 0 ? 0 : input->cursor;
     if (prev_cursor != new_cursor) update_desktop_cursor_handle( desktop, input, new_cursor );
 
-    reply->new_x       = desktop->cursor.x;
-    reply->new_y       = desktop->cursor.y;
+    reply->new_x       = desktop_shm->cursor.x;
+    reply->new_y       = desktop_shm->cursor.y;
     reply->new_clip    = desktop->cursor.clip;
     reply->last_change = desktop->cursor.last_change;
 }

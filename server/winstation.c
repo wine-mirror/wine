@@ -304,6 +304,13 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                 release_object( desktop );
                 return NULL;
             }
+
+            SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
+            {
+                shared->cursor.x = 0;
+                shared->cursor.y = 0;
+            }
+            SHARED_WRITE_END;
         }
         else
         {

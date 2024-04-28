@@ -883,9 +883,15 @@ struct directory_entry
 
 
 
+struct shared_cursor
+{
+    int                  x;
+    int                  y;
+};
+
 typedef volatile struct
 {
-    char placeholder;
+    struct shared_cursor cursor;
 } desktop_shm_t;
 
 typedef volatile union
@@ -6560,7 +6566,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 811
+#define SERVER_PROTOCOL_VERSION 812
 
 /* ### protocol_version end ### */
 
