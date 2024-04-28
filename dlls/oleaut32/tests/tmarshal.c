@@ -932,6 +932,10 @@ static HRESULT WINAPI Widget_VarArg(
 
     trace("VarArg(%p)\n", values);
 
+    ok( values->cDims == 1, "wrong cDims %u\n", values->cDims );
+    ok( values->cbElements == (numexpect ? sizeof(VARIANT) : 0),
+        "wrong cbElements %lu\n", values->cbElements );
+
     hr = SafeArrayGetLBound(values, 1, &lbound);
     ok(hr == S_OK, "SafeArrayGetLBound failed with %lx\n", hr);
     ok(lbound == 0, "SafeArrayGetLBound returned %ld\n", lbound);
@@ -1058,6 +1062,16 @@ static HRESULT WINAPI Widget_VarArg_Run(
 
     ok(!lstrcmpW(name, catW), "got %s\n", wine_dbgstr_w(name));
 
+    if (!params->cbElements)  /* no varargs */
+    {
+        hr = SafeArrayGetUBound(params, 1, &bound);
+        ok(hr == S_OK, "SafeArrayGetUBound error %#lx\n", hr);
+        ok(bound == -1, "expected -1, got %ld\n", bound);
+        return S_OK;
+    }
+
+    ok( params->cbElements == sizeof(VARIANT), "wrong cbElements %lu\n", params->cbElements );
+
     hr = SafeArrayGetLBound(params, 1, &bound);
     ok(hr == S_OK, "SafeArrayGetLBound error %#lx\n", hr);
     ok(bound == 0, "expected 0, got %ld\n", bound);
@@ -1092,6 +1106,16 @@ static HRESULT WINAPI Widget_VarArg_Ref_Run(
     trace("VarArg_Ref_Run(%p,%p,%p)\n", name, params, result);
 
     ok(!lstrcmpW(name, catW), "got %s\n", wine_dbgstr_w(name));
+
+    if (!(*params)->cbElements)  /* no varargs */
+    {
+        hr = SafeArrayGetUBound(*params, 1, &bound);
+        ok(hr == S_OK, "SafeArrayGetUBound error %#lx\n", hr);
+        ok(bound == -1, "expected -1, got %ld\n", bound);
+        return S_OK;
+    }
+
+    ok( (*params)->cbElements == sizeof(VARIANT), "wrong cbElements %lu\n", (*params)->cbElements );
 
     hr = SafeArrayGetLBound(*params, 1, &bound);
     ok(hr == S_OK, "SafeArrayGetLBound error %#lx\n", hr);
@@ -3231,6 +3255,12 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
 
+    /* without any varargs */
+    dispparams.cArgs = 1;
+    V_I4(&vararg[0]) = 0;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+
     /* call VarArg, even one (non-optional, non-safearray) named argument is not allowed */
     dispidNamed = 0;
     dispparams.cNamedArgs = 1;
@@ -3252,6 +3282,11 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
+    /* without any varargs */
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = vararg + 1;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
     SysFreeString(V_BSTR(&vararg[1]));
     SysFreeString(V_BSTR(&vararg[0]));
 
@@ -3266,6 +3301,11 @@ static void test_typelibmarshal(void)
     dispparams.cArgs = 2;
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_REF_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok_ole_success(hr, IDispatch_Invoke);
+    /* without any varargs */
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = vararg + 1;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_REF_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     SysFreeString(V_BSTR(&vararg[1]));

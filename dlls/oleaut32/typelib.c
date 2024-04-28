@@ -7483,6 +7483,17 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         }
                     }
                 }
+                else if (func_desc->cParamsOpt < 0 && ((rgvt[i] & ~VT_BYREF) == (VT_VARIANT | VT_ARRAY)))
+                {
+                    hres = SafeArrayAllocDescriptorEx( VT_EMPTY, 1, &a );
+                    if (FAILED(hres)) break;
+                    if (rgvt[i] & VT_BYREF)
+                        V_BYREF(&rgvarg[i]) = &a;
+                    else
+                        V_ARRAY(&rgvarg[i]) = a;
+                    V_VT(&rgvarg[i]) = rgvt[i];
+                    prgpvarg[i] = &rgvarg[i];
+                }
                 else
                 {
                     hres = DISP_E_BADPARAMCOUNT;
