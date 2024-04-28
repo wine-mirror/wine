@@ -180,7 +180,7 @@ static void test_bufferrawformat(void* buff, int size, REFGUID expected, int lin
     LPBYTE   data;
     HRESULT  hres;
     GpStatus stat;
-    GpImage *img;
+    GpImage *img, *copy;
 
     hglob = GlobalAlloc (0, size);
     data = GlobalLock (hglob);
@@ -199,8 +199,12 @@ static void test_bufferrawformat(void* buff, int size, REFGUID expected, int lin
     }
 
     expect_rawformat(expected, img, line, todo);
+    stat = GdipCloneImage(img, &copy);
+    expect(Ok, stat);
+    expect_rawformat(expected, copy, line, todo);
 
     GdipDisposeImage(img);
+    GdipDisposeImage(copy);
     IStream_Release(stream);
 }
 
