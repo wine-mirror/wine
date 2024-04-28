@@ -2784,6 +2784,9 @@ static BOOL dwarf2_parse_line_numbers(dwarf2_parse_context_t* ctx,
                 case DW_LNS_fixed_advance_pc:
                     address += dwarf2_parse_u2(&traverse);
                     break;
+                case DW_LNS_set_prologue_end:
+                case DW_LNS_set_epilogue_begin:
+                    break;
                 case DW_LNS_extended_op:
                     dwarf2_leb128_as_unsigned(&traverse);
                     extopcode = dwarf2_parse_byte(&traverse);
