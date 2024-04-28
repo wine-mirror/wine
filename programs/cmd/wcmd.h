@@ -288,9 +288,15 @@ static inline BOOL for_var_index_in_range(int var_idx, int var_offset)
     return for_var_char_to_index(for_var_index_to_char(var_idx) + var_offset) == var_idx + var_offset;
 }
 
-typedef struct _FOR_CONTEXT {
-  WCHAR *variable[MAX_FOR_VARIABLES];	/* a-z then A-Z */
+typedef struct _FOR_CONTEXT
+{
+    struct _FOR_CONTEXT *previous;
+    WCHAR *variable[MAX_FOR_VARIABLES];	/* a-z then A-Z */
 } FOR_CONTEXT;
+
+void WCMD_save_for_loop_context(BOOL reset);
+void WCMD_restore_for_loop_context(void);
+void WCMD_set_for_loop_variable(int var_idx, const WCHAR *value);
 
 /*
  * Global variables quals, param1, param2 contain the current qualifiers
@@ -300,7 +306,7 @@ typedef struct _FOR_CONTEXT {
 extern WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 extern int errorlevel;
 extern BATCH_CONTEXT *context;
-extern FOR_CONTEXT forloopcontext;
+extern FOR_CONTEXT *forloopcontext;
 extern BOOL delayedsubst;
 
 #endif /* !RC_INVOKED */

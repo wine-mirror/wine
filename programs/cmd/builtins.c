@@ -1962,7 +1962,6 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
                             WCHAR       *forf_tokens) {
 
   WCHAR *parm;
-  FOR_CONTEXT oldcontext;
   int varoffset;
   int nexttoken, lasttoken = -1;
   BOOL starfound = FALSE;
@@ -1978,7 +1977,7 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
   }
 
   /* Save away any existing for variable context (e.g. nested for loops) */
-  oldcontext = forloopcontext;
+  WCMD_save_for_loop_context(FALSE);
 
   /* Extract the parameters based on the tokens= value (There will always
      be some value, as if it is not supplied, it defaults to tokens=1).
@@ -1999,7 +1998,7 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
   for (varoffset=0;
        varidx >= 0 && varoffset<totalfound && for_var_index_in_range(varidx, varoffset);
        varoffset++) {
-    forloopcontext.variable[varidx + varoffset] = emptyW;
+    WCMD_set_for_loop_variable(varidx + varoffset, emptyW);
   }
 
   /* Loop extracting the tokens
@@ -2017,7 +2016,8 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
     WINE_TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
                varidx + varoffset, wine_dbgstr_w(parm));
     if (varidx >=0) {
-      if (parm) forloopcontext.variable[varidx + varoffset] = xstrdupW(parm);
+      if (parm)
+        WCMD_set_for_loop_variable(varidx + varoffset, parm);
       varoffset++;
     }
 
@@ -2034,30 +2034,19 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
     WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
     WINE_TRACE("Parsed allremaining tokens (%d) as parameter %s\n",
                varidx + varoffset, wine_dbgstr_w(parm));
-    if (parm) forloopcontext.variable[varidx + varoffset] = xstrdupW(parm);
+    if (parm)
+        WCMD_set_for_loop_variable(varidx + varoffset, parm);
   }
 
   /* Execute the body of the foor loop with these values */
-  if (varidx >= 0 && forloopcontext.variable[varidx] && forloopcontext.variable[varidx][0] != forf_eol) {
+  if (varidx >= 0 && forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol) {
     CMD_NODE *thisCmdStart = cmdStart;
     *doExecuted = TRUE;
     WCMD_part_execute(&thisCmdStart, firstCmd, FALSE, TRUE);
     *cmdEnd = thisCmdStart;
   }
 
-  /* Free the duplicated strings, and restore the context */
-  if (varidx >=0) {
-    int i;
-    for (i=varidx; i<MAX_FOR_VARIABLES; i++) {
-      if ((forloopcontext.variable[i] != oldcontext.variable[i]) &&
-          (forloopcontext.variable[i] != emptyW)) {
-        free(forloopcontext.variable[i]);
-      }
-    }
-  }
-
-  /* Restore the original for variable contextx */
-  forloopcontext = oldcontext;
+  WCMD_restore_for_loop_context();
 }
 
 /**************************************************************************
@@ -2077,7 +2066,7 @@ static void WCMD_parse_line(CMD_NODE    *cmdStart,
  *
  * Returns a file handle which can be used to read the input lines from.
  */
-static FILE* WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd)
+static FILE *WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd)
 {
     WCHAR *trimmed = NULL;
     FILE*  ret;
@@ -2132,7 +2121,6 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
   CMD_NODE *setStart, *thisSet, *cmdStart, *cmdEnd;
   WCHAR variable[4];
   int   varidx = -1;
-  WCHAR *oldvariablevalue;
   WCHAR *firstCmd;
   int thisDepth;
   WCHAR optionsRoot[MAX_PATH];
@@ -2352,14 +2340,13 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
                       }
                       doExecuted = TRUE;
 
+                      WCMD_save_for_loop_context(FALSE);
                       /* Save away any existing for variable context (e.g. nested for loops)
                          and restore it after executing the body of this for loop           */
-                      if (varidx >= 0) {
-                        oldvariablevalue = forloopcontext.variable[varidx];
-                        forloopcontext.variable[varidx] = fullitem;
-                      }
+                      if (varidx >= 0)
+                          WCMD_set_for_loop_variable(varidx, fullitem);
                       WCMD_part_execute (&thisCmdStart, firstCmd, FALSE, TRUE);
-                      if (varidx >= 0) forloopcontext.variable[varidx] = oldvariablevalue;
+                      WCMD_restore_for_loop_context();
 
                       cmdEnd = thisCmdStart;
                   }
@@ -2369,14 +2356,13 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
             } else {
               doExecuted = TRUE;
 
+              WCMD_save_for_loop_context(FALSE);
               /* Save away any existing for variable context (e.g. nested for loops)
                  and restore it after executing the body of this for loop           */
-              if (varidx >= 0) {
-                oldvariablevalue = forloopcontext.variable[varidx];
-                forloopcontext.variable[varidx] = fullitem;
-              }
+              if (varidx >= 0)
+                  WCMD_set_for_loop_variable(varidx, fullitem);
               WCMD_part_execute (&thisCmdStart, firstCmd, FALSE, TRUE);
-              if (varidx >= 0) forloopcontext.variable[varidx] = oldvariablevalue;
+              WCMD_restore_for_loop_context();
 
               cmdEnd = thisCmdStart;
             }
@@ -2491,12 +2477,14 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
 
             /* Save away any existing for variable context (e.g. nested for loops)
                and restore it after executing the body of this for loop           */
-            if (varidx >= 0) {
-              oldvariablevalue = forloopcontext.variable[varidx];
-              forloopcontext.variable[varidx] = thisNum;
+            if (varidx >= 0)
+            {
+                WCMD_save_for_loop_context(FALSE);
+                WCMD_set_for_loop_variable(varidx, thisNum);
             }
             WCMD_part_execute (&thisCmdStart, firstCmd, FALSE, TRUE);
-            if (varidx >= 0) forloopcontext.variable[varidx] = oldvariablevalue;
+            if (varidx >= 0)
+                WCMD_restore_for_loop_context();
         }
         cmdEnd = thisCmdStart;
     }

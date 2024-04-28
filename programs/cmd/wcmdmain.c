@@ -39,7 +39,7 @@ BATCH_CONTEXT *context = NULL;
 int errorlevel;
 WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
-FOR_CONTEXT forloopcontext; /* The 'for' loop context */
+FOR_CONTEXT *forloopcontext; /* The 'for' loop context */
 BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
 
 int defaultColor = 7;
@@ -808,10 +808,10 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
 
   /* Display the FOR variables in effect */
   for (i=0;i<MAX_FOR_VARIABLES;i++) {
-    if (forloopcontext.variable[i]) {
+    if (forloopcontext->variable[i]) {
       WINE_TRACE("FOR variable context: %c = '%s'\n",
                  for_var_index_to_char(i),
-                 wine_dbgstr_w(forloopcontext.variable[i]));
+                 wine_dbgstr_w(forloopcontext->variable[i]));
     }
   }
 
@@ -860,9 +860,9 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
 
     } else {
       int forvaridx = for_var_char_to_index(*(p+1));
-      if (startchar == '%' && forvaridx != -1 && forloopcontext.variable[forvaridx]) {
+      if (startchar == '%' && forvaridx != -1 && forloopcontext->variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
-        WCMD_strsubstW(p, p + 2, forloopcontext.variable[forvaridx], -1);
+        WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
       } else if (!atExecute || startchar == '!') {
         p = WCMD_expand_envvar(p, startchar);
 
@@ -2710,6 +2710,44 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
+void WCMD_save_for_loop_context(BOOL reset)
+{
+    FOR_CONTEXT *new = xalloc(sizeof(*new));
+    if (reset)
+        memset(new, 0, sizeof(*new));
+    else /* clone existing */
+        *new = *forloopcontext;
+    new->previous = forloopcontext;
+    forloopcontext = new;
+}
+
+void WCMD_restore_for_loop_context(void)
+{
+    FOR_CONTEXT *old = forloopcontext->previous;
+    int varidx;
+    if (!old)
+    {
+        FIXME("Unexpected situation\n");
+        return;
+    }
+    for (varidx = 0; varidx < MAX_FOR_VARIABLES; varidx++)
+    {
+        if (forloopcontext->variable[varidx] != old->variable[varidx])
+            free(forloopcontext->variable[varidx]);
+    }
+    free(forloopcontext);
+    forloopcontext = old;
+}
+
+void WCMD_set_for_loop_variable(int var_idx, const WCHAR *value)
+{
+    if (var_idx < 0 || var_idx >= MAX_FOR_VARIABLES) return;
+    if (forloopcontext->previous &&
+        forloopcontext->previous->variable[var_idx] != forloopcontext->variable[var_idx])
+        free(forloopcontext->variable[var_idx]);
+    forloopcontext->variable[var_idx] = xstrdupW(value);
+}
+
 /***************************************************************************
  * WCMD_process_commands
  *
@@ -2798,6 +2836,10 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   lstrcpyW(version_string, cmd);
   LocalFree(cmd);
   cmd = NULL;
+
+  /* init for loop context */
+  forloopcontext = NULL;
+  WCMD_save_for_loop_context(TRUE);
 
   /* Can't use argc/argv as it will have stripped quotes from parameters
    * meaning cmd.exe /C echo "quoted string" is impossible

@@ -398,7 +398,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
     } else {
       int foridx = for_var_char_to_index(*lastModifier);
       /* Its a valid parameter identifier - OK */
-      if ((foridx >= 0) && (forloopcontext.variable[foridx] != NULL)) break;
+      if ((foridx >= 0) && (forloopcontext->variable[foridx] != NULL)) break;
 
       /* Its not a valid parameter identifier - step backwards */
       lastModifier--;
@@ -425,7 +425,8 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
                             NULL, FALSE, TRUE));
   } else {
     int foridx = for_var_char_to_index(*lastModifier);
-    lstrcpyW(outputparam, forloopcontext.variable[foridx]);
+    if (foridx != -1)
+        lstrcpyW(outputparam, forloopcontext->variable[foridx]);
   }
 
   /* 1. Handle '~' : Strip surrounding quotes */
@@ -663,12 +664,10 @@ void WCMD_call (WCHAR *command) {
     if (context) {
 
       LARGE_INTEGER li;
-      FOR_CONTEXT oldcontext;
 
       /* Save the for variable context, then start with an empty context
          as for loop variables do not survive a call                    */
-      oldcontext = forloopcontext;
-      memset(&forloopcontext, 0, sizeof(forloopcontext));
+      WCMD_save_for_loop_context(TRUE);
 
       /* Save the current file position, call the same file,
          restore position                                    */
@@ -680,7 +679,7 @@ void WCMD_call (WCHAR *command) {
                      &li.u.HighPart, FILE_BEGIN);
 
       /* Restore the for loop context */
-      forloopcontext = oldcontext;
+      WCMD_restore_for_loop_context();
     } else {
       WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
     }
