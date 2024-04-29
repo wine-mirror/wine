@@ -1,6 +1,8 @@
 MODULE    = dispex.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
 
+EXTRAIDLFLAGS = -Oicf
+
 SOURCES = \
 	disp_ex.idl \
 	usrmarshal.c
