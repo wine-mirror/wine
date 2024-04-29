@@ -273,6 +273,39 @@ static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, c
     return ctx;
 }
 
+static void describe_pixel_format( struct egl_pixel_format *fmt, PIXELFORMATDESCRIPTOR *pfd )
+{
+    EGLint val;
+    EGLConfig config = fmt->config;
+
+    memset( pfd, 0, sizeof(*pfd) );
+    pfd->nSize = sizeof(*pfd);
+    pfd->nVersion = 1;
+    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER | PFD_SUPPORT_COMPOSITION;
+    pfd->iPixelType = PFD_TYPE_RGBA;
+    pfd->iLayerType = PFD_MAIN_PLANE;
+
+    p_eglGetConfigAttrib( display, config, EGL_BUFFER_SIZE, &val );
+    pfd->cColorBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_RED_SIZE, &val );
+    pfd->cRedBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_GREEN_SIZE, &val );
+    pfd->cGreenBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_BLUE_SIZE, &val );
+    pfd->cBlueBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_ALPHA_SIZE, &val );
+    pfd->cAlphaBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_DEPTH_SIZE, &val );
+    pfd->cDepthBits = val;
+    p_eglGetConfigAttrib( display, config, EGL_STENCIL_SIZE, &val );
+    pfd->cStencilBits = val;
+
+    pfd->cAlphaShift = 0;
+    pfd->cBlueShift = pfd->cAlphaShift + pfd->cAlphaBits;
+    pfd->cGreenShift = pfd->cBlueShift + pfd->cBlueBits;
+    pfd->cRedShift = pfd->cGreenShift + pfd->cGreenBits;
+}
+
 /***********************************************************************
  *		android_wglGetExtensionsStringARB
  */
@@ -451,52 +484,6 @@ static BOOL android_wglDeleteContext( struct wgl_context *ctx )
 }
 
 /***********************************************************************
- *		android_wglDescribePixelFormat
- */
-static int android_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd )
-{
-    EGLint val;
-    EGLConfig config;
-
-    if (!pfd) return nb_onscreen_formats;
-    if (!is_onscreen_pixel_format( fmt )) return 0;
-    if (size < sizeof(*pfd)) return 0;
-    config = pixel_formats[fmt - 1].config;
-
-    memset( pfd, 0, sizeof(*pfd) );
-    pfd->nSize = sizeof(*pfd);
-    pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER | PFD_SUPPORT_COMPOSITION;
-    pfd->iPixelType = PFD_TYPE_RGBA;
-    pfd->iLayerType = PFD_MAIN_PLANE;
-
-    p_eglGetConfigAttrib( display, config, EGL_BUFFER_SIZE, &val );
-    pfd->cColorBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_RED_SIZE, &val );
-    pfd->cRedBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_GREEN_SIZE, &val );
-    pfd->cGreenBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_BLUE_SIZE, &val );
-    pfd->cBlueBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_ALPHA_SIZE, &val );
-    pfd->cAlphaBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_DEPTH_SIZE, &val );
-    pfd->cDepthBits = val;
-    p_eglGetConfigAttrib( display, config, EGL_STENCIL_SIZE, &val );
-    pfd->cStencilBits = val;
-
-    pfd->cAlphaShift = 0;
-    pfd->cBlueShift = pfd->cAlphaShift + pfd->cAlphaBits;
-    pfd->cGreenShift = pfd->cBlueShift + pfd->cBlueBits;
-    pfd->cRedShift = pfd->cGreenShift + pfd->cGreenBits;
-
-    TRACE( "fmt %u color %u %u/%u/%u/%u depth %u stencil %u\n",
-           fmt, pfd->cColorBits, pfd->cRedBits, pfd->cGreenBits, pfd->cBlueBits,
-           pfd->cAlphaBits, pfd->cDepthBits, pfd->cStencilBits );
-    return nb_onscreen_formats;
-}
-
-/***********************************************************************
  *		android_wglGetPixelFormat
  */
 static int android_wglGetPixelFormat( HDC hdc )
@@ -603,6 +590,24 @@ static BOOL android_wglSwapBuffers( HDC hdc )
     if (refresh_context( ctx )) return TRUE;
     if (ctx->surface) p_eglSwapBuffers( display, ctx->surface );
     return TRUE;
+}
+
+/**********************************************************************
+ *              android_get_pixel_formats
+ */
+static void android_get_pixel_formats( struct wgl_pixel_format *formats,
+                                       UINT max_formats, UINT *num_formats,
+                                       UINT *num_onscreen_formats )
+{
+    UINT i;
+
+    if (formats)
+    {
+        for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
+            describe_pixel_format( &pixel_formats[i], &formats[i].pfd );
+    }
+    *num_formats = nb_pixel_formats;
+    *num_onscreen_formats = nb_onscreen_formats;
 }
 
 static void wglFinish(void)
@@ -1061,13 +1066,14 @@ static struct opengl_funcs egl_funcs =
         android_wglCopyContext,
         android_wglCreateContext,
         android_wglDeleteContext,
-        android_wglDescribePixelFormat,
+        NULL, /* p_wglDescribePixelFormat */
         android_wglGetPixelFormat,
         android_wglGetProcAddress,
         android_wglMakeCurrent,
         android_wglSetPixelFormat,
         android_wglShareLists,
         android_wglSwapBuffers,
+        android_get_pixel_formats,
     },
 #define USE_GL_FUNC(name) (void *)glstub_##name,
     { ALL_WGL_FUNCS }
