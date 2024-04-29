@@ -5340,7 +5340,7 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
         return FALSE;
     }
 
-    if (gl_info->glsl_version <= MAKEDWORD_VERSION(1, 20))
+    if (gl_info->glsl_version < MAKEDWORD_VERSION(1, 20))
     {
         ERR("GLSL version %s is too low; 1.20 is required.\n",
                 (const char *)gl_info->gl_ops.gl.p_glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
