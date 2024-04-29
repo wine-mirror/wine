@@ -316,25 +316,6 @@ static struct device *find_device_from_handle( HANDLE handle )
     return NULL;
 }
 
-BOOL rawinput_device_get_usages( HANDLE handle, USAGE *usage_page, USAGE *usage )
-{
-    struct device *device;
-
-    pthread_mutex_lock( &rawinput_mutex );
-
-    if (!(device = find_device_from_handle( handle )) || device->info.dwType != RIM_TYPEHID)
-        *usage_page = *usage = 0;
-    else
-    {
-        *usage_page = device->info.hid.usUsagePage;
-        *usage = device->info.hid.usUsage;
-    }
-
-    pthread_mutex_unlock( &rawinput_mutex );
-
-    return *usage_page || *usage;
-}
-
 /**********************************************************************
  *         NtUserGetRawInputDeviceList   (win32u.@)
  */
