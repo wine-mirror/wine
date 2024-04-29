@@ -1,6 +1,8 @@
 MODULE    = msctfp.dll
 IMPORTS   = rpcrt4 ole32 oleaut32
 
+EXTRAIDLFLAGS = -Oicf
+
 SOURCES = \
 	msctfp.idl
 
