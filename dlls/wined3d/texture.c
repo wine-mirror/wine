@@ -6254,12 +6254,13 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects, const RECT *draw_rect,
         uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
 {
+    unsigned int i, attachment_count, immediate_rt_count = 0, delay_count = 0;
     VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS + 1];
     VkImageView views[WINED3D_MAX_RENDER_TARGETS + 1];
-    unsigned int i, attachment_count, delay_count = 0;
     struct wined3d_rendertarget_view_vk *rtv_vk;
     struct wined3d_rendertarget_view *view;
     const struct wined3d_vk_info *vk_info;
+    struct wined3d_fb_state immediate_fb;
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkRenderPassBeginInfo begin_desc;
@@ -6313,6 +6314,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
         wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
 
+        immediate_fb.render_targets[immediate_rt_count++] = view;
         rtv_vk = wined3d_rendertarget_view_vk(view);
         views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
         wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
@@ -6349,6 +6351,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
             wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
             wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
 
+            immediate_fb.depth_stencil = view;
             rtv_vk = wined3d_rendertarget_view_vk(view);
             views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
             wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
@@ -6384,8 +6387,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     if (delay_count)
         TRACE_(d3d_perf)("Partial clear: %u immediate, %u delayed.\n", attachment_count, delay_count);
 
-    if (!(vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, fb,
-            rt_count, flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL), flags)))
+    if (!(vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, &immediate_fb,
+            immediate_rt_count, flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL), flags)))
     {
         ERR("Failed to get render pass.\n");
         return;
@@ -6441,19 +6444,13 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
     wined3d_context_vk_destroy_vk_framebuffer(context_vk, vk_framebuffer, context_vk->current_command_buffer.id);
 
-    for (i = 0; i < rt_count; ++i)
-    {
-        if (!(view = fb->render_targets[i]))
-            continue;
-
-        wined3d_context_vk_reference_rendertarget_view(context_vk, wined3d_rendertarget_view_vk(view));
-    }
+    for (i = 0; i < immediate_rt_count; ++i)
+        wined3d_context_vk_reference_rendertarget_view(context_vk,
+                wined3d_rendertarget_view_vk(immediate_fb.render_targets[i]));
 
     if (depth_stencil)
-    {
-        view = fb->depth_stencil;
-        wined3d_context_vk_reference_rendertarget_view(context_vk, wined3d_rendertarget_view_vk(view));
-    }
+        wined3d_context_vk_reference_rendertarget_view(context_vk,
+                wined3d_rendertarget_view_vk(immediate_fb.depth_stencil));
 }
 
 static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
