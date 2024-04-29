@@ -68,7 +68,7 @@ DECL_FUNCPTR( eglSwapInterval );
 
 static const int egl_client_version = 2;
 
-struct wgl_pixel_format
+struct egl_pixel_format
 {
     EGLConfig config;
 };
@@ -96,7 +96,7 @@ struct gl_drawable
 
 static void *egl_handle;
 static void *opengl_handle;
-static struct wgl_pixel_format *pixel_formats;
+static struct egl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static EGLDisplay display;
 static int swap_interval;
