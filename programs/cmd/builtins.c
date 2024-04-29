@@ -153,6 +153,41 @@ static struct
   {' ',' '}
 };
 
+static DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file)
+{
+    DIRECTORY_STACK *new = xalloc(sizeof(DIRECTORY_STACK));
+
+    new->next = NULL;
+    new->fileName = NULL;
+    if (!dir && !file)
+    {
+        DWORD sz = GetCurrentDirectoryW(0, NULL);
+        new->dirName = xalloc(sz * sizeof(WCHAR));
+        GetCurrentDirectoryW(sz, new->dirName);
+    }
+    else if (!file)
+        new->dirName = xstrdupW(dir);
+    else
+    {
+        new->dirName = xalloc((wcslen(dir) + 1 + wcslen(file) + 1) * sizeof(WCHAR));
+        wcscpy(new->dirName, dir);
+        wcscat(new->dirName, L"\\");
+        wcscat(new->dirName, file);
+    }
+    return new;
+}
+
+static DIRECTORY_STACK *WCMD_dir_stack_free(DIRECTORY_STACK *dir)
+{
+    DIRECTORY_STACK *next;
+
+    if (!dir) return NULL;
+    next = dir->next;
+    free(dir->dirName);
+    free(dir);
+    return next;
+}
+
 /**************************************************************************
  * WCMD_ask_confirm
  *
@@ -1371,26 +1406,18 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
 
             /* Allocate memory, add to list */
-            nextDir = xalloc(sizeof(DIRECTORY_STACK));
+            nextDir = WCMD_dir_stack_create(subParm, NULL);
             if (allDirs == NULL) allDirs = nextDir;
             if (lastEntry != NULL) lastEntry->next = nextDir;
             lastEntry = nextDir;
-            nextDir->next = NULL;
-            nextDir->dirName = xstrdupW(subParm);
           }
         } while (FindNextFileW(hff, &fd) != 0);
         FindClose (hff);
 
         /* Go through each subdir doing the delete */
         while (allDirs != NULL) {
-          DIRECTORY_STACK *tempDir;
-
-          tempDir = allDirs->next;
           found |= WCMD_delete_one (allDirs->dirName);
-
-          free(allDirs->dirName);
-          free(allDirs);
-          allDirs = tempDir;
+          allDirs = WCMD_dir_stack_free(allDirs);
         }
       }
     }
@@ -1763,47 +1790,44 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
  * processed, and any other directory still to be processed, mimicking what
  * Windows does
  */
-static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
-  DIRECTORY_STACK *remainingDirs = dirsToWalk;
-  WCHAR fullitem[MAX_PATH];
-  WIN32_FIND_DATAW fd;
-  HANDLE hff;
+static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk)
+{
+    DIRECTORY_STACK *remainingDirs = dirsToWalk;
+    WCHAR fullitem[MAX_PATH];
+    WIN32_FIND_DATAW fd;
+    HANDLE hff;
 
-  /* Build a generic search and add all directories on the list of directories
-     still to walk                                                             */
-  lstrcpyW(fullitem, dirsToWalk->dirName);
-  lstrcatW(fullitem, L"\\*");
-  hff = FindFirstFileW(fullitem, &fd);
-  if (hff != INVALID_HANDLE_VALUE) {
-    do {
-      WINE_TRACE("Looking for subdirectories\n");
-      if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-          (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0))
-      {
-        /* Allocate memory, add to list */
-        DIRECTORY_STACK *toWalk;
-        if (wcslen(dirsToWalk->dirName) + 1 + wcslen(fd.cFileName) >= MAX_PATH)
+    /* Build a generic search and add all directories on the list of directories
+       still to walk                                                             */
+    lstrcpyW(fullitem, dirsToWalk->dirName);
+    lstrcatW(fullitem, L"\\*");
+    if ((hff = FindFirstFileW(fullitem, &fd)) == INVALID_HANDLE_VALUE) return;
+
+    do
+    {
+        TRACE("Looking for subdirectories\n");
+        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0))
         {
-            WINE_TRACE("Skipping too long path %s\\%s\n",
-                       debugstr_w(dirsToWalk->dirName), debugstr_w(fd.cFileName));
-            continue;
+            /* Allocate memory, add to list */
+            DIRECTORY_STACK *toWalk;
+            if (wcslen(dirsToWalk->dirName) + 1 + wcslen(fd.cFileName) >= MAX_PATH)
+            {
+                TRACE("Skipping too long path %s\\%s\n",
+                      debugstr_w(dirsToWalk->dirName), debugstr_w(fd.cFileName));
+                continue;
+            }
+            toWalk = WCMD_dir_stack_create(dirsToWalk->dirName, fd.cFileName);
+            TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
+            toWalk->next = remainingDirs->next;
+            remainingDirs->next = toWalk;
+            remainingDirs = toWalk;
+            TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
+                  toWalk, toWalk->next);
         }
-        toWalk = xalloc(sizeof(DIRECTORY_STACK));
-        WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
-        toWalk->next = remainingDirs->next;
-        remainingDirs->next = toWalk;
-        remainingDirs = toWalk;
-        toWalk->dirName = xalloc(sizeof(WCHAR) * (wcslen(dirsToWalk->dirName) + 2 + wcslen(fd.cFileName)));
-        lstrcpyW(toWalk->dirName, dirsToWalk->dirName);
-        lstrcatW(toWalk->dirName, L"\\");
-        lstrcatW(toWalk->dirName, fd.cFileName);
-        WINE_TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
-                   toWalk, toWalk->next);
-      }
     } while (FindNextFileW(hff, &fd) != 0);
-    WINE_TRACE("Finished adding all subdirectories\n");
-    FindClose (hff);
-  }
+    TRACE("Finished adding all subdirectories\n");
+    FindClose(hff);
 }
 
 /**************************************************************************
@@ -2201,10 +2225,8 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
   /* Set up the list of directories to recurse if we are going to */
   } else if (doRecurse) {
        /* Allocate memory, add to list */
-       dirsToWalk = xalloc(sizeof(DIRECTORY_STACK));
-       dirsToWalk->next = NULL;
-       dirsToWalk->dirName = xstrdupW(optionsRoot);
-       WINE_TRACE("Starting with root directory %s\n", wine_dbgstr_w(dirsToWalk->dirName));
+      dirsToWalk = WCMD_dir_stack_create(optionsRoot, NULL);
+      TRACE("Starting with root directory %s\n", wine_dbgstr_w(dirsToWalk->dirName));
   }
 
   /* Variable should follow */
@@ -2491,10 +2513,7 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
 
     /* If we are walking directories, move on to any which remain */
     if (dirsToWalk != NULL) {
-      DIRECTORY_STACK *nextDir = dirsToWalk->next;
-      free(dirsToWalk->dirName);
-      free(dirsToWalk);
-      dirsToWalk = nextDir;
+      dirsToWalk = WCMD_dir_stack_free(dirsToWalk);
       if (dirsToWalk) WINE_TRACE("Moving to next directory to iterate: %s\n",
                                  wine_dbgstr_w(dirsToWalk->dirName));
       else WINE_TRACE("Finished all directories.\n");
