@@ -1771,10 +1771,21 @@ SQLRETURN WINAPI SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *Connectio
                                   SQLCHAR *conn_str_out, SQLSMALLINT conn_str_out_max,
                                   SQLSMALLINT *ptr_conn_str_out, SQLUSMALLINT driver_completion)
 {
+    static const char *serverStr="SERVER=";
     struct SQLDriverConnect_params params = { hdbc, hwnd, ConnectionString, Length, conn_str_out,
                                               conn_str_out_max, ptr_conn_str_out, driver_completion };
     SQLRETURN ret;
 
+    SQLCHAR *serverPos;
+    for (serverPos = strstr(ConnectionString,serverStr);(*serverPos != ';') && (*serverPos != '\0'); ++serverPos)
+    {
+        if (*serverPos == '/')
+        {
+           *serverPos = ':';
+           break;
+        }
+    }
+    
     TRACE("(hdbc %p, hwnd %p, ConnectionString %s, Length %d, conn_str_out %p, conn_str_out_max %d,"
           " ptr_conn_str_out %p, driver_completion %d)\n", hdbc, hwnd,
           debugstr_an((const char *)ConnectionString, Length), Length, conn_str_out, conn_str_out_max,
