@@ -60,7 +60,7 @@ static void output_processors( IWbemServices *services, enum format_flags flags,
 
     while (IEnumWbemClassObject_Skip( iter, WBEM_INFINITE, 1 ) == S_OK) num_cpus++;
 
-    fwprintf( stdout, L"Processor(s):%*s %u Processor(s) Installed.\n", width - wcslen(L"Processor(s)"), " ", num_cpus );
+    fwprintf( stdout, L"Processor(s):%*s %u Processor(s) Installed.\n", width - wcslen(L"Processor(s)"), L" ", num_cpus );
     IEnumWbemClassObject_Reset( iter );
 
     for (i = 0; i < num_cpus; i++)
@@ -74,7 +74,7 @@ static void output_processors( IWbemServices *services, enum format_flags flags,
             IWbemClassObject_Release( obj );
             goto done;
         }
-        fwprintf( stdout, L"%*s[%02u]: %s", width + 2, " ", i + 1, V_BSTR(&value) );
+        fwprintf( stdout, L"%*s[%02u]: %s", width + 2, L" ", i + 1, V_BSTR(&value) );
         VariantClear( &value );
 
         hr = IWbemClassObject_Get( obj, L"Manufacturer", 0, &value, NULL, NULL );
@@ -117,7 +117,7 @@ static void output_hotfixes( IWbemServices *services, enum format_flags flags, U
 
     while (IEnumWbemClassObject_Skip( iter, WBEM_INFINITE, 1 ) == S_OK) num_hotfixes++;
 
-    fwprintf( stdout, L"Hotfix(es):%*s %u Hotfix(es) Installed.\n", width - wcslen(L"Hotfix(es)"), " ", num_hotfixes );
+    fwprintf( stdout, L"Hotfix(es):%*s %u Hotfix(es) Installed.\n", width - wcslen(L"Hotfix(es)"), L" ", num_hotfixes );
     IEnumWbemClassObject_Reset( iter );
 
     for (i = 0; i < num_hotfixes; i++)
@@ -131,7 +131,7 @@ static void output_hotfixes( IWbemServices *services, enum format_flags flags, U
             IWbemClassObject_Release( obj );
             goto done;
         }
-        fwprintf( stdout, L"%*s[%02u]: %s\n", width + 2, " ", i + 1, V_BSTR(&value) );
+        fwprintf( stdout, L"%*s[%02u]: %s\n", width + 2, L" ", i + 1, V_BSTR(&value) );
         VariantClear( &value );
 
         IWbemClassObject_Release( obj );
@@ -159,7 +159,7 @@ static void output_nics( IWbemServices *services, enum format_flags flags, UINT3
 
     while (IEnumWbemClassObject_Skip( iter, WBEM_INFINITE, 1 ) == S_OK) num_nics++;
 
-    fwprintf( stdout, L"Network Card(s):%*s %u NICs(s) Installed.\n", width - wcslen(L"Network Card(s)"), " ", num_nics );
+    fwprintf( stdout, L"Network Card(s):%*s %u NICs(s) Installed.\n", width - wcslen(L"Network Card(s)"), L" ", num_nics );
     IEnumWbemClassObject_Reset( iter );
 
     for (i = 0; i < num_nics; i++)
@@ -173,7 +173,7 @@ static void output_nics( IWbemServices *services, enum format_flags flags, UINT3
             IWbemClassObject_Release( obj );
             goto done;
         }
-        fwprintf( stdout, L"%*s[%02u]: %s\n", width + 2, " ", i + 1, V_BSTR(&value) );
+        fwprintf( stdout, L"%*s[%02u]: %s\n", width + 2, L" ", i + 1, V_BSTR(&value) );
         VariantClear( &value );
 
         /* FIXME: Connection Name, DHCP Server */
@@ -184,7 +184,7 @@ static void output_nics( IWbemServices *services, enum format_flags flags, UINT3
             IWbemClassObject_Release( obj );
             goto done;
         }
-        fwprintf( stdout, L"%*s      DHCP Enabled: %s\n", width + 2, " ", V_BOOL(&value) ? L"Yes" : L"No" );
+        fwprintf( stdout, L"%*s      DHCP Enabled: %s\n", width + 2, L" ", V_BOOL(&value) ? L"Yes" : L"No" );
 
         hr = IWbemClassObject_Get( obj, L"IPAddress", 0, &value, NULL, NULL );
         if (FAILED( hr ))
@@ -198,11 +198,11 @@ static void output_nics( IWbemServices *services, enum format_flags flags, UINT3
             SafeArrayGetUBound( sa, 1, &bound );
             if (bound >= 0)
             {
-                fwprintf( stdout, L"%*s      IP Addresse(es)\n", width + 2, " " );
+                fwprintf( stdout, L"%*s      IP Addresse(es)\n", width + 2, L" " );
                 for (j = 0; j <= bound; j++)
                 {
                     SafeArrayGetElement( sa, &j, &str );
-                    fwprintf( stdout, L"%*s      [%02u]: %s\n", width + 2, " ", j + 1, str );
+                    fwprintf( stdout, L"%*s      [%02u]: %s\n", width + 2, L" ", j + 1, str );
                     SysFreeString( str );
                 }
             }
@@ -231,7 +231,7 @@ static void output_timezone( IWbemServices *services, enum format_flags flags, U
     RegQueryValueExW( key_name, L"Display", NULL, NULL, (BYTE *)timezone, &count );
 
 done:
-    fwprintf( stdout, L"Time Zone:%*s %s\n", width - wcslen(L"Time Zone"), " ", timezone );
+    fwprintf( stdout, L"Time Zone:%*s %s\n", width - wcslen(L"Time Zone"), L" ", timezone );
     RegCloseKey( key_name );
     RegCloseKey( key_timezones );
     RegCloseKey( key_current );
@@ -284,7 +284,7 @@ static void output_item( IWbemServices *services, const struct sysinfo *info, UI
     if (!info->class)
     {
         if (info->property)
-            fwprintf( stdout, L"%s:%*s %s\n", info->item, width - wcslen(info->item), " ", info->property );
+            fwprintf( stdout, L"%s:%*s %s\n", info->item, width - wcslen(info->item), L" ", info->property );
         else
             info->callback( services, info->flags, width );
         return;
@@ -315,7 +315,7 @@ static void output_item( IWbemServices *services, const struct sysinfo *info, UI
                  &st.wYear, &st.wMonth, &st.wDay, &st.wHour, &st.wMinute, &st.wSecond );
         GetDateFormatW( LOCALE_SYSTEM_DEFAULT, 0, &st, NULL, date, ARRAY_SIZE(date) );
         GetTimeFormatW( LOCALE_SYSTEM_DEFAULT, 0, &st, NULL, time, ARRAY_SIZE(time) );
-        fwprintf( stdout, L"%s:%*s %s, %s\n", info->item, width - wcslen(info->item), " ", date, time );
+        fwprintf( stdout, L"%s:%*s %s, %s\n", info->item, width - wcslen(info->item), L" ", date, time );
         break;
     }
     case FORMAT_LOCALE:
@@ -326,18 +326,18 @@ static void output_item( IWbemServices *services, const struct sysinfo *info, UI
         swscanf( V_BSTR(&value), L"%x", &lcid );
         LCIDToLocaleName( lcid, name, ARRAY_SIZE(name), 0 );
         GetLocaleInfoW( lcid, LOCALE_SENGLISHDISPLAYNAME, displayname, ARRAY_SIZE(displayname) );
-        fwprintf( stdout, L"%s:%*s %s;%s\n", info->item, width - wcslen(info->item), " ", name, displayname );
+        fwprintf( stdout, L"%s:%*s %s;%s\n", info->item, width - wcslen(info->item), L" ", name, displayname );
         break;
     }
     case FORMAT_SIZE:
     {
         UINT64 size = 0;
         swscanf( V_BSTR(&value), L"%I64u", &size );
-        fwprintf( stdout, L"%s:%*s %I64u MB\n", info->item, width - wcslen(info->item), " ", size / 1024 );
+        fwprintf( stdout, L"%s:%*s %I64u MB\n", info->item, width - wcslen(info->item), L" ", size / 1024 );
         break;
     }
     default:
-        fwprintf( stdout, L"%s:%*s %s\n", info->item, width - wcslen(info->item), " ", V_BSTR(&value) );
+        fwprintf( stdout, L"%s:%*s %s\n", info->item, width - wcslen(info->item), L" ", V_BSTR(&value) );
         break;
     }
     VariantClear( &value );
