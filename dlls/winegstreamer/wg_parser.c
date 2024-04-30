@@ -107,14 +107,15 @@ struct wg_parser_stream
     GstPad *my_sink;
     GstElement *flip, *decodebin;
     GstSegment segment;
-    struct wg_format preferred_format, codec_format;
+    struct wg_format codec_format;
+    GstCaps *current_caps;
     GstCaps *desired_caps;
 
     pthread_cond_t event_cond, event_empty_cond;
     GstBuffer *buffer;
     GstMapInfo map_info;
 
-    bool flushing, eos, enabled, has_caps, has_tags, has_buffer, no_more_pads;
+    bool flushing, eos, enabled, has_tags, has_buffer, no_more_pads;
 
     uint64_t duration;
     gchar *tags[WG_PARSER_TAG_COUNT];
@@ -222,8 +223,13 @@ static NTSTATUS wg_parser_push_data(void *args)
 static NTSTATUS wg_parser_stream_get_preferred_format(void *args)
 {
     const struct wg_parser_stream_get_preferred_format_params *params = args;
+    struct wg_parser_stream *stream = get_stream(params->stream);
 
-    *params->format = get_stream(params->stream)->preferred_format;
+    if (stream->current_caps)
+        wg_format_from_caps(params->format, stream->current_caps);
+    else
+        memset(params->format, 0, sizeof(*params->format));
+
     return S_OK;
 }
 
@@ -232,9 +238,13 @@ static NTSTATUS wg_parser_stream_get_codec_format(void *args)
     struct wg_parser_stream_get_codec_format_params *params = args;
     struct wg_parser_stream *stream = get_stream(params->stream);
 
-    *params->format = format_is_compressed(&stream->codec_format) ?
-            stream->codec_format :
-            stream->preferred_format;
+    if (format_is_compressed(&stream->codec_format))
+        *params->format = stream->codec_format;
+    else if (stream->current_caps)
+        wg_format_from_caps(params->format, stream->current_caps);
+    else
+        memset(params->format, 0, sizeof(*params->format));
+
     return S_OK;
 }
 
@@ -637,8 +647,7 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 
             gst_event_parse_caps(event, &caps);
             pthread_mutex_lock(&parser->mutex);
-            wg_format_from_caps(&stream->preferred_format, caps);
-            stream->has_caps = true;
+            stream->current_caps = gst_caps_ref(caps);
             pthread_mutex_unlock(&parser->mutex);
             pthread_cond_signal(&parser->init_cond);
             break;
@@ -1627,7 +1636,7 @@ static NTSTATUS wg_parser_connect(void *args)
         gint64 duration;
 
         /* If we received a buffer, waiting for tags or caps does not make sense anymore. */
-        while ((!stream->has_caps || !stream->has_tags) && !parser->error && !stream->has_buffer)
+        while ((!stream->current_caps || !stream->has_tags) && !parser->error && !stream->has_buffer)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
 
         /* GStreamer doesn't actually provide any guarantees about when duration
