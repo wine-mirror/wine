@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "cpsf.h"
 #include "wine/asm.h"
 
 #define ALL_THUNK_ENTRIES \
@@ -231,3 +232,90 @@ __ASM_GLOBAL_FUNC( call_stubless_func,
 __ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
 
 #undef T
+
+
+/* The idea here is to replace the first param on the stack
+   ie. This (which will point to cstdstubbuffer_delegating_t)
+   with This->stub_buffer.pvServerObject and then jump to the
+   relevant offset in This->stub_buffer.pvServerObject's vtbl.
+*/
+#ifdef __i386__
+
+#define T(num) \
+    ".balign 4\n\t" \
+    ".globl " __ASM_NAME("NdrProxyForwardingFunction" #num) "\n" \
+    __ASM_NAME("NdrProxyForwardingFunction" #num) ":\n\t" \
+    "mov 4(%esp),%eax\n\t" \
+    "mov 0x10(%eax),%eax\n\t" \
+    "mov %eax,4(%esp)\n\t" \
+    "mov (%eax),%eax\n\t" \
+    ".byte 0xff,0xa0\n\t" /* jmp *offset(%eax) */ \
+    ".long 4*"#num"\n\t"
+
+#elif defined __x86_64__
+
+#define T(num) \
+    ".balign 4\n\t" \
+    ".globl " __ASM_NAME("NdrProxyForwardingFunction" #num) "\n" \
+    __ASM_NAME("NdrProxyForwardingFunction" #num) ":\n\t" \
+    "movq 0x20(%rcx),%rcx\n\t" \
+    "movq (%rcx),%rax\n\t" \
+    ".byte 0xff,0xa0\n\t" /* jmp *offset(%rax) */ \
+    ".long 8*"#num"\n\t"
+
+#elif defined __aarch64__
+
+#define T(num) \
+    ".globl NdrProxyForwardingFunction" #num "\n" \
+    "NdrProxyForwardingFunction" #num ":\n\t" \
+    "ldr x0, [x0, #0x20]\n\t" \
+    "ldr x16, [x0]\n\t" \
+    "mov x17, #"#num"\n\t" \
+    "ldr x16, [x16, x17, lsl #3]\n\t" \
+    "br x16\n\t"
+
+#elif defined __arm__
+
+#define T(num) \
+    ".balign 4\n\t" \
+    ".globl NdrProxyForwardingFunction" #num "\n" \
+    "NdrProxyForwardingFunction" #num ":\n\t" \
+    "ldr r0, [r0, #0x10]\n\t" \
+    "ldr ip, [r0]\n\t" \
+    "ldr pc, [ip, #(4*"#num")]\n\t"
+
+#endif  /* __i386__ */
+
+__ASM_GLOBAL_FUNC( vtbl_thunks, ALL_THUNK_ENTRIES )
+
+#undef T
+
+static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
+{
+    *ppv = pUnk;
+    return S_OK;
+}
+
+static ULONG WINAPI delegating_AddRef(IUnknown *pUnk)
+{
+    return 1;
+}
+
+static ULONG WINAPI delegating_Release(IUnknown *pUnk)
+{
+    return 1;
+}
+
+#define T(num) extern void NdrProxyForwardingFunction##num(void);
+ALL_THUNK_ENTRIES
+#undef T
+
+const struct delegating_vtbl delegating_vtbl =
+{
+    { delegating_QueryInterface, delegating_AddRef, delegating_Release },
+    {
+#define T(num) (void *)NdrProxyForwardingFunction##num,
+        ALL_THUNK_ENTRIES
+#undef T
+    }
+};

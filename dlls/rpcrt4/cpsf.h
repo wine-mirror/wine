@@ -71,105 +71,14 @@ HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub);
 BOOL fill_stubless_table(IUnknownVtbl *vtbl, DWORD num);
 const IUnknownVtbl *get_delegating_vtbl(DWORD num_methods);
 
-#define THUNK_ENTRY_FIRST_BLOCK() \
-    THUNK_ENTRY(3) \
-    THUNK_ENTRY(4) \
-    THUNK_ENTRY(5) \
-    THUNK_ENTRY(6) \
-    THUNK_ENTRY(7) \
-    THUNK_ENTRY(8) \
-    THUNK_ENTRY(9) \
-    THUNK_ENTRY(10) \
-    THUNK_ENTRY(11) \
-    THUNK_ENTRY(12) \
-    THUNK_ENTRY(13) \
-    THUNK_ENTRY(14) \
-    THUNK_ENTRY(15) \
-    THUNK_ENTRY(16) \
-    THUNK_ENTRY(17) \
-    THUNK_ENTRY(18) \
-    THUNK_ENTRY(19) \
-    THUNK_ENTRY(20) \
-    THUNK_ENTRY(21) \
-    THUNK_ENTRY(22) \
-    THUNK_ENTRY(23) \
-    THUNK_ENTRY(24) \
-    THUNK_ENTRY(25) \
-    THUNK_ENTRY(26) \
-    THUNK_ENTRY(27) \
-    THUNK_ENTRY(28) \
-    THUNK_ENTRY(29) \
-    THUNK_ENTRY(30) \
-    THUNK_ENTRY(31)
+#define NB_THUNK_ENTRIES 1024
 
-#define THUNK_ENTRY_BLOCK(block) \
-    THUNK_ENTRY(32 * (block) + 0) \
-    THUNK_ENTRY(32 * (block) + 1) \
-    THUNK_ENTRY(32 * (block) + 2) \
-    THUNK_ENTRY(32 * (block) + 3) \
-    THUNK_ENTRY(32 * (block) + 4) \
-    THUNK_ENTRY(32 * (block) + 5) \
-    THUNK_ENTRY(32 * (block) + 6) \
-    THUNK_ENTRY(32 * (block) + 7) \
-    THUNK_ENTRY(32 * (block) + 8) \
-    THUNK_ENTRY(32 * (block) + 9) \
-    THUNK_ENTRY(32 * (block) + 10) \
-    THUNK_ENTRY(32 * (block) + 11) \
-    THUNK_ENTRY(32 * (block) + 12) \
-    THUNK_ENTRY(32 * (block) + 13) \
-    THUNK_ENTRY(32 * (block) + 14) \
-    THUNK_ENTRY(32 * (block) + 15) \
-    THUNK_ENTRY(32 * (block) + 16) \
-    THUNK_ENTRY(32 * (block) + 17) \
-    THUNK_ENTRY(32 * (block) + 18) \
-    THUNK_ENTRY(32 * (block) + 19) \
-    THUNK_ENTRY(32 * (block) + 20) \
-    THUNK_ENTRY(32 * (block) + 21) \
-    THUNK_ENTRY(32 * (block) + 22) \
-    THUNK_ENTRY(32 * (block) + 23) \
-    THUNK_ENTRY(32 * (block) + 24) \
-    THUNK_ENTRY(32 * (block) + 25) \
-    THUNK_ENTRY(32 * (block) + 26) \
-    THUNK_ENTRY(32 * (block) + 27) \
-    THUNK_ENTRY(32 * (block) + 28) \
-    THUNK_ENTRY(32 * (block) + 29) \
-    THUNK_ENTRY(32 * (block) + 30) \
-    THUNK_ENTRY(32 * (block) + 31)
+struct delegating_vtbl
+{
+    IUnknownVtbl vtbl;
+    const void *methods[NB_THUNK_ENTRIES - 3];
+};
 
-#define ALL_THUNK_ENTRIES \
-    THUNK_ENTRY_FIRST_BLOCK() \
-    THUNK_ENTRY_BLOCK(1) \
-    THUNK_ENTRY_BLOCK(2) \
-    THUNK_ENTRY_BLOCK(3) \
-    THUNK_ENTRY_BLOCK(4) \
-    THUNK_ENTRY_BLOCK(5) \
-    THUNK_ENTRY_BLOCK(6) \
-    THUNK_ENTRY_BLOCK(7) \
-    THUNK_ENTRY_BLOCK(8) \
-    THUNK_ENTRY_BLOCK(9) \
-    THUNK_ENTRY_BLOCK(10) \
-    THUNK_ENTRY_BLOCK(11) \
-    THUNK_ENTRY_BLOCK(12) \
-    THUNK_ENTRY_BLOCK(13) \
-    THUNK_ENTRY_BLOCK(14) \
-    THUNK_ENTRY_BLOCK(15) \
-    THUNK_ENTRY_BLOCK(16) \
-    THUNK_ENTRY_BLOCK(17) \
-    THUNK_ENTRY_BLOCK(18) \
-    THUNK_ENTRY_BLOCK(19) \
-    THUNK_ENTRY_BLOCK(20) \
-    THUNK_ENTRY_BLOCK(21) \
-    THUNK_ENTRY_BLOCK(22) \
-    THUNK_ENTRY_BLOCK(23) \
-    THUNK_ENTRY_BLOCK(24) \
-    THUNK_ENTRY_BLOCK(25) \
-    THUNK_ENTRY_BLOCK(26) \
-    THUNK_ENTRY_BLOCK(27) \
-    THUNK_ENTRY_BLOCK(28) \
-    THUNK_ENTRY_BLOCK(29) \
-    THUNK_ENTRY_BLOCK(30) \
-    THUNK_ENTRY_BLOCK(31)
-
-#define NB_THUNK_ENTRIES (32 * 32)
+extern const struct delegating_vtbl delegating_vtbl;
 
 #endif  /* __WINE_CPSF_H */
