@@ -661,6 +661,31 @@ HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMA
     return hr;
 }
 
+HRESULT check_video_transform_support(const MFVIDEOFORMAT *input, const MFVIDEOFORMAT *output)
+{
+    IMFMediaType *input_type, *output_type;
+    struct wg_transform_attrs attrs = {0};
+    wg_transform_t transform;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateMediaType(&input_type)))
+        return hr;
+    if (FAILED(hr = MFCreateMediaType(&output_type)))
+    {
+        IMFMediaType_Release(input_type);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = MFInitMediaTypeFromMFVideoFormat(input_type, input, input->dwSize))
+            && SUCCEEDED(hr = MFInitMediaTypeFromMFVideoFormat(output_type, output, output->dwSize))
+            && SUCCEEDED(hr = wg_transform_create_mf(input_type, output_type, &attrs, &transform)))
+        wg_transform_destroy(transform);
+
+    IMFMediaType_Release(output_type);
+    IMFMediaType_Release(input_type);
+    return hr;
+}
+
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
 
 unsigned int wg_format_get_stride(const struct wg_format *format)

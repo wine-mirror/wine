@@ -700,39 +700,28 @@ static const IMFTransformVtbl video_processor_vtbl =
 
 HRESULT video_processor_create(REFIID riid, void **ret)
 {
-    static const struct wg_format input_format =
+    const MFVIDEOFORMAT input_format =
     {
-        .major_type = WG_MAJOR_TYPE_VIDEO,
-        .u.video =
-        {
-            .format = WG_VIDEO_FORMAT_I420,
-            .width = 1920,
-            .height = 1080,
-        },
+        .dwSize = sizeof(MFVIDEOFORMAT),
+        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
+        .guidFormat = MFVideoFormat_I420,
     };
-    static const struct wg_format output_format =
+    const MFVIDEOFORMAT output_format =
     {
-        .major_type = WG_MAJOR_TYPE_VIDEO,
-        .u.video =
-        {
-            .format = WG_VIDEO_FORMAT_NV12,
-            .width = 1920,
-            .height = 1080,
-        },
+        .dwSize = sizeof(MFVIDEOFORMAT),
+        .videoInfo = {.dwWidth = 1920, .dwHeight = 1080},
+        .guidFormat = MFVideoFormat_NV12,
     };
-    struct wg_transform_attrs attrs = {0};
-    wg_transform_t transform;
     struct video_processor *impl;
     HRESULT hr;
 
     TRACE("riid %s, ret %p.\n", debugstr_guid(riid), ret);
 
-    if (!(transform = wg_transform_create(&input_format, &output_format, &attrs)))
+    if (FAILED(hr = check_video_transform_support(&input_format, &output_format)))
     {
         ERR_(winediag)("GStreamer doesn't support video conversion, please install appropriate plugins.\n");
-        return E_FAIL;
+        return hr;
     }
-    wg_transform_destroy(transform);
 
     if (!(impl = calloc(1, sizeof(*impl))))
         return E_OUTOFMEMORY;
