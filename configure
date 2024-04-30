@@ -10310,7 +10310,16 @@ saved_CC=$CC
 saved_CFLAGS=$CFLAGS
 saved_LDFLAGS=$LDFLAGS
 
-for wine_arch in $cross_archs
+{ extra_arch=; unset extra_arch;}
+for arch in $cross_archs
+do
+  case $arch in
+    arm64ec) test ${extra_arch+y} || extra_arch=x86_64 ;;
+    x86_64) extra_arch="" ;;
+  esac
+done
+
+for wine_arch in $cross_archs $extra_arch
 do
     case "x$with_mingw" in
       xclang|x*/clang) eval "${wine_arch}_CC=\$with_mingw" ;;
@@ -10840,7 +10849,13 @@ fi
 fi
 fi
 
-    as_fn_append PE_ARCHS " $wine_arch"
+    if test "x$wine_arch" = x$extra_arch
+then :
+
+else $as_nop
+  as_fn_append PE_ARCHS " $wine_arch"
+fi
+
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
 printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }

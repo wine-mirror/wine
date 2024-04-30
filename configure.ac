@@ -793,7 +793,16 @@ saved_CC=$CC
 saved_CFLAGS=$CFLAGS
 saved_LDFLAGS=$LDFLAGS
 
-for wine_arch in $cross_archs
+AS_UNSET(extra_arch)
+for arch in $cross_archs
+do
+  case $arch in
+    arm64ec) test ${extra_arch+y} || extra_arch=x86_64 ;;
+    x86_64) extra_arch="" ;;
+  esac
+done
+
+for wine_arch in $cross_archs $extra_arch
 do
     case "x$with_mingw" in
       xclang|x*/clang) AS_VAR_SET(${wine_arch}_CC,$with_mingw) ;;
@@ -925,7 +934,8 @@ This is an error since --enable-archs=$wine_arch was requested.])])
 This is an error since --enable-archs=$wine_arch was requested.])])
                           continue])])
 
-    AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])
+    AS_VAR_IF([wine_arch],[$extra_arch],[],[AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])])
+
     WINE_TRY_PE_CFLAGS([-fno-strict-aliasing])
     dnl clang needs to be told to fail on unknown options
     WINE_TRY_PE_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
