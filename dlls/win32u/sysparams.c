@@ -1900,6 +1900,7 @@ static BOOL desktop_update_display_devices( BOOL force, struct device_manager_ct
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &current ))
     {
         current = desktop_ctx.primary;
+        current.dmDisplayFrequency = 60;
         current.dmPelsWidth = screen_width;
         current.dmPelsHeight = screen_height;
     }
