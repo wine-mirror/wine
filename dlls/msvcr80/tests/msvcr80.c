@@ -64,6 +64,11 @@ static int (__cdecl *p_strcmp)(const char *, const char *);
 static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
 static int (__cdecl *p_dupenv_s)(char **, size_t *, const char *);
 static int (__cdecl *p_wdupenv_s)(wchar_t **, size_t *, const wchar_t *);
+static int* (__cdecl *p_errno)(void);
+
+/* make sure we use the correct errno */
+#undef errno
+#define errno (*p_errno())
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hcrt,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -87,6 +92,7 @@ static BOOL init(void)
     SET(p_strncmp, "strncmp");
     SET(p_dupenv_s, "_dupenv_s");
     SET(p_wdupenv_s, "_wdupenv_s");
+    SET(p_errno, "_errno");
 
     return TRUE;
 }
