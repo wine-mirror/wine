@@ -107,7 +107,7 @@ struct wg_parser_stream
     GstPad *my_sink;
     GstElement *flip, *decodebin;
     GstSegment segment;
-    struct wg_format codec_format;
+    GstCaps *codec_caps;
     GstCaps *current_caps;
     GstCaps *desired_caps;
 
@@ -131,11 +131,17 @@ static struct wg_parser_stream *get_stream(wg_parser_stream_t stream)
     return (struct wg_parser_stream *)(ULONG_PTR)stream;
 }
 
-static bool format_is_compressed(struct wg_format *format)
+static bool caps_is_compressed(GstCaps *caps)
 {
-    return format->major_type != WG_MAJOR_TYPE_UNKNOWN
-            && format->major_type != WG_MAJOR_TYPE_VIDEO
-            && format->major_type != WG_MAJOR_TYPE_AUDIO;
+    struct wg_format format;
+
+    if (!caps)
+        return false;
+    wg_format_from_caps(&format, caps);
+
+    return format.major_type != WG_MAJOR_TYPE_UNKNOWN
+            && format.major_type != WG_MAJOR_TYPE_VIDEO
+            && format.major_type != WG_MAJOR_TYPE_AUDIO;
 }
 
 static NTSTATUS wg_parser_get_stream_count(void *args)
@@ -238,8 +244,8 @@ static NTSTATUS wg_parser_stream_get_codec_format(void *args)
     struct wg_parser_stream_get_codec_format_params *params = args;
     struct wg_parser_stream *stream = get_stream(params->stream);
 
-    if (format_is_compressed(&stream->codec_format))
-        *params->format = stream->codec_format;
+    if (caps_is_compressed(stream->codec_caps))
+        wg_format_from_caps(params->format, stream->codec_caps);
     else if (stream->current_caps)
         wg_format_from_caps(params->format, stream->current_caps);
     else
@@ -519,11 +525,7 @@ static bool parser_no_more_pads(struct wg_parser *parser)
 
 static gboolean autoplug_continue_cb(GstElement * decodebin, GstPad *pad, GstCaps * caps, gpointer user)
 {
-    struct wg_format format;
-
-    wg_format_from_caps(&format, caps);
-
-    return !format_is_compressed(&format);
+    return !caps_is_compressed(caps);
 }
 
 static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
@@ -980,7 +982,6 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 {
     struct wg_parser_stream *stream;
     struct wg_parser *parser = user;
-    GstCaps *caps;
 
     GST_LOG("parser %p, element %p, pad %p.", parser, element, pad);
 
@@ -989,13 +990,10 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 
     if (!(stream = create_stream(parser)))
         return;
-
-    caps = gst_pad_query_caps(pad, NULL);
-    wg_format_from_caps(&stream->codec_format, caps);
-    gst_caps_unref(caps);
+    stream->codec_caps = gst_pad_query_caps(pad, NULL);
 
     /* For compressed stream, create an extra decodebin to decode it. */
-    if (!parser->output_compressed && format_is_compressed(&stream->codec_format))
+    if (!parser->output_compressed && caps_is_compressed(stream->codec_caps))
     {
         if (!stream_decodebin_create(stream))
         {
