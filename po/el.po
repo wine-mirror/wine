@@ -14340,6 +14340,11 @@ msgstr ""
 msgid "End of line"
 msgstr "Α&γαπημένα.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+msgid "End of file"
+msgstr "Α&γαπημένα.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

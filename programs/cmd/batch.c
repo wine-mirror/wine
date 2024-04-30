@@ -92,7 +92,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, WCHAR *startLabel, HANDLE pgmHandl
       /* Note: although this batch program itself may be called, we are not retrying
          the command as a result of a call failing to find a program, hence the
          retryCall parameter below is FALSE                                           */
-      WCMD_process_commands(toExecute, FALSE, FALSE);
+      node_execute(toExecute);
       node_dispose_tree(toExecute);
       toExecute = NULL;
   }

@@ -14583,6 +14583,10 @@ msgstr "Syntax error: unexpected %1\n"
 msgid "End of line"
 msgstr "End of line"
 
+#: programs/cmd/cmd.rc:413
+msgid "End of file"
+msgstr "End of file"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursor size"

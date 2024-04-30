@@ -14510,6 +14510,11 @@ msgstr ""
 msgid "End of line"
 msgstr "&Rafacer\tDel"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+msgid "End of file"
+msgstr "&Rafacer\tDel"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

@@ -14079,6 +14079,10 @@ msgstr ""
 msgid "End of line"
 msgstr ""
 
+#: programs/cmd/cmd.rc:413
+msgid "End of file"
+msgstr ""
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

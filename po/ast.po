@@ -14491,6 +14491,12 @@ msgstr "Error de la sintaxis\n"
 msgid "End of line"
 msgstr "Fin del ficheru.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "Fin del ficheru.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamañu del cursor"

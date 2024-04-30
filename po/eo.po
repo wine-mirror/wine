@@ -14950,6 +14950,12 @@ msgstr ""
 msgid "End of line"
 msgstr "&Ordinara zono"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "&Standard bar"
+msgid "End of file"
+msgstr "&Ordinara zono"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kursor-grando"

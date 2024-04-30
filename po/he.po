@@ -15350,6 +15350,11 @@ msgstr "שגיאת תחביר"
 msgid "End of line"
 msgstr "&איגוד לקובץ..."
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+msgid "End of file"
+msgstr "&איגוד לקובץ..."
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "גודל הסמן"

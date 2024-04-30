@@ -14587,6 +14587,12 @@ msgstr "構文エラー\n"
 msgid "End of line"
 msgstr "ファイルの終端です。\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "ファイルの終端です。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "カーソルの大きさ"

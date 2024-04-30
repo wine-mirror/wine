@@ -1458,7 +1458,6 @@ for %%a in ("f"
 "g"
 "h"
 ) do if #==# (echo %%a)
-echo ---
 
 mkdir foobar & cd foobar
 mkdir foo

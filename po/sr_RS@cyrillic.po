@@ -15136,6 +15136,11 @@ msgstr "Грешка у синтакси"
 msgid "End of line"
 msgstr "&Додај у омиљене..."
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+msgid "End of file"
+msgstr "&Додај у омиљене..."
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

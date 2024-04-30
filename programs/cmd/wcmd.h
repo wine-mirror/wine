@@ -56,6 +56,8 @@ typedef enum _CMD_OPERATOR
     CMD_ONFAILURE,   /* ||                      */
     CMD_ONSUCCESS,   /* &&                      */
     CMD_PIPE,        /* Single |                */
+    CMD_IF,          /* IF command              */
+    CMD_FOR,         /* FOR command             */
 } CMD_OPERATOR;
 
 /* Data structure to hold commands to be processed */
@@ -109,14 +111,12 @@ typedef struct _CMD_FOR_CONTROL
 typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
-  int                 bracketDepth;/* How deep bracketing have we got to       */
-  WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_COMMAND;
 
 typedef struct _CMD_NODE
 {
     CMD_OPERATOR      op;            /* operator */
-    CMD_REDIRECTION  *redirects;     /* Redirects in place */
+    CMD_REDIRECTION  *redirects;     /* Redirections */
     union
     {
         CMD_COMMAND  *command;       /* CMD_SINGLE */
@@ -125,51 +125,23 @@ typedef struct _CMD_NODE
             struct _CMD_NODE *left;
             struct _CMD_NODE *right;
         };
+        struct                       /* CMD_IF */
+        {
+            CMD_IF_CONDITION  condition;
+            struct _CMD_NODE *then_block;
+            struct _CMD_NODE *else_block;
+        };
+        struct                       /* CMD_FOR */
+        {
+            CMD_FOR_CONTROL   for_ctrl;
+            struct _CMD_NODE *do_block;
+        };
     };
 } CMD_NODE;
-/* temporary helpers to fake a list into a tree */
-/* Note: for binary op, left should be a CMD_SINGLE node */
-static inline const CMD_NODE *CMD_node_get_single_node(const CMD_NODE *node)
-{
-    /* assert(node->left && node->left->op == CMD_SINGLE); */
-    return (node->op == CMD_SINGLE) ? node : node->left;
-}
-
-static inline CMD_COMMAND *CMD_node_get_command(const CMD_NODE *node)
-{
-    return CMD_node_get_single_node(node)->command;
-}
-static inline CMD_NODE *CMD_node_next(const CMD_NODE *node)
-{
-    return (node->op == CMD_SINGLE) ? NULL : node->right;
-}
-static inline int CMD_node_get_depth(const CMD_NODE *node)
-{
-    CMD_COMMAND *cmd = CMD_node_get_command(node);
-    return cmd->bracketDepth;
-}
-/* end temporary */
-
-/* temporary helpers for parsing transition */
-BOOL if_condition_create(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond);
-void if_condition_dispose(CMD_IF_CONDITION *);
-BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test);
-const char *debugstr_if_condition(const CMD_IF_CONDITION *cond);
-
-void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, int var_idx, CMD_FOR_CONTROL *for_ctrl);
-void for_control_create_fileset(unsigned flags, int var_idx, WCHAR eol, int num_lines_to_skip, BOOL use_backq,
-                                 const WCHAR *delims, const WCHAR *tokens,
-                                 CMD_FOR_CONTROL *for_ctrl);
-CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var);
-void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *string);
-void for_control_dump(const CMD_FOR_CONTROL *for_ctrl);
-void for_control_dispose(CMD_FOR_CONTROL *for_ctrl);
-void for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE **cmdList);
 int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
                        int *totalfound, BOOL *doall,
                        BOOL *duplicates);
-void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
-                       BOOL isIF, BOOL executecmds);
+
 struct _DIRECTORY_STACK;
 void WCMD_add_dirstowalk(struct _DIRECTORY_STACK *dirsToWalk);
 struct _DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file);
@@ -200,11 +172,9 @@ void WCMD_echo (const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
 RETURN_CODE WCMD_exit(void);
-void WCMD_for (WCHAR *, CMD_NODE **cmdList);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 void WCMD_give_help (const WCHAR *args);
 RETURN_CODE WCMD_goto(void);
-void WCMD_if (WCHAR *, CMD_NODE **cmdList);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);
 void WCMD_move (void);
@@ -250,10 +220,8 @@ WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int 
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
-CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket, BOOL retrycall);
 void      node_dispose_tree(CMD_NODE *cmds);
-void      WCMD_execute(const WCHAR *orig_command, CMD_REDIRECTION *redirects,
-                       CMD_NODE **cmdList, BOOL retrycall);
+RETURN_CODE node_execute(CMD_NODE *node);
 
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
@@ -483,3 +451,4 @@ extern WCHAR version_string[];
 #define WCMD_FILENAMETOOLONG  1046
 #define WCMD_BADTOKEN         1047
 #define WCMD_ENDOFLINE        1048
+#define WCMD_ENDOFFILE        1049

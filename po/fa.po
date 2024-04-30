@@ -14525,6 +14525,11 @@ msgstr ""
 msgid "End of line"
 msgstr "&حذف\tDel"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+msgid "End of file"
+msgstr "&حذف\tDel"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

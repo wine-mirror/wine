@@ -14190,6 +14190,12 @@ msgstr "სინტაქსური შეცდომა\n"
 msgid "End of line"
 msgstr "ფაილის დასასრული.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "ფაილის დასასრული.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "კურსორის ზომა"

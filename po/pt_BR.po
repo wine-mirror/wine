@@ -14793,6 +14793,12 @@ msgstr "Erro de sintaxe\n"
 msgid "End of line"
 msgstr "Fim do arquivo.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "Fim do arquivo.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Cursor"

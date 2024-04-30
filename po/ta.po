@@ -14054,6 +14054,12 @@ msgstr ""
 msgid "End of line"
 msgstr "கையொப்பமிடும் நேரம்"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "Signing Time"
+msgid "End of file"
+msgstr "கையொப்பமிடும் நேரம்"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

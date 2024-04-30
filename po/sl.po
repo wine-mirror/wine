@@ -15826,6 +15826,12 @@ msgstr "Napaka skladnje\n"
 msgid "End of line"
 msgstr "Konec datoteke.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "Konec datoteke.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Velikost kazalca"

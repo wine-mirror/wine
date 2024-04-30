@@ -14693,6 +14693,12 @@ msgstr "Error de sintaxi\n"
 msgid "End of line"
 msgstr "S'ha acabat el fitxer.\n"
 
+#: programs/cmd/cmd.rc:413
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of file"
+msgstr "S'ha acabat el fitxer.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Mida de cursor"
