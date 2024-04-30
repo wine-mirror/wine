@@ -31,6 +31,8 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "cpsf.h"
+#include "ndrtypes.h"
+#include "ndr_stubless.h"
 #include "wine/asm.h"
 
 #define ALL_THUNK_ENTRIES \
@@ -319,3 +321,196 @@ const struct delegating_vtbl delegating_vtbl =
 #undef T
     }
 };
+
+
+#if defined(__aarch64__) || defined(__arm__)
+static void __attribute__((used)) args_stack_to_regs( void **args, void **regs, void **stack,
+                                                      const NDR_PROC_PARTIAL_OIF_HEADER *header )
+{
+    const NDR_PROC_HEADER_EXTS *ext = (const NDR_PROC_HEADER_EXTS *)(header + 1);
+    unsigned int i, size, count, pos;
+    unsigned char *data;
+
+#ifdef __arm__
+    const NDR_PARAM_OIF *params = (const NDR_PARAM_OIF *)((const char *)ext + ext->Size);
+
+    for (i = 0; i < header->number_of_params; i++)
+        if (params[i].attr.IsIn && params[i].attr.IsBasetype)
+        {
+            int *arg = (int *)((char *)args + params[i].stack_offset);
+
+            switch (params[i].u.type_format_char)
+            {
+            case FC_BYTE:
+            case FC_USMALL:
+                *arg = (unsigned char)*arg;
+                break;
+            case FC_CHAR:
+            case FC_SMALL:
+                *arg = (signed char)*arg;
+                break;
+            case FC_WCHAR:
+            case FC_USHORT:
+                *arg = (unsigned short)*arg;
+                break;
+            case FC_SHORT:
+                *arg = (short)*arg;
+                break;
+            }
+        }
+#endif
+
+    if (ext->Size < sizeof(*ext) + 3) return;
+    data = (unsigned char *)(ext + 1);
+    size = min( ext->Size - sizeof(*ext) - 3, data[2] );
+    data += 3;
+    for (i = pos = 0; i < size; i++, pos++)
+    {
+        if (data[i] < 0x80) continue;
+        else if (data[i] < 0x94) regs[data[i] - 0x80] = args[pos];
+        else if (data[i] == 0x9d) /* repeat */
+        {
+            if (i + 3 >= size) break;
+            count = data[i + 2] + (data[i + 3] << 8);
+            memcpy( &stack[pos + (signed char)data[i + 1]], &args[pos], count * sizeof(*args) );
+            pos += count - 1;
+            i += 3;
+        }
+        else if (data[i] < 0xa0) continue;
+        else stack[pos + (signed char)data[i]] = args[pos];
+    }
+}
+#endif
+
+
+/* Call a function with the specified arguments, restoring the stack
+ * properly afterwards as we don't know the calling convention of the
+ * function */
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( call_server_func,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %edi\n\t"            /* Save registers */
+                   __ASM_CFI(".cfi_rel_offset %edi,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "movl 16(%ebp), %eax\n\t"   /* Get stack size */
+                   "subl %eax, %esp\n\t"       /* Make room in stack for arguments */
+                   "andl $~15, %esp\n\t"	/* Make sure stack has 16-byte alignment for Mac OS X */
+                   "movl %esp, %edi\n\t"
+                   "movl %eax, %ecx\n\t"
+                   "movl 12(%ebp), %esi\n\t"
+                   "shrl $2, %ecx\n\t"         /* divide by 4 */
+                   "cld\n\t"
+                   "rep; movsl\n\t"            /* Copy dword blocks */
+                   "call *8(%ebp)\n\t"         /* Call function */
+                   "leal -8(%ebp), %esp\n\t"   /* Restore stack */
+                   "popl %esi\n\t"             /* Restore registers */
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
+#elif defined __x86_64__
+__ASM_GLOBAL_FUNC( call_server_func,
+                   "pushq %rbp\n\t"
+                   __ASM_SEH(".seh_pushreg %rbp\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_SEH(".seh_setframe %rbp,0\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "pushq %rsi\n\t"
+                   __ASM_SEH(".seh_pushreg %rsi\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
+                   "pushq %rdi\n\t"
+                   __ASM_SEH(".seh_pushreg %rdi\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
+                   "movq %rcx,%rax\n\t"   /* function to call */
+                   "movq $32,%rcx\n\t"    /* allocate max(32,stack_size) bytes of stack space */
+                   "cmpq %rcx,%r8\n\t"
+                   "cmovgq %r8,%rcx\n\t"
+                   "subq %rcx,%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %r8,%rcx\n\t"
+                   "shrq $3,%rcx\n\t"
+                   "movq %rsp,%rdi\n\t"
+                   "movq %rdx,%rsi\n\t"
+                   "rep; movsq\n\t"       /* copy arguments */
+                   "movq 0(%rsp),%rcx\n\t"
+                   "movq 8(%rsp),%rdx\n\t"
+                   "movq 16(%rsp),%r8\n\t"
+                   "movq 24(%rsp),%r9\n\t"
+                   "movq 0(%rsp),%xmm0\n\t"
+                   "movq 8(%rsp),%xmm1\n\t"
+                   "movq 16(%rsp),%xmm2\n\t"
+                   "movq 24(%rsp),%xmm3\n\t"
+                   "callq *%rax\n\t"
+                   "leaq -16(%rbp),%rsp\n\t"  /* restore stack */
+                   "popq %rdi\n\t"
+                   __ASM_CFI(".cfi_same_value %rdi\n\t")
+                   "popq %rsi\n\t"
+                   __ASM_CFI(".cfi_same_value %rsi\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret" )
+#elif defined __arm__
+__ASM_GLOBAL_FUNC( call_server_func,
+                   "push {r4,r5,fp,lr}\n\t"
+                   ".seh_save_regs_w {r4,r5,fp,lr}\n\t"
+                   "mov fp, sp\n\t"
+                   ".seh_save_sp fp\n\t"
+                   ".seh_endprologue\n\t"
+                   "add r2, r2, #20*4+8+4\n\t"
+                   "and r2, r2, #~7\n\t"
+                   "sub sp, sp, r2\n\t"
+                   "mov r4, r0\n\t"        /* func */
+                   "mov r0, r1\n\t"        /* args */
+                   "add r1, sp, #8\n\t"    /* regs */
+                   "add r2, r1, #20*4\n\t" /* stack */
+                   "bl args_stack_to_regs\n\t"
+                   "add sp, sp, #8\n\t"
+                   "pop {r0-r3}\n\t"
+                   "vpop {s0-s15}\n\t"
+                   "blx r4\n\t"
+                   "mov sp, fp\n\t"
+                   "pop {r4,r5,fp,pc}" )
+#elif defined __aarch64__
+__ASM_GLOBAL_FUNC( call_server_func,
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   ".seh_save_fplr_x 0x20\n\t"
+                   "stp x19, x20, [sp, #0x10]\n\t"
+                   ".seh_save_regp x19, 0x10\n\t"
+                   "mov x29, sp\n\t"
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
+                   "add x9, x2, #16*8+15\n\t"
+                   "lsr x9, x9, #4\n\t"
+                   "sub sp, sp, x9, lsl #4\n\t"
+                   "mov x19, x0\n\t"       /* func */
+                   "mov x0, x1\n\t"        /* args */
+                   "mov x1, sp\n\t"        /* regs */
+                   "add x2, sp, #16*8\n\t" /* stack */
+                   "bl args_stack_to_regs\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldp d0, d1, [sp, #0x40]\n\t"
+                   "ldp d2, d3, [sp, #0x50]\n\t"
+                   "ldp d4, d5, [sp, #0x60]\n\t"
+                   "ldp d6, d7, [sp, #0x70]\n\t"
+                   "ldp x0, x1, [sp], #0x80\n\t"
+                   "blr x19\n\t"
+                   "mov sp, x29\n\t"
+                   "ldp x19, x20, [sp, #0x10]\n\t"
+                   "ldp x29, x30, [sp], #0x20\n\t"
+                   "ret" )
+#endif
