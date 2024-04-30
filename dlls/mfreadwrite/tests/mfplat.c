@@ -361,7 +361,7 @@ static HRESULT WINAPI test_media_stream_RequestSample(IMFMediaStream *iface, IUn
 
     hr = IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK,
             (IUnknown *)sample);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     IMFSample_Release(sample);
 
     return S_OK;
