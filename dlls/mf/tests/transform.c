@@ -7600,7 +7600,7 @@ static void test_video_processor(void)
         {
             .input_type_desc = rgb32_no_aperture, .input_bitmap = L"rgb32frame-crop.bmp",
             .output_type_desc = rgb32_with_aperture, .output_bitmap = L"rgb32frame-flip.bmp",
-            .output_sample_desc = &rgb32_sample_desc,
+            .output_sample_desc = &rgb32_sample_desc, .broken = TRUE /* old Windows version incorrectly rescale */
         },
         {
             .input_type_desc = rgb32_with_aperture, .input_bitmap = L"rgb32frame-flip.bmp",
