@@ -344,9 +344,6 @@ void xinerama_init( unsigned int width, unsigned int height )
     int i;
     RECT rect;
 
-    if (is_virtual_desktop())
-        return;
-
     pthread_mutex_lock( &xinerama_mutex );
 
     SetRect( &rect, 0, 0, width, height );
