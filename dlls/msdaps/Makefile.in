@@ -9,5 +9,6 @@ SOURCES = \
 	usrmarshal.c
 
 dlldata_EXTRADEFS  = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer -DENTRY_PREFIX=msdaps_
+EXTRAIDLFLAGS = -Oicf
 i386_EXTRAIDLFLAGS = --packing=2
 arm_EXTRAIDLFLAGS  = --packing=2
