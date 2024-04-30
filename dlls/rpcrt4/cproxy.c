@@ -50,149 +50,12 @@ static inline StdProxyImpl *impl_from_proxy_obj( void *iface )
     return CONTAINING_RECORD(iface, StdProxyImpl, PVtbl);
 }
 
-#ifdef __i386__
-
-extern void call_stubless_func(void);
-__ASM_GLOBAL_FUNC(call_stubless_func,
-                  "movl 4(%esp),%ecx\n\t"         /* This pointer */
-                  "movl (%ecx),%ecx\n\t"          /* This->lpVtbl */
-                  "movl -8(%ecx),%ecx\n\t"        /* MIDL_STUBLESS_PROXY_INFO */
-                  "movl 8(%ecx),%edx\n\t"         /* info->FormatStringOffset */
-                  "movzwl (%edx,%eax,2),%edx\n\t" /* FormatStringOffset[index] */
-                  "addl 4(%ecx),%edx\n\t"         /* info->ProcFormatString + offset */
-                  "movzbl 1(%edx),%eax\n\t"       /* Oi_flags */
-                  "andl $0x08,%eax\n\t"           /* Oi_HAS_RPCFLAGS */
-                  "shrl $1,%eax\n\t"
-                  "movzwl 4(%edx,%eax),%eax\n\t"  /* arguments size */
-                  "pushl %eax\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "pushl $0\n\t"                  /* fpu_stack */
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "leal 12(%esp),%eax\n\t"        /* &This */
-                  "pushl %eax\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "pushl %edx\n\t"                /* format string */
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "pushl (%ecx)\n\t"              /* info->pStubDesc */
-                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                  "call " __ASM_STDCALL("NdrpClientCall2",16) "\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset -16\n\t")
-                  "popl %edx\n\t"                 /* arguments size */
-                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-                  "movl (%esp),%ecx\n\t"  /* return address */
-                  "addl %edx,%esp\n\t"
-                  "jmp *%ecx" );
-
-#define THUNK_ENTRY_SIZE 12
-#define THUNK_ENTRY(num) \
-    ".balign 4\n\t" \
-    "movl $("#num"),%eax\n\t" \
-    ".byte 0xe9\n\t" /* jmp */ \
-    ".long " __ASM_NAME("call_stubless_func") "-1f\n" \
-    "1:\n\t"
-
-#elif defined(__x86_64__)
-
-extern void call_stubless_func(void);
-__ASM_GLOBAL_FUNC(call_stubless_func,
-                  "subq $0x38,%rsp\n\t"
-                  __ASM_SEH(".seh_stackalloc 0x38\n\t")
-                  __ASM_SEH(".seh_endprologue\n\t")
-                  __ASM_CFI(".cfi_adjust_cfa_offset 0x38\n\t")
-                  "movq %rcx,0x40(%rsp)\n\t"
-                  "movq %rdx,0x48(%rsp)\n\t"
-                  "movq %r8,0x50(%rsp)\n\t"
-                  "movq %r9,0x58(%rsp)\n\t"
-                  "leaq 0x40(%rsp),%rdx\n\t"    /* args */
-                  "movq %xmm1,0x20(%rsp)\n\t"
-                  "movq %xmm2,0x28(%rsp)\n\t"
-                  "movq %xmm3,0x30(%rsp)\n\t"
-                  "leaq 0x18(%rsp),%r8\n\t"     /* fpu_regs */
-                  "movl %r10d,%ecx\n\t"         /* index */
-                  "call " __ASM_NAME("ndr_stubless_client_call") "\n\t"
-                  "addq $0x38,%rsp\n\t"
-                  __ASM_CFI(".cfi_adjust_cfa_offset -0x38\n\t")
-                  "ret" );
-
-#define THUNK_ENTRY_SIZE 12
-#define THUNK_ENTRY(num) \
-    ".balign 4\n\t" \
-    "movl $("#num"),%r10d\n\t" \
-    ".byte 0xe9\n\t" /* jmp */ \
-    ".long " __ASM_NAME("call_stubless_func") "-1f\n" \
-    "1:\n\t"
-
-#elif defined(__arm__)
-
-extern void call_stubless_func(void);
-__ASM_GLOBAL_FUNC(call_stubless_func,
-                  "push {r0-r3}\n\t"
-                  ".seh_save_regs {r0-r3}\n\t"
-                  "push {fp,lr}\n\t"
-                  ".seh_save_regs_w {fp,lr}\n\t"
-                  "mov fp, sp\n\t"
-                  ".seh_save_sp fp\n\t"
-                  ".seh_endprologue\n\t"
-                  "mov r0, ip\n\t"              /* index */
-                  "add r1, sp, #8\n\t"          /* args */
-                  "vpush {s0-s15}\n\t"          /* store the s0-s15/d0-d7 arguments */
-                  "mov r2, sp\n\t"              /* fpu_regs */
-                  "bl ndr_stubless_client_call\n\t"
-                  "mov sp, fp\n\t"
-                  "pop {fp,lr}\n\t"
-                  "add sp, #16\n\t"
-                  "bx lr" );
-
-#define THUNK_ENTRY_SIZE 12
-#define THUNK_ENTRY(num) \
-    "ldr ip,1f\n\t" \
-    "b.w " __ASM_NAME("call_stubless_func") "\n" \
-    "1:\t.long "#num"\n\t"
-
-#elif defined(__aarch64__)
-
-extern void call_stubless_func(void);
-__ASM_GLOBAL_FUNC( call_stubless_func,
-                   "stp x29, x30, [sp, #-0x90]!\n\t"
-                   ".seh_save_fplr_x 0x90\n\t"
-                   "mov x29, sp\n\t"
-                   ".seh_set_fp\n\t"
-                   ".seh_endprologue\n\t"
-                   "stp d0, d1, [sp, #0x10]\n\t"
-                   "stp d2, d3, [sp, #0x20]\n\t"
-                   "stp d4, d5, [sp, #0x30]\n\t"
-                   "stp d6, d7, [sp, #0x40]\n\t"
-                   "stp x0, x1, [sp, #0x50]\n\t"
-                   "stp x2, x3, [sp, #0x60]\n\t"
-                   "stp x4, x5, [sp, #0x70]\n\t"
-                   "stp x6, x7, [sp, #0x80]\n\t"
-                   "mov w0, w16\n\t"            /* index */
-                   "add x1, sp, #0x50\n\t"      /* args */
-                   "add x2, sp, #0x10\n\t"      /* fpu_regs */
-                   "bl ndr_stubless_client_call\n\t"
-                   "ldp x29, x30, [sp], #0x90\n\t"
-                   "ret" )
-
-#define THUNK_ENTRY_SIZE 8
-#define THUNK_ENTRY(num) \
-    "mov w16,#("#num")\n\t" \
-    "b " __ASM_NAME("call_stubless_func") "\n\t"
-
-#else  /* __i386__ */
-
-#warning You must implement stubless proxies for your CPU
-
-#define THUNK_ENTRY_SIZE 0
-#define THUNK_ENTRY(num) ""
-
-#endif  /* __i386__ */
-
-extern void stubless_thunks(void);
-__ASM_GLOBAL_FUNC( stubless_thunks, ALL_THUNK_ENTRIES )
-#undef THUNK_ENTRY
+extern void ObjectStublessClient3(void);
+extern void ObjectStublessClient4(void);
 
 BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
 {
+    size_t entry_size = (char *)ObjectStublessClient4 - (char *)ObjectStublessClient3;
     const void **entry = (const void **)(vtbl + 1);
     DWORD i;
 
@@ -202,7 +65,7 @@ BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
         return FALSE;
     }
     for (i = 0; i < num - 3; i++, entry++)
-        if (*entry == (void *)-1) *entry = (char *)stubless_thunks + i * THUNK_ENTRY_SIZE;
+        if (*entry == (void *)-1) *entry = (char *)ObjectStublessClient3 + i * entry_size;
 
     return TRUE;
 }

@@ -28,4 +28,5 @@ SOURCES = \
 	rpc_server.c \
 	rpc_transport.c \
 	rpcrt4_main.c \
+	thunks.c \
 	version.rc
