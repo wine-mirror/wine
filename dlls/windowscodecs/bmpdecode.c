@@ -432,7 +432,7 @@ static HRESULT BmpFrameDecode_ReadABGRasBGR(BmpDecoder* This)
     {
         for (y = 0; y < height; y++)
         {
-            pixel = This->imagedatastart + This->stride * y;
+            pixel = This->imagedatastart + This->stride * (INT)y;
 
             for (x = 0; x < width; x++)
             {
