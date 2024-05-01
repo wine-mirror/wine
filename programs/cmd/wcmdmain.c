@@ -2542,6 +2542,59 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     return FALSE;
 }
 
+static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* buffer)
+{
+    if (!context && !first_line)
+        WCMD_output_asis( WCMD_LoadMessage(WCMD_MOREPROMPT));
+    if (feed && !WCMD_fgets(buffer, MAXSTRING, from))
+    {
+        buffer[0] = L'\0';
+        return NULL;
+    }
+    /* Handle truncated input - issue warning */
+    if (wcslen(buffer) == MAXSTRING - 1)
+    {
+        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
+        WCMD_output_asis_stderr(buffer);
+        WCMD_output_asis_stderr(L"\r\n");
+    }
+    /* Replace env vars if in a batch context */
+    if (context) handleExpansion(buffer, FALSE, FALSE);
+
+    buffer = WCMD_skip_leading_spaces(buffer);
+    /* Show prompt before batch line IF echo is on and in batch program */
+    if (context && echo_mode && *buffer && *buffer != '@')
+    {
+        if (first_line)
+        {
+            const size_t len = wcslen(L"echo.");
+            size_t curr_size = wcslen(buffer);
+            size_t min_len = curr_size < len ? curr_size : len;
+            WCMD_show_prompt(TRUE);
+            WCMD_output_asis(buffer);
+            /* I don't know why Windows puts a space here but it does */
+            /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
+            if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                               buffer, min_len, L"echo.", len) != CSTR_EQUAL
+                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                                  buffer, min_len, L"echo:", len) != CSTR_EQUAL
+                && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                                  buffer, min_len, L"echo/", len) != CSTR_EQUAL)
+            {
+                WCMD_output_asis(L" ");
+            }
+        }
+        else
+            WCMD_output_asis(buffer);
+
+        WCMD_output_asis(L"\r\n");
+    }
+
+    /* Skip repeated 'no echo' characters and whitespace */
+    while (*buffer == '@' || *buffer == L' ' || *buffer == L'\t') buffer++;
+    return buffer;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -2581,7 +2634,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     BOOL      lastWasIn   = FALSE;
     BOOL      lastWasElse = FALSE;
     BOOL      lastWasRedirect = TRUE;
-    BOOL      lastWasCaret = FALSE;
     BOOL      ignoreBracket = FALSE;         /* Some expressions after if (set) require */
                                              /* handling brackets as a normal character */
     int       lineCurDepth;                  /* Bracket depth when line was read in */
@@ -2593,63 +2645,16 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
         extraSpace = xalloc((MAXSTRING + 1) * sizeof(WCHAR));
-    if (!extraSpace)
-    {
-        WINE_ERR("Could not allocate memory for extraSpace\n");
-        return NULL;
-    }
 
-    *output = NULL;
     /* If initial command read in, use that, otherwise get input from handle */
-    if (optionalcmd != NULL) {
-        lstrcpyW(extraSpace, optionalcmd);
-    } else if (readFrom == INVALID_HANDLE_VALUE) {
-        WINE_FIXME("No command nor handle supplied\n");
-    } else {
-        if (!WCMD_fgets(extraSpace, MAXSTRING, readFrom))
-          return NULL;
-    }
-    curPos = extraSpace;
+    if (optionalcmd)
+        wcscpy(extraSpace, optionalcmd);
+    if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, readFrom, extraSpace)))
+        return NULL;
+
     TRACE("About to parse line (%ls)\n", extraSpace);
 
     node_builder_init(&builder);
-
-    /* Handle truncated input - issue warning */
-    if (lstrlenW(extraSpace) == MAXSTRING -1) {
-        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
-        WCMD_output_asis_stderr(extraSpace);
-        WCMD_output_asis_stderr(L"\r\n");
-    }
-
-    /* Replace env vars if in a batch context */
-    if (context) handleExpansion(extraSpace, FALSE, FALSE);
-
-    /* Skip preceding whitespace */
-    while (*curPos == ' ' || *curPos == '\t') curPos++;
-
-    /* Show prompt before batch line IF echo is on and in batch program */
-    if (context && echo_mode && *curPos && (*curPos != '@')) {
-      const DWORD len = lstrlenW(L"echo.");
-      DWORD curr_size = lstrlenW(curPos);
-      DWORD min_len = (curr_size < len ? curr_size : len);
-      WCMD_show_prompt(TRUE);
-      WCMD_output_asis(curPos);
-      /* I don't know why Windows puts a space here but it does */
-      /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
-      if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         curPos, min_len, L"echo.", len) != CSTR_EQUAL
-          && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         curPos, min_len, L"echo:", len) != CSTR_EQUAL
-          && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         curPos, min_len, L"echo/", len) != CSTR_EQUAL)
-      {
-          WCMD_output_asis(L" ");
-      }
-      WCMD_output_asis(L"\r\n");
-    }
-
-    /* Skip repeated 'no echo' characters */
-    while (*curPos == '@') curPos++;
 
     /* Start with an empty string, copying to the command string */
     curStringLen = 0;
@@ -2767,7 +2772,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
       else            thisChar = 'X';  /* Character with no special processing */
 
       lastWasWhiteSpace = FALSE; /* Will be reset below */
-      lastWasCaret = FALSE;
 
       switch (thisChar) {
 
@@ -2921,9 +2925,18 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
       case '^': if (!inQuotes) {
                   /* If we reach the end of the input, we need to wait for more */
-                  if (*(curPos+1) == 0x00) {
-                    lastWasCaret = TRUE;
-                    WINE_TRACE("Caret found at end of line\n");
+                  if (curPos[1] == L'\0') {
+                    TRACE("Caret found at end of line\n");
+                    extraSpace[0] = L'^';
+                    if (!fetch_next_line(TRUE, FALSE, readFrom, extraSpace + 1))
+                        break;
+                    if (!extraSpace[1]) /* empty line */
+                    {
+                        extraSpace[1] = L'\r';
+                        if (!fetch_next_line(TRUE, FALSE, readFrom, extraSpace + 2))
+                            break;
+                    }
+                    curPos = extraSpace;
                     break;
                   }
                   curPos++;
@@ -3016,7 +3029,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
       /* If we have reached the end, add this command into the list
          Do not add command to list if escape char ^ was last */
-      if (*curPos == 0x00 && !lastWasCaret && *curLen > 0) {
+      if (*curPos == 0x00 && *curLen > 0) {
 
           node_builder_push_token(&builder, cmd_tkn);
           /* Add an entry to the command list */
@@ -3037,54 +3050,22 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
       /* If we have reached the end of the string, see if bracketing or
          final caret is outstanding */
-      if (*curPos == 0x00 && (curDepth > 0 || lastWasCaret) &&
-          readFrom != INVALID_HANDLE_VALUE) {
-        WCHAR *extraData;
+      if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
 
         WINE_TRACE("Need to read more data as outstanding brackets or carets\n");
         inOneLine = FALSE;
         ignoreBracket = FALSE;
         cmd_tkn = TKN_AMP;
         inQuotes = 0;
-        memset(extraSpace, 0x00, (MAXSTRING+1) * sizeof(WCHAR));
-        extraData = extraSpace;
 
         /* Read more, skipping any blank lines */
         do {
           WINE_TRACE("Read more input\n");
-          if (!context) WCMD_output_asis( WCMD_LoadMessage(WCMD_MOREPROMPT));
-          if (!WCMD_fgets(extraData, MAXSTRING, readFrom))
-            break;
-
-          /* Edge case for carets - a completely blank line (i.e. was just
-             CRLF) is oddly added as an LF but then more data is received (but
-             only once more!) */
-          if (lastWasCaret) {
-            if (*extraSpace == 0x00) {
-              WINE_TRACE("Read nothing, so appending LF char and will try again\n");
-              *extraData++ = '\r';
-              *extraData = 0x00;
-            } else break;
-          }
-
-          extraData = WCMD_skip_leading_spaces(extraData);
-        } while (*extraData == 0x00);
-        curPos = extraSpace;
-
-        /* Skip preceding whitespace */
-        while (*curPos == ' ' || *curPos == '\t') curPos++;
-
-        /* Replace env vars if in a batch context */
-        if (context) handleExpansion(curPos, FALSE, FALSE);
-
-        /* Continue to echo commands IF echo is on and in batch program */
-        if (context && echo_mode && *curPos && *curPos != '@') {
-          WCMD_output_asis(extraSpace);
-          WCMD_output_asis(L"\r\n");
-        }
-
-        /* Skip repeated 'no echo' characters and whitespace */
-        while (*curPos == '@' || *curPos == ' ' || *curPos == '\t') curPos++;
+          if (!(curPos = fetch_next_line(TRUE, FALSE, readFrom, extraSpace)))
+              break;
+        } while (*curPos == L'\0');
+        if (!curPos)
+            curPos = extraSpace;
       }
     }
 
