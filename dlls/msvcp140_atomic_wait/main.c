@@ -165,3 +165,13 @@ void __stdcall __std_release_shared_mutex_for_instance(void *ptr)
     }
     LeaveCriticalSection(&shared_mutex_cs);
 }
+
+void* __stdcall __std_calloc_crt(size_t count, size_t size)
+{
+    return calloc(count, size);
+}
+
+void __stdcall __std_free_crt(void *ptr)
+{
+    free(ptr);
+}
