@@ -2618,7 +2618,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         if (type_get_type(type) == TYPE_UNION && is_attr(attrs, ATTR_SWITCHIS))
         {
             absoff = *corroff;
-            *corroff += 8;
+            *corroff += interpreted_mode ? 10 : 8;
         }
         else
         {
@@ -2708,7 +2708,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
             if (!fc) fc = FC_LONG;
 
             if (is_attr(ft->attrs, ATTR_SWITCHTYPE))
-                absoff += 8; /* we already have a corr descr, skip it */
+                absoff += interpreted_mode ? 10 : 8; /* we already have a corr descr, skip it */
             print_file(file, 0, "/* %d */\n", *tfsoff);
             print_file(file, 2, "0x%x,\t/* FC_NON_ENCAPSULATED_UNION */\n", FC_NON_ENCAPSULATED_UNION);
             print_file(file, 2, "0x%x,\t/* %s */\n", fc, string_of_type(fc));
