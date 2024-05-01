@@ -25950,6 +25950,30 @@ static void test_color_vertex(void)
     HWND window;
     HRESULT hr;
 
+    static const D3DVERTEXELEMENT9 decl_elements_missing_diffuse[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    1},
+        {1,  0, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    0},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_missing_specular[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    0},
+        {2,  0, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    1},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_missing_both[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {1,  0, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    0},
+        {2,  0, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,    1},
+        D3DDECL_END()
+    };
+
     /* The idea here is to set up ambient light parameters in a way that the
      * ambient colour from the material is just passed through. The emissive
      * colour is just passed through anyway. The sum of ambient + emissive
@@ -25959,27 +25983,36 @@ static void test_color_vertex(void)
      * in the struct will be fed into the specular vertex colour slot. */
     static const struct
     {
+        const D3DVERTEXELEMENT9 *decl_elements;
         DWORD fvf, color_vertex, ambient, emissive;
         unsigned int result;
     }
     tests[] =
     {
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, FALSE, D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, FALSE, D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0},
 
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ffff00},
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x0000ff80},
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040},
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR1,   0x00ff0000},
-        {D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR2,   D3DMCS_COLOR2,   0x0000ff00},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ffff00},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x0000ff80},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR1,   0x00ff0000},
+        {NULL, D3DFVF_DIFFUSE | D3DFVF_SPECULAR, TRUE,  D3DMCS_COLOR2,   D3DMCS_COLOR2,   0x0000ff00},
 
-        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0080},
-        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x000000c0},
-        {D3DFVF_SPECULAR,                  TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x00ff0080},
-        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0040},
-        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040},
-        {D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR2,   D3DMCS_MATERIAL, 0x000000c0},
+        {NULL, D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0080},
+        {NULL, D3DFVF_SPECULAR,                  TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x000000c0},
+        {NULL, D3DFVF_SPECULAR,                  TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x00ff0080},
+        {NULL, D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0040},
+        {NULL, D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040},
+        {NULL, D3DFVF_DIFFUSE,                   TRUE,  D3DMCS_COLOR2,   D3DMCS_MATERIAL, 0x000000c0},
 
-        {0,                                TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0},
+        {NULL, 0,                                TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x000000c0},
+
+        {decl_elements_missing_diffuse, 0,       TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0000},
+        {decl_elements_missing_diffuse, 0,       TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00000040},
+        {decl_elements_missing_diffuse, 0,       TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x00ff0080},
+        {decl_elements_missing_specular, 0,      TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00ff0000},
+        {decl_elements_missing_specular, 0,      TRUE,  D3DMCS_COLOR1,   D3DMCS_MATERIAL, 0x00ff0040},
+        {decl_elements_missing_specular, 0,      TRUE,  D3DMCS_MATERIAL, D3DMCS_COLOR2,   0x00000080},
+        {decl_elements_missing_both, 0,          TRUE,  D3DMCS_COLOR1,   D3DMCS_COLOR2,   0x00000000},
     };
 
     static const struct
@@ -26028,8 +26061,22 @@ static void test_color_vertex(void)
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_EMISSIVEMATERIALSOURCE, tests[i].emissive);
         ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | tests[i].fvf);
-        ok(SUCCEEDED(hr), "Failed to set render state, hr %#lx.\n", hr);
+
+        if (tests[i].decl_elements)
+        {
+            IDirect3DVertexDeclaration9 *vertex_declaration;
+
+            hr = IDirect3DDevice9_CreateVertexDeclaration(device, tests[i].decl_elements, &vertex_declaration);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            IDirect3DVertexDeclaration9_Release(vertex_declaration);
+        }
+        else
+        {
+            hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | tests[i].fvf);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x77777777, 0.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear depth/stencil, hr %#lx.\n", hr);
@@ -26042,9 +26089,10 @@ static void test_color_vertex(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
         colour = getPixelColor(device, 320, 240);
-        ok(color_match(colour, tests[i].result, 1),
-                "Expected colour 0x%08x for test %u, got 0x%08x.\n",
-                tests[i].result, i, colour);
+        todo_wine_if (i == 13 || i == 14 || i == 16 || i == 18 || i == 19)
+            ok(color_match(colour, tests[i].result, 1),
+                    "Expected colour 0x%08x for test %u, got 0x%08x.\n",
+                    tests[i].result, i, colour);
     }
 
     refcount = IDirect3DDevice9_Release(device);
