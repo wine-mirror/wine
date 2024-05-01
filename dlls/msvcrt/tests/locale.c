@@ -798,6 +798,40 @@ static void test___mb_cur_max_func(void)
     }
 }
 
+static void test__wcsicmp_l(void)
+{
+    const struct {
+        const wchar_t *str1;
+        const wchar_t *str2;
+        int exp;
+        const char *loc;
+    } tests[] = {
+        { L"i", L"i",  0 },
+        { L"I", L"i",  0 },
+        { L"I", L"i",  0, "Turkish" },
+        { L"i", L"a",  8 },
+        { L"a", L"i", -8 },
+        { L"i", L"a",  8, "Turkish" },
+    };
+    int ret, i;
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        _locale_t loc = NULL;
+
+        if(tests[i].loc && !(loc = _create_locale(LC_ALL, tests[i].loc))) {
+            win_skip("locale %s not available.  skipping\n", tests[i].loc);
+            continue;
+        }
+
+        ret = _wcsicmp_l(tests[i].str1, tests[i].str2, loc);
+        ok(ret == tests[i].exp, "_wcsicmp_l = %d, expected %d for test %d '%ls' vs '%ls' using %s locale\n",
+            ret, tests[i].exp, i, tests[i].str1, tests[i].str2, loc ? tests[i].loc : "current");
+
+        if(loc)
+            _free_locale(loc);
+    }
+}
+
 START_TEST(locale)
 {
     init();
@@ -806,4 +840,5 @@ START_TEST(locale)
     test_setlocale();
     test__Gettnames();
     test___mb_cur_max_func();
+    test__wcsicmp_l();
 }
