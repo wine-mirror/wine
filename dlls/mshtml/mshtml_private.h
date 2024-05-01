@@ -1224,7 +1224,10 @@ HRESULT get_doc_elem_by_id(HTMLDocumentNode*,const WCHAR*,HTMLElement**);
 HTMLOuterWindow *get_target_window(HTMLOuterWindow*,nsAString*,BOOL*);
 HRESULT handle_link_click_event(HTMLElement*,nsAString*,nsAString*,nsIDOMEvent*,BOOL*);
 
-HRESULT wrap_iface(IUnknown*,IUnknown*,IUnknown**);
+HRESULT WINAPI wrapper_QueryInterface(IUnknown *iface, REFIID riid, void **ppv);
+ULONG WINAPI wrapper_AddRef(IUnknown *iface);
+ULONG WINAPI wrapper_Release(IUnknown *iface);
+extern const void *iface_wrapper_vtbl[];
 
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL);
 IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList*,compat_mode_t);
