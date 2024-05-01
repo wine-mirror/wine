@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+#ifndef __WINCRYPT_H__
+typedef const struct _CERT_CONTEXT *PCCERT_CONTEXT;
+#endif
+
 typedef enum tagNETSETUP_JOIN_STATUS
 {
     NetSetupUnknownStatus = 0,
@@ -31,10 +35,44 @@ typedef enum tagNETSETUP_JOIN_STATUS
     NetSetupDomainName
 } NETSETUP_JOIN_STATUS, *PNETSETUP_JOIN_STATUS;
 
+typedef enum _DSREG_JOIN_TYPE
+{
+    DSREG_UNKNOWN_JOIN = 0,
+    DSREG_DEVICE_JOIN = 1,
+    DSREG_WORKPLACE_JOIN = 2
+} DSREG_JOIN_TYPE, *PDSREG_JOIN_TYPE;
+
+typedef struct _DSREG_USER_INFO
+{
+    LPWSTR pszUserEmail;
+    LPWSTR pszUserKeyId;
+    LPWSTR pszUserKeyName;
+} DSREG_USER_INFO, *PDSREG_USER_INFO;
+
+typedef struct _DSREG_JOIN_INFO
+{
+    DSREG_JOIN_TYPE joinType;
+    PCCERT_CONTEXT pJoinCertificate;
+    LPWSTR pszDeviceId;
+    LPWSTR pszIdpDomain;
+    LPWSTR pszTenantId;
+    LPWSTR pszJoinUserEmail;
+    LPWSTR pszTenantDisplayName;
+    LPWSTR pszMdmEnrollmentUrl;
+    LPWSTR pszMdmTermsOfUseUrl;
+    LPWSTR pszMdmComplianceUrl;
+    LPWSTR pszUserSettingSyncUrl;
+    DSREG_USER_INFO *pUserInfo;
+} DSREG_JOIN_INFO, *PDSREG_JOIN_INFO;
+
 NET_API_STATUS NET_API_FUNCTION NetGetJoinInformation(
     LPCWSTR Server,
     LPWSTR *Name,
     PNETSETUP_JOIN_STATUS type);
+
+HRESULT NET_API_FUNCTION NetGetAadJoinInformation(
+    LPCWSTR pcszTenantId,
+    PDSREG_JOIN_INFO *ppJoinInfo);
 
 #ifdef __cplusplus
 }

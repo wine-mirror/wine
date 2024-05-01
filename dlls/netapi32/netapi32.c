@@ -2814,3 +2814,12 @@ void __RPC_USER ATSVC_HANDLE_unbind(ATSVC_HANDLE ServerName, handle_t rpc_handle
 {
     RpcBindingFree(&rpc_handle);
 }
+
+/************************************************************
+ *  NetGetAadJoinInformation (NETAPI32.@)
+ */
+HRESULT WINAPI NetGetAadJoinInformation(LPCWSTR tenant_id, PDSREG_JOIN_INFO *join_info)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(tenant_id), join_info);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
