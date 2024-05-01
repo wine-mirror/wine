@@ -1247,8 +1247,8 @@ static gboolean src_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
         case GST_QUERY_URI:
             if (parser->uri)
             {
-                GST_LOG_OBJECT(pad, "Responding with %" GST_PTR_FORMAT, query);
                 gst_query_set_uri(query, parser->uri);
+                GST_LOG_OBJECT(pad, "Responding with %" GST_PTR_FORMAT, query);
                 return TRUE;
             }
             return FALSE;
