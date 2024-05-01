@@ -573,12 +573,14 @@ static void test_setlocale(void)
     ret = setlocale(LC_ALL, "trk");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Turkish_Turkey.1254"), "ret = %s\n", ret);
+        ok(!strcmp(ret, "Turkish_Turkey.1254")
+        || !strcmp(ret, "Turkish_T\xfcrkiye.1254"), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "turkish");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Turkish_Turkey.1254"), "ret = %s\n", ret);
+        ok(!strcmp(ret, "Turkish_Turkey.1254")
+        || !strcmp(ret, "Turkish_T\xfcrkiye.1254"), "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "uk");
     ok(ret != NULL, "ret == NULL\n");
