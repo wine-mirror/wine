@@ -11711,6 +11711,7 @@ static void test_pointsize(void)
     static const float a = 1.0f, b = 1.0f, c = 1.0f;
     float ptsize, ptsizemax_orig, ptsizemin_orig;
     IDirect3DSurface9 *rt, *backbuffer;
+    D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DTexture9 *tex1, *tex2;
     IDirect3DDevice9 *device;
     IDirect3DVertexShader9 *vs;
@@ -11883,6 +11884,27 @@ static void test_pointsize(void)
     ps2_zw = {D3DPS_VERSION(2, 0), pshader2_zw_code},
     ps3 = {D3DPS_VERSION(3, 0), pshader3_code},
     ps3_zw = {D3DPS_VERSION(3, 0), pshader3_zw_code};
+
+    static const D3DVERTEXELEMENT9 decl_elements_psize[] =
+    {
+        {0,  0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_PSIZE,    0},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_no_psize[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_missing_psize[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {1, 0,  D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_PSIZE,    0},
+        D3DDECL_END()
+    };
+
     static const struct
     {
         const struct test_shader *vs;
@@ -11890,7 +11912,7 @@ static void test_pointsize(void)
         DWORD accepted_fvf;
         unsigned int nonscaled_size, scaled_size;
         BOOL gives_0_0_texcoord;
-        BOOL allow_broken;
+        BOOL broken_texcoord_u;
     }
     test_setups[] =
     {
@@ -11908,26 +11930,33 @@ static void test_pointsize(void)
         {&vs1_psize, &ps1, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, FALSE},
         {&vs3_psize, &ps3, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, TRUE},
     };
+
     static const struct
     {
         BOOL zero_size;
         BOOL scale;
         BOOL override_min;
+        const D3DVERTEXELEMENT9 *decl_elements;
         DWORD fvf;
         const void *vertex_data;
         unsigned int vertex_size;
     }
     tests[] =
     {
-        {FALSE, FALSE, FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
-        {FALSE, TRUE,  FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
-        {FALSE, FALSE, TRUE,  D3DFVF_XYZ, vertices, sizeof(float) * 3},
-        {TRUE,  FALSE, FALSE, D3DFVF_XYZ, vertices, sizeof(float) * 3},
-        {FALSE, FALSE, FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
-        {FALSE, TRUE,  FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_scaled, sizeof(vertex_pointsize_scaled)},
-        {FALSE, FALSE, TRUE,  D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
-        {TRUE,  FALSE, FALSE, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_zero, sizeof(vertex_pointsize_zero)},
+        {FALSE, FALSE, FALSE, NULL, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, TRUE,  FALSE, NULL, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, TRUE,  NULL, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {TRUE,  FALSE, FALSE, NULL, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, FALSE, NULL, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
+        {FALSE, TRUE,  FALSE, NULL, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_scaled, sizeof(vertex_pointsize_scaled)},
+        {FALSE, FALSE, TRUE,  NULL, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
+        {TRUE,  FALSE, FALSE, NULL, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize_zero, sizeof(vertex_pointsize_zero)},
+        {FALSE, FALSE, FALSE, decl_elements_no_psize, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, FALSE, decl_elements_psize, D3DFVF_XYZ | D3DFVF_PSIZE, &vertex_pointsize, sizeof(vertex_pointsize)},
+        {FALSE, FALSE, FALSE, decl_elements_missing_psize, D3DFVF_XYZ, vertices, sizeof(float) * 3},
+        {FALSE, FALSE, FALSE, decl_elements_missing_psize, D3DFVF_XYZ | D3DFVF_PSIZE, vertices, sizeof(float) * 3},
     };
+
     /* Transforms the coordinate system [-1.0;1.0]x[1.0;-1.0] to
      * [0.0;0.0]x[640.0;480.0]. Z is untouched. */
     D3DMATRIX matrix =
@@ -11946,6 +11975,9 @@ static void test_pointsize(void)
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
     }
+
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -12167,10 +12199,13 @@ static void test_pointsize(void)
 
     for (i = 0; i < ARRAY_SIZE(test_setups); ++i)
     {
+        winetest_push_context("Setup %u", i);
+
         if (caps.VertexShaderVersion < test_setups[i].vs->version
                 || caps.PixelShaderVersion < test_setups[i].ps->version)
         {
             skip("Vertex / pixel shader version not supported, skipping test.\n");
+            winetest_pop_context();
             continue;
         }
         if (test_setups[i].vs->code)
@@ -12199,12 +12234,26 @@ static void test_pointsize(void)
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
-            BOOL allow_broken = test_setups[i].allow_broken;
+            bool broken_texcoord_u = test_setups[i].broken_texcoord_u;
             unsigned int size = tests[j].override_min ? 63 : tests[j].zero_size ? 0 : tests[j].scale
                     ? test_setups[i].scaled_size : test_setups[i].nonscaled_size;
+            struct surface_readback rb;
 
             if (test_setups[i].accepted_fvf != tests[j].fvf)
                 continue;
+
+            if (tests[j].decl_elements == decl_elements_missing_psize)
+            {
+                /* If PSIZE is referenced in the vertex declaration but the
+                 * corresponding buffer is not bound, the point size is
+                 * effectively either zero (NVidia) or one (AMD, WARP). */
+                if (!vs || (test_setups[i].accepted_fvf & D3DFVF_PSIZE))
+                    size = 1;
+                else
+                    size = 32;
+            }
+
+            winetest_push_context("test %u (expected size %u)", j, size);
 
             ptsize = tests[j].zero_size ? 0.0f : 32.0f;
             hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *(DWORD *)&ptsize);
@@ -12217,8 +12266,21 @@ static void test_pointsize(void)
             hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALEENABLE, tests[j].scale);
             ok(SUCCEEDED(hr), "Failed setting point scale state, hr %#lx.\n", hr);
 
-            hr = IDirect3DDevice9_SetFVF(device, tests[j].fvf);
-            ok(SUCCEEDED(hr), "Failed setting FVF, hr %#lx.\n", hr);
+            if (tests[j].decl_elements)
+            {
+                IDirect3DVertexDeclaration9 *vertex_declaration;
+
+                hr = IDirect3DDevice9_CreateVertexDeclaration(device, tests[j].decl_elements, &vertex_declaration);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                IDirect3DVertexDeclaration9_Release(vertex_declaration);
+            }
+            else
+            {
+                hr = IDirect3DDevice9_SetFVF(device, tests[j].fvf);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            }
 
             hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
             ok(SUCCEEDED(hr), "Failed to set render target, hr %#lx.\n", hr);
@@ -12238,40 +12300,116 @@ static void test_pointsize(void)
             hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
             ok(SUCCEEDED(hr), "Failed to set render target, hr %#lx.\n", hr);
 
-            if (tests[j].zero_size)
+            get_rt_readback(backbuffer, &rb);
+
+            if (size <= 1)
             {
-                /* Technically 0 pointsize is undefined in OpenGL but in practice it seems like
-                 * it does the "useful" thing on all the drivers I tried. */
-                /* On WARP it does draw some pixels, most of the time. */
-                color = getPixelColor(device, 64, 64);
-                todo_wine_if(!color_match(color, 0x0000ffff, 0))
-                ok(color_match(color, 0x0000ffff, 0)
-                        || broken(color_match(color, 0x00ff0000, 0))
-                        || broken(color_match(color, 0x00ffff00, 0))
-                        || broken(color_match(color, 0x00000000, 0))
-                        || broken(color_match(color, 0x0000ff00, 0)),
-                        "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+                unsigned int warp_colour = 0x0000ff00;
+
+                if (test_setups[i].broken_texcoord_u)
+                    warp_colour = 0x00000000;
+                else if (test_setups[i].gives_0_0_texcoord)
+                    warp_colour = 0x00ff0000;
+
+                color = get_readback_color(&rb, 64, 64);
+                if (size == 0)
+                {
+                    /* Windows on real hardware draws nothing. WARP draws one
+                     * pixel as if the point size was 1.
+                     *
+                     * Technically 0 pointsize is undefined in OpenGL but in
+                     * practice it seems like it does the "useful" thing on all
+                     * the drivers I tried. */
+                    todo_wine_if(!color_match(color, 0xff00ffff, 0))
+                        ok(color == 0xff00ffff
+                                || broken(adapter_is_warp(&identifier) && color == warp_colour),
+                                "Got unexpected color 0x%08x at (64, 64).\n", color);
+                }
+                else
+                {
+                    /* Exact colour varies based on texcoord, but we should get
+                     * a pixel drawn here. */
+                    ok(color != 0xff00ffff, "Got unexpected color 0x%08x at (64, 64).\n", color);
+                }
+
+                todo_wine_if (j == 10)
+                {
+                    color = get_readback_color(&rb, 63, 64);
+                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (63, 64).\n", color);
+                    color = get_readback_color(&rb, 65, 64);
+                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (65, 64).\n", color);
+                    color = get_readback_color(&rb, 64, 63);
+                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 63).\n", color);
+                    color = get_readback_color(&rb, 64, 65);
+                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 65).\n", color);
+                }
             }
             else
             {
-                struct surface_readback rb;
+                /* On AMD and WARP, apparently only the first texcoord is
+                 * modified by the point coordinates when using SM2/3 pixel
+                 * shaders. */
 
-                get_rt_readback(backbuffer, &rb);
-                /* On AMD apparently only the first texcoord is modified by the point coordinates
-                 * when using SM2/3 pixel shaders. */
+                for (unsigned int y = 0; y < 128; ++y)
+                {
+                    /* Skip the edges; coordinates are not pixel-exact. */
+                    if (y == 64 - size / 2 || y == 64 + size / 2 || y == 64)
+                        continue;
+
+                    for (unsigned int x = 0; x < 128; ++x)
+                    {
+                        unsigned int expect = 0xff00ffff, broken_u = 0xff00ffff;
+
+                        /* Skip the edges; coordinates are not pixel-exact. */
+                        if (x == 64 - size / 2 || x == 64 + size / 2 || x == 64)
+                            continue;
+
+                        color = get_readback_color(&rb, x, y);
+
+                        if (x > 64 - size / 2 && x < 64 + size / 2
+                                && y > 64 - size / 2 && y < 64 + size / 2)
+                        {
+
+                            if (test_setups[i].gives_0_0_texcoord)
+                                expect = broken_u = 0x00ff0000;
+                            else if (y < 64 && x < 64)
+                                expect = broken_u = 0x00ff0000;
+                            else if (y >= 64 && x < 64)
+                                expect = broken_u = 0x00000000;
+                            else if (y < 64 && x >= 64)
+                            {
+                                expect = 0x00ffff00;
+                                broken_u = 0x00ff0000;
+                            }
+                            else if (y >= 64 && x >= 64)
+                            {
+                                expect = 0x0000ff00;
+                                broken_u = 0x00000000;
+                            }
+                        }
+
+                        if (!(color == expect || broken(test_setups[i].broken_texcoord_u && color == broken_u)))
+                        {
+                            ok(0, "Expected 0x%08x, got 0x%08x at (%u, %u).\n", expect, color, x, y);
+                            goto stop;
+                        }
+                    }
+                }
+stop:
+
                 color = get_readback_color(&rb, 64 - size / 2 + 1, 64 - size / 2 + 1);
                 ok(color_match(color, 0x00ff0000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
                 color = get_readback_color(&rb, 64 + size / 2 - 1, 64 - size / 2 + 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00ffff00, 0)
-                        || (allow_broken && broken(color_match(color, 0x00ff0000, 0))),
+                        || (broken_texcoord_u && broken(color_match(color, 0x00ff0000, 0))),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
                 color = get_readback_color(&rb, 64 - size / 2 + 1, 64 + size / 2 - 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00000000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
                 color = get_readback_color(&rb, 64 + size / 2 - 1, 64 + size / 2 - 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x0000ff00, 0)
-                        || (allow_broken && broken(color_match(color, 0x00000000, 0))),
+                        || (broken_texcoord_u && broken(color_match(color, 0x00000000, 0))),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
 
                 color = get_readback_color(&rb, 64 - size / 2 - 1, 64 - size / 2 - 1);
@@ -12286,9 +12424,14 @@ static void test_pointsize(void)
                 color = get_readback_color(&rb, 64 + size / 2 + 1, 64 + size / 2 + 1);
                 ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-
-                release_surface_readback(&rb);
             }
+
+            release_surface_readback(&rb);
+
+            IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+            Sleep(50);
+
+            winetest_pop_context();
         }
         IDirect3DDevice9_SetVertexShader(device, NULL);
         IDirect3DDevice9_SetPixelShader(device, NULL);
@@ -12296,6 +12439,8 @@ static void test_pointsize(void)
             IDirect3DVertexShader9_Release(vs);
         if (ps)
             IDirect3DVertexShader9_Release(ps);
+
+        winetest_pop_context();
     }
 
 cleanup:
