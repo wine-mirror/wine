@@ -1695,6 +1695,7 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir, WCHAR *in_pipe)
  */
 static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOOL retrycall)
 {
+    RETURN_CODE return_code = NO_ERROR;
     WCHAR *cmd, *parms_start;
     int status, cmd_index, count;
     WCHAR *whichcmd;
@@ -1797,7 +1798,7 @@ static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOO
         WCMD_echo(&whichcmd[count]);
         break;
       case WCMD_GOTO:
-        WCMD_goto (cmdList);
+        return_code = WCMD_goto();
         break;
       case WCMD_HELP:
         WCMD_give_help (parms_start);
@@ -1891,7 +1892,7 @@ static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOO
         WCMD_mklink(parms_start);
         break;
       case WCMD_EXIT:
-        WCMD_exit (cmdList);
+        return_code = WCMD_exit();
         break;
       case WCMD_FOR:
       case WCMD_IF:
@@ -1911,6 +1912,8 @@ static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOO
     }
 cleanup:
     free(cmd);
+    if (return_code == RETURN_CODE_ABORTED && cmdList)
+        *cmdList = NULL;
 }
 
 /*****************************************************************************

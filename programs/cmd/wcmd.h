@@ -176,10 +176,12 @@ struct _DIRECTORY_STACK *WCMD_dir_stack_free(struct _DIRECTORY_STACK *dir);
 /* The return code:
  * - some of them are directly mapped to kernel32's errors
  * - some others are cmd.exe specific
+ * - ABORTED if used to break out of FOR/IF blocks (to handle GOTO, EXIT commands)
  */
 typedef int RETURN_CODE;
 #define RETURN_CODE_SYNTAX_ERROR         255
 #define RETURN_CODE_CANT_LAUNCH          9009
+#define RETURN_CODE_ABORTED              (-999999)
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);
@@ -195,11 +197,11 @@ void WCMD_directory (WCHAR *);
 void WCMD_echo (const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
-void WCMD_exit (CMD_NODE **cmdList);
+RETURN_CODE WCMD_exit(void);
 void WCMD_for (WCHAR *, CMD_NODE **cmdList);
 BOOL WCMD_get_fullpath(const WCHAR *, SIZE_T, WCHAR *, WCHAR **);
 void WCMD_give_help (const WCHAR *args);
-void WCMD_goto (CMD_NODE **cmdList);
+RETURN_CODE WCMD_goto(void);
 void WCMD_if (WCHAR *, CMD_NODE **cmdList);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);

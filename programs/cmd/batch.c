@@ -77,7 +77,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
   /* If processing a call :label, 'goto' the label in question */
   if (startLabel) {
     lstrcpyW(param1, startLabel);
-    WCMD_goto(NULL);
+    WCMD_goto();
   }
 
 /*

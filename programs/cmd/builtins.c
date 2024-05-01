@@ -1926,7 +1926,7 @@ void WCMD_give_help (const WCHAR *args)
 }
 
 /****************************************************************************
- * WCMD_go_to
+ * WCMD_goto
  *
  * Batch file jump instruction. Not the most efficient algorithm ;-)
  * Prints error message if the specified label cannot be found - the file pointer is
@@ -1934,27 +1934,24 @@ void WCMD_give_help (const WCHAR *args)
  * FIXME: DOS is supposed to allow labels with spaces - we don't.
  */
 
-void WCMD_goto (CMD_NODE **cmdList) {
-
+RETURN_CODE WCMD_goto(void)
+{
   WCHAR string[MAX_PATH];
   WCHAR *labelend = NULL;
   const WCHAR labelEndsW[] = L"><|& :\t";
-
-  /* Do not process any more parts of a processed multipart or multilines command */
-  if (cmdList) *cmdList = NULL;
 
   if (context != NULL) {
     WCHAR *paramStart = param1, *str;
 
     if (param1[0] == 0x00) {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-      return;
+      return ERROR_INVALID_FUNCTION;
     }
 
     /* Handle special :EOF label */
     if (lstrcmpiW(L":eof", param1) == 0) {
       context -> skip_rest = TRUE;
-      return;
+      return RETURN_CODE_ABORTED;
     }
 
     /* Support goto :label as well as goto label plus remove trailing chars */
@@ -2000,7 +1997,7 @@ void WCMD_goto (CMD_NODE **cmdList) {
                 if (labelend) *labelend = 0x00;
                 WINE_TRACE("comparing found label %s\n", wine_dbgstr_w(str));
 
-                if (lstrcmpiW (str, paramStart) == 0) return;
+                if (lstrcmpiW (str, paramStart) == 0) return RETURN_CODE_ABORTED;
               }
 
               /* See if we have gone beyond the end point if second time through */
@@ -2021,7 +2018,7 @@ void WCMD_goto (CMD_NODE **cmdList) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
     context -> skip_rest = TRUE;
   }
-  return;
+  return ERROR_INVALID_FUNCTION;
 }
 
 /*****************************************************************************
@@ -3966,16 +3963,17 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
  *
  */
 
-void WCMD_exit (CMD_NODE **cmdList) {
+RETURN_CODE WCMD_exit(void)
+{
     int rc = wcstol(param1, NULL, 10); /* Note: wcstol of empty parameter is 0 */
 
-    if (context && lstrcmpiW(quals, L"/B") == 0) {
+    if (context && lstrcmpiW(quals, L"/B") == 0)
+    {
         errorlevel = rc;
         context -> skip_rest = TRUE;
-        *cmdList = NULL;
-    } else {
-        ExitProcess(rc);
+        return RETURN_CODE_ABORTED;
     }
+    ExitProcess(rc);
 }
 
 
