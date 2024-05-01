@@ -24,7 +24,6 @@
 #include "winnt.h"
 #include "wine/asm.h"
 
-void *__os_arm64x_check_call = 0;
 void *__os_arm64x_check_icall_cfg = 0;
 void *__os_arm64x_dispatch_call_no_redirect = 0;
 void *__os_arm64x_dispatch_fptr = 0;
@@ -51,6 +50,11 @@ asm( ".section .data,\"drw\"\n"
      "__os_arm64x_dispatch_icall:\n"
      ".globl __os_arm64x_check_icall\n"
      "__os_arm64x_check_icall:\n"
+     ".xword 0\n"
+     ".globl __os_arm64x_dispatch_call\n"
+     "__os_arm64x_dispatch_call:\n"
+     ".globl __os_arm64x_check_call\n"
+     "__os_arm64x_check_call:\n"
      ".xword 0\n" );
 
 __ASM_GLOBAL_FUNC( __icall_helper_arm64ec,
