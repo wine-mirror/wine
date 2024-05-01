@@ -1,6 +1,8 @@
 MODULE    = qmgrprxy.dll
 IMPORTS   = rpcrt4
 
+EXTRAIDLFLAGS = -Oicf
+
 SOURCES = \
 	qmgrprxy.idl
 
