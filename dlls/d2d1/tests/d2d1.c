@@ -10947,14 +10947,15 @@ static void test_builtin_effect(BOOL d3d11)
     unsigned int i, j, min_inputs, max_inputs, str_size, input_count;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     D2D1_BUFFER_PRECISION precision;
+    ID2D1Effect *effect, *effect2;
     ID2D1Image *image_a, *image_b;
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
     ID2D1Factory1 *factory;
     ID2D1Bitmap *bitmap;
-    ID2D1Effect *effect;
     D2D1_SIZE_U size;
     BYTE buffer[256];
+    IUnknown *unk;
     BOOL cached;
     CLSID clsid;
     HRESULT hr;
@@ -11009,6 +11010,17 @@ static void test_builtin_effect(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID2D1Effect_GetOutput(effect, &image_b);
         ok(image_b == image_a, "Got unexpected image_b %p, expected %p.\n", image_b, image_a);
+
+        hr = ID2D1Image_QueryInterface(image_a, &IID_ID2D1Effect, (void **)&effect2);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(effect2 == effect, "Unexpected pointer.\n");
+        ID2D1Effect_Release(effect2);
+
+        hr = ID2D1Image_QueryInterface(image_a, &IID_IUnknown, (void **)&unk);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(unk == (IUnknown *)effect, "Unexpected pointer.\n");
+        IUnknown_Release(unk);
+
         ID2D1Image_Release(image_b);
         ID2D1Image_Release(image_a);
 
