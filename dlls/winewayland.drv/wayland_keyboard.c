@@ -358,7 +358,7 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
 
     unsigned int mod, keyc, len, names_len, min_keycode, max_keycode;
     struct xkb_state *xkb_state = xkb_state_new(xkb_keymap);
-    xkb_mod_mask_t shift_mask, control_mask, altgr_mask, capslock_mask;
+    xkb_mod_mask_t shift_mask, control_mask, altgr_mask, capslock_mask, numlock_mask;
     VSC_LPWSTR *names_entry, *names_ext_entry;
     VSC_VK *vsc2vk_e0_entry, *vsc2vk_e1_entry;
     VK_TO_WCHARS8 *vk2wchars_entry;
@@ -493,6 +493,7 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
     control_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_CTRL);
     capslock_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_CAPS);
     altgr_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, "Mod5");
+    numlock_mask = 1 << xkb_keymap_mod_get_index(xkb_keymap, XKB_MOD_NAME_NUM);
 
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
@@ -501,6 +502,19 @@ static void add_xkb_layout(const char *xkb_layout, struct xkb_keymap *xkb_keymap
         BOOL found = FALSE, caps_found = FALSE;
         uint32_t caps_ret, shift_ret;
         unsigned int mod;
+
+        if ((vkey & KBDNUMPAD) && (vkey & 0xff) == VK_DELETE)
+        {
+            VK_TO_WCHARS8 num_vkey2wch = {.VirtualKey = VK_DECIMAL};
+
+            xkb_state_update_mask(xkb_state, 0, 0, numlock_mask, 0, 0, xkb_group);
+            if (!(num_vkey2wch.wch[0] = xkb_state_key_get_utf32(xkb_state, keyc)))
+                num_vkey2wch.wch[0] = WCH_NONE;
+            for (mod = 1; mod < 8; ++mod) num_vkey2wch.wch[mod] = WCH_NONE;
+            num_vkey2wch.Attributes = 0;
+            TRACE("vkey %#06x -> %s\n", num_vkey2wch.VirtualKey, debugstr_wn(num_vkey2wch.wch, 8));
+            *vk2wchars_entry++ = num_vkey2wch;
+        }
 
         for (mod = 0; mod < 8; ++mod)
         {
