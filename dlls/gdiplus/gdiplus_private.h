@@ -62,6 +62,8 @@ extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi, BOOL printer_display);
 
 #define WineCoordinateSpaceGdiDevice ((GpCoordinateSpace)4)
 
+extern GpStatus gdi_dc_acquire(GpGraphics *graphics, HDC *hdc);
+extern void gdi_dc_release(GpGraphics *graphics, HDC hdc);
 extern GpStatus gdi_transform_acquire(GpGraphics *graphics);
 extern GpStatus gdi_transform_release(GpGraphics *graphics);
 extern GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
@@ -248,6 +250,7 @@ struct GpPen{
 struct GpGraphics{
     HDC hdc;
     HWND hwnd;
+    INT hdc_refs;
     BOOL owndc;
     BOOL alpha_hdc;
     BOOL printer_display;
@@ -656,6 +659,11 @@ static inline BOOL image_lock(GpImage *image)
 static inline void image_unlock(GpImage *image)
 {
     ReleaseSRWLockExclusive(&image->lock);
+}
+
+static inline BOOL has_gdi_dc(GpGraphics *graphics)
+{
+    return graphics->hdc != NULL;
 }
 
 static inline void set_rect(GpRectF *rect, REAL x, REAL y, REAL width, REAL height)

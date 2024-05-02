@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -45,6 +46,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 /* looks-right constants */
 #define ANCHOR_WIDTH (2.0)
 #define MAX_ITERS (50)
+
+GpStatus gdi_dc_acquire(GpGraphics *graphics, HDC *hdc)
+{
+    if (graphics->hdc != NULL)
+    {
+        *hdc = graphics->hdc;
+        graphics->hdc_refs++;
+        return Ok;
+    }
+
+    *hdc = NULL;
+    return InvalidParameter;
+}
+
+void gdi_dc_release(GpGraphics *graphics, HDC hdc)
+{
+    assert(graphics->hdc_refs > 0);
+    graphics->hdc_refs--;
+}
 
 static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
                                    GDIPCONST GpFont *font, GDIPCONST GpStringFormat *format,
@@ -252,7 +272,7 @@ static HBRUSH create_gdi_brush(const GpBrush *brush, INT origin_x, INT origin_y)
     return gdibrush;
 }
 
-static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
+static INT prepare_dc(GpGraphics *graphics, HDC hdc, GpPen *pen)
 {
     LOGBRUSH lb;
     HPEN gdipen;
@@ -261,9 +281,9 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
     GpPointF pt[2];
     DWORD dash_array[MAX_DASHLEN];
 
-    save_state = SaveDC(graphics->hdc);
+    save_state = SaveDC(hdc);
 
-    EndPath(graphics->hdc);
+    EndPath(hdc);
 
     if(pen->unit == UnitPixel){
         width = pen->width;
@@ -311,15 +331,15 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         free_gdi_logbrush(&lb);
     }
 
-    SelectObject(graphics->hdc, gdipen);
+    SelectObject(hdc, gdipen);
 
     return save_state;
 }
 
-static void restore_dc(GpGraphics *graphics, INT state)
+static void restore_dc(GpGraphics *graphics, HDC hdc, INT state)
 {
-    DeleteObject(SelectObject(graphics->hdc, GetStockObject(NULL_PEN)));
-    RestoreDC(graphics->hdc, state);
+    DeleteObject(SelectObject(hdc, GetStockObject(NULL_PEN)));
+    RestoreDC(hdc, state);
 }
 
 static void round_points(POINT *pti, GpPointF *ptf, INT count)
@@ -2533,6 +2553,8 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     if(!graphics) return InvalidParameter;
     if(graphics->busy) return ObjectBusy;
 
+    assert(graphics->hdc_refs == 0);
+
     if (is_metafile_graphics(graphics))
     {
         stat = METAFILE_GraphicsDeleted((GpMetafile*)graphics->image);
@@ -3633,11 +3655,16 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
 
 static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
+    HDC hdc;
     INT save_state;
     GpStatus retval;
     HRGN hrgn=NULL;
 
-    save_state = prepare_dc(graphics, pen);
+    retval = gdi_dc_acquire(graphics, &hdc);
+    if (retval != Ok)
+        return retval;
+
+    save_state = prepare_dc(graphics, hdc, pen);
 
     retval = get_clip_hrgn(graphics, &hrgn);
 
@@ -3654,8 +3681,9 @@ static GpStatus GDI32_GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *pat
     gdi_transform_release(graphics);
 
 end:
-    restore_dc(graphics, save_state);
+    restore_dc(graphics, hdc, save_state);
     DeleteObject(hrgn);
+    gdi_dc_release(graphics, hdc);
 
     return retval;
 }
@@ -4069,7 +4097,7 @@ GpStatus WINGDIPAPI GdipDrawPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 
     if (is_metafile_graphics(graphics))
         retval = METAFILE_DrawPath((GpMetafile*)graphics->image, pen, path);
-    else if (!graphics->hdc || graphics->alpha_hdc || !brush_can_fill_path(pen->brush, FALSE))
+    else if (!has_gdi_dc(graphics) || graphics->alpha_hdc || !brush_can_fill_path(pen->brush, FALSE))
         retval = SOFTWARE_GdipDrawPath(graphics, pen, path);
     else
         retval = GDI32_GdipDrawPath(graphics, pen, path);
