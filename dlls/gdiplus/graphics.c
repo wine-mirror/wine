@@ -362,9 +362,14 @@ static void round_points(POINT *pti, GpPointF *ptf, INT count)
 static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_width, INT dst_height,
                             HDC hdc, INT src_x, INT src_y, INT src_width, INT src_height)
 {
+    HDC dst_hdc;
     CompositingMode comp_mode;
-    INT technology = GetDeviceCaps(graphics->hdc, TECHNOLOGY);
-    INT shadeblendcaps  = GetDeviceCaps(graphics->hdc, SHADEBLENDCAPS);
+    INT technology, shadeblendcaps;
+
+    gdi_dc_acquire(graphics, &dst_hdc);
+
+    technology = GetDeviceCaps(dst_hdc, TECHNOLOGY);
+    shadeblendcaps  = GetDeviceCaps(dst_hdc, SHADEBLENDCAPS);
 
     GdipGetCompositingMode(graphics, &comp_mode);
 
@@ -373,7 +378,7 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
     {
         TRACE("alpha blending not supported by device, fallback to StretchBlt\n");
 
-        StretchBlt(graphics->hdc, dst_x, dst_y, dst_width, dst_height,
+        StretchBlt(dst_hdc, dst_x, dst_y, dst_width, dst_height,
                    hdc, src_x, src_y, src_width, src_height, SRCCOPY);
     }
     else
@@ -385,9 +390,11 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
         bf.SourceConstantAlpha = 255;
         bf.AlphaFormat = AC_SRC_ALPHA;
 
-        GdiAlphaBlend(graphics->hdc, dst_x, dst_y, dst_width, dst_height,
+        GdiAlphaBlend(dst_hdc, dst_x, dst_y, dst_width, dst_height,
                       hdc, src_x, src_y, src_width, src_height, bf);
     }
+
+    gdi_dc_release(graphics, dst_hdc);
 }
 
 static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
