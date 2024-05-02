@@ -24,6 +24,8 @@
 
 #include "config.h"
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 
 #include "wine/debug.h"
@@ -275,7 +277,7 @@ static void wayland_add_device_modes(const struct gdi_device_manager *device_man
 /***********************************************************************
  *      UpdateDisplayDevices (WAYLAND.@)
  */
-BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
+UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param)
 {
     struct wayland_output *output;
@@ -283,7 +285,7 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
     struct wl_array output_info_array;
     struct output_info *output_info;
 
-    if (!force && !force_display_devices_refresh) return TRUE;
+    if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
 
     TRACE("force=%d force_refresh=%d\n", force, force_display_devices_refresh);
 
@@ -318,5 +320,5 @@ BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manage
 
     pthread_mutex_unlock(&process_wayland.output_mutex);
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }

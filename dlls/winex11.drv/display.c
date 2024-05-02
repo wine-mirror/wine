@@ -23,6 +23,9 @@
 #endif
 
 #include "config.h"
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "x11drv.h"
 #include "wine/debug.h"
 
@@ -493,7 +496,7 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
 
 static BOOL force_display_devices_refresh;
 
-BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
@@ -503,13 +506,13 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     DEVMODEW *modes;
     UINT mode_count;
 
-    if (!force && !force_display_devices_refresh) return TRUE;
+    if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
     force_display_devices_refresh = FALSE;
 
     TRACE( "via %s\n", debugstr_a(host_handler.name) );
 
     /* Initialize GPUs */
-    if (!host_handler.get_gpus( &gpus, &gpu_count, TRUE )) return FALSE;
+    if (!host_handler.get_gpus( &gpus, &gpu_count, TRUE )) return STATUS_UNSUCCESSFUL;
     TRACE("GPU count: %d\n", gpu_count);
 
     for (gpu = 0; gpu < gpu_count; gpu++)
@@ -558,7 +561,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     }
 
     host_handler.free_gpus( gpus, gpu_count );
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 void X11DRV_DisplayDevices_Init(BOOL force)

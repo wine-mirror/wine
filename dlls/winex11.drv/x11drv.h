@@ -217,7 +217,7 @@ extern BOOL X11DRV_SystrayDockRemove( HWND hwnd );
 extern LONG X11DRV_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid );
 extern BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode );
 extern INT X11DRV_GetDisplayDepth( LPCWSTR name, BOOL is_primary );
-extern BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+extern UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param );
 extern BOOL X11DRV_CreateDesktop( const WCHAR *name, UINT width, UINT height );
 extern BOOL X11DRV_CreateWindow( HWND hwnd );

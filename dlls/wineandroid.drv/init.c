@@ -269,7 +269,7 @@ LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, H
 /***********************************************************************
  *           ANDROID_UpdateDisplayDevices
  */
-BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     if (force || force_display_devices_refresh)
     {
@@ -295,9 +295,11 @@ BOOL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
         current.dmFields |= DM_POSITION;
         device_manager->add_modes( &current, 1, &mode, param );
         force_display_devices_refresh = FALSE;
+
+        return STATUS_SUCCESS;
     }
 
-    return TRUE;
+    return STATUS_ALREADY_COMPLETE;
 }
 
 

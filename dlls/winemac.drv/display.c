@@ -1110,7 +1110,7 @@ static BOOL is_same_devmode(const DEVMODEW *a, const DEVMODEW *b)
            a->dmDisplayFrequency == b->dmDisplayFrequency;
 }
 
-BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
@@ -1120,7 +1120,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     DEVMODEW *mode, *modes;
     DWORD len;
 
-    if (!force && !force_display_devices_refresh) return TRUE;
+    if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
     force_display_devices_refresh = FALSE;
 
     if (macdrv_get_displays(&displays, &display_count))
@@ -1133,7 +1133,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     if (macdrv_get_gpus(&gpus, &gpu_count))
     {
         ERR("could not get GPUs\n");
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
     TRACE("GPU count: %d\n", gpu_count);
 
@@ -1198,7 +1198,7 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
 
     macdrv_free_gpus(gpus);
     macdrv_free_displays(displays);
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************

@@ -332,7 +332,7 @@ void WAYLAND_DestroyWindow(HWND hwnd);
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);
 void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text);
 LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
-BOOL WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
+UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
                                   BOOL force, void *param);
 LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,

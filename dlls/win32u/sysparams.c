@@ -1888,7 +1888,7 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     if (!write_source_to_registry( &virtual_source, &ctx->source_key ))
     {
         WARN( "Failed to write source to registry\n" );
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
 
     ctx->source = virtual_source;
@@ -1916,18 +1916,21 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     add_monitor( &monitor, ctx );
     add_virtual_modes( ctx, &current, &initial, &maximum );
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
-static BOOL update_display_devices( BOOL force, struct device_manager_ctx *ctx )
+static UINT update_display_devices( BOOL force, struct device_manager_ctx *ctx )
 {
-    if (user_driver->pUpdateDisplayDevices( &device_manager, force, ctx ))
+    UINT status;
+
+    if (!(status = user_driver->pUpdateDisplayDevices( &device_manager, force, ctx )))
     {
         if (ctx->source_count && is_virtual_desktop()) return add_virtual_source( ctx );
-        return TRUE;
+        return status;
     }
 
-    return default_update_display_devices( force, ctx );
+    if (status == STATUS_NOT_IMPLEMENTED) return default_update_display_devices( force, ctx );
+    return status;
 }
 
 BOOL update_display_cache( BOOL force )
@@ -1936,7 +1939,7 @@ BOOL update_display_cache( BOOL force )
         {'_','_','w','i','n','e','s','e','r','v','i','c','e','_','w','i','n','s','t','a','t','i','o','n',0};
     HWINSTA winstation = NtUserGetProcessWindowStation();
     struct device_manager_ctx ctx = {0};
-    BOOL ret;
+    UINT status;
     WCHAR name[MAX_PATH];
 
     /* services do not have any adapters, only a virtual monitor */
@@ -1950,10 +1953,10 @@ BOOL update_display_cache( BOOL force )
         return TRUE;
     }
 
-    ret = update_display_devices( force, &ctx );
+    status = update_display_devices( force, &ctx );
 
     release_display_manager_ctx( &ctx );
-    if (!ret) WARN( "Failed to update display devices\n" );
+    if (status && status != STATUS_ALREADY_COMPLETE) WARN( "Failed to update display devices, status %#x\n", status );
 
     if (!update_display_cache_from_registry())
     {
