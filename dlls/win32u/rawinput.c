@@ -282,11 +282,16 @@ static void enumerate_devices( DWORD type, const WCHAR *class )
     NtClose( class_key );
 }
 
-static void rawinput_update_device_list(void)
+static void rawinput_update_device_list( BOOL force )
 {
+    unsigned int ticks = NtGetTickCount();
+    static unsigned int last_check;
     struct device *device, *next;
 
     TRACE( "\n" );
+
+    if (ticks - last_check <= 2000 && !force) return;
+    last_check = ticks;
 
     LIST_FOR_EACH_ENTRY_SAFE( device, next, &devices, struct device, entry )
     {
@@ -309,7 +314,7 @@ static struct device *find_device_from_handle( HANDLE handle, BOOL refresh )
         if (device->handle == handle) return device;
     if (!refresh) return NULL;
 
-    rawinput_update_device_list();
+    rawinput_update_device_list( TRUE );
 
     LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
         if (device->handle == handle) return device;
@@ -322,8 +327,7 @@ static struct device *find_device_from_handle( HANDLE handle, BOOL refresh )
  */
 UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *device_count, UINT size )
 {
-    unsigned int count = 0, ticks = NtGetTickCount();
-    static unsigned int last_check;
+    unsigned int count = 0;
     struct device *device;
 
     TRACE( "device_list %p, device_count %p, size %u.\n", device_list, device_count, size );
@@ -342,11 +346,7 @@ UINT WINAPI NtUserGetRawInputDeviceList( RAWINPUTDEVICELIST *device_list, UINT *
 
     pthread_mutex_lock( &rawinput_mutex );
 
-    if (ticks - last_check > 2000)
-    {
-        last_check = ticks;
-        rawinput_update_device_list();
-    }
+    rawinput_update_device_list( FALSE );
 
     LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
     {
