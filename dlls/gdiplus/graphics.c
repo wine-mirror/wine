@@ -2418,17 +2418,17 @@ GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
     return GdipCreateFromHDC2(hdc, NULL, graphics);
 }
 
-static void get_gdi_transform(GpGraphics *graphics, GpMatrix *matrix)
+static void get_gdi_transform(HDC hdc, GpMatrix *matrix)
 {
     XFORM xform;
 
-    if (graphics->hdc == NULL)
+    if (hdc == NULL)
     {
         GdipSetMatrixElements(matrix, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
         return;
     }
 
-    GetTransform(graphics->hdc, 0x204, &xform);
+    GetTransform(hdc, 0x204, &xform);
     GdipSetMatrixElements(matrix, xform.eM11, xform.eM12, xform.eM21, xform.eM22, xform.eDx, xform.eDy);
 }
 
@@ -2483,7 +2483,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     list_init(&(*graphics)->containers);
     (*graphics)->contid = 0;
     (*graphics)->printer_display = (GetDeviceCaps(hdc, TECHNOLOGY) == DT_RASPRINTER);
-    get_gdi_transform(*graphics, &(*graphics)->gdi_transform);
+    get_gdi_transform(hdc, &(*graphics)->gdi_transform);
 
     (*graphics)->gdi_clip = CreateRectRgn(0,0,0,0);
     if (!GetClipRgn(hdc, (*graphics)->gdi_clip))
