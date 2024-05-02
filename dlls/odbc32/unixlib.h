@@ -25,14 +25,8 @@
  */
 
 #include <stdarg.h>
-
 #include "windef.h"
 #include "winbase.h"
-
-#include "sql.h"
-#include "sqltypes.h"
-#include "sqlext.h"
-
 #include "wine/unixlib.h"
 
 enum sql_funcs
@@ -154,121 +148,1108 @@ enum sql_funcs
     unix_SQLTables,
     unix_SQLTablesW,
     unix_SQLTransact,
-    NB_ODBC_FUNCS
+    unix_funcs_count
 };
 
-struct SQLAllocConnect_params { SQLHENV EnvironmentHandle; SQLHDBC *ConnectionHandle; };
-struct SQLAllocEnv_params { SQLHENV *EnvironmentHandle; };
-struct SQLAllocHandle_params { SQLSMALLINT HandleType; SQLHANDLE InputHandle; SQLHANDLE *OutputHandle; };
-struct SQLAllocHandleStd_params { SQLSMALLINT HandleType; SQLHANDLE InputHandle; SQLHANDLE *OutputHandle; };
-struct SQLAllocStmt_params { SQLHDBC ConnectionHandle; SQLHSTMT *StatementHandle; };
-struct SQLBindCol_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLSMALLINT TargetType; SQLPOINTER TargetValue; SQLLEN BufferLength; SQLLEN *StrLen_or_Ind; };
-struct SQLBindParam_params { SQLHSTMT StatementHandle; SQLUSMALLINT ParameterNumber; SQLSMALLINT ValueType; SQLSMALLINT ParameterType; SQLULEN LengthPrecision; SQLSMALLINT ParameterScale; SQLPOINTER ParameterValue; SQLLEN *StrLen_or_Ind; };
-struct SQLBindParameter_params { SQLHSTMT hstmt; SQLUSMALLINT ipar; SQLSMALLINT fParamType; SQLSMALLINT fCType; SQLSMALLINT fSqlType; SQLULEN cbColDef; SQLSMALLINT ibScale; SQLPOINTER rgbValue; SQLLEN cbValueMax; SQLLEN *pcbValue; };
-struct SQLBrowseConnect_params { SQLHDBC hdbc; SQLCHAR *szConnStrIn; SQLSMALLINT cbConnStrIn; SQLCHAR *szConnStrOut; SQLSMALLINT cbConnStrOutMax; SQLSMALLINT *pcbConnStrOut; };
-struct SQLBrowseConnectW_params { SQLHDBC hdbc; SQLWCHAR *szConnStrIn; SQLSMALLINT cbConnStrIn; SQLWCHAR *szConnStrOut; SQLSMALLINT cbConnStrOutMax; SQLSMALLINT *pcbConnStrOut; };
-struct SQLBulkOperations_params { SQLHSTMT StatementHandle; SQLSMALLINT Operation; };
-struct SQLCancel_params { SQLHSTMT StatementHandle; };
-struct SQLCloseCursor_params { SQLHSTMT StatementHandle; };
-struct SQLColAttribute_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLUSMALLINT FieldIdentifier; SQLPOINTER CharacterAttribute; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLLEN *NumericAttribute; };
-struct SQLColAttributeW_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLUSMALLINT FieldIdentifier; SQLPOINTER CharacterAttribute; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLLEN *NumericAttribute; };
-struct SQLColAttributes_params { SQLHSTMT hstmt; SQLUSMALLINT icol; SQLUSMALLINT fDescType; SQLPOINTER rgbDesc; SQLSMALLINT cbDescMax; SQLSMALLINT *pcbDesc; SQLLEN *pfDesc; };
-struct SQLColAttributesW_params { SQLHSTMT hstmt; SQLUSMALLINT icol; SQLUSMALLINT fDescType; SQLPOINTER rgbDesc; SQLSMALLINT cbDescMax; SQLSMALLINT *pcbDesc; SQLLEN *pfDesc; };
-struct SQLColumnPrivileges_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; SQLCHAR *szColumnName; SQLSMALLINT cbColumnName; };
-struct SQLColumnPrivilegesW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; SQLWCHAR *szColumnName; SQLSMALLINT cbColumnName; };
-struct SQLColumns_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLCHAR *ColumnName; SQLSMALLINT NameLength4; };
-struct SQLColumnsW_params { SQLHSTMT StatementHandle; WCHAR *CatalogName; SQLSMALLINT NameLength1; WCHAR *SchemaName; SQLSMALLINT NameLength2; WCHAR *TableName; SQLSMALLINT NameLength3; WCHAR *ColumnName; SQLSMALLINT NameLength4; };
-struct SQLConnect_params { SQLHDBC ConnectionHandle; SQLCHAR *ServerName; SQLSMALLINT NameLength1; SQLCHAR *UserName; SQLSMALLINT NameLength2; SQLCHAR *Authentication; SQLSMALLINT NameLength3; };
-struct SQLConnectW_params { SQLHDBC ConnectionHandle; WCHAR *ServerName; SQLSMALLINT NameLength1; WCHAR *UserName; SQLSMALLINT NameLength2; WCHAR *Authentication; SQLSMALLINT NameLength3; };
-struct SQLCopyDesc_params { SQLHDESC SourceDescHandle; SQLHDESC TargetDescHandle; };
-struct SQLDataSources_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; SQLCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; SQLCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
-struct SQLDataSourcesW_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; WCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; WCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
-struct SQLDescribeCol_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
-struct SQLDescribeColW_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; WCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
-struct SQLDescribeParam_params { SQLHSTMT hstmt; SQLUSMALLINT ipar; SQLSMALLINT *pfSqlType; SQLULEN *pcbParamDef; SQLSMALLINT *pibScale; SQLSMALLINT *pfNullable; };
-struct SQLDisconnect_params { SQLHDBC ConnectionHandle; };
-struct SQLDriverConnect_params { SQLHDBC hdbc; SQLHWND hwnd; SQLCHAR *ConnectionString; SQLSMALLINT Length; SQLCHAR *conn_str_out; SQLSMALLINT conn_str_out_max; SQLSMALLINT *ptr_conn_str_out; SQLUSMALLINT driver_completion; };
-struct SQLDriverConnectW_params { SQLHDBC ConnectionHandle; SQLHWND WindowHandle; WCHAR *InConnectionString; SQLSMALLINT Length; WCHAR *OutConnectionString; SQLSMALLINT BufferLength; SQLSMALLINT *Length2; SQLUSMALLINT DriverCompletion; };
-struct SQLDrivers_params { SQLHENV EnvironmentHandle; SQLUSMALLINT fDirection; SQLCHAR *szDriverDesc; SQLSMALLINT cbDriverDescMax; SQLSMALLINT *pcbDriverDesc; SQLCHAR *szDriverAttributes; SQLSMALLINT cbDriverAttrMax; SQLSMALLINT *pcbDriverAttr; };
-struct SQLDriversW_params { SQLHENV EnvironmentHandle; SQLUSMALLINT fDirection; SQLWCHAR *szDriverDesc; SQLSMALLINT cbDriverDescMax; SQLSMALLINT *pcbDriverDesc; SQLWCHAR *szDriverAttributes; SQLSMALLINT cbDriverAttrMax; SQLSMALLINT *pcbDriverAttr; };
-struct SQLEndTran_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT CompletionType; };
-struct SQLError_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLHSTMT StatementHandle; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
-struct SQLErrorW_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLHSTMT StatementHandle; WCHAR *Sqlstate; SQLINTEGER *NativeError; WCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
-struct SQLExecDirect_params { SQLHSTMT StatementHandle; SQLCHAR *StatementText; SQLINTEGER TextLength; };
-struct SQLExecDirectW_params { SQLHSTMT StatementHandle; WCHAR *StatementText; SQLINTEGER TextLength; };
-struct SQLExecute_params { SQLHSTMT StatementHandle; };
-struct SQLExtendedFetch_params { SQLHSTMT hstmt; SQLUSMALLINT fFetchType; SQLLEN irow; SQLULEN *pcrow; SQLUSMALLINT *rgfRowStatus; };
-struct SQLFetch_params { SQLHSTMT StatementHandle; };
-struct SQLFetchScroll_params { SQLHSTMT StatementHandle; SQLSMALLINT FetchOrientation; SQLLEN FetchOffset; };
-struct SQLForeignKeys_params { SQLHSTMT hstmt; SQLCHAR *szPkCatalogName; SQLSMALLINT cbPkCatalogName; SQLCHAR *szPkSchemaName; SQLSMALLINT cbPkSchemaName; SQLCHAR *szPkTableName; SQLSMALLINT cbPkTableName; SQLCHAR *szFkCatalogName; SQLSMALLINT cbFkCatalogName; SQLCHAR *szFkSchemaName; SQLSMALLINT cbFkSchemaName; SQLCHAR *szFkTableName; SQLSMALLINT cbFkTableName; };
-struct SQLForeignKeysW_params { SQLHSTMT hstmt; SQLWCHAR *szPkCatalogName; SQLSMALLINT cbPkCatalogName; SQLWCHAR *szPkSchemaName; SQLSMALLINT cbPkSchemaName; SQLWCHAR *szPkTableName; SQLSMALLINT cbPkTableName; SQLWCHAR *szFkCatalogName; SQLSMALLINT cbFkCatalogName; SQLWCHAR *szFkSchemaName; SQLSMALLINT cbFkSchemaName; SQLWCHAR *szFkTableName; SQLSMALLINT cbFkTableName; };
-struct SQLFreeConnect_params { SQLHDBC ConnectionHandle; };
-struct SQLFreeEnv_params { SQLHENV EnvironmentHandle; };
-struct SQLFreeHandle_params { SQLSMALLINT HandleType; SQLHANDLE Handle; };
-struct SQLFreeStmt_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; };
-struct SQLGetConnectAttr_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetConnectAttrW_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetConnectOption_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
-struct SQLGetConnectOptionW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
-struct SQLGetCursorName_params { SQLHSTMT StatementHandle; SQLCHAR *CursorName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; };
-struct SQLGetCursorNameW_params { SQLHSTMT StatementHandle; WCHAR *CursorName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; };
-struct SQLGetData_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLSMALLINT TargetType; SQLPOINTER TargetValue; SQLLEN BufferLength; SQLLEN *StrLen_or_Ind; };
-struct SQLGetDescField_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetDescFieldW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetDescRec_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLCHAR *Name; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLSMALLINT *Type; SQLSMALLINT *SubType; SQLLEN *Length; SQLSMALLINT *Precision; SQLSMALLINT *Scale; SQLSMALLINT *Nullable; };
-struct SQLGetDescRecW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; WCHAR *Name; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; SQLSMALLINT *Type; SQLSMALLINT *SubType; SQLLEN *Length; SQLSMALLINT *Precision; SQLSMALLINT *Scale; SQLSMALLINT *Nullable; };
-struct SQLGetDiagField_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
-struct SQLGetDiagFieldW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
-struct SQLGetDiagRec_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
-struct SQLGetDiagRecW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; WCHAR *Sqlstate; SQLINTEGER *NativeError; WCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
-struct SQLGetEnvAttr_params { SQLHENV EnvironmentHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetFunctions_params { SQLHDBC ConnectionHandle; SQLUSMALLINT FunctionId; SQLUSMALLINT *Supported; };
-struct SQLGetInfo_params { SQLHDBC ConnectionHandle; SQLUSMALLINT InfoType; SQLPOINTER InfoValue; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
-struct SQLGetInfoW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT InfoType; SQLPOINTER InfoValue; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
-struct SQLGetStmtAttr_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetStmtAttrW_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
-struct SQLGetStmtOption_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; SQLPOINTER Value; };
-struct SQLGetTypeInfo_params { SQLHSTMT StatementHandle; SQLSMALLINT DataType; };
-struct SQLGetTypeInfoW_params { SQLHSTMT StatementHandle; SQLSMALLINT DataType; };
-struct SQLMoreResults_params { SQLHSTMT StatementHandle; };
-struct SQLNativeSql_params { SQLHDBC hdbc; SQLCHAR *szSqlStrIn; SQLINTEGER cbSqlStrIn; SQLCHAR *szSqlStr; SQLINTEGER cbSqlStrMax; SQLINTEGER *pcbSqlStr; };
-struct SQLNativeSqlW_params { SQLHDBC hdbc; SQLWCHAR *szSqlStrIn; SQLINTEGER cbSqlStrIn; SQLWCHAR *szSqlStr; SQLINTEGER cbSqlStrMax; SQLINTEGER *pcbSqlStr; };
-struct SQLNumParams_params { SQLHSTMT hstmt; SQLSMALLINT *pcpar; };
-struct SQLNumResultCols_params { SQLHSTMT StatementHandle; SQLSMALLINT *ColumnCount; };
-struct SQLParamData_params { SQLHSTMT StatementHandle; SQLPOINTER *Value; };
-struct SQLParamOptions_params { SQLHSTMT hstmt; SQLULEN crow; SQLULEN *pirow; };
-struct SQLPrepare_params { SQLHSTMT StatementHandle; SQLCHAR *StatementText; SQLINTEGER TextLength; };
-struct SQLPrepareW_params { SQLHSTMT StatementHandle; WCHAR *StatementText; SQLINTEGER TextLength; };
-struct SQLPrimaryKeys_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; };
-struct SQLPrimaryKeysW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; };
-struct SQLProcedureColumns_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szProcName; SQLSMALLINT cbProcName; SQLCHAR *szColumnName; SQLSMALLINT cbColumnName; };
-struct SQLProcedureColumnsW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szProcName; SQLSMALLINT cbProcName; SQLWCHAR *szColumnName; SQLSMALLINT cbColumnName; };
-struct SQLProcedures_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szProcName; SQLSMALLINT cbProcName; };
-struct SQLProceduresW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szProcName; SQLSMALLINT cbProcName; };
-struct SQLPutData_params { SQLHSTMT StatementHandle; SQLPOINTER Data; SQLLEN StrLen_or_Ind; };
-struct SQLRowCount_params { SQLHSTMT StatementHandle; SQLLEN *RowCount; };
-struct SQLSetConnectAttr_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
-struct SQLSetConnectAttrW_params { SQLHDBC ConnectionHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
-struct SQLSetConnectOption_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLULEN Value; };
-struct SQLSetConnectOptionW_params { SQLHDBC ConnectionHandle; SQLUSMALLINT Option; SQLULEN Value; };
-struct SQLSetCursorName_params { SQLHSTMT StatementHandle; SQLCHAR *CursorName; SQLSMALLINT NameLength; };
-struct SQLSetCursorNameW_params { SQLHSTMT StatementHandle; WCHAR *CursorName; SQLSMALLINT NameLength; };
-struct SQLSetDescField_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; };
-struct SQLSetDescFieldW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT FieldIdentifier; SQLPOINTER Value; SQLINTEGER BufferLength; };
-struct SQLSetDescRec_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber; SQLSMALLINT Type; SQLSMALLINT SubType; SQLLEN Length; SQLSMALLINT Precision; SQLSMALLINT Scale; SQLPOINTER Data; SQLLEN *StringLength; SQLLEN *Indicator; };
-struct SQLSetEnvAttr_params { SQLHENV EnvironmentHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
-struct SQLSetParam_params { SQLHSTMT StatementHandle; SQLUSMALLINT ParameterNumber; SQLSMALLINT ValueType; SQLSMALLINT ParameterType; SQLULEN LengthPrecision; SQLSMALLINT ParameterScale; SQLPOINTER ParameterValue; SQLLEN *StrLen_or_Ind; };
-struct SQLSetPos_params { SQLHSTMT hstmt; SQLSETPOSIROW irow; SQLUSMALLINT fOption; SQLUSMALLINT fLock; };
-struct SQLSetScrollOptions_params { SQLHSTMT statement_handle; SQLUSMALLINT f_concurrency; SQLLEN crow_keyset; SQLUSMALLINT crow_rowset; };
-struct SQLSetStmtAttr_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
-struct SQLSetStmtAttrW_params { SQLHSTMT StatementHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER StringLength; };
-struct SQLSetStmtOption_params { SQLHSTMT StatementHandle; SQLUSMALLINT Option; SQLULEN Value; };
-struct SQLSpecialColumns_params { SQLHSTMT StatementHandle; SQLUSMALLINT IdentifierType; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Scope; SQLUSMALLINT Nullable; };
-struct SQLSpecialColumnsW_params { SQLHSTMT StatementHandle; SQLUSMALLINT IdentifierType; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Scope; SQLUSMALLINT Nullable; };
-struct SQLStatistics_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Unique; SQLUSMALLINT Reserved; };
-struct SQLStatisticsW_params { SQLHSTMT StatementHandle; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLUSMALLINT Unique; SQLUSMALLINT Reserved; };
-struct SQLTablePrivileges_params { SQLHSTMT hstmt; SQLCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLCHAR *szTableName; SQLSMALLINT cbTableName; };
-struct SQLTablePrivilegesW_params { SQLHSTMT hstmt; SQLWCHAR *szCatalogName; SQLSMALLINT cbCatalogName; SQLWCHAR *szSchemaName; SQLSMALLINT cbSchemaName; SQLWCHAR *szTableName; SQLSMALLINT cbTableName; };
-struct SQLTables_params { SQLHSTMT StatementHandle; SQLCHAR *CatalogName; SQLSMALLINT NameLength1; SQLCHAR *SchemaName; SQLSMALLINT NameLength2; SQLCHAR *TableName; SQLSMALLINT NameLength3; SQLCHAR *TableType; SQLSMALLINT NameLength4; };
-struct SQLTablesW_params { SQLHSTMT StatementHandle; SQLWCHAR *CatalogName; SQLSMALLINT NameLength1; SQLWCHAR *SchemaName; SQLSMALLINT NameLength2; SQLWCHAR *TableName; SQLSMALLINT NameLength3; SQLWCHAR *TableType; SQLSMALLINT NameLength4; };
-struct SQLTransact_params { SQLHENV EnvironmentHandle; SQLHDBC ConnectionHandle; SQLUSMALLINT CompletionType; };
+struct param
+{
+    INT64 len;  /* result length stored in Unix lib */
+    void *ptr;  /* result length ptr passed by client */
+};
+
+struct param_binding
+{
+    UINT32 count;
+    struct param *param;
+};
+
+struct handle
+{
+    UINT64 unix_handle;
+    struct param_binding bind_col;
+    struct param_binding bind_param;
+    struct param_binding bind_parameter;
+};
+
+struct SQLAllocConnect_params
+{
+    UINT64 EnvironmentHandle;
+    UINT64 ConnectionHandle;
+};
+
+struct SQLAllocEnv_params
+{
+    UINT64 EnvironmentHandle;
+};
+
+struct SQLAllocHandle_params
+{
+    INT16  HandleType;
+    UINT64 InputHandle;
+    UINT64 OutputHandle;
+};
+
+struct SQLAllocHandleStd_params
+{
+    INT16  HandleType;
+    UINT64 InputHandle;
+    UINT64 OutputHandle;
+};
+
+struct SQLAllocStmt_params
+{
+    UINT64 ConnectionHandle;
+    UINT64 StatementHandle;
+};
+
+struct SQLBindCol_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    INT16  TargetType;
+    void  *TargetValue;
+    INT64  BufferLength;
+    INT64 *StrLen_or_Ind;
+};
+
+struct SQLBindParam_params
+{
+    UINT64 StatementHandle;
+    UINT16 ParameterNumber;
+    INT16  ValueType;
+    INT16  ParameterType;
+    UINT64 LengthPrecision;
+    INT16  ParameterScale;
+    void  *ParameterValue;
+    INT64 *StrLen_or_Ind;
+};
+
+struct SQLBindParameter_params
+{
+    UINT64 StatementHandle;
+    UINT16 ParameterNumber;
+    INT16  InputOutputType;
+    INT16  ValueType;
+    INT16  ParameterType;
+    UINT64 ColumnSize;
+    INT16  DecimalDigits;
+    void  *ParameterValue;
+    INT64  BufferLength;
+    INT64 *StrLen_or_Ind;
+};
+
+struct SQLBrowseConnect_params
+{
+    UINT64 ConnectionHandle;
+    UCHAR *InConnectionString;
+    INT16  StringLength1;
+    UCHAR *OutConnectionString;
+    INT16  BufferLength;
+    INT16 *StringLength2;
+};
+
+struct SQLBrowseConnectW_params
+{
+    UINT64 ConnectionHandle;
+    WCHAR *InConnectionString;
+    INT16  StringLength1;
+    WCHAR *OutConnectionString;
+    INT16  BufferLength;
+    INT16 *StringLength2;
+};
+
+struct SQLBulkOperations_params
+{
+    UINT64 StatementHandle;
+    INT16  Operation;
+};
+
+struct SQLCancel_params
+{
+    UINT64 StatementHandle;
+};
+
+struct SQLCloseCursor_params
+{
+    UINT64 StatementHandle;
+};
+
+struct SQLColAttribute_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    UINT16 FieldIdentifier;
+    void  *CharacterAttribute;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT64 *NumericAttribute;
+};
+
+struct SQLColAttributeW_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    UINT16 FieldIdentifier;
+    void  *CharacterAttribute;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT64 *NumericAttribute;
+};
+
+struct SQLColAttributes_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    UINT16 FieldIdentifier;
+    void  *CharacterAttributes;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT64 *NumericAttributes;
+};
+
+struct SQLColAttributesW_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    UINT16 FieldIdentifier;
+    void  *CharacterAttributes;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT64 *NumericAttributes;
+};
+
+struct SQLColumnPrivileges_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+    UCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLColumnPrivilegesW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+    WCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLColumns_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+    UCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLColumnsW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+    WCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLConnect_params
+{
+    UINT64 ConnectionHandle;
+    UCHAR *ServerName;
+    INT16  NameLength1;
+    UCHAR *UserName;
+    INT16  NameLength2;
+    UCHAR *Authentication;
+    INT16  NameLength3;
+};
+
+struct SQLConnectW_params
+{
+    UINT64 ConnectionHandle;
+    WCHAR *ServerName;
+    INT16  NameLength1;
+    WCHAR *UserName;
+    INT16  NameLength2;
+    WCHAR *Authentication;
+    INT16  NameLength3;
+};
+
+struct SQLCopyDesc_params
+{
+    UINT64 SourceDescHandle;
+    UINT64 TargetDescHandle;
+};
+
+struct SQLDataSources_params
+{
+    UINT64 EnvironmentHandle;
+    UINT16 Direction;
+    UCHAR *ServerName;
+    INT16  BufferLength1;
+    INT16 *NameLength1;
+    UCHAR *Description;
+    INT16  BufferLength2;
+    INT16 *NameLength2;
+};
+
+struct SQLDataSourcesW_params
+{
+    UINT64 EnvironmentHandle;
+    UINT16 Direction;
+    WCHAR *ServerName;
+    INT16  BufferLength1;
+    INT16 *NameLength1;
+    WCHAR *Description;
+    INT16  BufferLength2;
+    INT16 *NameLength2;
+};
+
+struct SQLDescribeCol_params
+{
+    UINT64  StatementHandle;
+    UINT16  ColumnNumber;
+    UCHAR  *ColumnName;
+    INT16   BufferLength;
+    INT16  *NameLength;
+    INT16  *DataType;
+    UINT64 *ColumnSize;
+    INT16  *DecimalDigits;
+    INT16  *Nullable;
+};
+
+struct SQLDescribeColW_params
+{
+    UINT64  StatementHandle;
+    UINT16  ColumnNumber;
+    WCHAR  *ColumnName;
+    INT16   BufferLength;
+    INT16  *NameLength;
+    INT16  *DataType;
+    UINT64 *ColumnSize;
+    INT16  *DecimalDigits;
+    INT16  *Nullable;
+};
+
+struct SQLDescribeParam_params
+{
+    UINT64  StatementHandle;
+    UINT16  ParameterNumber;
+    INT16  *DataType;
+    UINT64 *ParameterSize;
+    INT16  *DecimalDigits;
+    INT16  *Nullable;
+};
+
+struct SQLDisconnect_params
+{
+    UINT64 ConnectionHandle;
+};
+
+struct SQLDriverConnect_params
+{
+    UINT64 ConnectionHandle;
+    void  *WindowHandle;
+    UCHAR *ConnectionString;
+    INT16  Length;
+    UCHAR *OutConnectionString;
+    INT16  BufferLength;
+    INT16 *Length2;
+    UINT16 DriverCompletion;
+};
+
+struct SQLDriverConnectW_params
+{
+    UINT64 ConnectionHandle;
+    void  *WindowHandle;
+    WCHAR *InConnectionString;
+    INT16  Length;
+    WCHAR *OutConnectionString;
+    INT16  BufferLength;
+    INT16 *Length2;
+    UINT16 DriverCompletion;
+};
+
+struct SQLDrivers_params
+{
+    UINT64 EnvironmentHandle;
+    UINT16 Direction;
+    UCHAR *DriverDescription;
+    INT16  BufferLength1;
+    INT16 *DescriptionLength;
+    UCHAR *DriverAttributes;
+    INT16  BufferLength2;
+    INT16 *AttributesLength;
+};
+
+struct SQLDriversW_params
+{
+    UINT64 EnvironmentHandle;
+    UINT16 Direction;
+    WCHAR *DriverDescription;
+    INT16  BufferLength1;
+    INT16 *DescriptionLength;
+    WCHAR *DriverAttributes;
+    INT16  BufferLength2;
+    INT16 *AttributesLength;
+};
+
+struct SQLEndTran_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+    INT16  CompletionType;
+};
+
+struct SQLError_params
+{
+    UINT64 EnvironmentHandle;
+    UINT64 ConnectionHandle;
+    UINT64 StatementHandle;
+    UCHAR *SqlState;
+    INT32 *NativeError;
+    UCHAR *MessageText;
+    INT16  BufferLength;
+    INT16 *TextLength;
+};
+
+struct SQLErrorW_params
+{
+    UINT64 EnvironmentHandle;
+    UINT64 ConnectionHandle;
+    UINT64 StatementHandle;
+    WCHAR *SqlState;
+    INT32 *NativeError;
+    WCHAR *MessageText;
+    INT16  BufferLength;
+    INT16 *TextLength;
+};
+
+struct SQLExecDirect_params
+{
+    UINT64 StatementHandle;
+    UCHAR *StatementText;
+    INT32  TextLength;
+};
+
+struct SQLExecDirectW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *StatementText;
+    INT32  TextLength;
+};
+
+struct SQLExecute_params
+{
+    UINT64 StatementHandle;
+};
+
+struct SQLExtendedFetch_params
+{
+    UINT64  StatementHandle;
+    UINT16  FetchOrientation;
+    INT64   FetchOffset;
+    UINT64 *RowCount;
+    UINT16 *RowStatusArray;
+};
+
+struct SQLFetch_params
+{
+    UINT64 StatementHandle;
+};
+
+struct SQLFetchScroll_params
+{
+    UINT64 StatementHandle;
+    INT16  FetchOrientation;
+    INT64  FetchOffset;
+};
+
+struct SQLForeignKeys_params
+{
+    UINT64 StatementHandle;
+    UCHAR *PkCatalogName;
+    INT16  NameLength1;
+    UCHAR *PkSchemaName;
+    INT16  NameLength2;
+    UCHAR *PkTableName;
+    INT16  NameLength3;
+    UCHAR *FkCatalogName;
+    INT16  NameLength4;
+    UCHAR *FkSchemaName;
+    INT16  NameLength5;
+    UCHAR *FkTableName;
+    INT16  NameLength6;
+};
+
+struct SQLForeignKeysW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *PkCatalogName;
+    INT16  NameLength1;
+    WCHAR *PkSchemaName;
+    INT16  NameLength2;
+    WCHAR *PkTableName;
+    INT16  NameLength3;
+    WCHAR *FkCatalogName;
+    INT16  NameLength4;
+    WCHAR *FkSchemaName;
+    INT16  NameLength5;
+    WCHAR *FkTableName;
+    INT16  NameLength6;
+};
+
+struct SQLFreeConnect_params
+{
+    UINT64 ConnectionHandle;
+};
+
+struct SQLFreeEnv_params
+{
+    UINT64 EnvironmentHandle;
+};
+
+struct SQLFreeHandle_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+};
+
+struct SQLFreeStmt_params
+{
+    UINT64 StatementHandle;
+    UINT16 Option;
+};
+
+struct SQLGetConnectAttr_params
+{
+    UINT64 ConnectionHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetConnectAttrW_params
+{
+    UINT64 ConnectionHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetConnectOption_params
+{
+    UINT64 ConnectionHandle;
+    UINT16 Option;
+    void  *Value;
+};
+
+struct SQLGetConnectOptionW_params
+{
+    UINT64 ConnectionHandle;
+    INT16  Option;
+    void  *Value;
+};
+
+struct SQLGetCursorName_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CursorName;
+    INT16  BufferLength;
+    INT16 *NameLength;
+};
+
+struct SQLGetCursorNameW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CursorName;
+    INT16  BufferLength;
+    INT16 *NameLength;
+};
+
+struct SQLGetData_params
+{
+    UINT64 StatementHandle;
+    UINT16 ColumnNumber;
+    INT16  TargetType;
+    void  *TargetValue;
+    INT64  BufferLength;
+    INT64 *StrLen_or_Ind;
+};
+
+struct SQLGetDescField_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    INT16  FieldIdentifier;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+}
+;
+struct SQLGetDescFieldW_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    INT16  FieldIdentifier;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetDescRec_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    UCHAR *Name;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT16 *Type;
+    INT16 *SubType;
+    INT64 *Length;
+    INT16 *Precision;
+    INT16 *Scale;
+    INT16 *Nullable;
+};
+
+struct SQLGetDescRecW_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    WCHAR *Name;
+    INT16  BufferLength;
+    INT16 *StringLength;
+    INT16 *Type;
+    INT16 *SubType;
+    INT64 *Length;
+    INT16 *Precision;
+    INT16 *Scale;
+    INT16 *Nullable;
+};
+
+struct SQLGetDiagField_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+    INT16  RecNumber;
+    INT16  DiagIdentifier;
+    void  *DiagInfo;
+    INT16  BufferLength;
+    INT16 *StringLength;
+};
+
+struct SQLGetDiagFieldW_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+    INT16  RecNumber;
+    INT16  DiagIdentifier;
+    void  *DiagInfo;
+    INT16  BufferLength;
+    INT16 *StringLength;
+};
+
+struct SQLGetDiagRec_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+    INT16  RecNumber;
+    UCHAR *SqlState;
+    INT32 *NativeError;
+    UCHAR *MessageText;
+    INT16  BufferLength;
+    INT16 *TextLength;
+};
+
+struct SQLGetDiagRecW_params
+{
+    INT16  HandleType;
+    UINT64 Handle;
+    INT16  RecNumber;
+    WCHAR *SqlState;
+    INT32 *NativeError;
+    WCHAR *MessageText;
+    INT16  BufferLength;
+    INT16 *TextLength;
+};
+
+struct SQLGetEnvAttr_params
+{
+    UINT64 EnvironmentHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetFunctions_params
+{
+    UINT64  ConnectionHandle;
+    UINT16  FunctionId;
+    UINT16 *Supported;
+};
+
+struct SQLGetInfo_params
+{
+    UINT64 ConnectionHandle;
+    UINT16 InfoType;
+    void  *InfoValue;
+    INT16  BufferLength;
+    INT16 *StringLength;
+};
+
+struct SQLGetInfoW_params
+{
+    UINT64 ConnectionHandle;
+    UINT16 InfoType;
+    void  *InfoValue;
+    INT16  BufferLength;
+    INT16 *StringLength;
+};
+
+struct SQLGetStmtAttr_params
+{
+    UINT64 StatementHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetStmtAttrW_params
+{
+    UINT64 StatementHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  BufferLength;
+    INT32 *StringLength;
+};
+
+struct SQLGetStmtOption_params
+{
+    UINT64 StatementHandle;
+    UINT16 Option;
+    void  *Value;
+};
+
+struct SQLGetTypeInfo_params
+{
+    UINT64 StatementHandle;
+    INT16  DataType;
+};
+
+struct SQLGetTypeInfoW_params
+{
+    UINT64 StatementHandle;
+    INT16  DataType;
+};
+
+struct SQLMoreResults_params
+{
+    UINT64 StatementHandle;
+};
+
+struct SQLNativeSql_params
+{
+    UINT64 ConnectionHandle;
+    UCHAR *InStatementText;
+    INT32  TextLength1;
+    UCHAR *OutStatementText;
+    INT32  BufferLength;
+    INT32 *TextLength2;
+};
+
+struct SQLNativeSqlW_params
+{
+    UINT64 ConnectionHandle;
+    WCHAR *InStatementText;
+    INT32  TextLength1;
+    WCHAR *OutStatementText;
+    INT32  BufferLength;
+    INT32 *TextLength2;
+};
+
+struct SQLNumParams_params
+{
+    UINT64 StatementHandle;
+    INT16 *ParameterCount;
+};
+
+struct SQLNumResultCols_params
+{
+    UINT64 StatementHandle;
+    INT16 *ColumnCount;
+};
+
+struct SQLParamData_params
+{
+    UINT64 StatementHandle;
+    void  *Value;
+};
+
+struct SQLParamOptions_params
+{
+    UINT64  StatementHandle;
+    UINT64  RowCount;
+    UINT64 *RowNumber;
+};
+
+struct SQLPrepare_params
+{
+    UINT64 StatementHandle;
+    UCHAR *StatementText;
+    INT32  TextLength;
+};
+
+struct SQLPrepareW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *StatementText;
+    INT32  TextLength;
+};
+
+struct SQLPrimaryKeys_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+};
+
+struct SQLPrimaryKeysW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+};
+
+struct SQLProcedureColumns_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *ProcName;
+    INT16  NameLength3;
+    UCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLProcedureColumnsW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *ProcName;
+    INT16  NameLength3;
+    WCHAR *ColumnName;
+    INT16  NameLength4;
+};
+
+struct SQLProcedures_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *ProcName;
+    INT16  NameLength3;
+};
+
+struct SQLProceduresW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *ProcName;
+    INT16  NameLength3;
+};
+
+struct SQLPutData_params
+{
+    UINT64 StatementHandle;
+    void  *Data;
+    INT64  StrLen_or_Ind;
+};
+
+struct SQLRowCount_params
+{
+    UINT64 StatementHandle;
+    INT64 *RowCount;
+};
+
+struct SQLSetConnectAttr_params
+{
+    UINT64 ConnectionHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  StringLength;
+};
+
+struct SQLSetConnectAttrW_params
+{
+    UINT64 ConnectionHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  StringLength;
+};
+
+struct SQLSetConnectOption_params
+{
+    UINT64 ConnectionHandle;
+    UINT16 Option;
+    UINT64 Value;
+};
+
+struct SQLSetConnectOptionW_params
+{
+    UINT64 ConnectionHandle;
+    UINT16 Option;
+    UINT64 Value;
+};
+
+struct SQLSetCursorName_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CursorName;
+    INT16  NameLength;
+};
+
+struct SQLSetCursorNameW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CursorName;
+    INT16  NameLength;
+};
+
+struct SQLSetDescField_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    INT16  FieldIdentifier;
+    void  *Value;
+    INT32  BufferLength;
+};
+
+struct SQLSetDescFieldW_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    INT16  FieldIdentifier;
+    void  *Value;
+    INT32  BufferLength;
+};
+
+struct SQLSetDescRec_params
+{
+    UINT64 DescriptorHandle;
+    INT16  RecNumber;
+    INT16  Type;
+    INT16  SubType;
+    INT64  Length;
+    INT16  Precision;
+    INT16  Scale;
+    void  *Data;
+    INT64 *StringLength;
+    INT64 *Indicator;
+};
+
+struct SQLSetEnvAttr_params
+{
+    UINT64 EnvironmentHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  StringLength;
+};
+
+struct SQLSetParam_params
+{
+    UINT64 StatementHandle;
+    UINT16 ParameterNumber;
+    INT16  ValueType;
+    INT16  ParameterType;
+    UINT64 LengthPrecision;
+    INT16  ParameterScale;
+    void  *ParameterValue;
+    INT64 *StrLen_or_Ind;
+};
+
+struct SQLSetPos_params
+{
+    UINT64 StatementHandle;
+    UINT64 RowNumber;
+    UINT16 Operation;
+    UINT16 LockType;
+};
+
+struct SQLSetScrollOptions_params
+{
+    UINT64 StatementHandle;
+    UINT16 Concurrency;
+    INT64  KeySetSize;
+    UINT16 RowSetSize;
+};
+
+struct SQLSetStmtAttr_params
+{
+    UINT64 StatementHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  StringLength;
+};
+
+struct SQLSetStmtAttrW_params
+{
+    UINT64 StatementHandle;
+    INT32  Attribute;
+    void  *Value;
+    INT32  StringLength;
+};
+
+struct SQLSetStmtOption_params
+{
+    UINT64 StatementHandle;
+    UINT16 Option;
+    UINT64 Value;
+};
+
+struct SQLSpecialColumns_params
+{
+    UINT64 StatementHandle;
+    UINT16 IdentifierType;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+    UINT16 Scope;
+    UINT16 Nullable;
+};
+
+struct SQLSpecialColumnsW_params
+{
+    UINT64 StatementHandle;
+    UINT16 IdentifierType;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+    UINT16 Scope;
+    UINT16 Nullable;
+};
+
+struct SQLStatistics_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+    UINT16 Unique;
+    UINT16 Reserved;
+};
+
+struct SQLStatisticsW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+    UINT16 Unique;
+    UINT16 Reserved;
+};
+
+struct SQLTablePrivileges_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+};
+
+struct SQLTablePrivilegesW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+};
+
+struct SQLTables_params
+{
+    UINT64 StatementHandle;
+    UCHAR *CatalogName;
+    INT16  NameLength1;
+    UCHAR *SchemaName;
+    INT16  NameLength2;
+    UCHAR *TableName;
+    INT16  NameLength3;
+    UCHAR *TableType;
+    INT16  NameLength4;
+};
+
+struct SQLTablesW_params
+{
+    UINT64 StatementHandle;
+    WCHAR *CatalogName;
+    INT16  NameLength1;
+    WCHAR *SchemaName;
+    INT16  NameLength2;
+    WCHAR *TableName;
+    INT16  NameLength3;
+    WCHAR *TableType;
+    INT16  NameLength4;
+};
+
+struct SQLTransact_params
+{
+    UINT64 EnvironmentHandle;
+    UINT64 ConnectionHandle;
+    UINT16 CompletionType;
+};
