@@ -1667,6 +1667,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL size,
     const GpCustomLineCap *custom, REAL x1, REAL y1, REAL x2, REAL y2)
 {
+    HDC hdc;
     HGDIOBJ oldbrush = NULL, oldpen = NULL;
     GpMatrix matrix;
     HBRUSH brush = NULL;
@@ -1682,6 +1683,8 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
     if((x1 == x2) && (y1 == y2))
         return;
 
+    gdi_dc_acquire(graphics, &hdc);
+
     theta = gdiplus_atan2(y2 - y1, x2 - x1);
 
     customstroke = (cap == LineCapCustom) && custom && (!custom->fill);
@@ -1693,8 +1696,8 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
         pen = ExtCreatePen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT |
                            PS_JOIN_MITER, 1, &lb, 0,
                            NULL);
-        oldbrush = SelectObject(graphics->hdc, brush);
-        oldpen = SelectObject(graphics->hdc, pen);
+        oldbrush = SelectObject(hdc, brush);
+        oldpen = SelectObject(hdc, pen);
     }
 
     switch(cap){
@@ -1729,7 +1732,7 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
 
             round_points(pt, ptf, 4);
 
-            Polygon(graphics->hdc, pt, 4);
+            Polygon(hdc, pt, 4);
 
             break;
         case LineCapArrowAnchor:
@@ -1754,7 +1757,7 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
 
             round_points(pt, ptf, 3);
 
-            Polygon(graphics->hdc, pt, 3);
+            Polygon(hdc, pt, 3);
 
             break;
         case LineCapRoundAnchor:
@@ -1769,7 +1772,7 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
 
             round_points(pt, ptf, 2);
 
-            Ellipse(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+            Ellipse(hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
 
             break;
         case LineCapTriangle:
@@ -1792,7 +1795,7 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
 
             round_points(pt, ptf, 3);
 
-            Polygon(graphics->hdc, pt, 3);
+            Polygon(hdc, pt, 3);
 
             break;
         case LineCapRound:
@@ -1815,7 +1818,7 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
 
             round_points(pt, ptf, 4);
 
-            Pie(graphics->hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y, pt[2].x,
+            Pie(hdc, pt[0].x, pt[0].y, pt[1].x, pt[1].y, pt[2].x,
                 pt[2].y, pt[3].x, pt[3].y);
 
             break;
@@ -1855,13 +1858,13 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
                 tp[i] = convert_path_point_type(custom->pathdata.Types[i]);
 
             if(custom->fill){
-                BeginPath(graphics->hdc);
-                PolyDraw(graphics->hdc, custpt, tp, count);
-                EndPath(graphics->hdc);
-                StrokeAndFillPath(graphics->hdc);
+                BeginPath(hdc);
+                PolyDraw(hdc, custpt, tp, count);
+                EndPath(hdc);
+                StrokeAndFillPath(hdc);
             }
             else
-                PolyDraw(graphics->hdc, custpt, tp, count);
+                PolyDraw(hdc, custpt, tp, count);
 
 custend:
             free(custptf);
@@ -1873,11 +1876,13 @@ custend:
     }
 
     if(!customstroke){
-        SelectObject(graphics->hdc, oldbrush);
-        SelectObject(graphics->hdc, oldpen);
+        SelectObject(hdc, oldbrush);
+        SelectObject(hdc, oldpen);
         DeleteObject(brush);
         DeleteObject(pen);
     }
+
+    gdi_dc_release(graphics, hdc);
 }
 
 /* Shortens the line by the given percent by changing x2, y2.
