@@ -103,6 +103,7 @@ CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
             @"com.compuserve.gif" : @(NSBitmapImageFileTypeGIF),
                    @"public.jpeg" : @(NSBitmapImageFileTypeJPEG),
         };
+        [BitmapOutputTypeMap retain];
     });
 
     OnMainThread(^{
