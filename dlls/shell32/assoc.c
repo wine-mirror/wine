@@ -1132,3 +1132,12 @@ HRESULT WINAPI SHAssocEnumHandlers(const WCHAR *extra, ASSOC_FILTER filter, IEnu
     *enumhandlers = &enumassoc->IEnumAssocHandlers_iface;
     return S_OK;
 }
+
+/**************************************************************************
+ * SHAssocEnumHandlersForProtocolByApplication            [SHELL32.@]
+ */
+HRESULT WINAPI SHAssocEnumHandlersForProtocolByApplication(const WCHAR *protocol, REFIID riid, void **handlers)
+{
+    FIXME("(%s %s %p): stub\n", debugstr_w(protocol), debugstr_guid(riid), handlers);
+    return E_NOTIMPL;
+}
