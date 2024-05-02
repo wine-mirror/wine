@@ -258,9 +258,9 @@ static void vulkan_init(void)
 
 void vulkan_detach_surfaces( struct list *surfaces )
 {
-    struct surface *surface;
+    struct surface *surface, *next;
 
-    LIST_FOR_EACH_ENTRY( surface, surfaces, struct surface, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( surface, next, surfaces, struct surface, entry )
     {
         driver_funcs->p_vulkan_surface_detach( surface->hwnd, surface->driver_private );
         list_remove( &surface->entry );
