@@ -99,6 +99,61 @@ static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolu
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
 
+static HRESULT adjust_timing(struct audio_client *This,
+                             REFERENCE_TIME *duration, REFERENCE_TIME *period,
+                             const AUDCLNT_SHAREMODE mode, const DWORD flags,
+                             const WAVEFORMATEX *fmt)
+{
+    struct get_device_period_params params;
+    REFERENCE_TIME def_period, min_period;
+
+    TRACE("Requested duration %lu and period %lu\n", (ULONG)*duration, (ULONG)*period);
+
+    params.device     = This->device_name;
+    params.flow       = This->dataflow;
+    params.def_period = &def_period;
+    params.min_period = &min_period;
+
+    wine_unix_call(get_device_period, &params);
+
+    if (FAILED(params.result))
+        return params.result;
+
+    TRACE("Device periods: %lu default and %lu minimum\n", (ULONG)def_period, (ULONG)min_period);
+
+    if (mode == AUDCLNT_SHAREMODE_SHARED) {
+        *period = def_period;
+        if (*duration < 3 * *period)
+            *duration = 3 * *period;
+    } else {
+        const WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE *)fmt;
+        if (fmtex->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+           (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
+            params.result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        else {
+            if (*period == 0)
+                *period = def_period;
+            if (*period < min_period || *period > 5000000)
+                params.result = AUDCLNT_E_INVALID_DEVICE_PERIOD;
+            else if (*duration > 20000000) /* The smaller the period, the lower this limit. */
+                params.result = AUDCLNT_E_BUFFER_SIZE_ERROR;
+            else if (flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) {
+                if (*duration != *period)
+                    params.result = AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
+
+                FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
+
+                params.result = AUDCLNT_E_DEVICE_IN_USE;
+            } else if (*duration < 8 * *period)
+                *duration = 8 * *period; /* May grow above 2s. */
+        }
+    }
+
+    TRACE("Adjusted duration %lu and period %lu\n", (ULONG)*duration, (ULONG)*period);
+
+    return params.result;
+}
+
 static void dump_fmt(const WAVEFORMATEX *fmt)
 {
     TRACE("wFormatTag: 0x%x (", fmt->wFormatTag);
@@ -501,6 +556,9 @@ static HRESULT WINAPI client_Initialize(IAudioClient3 *iface, AUDCLNT_SHAREMODE 
         FIXME("Unknown flags: %08lx\n", flags);
         return E_INVALIDARG;
     }
+
+    if (FAILED(params.result = adjust_timing(This, &duration, &period, mode, flags, fmt)))
+        return params.result;
 
     sessions_lock();
 
