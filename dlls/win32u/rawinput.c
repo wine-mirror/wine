@@ -598,6 +598,30 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
     return TRUE;
 }
 
+static void post_device_notifications( const RAWINPUTDEVICE *filter )
+{
+    ULONG usages = MAKELONG( filter->usUsagePage, filter->usUsage );
+    struct device *device;
+
+    LIST_FOR_EACH_ENTRY( device, &devices, struct device, entry )
+    {
+        switch (device->info.dwType)
+        {
+        case RIM_TYPEMOUSE:
+            if (usages != MAKELONG( HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_MOUSE )) continue;
+            break;
+        case RIM_TYPEKEYBOARD:
+            if (usages != MAKELONG( HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_KEYBOARD )) continue;
+            break;
+        case RIM_TYPEHID:
+            if (usages != MAKELONG( device->info.hid.usUsagePage, device->info.hid.usUsage )) continue;
+            break;
+        }
+
+        NtUserPostMessage( filter->hwndTarget, WM_INPUT_DEVICE_CHANGE, GIDC_ARRIVAL, (LPARAM)device->handle );
+    }
+}
+
 static void register_rawinput_device( const RAWINPUTDEVICE *device )
 {
     RAWINPUTDEVICE *pos, *end;
@@ -619,6 +643,7 @@ static void register_rawinput_device( const RAWINPUTDEVICE *device )
     }
     else
     {
+        if ((device->dwFlags & RIDEV_DEVNOTIFY) && device->hwndTarget) post_device_notifications( device );
         if (pos == end || pos->usUsagePage != device->usUsagePage || pos->usUsage != device->usUsage)
         {
             memmove( pos + 1, pos, (char *)end - (char *)pos );
@@ -683,6 +708,8 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
         RtlSetLastWin32Error( ERROR_OUTOFMEMORY );
         return FALSE;
     }
+
+    rawinput_update_device_list( TRUE );
 
     registered_devices = new_registered_devices;
     for (i = 0; i < device_count; ++i) register_rawinput_device( devices + i );

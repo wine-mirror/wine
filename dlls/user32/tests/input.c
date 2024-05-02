@@ -1880,7 +1880,7 @@ static void test_RegisterRawInputDevices(void)
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
-    todo_wine ok( count >= 2, "got %u messages\n", count );
+    ok( count >= 2, "got %u messages\n", count );
 
     count = 0;
     ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
@@ -1890,7 +1890,7 @@ static void test_RegisterRawInputDevices(void)
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
-    todo_wine ok( count >= 2, "got %u messages\n", count );
+    ok( count >= 2, "got %u messages\n", count );
 
     /* RIDEV_REMOVE requires hwndTarget == NULL */
     raw_devices[0].dwFlags = RIDEV_REMOVE;
