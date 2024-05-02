@@ -1778,6 +1778,7 @@ static void test_RegisterRawInputDevices(void)
     HWND hwnd;
     RAWINPUTDEVICE raw_devices[2] = {0};
     UINT count, raw_devices_count;
+    MSG msg;
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
     raw_devices[0].usUsage = HID_USAGE_GENERIC_GAMEPAD;
@@ -1848,6 +1849,48 @@ static void test_RegisterRawInputDevices(void)
     raw_devices[0].hwndTarget = hwnd;
     raw_devices[1].hwndTarget = hwnd;
     ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+
+    /* RIDEV_DEVNOTIFY send messages for any pre-existing device */
+    raw_devices[0].dwFlags = RIDEV_DEVNOTIFY;
+    raw_devices[0].hwndTarget = 0;
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+    raw_devices[1].dwFlags = RIDEV_DEVNOTIFY;
+    raw_devices[1].hwndTarget = 0;
+    raw_devices[1].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[1].usUsage = HID_USAGE_GENERIC_KEYBOARD;
+
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        ok_ne( WM_INPUT_DEVICE_CHANGE, msg.message, UINT, "%#x" );
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+
+    /* RIDEV_DEVNOTIFY send messages only to hwndTarget */
+    raw_devices[0].hwndTarget = hwnd;
+    raw_devices[1].hwndTarget = hwnd;
+
+    count = 0;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.message == WM_INPUT_DEVICE_CHANGE) count++;
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+    todo_wine ok( count >= 2, "got %u messages\n", count );
+
+    count = 0;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+    {
+        if (msg.message == WM_INPUT_DEVICE_CHANGE) count++;
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+    todo_wine ok( count >= 2, "got %u messages\n", count );
 
     /* RIDEV_REMOVE requires hwndTarget == NULL */
     raw_devices[0].dwFlags = RIDEV_REMOVE;
