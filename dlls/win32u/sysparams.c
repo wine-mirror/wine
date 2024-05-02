@@ -1994,6 +1994,18 @@ static UINT update_display_devices( BOOL force, struct device_manager_ctx *ctx )
     return status;
 }
 
+static void add_vulkan_only_gpus( struct device_manager_ctx *ctx )
+{
+    struct list gpus = LIST_INIT(gpus);
+    struct vulkan_gpu *gpu, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( gpu, next, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
+    {
+        TRACE( "adding vulkan-only gpu uuid %s, name %s\n", debugstr_guid(&gpu->uuid), debugstr_a(gpu->name));
+        add_gpu( gpu->name, &gpu->pci_id, &gpu->uuid, ctx );
+    }
+}
+
 BOOL update_display_cache( BOOL force )
 {
     static const WCHAR wine_service_station_name[] =
@@ -2016,7 +2028,8 @@ BOOL update_display_cache( BOOL force )
 
     if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
 
-    status = update_display_devices( force, &ctx );
+    if (!(status = update_display_devices( force, &ctx )))
+        add_vulkan_only_gpus( &ctx );
 
     release_display_manager_ctx( &ctx );
     if (status && status != STATUS_ALREADY_COMPLETE) WARN( "Failed to update display devices, status %#x\n", status );
