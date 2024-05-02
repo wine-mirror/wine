@@ -78,7 +78,7 @@ Generate inline stubs.
 .IP "\fB-Oi\fR"
 Generate old-style interpreted stubs.
 .IP "\fB-Oif, -Oic, -Oicf\fR"
-Generate new-style fully interpreted stubs.
+Generate new-style fully interpreted stubs. This is the default.
 .IP "\fB-p\fR"
 Generate a proxy. The default output filename is \fIinfile\fB_p.c\fR.
 .IP "\fB--prefix-all=\fIprefix\fR"

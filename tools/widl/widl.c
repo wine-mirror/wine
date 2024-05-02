@@ -109,7 +109,7 @@ static int no_preprocess = 0;
 int old_names = 0;
 int old_typelib = 0;
 int winrt_mode = 0;
-int interpreted_mode = 0;
+int interpreted_mode = 1;
 int use_abi_namespace = 0;
 static int stdinc = 1;
 

@@ -1,8 +1,6 @@
 MODULE    = actxprxy.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4
 
-EXTRAIDLFLAGS = -Oicf
-
 SOURCES = \
 	actxprxy_activscp.idl \
 	actxprxy_comcat.idl \

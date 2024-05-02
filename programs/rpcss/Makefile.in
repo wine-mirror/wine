@@ -2,7 +2,6 @@ MODULE    = rpcss.exe
 IMPORTS   = rpcrt4 advapi32
 
 EXTRADLLFLAGS = -mconsole -municode
-EXTRAIDLFLAGS = -Oicf
 
 SOURCES = \
 	epm.idl \

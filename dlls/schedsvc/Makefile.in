@@ -1,8 +1,6 @@
 MODULE    = schedsvc.dll
 IMPORTS   = rpcrt4 advapi32 ole32 xmllite
 
-EXTRAIDLFLAGS = -Oicf
-
 SOURCES = \
 	atsvc.c \
 	atsvc.idl \

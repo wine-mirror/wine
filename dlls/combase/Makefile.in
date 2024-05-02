@@ -4,8 +4,6 @@ IMPORTLIB = combase
 IMPORTS   = advapi32 ole32 user32 gdi32 uuid rpcrt4
 DELAYIMPORTS = oleaut32
 
-EXTRAIDLFLAGS = -Oicf
-
 SOURCES = \
 	apartment.c \
 	combase.c \

@@ -3,8 +3,6 @@ IMPORTLIB = urlmon
 IMPORTS   = uuid ole32 oleaut32 shell32 rpcrt4 shlwapi wininet user32 advapi32
 DELAYIMPORTS = advpack
 
-EXTRAIDLFLAGS = -Oicf
-
 SOURCES = \
 	axinstall.c \
 	bindctx.c \

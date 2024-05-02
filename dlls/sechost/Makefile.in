@@ -3,8 +3,6 @@ IMPORTLIB = sechost
 IMPORTS   = kernelbase
 DELAYIMPORTS = rpcrt4
 
-EXTRAIDLFLAGS = -Oicf
-
 SOURCES = \
 	plugplay.idl \
 	security.c \

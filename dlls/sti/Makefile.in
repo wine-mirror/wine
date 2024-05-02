@@ -3,7 +3,6 @@ IMPORTLIB = sti
 IMPORTS   = uuid ole32 oleaut32 rpcrt4 advapi32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
-EXTRAIDLFLAGS = -Oicf
 
 SOURCES = \
 	sti.c \
