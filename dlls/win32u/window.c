@@ -1483,6 +1483,18 @@ int win32u_get_window_pixel_format( HWND hwnd )
     return ret;
 }
 
+static int window_has_client_surface( HWND hwnd )
+{
+    WND *win = get_win_ptr( hwnd );
+    BOOL ret;
+
+    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
+    ret = win->pixel_format || win->internal_pixel_format || !list_empty(&win->vulkan_surfaces);
+    release_win_ptr( win );
+
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
@@ -1960,6 +1972,22 @@ static struct window_surface *get_window_surface( HWND hwnd, UINT swp_flags, BOO
     return new_surface;
 }
 
+static void update_children_window_state( HWND hwnd )
+{
+    HWND *children;
+    int i;
+
+    if (!(children = list_window_children( 0, hwnd, NULL, 0 ))) return;
+
+    for (i = 0; children[i]; i++)
+    {
+        if (!window_has_client_surface( children[i] )) continue;
+        update_window_state( children[i] );
+    }
+
+    free( children );
+}
+
 /***********************************************************************
  *           apply_window_pos
  *
@@ -2105,6 +2133,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
         }
 
         user_driver->pWindowPosChanged( hwnd, insert_after, swp_flags, is_fullscreen, &monitor_rects, get_driver_window_surface( new_surface, monitor_dpi ) );
+
+        update_children_window_state( hwnd );
     }
 
     return ret;
