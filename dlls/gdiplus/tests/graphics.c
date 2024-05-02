@@ -2726,7 +2726,7 @@ static void test_fromMemoryBitmap(void)
     ok(hdc != NULL, "got NULL hdc\n");
 
     color = GetPixel(hdc, 0, 0);
-    todo_wine expect(0x0c0b0d, color);
+    expect(0x0c0b0d, color);
 
     status = GdipReleaseDC(graphics, hdc);
     expect(Ok, status);

@@ -3402,69 +3402,44 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
         {
             HDC hdc;
-            BOOL temp_hdc = FALSE, temp_bitmap = FALSE;
             HBITMAP hbitmap, old_hbm=NULL;
             HRGN hrgn;
             INT save_state;
+            BITMAPINFOHEADER bih;
+            BYTE *temp_bits;
+            PixelFormat dst_format;
 
-            if (!(bitmap->format == PixelFormat16bppRGB555 ||
-                  bitmap->format == PixelFormat24bppRGB ||
-                  bitmap->format == PixelFormat32bppRGB ||
-                  bitmap->format == PixelFormat32bppPARGB))
-            {
-                BITMAPINFOHEADER bih;
-                BYTE *temp_bits;
-                PixelFormat dst_format;
+            hdc = CreateCompatibleDC(0);
 
-                /* we can't draw a bitmap of this format directly */
-                hdc = CreateCompatibleDC(0);
-                temp_hdc = TRUE;
-                temp_bitmap = TRUE;
-
-                bih.biSize = sizeof(BITMAPINFOHEADER);
-                bih.biWidth = bitmap->width;
-                bih.biHeight = -bitmap->height;
-                bih.biPlanes = 1;
-                bih.biBitCount = 32;
-                bih.biCompression = BI_RGB;
-                bih.biSizeImage = 0;
-                bih.biXPelsPerMeter = 0;
-                bih.biYPelsPerMeter = 0;
-                bih.biClrUsed = 0;
-                bih.biClrImportant = 0;
-
-                hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
-                    (void**)&temp_bits, NULL, 0);
-
-                if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
-                    dst_format = PixelFormat32bppPARGB;
-                else
-                    dst_format = PixelFormat32bppRGB;
-
-                convert_pixels(bitmap->width, bitmap->height,
-                    bitmap->width*4, temp_bits, dst_format, bitmap->image.palette,
-                    bitmap->stride, bitmap->bits, bitmap->format,
-                    bitmap->image.palette);
-            }
+            if (bitmap->format == PixelFormat16bppRGB555 ||
+                bitmap->format == PixelFormat24bppRGB)
+                dst_format = bitmap->format;
+            else if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
+                dst_format = PixelFormat32bppPARGB;
             else
-            {
-                if (bitmap->hbitmap)
-                    hbitmap = bitmap->hbitmap;
-                else
-                {
-                    GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
-                    temp_bitmap = TRUE;
-                }
+                dst_format = PixelFormat32bppRGB;
 
-                hdc = bitmap->hdc;
-                temp_hdc = (hdc == 0);
-            }
+            bih.biSize = sizeof(BITMAPINFOHEADER);
+            bih.biWidth = bitmap->width;
+            bih.biHeight = -bitmap->height;
+            bih.biPlanes = 1;
+            bih.biBitCount = PIXELFORMATBPP(dst_format);
+            bih.biCompression = BI_RGB;
+            bih.biSizeImage = 0;
+            bih.biXPelsPerMeter = 0;
+            bih.biYPelsPerMeter = 0;
+            bih.biClrUsed = 0;
+            bih.biClrImportant = 0;
 
-            if (temp_hdc)
-            {
-                if (!hdc) hdc = CreateCompatibleDC(0);
-                old_hbm = SelectObject(hdc, hbitmap);
-            }
+            hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
+                (void**)&temp_bits, NULL, 0);
+
+            convert_pixels(bitmap->width, bitmap->height,
+                bitmap->width*PIXELFORMATBPP(dst_format)/8, temp_bits, dst_format, bitmap->image.palette,
+                bitmap->stride, bitmap->bits, bitmap->format,
+                bitmap->image.palette);
+
+            old_hbm = SelectObject(hdc, hbitmap);
 
             save_state = SaveDC(graphics->hdc);
 
@@ -3493,14 +3468,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             RestoreDC(graphics->hdc, save_state);
 
-            if (temp_hdc)
-            {
-                SelectObject(hdc, old_hbm);
-                DeleteDC(hdc);
-            }
-
-            if (temp_bitmap)
-                DeleteObject(hbitmap);
+            SelectObject(hdc, old_hbm);
+            DeleteDC(hdc);
+            DeleteObject(hbitmap);
         }
     }
     else if (image->type == ImageTypeMetafile && ((GpMetafile*)image)->hemf)
@@ -7005,7 +6975,7 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
         stat = METAFILE_GetDC((GpMetafile*)graphics->image, hdc);
     }
     else if (!graphics->hdc ||
-        (graphics->image && graphics->image->type == ImageTypeBitmap && ((GpBitmap*)graphics->image)->format & PixelFormatAlpha))
+        (graphics->image && graphics->image->type == ImageTypeBitmap))
     {
         /* Create a fake HDC and fill it with a constant color. */
         HDC temp_hdc;

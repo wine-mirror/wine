@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
-#define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
 #define WMF_PLACEABLE_KEY 0x9ac6cdd7
 
 static const struct
@@ -1793,8 +1792,7 @@ static GpStatus get_screen_resolution(REAL *xres, REAL *yres)
 GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     PixelFormat format, BYTE* scan0, GpBitmap** bitmap)
 {
-    HBITMAP hbitmap=NULL;
-    INT row_size, dib_stride;
+    INT row_size;
     BYTE *bits=NULL, *own_bits=NULL;
     REAL xres, yres;
     GpStatus stat;
@@ -1815,56 +1813,20 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     if (stat != Ok) return stat;
 
     row_size = (width * PIXELFORMATBPP(format)+7) / 8;
-    dib_stride = (row_size + 3) & ~3;
 
-    if(!scan0)
-        stride = dib_stride;
-
-    if (format & PixelFormatGDI && !(format & (PixelFormatAlpha|PixelFormatIndexed)) && !scan0)
-    {
-        char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-        BITMAPINFO *pbmi = (BITMAPINFO *)bmibuf;
-
-        pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        pbmi->bmiHeader.biWidth = width;
-        pbmi->bmiHeader.biHeight = -height;
-        pbmi->bmiHeader.biPlanes = 1;
-        /* FIXME: use the rest of the data from format */
-        pbmi->bmiHeader.biBitCount = PIXELFORMATBPP(format);
-        pbmi->bmiHeader.biCompression = BI_RGB;
-        pbmi->bmiHeader.biSizeImage = 0;
-        pbmi->bmiHeader.biXPelsPerMeter = 0;
-        pbmi->bmiHeader.biYPelsPerMeter = 0;
-        pbmi->bmiHeader.biClrUsed = 0;
-        pbmi->bmiHeader.biClrImportant = 0;
-
-        hbitmap = CreateDIBSection(0, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-
-        if (!hbitmap) return GenericError;
-
-        stride = dib_stride;
-    }
+    if (scan0)
+        bits = scan0;
     else
     {
-        /* Not a GDI format; don't try to make an HBITMAP. */
-        if (scan0)
-            bits = scan0;
-        else
-        {
-            INT size = abs(stride) * height;
+        stride = (row_size + 3) & ~3;
 
-            own_bits = bits = calloc(1, size);
-            if (!own_bits) return OutOfMemory;
-
-            if (stride < 0)
-                bits += stride * (1 - height);
-        }
+        own_bits = bits = calloc(1, stride * height);
+        if (!own_bits) return OutOfMemory;
     }
 
     *bitmap = calloc(1, sizeof(GpBitmap));
     if(!*bitmap)
     {
-        DeleteObject(hbitmap);
         free(own_bits);
         return OutOfMemory;
     }
@@ -1882,8 +1844,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->format = format;
     (*bitmap)->image.decoder = NULL;
     (*bitmap)->image.encoder = NULL;
-    (*bitmap)->hbitmap = hbitmap;
-    (*bitmap)->hdc = NULL;
     (*bitmap)->bits = bits;
     (*bitmap)->stride = stride;
     (*bitmap)->own_bits = own_bits;
@@ -2071,8 +2031,6 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
 
     free(dst->bitmapbits);
     free(dst->own_bits);
-    DeleteDC(dst->hdc);
-    DeleteObject(dst->hbitmap);
 
     if (clobber_palette)
     {
@@ -2087,8 +2045,6 @@ static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
     dst->width = src->width;
     dst->height = src->height;
     dst->format = src->format;
-    dst->hbitmap = src->hbitmap;
-    dst->hdc = src->hdc;
     dst->bits = src->bits;
     dst->stride = src->stride;
     dst->own_bits = src->own_bits;
@@ -2120,8 +2076,6 @@ static GpStatus free_image_data(GpImage *image)
     {
         free(((GpBitmap*)image)->bitmapbits);
         free(((GpBitmap*)image)->own_bits);
-        DeleteDC(((GpBitmap*)image)->hdc);
-        DeleteObject(((GpBitmap*)image)->hbitmap);
         if (((GpBitmap*)image)->metadata_reader)
             IWICMetadataReader_Release(((GpBitmap*)image)->metadata_reader);
         free(((GpBitmap*)image)->prop_item);
@@ -2240,7 +2194,6 @@ GpStatus WINGDIPAPI GdipGetImageDimension(GpImage *image, REAL *width,
 GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
     GpGraphics **graphics)
 {
-    HDC hdc;
     GpStatus stat;
 
     TRACE("%p %p\n", image, graphics);
@@ -2248,27 +2201,7 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
     if(!image || !graphics)
         return InvalidParameter;
 
-    if (image->type == ImageTypeBitmap && ((GpBitmap*)image)->hbitmap)
-    {
-        hdc = ((GpBitmap*)image)->hdc;
-
-        if(!hdc){
-            hdc = CreateCompatibleDC(0);
-            SelectObject(hdc, ((GpBitmap*)image)->hbitmap);
-            ((GpBitmap*)image)->hdc = hdc;
-        }
-
-        stat = GdipCreateFromHDC(hdc, graphics);
-
-        if (stat == Ok)
-        {
-            (*graphics)->image = image;
-            (*graphics)->image_type = image->type;
-            (*graphics)->xres = image->xres;
-            (*graphics)->yres = image->yres;
-        }
-    }
-    else if (image->type == ImageTypeMetafile)
+    if (image->type == ImageTypeMetafile)
         stat = METAFILE_GetGraphicsContext((GpMetafile*)image, graphics);
     else
         stat = graphics_from_image(image, graphics);

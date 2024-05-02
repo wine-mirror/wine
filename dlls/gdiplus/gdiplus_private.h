@@ -49,6 +49,8 @@
 #define GIF_DISPOSE_RESTORE_TO_BKGND 2
 #define GIF_DISPOSE_RESTORE_TO_PREV 3
 
+#define PIXELFORMATBPP(x) ((x) ? ((x) >> 8) & 255 : 24)
+
 
 COLORREF ARGB2COLORREF(ARGB color);
 HBITMAP ARGB2BMP(ARGB color);
@@ -467,8 +469,6 @@ struct GpBitmap{
     PixelFormat format;
     ImageLockMode lockmode;
     BYTE *bitmapbits;   /* pointer to the buffer we passed in BitmapLockBits */
-    HBITMAP hbitmap;
-    HDC hdc;
     BYTE *bits; /* actual image bits if this is a DIB */
     INT stride; /* stride of bits if this is a DIB */
     BYTE *own_bits; /* image bits that need to be freed with this object */
