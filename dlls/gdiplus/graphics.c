@@ -2268,7 +2268,7 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
 {
     GpStatus stat = get_graphics_device_bounds(graphics, rect);
 
-    if (stat == Ok && graphics->hdc)
+    if (stat == Ok && has_gdi_dc(graphics))
     {
         GpPointF points[4], min_point, max_point;
         int i;
