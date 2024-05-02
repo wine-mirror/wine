@@ -436,7 +436,7 @@ struct stub
     const char *name;
     const void* entry;
 };
-#elif defined(__aarch64__) || defined(__arm64ec__)
+#elif defined(__aarch64__)
 struct stub
 {
     DWORD ldr_x0;        /* ldr x0, $dll */
@@ -500,7 +500,7 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
     stub->dll       = dll;
     stub->name      = name;
     stub->entry     = stub_entry_point;
-#elif defined(__aarch64__) || defined(__arm64ec__)
+#elif defined(__aarch64__)
     stub->ldr_x0    = 0x580000a0; /* ldr x0, #20 ($dll) */
     stub->ldr_x1    = 0x580000c1; /* ldr x1, #24 ($name) */
     stub->mov_x2_lr = 0xaa1e03e2; /* mov x2, lr */
