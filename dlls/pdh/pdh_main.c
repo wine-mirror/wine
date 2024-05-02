@@ -1280,3 +1280,12 @@ PDH_STATUS WINAPI PdhBindInputDataSourceW(PDH_HLOG *source, const WCHAR *filenam
     FIXME("%p %s: stub\n", source, debugstr_w(filenamelist));
     return PDH_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *              PdhConnectMachineA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhConnectMachineA(const char *name)
+{
+    FIXME("%s: stub\n", debugstr_a(name));
+    return PDH_NOT_IMPLEMENTED;
+}
