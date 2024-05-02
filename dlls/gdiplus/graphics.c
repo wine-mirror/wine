@@ -591,27 +591,38 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
     }
     else
     {
+        HDC hdc;
         HRGN hrgn;
         int save;
 
-        stat = get_clip_hrgn(graphics, &hrgn);
+        stat = gdi_dc_acquire(graphics, &hdc);
 
         if (stat != Ok)
             return stat;
 
-        save = SaveDC(graphics->hdc);
+        stat = get_clip_hrgn(graphics, &hrgn);
 
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+        if (stat != Ok)
+        {
+            gdi_dc_release(graphics, hdc);
+            return stat;
+        }
+
+        save = SaveDC(hdc);
+
+        ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
 
         if (hregion)
-            ExtSelectClipRgn(graphics->hdc, hregion, RGN_AND);
+            ExtSelectClipRgn(hdc, hregion, RGN_AND);
 
         stat = alpha_blend_hdc_pixels(graphics, dst_x, dst_y, src, src_width,
             src_height, src_stride, fmt);
 
-        RestoreDC(graphics->hdc, save);
+        RestoreDC(hdc, save);
 
         DeleteObject(hrgn);
+
+        gdi_dc_release(graphics, hdc);
 
         return stat;
     }
