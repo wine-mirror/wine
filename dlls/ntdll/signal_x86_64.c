@@ -18,7 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if defined(__x86_64__) && !defined(__arm64ec__)
+#if 0
+#pragma makedep arm64ec_x64
+#endif
+
+#ifdef __x86_64__
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -33,6 +37,17 @@
 #include "ntdll_misc.h"
 #include "wine/debug.h"
 #include "ntsyscalls.h"
+
+
+/**************************************************************************
+ *		__chkstk (NTDLL.@)
+ *
+ * Supposed to touch all the stack pages, but we shouldn't need that.
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "ret" );
+
+
+#ifndef __arm64ec_x64__
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -79,14 +94,6 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
                               context, NULL, &dispatch->HandlerData, &dispatch->EstablisherFrame,
                               NULL, NULL, NULL, &dispatch->LanguageHandler, 0 );
 }
-
-
-/**************************************************************************
- *		__chkstk (NTDLL.@)
- *
- * Supposed to touch all the stack pages, but we shouldn't need that.
- */
-__ASM_GLOBAL_FUNC( __chkstk, "ret" );
 
 
 /***********************************************************************
@@ -1043,4 +1050,5 @@ __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret"
                     "\n\tnop; nop; nop; nop; nop; nop; nop; nop"
                     "\n\tnop; nop; nop; nop; nop; nop" );
 
+#endif  /* __arm64ec_x64__ */
 #endif  /* __x86_64__ */

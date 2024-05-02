@@ -2324,17 +2324,6 @@ static void __attribute__((naked)) arm64x_check_call(void)
 
 
 /**************************************************************************
- *		__chkstk (NTDLL.@)
- *
- * Supposed to touch all the stack pages, but we shouldn't need that.
- */
-void __attribute__((naked)) __chkstk(void)
-{
-    asm( "ret" );
-}
-
-
-/**************************************************************************
  *		__chkstk_arm64ec (NTDLL.@)
  *
  * Supposed to touch all the stack pages, but we shouldn't need that.
