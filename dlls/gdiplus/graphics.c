@@ -1150,7 +1150,13 @@ static BOOL brush_can_fill_path(GpBrush *brush, BOOL is_fill)
 
 static GpStatus brush_fill_path(GpGraphics *graphics, GpBrush *brush)
 {
-    GpStatus status = Ok;
+    HDC hdc;
+    GpStatus status;
+
+    status = gdi_dc_acquire(graphics, &hdc);
+    if (status != Ok)
+        return status;
+
     switch (brush->bt)
     {
     case BrushTypeSolidColor:
@@ -1163,27 +1169,27 @@ static GpStatus brush_fill_path(GpGraphics *graphics, GpBrush *brush)
             RECT rc;
             /* partially transparent fill */
 
-            if (!SelectClipPath(graphics->hdc, RGN_AND))
+            if (!SelectClipPath(hdc, RGN_AND))
             {
                 status = GenericError;
                 DeleteObject(bmp);
                 break;
             }
-            if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
+            if (GetClipBox(hdc, &rc) != NULLREGION)
             {
-                HDC hdc = CreateCompatibleDC(NULL);
+                HDC src_hdc = CreateCompatibleDC(NULL);
 
-                if (!hdc)
+                if (!src_hdc)
                 {
                     status = OutOfMemory;
                     DeleteObject(bmp);
                     break;
                 }
 
-                SelectObject(hdc, bmp);
+                SelectObject(src_hdc, bmp);
                 gdi_alpha_blend(graphics, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                                hdc, 0, 0, 1, 1);
-                DeleteDC(hdc);
+                                src_hdc, 0, 0, 1, 1);
+                DeleteDC(src_hdc);
             }
 
             DeleteObject(bmp);
@@ -1202,13 +1208,15 @@ static GpStatus brush_fill_path(GpGraphics *graphics, GpBrush *brush)
             break;
         }
 
-        old_brush = SelectObject(graphics->hdc, gdibrush);
-        FillPath(graphics->hdc);
-        SelectObject(graphics->hdc, old_brush);
+        old_brush = SelectObject(hdc, gdibrush);
+        FillPath(hdc);
+        SelectObject(hdc, old_brush);
         DeleteObject(gdibrush);
         break;
     }
     }
+
+    gdi_dc_release(graphics, hdc);
 
     return status;
 }
