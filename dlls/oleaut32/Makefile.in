@@ -17,6 +17,7 @@ SOURCES = \
 	olepropframe.c \
 	recinfo.c \
 	safearray.c \
+	thunks.c \
 	typelib.c \
 	usrmarshal.c \
 	varformat.c \
