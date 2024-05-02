@@ -616,26 +616,8 @@ SQLRETURN WINAPI SQLDataSourcesA(SQLHENV EnvironmentHandle, SQLUSMALLINT Directi
                                  SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1, SQLCHAR *Description,
                                  SQLSMALLINT BufferLength2, SQLSMALLINT *NameLength2)
 {
-    struct SQLDataSourcesA_params params = { EnvironmentHandle, Direction, ServerName, BufferLength1,
-                                             NameLength1, Description, BufferLength2, NameLength2 };
-    SQLRETURN ret;
-
-    TRACE("(EnvironmentHandle %p, Direction %d, ServerName %p, BufferLength1 %d, NameLength1 %p, Description %p,"
-          " BufferLength2 %d, NameLength2 %p)\n", EnvironmentHandle, Direction, ServerName, BufferLength1,
-          NameLength1, Description, BufferLength2, NameLength2);
-
-    ret = ODBC_CALL( SQLDataSourcesA, &params );
-    if (TRACE_ON(odbc))
-    {
-       if (ServerName && NameLength1 && *NameLength1 > 0)
-            TRACE(" DataSource %s", debugstr_an((const char *)ServerName, *NameLength1));
-       if (Description && NameLength2 && *NameLength2 > 0)
-            TRACE(" Description %s", debugstr_an((const char *)Description, *NameLength2));
-       TRACE("\n");
-    }
-
-    TRACE("Returning %d\n", ret);
-    return ret;
+    return SQLDataSources( EnvironmentHandle, Direction, ServerName, BufferLength1, NameLength1, Description,
+                           BufferLength2, NameLength2 );
 }
 
 /*************************************************************************
@@ -2612,22 +2594,12 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
  *				SQLGetDiagRecA           [ODBC32.236]
  */
 SQLRETURN WINAPI SQLGetDiagRecA(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMALLINT RecNumber,
-                                SQLCHAR *Sqlstate, SQLINTEGER *NativeError, SQLCHAR *MessageText,
+                                SQLCHAR *SqlState, SQLINTEGER *NativeError, SQLCHAR *MessageText,
                                 SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
-    struct SQLGetDiagRecA_params params = { HandleType, Handle, RecNumber, Sqlstate, NativeError,
-                                            MessageText, BufferLength, TextLength };
-    SQLRETURN ret;
-
-    TRACE("(HandleType %d, Handle %p, RecNumber %d, Sqlstate %p, NativeError %p, MessageText %p, BufferLength %d,"
-          " TextLength %p)\n", HandleType, Handle, RecNumber, Sqlstate, NativeError, MessageText, BufferLength,
-          TextLength);
-
-    ret = ODBC_CALL( SQLGetDiagRecA, &params );
-    TRACE("Returning %d\n", ret);
-    return ret;
+    return SQLGetDiagRec( HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
+                          TextLength );
 }
-
 
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'ODBC32.DLL'.

@@ -77,7 +77,6 @@ static SQLRETURN (*pSQLConnect)(SQLHDBC,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLIN
 static SQLRETURN (*pSQLConnectW)(SQLHDBC,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
 static SQLRETURN (*pSQLCopyDesc)(SQLHDESC,SQLHDESC);
 static SQLRETURN (*pSQLDataSources)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-static SQLRETURN (*pSQLDataSourcesA)(SQLHENV,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLDataSourcesW)(SQLHENV,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLDescribeCol)(SQLHSTMT,SQLUSMALLINT,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
 static SQLRETURN (*pSQLDescribeColW)(SQLHSTMT,SQLUSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*,SQLSMALLINT*,SQLULEN*,SQLSMALLINT*,SQLSMALLINT*);
@@ -116,7 +115,6 @@ static SQLRETURN (*pSQLGetDescRecW)(SQLHDESC,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,S
 static SQLRETURN (*pSQLGetDiagField)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLGetDiagFieldW)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLSMALLINT,SQLPOINTER,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLGetDiagRec)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLCHAR*,SQLINTEGER*,SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
-static SQLRETURN (*pSQLGetDiagRecA)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLCHAR*,SQLINTEGER*, SQLCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLGetDiagRecW)(SQLSMALLINT,SQLHANDLE,SQLSMALLINT,SQLWCHAR*,SQLINTEGER*,SQLWCHAR*,SQLSMALLINT,SQLSMALLINT*);
 static SQLRETURN (*pSQLGetEnvAttr)(SQLHENV,SQLINTEGER,SQLPOINTER,SQLINTEGER,SQLINTEGER*);
 static SQLRETURN (*pSQLGetFunctions)(SQLHDBC,SQLUSMALLINT,SQLUSMALLINT*);
@@ -409,16 +407,6 @@ static NTSTATUS wrap_SQLDataSources( void *args )
     return pSQLDataSources(params->EnvironmentHandle, params->Direction, params->ServerName,
                            params->BufferLength1, params->NameLength1, params->Description,
                            params->BufferLength2, params->NameLength2);
-}
-
-static NTSTATUS wrap_SQLDataSourcesA( void *args )
-{
-    struct SQLDataSourcesA_params *params = args;
-
-    if (!pSQLDataSourcesA) return SQL_ERROR;
-    return pSQLDataSourcesA(params->EnvironmentHandle, params->Direction, params->ServerName,
-                            params->BufferLength1, params->NameLength1, params->Description,
-                            params->BufferLength2, params->NameLength2);
 }
 
 static NTSTATUS wrap_SQLDataSourcesW( void *args )
@@ -766,16 +754,6 @@ static NTSTATUS wrap_SQLGetDiagRec( void *args )
     return pSQLGetDiagRec(params->HandleType, params->Handle, params->RecNumber, params->Sqlstate,
                           params->NativeError, params->MessageText, params->BufferLength,
                           params->TextLength);
-}
-
-static NTSTATUS wrap_SQLGetDiagRecA( void *args )
-{
-    struct SQLGetDiagRecA_params *params = args;
-
-    if (!pSQLGetDiagRecA) return SQL_ERROR;
-    return pSQLGetDiagRecA(params->HandleType, params->Handle, params->RecNumber, params->Sqlstate,
-                           params->NativeError, params->MessageText, params->BufferLength,
-                           params->TextLength);
 }
 
 static NTSTATUS wrap_SQLGetDiagRecW( void *args )
@@ -1269,7 +1247,6 @@ const unixlib_entry_t __wine_unix_call_funcs[NB_ODBC_FUNCS] =
     wrap_SQLConnectW,
     wrap_SQLCopyDesc,
     wrap_SQLDataSources,
-    wrap_SQLDataSourcesA,
     wrap_SQLDataSourcesW,
     wrap_SQLDescribeCol,
     wrap_SQLDescribeColW,
@@ -1308,7 +1285,6 @@ const unixlib_entry_t __wine_unix_call_funcs[NB_ODBC_FUNCS] =
     wrap_SQLGetDiagField,
     wrap_SQLGetDiagFieldW,
     wrap_SQLGetDiagRec,
-    wrap_SQLGetDiagRecA,
     wrap_SQLGetDiagRecW,
     wrap_SQLGetEnvAttr,
     wrap_SQLGetFunctions,
@@ -1404,7 +1380,6 @@ static NTSTATUS load_odbc(void)
     LOAD_FUNC(SQLConnectW);
     LOAD_FUNC(SQLCopyDesc);
     LOAD_FUNC(SQLDataSources);
-    LOAD_FUNC(SQLDataSourcesA);
     LOAD_FUNC(SQLDataSourcesW);
     LOAD_FUNC(SQLDescribeCol);
     LOAD_FUNC(SQLDescribeColW);
@@ -1443,7 +1418,6 @@ static NTSTATUS load_odbc(void)
     LOAD_FUNC(SQLGetDiagField);
     LOAD_FUNC(SQLGetDiagFieldW);
     LOAD_FUNC(SQLGetDiagRec);
-    LOAD_FUNC(SQLGetDiagRecA);
     LOAD_FUNC(SQLGetDiagRecW);
     LOAD_FUNC(SQLGetEnvAttr);
     LOAD_FUNC(SQLGetFunctions);

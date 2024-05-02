@@ -64,7 +64,6 @@ enum sql_funcs
     unix_SQLConnectW,
     unix_SQLCopyDesc,
     unix_SQLDataSources,
-    unix_SQLDataSourcesA,
     unix_SQLDataSourcesW,
     unix_SQLDescribeCol,
     unix_SQLDescribeColW,
@@ -103,7 +102,6 @@ enum sql_funcs
     unix_SQLGetDiagField,
     unix_SQLGetDiagFieldW,
     unix_SQLGetDiagRec,
-    unix_SQLGetDiagRecA,
     unix_SQLGetDiagRecW,
     unix_SQLGetEnvAttr,
     unix_SQLGetFunctions,
@@ -184,7 +182,6 @@ struct SQLConnect_params { SQLHDBC ConnectionHandle; SQLCHAR *ServerName; SQLSMA
 struct SQLConnectW_params { SQLHDBC ConnectionHandle; WCHAR *ServerName; SQLSMALLINT NameLength1; WCHAR *UserName; SQLSMALLINT NameLength2; WCHAR *Authentication; SQLSMALLINT NameLength3; };
 struct SQLCopyDesc_params { SQLHDESC SourceDescHandle; SQLHDESC TargetDescHandle; };
 struct SQLDataSources_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; SQLCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; SQLCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
-struct SQLDataSourcesA_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; SQLCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; SQLCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
 struct SQLDataSourcesW_params { SQLHENV EnvironmentHandle; SQLUSMALLINT Direction; WCHAR *ServerName; SQLSMALLINT BufferLength1; SQLSMALLINT *NameLength1; WCHAR *Description; SQLSMALLINT BufferLength2; SQLSMALLINT *NameLength2; };
 struct SQLDescribeCol_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; SQLCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
 struct SQLDescribeColW_params { SQLHSTMT StatementHandle; SQLUSMALLINT ColumnNumber; WCHAR *ColumnName; SQLSMALLINT BufferLength; SQLSMALLINT *NameLength; SQLSMALLINT *DataType; SQLULEN *ColumnSize; SQLSMALLINT *DecimalDigits; SQLSMALLINT *Nullable; };
@@ -223,7 +220,6 @@ struct SQLGetDescRecW_params { SQLHDESC DescriptorHandle; SQLSMALLINT RecNumber;
 struct SQLGetDiagField_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
 struct SQLGetDiagFieldW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLSMALLINT DiagIdentifier; SQLPOINTER DiagInfo; SQLSMALLINT BufferLength; SQLSMALLINT *StringLength; };
 struct SQLGetDiagRec_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
-struct SQLGetDiagRecA_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; SQLCHAR *Sqlstate; SQLINTEGER *NativeError; SQLCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
 struct SQLGetDiagRecW_params { SQLSMALLINT HandleType; SQLHANDLE Handle; SQLSMALLINT RecNumber; WCHAR *Sqlstate; SQLINTEGER *NativeError; WCHAR *MessageText; SQLSMALLINT BufferLength; SQLSMALLINT *TextLength; };
 struct SQLGetEnvAttr_params { SQLHENV EnvironmentHandle; SQLINTEGER Attribute; SQLPOINTER Value; SQLINTEGER BufferLength; SQLINTEGER *StringLength; };
 struct SQLGetFunctions_params { SQLHDBC ConnectionHandle; SQLUSMALLINT FunctionId; SQLUSMALLINT *Supported; };
