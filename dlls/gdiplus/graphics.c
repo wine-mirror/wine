@@ -2106,12 +2106,20 @@ end:
 
 GpStatus trace_path(GpGraphics *graphics, GpPath *path)
 {
+    HDC hdc;
     GpStatus result;
 
-    BeginPath(graphics->hdc);
+    result = gdi_dc_acquire(graphics, &hdc);
+    if (result != Ok)
+        return result;
+
+    BeginPath(hdc);
     result = draw_poly(graphics, NULL, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, FALSE);
-    EndPath(graphics->hdc);
+    EndPath(hdc);
+
+    gdi_dc_release(graphics, hdc);
+
     return result;
 }
 
