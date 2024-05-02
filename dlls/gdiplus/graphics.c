@@ -1973,6 +1973,7 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
 {
+    HDC hdc;
     POINT *pti = malloc(count * sizeof(POINT));
     BYTE *tp = malloc(count);
     GpPointF *ptcopy = malloc(count * sizeof(GpPointF));
@@ -2085,7 +2086,13 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
         tp[i] = convert_path_point_type(types[i]);
     }
 
-    PolyDraw(graphics->hdc, pti, tp, count);
+    status = gdi_dc_acquire(graphics, &hdc);
+    if (status != Ok)
+        goto end;
+
+    PolyDraw(hdc, pti, tp, count);
+
+    gdi_dc_release(graphics, hdc);
 
     status = Ok;
 
