@@ -6507,11 +6507,10 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context,
             }
             else
             {
-                const struct wined3d_stream_info *si = &context->stream_info;
                 unsigned int coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
                 if ((state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] >> WINED3D_FFP_TCI_SHIFT)
                         & WINED3D_FFP_TCI_MASK
-                        || (coord_idx < WINED3D_MAX_FFP_TEXTURES && (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx)))))
+                        || (coord_idx < WINED3D_MAX_FFP_TEXTURES && (state->vertex_declaration->texcoords & (1u << coord_idx))))
                     settings->texcoords_initialized |= 1u << i;
             }
         }
@@ -6588,7 +6587,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
         {
             coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
-            if (coord_idx < WINED3D_MAX_FFP_TEXTURES && (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
+            if (coord_idx < WINED3D_MAX_FFP_TEXTURES && (vdecl->texcoords & (1u << coord_idx)))
                 settings->texcoords |= 1u << i;
             settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         }
@@ -6638,7 +6637,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
         coord_idx = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
-        if (coord_idx < WINED3D_MAX_FFP_TEXTURES && (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))))
+        if (coord_idx < WINED3D_MAX_FFP_TEXTURES && (vdecl->texcoords & (1u << coord_idx)))
             settings->texcoords |= 1u << i;
         settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
     }
