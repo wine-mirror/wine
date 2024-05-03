@@ -1635,6 +1635,2411 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 C_ASSERT( ARRAYSIZE( __wine_unix_call_funcs) == unix_funcs_count );
 
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_SQLBindCol( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ColumnNumber;
+        INT16  TargetType;
+        PTR32  TargetValue;
+        INT64  BufferLength;
+        PTR32  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLBindCol_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->TargetType,
+        ULongToPtr(params32->TargetValue),
+        params32->BufferLength,
+        ULongToPtr(params32->StrLen_or_Ind)
+    };
+
+    return wrap_SQLBindCol( &params );
+}
+
+static NTSTATUS wow64_SQLBindParam( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ParameterNumber;
+        INT16  ValueType;
+        INT16  ParameterType;
+        UINT64 LengthPrecision;
+        INT16  ParameterScale;
+        PTR32  ParameterValue;
+        PTR32  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLBindParam_params params =
+    {
+        params32->StatementHandle,
+        params32->ParameterNumber,
+        params32->ValueType,
+        params32->ParameterType,
+        params32->LengthPrecision,
+        params32->ParameterScale,
+        ULongToPtr(params32->ParameterValue),
+        ULongToPtr(params32->StrLen_or_Ind)
+    };
+
+    return wrap_SQLBindParam( &params );
+}
+
+static NTSTATUS wow64_SQLBindParameter( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ParameterNumber;
+        INT16  InputOutputType;
+        INT16  ValueType;
+        INT16  ParameterType;
+        UINT64 ColumnSize;
+        INT16  DecimalDigits;
+        PTR32  ParameterValue;
+        INT64  BufferLength;
+        PTR32  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLBindParameter_params params =
+    {
+        params32->StatementHandle,
+        params32->ParameterNumber,
+        params32->InputOutputType,
+        params32->ValueType,
+        params32->ParameterType,
+        params32->ColumnSize,
+        params32->DecimalDigits,
+        ULongToPtr(params32->ParameterValue),
+        params32->BufferLength,
+        ULongToPtr(params32->StrLen_or_Ind)
+    };
+
+    return wrap_SQLBindParameter( &params );
+}
+
+static NTSTATUS wow64_SQLBrowseConnect( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  InConnectionString;
+        INT16  StringLength1;
+        PTR32  OutConnectionString;
+        INT16  BufferLength;
+        PTR32  StringLength2;
+    } const *params32 = args;
+
+    struct SQLBrowseConnect_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->InConnectionString),
+        params32->StringLength1,
+        ULongToPtr(params32->OutConnectionString),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength2)
+    };
+
+    return wrap_SQLBrowseConnect( &params );
+}
+
+static NTSTATUS wow64_SQLBrowseConnectW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  InConnectionString;
+        INT16  StringLength1;
+        PTR32  OutConnectionString;
+        INT16  BufferLength;
+        PTR32  StringLength2;
+    } const *params32 = args;
+
+    struct SQLBrowseConnectW_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->InConnectionString),
+        params32->StringLength1,
+        ULongToPtr(params32->OutConnectionString),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength2)
+    };
+
+    return wrap_SQLBrowseConnectW( &params );
+}
+
+static NTSTATUS wow64_SQLColAttribute( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ColumnNumber;
+        UINT16 FieldIdentifier;
+        PTR32  CharacterAttribute;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  NumericAttribute;
+    } const *params32 = args;
+
+    struct SQLColAttribute_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->CharacterAttribute),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->NumericAttribute)
+    };
+
+    return wrap_SQLColAttribute( &params );
+}
+
+static NTSTATUS wow64_SQLColAttributeW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ColumnNumber;
+        UINT16 FieldIdentifier;
+        PTR32  CharacterAttribute;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  NumericAttribute;
+    } const *params32 = args;
+
+    struct SQLColAttributeW_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->CharacterAttribute),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->NumericAttribute)
+    };
+
+    return wrap_SQLColAttributeW( &params );
+}
+
+static NTSTATUS wow64_SQLColAttributes( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ColumnNumber;
+        UINT16 FieldIdentifier;
+        PTR32  CharacterAttributes;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  NumericAttributes;
+    } const *params32 = args;
+
+    struct SQLColAttributes_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->CharacterAttributes),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->NumericAttributes)
+    };
+
+    return wrap_SQLColAttributes( &params );
+}
+
+static NTSTATUS wow64_SQLColAttributesW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 ColumnNumber;
+        UINT16 FieldIdentifier;
+        PTR32  CharacterAttributes;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  NumericAttributes;
+    } const *params32 = args;
+
+    struct SQLColAttributesW_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->CharacterAttributes),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->NumericAttributes)
+    };
+
+    return wrap_SQLColAttributesW( &params );
+}
+
+static NTSTATUS wow64_SQLColumnPrivileges( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLColumnPrivileges_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLColumnPrivileges( &params );
+}
+
+static NTSTATUS wow64_SQLColumnPrivilegesW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLColumnPrivilegesW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLColumnPrivilegesW( &params );
+}
+
+static NTSTATUS wow64_SQLColumns( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLColumns_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLColumns( &params );
+}
+
+static NTSTATUS wow64_SQLColumnsW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLColumnsW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLColumnsW( &params );
+}
+
+static NTSTATUS wow64_SQLConnect( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  ServerName;
+        INT16  NameLength1;
+        PTR32  UserName;
+        INT16  NameLength2;
+        PTR32  Authentication;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLConnect_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->ServerName),
+        params32->NameLength1,
+        ULongToPtr(params32->UserName),
+        params32->NameLength2,
+        ULongToPtr(params32->Authentication),
+        params32->NameLength3
+    };
+
+    return wrap_SQLConnect( &params );
+}
+
+static NTSTATUS wow64_SQLConnectW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  ServerName;
+        INT16  NameLength1;
+        PTR32  UserName;
+        INT16  NameLength2;
+        PTR32  Authentication;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLConnectW_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->ServerName),
+        params32->NameLength1,
+        ULongToPtr(params32->UserName),
+        params32->NameLength2,
+        ULongToPtr(params32->Authentication),
+        params32->NameLength3
+    };
+
+    return wrap_SQLConnectW( &params );
+}
+
+static NTSTATUS wow64_SQLDataSources( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT16 Direction;
+        PTR32  ServerName;
+        INT16  BufferLength1;
+        PTR32  NameLength1;
+        PTR32  Description;
+        INT16  BufferLength2;
+        PTR32  NameLength2;
+    } const *params32 = args;
+
+    struct SQLDataSources_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Direction,
+        ULongToPtr(params32->ServerName),
+        params32->BufferLength1,
+        ULongToPtr(params32->NameLength1),
+        ULongToPtr(params32->Description),
+        params32->BufferLength2,
+        ULongToPtr(params32->NameLength2)
+    };
+
+    return wrap_SQLDataSources( &params );
+}
+
+static NTSTATUS wow64_SQLDataSourcesW( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT16 Direction;
+        PTR32  ServerName;
+        INT16  BufferLength1;
+        PTR32  NameLength1;
+        PTR32  Description;
+        INT16  BufferLength2;
+        PTR32  NameLength2;
+    } const *params32 = args;
+
+    struct SQLDataSourcesW_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Direction,
+        ULongToPtr(params32->ServerName),
+        params32->BufferLength1,
+        ULongToPtr(params32->NameLength1),
+        ULongToPtr(params32->Description),
+        params32->BufferLength2,
+        ULongToPtr(params32->NameLength2)
+    };
+
+    return wrap_SQLDataSourcesW( &params );
+}
+
+static NTSTATUS wow64_SQLDescribeCol( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ColumnNumber;
+        PTR32  ColumnName;
+        INT16  BufferLength;
+        PTR32  NameLength;
+        PTR32  DataType;
+        PTR32  ColumnSize;
+        PTR32  DecimalDigits;
+        PTR32  Nullable;
+    } const *params32 = args;
+
+    struct SQLDescribeCol_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        ULongToPtr(params32->ColumnName),
+        params32->BufferLength,
+        ULongToPtr(params32->NameLength),
+        ULongToPtr(params32->DataType),
+        ULongToPtr(params32->ColumnSize),
+        ULongToPtr(params32->DecimalDigits),
+        ULongToPtr(params32->Nullable)
+    };
+
+    return wrap_SQLDescribeCol( &params );
+}
+
+static NTSTATUS wow64_SQLDescribeColW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ColumnNumber;
+        PTR32  ColumnName;
+        INT16  BufferLength;
+        PTR32  NameLength;
+        PTR32  DataType;
+        PTR32  ColumnSize;
+        PTR32  DecimalDigits;
+        PTR32  Nullable;
+    } const *params32 = args;
+
+    struct SQLDescribeColW_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        ULongToPtr(params32->ColumnName),
+        params32->BufferLength,
+        ULongToPtr(params32->NameLength),
+        ULongToPtr(params32->DataType),
+        ULongToPtr(params32->ColumnSize),
+        ULongToPtr(params32->DecimalDigits),
+        ULongToPtr(params32->Nullable)
+    };
+
+    return wrap_SQLDescribeColW( &params );
+}
+
+static NTSTATUS wow64_SQLDescribeParam( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ParameterNumber;
+        PTR32  DataType;
+        PTR32  ParameterSize;
+        PTR32  DecimalDigits;
+        PTR32  Nullable;
+    } const *params32 = args;
+
+    struct SQLDescribeParam_params params =
+    {
+        params32->StatementHandle,
+        params32->ParameterNumber,
+        ULongToPtr(params32->DataType),
+        ULongToPtr(params32->ParameterSize),
+        ULongToPtr(params32->DecimalDigits),
+        ULongToPtr(params32->Nullable)
+    };
+
+    return wrap_SQLDescribeParam( &params );
+}
+
+static NTSTATUS wow64_SQLDrivers( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT16 Direction;
+        PTR32  DriverDescription;
+        INT16  BufferLength1;
+        PTR32  DescriptionLength;
+        PTR32  DriverAttributes;
+        INT16  BufferLength2;
+        PTR32  AttributesLength;
+    } const *params32 = args;
+
+    struct SQLDrivers_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Direction,
+        ULongToPtr(params32->DriverDescription),
+        params32->BufferLength1,
+        ULongToPtr(params32->DescriptionLength),
+        ULongToPtr(params32->DriverAttributes),
+        params32->BufferLength2,
+        ULongToPtr(params32->AttributesLength)
+    };
+
+    return wrap_SQLDrivers( &params );
+}
+
+static NTSTATUS wow64_SQLDriversW( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT16 Direction;
+        PTR32  DriverDescription;
+        INT16  BufferLength1;
+        PTR32  DescriptionLength;
+        PTR32  DriverAttributes;
+        INT16  BufferLength2;
+        PTR32  AttributesLength;
+    } const *params32 = args;
+
+    struct SQLDriversW_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Direction,
+        ULongToPtr(params32->DriverDescription),
+        params32->BufferLength1,
+        ULongToPtr(params32->DescriptionLength),
+        ULongToPtr(params32->DriverAttributes),
+        params32->BufferLength2,
+        ULongToPtr(params32->AttributesLength)
+    };
+
+    return wrap_SQLDriversW( &params );
+}
+
+static NTSTATUS wow64_SQLDriverConnect( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  WindowHandle;
+        PTR32  InConnectionString;
+        INT16  Length;
+        PTR32  OutConnectionString;
+        INT16  BufferLength;
+        PTR32  Length2;
+        UINT16 DriverCompletion;
+    } const *params32 = args;
+
+    struct SQLDriverConnect_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->WindowHandle),
+        ULongToPtr(params32->InConnectionString),
+        params32->Length,
+        ULongToPtr(params32->OutConnectionString),
+        params32->BufferLength,
+        ULongToPtr(params32->Length2),
+        params32->DriverCompletion,
+    };
+
+    return wrap_SQLDriverConnect( &params );
+}
+
+static NTSTATUS wow64_SQLDriverConnectW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  WindowHandle;
+        PTR32  InConnectionString;
+        INT16  Length;
+        PTR32  OutConnectionString;
+        INT16  BufferLength;
+        PTR32  Length2;
+        UINT16 DriverCompletion;
+    } const *params32 = args;
+
+    struct SQLDriverConnectW_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->WindowHandle),
+        ULongToPtr(params32->InConnectionString),
+        params32->Length,
+        ULongToPtr(params32->OutConnectionString),
+        params32->BufferLength,
+        ULongToPtr(params32->Length2),
+        params32->DriverCompletion,
+    };
+
+    return wrap_SQLDriverConnectW( &params );
+}
+
+static NTSTATUS wow64_SQLError( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT64 ConnectionHandle;
+        UINT64 StatementHandle;
+        PTR32  SqlState;
+        PTR32  NativeError;
+        PTR32  MessageText;
+        INT16  BufferLength;
+        PTR32  TextLength;
+    } const *params32 = args;
+
+    struct SQLError_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->ConnectionHandle,
+        params32->StatementHandle,
+        ULongToPtr(params32->SqlState),
+        ULongToPtr(params32->NativeError),
+        ULongToPtr(params32->MessageText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength)
+    };
+
+    return wrap_SQLError( &params );
+}
+
+static NTSTATUS wow64_SQLErrorW( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        UINT64 ConnectionHandle;
+        UINT64 StatementHandle;
+        PTR32  SqlState;
+        PTR32  NativeError;
+        PTR32  MessageText;
+        INT16  BufferLength;
+        PTR32  TextLength;
+    } const *params32 = args;
+
+    struct SQLErrorW_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->ConnectionHandle,
+        params32->StatementHandle,
+        ULongToPtr(params32->SqlState),
+        ULongToPtr(params32->NativeError),
+        ULongToPtr(params32->MessageText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength)
+    };
+
+    return wrap_SQLErrorW( &params );
+}
+
+static NTSTATUS wow64_SQLExecDirect( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  StatementText;
+        INT32  TextLength;
+    } const *params32 = args;
+
+    struct SQLExecDirect_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->StatementText),
+        params32->TextLength,
+    };
+
+    return wrap_SQLExecDirect( &params );
+}
+
+static NTSTATUS wow64_SQLExecDirectW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  StatementText;
+        INT32  TextLength;
+    } const *params32 = args;
+
+    struct SQLExecDirectW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->StatementText),
+        params32->TextLength,
+    };
+
+    return wrap_SQLExecDirectW( &params );
+}
+
+static NTSTATUS wow64_SQLExtendedFetch( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  FetchOrientation;
+        INT64  FetchOffset;
+        UINT64 RowCount;
+        PTR32  RowStatusArray;
+    } const *params32 = args;
+
+    struct SQLExtendedFetch_params params =
+    {
+        params32->StatementHandle,
+        params32->FetchOrientation,
+        params32->FetchOffset,
+        ULongToPtr(params32->RowCount),
+        ULongToPtr(params32->RowStatusArray)
+    };
+
+    return wrap_SQLExtendedFetch( &params );
+}
+
+static NTSTATUS wow64_SQLForeignKeys( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  PkCatalogName;
+        INT16  NameLength1;
+        PTR32  PkSchemaName;
+        INT16  NameLength2;
+        PTR32  PkTableName;
+        INT16  NameLength3;
+        PTR32  FkCatalogName;
+        INT16  NameLength4;
+        PTR32  FkSchemaName;
+        INT16  NameLength5;
+        PTR32  FkTableName;
+        INT16  NameLength6;
+    } const *params32 = args;
+
+    struct SQLForeignKeys_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->PkCatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->PkSchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->PkTableName),
+        params32->NameLength3,
+        ULongToPtr(params32->FkCatalogName),
+        params32->NameLength4,
+        ULongToPtr(params32->FkSchemaName),
+        params32->NameLength5,
+        ULongToPtr(params32->FkTableName),
+        params32->NameLength6
+    };
+
+    return wrap_SQLForeignKeys( &params );
+}
+
+static NTSTATUS wow64_SQLForeignKeysW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  PkCatalogName;
+        INT16  NameLength1;
+        PTR32  PkSchemaName;
+        INT16  NameLength2;
+        PTR32  PkTableName;
+        INT16  NameLength3;
+        PTR32  FkCatalogName;
+        INT16  NameLength4;
+        PTR32  FkSchemaName;
+        INT16  NameLength5;
+        PTR32  FkTableName;
+        INT16  NameLength6;
+    } const *params32 = args;
+
+    struct SQLForeignKeysW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->PkCatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->PkSchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->PkTableName),
+        params32->NameLength3,
+        ULongToPtr(params32->FkCatalogName),
+        params32->NameLength4,
+        ULongToPtr(params32->FkSchemaName),
+        params32->NameLength5,
+        ULongToPtr(params32->FkTableName),
+        params32->NameLength6
+    };
+
+    return wrap_SQLForeignKeysW( &params );
+}
+
+static NTSTATUS wow64_SQLGetConnectAttr( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetConnectAttr_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetConnectAttr( &params );
+}
+
+static NTSTATUS wow64_SQLGetConnectAttrW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetConnectAttrW_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetConnectAttrW( &params );
+}
+
+static NTSTATUS wow64_SQLGetConnectOption( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT16  Option;
+        PTR32  Value;
+    } const *params32 = args;
+
+    struct SQLGetConnectOption_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Option,
+        ULongToPtr(params32->Value)
+    };
+
+    return wrap_SQLGetConnectOption( &params );
+}
+
+static NTSTATUS wow64_SQLGetConnectOptionW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT16  Option;
+        PTR32  Value;
+    } const *params32 = args;
+
+    struct SQLGetConnectOptionW_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Option,
+        ULongToPtr(params32->Value)
+    };
+
+    return wrap_SQLGetConnectOptionW( &params );
+}
+
+static NTSTATUS wow64_SQLGetCursorName( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CursorName;
+        INT16  BufferLength;
+        PTR32  NameLength;
+    } const *params32 = args;
+
+    struct SQLGetCursorName_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CursorName),
+        params32->BufferLength,
+        ULongToPtr(params32->NameLength)
+    };
+
+    return wrap_SQLGetCursorName( &params );
+}
+
+static NTSTATUS wow64_SQLGetCursorNameW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CursorName;
+        INT16  BufferLength;
+        PTR32  NameLength;
+    } const *params32 = args;
+
+    struct SQLGetCursorNameW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CursorName),
+        params32->BufferLength,
+        ULongToPtr(params32->NameLength)
+    };
+
+    return wrap_SQLGetCursorNameW( &params );
+}
+
+static NTSTATUS wow64_SQLGetData( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ColumnNumber;
+        INT16  TargetType;
+        PTR32  TargetValue;
+        INT64  BufferLength;
+        PTR32  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLGetData_params params =
+    {
+        params32->StatementHandle,
+        params32->ColumnNumber,
+        params32->TargetType,
+        ULongToPtr(params32->TargetValue),
+        params32->BufferLength,
+        ULongToPtr(params32->StrLen_or_Ind)
+    };
+
+    return wrap_SQLGetData( &params );
+}
+
+static NTSTATUS wow64_SQLGetDescField( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        INT16  FieldIdentifier;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetDescField_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetDescField( &params );
+}
+
+static NTSTATUS wow64_SQLGetDescFieldW( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        INT16  FieldIdentifier;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetDescFieldW_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetDescFieldW( &params );
+}
+
+static NTSTATUS wow64_SQLGetDescRec( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        PTR32  Name;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  Type;
+        PTR32  SubType;
+        PTR32  Length;
+        PTR32  Precision;
+        PTR32  Scale;
+        PTR32  Nullable;
+    } const *params32 = args;
+
+    struct SQLGetDescRec_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        ULongToPtr(params32->Name),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->Type),
+        ULongToPtr(params32->SubType),
+        ULongToPtr(params32->Length),
+        ULongToPtr(params32->Precision),
+        ULongToPtr(params32->Scale),
+        ULongToPtr(params32->Nullable)
+    };
+
+    return wrap_SQLGetDescRec( &params );
+}
+
+static NTSTATUS wow64_SQLGetDescRecW( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        PTR32  Name;
+        INT16  BufferLength;
+        PTR32  StringLength;
+        PTR32  Type;
+        PTR32  SubType;
+        PTR32  Length;
+        PTR32  Precision;
+        PTR32  Scale;
+        PTR32  Nullable;
+    } const *params32 = args;
+
+    struct SQLGetDescRecW_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        ULongToPtr(params32->Name),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->Type),
+        ULongToPtr(params32->SubType),
+        ULongToPtr(params32->Length),
+        ULongToPtr(params32->Precision),
+        ULongToPtr(params32->Scale),
+        ULongToPtr(params32->Nullable)
+    };
+
+    return wrap_SQLGetDescRecW( &params );
+}
+
+static NTSTATUS wow64_SQLGetDiagRec( void *args )
+{
+    struct
+    {
+        INT16  HandleType;
+        UINT64 Handle;
+        INT16  RecNumber;
+        PTR32  SqlState;
+        PTR32  NativeError;
+        PTR32  MessageText;
+        INT16  BufferLength;
+        PTR32  TextLength;
+    } const *params32 = args;
+
+    struct SQLGetDiagRec_params params =
+    {
+        params32->HandleType,
+        params32->Handle,
+        params32->RecNumber,
+        ULongToPtr(params32->SqlState),
+        ULongToPtr(params32->NativeError),
+        ULongToPtr(params32->MessageText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength)
+    };
+
+    return wrap_SQLGetDiagRec( &params );
+}
+
+static NTSTATUS wow64_SQLGetDiagRecW( void *args )
+{
+    struct
+    {
+        INT16  HandleType;
+        UINT64 Handle;
+        INT16  RecNumber;
+        PTR32  SqlState;
+        PTR32  NativeError;
+        PTR32  MessageText;
+        INT16  BufferLength;
+        PTR32  TextLength;
+    } const *params32 = args;
+
+    struct SQLGetDiagRecW_params params =
+    {
+        params32->HandleType,
+        params32->Handle,
+        params32->RecNumber,
+        ULongToPtr(params32->SqlState),
+        ULongToPtr(params32->NativeError),
+        ULongToPtr(params32->MessageText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength)
+    };
+
+    return wrap_SQLGetDiagRecW( &params );
+}
+
+static NTSTATUS wow64_SQLGetDiagField( void *args )
+{
+    struct
+    {
+        INT16  HandleType;
+        UINT64 Handle;
+        INT16  RecNumber;
+        INT16  DiagIdentifier;
+        PTR32  DiagInfo;
+        INT16  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetDiagField_params params =
+    {
+        params32->HandleType,
+        params32->Handle,
+        params32->RecNumber,
+        params32->DiagIdentifier,
+        ULongToPtr(params32->DiagInfo),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetDiagField( &params );
+}
+
+static NTSTATUS wow64_SQLGetDiagFieldW( void *args )
+{
+    struct
+    {
+        INT16  HandleType;
+        UINT64 Handle;
+        INT16  RecNumber;
+        INT16  DiagIdentifier;
+        PTR32  DiagInfo;
+        INT16  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetDiagFieldW_params params =
+    {
+        params32->HandleType,
+        params32->Handle,
+        params32->RecNumber,
+        params32->DiagIdentifier,
+        ULongToPtr(params32->DiagInfo),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetDiagFieldW( &params );
+}
+
+static NTSTATUS wow64_SQLGetEnvAttr( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetEnvAttr_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetEnvAttr( &params );
+}
+
+static NTSTATUS wow64_SQLGetFunctions( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        UINT16 FunctionId;
+        PTR32  Supported;
+    } const *params32 = args;
+
+    struct SQLGetFunctions_params params =
+    {
+        params32->ConnectionHandle,
+        params32->FunctionId,
+        ULongToPtr(params32->Supported)
+    };
+
+    return wrap_SQLGetFunctions( &params );
+}
+
+static NTSTATUS wow64_SQLGetInfo( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        UINT16 InfoType;
+        PTR32  InfoValue;
+        INT16  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetInfo_params params =
+    {
+        params32->ConnectionHandle,
+        params32->InfoType,
+        ULongToPtr(params32->InfoValue),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetInfo( &params );
+}
+
+static NTSTATUS wow64_SQLGetInfoW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        UINT16 InfoType;
+        PTR32  InfoValue;
+        INT16  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetInfoW_params params =
+    {
+        params32->ConnectionHandle,
+        params32->InfoType,
+        ULongToPtr(params32->InfoValue),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetInfoW( &params );
+}
+
+static NTSTATUS wow64_SQLGetStmtOption( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 Option;
+        PTR32  Value;
+    } const *params32 = args;
+
+    struct SQLGetStmtOption_params params =
+    {
+        params32->StatementHandle,
+        params32->Option,
+        ULongToPtr(params32->Value)
+    };
+
+    return wrap_SQLGetStmtOption( &params );
+}
+
+static NTSTATUS wow64_SQLNativeSql( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  InStatementText;
+        INT32  TextLength1;
+        PTR32  OutStatementText;
+        INT32  BufferLength;
+        PTR32  TextLength2;
+    } const *params32 = args;
+
+    struct SQLNativeSql_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->InStatementText),
+        params32->TextLength1,
+        ULongToPtr(params32->OutStatementText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength2)
+    };
+
+    return wrap_SQLNativeSql( &params );
+}
+
+static NTSTATUS wow64_SQLNativeSqlW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        PTR32  InStatementText;
+        INT32  TextLength1;
+        PTR32  OutStatementText;
+        INT32  BufferLength;
+        PTR32  TextLength2;
+    } const *params32 = args;
+
+    struct SQLNativeSqlW_params params =
+    {
+        params32->ConnectionHandle,
+        ULongToPtr(params32->InStatementText),
+        params32->TextLength1,
+        ULongToPtr(params32->OutStatementText),
+        params32->BufferLength,
+        ULongToPtr(params32->TextLength2)
+    };
+
+    return wrap_SQLNativeSqlW( &params );
+}
+
+static NTSTATUS wow64_SQLNumParams( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  ParameterCount;
+    } const *params32 = args;
+
+    struct SQLNumParams_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->ParameterCount)
+    };
+
+    return wrap_SQLNumParams( &params );
+}
+
+static NTSTATUS wow64_SQLNumResultCols( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  ColumnCount;
+    } const *params32 = args;
+
+    struct SQLNumResultCols_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->ColumnCount)
+    };
+
+    return wrap_SQLNumResultCols( &params );
+}
+
+static NTSTATUS wow64_SQLParamData( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  Value;
+    } const *params32 = args;
+
+    struct SQLParamData_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->Value)
+    };
+
+    return wrap_SQLParamData( &params );
+}
+
+static NTSTATUS wow64_SQLParamOptions( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT64 RowCount;
+        PTR32  RowNumber;
+    } const *params32 = args;
+
+    struct SQLParamOptions_params params =
+    {
+        params32->StatementHandle,
+        params32->RowCount,
+        ULongToPtr(params32->RowNumber)
+    };
+
+    return wrap_SQLParamOptions( &params );
+}
+
+static NTSTATUS wow64_SQLPrepare( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  StatementText;
+        INT32  TextLength;
+    } const *params32 = args;
+
+    struct SQLPrepare_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->StatementText),
+        params32->TextLength,
+    };
+
+    return wrap_SQLPrepare( &params );
+}
+
+static NTSTATUS wow64_SQLPrepareW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  StatementText;
+        INT32  TextLength;
+    } const *params32 = args;
+
+    struct SQLPrepareW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->StatementText),
+        params32->TextLength,
+    };
+
+    return wrap_SQLPrepareW( &params );
+}
+
+static NTSTATUS wow64_SQLPrimaryKeys( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLPrimaryKeys_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLPrimaryKeys( &params );
+}
+
+static NTSTATUS wow64_SQLPrimaryKeysW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLPrimaryKeysW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLPrimaryKeysW( &params );
+}
+
+static NTSTATUS wow64_SQLProcedureColumns( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  ProcName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLProcedureColumns_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->ProcName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLProcedureColumns( &params );
+}
+
+static NTSTATUS wow64_SQLProcedureColumnsW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  ProcName;
+        INT16  NameLength3;
+        PTR32  ColumnName;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLProcedureColumnsW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->ProcName),
+        params32->NameLength3,
+        ULongToPtr(params32->ColumnName),
+        params32->NameLength4
+    };
+
+    return wrap_SQLProcedureColumnsW( &params );
+}
+
+static NTSTATUS wow64_SQLProcedures( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  ProcName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLProcedures_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->ProcName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLProcedures( &params );
+}
+
+static NTSTATUS wow64_SQLProceduresW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  ProcName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLProceduresW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->ProcName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLProceduresW( &params );
+}
+
+static NTSTATUS wow64_SQLPutData( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  Data;
+        INT64  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLPutData_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->Data),
+        params32->StrLen_or_Ind
+    };
+
+    return wrap_SQLPutData( &params );
+}
+
+static NTSTATUS wow64_SQLRowCount( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  RowCount;
+    } const *params32 = args;
+
+    struct SQLRowCount_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->RowCount)
+    };
+
+    return wrap_SQLRowCount( &params );
+}
+
+static NTSTATUS wow64_SQLSetConnectAttr( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  StringLength;
+    } const *params32 = args;
+
+    struct SQLSetConnectAttr_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->StringLength
+    };
+
+    return wrap_SQLSetConnectAttr( &params );
+}
+
+static NTSTATUS wow64_SQLSetConnectAttrW( void *args )
+{
+    struct
+    {
+        UINT64 ConnectionHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  StringLength;
+    } const *params32 = args;
+
+    struct SQLSetConnectAttrW_params params =
+    {
+        params32->ConnectionHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->StringLength
+    };
+
+    return wrap_SQLSetConnectAttrW( &params );
+}
+
+static NTSTATUS wow64_SQLSetCursorName( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CursorName;
+        INT16  NameLength;
+    } const *params32 = args;
+
+    struct SQLSetCursorName_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CursorName),
+        params32->NameLength
+    };
+
+    return wrap_SQLSetCursorName( &params );
+}
+
+static NTSTATUS wow64_SQLSetCursorNameW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CursorName;
+        INT16  NameLength;
+    } const *params32 = args;
+
+    struct SQLSetCursorNameW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CursorName),
+        params32->NameLength
+    };
+
+    return wrap_SQLSetCursorNameW( &params );
+}
+
+static NTSTATUS wow64_SQLSetDescField( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        INT16  FieldIdentifier;
+        PTR32  Value;
+        INT32  BufferLength;
+    } const *params32 = args;
+
+    struct SQLSetDescField_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->Value),
+        params32->BufferLength
+    };
+
+    return wrap_SQLSetDescField( &params );
+}
+
+static NTSTATUS wow64_SQLSetDescFieldW( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        INT16  FieldIdentifier;
+        PTR32  Value;
+        INT32  BufferLength;
+    } const *params32 = args;
+
+    struct SQLSetDescFieldW_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        params32->FieldIdentifier,
+        ULongToPtr(params32->Value),
+        params32->BufferLength
+    };
+
+    return wrap_SQLSetDescFieldW( &params );
+}
+
+static NTSTATUS wow64_SQLSetDescRec( void *args )
+{
+    struct
+    {
+        UINT64 DescriptorHandle;
+        INT16  RecNumber;
+        INT16  Type;
+        INT16  SubType;
+        INT64  Length;
+        INT16  Precision;
+        INT16  Scale;
+        PTR32  Data;
+        PTR32  StringLength;
+        PTR32  Indicator;
+    } const *params32 = args;
+
+    struct SQLSetDescRec_params params =
+    {
+        params32->DescriptorHandle,
+        params32->RecNumber,
+        params32->Type,
+        params32->SubType,
+        params32->Length,
+        params32->Precision,
+        params32->Scale,
+        ULongToPtr(params32->Data),
+        ULongToPtr(params32->StringLength),
+        ULongToPtr(params32->Indicator)
+    };
+
+    return wrap_SQLSetDescRec( &params );
+}
+
+static NTSTATUS wow64_SQLSetEnvAttr( void *args )
+{
+    struct
+    {
+        UINT64 EnvironmentHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  StringLength;
+    } const *params32 = args;
+
+    struct SQLSetEnvAttr_params params =
+    {
+        params32->EnvironmentHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->StringLength
+    };
+
+    return wrap_SQLSetEnvAttr( &params );
+}
+
+static NTSTATUS wow64_SQLSetParam( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT16  ParameterNumber;
+        INT16  ValueType;
+        INT16  ParameterType;
+        UINT64 LengthPrecision;
+        INT16  ParameterScale;
+        PTR32  ParameterValue;
+        PTR32  StrLen_or_Ind;
+    } const *params32 = args;
+
+    struct SQLSetParam_params params =
+    {
+        params32->StatementHandle,
+        params32->ParameterNumber,
+        params32->ValueType,
+        params32->ParameterType,
+        params32->LengthPrecision,
+        params32->ParameterScale,
+        ULongToPtr(params32->ParameterValue),
+        ULongToPtr(params32->StrLen_or_Ind)
+    };
+
+    return wrap_SQLSetParam( &params );
+}
+
+static NTSTATUS wow64_SQLSetStmtAttr( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  StringLength;
+    } const *params32 = args;
+
+    struct SQLSetStmtAttr_params params =
+    {
+        params32->StatementHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->StringLength
+    };
+
+    return wrap_SQLSetStmtAttr( &params );
+}
+
+static NTSTATUS wow64_SQLSetStmtAttrW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  StringLength;
+    } const *params32 = args;
+
+    struct SQLSetStmtAttrW_params params =
+    {
+        params32->StatementHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->StringLength
+    };
+
+    return wrap_SQLSetStmtAttrW( &params );
+}
+
+static NTSTATUS wow64_SQLSpecialColumns( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 IdentifierType;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        UINT16 Scope;
+        UINT16 Nullable;
+    } const *params32 = args;
+
+    struct SQLSpecialColumns_params params =
+    {
+        params32->StatementHandle,
+        params32->IdentifierType,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        params32->Scope,
+        params32->Nullable
+    };
+
+    return wrap_SQLSpecialColumns( &params );
+}
+
+static NTSTATUS wow64_SQLSpecialColumnsW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        UINT16 IdentifierType;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        UINT16 Scope;
+        UINT16 Nullable;
+    } const *params32 = args;
+
+    struct SQLSpecialColumnsW_params params =
+    {
+        params32->StatementHandle,
+        params32->IdentifierType,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        params32->Scope,
+        params32->Nullable
+    };
+
+    return wrap_SQLSpecialColumnsW( &params );
+}
+
+static NTSTATUS wow64_SQLStatistics( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        UINT16 Unique;
+        UINT16 Reserved;
+    } const *params32 = args;
+
+    struct SQLStatistics_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        params32->Unique,
+        params32->Reserved
+    };
+
+    return wrap_SQLStatistics( &params );
+}
+
+static NTSTATUS wow64_SQLStatisticsW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        UINT16 Unique;
+        UINT16 Reserved;
+    } const *params32 = args;
+
+    struct SQLStatisticsW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        params32->Unique,
+        params32->Reserved
+    };
+
+    return wrap_SQLStatisticsW( &params );
+}
+
+static NTSTATUS wow64_SQLGetStmtAttr( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetStmtAttr_params params =
+    {
+        params32->StatementHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetStmtAttr( &params );
+}
+
+static NTSTATUS wow64_SQLGetStmtAttrW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        INT32  Attribute;
+        PTR32  Value;
+        INT32  BufferLength;
+        PTR32  StringLength;
+    } const *params32 = args;
+
+    struct SQLGetStmtAttrW_params params =
+    {
+        params32->StatementHandle,
+        params32->Attribute,
+        ULongToPtr(params32->Value),
+        params32->BufferLength,
+        ULongToPtr(params32->StringLength)
+    };
+
+    return wrap_SQLGetStmtAttrW( &params );
+}
+
+static NTSTATUS wow64_SQLTablePrivileges( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLTablePrivileges_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLTablePrivileges( &params );
+}
+
+static NTSTATUS wow64_SQLTablePrivilegesW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+    } const *params32 = args;
+
+    struct SQLTablePrivilegesW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3
+    };
+
+    return wrap_SQLTablePrivilegesW( &params );
+}
+
+static NTSTATUS wow64_SQLTables( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  TableType;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLTables_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->TableType),
+        params32->NameLength4
+    };
+
+    return wrap_SQLTables( &params );
+}
+
+static NTSTATUS wow64_SQLTablesW( void *args )
+{
+    struct
+    {
+        UINT64 StatementHandle;
+        PTR32  CatalogName;
+        INT16  NameLength1;
+        PTR32  SchemaName;
+        INT16  NameLength2;
+        PTR32  TableName;
+        INT16  NameLength3;
+        PTR32  TableType;
+        INT16  NameLength4;
+    } const *params32 = args;
+
+    struct SQLTablesW_params params =
+    {
+        params32->StatementHandle,
+        ULongToPtr(params32->CatalogName),
+        params32->NameLength1,
+        ULongToPtr(params32->SchemaName),
+        params32->NameLength2,
+        ULongToPtr(params32->TableName),
+        params32->NameLength3,
+        ULongToPtr(params32->TableType),
+        params32->NameLength4
+    };
+
+    return wrap_SQLTablesW( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    odbc_process_attach,
+    odbc_process_detach,
+    wrap_SQLAllocConnect,
+    wrap_SQLAllocEnv,
+    wrap_SQLAllocHandle,
+    wrap_SQLAllocHandleStd,
+    wrap_SQLAllocStmt,
+    wow64_SQLBindCol,
+    wow64_SQLBindParam,
+    wow64_SQLBindParameter,
+    wow64_SQLBrowseConnect,
+    wow64_SQLBrowseConnectW,
+    wrap_SQLBulkOperations,
+    wrap_SQLCancel,
+    wrap_SQLCloseCursor,
+    wow64_SQLColAttribute,
+    wow64_SQLColAttributeW,
+    wow64_SQLColAttributes,
+    wow64_SQLColAttributesW,
+    wow64_SQLColumnPrivileges,
+    wow64_SQLColumnPrivilegesW,
+    wow64_SQLColumns,
+    wow64_SQLColumnsW,
+    wow64_SQLConnect,
+    wow64_SQLConnectW,
+    wrap_SQLCopyDesc,
+    wow64_SQLDataSources,
+    wow64_SQLDataSourcesW,
+    wow64_SQLDescribeCol,
+    wow64_SQLDescribeColW,
+    wow64_SQLDescribeParam,
+    wrap_SQLDisconnect,
+    wow64_SQLDriverConnect,
+    wow64_SQLDriverConnectW,
+    wow64_SQLDrivers,
+    wow64_SQLDriversW,
+    wrap_SQLEndTran,
+    wow64_SQLError,
+    wow64_SQLErrorW,
+    wow64_SQLExecDirect,
+    wow64_SQLExecDirectW,
+    wrap_SQLExecute,
+    wow64_SQLExtendedFetch,
+    wrap_SQLFetch,
+    wrap_SQLFetchScroll,
+    wow64_SQLForeignKeys,
+    wow64_SQLForeignKeysW,
+    wrap_SQLFreeConnect,
+    wrap_SQLFreeEnv,
+    wrap_SQLFreeHandle,
+    wrap_SQLFreeStmt,
+    wow64_SQLGetConnectAttr,
+    wow64_SQLGetConnectAttrW,
+    wow64_SQLGetConnectOption,
+    wow64_SQLGetConnectOptionW,
+    wow64_SQLGetCursorName,
+    wow64_SQLGetCursorNameW,
+    wow64_SQLGetData,
+    wow64_SQLGetDescField,
+    wow64_SQLGetDescFieldW,
+    wow64_SQLGetDescRec,
+    wow64_SQLGetDescRecW,
+    wow64_SQLGetDiagField,
+    wow64_SQLGetDiagFieldW,
+    wow64_SQLGetDiagRec,
+    wow64_SQLGetDiagRecW,
+    wow64_SQLGetEnvAttr,
+    wow64_SQLGetFunctions,
+    wow64_SQLGetInfo,
+    wow64_SQLGetInfoW,
+    wow64_SQLGetStmtAttr,
+    wow64_SQLGetStmtAttrW,
+    wow64_SQLGetStmtOption,
+    wrap_SQLGetTypeInfo,
+    wrap_SQLGetTypeInfoW,
+    wrap_SQLMoreResults,
+    wow64_SQLNativeSql,
+    wow64_SQLNativeSqlW,
+    wow64_SQLNumParams,
+    wow64_SQLNumResultCols,
+    wow64_SQLParamData,
+    wow64_SQLParamOptions,
+    wow64_SQLPrepare,
+    wow64_SQLPrepareW,
+    wow64_SQLPrimaryKeys,
+    wow64_SQLPrimaryKeysW,
+    wow64_SQLProcedureColumns,
+    wow64_SQLProcedureColumnsW,
+    wow64_SQLProcedures,
+    wow64_SQLProceduresW,
+    wow64_SQLPutData,
+    wow64_SQLRowCount,
+    wow64_SQLSetConnectAttr,
+    wow64_SQLSetConnectAttrW,
+    wrap_SQLSetConnectOption,
+    wrap_SQLSetConnectOptionW,
+    wow64_SQLSetCursorName,
+    wow64_SQLSetCursorNameW,
+    wow64_SQLSetDescField,
+    wow64_SQLSetDescFieldW,
+    wow64_SQLSetDescRec,
+    wow64_SQLSetEnvAttr,
+    wow64_SQLSetParam,
+    wrap_SQLSetPos,
+    wrap_SQLSetScrollOptions,
+    wow64_SQLSetStmtAttr,
+    wow64_SQLSetStmtAttrW,
+    wrap_SQLSetStmtOption,
+    wow64_SQLSpecialColumns,
+    wow64_SQLSpecialColumnsW,
+    wow64_SQLStatistics,
+    wow64_SQLStatisticsW,
+    wow64_SQLTablePrivileges,
+    wow64_SQLTablePrivilegesW,
+    wow64_SQLTables,
+    wow64_SQLTablesW,
+    wrap_SQLTransact,
+};
+
+C_ASSERT( ARRAYSIZE( __wine_unix_call_wow64_funcs) == unix_funcs_count );
+
+#endif  /* _WIN64 */
+
 static NTSTATUS load_odbc(void)
 {
    const char *s = getenv("LIB_ODBC_DRIVER_MANAGER");
