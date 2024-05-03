@@ -212,9 +212,9 @@ void LinkedList_RemoveEntry(
 	FAudioFreeFunc pFree
 ) {
 	LinkedList *latest, *prev;
+	FAudio_PlatformLockMutex(lock);
 	latest = *start;
 	prev = latest;
-	FAudio_PlatformLockMutex(lock);
 	while (latest != NULL)
 	{
 		if (latest->entry == toRemove)

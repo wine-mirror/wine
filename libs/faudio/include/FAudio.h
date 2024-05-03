@@ -494,7 +494,7 @@ extern FAudioGUID DATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
 #define FAUDIO_ABI_VERSION	 0
 #define FAUDIO_MAJOR_VERSION	24
-#define FAUDIO_MINOR_VERSION	 2
+#define FAUDIO_MINOR_VERSION	 5
 #define FAUDIO_PATCH_VERSION	 0
 
 #define FAUDIO_COMPILED_VERSION ( \
@@ -1063,6 +1063,11 @@ FAUDIOAPI void FAudioVoice_GetOutputMatrix(
 
 /* Removes this voice from the audio graph and frees memory. */
 FAUDIOAPI void FAudioVoice_DestroyVoice(FAudioVoice *voice);
+
+/*
+ * Returns S_OK on success and E_FAIL if voice could not be destroyed (e. g., because it is in use).
+ */
+FAUDIOAPI uint32_t FAudioVoice_DestroyVoiceSafeEXT(FAudioVoice *voice);
 
 /* FAudioSourceVoice Interface */
 

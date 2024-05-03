@@ -515,7 +515,7 @@ uint8_t FACT_INTERNAL_CreateSound(FACTCue *cue, uint16_t fadeInMS)
 		/* Sound */
 		baseSound = cue->sound;
 	}
-	else
+	else if (cue->variation)
 	{
 		/* Variation */
 		if (cue->variation->flags == 3)
@@ -1662,7 +1662,7 @@ void FACT_INTERNAL_UpdateCue(FACTCue *cue)
 	FACTSoundInstance *sound;
 
 	/* Interactive sound selection */
-	if (!(cue->data->flags & 0x04) && cue->variation->flags == 3)
+	if (!(cue->data->flags & 0x04) && cue->variation && cue->variation->flags == 3)
 	{
 		/* Interactive */
 		if (cue->parentBank->parentEngine->variables[cue->variation->variable].accessibility & 0x04)

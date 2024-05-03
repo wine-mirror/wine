@@ -210,8 +210,14 @@ void FAudio_PlatformInit(
 	HRESULT hr;
 	HANDLE audioEvent = NULL;
 	BOOL has_sse2 = IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE);
-
-	FAudio_INTERNAL_InitSIMDFunctions(has_sse2, FALSE);
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(__arm64ec__) || defined(_M_ARM64EC)
+	BOOL has_neon = TRUE;
+#elif defined(__arm__) || defined(_M_ARM)
+	BOOL has_neon = IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE);
+#else
+	BOOL has_neon = FALSE;
+#endif
+	FAudio_INTERNAL_InitSIMDFunctions(has_sse2, has_neon);
 	FAudio_resolve_SetThreadDescription();
 
 	FAudio_PlatformAddRef();

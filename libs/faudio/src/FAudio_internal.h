@@ -37,8 +37,8 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include <windef.h>
-#include <winbase.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 #define FAudio_malloc malloc
 #define FAudio_realloc realloc
@@ -109,10 +109,17 @@ extern void FAudio_Log(char const *msg);
 	((x << 24)	& 0x00FF000000000000) | \
 	((x << 32)	& 0xFF00000000000000)
 #else
+#ifdef FAUDIO_SDL3_PLATFORM
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_assert.h>
+#include <SDL3/SDL_endian.h>
+#include <SDL3/SDL_log.h>
+#else
 #include <SDL_stdinc.h>
 #include <SDL_assert.h>
 #include <SDL_endian.h>
 #include <SDL_log.h>
+#endif
 
 #define FAudio_malloc SDL_malloc
 #define FAudio_realloc SDL_realloc
@@ -210,6 +217,15 @@ extern void FAudio_Log(char const *msg);
 /* C++ does not have restrict (though VS2012+ does have __restrict) */
 #if defined(__cplusplus) && !defined(restrict)
 #define restrict
+#endif
+
+/* Alignment macro for gcc/clang/msvc */
+#if defined(__clang__) || defined(__GNUC__)
+#define ALIGN(type, boundary) type __attribute__((aligned(boundary)))
+#elif defined(_MSC_VER)
+#define ALIGN(type, boundary) __declspec(align(boundary)) type
+#else
+#define ALIGN(type, boundary) type
 #endif
 
 /* Threading Types */
@@ -620,10 +636,10 @@ void FAudio_INTERNAL_debug_fmt(
 #define LOG_FUNC_ENTER(engine) PRINT_DEBUG(engine, FUNC_CALLS, "FUNC Enter", "%s", __func__)
 #define LOG_FUNC_EXIT(engine) PRINT_DEBUG(engine, FUNC_CALLS, "FUNC Exit", "%s", __func__)
 /* TODO: LOG_TIMING */
-#define LOG_MUTEX_CREATE(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Create", "%p", mutex)
-#define LOG_MUTEX_DESTROY(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Destroy", "%p", mutex)
-#define LOG_MUTEX_LOCK(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Lock", "%p", mutex)
-#define LOG_MUTEX_UNLOCK(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Unlock", "%p", mutex)
+#define LOG_MUTEX_CREATE(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Create", "%p (%s)", mutex, #mutex)
+#define LOG_MUTEX_DESTROY(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Destroy", "%p (%s)", mutex, #mutex)
+#define LOG_MUTEX_LOCK(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Lock", "%p (%s)", mutex, #mutex)
+#define LOG_MUTEX_UNLOCK(engine, mutex) PRINT_DEBUG(engine, LOCKS, "Mutex Unlock", "%p (%s)", mutex, #mutex)
 /* TODO: LOG_MEMORY */
 /* TODO: LOG_STREAMING */
 

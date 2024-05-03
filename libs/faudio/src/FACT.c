@@ -1239,7 +1239,7 @@ uint32_t FACTSoundBank_Prepare(
 				break;
 			}
 		}
-		if ((*ppCue)->variation->flags == 3)
+		if ((*ppCue)->variation && (*ppCue)->variation->flags == 3)
 		{
 			(*ppCue)->interactive = pSoundBank->parentEngine->variables[
 				(*ppCue)->variation->variable
