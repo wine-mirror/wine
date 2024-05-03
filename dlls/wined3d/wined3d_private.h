@@ -3495,6 +3495,7 @@ struct wined3d_vertex_declaration
     bool point_size;
     bool diffuse;
     bool specular;
+    bool normal;
 };
 
 bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,

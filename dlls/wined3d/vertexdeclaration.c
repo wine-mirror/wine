@@ -226,6 +226,8 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             declaration->diffuse = true;
         else if (e->usage == WINED3D_DECL_USAGE_COLOR && e->usage_idx == 1)
             declaration->specular = true;
+        else if (e->usage == WINED3D_DECL_USAGE_NORMAL)
+            declaration->normal = true;
 
         /* Find the streams used in the declaration. The vertex buffers have
          * to be loaded when drawing, but filter tessellation pseudo streams. */

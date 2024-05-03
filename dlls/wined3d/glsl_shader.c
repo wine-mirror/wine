@@ -11759,13 +11759,13 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     const struct wined3d_vertex_declaration *vdecl = state->vertex_declaration;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    BOOL normal = !!(context->stream_info.use_map & (1u << WINED3D_FFP_NORMAL));
     const BOOL legacy_clip_planes = needs_legacy_glsl_syntax(gl_info);
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
     bool point_size = vdecl->point_size;
     bool specular = vdecl->specular;
     bool diffuse = vdecl->diffuse;
+    bool normal = vdecl->normal;
     unsigned int i;
 
     context->last_was_rhw = transformed;
