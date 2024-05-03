@@ -11759,6 +11759,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     BOOL specular = !!(context->stream_info.use_map & (1u << WINED3D_FFP_SPECULAR));
+    BOOL point_size = !!(context->stream_info.use_map & (1u << WINED3D_FFP_PSIZE));
     BOOL diffuse = !!(context->stream_info.use_map & (1u << WINED3D_FFP_DIFFUSE));
     BOOL normal = !!(context->stream_info.use_map & (1u << WINED3D_FFP_NORMAL));
     const BOOL legacy_clip_planes = needs_legacy_glsl_syntax(gl_info);
@@ -11799,7 +11800,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
          * normal presence changes. */
         if (!shader_glsl_full_ffp_varyings(gl_info) || (state->render_states[WINED3D_RS_COLORVERTEX]
                 && (diffuse != context->last_was_diffuse || specular != context->last_was_specular))
-                || normal != context->last_was_normal)
+                || normal != context->last_was_normal || point_size != context->last_was_point_size)
             context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 
         if (use_ps(state)
@@ -11824,6 +11825,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     context->last_was_diffuse = diffuse;
     context->last_was_specular = specular;
     context->last_was_normal = normal;
+    context->last_was_point_size = point_size;
 }
 
 static void glsl_vertex_pipe_vs(struct wined3d_context *context,
