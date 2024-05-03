@@ -48,6 +48,7 @@
 #include "unixlib.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libodbc;
@@ -168,12 +169,295 @@ static SQLRETURN (*pSQLTables)(SQLHSTMT,SQLCHAR*,SQLSMALLINT,SQLCHAR*,SQLSMALLIN
 static SQLRETURN (*pSQLTablesW)(SQLHSTMT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT,SQLWCHAR*,SQLSMALLINT);
 static SQLRETURN (*pSQLTransact)(SQLHENV,SQLHDBC,SQLUSMALLINT);
 
+static inline void init_unicode_string( UNICODE_STRING *str, const WCHAR *data, ULONG data_size )
+{
+    str->Length = str->MaximumLength = data_size;
+    str->Buffer = (WCHAR *)data;
+}
+
+static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
+static HANDLE create_hkcu_key( const WCHAR *path, ULONG path_size )
+{
+    NTSTATUS status;
+    char buffer[512 + ARRAY_SIZE("\\Registry\\User\\")];
+    WCHAR bufferW[512 + ARRAY_SIZE("\\Registry\\User\\")];
+    DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+    DWORD i, len = sizeof(sid_data);
+    SID *sid;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    status = NtQueryInformationToken( GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len );
+    if (status) return NULL;
+
+    sid = ((TOKEN_USER *)sid_data)->User.Sid;
+    len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
+                   (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                                  MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+    for (i = 0; i < sid->SubAuthorityCount; i++)
+        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
+    buffer[len++] = '\\';
+
+    ascii_to_unicode( bufferW, buffer, len );
+    memcpy( bufferW + len, path, path_size );
+    init_unicode_string( &str, bufferW, len * sizeof(WCHAR) + path_size );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (!NtCreateKey( &ret, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return ret;
+    return NULL;
+}
+
+static HANDLE create_hklm_key( const WCHAR *path, ULONG path_size )
+{
+    static const WCHAR machineW[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\'};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    WCHAR bufferW[256 + ARRAY_SIZE(machineW)];
+    HANDLE ret;
+
+    memcpy( bufferW, machineW, sizeof(machineW) );
+    memcpy( bufferW + ARRAY_SIZE(machineW), path, path_size );
+    init_unicode_string( &str, bufferW, sizeof(machineW) + path_size );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (!NtCreateKey( &ret, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL )) return ret;
+    return NULL;
+}
+
+static HANDLE create_key( HANDLE root, const WCHAR *path, ULONG path_size, ULONG options, ULONG *disposition )
+{
+    UNICODE_STRING name = { path_size, path_size, (WCHAR *)path };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &name;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition )) return NULL;
+    return ret;
+}
+
+static ULONG query_value( HANDLE key, const WCHAR *name, ULONG name_size, KEY_VALUE_PARTIAL_INFORMATION *info,
+                          ULONG size )
+{
+    UNICODE_STRING str = { name_size, name_size, (WCHAR *)name };
+    if (NtQueryValueKey( key, &str, KeyValuePartialInformation, info, size, &size )) return 0;
+    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+}
+
+static BOOL set_value( HANDLE key, const WCHAR *name, ULONG name_size, ULONG type, const void *value, ULONG count )
+{
+    UNICODE_STRING str = { name_size, name_size, (WCHAR *)name };
+    return !NtSetValueKey( key, &str, 0, type, value, count );
+}
+
+/***********************************************************************
+ * odbc_replicate_odbcinst_to_registry
+ *
+ * Utility to odbc_replicate_odbcinst_to_registry() to replicate the drivers of the
+ * ODBCINST.INI settings
+ *
+ * The driver settings are not replicated to the registry.  If we were to
+ * replicate them we would need to decide whether to replicate all settings
+ * or to do some translation; whether to remove any entries present only in
+ * the windows registry, etc.
+ */
+static void replicate_odbcinst_to_registry( SQLHENV env )
+{
+    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
+    static const WCHAR odbcinstW[] = {'O','D','B','C','I','N','S','T','.','I','N','I'};
+    static const WCHAR driversW[] = {'O','D','B','C',' ','D','r','i','v','e','r','s'};
+    HANDLE key_odbc, key_odbcinst, key_drivers;
+    BOOL success = FALSE;
+
+    if (!(key_odbc = create_hklm_key( odbcW, sizeof(odbcW) ))) return;
+
+    if ((key_odbcinst = create_key( key_odbc, odbcinstW, sizeof(odbcinstW), 0, NULL )))
+    {
+        if ((key_drivers = create_key( key_odbcinst, driversW, sizeof(driversW), 0, NULL )))
+        {
+            SQLRETURN ret;
+            SQLUSMALLINT dir = SQL_FETCH_FIRST;
+            WCHAR desc [256];
+            SQLSMALLINT len;
+
+            success = TRUE;
+            while (SUCCESS((ret = pSQLDriversW( env, dir, (SQLWCHAR *)desc, sizeof(desc), &len, NULL, 0, NULL ))))
+            {
+                dir = SQL_FETCH_NEXT;
+                if (len == lstrlenW( desc ))
+                {
+                    static const WCHAR installedW[] = {'I','n','s','t','a','l','l','e','d',0};
+                    HANDLE key_driver;
+                    WCHAR buffer[256];
+                    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
+
+                    if (!query_value( key_drivers, desc, len * sizeof(WCHAR), info, sizeof(buffer) ))
+                    {
+                        if (!set_value( key_drivers, desc, len * sizeof(WCHAR), REG_SZ, (const BYTE *)installedW,
+                                        sizeof(installedW) ))
+                        {
+                            TRACE( "error replicating driver %s\n", debugstr_w(desc) );
+                            success = FALSE;
+                        }
+                    }
+                    if ((key_driver = create_key( key_odbcinst, desc, lstrlenW( desc ) * sizeof(WCHAR), 0, NULL )))
+                        NtClose( key_driver );
+                    else
+                    {
+                        TRACE( "error ensuring driver key %s\n", debugstr_w(desc) );
+                        success = FALSE;
+                    }
+                }
+                else
+                {
+                    WARN( "unusually long driver name %s not replicated\n", debugstr_w(desc) );
+                    success = FALSE;
+                }
+            }
+            NtClose( key_drivers );
+        }
+        else TRACE( "error opening Drivers key\n" );
+
+        NtClose( key_odbcinst );
+    }
+    else TRACE( "error creating/opening ODBCINST.INI key\n" );
+
+    if (!success) WARN( "may not have replicated all ODBC drivers to the registry\n" );
+    NtClose( key_odbc );
+}
+
+/***********************************************************************
+ * replicate_odbc_to_registry
+ *
+ * Utility to replicate_to_registry() to replicate either the USER or
+ * SYSTEM data sources.
+ *
+ * For now simply place the "Driver description" (as returned by SQLDataSources)
+ * into the registry as the driver.  This is enough to satisfy Crystal's
+ * requirement that there be a driver entry.  (It doesn't seem to care what
+ * the setting is).
+ * A slightly more accurate setting would be to access the registry to find
+ * the actual driver library for the given description (which appears to map
+ * to one of the HKLM/Software/ODBC/ODBCINST.INI keys).  (If you do this note
+ * that this will add a requirement that this function be called after
+ * replicate_odbcinst_to_registry())
+ */
+static void replicate_odbc_to_registry( BOOL is_user, SQLHENV env )
+{
+    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C'};
+    static const WCHAR odbciniW[] = {'O','D','B','C','.','I','N','I'};
+    HANDLE key_odbc, key_odbcini, key_source;
+    SQLRETURN ret;
+    SQLUSMALLINT dir;
+    WCHAR dsn[SQL_MAX_DSN_LENGTH + 1], desc[256];
+    SQLSMALLINT len_dsn, len_desc;
+    BOOL success = FALSE;
+    const char *which;
+
+    if (is_user)
+    {
+        key_odbc = create_hkcu_key( odbcW, sizeof(odbcW) );
+        which = "user";
+    }
+    else
+    {
+        key_odbc = create_hklm_key( odbcW, sizeof(odbcW) );
+        which = "system";
+    }
+    if (!key_odbc) return;
+
+    if ((key_odbcini = create_key( key_odbc, odbciniW, sizeof(odbciniW), 0, NULL )))
+    {
+        success = TRUE;
+        dir = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
+        while (SUCCESS((ret = pSQLDataSourcesW( env, dir, (SQLWCHAR *)dsn, sizeof(dsn), &len_dsn, (SQLWCHAR *)desc,
+                                                sizeof(desc), &len_desc ))))
+        {
+            dir = SQL_FETCH_NEXT;
+            if (len_dsn == lstrlenW( dsn ) && len_desc == lstrlenW( desc ))
+            {
+                if ((key_source = create_key( key_odbcini, dsn, len_dsn * sizeof(WCHAR), 0, NULL )))
+                {
+                    static const WCHAR driverW[] = {'D','r','i','v','e','r'};
+                    WCHAR buffer[256];
+                    KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
+                    ULONG size;
+
+                    if (!(size = query_value( key_source, driverW, sizeof(driverW), info, sizeof(buffer) )))
+                    {
+                        if (!set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)desc,
+                                        len_desc * sizeof(WCHAR) ))
+                        {
+                            TRACE( "error replicating description of %s (%s)\n", debugstr_w(dsn), debugstr_w(desc) );
+                            success = FALSE;
+                        }
+                    }
+                    NtClose( key_source );
+                }
+                else
+                {
+                    TRACE( "error opening %s DSN key %s\n", which, debugstr_w(dsn) );
+                    success = FALSE;
+                }
+            }
+            else
+            {
+                WARN( "unusually long %s data source name %s (%s) not replicated\n", which, debugstr_w(dsn), debugstr_w(desc) );
+                success = FALSE;
+            }
+        }
+        NtClose( key_odbcini );
+    }
+    else TRACE( "error creating/opening %s ODBC.INI registry key\n", which );
+
+    if (!success) WARN( "may not have replicated all %s ODBC DSNs to the registry\n", which );
+    NtClose( key_odbc );
+}
+
+/***********************************************************************
+ * replicate_to_registry
+ *
+ * Unfortunately some of the functions that Windows documents as being part
+ * of the ODBC API it implements directly during compilation or something
+ * in terms of registry access functions.
+ * e.g. SQLGetInstalledDrivers queries the list at
+ * HKEY_LOCAL_MACHINE\Software\ODBC\ODBCINST.INI\ODBC Drivers
+ *
+ * This function is called when the driver manager is loaded and is used
+ * to replicate the appropriate details into the Wine registry
+ */
+static void replicate_to_registry(void)
+{
+    SQLHENV env;
+    SQLRETURN ret;
+
+    if (!(ret = pSQLAllocEnv( &env )))
+    {
+        replicate_odbcinst_to_registry( env );
+        replicate_odbc_to_registry( FALSE /* system dsn */, env );
+        replicate_odbc_to_registry( TRUE /* user dsn */, env );
+        pSQLFreeEnv( env );
+    }
+    else
+    {
+        TRACE( "error %d opening an SQL environment\n", (int)ret );
+        WARN( "external ODBC settings have not been replicated to the Wine registry\n" );
+    }
+}
 
 static NTSTATUS load_odbc(void);
 
 static NTSTATUS odbc_process_attach( void *args )
 {
     if (load_odbc()) return STATUS_DLL_NOT_FOUND;
+    replicate_to_registry();
     return STATUS_SUCCESS;
 }
 

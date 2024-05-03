@@ -29,6 +29,8 @@
 #include "winbase.h"
 #include "wine/unixlib.h"
 
+#define SUCCESS(ret) (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+
 enum sql_funcs
 {
     process_attach,
