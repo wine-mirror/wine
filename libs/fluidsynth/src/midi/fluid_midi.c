@@ -1644,7 +1644,7 @@ fluid_player_handle_reset_synth(void *data, const char *name, int value)
 static int check_for_on_notes(fluid_synth_t *synth)
 {
     fluid_voice_t* v[1024];
-    int i, res=FALSE;
+    unsigned int i, res=FALSE;
     fluid_synth_get_voicelist(synth, v, FLUID_N_ELEMENTS(v), -1);
     for(i=0; i<FLUID_N_ELEMENTS(v) && v[i] != NULL; i++)
     {

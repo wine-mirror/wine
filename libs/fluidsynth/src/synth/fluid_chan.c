@@ -325,7 +325,7 @@ fluid_channel_set_bank_msb(fluid_channel_t *chan, int bankmsb)
         /* XG bank, do drum-channel auto-switch */
         /* The number "120" was based on several keyboards having drums at 120 - 127,
            reference: https://lists.nongnu.org/archive/html/fluid-dev/2011-02/msg00003.html */
-        chan->channel_type = (120 <= bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
+        chan->channel_type = (120 == bankmsb || 126 == bankmsb || 127 == bankmsb) ? CHANNEL_TYPE_DRUM : CHANNEL_TYPE_MELODIC;
         return;
     }
 
