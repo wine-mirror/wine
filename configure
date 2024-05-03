@@ -22473,6 +22473,7 @@ wine_fn_config_makefile dlls/ntprint enable_ntprint
 wine_fn_config_makefile dlls/ntprint/tests enable_tests
 wine_fn_config_makefile dlls/objsel enable_objsel
 wine_fn_config_makefile dlls/odbc32 enable_odbc32
+wine_fn_config_makefile dlls/odbc32/tests enable_tests
 wine_fn_config_makefile dlls/odbcbcp enable_odbcbcp
 wine_fn_config_makefile dlls/odbccp32 enable_odbccp32
 wine_fn_config_makefile dlls/odbccp32/tests enable_tests
