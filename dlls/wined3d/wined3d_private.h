@@ -3491,7 +3491,8 @@ struct wined3d_vertex_declaration
     struct wined3d_vertex_declaration_element *elements;
     unsigned int element_count;
 
-    BOOL position_transformed;
+    bool position_transformed;
+    bool point_size;
 };
 
 bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,

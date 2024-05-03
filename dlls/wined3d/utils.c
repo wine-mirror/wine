@@ -6566,6 +6566,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         const struct wined3d_state *state, struct wined3d_ffp_vs_settings *settings)
 {
     enum wined3d_material_color_source diffuse_source, emissive_source, ambient_source, specular_source;
+    const struct wined3d_vertex_declaration *vdecl = state->vertex_declaration;
     const struct wined3d_stream_info *si = &context->stream_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     unsigned int coord_idx, i;
@@ -6576,7 +6577,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     {
         settings->transformed = 1;
         settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
-        settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
+        settings->per_vertex_point_size = vdecl->point_size;
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
         else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
@@ -6625,7 +6626,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
     settings->specular_enable = !!state->render_states[WINED3D_RS_SPECULARENABLE];
     settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
-    settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
+    settings->per_vertex_point_size = vdecl->point_size;
 
     wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
             &ambient_source, &specular_source, state, si);

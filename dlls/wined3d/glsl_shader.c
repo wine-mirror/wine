@@ -11756,15 +11756,16 @@ static void glsl_vertex_pipe_shader(struct wined3d_context *context,
 static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
+    const struct wined3d_vertex_declaration *vdecl = state->vertex_declaration;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     BOOL specular = !!(context->stream_info.use_map & (1u << WINED3D_FFP_SPECULAR));
-    BOOL point_size = !!(context->stream_info.use_map & (1u << WINED3D_FFP_PSIZE));
     BOOL diffuse = !!(context->stream_info.use_map & (1u << WINED3D_FFP_DIFFUSE));
     BOOL normal = !!(context->stream_info.use_map & (1u << WINED3D_FFP_NORMAL));
     const BOOL legacy_clip_planes = needs_legacy_glsl_syntax(gl_info);
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
+    bool point_size = vdecl->point_size;
     unsigned int i;
 
     context->last_was_rhw = transformed;

@@ -12332,17 +12332,14 @@ static void test_pointsize(void)
                     ok(color != 0xff00ffff, "Got unexpected color 0x%08x at (64, 64).\n", color);
                 }
 
-                todo_wine_if (j == 10 || (j == 11 && i == 10))
-                {
-                    color = get_readback_color(&rb, 63, 64);
-                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (63, 64).\n", color);
-                    color = get_readback_color(&rb, 65, 64);
-                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (65, 64).\n", color);
-                    color = get_readback_color(&rb, 64, 63);
-                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 63).\n", color);
-                    color = get_readback_color(&rb, 64, 65);
-                    ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 65).\n", color);
-                }
+                color = get_readback_color(&rb, 63, 64);
+                ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (63, 64).\n", color);
+                color = get_readback_color(&rb, 65, 64);
+                ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (65, 64).\n", color);
+                color = get_readback_color(&rb, 64, 63);
+                ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 63).\n", color);
+                color = get_readback_color(&rb, 64, 65);
+                ok(color == 0xff00ffff, "Got unexpected color 0x%08x at (64, 65).\n", color);
             }
             else
             {

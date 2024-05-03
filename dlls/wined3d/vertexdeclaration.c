@@ -219,7 +219,9 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             alignment = 4;
 
         if (e->usage == WINED3D_DECL_USAGE_POSITIONT)
-            declaration->position_transformed = TRUE;
+            declaration->position_transformed = true;
+        else if (e->usage == WINED3D_DECL_USAGE_PSIZE)
+            declaration->point_size = true;
 
         /* Find the streams used in the declaration. The vertex buffers have
          * to be loaded when drawing, but filter tessellation pseudo streams. */
