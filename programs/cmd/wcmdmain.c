@@ -2240,6 +2240,19 @@ static const char* debugstr_token(enum builder_token tkn, union token_parameter 
     }
 }
 
+static unsigned token_get_precedence(enum builder_token tkn)
+{
+    switch (tkn)
+    {
+    case TKN_EOL: return 5;
+    case TKN_BAR: return 4;
+    case TKN_AMPAMP: return 3;
+    case TKN_BARBAR: return 2;
+    case TKN_AMP: return 1;
+    default: return 0;
+    }
+}
+
 static void node_builder_init(struct node_builder *builder)
 {
     memset(builder, 0, sizeof(*builder));
@@ -2315,7 +2328,7 @@ static void redirection_list_append(CMD_REDIRECTION **redir, CMD_REDIRECTION *la
     }
 }
 
-static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
+static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence, CMD_NODE **result)
 {
     CMD_REDIRECTION *redir = NULL;
     unsigned bogus_line;
@@ -2346,14 +2359,14 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
             /* empty lines are allowed here */
             while ((tkn = node_builder_peek_next_token(builder, &pmt)) == TKN_EOL)
                 node_builder_consume(builder);
-            ERROR_IF(!node_builder_parse(builder, &left));
+            ERROR_IF(!node_builder_parse(builder, 0, &left));
             /* temp before using precedence in chaining */
             while ((tkn = node_builder_peek_next_token(builder, &pmt)) != TKN_CLOSEPAR)
             {
                 ERROR_IF(tkn != TKN_EOL);
                 node_builder_consume(builder);
                 /* FIXME potential empty here?? */
-                ERROR_IF(!node_builder_parse(builder, &right));
+                ERROR_IF(!node_builder_parse(builder, 0, &right));
                 left = node_create_binary(CMD_CONCAT, left, right);
             }
             node_builder_consume(builder);
@@ -2381,32 +2394,44 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
             break;
         case TKN_AMP:
             ERROR_IF(!left);
-            node_builder_consume(builder);
-            if (node_builder_peek_next_token(builder, &pmt) == TKN_CLOSEPAR)
+            if (!(done = token_get_precedence(tkn) <= precedence))
             {
-                done = TRUE;
-                break;
+                node_builder_consume(builder);
+                if (node_builder_peek_next_token(builder, &pmt) == TKN_CLOSEPAR)
+                {
+                    done = TRUE;
+                    break;
+                }
+                ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
+                left = node_create_binary(CMD_CONCAT, left, right);
             }
-            ERROR_IF(!node_builder_parse(builder, &right));
-            left = node_create_binary(CMD_CONCAT, left, right);
             break;
         case TKN_AMPAMP:
             ERROR_IF(!left);
-            node_builder_consume(builder);
-            ERROR_IF(!node_builder_parse(builder, &right));
-            left = node_create_binary(CMD_ONSUCCESS, left, right);
+            if (!(done = token_get_precedence(tkn) <= precedence))
+            {
+                node_builder_consume(builder);
+                ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
+                left = node_create_binary(CMD_ONSUCCESS, left, right);
+            }
             break;
         case TKN_BAR:
             ERROR_IF(!left);
-            node_builder_consume(builder);
-            ERROR_IF(!node_builder_parse(builder, &right));
-            left = node_create_binary(CMD_PIPE, left, right);
+            if (!(done = token_get_precedence(tkn) <= precedence))
+            {
+                node_builder_consume(builder);
+                ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
+                left = node_create_binary(CMD_PIPE, left, right);
+            }
             break;
         case TKN_BARBAR:
             ERROR_IF(!left);
-            node_builder_consume(builder);
-            ERROR_IF(!node_builder_parse(builder, &right));
-            left = node_create_binary(CMD_ONFAILURE, left, right);
+            if (!(done = token_get_precedence(tkn) <= precedence))
+            {
+                node_builder_consume(builder);
+                ERROR_IF(!node_builder_parse(builder, token_get_precedence(tkn), &right));
+                left = node_create_binary(CMD_ONFAILURE, left, right);
+            }
             break;
         case TKN_COMMAND:
             ERROR_IF(left);
@@ -2437,7 +2462,7 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
                 ERROR_IF(!if_condition_parse(pmt.command->command, &end, &cond));
                 command_dispose(pmt.command);
                 node_builder_consume(builder);
-                if (!node_builder_parse(builder, &then_block))
+                if (!node_builder_parse(builder, 0, &then_block))
                 {
                     if_condition_dispose(&cond);
                     ERROR_IF(TRUE);
@@ -2446,7 +2471,7 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
                 if (tkn == TKN_ELSE)
                 {
                     node_builder_consume(builder);
-                    if (!node_builder_parse(builder, &else_block))
+                    if (!node_builder_parse(builder, 0, &else_block))
                     {
                         if_condition_dispose(&cond);
                         node_dispose_tree(then_block);
@@ -2499,7 +2524,7 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
                     node_builder_consume(builder);
                 } while (tkn != TKN_CLOSEPAR);
                 if (!node_builder_expect_token(builder, TKN_DO) ||
-                    !node_builder_parse(builder, &do_block))
+                    !node_builder_parse(builder, 0, &do_block))
                 {
                     for_control_dispose(for_ctrl);
                     ERROR_IF(TRUE);
@@ -2538,7 +2563,7 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     }
     else
     {
-        if (node_builder_parse(builder, node) &&
+        if (node_builder_parse(builder, 0, node) &&
             builder->pos + 1 >= builder->num) /* consumed all tokens? */
             return TRUE;
         /* print error on first unused token */
