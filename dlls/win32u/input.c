@@ -521,6 +521,7 @@ static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const
         if (vkey >= 'A' && vkey <= 'Z') return vkey - 'A' + 1;
         tables = &kbdus_tables;
     }
+    if (vkey >= VK_NUMPAD0 && vkey <= VK_NUMPAD9) tables = &kbdus_tables;
 
     mod = caps_mod = kbd_tables_get_mod_num( tables, state, FALSE );
     if (caps) caps_mod = kbd_tables_get_mod_num( tables, state, TRUE );
