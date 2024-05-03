@@ -568,7 +568,11 @@ png_read_row(png_structrp png_ptr, png_bytep row, png_bytep dsp_row)
 #endif
 
 #ifdef PNG_READ_TRANSFORMS_SUPPORTED
-   if (png_ptr->transformations || png_ptr->num_palette_max >= 0)
+   if (png_ptr->transformations
+#     ifdef PNG_CHECK_FOR_INVALID_INDEX_SUPPORTED
+         || png_ptr->num_palette_max >= 0
+#     endif
+      )
       png_do_read_transformations(png_ptr, &row_info);
 #endif
 
