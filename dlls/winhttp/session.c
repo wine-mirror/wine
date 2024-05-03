@@ -1896,7 +1896,17 @@ static BOOL parse_script_result( const char *result, WINHTTP_PROXY_INFO *info )
         p += 5;
         while (*p == ' ') p++;
         if (!*p || *p == ';') return TRUE;
-        if (!(info->lpszProxy = q = strdupAW( p ))) return FALSE;
+        if (!(q = strdupAW( p ))) return FALSE;
+        len = wcslen( q );
+        info->lpszProxy = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) );
+        if (!info->lpszProxy)
+        {
+            free( q );
+            return FALSE;
+        }
+        memcpy( info->lpszProxy, q, (len + 1) * sizeof(WCHAR) );
+        free( q );
+        q = info->lpszProxy;
         info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
         for (; *q; q++)
         {
