@@ -2229,15 +2229,12 @@ HWND create_foreign_window( Display *display, Window xwin )
     hwnd = NtUserCreateWindowEx( 0, &class_name, &class_name, NULL, style, pos.x, pos.y,
                                  attr.width, attr.height, parent, 0, NULL, NULL, 0, NULL,
                                  0, FALSE );
-
-    if (!(data = alloc_win_data( display, hwnd )))
+    if (!(data = get_win_data( hwnd )))
     {
         NtUserDestroyWindow( hwnd );
         return 0;
     }
-    SetRect( &data->window_rect, pos.x, pos.y, pos.x + attr.width, pos.y + attr.height );
-    data->whole_rect = data->client_rect = data->window_rect;
-    data->whole_window = data->client_window = 0;
+    destroy_whole_window( data, FALSE );
     data->embedded = TRUE;
     data->mapped = TRUE;
 
