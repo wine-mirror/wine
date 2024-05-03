@@ -3558,9 +3558,26 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
                                                         MOUSEEVENTF_XDOWN | MOUSEEVENTF_XUP));
             break;
         case INPUT_KEYBOARD:
-            req->input.kbd.vkey  = input->ki.wVk;
-            req->input.kbd.scan  = input->ki.wScan;
-            req->input.kbd.flags = input->ki.dwFlags;
+            if (input->ki.dwFlags & KEYEVENTF_SCANCODE)
+            {
+                UINT scan = input->ki.wScan;
+                /* TODO: Use the keyboard layout of the target hwnd, once
+                 * NtUserGetKeyboardLayout supports non-current threads. */
+                HKL layout = NtUserGetKeyboardLayout( 0 );
+                if (flags & SEND_HWMSG_INJECTED)
+                {
+                    scan = scan & 0xff;
+                    if (input->ki.dwFlags & KEYEVENTF_EXTENDEDKEY) scan |= 0xe000;
+                }
+                req->input.kbd.vkey = NtUserMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout );
+                req->input.kbd.scan = input->ki.wScan & 0xff;
+            }
+            else
+            {
+                req->input.kbd.vkey = input->ki.wVk;
+                req->input.kbd.scan = input->ki.wScan;
+            }
+            req->input.kbd.flags = input->ki.dwFlags & ~KEYEVENTF_SCANCODE;
             req->input.kbd.time  = input->ki.time;
             req->input.kbd.info  = input->ki.dwExtraInfo;
             affects_key_state = TRUE;

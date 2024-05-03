@@ -801,9 +801,8 @@ static void send_right_control(HWND hwnd, uint32_t state)
 {
     INPUT input = {0};
     input.type = INPUT_KEYBOARD;
-    input.ki.wScan = key2scan(KEY_RIGHTCTRL);
-    input.ki.wVk = VK_RCONTROL;
-    input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    input.ki.wScan = 0xe000 | (key2scan(KEY_RIGHTCTRL) & 0xff);
+    input.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY;
     if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;
     NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
@@ -824,8 +823,8 @@ static void keyboard_handle_key(void *data, struct wl_keyboard *wl_keyboard,
     if (key == KEY_RIGHTALT) send_right_control(hwnd, state);
 
     input.type = INPUT_KEYBOARD;
-    input.ki.wScan = scan & 0xff;
-    input.ki.wVk = NtUserMapVirtualKeyEx(scan, MAPVK_VSC_TO_VK_EX, keyboard_hkl);
+    input.ki.wScan = (scan & 0x300) ? scan + 0xdf00 : scan;
+    input.ki.dwFlags = KEYEVENTF_SCANCODE;
     if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
     if (state == WL_KEYBOARD_KEY_STATE_RELEASED) input.ki.dwFlags |= KEYEVENTF_KEYUP;

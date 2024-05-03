@@ -1063,16 +1063,26 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     struct send_input_keyboard_test rshift_scan[] =
     {
         {.scan = 0x36, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
-         .todo_state = {[0] = TRUE, [VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE},
-         .expect = {KEY_HOOK(WM_KEYDOWN, 0x36, VK_RSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0x36, VK_SHIFT, .todo_value = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x36, VK_RSHIFT), KEY_MSG(WM_KEYDOWN, 0x36, VK_SHIFT), {0}}},
         {.scan = scan, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80, /*[vkey] = 0x80*/},
-         .todo_state = {[0] = TRUE, [VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE, /*[vkey] = TRUE*/},
-         .expect = {KEY_HOOK(WM_KEYDOWN, scan, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, scan, vkey, .todo_value = TRUE), WIN_MSG(WM_CHAR, wch_shift, MAKELONG(1, scan), .todo = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYDOWN, scan, vkey), KEY_MSG(WM_KEYDOWN, scan, vkey), WIN_MSG(WM_CHAR, wch_shift, MAKELONG(1, scan)), {0}}},
         {.scan = scan, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
-         .todo_state = {[VK_SHIFT] = TRUE, [VK_LSHIFT] = TRUE},
-         .expect = {KEY_HOOK(WM_KEYUP, scan, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYUP, scan, vkey, .todo_value = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, scan, vkey), KEY_MSG(WM_KEYUP, scan, vkey), {0}}},
         {.scan = 0x36, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
-         .expect = {KEY_HOOK(WM_KEYUP, 0x36, VK_RSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0x36, VK_SHIFT, .todo_value = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x36, VK_RSHIFT), KEY_MSG(WM_KEYUP, 0x36, VK_SHIFT), {0}}},
+        {0},
+    };
+
+    struct send_input_keyboard_test rctrl_scan[] =
+    {
+        {.scan = 0xe01d, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0xe01d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 0x1d, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0x1d, VK_CONTROL), {0}}},
+        {.scan = 0x1d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
+         .expect = {KEY_HOOK_(WM_KEYDOWN, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0x11d, VK_CONTROL), {0}}},
+        {.scan = 0x1d, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK_(WM_KEYUP, 0x1d, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0x11d, VK_CONTROL), {0}}},
         {0},
     };
 
@@ -1179,7 +1189,6 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     lmenu_lcontrol_vkey[2].expect_state[vkey] = 0x80;
     shift_vkey[1].expect_state[vkey] = 0x80;
     rshift_scan[1].expect_state[vkey] = 0x80;
-    rshift_scan[1].todo_state[vkey] = TRUE;
     unicode_vkey[0].expect_state[vkey] = 0x80;
 
     /* test peeked messages */
@@ -1211,6 +1220,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     else check_send_input_keyboard_test( menu_ext_peeked, TRUE );
     check_send_input_keyboard_test( lrshift_ext, TRUE );
     check_send_input_keyboard_test( rshift_scan, TRUE );
+    /* Skip on Korean layouts since they map the right control key to VK_HANJA */
+    if (hkl == (HKL)0x04120412) skip( "skipping rctrl_scan test on Korean layout" );
+    else check_send_input_keyboard_test( rctrl_scan, TRUE );
     check_send_input_keyboard_test( unicode, TRUE );
     check_send_input_keyboard_test( lmenu_unicode_peeked, TRUE );
     check_send_input_keyboard_test( unicode_vkey, TRUE );
@@ -1251,6 +1263,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     else check_send_input_keyboard_test( menu_ext, FALSE );
     check_send_input_keyboard_test( lrshift_ext, FALSE );
     check_send_input_keyboard_test( rshift_scan, FALSE );
+    /* Skip on Korean layouts since they map the right control key to VK_HANJA */
+    if (hkl == (HKL)0x04120412) skip( "skipping rctrl_scan test on Korean layout" );
+    else check_send_input_keyboard_test( rctrl_scan, FALSE );
     check_send_input_keyboard_test( unicode, FALSE );
     check_send_input_keyboard_test( lmenu_unicode, FALSE );
     check_send_input_keyboard_test( unicode_vkey, FALSE );
