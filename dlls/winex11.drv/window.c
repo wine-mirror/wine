@@ -1807,12 +1807,7 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
             Window xwin = (Window)NtUserGetProp( data->hwnd, foreign_window_prop );
             if (xwin)
             {
-                if (!already_destroyed)
-                {
-                    x11drv_xinput2_disable( data->display, xwin );
-                    XSelectInput( data->display, xwin, 0 );
-                }
-
+                if (!already_destroyed) XSelectInput( data->display, xwin, 0 );
                 XDeleteContext( data->display, xwin, winContext );
                 NtUserRemoveProp( data->hwnd, foreign_window_prop );
             }
