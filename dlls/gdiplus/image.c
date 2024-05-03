@@ -1817,7 +1817,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     row_size = (width * PIXELFORMATBPP(format)+7) / 8;
     dib_stride = (row_size + 3) & ~3;
 
-    if(stride == 0)
+    if(!scan0)
         stride = dib_stride;
 
     if (format & PixelFormatGDI && !(format & (PixelFormatAlpha|PixelFormatIndexed)) && !scan0)

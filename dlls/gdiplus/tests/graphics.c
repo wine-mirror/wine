@@ -7406,6 +7406,76 @@ static void test_printer_dc(void)
     DeleteDC(hdc_printer);
 }
 
+void test_bitmap_stride(void)
+{
+    GpStatus status;
+    GpBitmap *bitmap = NULL;
+    BitmapData locked_data;
+    GpRect bounds = {0, 0, 10, 10};
+    BYTE buffer[400];
+    BYTE *scan0;
+    int i;
+    struct {
+        INT stride;
+        BOOL use_scan0;
+        INT expected_stride;
+        GpStatus status;
+    } test_data[] = {
+        { 12, FALSE, 20 },
+        { 40, FALSE, 20 },
+        { 0, FALSE, 20 },
+        { 20, FALSE, 20 },
+        { -12, FALSE, 20 },
+        { -32, FALSE, 20 },
+        { 30, TRUE, 0, InvalidParameter },
+        { 12, TRUE, 12 },
+        { 40, TRUE, 40 },
+        { 0, TRUE, 0, InvalidParameter },
+        { 32, TRUE, 32 },
+        { -12, TRUE, -12 },
+        { -32, TRUE, -32 },
+        { -13, TRUE, 0, InvalidParameter },
+    };
+
+    for (i=0; i < ARRAY_SIZE(test_data); i++)
+    {
+        if (test_data[i].use_scan0)
+        {
+            if (test_data[i].stride >= 0)
+                scan0 = buffer;
+            else
+                scan0 = buffer + sizeof(buffer) + test_data[i].stride;
+        }
+        else
+            scan0 = NULL;
+
+        winetest_push_context("%i: %i %i", i, test_data[i].stride, test_data[i].use_scan0);
+
+        status = GdipCreateBitmapFromScan0(10, 10, test_data[i].stride, PixelFormat16bppGrayScale, scan0, &bitmap);
+        expect(test_data[i].status, status);
+
+        if (status == Ok)
+        {
+            status = GdipBitmapLockBits(bitmap, &bounds, ImageLockModeRead, PixelFormat16bppGrayScale, &locked_data);
+            expect(Ok, status);
+
+            expect(10, locked_data.Width);
+            expect(10, locked_data.Height);
+            expect(test_data[i].expected_stride, locked_data.Stride);
+            expect(PixelFormat16bppGrayScale, locked_data.PixelFormat);
+            if (test_data[i].use_scan0)
+                ok(locked_data.Scan0 == scan0, "got %p, expected %p\n", locked_data.Scan0, scan0);
+
+            status = GdipBitmapUnlockBits(bitmap, &locked_data);
+            expect(Ok, status);
+
+            GdipDisposeImage((GpImage*)bitmap);
+        }
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -7504,6 +7574,7 @@ START_TEST(graphics)
     test_gdi_interop_bitmap();
     test_gdi_interop_hdc();
     test_printer_dc();
+    test_bitmap_stride();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
