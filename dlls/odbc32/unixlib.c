@@ -173,7 +173,7 @@ static NTSTATUS load_odbc(void);
 
 static NTSTATUS odbc_process_attach( void *args )
 {
-    if (!load_odbc()) return STATUS_DLL_NOT_FOUND;
+    if (load_odbc()) return STATUS_DLL_NOT_FOUND;
     return STATUS_SUCCESS;
 }
 
