@@ -2699,7 +2699,7 @@ static void test_fromMemoryBitmap(void)
     color = GetPixel(hdc, 0, 0);
     /* The HDC is write-only, and native fills with a solid color to figure out
      * which pixels have changed. */
-    todo_wine expect(0x0c0b0d, color);
+    expect(0x0c0b0d, color);
 
     SetPixel(hdc, 0, 0, 0x797979);
     SetPixel(hdc, 1, 0, 0x0c0b0d);
@@ -2710,7 +2710,7 @@ static void test_fromMemoryBitmap(void)
     GdipDeleteGraphics(graphics);
 
     expect(0x79, bits[0]);
-    todo_wine expect(0x68, bits[3]);
+    expect(0x68, bits[3]);
 
     GdipDisposeImage((GpImage*)bitmap);
 
@@ -2747,7 +2747,7 @@ static void test_fromMemoryBitmap(void)
     ok(hdc != NULL, "got NULL hdc\n");
 
     color = GetPixel(hdc, 0, 0);
-    todo_wine expect(0x0c0b0d, color);
+    expect(0x0c0b0d, color);
 
     status = GdipReleaseDC(graphics, hdc);
     expect(Ok, status);
