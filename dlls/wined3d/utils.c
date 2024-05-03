@@ -6629,7 +6629,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     settings->per_vertex_point_size = vdecl->point_size;
 
     wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
-            &ambient_source, &specular_source, state, si);
+            &ambient_source, &specular_source, state);
     settings->diffuse_source = diffuse_source;
     settings->emissive_source = emissive_source;
     settings->ambient_source = ambient_source;

@@ -26083,7 +26083,7 @@ static void test_color_vertex(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
         colour = getPixelColor(device, 320, 240);
-        todo_wine_if (i == 13 || i == 14 || i == 16 || i == 18 || i == 19)
+        todo_wine_if (i == 13 || i == 14 || i == 19)
             ok(color_match(colour, tests[i].result, 1),
                     "Expected colour 0x%08x for test %u, got 0x%08x.\n",
                     tests[i].result, i, colour);

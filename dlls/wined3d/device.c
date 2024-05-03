@@ -3383,7 +3383,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     lighting = state->render_states[WINED3D_RS_LIGHTING]
             && (dst_fvf & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
     wined3d_get_material_colour_source(&diffuse_source, &emissive_source,
-            &ambient_source, &specular_source, state, stream_info);
+            &ambient_source, &specular_source, state);
     output_colour_format = wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, 0);
     material_specular_state_colour = state->render_states[WINED3D_RS_SPECULARENABLE]
             ? &state->material.specular : &black;
