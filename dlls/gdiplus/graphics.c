@@ -4433,42 +4433,47 @@ GpStatus WINGDIPAPI GdipFillEllipseI(GpGraphics *graphics, GpBrush *brush, INT x
 
 static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
 {
+    HDC hdc;
     INT save_state;
     GpStatus retval;
     HRGN hrgn=NULL;
 
-    if(!graphics->hdc || !brush_can_fill_path(brush, TRUE))
+    if(!brush_can_fill_path(brush, TRUE))
         return NotImplemented;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SetPolyFillMode(graphics->hdc, (path->fill == FillModeAlternate ? ALTERNATE
-                                                                    : WINDING));
+    retval = gdi_dc_acquire(graphics, &hdc);
+    if (retval != Ok)
+        return retval;
+
+    save_state = SaveDC(hdc);
+    EndPath(hdc);
+    SetPolyFillMode(hdc, (path->fill == FillModeAlternate ? ALTERNATE : WINDING));
 
     retval = get_clip_hrgn(graphics, &hrgn);
 
     if (retval != Ok)
         goto end;
 
-    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+    ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
 
     gdi_transform_acquire(graphics);
 
-    BeginPath(graphics->hdc);
+    BeginPath(hdc);
     retval = draw_poly(graphics, NULL, path->pathdata.Points,
                        path->pathdata.Types, path->pathdata.Count, FALSE);
 
     if(retval == Ok)
     {
-        EndPath(graphics->hdc);
+        EndPath(hdc);
         retval = brush_fill_path(graphics, brush);
     }
 
     gdi_transform_release(graphics);
 
 end:
-    RestoreDC(graphics->hdc, save_state);
+    RestoreDC(hdc, save_state);
     DeleteObject(hrgn);
+    gdi_dc_release(graphics, hdc);
 
     return retval;
 }
