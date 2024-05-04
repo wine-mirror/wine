@@ -3737,7 +3737,8 @@ end:
 static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPath *path)
 {
     GpStatus stat;
-    GpPath* flat_path;
+    GpPath *flat_path, *anchor_path;
+    GpRegion *anchor_region;
     GpMatrix* transform;
     GpRectF gp_bound_rect;
     GpRect gp_output_area;
@@ -3765,6 +3766,9 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
         if (stat == Ok)
             stat = GdipFlattenPath(flat_path, transform, 1.0);
 
+        if (stat == Ok)
+            stat = widen_flat_path_anchors(flat_path, pen, 1.0, &anchor_path);
+
         GdipDeleteMatrix(transform);
     }
 
@@ -3788,6 +3792,18 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
             if (ceilf(y) > output_area.bottom) output_area.bottom = ceilf(y);
         }
 
+        for (i=0; i<anchor_path->pathdata.Count; i++)
+        {
+            REAL x, y;
+            x = anchor_path->pathdata.Points[i].X;
+            y = anchor_path->pathdata.Points[i].Y;
+
+            if (floorf(x) < output_area.left) output_area.left = floorf(x);
+            if (floorf(y) < output_area.top) output_area.top = floorf(y);
+            if (ceilf(x) > output_area.right) output_area.right = ceilf(x);
+            if (ceilf(y) > output_area.bottom) output_area.bottom = ceilf(y);
+        }
+
         stat = get_graphics_device_bounds(graphics, &gp_bound_rect);
     }
 
@@ -3804,6 +3820,7 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
         if (output_width <= 0 || output_height <= 0)
         {
             GdipDeletePath(flat_path);
+            GdipDeletePath(anchor_path);
             return Ok;
         }
 
@@ -4015,6 +4032,66 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
                     }
                 }
             }
+
+            /* draw anchors */
+            stat = GdipCreateRegionPath(anchor_path, &anchor_region);
+            if (stat == Ok)
+            {
+                HRGN hrgn;
+                DWORD rgn_data_size;
+                RGNDATA *rgn_data;
+                RECT *rects;
+                INT x, y;
+
+                stat = GdipCombineRegionRectI(anchor_region, &gp_output_area, CombineModeIntersect);
+
+                if (stat == Ok)
+                    stat = GdipGetRegionHRgn(anchor_region, NULL, &hrgn);
+
+                if (stat == Ok)
+                {
+                    rgn_data_size = GetRegionData(hrgn, 0, NULL);
+
+                    if (rgn_data_size)
+                    {
+                        rgn_data = malloc(rgn_data_size);
+
+                        if (rgn_data)
+                        {
+                            GetRegionData(hrgn, rgn_data_size, rgn_data);
+
+                            rects = (RECT*)&rgn_data->Buffer;
+
+                            for (i=0; i < rgn_data->rdh.nCount; i++)
+                            {
+                                RECT rc;
+                                rc = rects[i];
+
+                                OffsetRect(&rc, -output_area.left, -output_area.top);
+
+                                for (y = rc.top; y < rc.bottom; y++)
+                                {
+                                    for (x = rc.left; x < rc.right; x++)
+                                    {
+                                        if (brush_bits)
+                                            output_bits[x + y*output_width] = brush_bits[x + y*output_width];
+                                        else
+                                            output_bits[x + y*output_width] = ((GpSolidFill*)pen->brush)->color;
+                                    }
+                                }
+                            }
+
+                            free(rgn_data);
+                        }
+                        else
+                            stat = OutOfMemory;
+                    }
+
+                    DeleteObject(hrgn);
+                }
+
+                GdipDeleteRegion(anchor_region);
+            }
         }
 
         /* draw output image */
@@ -4035,6 +4112,7 @@ static GpStatus SOFTWARE_GdipDrawThinPath(GpGraphics *graphics, GpPen *pen, GpPa
     }
 
     GdipDeletePath(flat_path);
+    GdipDeletePath(anchor_path);
 
     return stat;
 }

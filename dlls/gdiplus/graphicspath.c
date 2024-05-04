@@ -2111,9 +2111,8 @@ static void widen_closed_figure(const GpPointF *points, int start, int end,
     GpPen *pen, REAL pen_width, path_list_node_t **last_point);
 
 static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
-    GpPen *pen, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
+    GpPen *pen, REAL pen_width, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
 {
-    REAL pen_width = max(pen->width, 2.0);
     switch (cap)
     {
     default:
@@ -2520,6 +2519,71 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     free(tmp_points);
 }
 
+void widen_anchors(GpPath *flat_path, GpPen *pen, REAL pen_width, path_list_node_t** last_point)
+{
+    BYTE *types = flat_path->pathdata.Types;
+    int i, subpath_start=0;
+
+    for (i=0; i < flat_path->pathdata.Count; i++)
+    {
+        if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
+            continue;
+
+        if ((types[i]&PathPointTypePathTypeMask) == PathPointTypeStart)
+            subpath_start = i;
+
+        if (i == flat_path->pathdata.Count-1 ||
+            (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
+        {
+            if (pen->startcap & LineCapAnchorMask)
+                add_anchor(&flat_path->pathdata.Points[subpath_start],
+                    &flat_path->pathdata.Points[subpath_start+1],
+                    pen, pen_width, pen->startcap, pen->customstart, last_point);
+
+            if (pen->endcap & LineCapAnchorMask)
+                add_anchor(&flat_path->pathdata.Points[i],
+                    &flat_path->pathdata.Points[i-1],
+                    pen, pen_width, pen->endcap, pen->customend, last_point);
+        }
+    }
+}
+
+GpStatus widen_flat_path_anchors(GpPath *flat_path, GpPen *pen, REAL pen_width, GpPath **anchors)
+{
+    GpStatus stat;
+    path_list_node_t *points=NULL, *last_point=NULL;
+
+    if (!flat_path || !pen)
+        return InvalidParameter;
+
+    if (init_path_list(&points, 314.0, 22.0))
+    {
+        last_point = points;
+
+        stat = GdipCreatePath(flat_path->fill, anchors);
+        if (stat == Ok)
+        {
+            widen_anchors(flat_path, pen, pen_width, &last_point);
+
+            if (!path_list_to_path(points->next, *anchors))
+                stat = OutOfMemory;
+
+            if (stat != Ok)
+            {
+                GdipDeletePath(*anchors);
+                *anchors = NULL;
+            }
+        }
+        free_path_list(points);
+    }
+    else
+        stat = OutOfMemory;
+
+    /* FIXME: Apply insets to flat_path */
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     REAL flatness)
 {
@@ -2586,28 +2650,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
             }
         }
 
-        for (i=0; i < flat_path->pathdata.Count; i++)
-        {
-            if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
-                continue;
-
-            if ((types[i]&PathPointTypePathTypeMask) == PathPointTypeStart)
-                subpath_start = i;
-
-            if (i == flat_path->pathdata.Count-1 ||
-                (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
-            {
-                if (pen->startcap & LineCapAnchorMask)
-                    add_anchor(&flat_path->pathdata.Points[subpath_start],
-                        &flat_path->pathdata.Points[subpath_start+1],
-                        pen, pen->startcap, pen->customstart, &last_point);
-
-                if (pen->endcap & LineCapAnchorMask)
-                    add_anchor(&flat_path->pathdata.Points[i],
-                        &flat_path->pathdata.Points[i-1],
-                        pen, pen->endcap, pen->customend, &last_point);
-            }
-        }
+        widen_anchors(flat_path, pen, fmax(pen->width, 2.0), &last_point);
 
         if (!path_list_to_path(points->next, path))
             status = OutOfMemory;

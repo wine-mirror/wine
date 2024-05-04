@@ -137,6 +137,8 @@ extern void free_installed_fonts(void);
 
 extern BOOL lengthen_path(GpPath *path, INT len);
 
+extern GpStatus widen_flat_path_anchors(GpPath *flat_path, GpPen *pen, REAL pen_width, GpPath **anchors);
+
 extern DWORD write_region_data(const GpRegion *region, void *data);
 extern DWORD write_path_data(GpPath *path, void *data);
 
