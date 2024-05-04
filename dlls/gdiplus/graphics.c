@@ -7154,14 +7154,21 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 
 GpStatus gdi_transform_acquire(GpGraphics *graphics)
 {
-    if (graphics->gdi_transform_acquire_count == 0 && graphics->hdc)
+    if (graphics->gdi_transform_acquire_count == 0 && has_gdi_dc(graphics))
     {
-        graphics->gdi_transform_save = SaveDC(graphics->hdc);
-        ModifyWorldTransform(graphics->hdc, NULL, MWT_IDENTITY);
-        SetGraphicsMode(graphics->hdc, GM_COMPATIBLE);
-        SetMapMode(graphics->hdc, MM_TEXT);
-        SetWindowOrgEx(graphics->hdc, 0, 0, NULL);
-        SetViewportOrgEx(graphics->hdc, 0, 0, NULL);
+        HDC hdc;
+        GpStatus stat;
+
+        stat = gdi_dc_acquire(graphics, &hdc);
+        if (stat != Ok)
+            return stat;
+
+        graphics->gdi_transform_save = SaveDC(hdc);
+        ModifyWorldTransform(hdc, NULL, MWT_IDENTITY);
+        SetGraphicsMode(hdc, GM_COMPATIBLE);
+        SetMapMode(hdc, MM_TEXT);
+        SetWindowOrgEx(hdc, 0, 0, NULL);
+        SetViewportOrgEx(hdc, 0, 0, NULL);
     }
     graphics->gdi_transform_acquire_count++;
     return Ok;
@@ -7177,6 +7184,7 @@ GpStatus gdi_transform_release(GpGraphics *graphics)
     if (graphics->gdi_transform_acquire_count == 1 && graphics->hdc)
     {
         RestoreDC(graphics->hdc, graphics->gdi_transform_save);
+        gdi_dc_release(graphics, graphics->hdc);
     }
     graphics->gdi_transform_acquire_count--;
     return Ok;
