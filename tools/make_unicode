@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "15.1.0";
-my $CLDRVERSION = "44";
+my $CLDRVERSION = "45";
 my $ISO639VERSION = "20230123";
 my $TZVERSION = "2024a";
 
@@ -39,7 +39,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "402cbd285f1f952fcd0834b63541d54f69d3d8f1b8f8599bf71a1a14935f82c4" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "38d04cf28ccfee8b86d2feecebf99d5dc6d3317f53f87ba53b1e774f6395573c" },
+                sha  => "29f4dafa918017e74cb84edf19fb707894cbce1cf7da1dd89fff24c107a66ecb" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -5402,7 +5402,7 @@ sub load_windows_zones()
     my $INPUT = open_data_file( "cldr", "$base/common/supplemental/windowsZones.xml" );
     while (<$INPUT>)
     {
-        if (/<!-- +(\(UTC.*) -->.*/)
+        if (/<!-- +(\(UTC[^<]*) -->.*/)
         {
             $current_name = $1;
         }
