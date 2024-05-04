@@ -7806,7 +7806,7 @@ static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text,
         return METAFILE_DrawDriverString((GpMetafile*)graphics->image, text, length, font,
             format, brush, positions, flags, matrix);
 
-    if (graphics->hdc && !graphics->alpha_hdc &&
+    if (has_gdi_dc(graphics) && !graphics->alpha_hdc &&
         brush->bt == BrushTypeSolidColor &&
         (((GpSolidFill*)brush)->color & 0xff000000) == 0xff000000)
         stat = GDI32_GdipDrawDriverString(graphics, text, length, font, format,
