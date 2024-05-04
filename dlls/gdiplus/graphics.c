@@ -5987,6 +5987,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     INT length, GDIPCONST GpFont *font, GDIPCONST RectF *rect,
     GDIPCONST GpStringFormat *format, GDIPCONST GpBrush *brush)
 {
+    GpStatus status;
     HRGN rgn = NULL;
     HFONT gdifont;
     GpPointF rectcpy[4];
@@ -6005,9 +6006,11 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
 
-    if(graphics->hdc)
+    if(has_gdi_dc(graphics))
     {
-        hdc = graphics->hdc;
+        status = gdi_dc_acquire(graphics, &hdc);
+        if (status != Ok)
+            return status;
     }
     else
     {
@@ -6097,7 +6100,10 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     RestoreDC(hdc, save_state);
 
-    DeleteDC(temp_hdc);
+    if (temp_hdc)
+        DeleteDC(temp_hdc);
+    else
+        gdi_dc_release(graphics, hdc);
 
     return Ok;
 }
