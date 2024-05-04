@@ -3401,7 +3401,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         }
         else
         {
-            HDC hdc;
+            HDC src_hdc, dst_hdc;
             HBITMAP hbitmap, old_hbm=NULL;
             HRGN hrgn;
             INT save_state;
@@ -3409,7 +3409,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             BYTE *temp_bits;
             PixelFormat dst_format;
 
-            hdc = CreateCompatibleDC(0);
+            src_hdc = CreateCompatibleDC(0);
 
             if (bitmap->format == PixelFormat16bppRGB555 ||
                 bitmap->format == PixelFormat24bppRGB)
@@ -3431,7 +3431,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             bih.biClrUsed = 0;
             bih.biClrImportant = 0;
 
-            hbitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
+            hbitmap = CreateDIBSection(src_hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS,
                 (void**)&temp_bits, NULL, 0);
 
             convert_pixels(bitmap->width, bitmap->height,
@@ -3439,15 +3439,17 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 bitmap->stride, bitmap->bits, bitmap->format,
                 bitmap->image.palette);
 
-            old_hbm = SelectObject(hdc, hbitmap);
+            old_hbm = SelectObject(src_hdc, hbitmap);
 
-            save_state = SaveDC(graphics->hdc);
+            gdi_dc_acquire(graphics, &dst_hdc);
+
+            save_state = SaveDC(dst_hdc);
 
             stat = get_clip_hrgn(graphics, &hrgn);
 
             if (stat == Ok)
             {
-                ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+                ExtSelectClipRgn(dst_hdc, hrgn, RGN_COPY);
                 DeleteObject(hrgn);
             }
 
@@ -3456,20 +3458,22 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             if (bitmap->format & (PixelFormatAlpha|PixelFormatPAlpha))
             {
                 gdi_alpha_blend(graphics, pti[0].x, pti[0].y, pti[1].x - pti[0].x, pti[2].y - pti[0].y,
-                                hdc, srcx, srcy, srcwidth, srcheight);
+                                src_hdc, srcx, srcy, srcwidth, srcheight);
             }
             else
             {
-                StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-                    hdc, srcx, srcy, srcwidth, srcheight, SRCCOPY);
+                StretchBlt(dst_hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
+                    src_hdc, srcx, srcy, srcwidth, srcheight, SRCCOPY);
             }
 
             gdi_transform_release(graphics);
 
-            RestoreDC(graphics->hdc, save_state);
+            RestoreDC(dst_hdc, save_state);
 
-            SelectObject(hdc, old_hbm);
-            DeleteDC(hdc);
+            gdi_dc_release(graphics, dst_hdc);
+
+            SelectObject(src_hdc, old_hbm);
+            DeleteDC(src_hdc);
             DeleteObject(hbitmap);
         }
     }
