@@ -5836,6 +5836,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format, RectF *bounds,
     INT *codepointsfitted, INT *linesfilled)
 {
+    GpStatus status;
     HFONT oldfont, gdifont;
     struct measure_string_args args;
     HDC temp_hdc=NULL, hdc;
@@ -5850,13 +5851,17 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(!graphics || !string || !font || !rect || !bounds)
         return InvalidParameter;
 
-    if(!graphics->hdc)
+    if(!has_gdi_dc(graphics))
     {
         hdc = temp_hdc = CreateCompatibleDC(0);
         if (!temp_hdc) return OutOfMemory;
     }
     else
-        hdc = graphics->hdc;
+    {
+        status = gdi_dc_acquire(graphics, &hdc);
+        if (status != Ok)
+            return status;
+    }
 
     if(linesfilled) *linesfilled = 0;
     if(codepointsfitted) *codepointsfitted = 0;
@@ -5909,6 +5914,8 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     if (temp_hdc)
         DeleteDC(temp_hdc);
+    else
+        gdi_dc_release(graphics, hdc);
 
     return Ok;
 }
