@@ -939,7 +939,7 @@ cpp_quote("#endif")
     }
 
     [
-        uuid(ee519f11-851a-11d0-8252-00c04fd85ab4),
+        uuid(ee519f11-851a-11d0-825c-00c04fd85ab4),
         object
     ]
     interface IMimeWebDocument : IUnknown
@@ -1340,7 +1340,7 @@ cpp_quote("#endif")
     }
 
     [
-        uuid(761aa741-7bda-11d1-8aa9-00c04fb951f3),
+        uuid(761aa641-7bda-11d1-8aa9-00c04fb951f3),
         object
     ]
     interface IMimeMessageCallback : IUnknown
