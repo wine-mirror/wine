@@ -990,7 +990,7 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
 
 static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
 {
-    HDC new_hdc=NULL;
+    HDC new_hdc=NULL, hdc;
     GpGraphics *new_graphics=NULL;
     GpStatus stat;
     INT save_state;
@@ -1003,7 +1003,7 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
 
     if (!graphics)
     {
-        new_hdc = CreateCompatibleDC(0);
+        hdc = new_hdc = CreateCompatibleDC(0);
         if (!new_hdc)
             return OutOfMemory;
 
@@ -1015,31 +1015,36 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
             return stat;
         }
     }
-    else if (!graphics->hdc)
+    else if (has_gdi_dc(graphics))
     {
-        graphics->hdc = new_hdc = CreateCompatibleDC(0);
+        stat = gdi_dc_acquire(graphics, &hdc);
+        if (stat != Ok)
+            return stat;
+    }
+    else
+    {
+        graphics->hdc = hdc = new_hdc = CreateCompatibleDC(0);
         if (!new_hdc)
             return OutOfMemory;
     }
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
+    save_state = SaveDC(hdc);
+    EndPath(hdc);
 
-    SetPolyFillMode(graphics->hdc, (path->fill == FillModeAlternate ? ALTERNATE
-                                                                    : WINDING));
+    SetPolyFillMode(hdc, (path->fill == FillModeAlternate ? ALTERNATE : WINDING));
 
     gdi_transform_acquire(graphics);
 
     stat = trace_path(graphics, path);
     if (stat == Ok)
     {
-        *hrgn = PathToRegion(graphics->hdc);
+        *hrgn = PathToRegion(hdc);
         stat = *hrgn ? Ok : OutOfMemory;
     }
 
     gdi_transform_release(graphics);
 
-    RestoreDC(graphics->hdc, save_state);
+    RestoreDC(hdc, save_state);
     if (new_hdc)
     {
         DeleteDC(new_hdc);
@@ -1048,6 +1053,8 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
         else
             graphics->hdc = NULL;
     }
+    else
+        gdi_dc_release(graphics, hdc);
 
     return stat;
 }
