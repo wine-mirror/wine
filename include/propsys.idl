@@ -278,7 +278,7 @@ interface IPropertyEnumType : IUnknown
 }
 
 [
-    uuid(9b6e051c-5ddd-4321-9070-fe2acb55e974),
+    uuid(9b6e051c-5ddd-4321-9070-fe2acb55e794),
     object,
     pointer_default(unique)
 ]
@@ -828,7 +828,7 @@ library PropSysObjects
     {
         interface IPropertyStore;
     }
-    [uuid(b8967f86-58ae-4f96-9fb2-5d7904798f4b)] coclass PropertySystem
+    [uuid(b8967f85-58ae-4f46-9fb2-5d7904798f4b)] coclass PropertySystem
     {
         interface IPropertySystem;
     }
