@@ -5734,13 +5734,17 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
     if (regionCount < stringFormat->range_count)
         return InvalidParameter;
 
-    if(!graphics->hdc)
+    if(!has_gdi_dc(graphics))
     {
         hdc = temp_hdc = CreateCompatibleDC(0);
         if (!temp_hdc) return OutOfMemory;
     }
     else
-        hdc = graphics->hdc;
+    {
+        stat = gdi_dc_acquire(graphics, &hdc);
+        if (stat != Ok)
+            return stat;
+    }
 
     if (stringFormat->attr)
         TRACE("may be ignoring some format flags: attr %x\n", stringFormat->attr);
@@ -5787,6 +5791,8 @@ GpStatus WINGDIPAPI GdipMeasureCharacterRanges(GpGraphics* graphics,
 
     if (temp_hdc)
         DeleteDC(temp_hdc);
+    else
+        gdi_dc_release(graphics, hdc);
 
     return stat;
 }
