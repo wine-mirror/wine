@@ -296,7 +296,7 @@ interface IAudioChannelConfig : IUnknown
 [
     pointer_default(unique),
     nonextensible,
-    uuid(7d8b1437-dd53-4350-9c1b-1ee2890bf938),
+    uuid(7d8b1437-dd53-4350-9c1b-1ee2890bd938),
     local,
     object
 ]
