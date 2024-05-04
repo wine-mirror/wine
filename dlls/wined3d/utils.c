@@ -6577,6 +6577,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->transformed = 1;
         settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
         settings->per_vertex_point_size = vdecl->point_size;
+        settings->diffuse = vdecl->diffuse;
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
         else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
@@ -6619,6 +6620,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
 
     settings->clipping = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+    settings->diffuse = vdecl->diffuse;
     settings->normal = vdecl->normal;
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];

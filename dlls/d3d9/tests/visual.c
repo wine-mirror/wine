@@ -26083,10 +26083,9 @@ static void test_color_vertex(void)
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#lx.\n", hr);
 
         colour = getPixelColor(device, 320, 240);
-        todo_wine_if (i == 13 || i == 14 || i == 19)
-            ok(color_match(colour, tests[i].result, 1),
-                    "Expected colour 0x%08x for test %u, got 0x%08x.\n",
-                    tests[i].result, i, colour);
+        ok(color_match(colour, tests[i].result, 1),
+                "Expected colour 0x%08x for test %u, got 0x%08x.\n",
+                tests[i].result, i, colour);
     }
 
     refcount = IDirect3DDevice9_Release(device);
@@ -28516,8 +28515,7 @@ static void test_default_diffuse(void)
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             colour = getPixelColor(device, 320, 240);
-            todo_wine_if (j == 2)
-                ok(colour == vs_tests[j].expect_colour, "Got unexpected colour %08x.\n", colour);
+            ok(colour == vs_tests[j].expect_colour, "Got unexpected colour %08x.\n", colour);
 
             winetest_pop_context();
         }

@@ -2725,7 +2725,8 @@ struct wined3d_ffp_vs_settings
     DWORD ortho_fog       : 1;
     DWORD flatshading     : 1;
     DWORD specular_enable : 1;
-    DWORD padding         : 17;
+    DWORD diffuse         : 1;
+    DWORD padding         : 16;
 
     DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
 

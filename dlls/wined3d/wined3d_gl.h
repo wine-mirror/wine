@@ -608,12 +608,11 @@ struct wined3d_context_gl
     uint32_t dc_is_private : 1;
     uint32_t dc_has_format : 1; /* Only meaningful for private DCs. */
     uint32_t fog_enabled : 1;
-    uint32_t diffuse_attrib_to_1 : 1;
     uint32_t rebind_fbo : 1;
     uint32_t needs_set : 1;
     uint32_t internal_format_set : 1;
     uint32_t valid : 1;
-    uint32_t padding : 24;
+    uint32_t padding : 25;
 
     uint32_t default_attrib_value_set;
 

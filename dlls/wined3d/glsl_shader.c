@@ -8937,7 +8937,10 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
 
     if (!settings->lighting)
     {
-        shader_addline(buffer, "ffp_varying_diffuse = ffp_attrib_diffuse;\n");
+        if (settings->diffuse)
+            shader_addline(buffer, "ffp_varying_diffuse = ffp_attrib_diffuse;\n");
+        else
+            shader_addline(buffer, "ffp_varying_diffuse = vec4(1.0);\n");
         shader_addline(buffer, "ffp_varying_specular = ffp_attrib_specular;\n");
         return;
     }
