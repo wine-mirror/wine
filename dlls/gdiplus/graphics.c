@@ -4907,7 +4907,7 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
 
     /* We have no internal operation queue, so there's no need to clear it. */
 
-    if (graphics->hdc)
+    if (has_gdi_dc(graphics))
         GdiFlush();
 
     return Ok;
