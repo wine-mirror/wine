@@ -295,7 +295,7 @@ interface IRemoteDebugApplicationThread : IUnknown
  */
 [
     object,
-    uuid(51973c30-cb0c-11d0-b5c9-00a0244Aae7a),
+    uuid(51973c30-cb0c-11d0-b5c9-00a0244a0e7a),
     pointer_default(unique)
 ]
 interface IRemoteDebugApplication : IUnknown
