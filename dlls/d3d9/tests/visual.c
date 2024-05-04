@@ -28336,6 +28336,205 @@ static void test_mipmap_upload(void)
     release_test_context(&context);
 }
 
+static void test_default_diffuse(void)
+{
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    struct d3d9_test_context context;
+    IDirect3DVertexBuffer9 *vb;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+    void *data;
+
+    static const D3DVERTEXELEMENT9 decl_elements_with_diffuse[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_no_diffuse[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    static const D3DVERTEXELEMENT9 decl_elements_missing_diffuse[] =
+    {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {1, 0,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END()
+    };
+
+    static const DWORD vs_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x0200001f, 0x8000000a, 0x900f0001,                 /* dcl_color0 v1        */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x02000001, 0xd00f0000, 0x90e40001,                 /* mov oD0, v1          */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD vs_no_diffuse_code[] =
+    {
+        0xfffe0200,                                         /* vs_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0      */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0         */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const DWORD ps_code[] =
+    {
+        0xffff0200,                                         /* ps_2_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl v0               */
+        0x02000001, 0x800f0800, 0x90e40000,                 /* mov oC0, v0          */
+        0x0000ffff                                          /* end                  */
+    };
+
+    static const struct
+    {
+        struct vec3 position;
+        unsigned int diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xff0000ff},
+        {{-1.0f,  1.0f, 0.1f}, 0xff0000ff},
+        {{ 1.0f, -1.0f, 0.1f}, 0xff0000ff},
+        {{ 1.0f,  1.0f, 0.1f}, 0xff0000ff},
+    };
+
+    static const struct
+    {
+        const DWORD *ps;
+        DWORD texture_source;
+    }
+    ps_tests[] =
+    {
+        {ps_code, 0},
+        {NULL, D3DTA_CURRENT},
+        {NULL, D3DTA_DIFFUSE},
+    };
+
+    static const struct
+    {
+        const DWORD *vs;
+        const D3DVERTEXELEMENT9 *decl_elements;
+        unsigned int expect_colour;
+    }
+    vs_tests[] =
+    {
+        {NULL,               decl_elements_with_diffuse,    0x000000ff},
+        {NULL,               decl_elements_no_diffuse,      0x00ffffff},
+        {NULL,               decl_elements_missing_diffuse, 0x00000000},
+        {vs_code,            decl_elements_with_diffuse,    0x000000ff},
+        {vs_code,            decl_elements_no_diffuse,      0x00000000},
+        {vs_code,            decl_elements_missing_diffuse, 0x00000000},
+        {vs_no_diffuse_code, decl_elements_with_diffuse,    0x00ffffff},
+        {vs_no_diffuse_code, decl_elements_no_diffuse,      0x00ffffff},
+        {vs_no_diffuse_code, decl_elements_missing_diffuse, 0x00ffffff},
+    };
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad),
+            D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &vb, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, 0, &data, D3DLOCK_DISCARD);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    memcpy(data, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(quad[0]));
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(ps_tests); ++i)
+    {
+        winetest_push_context("PS test %u", i);
+
+        if (ps_tests[i].ps)
+        {
+            IDirect3DPixelShader9 *ps;
+
+            hr = IDirect3DDevice9_CreatePixelShader(device, ps_tests[i].ps, &ps);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetPixelShader(device, ps);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            IDirect3DPixelShader9_Release(ps);
+        }
+        else
+        {
+            hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, ps_tests[i].texture_source);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_ALPHAARG1, ps_tests[i].texture_source);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
+        for (unsigned int j = 0; j < ARRAY_SIZE(vs_tests); ++j)
+        {
+            unsigned int colour;
+
+            winetest_push_context("VS test %u", j);
+
+            if (vs_tests[j].vs)
+            {
+                IDirect3DVertexShader9 *vs;
+
+                hr = IDirect3DDevice9_CreateVertexShader(device, vs_tests[j].vs, &vs);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                hr = IDirect3DDevice9_SetVertexShader(device, vs);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+                IDirect3DVertexShader9_Release(vs);
+            }
+            else
+            {
+                hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            }
+
+            hr = IDirect3DDevice9_CreateVertexDeclaration(device, vs_tests[j].decl_elements, &vertex_declaration);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_SetVertexDeclaration(device, vertex_declaration);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            IDirect3DVertexDeclaration9_Release(vertex_declaration);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DDevice9_BeginScene(device);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_EndScene(device);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            colour = getPixelColor(device, 320, 240);
+            todo_wine_if (j == 2)
+                ok(colour == vs_tests[j].expect_colour, "Got unexpected colour %08x.\n", colour);
+
+            winetest_pop_context();
+        }
+
+        winetest_pop_context();
+    }
+
+    IDirect3DVertexShader9_Release(vb);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -28490,4 +28689,5 @@ START_TEST(visual)
     test_managed_reset();
     test_managed_generate_mipmap();
     test_mipmap_upload();
+    test_default_diffuse();
 }
