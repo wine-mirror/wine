@@ -7492,6 +7492,7 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     LOGFONTW lfw;
     UINT eto_flags=0;
     GpStatus status;
+    HDC hdc;
     HRGN hrgn;
 
     if (!(flags & DriverStringOptionsCmapLookup))
@@ -7509,15 +7510,23 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
         }
     }
 
-    save_state = SaveDC(graphics->hdc);
-    SetBkMode(graphics->hdc, TRANSPARENT);
-    SetTextColor(graphics->hdc, get_gdi_brush_color(brush));
+    status = gdi_dc_acquire(graphics, &hdc);
+    if (status != Ok)
+    {
+        free(real_positions);
+        free(eto_positions);
+        return status;
+    }
+
+    save_state = SaveDC(hdc);
+    SetBkMode(hdc, TRANSPARENT);
+    SetTextColor(hdc, get_gdi_brush_color(brush));
 
     status = get_clip_hrgn(graphics, &hrgn);
 
     if (status == Ok)
     {
-        ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+        ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
         DeleteObject(hrgn);
     }
 
@@ -7548,22 +7557,24 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
         }
     }
 
-    SelectObject(graphics->hdc, hfont);
+    SelectObject(hdc, hfont);
 
-    SetTextAlign(graphics->hdc, TA_BASELINE|TA_LEFT);
+    SetTextAlign(hdc, TA_BASELINE|TA_LEFT);
 
     gdi_transform_acquire(graphics);
 
-    ExtTextOutW(graphics->hdc, gdip_round(pt.X), gdip_round(pt.Y), eto_flags, NULL, text, length, eto_positions);
+    ExtTextOutW(hdc, gdip_round(pt.X), gdip_round(pt.Y), eto_flags, NULL, text, length, eto_positions);
 
     gdi_transform_release(graphics);
 
-    RestoreDC(graphics->hdc, save_state);
+    RestoreDC(hdc, save_state);
 
     DeleteObject(hfont);
 
     free(real_positions);
     free(eto_positions);
+
+    gdi_dc_release(graphics, hdc);
 
     return Ok;
 }
