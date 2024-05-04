@@ -4734,47 +4734,47 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
 {
     INT save_state;
     GpStatus status;
+    HDC hdc;
     HRGN hrgn;
     RECT rc;
 
-    if(!graphics->hdc || !brush_can_fill_path(brush, TRUE))
+    if(!brush_can_fill_path(brush, TRUE))
         return NotImplemented;
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
+    status = gdi_dc_acquire(graphics, &hdc);
+    if (status != Ok)
+        return status;
+
+    save_state = SaveDC(hdc);
+    EndPath(hdc);
 
     hrgn = NULL;
     status = get_clip_hrgn(graphics, &hrgn);
     if (status != Ok)
-    {
-        RestoreDC(graphics->hdc, save_state);
-        return status;
-    }
+        goto end;
 
-    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_COPY);
+    ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
     DeleteObject(hrgn);
 
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
     if (status != Ok)
-    {
-        RestoreDC(graphics->hdc, save_state);
-        return status;
-    }
+        goto end;
 
-    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+    ExtSelectClipRgn(hdc, hrgn, RGN_AND);
     DeleteObject(hrgn);
 
-    if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
+    if (GetClipBox(hdc, &rc) != NULLREGION)
     {
-        BeginPath(graphics->hdc);
-        Rectangle(graphics->hdc, rc.left, rc.top, rc.right, rc.bottom);
-        EndPath(graphics->hdc);
+        BeginPath(hdc);
+        Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
+        EndPath(hdc);
 
         status = brush_fill_path(graphics, brush);
     }
 
-    RestoreDC(graphics->hdc, save_state);
-
+end:
+    RestoreDC(hdc, save_state);
+    gdi_dc_release(graphics, hdc);
 
     return status;
 }
