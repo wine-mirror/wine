@@ -3025,7 +3025,7 @@ static void dump_version_data( const void *ptr, unsigned int size, const char *p
 }
 
 /* dump data for a HTML/MANIFEST resource */
-static void dump_xml_data( const void *ptr, unsigned int size, const char *prefix )
+static void dump_text_data( const void *ptr, unsigned int size, const char *prefix )
 {
     const char *p = ptr, *end = p + size;
 
@@ -3036,6 +3036,18 @@ static void dump_xml_data( const void *ptr, unsigned int size, const char *prefi
         printf( "%s%.*s\n", prefix, (int)(p - start), start );
         while (p < end && (*p == '\r' || *p == '\n')) p++;
     }
+}
+
+static int cmp_resource_name( const IMAGE_RESOURCE_DIR_STRING_U *str_res, const char *str )
+{
+    unsigned int i;
+
+    for (i = 0; i < str_res->Length; i++)
+    {
+        int res = str_res->NameString[i] - (WCHAR)str[i];
+        if (res || !str[i]) return res;
+    }
+    return -(WCHAR)str[i];
 }
 
 static void dump_dir_resource(void)
@@ -3090,7 +3102,11 @@ static void dump_dir_resource(void)
                 data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->OffsetToData);
                 if (e1->NameIsString)
                 {
-                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->NameOffset);
+                    if (!cmp_resource_name( string, "WINE_REGISTRY" ))
+                        dump_text_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
+                    else
+                        dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
                 }
                 else switch(e1->Id)
                 {
@@ -3105,7 +3121,7 @@ static void dump_dir_resource(void)
                     break;
                 case 23:  /* RT_HTML */
                 case 24:  /* RT_MANIFEST */
-                    dump_xml_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
+                    dump_text_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     break;
                 default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
