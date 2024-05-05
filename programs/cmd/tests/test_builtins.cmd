@@ -450,6 +450,15 @@ if 1==0 (echo o1) else echo o2&&echo o3
 if 1==0 (echo p1) else echo p2||echo p3
 echo ---
 if 1==0 (echo q1) else echo q2&echo q3
+echo ------------- Testing internal commands return codes
+call :setError 0 &&echo SUCCESS||echo FAILURE %errorlevel%
+call :setError 33 &&echo SUCCESS||echo FAILURE %errorlevel%
+call :setError 666
+echo foo &&echo SUCCESS||echo FAILURE %errorlevel%
+echo foo >> h:\i\dont\exist\at\all.txt &&echo SUCCESS||echo FAILURE %errorlevel%
+type NUL &&echo SUCCESS||echo FAILURE %errorlevel%
+type h:\i\dont\exist\at\all.txt &&echo SUCCESS||echo FAILURE %errorlevel%
+echo ---
 echo ------------ Testing 'set' ------------
 call :setError 0
 rem Remove any WINE_FOO* WINE_BA* environment variables from shell before proceeding

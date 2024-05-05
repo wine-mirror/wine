@@ -449,6 +449,15 @@ p2
 @todo_wine@---
 q2
 q3
+------------- Testing internal commands return codes
+SUCCESS
+FAILURE 0
+@todo_wine@foo@space@
+@todo_wine@SUCCESS
+@todo_wine@FAILURE 666
+SUCCESS
+@todo_wine@FAILURE 0
+@todo_wine@---
 ------------ Testing 'set' ------------
 1
 0
