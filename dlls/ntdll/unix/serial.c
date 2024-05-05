@@ -33,6 +33,7 @@
 #include <stdio.h>
 #ifdef HAVE_ASM_TERMBITS_H
 # include <asm/termbits.h>
+# include <asm/ioctls.h>
 #else
 # include <termios.h>
 #endif
