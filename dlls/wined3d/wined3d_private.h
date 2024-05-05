@@ -1827,7 +1827,6 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 enum fogsource {
     FOGSOURCE_FFP,
     FOGSOURCE_VS,
-    FOGSOURCE_COORD,
 };
 
 /* Direct3D terminology with little modifications. We do not have an issued

@@ -5834,11 +5834,6 @@ void get_fog_start_end(const struct wined3d_context *context, const struct wined
             *end = 0.0f;
             break;
 
-        case FOGSOURCE_COORD:
-            *start = 255.0f;
-            *end = 0.0f;
-            break;
-
         case FOGSOURCE_FFP:
             tmpvalue.d = state->render_states[WINED3D_RS_FOGSTART];
             *start = tmpvalue.f;
