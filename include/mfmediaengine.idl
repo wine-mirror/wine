@@ -305,7 +305,7 @@ interface IMFMediaEngineEx : IMFMediaEngine
     HRESULT GetStreamSelection([in] DWORD stream_index, [out] BOOL *enabled);
     HRESULT SetStreamSelection([in] DWORD stream_index, [in] BOOL enabled);
     HRESULT ApplyStreamSelections();
-    HRESULT IsProtected([out] BOOL *protected);
+    HRESULT IsProtected([out] BOOL *is_protected);
     HRESULT InsertVideoEffect([in] IUnknown *effect, [in] BOOL is_optional);
     HRESULT InsertAudioEffect([in] IUnknown *effect, [in] BOOL is_optional);
     HRESULT RemoveAllEffects();
