@@ -140,6 +140,8 @@ static int msft_typeinfo_impltypes[1000];
 static int msft_typeinfo_elemcnt[1000];
 static int msft_typeinfo_cnt = 0;
 
+const char *dump_prefix = "";
+
 static const char * const tkind[TKIND_MAX] = {
     "TKIND_ENUM", "TKIND_RECORD", "TKIND_MODULE",
     "TKIND_INTERFACE", "TKIND_DISPATCH", "TKIND_COCLASS",
@@ -178,6 +180,7 @@ static int tlb_read_byte(void)
 static void print_offset(void)
 {
     int i;
+    printf("%s", dump_prefix);
     for(i=0; i<indent; i++)
         printf("    ");
 }
@@ -302,47 +305,21 @@ static void print_ctl2(const char *name)
     printf("\n");
 }
 
-static int tlb_isprint(unsigned char c)
-{
-    return c >= 32;
-}
-
 static void dump_binary(int size)
 {
     const unsigned char *ptr;
-    int i, j;
+    char *prefix;
+    int i;
 
     if (!size) return;
-
     ptr = tlb_read(size);
     if (!ptr) return;
 
-    print_offset();
-    printf("%08x: ", offset - size);
-
-    for (i = 0; i < size; i++)
-    {
-        printf("%02x%c", ptr[i], (i % 16 == 7) ? '-' : ' ');
-        if ((i % 16) == 15)
-        {
-            printf( " " );
-            for (j = 0; j < 16; j++)
-                printf("%c", tlb_isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.');
-            if (i < size-1)
-            {
-                printf("\n");
-                print_offset();
-                printf("%08x: ", offset - size + i + 1);
-            }
-        }
-    }
-    if (i % 16)
-    {
-        printf("%*s ", 3 * (16-(i%16)), "");
-        for (j = 0; j < i % 16; j++)
-            printf("%c", tlb_isprint(ptr[i-(i%16)+j]) ? ptr[i-(i%16)+j] : '.');
-    }
-    printf("\n");
+    prefix = malloc( strlen(dump_prefix) + 4 * indent + 1 );
+    strcpy( prefix, dump_prefix );
+    for (i = 0; i < indent; i++) strcat( prefix, "    " );
+    dump_data_offset( ptr, size, offset, prefix );
+    free( prefix );
 }
 
 static int dump_msft_varflags(void)
@@ -444,9 +421,7 @@ static void dump_msft_typeinfobase(void)
 
 static BOOL dump_msft_typeinfobases(seg_t *seg)
 {
-    int i;
-
-    for(i = 0; offset < seg->offset+seg->length; i++)
+    while (offset < seg->offset+seg->length)
         dump_msft_typeinfobase();
 
     assert(offset == seg->offset+seg->length);
@@ -686,11 +661,12 @@ static BOOL dump_msft_arraydescs(seg_t *seg)
 static BOOL dump_msft_custdata(seg_t *seg)
 {
     unsigned short vt;
-    unsigned i, n;
+    unsigned n;
 
     print_begin_block("CustData");
 
-    for(i=0; offset < seg->offset+seg->length; i++) {
+    while (offset < seg->offset+seg->length)
+    {
         print_offset();
 
         vt = tlb_read_short();
@@ -1235,26 +1211,32 @@ static void dump_sltg_index(int count)
 {
     int i;
 
+    print_offset();
     printf("index:\n");
 
+    print_offset();
     print_string0();
     printf("\n");
+    print_offset();
     print_string0();
     printf("\n");
 
     for (i = 0; i < count - 2; i++)
     {
+        print_offset();
         print_string0();
         printf("\n");
     }
-
+    print_offset();
     printf("\n");
 }
 
 static void dump_sltg_pad(int size_of_pad)
 {
+    print_offset();
     printf("pad:\n");
     dump_binary(size_of_pad);
+    print_offset();
     printf("\n");
 }
 
@@ -1877,19 +1859,14 @@ static void dump_type(int len, const char *hlp_strings)
     }
     else
     {
-        printf("skipping %#x bytes\n", extra);
         dump_binary(extra);
     }
 
     if (offset < member_offset + sizeof(struct sltg_member_header) + mem->extra)
     {
-        print_offset();
-        printf("skipping %d bytes\n", member_offset + (int)sizeof(struct sltg_member_header) + mem->extra - offset);
         dump_binary(member_offset + sizeof(struct sltg_member_header) + mem->extra - offset);
     }
 
-    print_offset();
-    printf("dumped %d (%#x) bytes\n", offset - typeinfo_start_offset, offset - typeinfo_start_offset);
     len -= offset - typeinfo_start_offset;
     print_offset();
     printf("sltg_tail %d (%#x) bytes:\n", len, len);
@@ -2005,34 +1982,40 @@ static void sltg_dump(void)
     libblk_start = offset;
     dump_sltg_library_block();
 
-    printf("skipping 0x40 bytes\n");
+    print_offset();
     dump_binary(0x40);
+    print_offset();
     printf("\n");
     typeinfo_cnt = print_short_dec("typeinfo count");
+    print_offset();
     printf("\n");
 
     for (i = 0; i < typeinfo_cnt; i++)
         dump_sltg_other_typeinfo(i, hlp_strings);
 
     len = print_hex("offset from start of library block to name table");
+    print_offset();
     printf("%#x + %#x = %#x\n", libblk_start, len, libblk_start + len);
     len = (libblk_start + len) - offset;
+    print_offset();
     printf("skipping %#x bytes (encoded/compressed helpstrings)\n", len);
+    print_offset();
     printf("max string length: %#x, strings length %#x\n", *(short *)hlp_strings, *(int *)(hlp_strings + 2));
     dump_binary(len);
+    print_offset();
     printf("\n");
 
     len = print_short_hex("name table jump");
     if (len == 0xffff)
     {
-        printf("skipping 0x000a bytes\n");
         dump_binary(0x000a);
+        print_offset();
         printf("\n");
     }
     else if (len == 0x0200)
     {
-        printf("skipping 0x002a bytes\n");
         dump_binary(0x002a);
+        print_offset();
         printf("\n");
     }
     else
@@ -2041,20 +2024,24 @@ static void sltg_dump(void)
         assert(0);
     }
 
-    printf("skipping 0x200 bytes\n");
     dump_binary(0x200);
+    print_offset();
     printf("\n");
 
     name_table_size = print_hex("name table size");
 
     name_table_start = offset;
-    printf("name table offset = %#x\n\n", offset);
+    print_offset();
+    printf("name table offset = %#x\n", offset);
+    print_offset();
+    printf("\n");
 
     while (offset < name_table_start + name_table_size)
     {
         int aligned_len;
 
         dump_binary(8);
+        print_offset();
         print_string0();
         printf("\n");
 
@@ -2064,18 +2051,21 @@ static void sltg_dump(void)
             dump_binary(aligned_len - len);
         else
             dump_binary(len & 1);
+        print_offset();
         printf("\n");
     }
 
     print_hex("01ffff01");
     len = print_hex("length");
-    printf("skipping %#x bytes\n", len);
     dump_binary(len);
+    print_offset();
     printf("\n");
 
     len = (libblk_start + libblk_len) - offset;
+    print_offset();
     printf("skipping libblk remainder %#x bytes\n", len);
     dump_binary(len);
+    print_offset();
     printf("\n");
 
     /* FIXME: msodumper/olestream.py parses this block differently
@@ -2087,24 +2077,30 @@ static void sltg_dump(void)
     print_hex("unknown");
     printf("\n");
     */
+    print_offset();
     printf("skipping 12 bytes\n");
     dump_binary(12);
+    print_offset();
     printf("\n");
 
     print_guid("uuid");
+    print_offset();
     printf("\n");
 
     /* 0x0008,"TYPELIB",0 */
     dump_binary(12);
+    print_offset();
     printf("\n");
 
+    print_offset();
     printf("skipping 12 bytes\n");
     dump_binary(12);
+    print_offset();
     printf("\n");
 
+    print_offset();
     printf("skipping remainder 0x10 bytes\n");
     dump_binary(0x10);
-    printf("\n");
 }
 
 void tlb_dump(void)
@@ -2114,6 +2110,26 @@ void tlb_dump(void)
         msft_dump();
     else
         sltg_dump();
+}
+
+void tlb_dump_resource( void *ptr, size_t size, const char *prefix )
+{
+    void *prev_dump_base = dump_base;
+    size_t prev_dump_total_len = dump_total_len;
+    const DWORD *sig;
+
+    dump_base = ptr;
+    dump_total_len = size;
+    dump_prefix = prefix;
+
+    sig = PRD(0, sizeof(DWORD));
+    if (*sig == MSFT_MAGIC)
+        msft_dump();
+    else
+        sltg_dump();
+
+    dump_base = prev_dump_base;
+    dump_total_len = prev_dump_total_len;
 }
 
 enum FileSig get_kind_tlb(void)

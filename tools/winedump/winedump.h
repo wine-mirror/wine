@@ -271,6 +271,8 @@ void            nls_dump(void);
 enum FileSig    get_kind_reg(void);
 void            reg_dump(void);
 
+extern void tlb_dump_resource( void *ptr, size_t size, const char *prefix );
+
 BOOL            codeview_dump_symbols(const void* root, unsigned long start, unsigned long size);
 BOOL            codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
 BOOL            codeview_dump_types_from_block(const void* table, unsigned long len);

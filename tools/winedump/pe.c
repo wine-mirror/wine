@@ -3103,7 +3103,9 @@ static void dump_dir_resource(void)
                 if (e1->NameIsString)
                 {
                     string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->NameOffset);
-                    if (!cmp_resource_name( string, "WINE_REGISTRY" ))
+                    if (!cmp_resource_name( string, "TYPELIB" ))
+                        tlb_dump_resource( (void *)RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
+                    else if (!cmp_resource_name( string, "WINE_REGISTRY" ))
                         dump_text_data( RVA( data->OffsetToData, data->Size ), data->Size, "  |  " );
                     else
                         dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
