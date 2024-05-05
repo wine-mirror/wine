@@ -273,11 +273,14 @@ void write_regscript( const statement_list_t *stmts )
         put_str( indent, "HKCR\n" );
         put_str( indent++, "{\n" );
 
-        put_str( indent, "NoRemove Interface\n" );
-        put_str( indent++, "{\n" );
         ps_factory = find_ps_factory( stmts );
-        if (ps_factory) write_interfaces( stmts, ps_factory );
-        put_str( --indent, "}\n" );
+        if (ps_factory)
+        {
+            put_str( indent, "NoRemove Interface\n" );
+            put_str( indent++, "{\n" );
+            write_interfaces( stmts, ps_factory );
+            put_str( --indent, "}\n" );
+        }
 
         put_str( indent, "NoRemove CLSID\n" );
         put_str( indent++, "{\n" );
