@@ -91,9 +91,36 @@ struct video_processor
     IMFVideoSampleAllocatorEx *allocator;
 };
 
+static HRESULT normalize_stride(IMFMediaType *media_type, BOOL bottom_up, IMFMediaType **ret)
+{
+    MFVIDEOFORMAT *format;
+    LONG stride;
+    UINT32 size;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFMediaType_GetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, (UINT32 *)&stride)))
+    {
+        *ret = media_type;
+        IMFMediaType_AddRef(media_type);
+        return hr;
+    }
+
+    if (SUCCEEDED(hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &format, &size)))
+    {
+        if (bottom_up) format->videoInfo.VideoFlags |= MFVideoFlag_BottomUpLinearRep;
+        hr = MFCreateVideoMediaType(format, (IMFVideoMediaType **)ret);
+        CoTaskMemFree(format);
+    }
+
+    return hr;
+}
+
 static HRESULT try_create_wg_transform(struct video_processor *impl)
 {
+    BOOL bottom_up = !impl->device_manager; /* when not D3D-enabled, the transform outputs bottom up RGB buffers */
+    IMFMediaType *input_type, *output_type;
     struct wg_transform_attrs attrs = {0};
+    HRESULT hr;
 
     if (impl->wg_transform)
     {
@@ -101,7 +128,18 @@ static HRESULT try_create_wg_transform(struct video_processor *impl)
         impl->wg_transform = 0;
     }
 
-    return wg_transform_create_mf(impl->input_type, impl->output_type, &attrs, &impl->wg_transform);
+    if (FAILED(hr = normalize_stride(impl->input_type, bottom_up, &input_type)))
+        return hr;
+    if (FAILED(hr = normalize_stride(impl->output_type, bottom_up, &output_type)))
+    {
+        IMFMediaType_Release(input_type);
+        return hr;
+    }
+    hr = wg_transform_create_mf(input_type, output_type, &attrs, &impl->wg_transform);
+    IMFMediaType_Release(output_type);
+    IMFMediaType_Release(input_type);
+
+    return hr;
 }
 
 static HRESULT video_processor_init_allocator(struct video_processor *processor)

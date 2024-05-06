@@ -9377,7 +9377,6 @@ static void test_video_processor_with_dxgi_manager(void)
     IMFSample_Release(output.pSample);
 
     ret = check_mf_sample_collection(output_samples, &output_sample_desc_rgb32, L"rgb32frame.bmp");
-    todo_wine /* FIXME: video process vertically flips the frame... */
     ok(ret <= 5, "got %lu%% diff\n", ret);
 
     for (i = 0; i < 9; i++)
