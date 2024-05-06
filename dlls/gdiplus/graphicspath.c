@@ -2260,8 +2260,8 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             TRACE("GpCustomLineCap fill: %d basecap: %d inset: %f join: %d scale: %f pen_width:%f\n",
                 custom->fill, custom->basecap, custom->inset, custom->join, custom->scale, pen_width);
 
-        sina = -pen_width * custom->scale * segment_dx / segment_length;
-        cosa = pen_width * custom->scale * segment_dy / segment_length;
+        sina = pen_width * custom->scale * segment_dx / segment_length;
+        cosa = -pen_width * custom->scale * segment_dy / segment_length;
 
         /* Coordination where cap needs to be drawn */
         posx = endpoint->X;
@@ -2277,8 +2277,8 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
 
             for (INT i = 0; i < custom->pathdata.Count; i++)
             {
-                tmp_points[i].X = posx + custom->pathdata.Points[i].X * cosa + custom->pathdata.Points[i].Y * sina;
-                tmp_points[i].Y = posy + custom->pathdata.Points[i].X * sina - custom->pathdata.Points[i].Y * cosa;
+                tmp_points[i].X = posx + custom->pathdata.Points[i].X * cosa - custom->pathdata.Points[i].Y * sina;
+                tmp_points[i].Y = posy + custom->pathdata.Points[i].X * sina + custom->pathdata.Points[i].Y * cosa;
             }
             if ((custom->pathdata.Types[custom->pathdata.Count - 1] & PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
                 widen_closed_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, last_point);
@@ -2291,8 +2291,8 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             for (INT i = 0; i < custom->pathdata.Count; i++)
             {
                 /* rotation of CustomCap according to line */
-                perp_dx = custom->pathdata.Points[i].X * cosa + custom->pathdata.Points[i].Y * sina;
-                perp_dy = custom->pathdata.Points[i].X * sina - custom->pathdata.Points[i].Y * cosa;
+                perp_dx = custom->pathdata.Points[i].X * cosa - custom->pathdata.Points[i].Y * sina;
+                perp_dy = custom->pathdata.Points[i].X * sina + custom->pathdata.Points[i].Y * cosa;
                 *last_point = add_path_list_node(*last_point, posx + perp_dx,
                     posy + perp_dy, custom->pathdata.Types[i]);
             }
