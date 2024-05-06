@@ -511,6 +511,7 @@ struct tagVIDEOINFOHEADER2;
 typedef struct tagVIDEOINFOHEADER2 VIDEOINFOHEADER2;
 typedef struct _AMMediaType AM_MEDIA_TYPE;
 typedef struct tagMPEG1VIDEOINFO MPEG1VIDEOINFO;
+typedef struct tagMPEG2VIDEOINFO MPEG2VIDEOINFO;
 
 HRESULT WINAPI MFAddPeriodicCallback(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
 HRESULT WINAPI MFAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue);
@@ -602,6 +603,8 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
 HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader2(IMFMediaType *media_type, const VIDEOINFOHEADER2 *vih,
         UINT32 size, const GUID *subtype);
 HRESULT WINAPI MFInitMediaTypeFromMPEG1VideoInfo(IMFMediaType *media_type, const MPEG1VIDEOINFO *vih,
+        UINT32 size, const GUID *subtype);
+HRESULT WINAPI MFInitMediaTypeFromMPEG2VideoInfo(IMFMediaType *media_type, const MPEG2VIDEOINFO *vih,
         UINT32 size, const GUID *subtype);
 HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size);
 HRESULT WINAPI MFInitVideoFormat_RGB(MFVIDEOFORMAT *format, DWORD width, DWORD height, DWORD d3dformat);

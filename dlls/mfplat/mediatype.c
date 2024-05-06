@@ -4009,6 +4009,34 @@ HRESULT WINAPI MFInitMediaTypeFromMPEG1VideoInfo(IMFMediaType *media_type, const
     return hr;
 }
 
+/***********************************************************************
+ *      MFInitMediaTypeFromMPEG2VideoInfo (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromMPEG2VideoInfo(IMFMediaType *media_type, const MPEG2VIDEOINFO *vih, UINT32 size,
+        const GUID *subtype)
+{
+    HRESULT hr;
+
+    TRACE("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
+
+    if (FAILED(hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih->hdr, sizeof(vih->hdr), subtype)))
+        return hr;
+
+    if (vih->dwStartTimeCode)
+        mediatype_set_uint32(media_type, &MF_MT_MPEG_START_TIME_CODE, vih->dwStartTimeCode, &hr);
+    if (vih->cbSequenceHeader)
+        mediatype_set_blob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, (BYTE *)vih->dwSequenceHeader, vih->cbSequenceHeader, &hr);
+
+    if (vih->dwProfile)
+        mediatype_set_uint32(media_type, &MF_MT_MPEG2_PROFILE, vih->dwProfile, &hr);
+    if (vih->dwLevel)
+        mediatype_set_uint32(media_type, &MF_MT_MPEG2_LEVEL, vih->dwLevel, &hr);
+    if (vih->dwFlags)
+        mediatype_set_uint32(media_type, &MF_MT_MPEG2_FLAGS, vih->dwFlags, &hr);
+
+    return hr;
+}
+
 static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, IMFMediaType *media_type)
 {
     HRESULT hr;
@@ -4339,6 +4367,9 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
         else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEGVideo)
                 && am_type->cbFormat >= sizeof(MPEG1VIDEOINFO))
             hr = MFInitMediaTypeFromMPEG1VideoInfo(media_type, (MPEG1VIDEOINFO *)am_type->pbFormat, am_type->cbFormat, subtype);
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEG2Video)
+                && am_type->cbFormat >= sizeof(MPEG2VIDEOINFO))
+            hr = MFInitMediaTypeFromMPEG2VideoInfo(media_type, (MPEG2VIDEOINFO *)am_type->pbFormat, am_type->cbFormat, subtype);
         else
         {
             FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
