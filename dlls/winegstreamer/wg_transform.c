@@ -96,7 +96,7 @@ static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, Gst
         return GST_FLOW_ERROR;
     }
 
-    if (transform->output_caps_changed)
+    if (transform->output_caps_changed && transform->attrs.allow_format_change)
         GST_MINI_OBJECT_FLAG_SET(sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
     transform->output_caps_changed = false;
 
@@ -273,9 +273,7 @@ static void transform_sink_event_caps(struct wg_transform *transform, GstEvent *
 
     gst_event_parse_caps(event, &caps);
 
-    transform->output_caps_changed = transform->output_caps_changed
-            || !transform_output_caps_is_compatible(transform, caps);
-
+    transform->output_caps_changed = true;
     gst_caps_unref(transform->output_caps);
     transform->output_caps = gst_caps_ref(caps);
 }

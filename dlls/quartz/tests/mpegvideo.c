@@ -1201,7 +1201,7 @@ static void test_quality_control(IFilterGraph2 *graph, IBaseFilter *filter,
     testsource->qc = NULL;
 }
 
-static void test_send_sample(IMemInputPin *input, IMediaSample *sample, const BYTE *data, LONG len, BOOL todo)
+static void test_send_sample(IMemInputPin *input, IMediaSample *sample, const BYTE *data, LONG len)
 {
     BYTE *target_data;
     HRESULT hr;
@@ -1216,8 +1216,7 @@ static void test_send_sample(IMemInputPin *input, IMediaSample *sample, const BY
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine_if(todo) /* 0xc00d6d61 is MF_E_TRANSFORM_STREAM_CHANGE */
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 }
 
 static void test_send_video(IMemInputPin *input, IMediaSample *sample)
@@ -1248,8 +1247,8 @@ static void test_send_video(IMemInputPin *input, IMediaSample *sample)
     IPin *pin;
 
     /* native won't emit anything until an unknown-sized internal buffer is filled, or EOS is announced */
-    test_send_sample(input, sample, empty_mpg_frames, ARRAY_SIZE(empty_mpg_frames), TRUE);
-    test_send_sample(input, sample, empty_mpg_eos, ARRAY_SIZE(empty_mpg_eos), FALSE);
+    test_send_sample(input, sample, empty_mpg_frames, ARRAY_SIZE(empty_mpg_frames));
+    test_send_sample(input, sample, empty_mpg_eos, ARRAY_SIZE(empty_mpg_eos));
 
     hr = IMemInputPin_QueryInterface(input, &IID_IPin, (void **)&pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
