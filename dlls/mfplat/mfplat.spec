@@ -76,7 +76,7 @@
 @ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath
 @ stub MFCreateUdpSockets
-@ stub MFCreateVideoMediaType
+@ stdcall MFCreateVideoMediaType(ptr ptr)
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeader
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeaderEx
 @ stdcall MFCreateVideoMediaTypeFromSubtype(ptr ptr)

@@ -556,6 +556,7 @@ HRESULT WINAPI MFCreateMediaTypeFromRepresentation(GUID guid_representation, voi
 HRESULT WINAPI MFCreateSample(IMFSample **sample);
 HRESULT WINAPI MFCreateTempFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE openmode, MF_FILE_FLAGS flags,
         IMFByteStream **bytestream);
+HRESULT WINAPI MFCreateVideoMediaType(const MFVIDEOFORMAT *format, IMFVideoMediaType **media_type);
 HRESULT WINAPI MFCreateVideoMediaTypeFromSubtype(const GUID *subtype, IMFVideoMediaType **media_type);
 
 #ifdef _KSMEDIA_

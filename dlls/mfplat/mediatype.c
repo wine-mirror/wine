@@ -3759,6 +3759,30 @@ static const GUID * get_mf_subtype_for_am_subtype(const GUID *subtype)
     return subtype;
 }
 
+HRESULT WINAPI MFCreateVideoMediaType(const MFVIDEOFORMAT *format, IMFVideoMediaType **media_type)
+{
+    struct media_type *object;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", format, media_type);
+
+    if (!media_type)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = create_media_type(&object)))
+        return hr;
+
+    if (FAILED(hr = MFInitMediaTypeFromMFVideoFormat(&object->IMFMediaType_iface, format, format->dwSize)))
+    {
+        IMFMediaType_Release(&object->IMFMediaType_iface);
+        return hr;
+    }
+
+    *media_type = &object->IMFVideoMediaType_iface;
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateVideoMediaTypeFromVideoInfoHeader (mfplat.@)
  */
