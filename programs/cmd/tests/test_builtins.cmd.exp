@@ -1000,6 +1000,9 @@ A C
 A D
 B C
 B D
+--- nested FORs and args tempering
+@todo_wine@inner argument {-foo, bar}
+@todo_wine@inner argument {-x, y}
 --- basic wildcards
 bazbaz
 --- wildcards in subdirs
