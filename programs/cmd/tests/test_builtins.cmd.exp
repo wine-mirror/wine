@@ -613,8 +613,8 @@ N
 @todo_wine@foo
 @todo_wine@bar
 --- in digit variables
-@todo_wine@a %1 %2
-@todo_wine@b %1 %2
+a %1 %2
+b %1 %2
 ------------ Testing parameter zero ------------
 :func parm1
 [:func] [@drive@] [@path@] [test] [.cmd] [@drive@@shortpath@test.cmd]

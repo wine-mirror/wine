@@ -266,12 +266,13 @@ typedef struct _DIRECTORY_STACK
 
 /* Data structure to for loop variables during for body execution, bearing
    in mind that for loops can be nested                                    */
-#define MAX_FOR_VARIABLES 52
+#define MAX_FOR_VARIABLES (2*26+10)
 
 static inline int for_var_char_to_index(WCHAR c)
 {
     if (c >= L'a' && c <= L'z') return c - L'a';
     if (c >= L'A' && c <= L'Z') return c - L'A' + 26;
+    if (c >= L'0' && c <= L'9') return c - L'0' + 2 * 26;
     return -1;
 }
 
@@ -279,7 +280,8 @@ static inline WCHAR for_var_index_to_char(int var_idx)
 {
     if (var_idx < 0 || var_idx >= MAX_FOR_VARIABLES) return L'?';
     if (var_idx < 26) return L'a' + var_idx;
-    return L'A' + var_idx - 26;
+    if (var_idx < 52) return L'A' + var_idx - 26;
+    return L'0' + var_idx - 52;
 }
 
 /* check that the range [var_idx, var_idx + var_offset] is a contiguous range */
