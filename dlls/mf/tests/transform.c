@@ -5886,6 +5886,7 @@ static void test_wmv_decoder(void)
         const struct sample_desc *output_sample_desc;
         const WCHAR *result_bitmap;
         ULONG delta;
+        BOOL todo;
     }
     transform_tests[] =
     {
@@ -5908,7 +5909,7 @@ static void test_wmv_decoder(void)
             .expect_output_info = &expect_output_info,
             .output_sample_desc = &output_sample_desc_nv12_todo_time,
             .result_bitmap = L"nv12frame.bmp",
-            .delta = 0,
+            .delta = 0, .todo = TRUE,
         },
 
         {
@@ -5941,7 +5942,7 @@ static void test_wmv_decoder(void)
             .expect_output_info = &expect_output_info_rgb,
             .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 5,
+            .delta = 5, .todo = TRUE,
         },
 
     };
@@ -6114,8 +6115,13 @@ static void test_wmv_decoder(void)
 
         ret = check_mf_sample_collection(output_samples, transform_tests[j].output_sample_desc,
                                          transform_tests[j].result_bitmap);
+        todo_wine_if(transform_tests[j].todo)
         ok(ret <= transform_tests[j].delta, "got %lu%% diff\n", ret);
         IMFCollection_Release(output_samples);
+
+        hr = IMFTransform_SetOutputType(transform, 0, NULL, 0);
+        ok(hr == S_OK, "SetOutputType returned %#lx\n", hr);
+
         winetest_pop_context();
     }
 
