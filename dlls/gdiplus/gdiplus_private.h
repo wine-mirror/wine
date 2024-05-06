@@ -665,7 +665,7 @@ static inline void image_unlock(GpImage *image)
 
 static inline BOOL has_gdi_dc(GpGraphics *graphics)
 {
-    return graphics->hdc != NULL;
+    return graphics->hdc != NULL || graphics->owndc;
 }
 
 static inline void set_rect(GpRectF *rect, REAL x, REAL y, REAL width, REAL height)

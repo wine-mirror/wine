@@ -55,6 +55,14 @@ GpStatus gdi_dc_acquire(GpGraphics *graphics, HDC *hdc)
         graphics->hdc_refs++;
         return Ok;
     }
+    else if (graphics->owndc)
+    {
+        *hdc = graphics->hdc = GetDC(graphics->hwnd);
+        if (!graphics->hdc)
+            return OutOfMemory;
+        graphics->hdc_refs++;
+        return Ok;
+    }
 
     *hdc = NULL;
     return InvalidParameter;
@@ -64,6 +72,13 @@ void gdi_dc_release(GpGraphics *graphics, HDC hdc)
 {
     assert(graphics->hdc_refs > 0);
     graphics->hdc_refs--;
+
+    if (graphics->owndc && !graphics->hdc_refs)
+    {
+        assert(graphics->hdc == hdc);
+        graphics->hdc = NULL;
+        ReleaseDC(graphics->hwnd, hdc);
+    }
 }
 
 static GpStatus draw_driver_string(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
@@ -2556,6 +2571,9 @@ GpStatus WINGDIPAPI GdipCreateFromHWND(HWND hwnd, GpGraphics **graphics)
     (*graphics)->hwnd = hwnd;
     (*graphics)->owndc = TRUE;
 
+    ReleaseDC(hwnd, hdc);
+    (*graphics)->hdc = NULL;
+
     return Ok;
 }
 
@@ -2610,12 +2628,12 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 
     if (graphics->temp_hdc)
     {
-        DeleteDC(graphics->temp_hdc);
+        if (graphics->owndc)
+            ReleaseDC(graphics->hwnd, graphics->temp_hdc);
+        else
+            DeleteDC(graphics->temp_hdc);
         graphics->temp_hdc = NULL;
     }
-
-    if(graphics->owndc)
-        ReleaseDC(graphics->hwnd, graphics->hdc);
 
     LIST_FOR_EACH_ENTRY_SAFE(cont, next, &graphics->containers, GraphicsContainerItem, entry){
         list_remove(&cont->entry);
@@ -7002,6 +7020,13 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
     {
         stat = METAFILE_GetDC((GpMetafile*)graphics->image, hdc);
     }
+    else if (graphics->owndc)
+    {
+        graphics->temp_hdc = GetDC(graphics->hwnd);
+        if (!graphics->temp_hdc)
+            return OutOfMemory;
+        *hdc = graphics->temp_hdc;
+    }
     else if (!graphics->hdc ||
         (graphics->image && graphics->image->type == ImageTypeBitmap))
     {
@@ -7082,6 +7107,11 @@ GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
     if (is_metafile_graphics(graphics))
     {
         stat = METAFILE_ReleaseDC((GpMetafile*)graphics->image, hdc);
+    }
+    else if (graphics->owndc)
+    {
+        ReleaseDC(graphics->hwnd, graphics->temp_hdc);
+        graphics->temp_hdc = NULL;
     }
     else if (graphics->temp_hdc == hdc)
     {
