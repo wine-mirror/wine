@@ -1274,6 +1274,7 @@ static void session_close(struct media_session *session)
     switch (session->state)
     {
         case SESSION_STATE_STOPPED:
+        case SESSION_STATE_RESTARTING_SOURCES:
             hr = session_finalize_sinks(session);
             break;
         case SESSION_STATE_STARTED:

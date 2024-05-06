@@ -6334,7 +6334,6 @@ static void test_media_session_Start(void)
     hr = IMFMediaSession_Close(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = wait_media_event(session, callback, MESessionClosed, 1000, &propvar);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
