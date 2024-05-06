@@ -81,8 +81,6 @@ char *wg_parser_stream_get_tag(wg_parser_stream_t stream, enum wg_parser_tag tag
 void wg_parser_stream_seek(wg_parser_stream_t stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
 
-wg_transform_t wg_transform_create(const struct wg_format *input_format,
-        const struct wg_format *output_format, const struct wg_transform_attrs *attrs);
 HRESULT wg_transform_create_mf(IMFMediaType *input_type, IMFMediaType *output_type,
         const struct wg_transform_attrs *attrs, wg_transform_t *transform);
 HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_MEDIA_TYPE *output_format,

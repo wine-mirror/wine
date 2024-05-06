@@ -2058,15 +2058,25 @@ NTSTATUS wow64_wg_transform_create(void *args)
     struct
     {
         wg_transform_t transform;
-        PTR32 input_format;
-        PTR32 output_format;
-        PTR32 attrs;
+        struct wg_media_type32 input_type;
+        struct wg_media_type32 output_type;
+        struct wg_transform_attrs attrs;
     } *params32 = args;
     struct wg_transform_create_params params =
     {
-        .input_format = ULongToPtr(params32->input_format),
-        .output_format = ULongToPtr(params32->output_format),
-        .attrs = ULongToPtr(params32->attrs),
+        .input_type =
+        {
+            .major = params32->input_type.major,
+            .format_size = params32->input_type.format_size,
+            .u.format = ULongToPtr(params32->input_type.format),
+        },
+        .output_type =
+        {
+            .major = params32->output_type.major,
+            .format_size = params32->output_type.format_size,
+            .u.format = ULongToPtr(params32->output_type.format),
+        },
+        .attrs = params32->attrs,
     };
     NTSTATUS ret;
 

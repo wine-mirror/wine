@@ -340,9 +340,9 @@ struct wg_transform_attrs
 struct wg_transform_create_params
 {
     wg_transform_t transform;
-    const struct wg_format *input_format;
-    const struct wg_format *output_format;
-    const struct wg_transform_attrs *attrs;
+    struct wg_media_type input_type;
+    struct wg_media_type output_type;
+    struct wg_transform_attrs attrs;
 };
 
 struct wg_transform_push_data_params

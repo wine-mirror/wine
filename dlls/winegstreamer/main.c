@@ -435,55 +435,59 @@ void wg_parser_stream_seek(wg_parser_stream_t stream, double rate,
     WINE_UNIX_CALL(unix_wg_parser_stream_seek, &params);
 }
 
-wg_transform_t wg_transform_create(const struct wg_format *input_format,
-        const struct wg_format *output_format, const struct wg_transform_attrs *attrs)
-{
-    struct wg_transform_create_params params =
-    {
-        .input_format = input_format,
-        .output_format = output_format,
-        .attrs = attrs,
-    };
-
-    TRACE("input_format %p, output_format %p.\n", input_format, output_format);
-
-    if (WINE_UNIX_CALL(unix_wg_transform_create, &params))
-        return 0;
-
-    TRACE("Returning transform %#I64x.\n", params.transform);
-    return params.transform;
-}
-
 HRESULT wg_transform_create_mf(IMFMediaType *input_type, IMFMediaType *output_type,
         const struct wg_transform_attrs *attrs, wg_transform_t *transform)
 {
-    struct wg_format input_format, output_format;
+    struct wg_transform_create_params params =
+    {
+        .attrs = *attrs,
+    };
+    NTSTATUS status;
+    HRESULT hr;
 
-    mf_media_type_to_wg_format(input_type, &input_format);
-    if (input_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
-    mf_media_type_to_wg_format(output_type, &output_format);
-    if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
-        return MF_E_INVALIDMEDIATYPE;
+    TRACE("input_type %p, output_type %p.\n", input_type, output_type);
 
-    if (!(*transform = wg_transform_create(&input_format, &output_format, attrs)))
-        return E_FAIL;
-    return S_OK;
+    if (FAILED(hr = wg_media_type_from_mf(input_type, &params.input_type)))
+        return hr;
+    if (FAILED(hr = wg_media_type_from_mf(output_type, &params.output_type)))
+    {
+        CoTaskMemFree(params.input_type.u.format);
+        return hr;
+    }
+
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_create, &params)))
+    {
+        WARN("Failed to create transform, status %#lx\n", status);
+        hr = HRESULT_FROM_NT(status);
+    }
+
+    CoTaskMemFree(params.output_type.u.format);
+    CoTaskMemFree(params.input_type.u.format);
+    *transform = params.transform;
+    return hr;
 }
 
-HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_type, const AM_MEDIA_TYPE *output_type,
+HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_MEDIA_TYPE *output_format,
         const struct wg_transform_attrs *attrs, wg_transform_t *transform)
 {
-    struct wg_format input_format, output_format;
+    IMFMediaType *input_type, *output_type;
+    HRESULT hr;
 
-    if (!amt_to_wg_format(input_type, &input_format))
-        return E_FAIL;
-    if (!amt_to_wg_format(output_type, &output_format))
-        return E_FAIL;
+    TRACE("input_format %p, output_format %p.\n", input_format, output_format);
 
-    if (!(*transform = wg_transform_create(&input_format, &output_format, attrs)))
-        return E_FAIL;
-    return S_OK;
+    /* through IMFMediaType to normalize representation to MFVIDEOFORMAT / WAVEFORMATEX */
+    if (FAILED(hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, (void *)input_format, &input_type)))
+        return 0;
+    if (FAILED(hr = MFCreateMediaTypeFromRepresentation(AM_MEDIA_TYPE_REPRESENTATION, (void *)output_format, &output_type)))
+    {
+        IMFMediaType_Release(input_type);
+        return 0;
+    }
+
+    hr = wg_transform_create_mf(input_type, output_type, attrs, transform);
+    IMFMediaType_Release(output_type);
+    IMFMediaType_Release(input_type);
+    return hr;
 }
 
 void wg_transform_destroy(wg_transform_t transform)
@@ -773,24 +777,22 @@ HRESULT wg_muxer_finalize(wg_muxer_t muxer)
     return S_OK;
 }
 
-HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMATEX *output)
+static HRESULT check_transform_support(const struct wg_media_type *input, const struct wg_media_type *output)
 {
     IMFMediaType *input_type, *output_type;
     struct wg_transform_attrs attrs = {0};
     wg_transform_t transform;
     HRESULT hr;
 
-    if (FAILED(hr = MFCreateMediaType(&input_type)))
+    if (FAILED(hr = wg_media_type_to_mf(input, &input_type)))
         return hr;
-    if (FAILED(hr = MFCreateMediaType(&output_type)))
+    if (FAILED(hr = wg_media_type_to_mf(output, &output_type)))
     {
         IMFMediaType_Release(input_type);
         return hr;
     }
 
-    if (SUCCEEDED(hr = MFInitMediaTypeFromWaveFormatEx(input_type, input, sizeof(*input) + input->cbSize))
-            && SUCCEEDED(hr = MFInitMediaTypeFromWaveFormatEx(output_type, output, sizeof(*output) + output->cbSize))
-            && SUCCEEDED(hr = wg_transform_create_mf(input_type, output_type, &attrs, &transform)))
+    if (SUCCEEDED(hr = wg_transform_create_mf(input_type, output_type, &attrs, &transform)))
         wg_transform_destroy(transform);
 
     IMFMediaType_Release(output_type);
@@ -798,29 +800,38 @@ HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMA
     return hr;
 }
 
+HRESULT check_audio_transform_support(const WAVEFORMATEX *input, const WAVEFORMATEX *output)
+{
+    const struct wg_media_type input_type =
+    {
+        .major = MFMediaType_Audio,
+        .format_size = sizeof(*input) + input->cbSize,
+        .u.audio = (WAVEFORMATEX *)input,
+    };
+    const struct wg_media_type output_type =
+    {
+        .major = MFMediaType_Audio,
+        .format_size = sizeof(*output) + output->cbSize,
+        .u.audio = (WAVEFORMATEX *)output,
+    };
+    return check_transform_support(&input_type, &output_type);
+}
+
 HRESULT check_video_transform_support(const MFVIDEOFORMAT *input, const MFVIDEOFORMAT *output)
 {
-    IMFMediaType *input_type, *output_type;
-    struct wg_transform_attrs attrs = {0};
-    wg_transform_t transform;
-    HRESULT hr;
-
-    if (FAILED(hr = MFCreateMediaType(&input_type)))
-        return hr;
-    if (FAILED(hr = MFCreateMediaType(&output_type)))
+    const struct wg_media_type input_type =
     {
-        IMFMediaType_Release(input_type);
-        return hr;
-    }
-
-    if (SUCCEEDED(hr = MFInitMediaTypeFromMFVideoFormat(input_type, input, input->dwSize))
-            && SUCCEEDED(hr = MFInitMediaTypeFromMFVideoFormat(output_type, output, output->dwSize))
-            && SUCCEEDED(hr = wg_transform_create_mf(input_type, output_type, &attrs, &transform)))
-        wg_transform_destroy(transform);
-
-    IMFMediaType_Release(output_type);
-    IMFMediaType_Release(input_type);
-    return hr;
+        .major = MFMediaType_Video,
+        .format_size = input->dwSize,
+        .u.video = (MFVIDEOFORMAT *)input,
+    };
+    const struct wg_media_type output_type =
+    {
+        .major = MFMediaType_Video,
+        .format_size = output->dwSize,
+        .u.video = (MFVIDEOFORMAT *)output,
+    };
+    return check_transform_support(&input_type, &output_type);
 }
 
 #define ALIGN(n, alignment) (((n) + (alignment) - 1) & ~((alignment) - 1))
