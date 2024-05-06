@@ -69,6 +69,7 @@ struct pulse_stream
     float vol[PA_CHANNELS_MAX];
 
     REFERENCE_TIME def_period;
+    REFERENCE_TIME duration;
 
     INT32 locked;
     BOOL started;
@@ -1073,7 +1074,7 @@ static HRESULT pulse_stream_connect(struct pulse_stream *stream, const char *pul
         pulse_name = NULL;  /* use default */
 
     if (stream->dataflow == eRender)
-        ret = pa_stream_connect_playback(stream->stream, pulse_name, &attr, flags, NULL, NULL);
+        ret = pa_stream_connect_playback(stream->stream, pulse_name, &attr, flags|PA_STREAM_VARIABLE_RATE, NULL, NULL);
     else
         ret = pa_stream_connect_record(stream->stream, pulse_name, &attr, flags);
     if (ret < 0) {
@@ -1158,6 +1159,7 @@ static NTSTATUS pulse_create_stream(void *args)
         goto exit;
 
     stream->def_period = params->period;
+    stream->duration = params->duration;
 
     stream->period_bytes = pa_frame_size(&stream->ss) * muldiv(params->period,
                                                                stream->ss.rate,
@@ -2486,6 +2488,71 @@ static NTSTATUS pulse_set_event_handle(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS pulse_set_sample_rate(void *args)
+{
+    struct set_sample_rate_params *params = args;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
+    HRESULT hr = S_OK;
+    int success;
+    SIZE_T size, new_bufsize_frames;
+    BYTE *new_buffer = NULL;
+    pa_sample_spec new_ss;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream)) {
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+    if (stream->dataflow != eRender) {
+        hr = E_NOTIMPL;
+        goto exit;
+    }
+
+    new_ss = stream->ss;
+    new_ss.rate = params->rate;
+    new_bufsize_frames = ceil((stream->duration / 10000000.) * new_ss.rate);
+    size = new_bufsize_frames * 2 * pa_frame_size(&stream->ss);
+
+    if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&new_buffer,
+                                zero_bits, &size, MEM_COMMIT, PAGE_READWRITE)) {
+        hr = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    if (!wait_pa_operation_complete(pa_stream_update_sample_rate(stream->stream, params->rate, pulse_op_cb, &success)))
+        success = 0;
+
+    if (!success) {
+        hr = E_OUTOFMEMORY;
+        size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&new_buffer, &size, MEM_RELEASE);
+        goto exit;
+    }
+
+    if (stream->held_bytes)
+        wait_pa_operation_complete(pa_stream_flush(stream->stream, pulse_op_cb, &success));
+
+    stream->clock_lastpos = stream->clock_written = 0;
+    stream->pa_offs_bytes = stream->lcl_offs_bytes = 0;
+    stream->held_bytes = stream->pa_held_bytes = 0;
+    stream->period_bytes = pa_frame_size(&new_ss) * muldiv(stream->mmdev_period_usec, new_ss.rate, 1000000);
+    stream->real_bufsize_bytes = size;
+    stream->bufsize_frames = new_bufsize_frames;
+    stream->ss = new_ss;
+
+    size = 0;
+    NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
+
+    silence_buffer(new_ss.format, new_buffer, size);
+    stream->local_buffer = new_buffer;
+
+exit:
+    pulse_unlock();
+
+    params->result = hr;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pulse_is_started(void *args)
 {
     struct is_started_params *params = args;
@@ -2611,7 +2678,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_get_position,
     pulse_set_volumes,
     pulse_set_event_handle,
-    pulse_not_implemented,
+    pulse_set_sample_rate,
     pulse_test_connect,
     pulse_is_started,
     pulse_get_prop_value,
@@ -3109,7 +3176,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_get_position,
     pulse_wow64_set_volumes,
     pulse_wow64_set_event_handle,
-    pulse_not_implemented,
+    pulse_set_sample_rate,
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
