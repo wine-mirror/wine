@@ -744,6 +744,17 @@ echo '%~xs1'
 goto :eof
 :endEchoFuns
 
+setlocal EnableDelayedExpansion
+set WINE_FOO=foo bar
+for %%i in ("!WINE_FOO!") do echo %%i
+for %%i in (!WINE_FOO!) do echo %%i
+rem tests disabled for now... wine's cmd loops endlessly here
+rem set WINE_FOO=4 4 4
+rem for /l %%i in (!WINE_FOO!) do echo %%i
+rem set WINE_FOO=4
+rem for /l %%i in (1 2 !WINE_FOO!) do echo %%i
+setlocal DisableDelayedExpansion
+
 echo --- in digit variables
 for %%0 in (a b) do echo %%0 %%1 %%2
 echo ------------ Testing parameter zero ------------
@@ -794,6 +805,12 @@ set WINE_FOO=foo
 echo %WINE_FOO%
 echo !WINE_FOO!
 set WINE_FOO=
+
+setlocal EnableDelayedExpansion
+set WINE_FOO=foo bar
+if !WINE_FOO!=="" (echo empty) else echo not empty
+setlocal DisableDelayedExpansion
+
 echo --- using /V cmd flag
 echo @echo off> tmp.cmd
 echo set WINE_FOO=foo>> tmp.cmd

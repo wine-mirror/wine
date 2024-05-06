@@ -600,6 +600,9 @@ N
 @drive@
 ''
 '.eh'@or_broken@''
+"foo bar"
+@todo_wine@foo
+@todo_wine@bar
 --- in digit variables
 @todo_wine@a %1 %2
 @todo_wine@b %1 %2
@@ -621,6 +624,7 @@ bar@or_broken@foo
 0@or_broken@1
 foo
 !WINE_FOO!
+@todo_wine@not empty
 --- using /V cmd flag
 foo
 foo@or_broken@!WINE_FOO!
