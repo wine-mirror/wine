@@ -744,6 +744,8 @@ echo '%~xs1'
 goto :eof
 :endEchoFuns
 
+echo --- in digit variables
+for %%0 in (a b) do echo %%0 %%1 %%2
 echo ------------ Testing parameter zero ------------
 call :func parm1 parm2
 goto :endParm0
