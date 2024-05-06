@@ -5909,7 +5909,7 @@ static void test_wmv_decoder(void)
             .expect_output_info = &expect_output_info,
             .output_sample_desc = &output_sample_desc_nv12_todo_time,
             .result_bitmap = L"nv12frame.bmp",
-            .delta = 0, .todo = TRUE,
+            .delta = 0,
         },
 
         {
@@ -5935,14 +5935,14 @@ static void test_wmv_decoder(void)
         },
 
         {
-            /* WMV1 -> RGB (positive stride */
+            /* WMV1 -> RGB (positive stride) */
             .output_type_desc = output_type_desc_rgb_positive_stride,
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
             .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame-flip.bmp",
-            .delta = 5, .todo = TRUE,
+            .delta = 5,
         },
 
     };
@@ -6115,7 +6115,6 @@ static void test_wmv_decoder(void)
 
         ret = check_mf_sample_collection(output_samples, transform_tests[j].output_sample_desc,
                                          transform_tests[j].result_bitmap);
-        todo_wine_if(transform_tests[j].todo)
         ok(ret <= transform_tests[j].delta, "got %lu%% diff\n", ret);
         IMFCollection_Release(output_samples);
 
