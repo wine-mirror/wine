@@ -438,7 +438,7 @@ void *xrealloc(void *ptr, size_t size)
  *    It's up to the caller to ensure there is enough space in the
  *    destination buffer.
  */
-void WCMD_strsubstW(WCHAR *start, const WCHAR *next, const WCHAR *insert, int len) {
+WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR *next, const WCHAR *insert, int len) {
 
    if (len < 0)
       len=insert ? lstrlenW(insert) : 0;
@@ -446,6 +446,7 @@ void WCMD_strsubstW(WCHAR *start, const WCHAR *next, const WCHAR *insert, int le
        memmove(start+len, next, (lstrlenW(next) + 1) * sizeof(*next));
    if (insert)
        memcpy(start, insert, len * sizeof(*insert));
+   return start + len;
 }
 
 BOOL WCMD_get_fullpath(const WCHAR* in, SIZE_T outsize, WCHAR* out, WCHAR** start)
@@ -568,8 +569,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       /* In batch program, missing terminator for % and no following
          ':' just removes the '%'                                   */
       if (context) {
-        WCMD_strsubstW(start, start + 1, NULL, 0);
-        return start;
+        return WCMD_strsubstW(start, start + 1, NULL, 0);
       } else {
 
         /* In command processing, just ignore it - allows command line
@@ -643,30 +643,21 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       /* Command line - just ignore this */
       if (context == NULL) return endOfVar+1;
 
-
       /* Batch - replace unknown env var with nothing */
-      if (colonpos == NULL) {
-        WCMD_strsubstW(start, endOfVar + 1, NULL, 0);
-      } else {
-        len = lstrlenW(thisVar);
-        thisVar[len-1] = 0x00;
-        /* If %:...% supplied, : is retained */
-        if (colonpos == thisVar+1) {
-          WCMD_strsubstW(start, endOfVar + 1, colonpos, -1);
-        } else {
-          WCMD_strsubstW(start, endOfVar + 1, colonpos + 1, -1);
-        }
-      }
-      return start;
-
+      if (colonpos == NULL)
+        return WCMD_strsubstW(start, endOfVar + 1, NULL, 0);
+      len = lstrlenW(thisVar);
+      thisVar[len-1] = 0x00;
+      /* If %:...% supplied, : is retained */
+      if (colonpos == thisVar+1)
+          return WCMD_strsubstW(start, endOfVar + 1, colonpos, -1);
+      return WCMD_strsubstW(start, endOfVar + 1, colonpos + 1, -1);
     }
 
     /* See if we need to do complex substitution (any ':'s), if not
        then our work here is done                                  */
-    if (colonpos == NULL) {
-      WCMD_strsubstW(start, endOfVar + 1, thisVarContents, -1);
-      return start;
-    }
+    if (colonpos == NULL)
+      return WCMD_strsubstW(start, endOfVar + 1, thisVarContents, -1);
 
     /* Restore complex bit */
     *colonpos = ':';
@@ -699,20 +690,18 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
         startCopy = &thisVarContents[max(0, len + substrposition)];
       }
 
-      if (commapos == NULL) {
+      if (commapos == NULL)
         /* Copy the lot */
-        WCMD_strsubstW(start, endOfVar + 1, startCopy, -1);
-      } else if (substrlength < 0) {
+        return WCMD_strsubstW(start, endOfVar + 1, startCopy, -1);
+      if (substrlength < 0) {
 
         int copybytes = len + substrlength - (startCopy - thisVarContents);
         if (copybytes >= len) copybytes = len - 1;
         else if (copybytes < 0) copybytes = 0;
-        WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
-      } else {
-        substrlength = min(substrlength, len - (startCopy - thisVarContents));
-        WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
+        return WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
       }
-
+      substrlength = min(substrlength, len - (startCopy - thisVarContents));
+      return WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
     /* search and replace manipulation */
     } else {
       WCHAR *equalspos = wcsstr(colonpos, L"=");
@@ -720,6 +709,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       WCHAR *found       = NULL;
       WCHAR *searchIn;
       WCHAR *searchFor;
+      WCHAR *ret;
 
       if (equalspos == NULL) return start+1;
       s = xstrdupW(endOfVar + 1);
@@ -743,13 +733,14 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
           /* Do replacement */
           lstrcpyW(start, replacewith);
           lstrcatW(start, thisVarContents + (found-searchIn) + lstrlenW(searchFor+1));
+          ret = start + wcslen(start);
           lstrcatW(start, s);
         } else {
           /* Copy as is */
           lstrcpyW(start, thisVarContents);
+          ret = start + wcslen(start);
           lstrcatW(start, s);
         }
-
       } else {
         /* Loop replacing all instances */
         WCHAR *lastFound = searchIn;
@@ -767,13 +758,14 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
         }
         lstrcatW(outputposn,
                 thisVarContents + (lastFound-searchIn));
+        ret = outputposn + wcslen(outputposn);
         lstrcatW(outputposn, s);
       }
       free(s);
       free(searchIn);
       free(searchFor);
+      return ret;
     }
-    return start;
 }
 
 /*****************************************************************************
@@ -831,8 +823,9 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
     if (!atExecute && *(p+1) == startchar) {
       if (context) {
         WCMD_strsubstW(p, p+1, NULL, 0);
+        p++;
       }
-      p+=1;
+      else p+=2;
 
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
@@ -843,7 +836,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
     } else if (!atExecute && context && (i >= 0) && (i <= 9) && startchar == '%') {
       t = WCMD_parameter(context -> command, i + context -> shift_count[i],
                          NULL, TRUE, TRUE);
-      WCMD_strsubstW(p, p+2, t, -1);
+      p = WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
     } else if (!atExecute && context && *(p+1)=='*' && startchar == '%') {
@@ -852,15 +845,15 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
       if (startOfParms != NULL) {
         startOfParms += lstrlenW(thisParm);
         while (*startOfParms==' ' || *startOfParms == '\t') startOfParms++;
-        WCMD_strsubstW(p, p+2, startOfParms, -1);
+        p = WCMD_strsubstW(p, p+2, startOfParms, -1);
       } else
-        WCMD_strsubstW(p, p+2, NULL, 0);
+        p = WCMD_strsubstW(p, p+2, NULL, 0);
 
     } else {
       int forvaridx = for_var_char_to_index(*(p+1));
       if (startchar == '%' && forvaridx != -1 && forloopcontext->variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
-        WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
+        p = WCMD_strsubstW(p, p + 2, forloopcontext->variable[forvaridx], -1);
       } else if (!atExecute || startchar == '!') {
         p = WCMD_expand_envvar(p, startchar);
 
@@ -928,6 +921,13 @@ static void WCMD_parse (const WCHAR *s, WCHAR *q, WCHAR *p1, WCHAR *p2)
 	p++;
     }
   }
+}
+
+void WCMD_expand(const WCHAR *src, WCHAR *dst)
+{
+    wcscpy(dst, src);
+    handleExpansion(dst, FALSE);
+    WCMD_parse(dst, quals, param1, param2);
 }
 
 /* ============================== */
@@ -1317,6 +1317,8 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
     }
 }
 
+static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOOL iscalled);
+
 /******************************************************************************
  * WCMD_run_program
  *
@@ -1524,8 +1526,12 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"))) {
         BOOL oldinteractive = interactive;
         interactive = FALSE;
-        WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
+        WCMD_batch(thisDir, command, NULL, INVALID_HANDLE_VALUE);
         interactive = oldinteractive;
+        if (context && !called) {
+          TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
+          context->skip_rest = TRUE;
+        }
         return;
       } else {
         DWORD exit_code;
@@ -1574,13 +1580,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
   /* Not found anywhere - were we called? */
   if (called) {
-    CMD_NODE *toExecute = NULL;         /* Commands left to be executed */
-
-    /* Parse the command string, without reading any more input */
-    WCMD_ReadAndParseLine(command, &toExecute, INVALID_HANDLE_VALUE);
-    WCMD_process_commands(toExecute, FALSE, called);
-    node_dispose_tree(toExecute);
-    toExecute = NULL;
+    execute_single_command(command, NULL, TRUE);
     return;
   }
 

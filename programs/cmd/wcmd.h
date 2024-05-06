@@ -182,7 +182,7 @@ typedef int RETURN_CODE;
 #define RETURN_CODE_ABORTED              (-999999)
 
 void WCMD_assoc (const WCHAR *, BOOL);
-void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);
+void WCMD_batch(WCHAR *, WCHAR *, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);
 void WCMD_change_tty (void);
 void WCMD_choice (const WCHAR *);
@@ -242,7 +242,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
 
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
-void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
+WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output, HANDLE readFrom);
