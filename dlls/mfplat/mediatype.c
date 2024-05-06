@@ -31,6 +31,7 @@
 #include "ksmedia.h"
 #include "amvideo.h"
 #include "wmcodecdsp.h"
+#include "wmsdkidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -3987,6 +3988,27 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
     return MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih2, sizeof(vih2), subtype);
 }
 
+/***********************************************************************
+ *      MFInitMediaTypeFromMPEG1VideoInfo (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromMPEG1VideoInfo(IMFMediaType *media_type, const MPEG1VIDEOINFO *vih, UINT32 size,
+        const GUID *subtype)
+{
+    HRESULT hr;
+
+    TRACE("%p, %p, %u, %s.\n", media_type, vih, size, debugstr_guid(subtype));
+
+    if (FAILED(hr = MFInitMediaTypeFromVideoInfoHeader(media_type, &vih->hdr, sizeof(vih->hdr), subtype)))
+        return hr;
+
+    if (vih->dwStartTimeCode)
+        mediatype_set_uint32(media_type, &MF_MT_MPEG_START_TIME_CODE, vih->dwStartTimeCode, &hr);
+    if (vih->cbSequenceHeader)
+        mediatype_set_blob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, vih->bSequenceHeader, vih->cbSequenceHeader, &hr);
+
+    return hr;
+}
+
 static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, IMFMediaType *media_type)
 {
     HRESULT hr;
@@ -4314,6 +4336,9 @@ HRESULT WINAPI MFInitMediaTypeFromAMMediaType(IMFMediaType *media_type, const AM
         else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2)
                 && am_type->cbFormat >= sizeof(VIDEOINFOHEADER2))
             hr = MFInitMediaTypeFromVideoInfoHeader2(media_type, (VIDEOINFOHEADER2 *)am_type->pbFormat, am_type->cbFormat, subtype);
+        else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEGVideo)
+                && am_type->cbFormat >= sizeof(MPEG1VIDEOINFO))
+            hr = MFInitMediaTypeFromMPEG1VideoInfo(media_type, (MPEG1VIDEOINFO *)am_type->pbFormat, am_type->cbFormat, subtype);
         else
         {
             FIXME("Unsupported format type %s / size %ld.\n", debugstr_guid(&am_type->formattype), am_type->cbFormat);
