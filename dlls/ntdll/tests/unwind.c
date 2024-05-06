@@ -1566,6 +1566,8 @@ struct unwind_test_arm64
     unsigned int nb_results;
     int unwound_clear;
     int last_set_reg_ptr;
+    int stack_value_index;
+    ULONG64 stack_value;
 };
 
 enum regs_arm64
@@ -1630,6 +1632,7 @@ static void call_virtual_unwind_arm64( void *code_mem, int testnum, const struct
         memset( &context, 0x55, sizeof(context) );
         memset( &unset_reg, 0x55, sizeof(unset_reg) );
         for (j = 0; j < 256; j++) fake_stack[j] = j * 8;
+        if (test->stack_value_index != -1) fake_stack[test->stack_value_index] = test->stack_value;
 
         context.Sp = (ULONG_PTR)fake_stack;
         context.Lr = (ULONG_PTR)ORIG_LR;
@@ -2598,27 +2601,27 @@ static void test_virtual_unwind_arm64(void)
 
     static const struct unwind_test_arm64 tests[] =
     {
-#define TEST(func, unwind, size, results, unwound_clear, last_ptr) \
-        { func, sizeof(func), unwind, size, results, ARRAY_SIZE(results), unwound_clear, last_ptr }
-        TEST(function_0, unwind_info_0, sizeof(unwind_info_0), results_0, 0, 0),
-        TEST(function_1, unwind_info_1, 0, results_1, 0, 0),
-        TEST(function_2, unwind_info_2, sizeof(unwind_info_2), results_2, 1, 0),
-        TEST(function_3, unwind_info_3, sizeof(unwind_info_3), results_3, 1, x28),
-        TEST(function_4, unwind_info_4, sizeof(unwind_info_4), results_4, 0, 0),
-        TEST(function_5, unwind_info_5, sizeof(unwind_info_5), results_5, 0, 0),
-        TEST(function_6, unwind_info_6, 0, results_6, 0, 0),
-        TEST(function_7, unwind_info_7, 0, results_7, 0, 0),
-        TEST(function_8, unwind_info_8, 0, results_8, 0, 0),
-        TEST(function_9, unwind_info_9, 0, results_9, 0, 0),
-        TEST(function_10, unwind_info_10, 0, results_10, 0, 0),
-        TEST(function_11, unwind_info_11, 0, results_11, 0, 0),
-        TEST(function_12, unwind_info_12, 0, results_12, 0, 0),
-        TEST(function_13, unwind_info_13, 0, results_13, 0, 0),
-        TEST(function_14, unwind_info_14, sizeof(unwind_info_14), results_14, 0, 0),
-        TEST(function_15, unwind_info_15, sizeof(unwind_info_15), results_15, 0, 0),
-        TEST(function_16, unwind_info_16, sizeof(unwind_info_16), results_16, 1, x18),
-        TEST(function_17, unwind_info_17, sizeof(unwind_info_17), results_17, 2, 0),
-        TEST(function_18, NULL, 0, results_18, 0, 0),
+#define TEST(func, unwind, size, results, unwound_clear, last_ptr, stack_value_index, stack_value) \
+        { func, sizeof(func), unwind, size, results, ARRAY_SIZE(results), unwound_clear, last_ptr, stack_value_index, stack_value }
+        TEST(function_0, unwind_info_0, sizeof(unwind_info_0), results_0, 0, 0, -1, 0),
+        TEST(function_1, unwind_info_1, 0, results_1, 0, 0, -1, 0),
+        TEST(function_2, unwind_info_2, sizeof(unwind_info_2), results_2, 1, 0, -1, 0),
+        TEST(function_3, unwind_info_3, sizeof(unwind_info_3), results_3, 2, x28, 0, CONTEXT_ARM64_UNWOUND_TO_CALL),
+        TEST(function_4, unwind_info_4, sizeof(unwind_info_4), results_4, 0, 0, -1, 0),
+        TEST(function_5, unwind_info_5, sizeof(unwind_info_5), results_5, 0, 0, -1, 0),
+        TEST(function_6, unwind_info_6, 0, results_6, 0, 0, -1, 0),
+        TEST(function_7, unwind_info_7, 0, results_7, 0, 0, -1, 0),
+        TEST(function_8, unwind_info_8, 0, results_8, 0, 0, -1, 0),
+        TEST(function_9, unwind_info_9, 0, results_9, 0, 0, -1, 0),
+        TEST(function_10, unwind_info_10, 0, results_10, 0, 0, -1, 0),
+        TEST(function_11, unwind_info_11, 0, results_11, 0, 0, -1, 0),
+        TEST(function_12, unwind_info_12, 0, results_12, 0, 0, -1, 0),
+        TEST(function_13, unwind_info_13, 0, results_13, 0, 0, -1, 0),
+        TEST(function_14, unwind_info_14, sizeof(unwind_info_14), results_14, 0, 0, -1, 0),
+        TEST(function_15, unwind_info_15, sizeof(unwind_info_15), results_15, 0, 0, -1, 0),
+        TEST(function_16, unwind_info_16, sizeof(unwind_info_16), results_16, 2, x18, 6, CONTEXT_ARM64_UNWOUND_TO_CALL),
+        TEST(function_17, unwind_info_17, sizeof(unwind_info_17), results_17, 2, 0, -1, 0),
+        TEST(function_18, NULL, 0, results_18, 0, 0, -1, 0),
 #undef TEST
     };
     unsigned int i;

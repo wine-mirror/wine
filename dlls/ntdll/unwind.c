@@ -402,7 +402,8 @@ static void do_pac_auth( ARM64_NT_CONTEXT *context )
 }
 
 static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *context,
-                                  KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs, int skip )
+                                  KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs, int skip,
+                                  BOOLEAN *final_pc_from_lr )
 {
     unsigned int i, val, len, save_next = 2;
 
@@ -482,6 +483,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
             context->Pc = ((DWORD64 *)context->Sp)[1];
             context->Sp = ((DWORD64 *)context->Sp)[0];
             context->ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
+            *final_pc_from_lr = FALSE;
         }
         else if (*ptr == 0xea)  /* MSFT_OP_CONTEXT */
         {
@@ -494,6 +496,7 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
                 for (i = 19; i < 29; i++) (&ptrs->X19)[i - 19] = &src_ctx->X[i];
                 for (i = 8; i < 16; i++) (&ptrs->D8)[i - 8] = &src_ctx->V[i].Low;
             }
+            *final_pc_from_lr = FALSE;
         }
         else if (*ptr == 0xeb)  /* MSFT_OP_EC_CONTEXT */
         {
@@ -502,11 +505,13 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, ARM64_NT_CONTEXT *contex
             context_x64_to_arm( context, src_ctx );
             context->ContextFlags = flags | (src_ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL);
             if (ptrs) for (i = 8; i < 16; i++) (&ptrs->D8)[i - 8] = &src_ctx->V[i].Low;
+            *final_pc_from_lr = FALSE;
         }
         else if (*ptr == 0xec)  /* MSFT_OP_CLEAR_UNWOUND_TO_CALL */
         {
             context->Pc = context->Lr;
             context->ContextFlags &= ~CONTEXT_UNWOUND_TO_CALL;
+            *final_pc_from_lr = FALSE;
         }
         else if (*ptr == 0xfc)  /* pac_sign_lr */
         {
@@ -675,7 +680,8 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUN
 
 static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUNCTION *func,
                                ARM64_NT_CONTEXT *context, PVOID *handler_data,
-                               KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs )
+                               KNONVOLATILE_CONTEXT_POINTERS_ARM64 *ptrs,
+                               BOOLEAN *final_pc_from_lr )
 {
     IMAGE_ARM64_RUNTIME_FUNCTION_ENTRY_XDATA *info;
     struct unwind_info_epilog *info_epilog;
@@ -711,7 +717,7 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUNCT
         len = get_sequence_len( data, end );
         if (offset < len)
         {
-            process_unwind_codes( data, end, context, ptrs, len - offset );
+            process_unwind_codes( data, end, context, ptrs, len - offset, final_pc_from_lr );
             return NULL;
         }
     }
@@ -728,7 +734,7 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUNCT
                 len = get_sequence_len( ptr, end );
                 if (offset <= info_epilog[i].offset + len)
                 {
-                    process_unwind_codes( ptr, end, context, ptrs, offset - info_epilog[i].offset );
+                    process_unwind_codes( ptr, end, context, ptrs, offset - info_epilog[i].offset, final_pc_from_lr );
                     return NULL;
                 }
             }
@@ -740,12 +746,12 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, ARM64_RUNTIME_FUNCT
         len = get_sequence_len( ptr, end ) + 1;
         if (offset >= info->FunctionLength - len)
         {
-            process_unwind_codes( ptr, end, context, ptrs, offset - (info->FunctionLength - len) );
+            process_unwind_codes( ptr, end, context, ptrs, offset - (info->FunctionLength - len), final_pc_from_lr );
             return NULL;
         }
     }
 
-    process_unwind_codes( data, end, context, ptrs, 0 );
+    process_unwind_codes( data, end, context, ptrs, 0, final_pc_from_lr );
 
     /* get handler since we are inside the main code */
     if (info->ExceptionDataPresent)
@@ -797,6 +803,7 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
                                    ULONG_PTR *limit_low, ULONG_PTR *limit_high,
                                    PEXCEPTION_ROUTINE *handler_ret, ULONG flags )
 {
+    BOOLEAN final_pc_from_lr = TRUE;
     TRACE( "type %lx base %I64x pc %I64x rva %I64x sp %I64x\n", type, base, pc, pc - base, context->Sp );
     if (limit_low || limit_high) FIXME( "limits not supported\n" );
 
@@ -810,9 +817,9 @@ NTSTATUS WINAPI RtlVirtualUnwind2( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     else if (func->Flag)
         *handler_ret = unwind_packed_data( base, pc, func, context, ctx_ptr );
     else
-        *handler_ret = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr );
+        *handler_ret = unwind_full_data( base, pc, func, context, handler_data, ctx_ptr, &final_pc_from_lr );
 
-    if (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) context->Pc = context->Lr;
+    if (final_pc_from_lr) context->Pc = context->Lr;
 
     TRACE( "ret: pc=%I64x lr=%I64x sp=%I64x handler=%p\n", context->Pc, context->Lr, context->Sp, *handler_ret );
     *frame_ret = context->Sp;
