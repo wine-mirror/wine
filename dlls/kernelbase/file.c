@@ -3745,6 +3745,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
     case FileDispositionInfo:
         status = NtSetInformationFile( file, &io, info, size, FileDispositionInformation );
         break;
+    case FileDispositionInfoEx:
+        status = NtSetInformationFile( file, &io, info, size, FileDispositionInformationEx );
+        break;
     case FileIoPriorityHintInfo:
         status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
         break;
