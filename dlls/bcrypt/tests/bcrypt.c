@@ -2725,6 +2725,21 @@ static void test_RSA(void)
     ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
     ok(!ret, "BCryptVerifySignature failed: %#lx\n", ret);
 
+    pad.pszAlgId = NULL;
+    memset(sig, 0, sizeof(sig));
+    len = 0;
+    ret = BCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %#lx\n", ret);
+    ok(len == 256, "got %lu\n", len);
+
+    pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
+    ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_INVALID_SIGNATURE, "BCryptVerifySignature failed: %#lx, len %ld\n", ret, len);
+
+    pad.pszAlgId = NULL;
+    ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ok(!ret, "BCryptVerifySignature failed: %#lx, len %ld\n", ret, len);
+
     pad_pss.pszAlgId = BCRYPT_SHA384_ALGORITHM;
     pad_pss.cbSalt = 48;
     memset(sig_pss, 0, sizeof(sig_pss));
@@ -2871,6 +2886,10 @@ static void test_RSA_SIGN(void)
 
     ret = BCryptExportKey(key, NULL, BCRYPT_RSAPRIVATE_BLOB, buf2, sizeof(buf2), &size, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
+
+    pad.pszAlgId = NULL;
+    ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);
+    ok(ret == STATUS_INVALID_SIGNATURE, "BCryptVerifySignature failed: %#lx\n", ret);
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     ret = BCryptVerifySignature(key, &pad, rsaHash, sizeof(rsaHash), rsaSignature, sizeof(rsaSignature), BCRYPT_PAD_PKCS1);

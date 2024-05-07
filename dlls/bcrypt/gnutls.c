@@ -2139,9 +2139,9 @@ static NTSTATUS pubkey_set_rsa_pss_params( gnutls_pubkey_t key, gnutls_digest_al
 static NTSTATUS key_asymmetric_verify( void *args )
 {
 #ifdef GNUTLS_VERIFY_ALLOW_BROKEN
-    static const unsigned int verify_flags = GNUTLS_VERIFY_ALLOW_BROKEN;
+    unsigned int verify_flags = GNUTLS_VERIFY_ALLOW_BROKEN;
 #else
-    static const unsigned int verify_flags = 0;
+    unsigned int verify_flags = 0;
 #endif
     const struct key_asymmetric_verify_params *params = args;
     struct key *key = params->key;
@@ -2182,8 +2182,12 @@ static NTSTATUS key_asymmetric_verify( void *args )
             BCRYPT_PKCS1_PADDING_INFO *info = params->padding;
 
             if (!info) return STATUS_INVALID_PARAMETER;
-            if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
-            if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
+            if (!info->pszAlgId)
+            {
+                hash_alg = GNUTLS_DIG_UNKNOWN;
+                verify_flags |= GNUTLS_VERIFY_USE_TLS1_RSA;
+            }
+            else if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
             {
                 FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
                 return STATUS_NOT_SUPPORTED;
@@ -2374,12 +2378,13 @@ static NTSTATUS key_asymmetric_sign( void *args )
     {
         BCRYPT_PKCS1_PADDING_INFO *pad = params->padding;
 
-        if (!pad || !pad->pszAlgId)
+        if (!pad)
         {
             WARN( "padding info not found\n" );
             return STATUS_INVALID_PARAMETER;
         }
-        if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
+        if (!pad->pszAlgId) hash_alg = GNUTLS_DIG_UNKNOWN;
+        else if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
