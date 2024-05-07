@@ -457,6 +457,17 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
 }
 
 
+/***********************************************************************
+ *              mode_is_preferred
+ *
+ * Returns whether new_mode ought to be preferred over old_mode - that is,
+ * whether new_mode is a better option to expose as a valid mode to switch to.
+ * old_mode may be NULL, in which case the function returns true if the mode
+ * should be considered at all.
+ * old_mode and new_mode are guaranteed to have identical return values from
+ * create_mode_dict. So, they will have the same point dimension and relevant
+ * IO flags, among other properties.
+ */
 static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mode,
                               struct display_mode_descriptor *original_mode_desc,
                               BOOL include_unsupported)
