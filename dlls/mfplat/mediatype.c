@@ -4208,8 +4208,7 @@ HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID f
     if (SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_SAMPLE_SIZE, &value)))
         am_type->lSampleSize = value;
 
-    if (FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA, NULL, 0, &user_size))
-            && hr != E_NOT_SUFFICIENT_BUFFER)
+    if (FAILED(IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &user_size)))
         user_size = 0;
 
     if (IsEqualGUID(&am_type->majortype, &MFMediaType_Audio))
