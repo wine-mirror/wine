@@ -59,7 +59,7 @@ extern uint32_t wg_channel_mask_from_gst(const GstAudioInfo *info);
 extern NTSTATUS wg_transform_create(void *args);
 extern NTSTATUS wg_transform_destroy(void *args);
 extern NTSTATUS wg_transform_get_output_type(void *args);
-extern NTSTATUS wg_transform_set_output_format(void *args);
+extern NTSTATUS wg_transform_set_output_type(void *args);
 extern NTSTATUS wg_transform_push_data(void *args);
 extern NTSTATUS wg_transform_read_data(void *args);
 extern NTSTATUS wg_transform_get_status(void *args);
@@ -69,6 +69,7 @@ extern NTSTATUS wg_transform_notify_qos(void *args);
 
 /* wg_media_type.c */
 
+extern GstCaps *caps_from_media_type(const struct wg_media_type *media_type);
 extern NTSTATUS caps_to_media_type(GstCaps *caps, struct wg_media_type *media_type,
         UINT32 video_plane_align);
 

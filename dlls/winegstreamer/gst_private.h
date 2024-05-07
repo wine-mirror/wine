@@ -89,7 +89,7 @@ HRESULT wg_transform_create_quartz(const AM_MEDIA_TYPE *input_format, const AM_M
         const struct wg_transform_attrs *attrs, wg_transform_t *transform);
 void wg_transform_destroy(wg_transform_t transform);
 HRESULT wg_transform_get_output_type(wg_transform_t transform, IMFMediaType **media_type);
-bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format);
+HRESULT wg_transform_set_output_type(wg_transform_t transform, IMFMediaType *media_type);
 bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input);
 HRESULT wg_transform_drain(wg_transform_t transform);
 HRESULT wg_transform_flush(wg_transform_t transform);

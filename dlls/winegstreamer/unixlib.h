@@ -365,10 +365,10 @@ struct wg_transform_get_output_type_params
     struct wg_media_type media_type;
 };
 
-struct wg_transform_set_output_format_params
+struct wg_transform_set_output_type_params
 {
     wg_transform_t transform;
-    const struct wg_format *format;
+    struct wg_media_type media_type;
 };
 
 struct wg_transform_get_status_params
@@ -447,7 +447,7 @@ enum unix_funcs
     unix_wg_transform_create,
     unix_wg_transform_destroy,
     unix_wg_transform_get_output_type,
-    unix_wg_transform_set_output_format,
+    unix_wg_transform_set_output_type,
 
     unix_wg_transform_push_data,
     unix_wg_transform_read_data,

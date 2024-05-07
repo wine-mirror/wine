@@ -633,17 +633,20 @@ NTSTATUS wg_transform_get_output_type(void *args)
     return caps_to_media_type(output_caps, &params->media_type, transform->attrs.output_plane_align);
 }
 
-NTSTATUS wg_transform_set_output_format(void *args)
+NTSTATUS wg_transform_set_output_type(void *args)
 {
-    struct wg_transform_set_output_format_params *params = args;
+    struct wg_transform_set_output_type_params *params = args;
     struct wg_transform *transform = get_transform(params->transform);
-    const struct wg_format *format = params->format;
+    MFVideoInfo output_info = {0};
     GstCaps *caps, *stripped;
     GstSample *sample;
 
-    if (!(caps = wg_format_to_caps(format)))
+    if (IsEqualGUID(&params->media_type.major, &MFMediaType_Video))
+        output_info = params->media_type.u.video->videoInfo;
+
+    if (!(caps = caps_from_media_type(&params->media_type)))
     {
-        GST_ERROR("Failed to convert format %p to caps.", format);
+        GST_ERROR("Failed to convert media type to caps.");
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -670,7 +673,7 @@ NTSTATUS wg_transform_set_output_format(void *args)
     if (transform->video_flip)
     {
         const char *value;
-        if (transform->input_is_flipped != wg_format_video_is_flipped(format))
+        if (transform->input_is_flipped != !!(output_info.VideoFlags & MFVideoFlag_BottomUpLinearRep))
             value = "vertical-flip";
         else
             value = "none";

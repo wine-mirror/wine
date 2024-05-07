@@ -694,25 +694,17 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
     }
 
     if (decoder->wg_transform)
-    {
-        struct wg_format output_format;
-        mf_media_type_to_wg_format(output_type, &output_format);
+        hr = wg_transform_set_output_type(decoder->wg_transform, output_type);
+    else
+        hr = try_create_wg_transform(decoder, output_type);
 
-        if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN
-                || !wg_transform_set_output_format(decoder->wg_transform, &output_format))
-        {
-            IMFMediaType_Release(decoder->output_type);
-            decoder->output_type = NULL;
-            hr = MF_E_INVALIDMEDIATYPE;
-        }
-    }
-    else if (FAILED(hr = try_create_wg_transform(decoder, output_type)))
+    IMFMediaType_Release(output_type);
+
+    if (FAILED(hr))
     {
         IMFMediaType_Release(decoder->output_type);
         decoder->output_type = NULL;
     }
-
-    IMFMediaType_Release(output_type);
     return hr;
 }
 

@@ -70,6 +70,66 @@ bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
     return TRUE;
 }
 
+static HRESULT video_format_from_media_type(IMFMediaType *media_type, MFVIDEOFORMAT **format, UINT32 *format_size)
+{
+    GUID subtype;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(media_type, format, format_size)))
+        return hr;
+
+    /* fixup MPEG video formats here, so we can consistently use MFVIDEOFORMAT internally */
+    if (IsEqualGUID(&subtype, &MEDIASUBTYPE_MPEG1Payload)
+            || IsEqualGUID(&subtype, &MEDIASUBTYPE_MPEG1Packet)
+            || IsEqualGUID(&subtype, &MEDIASUBTYPE_MPEG2_VIDEO))
+    {
+        struct mpeg_video_format *mpeg;
+        UINT32 mpeg_size, len;
+
+        if (FAILED(IMFMediaType_GetBlobSize(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, &len)))
+            len = 0;
+        mpeg_size = offsetof(struct mpeg_video_format, sequence_header[len]);
+
+        if ((mpeg = CoTaskMemAlloc(mpeg_size)))
+        {
+            memset(mpeg, 0, mpeg_size);
+            mpeg->hdr = **format;
+
+            IMFMediaType_GetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, mpeg->sequence_header, len, NULL);
+            IMFMediaType_GetUINT32(media_type, &MF_MT_MPEG_START_TIME_CODE, (UINT32 *)&mpeg->start_time_code);
+            IMFMediaType_GetUINT32(media_type, &MF_MT_MPEG2_PROFILE, &mpeg->profile);
+            IMFMediaType_GetUINT32(media_type, &MF_MT_MPEG2_LEVEL, &mpeg->level);
+            IMFMediaType_GetUINT32(media_type, &MF_MT_MPEG2_FLAGS, &mpeg->flags);
+
+            CoTaskMemFree(*format);
+            *format = &mpeg->hdr;
+            *format_size = mpeg_size;
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT wg_media_type_from_mf(IMFMediaType *media_type, struct wg_media_type *wg_media_type)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &wg_media_type->major)))
+        return hr;
+
+    if (IsEqualGUID(&wg_media_type->major, &MFMediaType_Video))
+        return video_format_from_media_type(media_type, &wg_media_type->u.video,
+                &wg_media_type->format_size);
+    if (IsEqualGUID(&wg_media_type->major, &MFMediaType_Audio))
+        return MFCreateWaveFormatExFromMFMediaType(media_type, &wg_media_type->u.audio,
+                &wg_media_type->format_size, 0);
+
+    FIXME("Unsupported major type %s\n", debugstr_guid(&wg_media_type->major));
+    return E_NOTIMPL;
+}
+
 static HRESULT media_type_from_video_format(const MFVIDEOFORMAT *format, IMFMediaType **media_type)
 {
     HRESULT hr;
@@ -514,17 +574,30 @@ HRESULT wg_transform_get_output_type(wg_transform_t transform, IMFMediaType **me
     return hr;
 }
 
-bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format)
+HRESULT wg_transform_set_output_type(wg_transform_t transform, IMFMediaType *media_type)
 {
-    struct wg_transform_set_output_format_params params =
+    struct wg_transform_set_output_type_params params =
     {
         .transform = transform,
-        .format = format,
     };
+    NTSTATUS status;
+    HRESULT hr;
 
-    TRACE("transform %#I64x, format %p.\n", transform, format);
+    TRACE("transform %#I64x, media_type %p.\n", transform, media_type);
 
-    return !WINE_UNIX_CALL(unix_wg_transform_set_output_format, &params);
+    if (FAILED(hr = wg_media_type_from_mf(media_type, &params.media_type)))
+    {
+        WARN("Failed to initialize media type, hr %#lx\n", hr);
+        return hr;
+    }
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_set_output_type, &params)))
+    {
+       WARN("Failed to set transform output type, status %#lx\n", status);
+       hr = HRESULT_FROM_NT(status);
+    }
+
+    CoTaskMemFree(params.media_type.u.format);
+    return hr;
 }
 
 HRESULT wg_transform_drain(wg_transform_t transform)
