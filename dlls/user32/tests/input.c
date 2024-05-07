@@ -2091,13 +2091,26 @@ static void test_GetRawInputBuffer(void)
     char buffer[16 * sizeof(RAWINPUT64)];
     RAWINPUT64 *rawbuffer64 = (RAWINPUT64 *)buffer;
     RAWINPUT *rawbuffer = (RAWINPUT *)buffer;
+    DWORD t1, t2, t3, now, pos1, pos2;
+    LPARAM extra_info1, extra_info2;
+    INPUT_MESSAGE_SOURCE source;
+    POINT pt;
     HWND hwnd;
+    BOOL ret;
 
     if (is_wow64) rawinput_size = sizeof(RAWINPUTHEADER64) + sizeof(RAWMOUSE);
     else rawinput_size = sizeof(RAWINPUTHEADER) + sizeof(RAWMOUSE);
 
     hwnd = create_foreground_window( TRUE );
     SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)rawinputbuffer_wndproc );
+
+    if (pGetCurrentInputMessageSource)
+    {
+        ret = pGetCurrentInputMessageSource( &source );
+        ok( ret, "got error %lu.\n", GetLastError() );
+        ok( !source.deviceType, "got %#x.\n", source.deviceType );
+        ok( !source.originId, "got %#x.\n", source.originId );
+    }
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
     raw_devices[0].usUsage = HID_USAGE_GENERIC_MOUSE;
@@ -2116,6 +2129,11 @@ static void test_GetRawInputBuffer(void)
     ok_ret( ERROR_INVALID_PARAMETER, GetLastError() );
 
     /* valid calls, but no input */
+    t1 = GetMessageTime();
+    pos1 = GetMessagePos();
+    extra_info1 = GetMessageExtraInfo();
+    now = GetTickCount();
+    ok( t1 <= now, "got %lu, %lu.\n", t1, now );
 
     size = sizeof(buffer);
     ok_ret( 0, GetRawInputBuffer( NULL, &size, sizeof(RAWINPUTHEADER) ) );
@@ -2128,8 +2146,10 @@ static void test_GetRawInputBuffer(void)
     ok_eq( 0, size, UINT, "%u" );
 
 
-    mouse_event( MOUSEEVENTF_MOVE, 5, 0, 0, 0 );
-
+    Sleep( 20 );
+    mouse_event( MOUSEEVENTF_MOVE, 5, 0, 0, 0xdeadbeef );
+    t2 = GetMessageTime();
+    ok( t2 == t1, "got %lu, %lu.\n", t1, t2 );
     /* invalid calls with input */
 
     SetLastError( 0xdeadbeef );
@@ -2137,6 +2157,9 @@ static void test_GetRawInputBuffer(void)
     ok_ret( (UINT)-1, GetRawInputBuffer( rawbuffer, &size, sizeof(RAWINPUTHEADER) ) );
     ok_eq( rawinput_size, size, UINT, "%u" );
     ok_ret( ERROR_INSUFFICIENT_BUFFER, GetLastError() );
+    t2 = GetMessageTime();
+    ok( t2 == t1, "got %lu, %lu.\n", t1, t2 );
+
     SetLastError( 0xdeadbeef );
     size = sizeof(buffer);
     ok_ret( (UINT)-1, GetRawInputBuffer( rawbuffer, &size, 0 ) );
@@ -2158,6 +2181,8 @@ static void test_GetRawInputBuffer(void)
     /* NOTE: calling with size == rawinput_size returns an error, */
     /* BUT it fills the buffer nonetheless and empties the internal buffer (!!) */
 
+    Sleep( 20 );
+    t2 = GetTickCount();
     size = 0;
     ok_ret( 0, GetRawInputBuffer( NULL, &size, sizeof(RAWINPUTHEADER) ) );
     ok_eq( rawinput_size, size, UINT, "%u" );
@@ -2170,6 +2195,23 @@ static void test_GetRawInputBuffer(void)
     if (is_wow64) ok_eq( 5, rawbuffer64->data.mouse.lLastX, UINT, "%u" );
     else ok_eq( 5, rawbuffer->data.mouse.lLastX, UINT, "%u" );
 
+    t3 = GetMessageTime();
+    pos2 = GetMessagePos();
+    extra_info2 = GetMessageExtraInfo();
+    ok( extra_info2 == extra_info1, "got %#Ix, %#Ix.\n", extra_info1, extra_info2 );
+    GetCursorPos( &pt );
+    ok( t3 > t1, "got %lu, %lu.\n", t1, t3 );
+    ok( t3 < t2, "got %lu, %lu.\n", t2, t3 );
+    ok( pos1 == pos2, "got pos1 (%ld, %ld), pos2 (%ld, %ld), pt (%ld %ld).\n",
+        pos1 & 0xffff, pos1 >> 16, pos2 & 0xffff, pos2 >> 16, pt.x, pt.y );
+    if (pGetCurrentInputMessageSource)
+    {
+        ret = pGetCurrentInputMessageSource( &source );
+        ok( ret, "got error %lu.\n", GetLastError() );
+        ok( !source.deviceType, "got %#x.\n", source.deviceType );
+        ok( !source.originId, "got %#x.\n", source.originId );
+    }
+
     /* no more data to read */
 
     size = sizeof(buffer);
@@ -2178,8 +2220,20 @@ static void test_GetRawInputBuffer(void)
 
 
     /* rawinput_size + 1 succeeds */
+    t1 = GetMessageTime();
+    pos1 = GetMessagePos();
+    extra_info1 = GetMessageExtraInfo();
+    now = GetTickCount();
+    ok( t1 <= now, "got %lu, %lu.\n", t1, now );
 
-    mouse_event( MOUSEEVENTF_MOVE, 5, 0, 0, 0 );
+    Sleep( 20 );
+    mouse_event( MOUSEEVENTF_MOVE, 5, 0, 0, 0xfeedcafe );
+
+    t2 = GetMessageTime();
+    ok( t2 == t1, "got %lu, %lu.\n", t1, t2 );
+
+    Sleep( 20 );
+    t2 = GetTickCount();
 
     size = rawinput_size + 1;
     memset( buffer, 0, sizeof(buffer) );
@@ -2201,6 +2255,16 @@ static void test_GetRawInputBuffer(void)
     size = sizeof(buffer);
     ok_ret( 0, GetRawInputBuffer( NULL, &size, sizeof(RAWINPUTHEADER) ) );
     ok_eq( 0, size, UINT, "%u" );
+
+    t3 = GetMessageTime();
+    pos2 = GetMessagePos();
+    extra_info2 = GetMessageExtraInfo();
+    GetCursorPos(&pt);
+    ok( extra_info2 == extra_info1, "got %#Ix, %#Ix.\n", extra_info1, extra_info2 );
+    ok( t3 > t1, "got %lu, %lu.\n", t1, t3 );
+    ok( t3 < t2, "got %lu, %lu.\n", t2, t3 );
+    ok( pos1 == pos2, "got pos1 (%ld, %ld), pos2 (%ld, %ld), pt (%ld %ld).\n",
+        pos1 & 0xffff, pos1 >> 16, pos2 & 0xffff, pos2 >> 16, pt.x, pt.y );
 
     raw_devices[0].dwFlags = RIDEV_REMOVE;
     raw_devices[0].hwndTarget = 0;

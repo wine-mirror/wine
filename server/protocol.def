@@ -3791,6 +3791,7 @@ struct handle_info
     int         read_data;     /* read the rawinput buffer data */
 @REPLY
     data_size_t next_size; /* minimum size to get next message data */
+    unsigned int time;     /* time of the last removed message */
     unsigned int count;
     VARARG(data,bytes);
 @END

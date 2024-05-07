@@ -454,6 +454,7 @@ UINT WINAPI NtUserGetRawInputDeviceInfo( HANDLE handle, UINT command, void *data
  */
 UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT header_size )
 {
+    struct user_thread_info *thread_info;
     UINT count;
 
     TRACE( "data %p, data_size %p, header_size %u\n", data, data_size, header_size );
@@ -473,6 +474,7 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
     /* with old WOW64 mode we didn't go through the WOW64 thunks, patch the header size here */
     if (NtCurrentTeb()->WowTebOffset) header_size = sizeof(RAWINPUTHEADER64);
 
+    thread_info = get_user_thread_info();
     SERVER_START_REQ( get_rawinput_buffer )
     {
         req->header_size = header_size;
@@ -480,6 +482,7 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
         if (!wine_server_call_err( req )) count = reply->count;
         else count = -1;
         *data_size = reply->next_size;
+        if (reply->count) thread_info->client_info.message_time = reply->time;
     }
     SERVER_END_REQ;
 

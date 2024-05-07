@@ -3751,6 +3751,7 @@ DECL_HANDLER(get_rawinput_buffer)
                 memcpy( &rawinput->header + 1, msg_data + 1, data_size );
 
                 total_size += (rawinput->header.dwSize + align) & ~align;
+                reply->time = msg->time;
                 list_remove( &msg->entry );
                 free_message( msg );
                 count++;

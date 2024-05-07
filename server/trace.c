@@ -4503,6 +4503,7 @@ static void dump_get_rawinput_buffer_request( const struct get_rawinput_buffer_r
 static void dump_get_rawinput_buffer_reply( const struct get_rawinput_buffer_reply *req )
 {
     fprintf( stderr, " next_size=%u", req->next_size );
+    fprintf( stderr, ", time=%08x", req->time );
     fprintf( stderr, ", count=%08x", req->count );
     dump_varargs_bytes( ", data=", cur_size );
 }
