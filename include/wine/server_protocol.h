@@ -883,9 +883,14 @@ struct directory_entry
 
 
 
-typedef volatile union
+typedef volatile struct
 {
     char placeholder;
+} desktop_shm_t;
+
+typedef volatile union
+{
+    desktop_shm_t        desktop;
 } object_shm_t;
 
 typedef volatile struct
@@ -6547,7 +6552,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 809
+#define SERVER_PROTOCOL_VERSION 810
 
 /* ### protocol_version end ### */
 

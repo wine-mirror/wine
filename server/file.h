@@ -192,6 +192,9 @@ extern struct mapping *create_session_mapping( struct object *root, const struct
                                                unsigned int attr, const struct security_descriptor *sd );
 extern void set_session_mapping( struct mapping *mapping );
 
+extern const volatile void *alloc_shared_object(void);
+extern void free_shared_object( const volatile void *object_shm );
+
 #define SHARED_WRITE_BEGIN( object_shm, type )                          \
     do {                                                                \
         const type *__shared = (object_shm);                            \

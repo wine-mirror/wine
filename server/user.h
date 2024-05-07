@@ -93,6 +93,7 @@ struct desktop
     struct global_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
     struct key_repeat    key_repeat;       /* key auto-repeat */
+    const desktop_shm_t *shared;           /* desktop session shared memory */
 };
 
 /* user handles functions */
