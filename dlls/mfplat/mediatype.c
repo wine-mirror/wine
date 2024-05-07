@@ -4118,6 +4118,20 @@ static void init_video_info_header2(VIDEOINFOHEADER2 *vih, const GUID *subtype, 
     }
 }
 
+static void init_video_info_header(VIDEOINFOHEADER *vih, const GUID *subtype, IMFMediaType *media_type)
+{
+    VIDEOINFOHEADER2 vih2 = {{0}};
+
+    init_video_info_header2(&vih2, subtype, media_type);
+
+    vih->rcSource = vih2.rcSource;
+    vih->rcTarget = vih2.rcTarget;
+    vih->dwBitRate = vih2.dwBitRate;
+    vih->dwBitErrorRate = vih2.dwBitErrorRate;
+    vih->AvgTimePerFrame = vih2.AvgTimePerFrame;
+    vih->bmiHeader = vih2.bmiHeader;
+}
+
 static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
 {
     HRESULT hr;
@@ -4132,7 +4146,6 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
     if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
             || IsEqualGUID(&am_type->formattype, &GUID_NULL))
     {
-        VIDEOINFOHEADER2 vih = {{0}};
         VIDEOINFOHEADER *format;
 
         am_type->cbFormat = sizeof(*format) + user_size;
@@ -4141,13 +4154,7 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
         format = (VIDEOINFOHEADER *)am_type->pbFormat;
         memset(format, 0, sizeof(*format));
 
-        init_video_info_header2(&vih, &am_type->subtype, media_type);
-        format->rcSource = vih.rcSource;
-        format->rcTarget = vih.rcTarget;
-        format->dwBitRate = vih.dwBitRate;
-        format->dwBitErrorRate = vih.dwBitErrorRate;
-        format->AvgTimePerFrame = vih.AvgTimePerFrame;
-        format->bmiHeader = vih.bmiHeader;
+        init_video_info_header(format, &am_type->subtype, media_type);
 
         if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
                 (BYTE *)(format + 1), user_size, NULL)))
