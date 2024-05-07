@@ -2292,7 +2292,7 @@ static BOOL STDMETHODCALLTYPE d2d_device_context_IsBufferPrecisionSupported(ID2D
     return !!(support & D3D11_FORMAT_SUPPORT_BUFFER);
 }
 
-static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext6 *iface,
+static HRESULT STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext6 *iface,
         ID2D1Image *image, D2D1_RECT_F *local_bounds)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
@@ -2325,10 +2325,14 @@ static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1Device
                 break;
         }
         ID2D1Bitmap_Release(bitmap);
+
+        return S_OK;
     }
     else
     {
         FIXME("Unable to get local bounds of image %p.\n", image);
+
+        return E_NOTIMPL;
     }
 }
 

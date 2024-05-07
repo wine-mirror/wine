@@ -798,7 +798,7 @@ interface ID2D1DeviceContext : ID2D1RenderTarget
     BOOL IsBufferPrecisionSupported(
         [in] D2D1_BUFFER_PRECISION buffer_precision
     );
-    void GetImageLocalBounds(
+    HRESULT GetImageLocalBounds(
         [in] ID2D1Image *image,
         [out] D2D1_RECT_F *local_bounds
     );
