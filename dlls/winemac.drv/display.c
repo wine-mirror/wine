@@ -475,6 +475,7 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
     BOOL new_is_supported;
     CFStringRef pixel_encoding;
     size_t width_points, height_points;
+    BOOL new_usable_for_desktop, old_usable_for_desktop;
     size_t old_width_pixels, old_height_pixels, new_width_pixels, new_height_pixels;
     BOOL old_size_same, new_size_same;
 
@@ -515,6 +516,12 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
     /* Prefer supported modes over similar unsupported ones. */
     if (!new_is_supported && display_mode_is_supported(old_mode))
         return FALSE;
+
+    /* Prefer modes that are usable for desktop over ones that aren't. */
+    new_usable_for_desktop = CGDisplayModeIsUsableForDesktopGUI(new_mode);
+    old_usable_for_desktop = CGDisplayModeIsUsableForDesktopGUI(old_mode);
+    if (new_usable_for_desktop && !old_usable_for_desktop)
+        return TRUE;
 
     /* Otherwise, prefer a mode whose pixel size equals its point size over one which
        is scaled. */
