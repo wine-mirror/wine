@@ -420,8 +420,7 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
         height *= 2;
     }
 
-    io_flags &= kDisplayModeValidFlag | kDisplayModeSafeFlag | kDisplayModeInterlacedFlag |
-                kDisplayModeStretchedFlag | kDisplayModeTelevisionFlag;
+    io_flags &= kDisplayModeInterlacedFlag | kDisplayModeStretchedFlag | kDisplayModeTelevisionFlag;
     cf_io_flags = CFNumberCreate(NULL, kCFNumberSInt32Type, &io_flags);
     cf_width = CFNumberCreate(NULL, kCFNumberSInt64Type, &width);
     cf_height = CFNumberCreate(NULL, kCFNumberSInt64Type, &height);
