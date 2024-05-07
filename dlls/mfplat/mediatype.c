@@ -3317,9 +3317,9 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
            sizeof(format->videoInfo.MinimumDisplayAperture), NULL);
 
     /* Video flags. */
-    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_PAD_CONTROL_FLAGS);
-    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_SOURCE_CONTENT_HINT);
-    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_DRM_FLAGS);
+    format->videoInfo.VideoFlags |= media_type_get_uint32(media_type, &MF_MT_PAD_CONTROL_FLAGS) & MFVideoFlag_PAD_TO_Mask;
+    format->videoInfo.VideoFlags |= (media_type_get_uint32(media_type, &MF_MT_SOURCE_CONTENT_HINT) << 2) & MFVideoFlag_SrcContentHintMask;
+    format->videoInfo.VideoFlags |= (media_type_get_uint32(media_type, &MF_MT_DRM_FLAGS) << 5) & (MFVideoFlag_AnalogProtected | MFVideoFlag_DigitallyProtected);
     if (media_type_get_uint32(media_type, &MF_MT_PAN_SCAN_ENABLED))
     {
         format->videoInfo.VideoFlags |= MFVideoFlag_PanScanEnabled;
