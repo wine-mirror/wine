@@ -1455,14 +1455,12 @@ static void copy_smbios_string( char **buffer, const char *s )
     *buffer += strlen(s) + 1;
 }
 
-static NTSTATUS create_smbios_tables( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
-                                      ULONG *required_len,
-                                      const struct smbios_bios_args *bios_args,
-                                      const struct smbios_system_args *system_args,
-                                      const struct smbios_board_args *board_args,
-                                      const struct smbios_chassis_args *chassis_args )
+static struct smbios_prologue *create_smbios_tables( const struct smbios_bios_args *bios_args,
+                                                     const struct smbios_system_args *system_args,
+                                                     const struct smbios_board_args *board_args,
+                                                     const struct smbios_chassis_args *chassis_args )
 {
-    char *buffer = (char*)sfti->TableBuffer;
+    char *buffer;
     BYTE string_count;
     BYTE handle_count = 0;
     struct smbios_prologue *prologue;
@@ -1472,46 +1470,39 @@ static NTSTATUS create_smbios_tables( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, U
     struct smbios_chassis *chassis;
     struct smbios_boot_info *boot_info;
     struct smbios_header *end_of_table;
-
-    *required_len = sizeof(struct smbios_prologue);
+    ULONG len = sizeof(struct smbios_prologue);
 
 #define L(s) (s[0] ? strlen(s) + 1 : 0)
-    *required_len += sizeof(struct smbios_bios);
-    *required_len += max(L(bios_args->vendor) + L(bios_args->version) + L(bios_args->date) + 1, 2);
+    len += sizeof(struct smbios_bios);
+    len += max(L(bios_args->vendor) + L(bios_args->version) + L(bios_args->date) + 1, 2);
 
-    *required_len += sizeof(struct smbios_system);
-    *required_len += max(L(system_args->vendor) + L(system_args->product) + L(system_args->version) +
-                         L(system_args->serial) + L(system_args->sku) + L(system_args->family) + 1, 2);
+    len += sizeof(struct smbios_system);
+    len += max(L(system_args->vendor) + L(system_args->product) + L(system_args->version) +
+               L(system_args->serial) + L(system_args->sku) + L(system_args->family) + 1, 2);
 
-    *required_len += sizeof(struct smbios_board);
-    *required_len += max(L(board_args->vendor) + L(board_args->product) + L(board_args->version) +
-                         L(board_args->serial) + L(board_args->asset_tag) + 1, 2);
+    len += sizeof(struct smbios_board);
+    len += max(L(board_args->vendor) + L(board_args->product) + L(board_args->version) +
+               L(board_args->serial) + L(board_args->asset_tag) + 1, 2);
 
-    *required_len += sizeof(struct smbios_chassis);
-    *required_len += max(L(chassis_args->vendor) + L(chassis_args->version) + L(chassis_args->serial) +
-                         L(chassis_args->asset_tag) + 1, 2);
+    len += sizeof(struct smbios_chassis);
+    len += max(L(chassis_args->vendor) + L(chassis_args->version) + L(chassis_args->serial) +
+               L(chassis_args->asset_tag) + 1, 2);
 
-    *required_len += sizeof(struct smbios_boot_info);
-    *required_len += 2;
+    len += sizeof(struct smbios_boot_info);
+    len += 2;
 
-    *required_len += sizeof(struct smbios_header);
-    *required_len += 2;
+    len += sizeof(struct smbios_header);
+    len += 2;
 #undef L
 
-    sfti->TableBufferLength = *required_len;
+    if (!(prologue = malloc( len ))) return NULL;
 
-    *required_len += FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
-
-    if (available_len < *required_len)
-        return STATUS_BUFFER_TOO_SMALL;
-
-    prologue = (struct smbios_prologue*)buffer;
     prologue->calling_method = 0;
     prologue->major_version = 2;
     prologue->minor_version = 4;
     prologue->revision = 0;
-    prologue->length = sfti->TableBufferLength - sizeof(struct smbios_prologue);
-    buffer += sizeof(struct smbios_prologue);
+    prologue->length = len - sizeof(struct smbios_prologue);
+    buffer = (char *)(prologue + 1);
 
     string_count = 0;
     bios = (struct smbios_bios*)buffer;
@@ -1633,7 +1624,7 @@ static NTSTATUS create_smbios_tables( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, U
     *buffer++ = 0;
     *buffer++ = 0;
 
-    return STATUS_SUCCESS;
+    return prologue;
 }
 
 #endif
@@ -1695,64 +1686,52 @@ static void get_system_uuid( GUID *uuid )
     }
 }
 
-static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
-                                   ULONG *required_len )
+static struct smbios_prologue *create_smbios_data(void)
 {
-    switch (sfti->ProviderSignature)
-    {
-    case RSMB:
-    {
-        char bios_vendor[128], bios_version[128], bios_date[128];
-        struct smbios_bios_args bios_args;
-        char system_vendor[128], system_product[128], system_version[128], system_serial[128];
-        char system_sku[128], system_family[128];
-        struct smbios_system_args system_args;
-        char board_vendor[128], board_product[128], board_version[128], board_serial[128], board_asset_tag[128];
-        struct smbios_board_args board_args;
-        char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
-        char chassis_type[11] = "2"; /* unknown */
-        struct smbios_chassis_args chassis_args;
+    char bios_vendor[128], bios_version[128], bios_date[128];
+    struct smbios_bios_args bios_args;
+    char system_vendor[128], system_product[128], system_version[128], system_serial[128];
+    char system_sku[128], system_family[128];
+    struct smbios_system_args system_args;
+    char board_vendor[128], board_product[128], board_version[128], board_serial[128], board_asset_tag[128];
+    struct smbios_board_args board_args;
+    char chassis_vendor[128], chassis_version[128], chassis_serial[128], chassis_asset_tag[128];
+    char chassis_type[11] = "2"; /* unknown */
+    struct smbios_chassis_args chassis_args;
 
 #define S(s) s, sizeof(s)
-        bios_args.vendor = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
-        bios_args.version = get_smbios_string("/sys/class/dmi/id/bios_version", S(bios_version));
-        bios_args.date = get_smbios_string("/sys/class/dmi/id/bios_date", S(bios_date));
+    bios_args.vendor = get_smbios_string("/sys/class/dmi/id/bios_vendor", S(bios_vendor));
+    bios_args.version = get_smbios_string("/sys/class/dmi/id/bios_version", S(bios_version));
+    bios_args.date = get_smbios_string("/sys/class/dmi/id/bios_date", S(bios_date));
 
-        system_args.vendor = get_smbios_string("/sys/class/dmi/id/sys_vendor", S(system_vendor));
-        system_args.product = get_smbios_string("/sys/class/dmi/id/product_name", S(system_product));
-        system_args.version = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
-        system_args.serial = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
-        get_system_uuid(&system_args.uuid);
-        system_args.sku = get_smbios_string("/sys/class/dmi/id/product_sku", S(system_sku));
-        system_args.family = get_smbios_string("/sys/class/dmi/id/product_family", S(system_family));
+    system_args.vendor = get_smbios_string("/sys/class/dmi/id/sys_vendor", S(system_vendor));
+    system_args.product = get_smbios_string("/sys/class/dmi/id/product_name", S(system_product));
+    system_args.version = get_smbios_string("/sys/class/dmi/id/product_version", S(system_version));
+    system_args.serial = get_smbios_string("/sys/class/dmi/id/product_serial", S(system_serial));
+    get_system_uuid(&system_args.uuid);
+    system_args.sku = get_smbios_string("/sys/class/dmi/id/product_sku", S(system_sku));
+    system_args.family = get_smbios_string("/sys/class/dmi/id/product_family", S(system_family));
 
-        board_args.vendor = get_smbios_string("/sys/class/dmi/id/board_vendor", S(board_vendor));
-        board_args.product = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
-        board_args.version = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
-        board_args.serial = get_smbios_string("/sys/class/dmi/id/board_serial", S(board_serial));
-        board_args.asset_tag = get_smbios_string("/sys/class/dmi/id/board_asset_tag", S(board_asset_tag));
+    board_args.vendor = get_smbios_string("/sys/class/dmi/id/board_vendor", S(board_vendor));
+    board_args.product = get_smbios_string("/sys/class/dmi/id/board_name", S(board_product));
+    board_args.version = get_smbios_string("/sys/class/dmi/id/board_version", S(board_version));
+    board_args.serial = get_smbios_string("/sys/class/dmi/id/board_serial", S(board_serial));
+    board_args.asset_tag = get_smbios_string("/sys/class/dmi/id/board_asset_tag", S(board_asset_tag));
 
-        chassis_args.vendor = get_smbios_string("/sys/class/dmi/id/chassis_vendor", S(chassis_vendor));
-        get_smbios_string("/sys/class/dmi/id/chassis_type", S(chassis_type));
-        chassis_args.type = atoi(chassis_type);
-        chassis_args.version = get_smbios_string("/sys/class/dmi/id/chassis_version", S(chassis_version));
-        chassis_args.serial = get_smbios_string("/sys/class/dmi/id/chassis_serial", S(chassis_serial));
-        chassis_args.asset_tag = get_smbios_string("/sys/class/dmi/id/chassis_tag", S(chassis_asset_tag));
+    chassis_args.vendor = get_smbios_string("/sys/class/dmi/id/chassis_vendor", S(chassis_vendor));
+    get_smbios_string("/sys/class/dmi/id/chassis_type", S(chassis_type));
+    chassis_args.type = atoi(chassis_type);
+    chassis_args.version = get_smbios_string("/sys/class/dmi/id/chassis_version", S(chassis_version));
+    chassis_args.serial = get_smbios_string("/sys/class/dmi/id/chassis_serial", S(chassis_serial));
+    chassis_args.asset_tag = get_smbios_string("/sys/class/dmi/id/chassis_tag", S(chassis_asset_tag));
 #undef S
 
-        return create_smbios_tables( sfti, available_len, required_len,
-                                     &bios_args, &system_args, &board_args, &chassis_args );
-    }
-    default:
-        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", (int)sfti->ProviderSignature);
-        return STATUS_NOT_IMPLEMENTED;
-    }
+    return create_smbios_tables( &bios_args, &system_args, &board_args, &chassis_args );
 }
 
 #elif defined(__APPLE__)
 
-static NTSTATUS get_smbios_from_iokit( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
-                                       ULONG *required_len )
+static struct smbios_prologue *get_smbios_from_iokit(void)
 {
     io_service_t service;
     CFDataRef data;
@@ -1764,14 +1743,14 @@ static NTSTATUS get_smbios_from_iokit( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, 
     if (!(service = IOServiceGetMatchingService(0, IOServiceMatching("AppleSMBIOS"))))
     {
         WARN("can't find AppleSMBIOS service\n");
-        return STATUS_NO_MEMORY;
+        return NULL;
     }
 
     if (!(data = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS-EPS"), kCFAllocatorDefault, 0)))
     {
         WARN("can't find SMBIOS entry point\n");
         IOObjectRelease(service);
-        return STATUS_NO_MEMORY;
+        return NULL;
     }
 
     len = CFDataGetLength(data);
@@ -1787,32 +1766,23 @@ static NTSTATUS get_smbios_from_iokit( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, 
     {
         WARN("can't find SMBIOS table\n");
         IOObjectRelease(service);
-        return STATUS_NO_MEMORY;
+        return NULL;
     }
 
     len = CFDataGetLength(data);
     ptr = CFDataGetBytePtr(data);
-    sfti->TableBufferLength = sizeof(*prologue) + len;
-    *required_len = sfti->TableBufferLength + FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
-    if (available_len < *required_len)
+    if ((prologue = malloc( sizeof(*prologue) + len )))
     {
-        CFRelease(data);
-        IOObjectRelease(service);
-        return STATUS_BUFFER_TOO_SMALL;
+        prologue->calling_method = 0;
+        prologue->major_version = major_version;
+        prologue->minor_version = minor_version;
+        prologue->revision = 0;
+        prologue->length = len;
+        memcpy( prologue + 1, ptr, len );
     }
-
-    prologue = (struct smbios_prologue *)sfti->TableBuffer;
-    prologue->calling_method = 0;
-    prologue->major_version = major_version;
-    prologue->minor_version = minor_version;
-    prologue->revision = 0;
-    prologue->length = sfti->TableBufferLength - sizeof(*prologue);
-
-    memcpy(sfti->TableBuffer + sizeof(*prologue), ptr, len);
-
     CFRelease(data);
     IOObjectRelease(service);
-    return STATUS_SUCCESS;
+    return prologue;
 }
 
 static void cf_to_string( CFTypeRef type_ref, char *buffer, size_t buffer_size )
@@ -1835,12 +1805,8 @@ static void cf_to_string( CFTypeRef type_ref, char *buffer, size_t buffer_size )
     CFRelease(type_ref);
 }
 
-static NTSTATUS generate_smbios( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
-                                 ULONG *required_len )
+static struct smbios_prologue *create_smbios_data(void)
 {
-    /* Apple Silicon Macs don't have SMBIOS, we need to generate it.
-     * Use strings and data from IOKit when available.
-     */
     io_service_t platform_expert;
     CFDataRef cf_manufacturer, cf_model;
     CFStringRef cf_serial_number, cf_uuid_string;
@@ -1850,10 +1816,17 @@ static NTSTATUS generate_smbios( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG 
     struct smbios_system_args system_args;
     struct smbios_board_args board_args;
     struct smbios_chassis_args chassis_args;
+    struct smbios_prologue *ret;
+
+    if ((ret = get_smbios_from_iokit())) return ret;
+
+    /* Apple Silicon Macs don't have SMBIOS, we need to generate it.
+     * Use strings and data from IOKit when available.
+     */
 
     platform_expert = IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice"));
     if (!platform_expert)
-        return STATUS_NO_MEMORY;
+        return NULL;
 
     cf_manufacturer = IORegistryEntryCreateCFProperty(platform_expert, CFSTR("manufacturer"), kCFAllocatorDefault, 0);
     cf_model = IORegistryEntryCreateCFProperty(platform_expert, CFSTR("model"), kCFAllocatorDefault, 0);
@@ -1908,40 +1881,46 @@ static NTSTATUS generate_smbios( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG 
     chassis_args.serial = serial_number;
     chassis_args.asset_tag = "";
 
-    return create_smbios_tables( sfti, available_len, required_len,
-                                 &bios_args, &system_args, &board_args, &chassis_args );
+    return create_smbios_tables( &bios_args, &system_args, &board_args, &chassis_args );
 }
+
+#else
+
+static struct smbios_prologue *create_smbios_data(void)
+{
+    FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION\n");
+    return NULL;
+}
+
+#endif
 
 static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
                                    ULONG *required_len )
 {
+    static struct smbios_prologue *smbios_data;
+    ULONG len;
+
     switch (sfti->ProviderSignature)
     {
     case RSMB:
-    {
-        NTSTATUS ret;
-        ret = get_smbios_from_iokit(sfti, available_len, required_len);
-        if (ret == STATUS_NO_MEMORY)
-            ret = generate_smbios(sfti, available_len, required_len);
-        return ret;
-    }
+        if (!smbios_data)
+        {
+            struct smbios_prologue *data = create_smbios_data();
+            if (!data) return STATUS_NO_MEMORY;
+            if (InterlockedCompareExchangePointer( (void **)&smbios_data, data, NULL )) free( data );
+        }
+        len = sizeof(*smbios_data) + smbios_data->length;
+        sfti->TableBufferLength = len;
+        *required_len = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer[len] );
+        if (available_len < *required_len) return STATUS_BUFFER_TOO_SMALL;
+        memcpy( sfti->TableBuffer, smbios_data, len );
+        return STATUS_SUCCESS;
+
     default:
         FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", (unsigned int)sfti->ProviderSignature);
         return STATUS_NOT_IMPLEMENTED;
     }
 }
-
-#else
-
-static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG available_len,
-                                   ULONG *required_len )
-{
-    FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION\n");
-    sfti->TableBufferLength = 0;
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-#endif
 
 static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 {
