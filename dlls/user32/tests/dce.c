@@ -369,6 +369,7 @@ static void test_dc_visrgn(void)
     /* parent DC */
     hdc = GetDC( hwnd_parentdc );
     GetClipBox( hdc, &rect );
+    MapWindowPoints(hwnd_parentdc, hwnd_parent, (POINT *)&rect, 2);
     ReleaseDC( hwnd_parentdc, hdc );
 
     hdc = GetDC( hwnd_parent );
@@ -508,18 +509,19 @@ static void test_begin_paint(void)
     RedrawWindow( hwnd_parentdc, NULL, 0, RDW_INVALIDATE );
     hdc = BeginPaint( hwnd_parentdc, &ps );
     GetClipBox( hdc, &rect );
+    MapWindowPoints(hwnd_parentdc, hwnd_parent, (POINT *)&rect, 2);
     cr = SetPixel( hdc, 10, 10, RGB(255, 0, 0) );
     ok( cr != -1, "error drawing outside of window client area\n" );
     EndPaint( hwnd_parentdc, &ps );
     GetClientRect( hwnd_parent, &parent_rect );
 
-    ok( rect.left == parent_rect.left, "rect.left = %ld, expected %ld\n", rect.left, parent_rect.left );
-    ok( rect.top == parent_rect.top, "rect.top = %ld, expected %ld\n", rect.top, parent_rect.top );
+    todo_wine ok( rect.left == parent_rect.left, "rect.left = %ld, expected %ld\n", rect.left, parent_rect.left );
+    todo_wine ok( rect.top == parent_rect.top, "rect.top = %ld, expected %ld\n", rect.top, parent_rect.top );
     todo_wine ok( rect.right == parent_rect.right, "rect.right = %ld, expected %ld\n", rect.right, parent_rect.right );
     todo_wine ok( rect.bottom == parent_rect.bottom, "rect.bottom = %ld, expected %ld\n", rect.bottom, parent_rect.bottom );
 
     hdc = GetDC( hwnd_parent );
-    todo_wine ok( GetPixel( hdc, 10, 10 ) == cr, "error drawing outside of window client area\n" );
+    todo_wine ok( GetPixel( hdc, 60, 60 ) == cr, "error drawing outside of window client area\n" );
     ReleaseDC( hwnd_parent, hdc );
 }
 
@@ -772,7 +774,7 @@ START_TEST(dce)
     hwnd_parent = CreateWindowA("static", NULL, WS_OVERLAPPED | WS_VISIBLE,
                                 400, 0, 100, 100, 0, 0, 0, NULL );
     hwnd_parentdc = CreateWindowA("parentdc_class", NULL, WS_CHILD | WS_VISIBLE,
-                                  0, 0, 1, 1, hwnd_parent, 0, 0, NULL );
+                                  50, 50, 1, 1, hwnd_parent, 0, 0, NULL );
 
     test_dc_attributes();
     test_parameters();
