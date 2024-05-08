@@ -1500,7 +1500,6 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
     if (FAILED(hr = MFCreateSampleCopierMFT(&decoder->copier)))
         goto failed;
 
-    decoder->wg_transform_attrs.output_plane_align = 15;
     decoder->wg_transform_attrs.input_queue_length = 15;
 
     *out = decoder;
@@ -1569,6 +1568,7 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
             | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     decoder->output_info.cbSize = 1920 * 1088 * 2;
 
+    decoder->wg_transform_attrs.output_plane_align = 15;
     decoder->wg_transform_attrs.allow_size_change = TRUE;
 
     TRACE("Created h264 transform %p.\n", &decoder->IMFTransform_iface);
