@@ -4602,7 +4602,7 @@ static void macdrv_get_pixel_formats(struct wgl_pixel_format *formats,
     if (formats)
     {
         for (i = 0; i < min(max_formats, nb_formats); ++i)
-            describe_pixel_format(&pixel_formats[i], &formats[i]);
+            describe_pixel_format(&pixel_formats[i], &formats[i].pfd);
     }
     *num_formats = nb_formats;
     *num_onscreen_formats = nb_displayable_formats;
