@@ -1818,8 +1818,21 @@ static struct smbios_prologue *create_smbios_data(void)
 
 static struct smbios_prologue *create_smbios_data(void)
 {
-    FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION\n");
-    return NULL;
+    static const char *vendor  = "The Wine project";
+    static const char *product = "Wine";
+    static const char *version = PACKAGE_VERSION;
+    static const char *serial  = "0";
+    GUID uuid = { 0 };
+    BYTE chassis;
+    struct smbios_buffer buf = { 0 };
+
+    append_smbios_bios( &buf, vendor, version, "01/01/2021" );
+    append_smbios_system( &buf, vendor, product, version, serial, "", "", &uuid );
+    chassis = append_smbios_chassis( &buf, 0, vendor, version, serial, "" );
+    append_smbios_board( &buf, chassis, vendor, product, version, serial, "" );
+    append_smbios_boot_info( &buf );
+    append_smbios_end( &buf );
+    return buf.prologue;
 }
 
 #endif
