@@ -410,27 +410,27 @@ LONG global_key_state_counter = 0;
 BOOL grab_pointer = TRUE;
 BOOL grab_fullscreen = FALSE;
 
-static void kbd_tables_init_vsc2vk( const KBDTABLES *tables, BYTE vsc2vk[0x300] )
+static void kbd_tables_init_vsc2vk( const KBDTABLES *tables, USHORT vsc2vk[0x300] )
 {
     const VSC_VK *entry;
     WORD vsc;
 
-    memset( vsc2vk, 0, 0x300 );
+    memset( vsc2vk, 0, 0x300 * sizeof(USHORT) );
 
     for (vsc = 0; tables->pusVSCtoVK && vsc <= tables->bMaxVSCtoVK; ++vsc)
     {
         if (tables->pusVSCtoVK[vsc] == VK__none_) continue;
-        vsc2vk[vsc] = (BYTE)tables->pusVSCtoVK[vsc];
+        vsc2vk[vsc] = tables->pusVSCtoVK[vsc];
     }
     for (entry = tables->pVSCtoVK_E0; entry && entry->Vsc; entry++)
     {
         if (entry->Vk == VK__none_) continue;
-        vsc2vk[entry->Vsc + 0x100] = (BYTE)entry->Vk;
+        vsc2vk[entry->Vsc + 0x100] = entry->Vk;
     }
     for (entry = tables->pVSCtoVK_E1; entry && entry->Vsc; entry++)
     {
         if (entry->Vk == VK__none_) continue;
-        vsc2vk[entry->Vsc + 0x200] = (BYTE)entry->Vk;
+        vsc2vk[entry->Vsc + 0x200] = entry->Vk;
     }
 }
 
@@ -1033,7 +1033,8 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
  */
 UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
-    BYTE vsc2vk[0x300], vk2char[0x100];
+    USHORT vsc2vk[0x300];
+    BYTE vk2char[0x100];
     const KBDTABLES *kbd_tables;
     UINT ret = 0;
 
@@ -1066,7 +1067,7 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         }
 
         kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
-        for (ret = 0; ret < ARRAY_SIZE(vsc2vk); ++ret) if (vsc2vk[ret] == code) break;
+        for (ret = 0; ret < ARRAY_SIZE(vsc2vk); ++ret) if ((vsc2vk[ret] & 0xff) == code) break;
         if (ret >= ARRAY_SIZE(vsc2vk)) ret = 0;
 
         if (type == MAPVK_VK_TO_VSC)
@@ -1082,7 +1083,7 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 
         if (code & 0xe000) code -= 0xdf00;
         if (code >= ARRAY_SIZE(vsc2vk)) ret = 0;
-        else ret = vsc2vk[code];
+        else ret = vsc2vk[code] & 0xff;
 
         if (type == MAPVK_VSC_TO_VK)
         {
@@ -1130,15 +1131,15 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 
     if (lparam & 0x2000000)
     {
-        BYTE vsc2vk[0x300];
+        USHORT vsc2vk[0x300];
         kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
-        switch ((vkey = vsc2vk[code]))
+        switch ((vkey = vsc2vk[code] & 0xff))
         {
         case VK_RSHIFT:
         case VK_RCONTROL:
         case VK_RMENU:
             for (code = 0; code < ARRAY_SIZE(vsc2vk); ++code)
-                if (vsc2vk[code] == (vkey - 1)) break;
+                if ((vsc2vk[code] & 0xff) == (vkey - 1)) break;
             break;
         }
     }
