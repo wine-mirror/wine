@@ -108,6 +108,7 @@ extern void update_mouse_tracking_info( HWND hwnd );
 extern BOOL get_clip_cursor( RECT *rect );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
+extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout );
 
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup );

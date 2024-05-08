@@ -3569,7 +3569,7 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
                     scan = scan & 0xff;
                     if (input->ki.dwFlags & KEYEVENTF_EXTENDEDKEY) scan |= 0xe000;
                 }
-                req->input.kbd.vkey = NtUserMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout );
+                req->input.kbd.vkey = map_scan_to_kbd_vkey( scan, layout );
                 req->input.kbd.scan = input->ki.wScan & 0xff;
             }
             else

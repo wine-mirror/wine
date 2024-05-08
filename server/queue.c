@@ -36,6 +36,7 @@
 #include "winternl.h"
 #include "ntuser.h"
 #include "hidusage.h"
+#include "kbd.h"
 
 #include "handle.h"
 #include "file.h"
@@ -1763,7 +1764,7 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
 
     if (input->type == INPUT_KEYBOARD)
     {
-        unsigned short vkey = input->kbd.vkey;
+        unsigned short vkey = input->kbd.vkey & 0xff;
         if (input->kbd.flags & KEYEVENTF_UNICODE) vkey = VK_PACKET;
         msg->lparam = (input->kbd.scan << 16) | vkey;
     }
@@ -2102,6 +2103,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     struct message *msg;
     struct thread *foreground;
     unsigned char vkey = input->kbd.vkey;
+    hw_input_t hook_input = *input;
     unsigned int message_code, time;
     int wait;
 
@@ -2171,6 +2173,27 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         break;
     }
 
+    /* send numpad vkeys if NumLock is active */
+    if ((input->kbd.vkey & KBDNUMPAD) && (desktop->keystate[VK_NUMLOCK] & 0x01) &&
+        !(desktop->keystate[VK_SHIFT] & 0x80))
+    {
+       switch (vkey)
+       {
+       case VK_INSERT: hook_input.kbd.vkey = vkey = VK_NUMPAD0; break;
+       case VK_END:    hook_input.kbd.vkey = vkey = VK_NUMPAD1; break;
+       case VK_DOWN:   hook_input.kbd.vkey = vkey = VK_NUMPAD2; break;
+       case VK_NEXT:   hook_input.kbd.vkey = vkey = VK_NUMPAD3; break;
+       case VK_LEFT:   hook_input.kbd.vkey = vkey = VK_NUMPAD4; break;
+       case VK_CLEAR:  hook_input.kbd.vkey = vkey = VK_NUMPAD5; break;
+       case VK_RIGHT:  hook_input.kbd.vkey = vkey = VK_NUMPAD6; break;
+       case VK_HOME:   hook_input.kbd.vkey = vkey = VK_NUMPAD7; break;
+       case VK_UP:     hook_input.kbd.vkey = vkey = VK_NUMPAD8; break;
+       case VK_PRIOR:  hook_input.kbd.vkey = vkey = VK_NUMPAD9; break;
+       case VK_DELETE: hook_input.kbd.vkey = vkey = VK_DECIMAL; break;
+       default: break;
+       }
+    }
+
     if ((foreground = get_foreground_thread( desktop, win )))
     {
         struct rawinput_message raw_msg = {0};
@@ -2217,7 +2240,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         msg_data->flags |= (flags & (KF_EXTENDED | KF_ALTDOWN | KF_UP)) >> 8;
     }
 
-    if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
+    if (!(wait = send_hook_ll_message( desktop, msg, &hook_input, sender )))
         queue_hardware_message( desktop, msg, 1 );
 
     return wait;

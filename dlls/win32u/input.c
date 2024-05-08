@@ -1112,6 +1112,31 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return ret;
 }
 
+/***********************************************************************
+ *      map_scan_to_kbd_vkey
+ *
+ * Map a scancode to a virtual key with KBD information.
+ */
+USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout )
+{
+    const KBDTABLES *kbd_tables;
+    USHORT vsc2vk[0x300];
+    UINT vkey;
+
+    if ((vkey = user_driver->pMapVirtualKeyEx( scan, MAPVK_VSC_TO_VK_EX, layout )) != -1) return vkey;
+
+    if (!(kbd_tables = user_driver->pKbdLayerDescriptor( layout ))) kbd_tables = &kbdus_tables;
+
+    kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
+    if (scan & 0xe000) scan -= 0xdf00;
+    if (scan >= ARRAY_SIZE(vsc2vk)) vkey = 0;
+    else vkey = vsc2vk[scan];
+
+    if (kbd_tables != &kbdus_tables) user_driver->pReleaseKbdTables( kbd_tables );
+
+    return vkey;
+}
+
 /****************************************************************************
  *	     NtUserGetKeyNameText    (win32u.@)
  */
