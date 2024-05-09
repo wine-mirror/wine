@@ -211,6 +211,7 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
                 add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
                                    sizes[size_idx].height, 0, size_idx, full );
                 mode = NEXT_DEVMODEW( mode );
+                mode_idx++;
                 continue;
             }
 
@@ -219,6 +220,7 @@ static BOOL xrandr10_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **n
                 add_xrandr10_mode( mode, depths[depth_idx], sizes[size_idx].width,
                                    sizes[size_idx].height, rates[rate_idx], size_idx, full );
                 mode = NEXT_DEVMODEW( mode );
+                mode_idx++;
             }
         }
     }

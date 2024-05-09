@@ -145,6 +145,7 @@ static BOOL xf86vm_get_modes( x11drv_settings_id id, DWORD flags, DEVMODEW **new
         {
             add_xf86vm_mode( mode, depths[depth_idx], xf86vm_modes[xf86vm_mode_idx], full );
             mode = NEXT_DEVMODEW( mode );
+            mode_idx++;
         }
     }
 
