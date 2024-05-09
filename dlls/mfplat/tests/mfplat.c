@@ -7352,6 +7352,7 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     VIDEOINFOHEADER *video_info;
     WAVEFORMATEX *wave_format;
     MPEG1VIDEOINFO *mpeg1_info;
+    MPEG2VIDEOINFO *mpeg2_info;
     IMFMediaType *media_type, *other_type;
     AM_MEDIA_TYPE am_type;
     MFVideoArea *area;
@@ -7458,6 +7459,13 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEGVideo), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    CoTaskMemFree(am_type.pbFormat);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MPEG2Video, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEG2Video), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
 
 
@@ -8085,6 +8093,81 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(mpeg1_info->hdr.bmiHeader.biSize == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biSize);
     ok(mpeg1_info->cbSequenceHeader == sizeof(dummy_mpeg_sequence), "got %lu\n", mpeg1_info->cbSequenceHeader);
     ok(!memcmp(mpeg1_info->bSequenceHeader, dummy_mpeg_sequence, mpeg1_info->cbSequenceHeader), "got wrong data\n");
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MFVIDEOFORMAT loses MF_MT_MPEG_SEQUENCE_HEADER */
+
+    hr = IMFMediaType_DeleteItem(media_type, &MF_MT_USER_DATA);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MFVIDEOFORMAT), "got %lu\n", am_type.cbFormat);
+    CoTaskMemFree(am_type.pbFormat);
+
+    IMFMediaType_DeleteAllItems(media_type);
+
+
+    /* MEDIASUBTYPE_MPEG2_VIDEO uses FORMAT_MPEG2Video by default */
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_MPEG2_VIDEO);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_MPEG2_VIDEO), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEG2Video), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg2_info = (MPEG2VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg2_info->dwStartTimeCode == 0, "got %lu\n", mpeg2_info->dwStartTimeCode);
+    ok(mpeg2_info->dwProfile == 0, "got %lu\n", mpeg2_info->dwProfile);
+    ok(mpeg2_info->dwLevel == 0, "got %lu\n", mpeg2_info->dwLevel);
+    ok(mpeg2_info->dwFlags == 0, "got %lu\n", mpeg2_info->dwFlags);
+    ok(mpeg2_info->cbSequenceHeader == 0, "got %lu\n", mpeg2_info->cbSequenceHeader);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_MPEG_START_TIME_CODE, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_MPEG2_PROFILE, 6);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_MPEG2_LEVEL, 7);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_MPEG2_FLAGS, 8910);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg2_info = (MPEG2VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg2_info->dwStartTimeCode == 1234, "got %lu\n", mpeg2_info->dwStartTimeCode);
+    ok(mpeg2_info->dwProfile == 6, "got %lu\n", mpeg2_info->dwProfile);
+    ok(mpeg2_info->dwLevel == 7, "got %lu\n", mpeg2_info->dwLevel);
+    ok(mpeg2_info->dwFlags == 8910, "got %lu\n", mpeg2_info->dwFlags);
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MF_MT_USER_DATA is ignored */
+
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)dummy_user_data, sizeof(dummy_user_data));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg2_info = (MPEG2VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg2_info->hdr.bmiHeader.biSize == sizeof(mpeg2_info->hdr.bmiHeader), "got %lu\n", mpeg2_info->hdr.bmiHeader.biSize);
+    ok(mpeg2_info->cbSequenceHeader == 0, "got %lu\n", mpeg2_info->cbSequenceHeader);
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MF_MT_MPEG_SEQUENCE_HEADER is used instead in MPEG2VIDEOINFO */
+
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, (BYTE *)dummy_mpeg_sequence, sizeof(dummy_mpeg_sequence));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO) + sizeof(dummy_mpeg_sequence), "got %lu\n", am_type.cbFormat);
+    mpeg2_info = (MPEG2VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg2_info->hdr.bmiHeader.biSize == sizeof(mpeg2_info->hdr.bmiHeader), "got %lu\n", mpeg2_info->hdr.bmiHeader.biSize);
+    ok(mpeg2_info->cbSequenceHeader == sizeof(dummy_mpeg_sequence), "got %lu\n", mpeg2_info->cbSequenceHeader);
+    ok(!memcmp(mpeg2_info->dwSequenceHeader, dummy_mpeg_sequence, mpeg2_info->cbSequenceHeader), "got wrong data\n");
     CoTaskMemFree(am_type.pbFormat);
 
     /* MFVIDEOFORMAT loses MF_MT_MPEG_SEQUENCE_HEADER */

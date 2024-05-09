@@ -4136,6 +4136,14 @@ static UINT32 get_am_media_type_video_format_size(const GUID *format_type, IMFMe
         return size;
     }
 
+    if (IsEqualGUID(format_type, &FORMAT_MPEG2Video))
+    {
+        UINT32 size = sizeof(MPEG2VIDEOINFO), sequence_size;
+        if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, &sequence_size)))
+            size += sequence_size;
+        return size;
+    }
+
     return 0;
 }
 
@@ -4156,6 +4164,8 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
         if (IsEqualGUID(&am_type->subtype, &MEDIASUBTYPE_MPEG1Payload)
                 || IsEqualGUID(&am_type->subtype, &MEDIASUBTYPE_MPEG1Packet))
             am_type->formattype = FORMAT_MPEGVideo;
+        else if (IsEqualGUID(&am_type->subtype, &MEDIASUBTYPE_MPEG2_VIDEO))
+            am_type->formattype = FORMAT_MPEG2Video;
         else
             am_type->formattype = FORMAT_VideoInfo;
     }
@@ -4204,6 +4214,26 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
 
         if (am_type->cbFormat > sizeof(*format) && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER,
                 format->bSequenceHeader, am_type->cbFormat - sizeof(*format), NULL)))
+            return hr;
+        format->cbSequenceHeader = am_type->cbFormat - sizeof(*format);
+
+        am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+        am_type->bFixedSizeSamples = !!video_format;
+        am_type->bTemporalCompression = !video_format;
+    }
+    else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEG2Video))
+    {
+        MPEG2VIDEOINFO *format = (MPEG2VIDEOINFO *)am_type->pbFormat;
+
+        init_video_info_header2(&format->hdr, &am_type->subtype, media_type);
+
+        format->dwStartTimeCode = media_type_get_uint32(media_type, &MF_MT_MPEG_START_TIME_CODE);
+        format->dwProfile = media_type_get_uint32(media_type, &MF_MT_MPEG2_PROFILE);
+        format->dwLevel = media_type_get_uint32(media_type, &MF_MT_MPEG2_LEVEL);
+        format->dwFlags = media_type_get_uint32(media_type, &MF_MT_MPEG2_FLAGS);
+
+        if (am_type->cbFormat > sizeof(*format) && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER,
+                (BYTE *)format->dwSequenceHeader, am_type->cbFormat - sizeof(*format), NULL)))
             return hr;
         format->cbSequenceHeader = am_type->cbFormat - sizeof(*format);
 
