@@ -7345,11 +7345,13 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
 static void test_MFInitAMMediaTypeFromMFMediaType(void)
 {
     static const MFVideoArea aperture = {.OffsetX = {.fract = 1, .value = 2}, .OffsetY = {.fract = 3, .value = 4}, .Area={56,78}};
+    static const BYTE dummy_mpeg_sequence[] = {0x04,0x05,0x06,0x07,0x08};
     static const BYTE dummy_user_data[] = {0x01,0x02,0x03};
 
     WAVEFORMATEXTENSIBLE *wave_format_ext;
     VIDEOINFOHEADER *video_info;
     WAVEFORMATEX *wave_format;
+    MPEG1VIDEOINFO *mpeg1_info;
     IMFMediaType *media_type, *other_type;
     AM_MEDIA_TYPE am_type;
     MFVideoArea *area;
@@ -7446,6 +7448,16 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_MFVideoFormat), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(MFVIDEOFORMAT), "got %lu\n", am_type.cbFormat);
+    CoTaskMemFree(am_type.pbFormat);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MPEGVideo, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 1, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 0, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEGVideo), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
 
 
@@ -7976,6 +7988,116 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     CoTaskMemFree(am_type.pbFormat);
 
     IMFMediaType_Release(other_type);
+    IMFMediaType_DeleteAllItems(media_type);
+
+
+    /* MEDIASUBTYPE_MPEG1Packet and MEDIASUBTYPE_MPEG1Payload use FORMAT_MPEGVideo by default */
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_MPEG1Packet);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_MPEG1Packet), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 0, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 1, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEGVideo), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_MPEG1Payload);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
+    ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_MPEG1Payload), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 0, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 1, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
+    ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEGVideo), "got %s.\n", debugstr_guid(&am_type.formattype));
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->cbSequenceHeader == 0, "got %lu\n", mpeg1_info->cbSequenceHeader);
+    ok(mpeg1_info->dwStartTimeCode == 0, "got %lu\n", mpeg1_info->dwStartTimeCode);
+    ok(mpeg1_info->hdr.bmiHeader.biPlanes == 1, "got %u\n", mpeg1_info->hdr.bmiHeader.biPlanes);
+    ok(mpeg1_info->hdr.bmiHeader.biBitCount == 0, "got %u\n", mpeg1_info->hdr.bmiHeader.biBitCount);
+    todo_wine ok(mpeg1_info->hdr.bmiHeader.biCompression == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biCompression);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)12 << 32 | 34);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->hdr.bmiHeader.biPlanes == 1, "got %u\n", mpeg1_info->hdr.bmiHeader.biPlanes);
+    ok(mpeg1_info->hdr.bmiHeader.biBitCount == 0, "got %u\n", mpeg1_info->hdr.bmiHeader.biBitCount);
+    ok(mpeg1_info->hdr.bmiHeader.biWidth == 12, "got %lu\n", mpeg1_info->hdr.bmiHeader.biWidth);
+    ok(mpeg1_info->hdr.bmiHeader.biHeight == 34, "got %lu\n", mpeg1_info->hdr.bmiHeader.biHeight);
+    ok(mpeg1_info->hdr.bmiHeader.biSizeImage == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biSizeImage);
+    ok(mpeg1_info->hdr.bmiHeader.biXPelsPerMeter == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biXPelsPerMeter);
+    ok(mpeg1_info->hdr.bmiHeader.biYPelsPerMeter == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biYPelsPerMeter);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, (UINT64)12 << 32 | 34);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->hdr.bmiHeader.biXPelsPerMeter == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biXPelsPerMeter);
+    ok(mpeg1_info->hdr.bmiHeader.biYPelsPerMeter == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biYPelsPerMeter);
+    CoTaskMemFree(am_type.pbFormat);
+
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_MPEG_START_TIME_CODE, 1234);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->dwStartTimeCode == 1234, "got %lu\n", mpeg1_info->dwStartTimeCode);
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MF_MT_USER_DATA is ignored */
+
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_USER_DATA, (BYTE *)dummy_user_data, sizeof(dummy_user_data));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->hdr.bmiHeader.biSize == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biSize);
+    ok(mpeg1_info->cbSequenceHeader == 0, "got %lu\n", mpeg1_info->cbSequenceHeader);
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MF_MT_MPEG_SEQUENCE_HEADER is used instead in MPEG1VIDEOINFO */
+
+    hr = IMFMediaType_SetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, (BYTE *)dummy_mpeg_sequence, sizeof(dummy_mpeg_sequence));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MPEG1VIDEOINFO) + sizeof(dummy_mpeg_sequence), "got %lu\n", am_type.cbFormat);
+    mpeg1_info = (MPEG1VIDEOINFO *)am_type.pbFormat;
+    ok(mpeg1_info->hdr.bmiHeader.biSize == 0, "got %lu\n", mpeg1_info->hdr.bmiHeader.biSize);
+    ok(mpeg1_info->cbSequenceHeader == sizeof(dummy_mpeg_sequence), "got %lu\n", mpeg1_info->cbSequenceHeader);
+    ok(!memcmp(mpeg1_info->bSequenceHeader, dummy_mpeg_sequence, mpeg1_info->cbSequenceHeader), "got wrong data\n");
+    CoTaskMemFree(am_type.pbFormat);
+
+    /* MFVIDEOFORMAT loses MF_MT_MPEG_SEQUENCE_HEADER */
+
+    hr = IMFMediaType_DeleteItem(media_type, &MF_MT_USER_DATA);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, FORMAT_MFVideoFormat, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(am_type.cbFormat == sizeof(MFVIDEOFORMAT), "got %lu\n", am_type.cbFormat);
+    CoTaskMemFree(am_type.pbFormat);
+
+    IMFMediaType_DeleteAllItems(media_type);
+
 
     IMFMediaType_Release(media_type);
 }

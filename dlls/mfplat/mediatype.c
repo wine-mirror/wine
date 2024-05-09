@@ -4128,6 +4128,14 @@ static UINT32 get_am_media_type_video_format_size(const GUID *format_type, IMFMe
         return size;
     }
 
+    if (IsEqualGUID(format_type, &FORMAT_MPEGVideo))
+    {
+        UINT32 size = sizeof(MPEG1VIDEOINFO), sequence_size;
+        if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_MPEG_SEQUENCE_HEADER, &sequence_size)))
+            size += sequence_size;
+        return size;
+    }
+
     return 0;
 }
 
@@ -4144,7 +4152,13 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
                 (UINT32 *)&am_type->cbFormat);
 
     if (IsEqualGUID(&am_type->formattype, &GUID_NULL))
-        am_type->formattype = FORMAT_VideoInfo;
+    {
+        if (IsEqualGUID(&am_type->subtype, &MEDIASUBTYPE_MPEG1Payload)
+                || IsEqualGUID(&am_type->subtype, &MEDIASUBTYPE_MPEG1Packet))
+            am_type->formattype = FORMAT_MPEGVideo;
+        else
+            am_type->formattype = FORMAT_VideoInfo;
+    }
 
     am_type->cbFormat = get_am_media_type_video_format_size(&am_type->formattype, media_type);
     if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
@@ -4174,6 +4188,24 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
                 (BYTE *)(format + 1), am_type->cbFormat - sizeof(*format), NULL)))
             return hr;
         format->bmiHeader.biSize += am_type->cbFormat - sizeof(*format);
+
+        am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+        am_type->bFixedSizeSamples = !!video_format;
+        am_type->bTemporalCompression = !video_format;
+    }
+    else if (IsEqualGUID(&am_type->formattype, &FORMAT_MPEGVideo))
+    {
+        MPEG1VIDEOINFO *format = (MPEG1VIDEOINFO *)am_type->pbFormat;
+
+        init_video_info_header(&format->hdr, &am_type->subtype, media_type);
+        format->hdr.bmiHeader.biSize = 0;
+
+        format->dwStartTimeCode = media_type_get_uint32(media_type, &MF_MT_MPEG_START_TIME_CODE);
+
+        if (am_type->cbFormat > sizeof(*format) && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_MPEG_SEQUENCE_HEADER,
+                format->bSequenceHeader, am_type->cbFormat - sizeof(*format), NULL)))
+            return hr;
+        format->cbSequenceHeader = am_type->cbFormat - sizeof(*format);
 
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
         am_type->bFixedSizeSamples = !!video_format;
