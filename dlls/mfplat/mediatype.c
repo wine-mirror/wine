@@ -3987,7 +3987,7 @@ HRESULT WINAPI MFInitMediaTypeFromVideoInfoHeader(IMFMediaType *media_type, cons
     return MFInitMediaTypeFromVideoInfoHeader2(media_type, &vih2, sizeof(vih2), subtype);
 }
 
-static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+static HRESULT init_am_media_type_audio_format(AM_MEDIA_TYPE *am_type, IMFMediaType *media_type)
 {
     HRESULT hr;
 
@@ -4110,7 +4110,28 @@ static void init_video_info_header(VIDEOINFOHEADER *vih, const GUID *subtype, IM
     vih->bmiHeader = vih2.bmiHeader;
 }
 
-static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 user_size, IMFMediaType *media_type)
+static UINT32 get_am_media_type_video_format_size(const GUID *format_type, IMFMediaType *media_type)
+{
+    if (IsEqualGUID(format_type, &FORMAT_VideoInfo))
+    {
+        UINT32 size = sizeof(VIDEOINFOHEADER), user_size;
+        if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &user_size)))
+            size += user_size;
+        return size;
+    }
+
+    if (IsEqualGUID(format_type, &FORMAT_VideoInfo2))
+    {
+        UINT32 size = sizeof(VIDEOINFOHEADER2), user_size;
+        if (SUCCEEDED(IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &user_size)))
+            size += user_size;
+        return size;
+    }
+
+    return 0;
+}
+
+static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaType *media_type)
 {
     HRESULT hr;
 
@@ -4121,45 +4142,36 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
         return MFCreateMFVideoFormatFromMFMediaType(media_type, (MFVIDEOFORMAT **)&am_type->pbFormat,
                 (UINT32 *)&am_type->cbFormat);
 
-    if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo)
-            || IsEqualGUID(&am_type->formattype, &GUID_NULL))
+    if (IsEqualGUID(&am_type->formattype, &GUID_NULL))
+        am_type->formattype = FORMAT_VideoInfo;
+
+    am_type->cbFormat = get_am_media_type_video_format_size(&am_type->formattype, media_type);
+    if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
+        return E_OUTOFMEMORY;
+    memset(am_type->pbFormat, 0, am_type->cbFormat);
+
+    if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo))
     {
-        VIDEOINFOHEADER *format;
-
-        am_type->cbFormat = sizeof(*format) + user_size;
-        if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
-            return E_OUTOFMEMORY;
-        format = (VIDEOINFOHEADER *)am_type->pbFormat;
-        memset(format, 0, sizeof(*format));
-
+        VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)am_type->pbFormat;
         init_video_info_header(format, &am_type->subtype, media_type);
 
-        if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
-                (BYTE *)(format + 1), user_size, NULL)))
+        if (am_type->cbFormat > sizeof(*format) && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                (BYTE *)(format + 1), am_type->cbFormat - sizeof(*format), NULL)))
             return hr;
-        format->bmiHeader.biSize += user_size;
+        format->bmiHeader.biSize += am_type->cbFormat - sizeof(*format);
 
-        am_type->formattype = FORMAT_VideoInfo;
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
     }
     else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
     {
-        VIDEOINFOHEADER2 *format;
-
-        am_type->cbFormat = sizeof(*format) + user_size;
-        if (!(am_type->pbFormat = CoTaskMemAlloc(am_type->cbFormat)))
-            return E_OUTOFMEMORY;
-        format = (VIDEOINFOHEADER2 *)am_type->pbFormat;
-        memset(format, 0, sizeof(*format));
-
+        VIDEOINFOHEADER2 *format = (VIDEOINFOHEADER2 *)am_type->pbFormat;
         init_video_info_header2(format, &am_type->subtype, media_type);
 
-        if (user_size && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
-                (BYTE *)(format + 1), user_size, NULL)))
+        if (am_type->cbFormat > sizeof(*format) && FAILED(hr = IMFMediaType_GetBlob(media_type, &MF_MT_USER_DATA,
+                (BYTE *)(format + 1), am_type->cbFormat - sizeof(*format), NULL)))
             return hr;
-        format->bmiHeader.biSize += user_size;
+        format->bmiHeader.biSize += am_type->cbFormat - sizeof(*format);
 
-        am_type->formattype = FORMAT_VideoInfo2;
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
     }
     else
@@ -4176,7 +4188,6 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, UINT32 us
  */
 HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID format, AM_MEDIA_TYPE *am_type)
 {
-    UINT32 user_size;
     HRESULT hr;
 
     TRACE("%p, %s, %p.\n", media_type, debugstr_mf_guid(&format), am_type);
@@ -4191,13 +4202,10 @@ HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID f
     am_type->bFixedSizeSamples = media_type_get_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES);
     am_type->lSampleSize = media_type_get_uint32(media_type, &MF_MT_SAMPLE_SIZE);
 
-    if (FAILED(IMFMediaType_GetBlobSize(media_type, &MF_MT_USER_DATA, &user_size)))
-        user_size = 0;
-
     if (IsEqualGUID(&am_type->majortype, &MFMediaType_Audio))
-        hr = init_am_media_type_audio_format(am_type, user_size, media_type);
+        hr = init_am_media_type_audio_format(am_type, media_type);
     else if (IsEqualGUID(&am_type->majortype, &MFMediaType_Video))
-        hr = init_am_media_type_video_format(am_type, user_size, media_type);
+        hr = init_am_media_type_video_format(am_type, media_type);
     else
     {
         FIXME("Not implemented!\n");
