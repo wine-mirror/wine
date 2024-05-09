@@ -7382,6 +7382,9 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Audio), "got %s.\n", debugstr_guid(&am_type.majortype));
     ok(IsEqualGUID(&am_type.subtype, &MFAudioFormat_PCM), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 0, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 1, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_WaveFormatEx), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(WAVEFORMATEX), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
@@ -7418,6 +7421,9 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
     ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 1, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 0, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
@@ -7425,6 +7431,9 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
     ok(IsEqualGUID(&am_type.subtype, &MEDIASUBTYPE_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 1, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 0, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_VideoInfo2), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(VIDEOINFOHEADER2), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
@@ -7432,6 +7441,9 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&am_type.majortype, &MFMediaType_Video), "got %s.\n", debugstr_guid(&am_type.majortype));
     ok(IsEqualGUID(&am_type.subtype, &MFVideoFormat_RGB32), "got %s.\n", debugstr_guid(&am_type.subtype));
+    ok(am_type.bFixedSizeSamples == 0, "got %u\n", am_type.bFixedSizeSamples);
+    ok(am_type.bTemporalCompression == 1, "got %u\n", am_type.bTemporalCompression);
+    ok(am_type.lSampleSize == 0, "got %lu\n", am_type.lSampleSize);
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_MFVideoFormat), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(MFVIDEOFORMAT), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);

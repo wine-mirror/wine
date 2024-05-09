@@ -4133,6 +4133,7 @@ static UINT32 get_am_media_type_video_format_size(const GUID *format_type, IMFMe
 
 static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaType *media_type)
 {
+    struct uncompressed_video_format *video_format = mf_get_video_format(&am_type->subtype);
     HRESULT hr;
 
     if (IsEqualGUID(&am_type->formattype, &FORMAT_WaveFormatEx))
@@ -4161,6 +4162,8 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
         format->bmiHeader.biSize += am_type->cbFormat - sizeof(*format);
 
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+        am_type->bFixedSizeSamples = !!video_format;
+        am_type->bTemporalCompression = !video_format;
     }
     else if (IsEqualGUID(&am_type->formattype, &FORMAT_VideoInfo2))
     {
@@ -4173,6 +4176,8 @@ static HRESULT init_am_media_type_video_format(AM_MEDIA_TYPE *am_type, IMFMediaT
         format->bmiHeader.biSize += am_type->cbFormat - sizeof(*format);
 
         am_type->subtype = get_am_subtype_for_mf_subtype(am_type->subtype);
+        am_type->bFixedSizeSamples = !!video_format;
+        am_type->bTemporalCompression = !video_format;
     }
     else
     {
@@ -4199,6 +4204,7 @@ HRESULT WINAPI MFInitAMMediaTypeFromMFMediaType(IMFMediaType *media_type, GUID f
             || FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &am_type->subtype)))
         goto done;
 
+    am_type->bTemporalCompression = !media_type_get_uint32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT);
     am_type->bFixedSizeSamples = media_type_get_uint32(media_type, &MF_MT_FIXED_SIZE_SAMPLES);
     am_type->lSampleSize = media_type_get_uint32(media_type, &MF_MT_SAMPLE_SIZE);
 
