@@ -1369,6 +1369,7 @@ enable_pidgen
 enable_powrprof
 enable_printui
 enable_prntvpt
+enable_profapi
 enable_propsys
 enable_psapi
 enable_pstorec
@@ -22517,6 +22518,7 @@ wine_fn_config_makefile dlls/powrprof enable_powrprof
 wine_fn_config_makefile dlls/printui enable_printui
 wine_fn_config_makefile dlls/prntvpt enable_prntvpt
 wine_fn_config_makefile dlls/prntvpt/tests enable_tests
+wine_fn_config_makefile dlls/profapi enable_profapi
 wine_fn_config_makefile dlls/propsys enable_propsys
 wine_fn_config_makefile dlls/propsys/tests enable_tests
 wine_fn_config_makefile dlls/psapi enable_psapi
