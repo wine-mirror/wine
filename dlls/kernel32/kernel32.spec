@@ -158,6 +158,7 @@
 @ stdcall ApplicationRecoveryFinished(long)
 @ stdcall ApplicationRecoveryInProgress(ptr)
 @ stdcall AppPolicyGetMediaFoundationCodecLoading(ptr ptr) kernelbase.AppPolicyGetMediaFoundationCodecLoading
+@ stdcall AppPolicyGetWindowingModel(ptr ptr) kernelbase.AppPolicyGetWindowingModel
 @ stdcall -import AreFileApisANSI()
 @ stdcall AssignProcessToJobObject(ptr ptr)
 @ stdcall -import AttachConsole(long)
