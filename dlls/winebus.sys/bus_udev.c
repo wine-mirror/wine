@@ -1367,7 +1367,7 @@ static void udev_add_device(struct udev_device *dev, int fd)
     if (is_xbox_gamepad(desc.vid, desc.pid))
         desc.is_gamepad = TRUE;
 #ifdef HAS_PROPER_INPUT_HEADER
-    else
+    else if (!strcmp(subsystem, "input"))
     {
         int axes=0, buttons=0;
         axes = count_abs_axis(fd);

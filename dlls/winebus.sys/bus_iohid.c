@@ -315,44 +315,6 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     {
         if (is_xbox_gamepad(desc.vid, desc.pid))
             desc.is_gamepad = TRUE;
-        else
-        {
-            int axes=0, buttons=0;
-            CFArrayRef element_array = IOHIDDeviceCopyMatchingElements(
-                IOHIDDevice, NULL, kIOHIDOptionsTypeNone);
-
-            if (element_array) {
-                CFIndex index;
-                CFIndex count = CFArrayGetCount(element_array);
-                for (index = 0; index < count; index++)
-                {
-                    IOHIDElementRef element = (IOHIDElementRef)CFArrayGetValueAtIndex(element_array, index);
-                    if (element)
-                    {
-                        int type = IOHIDElementGetType(element);
-                        if (type == kIOHIDElementTypeInput_Button) buttons++;
-                        if (type == kIOHIDElementTypeInput_Axis) axes++;
-                        if (type == kIOHIDElementTypeInput_Misc)
-                        {
-                            uint32_t usage = IOHIDElementGetUsage(element);
-                            switch (usage)
-                            {
-                                case kHIDUsage_GD_X:
-                                case kHIDUsage_GD_Y:
-                                case kHIDUsage_GD_Z:
-                                case kHIDUsage_GD_Rx:
-                                case kHIDUsage_GD_Ry:
-                                case kHIDUsage_GD_Rz:
-                                case kHIDUsage_GD_Slider:
-                                    axes ++;
-                            }
-                        }
-                    }
-                }
-                CFRelease(element_array);
-            }
-            desc.is_gamepad = (axes == 6  && buttons >= 14);
-        }
     }
 
     TRACE("dev %p, desc %s.\n", IOHIDDevice, debugstr_device_desc(&desc));
