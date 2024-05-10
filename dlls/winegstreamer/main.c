@@ -699,6 +699,7 @@ unsigned int wg_format_get_stride(const struct wg_format *format)
 
         case WG_VIDEO_FORMAT_BGRA:
         case WG_VIDEO_FORMAT_BGRx:
+        case WG_VIDEO_FORMAT_RGBA:
             return width * 4;
 
         case WG_VIDEO_FORMAT_BGR:
@@ -734,6 +735,7 @@ bool wg_video_format_is_rgb(enum wg_video_format format)
         case WG_VIDEO_FORMAT_BGR:
         case WG_VIDEO_FORMAT_RGB15:
         case WG_VIDEO_FORMAT_RGB16:
+        case WG_VIDEO_FORMAT_RGBA:
             return true;
 
         default:

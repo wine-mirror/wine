@@ -28,6 +28,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+extern GUID MFVideoFormat_ABGR32;
+
 static const GUID *const input_types[] =
 {
     &MFVideoFormat_IYUV,
@@ -66,6 +68,7 @@ static const GUID *const output_types[] =
     &MFVideoFormat_AYUV,
     &MFVideoFormat_RGB555,
     &MFVideoFormat_RGB565,
+    &MFVideoFormat_ABGR32,
 };
 
 struct video_processor

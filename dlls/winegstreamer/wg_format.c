@@ -145,6 +145,8 @@ static enum wg_video_format wg_video_format_from_gst(GstVideoFormat format)
             return WG_VIDEO_FORMAT_RGB15;
         case GST_VIDEO_FORMAT_RGB16:
             return WG_VIDEO_FORMAT_RGB16;
+        case GST_VIDEO_FORMAT_RGBA:
+            return WG_VIDEO_FORMAT_RGBA;
         case GST_VIDEO_FORMAT_AYUV:
             return WG_VIDEO_FORMAT_AYUV;
         case GST_VIDEO_FORMAT_I420:
@@ -568,6 +570,7 @@ static GstVideoFormat wg_video_format_to_gst(enum wg_video_format format)
         case WG_VIDEO_FORMAT_BGR:   return GST_VIDEO_FORMAT_BGR;
         case WG_VIDEO_FORMAT_RGB15: return GST_VIDEO_FORMAT_RGB15;
         case WG_VIDEO_FORMAT_RGB16: return GST_VIDEO_FORMAT_RGB16;
+        case WG_VIDEO_FORMAT_RGBA:  return GST_VIDEO_FORMAT_RGBA;
         case WG_VIDEO_FORMAT_AYUV:  return GST_VIDEO_FORMAT_AYUV;
         case WG_VIDEO_FORMAT_I420:  return GST_VIDEO_FORMAT_I420;
         case WG_VIDEO_FORMAT_NV12:  return GST_VIDEO_FORMAT_NV12;

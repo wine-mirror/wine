@@ -773,9 +773,9 @@ static void check_mft_set_output_type_required_(int line, IMFTransform *transfor
     ok_(__FILE__, line)(!ref, "Release returned %lu\n", ref);
 }
 
-#define check_mft_set_output_type(a, b, c) check_mft_set_output_type_(__LINE__, a, b, c, FALSE, FALSE)
+#define check_mft_set_output_type(a, b, c) check_mft_set_output_type_(__LINE__, a, b, c, FALSE)
 static void check_mft_set_output_type_(int line, IMFTransform *transform, const struct attribute_desc *attributes,
-        HRESULT expect_hr, BOOL todo_test, BOOL todo)
+        HRESULT expect_hr, BOOL todo)
 {
     IMFMediaType *media_type;
     HRESULT hr;
@@ -785,7 +785,6 @@ static void check_mft_set_output_type_(int line, IMFTransform *transform, const 
     init_media_type(media_type, attributes, -1);
 
     hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
-    todo_wine_if(todo_test)
     ok_(__FILE__, line)(hr == expect_hr, "SetOutputType returned %#lx.\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     todo_wine_if(todo)
@@ -7942,6 +7941,7 @@ static void test_video_processor(void)
             for (; k < ARRAY_SIZE(expect_available_outputs); k++)
                 if (IsEqualGUID(&expect_available_outputs[k], &guid))
                     break;
+            todo_wine_if(IsEqualGUID(&guid, &MFVideoFormat_ABGR32)) /* enumerated on purpose on Wine */
             ok(k < ARRAY_SIZE(expect_available_outputs), "got subtype %s\n", debugstr_guid(&guid));
 
             ret = IMFMediaType_Release(media_type);
@@ -7962,7 +7962,7 @@ static void test_video_processor(void)
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_ABGR32);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx\n", hr);
+    todo_wine ok(hr == MF_E_INVALIDMEDIATYPE, "got %#lx\n", hr);
     IMFMediaType_Release(media_type);
 
     /* MFVideoFormat_RGB32 output format works */
@@ -9292,7 +9292,7 @@ static void test_video_processor_with_dxgi_manager(void)
     hr = IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, (UINT64)96 << 32 | 96);
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, type, 0);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+    ok(hr == S_OK, "got %#lx\n", hr);
     IMFMediaType_Release(type);
 
 
@@ -9445,7 +9445,7 @@ static void test_video_processor_with_dxgi_manager(void)
     /* check RGB32 output aperture cropping with D3D buffers */
 
     check_mft_set_input_type(transform, nv12_with_aperture);
-    check_mft_set_output_type_(__LINE__, transform, rgb32_no_aperture, S_OK, FALSE, TRUE);
+    check_mft_set_output_type_(__LINE__, transform, rgb32_no_aperture, S_OK, TRUE);
 
     load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
     /* skip BMP header and RGB data from the dump */
@@ -9513,7 +9513,7 @@ skip_rgb32:
     /* check ABGR32 output with D3D buffers */
 
     check_mft_set_input_type(transform, nv12_with_aperture);
-    check_mft_set_output_type_(__LINE__, transform, abgr32_no_aperture, S_OK, TRUE, TRUE);
+    check_mft_set_output_type_(__LINE__, transform, abgr32_no_aperture, S_OK, TRUE);
 
     load_resource(L"nv12frame.bmp", &nv12frame_data, &nv12frame_data_len);
     /* skip BMP header and RGB data from the dump */
