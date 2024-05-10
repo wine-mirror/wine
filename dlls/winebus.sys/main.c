@@ -67,6 +67,9 @@ enum device_state
     DEVICE_STATE_REMOVED,
 };
 
+#define HIDRAW_FIXUP_DUALSHOCK_BT 0x1
+#define HIDRAW_FIXUP_DUALSENSE_BT 0x2
+
 struct device_extension
 {
     struct list entry;
@@ -86,6 +89,7 @@ struct device_extension
     struct list reports;
     IRP *pending_read;
 
+    UINT32 report_fixups;
     UINT64 unix_device;
 };
 
@@ -302,6 +306,17 @@ static DEVICE_OBJECT *bus_create_hid_device(struct device_desc *desc, UINT64 uni
     ext->unix_device        = unix_device;
     list_init(&ext->reports);
 
+    if (desc->is_hidraw && desc->is_bluetooth && is_dualshock4_gamepad(desc->vid, desc->pid))
+    {
+        TRACE("Enabling report fixup for Bluetooth DualShock4 device %p\n", device);
+        ext->report_fixups |= HIDRAW_FIXUP_DUALSHOCK_BT;
+    }
+    if (desc->is_hidraw && desc->is_bluetooth && is_dualsense_gamepad(desc->vid, desc->pid))
+    {
+        TRACE("Enabling report fixup for Bluetooth DualSense device %p\n", device);
+        ext->report_fixups |= HIDRAW_FIXUP_DUALSENSE_BT;
+    }
+
     InitializeCriticalSectionEx(&ext->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     ext->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
 
@@ -467,6 +482,59 @@ static void process_hid_report(DEVICE_OBJECT *device, BYTE *report_buf, DWORD re
     if (!(report = RtlAllocateHeap(GetProcessHeap(), 0, size))) return;
     memcpy(report->buffer, report_buf, report_len);
     report->length = report_len;
+
+    if (ext->report_fixups & HIDRAW_FIXUP_DUALSHOCK_BT)
+    {
+        /* As described in the Linux kernel driver, when connected over bluetooth, DS4 controllers
+         * start sending input through report #17 as soon as they receive a feature report #2, which
+         * the kernel sends anyway for calibration.
+         *
+         * Input report #17 is the same as the default input report #1, with additional gyro data and
+         * two additional bytes in front, but is only described as vendor specific in the report descriptor,
+         * and applications aren't expecting it.
+         *
+         * We have to translate it to input report #1, like native driver does.
+         */
+        if (report->buffer[0] == 0x11 && report->length >= 12)
+        {
+            memmove(report->buffer, report->buffer + 2, 10);
+            report->buffer[0] = 1; /* fake report #1 */
+            report->length = 10;
+        }
+    }
+
+    if (ext->report_fixups & HIDRAW_FIXUP_DUALSENSE_BT)
+    {
+        /* The behavior of DualSense is very similar to DS4 described above with a few exceptions.
+         *
+         * The report number #41 is used for the extended bluetooth input report. The report comes
+         * with only one extra byte in front and the format is not exactly the same as the one used
+         * for the report #1 so we need to shuffle a few bytes around.
+         *
+         * Basic #1 report:
+         *   X  Y  Z  RZ  Buttons[3]  TriggerLeft  TriggerRight
+         *
+         * Extended #41 report:
+         *   Prefix X  Y  Z  Rz  TriggerLeft  TriggerRight  Counter  Buttons[3] ...
+         */
+        if (report->buffer[0] == 0x31 && report->length >= 11)
+        {
+            BYTE trigger[2];
+
+            memmove(report->buffer, report->buffer + 1, 10);
+            report->buffer[0] = 1; /* fake report #1 */
+            report->length = 10;
+
+            trigger[0] = report->buffer[5]; /* TriggerLeft*/
+            trigger[1] = report->buffer[6]; /* TriggerRight */
+
+            report->buffer[5] = report->buffer[8];  /* Buttons[0] */
+            report->buffer[6] = report->buffer[9];  /* Buttons[1] */
+            report->buffer[7] = report->buffer[10]; /* Buttons[2] */
+            report->buffer[8] = trigger[0]; /* TriggerLeft */
+            report->buffer[9] = trigger[1]; /* TirggerRight */
+        }
+    }
 
     RtlEnterCriticalSection(&ext->cs);
     list_add_tail(&ext->reports, &report->entry);
@@ -1059,6 +1127,27 @@ static NTSTATUS hid_get_device_string(DEVICE_OBJECT *device, DWORD index, WCHAR 
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static void hidraw_disable_report_fixups(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
+
+    /* FIXME: we may want to validate CRC at the end of the outbound HID reports,
+     * as controllers do not switch modes if it is incorrect.
+     */
+
+    if ((ext->report_fixups & HIDRAW_FIXUP_DUALSHOCK_BT))
+    {
+        TRACE("Disabling report fixup for Bluetooth DualShock4 device %p\n", device);
+        ext->report_fixups &= ~HIDRAW_FIXUP_DUALSHOCK_BT;
+    }
+
+    if ((ext->report_fixups & HIDRAW_FIXUP_DUALSENSE_BT))
+    {
+        TRACE("Disabling report fixup for Bluetooth DualSense device %p\n", device);
+        ext->report_fixups &= ~HIDRAW_FIXUP_DUALSENSE_BT;
+    }
+}
+
 static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -1195,12 +1284,14 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
                 }
             }
             unix_device_set_output_report(device, packet, &irp->IoStatus);
+            if (!irp->IoStatus.Status) hidraw_disable_report_fixups(device);
             break;
         }
         case IOCTL_HID_GET_FEATURE:
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET *)irp->UserBuffer;
             unix_device_get_feature_report(device, packet, &irp->IoStatus);
+            if (!irp->IoStatus.Status) hidraw_disable_report_fixups(device);
             if (!irp->IoStatus.Status && TRACE_ON(hid))
             {
                 TRACE("read feature report id %u length %lu:\n", packet->reportId, packet->reportBufferLen);
@@ -1231,6 +1322,7 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
                 }
             }
             unix_device_set_feature_report(device, packet, &irp->IoStatus);
+            if (!irp->IoStatus.Status) hidraw_disable_report_fixups(device);
             break;
         }
         default:
