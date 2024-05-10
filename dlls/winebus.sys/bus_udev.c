@@ -1312,6 +1312,7 @@ static void udev_add_device(struct udev_device *dev, int fd)
     get_device_subsystem_info(dev, "hid", &desc, &bus);
     get_device_subsystem_info(dev, "input", &desc, &bus);
     get_device_subsystem_info(dev, "usb", &desc, &bus);
+    if (bus == BUS_BLUETOOTH) desc.is_bluetooth = TRUE;
 
     subsystem = udev_device_get_subsystem(dev);
     if (!strcmp(subsystem, "hidraw"))

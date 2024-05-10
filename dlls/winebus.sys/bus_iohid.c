@@ -285,6 +285,10 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     desc.version = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVersionNumberKey)));
     desc.uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
+    if ((str = IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDTransportKey))))
+        desc.is_bluetooth = !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
+                            !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0);
+
     if (desc.usages.UsagePage != HID_USAGE_PAGE_GENERIC ||
         !(desc.usages.Usage == HID_USAGE_GENERIC_JOYSTICK || desc.usages.Usage == HID_USAGE_GENERIC_GAMEPAD))
     {
