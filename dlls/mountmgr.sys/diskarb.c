@@ -91,9 +91,12 @@ static void appeared_callback( DADiskRef disk, void *context )
     if ((volume_url = CFDictionaryGetValue( dict, CFSTR("DAVolumePath") )))
         CFURLGetFileSystemRepresentation( volume_url, true, (UInt8 *)mount_point, sizeof(mount_point) );
     else
-        mount_point[0] = 0;
+    {
+        TRACE( "ignoring volume %s, uuid %s: no macOS volume path\n", device, wine_dbgstr_guid(guid_ptr) );
+        goto done;
+    }
 
-    if (volume_url && CFURLCopyResourcePropertyForKey( volume_url, kCFURLVolumeIsBrowsableKey, &ref, NULL ))
+    if (CFURLCopyResourcePropertyForKey( volume_url, kCFURLVolumeIsBrowsableKey, &ref, NULL ))
     {
         Boolean is_browsable = CFBooleanGetValue( ref );
         CFRelease( ref );
