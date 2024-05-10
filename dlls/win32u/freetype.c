@@ -3469,7 +3469,7 @@ static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT 
     if (matrices || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
     if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
 
-    err = pFT_Load_Glyph(ft_face, glyph, load_flags);
+    err = pFT_Load_Glyph(ft_face, glyph, load_flags & FT_LOAD_NO_HINTING ? load_flags : load_flags | FT_LOAD_PEDANTIC);
     if (err && !(load_flags & FT_LOAD_NO_HINTING))
     {
         WARN("Failed to load glyph %#x, retrying without hinting. Error %#x.\n", glyph, err);
