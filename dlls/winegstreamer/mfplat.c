@@ -638,6 +638,61 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *sub
     FIXME("Unrecognized audio subtype %s, depth %u.\n", debugstr_guid(subtype), depth);
 }
 
+static void mf_media_type_to_wg_format_audio_mpeg(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
+{
+    MPEG1WAVEFORMAT wfx = {0};
+    UINT32 codec_data_size;
+    UINT32 rate, channels;
+
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+    {
+        FIXME("Sample rate is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+    {
+        FIXME("Channel count is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_USER_DATA, (UINT8 *)(&wfx.wfx + 1),
+            sizeof(wfx) - sizeof(WAVEFORMATEX), &codec_data_size)))
+    {
+        FIXME("Codec data is not set.\n");
+        return;
+    }
+    if (codec_data_size < sizeof(wfx) - sizeof(WAVEFORMATEX))
+    {
+        FIXME("Codec data is incomplete.\n");
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
+    format->u.audio.channels = channels;
+    format->u.audio.rate = rate;
+    format->u.audio.layer = wfx.fwHeadLayer;
+}
+
+static void mf_media_type_to_wg_format_audio_mpeg_layer3(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
+{
+    UINT32 rate, channels;
+
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+    {
+        FIXME("Sample rate is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+    {
+        FIXME("Channel count is not set.\n");
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG1;
+    format->u.audio.channels = channels;
+    format->u.audio.rate = rate;
+    format->u.audio.layer = 3;
+}
+
 static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     BYTE buffer[sizeof(HEAACWAVEFORMAT) + 64];
@@ -942,7 +997,11 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
 
     if (IsEqualGUID(&major_type, &MFMediaType_Audio))
     {
-        if (IsEqualGUID(&subtype, &MEDIASUBTYPE_MSAUDIO1) ||
+        if (IsEqualGUID(&subtype, &MFAudioFormat_MPEG))
+            mf_media_type_to_wg_format_audio_mpeg(type, &subtype, format);
+        else if (IsEqualGUID(&subtype, &MFAudioFormat_MP3))
+            mf_media_type_to_wg_format_audio_mpeg_layer3(type, &subtype, format);
+        else if (IsEqualGUID(&subtype, &MEDIASUBTYPE_MSAUDIO1) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV8) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV9) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudio_Lossless))
