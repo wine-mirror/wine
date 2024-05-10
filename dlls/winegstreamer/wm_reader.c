@@ -1487,7 +1487,7 @@ static HRESULT init_stream(struct wm_reader *reader)
         stream->reader = reader;
         stream->index = i;
         stream->selection = WMT_ON;
-        wg_parser_stream_get_preferred_format(stream->wg_stream, &stream->format);
+        wg_parser_stream_get_current_format(stream->wg_stream, &stream->format);
         if (stream->format.major_type == WG_MAJOR_TYPE_AUDIO)
         {
             /* R.U.S.E enumerates available audio types, picks the first one it
@@ -1585,7 +1585,7 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
 
         stream->wg_stream = wg_parser_get_stream(reader->wg_parser, i);
         stream->reader = reader;
-        wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+        wg_parser_stream_get_current_format(stream->wg_stream, &format);
         if (stream->selection == WMT_ON)
             wg_parser_stream_enable(stream->wg_stream, read_compressed ? &format : &stream->format);
     }
@@ -2000,7 +2000,7 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
         return E_INVALIDARG;
     }
 
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+    wg_parser_stream_get_current_format(stream->wg_stream, &format);
 
     switch (format.major_type)
     {
@@ -2061,7 +2061,7 @@ static HRESULT WINAPI reader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD o
         return E_INVALIDARG;
     }
 
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+    wg_parser_stream_get_current_format(stream->wg_stream, &format);
     switch (format.major_type)
     {
         case WG_MAJOR_TYPE_VIDEO:
@@ -2312,7 +2312,7 @@ static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output,
         return E_INVALIDARG;
     }
 
-    wg_parser_stream_get_preferred_format(stream->wg_stream, &pref_format);
+    wg_parser_stream_get_current_format(stream->wg_stream, &pref_format);
     if (pref_format.major_type != format.major_type)
     {
         /* R.U.S.E sets the type of the wrong stream, apparently by accident. */
@@ -2498,7 +2498,7 @@ static HRESULT WINAPI reader_SetStreamsSelected(IWMSyncReader2 *iface,
             if (stream->read_compressed)
             {
                 struct wg_format format;
-                wg_parser_stream_get_preferred_format(stream->wg_stream, &format);
+                wg_parser_stream_get_current_format(stream->wg_stream, &format);
                 wg_parser_stream_enable(stream->wg_stream, &format);
             }
             else

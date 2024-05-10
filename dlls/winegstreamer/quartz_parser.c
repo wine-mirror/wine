@@ -1626,7 +1626,7 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         WG_VIDEO_FORMAT_RGB15,
     };
 
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
 
     memset(mt, 0, sizeof(AM_MEDIA_TYPE));
 
@@ -2233,7 +2233,7 @@ static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const 
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
@@ -2248,7 +2248,7 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;
@@ -2311,7 +2311,7 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
@@ -2326,7 +2326,7 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;
@@ -2423,7 +2423,7 @@ static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
     for (i = 0; i < stream_count; ++i)
     {
         stream = wg_parser_get_stream(parser, i);
-        wg_parser_stream_get_preferred_format(stream, &fmt);
+        wg_parser_stream_get_current_format(stream, &fmt);
         if (fmt.major_type == WG_MAJOR_TYPE_VIDEO_MPEG1)
         {
             if (!create_pin(filter, wg_parser_get_stream(parser, i), L"Video"))
@@ -2450,7 +2450,7 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(&pad_mt, &format, false))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
@@ -2465,7 +2465,7 @@ static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    wg_parser_stream_get_current_format(pin->wg_stream, &format);
     if (!amt_from_wg_format(mt, &format, false))
         return E_OUTOFMEMORY;
     return S_OK;

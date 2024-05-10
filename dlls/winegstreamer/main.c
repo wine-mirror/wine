@@ -176,9 +176,9 @@ wg_parser_stream_t wg_parser_get_stream(wg_parser_t parser, uint32_t index)
     return params.stream;
 }
 
-void wg_parser_stream_get_preferred_format(wg_parser_stream_t stream, struct wg_format *format)
+void wg_parser_stream_get_current_format(wg_parser_stream_t stream, struct wg_format *format)
 {
-    struct wg_parser_stream_get_preferred_format_params params =
+    struct wg_parser_stream_get_current_format_params params =
     {
         .stream = stream,
         .format = format,
@@ -186,7 +186,7 @@ void wg_parser_stream_get_preferred_format(wg_parser_stream_t stream, struct wg_
 
     TRACE("stream %#I64x, format %p.\n", stream, format);
 
-    WINE_UNIX_CALL(unix_wg_parser_stream_get_preferred_format, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_get_current_format, &params);
 }
 
 void wg_parser_stream_get_codec_format(wg_parser_stream_t stream, struct wg_format *format)

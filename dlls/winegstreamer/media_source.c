@@ -1673,7 +1673,7 @@ static HRESULT media_source_create(struct object_context *context, IMFMediaSourc
         struct media_stream *stream;
         struct wg_format format;
 
-        wg_parser_stream_get_preferred_format(wg_stream, &format);
+        wg_parser_stream_get_current_format(wg_stream, &format);
         if (FAILED(hr = stream_descriptor_create(i, &format, &descriptor)))
             goto fail;
         if (FAILED(hr = media_stream_create(&object->IMFMediaSource_iface, descriptor, wg_stream, &stream)))
