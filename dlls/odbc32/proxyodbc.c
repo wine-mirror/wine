@@ -2929,7 +2929,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-        WINE_UNIX_CALL( process_detach, NULL );
     }
 
     return TRUE;

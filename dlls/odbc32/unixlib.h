@@ -34,7 +34,6 @@
 enum sql_funcs
 {
     process_attach,
-    process_detach,
     unix_SQLAllocConnect,
     unix_SQLAllocEnv,
     unix_SQLAllocHandle,
