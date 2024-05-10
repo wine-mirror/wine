@@ -54,6 +54,7 @@ struct wm_reader
     QWORD start_time;
     QWORD file_size;
 
+    WCHAR *filename;
     IStream *source_stream;
     HANDLE file;
     HANDLE read_thread;
@@ -1464,7 +1465,7 @@ static HRESULT init_stream(struct wm_reader *reader)
         goto out_destroy_parser;
     }
 
-    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size, NULL)))
+    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size, reader->filename)))
     {
         ERR("Failed to connect parser, hr %#lx.\n", hr);
         goto out_shutdown_thread;
@@ -1569,7 +1570,7 @@ static HRESULT reinit_stream(struct wm_reader *reader, bool read_compressed)
         goto out_destroy_parser;
     }
 
-    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size, NULL)))
+    if (FAILED(hr = wg_parser_connect(reader->wg_parser, reader->file_size, reader->filename)))
     {
         ERR("Failed to connect parser, hr %#lx.\n", hr);
         goto out_shutdown_thread;
@@ -1888,6 +1889,8 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
     if (reader->file)
         CloseHandle(reader->file);
     reader->file = NULL;
+    free(reader->filename);
+    reader->filename = NULL;
 
     LeaveCriticalSection(&reader->cs);
     return S_OK;
@@ -2212,11 +2215,17 @@ static HRESULT WINAPI reader_Open(IWMSyncReader2 *iface, const WCHAR *filename)
         return E_UNEXPECTED;
     }
 
+    reader->filename = wcsdup(filename);
     reader->file = file;
     reader->file_size = size.QuadPart;
 
     if (FAILED(hr = init_stream(reader)))
+    {
+        CloseHandle(reader->file);
         reader->file = NULL;
+        free(reader->filename);
+        reader->filename = NULL;
+    }
 
     LeaveCriticalSection(&reader->cs);
     return hr;
