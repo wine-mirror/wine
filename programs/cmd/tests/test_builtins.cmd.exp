@@ -535,7 +535,37 @@ ERRORLEVEL 666
 ERRORLEVEL 666
 ERRORLEVEL 666
 ERRORLEVEL 666
----
+--- success/failure for SETLOCAL/ENDLOCAL commands
+@todo_wine@FAILURE 1
+@todo_wine@SUCCESS 0
+SUCCESS 666
+@todo_wine@SUCCESS@space@
+@todo_wine@SUCCESS 0
+--- success/failure for DATE command
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+--- success/failure for TIME command
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+--- success/failure for BREAK command
+@todo_wine@SUCCESS 666
+@todo_wine@SUCCESS 666
+--- success/failure for VER command
+@todo_wine@SUCCESS 0
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+--- success/failure for VERIFY command
+@todo_wine@SUCCESS 0
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+--- success/failure for VOL command
+@todo_wine@SUCCESS 0
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+--- success/failure for LABEL command
+@todo_wine@FAILURE 1
+@todo_wine@---
 ------------ Testing 'set' ------------
 1
 0

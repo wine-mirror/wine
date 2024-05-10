@@ -591,6 +591,40 @@ call :setError 666 & rmdir abc & echo ERRORLEVEL !errorlevel!
 call :setError 666 & rmdir @:\cba\abc & echo ERRORLEVEL !errorlevel!
 cd .. && rd /q /s foo
 
+echo --- success/failure for SETLOCAL/ENDLOCAL commands
+call :setError 666 & (setlocal foobar &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (setlocal &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (endlocal foobar &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (setlocal DisableExtensions &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (setlocal EnableExtensions &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for DATE command
+call :setError 666 & (date /t >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (date AAAA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem need evelated priviledges to set the date
+echo --- success/failure for TIME command
+call :setError 666 & (time /t >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (time AAAA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem need evelated priviledges to set the time
+echo --- success/failure for BREAK command
+call :setError 666 & (break &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (break 345 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for VER command
+call :setError 666 & (ver >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (ver foo >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (ver /f >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for VERIFY command
+call :setError 666 & (verify >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (verify on >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (verify foobar >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for VOL command
+call :setError 666 & (vol >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (vol c: >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (vol foobar >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (vol /Z >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for LABEL command
+call :setError 666 & (<NUL label >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem need evelated priviledges to test
+
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
