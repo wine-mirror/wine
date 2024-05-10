@@ -36,6 +36,7 @@
 #define WIN32_NO_STATUS
 #include "winternl.h"
 #include "mferror.h"
+#include "mfapi.h"
 
 #include "unix_private.h"
 
@@ -616,12 +617,10 @@ out:
     return status;
 }
 
-NTSTATUS wg_transform_get_output_format(void *args)
+NTSTATUS wg_transform_get_output_type(void *args)
 {
-    struct wg_transform_get_output_format_params *params = args;
+    struct wg_transform_get_output_type_params *params = args;
     struct wg_transform *transform = get_transform(params->transform);
-    struct wg_format *format = params->format;
-    GstVideoInfo video_info;
     GstCaps *output_caps;
 
     if (transform->output_sample)
@@ -631,31 +630,7 @@ NTSTATUS wg_transform_get_output_format(void *args)
 
     GST_INFO("transform %p output caps %"GST_PTR_FORMAT, transform, output_caps);
 
-    wg_format_from_caps(format, output_caps);
-
-    if (stream_type_from_caps(output_caps) == GST_STREAM_TYPE_VIDEO
-            && gst_video_info_from_caps(&video_info, output_caps))
-    {
-        gsize plane_align = transform->attrs.output_plane_align;
-        GstVideoAlignment align = {0};
-
-        /* set the desired output buffer alignment on the dest video info */
-        align_video_info_planes(plane_align, &video_info, &align);
-
-        GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
-                align.padding_top, align.padding_right, align.padding_bottom);
-
-        format->u.video.padding.left = align.padding_left;
-        format->u.video.width += format->u.video.padding.left;
-        format->u.video.padding.right = align.padding_right;
-        format->u.video.width += format->u.video.padding.right;
-        format->u.video.padding.top = align.padding_top;
-        format->u.video.height += format->u.video.padding.top;
-        format->u.video.padding.bottom = align.padding_bottom;
-        format->u.video.height += format->u.video.padding.bottom;
-    }
-
-    return STATUS_SUCCESS;
+    return caps_to_media_type(output_caps, &params->media_type, transform->attrs.output_plane_align);
 }
 
 NTSTATUS wg_transform_set_output_format(void *args)

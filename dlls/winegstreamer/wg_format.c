@@ -96,7 +96,7 @@ static uint32_t wg_channel_position_from_gst(GstAudioChannelPosition position)
     return 0;
 }
 
-static uint32_t wg_channel_mask_from_gst(const GstAudioInfo *info)
+uint32_t wg_channel_mask_from_gst(const GstAudioInfo *info)
 {
     uint32_t mask = 0, position;
     unsigned int i;

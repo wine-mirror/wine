@@ -70,6 +70,41 @@ bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
     return TRUE;
 }
 
+static HRESULT media_type_from_video_format(const MFVIDEOFORMAT *format, IMFMediaType **media_type)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateVideoMediaType(format, (IMFVideoMediaType **)media_type)) || format->dwSize <= sizeof(*format))
+        return hr;
+
+    /* fixup MPEG video formats here, so we can consistently use MFVIDEOFORMAT internally */
+    if (IsEqualGUID(&format->guidFormat, &MEDIASUBTYPE_MPEG1Payload)
+            || IsEqualGUID(&format->guidFormat, &MEDIASUBTYPE_MPEG1Packet)
+            || IsEqualGUID(&format->guidFormat, &MEDIASUBTYPE_MPEG2_VIDEO))
+    {
+        struct mpeg_video_format *mpeg = (struct mpeg_video_format *)format;
+        IMFMediaType_SetBlob(*media_type, &MF_MT_MPEG_SEQUENCE_HEADER, mpeg->sequence_header, mpeg->sequence_header_count);
+        IMFMediaType_SetUINT32(*media_type, &MF_MT_MPEG_START_TIME_CODE, mpeg->start_time_code);
+        IMFMediaType_SetUINT32(*media_type, &MF_MT_MPEG2_PROFILE, mpeg->profile);
+        IMFMediaType_SetUINT32(*media_type, &MF_MT_MPEG2_LEVEL, mpeg->level);
+        IMFMediaType_SetUINT32(*media_type, &MF_MT_MPEG2_FLAGS, mpeg->flags);
+        IMFMediaType_DeleteItem(*media_type, &MF_MT_USER_DATA);
+    }
+
+    return hr;
+}
+
+static HRESULT wg_media_type_to_mf(const struct wg_media_type *wg_media_type, IMFMediaType **media_type)
+{
+    if (IsEqualGUID(&wg_media_type->major, &MFMediaType_Video))
+        return media_type_from_video_format(wg_media_type->u.video, media_type);
+    if (IsEqualGUID(&wg_media_type->major, &MFMediaType_Audio))
+        return MFCreateAudioMediaType(wg_media_type->u.audio, (IMFAudioMediaType **)media_type);
+
+    FIXME("Unsupported major type %s\n", debugstr_guid(&wg_media_type->major));
+    return E_NOTIMPL;
+}
+
 wg_parser_t wg_parser_create(bool output_compressed)
 {
     struct wg_parser_create_params params =
@@ -448,17 +483,35 @@ bool wg_transform_get_status(wg_transform_t transform, bool *accepts_input)
     return true;
 }
 
-bool wg_transform_get_output_format(wg_transform_t transform, struct wg_format *format)
+HRESULT wg_transform_get_output_type(wg_transform_t transform, IMFMediaType **media_type)
 {
-    struct wg_transform_get_output_format_params params =
+    struct wg_transform_get_output_type_params params =
     {
         .transform = transform,
-        .format = format,
     };
+    NTSTATUS status;
+    HRESULT hr;
 
-    TRACE("transform %#I64x, format %p.\n", transform, format);
+    TRACE("transform %#I64x, media_type %p.\n", transform, media_type);
 
-    return !WINE_UNIX_CALL(unix_wg_transform_get_output_format, &params);
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_get_output_type, &params))
+            && status == STATUS_BUFFER_TOO_SMALL)
+    {
+        if (!(params.media_type.u.format = CoTaskMemAlloc(params.media_type.format_size)))
+            return ERROR_OUTOFMEMORY;
+        status = WINE_UNIX_CALL(unix_wg_transform_get_output_type, &params);
+    }
+
+    if (status)
+    {
+        CoTaskMemFree(params.media_type.u.format);
+        WARN("Failed to get output media type, status %#lx\n", status);
+        return HRESULT_FROM_NT(status);
+    }
+
+    hr = wg_media_type_to_mf(&params.media_type, media_type);
+    CoTaskMemFree(params.media_type.u.format);
+    return hr;
 }
 
 bool wg_transform_set_output_format(wg_transform_t transform, struct wg_format *format)

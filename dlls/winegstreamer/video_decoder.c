@@ -855,15 +855,15 @@ static HRESULT output_sample(struct video_decoder *decoder, IMFSample **out, IMF
 static HRESULT handle_stream_type_change(struct video_decoder *decoder)
 {
     UINT64 frame_size, frame_rate;
-    struct wg_format format;
     HRESULT hr;
 
     if (decoder->stream_type)
         IMFMediaType_Release(decoder->stream_type);
-    if (!(wg_transform_get_output_format(decoder->wg_transform, &format)))
-        return E_FAIL;
-    if (!(decoder->stream_type = mf_media_type_from_wg_format(&format)))
-        return E_OUTOFMEMORY;
+    if (FAILED(hr = wg_transform_get_output_type(decoder->wg_transform, &decoder->stream_type)))
+    {
+        WARN("Failed to get transform output type, hr %#lx\n", hr);
+        return hr;
+    }
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_RATE, &frame_rate))
             && FAILED(hr = IMFMediaType_SetUINT64(decoder->stream_type, &MF_MT_FRAME_RATE, frame_rate)))
