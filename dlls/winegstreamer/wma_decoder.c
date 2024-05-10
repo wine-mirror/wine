@@ -1032,8 +1032,9 @@ HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
     };
     static const WMAUDIO2WAVEFORMAT input_format =
     {
-        .wfx = {.wFormatTag = WAVE_FORMAT_WMAUDIO2, .nSamplesPerSec = 44100, .nChannels = 1,
-                .cbSize = sizeof(input_format) - sizeof(WAVEFORMATEX)},
+        .wfx = {.wFormatTag = WAVE_FORMAT_WMAUDIO2, .wBitsPerSample = 16, .nSamplesPerSec = 44100, .nChannels = 1,
+                .nAvgBytesPerSec = 3000, .nBlockAlign = 139, .cbSize = sizeof(input_format) - sizeof(WAVEFORMATEX)},
+        .wEncodeOptions = 1,
     };
     struct wma_decoder *decoder;
     HRESULT hr;
