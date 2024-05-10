@@ -1478,7 +1478,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
 
                                 case 2: /* oPts */
                                     reg_maps->output_registers |= 1u << 11;
-                                    shader_signature_from_usage(&output_signature_elements[11],
+                                    shader_signature_from_usage(&output_signature_elements[12],
                                             WINED3D_DECL_USAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
                                     break;
                             }
@@ -1822,8 +1822,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
     }
     else if (reg_maps->output_registers)
     {
-        unsigned int count = wined3d_popcount(reg_maps->output_registers);
         struct wined3d_shader_signature_element *e;
+        unsigned int count = 0;
+
+        for (i = 0; i < ARRAY_SIZE(output_signature_elements); ++i)
+        {
+            if (output_signature_elements[i].semantic_name)
+                ++count;
+        }
 
         if (!(output_signature->elements = calloc(count, sizeof(*output_signature->elements))))
             return E_OUTOFMEMORY;
@@ -1832,9 +1838,8 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
         e = output_signature->elements;
         for (i = 0; i < ARRAY_SIZE(output_signature_elements); ++i)
         {
-            if (!(reg_maps->output_registers & (1u << i)))
-                continue;
-            *e++ = output_signature_elements[i];
+            if (output_signature_elements[i].semantic_name)
+                *e++ = output_signature_elements[i];
         }
     }
 
