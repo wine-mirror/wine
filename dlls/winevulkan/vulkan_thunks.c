@@ -2779,6 +2779,13 @@ typedef struct VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32
     VkBool32 attachmentFeedbackLoopDynamicState;
 } VkPhysicalDeviceAttachmentFeedbackLoopDynamicStateFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 legacyVertexAttributes;
+} VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32;
+
 typedef struct VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32
 {
     VkStructureType sType;
@@ -2908,6 +2915,13 @@ typedef struct VkPhysicalDeviceRayTracingMotionBlurFeaturesNV32
     VkBool32 rayTracingMotionBlur;
     VkBool32 rayTracingMotionBlurPipelineTraceRaysIndirect;
 } VkPhysicalDeviceRayTracingMotionBlurFeaturesNV32;
+
+typedef struct VkPhysicalDeviceRayTracingValidationFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 rayTracingValidation;
+} VkPhysicalDeviceRayTracingValidationFeaturesNV32;
 
 typedef struct VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT32
 {
@@ -3328,6 +3342,13 @@ typedef struct VkPhysicalDeviceRawAccessChainsFeaturesNV32
     PTR32 pNext;
     VkBool32 shaderRawAccessChains;
 } VkPhysicalDeviceRawAccessChainsFeaturesNV32;
+
+typedef struct VkPhysicalDeviceImageAlignmentControlFeaturesMESA32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 imageAlignmentControl;
+} VkPhysicalDeviceImageAlignmentControlFeaturesMESA32;
 
 typedef struct VkDeviceCreateInfo32
 {
@@ -3836,6 +3857,13 @@ typedef struct VkOpticalFlowImageFormatInfoNV32
     PTR32 pNext;
     VkOpticalFlowUsageFlagsNV usage;
 } VkOpticalFlowImageFormatInfoNV32;
+
+typedef struct VkImageAlignmentControlCreateInfoMESA32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maximumRequestedAlignment;
+} VkImageAlignmentControlCreateInfoMESA32;
 
 typedef struct VkImageCreateInfo32
 {
@@ -6145,6 +6173,13 @@ typedef struct VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV32
     VkSampleCountFlagBits maxFragmentShadingRateInvocationCount;
 } VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV32;
 
+typedef struct VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 nativeUnalignedPerformance;
+} VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT32;
+
 typedef struct VkPhysicalDeviceHostImageCopyPropertiesEXT32
 {
     VkStructureType sType;
@@ -6423,6 +6458,13 @@ typedef struct VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32
     PTR32 pNext;
     VkDeviceSize DECLSPEC_ALIGN(8) minPlacedMemoryMapAlignment;
 } VkPhysicalDeviceMapMemoryPlacedPropertiesEXT32;
+
+typedef struct VkPhysicalDeviceImageAlignmentControlPropertiesMESA32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t supportedImageAlignmentMask;
+} VkPhysicalDeviceImageAlignmentControlPropertiesMESA32;
 
 typedef struct VkPhysicalDeviceProperties232
 {
@@ -12836,6 +12878,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->legacyVertexAttributes = in_ext->legacyVertexAttributes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -13026,6 +13079,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->pNext = NULL;
             out_ext->rayTracingMotionBlur = in_ext->rayTracingMotionBlur;
             out_ext->rayTracingMotionBlurPipelineTraceRaysIndirect = in_ext->rayTracingMotionBlurPipelineTraceRaysIndirect;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingValidationFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingValidationFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingValidationFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingValidation = in_ext->rayTracingValidation;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -13683,6 +13747,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlFeaturesMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageAlignmentControlFeaturesMESA *in_ext = (const VkPhysicalDeviceImageAlignmentControlFeaturesMESA *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA;
+            out_ext->pNext = NULL;
+            out_ext->imageAlignmentControl = in_ext->imageAlignmentControl;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -15130,6 +15205,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32 *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->legacyVertexAttributes = in_ext->legacyVertexAttributes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -15320,6 +15406,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->pNext = NULL;
             out_ext->rayTracingMotionBlur = in_ext->rayTracingMotionBlur;
             out_ext->rayTracingMotionBlurPipelineTraceRaysIndirect = in_ext->rayTracingMotionBlurPipelineTraceRaysIndirect;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingValidationFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingValidationFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingValidationFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingValidation = in_ext->rayTracingValidation;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -15977,6 +16074,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlFeaturesMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageAlignmentControlFeaturesMESA32 *in_ext = (const VkPhysicalDeviceImageAlignmentControlFeaturesMESA32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA;
+            out_ext->pNext = NULL;
+            out_ext->imageAlignmentControl = in_ext->imageAlignmentControl;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -17488,6 +17596,17 @@ static inline void convert_VkImageCreateInfo_win64_to_host(struct conversion_con
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_IMAGE_ALIGNMENT_CONTROL_CREATE_INFO_MESA:
+        {
+            VkImageAlignmentControlCreateInfoMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageAlignmentControlCreateInfoMESA *in_ext = (const VkImageAlignmentControlCreateInfoMESA *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_ALIGNMENT_CONTROL_CREATE_INFO_MESA;
+            out_ext->pNext = NULL;
+            out_ext->maximumRequestedAlignment = in_ext->maximumRequestedAlignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -17610,6 +17729,17 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
             out_ext->sType = VK_STRUCTURE_TYPE_OPTICAL_FLOW_IMAGE_FORMAT_INFO_NV;
             out_ext->pNext = NULL;
             out_ext->usage = in_ext->usage;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_IMAGE_ALIGNMENT_CONTROL_CREATE_INFO_MESA:
+        {
+            VkImageAlignmentControlCreateInfoMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkImageAlignmentControlCreateInfoMESA32 *in_ext = (const VkImageAlignmentControlCreateInfoMESA32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_ALIGNMENT_CONTROL_CREATE_INFO_MESA;
+            out_ext->pNext = NULL;
+            out_ext->maximumRequestedAlignment = in_ext->maximumRequestedAlignment;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -22561,6 +22691,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32 *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->legacyVertexAttributes = in_ext->legacyVertexAttributes;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -22751,6 +22892,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->pNext = NULL;
             out_ext->rayTracingMotionBlur = in_ext->rayTracingMotionBlur;
             out_ext->rayTracingMotionBlurPipelineTraceRaysIndirect = in_ext->rayTracingMotionBlurPipelineTraceRaysIndirect;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingValidationFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingValidationFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingValidationFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->rayTracingValidation = in_ext->rayTracingValidation;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -23397,6 +23549,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlFeaturesMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageAlignmentControlFeaturesMESA32 *in_ext = (const VkPhysicalDeviceImageAlignmentControlFeaturesMESA32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA;
+            out_ext->pNext = NULL;
+            out_ext->imageAlignmentControl = in_ext->imageAlignmentControl;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -24559,6 +24722,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT);
+            const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_FEATURES_EXT;
+            out_ext->legacyVertexAttributes = in_ext->legacyVertexAttributes;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
             VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT);
@@ -24716,6 +24888,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV;
             out_ext->rayTracingMotionBlur = in_ext->rayTracingMotionBlur;
             out_ext->rayTracingMotionBlurPipelineTraceRaysIndirect = in_ext->rayTracingMotionBlurPipelineTraceRaysIndirect;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingValidationFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV);
+            const VkPhysicalDeviceRayTracingValidationFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingValidationFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
+            out_ext->rayTracingValidation = in_ext->rayTracingValidation;
             out_header = (void *)out_ext;
             break;
         }
@@ -25248,6 +25429,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceRawAccessChainsFeaturesNV *in_ext = (const VkPhysicalDeviceRawAccessChainsFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAW_ACCESS_CHAINS_FEATURES_NV;
             out_ext->shaderRawAccessChains = in_ext->shaderRawAccessChains;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlFeaturesMESA32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA);
+            const VkPhysicalDeviceImageAlignmentControlFeaturesMESA *in_ext = (const VkPhysicalDeviceImageAlignmentControlFeaturesMESA *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_FEATURES_MESA;
+            out_ext->imageAlignmentControl = in_ext->imageAlignmentControl;
             out_header = (void *)out_ext;
             break;
         }
@@ -26458,6 +26648,17 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT32 *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->nativeUnalignedPerformance = in_ext->nativeUnalignedPerformance;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES_EXT:
         {
             VkPhysicalDeviceHostImageCopyPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -26702,6 +26903,17 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
             out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlPropertiesMESA *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceImageAlignmentControlPropertiesMESA32 *in_ext = (const VkPhysicalDeviceImageAlignmentControlPropertiesMESA32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA;
+            out_ext->pNext = NULL;
+            out_ext->supportedImageAlignmentMask = in_ext->supportedImageAlignmentMask;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -27560,6 +27772,15 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT:
+        {
+            VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT);
+            const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *in_ext = (const VkPhysicalDeviceLegacyVertexAttributesPropertiesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_VERTEX_ATTRIBUTES_PROPERTIES_EXT;
+            out_ext->nativeUnalignedPerformance = in_ext->nativeUnalignedPerformance;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES_EXT:
         {
             VkPhysicalDeviceHostImageCopyPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_IMAGE_COPY_PROPERTIES_EXT);
@@ -27887,6 +28108,15 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *in_ext = (const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT;
             out_ext->minPlacedMemoryMapAlignment = in_ext->minPlacedMemoryMapAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA:
+        {
+            VkPhysicalDeviceImageAlignmentControlPropertiesMESA32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA);
+            const VkPhysicalDeviceImageAlignmentControlPropertiesMESA *in_ext = (const VkPhysicalDeviceImageAlignmentControlPropertiesMESA *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ALIGNMENT_CONTROL_PROPERTIES_MESA;
+            out_ext->supportedImageAlignmentMask = in_ext->supportedImageAlignmentMask;
             out_header = (void *)out_ext;
             break;
         }
@@ -46444,6 +46674,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_index_type_uint8",
     "VK_EXT_inline_uniform_block",
     "VK_EXT_legacy_dithering",
+    "VK_EXT_legacy_vertex_attributes",
     "VK_EXT_line_rasterization",
     "VK_EXT_load_store_op_none",
     "VK_EXT_memory_budget",
@@ -46591,6 +46822,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_vulkan_memory_model",
     "VK_KHR_workgroup_memory_explicit_layout",
     "VK_KHR_zero_initialize_workgroup_memory",
+    "VK_MESA_image_alignment_control",
     "VK_MSFT_layered_driver",
     "VK_NVX_binary_import",
     "VK_NVX_image_view_handle",
@@ -46629,6 +46861,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_ray_tracing",
     "VK_NV_ray_tracing_invocation_reorder",
     "VK_NV_ray_tracing_motion_blur",
+    "VK_NV_ray_tracing_validation",
     "VK_NV_representative_fragment_test",
     "VK_NV_sample_mask_override_coverage",
     "VK_NV_scissor_exclusive",
