@@ -124,8 +124,9 @@ void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         CMD_LIST **cmdList, BOOL retrycall);
 
-void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free) __WINE_MALLOC;
+void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
+static inline void *xalloc(size_t sz) __WINE_MALLOC;
 static inline void *xalloc(size_t sz)
 {
     return xrealloc(NULL, sz);
