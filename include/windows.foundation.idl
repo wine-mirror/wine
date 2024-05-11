@@ -64,6 +64,7 @@ namespace Windows.Foundation {
     interface IClosable;
     interface IDeferral;
     interface IDeferralFactory;
+    interface IGetActivationFactory;
     interface IMemoryBuffer;
     interface IMemoryBufferFactory;
     interface IMemoryBufferReference;
@@ -109,6 +110,7 @@ namespace Windows.Foundation {
         interface Windows.Foundation.IReference<BYTE>;
         interface Windows.Foundation.IReference<INT32>;
         interface Windows.Foundation.IReference<DOUBLE>;
+        interface Windows.Foundation.IReference<FLOAT>;
         interface Windows.Foundation.IReference<UINT32>;
         interface Windows.Foundation.IReference<UINT64>;
         interface Windows.Foundation.IReference<Windows.Foundation.DateTime>;
@@ -246,6 +248,15 @@ namespace Windows.Foundation {
     interface IDeferralFactory : IInspectable
     {
         HRESULT Create([in] Windows.Foundation.DeferralCompletedHandler *handler, [out, retval] Windows.Foundation.Deferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(4edb8ee2-96dd-49a7-94f7-4607ddab8e3c)
+    ]
+    interface IGetActivationFactory : IInspectable
+    {
+        HRESULT GetActivationFactory([in] HSTRING activatable_class_id, [out, retval] IInspectable **factory);
     }
 
     [
