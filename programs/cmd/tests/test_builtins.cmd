@@ -625,6 +625,50 @@ echo --- success/failure for LABEL command
 call :setError 666 & (<NUL label >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem need evelated priviledges to test
 
+echo --- success/failure for PATH command
+call :setError 666 & (path >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+set SAVED_PATH=%PATH% > NUL
+call :setError 666 & (path @:\I\dont\Exist &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+path
+call :setError 666 & (path ; &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+path
+call :setError 666 & (path !SAVED_PATH! &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+set "SAVED_PATH="
+echo --- success/failure for SET command
+call :setError 666 & (set >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set "SAVED_PATH=%PATH%" >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set S >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set "SAVED_PATH=" >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set "SAVED_PATH=" >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set /Q >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (set ThisVariableLikelyDoesntExist >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem missing /A and /p tests
+echo --- success/failure for ASSOC command
+call :setError 666 & (assoc >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (assoc cmd >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (assoc .idontexist >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem testing changing the assoc requires elevated privilege
+echo --- success/failure for FTYPE command
+call :setError 666 & (ftype >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (ftype cmdfile >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (ftype fileidontexist >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem testing changing the ftype requires elevated privilege
+echo --- success/failure for SHIFT command
+call :setError 666 & shift /abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :testSuccessFailureShift 1
+goto :afterSuccessFailureShift
+:testSuccessFailureShift
+call :setError 666 & shift &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 666 & shift &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+goto :eof
+:afterSuccessFailureShift
+echo --- success/failure for HELP command
+call :setError 666 & help >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 666 & help help >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 666 & help ACommandThatLikelyDoesntExist >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+echo --- success/failure for PROMPT command
+call :setError 666 & prompt >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+rem doesn't seem to set errors either on invalid $ escapes, nor qualifiers
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
