@@ -22,6 +22,12 @@ test_builtins.cmd TESTCMD "test_builtins.cmd"
 /* @makedep: test_builtins.cmd.exp */
 test_builtins.cmd.exp TESTOUT "test_builtins.cmd.exp"
 
+/* @makedep: test_builtins.bat */
+test_builtins.bat TESTCMD "test_builtins.bat"
+
+/* @makedep: test_builtins.bat.exp */
+test_builtins.bat.exp TESTOUT "test_builtins.bat.exp"
+
 /* @makedep: test_cmdline.cmd */
 test_cmdline.cmd TESTCMD "test_cmdline.cmd"
 
