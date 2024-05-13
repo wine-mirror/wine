@@ -832,6 +832,7 @@ SOURCES = \
 	windows.devices.enumeration.idl \
 	windows.devices.geolocation.idl \
 	windows.devices.haptics.idl \
+	windows.devices.input.idl \
 	windows.devices.power.idl \
 	windows.devices.radios.idl \
 	windows.devices.usb.idl \
