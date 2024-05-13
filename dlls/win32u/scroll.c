@@ -512,6 +512,21 @@ static POINT clip_scroll_pos( RECT *rect, POINT pt )
     return pt;
 }
 
+void update_scroll_timer(HWND hwnd, HWND owner_hwnd, HWND ctl_hwnd, enum SCROLL_HITTEST hittest, UINT msg, UINT msg_send, BOOL vertical )
+{
+    if (hittest == g_tracking_info.hit_test)
+    {
+        if (msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
+        {
+            send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL, msg_send, (LPARAM)ctl_hwnd );
+        }
+
+        NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
+                msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
+    }
+    else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+}
+
 /***********************************************************************
  *           handle_scroll_event
  *
@@ -681,33 +696,12 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
 
     case SCROLL_TOP_ARROW:
         draw_scroll_bar( hwnd, hdc, bar, hittest, &g_tracking_info, TRUE, FALSE );
-        if (hittest == g_tracking_info.hit_test)
-        {
-            if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
-            {
-                send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL,
-                              SB_LINEUP, (LPARAM)ctl_hwnd );
-            }
-
-            NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
-                                  msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
-        }
-        else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+        update_scroll_timer( hwnd, owner_hwnd, ctl_hwnd, hittest, msg, SB_LINEUP, vertical );
         break;
 
     case SCROLL_TOP_RECT:
         draw_scroll_bar( hwnd, hdc, bar, hittest, &g_tracking_info, FALSE, TRUE );
-        if (hittest == g_tracking_info.hit_test)
-        {
-            if (msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
-            {
-                send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL,
-                              SB_PAGEUP, (LPARAM)ctl_hwnd );
-            }
-            NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
-                                  msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
-        }
-        else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+        update_scroll_timer( hwnd, owner_hwnd, ctl_hwnd, hittest, msg, SB_PAGEUP, vertical );
         break;
 
     case SCROLL_THUMB:
@@ -755,33 +749,12 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
 
     case SCROLL_BOTTOM_RECT:
         draw_scroll_bar( hwnd, hdc, bar, hittest, &g_tracking_info, FALSE, TRUE );
-        if (hittest == g_tracking_info.hit_test)
-        {
-            if (msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
-            {
-                send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL,
-                              SB_PAGEDOWN, (LPARAM)ctl_hwnd );
-            }
-            NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
-                                  msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
-        }
-        else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+        update_scroll_timer( hwnd, owner_hwnd, ctl_hwnd, hittest, msg, SB_PAGEDOWN, vertical );
         break;
 
     case SCROLL_BOTTOM_ARROW:
         draw_scroll_bar( hwnd, hdc, bar, hittest, &g_tracking_info, TRUE, FALSE );
-        if (hittest == g_tracking_info.hit_test)
-        {
-            if (msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
-            {
-                send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL,
-                              SB_LINEDOWN, (LPARAM)ctl_hwnd );
-            }
-
-            NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
-                                  msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
-        }
-        else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+        update_scroll_timer( hwnd, owner_hwnd, ctl_hwnd, hittest, msg, SB_LINEDOWN, vertical );
         break;
     }
 
