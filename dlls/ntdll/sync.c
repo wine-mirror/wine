@@ -187,12 +187,19 @@ static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
     }
 }
 
+static ULONG crit_sect_default_flags(void)
+{
+    if (NtCurrentTeb()->Peb->OSMajorVersion > 6 ||
+        (NtCurrentTeb()->Peb->OSMajorVersion == 6 && NtCurrentTeb()->Peb->OSMinorVersion >= 2)) return 0;
+    return RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO;
+}
+
 /******************************************************************************
  *      RtlInitializeCriticalSection   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    return RtlInitializeCriticalSectionEx( crit, 0, 0 );
+    return RtlInitializeCriticalSectionEx( crit, 0, crit_sect_default_flags() );
 }
 
 
@@ -201,7 +208,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, ULONG spincount )
 {
-    return RtlInitializeCriticalSectionEx( crit, spincount, 0 );
+    return RtlInitializeCriticalSectionEx( crit, spincount, crit_sect_default_flags() );
 }
 
 
