@@ -158,6 +158,37 @@ struct smbios_chassis
     BYTE contained_element_rec_length;
 };
 
+struct smbios_processor
+{
+    struct smbios_header hdr;
+    BYTE socket;
+    BYTE type;
+    BYTE family;
+    BYTE vendor;
+    ULONGLONG id;
+    BYTE version;
+    BYTE voltage;
+    WORD clock;
+    WORD max_speed;
+    WORD cur_speed;
+    BYTE status;
+    BYTE upgrade;
+    WORD l1cache;
+    WORD l2cache;
+    WORD l3cache;
+    BYTE serial;
+    BYTE asset_tag;
+    BYTE part_number;
+    BYTE core_count;
+    BYTE core_enabled;
+    BYTE thread_count;
+    WORD characteristics;
+    WORD family2;
+    WORD core_count2;
+    WORD core_enabled2;
+    WORD thread_count2;
+};
+
 struct smbios_boot_info
 {
     struct smbios_header hdr;
@@ -173,6 +204,7 @@ enum smbios_type
     SMBIOS_TYPE_SYSTEM = 1,
     SMBIOS_TYPE_BASEBOARD = 2,
     SMBIOS_TYPE_CHASSIS = 3,
+    SMBIOS_TYPE_PROCESSOR = 4,
     SMBIOS_TYPE_BOOTINFO = 32,
     SMBIOS_TYPE_END = 127
 };
@@ -1561,6 +1593,40 @@ static WORD append_smbios_board( struct smbios_buffer *buf, WORD chassis_handle,
     return append_smbios( buf, &board.hdr, strings, string_count );
 }
 
+static WORD append_smbios_processor( struct smbios_buffer *buf, WORD core_count, WORD thread_count,
+                                     WORD family, const char *socket, const char *vendor,
+                                     const char *version, const char *serial, const char *asset_tag )
+{
+    const char *strings[5];
+    unsigned int string_count = 0;
+    struct smbios_processor proc = { .hdr.type = SMBIOS_TYPE_PROCESSOR, .hdr.length = sizeof(proc) };
+
+    proc.socket         = ADD_STR( socket );
+    proc.type           = 3;  /* central processor */
+    proc.family         = family ? min( family, 0xfe ) : 2; /* unknown */
+    proc.vendor         = ADD_STR( vendor );
+    proc.id             = cpu_id;
+    proc.version        = ADD_STR( version );
+    proc.status         = 0x41; /* cpu enabled */
+    proc.upgrade        = 2;  /* unknown */
+    proc.l1cache        = 0xffff;  /* unknown */
+    proc.l2cache        = 0xffff;  /* unknown */
+    proc.l3cache        = 0xffff;  /* unknown */
+    proc.serial         = ADD_STR( serial );
+    proc.asset_tag      = ADD_STR( asset_tag );
+    proc.core_count     = min( core_count, 0xff );
+    proc.core_enabled   = min( core_count, 0xff );
+    proc.thread_count   = min( thread_count, 0xff );
+    proc.family2        = family ? family : 2;
+    proc.core_count2    = core_count;
+    proc.core_enabled2  = core_count;
+    proc.thread_count2  = thread_count;
+    if (sizeof(void *) > sizeof(int)) proc.characteristics |= 1 << 2;  /* 64-bit */
+    if (core_count > 1) proc.characteristics |= 1 << 3;  /* multi-core */
+    if (thread_count > core_count) proc.characteristics |= 1 << 4;  /* multi-thread */
+    return append_smbios( buf, &proc.hdr, strings, string_count );
+}
+
 static WORD append_smbios_boot_info( struct smbios_buffer *buf )
 {
     struct smbios_boot_info boot = { .hdr.type = SMBIOS_TYPE_BOOTINFO, .hdr.length = sizeof(boot) };
@@ -1573,6 +1639,41 @@ static void append_smbios_end( struct smbios_buffer *buf )
     struct smbios_header end = { .type = SMBIOS_TYPE_END, .length = sizeof(end) };
 
     append_smbios( buf, &end, NULL, 0 );
+}
+
+static void create_smbios_processors( struct smbios_buffer *buf )
+{
+    char socket[20], name[49];
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p = logical_proc_info_ex;
+    UINT i, family = 0, core_count = 0, thread_count = 0, pkg_count = 0;
+
+    strcpy( name, cpu_name );
+    for (i = strlen(name); i > 0 && name[i - 1] == ' '; i--) name[i - 1] = 0;
+
+    while ((char *)p != (char *)logical_proc_info_ex + logical_proc_info_ex_size)
+    {
+        switch (p->Relationship)
+        {
+        case RelationProcessorPackage:
+            if (!pkg_count++) break;
+            snprintf( socket, sizeof(socket), "Socket #%u", pkg_count - 1 );
+            append_smbios_processor( buf, core_count, thread_count, family,
+                                     socket, cpu_vendor, name, "", "" );
+            core_count = thread_count = 0;
+            break;
+        case RelationProcessorCore:
+            core_count++;
+            thread_count++;
+            if (p->Processor.Flags & LTP_PC_SMT) thread_count++;
+            break;
+        default:
+            break;
+        }
+        p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size);
+    }
+    snprintf( socket, sizeof(socket), "Socket #%u", pkg_count - 1 );
+    append_smbios_processor( buf, core_count, thread_count, family,
+                             socket, cpu_vendor, name, "", "" );
 }
 
 #undef ADD_STR
@@ -1673,6 +1774,7 @@ static struct smbios_prologue *create_smbios_data(void)
                          get_smbios_string( "/sys/class/dmi/id/board_asset_tag", S(asset_tag) ));
 #undef S
 
+    create_smbios_processors( &buf );
     append_smbios_boot_info( &buf );
     append_smbios_end( &buf );
     return buf.prologue;
@@ -1807,6 +1909,7 @@ static struct smbios_prologue *create_smbios_data(void)
     append_smbios_system( &buf, manufacturer, model, "1.0", serial_number, "", model, &system_uuid );
     chassis = append_smbios_chassis( &buf, 0, manufacturer, "", serial_number, "" );
     append_smbios_board( &buf, chassis, manufacturer, model, model, serial_number, "" );
+    create_smbios_processors( &buf );
     append_smbios_boot_info( &buf );
     append_smbios_end( &buf );
     return buf.prologue;
@@ -1828,6 +1931,7 @@ static struct smbios_prologue *create_smbios_data(void)
     append_smbios_system( &buf, vendor, product, version, serial, "", "", &uuid );
     chassis = append_smbios_chassis( &buf, 0, vendor, version, serial, "" );
     append_smbios_board( &buf, chassis, vendor, product, version, serial, "" );
+    create_smbios_processors( &buf );
     append_smbios_boot_info( &buf );
     append_smbios_end( &buf );
     return buf.prologue;
