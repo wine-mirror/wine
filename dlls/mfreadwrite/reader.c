@@ -258,7 +258,6 @@ static ULONG source_reader_release(struct source_reader *reader)
         }
         source_reader_release_responses(reader, NULL);
         free(reader->streams);
-        MFUnlockWorkQueue(reader->queue);
         DeleteCriticalSection(&reader->cs);
         free(reader);
     }
@@ -1666,6 +1665,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReaderEx *iface)
             }
         }
 
+        MFUnlockWorkQueue(reader->queue);
         source_reader_release(reader);
     }
 
