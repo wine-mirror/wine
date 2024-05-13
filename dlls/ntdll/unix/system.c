@@ -188,6 +188,8 @@ enum smbios_type
 SYSTEM_CPU_INFORMATION cpu_info = { 0 };
 static SYSTEM_PROCESSOR_FEATURES_INFORMATION cpu_features;
 static char cpu_name[49];
+static char cpu_vendor[13];
+static ULONGLONG cpu_id;
 static ULONG *performance_cores;
 static unsigned int performance_cores_capacity = 0;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
@@ -264,14 +266,6 @@ void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask )
         ++i;
     }
 }
-
-#define AUTH	0x68747541	/* "Auth" */
-#define ENTI	0x69746e65	/* "enti" */
-#define CAMD	0x444d4163	/* "cAMD" */
-
-#define GENU	0x756e6547	/* "Genu" */
-#define INEI	0x49656e69	/* "ineI" */
-#define NTEL	0x6c65746e	/* "ntel" */
 
 extern void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p );
 #ifdef __i386__
@@ -396,6 +390,9 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     if (!have_cpuid()) return;
 
     do_cpuid( 0x00000000, 0, regs );  /* get standard cpuid level and vendor name */
+    memcpy( cpu_vendor, &regs[1], sizeof(unsigned int) );
+    memcpy( cpu_vendor + 4, &regs[3], sizeof(unsigned int) );
+    memcpy( cpu_vendor + 8, &regs[2], sizeof(unsigned int) );
     if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
     {
         do_cpuid( 0x00000001, 0, regs2 ); /* get cpu features */
@@ -421,6 +418,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24)) && have_sse_daz_mode()) /* has SSE2 and FXSAVE/FXRSTOR */
             features |= CPU_FEATURE_DAZ;
 
+        cpu_id = regs2[0] | ((ULONGLONG)regs2[3] << 32);
         if (regs[0] >= 0x00000007)
         {
             do_cpuid( 0x00000007, 0, regs3 ); /* get extended features */
@@ -452,7 +450,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             TRACE("xstate_features_size %lld.\n", (long long)xstate_features_size);
         }
 
-        if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
+        if (!strcmp( cpu_vendor, "AuthenticAMD" ))
         {
             info->ProcessorLevel = (regs2[0] >> 8) & 0xf; /* family */
             if (info->ProcessorLevel == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
@@ -474,7 +472,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             }
             if (regs[0] >= 0x80000004) get_cpuid_name( cpu_name );
         }
-        else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
+        else if (!strcmp( cpu_vendor, "GenuineIntel" ))
         {
             info->ProcessorLevel = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
             if(info->ProcessorLevel == 15) info->ProcessorLevel = 6;
