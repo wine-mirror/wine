@@ -345,26 +345,19 @@ error:
 
 INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDESCRIPTOR *ppfd )
 {
-    struct wglDescribePixelFormat_params args = { .teb = NtCurrentTeb(), .hdc = hdc, .ipfd = index, .cjpfd = size, .ppfd = ppfd };
-    NTSTATUS status;
     struct wgl_pixel_format *formats;
     UINT num_formats, num_onscreen_formats;
 
     TRACE( "hdc %p, index %d, size %u, ppfd %p\n", hdc, index, index, ppfd );
 
-    if ((formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats )))
-    {
-        if (!ppfd) return num_onscreen_formats;
-        if (size < sizeof(*ppfd)) return 0;
-        if (index <= 0 || index > num_onscreen_formats) return 0;
+    if (!(formats = get_pixel_formats( hdc, &num_formats, &num_onscreen_formats ))) return 0;
+    if (!ppfd) return num_onscreen_formats;
+    if (size < sizeof(*ppfd)) return 0;
+    if (index <= 0 || index > num_onscreen_formats) return 0;
 
-        *ppfd = formats[index - 1].pfd;
+    *ppfd = formats[index - 1].pfd;
 
-        return num_onscreen_formats;
-    }
-
-    if ((status = UNIX_CALL( wglDescribePixelFormat, &args ))) WARN( "wglDescribePixelFormat returned %#lx\n", status );
-    return args.ret;
+    return num_onscreen_formats;
 }
 
 /***********************************************************************

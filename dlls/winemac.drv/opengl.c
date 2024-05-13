@@ -4614,7 +4614,6 @@ static struct opengl_funcs opengl_funcs =
         macdrv_wglCopyContext,          /* p_wglCopyContext */
         macdrv_wglCreateContext,        /* p_wglCreateContext */
         macdrv_wglDeleteContext,        /* p_wglDeleteContext */
-        NULL,                           /* p_wglDescribePixelFormat */
         macdrv_wglGetPixelFormat,       /* p_wglGetPixelFormat */
         macdrv_wglGetProcAddress,       /* p_wglGetProcAddress */
         macdrv_wglMakeCurrent,          /* p_wglMakeCurrent */

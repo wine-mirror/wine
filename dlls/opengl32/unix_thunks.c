@@ -48,15 +48,6 @@ extern NTSTATUS ext_wglReleasePbufferDCARB( void *args );
 extern NTSTATUS ext_wglReleaseTexImageARB( void *args );
 extern NTSTATUS ext_wglSetPbufferAttribARB( void *args );
 
-static NTSTATUS wgl_wglDescribePixelFormat( void *args )
-{
-    struct wglDescribePixelFormat_params *params = args;
-    const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
-    if (!funcs || !funcs->wgl.p_wglDescribePixelFormat) return STATUS_NOT_IMPLEMENTED;
-    params->ret = funcs->wgl.p_wglDescribePixelFormat( params->hdc, params->ipfd, params->cjpfd, params->ppfd );
-    return STATUS_SUCCESS;
-}
-
 static NTSTATUS wgl_wglGetPixelFormat( void *args )
 {
     struct wglGetPixelFormat_params *params = args;
@@ -24211,7 +24202,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     &wgl_wglCopyContext,
     &wgl_wglCreateContext,
     &wgl_wglDeleteContext,
-    &wgl_wglDescribePixelFormat,
     &wgl_wglGetPixelFormat,
     &wgl_wglGetProcAddress,
     &wgl_wglMakeCurrent,
@@ -27277,31 +27267,6 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
     };
     NTSTATUS status;
     status = wgl_wglCopyContext( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
-static NTSTATUS wow64_wgl_wglDescribePixelFormat( void *args )
-{
-    struct
-    {
-        PTR32 teb;
-        PTR32 hdc;
-        int ipfd;
-        UINT cjpfd;
-        PTR32 ppfd;
-        int ret;
-    } *params32 = args;
-    struct wglDescribePixelFormat_params params =
-    {
-        .teb = get_teb64(params32->teb),
-        .hdc = ULongToPtr(params32->hdc),
-        .ipfd = params32->ipfd,
-        .cjpfd = params32->cjpfd,
-        .ppfd = ULongToPtr(params32->ppfd),
-    };
-    NTSTATUS status;
-    status = wgl_wglDescribePixelFormat( &params );
     params32->ret = params.ret;
     return status;
 }
@@ -92333,7 +92298,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_wgl_wglCopyContext,
     wow64_wgl_wglCreateContext,
     wow64_wgl_wglDeleteContext,
-    wow64_wgl_wglDescribePixelFormat,
     wow64_wgl_wglGetPixelFormat,
     wow64_wgl_wglGetProcAddress,
     wow64_wgl_wglMakeCurrent,
@@ -95377,7 +95341,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
 static struct wgl_context * null_wglCreateContext( HDC hDc ) { return 0; }
 static BOOL null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
-static int null_wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
 static int null_wglGetPixelFormat( HDC hdc ) { return 0; }
 static PROC null_wglGetProcAddress( LPCSTR lpszProc ) { return 0; }
 static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext ) { return 0; }
@@ -98421,7 +98384,6 @@ struct opengl_funcs null_opengl_funcs =
         null_wglCopyContext,
         null_wglCreateContext,
         null_wglDeleteContext,
-        null_wglDescribePixelFormat,
         null_wglGetPixelFormat,
         null_wglGetProcAddress,
         null_wglMakeCurrent,

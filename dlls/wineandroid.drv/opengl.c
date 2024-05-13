@@ -1066,7 +1066,6 @@ static struct opengl_funcs egl_funcs =
         android_wglCopyContext,
         android_wglCreateContext,
         android_wglDeleteContext,
-        NULL, /* p_wglDescribePixelFormat */
         android_wglGetPixelFormat,
         android_wglGetProcAddress,
         android_wglMakeCurrent,

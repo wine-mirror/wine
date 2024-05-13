@@ -39,16 +39,6 @@ struct wglDeleteContext_params
     BOOL ret;
 };
 
-struct wglDescribePixelFormat_params
-{
-    TEB *teb;
-    HDC hdc;
-    int ipfd;
-    UINT cjpfd;
-    PIXELFORMATDESCRIPTOR *ppfd;
-    int ret;
-};
-
 struct wglGetPixelFormat_params
 {
     TEB *teb;
@@ -25349,7 +25339,6 @@ enum unix_funcs
     unix_wglCopyContext,
     unix_wglCreateContext,
     unix_wglDeleteContext,
-    unix_wglDescribePixelFormat,
     unix_wglGetPixelFormat,
     unix_wglGetProcAddress,
     unix_wglMakeCurrent,

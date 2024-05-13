@@ -600,7 +600,6 @@ static struct opengl_funcs opengl_funcs =
         dibdrv_wglCopyContext,         /* p_wglCopyContext */
         dibdrv_wglCreateContext,       /* p_wglCreateContext */
         dibdrv_wglDeleteContext,       /* p_wglDeleteContext */
-        NULL,                          /* p_wglDescribePixelFormat */
         dibdrv_wglGetPixelFormat,      /* p_wglGetPixelFormat */
         dibdrv_wglGetProcAddress,      /* p_wglGetProcAddress */
         dibdrv_wglMakeCurrent,         /* p_wglMakeCurrent */
