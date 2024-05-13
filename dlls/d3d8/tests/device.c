@@ -3701,28 +3701,34 @@ done:
     UnregisterClassA("d3d8_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static const GUID d3d8_private_data_test_guid =
+{
+    0xfdb37466,
+    0x428f,
+    0x4edf,
+    {0xa3,0x7f,0x9b,0x1d,0xf4,0x88,0xc5,0xfc}
+};
+
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__) && (defined(__GNUC__) || defined(__clang__)))
+
 static inline void set_fpu_cw(WORD cw)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-#define D3D8_TEST_SET_FPU_CW 1
-    __asm__ volatile ("fnclex");
-    __asm__ volatile ("fldcw %0" : : "m" (cw));
-#elif defined(__i386__) && defined(_MSC_VER)
-#define D3D8_TEST_SET_FPU_CW 1
+#if defined(_MSC_VER) && defined(__i386__)
     __asm fnclex;
     __asm fldcw cw;
+#else
+    __asm__ volatile ("fnclex");
+    __asm__ volatile ("fldcw %0" : : "m" (cw));
 #endif
 }
 
 static inline WORD get_fpu_cw(void)
 {
     WORD cw = 0;
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-#define D3D8_TEST_GET_FPU_CW 1
-    __asm__ volatile ("fnstcw %0" : "=m" (cw));
-#elif defined(__i386__) && defined(_MSC_VER)
-#define D3D8_TEST_GET_FPU_CW 1
+#if defined(_MSC_VER) && defined(__i386__)
     __asm fnstcw cw;
+#else
+    __asm__ volatile ("fnstcw %0" : "=m" (cw));
 #endif
     return cw;
 }
@@ -3759,17 +3765,8 @@ static const IUnknownVtbl dummy_object_vtbl =
     dummy_object_Release,
 };
 
-static const GUID d3d8_private_data_test_guid =
-{
-    0xfdb37466,
-    0x428f,
-    0x4edf,
-    {0xa3,0x7f,0x9b,0x1d,0xf4,0x88,0xc5,0xfc}
-};
-
 static void test_fpu_setup(void)
 {
-#if defined(D3D8_TEST_SET_FPU_CW) && defined(D3D8_TEST_GET_FPU_CW)
     struct device_desc device_desc;
     IDirect3DDevice8 *device;
     IDirect3D8 *d3d8;
@@ -3869,8 +3866,15 @@ static void test_fpu_setup(void)
 done:
     DestroyWindow(window);
     IDirect3D8_Release(d3d8);
-#endif
 }
+
+#else
+
+static void test_fpu_setup(void)
+{
+}
+
+#endif
 
 static void test_ApplyStateBlock(void)
 {
