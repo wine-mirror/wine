@@ -537,57 +537,7 @@ static inline HTMLRect *impl_from_IHTMLRect(IHTMLRect *iface)
     return CONTAINING_RECORD(iface, HTMLRect, IHTMLRect_iface);
 }
 
-static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, void **ppv)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLRect_AddRef(IHTMLRect *iface)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLRect_GetTypeInfoCount(IHTMLRect *iface, UINT *pctinfo)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI HTMLRect_GetTypeInfo(IHTMLRect *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLRect_GetIDsOfNames(IHTMLRect *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLRect_Invoke(IHTMLRect *iface, DISPID dispIdMember,
-        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLRect *This = impl_from_IHTMLRect(iface);
-
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLRect, IHTMLRect, impl_from_IHTMLRect(iface)->dispex)
 
 static HRESULT WINAPI HTMLRect_put_left(IHTMLRect *iface, LONG v)
 {
@@ -694,53 +644,7 @@ static inline HTMLRect *impl_from_IHTMLRect2(IHTMLRect2 *iface)
     return CONTAINING_RECORD(iface, HTMLRect, IHTMLRect2_iface);
 }
 
-static HRESULT WINAPI HTMLRect2_QueryInterface(IHTMLRect2 *iface, REFIID riid, void **ppv)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IHTMLRect_QueryInterface(&This->IHTMLRect_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLRect2_AddRef(IHTMLRect2 *iface)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IHTMLRect_AddRef(&This->IHTMLRect_iface);
-}
-
-static ULONG WINAPI HTMLRect2_Release(IHTMLRect2 *iface)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IHTMLRect_Release(&This->IHTMLRect_iface);
-}
-
-static HRESULT WINAPI HTMLRect2_GetTypeInfoCount(IHTMLRect2 *iface, UINT *pctinfo)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLRect2_GetTypeInfo(IHTMLRect2 *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLRect2_GetIDsOfNames(IHTMLRect2 *iface, REFIID riid,
-        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLRect2_Invoke(IHTMLRect2 *iface, DISPID dispIdMember,
-        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLRect *This = impl_from_IHTMLRect2(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLRect2, IHTMLRect2, impl_from_IHTMLRect2(iface)->dispex)
 
 static HRESULT WINAPI HTMLRect2_get_width(IHTMLRect2 *iface, FLOAT *p)
 {

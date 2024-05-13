@@ -412,6 +412,41 @@ struct DispatchEx {
     dispex_dynamic_data_t *dynamic_data;
 };
 
+#define DISPEX_IDISPATCH_IMPL(prefix, iface_name, dispex)                                      \
+    static HRESULT WINAPI prefix##_QueryInterface(iface_name *iface, REFIID riid, void **ppv)  \
+    {                                                                                          \
+        return IDispatchEx_QueryInterface(&(dispex).IDispatchEx_iface, riid, ppv);             \
+    }                                                                                          \
+    static ULONG WINAPI prefix##_AddRef(iface_name *iface)                                     \
+    {                                                                                          \
+        return IDispatchEx_AddRef(&(dispex).IDispatchEx_iface);                                \
+    }                                                                                          \
+    static ULONG WINAPI prefix##_Release(iface_name *iface)                                    \
+    {                                                                                          \
+        return IDispatchEx_Release(&(dispex).IDispatchEx_iface);                               \
+    }                                                                                          \
+    static HRESULT WINAPI prefix##_GetTypeInfoCount(iface_name *iface, UINT *count)            \
+    {                                                                                          \
+        return IDispatchEx_GetTypeInfoCount(&(dispex).IDispatchEx_iface, count);               \
+    }                                                                                          \
+    static HRESULT WINAPI prefix##_GetTypeInfo(iface_name *iface,                              \
+            UINT index, LCID lcid, ITypeInfo **ret)                                            \
+    {                                                                                          \
+        return IDispatchEx_GetTypeInfo(&(dispex).IDispatchEx_iface, index, lcid, ret);         \
+    }                                                                                          \
+    static HRESULT WINAPI prefix##_GetIDsOfNames(iface_name *iface, REFIID riid,               \
+            LPOLESTR *names, UINT count, LCID lcid, DISPID *dispid)                            \
+    {                                                                                          \
+        return IDispatchEx_GetIDsOfNames(&(dispex).IDispatchEx_iface,                          \
+                riid, names, count, lcid, dispid);                                             \
+    }                                                                                          \
+    static HRESULT WINAPI prefix##_Invoke(iface_name *iface, DISPID dispid, REFIID riid,       \
+            LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei, UINT *err) \
+    {                                                                                          \
+        return IDispatchEx_Invoke(&(dispex).IDispatchEx_iface, dispid,                         \
+                riid, lcid, flags, params, res, ei, err);                                      \
+    }
+
 typedef struct {
     void *vtbl;
     int ref_flags;
