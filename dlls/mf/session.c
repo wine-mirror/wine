@@ -1790,6 +1790,8 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
 
             if (SUCCEEDED(hr = session_add_media_sink(session, node, media_sink)))
             {
+                IUnknown *device_manager;
+
                 if (SUCCEEDED(session_get_stream_sink_type(topo_node->object.sink_stream, &media_type)))
                 {
                     if (SUCCEEDED(MFGetService(topo_node->object.object, &MR_VIDEO_ACCELERATION_SERVICE,
@@ -1806,6 +1808,21 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
                                 &topo_node->u.sink.notify_cb);
                     }
                     IMFMediaType_Release(media_type);
+                }
+
+                if (SUCCEEDED(stream_sink_get_device_manager(topo_node->object.sink_stream, &device_manager)))
+                {
+                    IMFTopologyNode *upstream;
+                    DWORD output;
+
+                    if (SUCCEEDED(IMFTopologyNode_GetInput(topo_node->node, 0, &upstream, &output)))
+                    {
+                        if (topology_node_is_d3d_aware(upstream))
+                            topology_node_set_device_manager(upstream, device_manager);
+                        IMFTopologyNode_Release(upstream);
+                    }
+
+                    IUnknown_Release(device_manager);
                 }
             }
             IMFMediaSink_Release(media_sink);

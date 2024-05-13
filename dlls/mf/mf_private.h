@@ -122,5 +122,8 @@ extern HRESULT create_topology(TOPOID id, IMFTopology **topology);
 extern HRESULT topology_node_get_object(IMFTopologyNode *node, REFIID riid, void **obj);
 extern HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaTypeHandler **handler);
 extern HRESULT topology_node_init_media_type(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
+extern BOOL topology_node_is_d3d_aware(IMFTopologyNode *node);
+extern HRESULT topology_node_set_device_manager(IMFTopologyNode *node, IUnknown *device_manager);
+extern HRESULT stream_sink_get_device_manager(IMFStreamSink *stream_sink, IUnknown **device_manager);
 
 extern HRESULT enum_audio_capture_sources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *ret_count);

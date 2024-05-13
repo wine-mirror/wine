@@ -24,6 +24,9 @@
 #include "winbase.h"
 
 #include "mfidl.h"
+#include "evr.h"
+#include "d3d9.h"
+#include "dxva2api.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -564,25 +567,35 @@ static HRESULT topology_loader_resolve_branches(struct topoloader_context *conte
     return hr;
 }
 
-static BOOL topology_loader_is_node_d3d_aware(IMFTopologyNode *node)
+static BOOL topology_node_get_object_attributes(IMFTopologyNode *node, IMFAttributes **attributes)
 {
-    IMFAttributes *attributes;
-    unsigned int d3d_aware = 0;
     IMFTransform *transform;
+    HRESULT hr;
 
-    if (FAILED(topology_node_get_object(node, &IID_IMFAttributes, (void **)&attributes)))
-        return FALSE;
-
-    IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware);
-    IMFAttributes_Release(attributes);
-
-    if (!d3d_aware && SUCCEEDED(topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
+    if (SUCCEEDED(topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
     {
-        d3d_aware = mf_is_sample_copier_transform(transform);
+        hr = IMFTransform_GetAttributes(transform, attributes);
         IMFTransform_Release(transform);
+        return hr;
     }
 
-    return !!d3d_aware;
+    return topology_node_get_object(node, &IID_IMFAttributes, (void **)&attributes);
+}
+
+BOOL topology_node_is_d3d_aware(IMFTopologyNode *node)
+{
+    UINT32 d3d_aware, d3d11_aware;
+    IMFAttributes *attributes;
+
+    if (FAILED(topology_node_get_object_attributes(node, &attributes)))
+        return FALSE;
+    if (FAILED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware)))
+        d3d_aware = FALSE;
+    if (FAILED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_AWARE, &d3d11_aware)))
+        d3d11_aware = FALSE;
+    IMFAttributes_Release(attributes);
+
+    return d3d_aware || d3d11_aware;
 }
 
 static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWORD upstream_output,
@@ -638,33 +651,98 @@ static HRESULT topology_loader_connect_copier(struct topoloader_context *context
     return S_OK;
 }
 
+HRESULT topology_node_set_device_manager(IMFTopologyNode *node, IUnknown *device_manager)
+{
+    IMFTransform *transform;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
+    {
+        hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (LONG_PTR)device_manager);
+        IMFTransform_Release(transform);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        IMFTopologyNode *upstream;
+        DWORD i, count, output;
+
+        hr = IMFTopologyNode_GetInputCount(node, &count);
+
+        for (i = 0; SUCCEEDED(hr) && i < count; i++)
+        {
+            if (FAILED(IMFTopologyNode_GetInput(node, 0, &upstream, &output)))
+                continue;
+
+            if (topology_node_is_d3d_aware(upstream))
+                topology_node_set_device_manager(upstream, device_manager);
+
+            IMFTopologyNode_Release(upstream);
+        }
+    }
+
+    return hr;
+}
+
+HRESULT stream_sink_get_device_manager(IMFStreamSink *stream_sink, IUnknown **device_manager)
+{
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)stream_sink, &MR_VIDEO_ACCELERATION_SERVICE,
+            &IID_IMFDXGIDeviceManager, (void **)device_manager)))
+        return hr;
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)stream_sink, &MR_VIDEO_ACCELERATION_SERVICE,
+            &IID_IDirect3DDeviceManager9, (void **)device_manager)))
+        return hr;
+
+    return hr;
+}
+
 /* Right now this should be used for output nodes only. */
-static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context *context,
-        IMFTopologyNode *node)
+static HRESULT topology_loader_connect_d3d_aware_sink(struct topoloader_context *context,
+        IMFTopologyNode *node, MFTOPOLOGY_DXVA_MODE dxva_mode)
 {
     IMFTopologyNode *upstream_node;
     IMFTransform *copier = NULL;
     IMFStreamSink *stream_sink;
+    IUnknown *device_manager;
     DWORD upstream_output;
     HRESULT hr;
 
     if (FAILED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
         return hr;
 
-    if (topology_loader_is_node_d3d_aware(node))
+    if (SUCCEEDED(hr = stream_sink_get_device_manager(stream_sink, &device_manager)))
     {
         if (SUCCEEDED(IMFTopologyNode_GetInput(node, 0, &upstream_node, &upstream_output)))
         {
-            if (!topology_loader_is_node_d3d_aware(upstream_node))
+            BOOL needs_copier = dxva_mode == MFTOPOLOGY_DXVA_DEFAULT;
+            IMFTransform *transform;
+
+            if (needs_copier && SUCCEEDED(topology_node_get_object(upstream_node, &IID_IMFTransform, (void **)&transform)))
             {
-                if (SUCCEEDED(hr = topology_loader_create_copier(upstream_node, upstream_output, node, 0, &copier)))
-                {
-                    hr = topology_loader_connect_copier(context, upstream_node, upstream_output, node, 0, copier);
-                    IMFTransform_Release(copier);
-                }
+                MFT_OUTPUT_STREAM_INFO info = {0};
+
+                if (FAILED(IMFTransform_GetOutputStreamInfo(transform, upstream_output, &info))
+                        || !(info.dwFlags & (MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES | MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)))
+                    needs_copier = FALSE;
+
+                IMFTransform_Release(transform);
             }
+
+            if (needs_copier && SUCCEEDED(hr = topology_loader_create_copier(upstream_node, upstream_output, node, 0, &copier)))
+            {
+                hr = topology_loader_connect_copier(context, upstream_node, upstream_output, node, 0, copier);
+                IMFTransform_Release(copier);
+            }
+
+            if (dxva_mode == MFTOPOLOGY_DXVA_FULL && topology_node_is_d3d_aware(upstream_node))
+                topology_node_set_device_manager(upstream_node, device_manager);
+
             IMFTopologyNode_Release(upstream_node);
         }
+
+        IUnknown_Release(device_manager);
     }
 
     IMFStreamSink_Release(stream_sink);
@@ -674,12 +752,16 @@ static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context
 
 static void topology_loader_resolve_complete(struct topoloader_context *context)
 {
+    MFTOPOLOGY_DXVA_MODE dxva_mode;
     MF_TOPOLOGY_TYPE node_type;
     IMFTopologyNode *node;
     WORD i, node_count;
     HRESULT hr;
 
     IMFTopology_GetNodeCount(context->output_topology, &node_count);
+
+    if (FAILED(IMFTopology_GetUINT32(context->input_topology, &MF_TOPOLOGY_DXVA_MODE, (UINT32 *)&dxva_mode)))
+        dxva_mode = 0;
 
     for (i = 0; i < node_count; ++i)
     {
@@ -693,7 +775,7 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
                 if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
                     IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
 
-                if (FAILED(hr = topology_loader_connect_d3d_aware_input(context, node)))
+                if (FAILED(hr = topology_loader_connect_d3d_aware_sink(context, node, dxva_mode)))
                     WARN("Failed to connect D3D-aware input, hr %#lx.\n", hr);
             }
             else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)

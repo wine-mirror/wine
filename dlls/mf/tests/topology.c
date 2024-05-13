@@ -3261,7 +3261,7 @@ static void test_topology_loader_d3d(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine ok(count == 2, "got count %u.\n", count);
+    ok(count == 2, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
     ok(ref == 0, "Release returned %ld\n", ref);
 
@@ -3277,7 +3277,7 @@ static void test_topology_loader_d3d(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine ok(count == 2, "got count %u.\n", count);
+    ok(count == 2, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
     ok(ref == 0, "Release returned %ld\n", ref);
 
@@ -3310,7 +3310,7 @@ static void test_topology_loader_d3d(void)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine ok(count == 6, "got count %u.\n", count);
+    ok(count == 6, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
     ok(ref == 0, "Release returned %ld\n", ref);
 
@@ -3446,7 +3446,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine ok(count == 6, "got count %u.\n", count);
+    ok(count == 6, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
     ok(ref == 0, "Release returned %ld\n", ref);
 
@@ -3459,7 +3459,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
         ret = test_transform_got_d3d9_device_manager(transforms[2]);
         ok(!ret, "got d3d9 device manager\n");
         ret = test_transform_got_d3d9_device_manager(transforms[3]);
-        todo_wine ok(!!ret, "got d3d9 device manager\n");
+        ok(!!ret, "got d3d9 device manager\n");
     }
 
     /* copier is inserted before the sink if preceding node may allocate samples without a device manager */
@@ -3470,7 +3470,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     if (mode == MFTOPOLOGY_DXVA_NONE || mode == MFTOPOLOGY_DXVA_FULL)
-        todo_wine ok(count == 6, "got count %u.\n", count);
+        ok(count == 6, "got count %u.\n", count);
     else
         ok(count == 7, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
@@ -3485,7 +3485,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
         ret = test_transform_got_d3d9_device_manager(transforms[2]);
         ok(!ret, "got d3d9 device manager\n");
         ret = test_transform_got_d3d9_device_manager(transforms[3]);
-        todo_wine ok(!!ret, "got d3d9 device manager\n");
+        ok(!!ret, "got d3d9 device manager\n");
     }
 
     output_stream_info.dwFlags = MFT_OUTPUT_STREAM_PROVIDES_SAMPLES;
@@ -3494,7 +3494,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
     ref = IMFTopology_GetNodeCount(full_topology, &count);
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     if (mode == MFTOPOLOGY_DXVA_NONE || mode == MFTOPOLOGY_DXVA_FULL)
-        todo_wine ok(count == 6, "got count %u.\n", count);
+        ok(count == 6, "got count %u.\n", count);
     else
         ok(count == 7, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
@@ -3509,7 +3509,7 @@ static void test_topology_loader_d3d9(MFTOPOLOGY_DXVA_MODE mode)
         ret = test_transform_got_d3d9_device_manager(transforms[2]);
         ok(!ret, "got d3d9 device manager\n");
         ret = test_transform_got_d3d9_device_manager(transforms[3]);
-        todo_wine ok(!!ret, "got d3d9 device manager\n");
+        ok(!!ret, "got d3d9 device manager\n");
     }
 
     ref = IMFTopology_Release(topology);
@@ -3664,7 +3664,7 @@ static void test_topology_loader_d3d11(MFTOPOLOGY_DXVA_MODE mode)
     if (mode == MFTOPOLOGY_DXVA_NONE)
         ok(count == 6, "got count %u.\n", count);
     else
-        todo_wine ok(count == 7, "got count %u.\n", count);
+        todo_wine_if(mode == MFTOPOLOGY_DXVA_FULL) ok(count == 7, "got count %u.\n", count);
     ref = IMFTopology_Release(full_topology);
     ok(ref == 0, "Release returned %ld\n", ref);
 
@@ -3732,9 +3732,9 @@ static void test_topology_loader_d3d11(MFTOPOLOGY_DXVA_MODE mode)
         ret = test_transform_got_dxgi_device_manager(transforms[1]);
         ok(!ret, "got dxgi device manager\n");
         ret = test_transform_got_dxgi_device_manager(transforms[2]);
-        todo_wine ok(!!ret, "got dxgi device manager\n");
+        ok(!!ret, "got dxgi device manager\n");
         ret = test_transform_got_dxgi_device_manager(transforms[3]);
-        todo_wine ok(!!ret, "got dxgi device manager\n");
+        ok(!!ret, "got dxgi device manager\n");
     }
 
     ref = IMFTopology_Release(topology);
