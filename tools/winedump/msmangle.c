@@ -273,6 +273,12 @@ static char* get_args(struct parsed_symbol* sym, BOOL z_term,
             sym->current++;
             break;
         }
+        /* Handle empty list in variadic template */
+        if (!z_term && sym->current[0] == '$' && sym->current[1] == '$' && sym->current[2] == 'V')
+        {
+            sym->current += 3;
+            continue;
+        }
         if (!demangle_datatype(sym, &ct, IN_ARGS))
             return NULL;
         /* 'void' terminates an argument list in a function */
