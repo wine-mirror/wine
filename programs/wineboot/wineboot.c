@@ -461,7 +461,6 @@ static void create_user_shared_data(void)
     case PROCESSOR_ARCHITECTURE_ARM:
         features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_VFP_32);
         features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_NEON);
-        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = (sci.ProcessorLevel >= 8);
         break;
 
     case PROCESSOR_ARCHITECTURE_ARM64:
@@ -801,14 +800,14 @@ static void create_hardware_registry_keys(void)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
         arch = L"ARM";
-        swprintf( id, ARRAY_SIZE(id), L"ARM Family %u Model %u Revision %u",
-                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
+        swprintf( id, ARRAY_SIZE(id), L"ARM Family 7 Model %X Revision %X",
+                  sci.ProcessorLevel, sci.ProcessorRevision );
         break;
 
     case PROCESSOR_ARCHITECTURE_ARM64:
         arch = L"ARM64";
-        swprintf( id, ARRAY_SIZE(id), L"ARMv8 (64-bit) Family %u Model %u Revision %u",
-                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
+        swprintf( id, ARRAY_SIZE(id), L"ARMv8 (64-bit) Family 8 Model %X Revision %X",
+                  sci.ProcessorLevel, sci.ProcessorRevision );
         break;
 
     case PROCESSOR_ARCHITECTURE_AMD64:
