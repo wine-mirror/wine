@@ -594,10 +594,15 @@ HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *fac
         D2D1_FILL_MODE fill_mode, ID2D1Geometry **src_geometries, unsigned int geometry_count);
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface);
 
-struct d2d_shader
+struct d2d_indexed_objects
 {
-    GUID id;
-    IUnknown *shader;
+    struct
+    {
+        GUID id;
+        IUnknown *object;
+    } *elements;
+    size_t size;
+    size_t count;
 };
 
 struct d2d_device
@@ -607,17 +612,13 @@ struct d2d_device
     ID2D1Factory1 *factory;
     IDXGIDevice *dxgi_device;
 
-    struct
-    {
-        struct d2d_shader *objects;
-        size_t size;
-        size_t count;
-    } shaders;
+    struct d2d_indexed_objects shaders;
 };
 
 struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
-HRESULT d2d_device_add_shader(struct d2d_device *device, REFGUID shader_id, IUnknown *shader);
-BOOL d2d_device_is_shader_loaded(struct d2d_device *device, REFGUID shader_id);
+HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects, const GUID *id,
+        IUnknown *object);
+BOOL d2d_device_is_object_indexed(struct d2d_indexed_objects *objects, const GUID *id);
 
 struct d2d_effect_context
 {
