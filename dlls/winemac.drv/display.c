@@ -1116,17 +1116,6 @@ void macdrv_displays_changed(const macdrv_event *event)
 
 static BOOL force_display_devices_refresh;
 
-static BOOL is_same_devmode(const DEVMODEW *a, const DEVMODEW *b)
-{
-    return a->dmDisplayOrientation == b->dmDisplayOrientation &&
-           a->dmDisplayFixedOutput == b->dmDisplayFixedOutput &&
-           a->dmBitsPerPel == b->dmBitsPerPel &&
-           a->dmPelsWidth == b->dmPelsWidth &&
-           a->dmPelsHeight == b->dmPelsHeight &&
-           a->dmDisplayFlags == b->dmDisplayFlags &&
-           a->dmDisplayFrequency == b->dmDisplayFrequency;
-}
-
 UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct macdrv_adapter *adapters, *adapter;
@@ -1134,8 +1123,7 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct macdrv_gpu *gpus, *gpu;
     struct macdrv_display *displays, *display;
     INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
-    DEVMODEW *mode, *modes;
-    DWORD len;
+    DEVMODEW *modes;
 
     if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
     force_display_devices_refresh = FALSE;
