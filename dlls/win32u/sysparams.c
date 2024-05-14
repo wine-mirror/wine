@@ -1711,7 +1711,7 @@ static BOOL update_display_cache_from_registry(void)
     return ret;
 }
 
-static BOOL default_update_display_devices( BOOL force, struct device_manager_ctx *ctx )
+static NTSTATUS default_update_display_devices( BOOL force, struct device_manager_ctx *ctx )
 {
     /* default implementation: expose an adapter and a monitor with a few standard modes,
      * and read / write current display settings from / to the registry.
@@ -1742,7 +1742,7 @@ static BOOL default_update_display_devices( BOOL force, struct device_manager_ct
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {.dmSize = sizeof(mode)};
 
-    if (!force) return TRUE;
+    if (!force) return STATUS_ALREADY_COMPLETE;
 
     add_gpu( "Default GPU", &pci_id, NULL, 0, ctx );
     add_source( "Default", source_flags, ctx );
@@ -1760,7 +1760,7 @@ static BOOL default_update_display_devices( BOOL force, struct device_manager_ct
     add_monitor( &monitor, ctx );
     add_modes( &mode, ARRAY_SIZE(modes), modes, ctx );
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 /* parse the desktop size specification */
