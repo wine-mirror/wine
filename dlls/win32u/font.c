@@ -2527,39 +2527,6 @@ typedef struct
 
 typedef struct
 {
-    CHAR ScriptTag[4];
-    WORD Script;
-} GSUB_ScriptRecord;
-
-typedef struct
-{
-    WORD ScriptCount;
-    GSUB_ScriptRecord ScriptRecord[1];
-} GSUB_ScriptList;
-
-typedef struct
-{
-    CHAR LangSysTag[4];
-    WORD LangSys;
-} GSUB_LangSysRecord;
-
-typedef struct
-{
-    WORD DefaultLangSys;
-    WORD LangSysCount;
-    GSUB_LangSysRecord LangSysRecord[1];
-} GSUB_Script;
-
-typedef struct
-{
-    WORD LookupOrder; /* Reserved */
-    WORD ReqFeatureIndex;
-    WORD FeatureCount;
-    WORD FeatureIndex[1];
-} GSUB_LangSys;
-
-typedef struct
-{
     CHAR FeatureTag[4];
     WORD Feature;
 } GSUB_FeatureRecord;
@@ -2627,91 +2594,13 @@ typedef struct
     WORD Substitute[1];
 } GSUB_SingleSubstFormat2;
 
-static GSUB_Script *GSUB_get_script_table( GSUB_Header *header, const char *tag )
-{
-    GSUB_ScriptList *script;
-    GSUB_Script *deflt = NULL;
-    int i;
-
-    script = (GSUB_ScriptList *)((BYTE *)header + GET_BE_WORD(header->ScriptList));
-    TRACE("%i scripts in this font\n", GET_BE_WORD(script->ScriptCount) );
-    for (i = 0; i < GET_BE_WORD(script->ScriptCount); i++)
-    {
-        int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
-        GSUB_Script *scr = (GSUB_Script *)((BYTE *)script + offset);
-        if (!memcmp( script->ScriptRecord[i].ScriptTag, tag, 4 )) return scr;
-        if (!memcmp( script->ScriptRecord[i].ScriptTag, "dflt", 4 )) deflt = scr;
-    }
-    return deflt;
-}
-
-static GSUB_LangSys *GSUB_get_lang_table( GSUB_Script *script, const char *tag )
-{
-    int i, offset;
-    GSUB_LangSys *lang;
-
-    TRACE("Deflang %x, LangCount %i\n",GET_BE_WORD(script->DefaultLangSys), GET_BE_WORD(script->LangSysCount));
-
-    for (i = 0; i < GET_BE_WORD(script->LangSysCount) ; i++)
-    {
-        offset = GET_BE_WORD(script->LangSysRecord[i].LangSys);
-        lang = (GSUB_LangSys *)((BYTE *)script + offset);
-        if (!memcmp( script->LangSysRecord[i].LangSysTag, tag, 4 )) return lang;
-    }
-    offset = GET_BE_WORD(script->DefaultLangSys);
-    if (offset) return (GSUB_LangSys *)((BYTE *)script + offset);
-    return NULL;
-}
-
-static GSUB_Feature *GSUB_get_feature( GSUB_Header *header, GSUB_LangSys *lang, const char *tag )
-{
-    int i;
-    const GSUB_FeatureList *feature;
-
-    feature = (GSUB_FeatureList *)((BYTE *)header + GET_BE_WORD(header->FeatureList));
-    TRACE("%i features\n",GET_BE_WORD(lang->FeatureCount));
-    for (i = 0; i < GET_BE_WORD(lang->FeatureCount); i++)
-    {
-        int index = GET_BE_WORD(lang->FeatureIndex[i]);
-        if (!memcmp( feature->FeatureRecord[index].FeatureTag, tag, 4 ))
-            return (GSUB_Feature *)((BYTE *)feature + GET_BE_WORD(feature->FeatureRecord[index].Feature));
-    }
-    return NULL;
-}
-
-static const char *get_opentype_script( const struct gdi_font *font )
-{
-    /*
-     * I am not sure if this is the correct way to generate our script tag
-     */
-    switch (font->charset)
-    {
-        case ANSI_CHARSET: return "latn";
-        case BALTIC_CHARSET: return "latn"; /* ?? */
-        case CHINESEBIG5_CHARSET: return "hani";
-        case EASTEUROPE_CHARSET: return "latn"; /* ?? */
-        case GB2312_CHARSET: return "hani";
-        case GREEK_CHARSET: return "grek";
-        case HANGUL_CHARSET: return "hang";
-        case RUSSIAN_CHARSET: return "cyrl";
-        case SHIFTJIS_CHARSET: return "kana";
-        case TURKISH_CHARSET: return "latn"; /* ?? */
-        case VIETNAMESE_CHARSET: return "latn";
-        case JOHAB_CHARSET: return "latn"; /* ?? */
-        case ARABIC_CHARSET: return "arab";
-        case HEBREW_CHARSET: return "hebr";
-        case THAI_CHARSET: return "thai";
-        default: return "latn";
-    }
-}
-
 static void *get_GSUB_vert_feature( struct gdi_font *font )
 {
+    int i, j;
     GSUB_Header *header;
-    GSUB_Script *script;
-    GSUB_LangSys *language;
-    GSUB_Feature *feature;
+    GSUB_FeatureList *feature_list;
     UINT length = font_funcs->get_font_data( font, MS_GSUB_TAG, 0, NULL, 0 );
+    static const char* feature_tag[] = { "vrt2", "vert" };
 
     if (length == GDI_ERROR) return NULL;
 
@@ -2719,22 +2608,21 @@ static void *get_GSUB_vert_feature( struct gdi_font *font )
     font_funcs->get_font_data( font, MS_GSUB_TAG, 0, header, length );
     TRACE( "Loaded GSUB table of %i bytes\n", length );
 
-    if ((script = GSUB_get_script_table( header, get_opentype_script(font) )))
+    /* gdi doesn't use ScriptList and LangSys for vertical writing feature */
+    feature_list = (GSUB_FeatureList *)((BYTE *)header + GET_BE_WORD(header->FeatureList));
+    for (i = 0; i < ARRAY_SIZE(feature_tag); i++)
     {
-        if ((language = GSUB_get_lang_table( script, "xxxx" ))) /* Need to get Lang tag */
+        for (j = 0; j < GET_BE_WORD(feature_list->FeatureCount); j++)
         {
-            feature = GSUB_get_feature( header, language, "vrt2" );
-            if (!feature) feature = GSUB_get_feature( header, language, "vert" );
-            if (feature)
+            GSUB_FeatureRecord *feature = &feature_list->FeatureRecord[j];
+            if (!memcmp( feature->FeatureTag, feature_tag[i], 4 ))
             {
                 font->gsub_table = header;
-                return feature;
+                return (BYTE *)feature_list + GET_BE_WORD(feature->Feature);
             }
-            TRACE("vrt2/vert feature not found\n");
         }
-        else TRACE("Language not found\n");
     }
-    else TRACE("Script not found\n");
+    TRACE("vrt2/vert feature not found\n");
 
     free( header );
     return NULL;

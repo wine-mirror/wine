@@ -6317,7 +6317,7 @@ static void test_vertical_font(void)
     ok(selected, "@WineTestVertical2 is not selected\n");
 
     /* use the first vertical alternates table that doesn't replace U+2025 */
-    todo_wine ok(hgi == vgi, "different glyph h:%u v:%u\n", hgi, vgi);
+    ok(hgi == vgi, "different glyph h:%u v:%u\n", hgi, vgi);
 
     ret = RemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(ret, "RemoveFontResourceEx() error %ld\n", GetLastError());
