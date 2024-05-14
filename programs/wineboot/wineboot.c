@@ -802,13 +802,14 @@ done:
 static void create_hardware_registry_keys(void)
 {
     unsigned int i;
-    HKEY hkey, system_key, cpu_key, fpu_key;
+    HKEY hkey, system_key, cpu_key, fpu_key, env_key;
     SYSTEM_CPU_INFORMATION sci;
     PROCESSOR_POWER_INFORMATION* power_info;
     ULONG sizeof_power_info = sizeof(PROCESSOR_POWER_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
     UINT64 tsc_frequency = read_tsc_frequency();
     ULONG name_buffer[16];
-    WCHAR id[60], vendorid[13];
+    const WCHAR *arch;
+    WCHAR id[60], buffer[128], vendorid[13];
 
     get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
@@ -824,17 +825,25 @@ static void create_hardware_registry_keys(void)
     switch (sci.ProcessorArchitecture)
     {
     case PROCESSOR_ARCHITECTURE_ARM:
-    case PROCESSOR_ARCHITECTURE_ARM64:
+        arch = L"ARM";
         swprintf( id, ARRAY_SIZE(id), L"ARM Family %u Model %u Revision %u",
                   sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
         break;
 
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        arch = L"ARM64";
+        swprintf( id, ARRAY_SIZE(id), L"ARMv8 (64-bit) Family %u Model %u Revision %u",
+                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
+        break;
+
     case PROCESSOR_ARCHITECTURE_AMD64:
+        arch = L"AMD64";
         get_identifier( id, ARRAY_SIZE(id), !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64" );
         break;
 
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
+        arch = L"x86";
         get_identifier( id, ARRAY_SIZE(id), L"x86" );
         break;
     }
@@ -857,14 +866,12 @@ static void create_hardware_registry_keys(void)
     case PROCESSOR_ARCHITECTURE_AMD64:
     default:
         set_reg_value( system_key, L"Identifier", L"AT compatible" );
+        if (RegCreateKeyExW( system_key, L"FloatingPointProcessor", 0, NULL, REG_OPTION_VOLATILE,
+                             KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
+            fpu_key = 0;
         break;
     }
 
-    if (sci.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM ||
-        sci.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64 ||
-        RegCreateKeyExW( system_key, L"FloatingPointProcessor", 0, NULL, REG_OPTION_VOLATILE,
-                         KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
-        fpu_key = 0;
     if (RegCreateKeyExW( system_key, L"CentralProcessor", 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &cpu_key, NULL ))
         cpu_key = 0;
@@ -899,6 +906,26 @@ static void create_hardware_registry_keys(void)
         }
     }
 
+    if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
+                        L"System\\CurrentControlSet\\Control\\Session Manager\\Environment",
+                        &env_key ))
+    {
+        set_reg_value( env_key, L"PROCESSOR_ARCHITECTURE", arch );
+
+        swprintf( buffer, ARRAY_SIZE(buffer), L"%s, %s", id, vendorid );
+        set_reg_value( env_key, L"PROCESSOR_IDENTIFIER", buffer );
+
+        swprintf( buffer, ARRAY_SIZE(buffer), L"%u", sci.ProcessorLevel );
+        set_reg_value( env_key, L"PROCESSOR_LEVEL", buffer );
+
+        swprintf( buffer, ARRAY_SIZE(buffer), L"%04x", sci.ProcessorRevision );
+        set_reg_value( env_key, L"PROCESSOR_REVISION", buffer );
+
+        swprintf( buffer, ARRAY_SIZE(buffer), L"%u", NtCurrentTeb()->Peb->NumberOfProcessors );
+        set_reg_value( env_key, L"NUMBER_OF_PROCESSORS", buffer );
+        RegCloseKey( env_key );
+    }
+
     create_bios_key( system_key );
 
     RegCloseKey( fpu_key );
@@ -917,63 +944,6 @@ static void create_dynamic_registry_keys(void)
         RegCloseKey( key );
     if (!RegCreateKeyExW( HKEY_DYN_DATA, L"Config Manager\\Enum", 0, NULL, 0, KEY_WRITE, NULL, &key, NULL ))
         RegCloseKey( key );
-}
-
-/* create the platform-specific environment registry keys */
-static void create_environment_registry_keys( void )
-{
-    HKEY env_key;
-    SYSTEM_CPU_INFORMATION sci;
-    WCHAR buffer[60], vendorid[13];
-    const WCHAR *arch, *parch;
-
-    if (RegCreateKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Session Manager\\Environment", &env_key )) return;
-
-    get_vendorid( vendorid );
-    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
-
-    swprintf( buffer, ARRAY_SIZE(buffer), L"%u", NtCurrentTeb()->Peb->NumberOfProcessors );
-    set_reg_value( env_key, L"NUMBER_OF_PROCESSORS", buffer );
-
-    switch (sci.ProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        arch = L"AMD64";
-        parch = !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64";
-        break;
-
-    case PROCESSOR_ARCHITECTURE_INTEL:
-    default:
-        arch = parch = L"x86";
-        break;
-    }
-    set_reg_value( env_key, L"PROCESSOR_ARCHITECTURE", arch );
-
-    switch (sci.ProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_ARM:
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        swprintf( buffer, ARRAY_SIZE(buffer), L"ARM Family %u Model %u Revision %u",
-                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
-        break;
-
-    case PROCESSOR_ARCHITECTURE_AMD64:
-    case PROCESSOR_ARCHITECTURE_INTEL:
-    default:
-        get_identifier( buffer, ARRAY_SIZE(buffer), parch );
-        lstrcatW( buffer, L", " );
-        lstrcatW( buffer, vendorid );
-        break;
-    }
-    set_reg_value( env_key, L"PROCESSOR_IDENTIFIER", buffer );
-
-    swprintf( buffer, ARRAY_SIZE(buffer), L"%u", sci.ProcessorLevel );
-    set_reg_value( env_key, L"PROCESSOR_LEVEL", buffer );
-
-    swprintf( buffer, ARRAY_SIZE(buffer), L"%04x", sci.ProcessorRevision );
-    set_reg_value( env_key, L"PROCESSOR_REVISION", buffer );
-
-    RegCloseKey( env_key );
 }
 
 /* create the ComputerName registry keys */
@@ -1859,7 +1829,6 @@ int __cdecl main( int argc, char *argv[] )
     create_user_shared_data();
     create_hardware_registry_keys();
     create_dynamic_registry_keys();
-    create_environment_registry_keys();
     create_computer_name_keys();
     wininit();
     pendingRename();
