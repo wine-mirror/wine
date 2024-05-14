@@ -46,6 +46,18 @@ static inline SIZE_T get_env_length( const WCHAR *env )
     return end + 1 - env;
 }
 
+static UNICODE_STRING *get_machine_name( USHORT machine, UNICODE_STRING *str )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  RtlInitUnicodeString( str, L"x86" ); break;
+    case IMAGE_FILE_MACHINE_AMD64: RtlInitUnicodeString( str, L"AMD64" ); break;
+    case IMAGE_FILE_MACHINE_ARMNT: RtlInitUnicodeString( str, L"ARM" ); break;
+    case IMAGE_FILE_MACHINE_ARM64: RtlInitUnicodeString( str, L"ARM64" ); break;
+    default:                       RtlInitUnicodeString( str, L"Unknown" ); break;
+    }
+    return str;
+}
 
 /***********************************************************************
  *           set_wow64_environment
@@ -59,23 +71,17 @@ static void set_wow64_environment( WCHAR **env )
     UNICODE_STRING arch6432_strW = RTL_CONSTANT_STRING( L"PROCESSOR_ARCHITEW6432" );
     UNICODE_STRING valW = { 0, sizeof(buf), buf };
     UNICODE_STRING nameW;
+    USHORT machine = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )->FileHeader.Machine;
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
-    if (!RtlQueryEnvironmentVariable_U( *env, &arch6432_strW, &valW ))
+    RtlSetEnvironmentVariable( env, &arch_strW, get_machine_name( machine, &nameW ));
+    if (NtCurrentTeb()->WowTebOffset)
     {
-        if (is_win64)
-        {
-            RtlSetEnvironmentVariable( env, &arch_strW, &valW );
-            RtlSetEnvironmentVariable( env, &arch6432_strW, NULL );
-        }
+        RtlWow64GetProcessMachines( GetCurrentProcess(), NULL, &machine );
+        RtlSetEnvironmentVariable( env, &arch6432_strW, get_machine_name( machine, &nameW ));
     }
-    else if (NtCurrentTeb64() && !RtlQueryEnvironmentVariable_U( *env, &arch_strW, &valW ))
-    {
-        RtlSetEnvironmentVariable( env, &arch6432_strW, &valW );
-        RtlInitUnicodeString( &nameW, L"x86" );
-        RtlSetEnvironmentVariable( env, &arch_strW, &nameW );
-    }
+    else RtlSetEnvironmentVariable( env, &arch6432_strW, NULL );
 
     /* set the ProgramFiles variables */
 
