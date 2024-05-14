@@ -859,10 +859,18 @@ static void test_submix(IXAudio2 *xa)
 
     hr = IXAudio2_CreateSubmixVoice(xa, &sub2, 2, 44100, 0, 0, NULL, NULL);
     ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
-
     send_desc.pOutputVoice = (IXAudio2Voice *)sub2;
     hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
-    ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+    ok(hr == S_OK || (XAUDIO2_VER >= 8 && hr == XAUDIO2_E_INVALID_CALL), "CreateSubmixVoice failed: %08lx\n", hr);
+    if (hr == XAUDIO2_E_INVALID_CALL)
+    {
+        IXAudio2SubmixVoice_DestroyVoice(sub2);
+        hr = IXAudio2_CreateSubmixVoice(xa, &sub2, 2, 44100, 0, 1, NULL, NULL);
+        ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+        send_desc.pOutputVoice = (IXAudio2Voice *)sub2;
+        hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
+        ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+    }
 
     IXAudio2SubmixVoice_DestroyVoice(sub2);
     /* The voice is not destroyed. */
@@ -873,7 +881,13 @@ static void test_submix(IXAudio2 *xa)
 
     sends.SendCount = 0;
     hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
-    ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+    ok(hr == S_OK || (XAUDIO2_VER >= 8 && hr == XAUDIO2_E_INVALID_CALL), "SetOutputVoices failed: %08lx\n", hr);
+    if (hr == XAUDIO2_E_INVALID_CALL)
+    {
+        sends.pSends = NULL;
+        hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
+        ok(hr == S_OK, "SetOutputVoices failed: %08lx\n", hr);
+    }
 
     IXAudio2SubmixVoice_DestroyVoice(sub2);
     if (0)
