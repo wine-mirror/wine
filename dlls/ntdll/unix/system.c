@@ -538,71 +538,12 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
 }
 
-#elif defined(__arm__)
-
-static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
-{
-    ULONGLONG features = 0;
-#ifdef linux
-    char line[512];
-    char *s, *value;
-    FILE *f = fopen("/proc/cpuinfo", "r");
-    if (f)
-    {
-        while (fgets( line, sizeof(line), f ))
-        {
-            /* NOTE: the ':' is the only character we can rely on */
-            if (!(value = strchr(line,':'))) continue;
-            /* terminate the valuename */
-            s = value - 1;
-            while ((s >= line) && (*s == ' ' || *s == '\t')) s--;
-            s[1] = 0;
-            /* and strip leading spaces from value */
-            value += 1;
-            while (*value == ' ' || *value == '\t') value++;
-            if ((s = strchr( value,'\n' ))) *s = 0;
-            if (!strcmp( line, "CPU architecture" ))
-            {
-                info->ProcessorLevel = atoi(value);
-                continue;
-            }
-            if (!strcmp( line, "CPU revision" ))
-            {
-                info->ProcessorRevision = atoi(value);
-                continue;
-            }
-            if (!strcmp( line, "Features" ))
-            {
-                if (strstr(value, "crc32")) features |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))   features |= CPU_FEATURE_ARM_V8_CRYPTO;
-                continue;
-            }
-        }
-        fclose( f );
-    }
-#elif defined(__FreeBSD__)
-    size_t valsize;
-    char buf[8];
-    int value;
-
-    valsize = sizeof(buf);
-    if (!sysctlbyname("hw.machine_arch", &buf, &valsize, NULL, 0) && sscanf(buf, "armv%i", &value) == 1)
-        info->ProcessorLevel = value;
-
-    valsize = sizeof(value);
-    if (!sysctlbyname("hw.floatingpoint", &value, &valsize, NULL, 0)) features |= CPU_FEATURE_ARM_VFP_32;
-#else
-    FIXME("CPU Feature detection not implemented.\n");
-#endif
-    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
-    info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
-}
-
-#elif defined(__aarch64__)
+#elif defined(__arm__) || defined(__aarch64__)
 
 static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 {
     ULONGLONG features = 0;
+    unsigned int implementer = 0x41, part = 0, variant = 0, revision = 0;
 #ifdef linux
     char line[512];
     char *s, *value;
@@ -621,24 +562,23 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             value += 1;
             while (*value == ' ' || *value == '\t') value++;
             if ((s = strchr( value,'\n' ))) *s = 0;
-            if (!strcmp( line, "CPU architecture" ))
+            if (!strcmp( line, "CPU implementer" )) implementer = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "CPU part" )) part = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "CPU variant" )) variant = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "CPU revision" )) revision = strtoul( value, NULL, 0);
+            else if (!strcmp( line, "Features" ))
             {
-                info->ProcessorLevel = atoi(value);
-                continue;
-            }
-            if (!strcmp( line, "CPU revision" ))
-            {
-                info->ProcessorRevision = atoi(value);
-                continue;
-            }
-            if (!strcmp( line, "Features" ))
-            {
+#ifdef __arm__
+                if (strstr(value, "vfpv3"))   features |= CPU_FEATURE_ARM_VFP_32;
+                if (strstr(value, "neon"))    features |= CPU_FEATURE_ARM_NEON;
+#else
                 if (strstr(value, "crc32"))   features |= CPU_FEATURE_ARM_V8_CRC32;
                 if (strstr(value, "aes"))     features |= CPU_FEATURE_ARM_V8_CRYPTO;
                 if (strstr(value, "atomics")) features |= CPU_FEATURE_ARM_V81_ATOMIC;
                 if (strstr(value, "asimddp")) features |= CPU_FEATURE_ARM_V82_DP;
                 if (strstr(value, "jscvt"))   features |= CPU_FEATURE_ARM_V83_JSCVT;
                 if (strstr(value, "lrcpc"))   features |= CPU_FEATURE_ARM_V83_LRCPC;
+#endif
                 continue;
             }
         }
@@ -647,9 +587,29 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
-    info->ProcessorLevel = max(info->ProcessorLevel, 8);
+#ifdef __arm__
+    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
+#else
     info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
+#endif
     info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
+    info->ProcessorLevel = part;
+    info->ProcessorRevision = (variant << 8) | revision;
+    cpu_id = (implementer << 24) | (variant << 20) | (0x0f << 16) | (part << 4) | revision;
+    switch (implementer)
+    {
+    case 0x41: strcpy( cpu_vendor, "ARM" ); break;
+    case 0x42: strcpy( cpu_vendor, "Broadcom" ); break;
+    case 0x43: strcpy( cpu_vendor, "Cavium" ); break;
+    case 0x44: strcpy( cpu_vendor, "DEC" ); break;
+    case 0x4e: strcpy( cpu_vendor, "Nvidia" ); break;
+    case 0x50: strcpy( cpu_vendor, "APM" ); break;
+    case 0x51: strcpy( cpu_vendor, "Qualcomm" ); break;
+    case 0x53: strcpy( cpu_vendor, "Samsung" ); break;
+    case 0x56: strcpy( cpu_vendor, "Marvell" ); break;
+    case 0x66: strcpy( cpu_vendor, "Faraday" ); break;
+    case 0x69: strcpy( cpu_vendor, "Intel" ); break;
+    }
 }
 
 #endif /* End architecture specific feature detection for CPUs */
@@ -1348,7 +1308,7 @@ void init_cpu_info(void)
     num = 1;
     FIXME("Detecting the number of processors is not supported.\n");
 #endif
-    peb->NumberOfProcessors = num;
+    peb->NumberOfProcessors = cpu_info.MaximumProcessors = num;
     get_cpuinfo( &cpu_info );
     TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
            (int)cpu_info.ProcessorArchitecture, (int)cpu_info.ProcessorLevel,

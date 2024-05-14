@@ -358,16 +358,15 @@ static void test_query_cpu(void)
         if (winetest_debug > 1) trace("Processor FeatureSet : %08lx\n", sci.ProcessorFeatureBits);
         ok( sci.ProcessorFeatureBits != 0, "Expected some features for this processor, got %08lx\n",
             sci.ProcessorFeatureBits);
-
-        ok( sci.ProcessorLevel == sci2.ProcessorLevel, "ProcessorLevel differs %x / %x\n",
-            sci.ProcessorLevel, sci2.ProcessorLevel );
-        ok( sci.ProcessorRevision == sci2.ProcessorRevision, "ProcessorRevision differs %x / %x\n",
-            sci.ProcessorRevision, sci2.ProcessorRevision );
-        ok( sci.MaximumProcessors == sci2.MaximumProcessors, "MaximumProcessors differs %x / %x\n",
-            sci.MaximumProcessors, sci2.MaximumProcessors );
-        ok( sci.ProcessorFeatureBits == sci2.ProcessorFeatureBits, "ProcessorFeatureBits differs %lx / %lx\n",
-            sci.ProcessorFeatureBits, sci2.ProcessorFeatureBits );
     }
+    ok( sci.ProcessorLevel == sci2.ProcessorLevel, "ProcessorLevel differs %x / %x\n",
+        sci.ProcessorLevel, sci2.ProcessorLevel );
+    ok( sci.ProcessorRevision == sci2.ProcessorRevision, "ProcessorRevision differs %x / %x\n",
+        sci.ProcessorRevision, sci2.ProcessorRevision );
+    ok( sci.MaximumProcessors == sci2.MaximumProcessors, "MaximumProcessors differs %x / %x\n",
+        sci.MaximumProcessors, sci2.MaximumProcessors );
+    ok( sci.ProcessorFeatureBits == sci2.ProcessorFeatureBits, "ProcessorFeatureBits differs %lx / %lx\n",
+        sci.ProcessorFeatureBits, sci2.ProcessorFeatureBits );
 
     memset(&sci3, 0xcc, sizeof(sci3));
     status = pNtQuerySystemInformation(SystemEmulationProcessorInformation, &sci3, sizeof(sci3), &len);
