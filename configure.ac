@@ -1016,6 +1016,9 @@ case $HOST_ARCH in
   arm|aarch64)
     test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT="" ;;
+  *)
+    WINE_NOTICE_WITH(mingw,[test "x$PE_ARCHS" = "x"],
+                     [Suitable PE cross-compiler not found, PE files won't be built.]) ;;
 esac
 
 dnl **** External libraries ****

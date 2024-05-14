@@ -12027,6 +12027,17 @@ case $HOST_ARCH in
   arm|aarch64)
     test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
     DLLEXT="" ;;
+  *)
+    if test "x$PE_ARCHS" = "x"
+then :
+  case "x$with_mingw" in
+  x)   as_fn_append wine_notices "|Suitable PE cross-compiler not found, PE files won't be built." ;;
+  xno) ;;
+  *)   as_fn_error $? "Suitable PE cross-compiler not found, PE files won't be built.
+This is an error since --with-mingw was requested." "$LINENO" 5 ;;
+esac
+
+fi ;;
 esac
 
 
