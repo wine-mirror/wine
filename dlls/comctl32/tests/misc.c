@@ -1239,14 +1239,9 @@ static void test_WM_SETFONT(void)
 
         ret = GetObjectA(hfont, sizeof(lf), &lf);
         if (!lstrcmpA(tests[i].class_name, WC_IPADDRESSA))
-        {
-            todo_wine
             ok(ret == 0, "GetObjectA succeeded.\n");
-        }
         else
-        {
             ok(ret == sizeof(lf), "GetObjectA failed, error %lu.\n", GetLastError());
-        }
 
         winetest_pop_context();
     }
