@@ -522,30 +522,6 @@ static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
     buffer[i] = 0;
 }
 
-static unsigned int get_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
-{
-    unsigned int model, family_id = (reg0 & (0x0f << 8)) >> 8;
-
-    model = (reg0 & (0x0f << 4)) >> 4;
-    if (family_id == 6 || family_id == 15) model |= (reg0 & (0x0f << 16)) >> 12;
-
-    *family = family_id;
-    if (family_id == 15) *family += (reg0 & (0xff << 20)) >> 20;
-
-    *stepping = reg0 & 0x0f;
-    return model;
-}
-
-static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch )
-{
-    unsigned int family, model, stepping;
-    int regs[4] = {0, 0, 0, 0};
-
-    __cpuid( regs, 1 );
-    model = get_model( regs[0], &stepping, &family );
-    swprintf( buf, size, L"%s Family %u Model %u Stepping %u", arch, family, model, stepping );
-}
-
 static void get_vendorid( WCHAR *buf )
 {
     int tmp, regs[4] = {0, 0, 0, 0};
@@ -560,7 +536,6 @@ static void get_vendorid( WCHAR *buf )
 
 #else  /* __i386__ || __x86_64__ */
 
-static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch ) { }
 static void get_vendorid( WCHAR *buf ) { }
 
 #endif  /* __i386__ || __x86_64__ */
@@ -838,13 +813,16 @@ static void create_hardware_registry_keys(void)
 
     case PROCESSOR_ARCHITECTURE_AMD64:
         arch = L"AMD64";
-        get_identifier( id, ARRAY_SIZE(id), !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64" );
+        swprintf( id, ARRAY_SIZE(id), L"%s Family %u Model %u Stepping %u",
+                  !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64",
+                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
         break;
 
     case PROCESSOR_ARCHITECTURE_INTEL:
     default:
         arch = L"x86";
-        get_identifier( id, ARRAY_SIZE(id), L"x86" );
+        swprintf( id, ARRAY_SIZE(id), L"x86 Family %u Model %u Stepping %u",
+                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
         break;
     }
 
