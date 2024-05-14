@@ -1231,7 +1231,6 @@ static void test_WM_SETFONT(void)
         if (tests[i].use_system_font)
             ok(hfont2 == NULL, "Got unexpected font %p.\n", hfont2);
         else
-            todo_wine_if(!lstrcmpA(tests[i].class_name, TOOLTIPS_CLASSA))
             ok(hfont2 == hfont, "Got unexpected font %p.\n", hfont2);
         ret = GetObjectA(hfont, sizeof(lf), &lf);
         ok(ret == sizeof(lf), "GetObjectA failed, error %lu.\n", GetLastError());
