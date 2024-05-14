@@ -326,6 +326,7 @@ static void test_choosepixelformat(void)
         ok( ret_fmt.cAlphaShift == 24, "Got %u.\n", ret_fmt.cAlphaShift );
     else
         ok( !ret_fmt.cAlphaShift, "Got %u.\n", ret_fmt.cAlphaShift );
+    ok( ret_fmt.cDepthBits, "Got %u.\n", ret_fmt.cDepthBits );
 
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
     ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );

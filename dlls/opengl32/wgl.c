@@ -284,7 +284,14 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                 continue;
             }
         }
-        if (ppfd->dwFlags & PFD_DEPTH_DONTCARE && format.cDepthBits < best.cDepthBits)
+        if (ppfd->dwFlags & PFD_DEPTH_DONTCARE)
+        {
+            if (format.cDepthBits < best.cDepthBits)
+                goto found;
+            continue;
+        }
+
+        if (!ppfd->cDepthBits && format.cDepthBits > best.cDepthBits)
             goto found;
 
         continue;
