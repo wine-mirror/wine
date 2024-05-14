@@ -158,58 +158,8 @@ static inline DocumentType *impl_from_IDOMDocumentType(IDOMDocumentType *iface)
     return CONTAINING_RECORD(iface, DocumentType, IDOMDocumentType_iface);
 }
 
-static HRESULT WINAPI DocumentType_QueryInterface(IDOMDocumentType *iface, REFIID riid, void **ppv)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IHTMLDOMNode_QueryInterface(&This->node.IHTMLDOMNode_iface, riid, ppv);
-}
-
-static ULONG WINAPI DocumentType_AddRef(IDOMDocumentType *iface)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IHTMLDOMNode_AddRef(&This->node.IHTMLDOMNode_iface);
-}
-
-static ULONG WINAPI DocumentType_Release(IDOMDocumentType *iface)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IHTMLDOMNode_Release(&This->node.IHTMLDOMNode_iface);
-}
-
-static HRESULT WINAPI DocumentType_GetTypeInfoCount(IDOMDocumentType *iface, UINT *pctinfo)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IDispatchEx_GetTypeInfoCount(&This->node.event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI DocumentType_GetTypeInfo(IDOMDocumentType *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI DocumentType_GetIDsOfNames(IDOMDocumentType *iface, REFIID riid, LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
-                                     cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI DocumentType_Invoke(IDOMDocumentType *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    DocumentType *This = impl_from_IDOMDocumentType(iface);
-
-    return IDispatchEx_Invoke(&This->node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
-                              wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(DocumentType, IDOMDocumentType,
+                      impl_from_IDOMDocumentType(iface)->node.event_target.dispex)
 
 static HRESULT WINAPI DocumentType_get_name(IDOMDocumentType *iface, BSTR *p)
 {
