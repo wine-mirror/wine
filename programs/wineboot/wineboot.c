@@ -604,7 +604,8 @@ struct smbios_system
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
 
-static const struct smbios_header *find_smbios_entry( enum smbios_type type, const char *buf, UINT len )
+static const struct smbios_header *find_smbios_entry( enum smbios_type type, unsigned int index,
+                                                      const char *buf, UINT len )
 {
     const char *ptr, *start;
     const struct smbios_prologue *prologue;
@@ -630,20 +631,16 @@ static const struct smbios_header *find_smbios_entry( enum smbios_type type, con
         if (hdr->type == type)
         {
             if ((const char *)hdr - start + hdr->length > prologue->length) return NULL;
-            break;
+            if (!index--) return hdr;
         }
-        else /* skip other entries and their strings */
+        /* skip other entries and their strings */
+        for (ptr = (const char *)hdr + hdr->length; ptr - buf < len && *ptr; ptr++)
         {
-            for (ptr = (const char *)hdr + hdr->length; ptr - buf < len && *ptr; ptr++)
-            {
-                for (; ptr - buf < len; ptr++) if (!*ptr) break;
-            }
-            if (ptr == (const char *)hdr + hdr->length) ptr++;
-            hdr = (const struct smbios_header *)(ptr + 1);
+            for (; ptr - buf < len; ptr++) if (!*ptr) break;
         }
+        if (ptr == (const char *)hdr + hdr->length) ptr++;
+        hdr = (const struct smbios_header *)(ptr + 1);
     }
-
-    return hdr;
 }
 
 static inline WCHAR *heap_strdupAW( const char *src )
@@ -684,7 +681,7 @@ static void create_bios_baseboard_values( HKEY bios_key, const char *buf, UINT l
     const struct smbios_baseboard *baseboard;
     UINT offset;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BASEBOARD, buf, len ))) return;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BASEBOARD, 0, buf, len ))) return;
     baseboard = (const struct smbios_baseboard *)hdr;
     offset = (const char *)baseboard - buf + baseboard->hdr.length;
 
@@ -699,7 +696,7 @@ static void create_bios_bios_values( HKEY bios_key, const char *buf, UINT len )
     const struct smbios_bios *bios;
     UINT offset;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, 0, buf, len ))) return;
     bios = (const struct smbios_bios *)hdr;
     offset = (const char *)bios - buf + bios->hdr.length;
 
@@ -729,7 +726,7 @@ static void create_bios_system_values( HKEY bios_key, const char *buf, UINT len 
     const struct smbios_system *system;
     UINT offset;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, buf, len ))) return;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, 0, buf, len ))) return;
     system = (const struct smbios_system *)hdr;
     offset = (const char *)system - buf + system->hdr.length;
 
