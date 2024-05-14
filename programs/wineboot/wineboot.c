@@ -510,35 +510,6 @@ static void create_user_shared_data(void)
     UnmapViewOfFile( data );
 }
 
-#if defined(__i386__) || defined(__x86_64__)
-
-static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
-{
-    unsigned int i;
-    unsigned char *p = (unsigned char *)regs;
-
-    for (i = 0; i < len; i++) { buffer[i] = *p++; }
-    buffer[i] = 0;
-}
-
-static void get_vendorid( WCHAR *buf )
-{
-    int tmp, regs[4] = {0, 0, 0, 0};
-
-    __cpuid( regs, 0 );
-    tmp = regs[2];      /* swap edx and ecx */
-    regs[2] = regs[3];
-    regs[3] = tmp;
-
-    regs_to_str( regs + 1, 12, buf );
-}
-
-#else  /* __i386__ || __x86_64__ */
-
-static void get_vendorid( WCHAR *buf ) { }
-
-#endif  /* __i386__ || __x86_64__ */
-
 #include "pshpack1.h"
 struct smbios_prologue
 {
@@ -551,9 +522,13 @@ struct smbios_prologue
 
 enum smbios_type
 {
-    SMBIOS_TYPE_BIOS,
-    SMBIOS_TYPE_SYSTEM,
-    SMBIOS_TYPE_BASEBOARD,
+    SMBIOS_TYPE_BIOS = 0,
+    SMBIOS_TYPE_SYSTEM = 1,
+    SMBIOS_TYPE_BASEBOARD = 2,
+    SMBIOS_TYPE_CHASSIS = 3,
+    SMBIOS_TYPE_PROCESSOR = 4,
+    SMBIOS_TYPE_BOOTINFO = 32,
+    SMBIOS_TYPE_END = 127
 };
 
 struct smbios_header
@@ -599,6 +574,37 @@ struct smbios_system
     BYTE                 wake_up_type;
     BYTE                 sku;
     BYTE                 family;
+};
+
+struct smbios_processor
+{
+    struct smbios_header hdr;
+    BYTE                 socket;
+    BYTE                 type;
+    BYTE                 family;
+    BYTE                 vendor;
+    ULONGLONG            id;
+    BYTE                 version;
+    BYTE                 voltage;
+    WORD                 clock;
+    WORD                 max_speed;
+    WORD                 cur_speed;
+    BYTE                 status;
+    BYTE                 upgrade;
+    WORD                 l1cache;
+    WORD                 l2cache;
+    WORD                 l3cache;
+    BYTE                 serial;
+    BYTE                 asset_tag;
+    BYTE                 part_number;
+    BYTE                 core_count;
+    BYTE                 core_enabled;
+    BYTE                 thread_count;
+    WORD                 characteristics;
+    WORD                 family2;
+    WORD                 core_count2;
+    WORD                 core_enabled2;
+    WORD                 thread_count2;
 };
 #include "poppack.h"
 
@@ -746,88 +752,26 @@ static void create_bios_system_values( HKEY bios_key, const char *buf, UINT len 
     }
 }
 
-static void create_bios_key( HKEY system_key )
+static void create_bios_processor_values( HKEY system_key, const char *buf, UINT len )
 {
-    HKEY bios_key;
-    UINT len;
-    char *buf;
-
-    if (RegCreateKeyExW( system_key, L"BIOS", 0, NULL, REG_OPTION_VOLATILE,
-                         KEY_ALL_ACCESS, NULL, &bios_key, NULL ))
-        return;
-
-    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
-    if (!(buf = malloc( len ))) goto done;
-    len = GetSystemFirmwareTable( RSMB, 0, buf, len );
-
-    create_bios_baseboard_values( bios_key, buf, len );
-    create_bios_bios_values( bios_key, buf, len );
-    create_bios_system_values( bios_key, buf, len );
-
-done:
-    free( buf );
-    RegCloseKey( bios_key );
-}
-
-/* create the volatile hardware registry keys */
-static void create_hardware_registry_keys(void)
-{
-    unsigned int i;
-    HKEY hkey, system_key, cpu_key, fpu_key, env_key;
+    const struct smbios_header *hdr;
+    const struct smbios_processor *proc;
+    unsigned int pkg, core, offset, i;
+    HKEY hkey, cpu_key, fpu_key = 0, env_key;
     SYSTEM_CPU_INFORMATION sci;
     PROCESSOR_POWER_INFORMATION* power_info;
     ULONG sizeof_power_info = sizeof(PROCESSOR_POWER_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
     UINT64 tsc_frequency = read_tsc_frequency();
-    ULONG name_buffer[16];
     const WCHAR *arch;
-    WCHAR id[60], buffer[128], vendorid[13];
+    WCHAR id[60], buffer[128], *version, *vendorid;
 
-    get_vendorid( vendorid );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
-    if (NtQuerySystemInformation( SystemProcessorBrandString, name_buffer, sizeof(name_buffer), NULL ))
-        name_buffer[0] = 0;
 
     power_info = malloc( sizeof_power_info );
     if (power_info == NULL)
         return;
     if (NtPowerInformation( ProcessorInformation, NULL, 0, power_info, sizeof_power_info ))
         memset( power_info, 0, sizeof_power_info );
-
-    switch (sci.ProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_ARM:
-        arch = L"ARM";
-        swprintf( id, ARRAY_SIZE(id), L"ARM Family 7 Model %X Revision %X",
-                  sci.ProcessorLevel, sci.ProcessorRevision );
-        break;
-
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        arch = L"ARM64";
-        swprintf( id, ARRAY_SIZE(id), L"ARMv8 (64-bit) Family 8 Model %X Revision %X",
-                  sci.ProcessorLevel, sci.ProcessorRevision );
-        break;
-
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        arch = L"AMD64";
-        swprintf( id, ARRAY_SIZE(id), L"%s Family %u Model %u Stepping %u",
-                  !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64",
-                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
-        break;
-
-    case PROCESSOR_ARCHITECTURE_INTEL:
-    default:
-        arch = L"x86";
-        swprintf( id, ARRAY_SIZE(id), L"x86 Family %u Model %u Stepping %u",
-                  sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
-        break;
-    }
-
-    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Hardware\\Description\\System", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &system_key, NULL ))
-    {
-        free( power_info );
-        return;
-    }
 
     switch (sci.ProcessorArchitecture)
     {
@@ -850,62 +794,122 @@ static void create_hardware_registry_keys(void)
                          KEY_ALL_ACCESS, NULL, &cpu_key, NULL ))
         cpu_key = 0;
 
-    for (i = 0; i < NtCurrentTeb()->Peb->NumberOfProcessors; i++)
+    for (pkg = core = 0; ; pkg++)
     {
-        WCHAR numW[10];
+        if (!(hdr = find_smbios_entry( SMBIOS_TYPE_PROCESSOR, pkg, buf, len ))) break;
+        proc = (const struct smbios_processor *)hdr;
+        offset = (const char *)proc - buf + proc->hdr.length;
+        version = get_smbios_string( proc->version, buf, offset, len );
+        vendorid = get_smbios_string( proc->vendor, buf, offset, len );
 
-        swprintf( numW, ARRAY_SIZE(numW), L"%u", i );
-        if (!RegCreateKeyExW( cpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
-                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        switch (sci.ProcessorArchitecture)
         {
-            DWORD tsc_freq_mhz = (DWORD)(tsc_frequency / 1000000ull); /* Hz -> Mhz */
-            if (!tsc_freq_mhz) tsc_freq_mhz = power_info[i].MaxMhz;
-
-            RegSetValueExW( hkey, L"FeatureSet", 0, REG_DWORD, (BYTE *)&sci.ProcessorFeatureBits, sizeof(DWORD) );
-            set_reg_value( hkey, L"Identifier", id );
-            /* TODO: report ARM properly */
-            RegSetValueExA( hkey, "ProcessorNameString", 0, REG_SZ, (const BYTE *)name_buffer,
-                            strlen( (char *)name_buffer ) + 1 );
-            set_reg_value( hkey, L"VendorIdentifier", vendorid );
-            RegSetValueExW( hkey, L"~MHz", 0, REG_DWORD, (BYTE *)&tsc_freq_mhz, sizeof(DWORD) );
-            RegCloseKey( hkey );
+        case PROCESSOR_ARCHITECTURE_ARM:
+            arch = L"ARM";
+            swprintf( id, ARRAY_SIZE(id), L"ARM Family 7 Model %X Revision %X",
+                      sci.ProcessorLevel, sci.ProcessorRevision );
+            break;
+        case PROCESSOR_ARCHITECTURE_ARM64:
+            arch = L"ARM64";
+            swprintf( id, ARRAY_SIZE(id), L"ARMv8 (64-bit) Family 8 Model %X Revision %X",
+                      sci.ProcessorLevel, sci.ProcessorRevision );
+            break;
+        case PROCESSOR_ARCHITECTURE_AMD64:
+            arch = L"AMD64";
+            swprintf( id, ARRAY_SIZE(id), L"%s Family %u Model %u Stepping %u",
+                      vendorid && !wcscmp(vendorid, L"AuthenticAMD") ? L"AMD64" : L"Intel64",
+                      sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
+            break;
+        case PROCESSOR_ARCHITECTURE_INTEL:
+        default:
+            arch = L"x86";
+            swprintf( id, ARRAY_SIZE(id), L"x86 Family %u Model %u Stepping %u",
+                      sci.ProcessorLevel, HIBYTE(sci.ProcessorRevision), LOBYTE(sci.ProcessorRevision) );
+            break;
         }
-        if (sci.ProcessorArchitecture != PROCESSOR_ARCHITECTURE_ARM &&
-            sci.ProcessorArchitecture != PROCESSOR_ARCHITECTURE_ARM64 &&
-            !RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
-                              KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+
+        for (i = 0; i < proc->thread_count2; i++, core++)
         {
-            set_reg_value( hkey, L"Identifier", id );
-            RegCloseKey( hkey );
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%u", core );
+            if (!RegCreateKeyExW( cpu_key, buffer, 0, NULL, REG_OPTION_VOLATILE,
+                                  KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+            {
+                DWORD tsc_freq_mhz = (DWORD)(tsc_frequency / 1000000ull); /* Hz -> Mhz */
+                if (!tsc_freq_mhz) tsc_freq_mhz = power_info[core].MaxMhz;
+
+                RegSetValueExW( hkey, L"FeatureSet", 0, REG_DWORD,
+                                (BYTE *)&sci.ProcessorFeatureBits, sizeof(DWORD) );
+                set_reg_value( hkey, L"Identifier", id );
+                if (vendorid) set_reg_value( hkey, L"VendorIdentifier", vendorid );
+                if (version) set_reg_value( hkey, L"ProcessorNameString", version );
+                RegSetValueExW( hkey, L"~MHz", 0, REG_DWORD, (BYTE *)&tsc_freq_mhz, sizeof(DWORD) );
+                RegCloseKey( hkey );
+            }
+            if (fpu_key && !RegCreateKeyExW( fpu_key, buffer, 0, NULL, REG_OPTION_VOLATILE,
+                                             KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+            {
+                set_reg_value( hkey, L"Identifier", id );
+                RegCloseKey( hkey );
+            }
         }
+
+        if (!pkg && !RegCreateKeyW( HKEY_LOCAL_MACHINE,
+                                    L"System\\CurrentControlSet\\Control\\Session Manager\\Environment",
+                                    &env_key ))
+        {
+            set_reg_value( env_key, L"PROCESSOR_ARCHITECTURE", arch );
+
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%s, %s", id, vendorid ? vendorid : L"Unknown" );
+            set_reg_value( env_key, L"PROCESSOR_IDENTIFIER", buffer );
+
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%u", sci.ProcessorLevel );
+            set_reg_value( env_key, L"PROCESSOR_LEVEL", buffer );
+
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%04x", sci.ProcessorRevision );
+            set_reg_value( env_key, L"PROCESSOR_REVISION", buffer );
+
+            swprintf( buffer, ARRAY_SIZE(buffer), L"%u", NtCurrentTeb()->Peb->NumberOfProcessors );
+            set_reg_value( env_key, L"NUMBER_OF_PROCESSORS", buffer );
+            RegCloseKey( env_key );
+        }
+
+        free( version );
+        free( vendorid );
     }
-
-    if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
-                        L"System\\CurrentControlSet\\Control\\Session Manager\\Environment",
-                        &env_key ))
-    {
-        set_reg_value( env_key, L"PROCESSOR_ARCHITECTURE", arch );
-
-        swprintf( buffer, ARRAY_SIZE(buffer), L"%s, %s", id, vendorid );
-        set_reg_value( env_key, L"PROCESSOR_IDENTIFIER", buffer );
-
-        swprintf( buffer, ARRAY_SIZE(buffer), L"%u", sci.ProcessorLevel );
-        set_reg_value( env_key, L"PROCESSOR_LEVEL", buffer );
-
-        swprintf( buffer, ARRAY_SIZE(buffer), L"%04x", sci.ProcessorRevision );
-        set_reg_value( env_key, L"PROCESSOR_REVISION", buffer );
-
-        swprintf( buffer, ARRAY_SIZE(buffer), L"%u", NtCurrentTeb()->Peb->NumberOfProcessors );
-        set_reg_value( env_key, L"NUMBER_OF_PROCESSORS", buffer );
-        RegCloseKey( env_key );
-    }
-
-    create_bios_key( system_key );
 
     RegCloseKey( fpu_key );
     RegCloseKey( cpu_key );
-    RegCloseKey( system_key );
     free( power_info );
+}
+
+/* create the volatile hardware registry keys */
+static void create_hardware_registry_keys(void)
+{
+    HKEY system_key, bios_key;
+    UINT len;
+    char *buf;
+
+    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
+    if (!(buf = malloc( len ))) return;
+    len = GetSystemFirmwareTable( RSMB, 0, buf, len );
+
+    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Hardware\\Description\\System", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &system_key, NULL ))
+    {
+        free( buf );
+        return;
+    }
+    if (!RegCreateKeyExW( system_key, L"BIOS", 0, NULL, REG_OPTION_VOLATILE,
+                          KEY_ALL_ACCESS, NULL, &bios_key, NULL ))
+    {
+        create_bios_baseboard_values( bios_key, buf, len );
+        create_bios_bios_values( bios_key, buf, len );
+        create_bios_system_values( bios_key, buf, len );
+        RegCloseKey( bios_key );
+    }
+    create_bios_processor_values( system_key, buf, len );
+    RegCloseKey( system_key );
+    free( buf );
 }
 
 
