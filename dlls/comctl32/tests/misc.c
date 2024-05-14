@@ -1160,6 +1160,102 @@ static void test_WM_STYLECHANGED(void)
     DestroyWindow(parent);
 }
 
+static void test_WM_SETFONT(void)
+{
+    HFONT hfont, hfont2;
+    HWND parent, hwnd;
+    LOGFONTA lf;
+    int i, ret;
+
+    static const struct
+    {
+        const CHAR *class_name;
+        BOOL use_system_font;
+    }
+    tests[] =
+    {
+        {ANIMATE_CLASSA, TRUE},
+        {WC_BUTTONA},
+        {WC_COMBOBOXA},
+        {WC_COMBOBOXEXA},
+        {DATETIMEPICK_CLASSA},
+        {WC_EDITA},
+        {WC_HEADERA},
+        {HOTKEY_CLASSA},
+        {WC_IPADDRESSA, TRUE},
+        {WC_LISTBOXA},
+        {WC_LISTVIEWA},
+        {MONTHCAL_CLASSA},
+        {WC_NATIVEFONTCTLA, TRUE},
+        {WC_PAGESCROLLERA, TRUE},
+        {PROGRESS_CLASSA},
+        {REBARCLASSNAMEA},
+        {WC_STATICA},
+        {STATUSCLASSNAMEA},
+        {"SysLink"},
+        {WC_TABCONTROLA},
+        {TOOLBARCLASSNAMEA},
+        {TOOLTIPS_CLASSA},
+        {TRACKBAR_CLASSA, TRUE},
+        {WC_TREEVIEWA},
+        {UPDOWN_CLASSA, TRUE},
+        {WC_SCROLLBARA, TRUE},
+    };
+
+    parent = CreateWindowA(WC_STATICA, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
+                           0, 0, 0, 0);
+    ok(parent != NULL, "CreateWindowA failed, error %lu.\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("%s", tests[i].class_name);
+
+        hwnd = CreateWindowA(tests[i].class_name, "test", WS_POPUP | WS_VISIBLE, 0, 0, 50, 50, parent,
+                             0, 0, 0);
+        /* SysLink is unavailable in comctl32 v5 */
+        if (!hwnd && !lstrcmpA(tests[i].class_name, "SysLink"))
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        ZeroMemory(&lf, sizeof(lf));
+        lf.lfWeight = FW_NORMAL;
+        lf.lfHeight = 20;
+        lstrcpyA(lf.lfFaceName, "Tahoma");
+        hfont = CreateFontIndirectA(&lf);
+        ok(hfont != NULL, "CreateFontIndirectA failed, error %lu.\n", GetLastError());
+
+        SendMessageA(hwnd, WM_SETFONT, (WPARAM)hfont, TRUE);
+        hfont2 = (HFONT)SendMessageA(hwnd, WM_GETFONT, 0, 0);
+        if (tests[i].use_system_font)
+            ok(hfont2 == NULL, "Got unexpected font %p.\n", hfont2);
+        else
+            todo_wine_if(!lstrcmpA(tests[i].class_name, TOOLTIPS_CLASSA))
+            ok(hfont2 == hfont, "Got unexpected font %p.\n", hfont2);
+        ret = GetObjectA(hfont, sizeof(lf), &lf);
+        ok(ret == sizeof(lf), "GetObjectA failed, error %lu.\n", GetLastError());
+
+        DestroyWindow(hwnd);
+
+        ret = GetObjectA(hfont, sizeof(lf), &lf);
+        if (!lstrcmpA(tests[i].class_name, WC_IPADDRESSA))
+        {
+            todo_wine
+            ok(ret == 0, "GetObjectA succeeded.\n");
+        }
+        else
+        {
+            todo_wine_if(!lstrcmpA(tests[i].class_name, "SysLink"))
+            ok(ret == sizeof(lf), "GetObjectA failed, error %lu.\n", GetLastError());
+        }
+
+        winetest_pop_context();
+    }
+
+    DestroyWindow(parent);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -1173,6 +1269,7 @@ START_TEST(misc)
     test_Alloc();
     test_comctl32_classes(FALSE);
     test_WM_STYLECHANGED();
+    test_WM_SETFONT();
 
     FreeLibrary(hComctl32);
 
@@ -1188,6 +1285,7 @@ START_TEST(misc)
     test_WM_THEMECHANGED();
     test_WM_SYSCOLORCHANGE();
     test_WM_STYLECHANGED();
+    test_WM_SETFONT();
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
