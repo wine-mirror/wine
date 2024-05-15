@@ -3348,6 +3348,13 @@ static HRESULT transform_stream_update_input_type(struct topo_node *node, UINT i
         struct transform_stream *stream = &node->u.transform.outputs[output];
         UINT id = transform_node_get_stream_id(node, TRUE, output);
 
+        /* check if transform output type is still valid or if we need to update it as well */
+        if (SUCCEEDED(hr = IMFTransform_GetOutputCurrentType(node->object.transform, id, &new_output_type)))
+        {
+            IMFMediaType_Release(new_output_type);
+            continue;
+        }
+
         if (SUCCEEDED(hr = transform_stream_update_output_type(node, stream, id,
                 old_output_types[output], &new_output_type)))
         {
