@@ -59,14 +59,6 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 
     if (ex_style & WS_EX_NOACTIVATE) wf->prevents_app_activation = TRUE;
 
-    /* The dock_icon flag is only relevant when the window is visible, so we
-       don't need to worry about any other styles or the window rect. */
-    if (NtUserGetWindowRelative(data->hwnd, GW_OWNER))
-        wf->dock_icon = FALSE;
-    else
-        wf->dock_icon = (ex_style & WS_EX_APPWINDOW) ||
-                        ((ex_style & (WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)) == 0);
-
     if (disable_window_decorations) return;
     if (IsRectEmpty(window_rect)) return;
     if (EqualRect(window_rect, client_rect)) return;

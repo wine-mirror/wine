@@ -1009,7 +1009,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
     @synthesize himc, commandDone;
-    @synthesize needsDockIcon;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -1049,7 +1048,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         window->savedContentMaxSize = NSMakeSize(FLT_MAX, FLT_MAX);
         window->resizable = wf->resizable;
         window->_lastDisplayTime = [[NSDate distantPast] timeIntervalSinceReferenceDate];
-        window->needsDockIcon = wf->dock_icon;
 
         [window registerForDraggedTypes:@[(NSString*)kUTTypeData, (NSString*)kUTTypeContent]];
 
@@ -1185,7 +1183,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                                              NSWindowStyleMaskNonactivatingPanel;
         NSUInteger currentStyle = [self styleMask];
         NSUInteger newStyle = style_mask_for_features(wf) | (currentStyle & ~usedStyles);
-        int neededDockIcon;
 
         self.preventsAppActivation = wf->prevents_app_activation;
 
@@ -1230,17 +1227,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         resizable = wf->resizable;
         [self adjustFeaturesForState];
         [self setHasShadow:wf->shadow];
-
-        // We may need to hide or show our dock icon in response to changes.
-        neededDockIcon = needsDockIcon;
-        needsDockIcon = wf->dock_icon;  // Need to update this before calling maybeHideDockIcon
-        if ([self isOrderedIn])
-        {
-            if (neededDockIcon && !needsDockIcon)
-                [[WineApplicationController sharedController] maybeHideDockIconDueToWindowOrderingOut:nil];
-            else if(!neededDockIcon && needsDockIcon)
-                [[WineApplicationController sharedController] transformProcessToForeground:!self.preventsAppActivation];
-        }
     }
 
     // Indicates if the window would be visible if the app were not hidden.
@@ -1753,9 +1739,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             WineWindow* parent;
             WineWindow* child;
 
-            if (!eager_dock_icon_hiding || self.needsDockIcon)
-                [controller transformProcessToForeground:!self.preventsAppActivation];
-
+            [controller transformProcessToForeground:!self.preventsAppActivation];
             if ([NSApp isHidden])
                 [NSApp unhide:nil];
             wasVisible = [self isVisible];
@@ -2126,10 +2110,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if (activate)
         {
             WineApplicationController *controller = [WineApplicationController sharedController];
-
-            if (!eager_dock_icon_hiding || self.needsDockIcon)
-                [controller transformProcessToForeground:YES];
-
+            [controller transformProcessToForeground:YES];
             [controller tryToActivateIgnoringOtherApps:YES];
         }
 

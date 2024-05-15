@@ -157,7 +157,6 @@ enum {
 
     - (void) window:(WineWindow*)window isBeingDragged:(BOOL)dragged;
     - (void) windowWillOrderOut:(WineWindow*)window;
-    - (void) maybeHideDockIconDueToWindowOrderingOut:(NSWindow *)window;
 
     - (void) flipRect:(NSRect*)rect;
     - (NSPoint) flippedMouseLocation:(NSPoint)point;
