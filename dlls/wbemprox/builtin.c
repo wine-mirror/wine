@@ -19,7 +19,6 @@
 #define COBJMACROS
 
 #include <stdarg.h>
-#include <intrin.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -44,7 +43,6 @@
 #include "setupapi.h"
 #include "ntddstor.h"
 
-#include "wine/asm.h"
 #include "wine/debug.h"
 #include "wbemprox_private.h"
 
@@ -3410,29 +3408,6 @@ done:
     return status;
 }
 
-void do_cpuid( unsigned int ax, int *p )
-{
-#if defined(__i386__) || defined(__x86_64__)
-    __cpuid( p, ax );
-#else
-    FIXME("\n");
-#endif
-}
-
-static unsigned int get_processor_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
-{
-    unsigned int model, family_id = (reg0 & (0x0f << 8)) >> 8;
-
-    model = (reg0 & (0x0f << 4)) >> 4;
-    if (family_id == 6 || family_id == 15) model |= (reg0 & (0x0f << 16)) >> 12;
-    if (family)
-    {
-        *family = family_id;
-        if (family_id == 15) *family += (reg0 & (0xff << 20)) >> 20;
-    }
-    *stepping = reg0 & 0x0f;
-    return model;
-}
 static WCHAR *get_processor_manufacturer( UINT index, const char *buf, UINT len )
 {
     WCHAR *ret = get_smbios_string( SMBIOS_TYPE_PROCESSOR, index, offsetof(struct smbios_processor, vendor), buf, len );
@@ -3451,22 +3426,6 @@ static WCHAR *get_processor_caption( UINT index )
     WCHAR name[64];
     swprintf( name, ARRAY_SIZE(name), L"Hardware\\Description\\System\\CentralProcessor\\%u", index );
     return get_reg_str( HKEY_LOCAL_MACHINE, name, L"Identifier" );
-}
-static void get_processor_version( WCHAR *version, UINT len )
-{
-    int regs[4] = {0, 0, 0, 0};
-    unsigned int model, stepping;
-
-    do_cpuid( 1, regs );
-
-    model = get_processor_model( regs[0], &stepping, NULL );
-    swprintf( version, len, L"Model %u Stepping %u", model, stepping );
-}
-static UINT16 get_processor_revision(void)
-{
-    int regs[4] = {0, 0, 0, 0};
-    do_cpuid( 1, regs );
-    return regs[0];
 }
 static WCHAR *get_processor_name( UINT index, const char *buf, UINT len )
 {
@@ -3511,6 +3470,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     struct record_processor *rec;
     UINT i, len, offset = 0, num_rows = 0, num_packages;
     enum fill_status status = FILL_STATUS_UNFILTERED;
+    SYSTEM_CPU_INFORMATION info;
     char *buf;
 
     len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
@@ -3525,7 +3485,9 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         return FILL_STATUS_FAILED;
     }
 
-    get_processor_version( version, ARRAY_SIZE( version ) );
+    RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), NULL );
+    swprintf( version, sizeof(version), L"Model %u, Stepping %u",
+              HIBYTE(info.ProcessorRevision), LOBYTE(info.ProcessorRevision) );
 
     for (i = 0; i < num_packages; i++)
     {
@@ -3535,7 +3497,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
 
         rec = (struct record_processor *)(table->data + offset);
         rec->addresswidth           = (proc->characteristics & 4) ? 64 : 32;
-        rec->architecture           = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 0 : 9;
+        rec->architecture           = info.ProcessorArchitecture;
         rec->caption                = get_processor_caption( i );
         rec->cpu_status             = proc->status;
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
@@ -3544,7 +3506,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         swprintf( device_id, ARRAY_SIZE( device_id ), L"CPU%u", i );
         rec->device_id              = wcsdup( device_id );
         rec->family                 = proc->family;
-        rec->level                  = 15;
+        rec->level                  = info.ProcessorLevel;
         rec->manufacturer           = get_processor_manufacturer( i, buf, len );
         rec->maxclockspeed          = get_processor_maxclockspeed( i );
         rec->name                   = get_processor_name( i, buf, len );
@@ -3553,7 +3515,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         swprintf( processor_id, ARRAY_SIZE( processor_id ), L"%016I64X", proc->id );
         rec->processor_id           = wcsdup( processor_id );
         rec->processortype          = proc->type;
-        rec->revision               = get_processor_revision();
+        rec->revision               = info.ProcessorRevision;
         rec->version                = wcsdup( version );
         if (!match_row( table, i, cond, &status ))
         {
