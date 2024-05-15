@@ -210,55 +210,8 @@ static inline HTMLElementCollection *impl_from_IHTMLElementCollection(IHTMLEleme
     return CONTAINING_RECORD(iface, HTMLElementCollection, IHTMLElementCollection_iface);
 }
 
-static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollection *iface,
-                                                           REFIID riid, void **ppv)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLElementCollection_GetTypeInfoCount(IHTMLElementCollection *iface,
-                                                             UINT *pctinfo)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLElementCollection_GetTypeInfo(IHTMLElementCollection *iface,
-        UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLElementCollection_GetIDsOfNames(IHTMLElementCollection *iface,
-        REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLElementCollection_Invoke(IHTMLElementCollection *iface,
-        DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
-            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLElementCollection, IHTMLElementCollection,
+                      impl_from_IHTMLElementCollection(iface)->dispex)
 
 static HRESULT WINAPI HTMLElementCollection_toString(IHTMLElementCollection *iface,
                                                      BSTR *String)
