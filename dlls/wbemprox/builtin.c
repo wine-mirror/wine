@@ -1351,6 +1351,27 @@ static WCHAR *get_smbios_string( enum smbios_type type, size_t field_offset, con
     return get_smbios_string_by_id( ((const BYTE *)hdr)[field_offset], buf, offset, len );
 }
 
+static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
+{
+    HKEY hkey = 0;
+    DWORD size, type;
+    WCHAR *ret = NULL;
+
+    if (!RegOpenKeyExW( root, path, 0, KEY_READ, &hkey ) &&
+        !RegQueryValueExW( hkey, value, NULL, &type, NULL, &size ) && type == REG_SZ &&
+        (ret = malloc( size + sizeof(WCHAR) )))
+    {
+        size += sizeof(WCHAR);
+        if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)ret, &size ))
+        {
+            free( ret );
+            ret = NULL;
+        }
+    }
+    if (hkey) RegCloseKey( hkey );
+    return ret;
+}
+
 static WCHAR *get_baseboard_manufacturer( const char *buf, UINT len )
 {
     WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, offsetof(struct smbios_baseboard, vendor), buf, len );
@@ -3434,22 +3455,11 @@ static const WCHAR *get_osarchitecture(void)
     if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"64-bit";
     return L"32-bit";
 }
-static void get_processor_caption( WCHAR *caption, UINT len )
+static WCHAR *get_processor_caption( UINT index )
 {
-    const WCHAR *arch;
-    WCHAR manufacturer[13];
-    int regs[4] = {0, 0, 0, 0};
-    unsigned int family, model, stepping;
-
-    get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
-    if (!wcscmp( get_osarchitecture(), L"32-bit" )) arch = L"x86";
-    else if (!wcscmp( manufacturer, L"AuthenticAMD" )) arch = L"AMD64";
-    else arch = L"Intel64";
-
-    do_cpuid( 1, regs );
-
-    model = get_processor_model( regs[0], &stepping, &family );
-    swprintf( caption, len, L"%s Family %u Model %u Stepping %u", arch, family, model, stepping );
+    WCHAR name[64];
+    swprintf( name, ARRAY_SIZE(name), L"Hardware\\Description\\System\\CentralProcessor\\%u", index );
+    return get_reg_str( HKEY_LOCAL_MACHINE, name, L"Identifier" );
 }
 static void get_processor_version( WCHAR *version, UINT len )
 {
@@ -3522,7 +3532,7 @@ static UINT get_processor_maxclockspeed( UINT index )
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
 {
-    WCHAR caption[100], device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
+    WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
     struct record_processor *rec;
     UINT i, offset = 0, num_rows = 0, num_logical, num_physical, num_packages;
     enum fill_status status = FILL_STATUS_UNFILTERED;
@@ -3531,7 +3541,6 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
 
     if (!resize_table( table, num_packages, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    get_processor_caption( caption, ARRAY_SIZE( caption ) );
     get_processor_id( processor_id, ARRAY_SIZE( processor_id ) );
     get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
     get_processor_name( name );
@@ -3542,11 +3551,11 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec = (struct record_processor *)(table->data + offset);
         rec->addresswidth           = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 32 : 64;
         rec->architecture           = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 0 : 9;
-        rec->caption                = wcsdup( caption );
+        rec->caption                = get_processor_caption( i );
         rec->cpu_status             = 1; /* CPU Enabled */
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
         rec->datawidth              = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 32 : 64;
-        rec->description            = wcsdup( caption );
+        rec->description            = get_processor_caption( i );
         swprintf( device_id, ARRAY_SIZE( device_id ), L"CPU%u", i );
         rec->device_id              = wcsdup( device_id );
         rec->family                 = 2; /* Unknown */
@@ -3654,27 +3663,6 @@ static WCHAR *get_locale(void)
 {
     WCHAR *ret = malloc( 5 * sizeof(WCHAR) );
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, ret, 5 );
-    return ret;
-}
-
-static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
-{
-    HKEY hkey = 0;
-    DWORD size, type;
-    WCHAR *ret = NULL;
-
-    if (!RegOpenKeyExW( root, path, 0, KEY_READ, &hkey ) &&
-        !RegQueryValueExW( hkey, value, NULL, &type, NULL, &size ) && type == REG_SZ &&
-        (ret = malloc( size + sizeof(WCHAR) )))
-    {
-        size += sizeof(WCHAR);
-        if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)ret, &size ))
-        {
-            free( ret );
-            ret = NULL;
-        }
-    }
-    if (hkey) RegCloseKey( hkey );
     return ret;
 }
 
