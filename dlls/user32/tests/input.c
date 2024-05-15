@@ -714,7 +714,7 @@ static void get_test_scan( WORD vkey, WORD *scan, WCHAR *wch, WCHAR *wch_shift )
     }
 }
 
-static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, WCHAR wch_shift, WCHAR wch_control )
+static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, WCHAR wch_shift, WCHAR wch_control, HKL hkl )
 {
 #define WIN_MSG(m, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .wparam = w, .lparam = l}, ## __VA_ARGS__}
 #define KBD_HOOK(m, s, v, f, ...) {.func = LL_HOOK_KEYBD, .ll_hook_kbd = {.msg = m, .scan = s, .vkey = v, .flags = f}, ## __VA_ARGS__}
@@ -1162,6 +1162,17 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( NULL, hwnd, HWND, "%p" );
     wait_messages( 100, FALSE );
+
+    /* If we have had a spurious layout change, wch(_shift) may be incorrect. */
+    if (GetKeyboardLayout( 0 ) != hkl)
+    {
+        win_skip( "Spurious keyboard layout changed detected (expected: %p got: %p)\n",
+                  hkl, GetKeyboardLayout( 0 ) );
+        ok_ret( 1, DestroyWindow( hwnd ) );
+        wait_messages( 100, FALSE );
+        ok_seq( empty_sequence );
+        return;
+    }
 
     hook = SetWindowsHookExW( WH_KEYBOARD_LL, ll_hook_kbd_proc, GetModuleHandleW( NULL ), 0 );
     ok_ne( NULL, hook, HHOOK, "%p" );
@@ -4918,7 +4929,7 @@ static void test_UnregisterDeviceNotification(void)
     ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
 }
 
-static void test_SendInput( WORD vkey, WCHAR wch )
+static void test_SendInput( WORD vkey, WCHAR wch, HKL hkl )
 {
     const struct user_call broken_sequence[] =
     {
@@ -4935,6 +4946,17 @@ static void test_SendInput( WORD vkey, WCHAR wch )
     hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( NULL, hwnd, HWND, "%p" );
     wait_messages( 100, FALSE );
+
+    /* If we have had a spurious layout change, wch may be incorrect. */
+    if (GetKeyboardLayout( 0 ) != hkl)
+    {
+        win_skip( "Spurious keyboard layout changed detected (expected: %p got: %p)\n",
+                  hkl, GetKeyboardLayout( 0 ) );
+        ok_ret( 1, DestroyWindow( hwnd ) );
+        wait_messages( 100, FALSE );
+        ok_seq( empty_sequence );
+        return;
+    }
 
     SetLastError( 0xdeadbeef );
     ok_ret( 0, SendInput( 0, NULL, 0 ) );
@@ -5649,7 +5671,7 @@ static void test_keyboard_ll_hook_blocking(void)
     ok_ret( 1, DestroyWindow( hwnd ) );
 }
 
-static void test_LoadKeyboardLayoutEx(void)
+static void test_LoadKeyboardLayoutEx( HKL orig_hkl )
 {
     static const WCHAR test_layout_name[] = L"00000429";
     static const HKL test_hkl = (HKL)0x04290429;
@@ -5660,6 +5682,16 @@ static void test_LoadKeyboardLayoutEx(void)
 
     old_hkl = GetKeyboardLayout( 0 );
     ok_ne( 0, old_hkl, HKL, "%p" );
+
+    /* If we are dealing with a testbot setup that is prone to spurious
+     * layout changes, layout activations in this test are likely to
+     * not have the expected effect, invalidating the test assumptions. */
+    if (orig_hkl != old_hkl)
+    {
+        win_skip( "Spurious keyboard layout changed detected (expected: %p got: %p)\n",
+                  orig_hkl, old_hkl );
+        return;
+    }
 
     hkl = pLoadKeyboardLayoutEx( NULL, test_layout_name, 0 );
     ok_eq( 0, hkl, HKL, "%p" );
@@ -5758,8 +5790,8 @@ static void test_input_desktop( char **argv )
     test_SetCursorPos();
 
     get_test_scan( 'F', &scan, &wch, &wch_shift );
-    test_SendInput( 'F', wch );
-    test_SendInput_keyboard_messages( 'F', scan, wch, wch_shift, '\x06' );
+    test_SendInput( 'F', wch, hkl );
+    test_SendInput_keyboard_messages( 'F', scan, wch, wch_shift, '\x06', hkl );
     test_SendInput_mouse_messages();
 
     test_keyboard_ll_hook_blocking();
@@ -5768,7 +5800,7 @@ static void test_input_desktop( char **argv )
     test_GetRawInputData();
     test_GetRawInputBuffer();
 
-    test_LoadKeyboardLayoutEx();
+    test_LoadKeyboardLayoutEx( hkl );
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
 }
