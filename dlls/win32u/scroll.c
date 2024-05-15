@@ -62,6 +62,9 @@ static struct SCROLL_TRACKING_INFO g_tracking_info;
 /* Is the moving thumb being displayed? */
 static BOOL scroll_moving_thumb = FALSE;
 
+/* is there currently a running timer for scrolling delay ?*/
+static BOOL scroll_timer_running = FALSE;
+
 /* data for window that has (one or two) scroll bars */
 struct win_scroll_bar_info
 {
@@ -516,15 +519,19 @@ void update_scroll_timer(HWND hwnd, HWND owner_hwnd, HWND ctl_hwnd, enum SCROLL_
 {
     if (hittest == g_tracking_info.hit_test)
     {
-        if (msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
+        if (!scroll_timer_running || msg == WM_LBUTTONDOWN || msg == WM_SYSTIMER)
         {
             send_message( owner_hwnd, vertical ? WM_VSCROLL : WM_HSCROLL, msg_send, (LPARAM)ctl_hwnd );
+            scroll_timer_running = TRUE;
+            NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
+                    msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
         }
-
-        NtUserSetSystemTimer( hwnd, SCROLL_TIMER,
-                msg == WM_LBUTTONDOWN ? SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY );
     }
-    else NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+    else
+    {
+        scroll_timer_running = FALSE;
+        NtUserKillSystemTimer( hwnd, SCROLL_TIMER );
+    }
 }
 
 /***********************************************************************
@@ -789,6 +796,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
         /* Terminate tracking */
         g_tracking_info.win = 0;
         scroll_moving_thumb = FALSE;
+        scroll_timer_running = FALSE;
         hittest = SCROLL_NOWHERE;
         draw_scroll_bar( hwnd, hdc, bar, hittest, &g_tracking_info, TRUE, TRUE );
     }
