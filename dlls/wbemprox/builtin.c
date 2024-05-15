@@ -1282,7 +1282,8 @@ struct smbios_system
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
 
-static const struct smbios_header *find_smbios_entry( enum smbios_type type, const char *buf, UINT len )
+static const struct smbios_header *find_smbios_entry( enum smbios_type type, unsigned int index,
+                                                      const char *buf, UINT len )
 {
     const char *ptr, *start;
     const struct smbios_prologue *prologue;
@@ -1308,20 +1309,16 @@ static const struct smbios_header *find_smbios_entry( enum smbios_type type, con
         if (hdr->type == type)
         {
             if ((const char *)hdr - start + hdr->length > prologue->length) return NULL;
-            break;
+            if (!index--) return hdr;
         }
-        else /* skip other entries and their strings */
+        /* skip other entries and their strings */
+        for (ptr = (const char *)hdr + hdr->length; ptr - buf < len && *ptr; ptr++)
         {
-            for (ptr = (const char *)hdr + hdr->length; ptr - buf < len && *ptr; ptr++)
-            {
-                for (; ptr - buf < len; ptr++) if (!*ptr) break;
-            }
-            if (ptr == (const char *)hdr + hdr->length) ptr++;
-            hdr = (const struct smbios_header *)(ptr + 1);
+            for (; ptr - buf < len; ptr++) if (!*ptr) break;
         }
+        if (ptr == (const char *)hdr + hdr->length) ptr++;
+        hdr = (const struct smbios_header *)(ptr + 1);
     }
-
-    return hdr;
 }
 
 static WCHAR *get_smbios_string_by_id( BYTE id, const char *buf, UINT offset, UINT buflen )
@@ -1338,12 +1335,12 @@ static WCHAR *get_smbios_string_by_id( BYTE id, const char *buf, UINT offset, UI
     return NULL;
 }
 
-static WCHAR *get_smbios_string( enum smbios_type type, size_t field_offset, const char *buf, UINT len )
+static WCHAR *get_smbios_string( enum smbios_type type, unsigned int index, size_t field_offset, const char *buf, UINT len )
 {
     const struct smbios_header *hdr;
     UINT offset;
 
-    if (!(hdr = find_smbios_entry( type, buf, len ))) return NULL;
+    if (!(hdr = find_smbios_entry( type, index, buf, len ))) return NULL;
 
     if (field_offset + sizeof(BYTE) > hdr->length) return NULL;
 
@@ -1374,28 +1371,28 @@ static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
 
 static WCHAR *get_baseboard_manufacturer( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, offsetof(struct smbios_baseboard, vendor), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, 0, offsetof(struct smbios_baseboard, vendor), buf, len );
     if (!ret) return wcsdup( L"Intel Corporation" );
     return ret;
 }
 
 static WCHAR *get_baseboard_product( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, offsetof(struct smbios_baseboard, product), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, 0, offsetof(struct smbios_baseboard, product), buf, len );
     if (!ret) return wcsdup( L"Base Board" );
     return ret;
 }
 
 static WCHAR *get_baseboard_serialnumber( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, offsetof(struct smbios_baseboard, serial), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, 0, offsetof(struct smbios_baseboard, serial), buf, len );
     if (!ret) return wcsdup( L"None" );
     return ret;
 }
 
 static WCHAR *get_baseboard_version( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, offsetof(struct smbios_baseboard, version), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BASEBOARD, 0, offsetof(struct smbios_baseboard, version), buf, len );
     if (!ret) return wcsdup( L"1.0" );
     return ret;
 }
@@ -1446,7 +1443,7 @@ static UINT16 get_bios_smbiosminorversion( const char *buf, UINT len )
 }
 static WCHAR *get_bios_manufacturer( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BIOS, offsetof(struct smbios_bios, vendor), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BIOS, 0, offsetof(struct smbios_bios, vendor), buf, len );
     if (!ret) return wcsdup( L"The Wine Project" );
     return ret;
 }
@@ -1484,7 +1481,7 @@ static WCHAR *convert_bios_date( const WCHAR *str )
 
 static WCHAR *get_bios_releasedate( const char *buf, UINT len )
 {
-    WCHAR *ret, *date = get_smbios_string( SMBIOS_TYPE_BIOS, offsetof(struct smbios_bios, date), buf, len );
+    WCHAR *ret, *date = get_smbios_string( SMBIOS_TYPE_BIOS, 0, offsetof(struct smbios_bios, date), buf, len );
     if (!date || !(ret = convert_bios_date( date ))) ret = wcsdup( L"20120608000000.000000+000" );
     free( date );
     return ret;
@@ -1492,7 +1489,7 @@ static WCHAR *get_bios_releasedate( const char *buf, UINT len )
 
 static WCHAR *get_bios_smbiosbiosversion( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BIOS, offsetof(struct smbios_bios, version), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_BIOS, 0, offsetof(struct smbios_bios, version), buf, len );
     if (!ret) return wcsdup( L"Wine" );
     return ret;
 }
@@ -1502,7 +1499,7 @@ static BYTE get_bios_ec_firmware_major_release( const char *buf, UINT len )
     const struct smbios_header *hdr;
     const struct smbios_bios *bios;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return 0xFF;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, 0, buf, len ))) return 0xFF;
 
     bios = (const struct smbios_bios *)hdr;
     if (bios->hdr.length >= 0x18) return bios->ec_firmware_major_release;
@@ -1514,7 +1511,7 @@ static BYTE get_bios_ec_firmware_minor_release( const char *buf, UINT len )
     const struct smbios_header *hdr;
     const struct smbios_bios *bios;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return 0xFF;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, 0, buf, len ))) return 0xFF;
 
     bios = (const struct smbios_bios *)hdr;
     if (bios->hdr.length >= 0x18) return bios->ec_firmware_minor_release;
@@ -1526,7 +1523,7 @@ static BYTE get_bios_system_bios_major_release( const char *buf, UINT len )
     const struct smbios_header *hdr;
     const struct smbios_bios *bios;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return 0xFF;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, 0, buf, len ))) return 0xFF;
 
     bios = (const struct smbios_bios *)hdr;
     if (bios->hdr.length >= 0x18) return bios->system_bios_major_release;
@@ -1538,7 +1535,7 @@ static BYTE get_bios_system_bios_minor_release( const char *buf, UINT len )
     const struct smbios_header *hdr;
     const struct smbios_bios *bios;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, buf, len ))) return 0xFF;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_BIOS, 0, buf, len ))) return 0xFF;
 
     bios = (const struct smbios_bios *)hdr;
     if (bios->hdr.length >= 0x18) return bios->system_bios_minor_release;
@@ -1749,14 +1746,14 @@ static WCHAR *get_username(void)
 
 static WCHAR *get_compsysproduct_name( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, offsetof(struct smbios_system, product), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, 0, offsetof(struct smbios_system, product), buf, len );
     if (!ret) return wcsdup( L"Wine" );
     return ret;
 }
 
 static WCHAR *get_compsysproduct_vendor( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, offsetof(struct smbios_system, vendor), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, 0, offsetof(struct smbios_system, vendor), buf, len );
     if (!ret) return wcsdup( L"The Wine Project" );
     return ret;
 }
@@ -1796,7 +1793,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
 
 static WCHAR *get_compsysproduct_identifyingnumber( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, offsetof(struct smbios_system, serial), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, 0, offsetof(struct smbios_system, serial), buf, len );
     if (!ret) return wcsdup( L"0" );
     return ret;
 }
@@ -1809,7 +1806,7 @@ static WCHAR *get_compsysproduct_uuid( const char *buf, UINT len )
     const BYTE *ptr;
     WCHAR *ret = NULL;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, buf, len )) || hdr->length < sizeof(*system)) goto done;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_SYSTEM, 0, buf, len )) || hdr->length < sizeof(*system)) goto done;
     system = (const struct smbios_system *)hdr;
     if (!memcmp( system->uuid, none, sizeof(none) ) || !(ret = malloc( 37 * sizeof(WCHAR) ))) goto done;
 
@@ -1824,7 +1821,7 @@ done:
 
 static WCHAR *get_compsysproduct_version( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, offsetof(struct smbios_system, version), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_SYSTEM, 0, offsetof(struct smbios_system, version), buf, len );
     if (!ret) return wcsdup( L"1.0" );
     return ret;
 }
@@ -4086,7 +4083,7 @@ static enum fill_status fill_sid( struct table *table, const struct expr *cond )
 
 static WCHAR *get_systemenclosure_manufacturer( const char *buf, UINT len )
 {
-    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_CHASSIS, offsetof(struct smbios_chassis, vendor), buf, len );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_CHASSIS, 0, offsetof(struct smbios_chassis, vendor), buf, len );
     if (!ret) return wcsdup( L"Wine" );
     return ret;
 }
@@ -4096,7 +4093,7 @@ static int get_systemenclosure_lockpresent( const char *buf, UINT len )
     const struct smbios_header *hdr;
     const struct smbios_chassis *chassis;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_CHASSIS, buf, len )) || hdr->length < sizeof(*chassis)) return 0;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_CHASSIS, 0, buf, len )) || hdr->length < sizeof(*chassis)) return 0;
 
     chassis = (const struct smbios_chassis *)hdr;
     return (chassis->type & 0x80) ? -1 : 0;
@@ -4124,7 +4121,7 @@ static struct array *get_systemenclosure_chassistypes( const char *buf, UINT len
     struct array *ret = NULL;
     UINT16 *types;
 
-    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_CHASSIS, buf, len )) || hdr->length < sizeof(*chassis)) goto done;
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_CHASSIS, 0, buf, len )) || hdr->length < sizeof(*chassis)) goto done;
     chassis = (const struct smbios_chassis *)hdr;
 
     if (!(ret = malloc( sizeof(*ret) ))) goto done;
