@@ -27,6 +27,9 @@ static BOOL (__cdecl *p__crtGetStringTypeW)(DWORD, DWORD, const wchar_t*, int, W
 static int (__cdecl *pmemcpy_s)(void *, size_t, void*, size_t);
 static int (__cdecl *p___mb_cur_max_func)(void);
 static int *(__cdecl *p__p___mb_cur_max)(void);
+static _locale_t(__cdecl *p_create_locale)(int, const char*);
+static void(__cdecl *p_free_locale)(_locale_t);
+static int (__cdecl *p_wcsicmp_l)(const wchar_t*, const wchar_t*, _locale_t);
 void* __cdecl _Gettnames(void);
 
 static void init(void)
@@ -37,6 +40,9 @@ static void init(void)
     pmemcpy_s = (void*)GetProcAddress(hmod, "memcpy_s");
     p___mb_cur_max_func = (void*)GetProcAddress(hmod, "___mb_cur_max_func");
     p__p___mb_cur_max = (void*)GetProcAddress(hmod, "__p___mb_cur_max");
+    p_create_locale = (void*)GetProcAddress(hmod, "_create_locale");
+    p_free_locale = (void*)GetProcAddress(hmod, "_free_locale");
+    p_wcsicmp_l = (void*)GetProcAddress(hmod, "_wcsicmp_l");
 }
 
 static void test_setlocale(void)
@@ -815,20 +821,27 @@ static void test__wcsicmp_l(void)
     };
     int ret, i;
 
+    if (!p_wcsicmp_l || !p_create_locale)
+    {
+        win_skip("_wcsicmp_l or _create_locale not available\n");
+        return;
+    }
+    ok(!!p_free_locale, "_free_locale not available\n");
+
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         _locale_t loc = NULL;
 
-        if(tests[i].loc && !(loc = _create_locale(LC_ALL, tests[i].loc))) {
+        if(tests[i].loc && !(loc = p_create_locale(LC_ALL, tests[i].loc))) {
             win_skip("locale %s not available.  skipping\n", tests[i].loc);
             continue;
         }
 
-        ret = _wcsicmp_l(tests[i].str1, tests[i].str2, loc);
+        ret = p_wcsicmp_l(tests[i].str1, tests[i].str2, loc);
         ok(ret == tests[i].exp, "_wcsicmp_l = %d, expected %d for test %d '%ls' vs '%ls' using %s locale\n",
             ret, tests[i].exp, i, tests[i].str1, tests[i].str2, loc ? tests[i].loc : "current");
 
         if(loc)
-            _free_locale(loc);
+            p_free_locale(loc);
     }
 }
 
