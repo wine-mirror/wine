@@ -12428,9 +12428,6 @@ stop:
 
             release_surface_readback(&rb);
 
-            IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-            Sleep(50);
-
             winetest_pop_context();
         }
         IDirect3DDevice9_SetVertexShader(device, NULL);
