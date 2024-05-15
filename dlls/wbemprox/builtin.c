@@ -1221,10 +1221,13 @@ struct smbios_prologue
 
 enum smbios_type
 {
-    SMBIOS_TYPE_BIOS,
-    SMBIOS_TYPE_SYSTEM,
-    SMBIOS_TYPE_BASEBOARD,
-    SMBIOS_TYPE_CHASSIS,
+    SMBIOS_TYPE_BIOS = 0,
+    SMBIOS_TYPE_SYSTEM = 1,
+    SMBIOS_TYPE_BASEBOARD = 2,
+    SMBIOS_TYPE_CHASSIS = 3,
+    SMBIOS_TYPE_PROCESSOR = 4,
+    SMBIOS_TYPE_BOOTINFO = 32,
+    SMBIOS_TYPE_END = 127
 };
 
 struct smbios_header
@@ -1277,6 +1280,37 @@ struct smbios_system
     BYTE                 version;
     BYTE                 serial;
     BYTE                 uuid[16];
+};
+
+struct smbios_processor
+{
+    struct smbios_header hdr;
+    BYTE                 socket;
+    BYTE                 type;
+    BYTE                 family;
+    BYTE                 vendor;
+    ULONGLONG            id;
+    BYTE                 version;
+    BYTE                 voltage;
+    WORD                 clock;
+    WORD                 max_speed;
+    WORD                 cur_speed;
+    BYTE                 status;
+    BYTE                 upgrade;
+    WORD                 l1cache;
+    WORD                 l2cache;
+    WORD                 l3cache;
+    BYTE                 serial;
+    BYTE                 asset_tag;
+    BYTE                 part_number;
+    BYTE                 core_count;
+    BYTE                 core_enabled;
+    BYTE                 thread_count;
+    WORD                 characteristics;
+    WORD                 family2;
+    WORD                 core_count2;
+    WORD                 core_enabled2;
+    WORD                 thread_count2;
 };
 #include "poppack.h"
 
@@ -3434,16 +3468,11 @@ static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
     for (i = 0; i < len; i++) { buffer[i] = *p++; }
     buffer[i] = 0;
 }
-static void get_processor_manufacturer( WCHAR *manufacturer, UINT len )
+static WCHAR *get_processor_manufacturer( UINT index, const char *buf, UINT len )
 {
-    int tmp, regs[4] = {0, 0, 0, 0};
-
-    do_cpuid( 0, regs );
-    tmp = regs[2];      /* swap edx and ecx */
-    regs[2] = regs[3];
-    regs[3] = tmp;
-
-    regs_to_str( regs + 1, min( 12, len ), manufacturer );
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_PROCESSOR, index, offsetof(struct smbios_processor, vendor), buf, len );
+    if (!ret) ret = wcsdup( L"Unknown" );
+    return ret;
 }
 static const WCHAR *get_osarchitecture(void)
 {
@@ -3529,17 +3558,25 @@ static UINT get_processor_maxclockspeed( UINT index )
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
 {
-    WCHAR device_id[14], processor_id[17], manufacturer[13], name[49] = {0}, version[50];
+    WCHAR device_id[14], processor_id[17], name[49] = {0}, version[50];
     struct record_processor *rec;
-    UINT i, offset = 0, num_rows = 0, num_logical, num_physical, num_packages;
+    UINT i, len, offset = 0, num_rows = 0, num_logical, num_physical, num_packages;
     enum fill_status status = FILL_STATUS_UNFILTERED;
+    char *buf;
+
+    len = GetSystemFirmwareTable( RSMB, 0, NULL, 0 );
+    if (!(buf = malloc( len ))) return FILL_STATUS_FAILED;
+    GetSystemFirmwareTable( RSMB, 0, buf, len );
 
     num_logical = get_logical_processor_count( &num_physical, &num_packages );
 
-    if (!resize_table( table, num_packages, sizeof(*rec) )) return FILL_STATUS_FAILED;
+    if (!resize_table( table, num_packages, sizeof(*rec) ))
+    {
+        free( buf );
+        return FILL_STATUS_FAILED;
+    }
 
     get_processor_id( processor_id, ARRAY_SIZE( processor_id ) );
-    get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
     get_processor_name( name );
     get_processor_version( version, ARRAY_SIZE( version ) );
 
@@ -3557,7 +3594,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->device_id              = wcsdup( device_id );
         rec->family                 = 2; /* Unknown */
         rec->level                  = 15;
-        rec->manufacturer           = wcsdup( manufacturer );
+        rec->manufacturer           = get_processor_manufacturer( i, buf, len );
         rec->maxclockspeed          = get_processor_maxclockspeed( i );
         rec->name                   = wcsdup( name );
         rec->num_cores              = num_physical / num_packages;
@@ -3574,6 +3611,8 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         offset += sizeof(*rec);
         num_rows++;
     }
+
+    free( buf );
 
     TRACE("created %u rows\n", num_rows);
     table->num_rows = num_rows;
