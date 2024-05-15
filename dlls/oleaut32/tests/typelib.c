@@ -1241,49 +1241,41 @@ static void test_TypeInfo(void)
     /* call propget with DISPATCH_PROPERTYPUT on HRESULT func(out int) - 0 params */
     dispparams.cArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 5, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on HRESULT func(out int) - 1 param */
     dispparams.cArgs = 1;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 5, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on HRESULT func(out int) - 0 params - NULL result passed */
     dispparams.cArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 5, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on on HRESULT func(out int) - 1 params - NULL result passed */
     dispparams.cArgs = 1;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 5, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func() - 0 params */
     dispparams.cArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 6, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func() - 1 params  */
     dispparams.cArgs = 1;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 6, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func() - 0 params - NULL result passed */
     dispparams.cArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 6, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func() - 1 param - NULL result passed */
     dispparams.cArgs = 1;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 6, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func(int) - 0 param - NULL result passed  */
@@ -1299,7 +1291,6 @@ static void test_TypeInfo(void)
     /* call propget with DISPATCH_PROPERTYPUT on int func(int) - 2 params - NULL result passed  */
     dispparams.cArgs = 2;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 7, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on int func(int) - 3 params - NULL result passed  */
@@ -1320,7 +1311,6 @@ static void test_TypeInfo(void)
     /* call propget with DISPATCH_PROPERTYPUT on HRESULT func(out int, int) - 2 params - NULL result passed  */
     dispparams.cArgs = 2;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 8, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on HRESULT func(out int, int) - 3 params - NULL result passed  */
@@ -1346,7 +1336,6 @@ static void test_TypeInfo(void)
     /* call propget with DISPATCH_PROPERTYPUT on int func(int, int) - 3 params - NULL result passed */
     dispparams.cArgs = 3;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 9, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* call propget with DISPATCH_PROPERTYPUT on void func(int, int) - 0 params - NULL result passed */
@@ -1367,7 +1356,6 @@ static void test_TypeInfo(void)
     /* call propget with DISPATCH_PROPERTYPUT on void func(int, int) - 3 params - NULL result passed */
     dispparams.cArgs = 3;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 10, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, &i);
-    todo_wine
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08lx\n", hr);
 
     /* If there's get and put, the put must work */
