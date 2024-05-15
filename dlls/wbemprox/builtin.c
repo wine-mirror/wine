@@ -3534,16 +3534,16 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         proc = (const struct smbios_processor *)hdr;
 
         rec = (struct record_processor *)(table->data + offset);
-        rec->addresswidth           = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 32 : 64;
+        rec->addresswidth           = (proc->characteristics & 4) ? 64 : 32;
         rec->architecture           = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 0 : 9;
         rec->caption                = get_processor_caption( i );
-        rec->cpu_status             = 1; /* CPU Enabled */
+        rec->cpu_status             = proc->status;
         rec->currentclockspeed      = get_processor_currentclockspeed( i );
-        rec->datawidth              = !wcscmp( get_osarchitecture(), L"32-bit" ) ? 32 : 64;
+        rec->datawidth              = rec->addresswidth;
         rec->description            = get_processor_caption( i );
         swprintf( device_id, ARRAY_SIZE( device_id ), L"CPU%u", i );
         rec->device_id              = wcsdup( device_id );
-        rec->family                 = 2; /* Unknown */
+        rec->family                 = proc->family;
         rec->level                  = 15;
         rec->manufacturer           = get_processor_manufacturer( i, buf, len );
         rec->maxclockspeed          = get_processor_maxclockspeed( i );
@@ -3552,7 +3552,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->num_logical_processors = proc->thread_count2;
         swprintf( processor_id, ARRAY_SIZE( processor_id ), L"%016I64X", proc->id );
         rec->processor_id           = wcsdup( processor_id );
-        rec->processortype          = 3; /* central processor */
+        rec->processortype          = proc->type;
         rec->revision               = get_processor_revision();
         rec->version                = wcsdup( version );
         if (!match_row( table, i, cond, &status ))
