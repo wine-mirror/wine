@@ -379,54 +379,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj(IHTMLEventObj *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj_QueryInterface(IHTMLEventObj *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj_AddRef(IHTMLEventObj *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj_GetTypeInfoCount(IHTMLEventObj *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj_GetTypeInfo(IHTMLEventObj *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj_GetIDsOfNames(IHTMLEventObj *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames,
-                                                LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj_Invoke(IHTMLEventObj *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
-            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj, IHTMLEventObj, impl_from_IHTMLEventObj(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj_get_srcElement(IHTMLEventObj *iface, IHTMLElement **p)
 {
@@ -879,50 +832,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj2(IHTMLEventObj2 *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj2_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj2_QueryInterface(IHTMLEventObj2 *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IHTMLEventObj_QueryInterface(&This->IHTMLEventObj_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj2_AddRef(IHTMLEventObj2 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IHTMLEventObj_AddRef(&This->IHTMLEventObj_iface);
-}
-
-static ULONG WINAPI HTMLEventObj2_Release(IHTMLEventObj2 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IHTMLEventObj_Release(&This->IHTMLEventObj_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj2_GetTypeInfoCount(IHTMLEventObj2 *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj2_GetTypeInfo(IHTMLEventObj2 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj2_GetIDsOfNames(IHTMLEventObj2 *iface, REFIID riid,LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj2_Invoke(IHTMLEventObj2 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj2(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj2, IHTMLEventObj2, impl_from_IHTMLEventObj2(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj2_setAttribute(IHTMLEventObj2 *iface, BSTR strAttributeName, VARIANT AttributeValue, LONG lFlags)
 {
@@ -1442,50 +1352,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj3(IHTMLEventObj3 *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj3_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj3_QueryInterface(IHTMLEventObj3 *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IHTMLEventObj_QueryInterface(&This->IHTMLEventObj_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj3_AddRef(IHTMLEventObj3 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IHTMLEventObj_AddRef(&This->IHTMLEventObj_iface);
-}
-
-static ULONG WINAPI HTMLEventObj3_Release(IHTMLEventObj3 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IHTMLEventObj_Release(&This->IHTMLEventObj_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj3_GetTypeInfoCount(IHTMLEventObj3 *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj3_GetTypeInfo(IHTMLEventObj3 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj3_GetIDsOfNames(IHTMLEventObj3 *iface, REFIID riid,LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj3_Invoke(IHTMLEventObj3 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj3(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj3, IHTMLEventObj3, impl_from_IHTMLEventObj3(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj3_get_contentOverflow(IHTMLEventObj3 *iface, VARIANT_BOOL *p)
 {
@@ -1662,50 +1529,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj4(IHTMLEventObj4 *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj4_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj4_QueryInterface(IHTMLEventObj4 *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IHTMLEventObj_QueryInterface(&This->IHTMLEventObj_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj4_AddRef(IHTMLEventObj4 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IHTMLEventObj_AddRef(&This->IHTMLEventObj_iface);
-}
-
-static ULONG WINAPI HTMLEventObj4_Release(IHTMLEventObj4 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IHTMLEventObj_Release(&This->IHTMLEventObj_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj4_GetTypeInfoCount(IHTMLEventObj4 *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj4_GetTypeInfo(IHTMLEventObj4 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj4_GetIDsOfNames(IHTMLEventObj4 *iface, REFIID riid,LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj4_Invoke(IHTMLEventObj4 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj4(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj4, IHTMLEventObj4, impl_from_IHTMLEventObj4(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj4_get_wheelDelta(IHTMLEventObj4 *iface, LONG *p)
 {
@@ -1732,50 +1556,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj5(IHTMLEventObj5 *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj5_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj5_QueryInterface(IHTMLEventObj5 *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IHTMLEventObj_QueryInterface(&This->IHTMLEventObj_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj5_AddRef(IHTMLEventObj5 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IHTMLEventObj_AddRef(&This->IHTMLEventObj_iface);
-}
-
-static ULONG WINAPI HTMLEventObj5_Release(IHTMLEventObj5 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IHTMLEventObj_Release(&This->IHTMLEventObj_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj5_GetTypeInfoCount(IHTMLEventObj5 *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj5_GetTypeInfo(IHTMLEventObj5 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj5_GetIDsOfNames(IHTMLEventObj5 *iface, REFIID riid,LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj5_Invoke(IHTMLEventObj5 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj5(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj5, IHTMLEventObj5, impl_from_IHTMLEventObj5(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj5_put_url(IHTMLEventObj5 *iface, BSTR v)
 {
@@ -1934,50 +1715,7 @@ static inline HTMLEventObj *impl_from_IHTMLEventObj6(IHTMLEventObj6 *iface)
     return CONTAINING_RECORD(iface, HTMLEventObj, IHTMLEventObj6_iface);
 }
 
-static HRESULT WINAPI HTMLEventObj6_QueryInterface(IHTMLEventObj6 *iface, REFIID riid, void **ppv)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IHTMLEventObj_QueryInterface(&This->IHTMLEventObj_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLEventObj6_AddRef(IHTMLEventObj6 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IHTMLEventObj_AddRef(&This->IHTMLEventObj_iface);
-}
-
-static ULONG WINAPI HTMLEventObj6_Release(IHTMLEventObj6 *iface)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IHTMLEventObj_Release(&This->IHTMLEventObj_iface);
-}
-
-static HRESULT WINAPI HTMLEventObj6_GetTypeInfoCount(IHTMLEventObj6 *iface, UINT *pctinfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLEventObj6_GetTypeInfo(IHTMLEventObj6 *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLEventObj6_GetIDsOfNames(IHTMLEventObj6 *iface, REFIID riid,LPOLESTR *rgszNames,
-        UINT cNames, LCID lcid, DISPID *rgDispId)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLEventObj6_Invoke(IHTMLEventObj6 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLEventObj *This = impl_from_IHTMLEventObj6(iface);
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags, pDispParams,
-                              pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLEventObj6, IHTMLEventObj6, impl_from_IHTMLEventObj6(iface)->dispex)
 
 static HRESULT WINAPI HTMLEventObj6_get_actionURL(IHTMLEventObj6 *iface, BSTR *p)
 {
