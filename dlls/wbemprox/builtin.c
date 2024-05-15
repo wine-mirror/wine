@@ -3468,13 +3468,6 @@ static UINT16 get_processor_revision(void)
     do_cpuid( 1, regs );
     return regs[0];
 }
-static void get_processor_id( WCHAR *processor_id, UINT len )
-{
-    int regs[4] = {0, 0, 0, 0};
-
-    do_cpuid( 1, regs );
-    swprintf( processor_id, len, L"%08X%08X", regs[3], regs[0] );
-}
 static WCHAR *get_processor_name( UINT index, const char *buf, UINT len )
 {
     WCHAR *ret = get_smbios_string( SMBIOS_TYPE_PROCESSOR, index, offsetof(struct smbios_processor, version), buf, len );
@@ -3532,7 +3525,6 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         return FILL_STATUS_FAILED;
     }
 
-    get_processor_id( processor_id, ARRAY_SIZE( processor_id ) );
     get_processor_version( version, ARRAY_SIZE( version ) );
 
     for (i = 0; i < num_packages; i++)
@@ -3558,6 +3550,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->name                   = get_processor_name( i, buf, len );
         rec->num_cores              = proc->core_count2;
         rec->num_logical_processors = proc->thread_count2;
+        swprintf( processor_id, ARRAY_SIZE( processor_id ), L"%016I64X", proc->id );
         rec->processor_id           = wcsdup( processor_id );
         rec->processortype          = 3; /* central processor */
         rec->revision               = get_processor_revision();
