@@ -3460,14 +3460,6 @@ static unsigned int get_processor_model( unsigned int reg0, unsigned int *steppi
     *stepping = reg0 & 0x0f;
     return model;
 }
-static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
-{
-    unsigned int i;
-    unsigned char *p = (unsigned char *)regs;
-
-    for (i = 0; i < len; i++) { buffer[i] = *p++; }
-    buffer[i] = 0;
-}
 static WCHAR *get_processor_manufacturer( UINT index, const char *buf, UINT len )
 {
     WCHAR *ret = get_smbios_string( SMBIOS_TYPE_PROCESSOR, index, offsetof(struct smbios_processor, vendor), buf, len );
@@ -3510,22 +3502,11 @@ static void get_processor_id( WCHAR *processor_id, UINT len )
     do_cpuid( 1, regs );
     swprintf( processor_id, len, L"%08X%08X", regs[3], regs[0] );
 }
-static void get_processor_name( WCHAR *name )
+static WCHAR *get_processor_name( UINT index, const char *buf, UINT len )
 {
-    int regs[4] = {0, 0, 0, 0};
-    int i;
-
-    do_cpuid( 0x80000000, regs );
-    if (regs[0] >= 0x80000004)
-    {
-        do_cpuid( 0x80000002, regs );
-        regs_to_str( regs, 16, name );
-        do_cpuid( 0x80000003, regs );
-        regs_to_str( regs, 16, name + 16 );
-        do_cpuid( 0x80000004, regs );
-        regs_to_str( regs, 16, name + 32 );
-    }
-    for (i = lstrlenW(name) - 1; i >= 0 && name[i] == ' '; i--) name[i] = 0;
+    WCHAR *ret = get_smbios_string( SMBIOS_TYPE_PROCESSOR, index, offsetof(struct smbios_processor, version), buf, len );
+    if (!ret) ret = wcsdup( L"Unknown CPU" );
+    return ret;
 }
 static UINT get_processor_currentclockspeed( UINT index )
 {
@@ -3558,7 +3539,7 @@ static UINT get_processor_maxclockspeed( UINT index )
 
 static enum fill_status fill_processor( struct table *table, const struct expr *cond )
 {
-    WCHAR device_id[14], processor_id[17], name[49] = {0}, version[50];
+    WCHAR device_id[14], processor_id[17], version[50];
     struct record_processor *rec;
     UINT i, len, offset = 0, num_rows = 0, num_logical, num_physical, num_packages;
     enum fill_status status = FILL_STATUS_UNFILTERED;
@@ -3577,7 +3558,6 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     }
 
     get_processor_id( processor_id, ARRAY_SIZE( processor_id ) );
-    get_processor_name( name );
     get_processor_version( version, ARRAY_SIZE( version ) );
 
     for (i = 0; i < num_packages; i++)
@@ -3596,7 +3576,7 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
         rec->level                  = 15;
         rec->manufacturer           = get_processor_manufacturer( i, buf, len );
         rec->maxclockspeed          = get_processor_maxclockspeed( i );
-        rec->name                   = wcsdup( name );
+        rec->name                   = get_processor_name( i, buf, len );
         rec->num_cores              = num_physical / num_packages;
         rec->num_logical_processors = num_logical / num_packages;
         rec->processor_id           = wcsdup( processor_id );
