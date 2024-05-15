@@ -7692,6 +7692,28 @@ func_fail:
         return E_NOTIMPL;
     }
 
+    /* not found, check for special error cases */
+    for (fdc = 0; fdc < This->typeattr.cFuncs; ++fdc)
+    {
+        const FUNCDESC *func_desc = &This->funcdescs[fdc].funcdesc;
+        if (memid == func_desc->memid)
+        {
+            if ((wFlags & INVOKE_PROPERTYPUT) && (func_desc->invkind & INVOKE_PROPERTYGET))
+            {
+                int count_inputs = 0;
+                for (i = 0; i < func_desc->cParams; i++)
+                {
+                    USHORT wParamFlags = func_desc->lprgelemdescParam[i].paramdesc.wParamFlags;
+                    if (!(wParamFlags & PARAMFLAG_FRETVAL))
+                        count_inputs++;
+                }
+
+                if (count_inputs == 0 || pDispParams->cArgs == count_inputs + 1)
+                    return DISP_E_BADPARAMCOUNT;
+            }
+        }
+    }
+
     /* not found, look for it in inherited interfaces */
     ITypeInfo2_GetTypeKind(iface, &type_kind);
     if(type_kind == TKIND_INTERFACE || type_kind == TKIND_DISPATCH) {
