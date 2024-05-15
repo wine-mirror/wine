@@ -1330,11 +1330,13 @@ static void test_demangle(void)
            "__ptr64 __cdecl std::forward<struct `private: static int __cdecl FFIFunctionBinder::call(struct lua_State "
            "* __ptr64)'::`2'::FFIValue & __ptr64>(struct `private: static int __cdecl FFIFunctionBinder::call(struct "
            "xlua_State * __ptr64)'::`2'::FFIValue & __ptr64)"},
+/* 153 */ {"?$AAA@XX", "AAA<void,void>"},
+/* 154 */ {"?$AAA@", "AAA<>"},
     };
-    int i, num_test = ARRAY_SIZE(test);
+    int i;
     char* name;
 
-    for (i = 0; i < num_test; i++)
+    for (i = 0; i < ARRAY_SIZE(test); i++)
     {
 	name = p__unDName(0, test[i].in, 0, malloc, free, test[i].flags);
         ok(name != NULL, "%u: unDName failed\n", i);
