@@ -2065,9 +2065,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     static BOOL InputSourceShouldBeIgnored(TISInputSourceRef inputSource)
     {
         /* Certain system utilities are technically input sources, but we
-           shouldn't consider them as such for our purposes.
-           Dictation is its own source too (com.apple.inputmethod.ironwood), but
-           it should receive keypresses; it cancels input on escape. */
+           shouldn't consider them as such for our purposes. */
         static CFStringRef ignoredIDs[] = {
             /* The "Emoji & Symbols" palette. */
             CFSTR("com.apple.CharacterPaletteIM"),
@@ -2077,6 +2075,11 @@ static NSString* WineLocalizedString(unsigned int stringID)
             CFSTR("com.apple.PressAndHold"),
             /* Emoji list on MacBooks with the Touch Bar. */
             CFSTR("com.apple.inputmethod.EmojiFunctionRowItem"),
+            /* Dictation. Ideally this would actually receive key events, since
+               escape cancels it, but it remains a "selected" input source even
+               when not active, so we need to ignore it to avoid incorrectly
+               sending input to it. */
+            CFSTR("com.apple.inputmethod.ironwood"),
         };
 
         CFStringRef sourceID = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
