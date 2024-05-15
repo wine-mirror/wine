@@ -705,13 +705,6 @@ static void get_test_scan( WORD vkey, WORD *scan, WCHAR *wch, WCHAR *wch_shift )
     ok_ret( 1, ToUnicodeEx( vkey, *scan, state, wch, 1, 0, hkl ) );
     state[VK_SHIFT] = 0x80;
     ok_ret( 1, ToUnicodeEx( vkey, *scan, state, wch_shift, 1, 0, hkl ) );
-
-    /* zh_CN returns a different WM_(SYS)CHAR, possibly coming from IME */
-    if (HIWORD(hkl) == 0x0804)
-    {
-        *wch = 0x430;
-        *wch_shift = 0x410;
-    }
 }
 
 static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, WCHAR wch_shift, WCHAR wch_control, HKL hkl )
