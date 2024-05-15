@@ -251,59 +251,8 @@ static inline HTMLFormElement *impl_from_IHTMLFormElement(IHTMLFormElement *ifac
     return CONTAINING_RECORD(iface, HTMLFormElement, IHTMLFormElement_iface);
 }
 
-static HRESULT WINAPI HTMLFormElement_QueryInterface(IHTMLFormElement *iface,
-        REFIID riid, void **ppv)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-
-    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLFormElement_AddRef(IHTMLFormElement *iface)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-
-    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
-}
-
-static ULONG WINAPI HTMLFormElement_Release(IHTMLFormElement *iface)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-
-    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
-}
-
-static HRESULT WINAPI HTMLFormElement_GetTypeInfoCount(IHTMLFormElement *iface, UINT *pctinfo)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->element.node.event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLFormElement_GetTypeInfo(IHTMLFormElement *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    return IDispatchEx_GetTypeInfo(&This->element.node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid,
-            ppTInfo);
-}
-
-static HRESULT WINAPI HTMLFormElement_GetIDsOfNames(IHTMLFormElement *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames,
-                                                LCID lcid, DISPID *rgDispId)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    return IDispatchEx_GetIDsOfNames(&This->element.node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
-            cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLFormElement_Invoke(IHTMLFormElement *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    return IDispatchEx_Invoke(&This->element.node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid,
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLFormElement, IHTMLFormElement,
+                      impl_from_IHTMLFormElement(iface)->element.node.event_target.dispex)
 
 static HRESULT WINAPI HTMLFormElement_put_action(IHTMLFormElement *iface, BSTR v)
 {
