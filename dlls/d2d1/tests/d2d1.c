@@ -14965,37 +14965,48 @@ static void test_effect_vertex_buffer(BOOL d3d11)
     buffer_desc.byteWidth = sizeof(data);
 
     hr = ID2D1EffectContext_CreateVertexBuffer(effect_context, &buffer_desc, NULL, NULL, &buffer);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) goto end;
     hr = ID2D1EffectContext_CreateVertexBuffer(effect_context, &buffer_desc, NULL, NULL, &buffer2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(buffer != buffer2, "Unexpected buffer instance.\n");
     ID2D1VertexBuffer_Release(buffer2);
 
     /* Mapping static buffer. */
+    ptr = NULL;
     hr = ID2D1VertexBuffer_Map(buffer, &ptr, buffer_desc.byteWidth);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(!!ptr, "Unexpected pointer.\n");
     hr = ID2D1VertexBuffer_Unmap(buffer);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1VertexBuffer_Map(buffer, &ptr, buffer_desc.byteWidth + 1);
+    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1VertexBuffer_Map(buffer, &ptr, buffer_desc.byteWidth - 1);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(!!ptr, "Unexpected pointer.\n");
     hr = ID2D1VertexBuffer_Unmap(buffer);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Map already mapped. */
     hr = ID2D1VertexBuffer_Map(buffer, &ptr, buffer_desc.byteWidth);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    todo_wine
     ok(!!ptr, "Unexpected pointer.\n");
+    ptr2 = NULL;
     hr = ID2D1VertexBuffer_Map(buffer, &ptr2, buffer_desc.byteWidth);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ok(ptr == ptr2, "Unexpected pointer.\n");
     hr = ID2D1VertexBuffer_Unmap(buffer);
+    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1VertexBuffer_Release(buffer);
@@ -15084,7 +15095,6 @@ static void test_effect_vertex_buffer(BOOL d3d11)
 
     ID2D1Device_Release(device);
 
-end:
     ID2D1Effect_Release(effect);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

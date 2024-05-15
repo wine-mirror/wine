@@ -304,6 +304,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         ID3D11Device1_Release(context->d3d_device);
         ID2D1Factory_Release(context->factory);
         ID2D1Device6_Release(&context->device->ID2D1Device6_iface);
+        d2d_device_indexed_objects_clear(&context->vertex_buffers);
         free(context);
     }
 
@@ -4282,7 +4283,7 @@ static ULONG WINAPI d2d_device_AddRef(ID2D1Device6 *iface)
     return refcount;
 }
 
-static void d2d_device_indexed_objects_clear(struct d2d_indexed_objects *objects)
+void d2d_device_indexed_objects_clear(struct d2d_indexed_objects *objects)
 {
     size_t i;
 
@@ -4546,15 +4547,24 @@ HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects,
     return S_OK;
 }
 
-BOOL d2d_device_is_object_indexed(struct d2d_indexed_objects *objects, const GUID *id)
+BOOL d2d_device_get_indexed_object(struct d2d_indexed_objects *objects, const GUID *id,
+        IUnknown **object)
 {
-     size_t i;
+    size_t i;
 
-     for (i = 0; i < objects->count; ++i)
-     {
-         if (IsEqualGUID(id, &objects->elements[i].id))
-             return TRUE;
-     }
+    for (i = 0; i < objects->count; ++i)
+    {
+        if (IsEqualGUID(id, &objects->elements[i].id))
+        {
+            if (object)
+            {
+                *object = objects->elements[i].object;
+                IUnknown_AddRef(*object);
+            }
+            return TRUE;
+        }
+    }
 
-     return FALSE;
+    if (object) *object = NULL;
+    return FALSE;
 }

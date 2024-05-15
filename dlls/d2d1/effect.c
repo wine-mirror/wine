@@ -41,6 +41,90 @@ static inline struct d2d_transform *impl_from_ID2D1BoundsAdjustmentTransform(
     return CONTAINING_RECORD(iface, struct d2d_transform, ID2D1TransformNode_iface);
 }
 
+static inline struct d2d_vertex_buffer *impl_from_ID2D1VertexBuffer(ID2D1VertexBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_vertex_buffer, ID2D1VertexBuffer_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_vertex_buffer_QueryInterface(ID2D1VertexBuffer *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1VertexBuffer)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        ID2D1VertexBuffer_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_vertex_buffer_AddRef(ID2D1VertexBuffer *iface)
+{
+    struct d2d_vertex_buffer *buffer = impl_from_ID2D1VertexBuffer(iface);
+    ULONG refcount = InterlockedIncrement(&buffer->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_vertex_buffer_Release(ID2D1VertexBuffer *iface)
+{
+    struct d2d_vertex_buffer *buffer = impl_from_ID2D1VertexBuffer(iface);
+    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(buffer);
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_vertex_buffer_Map(ID2D1VertexBuffer *iface, BYTE **data, UINT32 size)
+{
+    FIXME("iface %p, data %p, size %u.\n", iface, data, size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_vertex_buffer_Unmap(ID2D1VertexBuffer *iface)
+{
+    FIXME("iface %p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const ID2D1VertexBufferVtbl d2d_vertex_buffer_vtbl =
+{
+    d2d_vertex_buffer_QueryInterface,
+    d2d_vertex_buffer_AddRef,
+    d2d_vertex_buffer_Release,
+    d2d_vertex_buffer_Map,
+    d2d_vertex_buffer_Unmap,
+};
+
+static HRESULT d2d_vertex_buffer_create(ID2D1VertexBuffer **buffer)
+{
+    struct d2d_vertex_buffer *object;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1VertexBuffer_iface.lpVtbl = &d2d_vertex_buffer_vtbl;
+    object->refcount = 1;
+
+    *buffer = &object->ID2D1VertexBuffer_iface;
+
+    return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_offset_transform_QueryInterface(ID2D1OffsetTransform *iface,
         REFIID iid, void **out)
 {
@@ -1458,7 +1542,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadPixelShader(ID2D1EffectC
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (d2d_device_is_object_indexed(&device->shaders, shader_id))
+    if (d2d_device_get_indexed_object(&device->shaders, shader_id, NULL))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreatePixelShader(effect_context->device_context->d3d_device,
@@ -1485,7 +1569,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (d2d_device_is_object_indexed(&device->shaders, shader_id))
+    if (d2d_device_get_indexed_object(&device->shaders, shader_id, NULL))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreateVertexShader(effect_context->device_context->d3d_device,
@@ -1512,7 +1596,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1Effec
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    if (d2d_device_is_object_indexed(&device->shaders, shader_id))
+    if (d2d_device_get_indexed_object(&device->shaders, shader_id, NULL))
         return S_OK;
 
     if (FAILED(hr = ID3D11Device1_CreateComputeShader(effect_context->device_context->d3d_device,
@@ -1535,7 +1619,7 @@ static BOOL STDMETHODCALLTYPE d2d_effect_context_IsShaderLoaded(ID2D1EffectConte
 
     TRACE("iface %p, shader_id %s.\n", iface, debugstr_guid(shader_id));
 
-    return d2d_device_is_object_indexed(&device->shaders, shader_id);
+    return d2d_device_get_indexed_object(&device->shaders, shader_id, NULL);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateResourceTexture(ID2D1EffectContext *iface,
@@ -1558,20 +1642,43 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_FindResourceTexture(ID2D1Eff
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateVertexBuffer(ID2D1EffectContext *iface,
         const D2D1_VERTEX_BUFFER_PROPERTIES *buffer_properties, const GUID *id,
-        const D2D1_CUSTOM_VERTEX_BUFFER_PROPERTIES *custom_buffer_properties, ID2D1VertexBuffer **buffer)
+        const D2D1_CUSTOM_VERTEX_BUFFER_PROPERTIES *custom_buffer_properties,
+        ID2D1VertexBuffer **buffer)
 {
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    struct d2d_device_context *context = effect_context->device_context;
+    HRESULT hr;
+
     FIXME("iface %p, buffer_properties %p, id %s, custom_buffer_properties %p, buffer %p stub!\n",
             iface, buffer_properties, debugstr_guid(id), custom_buffer_properties, buffer);
 
-    return E_NOTIMPL;
+    if (id && d2d_device_get_indexed_object(&context->vertex_buffers, id, (IUnknown **)buffer))
+        return S_OK;
+
+    if (SUCCEEDED(hr = d2d_vertex_buffer_create(buffer)))
+    {
+        if (id)
+            hr = d2d_device_add_indexed_object(&context->vertex_buffers, id, (IUnknown *)*buffer);
+    }
+
+    if (FAILED(hr))
+        *buffer = NULL;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_FindVertexBuffer(ID2D1EffectContext *iface,
         const GUID *id, ID2D1VertexBuffer **buffer)
 {
-    FIXME("iface %p, id %s, buffer %p stub!\n", iface, debugstr_guid(id), buffer);
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    struct d2d_device_context *context = effect_context->device_context;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, id %s, buffer %p.\n", iface, debugstr_guid(id), buffer);
+
+    if (!d2d_device_get_indexed_object(&context->vertex_buffers, id, (IUnknown **)buffer))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateColorContext(ID2D1EffectContext *iface,

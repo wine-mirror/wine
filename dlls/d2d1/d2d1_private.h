@@ -159,6 +159,17 @@ enum d2d_device_context_target_type
     D2D_TARGET_COMMAND_LIST,
 };
 
+struct d2d_indexed_objects
+{
+    struct
+    {
+        GUID id;
+        IUnknown *object;
+    } *elements;
+    size_t size;
+    size_t count;
+};
+
 struct d2d_device_context
 {
     ID2D1DeviceContext6 ID2D1DeviceContext6_iface;
@@ -208,6 +219,8 @@ struct d2d_device_context
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_SIZE_U pixel_size;
     struct d2d_clip_stack clip_stack;
+
+    struct d2d_indexed_objects vertex_buffers;
 };
 
 HRESULT d2d_d3d_create_render_target(struct d2d_device *device, IDXGISurface *surface, IUnknown *outer_unknown,
@@ -594,17 +607,6 @@ HRESULT d2d_geometry_group_init(struct d2d_geometry *geometry, ID2D1Factory *fac
         D2D1_FILL_MODE fill_mode, ID2D1Geometry **src_geometries, unsigned int geometry_count);
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface);
 
-struct d2d_indexed_objects
-{
-    struct
-    {
-        GUID id;
-        IUnknown *object;
-    } *elements;
-    size_t size;
-    size_t count;
-};
-
 struct d2d_device
 {
     ID2D1Device6 ID2D1Device6_iface;
@@ -618,7 +620,9 @@ struct d2d_device
 struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface);
 HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects, const GUID *id,
         IUnknown *object);
-BOOL d2d_device_is_object_indexed(struct d2d_indexed_objects *objects, const GUID *id);
+BOOL d2d_device_get_indexed_object(struct d2d_indexed_objects *objects, const GUID *id,
+        IUnknown **object);
+void d2d_device_indexed_objects_clear(struct d2d_indexed_objects *objects);
 
 struct d2d_effect_context
 {
@@ -798,6 +802,12 @@ void d2d_effect_properties_cleanup(struct d2d_effect_properties *props);
 HRESULT d2d_factory_register_builtin_effect(struct d2d_factory *factory, REFCLSID effect_id,
         const WCHAR *property_xml, const D2D1_PROPERTY_BINDING *bindings, UINT32 binding_count,
         PD2D1_EFFECT_FACTORY effect_factory);
+
+struct d2d_vertex_buffer
+{
+    ID2D1VertexBuffer ID2D1VertexBuffer_iface;
+    LONG refcount;
+};
 
 enum d2d_command_list_state
 {
