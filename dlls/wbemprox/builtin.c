@@ -1725,10 +1725,16 @@ static WCHAR *get_computername(void)
 
 static const WCHAR *get_systemtype(void)
 {
-    SYSTEM_INFO info;
-    GetNativeSystemInfo( &info );
-    if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"x64 based PC";
-    return L"x86 based PC";
+    SYSTEM_CPU_INFORMATION info;
+
+    RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), NULL );
+    switch (info.ProcessorArchitecture)
+    {
+    case PROCESSOR_ARCHITECTURE_ARM:   return L"ARM-based PC";
+    case PROCESSOR_ARCHITECTURE_ARM64: return L"ARM64-based PC";
+    case PROCESSOR_ARCHITECTURE_AMD64: return L"x64-based PC";
+    default:                           return L"x86-based PC";
+    }
 }
 
 static WCHAR *get_username(void)
@@ -3416,10 +3422,17 @@ static WCHAR *get_processor_manufacturer( UINT index, const char *buf, UINT len 
 }
 static const WCHAR *get_osarchitecture(void)
 {
-    SYSTEM_INFO info;
-    GetNativeSystemInfo( &info );
-    if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"64-bit";
-    return L"32-bit";
+    SYSTEM_CPU_INFORMATION info;
+
+    RtlGetNativeSystemInformation( SystemCpuInformation, &info, sizeof(info), NULL );
+    switch (info.ProcessorArchitecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+    case PROCESSOR_ARCHITECTURE_ARM:
+        return L"32-bit";
+    default:
+        return L"64-bit";
+    }
 }
 static WCHAR *get_processor_caption( UINT index )
 {
