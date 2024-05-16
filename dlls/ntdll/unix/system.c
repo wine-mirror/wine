@@ -986,7 +986,7 @@ static NTSTATUS create_logical_proc_info(void)
 
             for (j = 0; j < 4; j++)
             {
-                CACHE_DESCRIPTOR cache;
+                CACHE_DESCRIPTOR cache = { .Associativity = 8, .LineSize = 64, .Type = CacheUnified, .Size = 64 * 1024 };
                 ULONG_PTR mask = 0;
 
                 snprintf(name, sizeof(name), cache_info, i, j, "shared_cpu_map");
@@ -1000,39 +1000,43 @@ static NTSTATUS create_logical_proc_info(void)
                 cache.Level = r;
 
                 snprintf(name, sizeof(name), cache_info, i, j, "ways_of_associativity");
-                f = fopen(name, "r");
-                if(!f) continue;
-                fscanf(f, "%u", &r);
-                fclose(f);
-                cache.Associativity = r;
+                if ((f = fopen(name, "r")))
+                {
+                    fscanf(f, "%u", &r);
+                    fclose(f);
+                    cache.Associativity = r;
+                }
 
                 snprintf(name, sizeof(name), cache_info, i, j, "coherency_line_size");
-                f = fopen(name, "r");
-                if(!f) continue;
-                fscanf(f, "%u", &r);
-                fclose(f);
-                cache.LineSize = r;
+                if ((f = fopen(name, "r")))
+                {
+                    fscanf(f, "%u", &r);
+                    fclose(f);
+                    cache.LineSize = r;
+                }
 
                 snprintf(name, sizeof(name), cache_info, i, j, "size");
-                f = fopen(name, "r");
-                if(!f) continue;
-                fscanf(f, "%u%c", &r, &op);
-                fclose(f);
-                if(op != 'K')
-                    WARN("unknown cache size %u%c\n", r, op);
-                cache.Size = (op=='K' ? r*1024 : r);
+                if ((f = fopen(name, "r")))
+                {
+                    fscanf(f, "%u%c", &r, &op);
+                    fclose(f);
+                    if(op != 'K')
+                        WARN("unknown cache size %u%c\n", r, op);
+                    cache.Size = (op=='K' ? r*1024 : r);
+                }
 
                 snprintf(name, sizeof(name), cache_info, i, j, "type");
-                f = fopen(name, "r");
-                if(!f) continue;
-                fscanf(f, "%s", name);
-                fclose(f);
-                if (!memcmp(name, "Data", 5))
-                    cache.Type = CacheData;
-                else if(!memcmp(name, "Instruction", 11))
-                    cache.Type = CacheInstruction;
-                else
-                    cache.Type = CacheUnified;
+                if ((f = fopen(name, "r")))
+                {
+                    fscanf(f, "%s", name);
+                    fclose(f);
+                    if (!memcmp(name, "Data", 5))
+                        cache.Type = CacheData;
+                    else if(!memcmp(name, "Instruction", 11))
+                        cache.Type = CacheInstruction;
+                    else
+                        cache.Type = CacheUnified;
+                }
 
                 if (!logical_proc_info_add_cache( mask, &cache ))
                 {
