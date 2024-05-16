@@ -263,37 +263,32 @@ LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, H
 /***********************************************************************
  *           ANDROID_UpdateDisplayDevices
  */
-UINT ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, void *param )
 {
-    if (force)
+    static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
+    struct pci_id pci_id = {0};
+    struct gdi_monitor gdi_monitor =
     {
-        static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
-        struct pci_id pci_id = {0};
-        struct gdi_monitor gdi_monitor =
-        {
-            .rc_monitor = virtual_screen_rect,
-            .rc_work = monitor_rc_work,
-        };
-        const DEVMODEW mode =
-        {
-            .dmSize = sizeof(mode),
-            .dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
-                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-            .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
-        };
-        DEVMODEW current = mode;
+        .rc_monitor = virtual_screen_rect,
+        .rc_work = monitor_rc_work,
+    };
+    const DEVMODEW mode =
+    {
+        .dmSize = sizeof(mode),
+        .dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
+                    DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
+    };
+    DEVMODEW current = mode;
 
-        device_manager->add_gpu( "Android GPU", &pci_id, NULL, param );
-        device_manager->add_source( "Default", source_flags, param );
-        device_manager->add_monitor( &gdi_monitor, param );
+    device_manager->add_gpu( "Android GPU", &pci_id, NULL, param );
+    device_manager->add_source( "Default", source_flags, param );
+    device_manager->add_monitor( &gdi_monitor, param );
 
-        current.dmFields |= DM_POSITION;
-        device_manager->add_modes( &current, 1, &mode, param );
+    current.dmFields |= DM_POSITION;
+    device_manager->add_modes( &current, 1, &mode, param );
 
-        return STATUS_SUCCESS;
-    }
-
-    return STATUS_ALREADY_COMPLETE;
+    return STATUS_SUCCESS;
 }
 
 

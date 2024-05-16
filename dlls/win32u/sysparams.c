@@ -1765,7 +1765,7 @@ static BOOL update_display_cache_from_registry(void)
     return ret;
 }
 
-static NTSTATUS default_update_display_devices( BOOL force, struct device_manager_ctx *ctx )
+static NTSTATUS default_update_display_devices( struct device_manager_ctx *ctx )
 {
     /* default implementation: expose an adapter and a monitor with a few standard modes,
      * and read / write current display settings from / to the registry.
@@ -1795,8 +1795,6 @@ static NTSTATUS default_update_display_devices( BOOL force, struct device_manage
     struct pci_id pci_id = {0};
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {.dmSize = sizeof(mode)};
-
-    if (!force) return STATUS_ALREADY_COMPLETE;
 
     add_gpu( "Default GPU", &pci_id, NULL, ctx );
     add_source( "Default", source_flags, ctx );
@@ -1980,17 +1978,17 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     return STATUS_SUCCESS;
 }
 
-static UINT update_display_devices( BOOL force, struct device_manager_ctx *ctx )
+static UINT update_display_devices( struct device_manager_ctx *ctx )
 {
     UINT status;
 
-    if (!(status = user_driver->pUpdateDisplayDevices( &device_manager, force, ctx )))
+    if (!(status = user_driver->pUpdateDisplayDevices( &device_manager, ctx )))
     {
         if (ctx->source_count && is_virtual_desktop()) return add_virtual_source( ctx );
         return status;
     }
 
-    if (status == STATUS_NOT_IMPLEMENTED) return default_update_display_devices( force, ctx );
+    if (status == STATUS_NOT_IMPLEMENTED) return default_update_display_devices( ctx );
     return status;
 }
 
@@ -2026,13 +2024,13 @@ BOOL update_display_cache( BOOL force )
         return TRUE;
     }
 
-    if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
-
-    if (!(status = update_display_devices( force, &ctx )))
-        add_vulkan_only_gpus( &ctx );
-
-    release_display_manager_ctx( &ctx );
-    if (status && status != STATUS_ALREADY_COMPLETE) WARN( "Failed to update display devices, status %#x\n", status );
+    if (force)
+    {
+        if (!get_vulkan_gpus( &ctx.vulkan_gpus )) WARN( "Failed to find any vulkan GPU\n" );
+        if (!(status = update_display_devices( &ctx ))) add_vulkan_only_gpus( &ctx );
+        else WARN( "Failed to update display devices, status %#x\n", status );
+        release_display_manager_ctx( &ctx );
+    }
 
     if (!update_display_cache_from_registry())
     {

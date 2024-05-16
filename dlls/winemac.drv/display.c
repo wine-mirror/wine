@@ -1118,7 +1118,7 @@ void macdrv_displays_changed(const macdrv_event *event)
     }
 }
 
-UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param)
 {
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;
@@ -1126,8 +1126,6 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     struct macdrv_display *displays, *display;
     INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
     DEVMODEW *modes;
-
-    if (!force) return STATUS_ALREADY_COMPLETE;
 
     if (macdrv_get_displays(&displays, &display_count))
     {

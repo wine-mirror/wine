@@ -494,7 +494,7 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
     return !!host_handler.register_event_handlers;
 }
 
-UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
+UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, void *param )
 {
     struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
@@ -503,8 +503,6 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu, adapter, monitor;
     DEVMODEW *modes;
     UINT mode_count;
-
-    if (!force) return STATUS_ALREADY_COMPLETE;
 
     TRACE( "via %s\n", debugstr_a(host_handler.name) );
 

@@ -129,8 +129,7 @@ extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_na
 extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode);
 extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary);
 extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-extern UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                         BOOL force, void *param );
+extern UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param);
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 extern BOOL macdrv_ClipCursor(const RECT *clip, BOOL reset);

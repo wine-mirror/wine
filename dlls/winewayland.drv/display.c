@@ -264,17 +264,14 @@ static void wayland_add_device_modes(const struct gdi_device_manager *device_man
 /***********************************************************************
  *      UpdateDisplayDevices (WAYLAND.@)
  */
-UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager,
-                                  BOOL force, void *param)
+UINT WAYLAND_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param)
 {
     struct wayland_output *output;
     DWORD state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
     struct wl_array output_info_array;
     struct output_info *output_info;
 
-    if (!force) return STATUS_ALREADY_COMPLETE;
-
-    TRACE("force=%d\n", force);
+    TRACE("\n");
 
     wl_array_init(&output_info_array);
 
