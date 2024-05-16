@@ -2227,6 +2227,22 @@ ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
 }
 
 
+/*************************************************************************
+ *		__wine_unix_call_arm64ec
+ */
+NTSTATUS __attribute__((naked)) __wine_unix_call_arm64ec( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    asm( ".seh_proc \"#__wine_unix_call_arm64ec\"\n\t"
+         ".seh_endprologue\n\t"
+         "adrp x16, __wine_unix_call_dispatcher_arm64ec\n\t"
+         "ldr x16, [x16, #:lo12:__wine_unix_call_dispatcher_arm64ec]\n\t"
+         "br x16\n\t"
+         ".seh_endproc" );
+}
+
+NTSTATUS (WINAPI *__wine_unix_call_dispatcher_arm64ec)( unixlib_handle_t, unsigned int, void * ) = __wine_unix_call_arm64ec;
+
+
 static int code_match( BYTE *code, const BYTE *seq, size_t len )
 {
     for ( ; len; len--, code++, seq++) if (*seq && *code != *seq) return 0;
@@ -2262,7 +2278,6 @@ void *check_call( void **target, void *exit_thunk, void *dest )
 
     for (;;)
     {
-        if (dest == __wine_unix_call_dispatcher) return dest;
         if (RtlIsEcCode( (ULONG_PTR)dest )) return dest;
         if (code_match( dest, jmp_sequence, sizeof(jmp_sequence) ))
         {

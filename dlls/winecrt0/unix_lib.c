@@ -64,6 +64,31 @@ static NTSTATUS WINAPI unix_call_init( unixlib_handle_t handle, unsigned int cod
 unixlib_handle_t __wine_unixlib_handle = 0;
 NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) = unix_call_init;
 
+#ifdef __arm64ec__
+
+static NTSTATUS WINAPI unix_call_init_arm64ec( unixlib_handle_t handle, unsigned int code, void *args );
+
+static __attribute__((used)) NTSTATUS (WINAPI *__wine_unix_call_dispatcher_arm64ec)( unixlib_handle_t, unsigned int, void * ) = unix_call_init_arm64ec;
+
+static NTSTATUS WINAPI unix_call_init_arm64ec( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    InterlockedExchangePointer( (void **)&__wine_unix_call_dispatcher_arm64ec,
+                                get_dispatcher( "__wine_unix_call_dispatcher_arm64ec" ));
+    return __wine_unix_call_arm64ec( handle, code, args );
+}
+
+NTSTATUS __attribute__((naked)) __wine_unix_call_arm64ec( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    asm( ".seh_proc \"#__wine_unix_call_arm64ec\"\n\t"
+         ".seh_endprologue\n\t"
+         "adrp x16, __wine_unix_call_dispatcher_arm64ec\n\t"
+         "ldr x16, [x16, #:lo12:__wine_unix_call_dispatcher_arm64ec]\n\t"
+         "br x16\n\t"
+         ".seh_endproc" );
+}
+
+#endif
+
 NTSTATUS WINAPI __wine_init_unix_call(void)
 {
     return NtQueryVirtualMemory( GetCurrentProcess(), image_base(), MemoryWineUnixFuncs,

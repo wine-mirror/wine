@@ -262,10 +262,18 @@ extern unixlib_handle_t __wine_unixlib_handle;
 extern NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * );
 extern NTSTATUS WINAPI __wine_init_unix_call(void);
 
+#ifdef __arm64ec__
+NTSTATUS __wine_unix_call_arm64ec( unixlib_handle_t handle, unsigned int code, void *args );
+static inline NTSTATUS __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    return __wine_unix_call_arm64ec( handle, code, args );
+}
+#else
 static inline NTSTATUS __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
 {
     return __wine_unix_call_dispatcher( handle, code, args );
 }
+#endif
 
 #define WINE_UNIX_CALL(code,args) __wine_unix_call( __wine_unixlib_handle, (code), (args) )
 
