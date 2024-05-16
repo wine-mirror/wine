@@ -309,6 +309,9 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     DWORD flags = 0;
     HRESULT hr;
 
+    if (filter->filter.state == State_Stopped)
+        return VFW_E_WRONG_STATE;
+
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
     if (IMediaSample_IsDiscontinuity(sample) == S_OK)

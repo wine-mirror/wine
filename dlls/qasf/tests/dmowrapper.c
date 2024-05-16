@@ -1716,12 +1716,10 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     hr = IBaseFilter_Stop(dmo_filter);
     ok(hr == S_OK, "Stop returned %#lx.\n", hr);
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == VFW_E_WRONG_STATE, "Receive returned %#lx.\n", hr);
     ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
     ok(got_ProcessOutput == 0, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
     ok(got_Receive == 0, "Got %u calls to Receive().\n", got_Receive);
-    todo_wine
     ok(got_Discontinuity == 0, "Got %u calls to Discontinuity().\n", got_Discontinuity);
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Run returned %#lx.\n", hr);
