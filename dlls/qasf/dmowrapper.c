@@ -202,12 +202,10 @@ static void dmo_wrapper_sink_disconnect(struct strmbase_sink *iface)
     IMediaObject_Release(dmo);
 }
 
-static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
+static HRESULT get_output_samples(struct dmo_wrapper *filter)
 {
-    DMO_OUTPUT_DATA_BUFFER *buffers = filter->buffers;
-    DWORD status, i;
-    BOOL more_data;
     HRESULT hr;
+    DWORD i;
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -216,15 +214,28 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
             if (FAILED(hr = IMemAllocator_GetBuffer(filter->sources[i].pin.pAllocator,
                     &filter->sources[i].buffer.sample, NULL, NULL, 0)))
             {
-                ERR("Failed to get sample, hr %#lx.\n", hr);
-                goto out;
+                ERR("Failed to get sample for source %lu, hr %#lx.\n", i, hr);
+                return hr;
             }
-            buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
+            filter->buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
             IMediaSample_SetActualDataLength(filter->sources[i].buffer.sample, 0);
         }
         else
-            buffers[i].pBuffer = NULL;
+            filter->buffers[i].pBuffer = NULL;
     }
+
+    return S_OK;
+}
+
+static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
+{
+    DMO_OUTPUT_DATA_BUFFER *buffers = filter->buffers;
+    DWORD status, i;
+    BOOL more_data;
+    HRESULT hr;
+
+    if (FAILED(hr = get_output_samples(filter)))
+        goto out;
 
     do
     {
