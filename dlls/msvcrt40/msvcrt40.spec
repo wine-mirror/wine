@@ -6,7 +6,7 @@
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@AEBV0@@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QEAA@AEBV0@@Z
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@PEBD@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QEAA@PEBD@Z
-@ thiscall -arch=win32 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
+@ thiscall -arch=i386 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABQBD@Z
 @ cdecl -arch=win64 ??0bad_cast@@AEAA@PEBQEBD@Z(ptr ptr) msvcrt.??0bad_cast@@AEAA@PEBQEBD@Z
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBQEBD@Z(ptr ptr) msvcrt.??0bad_cast@@QEAA@AEBQEBD@Z
@@ -613,7 +613,7 @@
 @ cdecl -arch=win64 ?lockptr@ios@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ(ptr) msvcirt.?lockptr@ios@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
 @ thiscall -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ(ptr) msvcirt.?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ
 @ cdecl -arch=win64 ?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ(ptr) msvcirt.?lockptr@streambuf@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
-@ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ(ptr) msvcrt.?name@type_info@@QBEPBDXZ
+@ thiscall -arch=i386 ?name@type_info@@QBEPBDXZ(ptr) msvcrt.?name@type_info@@QBEPBDXZ
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDXZ(ptr) msvcrt.?name@type_info@@QEBAPEBDXZ
 @ cdecl -arch=win32 ?oct@@YAAAVios@@AAV1@@Z(ptr) msvcirt.?oct@@YAAAVios@@AAV1@@Z
 @ cdecl -arch=win64 ?oct@@YAAEAVios@@AEAV1@@Z(ptr) msvcirt.?oct@@YAAEAVios@@AEAV1@@Z
