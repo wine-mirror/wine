@@ -1313,19 +1313,18 @@ static void test_connect_pin(void)
             const GUID *subtype;
             DWORD compression;
             WORD bpp;
-            BOOL todo;
         }
         expect[9] =
         {
-            {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8, TRUE},
-            {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16, TRUE},
-            {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16, TRUE},
-            {&MEDIASUBTYPE_RGB32, BI_RGB, 32, FALSE},
-            {&MEDIASUBTYPE_RGB24, BI_RGB, 24, TRUE},
-            {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, TRUE},
-            {&MEDIASUBTYPE_RGB555, BI_RGB, 16, TRUE},
-            {&MEDIASUBTYPE_RGB8, BI_RGB, 8, TRUE},
-            {&MEDIASUBTYPE_I420, mmioFOURCC('I','4','2','0'), 12, FALSE},
+            {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8},
+            {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16},
+            {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16},
+            {&MEDIASUBTYPE_RGB32, BI_RGB, 32},
+            {&MEDIASUBTYPE_RGB24, BI_RGB, 24},
+            {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16},
+            {&MEDIASUBTYPE_RGB555, BI_RGB, 16},
+            {&MEDIASUBTYPE_RGB8, BI_RGB, 8},
+            {&MEDIASUBTYPE_I420, mmioFOURCC('I','4','2','0'), 12},
         };
 
         VIDEOINFOHEADER expect_format =
@@ -1351,9 +1350,9 @@ static void test_connect_pin(void)
 
         hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        todo_wine_if(expect[i].todo) ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
+        ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
                 "%u: Media types didn't match.\n", i);
-        todo_wine_if(expect[i].todo) ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(VIDEOINFOHEADER)),
+        ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(VIDEOINFOHEADER)),
                 "%u: Format blocks didn't match.\n", i);
         if (i == 5)
         {

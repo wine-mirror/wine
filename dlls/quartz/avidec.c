@@ -361,8 +361,8 @@ static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface
         format->bmiHeader.biPlanes = sink_format->bmiHeader.biPlanes;
         format->bmiHeader.biBitCount = formats[index].bpp;
         format->bmiHeader.biCompression = formats[index].compression;
-        format->bmiHeader.biSizeImage = format->bmiHeader.biWidth
-                * format->bmiHeader.biHeight * formats[index].bpp / 8;
+        format->bmiHeader.biSizeImage = format->bmiHeader.biHeight * (((format->bmiHeader.biWidth
+                * formats[index].bpp + 31) / 8) & ~3);
 
         if (IsEqualGUID(formats[index].subtype, &MEDIASUBTYPE_RGB565))
         {
