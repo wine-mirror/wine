@@ -573,10 +573,16 @@ static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
     if (!filter->source.pin.peer)
         return S_OK;
 
-    if (filter->hvid && (res = ICDecompressEnd(filter->hvid)))
+    if (filter->hvid)
     {
-        ERR("ICDecompressEnd() failed, error %Id.\n", res);
-        return E_FAIL;
+        EnterCriticalSection(&filter->filter.stream_cs);
+        res = ICDecompressEnd(filter->hvid);
+        LeaveCriticalSection(&filter->filter.stream_cs);
+        if (res)
+        {
+            ERR("ICDecompressEnd() failed, error %Id.\n", res);
+            return E_FAIL;
+        }
     }
 
     IMemAllocator_Decommit(filter->source.pAllocator);
