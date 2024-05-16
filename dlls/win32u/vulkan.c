@@ -213,22 +213,14 @@ static const struct vulkan_driver_funcs nulldrv_funcs =
     .p_get_host_surface_extension = nulldrv_get_host_surface_extension,
 };
 
-static void vulkan_init(void)
+static void vulkan_driver_init(void)
 {
     UINT status;
-
-    if (!(vulkan_handle = dlopen( SONAME_LIBVULKAN, RTLD_NOW )))
-    {
-        ERR( "Failed to load %s\n", SONAME_LIBVULKAN );
-        return;
-    }
 
     if ((status = user_driver->pVulkanInit( WINE_VULKAN_DRIVER_VERSION, vulkan_handle, &driver_funcs )) &&
         status != STATUS_NOT_IMPLEMENTED)
     {
         ERR( "Failed to initialize the driver vulkan functions, status %#x\n", status );
-        dlclose( vulkan_handle );
-        vulkan_handle = NULL;
         return;
     }
 
@@ -238,6 +230,65 @@ static void vulkan_init(void)
     {
         vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR = driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR;
         vulkan_funcs.p_get_host_surface_extension = driver_funcs->p_get_host_surface_extension;
+    }
+}
+
+static void vulkan_driver_load(void)
+{
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+    pthread_once( &init_once, vulkan_driver_init );
+}
+
+static VkResult lazydrv_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vulkan_surface_create( hwnd, instance, surface, private );
+}
+
+static void lazydrv_vulkan_surface_destroy( HWND hwnd, void *private )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vulkan_surface_destroy( hwnd, private );
+}
+
+static void lazydrv_vulkan_surface_detach( HWND hwnd, void *private )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vulkan_surface_detach( hwnd, private );
+}
+
+static void lazydrv_vulkan_surface_presented( HWND hwnd, VkResult result )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vulkan_surface_presented( hwnd, result );
+}
+
+static VkBool32 lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )
+{
+    vulkan_driver_load();
+    return driver_funcs->p_vkGetPhysicalDeviceWin32PresentationSupportKHR( device, queue );
+}
+
+static const char *lazydrv_get_host_surface_extension(void)
+{
+    vulkan_driver_load();
+    return driver_funcs->p_get_host_surface_extension();
+}
+
+static const struct vulkan_driver_funcs lazydrv_funcs =
+{
+    .p_vulkan_surface_create = lazydrv_vulkan_surface_create,
+    .p_vulkan_surface_destroy = lazydrv_vulkan_surface_destroy,
+    .p_vulkan_surface_detach = lazydrv_vulkan_surface_detach,
+    .p_vulkan_surface_presented = lazydrv_vulkan_surface_presented,
+};
+
+static void vulkan_init(void)
+{
+    if (!(vulkan_handle = dlopen( SONAME_LIBVULKAN, RTLD_NOW )))
+    {
+        ERR( "Failed to load %s\n", SONAME_LIBVULKAN );
+        return;
     }
 
 #define LOAD_FUNCPTR( f )                                                                          \
@@ -254,6 +305,10 @@ static void vulkan_init(void)
     LOAD_FUNCPTR( vkGetDeviceProcAddr );
     LOAD_FUNCPTR( vkGetInstanceProcAddr );
 #undef LOAD_FUNCPTR
+
+    driver_funcs = &lazydrv_funcs;
+    vulkan_funcs.p_vkGetPhysicalDeviceWin32PresentationSupportKHR = lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR;
+    vulkan_funcs.p_get_host_surface_extension = lazydrv_get_host_surface_extension;
 }
 
 void vulkan_detach_surfaces( struct list *surfaces )
