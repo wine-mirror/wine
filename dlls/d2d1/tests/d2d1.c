@@ -12914,6 +12914,13 @@ static void test_transform_graph(BOOL d3d11)
     todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
+    /* Passthrough graph. */
+    hr = ID2D1TransformGraph_SetPassthroughGraph(graph, 100);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1TransformGraph_SetPassthroughGraph(graph, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
     ID2D1BlendTransform_Release(blend_transform);
     ID2D1OffsetTransform_Release(offset_transform);
     ID2D1Effect_Release(effect);

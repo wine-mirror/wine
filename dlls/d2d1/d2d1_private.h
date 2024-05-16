@@ -771,6 +771,9 @@ struct d2d_transform_graph
 
     struct d2d_transform_node *output;
 
+    bool passthrough;
+    unsigned int passthrough_input;
+
     struct list nodes;
 };
 

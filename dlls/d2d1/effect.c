@@ -659,6 +659,7 @@ static void d2d_transform_graph_clear(struct d2d_transform_graph *graph)
     {
         d2d_transform_graph_delete_node(graph, node);
     }
+    graph->passthrough = false;
 }
 
 static inline struct d2d_transform_graph *impl_from_ID2D1TransformGraph(ID2D1TransformGraph *iface)
@@ -788,6 +789,7 @@ static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetOutputNode(ID2D1Transfor
         return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
     graph->output = node;
+    graph->passthrough = false;
 
     return S_OK;
 }
@@ -821,6 +823,7 @@ static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectToEffectInput(ID2D1T
 
     graph->inputs[input_index].node = node;
     graph->inputs[input_index].index = node_index;
+    graph->passthrough = false;
 
     return S_OK;
 }
@@ -836,9 +839,19 @@ static void STDMETHODCALLTYPE d2d_transform_graph_Clear(ID2D1TransformGraph *ifa
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetPassthroughGraph(ID2D1TransformGraph *iface, UINT32 index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    if (index >= graph->input_count)
+        return E_INVALIDARG;
+
+    d2d_transform_graph_clear(graph);
+
+    graph->passthrough = true;
+    graph->passthrough_input = index;
+
+    return S_OK;
 }
 
 static const ID2D1TransformGraphVtbl d2d_transform_graph_vtbl =
