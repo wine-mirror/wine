@@ -119,7 +119,7 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         todo_wine_if (in->biSizeImage != sink_bitmap_info.biSizeImage)
             ok(!memcmp(in, &sink_bitmap_info, sizeof(BITMAPINFOHEADER)),
                     "Input types didn't match.\n");
-        todo_wine ok(!memcmp(out, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+        ok(!memcmp(out, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
                 "Output types didn't match.\n");
         ok(!in_begin, "Got multiple ICM_DECOMPRESS_BEGIN messages.\n");
         in_begin = 1;

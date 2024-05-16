@@ -552,7 +552,7 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
 
     filter->late = -1;
 
-    source_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+    source_format = (VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
     if ((res = ICDecompressBegin(filter->hvid, filter->pBihIn, &source_format->bmiHeader)))
     {
         ERR("ICDecompressBegin() failed, error %Id.\n", res);
