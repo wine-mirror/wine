@@ -753,6 +753,9 @@ struct d2d_transform_node
     struct list entry;
     ID2D1TransformNode *object;
     struct d2d_render_info *render_info;
+    struct d2d_transform_node **inputs;
+    unsigned int input_count;
+    struct d2d_transform_node *output;
 };
 
 struct d2d_transform_node_connection

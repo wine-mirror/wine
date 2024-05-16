@@ -12873,7 +12873,6 @@ static void test_transform_graph(BOOL d3d11)
     ID2D1TransformGraph_Clear(graph);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect added node to un-added node */
@@ -12881,7 +12880,6 @@ static void test_transform_graph(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect un-added node to added node */
@@ -12890,7 +12888,6 @@ static void test_transform_graph(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, 0);
-    todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Got unexpected hr %#lx.\n", hr);
 
     /* Connect nodes */
@@ -12904,14 +12901,12 @@ static void test_transform_graph(BOOL d3d11)
     {
         hr = ID2D1TransformGraph_ConnectNode(graph,
                 (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, i);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     /* Connect node to out-of-bounds index */
     hr = ID2D1TransformGraph_ConnectNode(graph,
             (ID2D1TransformNode *)offset_transform, (ID2D1TransformNode *)blend_transform, count);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     /* Passthrough graph. */

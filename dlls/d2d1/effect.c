@@ -620,12 +620,36 @@ static HRESULT d2d_transform_graph_add_node(struct d2d_transform_graph *graph,
 
     if (!(node = calloc(1, sizeof(*node))))
         return E_OUTOFMEMORY;
+    node->input_count = ID2D1TransformNode_GetInputCount(object);
+    if (!(node->inputs = calloc(node->input_count, sizeof(*node->inputs))))
+    {
+        free(node);
+        return E_OUTOFMEMORY;
+    }
 
     node->object = object;
     ID2D1TransformNode_AddRef(node->object);
     list_add_tail(&graph->nodes, &node->entry);
 
     return S_OK;
+}
+
+static void d2d_transform_node_disconnect(struct d2d_transform_node *node)
+{
+    struct d2d_transform_node *output = node->output;
+    unsigned int i;
+
+    if (!output)
+        return;
+
+    for (i = 0; i < output->input_count; ++i)
+    {
+        if (output->inputs[i] == node)
+        {
+            output->inputs[i] = NULL;
+            break;
+        }
+    }
 }
 
 static void d2d_transform_graph_delete_node(struct d2d_transform_graph *graph,
@@ -648,6 +672,9 @@ static void d2d_transform_graph_delete_node(struct d2d_transform_graph *graph,
     if (node->render_info)
         ID2D1DrawInfo_Release(&node->render_info->ID2D1DrawInfo_iface);
 
+    d2d_transform_node_disconnect(node);
+
+    free(node->inputs);
     free(node);
 }
 
@@ -797,9 +824,25 @@ static HRESULT STDMETHODCALLTYPE d2d_transform_graph_SetOutputNode(ID2D1Transfor
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectNode(ID2D1TransformGraph *iface,
         ID2D1TransformNode *from_node, ID2D1TransformNode *to_node, UINT32 index)
 {
-    FIXME("iface %p, from_node %p, to_node %p, index %u stub!\n", iface, from_node, to_node, index);
+    struct d2d_transform_graph *graph = impl_from_ID2D1TransformGraph(iface);
+    struct d2d_transform_node *from, *to;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, from_node %p, to_node %p, index %u.\n", iface, from_node, to_node, index);
+
+    if (!(from = d2d_transform_graph_get_node(graph, from_node)))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    if (!(to = d2d_transform_graph_get_node(graph, to_node)))
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+    if (index >= to->input_count)
+        return E_INVALIDARG;
+
+    d2d_transform_node_disconnect(from);
+    to->inputs[index] = from;
+    from->output = to;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_transform_graph_ConnectToEffectInput(ID2D1TransformGraph *iface,
