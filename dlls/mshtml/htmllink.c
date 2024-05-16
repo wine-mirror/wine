@@ -44,63 +44,8 @@ static inline HTMLLinkElement *impl_from_IHTMLLinkElement(IHTMLLinkElement *ifac
     return CONTAINING_RECORD(iface, HTMLLinkElement, IHTMLLinkElement_iface);
 }
 
-static HRESULT WINAPI HTMLLinkElement_QueryInterface(IHTMLLinkElement *iface,
-                                                         REFIID riid, void **ppv)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLLinkElement_AddRef(IHTMLLinkElement *iface)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
-}
-
-static ULONG WINAPI HTMLLinkElement_Release(IHTMLLinkElement *iface)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
-}
-
-static HRESULT WINAPI HTMLLinkElement_GetTypeInfoCount(IHTMLLinkElement *iface, UINT *pctinfo)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IDispatchEx_GetTypeInfoCount(&This->element.node.event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLLinkElement_GetTypeInfo(IHTMLLinkElement *iface, UINT iTInfo,
-                                              LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->element.node.event_target.dispex.IDispatchEx_iface, iTInfo, lcid,
-            ppTInfo);
-}
-
-static HRESULT WINAPI HTMLLinkElement_GetIDsOfNames(IHTMLLinkElement *iface, REFIID riid,
-                                                LPOLESTR *rgszNames, UINT cNames,
-                                                LCID lcid, DISPID *rgDispId)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->element.node.event_target.dispex.IDispatchEx_iface, riid, rgszNames,
-            cNames, lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLLinkElement_Invoke(IHTMLLinkElement *iface, DISPID dispIdMember,
-                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLLinkElement *This = impl_from_IHTMLLinkElement(iface);
-
-    return IDispatchEx_Invoke(&This->element.node.event_target.dispex.IDispatchEx_iface, dispIdMember, riid,
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLLinkElement, IHTMLLinkElement,
+                      impl_from_IHTMLLinkElement(iface)->element.node.event_target.dispex)
 
 static HRESULT WINAPI HTMLLinkElement_put_href(IHTMLLinkElement *iface, BSTR v)
 {
