@@ -913,7 +913,7 @@ void __cdecl DECLSPEC_NORETURN _Nomemory(void)
     TRACE("()\n");
 
     MSVCP_bad_alloc_default_ctor(&e);
-    _CxxThrowException(&e, &bad_alloc_cxx_type);
+    _CxxThrowException(&e, &bad_alloc_exception_type);
 }
 
 /* ?_Xmem@tr1@std@@YAXXZ */
@@ -924,7 +924,7 @@ void __cdecl DECLSPEC_NORETURN _Xmem(void)
     TRACE("()\n");
 
     MSVCP_bad_alloc_default_ctor(&e);
-    _CxxThrowException(&e, &bad_alloc_cxx_type);
+    _CxxThrowException(&e, &bad_alloc_exception_type);
 }
 
 /* ?_Xinvalid_argument@std@@YAXPBD@Z */
@@ -937,7 +937,7 @@ void __cdecl DECLSPEC_NORETURN _Xinvalid_argument(const char *str)
     TRACE("(%s)\n", debugstr_a(str));
 
     MSVCP_invalid_argument_ctor(&e, name);
-    _CxxThrowException(&e, &invalid_argument_cxx_type);
+    _CxxThrowException(&e, &invalid_argument_exception_type);
 }
 
 /* ?_Xlength_error@std@@YAXPBD@Z */
@@ -950,7 +950,7 @@ void __cdecl DECLSPEC_NORETURN _Xlength_error(const char *str)
     TRACE("(%s)\n", debugstr_a(str));
 
     MSVCP_length_error_ctor(&e, name);
-    _CxxThrowException(&e, &length_error_cxx_type);
+    _CxxThrowException(&e, &length_error_exception_type);
 }
 
 /* ?_Xout_of_range@std@@YAXPBD@Z */
@@ -963,7 +963,7 @@ void __cdecl DECLSPEC_NORETURN _Xout_of_range(const char *str)
     TRACE("(%s)\n", debugstr_a(str));
 
     MSVCP_out_of_range_ctor(&e, name);
-    _CxxThrowException(&e, &out_of_range_cxx_type);
+    _CxxThrowException(&e, &out_of_range_exception_type);
 }
 
 /* ?_Xruntime_error@std@@YAXPBD@Z */
@@ -976,7 +976,7 @@ void __cdecl DECLSPEC_NORETURN _Xruntime_error(const char *str)
     TRACE("(%s)\n", debugstr_a(str));
 
     MSVCP_runtime_error_ctor(&e, name);
-    _CxxThrowException(&e, &runtime_error_cxx_type);
+    _CxxThrowException(&e, &runtime_error_exception_type);
 }
 
 #if _MSVCP_VER > 90
@@ -988,7 +988,7 @@ void __cdecl _Xbad_function_call(void)
     TRACE("()\n");
 
     MSVCP_bad_function_call_ctor(&e);
-    _CxxThrowException(&e, &bad_function_call_cxx_type);
+    _CxxThrowException(&e, &bad_function_call_exception_type);
 }
 #endif
 
@@ -1014,7 +1014,7 @@ void __cdecl _XGetLastError(void)
     se.code.category = std_system_category();
     se.base.e.vtable = &system_error_vtable;
 
-    _CxxThrowException(&se, &system_error_cxx_type);
+    _CxxThrowException(&se, &system_error_exception_type);
 }
 #endif
 
@@ -1072,7 +1072,7 @@ void __cdecl DECLSPEC_NORETURN _Throw_future_error( const error_code *error_code
     MSVCP_logic_error_ctor(&e.base, EXCEPTION_NAME(name));
     e.code = *error_code;
     e.base.e.vtable = &future_error_vtable;
-    _CxxThrowException(&e, &future_error_cxx_type);
+    _CxxThrowException(&e, &future_error_exception_type);
 }
 
 typedef struct
@@ -1091,7 +1091,7 @@ static void exception_ptr_rethrow(const exception_ptr *ep)
         exception e;
 
         MSVCP_exception_ctor(&e, &exception_msg);
-        _CxxThrowException(&e, &exception_cxx_type);
+        _CxxThrowException(&e, &exception_exception_type);
         return;
     }
 
@@ -1140,7 +1140,7 @@ void __cdecl _Throw_C_error(int code)
     se.code.category = std_generic_category();
     se.base.e.vtable = &system_error_vtable;
 
-    _CxxThrowException(&se, &system_error_cxx_type);
+    _CxxThrowException(&se, &system_error_exception_type);
 }
 #endif
 
@@ -1562,7 +1562,7 @@ void DECLSPEC_NORETURN throw_exception(const char *str)
     exception e;
 
     MSVCP_exception_ctor(&e, name);
-    _CxxThrowException(&e, &exception_cxx_type);
+    _CxxThrowException(&e, &exception_exception_type);
 }
 
 /* Internal: throws range_error exception */
@@ -1572,7 +1572,7 @@ void DECLSPEC_NORETURN throw_range_error(const char *str)
     range_error e;
 
     MSVCP_range_error_ctor(&e, name);
-    _CxxThrowException(&e, &range_error_cxx_type);
+    _CxxThrowException(&e, &range_error_exception_type);
 }
 
 /* Internal: throws failure exception */
@@ -1582,7 +1582,7 @@ void DECLSPEC_NORETURN throw_failure(const char *str)
     failure e;
 
     MSVCP_failure_ctor(&e, name);
-    _CxxThrowException(&e, &failure_cxx_type);
+    _CxxThrowException(&e, &failure_exception_type);
 }
 
 void init_exception(void *base)

@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-#define CXX_EXCEPTION 0xe06d7363
-
 static DWORD fls_index;
 
 typedef struct

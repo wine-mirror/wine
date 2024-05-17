@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "winternl.h"
-#include "cxx.h"
+#include "cppexcept.h"
 
 void* __cdecl operator_new(size_t);
 void __cdecl operator_delete(void*);

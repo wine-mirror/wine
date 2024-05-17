@@ -91,7 +91,7 @@ __ASM_VTABLE(range_error,
         VTABLE_ADD_FUNC(exception_what));
 __ASM_BLOCK_END
 
-DEFINE_CXX_EXCEPTION0( exception, exception_dtor )
+DEFINE_CXX_DATA0( exception, exception_dtor )
 DEFINE_RTTI_DATA1(runtime_error, 0, &exception_rtti_base_descriptor, ".?AVruntime_error@std@@")
 DEFINE_CXX_TYPE_INFO(runtime_error)
 DEFINE_RTTI_DATA2(range_error, 0, &runtime_error_rtti_base_descriptor,

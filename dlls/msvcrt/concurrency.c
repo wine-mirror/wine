@@ -27,7 +27,7 @@
 #include "wine/exception.h"
 #include "wine/list.h"
 #include "msvcrt.h"
-#include "cxx.h"
+#include "cppexcept.h"
 
 #if _MSVCR_VER >= 100
 
@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef exception cexception;
 CREATE_EXCEPTION_OBJECT(cexception)
+DEFINE_CXX_TYPE_INFO(cexception)
 
 static LONG context_id = -1;
 static LONG scheduler_id = -1;

@@ -31,7 +31,7 @@
 #include "wine/debug.h"
 #include "msvcrt.h"
 #include "mtdll.h"
-#include "cxx.h"
+#include "cppexcept.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -586,9 +586,7 @@ DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@
 DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" )
 #endif
 
-#if _MSVCR_VER >= 100
-DEFINE_CXX_EXCEPTION0( exception, exception_dtor )
-#endif
+DEFINE_CXX_DATA0( exception, exception_dtor )
 DEFINE_CXX_DATA1( bad_typeid, &exception_cxx_type_info, bad_typeid_dtor )
 DEFINE_CXX_DATA1( bad_cast, &exception_cxx_type_info, bad_cast_dtor )
 DEFINE_CXX_DATA2( __non_rtti_object, &bad_typeid_cxx_type_info,
@@ -610,11 +608,7 @@ void msvcrt_init_exception(void *base)
     init_bad_cast_rtti(base);
     init___non_rtti_object_rtti(base);
 
-#if _MSVCR_VER >= 100
     init_exception_cxx(base);
-#else
-    init_exception_cxx_type_info(base);
-#endif
     init_bad_typeid_cxx(base);
     init_bad_cast_cxx(base);
     init___non_rtti_object_cxx(base);
@@ -633,14 +627,12 @@ void throw_bad_alloc(void)
 }
 #endif
 
-#if _MSVCR_VER >= 100
 void throw_exception(const char* msg)
 {
     exception e;
     __exception_ctor(&e, msg, &exception_vtable);
     _CxxThrowException(&e, &exception_exception_type);
 }
-#endif
 
 /******************************************************************
  *		?set_terminate@@YAP6AXXZP6AXXZ@Z (MSVCRT.@)

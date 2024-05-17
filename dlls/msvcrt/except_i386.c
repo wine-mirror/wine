@@ -602,9 +602,10 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8 &&
                 exc_type->custom_handler)
         {
-            return exc_type->custom_handler( rec, frame, context, dispatch, descr,
-                                         nested_frame ? nested_frame->trylevel : 0,
-                                         nested_frame ? &nested_frame->frame : NULL, 0 );
+            cxx_exc_custom_handler handler = exc_type->custom_handler;
+            return handler( rec, frame, context, dispatch, descr,
+                            nested_frame ? nested_frame->trylevel : 0,
+                            nested_frame ? &nested_frame->frame : NULL, 0 );
         }
 
         if (TRACE_ON(seh))

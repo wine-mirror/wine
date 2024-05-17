@@ -26,7 +26,7 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "msvcrt.h"
-#include "cxx.h"
+#include "cppexcept.h"
 
 #ifdef __i386__
 

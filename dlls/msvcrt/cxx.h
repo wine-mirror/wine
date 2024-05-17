@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "cppexcept.h"
+#include "wine/asm.h"
 
 #ifdef _WIN64
 
@@ -91,6 +91,36 @@ const rtti_object_locator name ## _rtti = { \
     0, \
     &name ## _type_info, \
     &name ## _hierarchy \
+};
+
+#define DEFINE_CXX_TYPE_INFO(type) \
+static const cxx_type_info type ## _cxx_type_info = { \
+    0, \
+    & type ##_type_info, \
+    { 0, -1, 0 }, \
+    sizeof(type), \
+    THISCALL(type ##_copy_ctor) \
+};
+
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+DEFINE_CXX_TYPE_INFO(type) \
+\
+static const cxx_type_info_table type ## _cxx_type_table = { \
+    base_no+1, \
+    { \
+        & type ## _cxx_type_info, \
+        cl1, \
+        cl2, \
+        cl3, \
+        cl4  \
+    } \
+}; \
+\
+static const cxx_exception_type type ## _exception_type = { \
+    0, \
+    THISCALL(dtor), \
+    NULL, \
+    & type ## _cxx_type_table \
 };
 
 #else
@@ -170,6 +200,55 @@ static void init_ ## name ## _rtti(char *base) \
     name ## _rtti.object_locator = (char*)&name ## _rtti - base; \
 }
 
+#define DEFINE_CXX_TYPE_INFO(type) \
+static cxx_type_info type ## _cxx_type_info = { \
+    0, \
+    0xdeadbeef, \
+    { 0, -1, 0 }, \
+    sizeof(type), \
+    0xdeadbeef \
+}; \
+\
+static void init_ ## type ## _cxx_type_info(char *base) \
+{ \
+    type ## _cxx_type_info.type_info  = (char *)&type ## _type_info - base; \
+    type ## _cxx_type_info.copy_ctor  = (char *)type ## _copy_ctor - base; \
+}
+
+#define DEFINE_CXX_DATA(type, base_no, cl1, cl2, cl3, cl4, dtor)  \
+\
+DEFINE_CXX_TYPE_INFO(type) \
+\
+static cxx_type_info_table type ## _cxx_type_table = { \
+    base_no+1, \
+    { \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef, \
+        0xdeadbeef  \
+    } \
+}; \
+\
+static cxx_exception_type type ##_exception_type = { \
+    0, \
+    0xdeadbeef, \
+    0, \
+    0xdeadbeef \
+}; \
+\
+static void init_ ## type ## _cxx(char *base) \
+{ \
+    init_ ## type ## _cxx_type_info(base); \
+    type ## _cxx_type_table.info[0]   = (char *)&type ## _cxx_type_info - base; \
+    type ## _cxx_type_table.info[1]   = (char *)cl1 - base; \
+    type ## _cxx_type_table.info[2]   = (char *)cl2 - base; \
+    type ## _cxx_type_table.info[3]   = (char *)cl3 - base; \
+    type ## _cxx_type_table.info[4]   = (char *)cl4 - base; \
+    type ## _exception_type.destructor      = (char *)dtor - base; \
+    type ## _exception_type.type_info_table = (char *)&type ## _cxx_type_table - base; \
+}
+
 #endif
 
 #define DEFINE_RTTI_DATA0(name, off, mangled_name) \
@@ -182,10 +261,74 @@ static void init_ ## name ## _rtti(char *base) \
     DEFINE_RTTI_DATA(name, off, 3, cl1, cl2, cl3, NULL, NULL, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA4(name, off, cl1, cl2, cl3, cl4, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 4, cl1, cl2, cl3, cl4, NULL, NULL, NULL, NULL, NULL, mangled_name)
+#define DEFINE_RTTI_DATA5(name, off, cl1, cl2, cl3, cl4, cl5, mangled_name) \
+    DEFINE_RTTI_DATA(name, off, 5, cl1, cl2, cl3, cl4, cl5, NULL, NULL, NULL, NULL, mangled_name)
 #define DEFINE_RTTI_DATA8(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 8, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, NULL, mangled_name)
 #define DEFINE_RTTI_DATA9(name, off, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name) \
     DEFINE_RTTI_DATA(name, off, 9, cl1, cl2, cl3, cl4, cl5, cl6, cl7, cl8, cl9, mangled_name)
+
+#define DEFINE_CXX_DATA0(name, dtor) \
+    DEFINE_CXX_DATA(name, 0, NULL, NULL, NULL, NULL, dtor)
+#define DEFINE_CXX_DATA1(name, cl1, dtor) \
+    DEFINE_CXX_DATA(name, 1, cl1, NULL, NULL, NULL, dtor)
+#define DEFINE_CXX_DATA2(name, cl1, cl2, dtor) \
+    DEFINE_CXX_DATA(name, 2, cl1, cl2, NULL, NULL, dtor)
+#define DEFINE_CXX_DATA3(name, cl1, cl2, cl3, dtor) \
+    DEFINE_CXX_DATA(name, 3, cl1, cl2, cl3, NULL, dtor)
+#define DEFINE_CXX_DATA4(name, cl1, cl2, cl3, cl4, dtor) \
+    DEFINE_CXX_DATA(name, 4, cl1, cl2, cl3, cl4, dtor)
+
+#ifdef __ASM_USE_THISCALL_WRAPPER
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
+
+extern void *vtbl_wrapper_0;
+extern void *vtbl_wrapper_4;
+extern void *vtbl_wrapper_8;
+extern void *vtbl_wrapper_12;
+extern void *vtbl_wrapper_16;
+extern void *vtbl_wrapper_20;
+extern void *vtbl_wrapper_24;
+extern void *vtbl_wrapper_28;
+extern void *vtbl_wrapper_32;
+extern void *vtbl_wrapper_36;
+extern void *vtbl_wrapper_40;
+extern void *vtbl_wrapper_44;
+extern void *vtbl_wrapper_48;
+extern void *vtbl_wrapper_52;
+extern void *vtbl_wrapper_56;
+
+#else
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__thiscall***)type)this)[0][off/4]args
+
+#endif
+
+/* exception object */
+typedef void (*vtable_ptr)(void);
+typedef struct __exception
+{
+    const vtable_ptr *vtable;
+    char             *name;    /* Name of this exception, always a new copy for each object */
+    int               do_free; /* Whether to free 'name' in our dtor */
+} exception;
+
+/* rtti */
+typedef struct __type_info
+{
+    const vtable_ptr *vtable;
+    char              *name;         /* Unmangled name, allocated lazily */
+    char               mangled[128]; /* Variable length, but we declare it large enough for static RTTI */
+} type_info;
+
+/* offsets for computing the this pointer */
+typedef struct
+{
+    int         this_offset;   /* offset of base class this pointer from start of object */
+    int         vbase_descr;   /* offset of virtual base class descriptor */
+    int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
+} this_ptr_offsets;
 
 #ifndef __x86_64__
 
@@ -218,6 +361,29 @@ typedef struct _rtti_object_locator
     const type_info *type_descriptor;
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
+
+typedef struct
+{
+    UINT flags;
+    const type_info *type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    void *copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    const cxx_type_info *info[5];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    void *destructor;
+    void *custom_handler;
+    const cxx_type_info_table *type_info_table;
+} cxx_exception_type;
 
 #else
 
@@ -252,33 +418,30 @@ typedef struct
     unsigned int object_locator;
 } rtti_object_locator;
 
+typedef struct
+{
+    UINT flags;
+    unsigned int type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    unsigned int copy_ctor;
+} cxx_type_info;
+
+typedef struct
+{
+    UINT count;
+    unsigned int info[5];
+} cxx_type_info_table;
+
+typedef struct
+{
+    UINT flags;
+    unsigned int destructor;
+    unsigned int custom_handler;
+    unsigned int type_info_table;
+} cxx_exception_type;
+
 #endif
-
-#ifdef __ASM_USE_THISCALL_WRAPPER
-
-#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
-
-extern void *vtbl_wrapper_0;
-extern void *vtbl_wrapper_4;
-extern void *vtbl_wrapper_8;
-extern void *vtbl_wrapper_12;
-extern void *vtbl_wrapper_16;
-extern void *vtbl_wrapper_20;
-extern void *vtbl_wrapper_24;
-extern void *vtbl_wrapper_28;
-extern void *vtbl_wrapper_32;
-extern void *vtbl_wrapper_36;
-extern void *vtbl_wrapper_40;
-extern void *vtbl_wrapper_44;
-extern void *vtbl_wrapper_48;
-
-#else
-
-#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__thiscall***)type)this)[0][off/4]args
-
-#endif
-
-exception* __thiscall exception_ctor(exception*, const char**);
 
 extern const vtable_ptr type_info_vtable;
 
@@ -308,18 +471,3 @@ __ASM_BLOCK_BEGIN(type_info_vtables) \
     __ASM_VTABLE(type_info, \
             VTABLE_ADD_FUNC(type_info_vector_dtor)); \
 __ASM_BLOCK_END
-
-typedef struct
-{
-    EXCEPTION_RECORD *rec;
-    LONG *ref; /* not binary compatible with native msvcr100 */
-} exception_ptr;
-
-void throw_exception(const char*);
-void exception_ptr_from_record(exception_ptr*,EXCEPTION_RECORD*);
-
-void __cdecl __ExceptionPtrCreate(exception_ptr*);
-void __cdecl __ExceptionPtrDestroy(exception_ptr*);
-void __cdecl __ExceptionPtrRethrow(const exception_ptr*);
-
-BOOL __cdecl __uncaught_exception(void);
