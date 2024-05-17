@@ -1738,13 +1738,12 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
 
 /* send the low-level hook message for a given hardware message */
 static int send_hook_ll_message( struct desktop *desktop, struct message *hardware_msg,
-                                 const hw_input_t *input, struct msg_queue *sender )
+                                 int id, lparam_t lparam, struct msg_queue *sender )
 {
     struct thread *hook_thread;
     struct msg_queue *queue;
     struct message *msg;
     timeout_t timeout = 2000 * -10000;  /* FIXME: load from registry */
-    int id = (input->type == INPUT_MOUSE) ? WH_MOUSE_LL : WH_KEYBOARD_LL;
 
     if (!(hook_thread = get_first_global_hook( id ))) return 0;
     if (!(queue = hook_thread->queue)) return 0;
@@ -1756,19 +1755,12 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
     msg->win       = 0;
     msg->msg       = id;
     msg->wparam    = hardware_msg->msg;
+    msg->lparam    = lparam;
     msg->x         = hardware_msg->x;
     msg->y         = hardware_msg->y;
     msg->time      = hardware_msg->time;
     msg->data_size = hardware_msg->data_size;
     msg->result    = NULL;
-
-    if (input->type == INPUT_KEYBOARD)
-    {
-        unsigned short vkey = input->kbd.vkey & 0xff;
-        if (input->kbd.flags & KEYEVENTF_UNICODE) vkey = VK_PACKET;
-        msg->lparam = (input->kbd.scan << 16) | vkey;
-    }
-    else msg->lparam = input->mouse.data << 16;
 
     if (!(msg->data = memdup( hardware_msg->data, hardware_msg->data_size )) ||
         !(msg->result = alloc_message_result( sender, queue, msg, timeout )))
@@ -1996,6 +1988,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     struct thread *foreground;
     unsigned int i, time, flags;
     struct hw_msg_source source = { IMDT_MOUSE, origin };
+    lparam_t wparam = input->mouse.data << 16;
     int wait = 0, x, y;
 
     static const unsigned int messages[] =
@@ -2060,7 +2053,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     if ((device = current->process->rawinput_mouse) && (device->flags & RIDEV_NOLEGACY))
     {
         if (flags & MOUSEEVENTF_MOVE) update_desktop_cursor_pos( desktop, win, x, y );
-        update_desktop_mouse_state( desktop, flags, input->mouse.data << 16 );
+        update_desktop_mouse_state( desktop, flags, wparam );
         return 0;
     }
 
@@ -2075,7 +2068,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 
         msg->win       = get_user_full_handle( win );
         msg->msg       = messages[i];
-        msg->wparam    = input->mouse.data << 16;
+        msg->wparam    = wparam;
         msg->lparam    = 0;
         msg->x         = x;
         msg->y         = y;
@@ -2084,10 +2077,10 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         /* specify a sender only when sending the last message */
         if (!(flags & ((1 << ARRAY_SIZE( messages )) - 1)))
         {
-            if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
+            if (!(wait = send_hook_ll_message( desktop, msg, WH_MOUSE_LL, wparam, sender )))
                 queue_hardware_message( desktop, msg, 0 );
         }
-        else if (!send_hook_ll_message( desktop, msg, input, NULL ))
+        else if (!send_hook_ll_message( desktop, msg, WH_MOUSE_LL, wparam, NULL ))
             queue_hardware_message( desktop, msg, 0 );
     }
     return wait;
@@ -2102,9 +2095,9 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     struct hardware_msg_data *msg_data;
     struct message *msg;
     struct thread *foreground;
-    unsigned char vkey = input->kbd.vkey;
-    hw_input_t hook_input = *input;
+    unsigned char vkey = input->kbd.vkey, hook_vkey = vkey;
     unsigned int message_code, time;
+    lparam_t lparam = input->kbd.scan << 16;
     int wait;
 
     if (!(time = input->kbd.time)) time = get_tick_count();
@@ -2179,17 +2172,17 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     {
        switch (vkey)
        {
-       case VK_INSERT: hook_input.kbd.vkey = vkey = VK_NUMPAD0; break;
-       case VK_END:    hook_input.kbd.vkey = vkey = VK_NUMPAD1; break;
-       case VK_DOWN:   hook_input.kbd.vkey = vkey = VK_NUMPAD2; break;
-       case VK_NEXT:   hook_input.kbd.vkey = vkey = VK_NUMPAD3; break;
-       case VK_LEFT:   hook_input.kbd.vkey = vkey = VK_NUMPAD4; break;
-       case VK_CLEAR:  hook_input.kbd.vkey = vkey = VK_NUMPAD5; break;
-       case VK_RIGHT:  hook_input.kbd.vkey = vkey = VK_NUMPAD6; break;
-       case VK_HOME:   hook_input.kbd.vkey = vkey = VK_NUMPAD7; break;
-       case VK_UP:     hook_input.kbd.vkey = vkey = VK_NUMPAD8; break;
-       case VK_PRIOR:  hook_input.kbd.vkey = vkey = VK_NUMPAD9; break;
-       case VK_DELETE: hook_input.kbd.vkey = vkey = VK_DECIMAL; break;
+       case VK_INSERT: hook_vkey = vkey = VK_NUMPAD0; break;
+       case VK_END:    hook_vkey = vkey = VK_NUMPAD1; break;
+       case VK_DOWN:   hook_vkey = vkey = VK_NUMPAD2; break;
+       case VK_NEXT:   hook_vkey = vkey = VK_NUMPAD3; break;
+       case VK_LEFT:   hook_vkey = vkey = VK_NUMPAD4; break;
+       case VK_CLEAR:  hook_vkey = vkey = VK_NUMPAD5; break;
+       case VK_RIGHT:  hook_vkey = vkey = VK_NUMPAD6; break;
+       case VK_HOME:   hook_vkey = vkey = VK_NUMPAD7; break;
+       case VK_UP:     hook_vkey = vkey = VK_NUMPAD8; break;
+       case VK_PRIOR:  hook_vkey = vkey = VK_NUMPAD9; break;
+       case VK_DELETE: hook_vkey = vkey = VK_DECIMAL; break;
        default: break;
        }
     }
@@ -2220,7 +2213,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
     msg->win       = get_user_full_handle( win );
     msg->msg       = message_code;
-    msg->lparam    = (input->kbd.scan << 16) | 1u; /* repeat count */
+    msg->lparam    = lparam | 1u; /* repeat count */
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
     if (input->kbd.flags & KEYEVENTF_UNICODE && !vkey)
@@ -2240,7 +2233,11 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         msg_data->flags |= (flags & (KF_EXTENDED | KF_ALTDOWN | KF_UP)) >> 8;
     }
 
-    if (!(wait = send_hook_ll_message( desktop, msg, &hook_input, sender )))
+    /* TODO: The following is incorrect (we also need to check for not !vkey),
+     * but we do it to temporarily retain existing behavior */
+    if (input->kbd.flags & KEYEVENTF_UNICODE) hook_vkey = VK_PACKET;
+
+    if (!(wait = send_hook_ll_message( desktop, msg, WH_KEYBOARD_LL, lparam | hook_vkey, sender )))
         queue_hardware_message( desktop, msg, 1 );
 
     return wait;
@@ -2315,7 +2312,7 @@ static void queue_pointer_message( struct pointer *pointer, int repeated )
         msg->x         = x;
         msg->y         = y;
 
-        if (!send_hook_ll_message( desktop, msg, input, NULL ))
+        if (!send_hook_ll_message( desktop, msg, WH_MOUSE_LL, 0, NULL ))
             queue_hardware_message( desktop, msg, 0 );
     }
 
