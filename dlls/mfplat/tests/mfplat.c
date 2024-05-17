@@ -966,6 +966,7 @@ static void test_source_resolver(void)
     GUID guid;
     float rate;
     UINT32 rotation;
+    ULONG refcount;
 
     if (!pMFCreateSourceResolver)
     {
@@ -1045,12 +1046,6 @@ static void test_source_resolver(void)
     hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    /* Wrap ::Close to test when the media source calls it */
-    bytestream_vtbl_orig = stream->lpVtbl;
-    bytestream_vtbl_wrapper = *bytestream_vtbl_orig;
-    bytestream_vtbl_wrapper.Close = bytestream_wrapper_Close;
-    stream->lpVtbl = &bytestream_vtbl_wrapper;
-
     hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"video/mp4");
@@ -1074,6 +1069,33 @@ static void test_source_resolver(void)
         DeleteFileW(filename);
         return;
     }
+    ok(mediasource != NULL, "got %p\n", mediasource);
+    ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
+
+    refcount = IMFMediaSource_Release(mediasource);
+    todo_wine
+    ok(!refcount, "Unexpected refcount %ld\n", refcount);
+    IMFByteStream_Release(stream);
+
+    /* We have to create a new bytestream here, because all following
+     * calls to CreateObjectFromByteStream will fail. */
+    hr = MFCreateFile(MF_ACCESSMODE_READ, MF_OPENMODE_FAIL_IF_NOT_EXIST, MF_FILEFLAGS_NONE, filename, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Wrap ::Close to test when the media source calls it */
+    bytestream_vtbl_orig = stream->lpVtbl;
+    bytestream_vtbl_wrapper = *bytestream_vtbl_orig;
+    bytestream_vtbl_wrapper.Close = bytestream_wrapper_Close;
+    stream->lpVtbl = &bytestream_vtbl_wrapper;
+
+    hr = IMFByteStream_QueryInterface(stream, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFAttributes_SetString(attributes, &MF_BYTESTREAM_CONTENT_TYPE, L"video/mp4");
+    ok(hr == S_OK, "Failed to set string value, hr %#lx.\n", hr);
+    IMFAttributes_Release(attributes);
+
+    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
+            &obj_type, (IUnknown **)&mediasource);
     ok(mediasource != NULL, "got %p\n", mediasource);
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
