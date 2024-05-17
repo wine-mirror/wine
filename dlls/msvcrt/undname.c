@@ -997,14 +997,22 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case 'B': /* volatile reference */
         if (!get_qualified_type(ct, sym, dt, flags)) goto done;
         break;
+    case 'P': /* Pointer */
     case 'Q': /* const pointer */
     case 'R': /* volatile pointer */
     case 'S': /* const volatile pointer */
-        if (!get_qualified_type(ct, sym, (flags & IN_ARGS) ? dt : 'P', flags)) goto done;
-        break;
-    case 'P': /* Pointer */
+        if (!(flags & IN_ARGS)) dt = 'P';
         if (isdigit(*sym->current))
-	{
+        {
+            const char *ptr_qualif;
+            switch (dt)
+            {
+            default:
+            case 'P': ptr_qualif = NULL; break;
+            case 'Q': ptr_qualif = "const"; break;
+            case 'R': ptr_qualif = "volatile"; break;
+            case 'S': ptr_qualif = "const volatile"; break;
+            }
             /* FIXME:
              *   P6 = Function pointer
              *   P8 = Member function pointer
@@ -1022,10 +1030,10 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 if (!get_function_qualifier(sym, &function_qualifier))
                     goto done;
                 if (!get_function_signature(sym, &fs))
-                     goto done;
+                    goto done;
 
-                ct->left  = str_printf(sym, "%s%s (%s %s::*",
-                                       fs.return_ct.left, fs.return_ct.right, fs.call_conv, class);
+                ct->left  = str_printf(sym, "%s%s (%s %s::*%s",
+                                       fs.return_ct.left, fs.return_ct.right, fs.call_conv, class, ptr_qualif);
                 ct->right = str_printf(sym, ")%s%s", fs.arguments, function_qualifier);
             }
             else if (*sym->current == '6')
@@ -1037,14 +1045,14 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
                 if (!get_function_signature(sym, &fs))
                      goto done;
 
-                ct->left  = str_printf(sym, "%s%s (%s*",
-                                       fs.return_ct.left, fs.return_ct.right, fs.call_conv);
+                ct->left  = str_printf(sym, "%s%s (%s*%s",
+                                       fs.return_ct.left, fs.return_ct.right, fs.call_conv, ptr_qualif);
                 ct->flags = DT_NO_LEADING_WS;
                 ct->right = str_printf(sym, ")%s", fs.arguments);
             }
             else goto done;
 	}
-	else if (!get_qualified_type(ct, sym, 'P', flags)) goto done;
+	else if (!get_qualified_type(ct, sym, dt, flags)) goto done;
         break;
     case 'W':
         if (*sym->current == '4')
