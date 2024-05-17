@@ -616,7 +616,7 @@ static unsigned int query_reg_subkey_value( HKEY hkey, const char *name, KEY_VAL
     return size;
 }
 
-static BOOL reade_source_from_registry( unsigned int index, struct source *source, char *gpu_path )
+static BOOL read_source_from_registry( unsigned int index, struct source *source, char *gpu_path )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -1738,7 +1738,7 @@ static BOOL update_display_cache_from_registry(void)
         source->refcount = 1;
         source->id = source_id;
 
-        if (!reade_source_from_registry( source_id, source, path ) ||
+        if (!read_source_from_registry( source_id, source, path ) ||
             !(source->gpu = find_gpu_from_path( path )))
         {
             free( source->modes );
