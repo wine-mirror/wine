@@ -656,17 +656,6 @@ EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 fr
 
 
 /*********************************************************************
- *		__CppXcptFilter (MSVCRT.@)
- */
-int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
-{
-    /* only filter c++ exceptions */
-    if (ex != CXX_EXCEPTION) return EXCEPTION_CONTINUE_SEARCH;
-    return _XcptFilter( ex, ptr );
-}
-
-
-/*********************************************************************
  *		__CxxDetectRethrow (MSVCRT.@)
  */
 BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)

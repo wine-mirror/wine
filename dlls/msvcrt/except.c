@@ -278,6 +278,16 @@ int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 }
 
 /*********************************************************************
+ *		__CppXcptFilter (MSVCRT.@)
+ */
+int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
+{
+    /* only filter c++ exceptions */
+    if (ex != CXX_EXCEPTION) return EXCEPTION_CONTINUE_SEARCH;
+    return _XcptFilter(ex, ptr);
+}
+
+/*********************************************************************
  *		_abnormal_termination (MSVCRT.@)
  */
 int CDECL __intrinsic_abnormal_termination(void)
