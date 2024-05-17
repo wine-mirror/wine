@@ -6664,6 +6664,14 @@ static void update_external_font_keys(void)
         list_add_tail( &external_keys, &key->entry );
     }
 
+    LIST_FOR_EACH_ENTRY_SAFE( key, next, &external_keys, struct external_key, entry )
+    {
+        reg_delete_value( win9x_key, key->value );
+        reg_delete_value( winnt_key, key->value );
+        reg_delete_value( hkey, key->value );
+        list_remove( &key->entry );
+        free( key );
+    }
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
     {
         LIST_FOR_EACH_ENTRY( face, &family->faces, struct gdi_font_face, entry )
@@ -6689,14 +6697,6 @@ static void update_external_font_keys(void)
             set_reg_value( win9x_key, value, REG_SZ, file, len );
             set_reg_value( hkey, value, REG_SZ, file, len );
         }
-    }
-    LIST_FOR_EACH_ENTRY_SAFE( key, next, &external_keys, struct external_key, entry )
-    {
-        reg_delete_value( win9x_key, key->value );
-        reg_delete_value( winnt_key, key->value );
-        reg_delete_value( hkey, key->value );
-        list_remove( &key->entry );
-        free( key );
     }
     NtClose( win9x_key );
     NtClose( winnt_key );
