@@ -1718,23 +1718,29 @@ static BOOL default_update_display_devices( BOOL force, struct device_manager_ct
      */
     static const DEVMODEW modes[] =
     {
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 32, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 32, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 32, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 16, .dmPelsWidth = 640, .dmPelsHeight = 480, .dmDisplayFrequency = 60, },
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 16, .dmPelsWidth = 800, .dmPelsHeight = 600, .dmDisplayFrequency = 60, },
-        { .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+        { .dmSize = sizeof(DEVMODEW),
+          .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
           .dmBitsPerPel = 16, .dmPelsWidth = 1024, .dmPelsHeight = 768, .dmDisplayFrequency = 60, },
     };
     static const DWORD source_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE;
     struct pci_id pci_id = {0};
     struct gdi_monitor monitor = {0};
-    DEVMODEW mode = {{0}};
+    DEVMODEW mode = {.dmSize = sizeof(mode)};
 
     if (!force) return TRUE;
 
@@ -1838,6 +1844,7 @@ static void add_virtual_modes( struct device_manager_ctx *ctx, const DEVMODEW *c
     {
         DEVMODEW mode =
         {
+            .dmSize = sizeof(mode),
             .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
             .dmDisplayFrequency = 60,
             .dmBitsPerPel = depths[i],
@@ -1872,7 +1879,7 @@ static void add_virtual_modes( struct device_manager_ctx *ctx, const DEVMODEW *c
 
 static BOOL add_virtual_source( struct device_manager_ctx *ctx )
 {
-    DEVMODEW current, initial = ctx->primary, maximum = ctx->primary;
+    DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary;
     struct source virtual_source =
     {
         .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE | DISPLAY_DEVICE_VGA_COMPATIBLE,
