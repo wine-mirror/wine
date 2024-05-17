@@ -1064,6 +1064,15 @@ LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
 }
 
 /***********************************************************************
+ *              DisplayConfigSetDeviceInfo (USER32.@)
+ */
+LONG WINAPI DisplayConfigSetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEADER *packet )
+{
+    FIXME( "stub!\n" );
+    return RtlNtStatusToDosError( STATUS_NOT_IMPLEMENTED );
+}
+
+/***********************************************************************
  *              SetDisplayConfig (USER32.@)
  */
 LONG WINAPI SetDisplayConfig(UINT32 path_info_count, DISPLAYCONFIG_PATH_INFO *path_info, UINT32 mode_info_count,
