@@ -682,7 +682,7 @@ static NTSTATUS x11drv_init( void *arg )
     if (use_xim) use_xim = xim_init( input_style );
 
     init_user_driver();
-    X11DRV_DisplayDevices_Init(FALSE);
+    X11DRV_DisplayDevices_Init();
     X11DRV_DisplayDevices_RegisterEventHandlers();
     return STATUS_SUCCESS;
 }

@@ -6341,6 +6341,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_ReleaseCapture:
         return release_capture();
 
+    case NtUserCallNoParam_UpdateDisplayCache:
+        return update_display_cache( TRUE );
+
     /* temporary exports */
     case NtUserExitingThread:
         exiting_thread_id = GetCurrentThreadId();

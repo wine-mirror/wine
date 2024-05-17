@@ -494,8 +494,6 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
     return !!host_handler.register_event_handlers;
 }
 
-static BOOL force_display_devices_refresh;
-
 UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
     struct x11drv_adapter *adapters;
@@ -506,8 +504,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     DEVMODEW *modes;
     UINT mode_count;
 
-    if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
-    force_display_devices_refresh = FALSE;
+    if (!force) return STATUS_ALREADY_COMPLETE;
 
     TRACE( "via %s\n", debugstr_a(host_handler.name) );
 
@@ -563,11 +560,10 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     return STATUS_SUCCESS;
 }
 
-void X11DRV_DisplayDevices_Init(BOOL force)
+void X11DRV_DisplayDevices_Init(void)
 {
     UINT32 num_path, num_mode;
 
-    if (force) force_display_devices_refresh = TRUE;
     /* trigger refresh in win32u */
     NtUserGetDisplayConfigBufferSizes( QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode );
 }

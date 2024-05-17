@@ -1113,12 +1113,10 @@ void macdrv_displays_changed(const macdrv_event *event)
     if (event->displays_changed.activating ||
         NtUserGetWindowThread(hwnd, NULL) == GetCurrentThreadId())
     {
-        macdrv_init_display_devices(TRUE);
+        NtUserCallNoParam(NtUserCallNoParam_UpdateDisplayCache);
         macdrv_resize_desktop();
     }
 }
-
-static BOOL force_display_devices_refresh;
 
 UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, BOOL force, void *param )
 {
@@ -1129,8 +1127,7 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu_count, adapter_count, monitor_count, mode_count, display_count;
     DEVMODEW *modes;
 
-    if (!force && !force_display_devices_refresh) return STATUS_ALREADY_COMPLETE;
-    force_display_devices_refresh = FALSE;
+    if (!force) return STATUS_ALREADY_COMPLETE;
 
     if (macdrv_get_displays(&displays, &display_count))
     {
@@ -1215,11 +1212,10 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
  *
  * Initialize display device registry data.
  */
-void macdrv_init_display_devices(BOOL force)
+void macdrv_init_display_devices(void)
 {
     UINT32 num_path, num_mode;
 
-    if (force) force_display_devices_refresh = TRUE;
     /* trigger refresh in win32u */
     NtUserGetDisplayConfigBufferSizes( QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode );
 }

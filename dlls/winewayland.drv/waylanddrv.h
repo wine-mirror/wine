@@ -223,7 +223,7 @@ struct wayland_shm_buffer
  */
 
 BOOL wayland_process_init(void);
-void wayland_init_display_devices(BOOL force);
+void wayland_init_display_devices(void);
 
 /**********************************************************************
  *          Wayland output

@@ -1181,7 +1181,7 @@ static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
     xrandr14_invalidate_current_mode_cache();
     if (hwnd == NtUserGetDesktopWindow() && NtUserGetWindowThread( hwnd, NULL ) == GetCurrentThreadId())
     {
-        X11DRV_DisplayDevices_Init( TRUE );
+        NtUserCallNoParam( NtUserCallNoParam_UpdateDisplayCache );
         X11DRV_resize_desktop();
     }
     /* Update xinerama monitors for xinerama_get_fullscreen_monitors() */
