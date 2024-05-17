@@ -439,7 +439,8 @@ static void test_ip_cmpt( int family )
     key = 1;
     for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
     {
-        err = NsiGetAllParameters( 1, mod, 2, &key, sizeof(key), &rw, rw_sizes[i], &dyn, sizeof(dyn), NULL, 0 );
+        err = NsiGetAllParameters( 1, mod, NSI_IP_COMPARTMENT_TABLE, &key, sizeof(key), &rw, rw_sizes[i],
+                                   &dyn, sizeof(dyn), NULL, 0 );
         if (!err) break;
     }
     ok( !err, "got %lx\n", err );
