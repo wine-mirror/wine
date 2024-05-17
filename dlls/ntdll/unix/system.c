@@ -2370,7 +2370,6 @@ static time_t find_dst_change(time_t start, time_t end, int *is_dst)
 
 static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 {
-    static pthread_mutex_t tz_mutex = PTHREAD_MUTEX_INITIALIZER;
     static RTL_DYNAMIC_TIME_ZONE_INFORMATION cached_tzi;
     static int current_year = -1, current_bias = 65535;
     struct tm *tm;
@@ -2378,7 +2377,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
     int is_dst, bias;
 
-    mutex_lock( &tz_mutex );
+    mutex_lock( &timezone_mutex );
 
     year_start = time(NULL);
     tm = gmtime(&year_start);
@@ -2388,7 +2387,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
     if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
-        mutex_unlock( &tz_mutex );
+        mutex_unlock( &timezone_mutex );
         return;
     }
 
@@ -2481,7 +2480,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 
     find_reg_tz_info(tzi, tz_name, current_year + 1900);
     cached_tzi = *tzi;
-    mutex_unlock( &tz_mutex );
+    mutex_unlock( &timezone_mutex );
 }
 
 
