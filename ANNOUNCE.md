@@ -1,12 +1,12 @@
-The Wine development release 9.8 is now available.
+The Wine development release 9.9 is now available.
 
 What's new in this release:
-  - Mono engine updated to version 9.1.0.
-  - IDL-generated files use fully interpreted stubs.
-  - Improved RPC/COM support on ARM platforms.
+  - Support for new Wow64 mode in ODBC.
+  - Improved CPU detection on ARM platforms.
+  - Removal of a number of obsolete features in WineD3D.
   - Various bug fixes.
 
-The source is available at <https://dl.winehq.org/wine/source/9.x/wine-9.8.tar.xz>
+The source is available at <https://dl.winehq.org/wine/source/9.x/wine-9.9.tar.xz>
 
 Binary packages for various distributions will be available
 from <https://www.winehq.org/download>
@@ -16,312 +16,356 @@ You will find documentation on <https://www.winehq.org/documentation>
 Wine is available thanks to the work of many people.
 See the file [AUTHORS][1] for the complete list.
 
-[1]: https://gitlab.winehq.org/wine/wine/-/raw/wine-9.8/AUTHORS
+[1]: https://gitlab.winehq.org/wine/wine/-/raw/wine-9.9/AUTHORS
 
 ----------------------------------------------------------------
 
-### Bugs fixed in 9.8 (total 22):
+### Bugs fixed in 9.9 (total 38):
 
- - #3689   Microsoft Office 97 installer depends on stdole32.tlb be in v1 (SLTG) format
- - #33270  Cursor disappears during Installshield install
- - #37885  Battle.net launcher fails to set permissions on WoW files
- - #38142  Approach fields box only show 3/4 of one line
- - #44388  gldriverquery.exe crash on wineboot and company of heroes says no 3d
- - #45035  Buttons of the Radiosure program are missing
- - #46455  Desktop syncing app for Remarkable devices crashes on startup
- - #47741  Lotus Approach: Initial "Welcome" dialog not shown on startup
- - #51361  SimSig with Wine 6.18 breaks after upgrading from libxml2 2.9.10 to 2.9.12
- - #54997  msys2: gpg.exe fails because "NtSetInformationFile Unsupported class (65)" / FileRenameInformationEx
- - #55736  Solid Edge crashes after a couple of minutes
- - #55844  Paper tray options missing.  Landscape orientation is ignored
- - #56041  iZotope Product Portal crashes
- - #56248  VTFEdit: Exception When Loading .VTF Files
- - #56309  Across Lite doesn't show the letters properly when typing
- - #56324  Falcon BMS launcher fails to start (native .Net 4.6.1 needed)
- - #56407  SaveToGame hangs during DWM initialization
- - #56472  Recettear opening movie blackscreen in Wine 9.5
- - #56581  Corsair iCUE 4: needs unimplemented function SHELL32.dll.SHAssocEnumHandlersForProtocolByApplication
- - #56598  Calling [vararg] method via ITypeLib without arguments via IDispatch fails
- - #56599  HWMonitor 1.53 needs unimplemented function pdh.dll.PdhConnectMachineA
- - #56609  vcrun2008 fails to install
+ - #25009  Password Memory 2010 - Titlebar color rendering error
+ - #26407  Shadowgrounds Survivor crashes after viewing the map
+ - #26545  Crysis2: Red color on highlights of Bumpmap/Specular Highlights
+ - #27745  Racer is unplayable
+ - #28192  regedit: The usage message arrives too late in the wine console
+ - #29417  Mouse pointer laggy/slow in Dweebs and Dweebs 2 when virtual desktop mode is enabled
+ - #31665  Femap unexpected crash on rebuild database (or any command that involves it i.e. import)
+ - #32346  Window is too large with Batman and Head Over Heels remakes
+ - #39532  Assassin's Creed Unity doesn't run
+ - #40248  Some .NET applications throw unhandled exception: System.NotImplementedException: 'System.Management.ManagementObjectSearcher.Get' when using Wine-Mono
+ - #44009  Syberia Gog version: crash after cinematics
+ - #44625  Cybernoid 2 exits but x window drawing updates are frozen
+ - #44863  Performance regression in Prince of Persia 3D
+ - #45358  Assassin's Creed Syndicate (AC Unity; AC Odyssey) broken graphics
+ - #49674  Feature Request: Restoring previous resolution upon an app crashing
+ - #51200  High repaint label volume causes freezing
+ - #53197  Total War: Shogun 2 crashes on unimplemented function d3dx11_42.dll.D3DX11LoadTextureFromTexture
+ - #55513  Paint.NET 3.5.11 runs unstable on Wine 8.x (and later) because of a bug in Mono
+ - #55939  Moorhuhn Director's Cut crashes after going in-game
+ - #56000  Window title is not set with winewayland
+ - #56422  Exact Audio Copy installer crashes
+ - #56429  Applications crash with BadWindow X error
+ - #56483  ShellExecute changes in Wine 9.5 broke 64-bit Winelib loading in WoW64 builds
+ - #56485  Visual novel RE:D Cherish! displays white screen instead of logo video
+ - #56492  Opentrack/TrackIR head tracking broken
+ - #56498  Incorrect substring expansion for magic variables
+ - #56506  strmbase TRACEs occasionally fail to print floats
+ - #56527  Final Fantasy XI Online: Opening movie triggers a 'GStreamer-Video-CRITICAL'.
+ - #56579  Setupapi fails to read correct class GUID and name from INF file containing %strkey% tokens
+ - #56588  FlatOut 1 display resolution options limited to current desktop resolution using old wow64
+ - #56595  Fallout 3 is slow
+ - #56607  steam: no tray icon starting with wine 9.2
+ - #56615  Spelunky won't start (GLSL version 1.20 is too low; 1.20 is required)
+ - #56653  GetLogicalProcessorInformation can be missing Cache information
+ - #56655  X11 Driver fails to load
+ - #56661  Project Diablo 2 crashes
+ - #56671  Disney Ratatouille demo renders upside down on Intel graphics
+ - #56682  msvcrt:locale prevents the msvcrt:* tests from running on Windows 7
 
-### Changes since 9.7:
+### Changes since 9.8:
 ```
-Aida Jonikienė (1):
-      msvcp140_atomic_wait: Implement __std_*_crt().
+Akihiro Sagawa (2):
+      quartz/tests: Test read position after MPEG splitter connection.
+      winegstreamer: Seek to the end after MPEG splitter connection.
 
-Akihiro Sagawa (3):
-      quartz/tests: Add tests to reject unsupported contents for MPEG splitter.
-      winegstreamer: Reject unexpected formats on init.
-      winegstreamer: Implement input media type enumeration in MPEG splitter.
+Alex Henrie (1):
+      dinput: Don't include every version of DirectInputCreate in every DLL.
 
-Alex Henrie (3):
-      setupapi: Don't set RequiredSize when SetupDiGetClassDescription* fails.
-      shell32: Add SHAssocEnumHandlersForProtocolByApplication stub.
-      pdh: Add PdhConnectMachineA stub.
+Alexandre Julliard (38):
+      nls: Update locale data to CLDR version 45.
+      winedump: Dump registry scripts resources as text.
+      winedump: Dump typelib resources in structured format.
+      atl: Remove empty clsid registration.
+      dhtmled.ocx: Remove empty clsid registration.
+      widl: Don't generate empty interface registrations.
+      ntdll: Use null-terminated strings instead of explicit lengths to build SMBIOS data.
+      ntdll: Cache the generated SMBIOS data.
+      ntdll: Build the SMBIOS table incrementally.
+      ntdll: Generate dummy SMBIOS data on non-supported platforms.
+      ntdll: Store the CPU vendor and id during detection.
+      ntdll: Add processor information to the SMBIOS data.
+      configure: Restore warning for missing PE compiler.
+      ntdll: Report the correct processor details on ARM platforms.
+      ntdll: Update PROCESSOR_ARCHITECTURE variable correctly for ARM platforms.
+      wineboot: Create CPU environment keys together with other hardware keys.
+      wineboot: Get the CPU model details with NtQuerySystemInformation(SystemCpuInformation).
+      wineboot: Report the correct model number on ARM platforms.
+      wineboot: Support multiple SMBIOS entries of the same type.
+      wineboot: Retrieve CPU details through the SMBIOS table.
+      winemac.drv: Remove some no longer used code.
+      wbemprox: Get the processor caption from the registry.
+      wbemprox: Support multiple SMBIOS entries of the same type.
+      wbemprox: Get the processor manufacturer from the SMBIOS table.
+      wbemprox: Get the processor name from the SMBIOS table.
+      wbemprox: Get the processor count from the SMBIOS table.
+      wbemprox: Get the processor id from the SMBIOS table.
+      wbemprox: Get a few more processor details from the SMBIOS table.
+      wbemprox: Get the processor type and model with SystemCpuInformation.
+      wbemprox: Use RtlGetNativeSystemInformation directly to get the correct info on ARM platforms.
+      msvcrt/tests: Don't link to _setmaxstdio.
+      msvcrt: Update some mangled names on ARM.
+      ntdll: Add default values for cache parameters.
+      msvcrt: Resync cxx.h with msvcp90.
+      msvcrt: Unify __CppXcptFilter implementations.
+      msvcrt: Unify __CxxQueryExceptionSize implementations.
+      msvcrt: Unify __CxxDetectRethrow implementations.
+      msvcrt: Unify checks for valid C++ exception.
 
-Alexandre Julliard (57):
-      include: Update a couple of RPC structures.
-      rpcrt4: Add a wrapper for client calls from stubless proxies.
-      rpcrt4: Move the FPU register conversion to the stubless proxy wrapper.
-      rpcrt4: Remap registers to the stack for stubless proxies on ARM platforms.
-      rpcrt4: Stop passing the actual FPU regs pointer to client call functions.
-      rpcrt4: Remove obsolete version comments from spec file.
-      rpcrt4: Fix stack alignment and by-value parameters for typelibs on ARM platforms.
-      rpcrt4: Generate the parameter extension data for typelibs on ARM platforms.
-      rpcrt4: Extend 8- and 16-bit parameters on ARM.
-      oleaut32: Extend 8- and 16-bit parameters on ARM.
-      rpcrt4: Use fully interpreted IDL stubs.
-      rpcrt4/tests: Use fully interpreted IDL stubs.
-      schedsvc: Use fully interpreted IDL stubs.
-      schedsvc/tests: Use fully interpreted IDL stubs.
-      sechost: Use fully interpreted IDL stubs.
-      taskschd: Use fully interpreted IDL stubs.
-      ntoskrnl.exe: Use fully interpreted IDL stubs.
-      plugplay: Use fully interpreted IDL stubs.
-      rpcss: Use fully interpreted IDL stubs.
-      services: Use fully interpreted IDL stubs.
-      ntdll/tests: Remove unnecessary shared header.
-      dbghelp: Ignore a couple of Dwarf-3 opcodes.
-      oleaut32: Fix IDispatch::Invoke for vararg functions with empty varargs.
-      systeminfo: Pass proper Unicode strings to fwprintf.
-      avifil32: Use fully interpreted IDL stubs.
-      combase: Use fully interpreted IDL stubs.
-      dispex: Use fully interpreted IDL stubs.
-      ia2comproxy: Use fully interpreted IDL stubs.
-      ieproxy: Use fully interpreted IDL stubs.
-      mscftp: Use fully interpreted IDL stubs.
-      makefiles: Support building files for x86-64 architecture on ARM64EC.
-      rpcrt4: Move the stubless client thunks to a separate file.
-      rpcrt4: Move the stubless delegating thunks to a separate file.
-      rpcrt4: Move call_server_func() to a separate file.
-      msdaps: Use fully interpreted IDL stubs.
-      msi: Use fully interpreted IDL stubs.
-      mstask: Use fully interpreted IDL stubs.
-      netapi32: Use fully interpreted IDL stubs.
-      oleacc: Use fully interpreted IDL stubs.
-      sti: Use fully interpreted IDL stubs.
-      urlmon: Use fully interpreted IDL stubs.
-      windowscodecs: Use fully interpreted IDL stubs.
-      actxprxy: Use fully interpreted IDL stubs.
-      ole32: Use fully interpreted IDL stubs.
-      oleaut32: Use fully interpreted IDL stubs.
-      qmgrprxy: Use fully interpreted IDL stubs.
-      quartz: Use fully interpreted IDL stubs.
-      widl: Fix correlation offset for unencapsulated unions in interpreted mode.
-      widl: Default to fully interpreted stubs mode.
-      oleaut32: Move the call_method thunk to a separate file.
-      vcomp: Move the fork wrapper to a separate file.
-      vcomp: Fix stack alignment in the fork wrapper on ARM.
-      ntdll: Build __chkstk as x86-64 code on ARM64EC.
-      ntdll: Generate stub entry points as x86-64 code on ARM64EC.
-      faudio: Import upstream release 24.05.
-      fluidsynth: Import upstream release 2.3.5.
-      png: Import upstream release 1.6.43.
+Alexandros Frantzis (3):
+      win32u: Enable dibdrv wglDescribePixelFormat through p_get_pixel_formats.
+      user32/tests: Skip affected keyboard tests if a spurious layout change is detected.
+      user32/tests: Remove workaround for SendInput keyboard tests on zh_CN.
 
-Alexandros Frantzis (9):
-      winex11.drv: Rename wgl_pixel_format to glx_pixel_format.
-      opengl32: Implement wglDescribePixelFormat using new driver API get_pixel_formats.
-      opengl32: Cache driver pixel format information.
-      winewayland.drv: Enable wglDescribePixelFormat through p_get_pixel_formats.
-      winex11.drv: Enable wglDescribePixelFormat through p_get_pixel_formats.
-      winex11.drv: Remove unnecessary parameter from describe_pixel_format.
-      winemac.drv: Enable wglDescribePixelFormat through p_get_pixel_formats.
-      wineandroid.drv: Rename wgl_pixel_format to avoid name conflicts.
-      wineandroid.drv: Enable wglDescribePixelFormat through p_get_pixel_formats.
+Alistair Leslie-Hughes (1):
+      include: Add some D3D12_FEATURE_DATA_D3D12_OPTIONS* types.
 
-Alfred Agrell (1):
-      include: Use the correct GUID for DXFILEOBJ_PatchMesh.
+Anton Baskanov (2):
+      winegstreamer: Recognize MFAudioFormat_MPEG and MFAudioFormat_MP3.
+      winegstreamer: Add missing format fields to WMA support check.
 
-Alistair Leslie-Hughes (2):
-      include: Add atldef.h.
-      windowscodecs: Avoid implicit cast changing value.
+Billy Laws (2):
+      ntdll: Allocate wow64 environment block within the 32-bit address space.
+      ntdll: Don't restore PC from LR after unwinding through frame switches.
 
-Anton Baskanov (3):
-      user32/tests: Test that display settings are restored on process exit.
-      winex11.drv: Process RRNotify events in xrandr14_get_id.
-      explorer: Restore display settings on process exit.
+Biswapriyo Nath (1):
+      include: Avoid a C++ keyword.
 
-Billy Laws (1):
-      winevulkan: Allocate commited memory for placed mappings.
+Brendan McGrath (3):
+      winex11.drv: Increment mode_idx in {xrandr10,xf86vm}_get_modes.
+      winegstreamer: Pass filename to wg_parser when available.
+      mplat/tests: Test Media Source is freed if immediately released.
 
-Brendan McGrath (4):
-      winegstreamer: Pass uri to wg_parser when available.
-      winegstreamer: Respond to the URI query.
-      winegstreamer: Fix wow64 support for wg_parser_connect.
-      winegstreamer: Log query after setting the URI.
+Brendan Shanks (1):
+      winemac.drv: Fix warning in macdrv_get_pixel_formats.
 
-Brendan Shanks (2):
-      widl: Use hardcoded build time in TLB custom data.
-      winemac.drv: Fix use-after-free in macdrv_copy_pasteboard_types.
+Connor McAdams (4):
+      d3dx9/tests: Add a test for negative values in the source rectangle passed to D3DXLoadSurfaceFromMemory.
+      d3dx9/tests: Add a new compressed surface loading test.
+      d3dx9: Only do direct copies of full blocks for compressed formats.
+      d3dx9: Fix destination rectangles passed from D3DXLoadSurfaceFromMemory() to d3dx_load_image_from_memory().
 
-Danyil Blyschak (1):
-      mfreadwrite: Store result of object activation in stream transform.
+Daniel Lehman (2):
+      msvcrt/tests: Add result for Turkish_Türkiye.1254.
+      msvcrt/tests: Add tests for _wcsicmp_l.
 
-Dmitry Timoshkov (11):
-      widl: Make automatic dispid generation scheme better match what midl does.
-      widl: Create library block index right after the CompObj one.
-      widl: Set the lowest bit in the param name to indicate whether type description follows the name.
-      widl: Add support for function parameter flags to SLTG typelib generator.
-      widl: Fix calculation of the SLTG library block size.
-      stdole32.tlb: Generate typelib in SLTG format.
-      include: Add _Inout_cap_c_(count) macro.
-      include: Move InterlockedExchangeAdd64() definition before its first usage.
-      dssenh: Add CPSetKeyParam() stub implementation.
-      rsaenh: Validate pbData in CPSetKeyParam().
-      advapi32: CryptSetKeyParam() should accept NULL pbData.
+Dmitry Timoshkov (2):
+      kernelbase: Add support for FileDispositionInfoEx to SetFileInformationByHandle().
+      user32/tests: Offset child CS_PARENTDC window from parent to make more bugs visible.
 
-Esme Povirk (4):
-      mscoree: Update Wine Mono to 9.1.0.
-      user32/tests: Add a flag for messages incorrectly sent by Wine.
-      user32/tests: Remove a no-longer needed optional flag.
-      windowscodecs: Check for overflow in jpeg_decoder_initialize.
+Elizabeth Figura (38):
+      wined3d: Retrieve the VkCommandBuffer from wined3d_context_vk after executing RTV barriers.
+      wined3d: Submit command buffers after 512 draw or dispatch commands.
+      ddraw: Use system memory for version 4 vertex buffers.
+      ddraw: Upload only the used range of indices in d3d_device7_DrawIndexedPrimitive().
+      ddraw/tests: Test GetVertexBufferDesc().
+      wined3d: Fix GLSL version comparison.
+      maintainers: Change the full form of my name.
+      wined3d: Remove the offscreen_rendering_mode setting.
+      wined3d: Use wined3d_resource_is_offscreen() directly in ffp_blitter_clear_rendertargets().
+      wined3d: Remove no longer used support for drawing to an onscreen render target.
+      wined3d: Remove the no longer used render_offscreen field from struct ds_compile_args.
+      wined3d: Remove the no longer used Y correction variable.
+      d3d9/tests: Clarify and expand point size tests.
+      d3d9/tests: Expand test_color_vertex().
+      d3d9/tests: Add some tests for default diffuse values.
+      d3d9/tests: Test default attribute components.
+      wined3d: Remove the GL FFP vertex pipeline.
+      wined3d: Remove the GL FFP fragment pipeline.
+      wined3d: Remove the NV_register_combiners fragment pipeline.
+      wined3d: Remove the ATI_fragment_shader fragment pipeline.
+      wined3d: Remove the ARB_fragment_program blitter.
+      wined3d: Remove the ARB fragment pipeline.
+      wined3d: Remove the ARB shader backend.
+      amstream: Link to msvcrt instead of ucrtbase.
+      evr: Link to msvcrt instead of ucrtbase.
+      qasf: Link to msvcrt instead of ucrtbase.
+      qcap: Link to msvcrt instead of ucrtbase.
+      qdvd: Link to msvcrt instead of ucrtbase.
+      qedit: Link to msvcrt instead of ucrtbase.
+      quartz: Link to msvcrt instead of ucrtbase.
+      winegstreamer: Link to msvcrt instead of ucrtbase.
+      wined3d: Remove no longer used support for emulated non-power-of-two textures.
+      wined3d: Remove no longer used support for rectangle textures.
+      wined3d: Remove texture non-power-of-two fixup.
+      wined3d: Remove the last vestiges of ARB_texture_rectangle support.
+      wined3d: Collapse together NPOT d3d_info flags.
+      wined3d: Remove the redundant "pow2_width" and "pow2_height" fields.
+      wined3d: Fix inversion in shader_get_position_fixup().
 
-Etaash Mathamsetty (2):
-      user32: Fake success from RegisterTouchWindow.
-      user32: Fake success from UnregisterTouchWindow.
+Eric Pouech (19):
+      cmd/tests: Test using %%0-%%9 as loop variables.
+      cmd/tests: Test nested loop variables expansion.
+      cmd/tests: Test delayed expansion with spaces in IF and FOR.
+      cmd/tests: Test calling batch files named as builtin commands.
+      cmd/tests: Test success/failure of commands.
+      cmd: Consistenly use the same variable to identify current command.
+      cmd: No longer keep track of last element in command list.
+      cmd: Introduce xrealloc helper.
+      cmd: Use CRT's popen instead of rewriting it.
+      cmd: Remove malloc attribute from xrealloc.
+      cmd: Introduce CMD_NODE structure.
+      cmd: Add helpers to handle list in degenerated binary tree.
+      cmd: Move operator from CMD_COMMAND to CMD_NODE.
+      msvcrt: Demangle std::nullptr_t datatype.
+      winedump: Demangle std::nullptr_t datatype.
+      msvcrt: Don't consider end of list encoding as real data types.
+      winedump: Don't consider end of list encoding as real data types.
+      msvcrt: Correctly unmangle qualified pointer to function/method.
+      winedump: Correctly unmangle qualified pointer to function/method.
 
-Evan Tang (2):
-      user32/tests: Check RegisterRawInputDevices RIDDEV_DEVNOTIFY posted messages.
-      win32u: Post device arrival messages in NtUserRegisterRawInputDevices.
+Esme Povirk (20):
+      gdiplus: Add a function to bracket HDC use.
+      gdiplus: Bracket HDC use in gdi_alpha_blend.
+      gdiplus: Bracket HDC use in alpha_blend_pixels_hrgn.
+      gdiplus: Bracket hdc use in brush_fill_path.
+      gdiplus: Bracket HDC use in draw_cap.
+      gdiplus: Bracket HDC use in draw_poly.
+      gdiplus: Bracket HDC use in trace_path.
+      gdiplus: Do not use hdc directly in get_graphics_bounds.
+      gdiplus: Accept an HDC in get_gdi_transform.
+      gdiplus: Fix background key.
+      gdiplus: Bitmap stride is ignored when Scan0 is non-NULL.
+      gdiplus: Support anchors on thin paths.
+      gdiplus: Remove unnecessary math in add_anchor.
+      gdiplus: Fix signs on custom line cap rotation in add_anchor.
+      gdiplus: Reorder filled arrow cap points to match native.
+      gdiplus: Add a test for GdipWidenPath with Custom linecaps.
+      gdiplus: Do not create gdi32 objects for Bitmap objects.
+      gdiplus: Bracket HDC use in GdipDrawImagePointsRect.
+      gdiplus: Bracket HDC use in GDI32_GdipFillPath.
+      gdiplus: Bracket HDC use in GDI32_GdipFillRegion.
 
-Gopal Prasad (2):
-      winewayland.drv: Set wayland app-id from the process name.
-      winewayland.drv: Implement SetWindowText.
+Fabian Maurer (2):
+      win32u: Factor out scroll timer handling.
+      win32u: Only set scroll timer if it's not running.
 
-Hans Leidekker (2):
-      wintrust: Add support for the PE image hash in CryptCATAdminCalcHashFromFileHandle().
-      msi: Install global assemblies after install custom actions and before commit custom actions.
+Fotios Valasiadis (1):
+      ntdll/unix: Fix building on musl by explicitly including asm/ioctls.h.
 
-Henri Verbeet (3):
-      wined3d: Pass a shader_glsl_priv structure to shader_glsl_generate_fragment_shader().
-      wined3d: Pass a shader_glsl_priv structure to shader_glsl_generate_compute_shader().
-      wined3d: Introduce the "glsl-vkd3d" shader backend.
+Georg Lehmann (1):
+      winevulkan: Update to VK spec version 1.3.285.
 
-Jacek Caban (1):
-      mshtml: Move iface_wrapper_t IUnknown implementation to htmlobject.c.
+Hans Leidekker (8):
+      odbc32: Forward SQLDataSourcesA() to SQLDataSources() and GetDiagRecA() to GetDiagRec().
+      odbc32: Make Unix call parameters Wow64 compatible.
+      odbc32: Load_odbc() returns NTSTATUS.
+      odbc32: Move replication of ODBC settings to the Unix lib.
+      odbc32: Add Wow64 thunks.
+      include: Add missing Unicode SQL function declarations.
+      odbc32: Don't load libodbc.so dynamically.
+      odbc32/tests: Add tests.
 
-Kirill Zhumarin (1):
-      ntdll: Use termios2 for serial when possible.
+Hongxin Zhao (1):
+      po: Add a missing \t in the Simplified Chinese translation.
 
-Matteo Bruni (9):
-      wined3d: Rename WINED3DUSAGE_PRIVATE to WINED3DUSAGE_CS.
-      d3d9: Don't do instanced draws in DrawPrimitive() and DrawPrimitiveUP().
-      wined3d: Don't skip FFP projection transform update.
-      wined3d: Don't override texture parameters for COND_NP2 on multisample textures.
-      d3d9/tests: Skip test_sample_attached_rendertarget() without pixel shaders support.
-      wined3d: Conditionally support WINED3D_FRAGMENT_CAP_SRGB_WRITE on the ffp fragment pipe.
-      wined3d: Conditionally allow sRGB writes with the 'none' shader backend.
-      d3d9/tests: Don't create a vertex shader in test_desktop_window() when unsupported.
-      d3d9/tests: Test creating a texture on a NULL HWND device.
+Huw D. M. Davies (3):
+      nsi/tests: Use NSI_IP_COMPARTMENT_TABLE instead of hard coding the integer.
+      mmdevapi: Remove unused ACImpl typedef.
+      maintainers: Remove Andrew Eikum.
 
-Michael Bond (1):
-      shell32/shellpath: Fix UserPinned and QuickLaunch KnownFolderPaths.
+Jacek Caban (25):
+      winecrt0: Support __os_arm64x_dispatch_call symbol on ARM64EC.
+      d3dx9/tests: Remove xfile dumping functionality.
+      mshtml: Introduce DISPEX_IDISPATCH_IMPL.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlnode.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlbody.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL in htmlanchor.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL in htmlarea.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL in htmlattribute.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL in htmlcomment.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL in htmlcurstyle.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL for DocumentType object implementation.
+      winebuild: Use .drectve section for exports on ARM64EC.
+      mshtml: Use DISPEX_IDISPATCH_IMPL for HTMLElement object implementation.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlelem.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlelemcol.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL for HTMLEventObj object implementation.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlevent.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlform.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlframe.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlgeneric.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlhead.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlimg.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmlinput.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmllink.c.
+      mshtml: Use DISPEX_IDISPATCH_IMPL macro in htmllocation.c.
 
-Nikolay Sivov (4):
-      d2d1: Update to ID2D1Factory7.
-      d2d1: Update to ID2D1DeviceContext6.
-      d2d1: Update to ID2D1Device6.
-      d2d1: Implement newer CreateDeviceContext() methods.
+Nikolay Sivov (7):
+      d2d1/tests: Add a test for effect output image interface query.
+      d2d1/effect: Fix GetImageLocalBounds() prototype.
+      d2d1/tests: Add some vertex buffer tests.
+      d2d1/effect: Use more generic naming for loaded shaders array.
+      d2d1/effect: Add a stub vertex buffer object.
+      d2d1/effect: Implement SetPassthroughGraph().
+      d2d1/effect: Implement ConnectNode().
 
-Paul Gofman (12):
-      ntdll: Remove entries from queue in RtlWakeAddressAll().
-      ntdll: Pre-check entry->addr before taking a spin lock in RtlWaitOnAddress().
-      crypt32: Mind constructor tag in CRYPT_AsnDecodeOCSPSignatureInfoCertEncoded().
-      cryptnet: Do not use InternetCombineUrlW() in build_request_url().
-      ntdll/tests: Add tests for CONTEXT_EXCEPTION_REQUEST.
-      ntdll: Set exception reporting flags in NtGetContextThread().
-      ntdll: Store exception reporting flags in server context.
-      ntdll: Store exception reporting flags on suspend.
-      ntdll: Store exception reporting flags for debug events.
-      winex11.drv: Support _SHIFT_ARB attributes in X11DRV_wglGetPixelFormatAttribivARB().
-      ntdll: Implement NtQuerySystemInformation(SystemProcessIdInformation).
-      msvcrt: Implement _mbsncpy_s[_l]().
-
-Peter Johnson (1):
-      wined3d: Added missing GTX 3080 & 1070M.
+Paul Gofman (7):
+      xaudio2: Use FAudioVoice_DestroyVoiceSafeEXT() in destroy_voice().
+      bcrypt: Support RSA/PKCS1 signatures with unspecified hash algorithm.
+      win32u: Update last message time in NtUserGetRawInputBuffer().
+      ntdll: Allocate crit section debug info by default for Windows versions before 8.
+      opengl32: Prefer formats with depth if unspecified in wglChoosePixelFormat().
+      xaudio2/tests: Fix test failures with xaudio2_8 in test_submix().
+      nsiproxy.sys: Return success and zero count from ipv6_forward_enumerate_all() if IPV6 is unsupported.
 
 Piotr Caban (4):
-      windowscodecs: Support 32-bit ABGR bitfields bitmaps.
-      winhttp: Fix parameters validation in WinHttpGetProxyForUrl.
-      msvcr80/tests: Fix errno access in tests.
-      winhttp: Use GlobalAlloc to allocate lpszProxy in WinHttpGetProxyForUrl.
+      ucrtbase: Handle empty list in variadic template.
+      winedump: Handle empty list in variadic template.
+      msvcrt/tests: Don't link to _wcsicmp_l and _create_locale.
+      ntdll: Don't use gmtime concurrently.
 
-Roland Häder (1):
-      wined3d: Added missing GTX 1650.
+Rémi Bernon (37):
+      winex11: Only request display modes driver data when needed.
+      win32u: Read / write source modes as a single registry blob.
+      win32u: Remove now unnecessary reset_display_manager_ctx.
+      win32u: Use struct pci_id in struct gdi_gpu.
+      win32u: Remove driver-specific id from struct gdi_gpu.
+      win32u: Pass gdi_gpu structure members as add_gpu parameters.
+      win32u: Return STATUS_ALREADY_COMPLETE from UpdateDisplayDevices.
+      mfreadwrite/tests: Add some source reader D3D11 awareness tests.
+      mf/tests: Test video processor D3D11 awareness.
+      winegstreamer/video_processor: Implement D3D awareness.
+      mfreadwrite/reader: Pass the device manager to the stream transforms.
+      winegstreamer: Introduce a new wg_transform_create_mf helper.
+      winegstreamer: Introduce a new check_audio_transform_support helper.
+      winegstreamer: Introduce a new check_video_transform_support helper.
+      mfplat: Fix MFCreateMFVideoFormatFromMFMediaType videoInfo.VideoFlags masks.
+      mfplat: Use IMFMediaType_GetBlobSize instead of IMFMediaType_GetBlob.
+      mfplat: Introduce a new init_video_info_header helper.
+      mfplat: Use media_type_get_uint32 in more places.
+      mfplat: Factor AM_MEDIA_TYPE video format allocation.
+      mfplat: Set AM_MEDIA_TYPE bTemporalCompression and bFixedSizeSamples.
+      mfplat: Implement FORMAT_MPEGVideo for MFInitAMMediaTypeFromMFMediaType.
+      mfplat: Implement FORMAT_MPEG2Video for MFInitAMMediaTypeFromMFMediaType.
+      mfplat: Implement MFInitMediaTypeFromMPEG1VideoInfo.
+      mfplat: Implement MFInitMediaTypeFromMPEG2VideoInfo.
+      mfplat: Implement MFCreateVideoMediaType.
+      winebus: Don't advertise hidraw devices as XInput compatible.
+      winebus: Report whether devices are connected over bluetooth.
+      winebus: Move Sony controllers report fixups to PE side.
+      mfreadwrite/reader: Shutdown the queue when public ref is released.
+      mfplat: Add MFVideoFormat_ABGR32 format information.
+      mf/tests: Add video processor tests with MFVideoFormat_ABGR32 format.
+      mfreadwrite/tests: Add tests with MFVideoFormat_ABGR32 output format.
+      winegstreamer: Support MFVideoFormat_ABGR32 output in the video processor.
+      mfreadwrite/reader: Fixup MFVideoFormat_ABGR32 subtype to enumerate the video processor.
+      win32u: Set DEVMODEW dmSize field.
+      wineandroid: Set DEVMODEW dmSize field.
+      winemac: Set DEVMODEW dmSize field.
 
-Rémi Bernon (45):
-      mfreadwrite/tests: Do not accept MFVideoFormat_RGB32 in the test transform.
-      mfreadwrite/tests: Avoid using MFCreateMediaBufferFromMediaType.
-      mfreadwrite/tests: Shutdown the test stream event queues on source shutdown.
-      mfreadwrite/reader: Avoid leaking the stream transform service MFT.
-      win32u: Introduce a distinct vulkan interface between win32u and the user drivers.
-      win32u: Introduce a new VkSurfaceKHR wrapping structure.
-      winevulkan: Pass win32u surface wrappers for each vkQueuePresent swapchain.
-      win32u: Rename vulkan surface creation/destroy driver callbacks.
-      win32u: Pass HWND directly to vulkan surface creation driver callback.
-      win32u: Move host surface destruction out of the drivers.
-      win32u: Destroy thread windows before calling driver ThreadDetach.
-      winegstreamer: Set other aperture attributes on video media types.
-      winegstreamer: Always set aperture attributes on video decoder output types.
-      winegstreamer: Introduce a new wg_transform_create_quartz helper.
-      winegstreamer: Use DMO_MEDIA_TYPE in the WMV decoder.
-      mf/tests: Use a separate field for buffer_desc image size and compare rect.
-      evr/tests: Sync compare_rgb32 / dump_rgb32 helpers with mf tests.
-      mfmediaengine/tests: Sync compare_rgb32 / dump_rgb32 helpers with mf tests.
-      winegstreamer/video_processor: Allow clearing input / output types.
-      mf/tests: Move the video processor input bitmap names to the test list.
-      mf/tests: Add more video processor tests with aperture changes.
-      mf/session: Introduce new (allocate|release)_output_samples helpers.
-      mf/session: Get session topo_node from their IMFTopologyNode directly.
-      mf/session: Introduce new session_get_topo_node_output helper.
-      mf/session: Introduce new session_get_topo_node_input helper.
-      mf/session: Wrap samples in IMFMediaEvent list instead of IMFSample list.
-      mf/session: Handle transform format changes and update downstream media types.
-      winex11: Report all sources as detached in virtual desktop mode.
-      win32u: Don't force refresh the display cache on thread desktop change.
-      winex11: Let win32u decide when to force update the display cache.
-      win32u: Introduce a new add_virtual_modes helper.
-      win32u: Return the host surface directly from vulkan_surface_create.
-      winewayland: Get rid of the now unnecessary surface wrapper.
-      win32u: Introduce a per-window vulkan surface list.
-      win32u: Move thread detach from winex11.
-      winex11: Remove now unnecessary surface wrapper struct.
-      win32u: Fix list corruption in vulkan_detach_surfaces.
-      win32u: Remove now unnecessary rawinput_device_get_usages.
-      win32u: Use find_device_from_handle in process_rawinput_message.
-      win32u: Move rawinput device cache ticks check to rawinput_update_device_list.
-      winex11: Don't call x11drv_xinput2_disable for foreign windows.
-      winex11: Remove duplicated foreign window class string constant.
-      winex11: Avoid leaking foreign window data if it was already created.
-      mfreawrite/tests: Allow MF_E_SHUTDOWN result in test stream RequestSample.
-      mf/tests: Add broken result for older Windows.
-
-Tuomas Räsänen (2):
-      setupapi/tests: Add tests for reading INF class with %strkey% tokens.
-      setupapi: Use INF parser to read class GUID and class name.
+Tim Clem (7):
+      mountmgr.sys: Do not create drive letters or volumes for unbrowsable macOS volumes.
+      mountmgr.sys: Do not add drive letters or volumes for macOS volumes without mount paths.
+      winemac.drv: Document mode_is_preferred.
+      winemac.drv: Prefer display modes that are marked as usable for desktop.
+      winemac.drv: Do not consider the "valid" and "safe" flags as making a display mode unique.
+      Revert "winemac.drv: Hide app's dock icon when it wouldn't have a taskbar item on Windows.".
+      winemac.drv: Exclude dictation when looking for input methods.
 
 Yuxuan Shui (3):
-      shell32: Fix a trace log message.
-      shell32: Use full path to current directory for finding executables.
-      shell32: Restore the ability of running native unix programs with ShellExecute.
+      rtworkq: Avoid use-after-free.
+      mfplat/tests: Validate MFCancelWorkItem releases the callback.
+      rtworkq: Release cancelled work items.
 
-Zebediah Figura (1):
-      kernelbase: Do not start the debugger if SEM_NOGPFAULTERRORBOX is set.
-
-Zhiyi Zhang (1):
-      win32u: Set the virtual desktop display frequency to 60Hz.
-
-Ziqing Hui (11):
-      winegstreamer: Merge video_cinepak into video field.
-      winegstreamer: Merge video_h264 into video field.
-      winegstreamer: Merge video_wmv into video field.
-      winegstreamer: Merge video_indeo into video field.
-      winegstreamer: Merge video_mpeg1 into video field.
-      winegstreamer: Implement mf_media_type_to_wg_format_video_wmv.
-      winegstreamer/video_decoder: Set input/output infos in h264_decoder_create.
-      winegstreamer/video_decoder: Change decoder attributes.
-      winegstreamer/video_decoder: Add wg_transform_attrs member.
-      winegstreamer/video_decoder: Support aggregation.
-      winegstreamer/video_decoder: Use video_decoder to implement wmv decoder.
+Ziqing Hui (1):
+      winegstreamer/video_decoder: Make output_plane_align specific to h264.
 ```
