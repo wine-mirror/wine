@@ -477,10 +477,7 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
     if (!ti) return EXCEPTION_EXECUTE_HANDLER;
 
     rec = ptrs->ExceptionRecord;
-    if (rec->ExceptionCode != CXX_EXCEPTION || rec->NumberParameters != 3 ||
-            rec->ExceptionInformation[0] < CXX_FRAME_MAGIC_VC6 ||
-            rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8)
-        return EXCEPTION_CONTINUE_SEARCH;
+    if (!is_cxx_exception( rec )) return EXCEPTION_CONTINUE_SEARCH;
 
     if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
     {

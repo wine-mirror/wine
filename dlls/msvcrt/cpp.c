@@ -1048,10 +1048,7 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
     {
         EXCEPTION_RECORD *rec = ep->ExceptionRecord;
 
-        if (rec->ExceptionCode==CXX_EXCEPTION && rec->NumberParameters==3 &&
-                (rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC6 ||
-                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC7 ||
-                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC8))
+        if (is_cxx_exception( rec ))
         {
             const cxx_type_info_table *tit = ((cxx_exception_type*)rec->ExceptionInformation[2])->type_info_table;
             int i;
@@ -1086,10 +1083,7 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
     {
         EXCEPTION_RECORD *rec = ep->ExceptionRecord;
 
-        if (rec->ExceptionCode==CXX_EXCEPTION && rec->NumberParameters==4 &&
-                (rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC6 ||
-                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC7 ||
-                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC8))
+        if (is_cxx_exception( rec ))
         {
             const cxx_exception_type *et = (cxx_exception_type*)rec->ExceptionInformation[2];
             const cxx_type_info_table *tit = (const cxx_type_info_table*)(rec->ExceptionInformation[3]+et->type_info_table);

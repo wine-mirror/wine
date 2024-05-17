@@ -51,6 +51,14 @@ typedef DWORD (*cxx_exc_custom_handler)( PEXCEPTION_RECORD, struct __cxx_excepti
 void WINAPI _CxxThrowException(void*,const cxx_exception_type*);
 int CDECL _XcptFilter(NTSTATUS, PEXCEPTION_POINTERS);
 
+static inline BOOL is_cxx_exception( EXCEPTION_RECORD *rec )
+{
+    if (rec->ExceptionCode != CXX_EXCEPTION) return FALSE;
+    if (rec->NumberParameters != CXX_EXCEPTION_PARAMS) return FALSE;
+    return (rec->ExceptionInformation[0] >= CXX_FRAME_MAGIC_VC6 &&
+            rec->ExceptionInformation[0] <= CXX_FRAME_MAGIC_VC8);
+}
+
 typedef struct
 {
     EXCEPTION_RECORD *rec;

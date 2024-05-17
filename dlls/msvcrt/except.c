@@ -298,11 +298,7 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
         return FALSE;
 
     rec = ptrs->ExceptionRecord;
-
-    if (rec->ExceptionCode == CXX_EXCEPTION &&
-        rec->NumberParameters == CXX_EXCEPTION_PARAMS &&
-        rec->ExceptionInformation[0] == CXX_FRAME_MAGIC_VC6 &&
-        rec->ExceptionInformation[2])
+    if (is_cxx_exception( rec ) && rec->ExceptionInformation[2])
     {
         ptrs->ExceptionRecord = msvcrt_get_thread_data()->exc_record;
         return TRUE;
@@ -447,14 +443,7 @@ void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
 
     TRACE("(%p)\n", rec);
 
-    if (rec->ExceptionCode != CXX_EXCEPTION) return;
-#ifndef __x86_64__
-    if (rec->NumberParameters != 3) return;
-#else
-    if (rec->NumberParameters != 4) return;
-#endif
-    if (rec->ExceptionInformation[0] < CXX_FRAME_MAGIC_VC6 ||
-            rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8) return;
+    if (!is_cxx_exception( rec )) return;
 
     if (!info || !info->destructor)
         return;
