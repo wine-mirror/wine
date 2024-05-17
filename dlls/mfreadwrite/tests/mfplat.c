@@ -3417,7 +3417,7 @@ static void test_source_reader_transforms_d3d11(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     init_media_type(media_type, abgr32_stream_type_desc, -1);
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
-    todo_wine ok(hr == S_OK || broken(hr == MF_E_INVALIDMEDIATYPE) /* needs a GPU */, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == MF_E_INVALIDMEDIATYPE) /* needs a GPU */, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(media_type);
 
     if (hr == S_OK)
