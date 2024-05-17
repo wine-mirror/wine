@@ -282,6 +282,7 @@ UINT ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manag
         };
         const DEVMODEW mode =
         {
+            .dmSize = sizeof(mode),
             .dmFields = DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL |
                         DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
             .dmBitsPerPel = screen_bpp, .dmPelsWidth = screen_width, .dmPelsHeight = screen_height, .dmDisplayFrequency = 60,
