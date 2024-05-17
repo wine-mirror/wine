@@ -1496,10 +1496,96 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     }
 }
 
+static DEVMODEW *get_virtual_modes( const DEVMODEW *current, const DEVMODEW *initial,
+                                    const DEVMODEW *maximum, UINT32 *modes_count )
+{
+    static struct screen_size
+    {
+        unsigned int width;
+        unsigned int height;
+    } screen_sizes[] = {
+        /* 4:3 */
+        { 320,  240},
+        { 400,  300},
+        { 512,  384},
+        { 640,  480},
+        { 768,  576},
+        { 800,  600},
+        {1024,  768},
+        {1152,  864},
+        {1280,  960},
+        {1400, 1050},
+        {1600, 1200},
+        {2048, 1536},
+        /* 5:4 */
+        {1280, 1024},
+        {2560, 2048},
+        /* 16:9 */
+        {1280,  720},
+        {1366,  768},
+        {1600,  900},
+        {1920, 1080},
+        {2560, 1440},
+        {3840, 2160},
+        /* 16:10 */
+        { 320,  200},
+        { 640,  400},
+        {1280,  800},
+        {1440,  900},
+        {1680, 1050},
+        {1920, 1200},
+        {2560, 1600}
+    };
+    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, count;
+    BOOL vertical = initial->dmDisplayOrientation & 1;
+    DEVMODEW *modes;
+
+    modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) );
+
+    for (count = i = 0; modes && i < ARRAY_SIZE(depths); ++i)
+    {
+        DEVMODEW mode =
+        {
+            .dmSize = sizeof(mode),
+            .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
+            .dmDisplayFrequency = 60,
+            .dmBitsPerPel = depths[i],
+            .dmDisplayOrientation = initial->dmDisplayOrientation,
+        };
+
+        for (j = 0; j < ARRAY_SIZE(screen_sizes); ++j)
+        {
+            mode.dmPelsWidth = vertical ? screen_sizes[j].height : screen_sizes[j].width;
+            mode.dmPelsHeight = vertical ? screen_sizes[j].width : screen_sizes[j].height;
+
+            if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsHeight) continue;
+            if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsHeight) continue;
+            if (mode.dmPelsWidth == initial->dmPelsWidth && mode.dmPelsHeight == initial->dmPelsHeight) continue;
+            modes[count++] = mode;
+        }
+
+        mode.dmPelsWidth = vertical ? initial->dmPelsHeight : initial->dmPelsWidth;
+        mode.dmPelsHeight = vertical ? initial->dmPelsWidth : initial->dmPelsHeight;
+        modes[count++] = mode;
+
+        if (maximum->dmPelsWidth != initial->dmPelsWidth || maximum->dmPelsHeight != initial->dmPelsHeight)
+        {
+            mode.dmPelsWidth = vertical ? maximum->dmPelsHeight : maximum->dmPelsWidth;
+            mode.dmPelsHeight = vertical ? maximum->dmPelsWidth : maximum->dmPelsHeight;
+            modes[count++] = mode;
+        }
+    }
+
+    *modes_count = count;
+    return modes;
+}
+
 static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param )
 {
     struct device_manager_ctx *ctx = param;
-    DEVMODEW dummy, detached = *current;
+    DEVMODEW dummy, detached = *current, virtual, *virtual_modes = NULL;
+    const DEVMODEW physical = modes_count == 1 ? *modes : *current;
+    UINT virtual_count;
 
     TRACE( "current %s, modes_count %u, modes %p, param %p\n", debugstr_devmodew( current ), modes_count, modes, param );
 
@@ -1509,6 +1595,21 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
     detached.dmPelsHeight = 0;
     if (!(ctx->source.state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP)) current = &detached;
 
+    if (modes_count > 1 || current == &detached)
+        virtual_modes = NULL;
+    else
+    {
+        if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &virtual ))
+            virtual = physical;
+
+        if ((virtual_modes = get_virtual_modes( &virtual, current, &physical, &virtual_count )))
+        {
+            modes_count = virtual_count;
+            modes = virtual_modes;
+            current = &virtual;
+        }
+    }
+
     if (current == &detached || !read_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, &dummy ))
         write_source_mode( ctx->source_key, ENUM_REGISTRY_SETTINGS, current );
     write_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, current );
@@ -1517,6 +1618,8 @@ static void add_modes( const DEVMODEW *current, UINT modes_count, const DEVMODEW
     set_reg_value( ctx->source_key, modesW, REG_BINARY, modes, modes_count * sizeof(*modes) );
     set_reg_value( ctx->source_key, mode_countW, REG_DWORD, &modes_count, sizeof(modes_count) );
     ctx->source.mode_count = modes_count;
+
+    free( virtual_modes );
 }
 
 static const struct gdi_device_manager device_manager =
@@ -1855,97 +1958,16 @@ static BOOL get_default_desktop_size( DWORD *width, DWORD *height )
     return TRUE;
 }
 
-static void add_virtual_modes( struct device_manager_ctx *ctx, const DEVMODEW *current,
-                               const DEVMODEW *initial, const DEVMODEW *maximum )
-{
-    static struct screen_size
-    {
-        unsigned int width;
-        unsigned int height;
-    } screen_sizes[] = {
-        /* 4:3 */
-        { 320,  240},
-        { 400,  300},
-        { 512,  384},
-        { 640,  480},
-        { 768,  576},
-        { 800,  600},
-        {1024,  768},
-        {1152,  864},
-        {1280,  960},
-        {1400, 1050},
-        {1600, 1200},
-        {2048, 1536},
-        /* 5:4 */
-        {1280, 1024},
-        {2560, 2048},
-        /* 16:9 */
-        {1280,  720},
-        {1366,  768},
-        {1600,  900},
-        {1920, 1080},
-        {2560, 1440},
-        {3840, 2160},
-        /* 16:10 */
-        { 320,  200},
-        { 640,  400},
-        {1280,  800},
-        {1440,  900},
-        {1680, 1050},
-        {1920, 1200},
-        {2560, 1600}
-    };
-    UINT depths[] = {8, 16, initial->dmBitsPerPel}, i, j, modes_count;
-    DEVMODEW *modes;
-
-    if (!(modes = malloc( ARRAY_SIZE(depths) * (ARRAY_SIZE(screen_sizes) + 2) * sizeof(*modes) ))) return;
-
-    for (modes_count = i = 0; i < ARRAY_SIZE(depths); ++i)
-    {
-        DEVMODEW mode =
-        {
-            .dmSize = sizeof(mode),
-            .dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY,
-            .dmDisplayFrequency = 60,
-            .dmBitsPerPel = depths[i],
-        };
-
-        for (j = 0; j < ARRAY_SIZE(screen_sizes); ++j)
-        {
-            mode.dmPelsWidth = screen_sizes[j].width;
-            mode.dmPelsHeight = screen_sizes[j].height;
-
-            if (mode.dmPelsWidth > maximum->dmPelsWidth || mode.dmPelsHeight > maximum->dmPelsHeight) continue;
-            if (mode.dmPelsWidth == maximum->dmPelsWidth && mode.dmPelsHeight == maximum->dmPelsHeight) continue;
-            if (mode.dmPelsWidth == initial->dmPelsWidth && mode.dmPelsHeight == initial->dmPelsHeight) continue;
-            modes[modes_count++] = mode;
-        }
-
-        mode.dmPelsWidth = initial->dmPelsWidth;
-        mode.dmPelsHeight = initial->dmPelsHeight;
-        modes[modes_count++] = mode;
-
-        if (maximum->dmPelsWidth != initial->dmPelsWidth || maximum->dmPelsWidth != initial->dmPelsHeight)
-        {
-            mode.dmPelsWidth = maximum->dmPelsWidth;
-            mode.dmPelsHeight = maximum->dmPelsHeight;
-            modes[modes_count++] = mode;
-        }
-    }
-
-    add_modes( current, modes_count, modes, ctx );
-    free( modes );
-}
-
 static BOOL add_virtual_source( struct device_manager_ctx *ctx )
 {
-    DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary;
+    DEVMODEW current = {.dmSize = sizeof(current)}, initial = ctx->primary, maximum = ctx->primary, *modes;
     struct source virtual_source =
     {
         .state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_VGA_COMPATIBLE,
         .gpu = &ctx->gpu,
     };
     struct gdi_monitor monitor = {0};
+    UINT modes_count;
 
     if (ctx->has_primary) ctx->source.id = ctx->source_count;
     else
@@ -1987,7 +2009,11 @@ static BOOL add_virtual_source( struct device_manager_ctx *ctx )
     monitor.rc_work.right = current.dmPelsWidth;
     monitor.rc_work.bottom = current.dmPelsHeight;
     add_monitor( &monitor, ctx );
-    add_virtual_modes( ctx, &current, &initial, &maximum );
+
+    /* Expose the virtual source display modes as physical modes, to avoid DPI scaling */
+    if (!(modes = get_virtual_modes( &current, &initial, &maximum, &modes_count ))) return STATUS_NO_MEMORY;
+    add_modes( &current, modes_count, modes, ctx );
+    free( modes );
 
     return STATUS_SUCCESS;
 }
