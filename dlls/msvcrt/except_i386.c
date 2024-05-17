@@ -690,29 +690,6 @@ void __stdcall __CxxLongjmpUnwind( const _JUMP_BUFFER *buf )
 }
 
 /*********************************************************************
- *		__CxxDetectRethrow (MSVCRT.@)
- */
-BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
-{
-  PEXCEPTION_RECORD rec;
-
-  if (!ptrs)
-    return FALSE;
-
-  rec = ptrs->ExceptionRecord;
-
-  if (rec->ExceptionCode == CXX_EXCEPTION &&
-      rec->NumberParameters == 3 &&
-      rec->ExceptionInformation[0] == CXX_FRAME_MAGIC_VC6 &&
-      rec->ExceptionInformation[2])
-  {
-    ptrs->ExceptionRecord = msvcrt_get_thread_data()->exc_record;
-    return TRUE;
-  }
-  return (msvcrt_get_thread_data()->exc_record == rec);
-}
-
-/*********************************************************************
  *		_EH_prolog (MSVCRT.@)
  */
 

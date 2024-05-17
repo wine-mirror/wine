@@ -28,6 +28,12 @@
 #define CXX_FRAME_MAGIC_VC8 0x19930522
 #define CXX_EXCEPTION       0xe06d7363
 
+#ifdef __x86_64__
+#define CXX_EXCEPTION_PARAMS 4
+#else
+#define CXX_EXCEPTION_PARAMS 3
+#endif
+
 #define FUNC_DESCR_SYNCHRONOUS  1 /* synchronous exceptions only (built with /EHs and /EHsc) */
 #define FUNC_DESCR_NOEXCEPT     4 /* noexcept function */
 
