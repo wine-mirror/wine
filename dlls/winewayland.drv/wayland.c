@@ -280,8 +280,6 @@ BOOL wayland_process_init(void)
         return FALSE;
     }
 
-    wayland_init_display_devices();
-
     process_wayland.initialized = TRUE;
 
     return TRUE;

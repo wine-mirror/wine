@@ -1206,16 +1206,3 @@ UINT macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     macdrv_free_displays(displays);
     return STATUS_SUCCESS;
 }
-
-/***********************************************************************
- *              macdrv_init_display_devices
- *
- * Initialize display device registry data.
- */
-void macdrv_init_display_devices(void)
-{
-    UINT32 num_path, num_mode;
-
-    /* trigger refresh in win32u */
-    NtUserGetDisplayConfigBufferSizes( QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode );
-}

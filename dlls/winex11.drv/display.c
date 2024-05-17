@@ -559,11 +559,3 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     host_handler.free_gpus( gpus, gpu_count );
     return STATUS_SUCCESS;
 }
-
-void X11DRV_DisplayDevices_Init(void)
-{
-    UINT32 num_path, num_mode;
-
-    /* trigger refresh in win32u */
-    NtUserGetDisplayConfigBufferSizes( QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode );
-}

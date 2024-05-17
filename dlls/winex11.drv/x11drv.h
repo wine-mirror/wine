@@ -819,7 +819,6 @@ struct x11drv_display_device_handler
 };
 
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler);
-extern void X11DRV_DisplayDevices_Init(void);
 extern void X11DRV_DisplayDevices_RegisterEventHandlers(void);
 extern BOOL X11DRV_DisplayDevices_SupportEventHandlers(void);
 /* Display device handler used in virtual desktop mode */

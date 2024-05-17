@@ -1012,6 +1012,7 @@ static const struct user_driver_funcs *load_driver(void)
         __wine_set_user_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
     }
 
+    update_display_cache( FALSE );
     return user_driver;
 }
 

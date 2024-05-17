@@ -36,16 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
-void wayland_init_display_devices(void)
-{
-    UINT32 num_path, num_mode;
-
-    TRACE("\n");
-
-    /* Trigger refresh in win32u */
-    NtUserGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &num_path, &num_mode);
-}
-
 struct output_info
 {
     int x, y;

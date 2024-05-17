@@ -451,7 +451,6 @@ static NTSTATUS macdrv_init(void *arg)
     }
 
     init_user_driver();
-    macdrv_init_display_devices();
     return STATUS_SUCCESS;
 }
 
