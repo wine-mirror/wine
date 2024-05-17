@@ -615,15 +615,38 @@ static void check_keyboard_state_( int line, const BYTE expect_state[256], const
     }
 }
 
+static void clear_keyboard_state( void )
+{
+    static BYTE empty_state[256] = {0};
+    INPUT input = {.type = INPUT_KEYBOARD};
+    BYTE lock_keys[] = {VK_NUMLOCK, VK_CAPITAL, VK_SCROLL};
+    UINT i;
+
+    for (i = 0; i < ARRAY_SIZE(lock_keys); ++i)
+    {
+        if (GetKeyState( lock_keys[i] ) & 0x0001)
+        {
+            input.ki.wVk = lock_keys[i];
+            SendInput( 1, &input, sizeof(input) );
+            input.ki.dwFlags = KEYEVENTF_KEYUP;
+            SendInput( 1, &input, sizeof(input) );
+            wait_messages( 5, FALSE );
+            memset( current_sequence, 0, sizeof(current_sequence) );
+            current_sequence_len = 0;
+        }
+    }
+
+    SetKeyboardState( empty_state );
+}
+
 #define check_send_input_keyboard_test( a, b ) check_send_input_keyboard_test_( a, #a, b )
 static void check_send_input_keyboard_test_( const struct send_input_keyboard_test *test, const char *context, BOOL peeked )
 {
-    static BYTE empty_state[256] = {0};
     INPUT input = {.type = INPUT_KEYBOARD};
     UINT i;
 
     winetest_push_context( "%s", context );
-    SetKeyboardState( empty_state );
+    clear_keyboard_state();
 
     for (i = 0; test->vkey || test->scan; i++, test++)
     {
@@ -641,7 +664,7 @@ static void check_send_input_keyboard_test_( const struct send_input_keyboard_te
         winetest_pop_context();
     }
 
-    SetKeyboardState( empty_state );
+    clear_keyboard_state();
     winetest_pop_context();
 }
 
@@ -1146,6 +1169,45 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
         {0},
     };
 
+    struct send_input_keyboard_test numpad_scan[] =
+    {
+        {.scan = 0x4b, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_LEFT] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x4b, VK_LEFT), KEY_MSG(WM_KEYDOWN, 0x4b, VK_LEFT), {0}}},
+        {.scan = 0x4b, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_HOOK(WM_KEYUP, 0x4b, VK_LEFT), KEY_MSG(WM_KEYUP, 0x4b, VK_LEFT), {0}}},
+        {0},
+    };
+
+    struct send_input_keyboard_test numpad_scan_numlock[] =
+    {
+        {.scan = 0x45, .flags = KEYEVENTF_SCANCODE, .expect_state = {[VK_NUMLOCK] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0x45, VK_NUMLOCK), KEY_MSG(WM_KEYDOWN, 0x45, VK_NUMLOCK), {0}}},
+        {.scan = 0x45, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_NUMLOCK] = 0x01},
+         .expect = {KEY_HOOK(WM_KEYUP, 0x45, VK_NUMLOCK), KEY_MSG(WM_KEYUP, 0x45, VK_NUMLOCK), {0}}},
+        {
+            .scan = 0x4b, .flags = KEYEVENTF_SCANCODE,
+            .expect_state = {[VK_NUMPAD4] = 0x80, [VK_NUMLOCK] = 0x01},
+            .todo_state = {[VK_NUMPAD4] = TRUE, [VK_LEFT] = TRUE},
+            .expect =
+            {
+                KEY_HOOK(WM_KEYDOWN, 0x4b, VK_NUMPAD4, .todo_value = TRUE),
+                KEY_MSG(WM_KEYDOWN, 0x4b, VK_NUMPAD4, .todo_value = TRUE),
+                WIN_MSG(WM_CHAR, '4', MAKELONG(1, 0x4b), .todo_value = TRUE),
+                {0}
+            }
+        },
+        {
+            .scan = 0x4b, .flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, .expect_state = {[VK_NUMLOCK] = 0x01},
+            .expect =
+            {
+                KEY_HOOK(WM_KEYUP, 0x4b, VK_NUMPAD4, .todo_value = TRUE),
+                KEY_MSG(WM_KEYUP, 0x4b, VK_NUMPAD4, .todo_value = TRUE),
+                {0}
+            }
+        },
+        {0},
+    };
+
 #undef WIN_MSG
 #undef KBD_HOOK
 #undef KEY_HOOK_
@@ -1226,6 +1288,8 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode, TRUE );
     check_send_input_keyboard_test( lmenu_unicode_peeked, TRUE );
     check_send_input_keyboard_test( unicode_vkey, TRUE );
+    check_send_input_keyboard_test( numpad_scan, TRUE );
+    check_send_input_keyboard_test( numpad_scan_numlock, TRUE );
     winetest_pop_context();
 
     wait_messages( 100, FALSE );
@@ -1269,6 +1333,8 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     check_send_input_keyboard_test( unicode, FALSE );
     check_send_input_keyboard_test( lmenu_unicode, FALSE );
     check_send_input_keyboard_test( unicode_vkey, FALSE );
+    check_send_input_keyboard_test( numpad_scan, FALSE );
+    check_send_input_keyboard_test( numpad_scan_numlock, FALSE );
     winetest_pop_context();
 
     ok_ret( 1, DestroyWindow( hwnd ) );
