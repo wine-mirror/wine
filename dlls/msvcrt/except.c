@@ -288,6 +288,14 @@ int CDECL __CppXcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
 }
 
 /*********************************************************************
+ *		__CxxQueryExceptionSize (MSVCRT.@)
+ */
+unsigned int CDECL __CxxQueryExceptionSize(void)
+{
+    return sizeof(cxx_exception_type);
+}
+
+/*********************************************************************
  *		_abnormal_termination (MSVCRT.@)
  */
 int CDECL __intrinsic_abnormal_termination(void)

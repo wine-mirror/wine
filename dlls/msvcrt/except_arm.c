@@ -86,15 +86,6 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 
 
 /*********************************************************************
- *		__CxxQueryExceptionSize (MSVCRT.@)
- */
-unsigned int CDECL __CxxQueryExceptionSize(void)
-{
-    return sizeof(cxx_exception_type);
-}
-
-
-/*********************************************************************
  *              _fpieee_flt (MSVCRT.@)
  */
 int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,

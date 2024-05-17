@@ -679,15 +679,6 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 }
 
 
-/*********************************************************************
- *		__CxxQueryExceptionSize (MSVCRT.@)
- */
-unsigned int CDECL __CxxQueryExceptionSize(void)
-{
-    return sizeof(cxx_exception_type);
-}
-
-
 /*******************************************************************
  *		longjmp (MSVCRT.@)
  */
