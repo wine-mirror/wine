@@ -97,7 +97,7 @@ static BOOL display_mode_is_supported(CGDisplayModeRef display_mode)
 }
 
 
-static void display_mode_to_devmode(CGDirectDisplayID display_id, CGDisplayModeRef display_mode, DEVMODEW *devmode)
+static void display_mode_to_devmode_fields(CGDirectDisplayID display_id, CGDisplayModeRef display_mode, DEVMODEW *devmode)
 {
     uint32_t io_flags;
     double rotation;
@@ -847,7 +847,11 @@ static DEVMODEW *display_get_modes(CGDirectDisplayID display_id, int *modes_coun
     for (i = 0; i < count; i++)
     {
         CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
-        display_mode_to_devmode(display_id, mode, devmodes + i);
+
+        memset(devmodes + i, 0, sizeof(*devmodes));
+        devmodes[i].dmSize = sizeof(*devmodes);
+
+        display_mode_to_devmode_fields(display_id, mode, devmodes + i);
 
         if (retina_enabled && display_mode_matches_descriptor(mode, desc))
         {
@@ -892,7 +896,7 @@ static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *d
     devmode->dmPosition.y = CGRectGetMinY(display->frame);
     devmode->dmFields |= DM_POSITION;
 
-    display_mode_to_devmode(display_id, display_mode, devmode);
+    display_mode_to_devmode_fields(display_id, display_mode, devmode);
     if (retina_enabled)
     {
         struct display_mode_descriptor *desc = create_original_display_mode_descriptor(display_id);
