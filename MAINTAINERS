@@ -37,7 +37,6 @@ F:	dlls/ntdll/signal_arm*
 F:	programs/winedbg/be_arm*
 
 Audio I/O
-P:	Andrew Eikum <coldpie@fastmail.com>
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/dsound/
 F:	dlls/mmdevapi/
@@ -205,11 +204,6 @@ F:	dlls/winebus.sys/
 F:	dlls/winexinput.sys/
 F:	dlls/winmm/joystick.c
 F:	dlls/xinput*/
-
-Media format conversion
-P:	Andrew Eikum <coldpie@fastmail.com>
-F:	dlls/*.acm/
-F:	dlls/msacm32/
 
 Media Foundation GStreamer backend
 M:	Rémi Bernon <rbernon@codeweavers.com>
