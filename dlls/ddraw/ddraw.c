@@ -1231,8 +1231,36 @@ void ddraw_d3dcaps1_from_7(D3DDEVICEDESC *caps1, D3DDEVICEDESC7 *caps7)
     caps1->dpcTriCaps = caps7->dpcTriCaps;
     caps1->dwDeviceRenderBitDepth = caps7->dwDeviceRenderBitDepth;
     caps1->dwDeviceZBufferBitDepth = caps7->dwDeviceZBufferBitDepth;
+
+    /* This value is zero on all Windows drivers we have seen so far. */
     caps1->dwMaxBufferSize = 0;
-    caps1->dwMaxVertexCount = 65536;
+
+    /* AMD GPUs on Windows XP and newer report 1024 for HAL devices.
+     * Nvidia GPUs report 65534. On Windows 9x we have seen 2048 on
+     * AMD cards and 32768 on Nvidia. The API defined limit is 65536
+     * because ddraw only supports 16 bit indices.
+     *
+     * Some games, for example Prince of Persia 3D (bug 44863), create a
+     * vertex buffer to hold as many vertices as we report here. The
+     * game requests a video memory buffer, maps it, writes a handful
+     * of vertices and draws. Because IDirect3DVertexBuffer::Lock does
+     * not allow passing a range, and prior to d3d7 doesn't support
+     * NOOVERWRITE/DISCARD, the upload becomes slow if the buffer is too
+     * large. So we don't want to report a value that's too high here.
+     *
+     * Why 2048? Windows 9x was the contemporaneous system when d3d 1-4
+     * titles were written.
+     *
+     * Regardless of this value, we put ddraw4 vertex buffers into
+     * system memory because games are using them poorly. This mitigates
+     * negative effects of a large vertex count.
+     *
+     * Windows doesn't enforce this limit. A larger vertex buffer can
+     * be created and used in draws. More vertices than dwMaxVertexCount
+     * can be rendered in one draw call. SetExecuteData with a vertex
+     * count exceeding dwMaxVertexCount succeeds too. */
+    caps1->dwMaxVertexCount = 2048;
+
     caps1->dwMinTextureWidth  = caps7->dwMinTextureWidth;
     caps1->dwMinTextureHeight = caps7->dwMinTextureHeight;
     caps1->dwMaxTextureWidth  = caps7->dwMaxTextureWidth;
