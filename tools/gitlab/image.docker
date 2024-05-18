@@ -54,7 +54,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
                        unixodbc-dev:amd64 unixodbc-dev:i386 \
                        x11proto-dev && \
     apt-get install -y ccache netbase curl ca-certificates xserver-xorg-video-dummy xserver-xorg xfonts-base xinit fvwm \
-                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio && \
+                       winbind fonts-liberation2 fonts-noto-core fonts-noto-cjk pulseaudio unzip && \
     curl -O https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb && \
     dpkg -i deb-multimedia-keyring_2016.8.1_all.deb && \
     echo 'deb https://www.deb-multimedia.org bookworm main' >> /etc/apt/sources.list && \
