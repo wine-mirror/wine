@@ -33,8 +33,10 @@
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
 #include "setupapi.h"
+#include "shellscalingapi.h"
 #include "ntddvdeo.h"
 #include <stdio.h>
+#include <math.h>
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
@@ -46,6 +48,7 @@ static LONG (WINAPI *pQueryDisplayConfig)(UINT32,UINT32*,DISPLAYCONFIG_PATH_INFO
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static UINT (WINAPI *pGetDpiForSystem)(void);
 
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER*);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME*);
@@ -66,6 +69,7 @@ static void init_function_pointers(void)
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
     GET_PROC(user32, SetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetDpiForSystem)
 
     GET_PROC(gdi32, D3DKMTCloseAdapter)
     GET_PROC(gdi32, D3DKMTOpenAdapterFromGdiDisplayName)
@@ -2969,6 +2973,208 @@ static void test_fullscreen(int argc, char **argv)
     CloseHandle(event1);
 }
 
+struct monitor_info
+{
+    UINT eff_x, eff_y, ang_x, ang_y, raw_x, raw_y; /* default monitor DPIs */
+    HMONITOR handle;
+    RECT rect;
+};
+
+static BOOL CALLBACK enum_monitor_infos( HMONITOR handle, HDC hdc, RECT *rect, LPARAM lparam )
+{
+    struct monitor_info *info, **iter = (struct monitor_info **)lparam;
+
+    info = *iter;
+    info->handle = handle;
+    info->rect = *rect;
+    GetDpiForMonitorInternal( handle, MDT_EFFECTIVE_DPI, &info->eff_x, &info->eff_y );
+    GetDpiForMonitorInternal( handle, MDT_ANGULAR_DPI, &info->ang_x, &info->ang_y );
+    GetDpiForMonitorInternal( handle, MDT_RAW_DPI, &info->raw_x, &info->raw_y );
+
+    *iter = info + 1;
+
+    return TRUE;
+}
+
+static void get_monitor_infos( struct monitor_info *infos )
+{
+    struct monitor_info *iter = infos;
+    BOOL ret;
+    ret = EnumDisplayMonitors( 0, NULL, enum_monitor_infos, (LPARAM)&iter );
+    ok( ret, "EnumDisplayMonitors failed\n" );
+}
+
+static void set_display_settings( HMONITOR monitor, UINT width, UINT height )
+{
+    MONITORINFOEXW info = {.cbSize = sizeof(MONITORINFOEXW)};
+    DEVMODEW mode = {.dmSize = sizeof(DEVMODEW)};
+    UINT ret;
+
+    ret = GetMonitorInfoW( monitor, (MONITORINFO *)&info );
+    ok( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+
+    mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+    mode.dmBitsPerPel = 32;
+    mode.dmPelsWidth = width;
+    mode.dmPelsHeight = height;
+
+    ChangeDisplaySettingsExW( NULL, &mode, 0, CDS_FULLSCREEN, NULL );
+}
+
+static void test_monitor_dpi(void)
+{
+    struct monitor_info infos[64] = {{0}}, phys_infos[ARRAY_SIZE(infos)] = {{0}};
+    UINT i, count, system_dpi, dpi_x, dpi_y;
+    DPI_AWARENESS_CONTEXT old_ctx;
+    float scale_x, scale_y;
+    BOOL ret, is_virtual;
+
+    if (!pGetDpiForMonitorInternal || !pSetThreadDpiAwarenessContext)
+    {
+        win_skip( "GetDpiForMonitorInternal / SetThreadDpiAwarenessContext not found, skipping tests\n" );
+        return;
+    }
+
+    old_ctx = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    system_dpi = pGetDpiForSystem();
+
+    count = GetSystemMetrics( SM_CMONITORS );
+    ok( count > 0, "Found zero monitors\n" );
+    ok( count <= ARRAY_SIZE(infos), "Too many monitors\n" );
+
+    get_monitor_infos( infos );
+    memcpy( phys_infos, infos, sizeof(infos) );
+
+    /* check whether display driver (likely) supports display mode virtualization */
+    is_virtual = abs( (int)infos[0].ang_x - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].ang_y - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].raw_x - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].raw_y - (int)system_dpi ) < system_dpi * 0.05;
+
+    for (i = 0; i < count; i++)
+    {
+        scale_x = scale_y = 1.0;
+
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( abs( (int)dpi_x - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( abs( (int)dpi_y - (int)system_dpi ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!ret)
+        {
+            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( abs( (int)dpi_x - (int)system_dpi ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( abs( (int)dpi_y - (int)system_dpi ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+
+        set_display_settings( infos[i].handle, 1600, 900 );
+        get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
+        scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
+        scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
+
+        pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!ret)
+        {
+            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        set_display_settings( infos[i].handle, 1024, 768 );
+        get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
+        scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
+        scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
+
+        pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+        ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+        }
+        ret = GetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!ret)
+        {
+            ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else if (!is_virtual)
+        {
+            ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+        else
+        {
+            ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+            ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+        }
+    }
+
+    ChangeDisplaySettingsExW( NULL, NULL, 0, 0, NULL );
+    pSetThreadDpiAwarenessContext( old_ctx );
+}
+
 START_TEST(monitor)
 {
     char** myARGV;
@@ -2991,6 +3197,7 @@ START_TEST(monitor)
         }
     }
 
+    test_monitor_dpi();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx(myARGC, myARGV);
     test_DisplayConfigSetDeviceInfo();
