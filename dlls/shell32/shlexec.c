@@ -599,7 +599,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
     WCHAR wBuffer[256];      /* Used to GetProfileString */
     UINT  retval = SE_ERR_NOASSOC;
     WCHAR *tok;              /* token pointer */
-    WCHAR xlpFile[256];      /* result of SearchPath */
+    WCHAR xlpFile[MAX_PATH]; /* result of SearchPath */
     DWORD attribs;           /* file attributes */
     WCHAR curdir[MAX_PATH];
     const WCHAR *search_paths[3] = {0};
@@ -634,7 +634,7 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
     }
     else
         search_paths[0] = curdir;
-    GetCurrentDirectoryW(MAX_PATH, curdir);
+    GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
     lstrcpyW(xlpFile, lpFile);
     if (PathResolveAW(xlpFile, (const void **)search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
     {
