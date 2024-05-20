@@ -65,62 +65,38 @@ static inline const rtti_object_locator *get_obj_locator( void *cppobj )
     return (const rtti_object_locator *)vtable[-1];
 }
 
-#ifndef __x86_64__
-static void dump_obj_locator( const rtti_object_locator *ptr )
+static uintptr_t get_obj_locator_base( const rtti_object_locator *ptr )
 {
-    int i;
-    const rtti_object_hierarchy *h = ptr->type_hierarchy;
-
-    TRACE( "%p: sig=%08x base_offset=%08x flags=%08x type=%p %s hierarchy=%p\n",
-           ptr, ptr->signature, ptr->base_class_offset, ptr->flags,
-           ptr->type_descriptor, dbgstr_type_info(ptr->type_descriptor), ptr->type_hierarchy );
-    TRACE( "  hierarchy: sig=%08x attr=%08x len=%d base classes=%p\n",
-           h->signature, h->attributes, h->array_len, h->base_classes );
-    for (i = 0; i < h->array_len; i++)
-    {
-        TRACE( "    base class %p: num %d off %d,%d,%d attr %08x type %p %s\n",
-               h->base_classes->bases[i],
-               h->base_classes->bases[i]->num_base_classes,
-               h->base_classes->bases[i]->offsets.this_offset,
-               h->base_classes->bases[i]->offsets.vbase_descr,
-               h->base_classes->bases[i]->offsets.vbase_offset,
-               h->base_classes->bases[i]->attributes,
-               h->base_classes->bases[i]->type_descriptor,
-               dbgstr_type_info(h->base_classes->bases[i]->type_descriptor) );
-    }
+#ifdef RTTI_USE_RVA
+    if (ptr->signature) return (uintptr_t)ptr - ptr->object_locator;
+#endif
+    return rtti_rva_base( ptr );
 }
 
-#else
-
 static void dump_obj_locator( const rtti_object_locator *ptr )
 {
     int i;
-    char *base = ptr->signature == 0 ? RtlPcToFileHeader((void*)ptr, (void**)&base) : (char*)ptr - ptr->object_locator;
-    const rtti_object_hierarchy *h = (const rtti_object_hierarchy*)(base + ptr->type_hierarchy);
-    const type_info *type_descriptor = (const type_info*)(base + ptr->type_descriptor);
+    uintptr_t base = get_obj_locator_base( ptr );
+    const rtti_object_hierarchy *h = rtti_rva( ptr->type_hierarchy, base );
+    const type_info *type_descriptor = rtti_rva( ptr->type_descriptor, base );
 
     TRACE( "%p: sig=%08x base_offset=%08x flags=%08x type=%p %s hierarchy=%p\n",
             ptr, ptr->signature, ptr->base_class_offset, ptr->flags,
             type_descriptor, dbgstr_type_info(type_descriptor), h );
     TRACE( "  hierarchy: sig=%08x attr=%08x len=%d base classes=%p\n",
-            h->signature, h->attributes, h->array_len, base + h->base_classes );
+           h->signature, h->attributes, h->array_len, rtti_rva(h->base_classes, base) );
     for (i = 0; i < h->array_len; i++)
     {
-        const rtti_base_descriptor *bases = (rtti_base_descriptor*)(base +
-                ((const rtti_base_array*)(base + h->base_classes))->bases[i]);
+        const rtti_base_array *base_array = rtti_rva( h->base_classes, base );
+        const rtti_base_descriptor *bases = rtti_rva( base_array->bases[i], base );
 
         TRACE( "    base class %p: num %d off %d,%d,%d attr %08x type %p %s\n",
-                bases,
-                bases->num_base_classes,
-                bases->offsets.this_offset,
-                bases->offsets.vbase_descr,
-                bases->offsets.vbase_offset,
-                bases->attributes,
-                base + bases->type_descriptor,
-                dbgstr_type_info((const type_info*)(base + bases->type_descriptor)) );
+               bases, bases->num_base_classes, bases->offsets.this_offset,
+               bases->offsets.vbase_descr, bases->offsets.vbase_offset, bases->attributes,
+               rtti_rva( bases->type_descriptor, base ),
+               dbgstr_type_info((const type_info*)(base + bases->type_descriptor)) );
     }
 }
-#endif
 
 /******************************************************************
  *		??0exception@@QAE@ABQBD@Z (MSVCRT.@)

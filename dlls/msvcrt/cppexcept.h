@@ -28,7 +28,7 @@
 #define CXX_FRAME_MAGIC_VC8 0x19930522
 #define CXX_EXCEPTION       0xe06d7363
 
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
 #define CXX_EXCEPTION_PARAMS 4
 #else
 #define CXX_EXCEPTION_PARAMS 3

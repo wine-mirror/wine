@@ -16,7 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windef.h"
+#include "winternl.h"
+#include "rtlsupportapi.h"
 #include "wine/asm.h"
+
+#ifndef __x86_64__
+#undef RTTI_USE_RVA
+#else
+#define RTTI_USE_RVA 1
+#endif
 
 #ifdef _WIN64
 
@@ -44,7 +53,7 @@
 
 #endif /* _WIN64 */
 
-#ifndef __x86_64__
+#ifndef RTTI_USE_RVA
 
 #define DEFINE_RTTI_BASE(name, base_classes_no, mangled_name) \
     static type_info name ## _type_info = { \
@@ -330,7 +339,7 @@ typedef struct
     int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
 } this_ptr_offsets;
 
-#ifndef __x86_64__
+#ifndef RTTI_USE_RVA
 
 typedef struct _rtti_base_descriptor
 {
@@ -444,6 +453,33 @@ typedef struct
 #endif
 
 extern const vtable_ptr type_info_vtable;
+
+#ifdef RTTI_USE_RVA
+
+static inline uintptr_t rtti_rva_base( const void *ptr )
+{
+    void *base;
+    return (uintptr_t)RtlPcToFileHeader( (void *)ptr, &base );
+}
+
+static inline void *rtti_rva( unsigned int rva, uintptr_t base )
+{
+    return (void *)(base + rva);
+}
+
+#else
+
+static inline uintptr_t rtti_rva_base( const void *ptr )
+{
+    return 0;
+}
+
+static inline void *rtti_rva( const void *ptr, uintptr_t base )
+{
+    return (void *)ptr;
+}
+
+#endif
 
 #define CREATE_TYPE_INFO_VTABLE \
 DEFINE_THISCALL_WRAPPER(type_info_vector_dtor,8) \
