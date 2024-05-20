@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
 typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);
 extern BOOL WINAPI PathResolveAW(void *path, const void **paths, DWORD flags);
+extern BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich);
 
 static inline BOOL isSpace(WCHAR c)
 {
@@ -627,24 +628,57 @@ static UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpVerb,
         return 33;
     }
 
-    if (lpPath && *lpPath)
-    {
-        search_paths[0] = lpPath;
-        search_paths[1] = curdir;
-    }
-    else
-        search_paths[0] = curdir;
     GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir);
-    lstrcpyW(xlpFile, lpFile);
-    if (PathResolveAW(xlpFile, (const void **)search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
+    if (!PathIsFileSpecW(lpFile))
     {
-        TRACE("PathResolveAW returned non-zero\n");
-        lpFile = xlpFile;
-        lstrcpyW(lpResult, xlpFile);
-        /* The file was found in lpPath or one of the directories in the system-wide search path */
+        BOOL found = FALSE;
+        if (lpPath && *lpPath)
+        {
+            TRACE("ASDF %s\n", debugstr_w(lpPath));
+            PathCombineW(xlpFile, lpPath, lpFile);
+            if (PathFileExistsDefExtW(xlpFile, 0xbf))
+            {
+                GetFullPathNameW(xlpFile, ARRAY_SIZE(xlpFile), xlpFile, NULL);
+                found = TRUE;
+            }
+        }
+        if (!found)
+        {
+            lstrcpyW(xlpFile, lpFile);
+            if (PathFileExistsDefExtW(xlpFile, 0xbf))
+            {
+                GetFullPathNameW(xlpFile, ARRAY_SIZE(xlpFile), xlpFile, NULL);
+                found = TRUE;
+            }
+        }
+        if (found)
+        {
+            lpFile = xlpFile;
+            lstrcpyW(lpResult, xlpFile);
+        }
+        else
+            xlpFile[0] = '\0';
     }
     else
-        xlpFile[0] = '\0';
+    {
+        if (lpPath && *lpPath)
+        {
+            search_paths[0] = lpPath;
+            search_paths[1] = curdir;
+        }
+        else
+            search_paths[0] = curdir;
+        lstrcpyW(xlpFile, lpFile);
+        if (PathResolveAW(xlpFile, (const void **)search_paths, PRF_TRYPROGRAMEXTENSIONS | PRF_VERIFYEXISTS))
+        {
+            TRACE("PathResolveAW returned non-zero\n");
+            lpFile = xlpFile;
+            lstrcpyW(lpResult, xlpFile);
+            /* The file was found in lpPath or one of the directories in the system-wide search path */
+        }
+        else
+            xlpFile[0] = '\0';
+    }
 
     attribs = GetFileAttributesW(lpFile);
     if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))

@@ -2267,9 +2267,11 @@ static void test_exes(void)
     char filename[2 * MAX_PATH + 17];
     char params[1024];
     char curdir[MAX_PATH];
-    char *basename = strrchr(argv0, '\\') + 1;
+    char relative_basename[MAX_PATH];
+    char *basename = strrchr(argv0, '\\') + 1, *dirname = strdup(argv0);
     INT_PTR rc;
 
+    *strrchr(dirname, '\\') = '\0';
     sprintf(params, "shlexec \"%s\" Exec", child_file);
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
@@ -2278,6 +2280,15 @@ static void test_exes(void)
     okShell(rc > 32, "returned %Iu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
+
+    /* Check non-filespec paths */
+    snprintf(relative_basename, ARRAY_SIZE(relative_basename), ".\\\\%s", basename);
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_FLAG_NO_UI, NULL, relative_basename, params,
+                        dirname, NULL);
+    okShell(rc > 32, "returned %Iu\n", rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", "Exec");
+    free(dirname);
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS | SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI, NULL, argv0, params,
                         NULL, ".exe");
