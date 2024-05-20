@@ -904,42 +904,6 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
  * ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z
  * ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z
  */
-#ifndef __x86_64__
-int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
-{
-    int ret = -1;
-
-    TRACE("(%p %p)\n", ti, ep);
-
-    __TRY
-    {
-        EXCEPTION_RECORD *rec = ep->ExceptionRecord;
-
-        if (is_cxx_exception( rec ))
-        {
-            const cxx_type_info_table *tit = ((cxx_exception_type*)rec->ExceptionInformation[2])->type_info_table;
-            int i;
-
-            for (i=0; i<tit->count; i++) {
-                if (ti==tit->info[i]->type_info || !strcmp(ti->mangled, tit->info[i]->type_info->mangled))
-                {
-                    ret = 1;
-                    break;
-                }
-            }
-
-            if (i == tit->count)
-                ret = 0;
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    __ENDTRY
-
-    if(ret == -1)
-        terminate();
-    return ret;
-}
-#else
 int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
 {
     int ret = -1;
@@ -953,12 +917,14 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         if (is_cxx_exception( rec ))
         {
             const cxx_exception_type *et = (cxx_exception_type*)rec->ExceptionInformation[2];
-            const cxx_type_info_table *tit = (const cxx_type_info_table*)(rec->ExceptionInformation[3]+et->type_info_table);
+            uintptr_t base = (CXX_EXCEPTION_PARAMS == 4) ? rec->ExceptionInformation[3] : 0;
+            const cxx_type_info_table *tit = rtti_rva( et->type_info_table, base );
             int i;
 
-            for (i=0; i<tit->count; i++) {
-                const cxx_type_info *cti = (const cxx_type_info*)(rec->ExceptionInformation[3]+tit->info[i]);
-                const type_info *except_ti = (const type_info*)(rec->ExceptionInformation[3]+cti->type_info);
+            for (i=0; i<tit->count; i++)
+            {
+                const cxx_type_info *cti = rtti_rva( tit->info[i], base );
+                const type_info *except_ti = rtti_rva( cti->type_info, base );
                 if (ti==except_ti || !strcmp(ti->mangled, except_ti->mangled))
                 {
                     ret = 1;
@@ -977,7 +943,6 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         terminate();
     return ret;
 }
-#endif
 
 /*********************************************************************
  * __clean_type_info_names_internal (MSVCR80.@)
