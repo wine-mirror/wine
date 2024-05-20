@@ -887,28 +887,16 @@ void* CDECL __RTCastToVoid(void *cppobj)
 /*********************************************************************
  *		_CxxThrowException (MSVCRT.@)
  */
-#ifndef __x86_64__
 void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
 {
-    ULONG_PTR args[3];
+    ULONG_PTR args[CXX_EXCEPTION_PARAMS];
 
     args[0] = CXX_FRAME_MAGIC_VC6;
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
-    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, 3, args );
+    if (CXX_EXCEPTION_PARAMS == 4) args[3] = rtti_rva_base( type );
+    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, CXX_EXCEPTION_PARAMS, args );
 }
-#else
-void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
-{
-    ULONG_PTR args[4];
-
-    args[0] = CXX_FRAME_MAGIC_VC6;
-    args[1] = (ULONG_PTR)object;
-    args[2] = (ULONG_PTR)type;
-    RtlPcToFileHeader( (void*)type, (void**)&args[3]);
-    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, 4, args );
-}
-#endif
 
 #if _MSVCR_VER >= 80
 
