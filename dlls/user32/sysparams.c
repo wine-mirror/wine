@@ -576,38 +576,27 @@ BOOL WINAPI EnumDisplaySettingsExW( const WCHAR *device, DWORD mode,
     return NtUserEnumDisplaySettings( &str, mode, dev_mode, flags );
 }
 
+static UINT get_ntuser_dpi_context( DPI_AWARENESS_CONTEXT context )
+{
+    switch ((UINT_PTR)context)
+    {
+    case (UINT_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:              return NTUSER_DPI_UNAWARE;
+    case (UINT_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:         return NTUSER_DPI_SYSTEM_AWARE;
+    case (UINT_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:    return NTUSER_DPI_PER_MONITOR_AWARE;
+    case (UINT_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2: return NTUSER_DPI_PER_MONITOR_AWARE_V2;
+    case (UINT_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED:    return NTUSER_DPI_PER_UNAWARE_GDISCALED;
+    }
+
+    return (UINT_PTR)context;
+}
+
 /**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    ULONG awareness;
-
-    switch (GetAwarenessFromDpiAwarenessContext( context ))
-    {
-    case DPI_AWARENESS_UNAWARE:
-        awareness = NTUSER_DPI_UNAWARE;
-        break;
-    case DPI_AWARENESS_SYSTEM_AWARE:
-        awareness = NTUSER_DPI_SYSTEM_AWARE;
-        break;
-    case DPI_AWARENESS_PER_MONITOR_AWARE:
-        awareness = context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
-            ? NTUSER_DPI_PER_MONITOR_AWARE_V2 : NTUSER_DPI_PER_MONITOR_AWARE;
-        break;
-    default:
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    if (!NtUserSetProcessDpiAwarenessContext( awareness, 0 ))
-    {
-        SetLastError( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-
-    TRACE( "set to %p\n", context );
-    return TRUE;
+    UINT value = get_ntuser_dpi_context( context );
+    return NtUserSetProcessDpiAwarenessContext( value, 0 );
 }
 
 /**********************************************************************

@@ -3936,7 +3936,6 @@ static void test_SetProcessDpiAwarenessContext( ULONG arg )
         SetLastError( 0xdeadbeef );
         ret = pSetProcessDpiAwarenessContext( contexts[i] );
         ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
-        todo_wine_if( i < 3 )
         ok( GetLastError() == ERROR_ACCESS_DENIED, "got %#lx\n", GetLastError() );
         ctx = pGetThreadDpiAwarenessContext();
         todo_wine_if( arg != 0x12 && context != DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE )
