@@ -781,7 +781,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-#ifndef __x86_64__
 void* CDECL __RTDynamicCast(void *cppobj, int unknown,
                                    type_info *src, type_info *dst,
                                    int do_throw)
@@ -805,21 +804,23 @@ void* CDECL __RTDynamicCast(void *cppobj, int unknown,
     {
         int i;
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
-        const rtti_object_hierarchy *obj_bases = obj_locator->type_hierarchy;
-        const rtti_base_descriptor * const* base_desc = obj_bases->base_classes->bases;
+        uintptr_t base = get_obj_locator_base( obj_locator );
+        const rtti_object_hierarchy *obj_bases = rtti_rva( obj_locator->type_hierarchy, base );
+        const rtti_base_array *base_array = rtti_rva( obj_bases->base_classes, base );
 
         if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
 
         ret = NULL;
         for (i = 0; i < obj_bases->array_len; i++)
         {
-            const type_info *typ = base_desc[i]->type_descriptor;
+            const rtti_base_descriptor *base_desc = rtti_rva( base_array->bases[i], base );
+            const type_info *typ = rtti_rva( base_desc->type_descriptor, base );
 
             if (!strcmp(typ->mangled, dst->mangled))
             {
                 /* compute the correct this pointer for that base class */
                 void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
-                ret = get_this_pointer( &base_desc[i]->offsets, this_ptr );
+                ret = get_this_pointer( &base_desc->offsets, this_ptr );
                 break;
             }
         }
@@ -843,69 +844,6 @@ void* CDECL __RTDynamicCast(void *cppobj, int unknown,
     __ENDTRY
     return ret;
 }
-
-#else
-
-void* CDECL __RTDynamicCast(void *cppobj, int unknown,
-        type_info *src, type_info *dst,
-        int do_throw)
-{
-    void *ret;
-
-    if (!cppobj) return NULL;
-
-    TRACE("obj: %p unknown: %d src: %p %s dst: %p %s do_throw: %d)\n",
-            cppobj, unknown, src, dbgstr_type_info(src), dst, dbgstr_type_info(dst), do_throw);
-
-    __TRY
-    {
-        int i;
-        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
-        const rtti_object_hierarchy *obj_bases;
-        const rtti_base_array *base_array;
-        char *base;
-
-        if (TRACE_ON(msvcrt)) dump_obj_locator(obj_locator);
-
-        if(obj_locator->signature == 0)
-            base = RtlPcToFileHeader((void*)obj_locator, (void**)&base);
-        else
-            base = (char*)obj_locator - obj_locator->object_locator;
-
-        obj_bases = (const rtti_object_hierarchy*)(base + obj_locator->type_hierarchy);
-        base_array = (const rtti_base_array*)(base + obj_bases->base_classes);
-
-        ret = NULL;
-        for (i = 0; i < obj_bases->array_len; i++)
-        {
-            const rtti_base_descriptor *base_desc = (const rtti_base_descriptor*)(base + base_array->bases[i]);
-            const type_info *typ = (const type_info*)(base + base_desc->type_descriptor);
-
-            if (!strcmp(typ->mangled, dst->mangled))
-            {
-                void *this_ptr = (char *)cppobj - obj_locator->base_class_offset;
-                ret = get_this_pointer( &base_desc->offsets, this_ptr );
-                break;
-            }
-        }
-        if (!ret && do_throw)
-        {
-            const char *msg = "Bad dynamic_cast!";
-            bad_cast e;
-            bad_cast_ctor( &e, &msg );
-            _CxxThrowException( &e, &bad_cast_exception_type );
-        }
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        __non_rtti_object e;
-        __non_rtti_object_ctor( &e, "Access violation - no RTTI data!" );
-        _CxxThrowException( &e, &__non_rtti_object_exception_type );
-    }
-    __ENDTRY
-    return ret;
-}
-#endif
 
 
 /******************************************************************
