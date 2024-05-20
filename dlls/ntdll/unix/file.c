@@ -1596,6 +1596,9 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
 #ifdef ENODATA
         if (errno == ENODATA) return ret;
 #endif
+#ifdef ENOATTR
+        if (errno == ENOATTR) return ret;
+#endif
         WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB ". errno %d (%s)\n",
               errno, strerror( errno ) );
     }
@@ -1694,6 +1697,9 @@ static int get_file_info( const char *path, struct stat *st, ULONG *attr )
         if (errno == ENOTSUP) return ret;
 #ifdef ENODATA
         if (errno == ENODATA) return ret;
+#endif
+#ifdef ENOATTR
+        if (errno == ENOATTR) return ret;
 #endif
         WARN( "Failed to get extended attribute " SAMBA_XATTR_DOS_ATTRIB " from \"%s\". errno %d (%s)\n",
               path, errno, strerror( errno ) );
