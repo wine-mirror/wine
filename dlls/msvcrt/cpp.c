@@ -731,7 +731,6 @@ void CDECL unexpected(void)
  *  This function is usually called by compiler generated code as a result
  *  of using one of the C++ dynamic cast statements.
  */
-#ifndef __x86_64__
 const type_info* CDECL __RTtypeid(void *cppobj)
 {
     const type_info *ret;
@@ -746,7 +745,9 @@ const type_info* CDECL __RTtypeid(void *cppobj)
     __TRY
     {
         const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
-        ret = obj_locator->type_descriptor;
+        uintptr_t base = get_obj_locator_base( obj_locator );
+
+        ret = rtti_rva( obj_locator->type_descriptor, base );
     }
     __EXCEPT_PAGE_FAULT
     {
@@ -757,42 +758,6 @@ const type_info* CDECL __RTtypeid(void *cppobj)
     __ENDTRY
     return ret;
 }
-
-#else
-
-const type_info* CDECL __RTtypeid(void *cppobj)
-{
-    const type_info *ret;
-
-    if (!cppobj)
-    {
-        bad_typeid e;
-        bad_typeid_ctor( &e, "Attempted a typeid of NULL pointer!" );
-        _CxxThrowException( &e, &bad_typeid_exception_type );
-    }
-
-    __TRY
-    {
-        const rtti_object_locator *obj_locator = get_obj_locator( cppobj );
-        char *base;
-
-        if(obj_locator->signature == 0)
-            base = RtlPcToFileHeader((void*)obj_locator, (void**)&base);
-        else
-            base = (char*)obj_locator - obj_locator->object_locator;
-
-        ret = (type_info*)(base + obj_locator->type_descriptor);
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        __non_rtti_object e;
-        __non_rtti_object_ctor( &e, "Bad read pointer - no RTTI data!" );
-        _CxxThrowException( &e, &__non_rtti_object_exception_type );
-    }
-    __ENDTRY
-    return ret;
-}
-#endif
 
 /******************************************************************
  *		__RTDynamicCast (MSVCRT.@)
