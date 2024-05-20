@@ -590,6 +590,35 @@ static UINT get_ntuser_dpi_context( DPI_AWARENESS_CONTEXT context )
     return (UINT_PTR)context;
 }
 
+/* keep in sync with win32u */
+static BOOL is_valid_dpi_awareness_context( UINT context, UINT dpi )
+{
+    switch (NTUSER_DPI_CONTEXT_GET_AWARENESS( context ))
+    {
+    case DPI_AWARENESS_UNAWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_DPI( context ) != USER_DEFAULT_SCREEN_DPI) return FALSE;
+        return TRUE;
+
+    case DPI_AWARENESS_SYSTEM_AWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_GDISCALED) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1) return FALSE;
+        if (dpi && NTUSER_DPI_CONTEXT_GET_DPI( context ) != dpi) return FALSE;
+        return TRUE;
+
+    case DPI_AWARENESS_PER_MONITOR_AWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_GDISCALED) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1 && NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 2) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_DPI( context )) return FALSE;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /**********************************************************************
  *              SetProcessDpiAwarenessContext   (USER32.@)
  */
@@ -676,7 +705,8 @@ DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT 
  */
 BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
-    return GetAwarenessFromDpiAwarenessContext( context ) != DPI_AWARENESS_INVALID;
+    UINT value = get_ntuser_dpi_context( context );
+    return is_valid_dpi_awareness_context( value, 0 );
 }
 
 /***********************************************************************

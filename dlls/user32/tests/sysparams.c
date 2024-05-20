@@ -4065,6 +4065,97 @@ static void test_SetThreadDpiAwarenessContext(void)
     if (!ctx) pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000010 );
 }
 
+static void test_IsValidDpiAwarenessContext(void)
+{
+    UINT_PTR i;
+    BOOL ret;
+
+    if (!pIsValidDpiAwarenessContext)
+    {
+        win_skip( "IsValidDpiAwarenessContext missing, skipping tests\n" );
+        return;
+    }
+
+    ret = pIsValidDpiAwarenessContext( 0 );
+    ok( !ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+
+    /* commonly seen dpi awareness contexts */
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x12 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x22 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6011 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x40006010 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+
+    ret = pIsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED );
+    ok( ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+    ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)-6 );
+    ok( !ret, "IsValidDpiAwarenessContext returned %u\n", ret );
+
+    for (i = 1; i < 0xff; i++)
+    {
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
+        if (i == 0x12 || i == 0x22) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", i );
+        /* 0x0011 is rejected on win11 */
+        else if (i != 0x11) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", i );
+
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x6000) );
+        if (i == 0x10 || i == 0x11) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", (i | 0x6000) );
+        /* 0x6013 is accepted on win11 */
+        else if (i != 0x13) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", (i | 0x6000) );
+
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 8) | 0x10) );
+        if (i == 0x60) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 8) | 0x10) );
+        else ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 8) | 0x10) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 8) | 0x11) );
+        if (i != 0xff) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 8) | 0x11) );
+        else ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 8) | 0x11) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 8) | 0x12) );
+        ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 8) | 0x12) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 8) | 0x22) );
+        ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 8) | 0x22) );
+
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 16) | 0x6010) );
+        ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 16) | 0x6010) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 16) | (real_dpi << 8) | 0x11) );
+        if (i == 1) ok( ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 16) | (real_dpi << 8) | 0x11) );
+        else ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 16) | (real_dpi << 8) | 0x11) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 16) | 0x12) );
+        ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 16) | 0x12) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 16) | 0x22) );
+        ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 16) | 0x22) );
+
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 24) | 0x6010) );
+        if (i & 0x1f) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 24) | 0x6010) );
+        /* 0x20000000 is rejected on win11 */
+        else if (!(i & 0x20)) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 24) | 0x6010) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 24) | (real_dpi << 8) | 0x11) );
+        if (i & 0x5f) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 24) | (real_dpi << 8) | 0x11) );
+        /* 0x20000000 is rejected on win11 */
+        else if (!(i & 0x20)) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 24) | (real_dpi << 8) | 0x11) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 24) | 0x12) );
+        if (i & 0x5f) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 24) | 0x12) );
+        /* 0x20000000 is rejected on win11 */
+        else if (!(i & 0x20)) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 24) | 0x12) );
+        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)((i << 24) | 0x22) );
+        if (i & 0x5f) ok( !ret, "IsValidDpiAwarenessContext %#Ix succeeded\n", ((i << 24) | 0x22) );
+        /* 0x20000000 is rejected on win11 */
+        else if (!(i & 0x20)) ok( ret, "IsValidDpiAwarenessContext %#Ix failed\n", ((i << 24) | 0x22) );
+    }
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
@@ -4237,9 +4328,6 @@ static void test_dpi_context(void)
             ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i, awareness );
             break;
         }
-        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
-        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%Ix: expected %d, got %d\n",
-            i, (awareness != DPI_AWARENESS_INVALID), ret );
 
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
         switch (i)
@@ -4263,9 +4351,6 @@ static void test_dpi_context(void)
             ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i | 0x80000000, awareness );
             break;
         }
-        ret = pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
-        ok( ret == (awareness != DPI_AWARENESS_INVALID), "%Ix: expected %d, got %d\n",
-            (i | 0x80000000), (awareness != DPI_AWARENESS_INVALID), ret );
 
         awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
         switch (~i)
@@ -4274,7 +4359,6 @@ static void test_dpi_context(void)
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
             ok( awareness == i, "%Ix: wrong value %u\n", ~i, awareness );
-            ok( pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%Ix: not valid\n", ~i );
             break;
         case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
             ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken ( awareness == DPI_AWARENESS_INVALID ), "%Ix: wrong value %u\n", ~i, awareness );
@@ -4285,7 +4369,6 @@ static void test_dpi_context(void)
             break;
         default:
             ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", ~i, awareness );
-            ok( !pIsValidDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i ), "%Ix: valid\n", ~i );
             break;
         }
     }
@@ -4539,6 +4622,7 @@ START_TEST(sysparams)
     test_GetSysColorBrush( );
     test_GetAutoRotationState( );
     test_SetThreadDpiAwarenessContext();
+    test_IsValidDpiAwarenessContext();
 
     change_counter = 0;
     change_last_param = 0;
