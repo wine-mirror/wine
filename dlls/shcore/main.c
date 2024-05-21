@@ -1017,7 +1017,7 @@ static HRESULT WINAPI filestream_CopyTo(IStream *iface, IStream *dest, ULARGE_IN
 
         /* Write */
         hr = IStream_Write(dest, buff, read_chunk, &written_chunk);
-        if (written_chunk)
+        if (written)
             written->QuadPart += written_chunk;
         if (FAILED(hr) || written_chunk != left)
             break;
