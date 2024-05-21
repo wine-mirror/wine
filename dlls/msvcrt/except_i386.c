@@ -148,9 +148,6 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
                                const cxx_function_descr *descr,
                                catch_func_nested_frame* nested_frame );
 
-/* call a copy constructor */
-extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
-
 /* continue execution to the specified address after exception is caught */
 extern void DECLSPEC_NORETURN continue_after_catch( cxx_exception_frame* frame, void *addr );
 

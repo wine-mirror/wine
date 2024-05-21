@@ -101,6 +101,23 @@ static inline void *get_this_pointer( const this_ptr_offsets *off, void *object 
     return object;
 }
 
+#ifdef __ASM_USE_THISCALL_WRAPPER
+extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
+extern void call_dtor( void *func, void *this );
+#else
+static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
+{
+    if (has_vbase)
+        ((void (__thiscall*)(void*, void*, BOOL))func)(this, src, 1);
+    else
+        ((void (__thiscall*)(void*, void*))func)(this, src);
+}
+static inline void call_dtor( void *func, void *this )
+{
+    ((void (__thiscall*)(void*))func)( this );
+}
+#endif
+
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"
 #else

@@ -448,13 +448,7 @@ void CDECL __DestructExceptionObject(EXCEPTION_RECORD *rec)
     if (!info || !info->destructor)
         return;
 
-#if defined(__i386__)
-    __asm__ __volatile__("call *%0" : : "r" (info->destructor), "c" (object) : "eax", "edx", "memory" );
-#elif defined(__x86_64__)
-    ((void (__cdecl*)(void*))(info->destructor+rec->ExceptionInformation[3]))(object);
-#else
-    ((void (__cdecl*)(void*))info->destructor)(object);
-#endif
+    call_dtor( rtti_rva( info->destructor, rec->ExceptionInformation[3] ), object );
 }
 
 /*********************************************************************
