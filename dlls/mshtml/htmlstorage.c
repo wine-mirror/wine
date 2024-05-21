@@ -371,55 +371,7 @@ done:
     return FAILED(hres) ? hres : S_OK;
 }
 
-static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID riid, void **ppv)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLStorage_AddRef(IHTMLStorage *iface)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLStorage_GetTypeInfoCount(IHTMLStorage *iface, UINT *pctinfo)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLStorage_GetTypeInfo(IHTMLStorage *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLStorage_GetIDsOfNames(IHTMLStorage *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
-        LCID lcid, DISPID *rgDispId)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLStorage_Invoke(IHTMLStorage *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLStorage *This = impl_from_IHTMLStorage(iface);
-
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLStorage, IHTMLStorage, impl_from_IHTMLStorage(iface)->dispex)
 
 static BOOL create_path(const WCHAR *path)
 {
