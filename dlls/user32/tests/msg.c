@@ -421,7 +421,7 @@ static const struct message WmSWP_FrameChanged_clip[] = {
     { WM_NCCALCSIZE, sent|wparam|parent, 1 },
     { WM_NCPAINT, sent|parent|optional }, /* wparam != 1 */
     { WM_GETTEXT, sent|parent|defwinproc|optional },
-    { WM_ERASEBKGND, sent|parent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_ERASEBKGND, sent|parent|msg_todo },
     { WM_NCPAINT, sent }, /* wparam != 1 */
     { WM_ERASEBKGND, sent },
     { WM_WINDOWPOSCHANGED, sent|wparam|parent, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
@@ -6554,8 +6554,8 @@ static const struct message WmSetTextGroupSeq[] =
     { WM_SETTEXT, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
     { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
-    { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
-    { WM_CTLCOLORSTATIC, sent|parent|optional }, /* FIXME: Missing in Wine */
+    { WM_CTLCOLORSTATIC, sent|parent|msg_todo }, /* FIXME: Missing in Wine */
+    { WM_CTLCOLORSTATIC, sent|parent|msg_todo }, /* FIXME: Missing in Wine */
     { 0 }
 };
 static const struct message WmSetTextInvisibleSeq[] =
@@ -7245,9 +7245,9 @@ static const struct message auto_radio_button_BM_CLICK[] =
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO2, BN_CLICKED) },
-    { WM_NCHITTEST, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
-    { WM_SETCURSOR, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
-    { WM_MOUSEMOVE, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_NCHITTEST, sent|optional, 0, 0 },
+    { WM_SETCURSOR, sent|optional, 0, 0 },
+    { WM_MOUSEMOVE, sent|optional, 0, 0 },
     { 0 }
 };
 
@@ -7348,9 +7348,9 @@ static const struct message auto_radio_button_VK_DOWN_dialog[] =
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { WM_CAPTURECHANGED, sent|wparam|lparam|defwinproc, 0, 0 },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_RADIO1, BN_CLICKED) },
-    { WM_NCHITTEST, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
-    { WM_SETCURSOR, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
-    { WM_MOUSEMOVE, sent|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_NCHITTEST, sent|optional, 0, 0 },
+    { WM_SETCURSOR, sent|optional, 0, 0 },
+    { WM_MOUSEMOVE, sent|optional, 0, 0 },
     { WM_PAINT, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
     { 0 }
@@ -15675,7 +15675,7 @@ static const struct message WmCreateDialogParamSeq_1[] = {
     { WM_MOVE, sent },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
-    { WM_GETDLGCODE, sent|wparam|lparam|optional, 0, 0 }, /* FIXME: Wine doesn't send it */
+    { WM_GETDLGCODE, sent|wparam|lparam|msg_todo, 0, 0 }, /* FIXME: Wine doesn't send it */
     { HCBT_SETFOCUS, hook },
     { HCBT_ACTIVATE, hook },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
