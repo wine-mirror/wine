@@ -173,7 +173,6 @@ void __cdecl __ExceptionPtrRethrow(const exception_ptr *ep)
             ep->rec->NumberParameters, ep->rec->ExceptionInformation);
 }
 
-#ifndef __x86_64__
 void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 {
     TRACE("(%p)\n", ep);
@@ -193,14 +192,13 @@ void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
 
     if (ep->rec->ExceptionCode == CXX_EXCEPTION)
     {
+        void *obj = (void*)ep->rec->ExceptionInformation[1];
         const cxx_exception_type *et = (void*)ep->rec->ExceptionInformation[2];
-        const cxx_type_info *ti;
-        void **data, *obj;
+        uintptr_t base = rtti_rva_base( et );
+        const cxx_type_info_table *table = rtti_rva( et->type_info_table, base );
+        const cxx_type_info *ti = rtti_rva( table->info[0], base );
+        void **data = HeapAlloc(GetProcessHeap(), 0, ti->size);
 
-        ti = et->type_info_table->info[0];
-        data = HeapAlloc(GetProcessHeap(), 0, ti->size);
-
-        obj = (void*)ep->rec->ExceptionInformation[1];
         if (ti->flags & CLASS_IS_SIMPLE_TYPE)
         {
             memcpy(data, obj, ti->size);
@@ -208,7 +206,7 @@ void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
         }
         else if (ti->copy_ctor)
         {
-            call_copy_ctor(ti->copy_ctor, data, get_this_pointer(&ti->offsets, obj),
+            call_copy_ctor(rtti_rva(ti->copy_ctor, base), data, get_this_pointer(&ti->offsets, obj),
                     ti->flags & CLASS_HAS_VIRTUAL_BASE_CLASS);
         }
         else
@@ -217,52 +215,6 @@ void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
     }
     return;
 }
-#else
-void exception_ptr_from_record(exception_ptr *ep, EXCEPTION_RECORD *rec)
-{
-    TRACE("(%p)\n", ep);
-
-    if (!rec)
-    {
-        ep->rec = NULL;
-        ep->ref = NULL;
-        return;
-    }
-
-    ep->rec = HeapAlloc(GetProcessHeap(), 0, sizeof(EXCEPTION_RECORD));
-    ep->ref = HeapAlloc(GetProcessHeap(), 0, sizeof(int));
-
-    *ep->rec = *rec;
-    *ep->ref = 1;
-
-    if (ep->rec->ExceptionCode == CXX_EXCEPTION)
-    {
-        const cxx_exception_type *et = (void*)ep->rec->ExceptionInformation[2];
-        const cxx_type_info *ti;
-        void **data, *obj;
-        char *base = RtlPcToFileHeader((void*)et, (void**)&base);
-
-        ti = (const cxx_type_info*)(base + ((const cxx_type_info_table*)(base + et->type_info_table))->info[0]);
-        data = HeapAlloc(GetProcessHeap(), 0, ti->size);
-
-        obj = (void*)ep->rec->ExceptionInformation[1];
-        if (ti->flags & CLASS_IS_SIMPLE_TYPE)
-        {
-            memcpy(data, obj, ti->size);
-            if (ti->size == sizeof(void *)) *data = get_this_pointer(&ti->offsets, *data);
-        }
-        else if (ti->copy_ctor)
-        {
-            call_copy_ctor(base + ti->copy_ctor, data, get_this_pointer(&ti->offsets, obj),
-                    ti->flags & CLASS_HAS_VIRTUAL_BASE_CLASS);
-        }
-        else
-            memcpy(data, get_this_pointer(&ti->offsets, obj), ti->size);
-        ep->rec->ExceptionInformation[1] = (ULONG_PTR)data;
-    }
-    return;
-}
-#endif
 
 #ifndef _CONCRT
 
