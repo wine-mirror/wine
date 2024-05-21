@@ -130,7 +130,9 @@ static NTSTATUS process_attach( void *args )
 
     if (TRACE_ON( crypt ))
     {
-        pgnutls_global_set_log_level( 4 );
+        char *env = getenv("GNUTLS_DEBUG_LEVEL");
+        int level = env ? atoi(env) : 4;
+        pgnutls_global_set_log_level(level);
         pgnutls_global_set_log_function( gnutls_log );
     }
 
