@@ -1273,9 +1273,7 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     TRACE("(EnvironmentHandle %p, Attribute %d, Value %p, StringLength %d)\n", EnvironmentHandle, Attribute, Value,
           StringLength);
 
-    if (!handle) return SQL_INVALID_HANDLE;
-
-    params.EnvironmentHandle = handle->unix_handle;
+    params.EnvironmentHandle = handle ? handle->unix_handle : 0;
     ret = ODBC_CALL( SQLSetEnvAttr, &params );
     TRACE("Returning %d\n", ret);
     return ret;
