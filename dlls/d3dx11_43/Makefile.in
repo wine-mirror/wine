@@ -7,6 +7,6 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	async.c \
-	main.c \
+	d3dx11_43_main.c \
 	texture.c \
 	version.rc
