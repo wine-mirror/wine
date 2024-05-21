@@ -45,8 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-#define INPUT_THREAD_MAX_DEVICES 128
-
 #define INPUT_THREAD_NOTIFY     (WM_USER + 0x10)
 #define NOTIFY_THREAD_STOP      0
 #define NOTIFY_REFRESH_DEVICES  1
@@ -57,11 +55,12 @@ struct input_thread_state
     BOOL running;
     UINT events_count;
     UINT devices_count;
+    UINT devices_capacity;
     HHOOK mouse_ll_hook;
     HHOOK keyboard_ll_hook;
     RAWINPUTDEVICE rawinput_devices[2];
-    struct dinput_device *devices[INPUT_THREAD_MAX_DEVICES];
-    HANDLE events[INPUT_THREAD_MAX_DEVICES];
+    struct dinput_device **devices;
+    HANDLE *events;
 };
 
 static inline struct dinput_device *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
@@ -193,10 +192,24 @@ static void input_thread_update_device_list( struct input_thread_state *state )
 {
     RAWINPUTDEVICE rawinput_keyboard = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = RIDEV_REMOVE};
     RAWINPUTDEVICE rawinput_mouse = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_MOUSE, .dwFlags = RIDEV_REMOVE};
-    UINT count = 0, keyboard_ll_count = 0, mouse_ll_count = 0;
+    UINT count = 0, keyboard_ll_count = 0, mouse_ll_count = 0, capacity;
     struct dinput_device *device;
 
     EnterCriticalSection( &dinput_hook_crit );
+
+    if ((capacity = list_count( &acquired_device_list )) && capacity > state->devices_capacity)
+    {
+        struct dinput_device **devices;
+        HANDLE *events;
+
+        if (!state->devices_capacity) capacity = max( capacity, 128 );
+        else capacity = max( capacity, state->devices_capacity * 3 / 2 );
+
+        if ((events = realloc( state->events, capacity * sizeof(*events) ))) state->events = events;
+        if ((devices = realloc( state->devices, capacity * sizeof(*devices) ))) state->devices = devices;
+        if (events && devices) state->devices_capacity = capacity;
+    }
+
     LIST_FOR_EACH_ENTRY( device, &acquired_device_list, struct dinput_device, entry )
     {
         unhook_device_window_foreground_changes( device );
@@ -205,7 +218,7 @@ static void input_thread_update_device_list( struct input_thread_state *state )
         if (!device->read_event || !device->vtbl->read) continue;
         state->events[count] = device->read_event;
         dinput_device_internal_addref( (state->devices[count] = device) );
-        if (++count >= INPUT_THREAD_MAX_DEVICES) break;
+        if (++count >= state->devices_capacity) break;
     }
     state->events_count = count;
 
@@ -238,7 +251,8 @@ static void input_thread_update_device_list( struct input_thread_state *state )
             rawinput_device->hwndTarget = di_em_win;
         }
 
-        if (count < INPUT_THREAD_MAX_DEVICES) dinput_device_internal_addref( (state->devices[count++] = device) );
+        dinput_device_internal_addref( (state->devices[count] = device) );
+        if (++count >= state->devices_capacity) break;
     }
     state->devices_count = count;
     LeaveCriticalSection( &dinput_hook_crit );
@@ -402,6 +416,9 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
     if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
     if (state.mouse_ll_hook) UnhookWindowsHookEx( state.mouse_ll_hook );
+    free( state.devices );
+    free( state.events );
+
     DestroyWindow( di_em_win );
     di_em_win = NULL;
     return 0;
