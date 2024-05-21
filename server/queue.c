@@ -2098,6 +2098,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     unsigned char vkey = input->kbd.vkey, hook_vkey = vkey;
     unsigned int message_code, time;
     lparam_t lparam = input->kbd.scan << 16;
+    unsigned int flags = 0;
     int wait;
 
     if (!(time = input->kbd.time)) time = get_tick_count();
@@ -2213,29 +2214,25 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
     msg->win       = get_user_full_handle( win );
     msg->msg       = message_code;
-    msg->lparam    = lparam | 1u; /* repeat count */
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
     if (input->kbd.flags & KEYEVENTF_UNICODE && !vkey)
     {
-        msg->wparam = VK_PACKET;
+        vkey = hook_vkey = VK_PACKET;
     }
     else
     {
-        unsigned int flags = 0;
         if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
         /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
         if (input->kbd.flags & KEYEVENTF_KEYUP) flags |= KF_REPEAT | KF_UP;
         else if (desktop->keystate[vkey] & 0x80) flags |= KF_REPEAT;
 
-        msg->wparam = vkey;
-        msg->lparam |= flags << 16;
+        lparam &= 0xff0000; /* mask off scan code high bits for non-unicode input */
         msg_data->flags |= (flags & (KF_EXTENDED | KF_ALTDOWN | KF_UP)) >> 8;
     }
 
-    /* TODO: The following is incorrect (we also need to check for not !vkey),
-     * but we do it to temporarily retain existing behavior */
-    if (input->kbd.flags & KEYEVENTF_UNICODE) hook_vkey = VK_PACKET;
+    msg->wparam = vkey;
+    msg->lparam = (flags << 16) | lparam | 1u /* repeat count */;
 
     if (!(wait = send_hook_ll_message( desktop, msg, WH_KEYBOARD_LL, lparam | hook_vkey, sender )))
         queue_hardware_message( desktop, msg, 1 );

@@ -1163,9 +1163,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     struct send_input_keyboard_test unicode_vkey[] =
     {
         {.scan = 0x3c0, .vkey = vkey, .flags = KEYEVENTF_UNICODE, .expect_state = {/*[vkey] = 0x80*/},
-         .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0xc0, vkey, .todo_value = TRUE), WIN_MSG(WM_CHAR, wch, MAKELONG(1, 0xc0), .todo_value = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, vkey), KEY_MSG(WM_KEYDOWN, 0xc0, vkey), WIN_MSG(WM_CHAR, wch, MAKELONG(1, 0xc0)), {0}}},
         {.scan = 0x3c0, .vkey = vkey, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
-         .expect = {KEY_HOOK(WM_KEYUP, 0xc0, vkey, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0xc0, vkey, .todo_value = TRUE), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, 0xc0, vkey), KEY_MSG(WM_KEYUP, 0xc0, vkey), {0}}},
         {0},
     };
 
