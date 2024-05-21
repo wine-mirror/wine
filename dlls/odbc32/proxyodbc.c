@@ -187,15 +187,16 @@ static const char *debugstr_sqllen( SQLLEN len )
 #endif
 }
 
-static BOOL resize_binding( struct param_binding *binding, UINT32 count )
+#define MAX_BINDING_PARAMS 1024
+static BOOL alloc_binding( struct param_binding *binding, UINT32 count )
 {
-    struct param *tmp;
-    UINT32 new_count = max( binding->count, count );
-
-    if (!(tmp = realloc( binding->param, new_count * sizeof(*tmp) ))) return FALSE;
-    memset( tmp + binding->count, 0, (new_count - binding->count) * sizeof(*tmp) );
-    binding->param = tmp;
-    binding->count = new_count;
+    if (count > MAX_BINDING_PARAMS)
+    {
+        FIXME( "increase maximum number of parameters\n" );
+        return FALSE;
+    }
+    binding->count = count;
+    if (binding->param || (binding->param = calloc( MAX_BINDING_PARAMS, sizeof(*binding->param)))) return TRUE;
     return TRUE;
 }
 
@@ -219,7 +220,7 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
         FIXME( "column 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!resize_binding( &handle->bind_col, ColumnNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_col, ColumnNumber )) return SQL_ERROR;
     params.StatementHandle = handle->unix_handle;
     params.StrLen_or_Ind   = &handle->bind_col.param[i].len;
     if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = StrLen_or_Ind;
@@ -259,7 +260,7 @@ SQLRETURN WINAPI SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNu
         FIXME( "parameter 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!resize_binding( &handle->bind_param, ParameterNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_param, ParameterNumber )) return SQL_ERROR;
 
     params.StatementHandle = handle->unix_handle;
     params.StrLen_or_Ind   = &handle->bind_param.param[i].len;
@@ -1884,7 +1885,7 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
         FIXME( "parameter 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!resize_binding( &handle->bind_parameter, ParameterNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_parameter, ParameterNumber )) return SQL_ERROR;
 
     params.StatementHandle = handle->unix_handle;
     params.StrLen_or_Ind   = &handle->bind_parameter.param[i].len;
