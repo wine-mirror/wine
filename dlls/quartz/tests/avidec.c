@@ -85,10 +85,10 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
 
         out->biSize = sizeof(BITMAPINFOHEADER);
         out->biCompression = mmioFOURCC('I','4','2','0');
-        out->biWidth = 32;
+        out->biWidth = 29;
         out->biHeight = 24;
         out->biBitCount = 12;
-        out->biSizeImage = 32 * 24 * 12 / 8;
+        out->biSizeImage = 24 * (((29 * 12 + 31) / 8) & ~3);
 
         return ICERR_OK;
     }
@@ -159,7 +159,7 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         for (i = 0; i < 200; ++i)
             expect[i] = i;
         ok(!memcmp(params->lpInput, expect, 200), "Data didn't match.\n");
-        for (i = 0; i < 32 * 24 * 12 / 8; ++i)
+        for (i = 0; i < 24 * (((29 * 12 + 31) / 8) & ~3); ++i)
             output[i] = 111 - i;
 
         return ICERR_OK;
@@ -876,7 +876,7 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
-    BYTE *data, expect[32 * 24 * 12 / 8];
+    BYTE *data, expect[24 * (((29 * 12 + 31) / 8) & ~3)];
     REFERENCE_TIME start, stop;
     LONG size, i;
     HRESULT hr;
@@ -884,9 +884,9 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     ++filter->got_sample;
 
     size = IMediaSample_GetSize(sample);
-    ok(size == 32 * 24 * 12 / 8, "Got size %lu.\n", size);
+    ok(size == 24 * (((29 * 12 + 31) / 8) & ~3), "Got size %lu.\n", size);
     size = IMediaSample_GetActualDataLength(sample);
-    ok(size == 32 * 24 * 12 / 8, "Got valid size %lu.\n", size);
+    ok(size == 24 * (((29 * 12 + 31) / 8) & ~3), "Got valid size %lu.\n", size);
 
     hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1221,7 +1221,7 @@ static void test_connect_pin(void)
     {
         .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
         .bmiHeader.biCompression = test_handler,
-        .bmiHeader.biWidth = 32,
+        .bmiHeader.biWidth = 29,
         .bmiHeader.biHeight = 24,
         .bmiHeader.biBitCount = 16,
     };
@@ -1313,28 +1313,29 @@ static void test_connect_pin(void)
             const GUID *subtype;
             DWORD compression;
             WORD bpp;
+            BOOL todo;
         }
         expect[9] =
         {
-            {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8},
-            {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16},
-            {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16},
-            {&MEDIASUBTYPE_RGB32, BI_RGB, 32},
-            {&MEDIASUBTYPE_RGB24, BI_RGB, 24},
-            {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16},
-            {&MEDIASUBTYPE_RGB555, BI_RGB, 16},
-            {&MEDIASUBTYPE_RGB8, BI_RGB, 8},
-            {&MEDIASUBTYPE_I420, mmioFOURCC('I','4','2','0'), 12},
+            {&MEDIASUBTYPE_CLJR, mmioFOURCC('C','L','J','R'), 8, TRUE},
+            {&MEDIASUBTYPE_UYVY, mmioFOURCC('U','Y','V','Y'), 16, TRUE},
+            {&MEDIASUBTYPE_YUY2, mmioFOURCC('Y','U','Y','2'), 16, TRUE},
+            {&MEDIASUBTYPE_RGB32, BI_RGB, 32, FALSE},
+            {&MEDIASUBTYPE_RGB24, BI_RGB, 24, TRUE},
+            {&MEDIASUBTYPE_RGB565, BI_BITFIELDS, 16, TRUE},
+            {&MEDIASUBTYPE_RGB555, BI_RGB, 16, TRUE},
+            {&MEDIASUBTYPE_RGB8, BI_RGB, 8, TRUE},
+            {&MEDIASUBTYPE_I420, mmioFOURCC('I','4','2','0'), 12, FALSE},
         };
 
         VIDEOINFOHEADER expect_format =
         {
             .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-            .bmiHeader.biWidth = 32,
+            .bmiHeader.biWidth = 29,
             .bmiHeader.biHeight = 24,
             .bmiHeader.biBitCount = expect[i].bpp,
             .bmiHeader.biCompression = expect[i].compression,
-            .bmiHeader.biSizeImage = 32 * 24 * expect[i].bpp / 8,
+            .bmiHeader.biSizeImage = 24 * (((29 * expect[i].bpp + 31) / 8) & ~3),
         };
 
         AM_MEDIA_TYPE expect_mt =
@@ -1342,7 +1343,7 @@ static void test_connect_pin(void)
             .majortype = MEDIATYPE_Video,
             .subtype = *expect[i].subtype,
             .bFixedSizeSamples = TRUE,
-            .lSampleSize = 32 * 24 * expect[i].bpp / 8,
+            .lSampleSize = 24 * (((29 * expect[i].bpp + 31) / 8) & ~3),
             .formattype = FORMAT_VideoInfo,
             .cbFormat = sizeof(VIDEOINFOHEADER),
             .pbFormat = (BYTE *)&expect_format,
@@ -1350,9 +1351,9 @@ static void test_connect_pin(void)
 
         hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
-        ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
+        todo_wine_if(expect[i].todo) ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
                 "%u: Media types didn't match.\n", i);
-        ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(VIDEOINFOHEADER)),
+        todo_wine_if(expect[i].todo) ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(VIDEOINFOHEADER)),
                 "%u: Format blocks didn't match.\n", i);
         if (i == 5)
         {
