@@ -1173,7 +1173,7 @@ static inline void *get_this_pointer( const this_ptr_offsets *off, void *object 
     return object;
 }
 
-#ifdef __i386__
+#ifdef __ASM_USE_THISCALL_WRAPPER
 extern void call_copy_ctor( void *func, void *this, void *src, int has_vbase );
 __ASM_GLOBAL_FUNC( call_copy_ctor,
                    "pushl %ebp\n\t"
@@ -1188,15 +1188,24 @@ __ASM_GLOBAL_FUNC( call_copy_ctor,
                    "leave\n"
                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
-                   "ret" );
+                   "ret" )
+extern void call_dtor( void *func, void *this );
+__ASM_GLOBAL_FUNC( call_dtor,
+                   "movl 8(%esp),%ecx\n\t"
+                   "call *4(%esp)\n\t"
+                   "ret" )
 #else
 static inline void call_copy_ctor( void *func, void *this, void *src, int has_vbase )
 {
     TRACE( "calling copy ctor %p object %p src %p\n", func, this, src );
     if (has_vbase)
-        ((void (__cdecl*)(void*, void*, BOOL))func)(this, src, 1);
+        ((void (__thiscall*)(void*, void*, BOOL))func)(this, src, 1);
     else
-        ((void (__cdecl*)(void*, void*))func)(this, src);
+        ((void (__thiscall*)(void*, void*))func)(this, src);
+}
+static inline void call_dtor( void *func, void *this )
+{
+    ((void (__thiscall*)(void*))func)( this );
 }
 #endif
 
@@ -1217,24 +1226,6 @@ void __cdecl __ExceptionPtrCreate(exception_ptr *ep)
     ep->ref = NULL;
 }
 
-#ifdef __ASM_USE_THISCALL_WRAPPER
-extern void call_dtor(const cxx_exception_type *type, void *func, void *object);
-
-__ASM_GLOBAL_FUNC( call_dtor,
-                   "movl 12(%esp),%ecx\n\t"
-                   "call *8(%esp)\n\t"
-                   "ret" );
-#elif __x86_64__
-static inline void call_dtor(const cxx_exception_type *type, unsigned int dtor, void *object)
-{
-    char *base = RtlPcToFileHeader((void*)type, (void**)&base);
-    void (__cdecl *func)(void*) = (void*)(base + dtor);
-    func(object);
-}
-#else
-#define call_dtor(type, func, object) ((void (__thiscall*)(void*))(func))(object)
-#endif
-
 /*********************************************************************
  * ?__ExceptionPtrDestroy@@YAXPAX@Z
  * ?__ExceptionPtrDestroy@@YAXPEAX@Z
@@ -1252,8 +1243,9 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
         {
             const cxx_exception_type *type = (void*)ep->rec->ExceptionInformation[2];
             void *obj = (void*)ep->rec->ExceptionInformation[1];
+            uintptr_t base = rtti_rva_base( type );
 
-            if (type && type->destructor) call_dtor(type, type->destructor, obj);
+            if (type && type->destructor) call_dtor( rtti_rva(type->destructor, base), obj );
             HeapFree(GetProcessHeap(), 0, obj);
         }
 
