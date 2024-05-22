@@ -164,6 +164,7 @@ _ACRTIMP void          __cdecl _beep(unsigned int,unsigned int);
 _ACRTIMP unsigned short   __cdecl _byteswap_ushort(unsigned short);
 _ACRTIMP __msvcrt_ulong   __cdecl _byteswap_ulong(__msvcrt_ulong);
 _ACRTIMP unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
+_ACRTIMP errno_t       __cdecl _dupenv_s(char**,size_t*,const char*);
 _ACRTIMP char*         __cdecl _ecvt(double,int,int*,int*);
 _ACRTIMP char*         __cdecl _fcvt(double,int,int*,int*);
 _ACRTIMP char*         __cdecl _fullpath(char*,const char*,size_t);

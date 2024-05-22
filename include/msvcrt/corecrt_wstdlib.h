@@ -22,6 +22,7 @@ _ACRTIMP wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
 _ACRTIMP errno_t       __cdecl _ui64tow_s(unsigned __int64, wchar_t*, size_t, int);
 _ACRTIMP wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
 _ACRTIMP errno_t       __cdecl _ultow_s(__msvcrt_ulong, wchar_t*, size_t, int);
+_ACRTIMP errno_t       __cdecl _wdupenv_s(wchar_t**,size_t*,const wchar_t*);
 _ACRTIMP wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 _ACRTIMP wchar_t*      __cdecl _wgetenv(const wchar_t*);
 _ACRTIMP errno_t       __cdecl _wgetenv_s(size_t *,wchar_t *,size_t,const wchar_t *);
