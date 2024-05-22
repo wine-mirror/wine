@@ -1704,6 +1704,7 @@ value1
 1
 ------------ Testing Errorlevel ------------
 9009
+-9999
 1
 errorlevel just right, good
 errorlevel with leading zero just right, good

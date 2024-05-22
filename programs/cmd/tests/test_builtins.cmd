@@ -3310,6 +3310,8 @@ should_not_exist 2> nul > nul
 echo %ErrorLevel%
 rem nt 4.0 doesn't really support a way of setting errorlevel, so this is weak
 rem See http://www.robvanderwoude.com/exit.php
+call :setError -9999
+echo %ErrorLevel%
 call :setError 1
 echo %ErrorLevel%
 if errorlevel 2 echo errorlevel too high, bad

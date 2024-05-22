@@ -402,7 +402,7 @@ void WCMD_choice (const WCHAR * args) {
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
             errorlevel = (ptr - opt_c) + 1;
-            WINE_TRACE("answer: %ld\n", errorlevel);
+            TRACE("answer: %d\n", errorlevel);
             free(my_command);
             return;
         }
@@ -2836,9 +2836,9 @@ int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
   if (!lstrcmpiW(condition, L"errorlevel")) {
     WCHAR *param = WCMD_parameter(p, 1+(*negate), NULL, FALSE, FALSE);
     WCHAR *endptr;
-    long int param_int = wcstol(param, &endptr, 10);
-    if (*endptr) goto syntax_err;
-    *test = ((long int)errorlevel >= param_int);
+    int param_int = wcstol(param, &endptr, 10);
+    if (endptr == param || *endptr) goto syntax_err;
+    *test = (errorlevel >= param_int);
     WCMD_parameter(p, 2+(*negate), command, FALSE, FALSE);
   }
   else if (!lstrcmpiW(condition, L"exist")) {
@@ -4483,9 +4483,10 @@ void WCMD_start(WCHAR *args)
 
     if (CreateProcessW( file, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pi ))
     {
+        DWORD exit_code;
         WaitForSingleObject( pi.hProcess, INFINITE );
-        GetExitCodeProcess( pi.hProcess, &errorlevel );
-        if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        errorlevel = (exit_code == STILL_ACTIVE) ? 0 : exit_code;
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
     }

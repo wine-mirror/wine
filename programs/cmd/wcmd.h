@@ -251,7 +251,7 @@ typedef struct _FOR_CONTEXT {
  * variables and batch parameters substitution already done.
  */
 extern WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
-extern DWORD errorlevel;
+extern int errorlevel;
 extern BATCH_CONTEXT *context;
 extern FOR_CONTEXT forloopcontext;
 extern BOOL delayedsubst;

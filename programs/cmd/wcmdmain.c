@@ -36,7 +36,7 @@ extern const WCHAR inbuilt[][10];
 extern struct env_stack *pushd_directories;
 
 BATCH_CONTEXT *context = NULL;
-DWORD errorlevel;
+int errorlevel;
 WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
 FOR_CONTEXT forloopcontext; /* The 'for' loop context */
@@ -1297,7 +1297,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         interactive = oldinteractive;
         return;
       } else {
-
+        DWORD exit_code;
         /* thisDir contains the file to be launched, but with what?
            eg. a.exe will require a.exe to be launched, a.html may be iexplore */
         hinst = FindExecutableW (thisDir, NULL, temp);
@@ -1331,8 +1331,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
            or for console applications                                    */
         if (!interactive || (console && !HIWORD(console)))
             WaitForSingleObject (pe.hProcess, INFINITE);
-        GetExitCodeProcess (pe.hProcess, &errorlevel);
-        if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+        GetExitCodeProcess (pe.hProcess, &exit_code);
+        errorlevel = (exit_code == STILL_ACTIVE) ? 0 : exit_code;
 
         CloseHandle(pe.hProcess);
         CloseHandle(pe.hThread);
