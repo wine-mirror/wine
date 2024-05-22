@@ -799,6 +799,8 @@ REBAR_CalcHorzBand (const REBAR_INFO *infoPtr, UINT rstart, UINT rend)
 	              lpBand->rcChild.top, lpBand->rcChild.right + CHEVRON_WIDTH,
 	              lpBand->rcChild.bottom);
 	  }
+	  else
+	      SetRectEmpty(&lpBand->rcChevron);
       }
       else {
           SetRect (&lpBand->rcChild,
