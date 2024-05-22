@@ -234,7 +234,7 @@ typedef struct
 typedef void (*cxx_copy_ctor)(void);
 
 /* complete information about a C++ type */
-#ifndef __x86_64__
+#ifdef __i386__
 typedef struct __cxx_type_info
 {
     UINT             flags;        /* flags (see CLASS_* flags below) */
@@ -255,7 +255,7 @@ typedef struct __cxx_type_info
 #endif
 
 /* table of C++ types that apply for a given object */
-#ifndef __x86_64__
+#ifdef __i386__
 typedef struct __cxx_type_info_table
 {
     UINT                 count;     /* number of types */
@@ -270,7 +270,7 @@ typedef struct __cxx_type_info_table
 #endif
 
 /* type information for an exception object */
-#ifndef __x86_64__
+#ifdef __i386__
 typedef struct __cxx_exception_type
 {
     UINT                       flags;            /* TYPE_FLAG flags */
@@ -1489,7 +1489,7 @@ static void test_access_s(void)
     ok(errno == ENOENT, "got %x\n", res);
 }
 
-#ifndef __x86_64__
+#ifdef __i386__
 #define EXCEPTION_REF(instance, name) &instance.name
 #else
 #define EXCEPTION_REF(instance, name) FIELD_OFFSET(struct _exception_data, name)
@@ -1521,7 +1521,7 @@ static void test_is_exception_typeof(void)
 
     int ret;
 
-#ifdef __x86_64__
+#ifndef __i386__
     rec.NumberParameters = 4;
     rec.ExceptionInformation[3] = (ULONG_PTR)&exception_data;
 #endif

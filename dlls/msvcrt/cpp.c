@@ -573,7 +573,7 @@ DEFINE_CXX_DATA1( bad_alloc, &exception_cxx_type_info, bad_alloc_dtor )
 
 void msvcrt_init_exception(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init_type_info_rtti(base);
     init_exception_rtti(base);
 #if _MSVCR_VER >= 80

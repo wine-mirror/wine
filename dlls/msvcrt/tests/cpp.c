@@ -869,7 +869,7 @@ static inline void/*rtti_object_locator*/ *get_obj_locator( void *cppobj )
     return (void *)vtable[-1];
 }
 
-#ifndef __x86_64__
+#ifdef __i386__
 #define DEFINE_RTTI_REF(type, name) type *name
 #define RTTI_REF(instance, name) &instance.name
 #define RTTI_REF_SIG0(instance, name, base) RTTI_REF(instance, name)
@@ -970,7 +970,7 @@ static void test_rtti(void)
   exception e,b;
   void *casted;
   BOOL old_signature;
-#ifdef __x86_64__
+#ifndef __i386__
   char *base = (char*)GetModuleHandleW(NULL);
 #endif
 

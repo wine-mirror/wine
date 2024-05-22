@@ -3775,7 +3775,7 @@ __ASM_BLOCK_END
 
 void msvcrt_init_concurrency(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init_cexception_rtti(base);
     init_improper_lock_rtti(base);
     init_improper_scheduler_attach_rtti(base);

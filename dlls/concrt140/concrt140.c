@@ -140,7 +140,7 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
    {
    case DLL_PROCESS_ATTACH:
        if (!init_cxx_funcs()) return FALSE;
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
        init_exception_rtti((char*)inst);
        init_range_error_rtti((char*)inst);
        init_runtime_error_rtti((char*)inst);
