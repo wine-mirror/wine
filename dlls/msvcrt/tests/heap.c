@@ -467,6 +467,35 @@ static void test_sbheap(void)
     free(mem);
 }
 
+static void test_malloc(void)
+{
+    /* use function pointers to bypass gcc builtins */
+    void *(__cdecl *p_malloc)(size_t);
+    void *(__cdecl *p_realloc)(void *,size_t);
+    void *mem;
+
+    p_malloc = (void *)GetProcAddress( GetModuleHandleA("msvcrt.dll"), "malloc");
+    p_realloc = (void *)GetProcAddress( GetModuleHandleA("msvcrt.dll"), "realloc");
+
+    mem = p_malloc(0);
+    ok(mem != NULL, "memory not allocated for size 0\n");
+    free(mem);
+
+    mem = p_realloc(NULL, 10);
+    ok(mem != NULL, "memory not allocated\n");
+
+    mem = p_realloc(mem, 20);
+    ok(mem != NULL, "memory not reallocated\n");
+
+    mem = p_realloc(mem, 0);
+    ok(mem == NULL, "memory not freed\n");
+
+    mem = p_realloc(NULL, 0);
+    ok(mem != NULL, "memory not (re)allocated for size 0\n");
+
+    free(mem);
+}
+
 static void test_calloc(void)
 {
     /* use function pointer to bypass gcc builtin */
@@ -496,27 +525,8 @@ static void test_calloc(void)
 
 START_TEST(heap)
 {
-    void *mem;
-
-    mem = malloc(0);
-    ok(mem != NULL, "memory not allocated for size 0\n");
-    free(mem);
-
-    mem = realloc(NULL, 10);
-    ok(mem != NULL, "memory not allocated\n");
-    
-    mem = realloc(mem, 20);
-    ok(mem != NULL, "memory not reallocated\n");
- 
-    mem = realloc(mem, 0);
-    ok(mem == NULL, "memory not freed\n");
-    
-    mem = realloc(NULL, 0);
-    ok(mem != NULL, "memory not (re)allocated for size 0\n");
-
-    free(mem);
-
     test_aligned();
     test_sbheap();
+    test_malloc();
     test_calloc();
 }
