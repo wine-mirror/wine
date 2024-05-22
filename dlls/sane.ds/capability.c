@@ -277,27 +277,45 @@ static TW_UINT16 SANE_CAPXferCount (pTW_CAPABILITY pCapability, TW_UINT16 action
     return twCC;
 }
 
-static BOOL pixeltype_to_sane_mode(TW_UINT16 pixeltype, char *mode, int len)
+static TW_UINT16 set_color_mode(TW_UINT32 pixeltype)
 {
-    const char *m = NULL;
+    TW_UINT16 twCC = TWCC_BADCAP;
+    BOOL reload = FALSE;
+    int i;
+    const char * const * modes;
+    /* most of the values are taken from https://gitlab.gnome.org/GNOME/simple-scan/-/blob/master/src/scanner.vala */
+    static const char * const gray[] = {"Gray", "Grayscale", "True Gray", "8-bit Grayscale", "Grayscale - 256 Levels", "gray",
+        0};
+    static const char * const rgb[] = {"Color", "24bit Color[Fast]", "24bit Color",
+        "24 bit Color", "Color - 16 Million Colors", 0};
+    static const char * const bw[] = {"Lineart", "LineArt", "Black & White", "Binary", "Thresholded", "1-bit Black & White",
+        "Black and White - Line Art", "Black and White - Halftone", "Monochrome", 0};
     switch (pixeltype)
     {
         case TWPT_GRAY:
-            m = "Gray";
+            modes = gray;
             break;
         case TWPT_RGB:
-            m = "Color";
+            modes = rgb;
             break;
         case TWPT_BW:
-            m = "Lineart";
+            modes = bw;
+            break;
+        default:
+            ERR("Unsupported pixeltype %lu\n", pixeltype);
+            return TWCC_BADVALUE;
             break;
     }
-    if (! m)
-        return FALSE;
-    if (strlen(m) >= len)
-        return FALSE;
-    strcpy(mode, m);
-    return TRUE;
+    TRACE("Setting pixeltype to %lu\n", pixeltype);
+    for(i=0; modes[i]; ++i)
+    {
+        twCC = sane_option_set_str("mode", (char*)modes[i], &reload);
+        if (twCC == TWCC_SUCCESS) {
+            if (reload) get_sane_params(&activeDS.frame_params);
+            break;
+        }
+    }
+    return twCC;
 }
 
 /* ICAP_PIXELTYPE */
@@ -307,9 +325,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
     TW_UINT32 possible_values[3];
     int possible_value_count;
     TW_UINT32 val;
-    BOOL reload = FALSE;
     TW_UINT16 current_pixeltype = TWPT_BW;
-    char mode[64];
 
     TRACE("ICAP_PIXELTYPE\n");
 
@@ -345,17 +361,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             if (twCC == TWCC_SUCCESS)
             {
                 TRACE("Setting pixeltype to %ld\n", val);
-                if (! pixeltype_to_sane_mode(val, mode, sizeof(mode)))
-                    return TWCC_BADVALUE;
-
-                twCC = sane_option_set_str("mode", mode, &reload);
-                /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
-                if (twCC != TWCC_SUCCESS && strcmp(mode, "Gray") == 0)
-                {
-                    strcpy(mode, "Grayscale");
-                    twCC = sane_option_set_str("mode", mode, &reload);
-                }
-                if (reload) get_sane_params( &activeDS.frame_params );
+                twCC = set_color_mode(val);
             }
             break;
 
@@ -364,19 +370,11 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             break;
 
         case MSG_RESET:
-            current_pixeltype = activeDS.defaultPixelType;
-            if (! pixeltype_to_sane_mode(current_pixeltype, mode, sizeof(mode)))
-                return TWCC_BADVALUE;
-
-            twCC = sane_option_set_str("mode", mode, &reload);
-            /* Some SANE devices use 'Grayscale' instead of the standard 'Gray' */
-            if (twCC != TWCC_SUCCESS && strcmp(mode, "Gray") == 0)
-            {
-                strcpy(mode, "Grayscale");
-                twCC = sane_option_set_str("mode", mode, &reload);
-            }
-            if (twCC != TWCC_SUCCESS) break;
-            if (reload) get_sane_params( &activeDS.frame_params );
+            twCC = set_color_mode(activeDS.defaultPixelType);
+            if (twCC == TWCC_SUCCESS)
+                current_pixeltype = activeDS.defaultPixelType;
+            else
+                ERR("Unable to reset color mode\n");
 
             /* .. fall through intentional .. */
 
