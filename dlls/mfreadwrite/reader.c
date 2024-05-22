@@ -967,6 +967,22 @@ static HRESULT source_reader_flush_transform_samples(struct source_reader *reade
     return next ? source_reader_flush_transform_samples(reader, stream, next) : S_OK;
 }
 
+static HRESULT source_reader_notify_transform(struct source_reader *reader, struct media_stream *stream,
+        struct transform_entry *entry, UINT message)
+{
+    struct transform_entry *next = NULL;
+    struct list *ptr;
+    HRESULT hr;
+
+    if ((ptr = list_next(&stream->transforms, &entry->entry)))
+        next = LIST_ENTRY(ptr, struct transform_entry, entry);
+
+    if (FAILED(hr = IMFTransform_ProcessMessage(entry->transform, message, 0)))
+        WARN("Failed to notify transform %p message %#x, hr %#lx\n", entry->transform, message, hr);
+
+    return next ? source_reader_notify_transform(reader, stream, next, message) : S_OK;
+}
+
 static HRESULT source_reader_process_sample(struct source_reader *reader, struct media_stream *stream,
         IMFSample *sample)
 {
@@ -1040,6 +1056,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
     MediaEventType event_type;
     LONGLONG timestamp;
     PROPVARIANT value;
+    struct list *ptr;
     unsigned int i;
     HRESULT hr;
     DWORD id;
@@ -1063,9 +1080,6 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
             switch (event_type)
             {
                 case MEEndOfStream:
-                {
-                    struct list *ptr;
-
                     stream->state = STREAM_STATE_EOS;
                     stream->flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
 
@@ -1080,10 +1094,16 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                         source_reader_queue_response(reader, stream, S_OK, MF_SOURCE_READERF_ENDOFSTREAM, 0, NULL);
 
                     break;
-                }
                 case MEStreamSeeked:
                 case MEStreamStarted:
                     stream->state = STREAM_STATE_READY;
+
+                    if ((ptr = list_head(&stream->transforms)))
+                    {
+                        struct transform_entry *entry = LIST_ENTRY(ptr, struct transform_entry, entry);
+                        if (FAILED(hr = source_reader_notify_transform(reader, stream, entry, MFT_MESSAGE_NOTIFY_START_OF_STREAM)))
+                            WARN("Failed to notify transforms of stream start, hr %#lx.\n", hr);
+                    }
                     break;
                 case MEStreamStopped:
                     stream->flags |= STREAM_FLAG_STOPPED;
