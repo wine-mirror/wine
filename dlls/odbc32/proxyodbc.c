@@ -47,6 +47,16 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define ODBC_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
+static BOOL is_wow64;
+
+static struct handle *alloc_handle( void )
+{
+    struct handle *ret;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
+    ret->row_count = 1;
+    return ret;
+}
+
 /*************************************************************************
  *				SQLAllocConnect           [ODBC32.001]
  */
@@ -59,7 +69,7 @@ SQLRETURN WINAPI SQLAllocConnect(SQLHENV EnvironmentHandle, SQLHDBC *ConnectionH
     TRACE("(EnvironmentHandle %p, ConnectionHandle %p)\n", EnvironmentHandle, ConnectionHandle);
 
     *ConnectionHandle = 0;
-    if (!(con = calloc( 1, sizeof(*con) ))) return SQL_ERROR;
+    if (!(con = alloc_handle())) return SQL_ERROR;
 
     params.EnvironmentHandle = env->unix_handle;
     if (SUCCESS((ret = ODBC_CALL( SQLAllocConnect, &params ))))
@@ -85,7 +95,7 @@ SQLRETURN WINAPI SQLAllocEnv(SQLHENV *EnvironmentHandle)
     TRACE("(EnvironmentHandle %p)\n", EnvironmentHandle);
 
     *EnvironmentHandle = 0;
-    if (!(env = calloc( 1, sizeof(*env) ))) return SQL_ERROR;
+    if (!(env = alloc_handle())) return SQL_ERROR;
 
     if (SUCCESS((ret = ODBC_CALL( SQLAllocEnv, &params ))))
     {
@@ -110,7 +120,7 @@ SQLRETURN WINAPI SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, S
     TRACE("(HandleType %d, InputHandle %p, OutputHandle %p)\n", HandleType, InputHandle, OutputHandle);
 
     *OutputHandle = 0;
-    if (!(output = calloc( 1, sizeof(*output) ))) return SQL_ERROR;
+    if (!(output = alloc_handle())) return SQL_ERROR;
 
     params.HandleType  = HandleType;
     params.InputHandle = input ? input->unix_handle : 0;
@@ -137,7 +147,7 @@ SQLRETURN WINAPI SQLAllocStmt(SQLHDBC ConnectionHandle, SQLHSTMT *StatementHandl
     TRACE("(ConnectionHandle %p, StatementHandle %p)\n", ConnectionHandle, StatementHandle);
 
     *StatementHandle = 0;
-    if (!(stmt = calloc( 1, sizeof(*stmt) ))) return SQL_ERROR;
+    if (!(stmt = alloc_handle())) return SQL_ERROR;
 
     params.ConnectionHandle = con->unix_handle;
     if (SUCCESS((ret = ODBC_CALL( SQLAllocStmt, &params ))))
@@ -163,7 +173,7 @@ SQLRETURN WINAPI SQLAllocHandleStd(SQLSMALLINT HandleType, SQLHANDLE InputHandle
     TRACE("(HandleType %d, InputHandle %p, OutputHandle %p)\n", HandleType, InputHandle, OutputHandle);
 
     *OutputHandle = 0;
-    if (!(output = calloc( 1, sizeof(*output) ))) return SQL_ERROR;
+    if (!(output = alloc_handle())) return SQL_ERROR;
 
     params.HandleType  = HandleType;
     params.InputHandle = input ? input->unix_handle : 0;
@@ -188,15 +198,17 @@ static const char *debugstr_sqllen( SQLLEN len )
 }
 
 #define MAX_BINDING_PARAMS 1024
-static BOOL alloc_binding( struct param_binding *binding, UINT32 count )
+static BOOL alloc_binding( struct param_binding *binding, UINT column, UINT row_count )
 {
-    if (count > MAX_BINDING_PARAMS)
+    if (column > MAX_BINDING_PARAMS)
     {
         FIXME( "increase maximum number of parameters\n" );
         return FALSE;
     }
-    binding->count = count;
-    if (binding->param || (binding->param = calloc( MAX_BINDING_PARAMS, sizeof(*binding->param)))) return TRUE;
+    if (!binding->param && !(binding->param = calloc( MAX_BINDING_PARAMS, sizeof(*binding->param)))) return FALSE;
+
+    if (!(binding->param[column - 1].len = calloc( row_count, sizeof(UINT64) ))) return FALSE;
+    binding->count = column;
     return TRUE;
 }
 
@@ -220,9 +232,10 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
         FIXME( "column 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!alloc_binding( &handle->bind_col, ColumnNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_col, ColumnNumber, handle->row_count )) return SQL_ERROR;
     params.StatementHandle = handle->unix_handle;
-    params.StrLen_or_Ind   = &handle->bind_col.param[i].len;
+    params.StrLen_or_Ind   = handle->bind_col.param[i].len;
+    *(UINT64 *)params.StrLen_or_Ind = *StrLen_or_Ind;
     if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = StrLen_or_Ind;
     TRACE ("Returning %d\n", ret);
     return ret;
@@ -260,10 +273,11 @@ SQLRETURN WINAPI SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNu
         FIXME( "parameter 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!alloc_binding( &handle->bind_param, ParameterNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_param, ParameterNumber, handle->row_count )) return SQL_ERROR;
 
     params.StatementHandle = handle->unix_handle;
-    params.StrLen_or_Ind   = &handle->bind_param.param[i].len;
+    params.StrLen_or_Ind   = handle->bind_param.param[i].len;
+    *(UINT64 *)params.StrLen_or_Ind = *StrLen_or_Ind;
     if (SUCCESS(( ret = ODBC_CALL( SQLBindParam, &params )))) handle->bind_param.param[i].ptr = StrLen_or_Ind;
     TRACE ("Returning %d\n", ret);
     return ret;
@@ -593,22 +607,39 @@ SQLRETURN WINAPI SQLExecute(SQLHSTMT StatementHandle)
 
 static void update_result_lengths( struct handle *handle )
 {
-    UINT i;
+    UINT i, j, width = sizeof(void *) == 8 ? 8 : is_wow64 ? 8 : 4;
+
     for (i = 0; i < handle->bind_col.count; i++)
     {
-        if (handle->bind_col.param[i].ptr)
-            *(SQLLEN *)handle->bind_col.param[i].ptr = handle->bind_col.param[i].len;
+        SQLLEN *ptr = handle->bind_col.param[i].ptr;
+        if (ptr)
+        {
+            for (j = 0; j < handle->row_count; j++)
+            {
+                *ptr++ = *(SQLLEN *)(handle->bind_col.param[i].len + j * width);
+            }
+        }
     }
     for (i = 0; i < handle->bind_param.count; i++)
     {
-        if (handle->bind_param.param[i].ptr)
-            *(SQLLEN *)handle->bind_param.param[i].ptr = handle->bind_param.param[i].len;
+        SQLLEN *ptr = handle->bind_param.param[i].ptr;
+        if (ptr)
+        {
+            for (j = 0; j < handle->row_count; j++)
+            {
+                *ptr++ = *(SQLLEN *)(handle->bind_param.param[i].len + j * width);
+            }
+        }
     }
     for (i = 0; i < handle->bind_parameter.count; i++)
     {
-        if (handle->bind_parameter.param[i].ptr)
+        SQLLEN *ptr = handle->bind_parameter.param[i].ptr;
+        if (ptr)
         {
-            *(SQLLEN *)handle->bind_parameter.param[i].ptr = handle->bind_parameter.param[i].len;
+            for (j = 0; j < handle->row_count; j++)
+            {
+                *ptr++ = *(SQLLEN *)(handle->bind_parameter.param[i].len + j * width);
+            }
         }
     }
 }
@@ -694,9 +725,21 @@ SQLRETURN WINAPI SQLFreeEnv(SQLHENV EnvironmentHandle)
 
 static void free_bindings( struct handle *handle )
 {
-    free( handle->bind_col.param );
-    free( handle->bind_param.param );
-    free( handle->bind_parameter.param );
+    if (handle->bind_col.param)
+    {
+        free( handle->bind_col.param->len );
+        free( handle->bind_col.param );
+    }
+    if (handle->bind_param.param)
+    {
+        free( handle->bind_param.param->len );
+        free( handle->bind_param.param );
+    }
+    if (handle->bind_parameter.param)
+    {
+        free( handle->bind_parameter.param->len );
+        free( handle->bind_parameter.param );
+    }
 }
 
 /*************************************************************************
@@ -1306,6 +1349,30 @@ SQLRETURN WINAPI SQLSetParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNum
     return ret;
 }
 
+static BOOL resize_result_lengths( struct handle *handle, UINT size )
+{
+    UINT i;
+    for (i = 0; i < handle->bind_col.count; i++)
+    {
+        UINT8 *tmp = realloc( handle->bind_col.param[i].len, size * sizeof(UINT64) );
+        if (!tmp) return FALSE;
+        handle->bind_col.param[i].len = tmp;
+    }
+    for (i = 0; i < handle->bind_param.count; i++)
+    {
+        UINT8 *tmp = realloc( handle->bind_param.param[i].len, size * sizeof(UINT64) );
+        if (!tmp) return FALSE;
+        handle->bind_param.param[i].len = tmp;
+    }
+    for (i = 0; i < handle->bind_parameter.count; i++)
+    {
+        UINT8 *tmp = realloc( handle->bind_parameter.param[i].len, size * sizeof(UINT64) );
+        if (!tmp) return FALSE;
+        handle->bind_parameter.param[i].len = tmp;
+    }
+    return TRUE;
+}
+
 /*************************************************************************
  *				SQLSetStmtAttr           [ODBC32.076]
  */
@@ -1322,7 +1389,16 @@ SQLRETURN WINAPI SQLSetStmtAttr(SQLHSTMT StatementHandle, SQLINTEGER Attribute, 
     if (!handle) return SQL_INVALID_HANDLE;
 
     params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetStmtAttr, &params );
+    if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttr, &params ))))
+    {
+        SQLULEN row_count = (SQLULEN)Value;
+        if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+        {
+            TRACE( "resizing result length array\n" );
+            if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
+            else handle->row_count = row_count;
+        }
+    }
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -1885,10 +1961,11 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
         FIXME( "parameter 0 not handled\n" );
         return SQL_ERROR;
     }
-    if (!alloc_binding( &handle->bind_parameter, ParameterNumber )) return SQL_ERROR;
+    if (!alloc_binding( &handle->bind_parameter, ParameterNumber, handle->row_count )) return SQL_ERROR;
 
     params.StatementHandle = handle->unix_handle;
-    params.StrLen_or_Ind   = &handle->bind_parameter.param[i].len;
+    params.StrLen_or_Ind   = handle->bind_parameter.param[i].len;
+    *(UINT64 *)params.StrLen_or_Ind = *StrLen_or_Ind;
     if (SUCCESS((ret = ODBC_CALL( SQLBindParameter, &params )))) handle->bind_parameter.param[i].ptr = StrLen_or_Ind;
     TRACE("Returning %d\n", ret);
     return ret;
@@ -2887,11 +2964,15 @@ SQLRETURN WINAPI SQLSetStmtAttrW(SQLHSTMT StatementHandle, SQLINTEGER Attribute,
     if (!handle) return SQL_INVALID_HANDLE;
 
     params.StatementHandle = handle->unix_handle;
-    ret = ODBC_CALL( SQLSetStmtAttrW, &params );
-    if (ret == SQL_ERROR && (Attribute == SQL_ROWSET_SIZE || Attribute == SQL_ATTR_ROW_ARRAY_SIZE))
+    if (SUCCESS((ret = ODBC_CALL( SQLSetStmtAttrW, &params ))))
     {
-        TRACE("CHEAT: returning SQL_SUCCESS to ADO\n");
-        return SQL_SUCCESS;
+        SQLULEN row_count = (SQLULEN)Value;
+        if (Attribute == SQL_ATTR_ROW_ARRAY_SIZE && row_count != handle->row_count)
+        {
+            TRACE( "resizing result length array\n" );
+            if (!resize_result_lengths( handle, row_count )) ret = SQL_ERROR;
+            else handle->row_count = row_count;
+        }
     }
 
     TRACE("Returning %d\n", ret);
@@ -2924,6 +3005,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         {
             if (WINE_UNIX_CALL( process_attach, NULL )) __wine_unixlib_handle = 0;
         }
+        IsWow64Process( GetCurrentProcess(), &is_wow64 );
         break;
 
     case DLL_PROCESS_DETACH:

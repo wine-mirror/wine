@@ -154,8 +154,8 @@ enum sql_funcs
 
 struct param
 {
-    INT64 len;  /* result length stored in Unix lib */
-    void *ptr;  /* result length ptr passed by client */
+    UINT8 *len;  /* result length array stored in Unix lib */
+    void  *ptr;  /* result length ptr passed by client */
 };
 
 struct param_binding
@@ -170,6 +170,7 @@ struct handle
     struct param_binding bind_col;
     struct param_binding bind_param;
     struct param_binding bind_parameter;
+    UINT32 row_count;   /* number of rows returned by SQLFetch() */
 };
 
 struct SQLAllocConnect_params
@@ -210,7 +211,7 @@ struct SQLBindCol_params
     INT16  TargetType;
     void  *TargetValue;
     INT64  BufferLength;
-    INT64 *StrLen_or_Ind;
+    void  *StrLen_or_Ind;
 };
 
 struct SQLBindParam_params
@@ -222,7 +223,7 @@ struct SQLBindParam_params
     UINT64 LengthPrecision;
     INT16  ParameterScale;
     void  *ParameterValue;
-    INT64 *StrLen_or_Ind;
+    void  *StrLen_or_Ind;
 };
 
 struct SQLBindParameter_params
@@ -236,7 +237,7 @@ struct SQLBindParameter_params
     INT16  DecimalDigits;
     void  *ParameterValue;
     INT64  BufferLength;
-    INT64 *StrLen_or_Ind;
+    void  *StrLen_or_Ind;
 };
 
 struct SQLBrowseConnect_params

@@ -368,7 +368,7 @@ static NTSTATUS wrap_SQLBindCol( void *args )
 {
     struct SQLBindCol_params *params = args;
     return SQLBindCol( (SQLHSTMT)(ULONG_PTR)params->StatementHandle, params->ColumnNumber, params->TargetType,
-                       params->TargetValue, params->BufferLength, (SQLLEN *)(ULONG_PTR)params->StrLen_or_Ind );
+                       params->TargetValue, params->BufferLength, params->StrLen_or_Ind );
 }
 
 static NTSTATUS wrap_SQLBindParam( void *args )
@@ -376,7 +376,7 @@ static NTSTATUS wrap_SQLBindParam( void *args )
     struct SQLBindParam_params *params = args;
     return SQLBindParam( (SQLHSTMT)(ULONG_PTR)params->StatementHandle, params->ParameterNumber, params->ValueType,
                          params->ParameterType, params->LengthPrecision, params->ParameterScale,
-                         params->ParameterValue, (SQLLEN *)(ULONG_PTR)params->StrLen_or_Ind );
+                         params->ParameterValue, params->StrLen_or_Ind );
 }
 
 static NTSTATUS wrap_SQLBindParameter( void *args )
@@ -385,7 +385,7 @@ static NTSTATUS wrap_SQLBindParameter( void *args )
     return SQLBindParameter( (SQLHSTMT)(ULONG_PTR)params->StatementHandle, params->ParameterNumber,
                              params->InputOutputType, params->ValueType, params->ParameterType, params->ColumnSize,
                              params->DecimalDigits, params->ParameterValue, params->BufferLength,
-                             (SQLLEN *)(ULONG_PTR)params->StrLen_or_Ind );
+                             params->StrLen_or_Ind );
 }
 
 static NTSTATUS wrap_SQLBrowseConnect( void *args )
