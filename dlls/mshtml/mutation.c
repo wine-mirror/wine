@@ -1089,59 +1089,8 @@ static inline struct mutation_observer *impl_from_IWineMSHTMLMutationObserver(IW
     return CONTAINING_RECORD(iface, struct mutation_observer, IWineMSHTMLMutationObserver_iface);
 }
 
-static HRESULT WINAPI MutationObserver_QueryInterface(IWineMSHTMLMutationObserver *iface, REFIID riid, void **ppv)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI MutationObserver_AddRef(IWineMSHTMLMutationObserver *iface)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI MutationObserver_Release(IWineMSHTMLMutationObserver *iface)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI MutationObserver_GetTypeInfoCount(IWineMSHTMLMutationObserver *iface, UINT *pctinfo)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI MutationObserver_GetTypeInfo(IWineMSHTMLMutationObserver *iface, UINT iTInfo,
-                                                   LCID lcid, ITypeInfo **ppTInfo)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI MutationObserver_GetIDsOfNames(IWineMSHTMLMutationObserver *iface, REFIID riid,
-                                                     LPOLESTR *rgszNames, UINT cNames, LCID lcid,
-                                                     DISPID *rgDispId)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid,
-            rgDispId);
-}
-
-static HRESULT WINAPI MutationObserver_Invoke(IWineMSHTMLMutationObserver *iface, DISPID dispIdMember,
-                                              REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
-                                              VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    struct mutation_observer *This = impl_from_IWineMSHTMLMutationObserver(iface);
-
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(MutationObserver, IWineMSHTMLMutationObserver,
+                      impl_from_IWineMSHTMLMutationObserver(iface)->dispex)
 
 static HRESULT WINAPI MutationObserver_disconnect(IWineMSHTMLMutationObserver *iface)
 {
