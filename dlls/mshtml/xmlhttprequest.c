@@ -504,55 +504,8 @@ static inline HTMLXMLHttpRequest *impl_from_IHTMLXMLHttpRequest(IHTMLXMLHttpRequ
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, IHTMLXMLHttpRequest_iface);
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest_QueryInterface(IHTMLXMLHttpRequest *iface, REFIID riid, void **ppv)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    return IDispatchEx_QueryInterface(&This->event_target.dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest_AddRef(IHTMLXMLHttpRequest *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    return IDispatchEx_AddRef(&This->event_target.dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    return IDispatchEx_Release(&This->event_target.dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_GetTypeInfoCount(IHTMLXMLHttpRequest *iface, UINT *pctinfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_GetTypeInfo(IHTMLXMLHttpRequest *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_GetIDsOfNames(IHTMLXMLHttpRequest *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
-        LCID lcid, DISPID *rgDispId)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_Invoke(IHTMLXMLHttpRequest *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-
-    return IDispatchEx_Invoke(&This->event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLXMLHttpRequest, IHTMLXMLHttpRequest,
+                      impl_from_IHTMLXMLHttpRequest(iface)->event_target.dispex)
 
 static HRESULT WINAPI HTMLXMLHttpRequest_get_readyState(IHTMLXMLHttpRequest *iface, LONG *p)
 {
@@ -998,52 +951,8 @@ static inline HTMLXMLHttpRequest *impl_from_IHTMLXMLHttpRequest2(IHTMLXMLHttpReq
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, IHTMLXMLHttpRequest2_iface);
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest2_QueryInterface(IHTMLXMLHttpRequest2 *iface, REFIID riid, void **ppv)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IHTMLXMLHttpRequest_QueryInterface(&This->IHTMLXMLHttpRequest_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest2_AddRef(IHTMLXMLHttpRequest2 *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IHTMLXMLHttpRequest_AddRef(&This->IHTMLXMLHttpRequest_iface);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest2_Release(IHTMLXMLHttpRequest2 *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IHTMLXMLHttpRequest_Release(&This->IHTMLXMLHttpRequest_iface);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest2_GetTypeInfoCount(IHTMLXMLHttpRequest2 *iface, UINT *pctinfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest2_GetTypeInfo(IHTMLXMLHttpRequest2 *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IDispatchEx_GetTypeInfo(&This->event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest2_GetIDsOfNames(IHTMLXMLHttpRequest2 *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
-        LCID lcid, DISPID *rgDispId)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IDispatchEx_GetIDsOfNames(&This->event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest2_Invoke(IHTMLXMLHttpRequest2 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
-    return IDispatchEx_Invoke(&This->event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLXMLHttpRequest2, IHTMLXMLHttpRequest2,
+                      impl_from_IHTMLXMLHttpRequest2(iface)->event_target.dispex)
 
 static HRESULT WINAPI HTMLXMLHttpRequest2_put_timeout(IHTMLXMLHttpRequest2 *iface, LONG v)
 {
@@ -1109,52 +1018,8 @@ static inline HTMLXMLHttpRequest *impl_from_IWineXMLHttpRequestPrivate(IWineXMLH
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequest, IWineXMLHttpRequestPrivate_iface);
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequest_private_QueryInterface(IWineXMLHttpRequestPrivate *iface, REFIID riid, void **ppv)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IHTMLXMLHttpRequest_QueryInterface(&This->IHTMLXMLHttpRequest_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest_private_AddRef(IWineXMLHttpRequestPrivate *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IHTMLXMLHttpRequest_AddRef(&This->IHTMLXMLHttpRequest_iface);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequest_private_Release(IWineXMLHttpRequestPrivate *iface)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IHTMLXMLHttpRequest_Release(&This->IHTMLXMLHttpRequest_iface);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_private_GetTypeInfoCount(IWineXMLHttpRequestPrivate *iface, UINT *pctinfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->event_target.dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_private_GetTypeInfo(IWineXMLHttpRequestPrivate *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IDispatchEx_GetTypeInfo(&This->event_target.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_private_GetIDsOfNames(IWineXMLHttpRequestPrivate *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
-        LCID lcid, DISPID *rgDispId)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IDispatchEx_GetIDsOfNames(&This->event_target.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequest_private_Invoke(IWineXMLHttpRequestPrivate *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
-    return IDispatchEx_Invoke(&This->event_target.dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLXMLHttpRequest_private, IWineXMLHttpRequestPrivate,
+                      impl_from_IWineXMLHttpRequestPrivate(iface)->event_target.dispex)
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_response(IWineXMLHttpRequestPrivate *iface, VARIANT *p)
 {
@@ -1624,55 +1489,8 @@ static inline HTMLXMLHttpRequestFactory *impl_from_IHTMLXMLHttpRequestFactory(IH
     return CONTAINING_RECORD(iface, HTMLXMLHttpRequestFactory, IHTMLXMLHttpRequestFactory_iface);
 }
 
-static HRESULT WINAPI HTMLXMLHttpRequestFactory_QueryInterface(IHTMLXMLHttpRequestFactory *iface, REFIID riid, void **ppv)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-    return IDispatchEx_QueryInterface(&This->dispex.IDispatchEx_iface, riid, ppv);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequestFactory_AddRef(IHTMLXMLHttpRequestFactory *iface)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-    return IDispatchEx_AddRef(&This->dispex.IDispatchEx_iface);
-}
-
-static ULONG WINAPI HTMLXMLHttpRequestFactory_Release(IHTMLXMLHttpRequestFactory *iface)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-    return IDispatchEx_Release(&This->dispex.IDispatchEx_iface);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequestFactory_GetTypeInfoCount(IHTMLXMLHttpRequestFactory *iface, UINT *pctinfo)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequestFactory_GetTypeInfo(IHTMLXMLHttpRequestFactory *iface, UINT iTInfo,
-        LCID lcid, ITypeInfo **ppTInfo)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-
-    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequestFactory_GetIDsOfNames(IHTMLXMLHttpRequestFactory *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
-        LCID lcid, DISPID *rgDispId)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-
-    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
-            lcid, rgDispId);
-}
-
-static HRESULT WINAPI HTMLXMLHttpRequestFactory_Invoke(IHTMLXMLHttpRequestFactory *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
-{
-    HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
-
-    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
-            pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
+DISPEX_IDISPATCH_IMPL(HTMLXMLHttpRequestFactory, IHTMLXMLHttpRequestFactory,
+                      impl_from_IHTMLXMLHttpRequestFactory(iface)->dispex)
 
 static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactory *iface, IHTMLXMLHttpRequest **p)
 {
