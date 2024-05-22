@@ -1781,7 +1781,7 @@ __ASM_BLOCK_END
 
 void init_misc(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
 #if _MSVCP_VER >= 100
     init_error_category_rtti(base);
     init_generic_category_rtti(base);

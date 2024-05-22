@@ -5162,7 +5162,7 @@ static void init_io(void *base)
 {
     filebuf *fb;
 
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init_streambuf_rtti(base);
     init_filebuf_rtti(base);
     init_strstreambuf_rtti(base);

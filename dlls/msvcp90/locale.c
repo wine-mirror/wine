@@ -13336,7 +13336,7 @@ __ASM_BLOCK_END
 
 void init_locale(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init__Facet_base_rtti(base);
     init_locale_facet_rtti(base);
     init_locale__Locimp_rtti(base);

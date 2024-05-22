@@ -1497,7 +1497,7 @@ void DECLSPEC_NORETURN throw_failure(const char *str)
 
 void init_exception(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init_type_info_rtti(base);
     init_exception_rtti(base);
     init_bad_alloc_rtti(base);

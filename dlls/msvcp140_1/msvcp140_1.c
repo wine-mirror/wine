@@ -263,7 +263,7 @@ static BOOL init_cxx_funcs(void)
 
 static void init_rtti(void *base)
 {
-#ifdef __x86_64__
+#ifdef RTTI_USE_RVA
     init_type_info_rtti(base);
     init_base_memory_resource_rtti(base);
     init__Identity_equal_resource_rtti(base);

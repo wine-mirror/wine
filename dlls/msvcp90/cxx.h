@@ -21,7 +21,7 @@
 #include "rtlsupportapi.h"
 #include "wine/asm.h"
 
-#ifndef __x86_64__
+#ifdef __i386__
 #undef RTTI_USE_RVA
 #else
 #define RTTI_USE_RVA 1
