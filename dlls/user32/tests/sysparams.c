@@ -4238,11 +4238,57 @@ static void test_AreDpiAwarenessContextsEqual(void)
     ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
 }
 
+static void test_GetAwarenessFromDpiAwarenessContext(void)
+{
+    DPI_AWARENESS ret;
+
+    if (!pGetAwarenessFromDpiAwarenessContext)
+    {
+        win_skip( "GetAwarenessFromDpiAwarenessContext missing, skipping tests\n" );
+        return;
+    }
+
+    ret = pGetAwarenessFromDpiAwarenessContext( 0 );
+    ok( ret == -1, "got %u\n", ret );
+
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x12 );
+    ok( ret == DPI_AWARENESS_PER_MONITOR_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x22 );
+    ok( ret == DPI_AWARENESS_PER_MONITOR_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6010 );
+    todo_wine ok( ret == DPI_AWARENESS_UNAWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6011 );
+    todo_wine ok( ret == DPI_AWARENESS_SYSTEM_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6111 );
+    todo_wine ok( ret == DPI_AWARENESS_SYSTEM_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x7811 );
+    todo_wine ok( ret == DPI_AWARENESS_SYSTEM_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x10011 );
+    todo_wine ok( ret == DPI_AWARENESS_SYSTEM_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x40006010 );
+    todo_wine ok( ret == DPI_AWARENESS_UNAWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000012 );
+    ok( ret == DPI_AWARENESS_PER_MONITOR_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80006010 );
+    todo_wine ok( ret == DPI_AWARENESS_UNAWARE, "got %u\n", ret );
+
+    ret = pGetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    ok( ret == DPI_AWARENESS_UNAWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    ok( ret == DPI_AWARENESS_SYSTEM_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ok( ret == DPI_AWARENESS_PER_MONITOR_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    ok( ret == DPI_AWARENESS_PER_MONITOR_AWARE, "got %u\n", ret );
+    ret = pGetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED );
+    todo_wine ok( ret == DPI_AWARENESS_UNAWARE, "got %u\n", ret );
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
     DPI_AWARENESS_CONTEXT context;
-    ULONG_PTR i, flags;
+    ULONG_PTR flags;
     BOOL ret;
     UINT dpi;
     HDC hdc = GetDC( 0 );
@@ -4384,74 +4430,6 @@ static void test_dpi_context(void)
     todo_wine
     ok( context == (DPI_AWARENESS_CONTEXT)(0x11 | flags), "wrong context %p\n", context );
 
-    for (i = 0; i < 0x100; i++)
-    {
-        awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)i );
-        switch (i)
-        {
-        case 0x10:
-            ok( awareness == DPI_AWARENESS_UNAWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i, awareness );
-            break;
-        case 0x11:
-            ok( awareness == DPI_AWARENESS_SYSTEM_AWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i, awareness );
-            break;
-        case 0x12:
-            ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i, awareness );
-            break;
-        case 0x22:
-            ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i, awareness );
-            break;
-        default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i, awareness );
-            break;
-        }
-
-        awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)(i | 0x80000000) );
-        switch (i)
-        {
-        case 0x10:
-            ok( awareness == DPI_AWARENESS_UNAWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i | 0x80000000, awareness );
-            break;
-        case 0x11:
-            ok( awareness == DPI_AWARENESS_SYSTEM_AWARE || broken( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i | 0x80000000, awareness );
-            break;
-        case 0x12:
-            ok( awareness == (i & ~0x10), "%Ix: wrong value %u\n", i | 0x80000000, awareness );
-            break;
-        case 0x22:
-            ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken ( awareness == DPI_AWARENESS_INVALID ) /* Win10 1709+ */,
-                "%Ix: wrong value %u\n", i, awareness );
-            break;
-        default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", i | 0x80000000, awareness );
-            break;
-        }
-
-        awareness = pGetAwarenessFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
-        switch (~i)
-        {
-        case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
-        case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
-        case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
-            ok( awareness == i, "%Ix: wrong value %u\n", ~i, awareness );
-            break;
-        case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
-            ok( awareness == DPI_AWARENESS_PER_MONITOR_AWARE || broken ( awareness == DPI_AWARENESS_INVALID ), "%Ix: wrong value %u\n", ~i, awareness );
-            break;
-        case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED:
-            todo_wine
-            ok( awareness == DPI_AWARENESS_UNAWARE || broken ( awareness == DPI_AWARENESS_INVALID ), "%Ix: wrong value %u\n", ~i, awareness );
-            break;
-        default:
-            ok( awareness == DPI_AWARENESS_INVALID, "%Ix: wrong value %u\n", ~i, awareness );
-            break;
-        }
-    }
     if (real_dpi != USER_DEFAULT_SCREEN_DPI) test_dpi_stock_objects( hdc );
     ReleaseDC( 0, hdc );
 }
@@ -4706,6 +4684,7 @@ START_TEST(sysparams)
     test_IsValidDpiAwarenessContext();
     test_GetDpiFromDpiAwarenessContext();
     test_AreDpiAwarenessContextsEqual();
+    test_GetAwarenessFromDpiAwarenessContext();
 
     change_counter = 0;
     change_last_param = 0;
