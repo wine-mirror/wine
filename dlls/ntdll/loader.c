@@ -70,7 +70,7 @@ typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 typedef void  (CALLBACK *LDRENUMPROC)(LDR_DATA_TABLE_ENTRY *, void *, BOOLEAN *);
 
 void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = NULL;
-NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) = __wine_unix_call;
+NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) = NULL;
 
 static DWORD (WINAPI *pCtrlRoutine)(void *);
 
@@ -3311,15 +3311,6 @@ NTSTATUS WINAPI __wine_ctrl_routine( void *arg )
 {
     DWORD ret = pCtrlRoutine ? pCtrlRoutine( arg ) : 0;
     RtlExitUserThread( ret );
-}
-
-
-/***********************************************************************
- *              __wine_unix_call
- */
-NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
-{
-    return __wine_unix_call_dispatcher( handle, code, args );
 }
 
 

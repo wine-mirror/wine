@@ -33,8 +33,6 @@
 
 void *__wine_syscall_dispatcher = NULL;
 
-static unixlib_handle_t win32u_handle;
-
 /*******************************************************************
  *         syscalls
  */
@@ -2192,6 +2190,8 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     for (;;) RtlRaiseException( &record );
 }
 
+void *dummy = NtQueryVirtualMemory;  /* forced import to avoid link error with winecrt0 */
+
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
 {
     HMODULE ntdll;
@@ -2206,9 +2206,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
         LdrGetDllHandle( NULL, 0, &ntdll_name, &ntdll );
         dispatcher_ptr = RtlFindExportedRoutineByName( ntdll, "__wine_syscall_dispatcher" );
         __wine_syscall_dispatcher = *dispatcher_ptr;
-        if (!NtQueryVirtualMemory( GetCurrentProcess(), inst, MemoryWineUnixFuncs,
-                                   &win32u_handle, sizeof(win32u_handle), NULL ))
-            __wine_unix_call( win32u_handle, 0, NULL );
+        if (!__wine_init_unix_call()) WINE_UNIX_CALL( 0, NULL );
         break;
     }
     return TRUE;
