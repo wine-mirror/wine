@@ -299,7 +299,7 @@ static BOOL init(void)
         SET(p__ContextCallback__Capture, "?_Capture@_ContextCallback@details@Concurrency@@AAAXXZ");
         SET(p__ContextCallback__Reset, "?_Reset@_ContextCallback@details@Concurrency@@AAAXXZ");
         SET(p__TaskEventLogger__LogCancelTask, "?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAAXXZ");
-        SET(p__TaskEventLogger__LogScheduleTask, "?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z");
+        SET(p__TaskEventLogger__LogScheduleTask, "?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAAX_N@Z@Z");
         SET(p__TaskEventLogger__LogTaskCompleted, "?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
         SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
         SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");

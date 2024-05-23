@@ -769,7 +769,7 @@ static BOOL init(void)
         SET(p_vector_base_v4__Internal_reserve,
                 "?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IAAXIII@Z");
         SET(p_vector_base_v4__Internal_resize,
-                "?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IAEXIIIP6AXPAXI@ZP6AX0PBXI@Z2@Z");
+                "?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IAAXIIIP6AXPAXI@ZP6AX0PBXI@Z2@Z");
 #endif
     }
     SET(p__Thrd_equal,
