@@ -299,6 +299,7 @@ associatorsof:
             }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
+            (void)yysymbol_name; /* avoid unused function warning */
         }
   | TK_ASSOCIATORS TK_OF path TK_WHERE keywordlist
         {
