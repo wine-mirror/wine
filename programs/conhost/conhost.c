@@ -2841,6 +2841,12 @@ static NTSTATUS process_console_ioctls( struct console *console )
     }
 }
 
+static BOOL is_key_message( const MSG *msg )
+{
+    return msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN ||
+           msg->message == WM_KEYUP   || msg->message == WM_SYSKEYUP;
+}
+
 static int main_loop( struct console *console, HANDLE signal )
 {
     HANDLE signal_event = NULL;
@@ -2875,10 +2881,15 @@ static int main_loop( struct console *console, HANDLE signal )
         if (res == WAIT_OBJECT_0 + wait_cnt)
         {
             MSG msg;
+
             while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
             {
+                BOOL translated = FALSE;
                 if (msg.message == WM_QUIT) return 0;
-                DispatchMessageW(&msg);
+                if (is_key_message( &msg ) && msg.wParam == VK_PROCESSKEY)
+                    translated = TranslateMessage( &msg );
+                if (!translated || msg.hwnd != console->win)
+                    DispatchMessageW( &msg );
             }
             continue;
         }
