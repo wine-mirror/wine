@@ -83,7 +83,7 @@ struct ntuser_thread_info
     UINT           receive_flags;     /* currently received message flags */
     UINT           top_window;        /* desktop window */
     UINT           msg_window;        /* HWND_MESSAGE parent window */
-    DPI_AWARENESS  dpi_awareness;     /* DPI awareness */
+    UINT           dpi_context;       /* DPI awareness context */
     UINT           default_imc;       /* default input context */
     UINT64         client_imm;        /* client IMM thread info */
     UINT64         wmchar_data;       /* client data for WM_CHAR mappings */

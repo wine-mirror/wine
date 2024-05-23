@@ -175,7 +175,7 @@ extern UINT get_system_dpi(void);
 extern int get_system_metrics( int index );
 extern UINT get_thread_dpi(void);
 extern UINT set_thread_dpi_awareness_context( UINT context );
-extern DPI_AWARENESS get_thread_dpi_awareness(void);
+extern UINT get_thread_dpi_awareness_context(void);
 extern RECT get_virtual_screen_rect( UINT dpi );
 extern BOOL is_exiting_thread( DWORD tid );
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to );

@@ -4911,7 +4911,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
                                   HINSTANCE instance, BOOL ansi,
                                   DWORD style, DWORD ex_style )
 {
-    DPI_AWARENESS awareness = get_thread_dpi_awareness();
+    DPI_AWARENESS awareness = NTUSER_DPI_CONTEXT_GET_AWARENESS( get_thread_dpi_awareness_context() );
     HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
     int extra_bytes = 0;
