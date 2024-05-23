@@ -379,7 +379,7 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
     params->lparam = lparam;
     params->ansi = params->ansi_dst = ansi;
     params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
-    params->dpi_awareness = ULongToHandle( get_window_dpi_awareness_context( params->hwnd ) );
+    params->dpi_context = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params, TRUE );
     return TRUE;
 }
@@ -410,7 +410,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->lparam = lParam;
     params->ansi = ansi;
     params->mapping = mapping;
-    params->dpi_awareness = ULongToHandle( get_window_dpi_awareness_context( params->hwnd ) );
+    params->dpi_context = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params, !is_dialog );
     return TRUE;
 }

@@ -355,7 +355,7 @@ struct win_proc_params32
     BOOL ansi;
     BOOL ansi_dst;
     enum wm_char_mapping mapping;
-    ULONG dpi_awareness;
+    ULONG dpi_context;
     ULONG procA;
     ULONG procW;
 };
@@ -471,7 +471,7 @@ static void win_proc_params_64to32( const struct win_proc_params *src, struct wi
     params.ansi = src->ansi;
     params.ansi_dst = src->ansi_dst;
     params.mapping = src->mapping;
-    params.dpi_awareness = HandleToUlong( src->dpi_awareness );
+    params.dpi_context = src->dpi_context;
     params.procA = PtrToUlong( src->procA );
     params.procW = PtrToUlong( src->procW );
     memcpy( dst, &params, sizeof(params) );

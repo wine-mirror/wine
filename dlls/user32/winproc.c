@@ -698,7 +698,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
 LRESULT dispatch_win_proc_params( struct win_proc_params *params )
 {
-    DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( params->dpi_awareness );
+    DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( ULongToHandle( params->dpi_context ) );
     LRESULT result = 0;
 
     if (!params->ansi)
