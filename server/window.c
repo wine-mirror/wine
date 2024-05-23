@@ -83,8 +83,7 @@ struct window
     unsigned int     color_key;       /* color key for a layered window */
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
-    unsigned int     dpi;             /* window DPI or 0 if per-monitor aware */
-    DPI_AWARENESS    dpi_awareness;   /* DPI awareness mode */
+    unsigned int     dpi_context;     /* DPI awareness context */
     lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     data_size_t      text_len;        /* length of window caption */
@@ -245,12 +244,20 @@ static inline void update_pixel_format_flags( struct window *win )
         win->paint_flags |= PAINT_PIXEL_FORMAT_CHILD;
 }
 
+static unsigned int get_window_dpi( struct window *win )
+{
+    unsigned int dpi;
+    if ((dpi = NTUSER_DPI_CONTEXT_GET_DPI( win->dpi_context ))) return dpi;
+    /* FIXME: return the window monitor DPI? */
+    return USER_DEFAULT_SCREEN_DPI;
+}
+
 /* get the per-monitor DPI for a window */
 static unsigned int get_monitor_dpi( struct window *win )
 {
     /* FIXME: we return the desktop window DPI for now */
     while (!is_desktop_window( win )) win = win->parent;
-    return win->dpi ? win->dpi : USER_DEFAULT_SCREEN_DPI;
+    return get_window_dpi( win );
 }
 
 /* link a window at the right place in the siblings list */
@@ -333,11 +340,7 @@ static int set_parent_window( struct window *win, struct window *parent )
         win->parent = (struct window *)grab_object( parent );
         link_window( win, WINPTR_TOP );
 
-        if (!is_desktop_window( parent ))
-        {
-            win->dpi = parent->dpi;
-            win->dpi_awareness = parent->dpi_awareness;
-        }
+        if (!is_desktop_window( parent )) win->dpi_context = parent->dpi_context;
 
         /* if parent belongs to a different thread and the window isn't */
         /* top-level, attach the two threads */
@@ -573,8 +576,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_linked      = 0;
     win->is_layered     = 0;
     win->is_orphan      = 0;
-    win->dpi_awareness  = DPI_AWARENESS_PER_MONITOR_AWARE;
-    win->dpi            = 0;
+    win->dpi_context    = NTUSER_DPI_PER_MONITOR_AWARE;
     win->user_data      = 0;
     win->text           = NULL;
     win->text_len       = 0;
@@ -760,7 +762,7 @@ static void screen_to_client( struct window *win, int *x, int *y, unsigned int d
     if (is_desktop_window( win )) return;
 
     client_to_screen( win, &offset_x, &offset_y );
-    map_dpi_point( win, x, y, dpi, win->dpi );
+    map_dpi_point( win, x, y, dpi, get_window_dpi( win ) );
     *x -= offset_x;
     *y -= offset_y;
 }
@@ -816,7 +818,7 @@ static int is_point_in_window( struct window *win, int *x, int *y, unsigned int 
         return 0;  /* disabled child */
     if ((win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT))
         return 0;  /* transparent */
-    map_dpi_point( win, x, y, dpi, win->dpi );
+    map_dpi_point( win, x, y, dpi, get_window_dpi( win ) );
     if (!point_in_rect( &win->visible_rect, *x, *y ))
         return 0;  /* not in window */
     if (win->win_region &&
@@ -857,7 +859,7 @@ static struct window *child_window_from_point( struct window *parent, int x, int
     {
         int x_child = x, y_child = y;
 
-        if (!is_point_in_window( ptr, &x_child, &y_child, parent->dpi )) continue;  /* skip it */
+        if (!is_point_in_window( ptr, &x_child, &y_child, get_window_dpi( parent ) )) continue;  /* skip it */
 
         /* if window is minimized or disabled, return at once */
         if (ptr->style & (WS_MINIMIZE|WS_DISABLED)) return ptr;
@@ -881,7 +883,7 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
     {
         int x_child = x, y_child = y;
 
-        if (!is_point_in_window( ptr, &x_child, &y_child, parent->dpi )) continue;  /* skip it */
+        if (!is_point_in_window( ptr, &x_child, &y_child, get_window_dpi( parent ) )) continue;  /* skip it */
 
         /* if point is in client area, and window is not minimized or disabled, check children */
         if (!(ptr->style & (WS_MINIMIZE|WS_DISABLED)) && point_in_rect( &ptr->client_rect, x_child, y_child ))
@@ -934,7 +936,7 @@ static int all_windows_from_point( struct window *top, int x, int y, unsigned in
     if (!is_desktop_window( top ) && !is_desktop_window( top->parent ))
     {
         screen_to_client( top->parent, &x, &y, dpi );
-        dpi = top->parent->dpi;
+        dpi = get_window_dpi( top->parent );
     }
 
     if (!is_point_in_window( top, &x, &y, dpi )) return 1;
@@ -1573,7 +1575,7 @@ static void redraw_window( struct window *win, struct region *region, int frame,
         if (!(child_rgn = create_empty_region())) continue;
         if (copy_region( child_rgn, tmp ))
         {
-            map_dpi_region( child, child_rgn, win->dpi, child->dpi );
+            map_dpi_region( child, child_rgn, get_window_dpi( win ), get_window_dpi( child ) );
             if (rect_in_region( child_rgn, &child->window_rect ))
             {
                 offset_region( child_rgn, -child->client_rect.left, -child->client_rect.top );
@@ -2086,25 +2088,19 @@ DECL_HANDLER(create_window)
     if (!(win = create_window( parent, owner, atom, req->instance ))) return;
 
     if (parent && !is_desktop_window( parent ))
-    {
-        win->dpi_awareness = parent->dpi_awareness;
-        win->dpi = parent->dpi;
-    }
-    else if (!parent || req->awareness != DPI_AWARENESS_PER_MONITOR_AWARE)
-    {
-        win->dpi_awareness = req->awareness;
-        win->dpi = req->dpi;
-    }
+        win->dpi_context = parent->dpi_context;
+    else if (!parent || !NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( req->dpi_context ))
+        win->dpi_context = req->dpi_context;
+
     win->style = req->style;
     win->ex_style = req->ex_style;
 
-    reply->handle    = win->handle;
-    reply->parent    = win->parent ? win->parent->handle : 0;
-    reply->owner     = win->owner;
-    reply->extra     = win->nb_extra_bytes;
-    reply->dpi       = win->dpi;
-    reply->awareness = win->dpi_awareness;
-    reply->class_ptr = get_class_client_ptr( win->class );
+    reply->handle      = win->handle;
+    reply->parent      = win->parent ? win->parent->handle : 0;
+    reply->owner       = win->owner;
+    reply->extra       = win->nb_extra_bytes;
+    reply->dpi_context = win->dpi_context;
+    reply->class_ptr   = get_class_client_ptr( win->class );
 }
 
 
@@ -2124,8 +2120,7 @@ DECL_HANDLER(set_parent)
     reply->old_parent  = win->parent->handle;
     reply->full_parent = parent ? parent->handle : 0;
     set_parent_window( win, parent );
-    reply->dpi       = win->dpi;
-    reply->awareness = win->dpi_awareness;
+    reply->dpi_context = win->dpi_context;
 }
 
 
@@ -2220,8 +2215,8 @@ DECL_HANDLER(get_window_info)
     reply->full_handle = win->handle;
     reply->last_active = win->handle;
     reply->is_unicode  = win->is_unicode;
-    reply->awareness   = win->dpi_awareness;
-    reply->dpi         = win->dpi ? win->dpi : get_monitor_dpi( win );
+    reply->dpi_context = win->dpi_context;
+
     if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
     if (win->thread)
     {
@@ -2532,8 +2527,8 @@ DECL_HANDLER(get_window_rectangles)
         set_error( STATUS_INVALID_PARAMETER );
         break;
     }
-    map_dpi_rect( win, &reply->window, win->dpi, req->dpi );
-    map_dpi_rect( win, &reply->client, win->dpi, req->dpi );
+    map_dpi_rect( win, &reply->window, get_window_dpi( win ), req->dpi );
+    map_dpi_rect( win, &reply->client, get_window_dpi( win ), req->dpi );
 }
 
 
@@ -2580,7 +2575,7 @@ DECL_HANDLER(get_windows_offset)
         x = mirror_from ? win->client_rect.right - win->client_rect.left : 0;
         y = 0;
         client_to_screen( win, &x, &y );
-        map_dpi_point( win, &x, &y, win->dpi, req->dpi );
+        map_dpi_point( win, &x, &y, get_window_dpi( win ), req->dpi );
         reply->x += x;
         reply->y += y;
     }
@@ -2591,7 +2586,7 @@ DECL_HANDLER(get_windows_offset)
         x = mirror_to ? win->client_rect.right - win->client_rect.left : 0;
         y = 0;
         client_to_screen( win, &x, &y );
-        map_dpi_point( win, &x, &y, win->dpi, req->dpi );
+        map_dpi_point( win, &x, &y, get_window_dpi( win ), req->dpi );
         reply->x -= x;
         reply->y -= y;
     }
@@ -2790,7 +2785,7 @@ DECL_HANDLER(update_window_zorder)
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         if (ptr->is_layered && (ptr->layered_flags & LWA_COLORKEY)) continue;
         tmp = rect;
-        map_dpi_rect( win, &tmp, win->parent->dpi, win->dpi );
+        map_dpi_rect( win, &tmp, get_window_dpi( win->parent ), get_window_dpi( win ) );
         if (!intersect_rect( &tmp, &tmp, &ptr->visible_rect )) continue;
         if (ptr->win_region)
         {

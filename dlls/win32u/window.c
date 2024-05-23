@@ -450,8 +450,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
         {
             old_parent = wine_server_ptr_handle( reply->old_parent );
             win->parent = parent = wine_server_ptr_handle( reply->full_parent );
-            win->dpi = reply->dpi;
-            win->dpi_awareness = reply->awareness;
+            win->dpi_context = reply->dpi_context;
         }
 
     }
@@ -869,7 +868,7 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
     if (win == WND_DESKTOP) return NTUSER_DPI_PER_MONITOR_AWARE;
     if (win != WND_OTHER_PROCESS)
     {
-        ret = get_dpi_awareness_context_from_awareness( win->dpi_awareness );
+        ret = win->dpi_context;
         release_win_ptr( win );
     }
     else
@@ -877,7 +876,7 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
         SERVER_START_REQ( get_window_info )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = get_dpi_awareness_context_from_awareness( reply->awareness );
+            if (!wine_server_call_err( req )) ret = reply->dpi_context;
         }
         SERVER_END_REQ;
     }
@@ -888,7 +887,7 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
 UINT get_dpi_for_window( HWND hwnd )
 {
     WND *win;
-    UINT ret = 0;
+    UINT context = 0;
 
     if (!(win = get_win_ptr( hwnd )))
     {
@@ -902,8 +901,7 @@ UINT get_dpi_for_window( HWND hwnd )
     }
     if (win != WND_OTHER_PROCESS)
     {
-        ret = win->dpi;
-        if (!ret) ret = get_win_monitor_dpi( hwnd );
+        context = win->dpi_context;
         release_win_ptr( win );
     }
     else
@@ -911,11 +909,13 @@ UINT get_dpi_for_window( HWND hwnd )
         SERVER_START_REQ( get_window_info )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = reply->dpi;
+            if (!wine_server_call_err( req )) context = reply->dpi_context;
         }
         SERVER_END_REQ;
     }
-    return ret;
+
+    if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( context )) return get_win_monitor_dpi( hwnd );
+    return NTUSER_DPI_CONTEXT_GET_DPI( context );
 }
 
 static LONG_PTR get_win_data( const void *ptr, UINT size )
@@ -4911,11 +4911,10 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
                                   HINSTANCE instance, BOOL ansi,
                                   DWORD style, DWORD ex_style )
 {
-    DPI_AWARENESS awareness = NTUSER_DPI_CONTEXT_GET_AWARENESS( get_thread_dpi_awareness_context() );
+    UINT dpi_context = get_thread_dpi_awareness_context();
     HWND handle = 0, full_parent = 0, full_owner = 0;
     struct tagCLASS *class = NULL;
     int extra_bytes = 0;
-    UINT dpi = 0;
     WND *win;
 
     SERVER_START_REQ( create_window )
@@ -4923,8 +4922,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
         req->parent    = wine_server_user_handle( parent );
         req->owner     = wine_server_user_handle( owner );
         req->instance  = wine_server_client_ptr( instance );
-        req->dpi       = get_system_dpi();
-        req->awareness = awareness;
+        req->dpi_context = dpi_context;
         req->style     = style;
         req->ex_style  = ex_style;
         if (!(req->atom = get_int_atom_value( name )) && name->Length)
@@ -4935,8 +4933,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
             full_parent = wine_server_ptr_handle( reply->parent );
             full_owner  = wine_server_ptr_handle( reply->owner );
             extra_bytes = reply->extra;
-            dpi         = reply->dpi;
-            awareness   = reply->awareness;
+            dpi_context = reply->dpi_context;
             class       = wine_server_get_ptr( reply->class_ptr );
         }
     }
@@ -4988,8 +4985,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->class      = class;
     win->winproc    = get_class_winproc( class );
     win->cbWndExtra = extra_bytes;
-    win->dpi        = dpi;
-    win->dpi_awareness = awareness;
+    win->dpi_context = dpi_context;
     list_init( &win->vulkan_surfaces );
     set_user_handle_ptr( handle, &win->obj );
     if (is_winproc_unicode( win->winproc, !ansi )) win->flags |= WIN_ISUNICODE;
@@ -5241,7 +5237,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     }
     else NtUserSetWindowLongPtr( hwnd, GWLP_ID, (ULONG_PTR)cs.hMenu, FALSE );
 
-    win_dpi = win->dpi;
+    win_dpi = NTUSER_DPI_CONTEXT_GET_DPI( win->dpi_context );
     release_win_ptr( win );
 
     if (parent) map_dpi_create_struct( &cs, thread_dpi, win_dpi );

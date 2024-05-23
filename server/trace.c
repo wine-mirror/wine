@@ -2956,8 +2956,7 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", atom=%04x", req->atom );
     dump_uint64( ", instance=", &req->instance );
-    fprintf( stderr, ", dpi=%d", req->dpi );
-    fprintf( stderr, ", awareness=%d", req->awareness );
+    fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
     fprintf( stderr, ", style=%08x", req->style );
     fprintf( stderr, ", ex_style=%08x", req->ex_style );
     dump_varargs_unicode_str( ", class=", cur_size );
@@ -2970,8 +2969,7 @@ static void dump_create_window_reply( const struct create_window_reply *req )
     fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", extra=%d", req->extra );
     dump_uint64( ", class_ptr=", &req->class_ptr );
-    fprintf( stderr, ", dpi=%d", req->dpi );
-    fprintf( stderr, ", awareness=%d", req->awareness );
+    fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
 }
 
 static void dump_destroy_window_request( const struct destroy_window_request *req )
@@ -3015,8 +3013,7 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
     fprintf( stderr, ", tid=%04x", req->tid );
     fprintf( stderr, ", atom=%04x", req->atom );
     fprintf( stderr, ", is_unicode=%d", req->is_unicode );
-    fprintf( stderr, ", dpi=%d", req->dpi );
-    fprintf( stderr, ", awareness=%d", req->awareness );
+    fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
 }
 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
@@ -3053,8 +3050,7 @@ static void dump_set_parent_reply( const struct set_parent_reply *req )
 {
     fprintf( stderr, " old_parent=%08x", req->old_parent );
     fprintf( stderr, ", full_parent=%08x", req->full_parent );
-    fprintf( stderr, ", dpi=%d", req->dpi );
-    fprintf( stderr, ", awareness=%d", req->awareness );
+    fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
 }
 
 static void dump_get_window_parents_request( const struct get_window_parents_request *req )

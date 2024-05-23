@@ -2136,16 +2136,6 @@ static BOOL is_valid_dpi_awareness_context( UINT context, UINT dpi )
     return FALSE;
 }
 
-UINT get_dpi_awareness_context_from_awareness( DPI_AWARENESS awareness )
-{
-    switch (awareness)
-    {
-    default: return NTUSER_DPI_UNAWARE;
-    case DPI_AWARENESS_SYSTEM_AWARE: return NTUSER_DPI_SYSTEM_AWARE;
-    case DPI_AWARENESS_PER_MONITOR_AWARE: return NTUSER_DPI_PER_MONITOR_AWARE;
-    }
-}
-
 UINT get_thread_dpi_awareness_context(void)
 {
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
