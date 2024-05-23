@@ -173,6 +173,24 @@ static int last_bpp;
 static BOOL displaychange_ok = FALSE, displaychange_test_active = FALSE;
 static HANDLE displaychange_sem = 0;
 
+#define run_in_process( a, b ) run_in_process_( __FILE__, __LINE__, a, b )
+static void run_in_process_( const char *file, int line, char **argv, const char *args )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    char cmdline[MAX_PATH * 2];
+    DWORD ret;
+
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+}
+
 static BOOL get_reg_dword(HKEY base, const char *key_name, const char *value_name, DWORD *value)
 {
     HKEY key;
@@ -194,13 +212,19 @@ static BOOL get_reg_dword(HKEY base, const char *key_name, const char *value_nam
 
 static DWORD get_real_dpi(void)
 {
+    DPI_AWARENESS_CONTEXT ctx;
     DWORD dpi;
 
     if (pSetThreadDpiAwarenessContext)
     {
-        DPI_AWARENESS_CONTEXT context = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        ctx = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)0x80006010, "got %p\n", ctx );
         dpi = pGetDpiForSystem();
-        pSetThreadDpiAwarenessContext( context );
+        ok( dpi, "GetDpiForSystem failed\n" );
+        /* restore process-wide DPI awareness context */
+        ctx = pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80006010 );
+        todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (dpi << 8)), "got %p\n", ctx );
+        if (!ctx) pSetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000010 );
         return dpi;
     }
     if (get_reg_dword(HKEY_CURRENT_USER, "Control Panel\\Desktop", "LogPixels", &dpi))
@@ -3871,6 +3895,102 @@ static void test_AreDpiAwarenessContextsEqual(ULONG_PTR flags)
     }
 }
 
+static void test_SetProcessDpiAwarenessContext( ULONG arg )
+{
+    DPI_AWARENESS_CONTEXT contexts[] =
+    {
+        (DPI_AWARENESS_CONTEXT)0x6010,
+        (DPI_AWARENESS_CONTEXT)0x40006010,
+        (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (real_dpi << 8)),
+        (DPI_AWARENESS_CONTEXT)0x12,
+        (DPI_AWARENESS_CONTEXT)0x22,
+    };
+    DPI_AWARENESS_CONTEXT context, ctx, expect_ctx;
+    UINT ret, i;
+
+    /* 0x11 is system aware DPI and only works with the current system DPI */
+    if (arg == 0x11) context = contexts[2];
+    else context = LongToHandle( arg ) /* sign-extend */;
+
+    if (context == DPI_AWARENESS_CONTEXT_UNAWARE) expect_ctx = contexts[0];
+    else if (context == DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED) expect_ctx = contexts[1];
+    else if (context == DPI_AWARENESS_CONTEXT_SYSTEM_AWARE) expect_ctx = contexts[2];
+    else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE) expect_ctx = contexts[3];
+    else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) expect_ctx = contexts[4];
+    else if ((arg & 0xff000000) == 0x80000000) expect_ctx = ULongToHandle( arg ) /* no sign-extend */;
+    else expect_ctx = context;
+
+    winetest_push_context( "%#lx", arg );
+
+    ctx = pGetThreadDpiAwarenessContext();
+    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "got %p\n", ctx );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( 0 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x11 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_ACCESS_DENIED, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x21 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x32 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6012 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6022 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x40006011 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x40000012 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x7810 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x1ff11 );
+    ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+    todo_wine ok( GetLastError() == ERROR_ACCESS_DENIED, "got %#lx\n", GetLastError() );
+    ctx = pGetThreadDpiAwarenessContext();
+    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "got %p\n", ctx );
+
+    SetLastError( 0xdeadbeef );
+    ret = pSetProcessDpiAwarenessContext( context );
+    todo_wine ok( ret, "SetProcessDpiAwarenessContext failed, error %lu\n", GetLastError() );
+    todo_wine ok( GetLastError() == 0xdeadbeef, "got %#lx\n", GetLastError() );
+    ctx = pGetThreadDpiAwarenessContext();
+    todo_wine_if( arg != 0x12 && context != DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE )
+    ok( ctx == expect_ctx, "got %p\n", ctx );
+
+    for (i = 0; i < ARRAY_SIZE(contexts); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pSetProcessDpiAwarenessContext( contexts[i] );
+        ok( !ret, "SetProcessDpiAwarenessContext succeeded\n" );
+        todo_wine_if( i < 3 )
+        ok( GetLastError() == ERROR_ACCESS_DENIED, "got %#lx\n", GetLastError() );
+        ctx = pGetThreadDpiAwarenessContext();
+        todo_wine_if( arg != 0x12 && context != DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE )
+        ok( ctx == expect_ctx, "got %p\n", ctx );
+    }
+
+    winetest_pop_context();
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
@@ -4320,7 +4440,6 @@ START_TEST(sysparams)
     hdc = GetDC(0);
     dpi = GetDeviceCaps( hdc, LOGPIXELSY);
     real_dpi = get_real_dpi();
-    trace("dpi %d real_dpi %d\n", dpi, real_dpi);
     ReleaseDC( 0, hdc);
 
     /* This test requires interactivity, if we don't have it, give up */
@@ -4329,7 +4448,14 @@ START_TEST(sysparams)
 
     argc = winetest_get_mainargs(&argv);
     strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
-    trace("strict=%d\n",strict);
+
+    if (argc > 3 && !strcmp( argv[2], "SetProcessDpiAwarenessContext" ))
+    {
+        test_SetProcessDpiAwarenessContext( strtoul( argv[3], NULL, 16 ) );
+        return;
+    }
+
+    trace("dpi %d real_dpi %d, strict %d\n", dpi, real_dpi, strict);
 
     test_LOGFONT_charset();
 
@@ -4379,4 +4505,25 @@ START_TEST(sysparams)
     else win_skip( "SetThreadDpiAwarenessContext not supported\n" );
 
     test_dpi_aware();
+
+    if (!pSetProcessDpiAwarenessContext || !pSetThreadDpiAwarenessContext || !pGetThreadDpiAwarenessContext)
+        win_skip( "SetProcessDpiAwarenessContext not supported\n" );
+    else
+    {
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x6010" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x11" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x12" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x22" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x40006010" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x80006010" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x80000012" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0x80000022" );
+
+        /* user32 allows abstract DPI contexts to be used */
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0xffffffff" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0xfffffffe" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0xfffffffd" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0xfffffffc" );
+        run_in_process( argv, "SetProcessDpiAwarenessContext 0xfffffffb" );
+    }
 }
