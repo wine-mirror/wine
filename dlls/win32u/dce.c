@@ -804,7 +804,7 @@ static void make_dc_dirty( struct dce *dce )
  */
 void invalidate_dce( WND *win, const RECT *extra_rect )
 {
-    DPI_AWARENESS_CONTEXT context;
+    UINT context;
     RECT window_rect;
     struct dce *dce;
 
@@ -1173,7 +1173,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
     if (whole_rgn)
     {
-        DPI_AWARENESS_CONTEXT context;
+        UINT context;
         RECT client, window, update;
         INT type;
 
@@ -1527,9 +1527,8 @@ BOOL WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect )
  */
 INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
-    DPI_AWARENESS_CONTEXT context;
     INT retval = ERROR;
-    UINT flags = UPDATE_NOCHILDREN;
+    UINT flags = UPDATE_NOCHILDREN, context;
     HRGN update_rgn;
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
@@ -1593,7 +1592,7 @@ INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
 
     if (ret != ERROR)
     {
-        DPI_AWARENESS_CONTEXT context;
+        UINT context;
         POINT pt;
 
         context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));

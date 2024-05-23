@@ -390,7 +390,7 @@ HWND get_parent( HWND hwnd )
 HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 {
     RECT window_rect, old_screen_rect, new_screen_rect;
-    DPI_AWARENESS_CONTEXT context;
+    UINT context;
     WINDOWPOS winpos;
     HWND full_handle;
     HWND old_parent = 0;
@@ -856,9 +856,9 @@ BOOL is_window_enabled( HWND hwnd )
 }
 
 /* see GetWindowDpiAwarenessContext */
-DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
+UINT get_window_dpi_awareness_context( HWND hwnd )
 {
-    DPI_AWARENESS_CONTEXT ret = 0;
+    UINT ret = 0;
     WND *win;
 
     if (!(win = get_win_ptr( hwnd )))
@@ -866,10 +866,10 @@ DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
         RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
-    if (win == WND_DESKTOP) return DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
+    if (win == WND_DESKTOP) return NTUSER_DPI_PER_MONITOR_AWARE;
     if (win != WND_OTHER_PROCESS)
     {
-        ret = ULongToHandle( win->dpi_awareness | 0x10 );
+        ret = MAKE_NTUSER_DPI_CONTEXT( win->dpi_awareness, 1, 0, 0 );
         release_win_ptr( win );
     }
     else
@@ -877,7 +877,7 @@ DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
         SERVER_START_REQ( get_window_info )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = ULongToHandle( reply->awareness | 0x10 );
+            if (!wine_server_call_err( req )) ret = MAKE_NTUSER_DPI_CONTEXT( reply->awareness, 1, 0, 0 );
         }
         SERVER_END_REQ;
     }
@@ -3383,9 +3383,8 @@ done:
 BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 {
     RECT old_window_rect, old_client_rect, new_window_rect, new_client_rect, valid_rects[2];
-    UINT orig_flags;
+    UINT orig_flags, context;
     BOOL ret = FALSE;
-    DPI_AWARENESS_CONTEXT context;
 
     orig_flags = winpos->flags;
 
@@ -3837,7 +3836,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
 {
     LONG style = get_window_long( hwnd, GWL_STYLE );
     LONG exstyle = get_window_long( hwnd, GWL_EXSTYLE );
-    DPI_AWARENESS_CONTEXT context;
+    UINT context;
     RECT rc_work, rc_primary;
     LONG adjusted_style;
     MINMAXINFO minmax;
@@ -4218,7 +4217,7 @@ static UINT arrange_iconic_windows( HWND parent )
  */
 void update_window_state( HWND hwnd )
 {
-    DPI_AWARENESS_CONTEXT context;
+    UINT context;
     RECT window_rect, client_rect, valid_rects[2];
 
     if (!is_current_thread_window( hwnd ))
@@ -4245,12 +4244,11 @@ static BOOL show_window( HWND hwnd, INT cmd )
 {
     WND *win;
     HWND parent;
-    DPI_AWARENESS_CONTEXT context;
     LONG style = get_window_long( hwnd, GWL_STYLE );
     BOOL was_visible = (style & WS_VISIBLE) != 0;
     BOOL show_flag = TRUE;
     RECT newPos = {0, 0, 0, 0};
-    UINT new_swp, swp = 0;
+    UINT new_swp, swp = 0, context;
 
     TRACE( "hwnd=%p, cmd=%d, was_visible %d\n", hwnd, cmd, was_visible );
 
@@ -5089,8 +5087,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   HWND parent, HMENU menu, HINSTANCE instance, void *params,
                                   DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi )
 {
-    UINT win_dpi, thread_dpi = get_thread_dpi();
-    DPI_AWARENESS_CONTEXT context;
+    UINT win_dpi, thread_dpi = get_thread_dpi(), context;
     CBT_CREATEWNDW cbtc;
     HWND hwnd, owner = 0;
     CREATESTRUCTW cs;
@@ -5446,7 +5443,7 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return get_window_context_help_id( hwnd );
 
     case NtUserCallHwnd_GetWindowDpiAwarenessContext:
-        return (ULONG_PTR)get_window_dpi_awareness_context( hwnd );
+        return get_window_dpi_awareness_context( hwnd );
 
     case NtUserCallHwnd_GetWindowInputContext:
         return HandleToUlong( get_window_input_context( hwnd ));

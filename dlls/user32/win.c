@@ -612,7 +612,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
  */
 DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 {
-    return NtUserGetWindowDpiAwarenessContext( hwnd );
+    return LongToHandle( NtUserGetWindowDpiAwarenessContext( hwnd ) );
 }
 
 

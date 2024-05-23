@@ -2199,10 +2199,10 @@ UINT get_system_dpi(void)
 }
 
 /* see SetThreadDpiAwarenessContext, keep in sync with user32 */
-DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
+UINT set_thread_dpi_awareness_context( UINT context )
 {
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
-    DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( context );
+    DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( ULongToHandle( context ) );
 
     if (val == DPI_AWARENESS_INVALID)
     {
@@ -2215,10 +2215,10 @@ DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT co
         prev |= 0x80000010;  /* restore to process default */
     }
     if (((ULONG_PTR)context & ~(ULONG_PTR)0x33) == 0x80000000) info->dpi_awareness = 0;
-    else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 || context == (DPI_AWARENESS_CONTEXT)0x22)
+    else if (context == HandleToUlong( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ) || context == 0x22)
         info->dpi_awareness = 0x22;
     else info->dpi_awareness = val | 0x10;
-    return ULongToHandle( prev );
+    return prev;
 }
 
 /**********************************************************************
@@ -6435,7 +6435,7 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return set_keyboard_auto_repeat( arg );
 
     case NtUserCallOneParam_SetThreadDpiAwarenessContext:
-        return (ULONG_PTR)set_thread_dpi_awareness_context( (DPI_AWARENESS_CONTEXT)arg );
+        return set_thread_dpi_awareness_context( arg );
 
     /* temporary exports */
     case NtUserGetDeskPattern:

@@ -1164,10 +1164,9 @@ static inline HWND NtUserGetParent( HWND hwnd )
     return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetParent ));
 }
 
-static inline DPI_AWARENESS_CONTEXT NtUserGetWindowDpiAwarenessContext( HWND hwnd )
+static inline UINT NtUserGetWindowDpiAwarenessContext( HWND hwnd )
 {
-    return (DPI_AWARENESS_CONTEXT)NtUserCallHwnd( hwnd,
-                                                  NtUserCallHwnd_GetWindowDpiAwarenessContext );
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowDpiAwarenessContext );
 }
 
 static inline HIMC NtUserGetWindowInputContext( HWND hwnd )
