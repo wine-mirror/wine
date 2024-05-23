@@ -2107,6 +2107,35 @@ UINT get_win_monitor_dpi( HWND hwnd )
     return system_dpi;
 }
 
+/* keep in sync with user32 */
+static BOOL is_valid_dpi_awareness_context( UINT context, UINT dpi )
+{
+    switch (NTUSER_DPI_CONTEXT_GET_AWARENESS( context ))
+    {
+    case DPI_AWARENESS_UNAWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_DPI( context ) != USER_DEFAULT_SCREEN_DPI) return FALSE;
+        return TRUE;
+
+    case DPI_AWARENESS_SYSTEM_AWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_GDISCALED) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1) return FALSE;
+        if (dpi && NTUSER_DPI_CONTEXT_GET_DPI( context ) != dpi) return FALSE;
+        return TRUE;
+
+    case DPI_AWARENESS_PER_MONITOR_AWARE:
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & ~NTUSER_DPI_CONTEXT_FLAG_VALID_MASK) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_GDISCALED) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 1 && NTUSER_DPI_CONTEXT_GET_VERSION( context ) != 2) return FALSE;
+        if (NTUSER_DPI_CONTEXT_GET_DPI( context )) return FALSE;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /* copied from user32 GetAwarenessFromDpiAwarenessContext, make sure to keep that in sync */
 static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
 {
@@ -6202,27 +6231,27 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
 }
 
 
-static LONG dpi_awareness;
+static LONG dpi_context;
 
 /***********************************************************************
  *	     NtUserSetProcessDpiAwarenessContext    (win32u.@)
  */
-BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown )
+BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG context, ULONG unknown )
 {
-    switch (awareness)
+    if (!is_valid_dpi_awareness_context( context, system_dpi ))
     {
-    case NTUSER_DPI_UNAWARE:
-    case NTUSER_DPI_SYSTEM_AWARE:
-    case NTUSER_DPI_PER_MONITOR_AWARE:
-    case NTUSER_DPI_PER_MONITOR_AWARE_V2:
-    case NTUSER_DPI_PER_UNAWARE_GDISCALED:
-        break;
-    default:
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    return !InterlockedCompareExchange( &dpi_awareness, awareness, 0 );
+    if (InterlockedCompareExchange( &dpi_context, context, 0 ))
+    {
+        RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+
+    TRACE( "set to %#x\n", (UINT)context );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -6230,7 +6259,7 @@ BOOL WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown 
  */
 ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
 {
-    DPI_AWARENESS val;
+    ULONG context;
 
     if (process && process != GetCurrentProcess())
     {
@@ -6238,9 +6267,9 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
         return NTUSER_DPI_UNAWARE;
     }
 
-    val = ReadNoFence( &dpi_awareness );
-    if (!val) return NTUSER_DPI_UNAWARE;
-    return val;
+    context = ReadNoFence( &dpi_context );
+    if (!context) return NTUSER_DPI_UNAWARE;
+    return context;
 }
 
 BOOL message_beep( UINT i )

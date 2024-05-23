@@ -281,12 +281,21 @@ struct unpack_dde_message_result
     LPARAM lparam;
 };
 
-/* process DPI awareness contexts */
-#define NTUSER_DPI_UNAWARE                0x00006010
-#define NTUSER_DPI_SYSTEM_AWARE           0x00006011
-#define NTUSER_DPI_PER_MONITOR_AWARE      0x00000012
-#define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
-#define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
+/* DPI awareness contexts */
+#define MAKE_NTUSER_DPI_CONTEXT( awareness, version, dpi, flags )  ((awareness) | ((version) << 4) | ((dpi) << 8) | (flags))
+#define NTUSER_DPI_CONTEXT_GET_AWARENESS( ctx )                    ((ctx) & 0x0f)
+#define NTUSER_DPI_CONTEXT_GET_VERSION( ctx )                      (((ctx) & 0xf0) >> 4)
+#define NTUSER_DPI_CONTEXT_GET_DPI( ctx )                          ((((ctx) & 0x1ff00) >> 8))
+#define NTUSER_DPI_CONTEXT_GET_FLAGS( ctx )                        ((ctx) & 0xfffe0000)
+#define NTUSER_DPI_CONTEXT_FLAG_GDISCALED                          0x40000000
+#define NTUSER_DPI_CONTEXT_FLAG_PROCESS                            0x80000000
+#define NTUSER_DPI_CONTEXT_FLAG_VALID_MASK                         (NTUSER_DPI_CONTEXT_FLAG_PROCESS | NTUSER_DPI_CONTEXT_FLAG_GDISCALED)
+
+#define NTUSER_DPI_UNAWARE                MAKE_NTUSER_DPI_CONTEXT( DPI_AWARENESS_UNAWARE, 1, USER_DEFAULT_SCREEN_DPI, 0 )
+#define NTUSER_DPI_SYSTEM_AWARE           MAKE_NTUSER_DPI_CONTEXT( DPI_AWARENESS_SYSTEM_AWARE, 1, system_dpi, 0 )
+#define NTUSER_DPI_PER_MONITOR_AWARE      MAKE_NTUSER_DPI_CONTEXT( DPI_AWARENESS_PER_MONITOR_AWARE, 1, 0, 0 )
+#define NTUSER_DPI_PER_MONITOR_AWARE_V2   MAKE_NTUSER_DPI_CONTEXT( DPI_AWARENESS_PER_MONITOR_AWARE, 2, 0, 0 )
+#define NTUSER_DPI_PER_UNAWARE_GDISCALED  MAKE_NTUSER_DPI_CONTEXT( DPI_AWARENESS_UNAWARE, 1, USER_DEFAULT_SCREEN_DPI, NTUSER_DPI_CONTEXT_FLAG_GDISCALED )
 
 /* message spy definitions */
 #define SPY_DISPATCHMESSAGE  0x0100

@@ -615,7 +615,8 @@ BOOL WINAPI SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
  */
 BOOL WINAPI GetProcessDpiAwarenessInternal( HANDLE process, DPI_AWARENESS *awareness )
 {
-    *awareness = NtUserGetProcessDpiAwarenessContext( process ) & 3;
+    ULONG context = NtUserGetProcessDpiAwarenessContext( process );
+    *awareness = NTUSER_DPI_CONTEXT_GET_AWARENESS( context );
     return TRUE;
 }
 
@@ -732,9 +733,12 @@ UINT WINAPI GetDpiForSystem(void)
 DPI_AWARENESS_CONTEXT WINAPI GetThreadDpiAwarenessContext(void)
 {
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
+    ULONG context;
 
     if (info->dpi_awareness) return ULongToHandle( info->dpi_awareness );
-    return UlongToHandle( (NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3 ) | 0x10 );
+
+    context = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+    return UlongToHandle( NTUSER_DPI_CONTEXT_GET_AWARENESS( context ) | 0x10 );
 }
 
 /**********************************************************************
@@ -753,8 +757,8 @@ DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT
     }
     if (!(prev = info->dpi_awareness))
     {
-        prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
-        prev |= 0x80000010;  /* restore to process default */
+        ULONG process_ctx = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+        prev = NTUSER_DPI_CONTEXT_GET_AWARENESS( process_ctx ) | 0x80000010;  /* restore to process default */
     }
     if (((ULONG_PTR)context & ~(ULONG_PTR)0x33) == 0x80000000) info->dpi_awareness = 0;
     else if (context == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 || context == (DPI_AWARENESS_CONTEXT)0x22)
