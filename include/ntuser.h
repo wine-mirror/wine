@@ -908,6 +908,7 @@ enum
     NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
     NtUserCallOneParam_SetKeyboardAutoRepeat,
+    NtUserCallOneParam_SetThreadDpiAwarenessContext,
     /* temporary exports */
     NtUserGetDeskPattern,
 };
@@ -1024,6 +1025,11 @@ static inline BOOL NtUserReplyMessage( LRESULT result )
 static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
 {
     return NtUserCallOneParam( layout, NtUserCallOneParam_SetProcessDefaultLayout );
+}
+
+static inline DPI_AWARENESS_CONTEXT NtUserSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
+{
+    return (DPI_AWARENESS_CONTEXT)NtUserCallOneParam( (ULONG_PTR)context, NtUserCallOneParam_SetThreadDpiAwarenessContext );
 }
 
 /* NtUserCallTwoParam codes, not compatible with Windows */

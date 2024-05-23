@@ -2500,7 +2500,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     }
 
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
-    SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( msg->hwnd ));
+    set_thread_dpi_awareness_context( get_window_dpi_awareness_context( msg->hwnd ));
 
     /* FIXME: is this really the right place for this hook? */
     event.message = msg->message;
@@ -2680,7 +2680,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     thread_info->msg_source.originId   = msg_data->source.origin;
 
     /* hardware messages are always in physical coords */
-    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    context = set_thread_dpi_awareness_context( (DPI_AWARENESS_CONTEXT)NTUSER_DPI_PER_MONITOR_AWARE );
 
     if (msg->message == WM_INPUT || msg->message == WM_INPUT_DEVICE_CHANGE)
         ret = process_rawinput_message( msg, hw_id, msg_data );
@@ -2696,7 +2696,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
         process_wine_setcursor( msg->hwnd, (HWND)msg->wParam, (HCURSOR)msg->lParam );
     else
         ERR( "unknown message type %x\n", msg->message );
-    SetThreadDpiAwarenessContext( context );
+    set_thread_dpi_awareness_context( context );
     return ret;
 }
 

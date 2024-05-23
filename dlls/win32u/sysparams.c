@@ -2198,11 +2198,8 @@ UINT get_system_dpi(void)
     return system_dpi;
 }
 
-/**********************************************************************
- *           SetThreadDpiAwarenessContext   (win32u.so)
- *           copied from user32, make sure to keep that in sync
- */
-DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
+/* see SetThreadDpiAwarenessContext, keep in sync with user32 */
+DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
 {
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
     DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( context );
@@ -6436,6 +6433,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_SetKeyboardAutoRepeat:
         return set_keyboard_auto_repeat( arg );
+
+    case NtUserCallOneParam_SetThreadDpiAwarenessContext:
+        return (ULONG_PTR)set_thread_dpi_awareness_context( (DPI_AWARENESS_CONTEXT)arg );
 
     /* temporary exports */
     case NtUserGetDeskPattern:

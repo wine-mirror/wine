@@ -175,6 +175,7 @@ extern HPEN get_sys_color_pen( unsigned int index );
 extern UINT get_system_dpi(void);
 extern int get_system_metrics( int index );
 extern UINT get_thread_dpi(void);
+extern DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context );
 extern DPI_AWARENESS get_thread_dpi_awareness(void);
 extern RECT get_virtual_screen_rect( UINT dpi );
 extern BOOL is_exiting_thread( DWORD tid );
