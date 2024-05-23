@@ -29,6 +29,24 @@
 #define check_member( val, exp, fmt, member )                                                      \
     check_member_( __FILE__, __LINE__, val, exp, fmt, member )
 
+#define run_in_process( a, b ) run_in_process_( __FILE__, __LINE__, a, b )
+static void run_in_process_( const char *file, int line, char **argv, const char *args )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    char cmdline[MAX_PATH * 2];
+    DWORD ret;
+
+    sprintf( cmdline, "%s %s %s", argv[0], argv[1], args );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+}
+
 static void flush_events(void)
 {
     int min_timeout = 100, diff = 200;
@@ -1305,7 +1323,7 @@ done:
     ok( ret, "UnregisterClassW failed: %lu\n", GetLastError() );
 }
 
-static void test_NtUserEnableMouseInPointer_process( const char *arg )
+static void test_NtUserEnableMouseInPointer( const char *arg )
 {
     DWORD enable = strtoul( arg, 0, 10 );
     BOOL ret;
@@ -1337,23 +1355,6 @@ static void test_NtUserEnableMouseInPointer_process( const char *arg )
     ok( ret == enable, "NtUserIsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     test_NtUserGetPointerInfoList( enable );
-}
-
-static void test_NtUserEnableMouseInPointer( char **argv, BOOL enable )
-{
-    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
-    PROCESS_INFORMATION info = {0};
-    char cmdline[MAX_PATH * 2];
-    BOOL ret;
-
-    sprintf( cmdline, "%s %s NtUserEnableMouseInPointer %u", argv[0], argv[1], enable );
-    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
-    ok( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
-    if (!ret) return;
-
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
 }
 
 struct lparam_hook_test
@@ -2060,7 +2061,7 @@ START_TEST(win32u)
     if (argc > 3 && !strcmp( argv[2], "NtUserEnableMouseInPointer" ))
     {
         winetest_push_context( "enable %s", argv[3] );
-        test_NtUserEnableMouseInPointer_process( argv[3] );
+        test_NtUserEnableMouseInPointer( argv[3] );
         winetest_pop_context();
         return;
     }
@@ -2083,6 +2084,6 @@ START_TEST(win32u)
     test_NtUserCloseWindowStation();
     test_NtUserDisplayConfigGetDeviceInfo();
 
-    test_NtUserEnableMouseInPointer( argv, FALSE );
-    test_NtUserEnableMouseInPointer( argv, TRUE );
+    run_in_process( argv, "NtUserEnableMouseInPointer 0" );
+    run_in_process( argv, "NtUserEnableMouseInPointer 1" );
 }
