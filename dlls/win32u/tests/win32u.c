@@ -2043,6 +2043,126 @@ static void test_wndproc_hook(void)
     UnregisterClassW( L"TestLParamClass", NULL );
 }
 
+static DWORD get_real_dpi(void)
+{
+    DPI_AWARENESS_CONTEXT ctx;
+    DWORD dpi;
+
+    ctx = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)0x80006010, "got %p\n", ctx );
+    dpi = GetDpiForSystem();
+    ok( dpi, "GetDpiForSystem failed\n" );
+    /* restore process-wide DPI awareness context */
+    ctx = SetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80006010 );
+    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (dpi << 8)), "got %p\n", ctx );
+    if (!ctx) SetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000010 );
+
+    return dpi;
+}
+
+static void test_NtUserSetProcessDpiAwarenessContext( ULONG context )
+{
+    UINT contexts[] =
+    {
+        0x6010,
+        0x40006010,
+        0x11 | (get_real_dpi() << 8),
+        0x12,
+        0x22,
+    };
+    UINT ret, i;
+
+    /* 0x11 is system aware DPI and only works with the current system DPI */
+    if (context == 0x11) context = contexts[1];
+
+    winetest_push_context( "%#lx", context );
+
+    ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+    todo_wine ok( ret == 0x6010, "got %#x\n", ret );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+
+    /* win32u doesn't allow abstract DPI awareness contexts */
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( (LONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( (LONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( (LONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( (LONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( (LONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x11, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x21, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x32, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x6012, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x6022, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x40006011, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x40000012, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x7810, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = NtUserSetProcessDpiAwarenessContext( 0x1ff11, 0 );
+    ok( ret == 0, "got %#x\n", ret );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
+    ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+    todo_wine ok( ret == 0x6010, "got %#x\n", ret );
+
+    ret = NtUserSetProcessDpiAwarenessContext( context, 0 );
+    todo_wine ok( ret == 1, "got %#x\n", ret );
+    ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+    todo_wine_if( context != 0x12 )
+    ok( ret == context, "got %#x\n", ret );
+
+    for (i = 0; i < ARRAY_SIZE(contexts); i++)
+    {
+        ret = NtUserSetProcessDpiAwarenessContext( contexts[i], 0 );
+        ok( !ret, "got %#x\n", ret );
+        ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
+        todo_wine_if( context != 0x12 )
+        ok( ret == context, "got %#x\n", ret );
+    }
+
+    winetest_pop_context();
+}
+
 START_TEST(win32u)
 {
     char **argv;
@@ -2066,6 +2186,12 @@ START_TEST(win32u)
         return;
     }
 
+    if (argc > 3 && !strcmp( argv[2], "NtUserSetProcessDpiAwarenessContext" ))
+    {
+        test_NtUserSetProcessDpiAwarenessContext( strtoul( argv[3], NULL, 16 ) );
+        return;
+    }
+
     test_NtUserEnumDisplayDevices();
     test_window_props();
     test_class();
@@ -2086,4 +2212,13 @@ START_TEST(win32u)
 
     run_in_process( argv, "NtUserEnableMouseInPointer 0" );
     run_in_process( argv, "NtUserEnableMouseInPointer 1" );
+
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x6010" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x11" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x12" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x22" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x40006010" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x80006010" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x80000012" );
+    run_in_process( argv, "NtUserSetProcessDpiAwarenessContext 0x80000022" );
 }
