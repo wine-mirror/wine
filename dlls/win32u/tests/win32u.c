@@ -2054,8 +2054,7 @@ static DWORD get_real_dpi(void)
     ok( dpi, "GetDpiForSystem failed\n" );
     /* restore process-wide DPI awareness context */
     ctx = SetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80006010 );
-    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (dpi << 8)), "got %p\n", ctx );
-    if (!ctx) SetThreadDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x80000010 );
+    ok( ctx == (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (dpi << 8)), "got %p\n", ctx );
 
     return dpi;
 }

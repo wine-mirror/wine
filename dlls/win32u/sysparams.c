@@ -2136,28 +2136,13 @@ static BOOL is_valid_dpi_awareness_context( UINT context, UINT dpi )
     return FALSE;
 }
 
-/* copied from user32 GetAwarenessFromDpiAwarenessContext, make sure to keep that in sync */
-static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
+UINT get_dpi_awareness_context_from_awareness( DPI_AWARENESS awareness )
 {
-    switch ((ULONG_PTR)context)
+    switch (awareness)
     {
-    case 0x10:
-    case 0x11:
-    case 0x12:
-    case 0x22:
-    case 0x80000010:
-    case 0x80000011:
-    case 0x80000012:
-    case 0x80000022:
-        return (ULONG_PTR)context & 3;
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
-        return ~(ULONG_PTR)context;
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
-        return ~(ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE;
-    default:
-        return DPI_AWARENESS_INVALID;
+    default: return NTUSER_DPI_UNAWARE;
+    case DPI_AWARENESS_SYSTEM_AWARE: return NTUSER_DPI_SYSTEM_AWARE;
+    case DPI_AWARENESS_PER_MONITOR_AWARE: return NTUSER_DPI_PER_MONITOR_AWARE;
     }
 }
 
@@ -2196,26 +2181,22 @@ UINT get_system_dpi(void)
     return system_dpi;
 }
 
-/* see SetThreadDpiAwarenessContext, keep in sync with user32 */
+/* keep in sync with user32 */
 UINT set_thread_dpi_awareness_context( UINT context )
 {
     struct ntuser_thread_info *info = NtUserGetThreadInfo();
-    DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( ULongToHandle( context ) );
+    UINT prev;
 
-    if (val == DPI_AWARENESS_INVALID)
+    if (!is_valid_dpi_awareness_context( context, system_dpi ))
     {
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (!(prev = info->dpi_context))
-    {
-        prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) & 3;
-        prev |= 0x80000010;  /* restore to process default */
-    }
-    if (((ULONG_PTR)context & ~(ULONG_PTR)0x33) == 0x80000000) info->dpi_context = 0;
-    else if (context == HandleToUlong( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ) || context == 0x22)
-        info->dpi_context = 0x22;
-    else info->dpi_context = val | 0x10;
+
+    if (!(prev = info->dpi_context)) prev = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() ) | NTUSER_DPI_CONTEXT_FLAG_PROCESS;
+    if (NTUSER_DPI_CONTEXT_GET_FLAGS( context ) & NTUSER_DPI_CONTEXT_FLAG_PROCESS) info->dpi_context = 0;
+    else info->dpi_context = context;
+
     return prev;
 }
 

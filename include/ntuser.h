@@ -1027,9 +1027,9 @@ static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
     return NtUserCallOneParam( layout, NtUserCallOneParam_SetProcessDefaultLayout );
 }
 
-static inline DPI_AWARENESS_CONTEXT NtUserSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
+static inline UINT NtUserSetThreadDpiAwarenessContext( UINT context )
 {
-    return (DPI_AWARENESS_CONTEXT)NtUserCallOneParam( (ULONG_PTR)context, NtUserCallOneParam_SetThreadDpiAwarenessContext );
+    return NtUserCallOneParam( context, NtUserCallOneParam_SetThreadDpiAwarenessContext );
 }
 
 /* NtUserCallTwoParam codes, not compatible with Windows */

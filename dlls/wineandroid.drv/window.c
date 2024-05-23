@@ -418,7 +418,7 @@ static void pull_events(void)
  */
 static int process_events( DWORD mask )
 {
-    DPI_AWARENESS_CONTEXT context;
+    UINT context;
     struct java_event *event, *next, *previous;
     unsigned int count = 0;
 

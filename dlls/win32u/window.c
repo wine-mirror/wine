@@ -869,7 +869,7 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
     if (win == WND_DESKTOP) return NTUSER_DPI_PER_MONITOR_AWARE;
     if (win != WND_OTHER_PROCESS)
     {
-        ret = MAKE_NTUSER_DPI_CONTEXT( win->dpi_awareness, 1, 0, 0 );
+        ret = get_dpi_awareness_context_from_awareness( win->dpi_awareness );
         release_win_ptr( win );
     }
     else
@@ -877,7 +877,7 @@ UINT get_window_dpi_awareness_context( HWND hwnd )
         SERVER_START_REQ( get_window_info )
         {
             req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) ret = MAKE_NTUSER_DPI_CONTEXT( reply->awareness, 1, 0, 0 );
+            if (!wine_server_call_err( req )) ret = get_dpi_awareness_context_from_awareness( reply->awareness );
         }
         SERVER_END_REQ;
     }
