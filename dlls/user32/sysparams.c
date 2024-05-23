@@ -701,6 +701,15 @@ DPI_AWARENESS WINAPI GetAwarenessFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT 
 }
 
 /***********************************************************************
+ *              GetDpiFromDpiAwarenessContext   (USER32.@)
+ */
+UINT WINAPI GetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT handle )
+{
+    UINT context = get_ntuser_dpi_context( handle );
+    return NTUSER_DPI_CONTEXT_GET_DPI( context );
+}
+
+/***********************************************************************
  *              IsValidDpiAwarenessContext   (USER32.@)
  */
 BOOL WINAPI IsValidDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )

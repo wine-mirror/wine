@@ -302,6 +302,7 @@
 @ stdcall GetDpiForMonitorInternal(long long ptr ptr) NtUserGetDpiForMonitor
 @ stdcall GetDpiForSystem()
 @ stdcall GetDpiForWindow(long)
+@ stdcall GetDpiFromDpiAwarenessContext(long)
 @ stdcall GetFocus()
 @ stdcall GetForegroundWindow() NtUserGetForegroundWindow
 @ stdcall GetGestureConfig(long long long ptr ptr long)

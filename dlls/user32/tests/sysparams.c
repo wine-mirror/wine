@@ -50,6 +50,7 @@ static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
 static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 static LONG (WINAPI *pGetAutoRotationState)(PAR_STATE);
 static BOOL (WINAPI *pAreDpiAwarenessContextsEqual)(DPI_AWARENESS_CONTEXT,DPI_AWARENESS_CONTEXT);
+static LONG (WINAPI *pGetDpiFromDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static BOOL strict;
 static int dpi, real_dpi;
@@ -4156,6 +4157,50 @@ static void test_IsValidDpiAwarenessContext(void)
     }
 }
 
+static void test_GetDpiFromDpiAwarenessContext(void)
+{
+    UINT ret;
+
+    if (!pGetDpiFromDpiAwarenessContext)
+    {
+        win_skip( "GetDpiFromDpiAwarenessContext missing, skipping tests\n" );
+        return;
+    }
+
+    ret = pGetDpiFromDpiAwarenessContext( 0 );
+    ok( !ret, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x11 );
+    ok( ret == 0, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x12 );
+    ok( ret == 0, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x22 );
+    ok( ret == 0, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6011 );
+    ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x6111 );
+    ok( ret == 97, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x7811 );
+    ok( ret == 120, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x10011 );
+    ok( ret == 256, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)0x40006010 );
+    ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+
+    ret = pGetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    ok( ret == real_dpi, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ok( ret == 0, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    ok( ret == 0, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+    ret = pGetDpiFromDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED );
+    ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
@@ -4591,6 +4636,7 @@ START_TEST(sysparams)
     pPhysicalToLogicalPointForPerMonitorDPI = (void*)GetProcAddress(hdll, "PhysicalToLogicalPointForPerMonitorDPI");
     pGetAutoRotationState = (void*)GetProcAddress(hdll, "GetAutoRotationState");
     pAreDpiAwarenessContextsEqual = (void*)GetProcAddress(hdll, "AreDpiAwarenessContextsEqual");
+    pGetDpiFromDpiAwarenessContext = (void*)GetProcAddress(hdll, "GetDpiFromDpiAwarenessContext");
 
     hInstance = GetModuleHandleA( NULL );
     hdc = GetDC(0);
@@ -4623,6 +4669,7 @@ START_TEST(sysparams)
     test_GetAutoRotationState( );
     test_SetThreadDpiAwarenessContext();
     test_IsValidDpiAwarenessContext();
+    test_GetDpiFromDpiAwarenessContext();
 
     change_counter = 0;
     change_last_param = 0;
