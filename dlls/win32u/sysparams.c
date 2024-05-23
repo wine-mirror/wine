@@ -4925,7 +4925,6 @@ void sysparams_init(void)
 
     /* FIXME: what do the DpiScalingVer flags mean? */
     get_dword_entry( (union sysparam_all_entry *)&entry_DPISCALINGVER, 0, &dpi_scaling, 0 );
-    if (!dpi_scaling) NtUserSetProcessDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE, 0 );
 
     if (volatile_base_key && dispos == REG_CREATED_NEW_KEY)  /* first process, initialize entries */
     {

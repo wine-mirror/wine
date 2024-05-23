@@ -2049,7 +2049,7 @@ static DWORD get_real_dpi(void)
     DWORD dpi;
 
     ctx = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
-    todo_wine ok( ctx == (DPI_AWARENESS_CONTEXT)0x80006010, "got %p\n", ctx );
+    ok( ctx == (DPI_AWARENESS_CONTEXT)0x80006010, "got %p\n", ctx );
     dpi = GetDpiForSystem();
     ok( dpi, "GetDpiForSystem failed\n" );
     /* restore process-wide DPI awareness context */
@@ -2077,7 +2077,7 @@ static void test_NtUserSetProcessDpiAwarenessContext( ULONG context )
     winetest_push_context( "%#lx", context );
 
     ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
-    todo_wine ok( ret == 0x6010, "got %#x\n", ret );
+    ok( ret == 0x6010, "got %#x\n", ret );
 
     SetLastError( 0xdeadbeef );
     ret = NtUserSetProcessDpiAwarenessContext( 0, 0 );
@@ -2142,12 +2142,11 @@ static void test_NtUserSetProcessDpiAwarenessContext( ULONG context )
     ok( ret == 0, "got %#x\n", ret );
     ok( GetLastError() == ERROR_INVALID_PARAMETER, "got %#lx\n", GetLastError() );
     ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
-    todo_wine ok( ret == 0x6010, "got %#x\n", ret );
+    ok( ret == 0x6010, "got %#x\n", ret );
 
     ret = NtUserSetProcessDpiAwarenessContext( context, 0 );
-    todo_wine ok( ret == 1, "got %#x\n", ret );
+    ok( ret == 1, "got %#x\n", ret );
     ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
-    todo_wine_if( context != 0x12 )
     ok( ret == context, "got %#x\n", ret );
 
     for (i = 0; i < ARRAY_SIZE(contexts); i++)
@@ -2155,7 +2154,6 @@ static void test_NtUserSetProcessDpiAwarenessContext( ULONG context )
         ret = NtUserSetProcessDpiAwarenessContext( contexts[i], 0 );
         ok( !ret, "got %#x\n", ret );
         ret = NtUserGetProcessDpiAwarenessContext( GetCurrentProcess() );
-        todo_wine_if( context != 0x12 )
         ok( ret == context, "got %#x\n", ret );
     }
 
