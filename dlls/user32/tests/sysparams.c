@@ -3804,53 +3804,6 @@ static void test_dpi_aware(void)
     test_metrics_for_dpi( 192 );
 }
 
-static int map_context(ULONG_PTR context, ULONG_PTR flags)
-{
-    switch (context)
-    {
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE:
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE:
-        return (~(ULONG_PTR)context) | 0x10;
-    case (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2:
-        return 0x22;
-    default:
-       context = context & (~flags);
-       return context & 0x33;
-    }
-}
-
-static void test_AreDpiAwarenessContextsEqual(ULONG_PTR flags)
-{
-    int i, j;
-    ULONG_PTR contexts[] = {
-        0x10 | flags,
-        0x11 | flags,
-        0x12,
-        0x22,
-        0x80000010 | flags,
-        0x80000011 | flags,
-        0x80000012,
-        0x80000022,
-        (ULONG_PTR)DPI_AWARENESS_CONTEXT_UNAWARE,
-        (ULONG_PTR)DPI_AWARENESS_CONTEXT_SYSTEM_AWARE,
-        (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE,
-        (ULONG_PTR)DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
-    };
-
-    for (i = 0; i < ARRAY_SIZE(contexts); i++)
-    {
-        for (j = 0; j < ARRAY_SIZE(contexts); j++)
-        {
-            BOOL equal = pAreDpiAwarenessContextsEqual((DPI_AWARENESS_CONTEXT)contexts[i], (DPI_AWARENESS_CONTEXT)contexts[j]);
-            int map_i = map_context(contexts[i], flags);
-            int map_j = map_context(contexts[j], flags);
-            BOOL equal_expected = map_i == map_j;
-            ok(equal == equal_expected, "(%d, %d) (%p == %p) - Expected equal to be %d but got %d\n", i, j, (DPI_AWARENESS_CONTEXT)contexts[i], (DPI_AWARENESS_CONTEXT)contexts[j], equal_expected, equal);
-        }
-    }
-}
-
 static void test_SetProcessDpiAwarenessContext( ULONG arg )
 {
     DPI_AWARENESS_CONTEXT contexts[] =
@@ -4201,6 +4154,90 @@ static void test_GetDpiFromDpiAwarenessContext(void)
     ok( ret == 96, "GetDpiFromDpiAwarenessContext returned %u\n", ret );
 }
 
+static void test_AreDpiAwarenessContextsEqual(void)
+{
+    BOOL ret;
+
+    if (!pAreDpiAwarenessContextsEqual)
+    {
+        win_skip( "AreDpiAwarenessContextsEqual missing, skipping tests\n" );
+        return;
+    }
+
+    ret = pAreDpiAwarenessContextsEqual( 0, 0 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x12, (DPI_AWARENESS_CONTEXT)0x12 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x22, (DPI_AWARENESS_CONTEXT)0x22 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x6010, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x6011, (DPI_AWARENESS_CONTEXT)0x6011 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x6111, (DPI_AWARENESS_CONTEXT)0x6111 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x7811, (DPI_AWARENESS_CONTEXT)0x7811 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x40006010, (DPI_AWARENESS_CONTEXT)0x40006010 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE, DPI_AWARENESS_CONTEXT_UNAWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED, DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x6010, DPI_AWARENESS_CONTEXT_UNAWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE, (DPI_AWARENESS_CONTEXT)0x10 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (real_dpi << 8)) );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)((UINT_PTR)0x11 | (real_dpi << 8)), DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE, (DPI_AWARENESS_CONTEXT)0x11 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE, (DPI_AWARENESS_CONTEXT)0x12 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x12, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, (DPI_AWARENESS_CONTEXT)0x22 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x22, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED, (DPI_AWARENESS_CONTEXT)0x40006010 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x40006010, DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED, (DPI_AWARENESS_CONTEXT)0x40000010 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x10, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x11, (DPI_AWARENESS_CONTEXT)0x6011 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x12, (DPI_AWARENESS_CONTEXT)0x6012 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x22, (DPI_AWARENESS_CONTEXT)0x6022 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x20006010, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x40006010, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( !ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+    ret = pAreDpiAwarenessContextsEqual( (DPI_AWARENESS_CONTEXT)0x80006010, (DPI_AWARENESS_CONTEXT)0x6010 );
+    ok( ret, "AreDpiAwarenessContextsEqual returned %u\n", ret );
+}
+
 static void test_dpi_context(void)
 {
     DPI_AWARENESS awareness;
@@ -4346,8 +4383,6 @@ static void test_dpi_context(void)
     context = pGetThreadDpiAwarenessContext();
     todo_wine
     ok( context == (DPI_AWARENESS_CONTEXT)(0x11 | flags), "wrong context %p\n", context );
-
-    test_AreDpiAwarenessContextsEqual(flags);
 
     for (i = 0; i < 0x100; i++)
     {
@@ -4670,6 +4705,7 @@ START_TEST(sysparams)
     test_SetThreadDpiAwarenessContext();
     test_IsValidDpiAwarenessContext();
     test_GetDpiFromDpiAwarenessContext();
+    test_AreDpiAwarenessContextsEqual();
 
     change_counter = 0;
     change_last_param = 0;

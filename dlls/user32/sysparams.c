@@ -655,21 +655,15 @@ BOOL WINAPI SetProcessDpiAwarenessInternal( DPI_AWARENESS awareness )
     return SetProcessDpiAwarenessContext( contexts[awareness] );
 }
 
-static ULONG_PTR map_awareness_context( DPI_AWARENESS_CONTEXT ctx )
-{
-    if (ctx == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 || ctx == (DPI_AWARENESS_CONTEXT)0x22 || ctx == (DPI_AWARENESS_CONTEXT)0x80000022)
-        return 0x22;
-    return GetAwarenessFromDpiAwarenessContext(ctx);
-}
-
 /***********************************************************************
  *              AreDpiAwarenessContextsEqual   (USER32.@)
  */
 BOOL WINAPI AreDpiAwarenessContextsEqual( DPI_AWARENESS_CONTEXT ctx1, DPI_AWARENESS_CONTEXT ctx2 )
 {
-    DPI_AWARENESS aware1 = map_awareness_context( ctx1 );
-    DPI_AWARENESS aware2 = map_awareness_context( ctx2 );
-    return aware1 != DPI_AWARENESS_INVALID && aware1 == aware2;
+    UINT value1, value2;
+    if (!(value1 = get_ntuser_dpi_context( ctx1 ))) return FALSE;
+    if (!(value2 = get_ntuser_dpi_context( ctx2 ))) return FALSE;
+    return (value1 & ~NTUSER_DPI_CONTEXT_FLAG_PROCESS) == (value2 & ~NTUSER_DPI_CONTEXT_FLAG_PROCESS);
 }
 
 /***********************************************************************
