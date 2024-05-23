@@ -980,6 +980,30 @@ static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     return false;
 }
 
+static bool amt_to_wg_format_video_cinepak(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_CINEPAK;
+    format->u.video.width = video_format->bmiHeader.biWidth;
+    format->u.video.height = video_format->bmiHeader.biHeight;
+    format->u.video.fps_n = 10000000;
+    format->u.video.fps_d = video_format->AvgTimePerFrame;
+
+    return true;
+}
+
 static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
@@ -1054,6 +1078,8 @@ bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
     {
+        if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_CVID))
+            return amt_to_wg_format_video_cinepak(mt, format);
         if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1)
                 || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2)
                 || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVA)
