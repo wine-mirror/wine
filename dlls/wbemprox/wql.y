@@ -299,7 +299,9 @@ associatorsof:
             }
 
             PARSER_BUBBLE_UP_VIEW( parser, $$, view );
+#if YYBISON >= 30704
             (void)yysymbol_name; /* avoid unused function warning */
+#endif
         }
   | TK_ASSOCIATORS TK_OF path TK_WHERE keywordlist
         {
