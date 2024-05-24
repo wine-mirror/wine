@@ -1518,8 +1518,17 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     InitializeListHead(&wm->ldr.DdagNode->Modules);
     InsertTailList(&wm->ldr.DdagNode->Modules, &wm->ldr.NodeModuleLink);
 
-    memcpy( buffer, nt_name->Buffer + 4 /* \??\ prefix */, nt_name->Length - 4 * sizeof(WCHAR) );
-    buffer[nt_name->Length/sizeof(WCHAR) - 4] = 0;
+    if (nt_name->Length >= 8 * sizeof(WCHAR) && !wcsncmp(nt_name->Buffer + 4, L"UNC\\", 4))
+    {
+        buffer[0] = '\\';
+        memcpy( buffer + 1, nt_name->Buffer + 7 /* \??\UNC prefix */, nt_name->Length - 7 * sizeof(WCHAR) );
+        buffer[nt_name->Length/sizeof(WCHAR) - 6] = 0;
+    }
+    else
+    {
+        memcpy( buffer, nt_name->Buffer + 4 /* \??\ prefix */, nt_name->Length - 4 * sizeof(WCHAR) );
+        buffer[nt_name->Length/sizeof(WCHAR) - 4] = 0;
+    }
     if ((p = wcsrchr( buffer, '\\' ))) p++;
     else p = buffer;
     RtlInitUnicodeString( &wm->ldr.FullDllName, buffer );
