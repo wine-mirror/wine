@@ -524,6 +524,48 @@ call :setError 666 & (erase i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!|
 call :setError 666 & (erase file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
 
+echo --- success/failure for MKDIR,MD command
+mkdir foo & cd foo
+call :setError 666 & (mkdir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mkdir abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mkdir abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mkdir @:\cba\abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (mkdir NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for CD command
+mkdir foo & cd foo
+mkdir abc
+call :setError 666 & (cd abc >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cd abc >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cd ..  >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cd     >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for PUSHD/POPD commands
+mkdir foo & cd foo
+mkdir abc
+call :setError 666 & (pushd &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (pushd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (popd abc &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (popd &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for DIR command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+mkdir dir
+echo b > dir\fileB
+call :setError 666 & (dir /e >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (dir zzz >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (dir fileA zzz >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (dir zzz fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (dir dir\zzz >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (dir file* >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
