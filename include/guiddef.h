@@ -56,8 +56,9 @@ typedef struct _GUID
 #ifdef __WINE_UUID_ATTR
 
 extern "C++" {
-    template<typename T> struct __wine_uuidof;
-
+    template<typename T> struct __wine_uuidof {
+        static const GUID uuid;
+    };
     template<typename T> struct __wine_uuidof_type {
         typedef __wine_uuidof<T> inst;
     };
