@@ -199,13 +199,14 @@ const char *find_binary( struct strarray prefix, const char *name )
 int spawn(struct strarray prefix, struct strarray args, int ignore_errors)
 {
     int status;
+    const char *cmd;
 
-    args.str[0] = find_binary( prefix, args.str[0] );
+    cmd = args.str[0] = find_binary( prefix, args.str[0] );
     if (verbose) strarray_trace( args );
 
     if ((status = strarray_spawn( args )) && !ignore_errors)
     {
-	if (status > 0) error("%s failed\n", args.str[0]);
+	if (status > 0) error("%s failed\n", cmd);
 	else perror("winegcc");
 	exit(3);
     }
