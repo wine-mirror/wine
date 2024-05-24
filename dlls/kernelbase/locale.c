@@ -648,6 +648,11 @@ static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid 
         *lcid = user_lcid;
         return user_locale;
     }
+    if (name[0] == '!' && !compare_locale_names( name, LOCALE_NAME_SYSTEM_DEFAULT ))
+    {
+        *lcid = system_lcid;
+        return system_locale;
+    }
     if (!(entry = find_lcname_entry( name ))) return NULL;
     *lcid = entry->id;
     return get_locale_data( entry->idx );
@@ -670,6 +675,10 @@ static const struct sortguid *get_language_sort( const WCHAR *name )
     {
         if (current_locale_sort) return current_locale_sort;
         name = locale_strings + user_locale->sname + 1;
+    }
+    else if (name[0] == '!' && !compare_locale_names( name, LOCALE_NAME_SYSTEM_DEFAULT ))
+    {
+        name = locale_strings + system_locale->sname + 1;
     }
 
     if (!(entry = find_lcname_entry( name )))

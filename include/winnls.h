@@ -336,9 +336,9 @@ static const WCHAR LOCALE_NAME_INVARIANT[] = { 0 };
 #endif
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-# define LOCALE_NAME_SYSTEM_DEFAULT      L"!sys-default-locale"
+# define LOCALE_NAME_SYSTEM_DEFAULT      L"!x-sys-default-locale"
 #else
-static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','f','a','u','l','t','-','l','o','c','a','l','e',0};
+static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','x','-','s','y','s','-','d','e','f','a','u','l','t','-','l','o','c','a','l','e',0};
 #endif
 
 #define LOCALE_NAME_USER_DEFAULT    NULL

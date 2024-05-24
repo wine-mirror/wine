@@ -2964,9 +2964,9 @@ static void test_LocaleNameToLCID(void)
 
     buffer[0] = 0;
     SetLastError(0xdeadbeef);
-    lcid = pLocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
-    ok(!lcid && GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected lcid == 0, got %08lx, error %ld\n", lcid, GetLastError());
+    lcid = LocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
+    ok(lcid == GetSystemDefaultLCID(),
+       "Expected lcid == %08lx, got %08lx, error %ld\n", GetSystemDefaultLCID(), lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %ld\n", ret, GetLastError());
     trace("%08lx, %s\n", lcid, wine_dbgstr_w(buffer));
@@ -5817,10 +5817,9 @@ static void test_ResolveLocaleName(void)
         { L"zz+XX", NULL },
         { L"zz.XX", NULL },
         { LOCALE_NAME_INVARIANT, L"" },
-        { LOCALE_NAME_SYSTEM_DEFAULT, NULL },
     };
     INT i, ret;
-    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH], system[LOCALE_NAME_MAX_LENGTH];
 
     if (!pResolveLocaleName)
     {
@@ -5831,7 +5830,7 @@ static void test_ResolveLocaleName(void)
     {
         SetLastError( 0xdeadbeef );
         memset( buffer, 0xcc, sizeof(buffer) );
-        ret = pResolveLocaleName( tests[i].name, buffer, sizeof(buffer) );
+        ret = pResolveLocaleName( tests[i].name, buffer, ARRAY_SIZE(buffer) );
         if (tests[i].exp)
         {
             ok( !wcscmp( buffer, tests[i].exp ) || broken( tests[i].broken ),
@@ -5847,6 +5846,14 @@ static void test_ResolveLocaleName(void)
                     "%s: wrong error %lu\n", debugstr_w(tests[i].name), GetLastError() );
         }
     }
+    SetLastError( 0xdeadbeef );
+    memset( buffer, 0xcc, sizeof(buffer) );
+    ret = pResolveLocaleName( LOCALE_NAME_SYSTEM_DEFAULT, buffer, ARRAY_SIZE(buffer) );
+    ok( ret, "failed err %lu\n", GetLastError() );
+    GetSystemDefaultLocaleName( system, ARRAY_SIZE(system) );
+    ok( !wcscmp( buffer, system ), "got wrong syslocale %s / %s\n", debugstr_w(buffer), debugstr_w(system));
+    ok( ret == wcslen(system) + 1, "wrong len %u / %Iu\n", ret, wcslen(system) + 1 );
+
     SetLastError( 0xdeadbeef );
     ret = pResolveLocaleName( L"en-US", buffer, 4 );
     ok( !ret, "got %u\n", ret );
