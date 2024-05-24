@@ -1740,7 +1740,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     stop_thread = CreateThread(NULL, 0, stop_filter_proc, dmo_filter, 0, NULL);
     ok(!!stop_thread, "CreateThread returned NULL thread.\n");
     ret = WaitForSingleObject(stop_thread, 200);
-    todo_wine
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx.\n", ret);
     /* Signal event to end Receive(). */
     SetEvent(testsink->event);

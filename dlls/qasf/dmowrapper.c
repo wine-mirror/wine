@@ -703,6 +703,7 @@ static HRESULT dmo_wrapper_cleanup_stream(struct strmbase_filter *iface)
 
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
+    EnterCriticalSection(&filter->filter.stream_cs);
     for (i = 0; i < filter->source_count; ++i)
     {
         if (filter->sources[i].pin.pin.peer)
@@ -712,6 +713,7 @@ static HRESULT dmo_wrapper_cleanup_stream(struct strmbase_filter *iface)
     IMediaObject_Flush(dmo);
 
     IMediaObject_Release(dmo);
+    LeaveCriticalSection(&filter->filter.stream_cs);
     return S_OK;
 }
 
