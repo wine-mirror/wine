@@ -1313,7 +1313,7 @@ static NTSTATUS process_console_input( struct console *console )
                     ctrl_value = ir.Event.KeyEvent.uChar.UnicodeChar;
                     ctrl_keyvalue = ir.Event.KeyEvent.dwControlKeyState;
                     ctx->status = STATUS_SUCCESS;
-                    TRACE("Found ctrl char in mask: ^%lc %x\n", ir.Event.KeyEvent.uChar.UnicodeChar + '@', ctx->ctrl_mask);
+                    TRACE("Found ctrl char in mask: ^%c %x\n", ir.Event.KeyEvent.uChar.UnicodeChar + '@', ctx->ctrl_mask);
                     continue;
                 }
                 if (ir.Event.KeyEvent.uChar.UnicodeChar == 10) continue;
