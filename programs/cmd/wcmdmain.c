@@ -1875,7 +1875,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
 	break;
       case WCMD_RD:
       case WCMD_RMDIR:
-        WCMD_remove_dir (parms_start);
+        return_code = WCMD_remove_dir(parms_start);
         break;
       case WCMD_SETLOCAL:
         WCMD_setlocal(parms_start);

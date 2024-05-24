@@ -2100,11 +2100,11 @@ void WCMD_pause (void)
  * Delete a directory.
  */
 
-void WCMD_remove_dir (WCHAR *args) {
-
+RETURN_CODE WCMD_remove_dir(WCHAR *args)
+{
   int   argno         = 0;
   int   argsProcessed = 0;
-  WCHAR *argN          = args;
+  WCHAR *argN         = args;
 
   /* Loop through all args */
   while (argN) {
@@ -2117,7 +2117,12 @@ void WCMD_remove_dir (WCHAR *args) {
       /* If subdirectory search not supplied, just try to remove
          and report error if it fails (eg if it contains a file) */
       if (wcsstr(quals, L"/S") == NULL) {
-        if (!RemoveDirectoryW(thisArg)) WCMD_print_error ();
+        if (!RemoveDirectoryW(thisArg))
+        {
+            RETURN_CODE return_code = GetLastError();
+            WCMD_print_error();
+            return return_code;
+        }
 
       /* Otherwise use ShFileOp to recursively remove a directory */
       } else {
@@ -2134,7 +2139,7 @@ void WCMD_remove_dir (WCHAR *args) {
           ok = WCMD_ask_confirm(question, TRUE, NULL);
 
           /* Abort if answer is 'N' */
-          if (!ok) return;
+          if (!ok) return ERROR_INVALID_FUNCTION;
         }
 
         /* Do the delete */
@@ -2155,9 +2160,9 @@ void WCMD_remove_dir (WCHAR *args) {
   /* Handle no valid args */
   if (argsProcessed == 0) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    return;
+    return ERROR_INVALID_FUNCTION;
   }
-
+  return NO_ERROR;
 }
 
 /****************************************************************************

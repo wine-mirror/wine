@@ -189,7 +189,7 @@ void WCMD_pause (void);
 RETURN_CODE WCMD_popd(void);
 void WCMD_print_error (void);
 RETURN_CODE WCMD_pushd(const WCHAR *args);
-void WCMD_remove_dir (WCHAR *command);
+RETURN_CODE WCMD_remove_dir(WCHAR *command);
 RETURN_CODE WCMD_rename(void);
 void WCMD_run_program (WCHAR *command, BOOL called);
 void WCMD_setlocal (const WCHAR *args);
