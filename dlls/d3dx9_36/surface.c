@@ -481,78 +481,6 @@ static UINT calculate_dds_file_size(D3DFORMAT format, UINT width, UINT height, U
     return file_size;
 }
 
-/************************************************************
-* get_image_info_from_dds
-*
-* Fills a D3DXIMAGE_INFO structure with information
-* about a DDS file stored in the memory.
-*
-* PARAMS
-*   buffer  [I] pointer to DDS data
-*   length  [I] size of DDS data
-*   info    [O] pointer to D3DXIMAGE_INFO structure
-*
-* RETURNS
-*   Success: D3D_OK
-*   Failure: D3DXERR_INVALIDDATA
-*
-*/
-static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAGE_INFO *info)
-{
-    UINT faces = 1;
-    UINT expected_length;
-    const struct dds_header *header = buffer;
-
-    if (length < sizeof(*header) || !info)
-        return D3DXERR_INVALIDDATA;
-
-    if (header->pixel_format.size != sizeof(header->pixel_format))
-        return D3DXERR_INVALIDDATA;
-
-    info->Width = header->width;
-    info->Height = header->height;
-    info->Depth = 1;
-    info->MipLevels = header->miplevels ? header->miplevels : 1;
-
-    info->Format = dds_pixel_format_to_d3dformat(&header->pixel_format);
-    if (info->Format == D3DFMT_UNKNOWN)
-        return D3DXERR_INVALIDDATA;
-
-    TRACE("Pixel format is %#x\n", info->Format);
-
-    if (header->caps2 & DDS_CAPS2_VOLUME)
-    {
-        info->Depth = header->depth;
-        info->ResourceType = D3DRTYPE_VOLUMETEXTURE;
-    }
-    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
-    {
-        DWORD face;
-        faces = 0;
-        for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
-        {
-            if (header->caps2 & face)
-                faces++;
-        }
-        info->ResourceType = D3DRTYPE_CUBETEXTURE;
-    }
-    else
-    {
-        info->ResourceType = D3DRTYPE_TEXTURE;
-    }
-
-    expected_length = calculate_dds_file_size(info->Format, info->Width, info->Height, info->Depth,
-        info->MipLevels, faces);
-    if (length < expected_length)
-    {
-        WARN("File is too short %u, expected at least %u bytes\n", length, expected_length);
-        return D3DXERR_INVALIDDATA;
-    }
-
-    info->ImageFileFormat = D3DXIFF_DDS;
-    return D3D_OK;
-}
-
 static HRESULT load_surface_from_dds(IDirect3DSurface9 *dst_surface, const PALETTEENTRY *dst_palette,
     const RECT *dst_rect, const void *src_data, const RECT *src_rect, DWORD filter, D3DCOLOR color_key,
     const D3DXIMAGE_INFO *src_info)
@@ -822,6 +750,59 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
     return D3D_OK;
 }
 
+static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src_data_size,
+        struct d3dx_image *image)
+{
+    const struct dds_header *header = src_data;
+    uint32_t expected_src_data_size;
+    uint32_t faces = 1;
+
+    if (src_data_size < sizeof(*header) || header->pixel_format.size != sizeof(header->pixel_format))
+        return D3DXERR_INVALIDDATA;
+
+    TRACE("File type is DDS.\n");
+    image->width = header->width;
+    image->height = header->height;
+    image->depth = 1;
+    image->mip_levels = header->miplevels ? header->miplevels : 1;
+    image->format = dds_pixel_format_to_d3dformat(&header->pixel_format);
+
+    if (image->format == D3DFMT_UNKNOWN)
+        return D3DXERR_INVALIDDATA;
+
+    TRACE("Pixel format is %#x.\n", image->format);
+    if (header->caps2 & DDS_CAPS2_VOLUME)
+    {
+        image->depth = header->depth;
+        image->resource_type = D3DRTYPE_VOLUMETEXTURE;
+    }
+    else if (header->caps2 & DDS_CAPS2_CUBEMAP)
+    {
+        DWORD face;
+
+        faces = 0;
+        for (face = DDS_CAPS2_CUBEMAP_POSITIVEX; face <= DDS_CAPS2_CUBEMAP_NEGATIVEZ; face <<= 1)
+        {
+            if (header->caps2 & face)
+                faces++;
+        }
+        image->resource_type = D3DRTYPE_CUBETEXTURE;
+    }
+    else
+        image->resource_type = D3DRTYPE_TEXTURE;
+
+    expected_src_data_size = calculate_dds_file_size(image->format, image->width, image->height,
+            image->depth, image->mip_levels, faces);
+    if (src_data_size < expected_src_data_size)
+    {
+        WARN("File is too short %u, expected at least %u bytes.\n", src_data_size, expected_src_data_size);
+        return D3DXERR_INVALIDDATA;
+    }
+
+    image->image_file_format = D3DXIFF_DDS;
+    return D3D_OK;
+}
+
 static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
 {
     ULONG header_size;
@@ -889,28 +870,28 @@ static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
 
 /* windowscodecs always returns xRGB, but we should return ARGB if and only if
  * at least one pixel has a non-zero alpha component. */
-static BOOL image_is_argb(IWICBitmapFrameDecode *frame, const D3DXIMAGE_INFO *info)
+static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image)
 {
     unsigned int size, i;
     BYTE *buffer;
     HRESULT hr;
 
-    if (info->Format != D3DFMT_X8R8G8B8 || (info->ImageFileFormat != D3DXIFF_BMP
-            && info->ImageFileFormat != D3DXIFF_TGA))
+    if (image->format != D3DFMT_X8R8G8B8 || (image->image_file_format != D3DXIFF_BMP
+            && image->image_file_format != D3DXIFF_TGA))
         return FALSE;
 
-    size = info->Width * info->Height * 4;
+    size = image->width * image->height * 4;
     if (!(buffer = malloc(size)))
         return FALSE;
 
-    if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, info->Width * 4, size, buffer)))
+    if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, image->width * 4, size, buffer)))
     {
         ERR("Failed to copy pixels, hr %#lx.\n", hr);
         free(buffer);
         return FALSE;
     }
 
-    for (i = 0; i < info->Width * info->Height; ++i)
+    for (i = 0; i < image->width * image->height; ++i)
     {
         if (buffer[i * 4 + 3])
         {
@@ -976,7 +957,8 @@ static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
     }
 }
 
-static HRESULT get_image_info_from_wic(const void *src_data, uint32_t src_data_size, D3DXIMAGE_INFO *info)
+static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src_data_size,
+        struct d3dx_image *image)
 {
     IWICBitmapFrameDecode *bitmap_frame = NULL;
     IWICBitmapDecoder *bitmap_decoder = NULL;
@@ -1019,19 +1001,19 @@ static HRESULT get_image_info_from_wic(const void *src_data, uint32_t src_data_s
     if (FAILED(hr))
         goto exit;
 
-    info->ImageFileFormat = wic_container_guid_to_d3dx_file_format(&container_format);
-    if (is_dib && info->ImageFileFormat == D3DXIFF_BMP)
+    image->image_file_format = wic_container_guid_to_d3dx_file_format(&container_format);
+    if (is_dib && image->image_file_format == D3DXIFF_BMP)
     {
-        info->ImageFileFormat = D3DXIFF_DIB;
+        image->image_file_format = D3DXIFF_DIB;
     }
-    else if (info->ImageFileFormat == D3DXIFF_FORCE_DWORD)
+    else if (image->image_file_format == D3DXIFF_FORCE_DWORD)
     {
         WARN("Unsupported image file format %s.\n", debugstr_guid(&container_format));
         hr = D3DXERR_INVALIDDATA;
         goto exit;
     }
 
-    TRACE("File type is %s.\n", debug_d3dx_image_file_format(info->ImageFileFormat));
+    TRACE("File type is %s.\n", debug_d3dx_image_file_format(image->image_file_format));
     hr = IWICBitmapDecoder_GetFrameCount(bitmap_decoder, &frame_count);
     if (FAILED(hr) || (SUCCEEDED(hr) && !frame_count))
     {
@@ -1043,7 +1025,7 @@ static HRESULT get_image_info_from_wic(const void *src_data, uint32_t src_data_s
     if (FAILED(hr))
         goto exit;
 
-    hr = IWICBitmapFrameDecode_GetSize(bitmap_frame, &info->Width, &info->Height);
+    hr = IWICBitmapFrameDecode_GetSize(bitmap_frame, &image->width, &image->height);
     if (FAILED(hr))
         goto exit;
 
@@ -1051,19 +1033,19 @@ static HRESULT get_image_info_from_wic(const void *src_data, uint32_t src_data_s
     if (FAILED(hr))
         goto exit;
 
-    if ((info->Format = wic_guid_to_d3dformat(&pixel_format)) == D3DFMT_UNKNOWN)
+    if ((image->format = wic_guid_to_d3dformat(&pixel_format)) == D3DFMT_UNKNOWN)
     {
         WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
         hr = D3DXERR_INVALIDDATA;
         goto exit;
     }
 
-    if (image_is_argb(bitmap_frame, info))
-        info->Format = D3DFMT_A8R8G8B8;
+    if (image_is_argb(bitmap_frame, image))
+        image->format = D3DFMT_A8R8G8B8;
 
-    info->Depth = 1;
-    info->MipLevels = 1;
-    info->ResourceType = D3DRTYPE_TEXTURE;
+    image->depth = 1;
+    image->mip_levels = 1;
+    image->resource_type = D3DRTYPE_TEXTURE;
 
 exit:
     if (is_dib)
@@ -1078,6 +1060,19 @@ exit:
         IWICImagingFactory_Release(wic_factory);
 
     return hr;
+}
+
+static HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size,
+        struct d3dx_image *image)
+{
+    if (!src_data || !src_data_size || !image)
+        return D3DERR_INVALIDCALL;
+
+    memset(image, 0, sizeof(*image));
+    if ((src_data_size >= 4) && !memcmp(src_data, "DDS ", 4))
+        return d3dx_initialize_image_from_dds(src_data, src_data_size, image);
+
+    return d3dx_initialize_image_from_wic(src_data, src_data_size, image);
 }
 
 /************************************************************
@@ -1103,6 +1098,7 @@ exit:
  */
 HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize, D3DXIMAGE_INFO *info)
 {
+    struct d3dx_image image;
     HRESULT hr;
 
     TRACE("(%p, %d, %p)\n", data, datasize, info);
@@ -1113,16 +1109,19 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
     if (!info)
         return D3D_OK;
 
-    if ((datasize >= 4) && !strncmp(data, "DDS ", 4)) {
-        TRACE("File type is DDS\n");
-        return get_image_info_from_dds(data, datasize, info);
-    } else
-        hr = get_image_info_from_wic(data, datasize, info);
-
+    hr = d3dx_image_init(data, datasize, &image);
     if (FAILED(hr)) {
         TRACE("Invalid or unsupported image file\n");
         return D3DXERR_INVALIDDATA;
     }
+
+    info->ImageFileFormat = image.image_file_format;
+    info->Width = image.width;
+    info->Height = image.height;
+    info->Depth = image.depth;
+    info->MipLevels = image.mip_levels;
+    info->Format = image.format;
+    info->ResourceType = image.resource_type;
 
     return D3D_OK;
 }

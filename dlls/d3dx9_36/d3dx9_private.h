@@ -68,6 +68,19 @@ struct pixel_format_desc {
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
+struct d3dx_image
+{
+    D3DRESOURCETYPE resource_type;
+    D3DFORMAT format;
+
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+    uint32_t mip_levels;
+
+    D3DXIMAGE_FILEFORMAT image_file_format;
+};
+
 struct d3dx_include_from_file
 {
     ID3DXInclude ID3DXInclude_iface;
