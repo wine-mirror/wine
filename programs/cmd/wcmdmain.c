@@ -1878,10 +1878,10 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_remove_dir(parms_start);
         break;
       case WCMD_SETLOCAL:
-        WCMD_setlocal(parms_start);
+        return_code = WCMD_setlocal(parms_start);
         break;
       case WCMD_ENDLOCAL:
-        WCMD_endlocal();
+        return_code = WCMD_endlocal();
         break;
       case WCMD_SET:
         WCMD_setshow_env (parms_start);

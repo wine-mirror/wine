@@ -2298,33 +2298,40 @@ static WCHAR *WCMD_dupenv( const WCHAR *env )
  *  setlocal pushes the environment onto a stack
  *  Save the environment as unicode so we don't screw anything up.
  */
-void WCMD_setlocal (const WCHAR *s) {
+RETURN_CODE WCMD_setlocal(WCHAR *args)
+{
   WCHAR *env;
   struct env_stack *env_copy;
   WCHAR cwd[MAX_PATH];
   BOOL newdelay;
+  int argno = 0;
+  WCHAR *argN = args;
 
   /* setlocal does nothing outside of batch programs */
-  if (!context) return;
-
-  /* DISABLEEXTENSIONS ignored */
-
-  /* ENABLEDELAYEDEXPANSION / DISABLEDELAYEDEXPANSION could be parm1 or parm2
-     (if both ENABLEEXTENSIONS and ENABLEDELAYEDEXPANSION supplied for example) */
-  if (!wcsicmp(param1, L"ENABLEDELAYEDEXPANSION") || !wcsicmp(param2, L"ENABLEDELAYEDEXPANSION")) {
-    newdelay = TRUE;
-  } else if (!wcsicmp(param1, L"DISABLEDELAYEDEXPANSION") || !wcsicmp(param2, L"DISABLEDELAYEDEXPANSION")) {
-    newdelay = FALSE;
-  } else {
-    newdelay = delayedsubst;
+  if (!context)
+      return NO_ERROR;
+  newdelay = delayedsubst;
+  while (argN)
+  {
+      WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
+      if (!thisArg || !*thisArg) break;
+      if (!wcsicmp(thisArg, L"ENABLEDELAYEDEXPANSION"))
+          newdelay = TRUE;
+      else if (!wcsicmp(thisArg, L"DISABLEDELAYEDEXPANSION"))
+          newdelay = FALSE;
+      /* ENABLE/DISABLE EXTENSIONS ignored for now */
+      else if (!wcsicmp(thisArg, L"ENABLEEXTENSIONS") || !wcsicmp(thisArg, L"DISABLEEXTENSIONS"))
+      {}
+      else
+          return errorlevel = ERROR_INVALID_FUNCTION;
+      TRACE("Setting delayed expansion to %d\n", newdelay);
   }
-  WINE_TRACE("Setting delayed expansion to %d\n", newdelay);
 
   env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
   if( !env_copy )
   {
-    WINE_ERR ("out of memory\n");
-    return;
+      ERR("out of memory\n");
+      return errorlevel = ERROR_OUTOFMEMORY;
   }
 
   env = GetEnvironmentStringsW ();
@@ -2345,7 +2352,7 @@ void WCMD_setlocal (const WCHAR *s) {
     LocalFree (env_copy);
 
   FreeEnvironmentStringsW (env);
-
+  return errorlevel = NO_ERROR;
 }
 
 /*****************************************************************************
@@ -2355,18 +2362,19 @@ void WCMD_setlocal (const WCHAR *s) {
  *  Note: When searching for '=', search from WCHAR position 1, to handle
  *        special internal environment variables =C:, =D: etc
  */
-void WCMD_endlocal (void) {
+RETURN_CODE WCMD_endlocal(void)
+{
   WCHAR *env, *old, *p;
   struct env_stack *temp;
   int len, n;
 
   /* setlocal does nothing outside of batch programs */
-  if (!context) return;
+  if (!context) return NO_ERROR;
 
   /* setlocal needs a saved environment from within the same context (batch
      program) as it was saved in                                            */
   if (!saved_environment || saved_environment->batchhandle != context->h)
-    return;
+    return ERROR_INVALID_FUNCTION;
 
   /* pop the old environment from the stack */
   temp = saved_environment;
@@ -2419,6 +2427,7 @@ void WCMD_endlocal (void) {
 
   LocalFree (env);
   LocalFree (temp);
+  return NO_ERROR;
 }
 
 /*****************************************************************************
