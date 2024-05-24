@@ -466,6 +466,64 @@ call :setError 666 & ((for %%i in () do echo "") &&echo SUCCESS !errorlevel!||ec
 call :setError 666 & ((for %%i in () do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((for %%i in (a) do call :setError 0) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & ((for %%i in (a) do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+
+echo --- success/failure for TYPE command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+call :setError 666 & (type &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (type file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo ---
+call :setError 666 & (type i\dont\exist\at\all.txt file* &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for COPY command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+call :setError 666 & (copy fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy fileA fileZ >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy fileA+fileD fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (copy fileD+fileA fileZ /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+if exist fileD echo Unexpected fileD
+cd .. && rd /q /s foo
+
+echo --- success/failure for MOVE command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+call :setError 666 & (move >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (move fileA fileC >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (move fileC nowhere\fileC >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (move fileD fileE >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (move fileC fileB /-Y >NUL <NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for RENAME command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+call :setError 666 & (rename fileB >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rename fileB fileA >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rename fileB nowhere\fileB >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rename fileD fileC >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (rename fileB fileC >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
+echo --- success/failure for ERASE command
+mkdir foo & cd foo
+echo a > fileA
+echo b > fileB
+echo e > fileE
+call :setError 666 & (erase &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (erase fileE &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (erase i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (erase file* i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+cd .. && rd /q /s foo
+
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
