@@ -39,12 +39,35 @@ interface IUnknown
 {
   typedef [unique] IUnknown *LPUNKNOWN;
 
+cpp_quote("#if defined(__cplusplus) && !defined(CINTERFACE)")
+cpp_quote("EXTERN_C const IID IID_IUnknown;")
+cpp_quote("extern \"C++\"")
+cpp_quote("{")
+cpp_quote("    MIDL_INTERFACE(\"00000000-0000-0000-c000-000000000046\")")
+cpp_quote("    IUnknown")
+cpp_quote("    {")
+cpp_quote("    public:")
+cpp_quote("        BEGIN_INTERFACE")
+cpp_quote("        virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) = 0;")
+cpp_quote("        virtual ULONG STDMETHODCALLTYPE AddRef(void) = 0;")
+cpp_quote("        virtual ULONG STDMETHODCALLTYPE Release(void) = 0;")
+
+cpp_quote("        template<class iface>")
+cpp_quote("        HRESULT STDMETHODCALLTYPE QueryInterface(iface** pp)")
+cpp_quote("        {")
+cpp_quote("           return QueryInterface(__uuidof(iface), (void **)pp);")
+cpp_quote("        }")
+cpp_quote("        END_INTERFACE")
+cpp_quote("    };")
+cpp_quote("}")
+cpp_quote("#else")
   HRESULT QueryInterface(
     [in] REFIID riid,
     [out, iid_is(riid)] void **ppvObject);
   ULONG AddRef();
   ULONG Release();
 }
+cpp_quote("#endif")
 
 cpp_quote("HRESULT STDMETHODCALLTYPE IUnknown_QueryInterface_Proxy(IUnknown* This, REFIID riid, void **ppvObject);")
 cpp_quote("void __RPC_STUB IUnknown_QueryInterface_Stub(IRpcStubBuffer* This, IRpcChannelBuffer* pRpcChannelBuffer,")
