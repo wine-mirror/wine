@@ -181,8 +181,6 @@ void PSDRV_MergeDevmodes( PSDRV_DEVMODE *dm1, const DEVMODEW *dm2, PRINTERINFO *
             TRACE("Trying to change to unsupported bin %d\n", dm2->dmDefaultSource);
     }
 
-   if (dm2->dmFields & DM_DEFAULTSOURCE )
-       dm1->dmPublic.dmDefaultSource = dm2->dmDefaultSource;
    if (dm2->dmFields & DM_PRINTQUALITY )
        dm1->dmPublic.dmPrintQuality = dm2->dmPrintQuality;
    if (dm2->dmFields & DM_COLOR )
