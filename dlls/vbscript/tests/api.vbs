@@ -131,7 +131,7 @@ if isEnglishLang then TestCStr true, "True"
 
 sub testCStrError()
     on error resume next
-    Error.clear()
+    Err.clear()
     CStr(null)
     call ok(Err.number = 94, "Err.number = " & Err.number)
     if isEnglishLang then call ok(Err.source = "Microsoft VBScript runtime error", "Err.source = " & Err.source)
