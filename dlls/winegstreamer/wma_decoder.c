@@ -813,14 +813,32 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
 
 static HRESULT WINAPI media_object_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
-    return E_NOTIMPL;
+    struct wma_decoder *decoder = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, type %p\n", iface, index, type);
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (IsEqualGUID(&decoder->input_type.majortype, &GUID_NULL))
+        return DMO_E_TYPE_NOT_SET;
+    if (!type)
+        return E_POINTER;
+    return MoCopyMediaType(type, &decoder->input_type);
 }
 
 static HRESULT WINAPI media_object_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type %p stub!\n", iface, index, type);
-    return E_NOTIMPL;
+    struct wma_decoder *decoder = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, type %p\n", iface, index, type);
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (IsEqualGUID(&decoder->output_type.majortype, &GUID_NULL))
+        return DMO_E_TYPE_NOT_SET;
+    if (!type)
+        return E_POINTER;
+    return MoCopyMediaType(type, &decoder->output_type);
 }
 
 static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size,
