@@ -6446,8 +6446,8 @@ static void test_MFEnumDeviceSources(void)
     sources = (void *)0xdeadbeef;
     count = 0xdeadbeef;
     hr = MFEnumDeviceSources(attrs, &sources, &count);
-    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
-    todo_wine ok(count == 0xdeadbeef, "got %#x.\n", count);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+    ok(count == 0xdeadbeef, "got %#x.\n", count);
     ok(sources == (void *)0xdeadbeef, "got %p.\n", sources);
 
     hr = CoInitialize(NULL);
@@ -6456,7 +6456,7 @@ static void test_MFEnumDeviceSources(void)
     hr = IMFAttributes_SetGUID(attrs, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = MFEnumDeviceSources(attrs, &sources, &count);
-    todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
 
     hr = IMFAttributes_SetGUID(attrs, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
     ok(hr == S_OK, "got %#lx.\n", hr);
@@ -6474,7 +6474,7 @@ static void test_MFEnumDeviceSources(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = IMMDeviceCollection_GetCount(devices, &count2);
     ok(hr == S_OK, "got %#lx.\n", hr);
-    todo_wine ok(count2 == count, "got %u, %u.\n", count, count2);
+    ok(count2 == count, "got %u, %u.\n", count, count2);
 
     for (i = 0; i < count; ++i)
     {
@@ -6493,7 +6493,7 @@ static void test_MFEnumDeviceSources(void)
         ok(!wcscmp(str, device_id), "got %s, %s.\n", debugstr_w(str), debugstr_w(device_id));
 
         hr = IMFActivate_GetString(source, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, str, sizeof(str), NULL);
-        ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "got %#lx.\n", hr);
+        todo_wine ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "got %#lx.\n", hr);
         if (hr == S_OK)
         {
             swprintf(expect_str, ARRAY_SIZE(expect_str), L"%s%s#%s", mmdev_path_prefix, device_id, devinterface_audio_capture_wstr);

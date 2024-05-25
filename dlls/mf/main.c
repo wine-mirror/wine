@@ -747,16 +747,29 @@ HRESULT WINAPI MFShutdownObject(IUnknown *object)
 /***********************************************************************
  *      MFEnumDeviceSources (mf.@)
  */
-HRESULT WINAPI MFEnumDeviceSources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *count)
+HRESULT WINAPI MFEnumDeviceSources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *ret_count)
 {
-    FIXME("%p, %p, %p.\n", attributes, sources, count);
+    GUID source_type;
+    HRESULT hr;
 
-    if (!attributes || !sources || !count)
+    TRACE("%p, %p, %p.\n", attributes, sources, ret_count);
+
+    if (!attributes || !sources || !ret_count)
         return E_INVALIDARG;
 
-    *count = 0;
+    if (FAILED(hr = IMFAttributes_GetGUID(attributes, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &source_type)))
+        return hr;
 
-    return S_OK;
+    if (IsEqualGUID(&source_type, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID))
+    {
+        FIXME("Not implemented for video capture devices.\n");
+        *ret_count = 0;
+        return S_OK;
+    }
+    if (IsEqualGUID(&source_type, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID))
+        return enum_audio_capture_sources(attributes, sources, ret_count);
+
+    return E_INVALIDARG;
 }
 
 struct simple_type_handler

@@ -122,3 +122,5 @@ extern HRESULT create_topology(TOPOID id, IMFTopology **topology);
 extern HRESULT topology_node_get_object(IMFTopologyNode *node, REFIID riid, void **obj);
 extern HRESULT topology_node_get_type_handler(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaTypeHandler **handler);
 extern HRESULT topology_node_init_media_type(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
+
+extern HRESULT enum_audio_capture_sources(IMFAttributes *attributes, IMFActivate ***sources, UINT32 *ret_count);
