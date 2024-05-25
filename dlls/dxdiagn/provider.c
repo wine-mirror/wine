@@ -636,6 +636,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     if (FAILED(hr))
         return hr;
 
+    hr = add_bool_property(node, L"bIsD3DDebugRuntime", FALSE);
+    if (FAILED(hr))
+        return hr;
+
     hr = add_bool_property(node, L"bNECPC98", FALSE);
     if (FAILED(hr))
         return hr;

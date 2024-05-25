@@ -792,6 +792,7 @@ static void test_DxDiag_SystemInfo(void)
         {L"dwDirectXVersionMinor", VT_UI4},
         {L"szDirectXVersionLetter", VT_BSTR},
         {L"bDebug", VT_BOOL},
+        {L"bIsD3DDebugRuntime", VT_BOOL},
         {L"bNECPC98", VT_BOOL},
         {L"ullPhysicalMemory", VT_BSTR},
         {L"ullUsedPageFile", VT_BSTR},
