@@ -743,7 +743,7 @@ static void android_surface_flush( struct window_surface *window_surface )
     if (!surface->window->perform( surface->window, NATIVE_WINDOW_LOCK, &buffer, &rc ))
     {
         const RECT *rgn_rect = NULL, *end = NULL;
-        unsigned int *src, *dst;
+        DWORD *src, *dst;
         int x, y, width;
 
         rect.left   = rc.left;
@@ -757,10 +757,10 @@ static void android_surface_flush( struct window_surface *window_surface )
             rgn_rect = (RECT *)surface->region_data->Buffer;
             end = rgn_rect + surface->region_data->rdh.nCount;
         }
-        src = (unsigned int *)surface->bits
+        src = (DWORD *)surface->bits
             + (rect.top - surface->header.rect.top) * surface->info.bmiHeader.biWidth
             + (rect.left - surface->header.rect.left);
-        dst = (unsigned int *)buffer.bits + rect.top * buffer.stride + rect.left;
+        dst = (DWORD *)buffer.bits + rect.top * buffer.stride + rect.left;
         width = min( rect.right - rect.left, buffer.stride );
 
         for (y = rect.top; y < min( buffer.height, rect.bottom); y++)
