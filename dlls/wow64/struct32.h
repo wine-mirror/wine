@@ -369,6 +369,11 @@ typedef struct
 
 typedef struct
 {
+    SID_AND_ATTRIBUTES32 Label;
+} TOKEN_MANDATORY_LABEL32;
+
+typedef struct
+{
     ULONG DefaultDacl;
 } TOKEN_DEFAULT_DACL32;
 
