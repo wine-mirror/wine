@@ -1911,6 +1911,8 @@ static BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus )
 
     if (hwnd)
     {
+        NtUserNotifyWinEvent( EVENT_SYSTEM_FOREGROUND, hwnd, 0, 0 );
+
         /* send palette messages */
         if (send_message( hwnd, WM_QUERYNEWPALETTE, 0, 0 ))
             send_message_timeout( HWND_BROADCAST, WM_PALETTEISCHANGING, (WPARAM)hwnd, 0,
