@@ -514,7 +514,7 @@ static int process_events( DWORD mask )
                     }
                     SERVER_END_REQ;
                 }
-                NtUserSendHardwareInput( capture ? capture : event->data.motion.hwnd, &event->data.motion.input, 0, 0 );
+                NtUserSendHardwareInput( capture ? capture : event->data.motion.hwnd, 0, &event->data.motion.input, 0 );
             }
             break;
 
