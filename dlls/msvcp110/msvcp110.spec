@@ -1802,8 +1802,8 @@
 @ cdecl -arch=arm ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAAXXZ(ptr) time_get_wchar__Tidy
 @ thiscall -arch=i386 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ(ptr) time_get_wchar__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ(ptr) time_get_wchar__Tidy
-@ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
-@ stub -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ
+@ cdecl -arch=arm ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
+@ thiscall -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPBD@Z(str) tr2_sys__Unlink
 @ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEBD@Z(str) tr2_sys__Unlink

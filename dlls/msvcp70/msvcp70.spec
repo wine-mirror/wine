@@ -2216,7 +2216,7 @@
 @ stub -arch=win64 ?_Tidy@?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEAAXXZ
 @ thiscall -arch=win32 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ(ptr) time_get_wchar__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ(ptr) time_get_wchar__Tidy
-@ stub -arch=win32 ?_Tidy@ios_base@std@@AAEXXZ
+@ thiscall -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ thiscall -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ(ptr) strstreambuf__Tidy
 @ cdecl -arch=win64 ?_Tidy@strstreambuf@std@@IEAAXXZ(ptr) strstreambuf__Tidy

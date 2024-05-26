@@ -5115,8 +5115,14 @@ void __thiscall ios_base_Callfns(ios_base *this, IOS_BASE_event event)
 }
 
 /* ?_Tidy@ios_base@std@@AAAXXZ */
+/* ?_Tidy@ios_base@std@@AAEXXZ */
 /* ?_Tidy@ios_base@std@@AEAAXXZ */
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 void __cdecl ios_base_Tidy(ios_base *this)
+#else
+DEFINE_THISCALL_WRAPPER(ios_base_Tidy, 4)
+void __thiscall ios_base_Tidy(ios_base *this)
+#endif
 {
     IOS_BASE_iosarray *arr_cur, *arr_next;
     IOS_BASE_fnarray *event_cur, *event_next;

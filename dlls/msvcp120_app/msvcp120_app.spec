@@ -1763,8 +1763,8 @@
 @ cdecl -arch=arm ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAAXXZ(ptr) msvcp120.?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAAXXZ
 @ thiscall -arch=i386 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ(ptr) msvcp120.?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ
 @ cdecl -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ(ptr) msvcp120.?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ
-@ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ(ptr) msvcp120.?_Tidy@ios_base@std@@AAAXXZ
-@ stub -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ
+@ cdecl -arch=arm ?_Tidy@ios_base@std@@AAAXXZ(ptr) msvcp120.?_Tidy@ios_base@std@@AAAXXZ
+@ thiscall -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ(ptr) msvcp120.?_Tidy@ios_base@std@@AAEXXZ
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) msvcp120.?_Tidy@ios_base@std@@AEAAXXZ
 @ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPBD@Z(str) msvcp120.?_Unlink@sys@tr2@std@@YAHPBD@Z
 @ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEBD@Z(str) msvcp120.?_Unlink@sys@tr2@std@@YAHPEBD@Z

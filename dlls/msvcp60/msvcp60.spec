@@ -2383,7 +2383,7 @@
 @ cdecl -arch=win64 ?_Tidy@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAXXZ(ptr) basic_stringbuf_char__Tidy
 @ thiscall -arch=win32 ?_Tidy@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAEXXZ(ptr) basic_stringbuf_short__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAXXZ(ptr) basic_stringbuf_short__Tidy
-@ stub -arch=win32 ?_Tidy@ios_base@std@@AAEXXZ
+@ thiscall -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ stub ?_Tidy@locale@std@@CAXXZ
 @ thiscall -arch=win32 ?_Tidy@strstreambuf@std@@IAEXXZ(ptr) strstreambuf__Tidy
