@@ -504,14 +504,12 @@ static void sync_window_opacity(struct macdrv_win_data *data, COLORREF key, BYTE
 
     if (needs_flush && data->surface)
     {
-        RECT *bounds;
         RECT rect;
 
         rect = data->whole_rect;
         OffsetRect(&rect, -data->whole_rect.left, -data->whole_rect.top);
         window_surface_lock(data->surface);
-        bounds = data->surface->funcs->get_bounds(data->surface);
-        add_bounds_rect(bounds, &rect);
+        add_bounds_rect(&data->surface->bounds, &rect);
         window_surface_unlock(data->surface);
     }
 }
@@ -1985,7 +1983,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
         {
             window_surface_lock(surface);
             memcpy(dst_bits, src_bits, bmi->bmiHeader.biSizeImage);
-            add_bounds_rect(surface->funcs->get_bounds(surface), &rect);
+            add_bounds_rect(&surface->bounds, &rect);
             window_surface_unlock(surface);
             surface->funcs->flush(surface);
         }

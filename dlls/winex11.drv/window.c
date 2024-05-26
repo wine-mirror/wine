@@ -3046,7 +3046,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     if (ret)
     {
         memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
-        add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
+        add_bounds_rect( &surface->bounds, &rect );
     }
 
     window_surface_unlock( surface );

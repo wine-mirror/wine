@@ -46,7 +46,6 @@ struct wayland_window_surface
     HWND hwnd;
     struct wayland_surface *wayland_surface;
     struct wayland_buffer_queue *wayland_buffer_queue;
-    RECT bounds;
     void *bits;
     BITMAPINFO info;
 };
@@ -232,15 +231,6 @@ static void *wayland_window_surface_get_bitmap_info(struct window_surface *windo
 }
 
 /***********************************************************************
- *           wayland_window_surface_get_bounds
- */
-static RECT *wayland_window_surface_get_bounds(struct window_surface *window_surface)
-{
-    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
-    return &wws->bounds;
-}
-
-/***********************************************************************
  *           wayland_window_surface_set_region
  */
 static void wayland_window_surface_set_region(struct window_surface *window_surface,
@@ -362,7 +352,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
 
     window_surface_lock(window_surface);
 
-    if (!intersect_rect(&damage_rect, &wws->header.rect, &wws->bounds)) goto done;
+    if (!intersect_rect(&damage_rect, &wws->header.rect, &window_surface->bounds)) goto done;
 
     if (!wws->wayland_surface || !wws->wayland_buffer_queue)
     {
@@ -372,7 +362,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     }
 
     TRACE("surface=%p hwnd=%p surface_rect=%s bounds=%s\n", wws, wws->hwnd,
-          wine_dbgstr_rect(&wws->header.rect), wine_dbgstr_rect(&wws->bounds));
+          wine_dbgstr_rect(&wws->header.rect), wine_dbgstr_rect(&window_surface->bounds));
 
     surface_damage_region = NtGdiCreateRectRgn(damage_rect.left, damage_rect.top,
                                                damage_rect.right, damage_rect.bottom);
@@ -448,7 +438,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     wayland_shm_buffer_ref((wws->wayland_surface->latest_window_buffer = shm_buffer));
 
 done:
-    if (flushed) reset_bounds(&wws->bounds);
+    if (flushed) reset_bounds(&window_surface->bounds);
     if (surface_damage_region) NtGdiDeleteObjectApp(surface_damage_region);
     window_surface_unlock(window_surface);
 }
@@ -471,7 +461,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
     wayland_window_surface_get_bitmap_info,
-    wayland_window_surface_get_bounds,
     wayland_window_surface_set_region,
     wayland_window_surface_flush,
     wayland_window_surface_destroy
@@ -502,7 +491,6 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     wws->info.bmiHeader.biSizeImage = width * height * 4;
 
     wws->hwnd = hwnd;
-    reset_bounds(&wws->bounds);
 
     if (!(wws->bits = malloc(wws->info.bmiHeader.biSizeImage)))
         goto failed;

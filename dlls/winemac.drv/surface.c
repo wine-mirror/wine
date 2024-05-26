@@ -64,7 +64,6 @@ struct macdrv_window_surface
 {
     struct window_surface   header;
     macdrv_window           window;
-    RECT                    bounds;
     HRGN                    region;
     HRGN                    drawn;
     BOOL                    use_alpha;
@@ -109,16 +108,6 @@ static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surfac
 }
 
 /***********************************************************************
- *              macdrv_surface_get_bounds
- */
-static RECT *macdrv_surface_get_bounds(struct window_surface *window_surface)
-{
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    return &surface->bounds;
-}
-
-/***********************************************************************
  *              macdrv_surface_set_region
  */
 static void macdrv_surface_set_region(struct window_surface *window_surface, HRGN region)
@@ -156,14 +145,14 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
     window_surface_lock(window_surface);
 
     TRACE("flushing %p %s bounds %s bits %p\n", surface, wine_dbgstr_rect(&surface->header.rect),
-          wine_dbgstr_rect(&surface->bounds), surface->bits);
+          wine_dbgstr_rect(&window_surface->bounds), surface->bits);
 
-    rect = cgrect_from_rect(surface->bounds);
+    rect = cgrect_from_rect(window_surface->bounds);
     rect = CGRectOffset(rect, surface->header.rect.left, surface->header.rect.top);
 
-    if (!IsRectEmpty(&surface->bounds) &&
-        (region = NtGdiCreateRectRgn(surface->bounds.left, surface->bounds.top,
-                                     surface->bounds.right, surface->bounds.bottom)))
+    if (!IsRectEmpty(&window_surface->bounds) &&
+        (region = NtGdiCreateRectRgn(window_surface->bounds.left, window_surface->bounds.top,
+                                     window_surface->bounds.right, window_surface->bounds.bottom)))
     {
         if (surface->drawn)
         {
@@ -174,7 +163,7 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
             surface->drawn = region;
     }
     update_blit_data(surface);
-    reset_bounds(&surface->bounds);
+    reset_bounds(&window_surface->bounds);
 
     window_surface_unlock(window_surface);
 
@@ -200,7 +189,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
     macdrv_surface_get_bitmap_info,
-    macdrv_surface_get_bounds,
     macdrv_surface_set_region,
     macdrv_surface_flush,
     macdrv_surface_destroy,
@@ -243,7 +231,6 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     colors[2] = 0x000000ff;
 
     surface->window = window;
-    reset_bounds(&surface->bounds);
     if (old_mac_surface && old_mac_surface->drawn)
     {
         surface->drawn = NtGdiCreateRectRgn(rect->left, rect->top, rect->right, rect->bottom);

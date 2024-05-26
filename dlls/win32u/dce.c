@@ -74,12 +74,6 @@ static void *dummy_surface_get_bitmap_info( struct window_surface *window_surfac
     return &dummy_data;
 }
 
-static RECT *dummy_surface_get_bounds( struct window_surface *window_surface )
-{
-    static RECT dummy_bounds;
-    return &dummy_bounds;
-}
-
 static void dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     /* nothing to do */
@@ -98,7 +92,6 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs dummy_surface_funcs =
 {
     dummy_surface_get_bitmap_info,
-    dummy_surface_get_bounds,
     dummy_surface_set_region,
     dummy_surface_flush,
     dummy_surface_destroy
@@ -113,7 +106,6 @@ struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1,
 struct offscreen_window_surface
 {
     struct window_surface header;
-    RECT bounds;
     char *bits;
     BITMAPINFO info;
 };
@@ -124,12 +116,6 @@ static struct offscreen_window_surface *impl_from_window_surface( struct window_
 {
     if (!base || base->funcs != &offscreen_window_surface_funcs) return NULL;
     return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
-}
-
-static RECT *offscreen_window_surface_get_bounds( struct window_surface *base )
-{
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    return &impl->bounds;
 }
 
 static void *offscreen_window_surface_get_bitmap_info( struct window_surface *base, BITMAPINFO *info )
@@ -143,12 +129,11 @@ static void offscreen_window_surface_set_region( struct window_surface *base, HR
 {
 }
 
-static void offscreen_window_surface_flush( struct window_surface *base )
+static void offscreen_window_surface_flush( struct window_surface *surface )
 {
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    window_surface_lock( base );
-    reset_bounds( &impl->bounds );
-    window_surface_unlock( base );
+    window_surface_lock( surface );
+    reset_bounds( &surface->bounds );
+    window_surface_unlock( surface );
 }
 
 static void offscreen_window_surface_destroy( struct window_surface *base )
@@ -160,7 +145,6 @@ static void offscreen_window_surface_destroy( struct window_surface *base )
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
     offscreen_window_surface_get_bitmap_info,
-    offscreen_window_surface_get_bounds,
     offscreen_window_surface_set_region,
     offscreen_window_surface_flush,
     offscreen_window_surface_destroy
@@ -193,8 +177,6 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
     window_surface_init( &impl->header, &offscreen_window_surface_funcs, &surface_rect );
 
-    reset_bounds( &impl->bounds );
-
     impl->bits = (char *)&impl->info.bmiColors[0];
     impl->info.bmiHeader.biSize        = sizeof( impl->info );
     impl->info.bmiHeader.biWidth       = surface_rect.right;
@@ -217,6 +199,7 @@ W32KAPI void window_surface_init( struct window_surface *surface, const struct w
     surface->ref = 1;
     surface->rect = *rect;
     pthread_mutex_init( &surface->mutex, NULL );
+    reset_bounds( &surface->bounds );
 }
 
 W32KAPI void window_surface_add_ref( struct window_surface *surface )
