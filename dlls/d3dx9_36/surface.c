@@ -1901,12 +1901,12 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
     }
 }
 
-static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, const RECT *rect,
-        const RECT *unaligned_rect, const struct volume *size, const struct pixel_format_desc *desc,
-        void **out_memory, uint32_t *out_row_pitch, RECT *out_rect, const struct pixel_format_desc **out_desc)
+static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct pixel_format_desc *desc,
+        BOOL is_dst, void **out_memory, uint32_t *out_row_pitch, const struct pixel_format_desc **out_desc)
 {
     void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
     const struct pixel_format_desc *uncompressed_desc = NULL;
+    const struct volume *size = &pixels->size;
     uint32_t x, y, tmp_pitch;
     BYTE *uncompressed_mem;
 
@@ -1934,11 +1934,26 @@ static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, con
     if (!(uncompressed_mem = malloc(size->width * size->height * size->depth * uncompressed_desc->bytes_per_pixel)))
         return E_OUTOFMEMORY;
 
-    if (unaligned_rect && EqualRect(rect, unaligned_rect))
-        goto exit;
+    /*
+     * For compressed destination pixels, width/height will represent
+     * the entire set of compressed blocks our destination rectangle touches.
+     * If we're only updating a sub-area of any blocks, we need to decompress
+     * the pixels outside of the sub-area.
+     */
+    if (is_dst)
+    {
+        const RECT aligned_rect = { 0, 0, size->width, size->height };
 
-    TRACE("Decompressing image.\n");
-    tmp_pitch = row_pitch * desc->block_width / desc->block_byte_count;
+        /*
+         * If our destination covers the entire set of blocks, no
+         * decompression needs to be done, just return the allocated memory.
+         */
+        if (EqualRect(&aligned_rect, &pixels->unaligned_rect))
+            goto exit;
+    }
+
+    TRACE("Decompressing pixels.\n");
+    tmp_pitch = pixels->row_pitch * desc->block_width / desc->block_byte_count;
     for (y = 0; y < size->height; ++y)
     {
         BYTE *ptr = &uncompressed_mem[y * size->width * uncompressed_desc->bytes_per_pixel];
@@ -1946,8 +1961,11 @@ static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, con
         {
             const POINT pt = { x, y };
 
-            if (!PtInRect(unaligned_rect, pt))
-                fetch_dxt_texel(tmp_pitch, (BYTE *)memory, x + rect->left, y + rect->top, ptr);
+            if (!is_dst)
+                fetch_dxt_texel(tmp_pitch, (BYTE *)pixels->data, x + pixels->unaligned_rect.left,
+                        y + pixels->unaligned_rect.top, ptr);
+            else if (!PtInRect(&pixels->unaligned_rect, pt))
+                fetch_dxt_texel(tmp_pitch, (BYTE *)pixels->data, x, y, ptr);
             ptr += uncompressed_desc->bytes_per_pixel;
         }
     }
@@ -1955,10 +1973,6 @@ static HRESULT d3dx_image_decompress(const void *memory, uint32_t row_pitch, con
 exit:
     *out_memory = uncompressed_mem;
     *out_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
-    if (unaligned_rect)
-        *out_rect = *unaligned_rect;
-    else
-        SetRect(out_rect, 0, 0, size->width, size->height);
     *out_desc = uncompressed_desc;
 
     return S_OK;
@@ -2069,10 +2083,9 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
         const struct pixel_format_desc *uncompressed_desc;
         uint32_t uncompressed_row_pitch;
         void *uncompressed_mem = NULL;
-        RECT uncompressed_rect;
 
-        hr = d3dx_image_decompress(src_pixels->data, src_pixels->row_pitch, &src_pixels->unaligned_rect, NULL,
-                &src_size, src_desc, &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
+        hr = d3dx_pixels_decompress(src_pixels, src_desc, FALSE, &uncompressed_mem, &uncompressed_row_pitch,
+                &uncompressed_desc);
         if (SUCCEEDED(hr))
         {
             struct d3dx_pixels uncompressed_pixels;
@@ -2093,14 +2106,11 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
     {
         const struct pixel_format_desc *uncompressed_desc;
         struct d3dx_pixels uncompressed_pixels;
-        RECT uncompressed_rect, aligned_rect;
         uint32_t uncompressed_row_pitch;
         void *uncompressed_mem = NULL;
 
-        SetRect(&aligned_rect, 0, 0, dst_pixels->size.width, dst_pixels->size.height);
-        hr = d3dx_image_decompress(dst_pixels->data, dst_pixels->row_pitch, &aligned_rect,
-                &dst_pixels->unaligned_rect, &dst_size_aligned, dst_desc, &uncompressed_mem, &uncompressed_row_pitch,
-                &uncompressed_rect, &uncompressed_desc);
+        hr = d3dx_pixels_decompress(dst_pixels, dst_desc, TRUE, &uncompressed_mem, &uncompressed_row_pitch,
+                &uncompressed_desc);
         if (FAILED(hr))
             goto exit;
 
