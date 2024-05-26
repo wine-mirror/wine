@@ -97,22 +97,6 @@ static void update_blit_data(struct macdrv_window_surface *surface)
 }
 
 /***********************************************************************
- *              macdrv_surface_lock
- */
-static void macdrv_surface_lock(struct window_surface *window_surface)
-{
-    pthread_mutex_lock(&window_surface->mutex);
-}
-
-/***********************************************************************
- *              macdrv_surface_unlock
- */
-static void macdrv_surface_unlock(struct window_surface *window_surface)
-{
-    pthread_mutex_unlock(&window_surface->mutex);
-}
-
-/***********************************************************************
  *              macdrv_surface_get_bitmap_info
  */
 static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surface,
@@ -143,7 +127,7 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 
     TRACE("updating surface %p with %p\n", surface, region);
 
-    window_surface->funcs->lock(window_surface);
+    window_surface_lock(window_surface);
 
     if (region)
     {
@@ -157,7 +141,7 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
     }
     update_blit_data(surface);
 
-    window_surface->funcs->unlock(window_surface);
+    window_surface_unlock(window_surface);
 }
 
 /***********************************************************************
@@ -169,7 +153,7 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
     CGRect rect;
     HRGN region;
 
-    window_surface->funcs->lock(window_surface);
+    window_surface_lock(window_surface);
 
     TRACE("flushing %p %s bounds %s bits %p\n", surface, wine_dbgstr_rect(&surface->header.rect),
           wine_dbgstr_rect(&surface->bounds), surface->bits);
@@ -192,7 +176,7 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
     update_blit_data(surface);
     reset_bounds(&surface->bounds);
 
-    window_surface->funcs->unlock(window_surface);
+    window_surface_unlock(window_surface);
 
     if (!CGRectIsEmpty(rect))
         macdrv_window_needs_display(surface->window, rect);
@@ -215,8 +199,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
-    macdrv_surface_lock,
-    macdrv_surface_unlock,
     macdrv_surface_get_bitmap_info,
     macdrv_surface_get_bounds,
     macdrv_surface_set_region,
@@ -427,7 +409,7 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     if (!surface) return;
-    window_surface->funcs->lock(window_surface);
+    window_surface_lock(window_surface);
 
     if (surface->drawn)
     {
@@ -446,5 +428,5 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
         }
     }
 
-    window_surface->funcs->unlock(window_surface);
+    window_surface_unlock(window_surface);
 }

@@ -646,22 +646,6 @@ static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *
 }
 
 /***********************************************************************
- *           android_surface_lock
- */
-static void android_surface_lock( struct window_surface *window_surface )
-{
-    pthread_mutex_lock( &window_surface->mutex );
-}
-
-/***********************************************************************
- *           android_surface_unlock
- */
-static void android_surface_unlock( struct window_surface *window_surface )
-{
-    pthread_mutex_unlock( &window_surface->mutex );
-}
-
-/***********************************************************************
  *           android_surface_get_bitmap_info
  */
 static void *android_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
@@ -691,7 +675,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     if (!region)
     {
         if (surface->region) NtGdiDeleteObjectApp( surface->region );
@@ -702,7 +686,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
         if (!surface->region) surface->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         NtGdiCombineRgn( surface->region, region, 0, RGN_COPY );
     }
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
     set_surface_region( &surface->header, (HRGN)1 );
 }
 
@@ -717,12 +701,12 @@ static void android_surface_flush( struct window_surface *window_surface )
     RECT rect;
     BOOL needs_flush;
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     SetRect( &rect, 0, 0, surface->header.rect.right - surface->header.rect.left,
              surface->header.rect.bottom - surface->header.rect.top );
     needs_flush = intersect_rect( &rect, &rect, &surface->bounds );
     reset_bounds( &surface->bounds );
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
     if (!needs_flush) return;
 
     TRACE( "flushing %p hwnd %p surface %s rect %s bits %p alpha %02x key %08x region %u rects\n",
@@ -807,8 +791,6 @@ static void android_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs android_surface_funcs =
 {
-    android_surface_lock,
-    android_surface_unlock,
     android_surface_get_bitmap_info,
     android_surface_get_bounds,
     android_surface_set_region,
@@ -880,11 +862,11 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
     }
 
 done:
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     free( surface->region_data );
     surface->region_data = data;
     *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
     if (region != win_region) NtGdiDeleteObjectApp( region );
 }
 
@@ -938,14 +920,14 @@ static void set_surface_layered( struct window_surface *window_surface, BYTE alp
 
     if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     prev_key = surface->color_key;
     prev_alpha = surface->alpha;
     surface->alpha = alpha;
     set_color_key( surface, color_key );
     if (alpha != prev_alpha || surface->color_key != prev_key)  /* refresh */
         *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1577,7 +1559,7 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
 
     NtGdiSelectBitmap( hdc, dib );
 
-    surface->funcs->lock( surface );
+    window_surface_lock( surface );
 
     if (info->prcDirty)
     {
@@ -1600,7 +1582,7 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
         add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
     }
 
-    surface->funcs->unlock( surface );
+    window_surface_unlock( surface );
     surface->funcs->flush( surface );
 
 done:
@@ -1630,9 +1612,9 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
             struct window_surface *surface = data->surface;
             if (surface)
             {
-                surface->funcs->lock( surface );
+                window_surface_lock( surface );
                 *surface->funcs->get_bounds( surface ) = surface->rect;
-                surface->funcs->unlock( surface );
+                window_surface_unlock( surface );
                 if (is_argb_surface( surface )) surface->funcs->flush( surface );
             }
             release_win_data( data );

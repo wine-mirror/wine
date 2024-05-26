@@ -219,22 +219,6 @@ static void wayland_buffer_queue_add_damage(struct wayland_buffer_queue *queue, 
 }
 
 /***********************************************************************
- *           wayland_window_surface_lock
- */
-static void wayland_window_surface_lock(struct window_surface *window_surface)
-{
-    pthread_mutex_lock(&window_surface->mutex);
-}
-
-/***********************************************************************
- *           wayland_window_surface_unlock
- */
-static void wayland_window_surface_unlock(struct window_surface *window_surface)
-{
-    pthread_mutex_unlock(&window_surface->mutex);
-}
-
-/***********************************************************************
  *           wayland_window_surface_get_bitmap_info
  */
 static void *wayland_window_surface_get_bitmap_info(struct window_surface *window_surface,
@@ -376,7 +360,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     HRGN surface_damage_region = NULL;
     HRGN copy_from_window_region;
 
-    wayland_window_surface_lock(window_surface);
+    window_surface_lock(window_surface);
 
     if (!intersect_rect(&damage_rect, &wws->header.rect, &wws->bounds)) goto done;
 
@@ -466,7 +450,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
 done:
     if (flushed) reset_bounds(&wws->bounds);
     if (surface_damage_region) NtGdiDeleteObjectApp(surface_damage_region);
-    wayland_window_surface_unlock(window_surface);
+    window_surface_unlock(window_surface);
 }
 
 /***********************************************************************
@@ -486,8 +470,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
-    wayland_window_surface_lock,
-    wayland_window_surface_unlock,
     wayland_window_surface_get_bitmap_info,
     wayland_window_surface_get_bounds,
     wayland_window_surface_set_region,
@@ -543,7 +525,7 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
 {
     struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
 
-    wayland_window_surface_lock(window_surface);
+    window_surface_lock(window_surface);
 
     TRACE("surface=%p hwnd=%p wayland_surface=%p\n", wws, wws->hwnd, wayland_surface);
 
@@ -562,5 +544,5 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
         wws->wayland_buffer_queue = NULL;
     }
 
-    wayland_window_surface_unlock(window_surface);
+    window_surface_unlock(window_surface);
 }

@@ -751,7 +751,7 @@ static inline void lock_surface( struct windrv_physdev *dev )
 
     if (!dev->lock_count++)
     {
-        surface->funcs->lock( surface );
+        window_surface_lock( surface );
         if (IsRectEmpty( dev->dibdrv->bounds ) || !surface->draw_start_ticks)
             surface->draw_start_ticks = NtGetTickCount();
     }
@@ -764,7 +764,7 @@ static inline void unlock_surface( struct windrv_physdev *dev )
     if (!--dev->lock_count)
     {
         DWORD ticks = NtGetTickCount() - surface->draw_start_ticks;
-        surface->funcs->unlock( surface );
+        window_surface_unlock( surface );
         if (ticks > FLUSH_PERIOD) surface->funcs->flush( dev->surface );
     }
 }

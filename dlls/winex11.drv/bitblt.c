@@ -1828,22 +1828,6 @@ failed:
 #endif /* HAVE_LIBXXSHM */
 
 /***********************************************************************
- *           x11drv_surface_lock
- */
-static void x11drv_surface_lock( struct window_surface *window_surface )
-{
-    pthread_mutex_lock( &window_surface->mutex );
-}
-
-/***********************************************************************
- *           x11drv_surface_unlock
- */
-static void x11drv_surface_unlock( struct window_surface *window_surface )
-{
-    pthread_mutex_unlock( &window_surface->mutex );
-}
-
-/***********************************************************************
  *           x11drv_surface_get_bitmap_info
  */
 static void *x11drv_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
@@ -1874,7 +1858,7 @@ static void x11drv_surface_set_region( struct window_surface *window_surface, HR
 
     TRACE( "updating surface %p with %p\n", surface, region );
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     if (!region)
     {
         if (surface->region) NtGdiDeleteObjectApp( surface->region );
@@ -1892,7 +1876,7 @@ static void x11drv_surface_set_region( struct window_surface *window_surface, HR
             free( data );
         }
     }
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1905,7 +1889,7 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
     unsigned char *dst = (unsigned char *)surface->image->data;
     struct bitblt_coords coords;
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     coords.x = 0;
     coords.y = 0;
     coords.width  = surface->header.rect.right - surface->header.rect.left;
@@ -1959,7 +1943,7 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
         XFlush( gdi_display );
     }
     reset_bounds( &surface->bounds );
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1993,8 +1977,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
-    x11drv_surface_lock,
-    x11drv_surface_unlock,
     x11drv_surface_get_bitmap_info,
     x11drv_surface_get_bounds,
     x11drv_surface_set_region,
@@ -2078,11 +2060,11 @@ void set_surface_color_key( struct window_surface *window_surface, COLORREF colo
 
     if (window_surface->funcs != &x11drv_surface_funcs) return;  /* we may get the null surface */
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     prev = surface->color_key;
     set_color_key( surface, color_key );
     if (surface->color_key != prev) update_surface_region( surface );
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -2096,7 +2078,7 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 
     if (window_surface->funcs != &x11drv_surface_funcs) return 0;  /* we may get the null surface */
 
-    window_surface->funcs->lock( window_surface );
+    window_surface_lock( window_surface );
     OffsetRect( &rc, -window_surface->rect.left, -window_surface->rect.top );
     add_bounds_rect( &surface->bounds, &rc );
     if (surface->region)
@@ -2108,6 +2090,6 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
             region = 0;
         }
     }
-    window_surface->funcs->unlock( window_surface );
+    window_surface_unlock( window_surface );
     return region;
 }

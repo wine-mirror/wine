@@ -3026,7 +3026,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
 
     NtGdiSelectBitmap( hdc, dib );
 
-    surface->funcs->lock( surface );
+    window_surface_lock( surface );
 
     if (info->prcDirty)
     {
@@ -3049,7 +3049,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
         add_bounds_rect( surface->funcs->get_bounds( surface ), &rect );
     }
 
-    surface->funcs->unlock( surface );
+    window_surface_unlock( surface );
     surface->funcs->flush( surface );
 
 done:

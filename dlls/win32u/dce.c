@@ -56,16 +56,6 @@ static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
  * Dummy window surface for windows that shouldn't get painted.
  */
 
-static void dummy_surface_lock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-static void dummy_surface_unlock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
 static void *dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
     static DWORD dummy_data;
@@ -107,8 +97,6 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs dummy_surface_funcs =
 {
-    dummy_surface_lock,
-    dummy_surface_unlock,
     dummy_surface_get_bitmap_info,
     dummy_surface_get_bounds,
     dummy_surface_set_region,
@@ -138,16 +126,6 @@ static struct offscreen_window_surface *impl_from_window_surface( struct window_
     return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
 }
 
-static void offscreen_window_surface_lock( struct window_surface *surface )
-{
-    pthread_mutex_lock( &surface->mutex );
-}
-
-static void offscreen_window_surface_unlock( struct window_surface *surface )
-{
-    pthread_mutex_unlock( &surface->mutex );
-}
-
 static RECT *offscreen_window_surface_get_bounds( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
@@ -168,9 +146,9 @@ static void offscreen_window_surface_set_region( struct window_surface *base, HR
 static void offscreen_window_surface_flush( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    base->funcs->lock( base );
+    window_surface_lock( base );
     reset_bounds( &impl->bounds );
-    base->funcs->unlock( base );
+    window_surface_unlock( base );
 }
 
 static void offscreen_window_surface_destroy( struct window_surface *base )
@@ -181,8 +159,6 @@ static void offscreen_window_surface_destroy( struct window_surface *base )
 
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
-    offscreen_window_surface_lock,
-    offscreen_window_surface_unlock,
     offscreen_window_surface_get_bitmap_info,
     offscreen_window_surface_get_bounds,
     offscreen_window_surface_set_region,
@@ -256,6 +232,18 @@ W32KAPI void window_surface_release( struct window_surface *surface )
         if (surface != &dummy_surface) pthread_mutex_destroy( &surface->mutex );
         surface->funcs->destroy( surface );
     }
+}
+
+W32KAPI void window_surface_lock( struct window_surface *surface )
+{
+    if (surface == &dummy_surface) return;
+    pthread_mutex_lock( &surface->mutex );
+}
+
+W32KAPI void window_surface_unlock( struct window_surface *surface )
+{
+    if (surface == &dummy_surface) return;
+    pthread_mutex_unlock( &surface->mutex );
 }
 
 /*******************************************************************
@@ -1171,12 +1159,12 @@ static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
     else
     {
         bits = surface->funcs->get_info( surface, info );
-        surface->funcs->lock( surface );
+        window_surface_lock( surface );
         NtGdiSetDIBitsToDeviceInternal( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
                                         src->left - surface->rect.left, surface->rect.bottom - src->bottom,
                                         0, surface->rect.bottom - surface->rect.top,
                                         bits, info, DIB_RGB_COLORS, 0, 0, FALSE, NULL );
-        surface->funcs->unlock( surface );
+        window_surface_unlock( surface );
     }
 
     NtUserReleaseDC( hwnd, hdc );
