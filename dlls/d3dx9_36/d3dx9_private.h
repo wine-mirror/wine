@@ -45,6 +45,13 @@ struct volume
     UINT depth;
 };
 
+static inline void set_volume_struct(struct volume *volume, uint32_t width, uint32_t height, uint32_t depth)
+{
+    volume->width = width;
+    volume->height = height;
+    volume->depth = depth;
+}
+
 /* for internal use */
 enum format_type {
     FORMAT_ARGB,   /* unsigned */
@@ -68,6 +75,17 @@ struct pixel_format_desc {
     void (*to_rgba)(const struct vec4 *src, struct vec4 *dst, const PALETTEENTRY *palette);
 };
 
+struct d3dx_pixels
+{
+    const void *data;
+    uint32_t row_pitch;
+    uint32_t slice_pitch;
+    const PALETTEENTRY *palette;
+
+    struct volume size;
+};
+
+#define D3DX_IMAGE_INFO_ONLY 1
 struct d3dx_image
 {
     D3DRESOURCETYPE resource_type;
@@ -77,6 +95,16 @@ struct d3dx_image
     uint32_t height;
     uint32_t depth;
     uint32_t mip_levels;
+
+    BYTE *pixels;
+
+    /*
+     * image_buf and palette are pointers to allocated memory used to store
+     * image data. If they are non-NULL, they need to be freed when no longer
+     * in use.
+     */
+    void *image_buf;
+    PALETTEENTRY *palette;
 
     D3DXIMAGE_FILEFORMAT image_file_format;
 };
