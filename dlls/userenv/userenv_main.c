@@ -688,3 +688,13 @@ BOOL WINAPI USERENV_138( int csidl, LPCSTR lnk_dir, LPCSTR lnk_filename,
 
     return FALSE;
 }
+
+HRESULT WINAPI CreateAppContainerProfile(PCWSTR container_name, PCWSTR display_name, PCWSTR description,
+                                         SID_AND_ATTRIBUTES *capabilities, DWORD capability_count,
+                                         SID **container_sid)
+{
+    FIXME("(%s, %s, %s, %p, %ld, %p): stub\n", debugstr_w(container_name), debugstr_w(display_name),
+          debugstr_w(description), capabilities, capability_count, container_sid);
+
+    return E_NOTIMPL;
+}
