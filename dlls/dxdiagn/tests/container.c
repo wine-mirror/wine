@@ -878,6 +878,9 @@ static void test_DxDiag_DisplayDevices(void)
         {L"szManufacturer", VT_BSTR},
         {L"b3DAccelerationExists", VT_BOOL},
         {L"b3DAccelerationEnabled", VT_BOOL},
+        {L"bAGPEnabled", VT_BOOL},
+        {L"bAGPExistenceValid", VT_BOOL},
+        {L"bAGPExists", VT_BOOL},
         {L"bDDAccelerationEnabled", VT_BOOL},
         {L"iAdapter", VT_UI4},
     };

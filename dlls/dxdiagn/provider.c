@@ -1003,6 +1003,18 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
         if (FAILED(hr))
             goto cleanup;
 
+        hr = add_bool_property(display_adapter, L"bAGPEnabled", hardware_accel);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(display_adapter, L"bAGPExistenceValid", hardware_accel);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(display_adapter, L"bAGPExists", hardware_accel);
+        if (FAILED(hr))
+            goto cleanup;
+
         hr = add_bool_property(display_adapter, L"bDDAccelerationEnabled", hardware_accel);
         if (FAILED(hr))
             goto cleanup;
