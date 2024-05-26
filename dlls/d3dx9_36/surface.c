@@ -1154,17 +1154,16 @@ static void d3dx_image_cleanup(struct d3dx_image *image)
 static HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels)
 {
     uint32_t row_pitch, slice_pitch;
+    RECT unaligned_rect;
     HRESULT hr = S_OK;
 
     hr = d3dx_calculate_pixels_size(image->format, image->width, image->height, &row_pitch, &slice_pitch);
     if (FAILED(hr))
         return hr;
 
-    pixels->data = image->pixels;
-    pixels->row_pitch = row_pitch;
-    pixels->slice_pitch = slice_pitch;
-    pixels->palette = image->palette;
-    set_volume_struct(&pixels->size, image->width, image->height, image->depth);
+    SetRect(&unaligned_rect, 0, 0, image->width, image->height);
+    set_d3dx_pixels(pixels, image->pixels, row_pitch, slice_pitch, image->palette, image->width, image->height,
+            image->depth, &unaligned_rect);
 
     return D3D_OK;
 }
@@ -1965,40 +1964,91 @@ exit:
     return S_OK;
 }
 
-static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pitch, const struct pixel_format_desc *dst_desc,
-        const PALETTEENTRY *dst_palette, const RECT *dst_rect, const RECT *dst_rect_aligned, const void *src_memory,
-        uint32_t src_row_pitch, const struct pixel_format_desc *src_desc, const PALETTEENTRY *src_palette, const RECT *src_rect,
-        uint32_t filter_flags, uint32_t color_key)
+static HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
+        const PALETTEENTRY *palette, D3DFORMAT format, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom,
+        uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
+{
+    const struct pixel_format_desc *fmt_desc = get_format_info(format);
+    const BYTE *ptr = data;
+    RECT unaligned_rect;
+
+    memset(pixels, 0, sizeof(*pixels));
+    if (fmt_desc->type == FORMAT_UNKNOWN)
+    {
+        FIXME("Unsupported format %#x.\n", format);
+        return E_NOTIMPL;
+    }
+
+    ptr += front * slice_pitch;
+    ptr += (top / fmt_desc->block_height) * row_pitch;
+    ptr += (left / fmt_desc->block_width) * fmt_desc->block_byte_count;
+
+    if (fmt_desc->type == FORMAT_DXT)
+    {
+        uint32_t left_aligned, top_aligned;
+
+        top_aligned = top & ~(fmt_desc->block_height - 1);
+        left_aligned = left & ~(fmt_desc->block_width - 1);
+        SetRect(&unaligned_rect, left, top, right, bottom);
+        OffsetRect(&unaligned_rect, -left_aligned, -top_aligned);
+    }
+    else
+    {
+        SetRect(&unaligned_rect, 0, 0, (right - left), (bottom - top));
+    }
+
+    set_d3dx_pixels(pixels, ptr, row_pitch, slice_pitch, palette, (right - left), (bottom - top), (back - front),
+            &unaligned_rect);
+
+    return S_OK;
+}
+
+static const char *debug_d3dx_pixels(struct d3dx_pixels *pixels)
+{
+    if (!pixels)
+        return "(null)";
+    return wine_dbg_sprintf("(data %p, row_pitch %d, slice_pitch %d, palette %p, width %d, height %d, depth %d, "
+            "unaligned_rect %s)", pixels->data, pixels->row_pitch, pixels->slice_pitch, pixels->palette,
+            pixels->size.width, pixels->size.height, pixels->size.depth, wine_dbgstr_rect(&pixels->unaligned_rect));
+}
+
+static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
+       const struct pixel_format_desc *dst_desc, struct d3dx_pixels *src_pixels,
+       const struct pixel_format_desc *src_desc, uint32_t filter_flags, uint32_t color_key)
 {
     struct volume src_size, dst_size, dst_size_aligned;
-    const BYTE *src_memory_offset = src_memory;
     HRESULT hr = S_OK;
 
-    TRACE("dst_memory %p, dst_row_pitch %d, dst_desc %p, dst_palette %p, dst_rect %s, dst_rect_aligned %s, src_memory %p, "
-          "src_row_pitch %d, src_desc %p, src_palette %p, src_rect %s, filter %#x, color_key 0x%08x.\n",
-            dst_memory, dst_row_pitch, dst_desc, dst_palette, wine_dbgstr_rect(dst_rect), wine_dbgstr_rect(dst_rect_aligned),
-            src_memory, src_row_pitch, src_desc, src_palette, wine_dbgstr_rect(src_rect), filter_flags, color_key);
+    TRACE("dst_pixels %s, dst_desc %p, src_pixels %s, src_desc %p, filter_flags %#x, color_key %#x.\n",
+            debug_d3dx_pixels(dst_pixels), dst_desc, debug_d3dx_pixels(src_pixels), src_desc,
+            filter_flags, color_key);
 
-    set_volume_struct(&src_size, (src_rect->right - src_rect->left), (src_rect->bottom - src_rect->top), 1);
-    set_volume_struct(&dst_size, (dst_rect->right - dst_rect->left), (dst_rect->bottom - dst_rect->top), 1);
-    set_volume_struct(&dst_size_aligned, (dst_rect_aligned->right - dst_rect_aligned->left),
-            (dst_rect_aligned->bottom - dst_rect_aligned->top), 1);
+    if (src_desc->type == FORMAT_DXT)
+        set_volume_struct(&src_size, (src_pixels->unaligned_rect.right - src_pixels->unaligned_rect.left),
+                (src_pixels->unaligned_rect.bottom - src_pixels->unaligned_rect.top), src_pixels->size.depth);
+    else
+        src_size = src_pixels->size;
 
-    src_memory_offset += (src_rect->top / src_desc->block_height) * src_row_pitch;
-    src_memory_offset += (src_rect->left / src_desc->block_width) * src_desc->block_byte_count;
+    dst_size_aligned = dst_pixels->size;
+    if (dst_desc->type == FORMAT_DXT)
+        set_volume_struct(&dst_size, (dst_pixels->unaligned_rect.right - dst_pixels->unaligned_rect.left),
+                (dst_pixels->unaligned_rect.bottom - dst_pixels->unaligned_rect.top), dst_pixels->size.depth);
+    else
+        dst_size = dst_size_aligned;
 
     /* Everything matches, simply copy the pixels. */
     if (src_desc->format == dst_desc->format
             && (dst_size.width == src_size.width && !(dst_size.width % dst_desc->block_width))
             && (dst_size.height == src_size.height && !(dst_size.height % dst_desc->block_height))
             && color_key == 0
-            && !(src_rect->left & (src_desc->block_width - 1))
-            && !(src_rect->top & (src_desc->block_height - 1))
-            && !(dst_rect->left & (dst_desc->block_width - 1))
-            && !(dst_rect->top & (dst_desc->block_height - 1)))
+            && !(src_pixels->unaligned_rect.left & (src_desc->block_width - 1))
+            && !(src_pixels->unaligned_rect.top & (src_desc->block_height - 1))
+            && !(dst_pixels->unaligned_rect.left & (dst_desc->block_width - 1))
+            && !(dst_pixels->unaligned_rect.top & (dst_desc->block_height - 1)))
     {
         TRACE("Simple copy.\n");
-        copy_pixels(src_memory_offset, src_row_pitch, 0, dst_memory, dst_row_pitch, 0, &src_size, src_desc);
+        copy_pixels(src_pixels->data, src_pixels->row_pitch, src_pixels->slice_pitch, (void *)dst_pixels->data,
+                dst_pixels->row_pitch, dst_pixels->slice_pitch, &src_size, src_desc);
         return S_OK;
     }
 
@@ -2021,37 +2071,45 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
         void *uncompressed_mem = NULL;
         RECT uncompressed_rect;
 
-        hr = d3dx_image_decompress(src_memory, src_row_pitch, src_rect, NULL, &src_size, src_desc,
-                &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
+        hr = d3dx_image_decompress(src_pixels->data, src_pixels->row_pitch, &src_pixels->unaligned_rect, NULL,
+                &src_size, src_desc, &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
         if (SUCCEEDED(hr))
         {
-            hr = d3dx_load_image_from_memory(dst_memory, dst_row_pitch, dst_desc, dst_palette, dst_rect, dst_rect_aligned,
-                    uncompressed_mem, uncompressed_row_pitch, uncompressed_desc, src_palette, &uncompressed_rect,
+            struct d3dx_pixels uncompressed_pixels;
+
+            d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, 0, NULL, uncompressed_desc->format,
+                    0, 0, src_pixels->size.width, src_pixels->size.height, 0, src_pixels->size.depth,
+                    &uncompressed_pixels);
+
+            hr = d3dx_load_pixels_from_pixels(dst_pixels, dst_desc, &uncompressed_pixels, uncompressed_desc,
                     filter_flags, color_key);
         }
         free(uncompressed_mem);
-        return hr;
+        goto exit;
     }
 
     /* Same as the above, need to decompress the destination prior to modifying. */
     if (dst_desc->type == FORMAT_DXT)
     {
         const struct pixel_format_desc *uncompressed_desc;
+        struct d3dx_pixels uncompressed_pixels;
+        RECT uncompressed_rect, aligned_rect;
         uint32_t uncompressed_row_pitch;
         void *uncompressed_mem = NULL;
-        BYTE *uncompressed_mem_offset;
-        RECT uncompressed_rect;
 
-        hr = d3dx_image_decompress(dst_memory, dst_row_pitch, dst_rect_aligned, dst_rect, &dst_size_aligned, dst_desc,
-                &uncompressed_mem, &uncompressed_row_pitch, &uncompressed_rect, &uncompressed_desc);
+        SetRect(&aligned_rect, 0, 0, dst_pixels->size.width, dst_pixels->size.height);
+        hr = d3dx_image_decompress(dst_pixels->data, dst_pixels->row_pitch, &aligned_rect,
+                &dst_pixels->unaligned_rect, &dst_size_aligned, dst_desc, &uncompressed_mem, &uncompressed_row_pitch,
+                &uncompressed_rect, &uncompressed_desc);
         if (FAILED(hr))
-            return hr;
+            goto exit;
 
-        uncompressed_mem_offset = (BYTE *)uncompressed_mem + (dst_rect->top - dst_rect_aligned->top) * uncompressed_row_pitch
-                + (dst_rect->left - dst_rect_aligned->left) * uncompressed_desc->bytes_per_pixel;
-        hr = d3dx_load_image_from_memory(uncompressed_mem_offset, uncompressed_row_pitch, uncompressed_desc, dst_palette,
-                &uncompressed_rect, &uncompressed_rect, src_memory, src_row_pitch, src_desc, src_palette,
-                src_rect, filter_flags, color_key);
+        d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, 0, NULL,
+                uncompressed_desc->format, dst_pixels->unaligned_rect.left, dst_pixels->unaligned_rect.top,
+                dst_pixels->unaligned_rect.right, dst_pixels->unaligned_rect.bottom, 0, 1, &uncompressed_pixels);
+
+        hr = d3dx_load_pixels_from_pixels(&uncompressed_pixels, uncompressed_desc, src_pixels, src_desc, filter_flags,
+                color_key);
         if (SUCCEEDED(hr))
         {
             GLenum gl_format = 0;
@@ -2074,16 +2132,17 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
                     ERR("Unexpected destination compressed format %u.\n", dst_desc->format);
             }
             tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, uncompressed_mem, gl_format,
-                    dst_memory, dst_row_pitch);
+                    (BYTE *)dst_pixels->data, dst_pixels->row_pitch);
         }
         free(uncompressed_mem);
-        return hr;
+        goto exit;
     }
 
     if ((filter_flags & 0xf) == D3DX_FILTER_NONE)
     {
-        convert_argb_pixels(src_memory_offset, src_row_pitch, 0, &src_size, src_desc,
-                dst_memory, dst_row_pitch, 0, &dst_size, dst_desc, color_key, src_palette);
+        convert_argb_pixels(src_pixels->data, src_pixels->row_pitch, src_pixels->slice_pitch, &src_size, src_desc,
+                (BYTE *)dst_pixels->data, dst_pixels->row_pitch, dst_pixels->slice_pitch, &dst_size, dst_desc,
+                color_key, src_pixels->palette);
     }
     else /* if ((filter & 0xf) == D3DX_FILTER_POINT) */
     {
@@ -2092,10 +2151,14 @@ static HRESULT d3dx_load_image_from_memory(void *dst_memory, uint32_t dst_row_pi
 
         /* Always apply a point filter until D3DX_FILTER_LINEAR,
          * D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented. */
-        point_filter_argb_pixels(src_memory_offset, src_row_pitch, 0, &src_size, src_desc, dst_memory, dst_row_pitch, 0,
-                &dst_size, dst_desc, color_key, src_palette);
+        point_filter_argb_pixels(src_pixels->data, src_pixels->row_pitch, src_pixels->slice_pitch, &src_size,
+                src_desc, (BYTE *)dst_pixels->data, dst_pixels->row_pitch, dst_pixels->slice_pitch, &dst_size,
+                dst_desc, color_key, src_pixels->palette);
     }
 
+exit:
+    if (FAILED(hr))
+        WARN("Failed to load pixels, hr %#lx.\n", hr);
     return hr;
 }
 
@@ -2136,8 +2199,9 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         D3DFORMAT src_format, UINT src_pitch, const PALETTEENTRY *src_palette, const RECT *src_rect,
         DWORD filter, D3DCOLOR color_key)
 {
-    RECT dst_rect_temp, dst_rect_aligned, dst_locked_rect, dst_locked_rect_aligned;
     const struct pixel_format_desc *srcformatdesc, *destformatdesc;
+    struct d3dx_pixels src_pixels, dst_pixels;
+    RECT dst_rect_temp, dst_rect_aligned;
     IDirect3DSurface9 *surface;
     D3DSURFACE_DESC surfdesc;
     D3DLOCKED_RECT lockrect;
@@ -2209,17 +2273,21 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     if (filter == D3DX_DEFAULT)
         filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
 
+    hr = d3dx_pixels_init(src_memory, src_pitch, 0, src_palette, srcformatdesc->format,
+            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
+    if (FAILED(hr))
+        return hr;
+
     if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lockrect, &surface, TRUE)))
         return hr;
 
-    dst_locked_rect_aligned = dst_rect_aligned;
-    dst_locked_rect = *dst_rect;
-    OffsetRect(&dst_locked_rect_aligned, -dst_rect_aligned.left, -dst_rect_aligned.top);
-    OffsetRect(&dst_locked_rect, -dst_rect_aligned.left, -dst_rect_aligned.top);
-    hr = d3dx_load_image_from_memory(lockrect.pBits, lockrect.Pitch, destformatdesc, dst_palette, &dst_locked_rect,
-            &dst_locked_rect_aligned, src_memory, src_pitch, srcformatdesc, src_palette, src_rect, filter, color_key);
-    if (FAILED(hr))
-        WARN("d3dx_load_image_from_memory failed with hr %#lx\n", hr);
+
+    set_d3dx_pixels(&dst_pixels, lockrect.pBits, lockrect.Pitch, 0, dst_palette,
+            (dst_rect_aligned.right - dst_rect_aligned.left), (dst_rect_aligned.bottom - dst_rect_aligned.top), 1,
+            dst_rect);
+    OffsetRect(&dst_pixels.unaligned_rect, -dst_rect_aligned.left, -dst_rect_aligned.top);
+
+    d3dx_load_pixels_from_pixels(&dst_pixels, destformatdesc, &src_pixels, srcformatdesc, filter, color_key);
 
     return unlock_surface(dst_surface, &dst_rect_aligned, surface, TRUE);
 }

@@ -83,7 +83,20 @@ struct d3dx_pixels
     const PALETTEENTRY *palette;
 
     struct volume size;
+    RECT unaligned_rect;
 };
+
+static inline void set_d3dx_pixels(struct d3dx_pixels *pixels, const void *data, uint32_t row_pitch,
+        uint32_t slice_pitch, const PALETTEENTRY *palette, uint32_t width, uint32_t height, uint32_t depth,
+        const RECT *unaligned_rect)
+{
+    pixels->data = data;
+    pixels->row_pitch = row_pitch;
+    pixels->slice_pitch = slice_pitch;
+    pixels->palette = palette;
+    set_volume_struct(&pixels->size, width, height, depth);
+    pixels->unaligned_rect = *unaligned_rect;
+}
 
 #define D3DX_IMAGE_INFO_ONLY 1
 struct d3dx_image
