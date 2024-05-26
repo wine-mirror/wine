@@ -949,11 +949,11 @@
 @ cdecl -arch=win64 ?_Gnpreinc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAPEAGXZ(ptr) basic_streambuf_wchar__Gnpreinc
 @ thiscall -arch=win32 ?_Gnpreinc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEPA_WXZ(ptr) basic_streambuf_wchar__Gnpreinc
 @ cdecl -arch=win64 ?_Gnpreinc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAPEA_WXZ(ptr) basic_streambuf_wchar__Gnpreinc
-@ stub -arch=win32 ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHDDDD@Z
+@ cdecl -arch=win32 ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAHDDDD@Z(ptr long long long long) MSVCP_num_get_char__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAHDDDD@Z(ptr long long long long) MSVCP_num_get_char__Hexdig
-@ stub -arch=win32 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHGGGG@Z
+@ cdecl -arch=win32 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAHGGGG@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAHGGGG@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
-@ stub -arch=win32 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAH_W000@Z
+@ cdecl -arch=win32 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAH_W000@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ cdecl -arch=win64 ?_Hexdig@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAH_W000@Z(ptr long long long long) MSVCP_num_get_wchar__Hexdig
 @ extern ?_Id_cnt@id@locale@std@@0HA locale_id__Id_cnt
 @ cdecl -arch=win32 ?_Ifmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADPBDH@Z(ptr ptr str long) num_put_char__Ifmt

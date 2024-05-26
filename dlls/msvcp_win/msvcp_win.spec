@@ -1481,7 +1481,7 @@
 @ cdecl -arch=arm ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAAX_N@Z(ptr long) msvcp140.?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAAX_N@Z
 @ thiscall -arch=i386 ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z(ptr long) msvcp140.?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z
 @ cdecl -arch=win64 ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QEAAX_N@Z(ptr long) msvcp140.?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QEAAX_N@Z
-@ stub -arch=arm ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAAXX
+@ cdecl -arch=arm ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ(ptr) msvcp140.?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ
 @ thiscall -arch=i386 ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ(ptr) msvcp140.?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ
 @ cdecl -arch=win64 ?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ(ptr) msvcp140.?_LogTaskCompleted@_TaskEventLogger@details@Concurrency@@QEAAXXZ
 @ cdecl -arch=arm ?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ(ptr) msvcp140.?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ
