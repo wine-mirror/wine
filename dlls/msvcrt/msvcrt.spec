@@ -13,7 +13,7 @@
 @ cdecl -arch=arm ??0bad_cast@@QAA@ABQBD@Z(ptr ptr) bad_cast_ctor
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBQEBD@Z(ptr ptr) bad_cast_ctor
-@ cdecl -arch=arm ??0bad_cast@@QAA@ABV0@@Z(ptr ptr) bad_cast_ctor
+@ cdecl -arch=arm ??0bad_cast@@QAA@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBV0@@Z(ptr ptr) bad_cast_copy_ctor
 @ cdecl -arch=arm ??0bad_cast@@QAA@PBD@Z(ptr str) bad_cast_ctor_charptr
