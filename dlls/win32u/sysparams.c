@@ -1996,7 +1996,6 @@ static UINT update_display_devices( struct device_manager_ctx *ctx )
 
 static void add_vulkan_only_gpus( struct device_manager_ctx *ctx )
 {
-    struct list gpus = LIST_INIT(gpus);
     struct vulkan_gpu *gpu, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE( gpu, next, &ctx->vulkan_gpus, struct vulkan_gpu, entry )
