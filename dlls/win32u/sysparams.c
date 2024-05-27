@@ -1235,14 +1235,16 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
 
     if ((vulkan_gpu = find_vulkan_gpu_from_uuid( ctx, vulkan_uuid )))
         TRACE( "Found vulkan GPU matching uuid %s, pci_id %#04x:%#04x, name %s\n", debugstr_guid(&vulkan_gpu->uuid),
-               pci_id->vendor, pci_id->device, debugstr_a(vulkan_gpu->name));
+               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device, debugstr_a(vulkan_gpu->name));
     else if ((vulkan_gpu = find_vulkan_gpu_from_pci_id( ctx, pci_id )))
-        TRACE( "Found vulkan GPU matching pci_id %#04x:%#04x, uuid %s, name %s\n", pci_id->vendor, pci_id->device,
+        TRACE( "Found vulkan GPU matching pci_id %#04x:%#04x, uuid %s, name %s\n",
+               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device,
                debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
     else if ((ptr = list_head( &ctx->vulkan_gpus )))
     {
         vulkan_gpu = LIST_ENTRY( ptr, struct vulkan_gpu, entry );
-        WARN( "Using vulkan GPU pci_id %#04x:%#04x, uuid %s, name %s\n", pci_id->vendor, pci_id->device,
+        WARN( "Using vulkan GPU pci_id %#04x:%#04x, uuid %s, name %s\n",
+               vulkan_gpu->pci_id.vendor, vulkan_gpu->pci_id.device,
                debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
     }
 
