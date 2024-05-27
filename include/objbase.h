@@ -210,6 +210,11 @@
 #define DECLARE_INTERFACE_(iface,ibase) interface DECLSPEC_NOVTABLE iface : public ibase
 #define DECLARE_INTERFACE_IID_(iface, ibase, iid) interface DECLSPEC_UUID(iid) DECLSPEC_NOVTABLE iface : public ibase
 
+#define IFACEMETHOD(method)         STDMETHOD(method)
+#define IFACEMETHOD_(type,method)   STDMETHOD_(type,method)
+#define IFACEMETHODV(method)        STDMETHODV(method)
+#define IFACEMETHODV_(type,method)  STDMETHODV_(type,method)
+
 #define BEGIN_INTERFACE
 #define END_INTERFACE
 
@@ -252,6 +257,11 @@
 
 #define BEGIN_INTERFACE
 #define END_INTERFACE
+
+#define IFACEMETHOD(method)         STDMETHOD(method)
+#define IFACEMETHOD_(type,method)   STDMETHOD_(type,method)
+#define IFACEMETHODV(method)        STDMETHODV(method)
+#define IFACEMETHODV_(type,method)  STDMETHODV_(type,method)
 
 #endif  /* __cplusplus && !CINTERFACE */
 
