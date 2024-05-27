@@ -156,7 +156,6 @@ static NTSTATUS (WINAPI * pNtWaitForSingleObject)(HANDLE,BOOLEAN,const LARGE_INT
 static NTSTATUS (WINAPI * pNtLoadKeyEx)(const OBJECT_ATTRIBUTES*,OBJECT_ATTRIBUTES*,ULONG,HANDLE,HANDLE,ACCESS_MASK,HANDLE*,IO_STATUS_BLOCK*);
 
 static HMODULE hntdll = 0;
-static int CurrentTest = 0;
 static UNICODE_STRING winetestpath;
 
 #define NTDLL_GET_PROC(func) \
@@ -216,131 +215,6 @@ static BOOL InitFunctionPtrs(void)
     return TRUE;
 }
 #undef NTDLL_GET_PROC
-
-static NTSTATUS WINAPI QueryRoutine (IN PCWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData,
-                              IN ULONG ValueLength, IN PVOID Context, IN PVOID EntryContext)
-{
-    NTSTATUS ret = STATUS_SUCCESS;
-
-    trace("**Test %d**\n", CurrentTest);
-    trace("ValueName: %s\n", wine_dbgstr_w(ValueName));
-
-    switch(ValueType)
-    {
-            case REG_NONE:
-                trace("ValueType: REG_NONE\n");
-                trace("ValueData: %p\n", ValueData);
-                break;
-
-            case REG_BINARY:
-                trace("ValueType: REG_BINARY\n");
-                trace("ValueData: %p\n", ValueData);
-                break;
-
-            case REG_SZ:
-                trace("ValueType: REG_SZ\n");
-                trace("ValueData: %s\n", (char*)ValueData);
-                break;
-
-            case REG_MULTI_SZ:
-                trace("ValueType: REG_MULTI_SZ\n");
-                trace("ValueData: %s\n", (char*)ValueData);
-                break;
-
-            case REG_EXPAND_SZ:
-                trace("ValueType: REG_EXPAND_SZ\n");
-                trace("ValueData: %s\n", (char*)ValueData);
-                break;
-
-            case REG_DWORD:
-                trace("ValueType: REG_DWORD\n");
-                trace("ValueData: %p\n", ValueData);
-                break;
-    };
-    trace("ValueLength: %d\n", (int)ValueLength);
-
-    if(CurrentTest == 0)
-        ok(1, "\n"); /*checks that QueryRoutine is called*/
-    if(CurrentTest > 7)
-        ok(!1, "Invalid Test Specified!\n");
-
-    CurrentTest++;
-
-    return ret;
-}
-
-static void test_RtlQueryRegistryValues(void)
-{
-
-    /*
-    ******************************
-    *       QueryTable Flags     *
-    ******************************
-    *RTL_QUERY_REGISTRY_SUBKEY   * Name is the name of a subkey relative to Path
-    *RTL_QUERY_REGISTRY_TOPKEY   * Resets location to original RelativeTo and Path
-    *RTL_QUERY_REGISTRY_REQUIRED * Key required. returns STATUS_OBJECT_NAME_NOT_FOUND if not present
-    *RTL_QUERY_REGISTRY_NOVALUE  * We just want a call-back
-    *RTL_QUERY_REGISTRY_NOEXPAND * Don't expand the variables!
-    *RTL_QUERY_REGISTRY_DIRECT   * Results of query will be stored in EntryContext(QueryRoutine ignored)
-    *RTL_QUERY_REGISTRY_DELETE   * Delete value key after query
-    ******************************
-
-
-    **Test layout(numbered according to CurrentTest value)**
-    0)NOVALUE           Just make sure call-back works
-    1)Null Name         See if QueryRoutine is called for every value in current key
-    2)SUBKEY            See if we can use SUBKEY to change the current path on the fly
-    3)REQUIRED          Test for value that's not there
-    4)NOEXPAND          See if it will return multiple strings(no expand should split strings up)
-    5)DIRECT            Make it store data directly in EntryContext and not call QueryRoutine
-    6)DefaultType       Test return values when key isn't present
-    7)DefaultValue      Test Default Value returned with key isn't present(and no REQUIRED flag set)
-    8)DefaultLength     Test Default Length with DefaultType = REG_SZ
-   9)DefaultLength      Test Default Length with DefaultType = REG_MULTI_SZ
-   10)DefaultLength     Test Default Length with DefaultType = REG_EXPAND_SZ
-   11)DefaultData       Test whether DefaultData is used while DefaultType = REG_NONE(shouldn't be)
-   12)Delete            Try to delete value key
-
-    */
-    NTSTATUS status;
-    ULONG RelativeTo;
-
-    PRTL_QUERY_REGISTRY_TABLE QueryTable = NULL;
-    RelativeTo = RTL_REGISTRY_ABSOLUTE;/*Only using absolute - no need to test all relativeto variables*/
-
-    QueryTable = pRtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_QUERY_REGISTRY_TABLE)*26);
-
-    pRtlZeroMemory( QueryTable, sizeof(RTL_QUERY_REGISTRY_TABLE) * 26);
-
-    QueryTable[0].QueryRoutine = QueryRoutine;
-    QueryTable[0].Flags = RTL_QUERY_REGISTRY_NOVALUE;
-    QueryTable[0].Name = NULL;
-    QueryTable[0].EntryContext = NULL;
-    QueryTable[0].DefaultType = REG_BINARY;
-    QueryTable[0].DefaultData = NULL;
-    QueryTable[0].DefaultLength = 100;
-
-    QueryTable[1].QueryRoutine = QueryRoutine;
-    QueryTable[1].Flags = 0;
-    QueryTable[1].Name = NULL;
-    QueryTable[1].EntryContext = 0;
-    QueryTable[1].DefaultType = REG_NONE;
-    QueryTable[1].DefaultData = NULL;
-    QueryTable[1].DefaultLength = 0;
-
-    QueryTable[2].QueryRoutine = NULL;
-    QueryTable[2].Flags = 0;
-    QueryTable[2].Name = NULL;
-    QueryTable[2].EntryContext = 0;
-    QueryTable[2].DefaultType = REG_NONE;
-    QueryTable[2].DefaultData = NULL;
-    QueryTable[2].DefaultLength = 0;
-
-    status = pRtlQueryRegistryValues(RelativeTo, winetestpath.Buffer, QueryTable, 0, 0);
-    ok(status == STATUS_SUCCESS, "RtlQueryRegistryValues return: 0x%08lx\n", status);
-
-    pRtlFreeHeap(GetProcessHeap(), 0, QueryTable);
-}
 
 static void test_NtOpenKey(void)
 {
@@ -2651,6 +2525,352 @@ static void test_NtRegLoadKeyEx(void)
     DeleteFileW(hivefile_path);
 }
 
+struct query_reg_values_test
+{
+    RTL_QUERY_REGISTRY_TABLE query_table[3];
+    NTSTATUS expected_ret;
+    unsigned int expected_calls;
+    enum
+    {
+        SKIP_NAME_CHECK = 0x1,
+        SKIP_DATA_CHECK = 0x2,
+        EXPECT_DEFAULT_DATA = 0x4,
+        SPLIT_MULTI = 0x8,
+        WINE_TODO_RET = 0x10,
+        WINE_TODO_CALLS = 0x20,
+        WINE_TODO_NAME = 0x40,
+        WINE_TODO_TYPE = 0x80,
+        WINE_TODO_SIZE = 0x100,
+        WINE_TODO_DATA = 0x200,
+        WINE_CRASH = 0x400,
+    }
+    flags;
+    ULONG expected_type;
+    const WCHAR *expected_data;
+    ULONG expected_data_size;
+};
+
+static unsigned int query_routine_calls;
+
+static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, void *value_data, ULONG value_data_size,
+                                     void *context, void *entry_context)
+{
+    struct query_reg_values_test *test = context;
+    RTL_QUERY_REGISTRY_TABLE *query = entry_context;
+    const WCHAR *expected_data;
+    ULONG expected_size;
+    ULONG expected_type;
+
+    trace("Value name: %s\n", debugstr_w(value_name));
+    trace("Value data: %s\n", debugstr_w(value_data));
+
+    if (!(test->flags & SKIP_NAME_CHECK))
+    {
+        todo_wine_if(test->flags & WINE_TODO_NAME)
+        if (query->Name)
+            ok(!wcscmp(value_name, query->Name), "Expected name %s, got %s\n", debugstr_w(query->Name), debugstr_w(value_name));
+        else
+            ok(!value_name, "Expected null name\n");
+    }
+
+    if (!(test->flags & SKIP_DATA_CHECK) && query_routine_calls < test->expected_calls)
+    {
+        if (test->flags & EXPECT_DEFAULT_DATA)
+        {
+            expected_type = query->DefaultType;
+            expected_data = query->DefaultData;
+            expected_size = query->DefaultLength;
+        }
+        else
+        {
+            expected_type = test->expected_type;
+            expected_data = test->expected_data;
+            expected_size = test->expected_data_size;
+        }
+
+        if (test->flags & SPLIT_MULTI)
+        {
+            expected_type = REG_SZ;
+            for (int i = 0; i < query_routine_calls; i++)
+                expected_data = wcschr(expected_data, '\0') + 1;
+            expected_size = 0;
+        }
+
+        if (!expected_size && expected_data)
+            expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
+
+        todo_wine_if(test->flags & WINE_TODO_TYPE)
+        ok(value_type == expected_type, "Expected type %lu, got %lu\n", expected_type, value_type);
+
+        todo_wine_if(test->flags & WINE_TODO_SIZE)
+        ok(value_data_size == expected_size, "Expected size %lu, got %lu\n", expected_size, value_data_size);
+
+        todo_wine_if(test->flags & WINE_TODO_DATA && !(test->flags & SPLIT_MULTI && query_routine_calls == 0))
+        if (expected_data)
+            ok(!memcmp(value_data, expected_data, value_data_size),
+               "Expected data %s, got %s\n", debugstr_w(expected_data), debugstr_w(value_data));
+        else
+            ok(!value_data, "Expected null data\n");
+    }
+
+    query_routine_calls++;
+
+    return STATUS_SUCCESS;
+}
+
+static UNICODE_STRING query_reg_values_direct_str;
+
+static struct query_reg_values_test query_reg_values_tests[] =
+{
+    /* Empty table */
+    {
+        {{ NULL }},
+        STATUS_SUCCESS, 0
+    },
+    /* Name without query routine or DIRECT */
+    {
+        {{ NULL, 0, (WCHAR*)L"WindowsDrive" }},
+        STATUS_SUCCESS, 0, WINE_CRASH
+    },
+    /* The query routine is called for every value in current key */
+    {
+        {{ query_routine }},
+        STATUS_SUCCESS, 4, SKIP_NAME_CHECK | SKIP_DATA_CHECK | WINE_TODO_CALLS
+    },
+    /* NOVALUE is ignored when the name is not null */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_NOVALUE, (WCHAR*)L"WindowsDrive" }},
+        STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
+    },
+    /* NOVALUE calls the callback without enumerating any values */
+    {
+        {
+            { query_routine, RTL_QUERY_REGISTRY_NOVALUE },
+            { query_routine, RTL_QUERY_REGISTRY_NOVALUE, NULL, NULL, REG_SZ, (WCHAR*)L"Some default" },
+        },
+        STATUS_SUCCESS, 2
+    },
+    /* DIRECT doesn't call the query routine and reads directly into a buffer */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
+        STATUS_INVALID_PARAMETER, 0, WINE_TODO_RET | WINE_TODO_CALLS | WINE_TODO_NAME | WINE_TODO_TYPE | WINE_TODO_SIZE | WINE_TODO_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, WINE_CRASH, REG_SZ, L"C:"
+    },
+    /* DIRECT on a multi-string crashes on Windows without NOEXPAND */
+    /* {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"CapitalsOfEurope", &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, WINE_TODO_RET
+    }, */
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
+           &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, 0, REG_SZ, L"Brussels\0Paris\0Madrid", sizeof(L"Brussels\0Paris\0Madrid")
+    },
+    /* DIRECT with a null buffer crashes on Windows */
+    /* {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", NULL }},
+        STATUS_INVALID_PARAMETER
+    }, */
+    /* SUBKEY changes the current path on the fly */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_SUBKEY, (WCHAR*)L"subkey" }},
+        STATUS_SUCCESS, 1, SKIP_NAME_CHECK | WINE_TODO_RET | WINE_TODO_CALLS, REG_SZ, L"Yellow"
+    },
+    {
+        {
+            { NULL, RTL_QUERY_REGISTRY_SUBKEY, (WCHAR*)L"subkey" },
+            { query_routine, 0, (WCHAR*)L"Color" },
+        },
+        STATUS_SUCCESS, 1, WINE_TODO_RET | WINE_TODO_CALLS, REG_SZ, L"Yellow"
+    },
+    /* NOEXPAND disables variable expansion */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive" }},
+        STATUS_SUCCESS, 1, 0, REG_EXPAND_SZ, L"%SYSTEMDRIVE%"
+    },
+    /* NOEXPAND calls the query routine once for each string in a multi-string */
+    {
+        {{ query_routine, 0, (WCHAR*)L"CapitalsOfEurope" }},
+        STATUS_SUCCESS, 3, SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE | WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0Madrid\0"
+    },
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope" }},
+        STATUS_SUCCESS, 1, WINE_TODO_SIZE, REG_MULTI_SZ, L"Brussels\0Paris\0Madrid\0", sizeof(L"Brussels\0Paris\0Madrid\0")
+    },
+    /* The default value is used if the registry value does not exist */
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"Some default", 4 * sizeof (WCHAR) }},
+        STATUS_SUCCESS, 1, 0, REG_SZ, L"Some", 4 * sizeof(WCHAR)
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_MULTI_SZ, (WCHAR*)L"Brussels\0Paris\0Madrid\0" }},
+        STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"Some default", 4 * sizeof(WCHAR) }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 0, WINE_TODO_RET | WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
+    },
+    /* DIRECT with a multi-string default value crashes on Windows */
+    /* {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
+        STATUS_SUCCESS, EXPECT_DEFAULT_DATA
+    }, */
+    /* The default value is not used if it is not valid */
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ }},
+        STATUS_DATA_OVERRUN, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_CALLS
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_NONE, (WCHAR*)L"Some default" }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_CALLS | WINE_TODO_SIZE
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_SZ }},
+        STATUS_DATA_OVERRUN, 0, WINE_TODO_RET
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"Some default" }},
+        STATUS_SUCCESS, 0
+    },
+    /* REQUIRED fails if the value doesn't exist and there is no default */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_REQUIRED, (WCHAR*)L"I don't exist",
+           NULL, REG_SZ, (WCHAR*)L"Some default" }},
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_CALLS
+    },
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_REQUIRED, (WCHAR*)L"I don't exist",
+           NULL, REG_NONE, (WCHAR*)L"Some default" }},
+        STATUS_OBJECT_NAME_NOT_FOUND
+    },
+    /* DELETE deletes the value after reading it */
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_DELETE, (WCHAR*)L"WindowsDrive" }},
+        STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
+    },
+    {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"Some default" }},
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+    },
+};
+
+static void test_RtlQueryRegistryValues(void)
+{
+    NTSTATUS status;
+    unsigned int i;
+
+    status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"WindowsDrive", REG_EXPAND_SZ,
+                             L"%SYSTEMDRIVE%", sizeof(L"%SYSTEMDRIVE%"));
+    ok(status == ERROR_SUCCESS, "Failed to create registry value WindowsDrive: %lu\n", status);
+
+    status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"CapitalsOfEurope", REG_MULTI_SZ,
+                             L"Brussels\0Paris\0Madrid", sizeof(L"Brussels\0Paris\0Madrid"));
+    ok(status == ERROR_SUCCESS, "Failed to create registry value CapitalsOfEurope: %lu\n", status);
+
+    status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest\\subkey", L"Color", REG_SZ,
+                             (void*)L"Yellow", sizeof(L"Yellow"));
+    ok(status == ERROR_SUCCESS, "Failed to create registry value Color: %lu\n", status);
+
+    query_reg_values_direct_str.MaximumLength = 32 * sizeof(WCHAR);
+    query_reg_values_direct_str.Buffer = pRtlAllocateHeap(GetProcessHeap(), 0,
+                                                          query_reg_values_direct_str.MaximumLength);
+
+    for (i = 0; i < ARRAY_SIZE(query_reg_values_tests); i++)
+    {
+        struct query_reg_values_test *test = &query_reg_values_tests[i];
+        RTL_QUERY_REGISTRY_TABLE *query;
+        const WCHAR *expected_data;
+        ULONG expected_size;
+
+        if ((test->flags & WINE_CRASH) && !strcmp(winetest_platform, "wine"))
+        {
+            skip("Currently crashes on Wine\n");
+            continue;
+        }
+
+        winetest_push_context("%u/%Iu", i, ARRAY_SIZE(query_reg_values_tests) - 1);
+
+        for (query = test->query_table; query->QueryRoutine || query->Name; query++)
+        {
+            if (!(query->Flags & RTL_QUERY_REGISTRY_DIRECT))
+                query->EntryContext = query;
+        }
+
+        query_routine_calls = 0;
+        wcscpy(query_reg_values_direct_str.Buffer, L"###");
+
+        status = pRtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer, test->query_table, test, NULL);
+
+        todo_wine_if(test->flags & WINE_TODO_RET)
+        ok(status == test->expected_ret, "Expected RtlQueryRegistryValues to return 0x%08lx, got 0x%08lx\n",
+           test->expected_ret, status);
+
+        todo_wine_if(test->flags & WINE_TODO_CALLS)
+        ok(query_routine_calls == test->expected_calls, "Expected %u calls to QueryRoutine, got %u\n",
+           test->expected_calls, query_routine_calls);
+
+        for (query = test->query_table; query->QueryRoutine || query->Name; query++)
+        {
+            if ((query->Flags & RTL_QUERY_REGISTRY_DIRECT) && query->EntryContext)
+            {
+                if (test->flags & EXPECT_DEFAULT_DATA)
+                {
+                    expected_data = query->DefaultData;
+                    expected_size = query->DefaultLength;
+                }
+                else
+                {
+                    expected_data = test->expected_data;
+                    expected_size = test->expected_data_size;
+                }
+
+                if (expected_data)
+                {
+                    if (!expected_size)
+                        expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
+
+                    todo_wine_if(test->flags & WINE_TODO_DATA)
+                    ok(!memcmp(query_reg_values_direct_str.Buffer, expected_data, expected_size),
+                       "Expected data %s, got %s\n", debugstr_w(expected_data),
+                       debugstr_w(query_reg_values_direct_str.Buffer));
+                }
+            }
+        }
+
+        winetest_pop_context();
+    }
+
+    status = RegDeleteKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"WindowsDrive");
+    ok(status == ERROR_FILE_NOT_FOUND, "Registry value WindowsDrive should have been deleted already\n");
+
+    pRtlFreeHeap(GetProcessHeap(), 0, query_reg_values_direct_str.Buffer);
+}
+
 START_TEST(reg)
 {
     LSTATUS status;
@@ -2669,7 +2889,6 @@ START_TEST(reg)
     test_NtSetValueKey();
     test_RtlCheckRegistryKey();
     test_RtlOpenCurrentUser();
-    test_RtlQueryRegistryValues();
     test_RtlpNtQueryValueKey();
     test_NtFlushKey();
     test_NtQueryKey();
@@ -2683,6 +2902,7 @@ START_TEST(reg)
     test_redirection();
     test_NtRenameKey();
     test_NtRegLoadKeyEx();
+    test_RtlQueryRegistryValues();
 
     status = RegDeleteTreeW(HKEY_CURRENT_USER, L"WineTest");
     ok(status == ERROR_SUCCESS, "Failed to delete the WineTest registry key: %lu\n", status);
