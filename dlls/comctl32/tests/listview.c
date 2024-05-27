@@ -115,7 +115,6 @@ static const struct message redraw_listview_seq[] = {
     { WM_NCPAINT,    sent|id|defwinproc, 0, 0, HEADER_ID },
     { WM_ERASEBKGND, sent|id|defwinproc|optional, 0, 0, HEADER_ID },
     { WM_NOTIFY,     sent|id|defwinproc, 0, 0, LISTVIEW_ID },
-    { WM_NCPAINT,    sent|id|defwinproc, 0, 0, LISTVIEW_ID },
     { WM_ERASEBKGND, sent|id|defwinproc|optional, 0, 0, LISTVIEW_ID },
     { 0 }
 };
@@ -810,6 +809,8 @@ static HWND create_listview_control(DWORD style)
 
     if (!hwnd) return NULL;
 
+    UpdateWindow(hwnd);
+
     oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
                                         (LONG_PTR)listview_subclass_proc);
     SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)oldproc);
@@ -832,6 +833,8 @@ static HWND create_listview_controlW(DWORD style, HWND parent)
     ok(hwnd != NULL, "gle=%ld\n", GetLastError());
 
     if (!hwnd) return NULL;
+
+    UpdateWindow(hwnd);
 
     oldproc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC,
                                         (LONG_PTR)listview_subclass_proc);
@@ -1888,7 +1891,10 @@ static void test_create(BOOL is_version_6)
 
     /* WM_MEASUREITEM should be sent when created with LVS_OWNERDRAWFIXED */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    hList = create_listview_control(LVS_OWNERDRAWFIXED | LVS_REPORT);
+    hList = CreateWindowExA(0, WC_LISTVIEWA, NULL,
+        WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_OWNERDRAWFIXED | LVS_REPORT,
+        0, 0, 100, 100, hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hList != NULL, "Failed to create ListView window.\n");
     ok_sequence(sequences, PARENT_SEQ_INDEX, create_ownerdrawfixed_parent_seq,
                 "created with LVS_OWNERDRAWFIXED|LVS_REPORT - parent seq", FALSE);
     DestroyWindow(hList);
@@ -2198,8 +2204,8 @@ static void test_color(void)
 
     rect.right = rect.bottom = 1;
     r = GetUpdateRect(hwnd, &rect, TRUE);
-    todo_wine expect(FALSE, r);
-    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+    expect(FALSE, r);
+    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle %s\n", wine_dbgstr_rect(&rect));
 
     r = ValidateRect(hwnd, NULL);
     expect(TRUE, r);
@@ -2208,8 +2214,8 @@ static void test_color(void)
 
     rect.right = rect.bottom = 1;
     r = GetUpdateRect(hwnd, &rect, TRUE);
-    todo_wine expect(FALSE, r);
-    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+    expect(FALSE, r);
+    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle %s\n", wine_dbgstr_rect(&rect));
 
     r = ValidateRect(hwnd, NULL);
     expect(TRUE, r);
@@ -2218,8 +2224,8 @@ static void test_color(void)
 
     rect.right = rect.bottom = 1;
     r = GetUpdateRect(hwnd, &rect, TRUE);
-    todo_wine expect(FALSE, r);
-    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle\n");
+    expect(FALSE, r);
+    ok(rect.right == 0 && rect.bottom == 0, "got update rectangle %s\n", wine_dbgstr_rect(&rect));
 
     DestroyWindow(hwnd);
 }
