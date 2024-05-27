@@ -49,7 +49,7 @@ interface IRowsetNotify : IUnknown
     [local]
     HRESULT OnRowChange([in] IRowset *rowset,
                         [in] DBCOUNTITEM rows,
-                        [in, size_is((ULONG)rows)] HROW *hrows,
+                        [in, size_is((ULONG)rows)] const HROW *hrows,
                         [in] DBREASON reason,
                         [in] DBEVENTPHASE phase,
                         [in] BOOL cantdeny);
@@ -58,7 +58,7 @@ interface IRowsetNotify : IUnknown
     HRESULT RemoteOnRowChange(
                         [in] IRowset *rowset,
                         [in] DBCOUNTITEM rows,
-                        [in, size_is((ULONG)rows)] HROW *hrows,
+                        [in, size_is((ULONG)rows)] const HROW *hrows,
                         [in] DBREASON reason,
                         [in] DBEVENTPHASE phase,
                         [in] BOOL cantdeny);
