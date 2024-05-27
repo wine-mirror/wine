@@ -1218,6 +1218,8 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     HKEY hkey, subkey;
     DWORD len;
 
+    static const GUID empty_uuid;
+
     TRACE( "%s %04X %04X %08X %02X %s\n", debugstr_a( name ), pci_id->vendor, pci_id->device,
            pci_id->subsystem, pci_id->revision, debugstr_guid( vulkan_uuid ) );
 
@@ -1249,7 +1251,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
                debugstr_guid(&vulkan_gpu->uuid), debugstr_a(vulkan_gpu->name));
     }
 
-    if (vulkan_uuid) ctx->gpu.vulkan_uuid = *vulkan_uuid;
+    if (vulkan_uuid && !IsEqualGUID( vulkan_uuid, &empty_uuid )) ctx->gpu.vulkan_uuid = *vulkan_uuid;
     else if (vulkan_gpu) ctx->gpu.vulkan_uuid = vulkan_gpu->uuid;
 
     if (!pci_id->vendor && !pci_id->device && vulkan_gpu) pci_id = &vulkan_gpu->pci_id;
