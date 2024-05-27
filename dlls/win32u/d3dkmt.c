@@ -563,7 +563,7 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
 BOOL get_vulkan_gpus( struct list *gpus )
 {
     VkPhysicalDevice *devices;
-    UINT i, count;
+    UINT i, j, count;
 
     if (!d3dkmt_use_vulkan()) return FALSE;
     if (!(count = get_vulkan_physical_devices( &devices ))) return FALSE;
@@ -583,10 +583,10 @@ BOOL get_vulkan_gpus( struct list *gpus )
         gpu->pci_id.device = properties2.properties.deviceID;
 
         pvkGetPhysicalDeviceMemoryProperties( devices[i], &mem_properties );
-        for (i = 0; i < mem_properties.memoryHeapCount; i++)
+        for (j = 0; j < mem_properties.memoryHeapCount; j++)
         {
-            if (mem_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-                gpu->memory += mem_properties.memoryHeaps[i].size;
+            if (mem_properties.memoryHeaps[j].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                gpu->memory += mem_properties.memoryHeaps[j].size;
         }
 
         list_add_tail( gpus, &gpu->entry );
