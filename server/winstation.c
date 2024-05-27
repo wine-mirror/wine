@@ -294,6 +294,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_init( &desktop->threads );
             memset( &desktop->cursor, 0, sizeof(desktop->cursor) );
             memset( desktop->keystate, 0, sizeof(desktop->keystate) );
+            memset( &desktop->key_repeat, 0, sizeof(desktop->key_repeat) );
             list_add_tail( &winstation->desktops, &desktop->entry );
             list_init( &desktop->hotkeys );
             list_init( &desktop->pointers );
@@ -365,6 +366,7 @@ static void desktop_destroy( struct object *obj )
     if (desktop->msg_window) free_window_handle( desktop->msg_window );
     if (desktop->global_hooks) release_object( desktop->global_hooks );
     if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
+    if (desktop->key_repeat.timeout) remove_timeout_user( desktop->key_repeat.timeout );
     release_object( desktop->winstation );
 }
 

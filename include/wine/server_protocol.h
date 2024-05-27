@@ -5638,6 +5638,22 @@ struct get_next_thread_reply
 };
 
 
+
+struct set_keyboard_repeat_request
+{
+    struct request_header __header;
+    int enable;
+    int delay;
+    int period;
+};
+struct set_keyboard_repeat_reply
+{
+    struct reply_header __header;
+    int enable;
+    char __pad_12[4];
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -5924,6 +5940,7 @@ enum request
     REQ_suspend_process,
     REQ_resume_process,
     REQ_get_next_thread,
+    REQ_set_keyboard_repeat,
     REQ_NB_REQUESTS
 };
 
@@ -6215,6 +6232,7 @@ union generic_request
     struct suspend_process_request suspend_process_request;
     struct resume_process_request resume_process_request;
     struct get_next_thread_request get_next_thread_request;
+    struct set_keyboard_repeat_request set_keyboard_repeat_request;
 };
 union generic_reply
 {
@@ -6504,11 +6522,12 @@ union generic_reply
     struct suspend_process_reply suspend_process_reply;
     struct resume_process_reply resume_process_reply;
     struct get_next_thread_reply get_next_thread_reply;
+    struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 803
+#define SERVER_PROTOCOL_VERSION 804
 
 /* ### protocol_version end ### */
 

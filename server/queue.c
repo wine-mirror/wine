@@ -2079,9 +2079,28 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
     return wait;
 }
 
+static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+                                   unsigned int origin, struct msg_queue *sender, int repeat );
+
+static void key_repeat_timeout( void *private )
+{
+    struct desktop *desktop = private;
+
+    desktop->key_repeat.timeout = NULL;
+    queue_keyboard_message( desktop, desktop->key_repeat.win, &desktop->key_repeat.input, IMO_HARDWARE, NULL, 1 );
+}
+
+static void stop_key_repeat( struct desktop *desktop )
+{
+    if (desktop->key_repeat.timeout) remove_timeout_user( desktop->key_repeat.timeout );
+    desktop->key_repeat.timeout = NULL;
+    desktop->key_repeat.win = 0;
+    memset( &desktop->key_repeat.input, 0, sizeof(desktop->key_repeat.input) );
+}
+
 /* queue a hardware message for a keyboard event */
 static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
-                                   unsigned int origin, struct msg_queue *sender )
+                                   unsigned int origin, struct msg_queue *sender, int repeat )
 {
     struct hw_msg_source source = { IMDT_KEYBOARD, origin };
     struct hardware_msg_data *msg_data;
@@ -2182,6 +2201,26 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
        case VK_DELETE: hook_vkey = vkey = VK_DECIMAL; break;
        default: break;
        }
+    }
+
+    if (origin == IMO_HARDWARE)
+    {
+        /* if the repeat key is released, stop auto-repeating */
+        if (((input->kbd.flags & KEYEVENTF_KEYUP) &&
+             (input->kbd.scan == desktop->key_repeat.input.kbd.scan)))
+        {
+            stop_key_repeat( desktop );
+        }
+        /* if a key is down, start or continue auto-repeating */
+        if (!(input->kbd.flags & KEYEVENTF_KEYUP) && desktop->key_repeat.enable)
+        {
+            timeout_t timeout = repeat ? desktop->key_repeat.period : desktop->key_repeat.delay;
+            desktop->key_repeat.input = *input;
+            desktop->key_repeat.input.kbd.time = 0;
+            desktop->key_repeat.win = win;
+            if (desktop->key_repeat.timeout) remove_timeout_user( desktop->key_repeat.timeout );
+            desktop->key_repeat.timeout = add_timeout_user( timeout, key_repeat_timeout, desktop );
+        }
     }
 
     if (!unicode && (foreground = get_foreground_thread( desktop, win )))
@@ -2945,7 +2984,7 @@ DECL_HANDLER(send_hardware_message)
         wait = queue_mouse_message( desktop, req->win, &req->input, origin, sender );
         break;
     case INPUT_KEYBOARD:
-        wait = queue_keyboard_message( desktop, req->win, &req->input, origin, sender );
+        wait = queue_keyboard_message( desktop, req->win, &req->input, origin, sender, 0 );
         break;
     case INPUT_HARDWARE:
         queue_custom_hardware_message( desktop, req->win, origin, &req->input );
@@ -3818,4 +3857,23 @@ DECL_HANDLER(update_rawinput_devices)
 
         release_object( desktop );
     }
+}
+
+DECL_HANDLER(set_keyboard_repeat)
+{
+    struct desktop *desktop;
+
+    if (!(desktop = get_thread_desktop( current, 0 ))) return;
+
+    /* report previous values */
+    reply->enable = desktop->key_repeat.enable;
+
+    /* ignore negative values to allow partial updates */
+    if (req->enable >= 0) desktop->key_repeat.enable = req->enable;
+    if (req->delay >= 0) desktop->key_repeat.delay = -req->delay * 10000;
+    if (req->period >= 0) desktop->key_repeat.period = -req->period * 10000;
+
+    if (!desktop->key_repeat.enable) stop_key_repeat( desktop );
+
+    release_object( desktop );
 }

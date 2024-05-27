@@ -3877,3 +3877,13 @@ struct handle_info
 @REPLY
     obj_handle_t handle;       /* next thread handle */
 @END
+
+
+/* Setup keyboard auto-repeat */
+@REQ(set_keyboard_repeat)
+    int enable;                /* whether to enable auto-repeat */
+    int delay;                 /* auto-repeat delay in ms */
+    int period;                /* auto-repeat period in ms */
+@REPLY
+    int enable;                /* previous state of auto-repeat enable */
+@END

@@ -403,6 +403,7 @@ DECL_HANDLER(terminate_job);
 DECL_HANDLER(suspend_process);
 DECL_HANDLER(resume_process);
 DECL_HANDLER(get_next_thread);
+DECL_HANDLER(set_keyboard_repeat);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -693,6 +694,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_suspend_process,
     (req_handler)req_resume_process,
     (req_handler)req_get_next_thread,
+    (req_handler)req_set_keyboard_repeat,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2335,6 +2337,12 @@ C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, flags) == 28 );
 C_ASSERT( sizeof(struct get_next_thread_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_next_thread_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_next_thread_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_keyboard_repeat_request, enable) == 12 );
+C_ASSERT( FIELD_OFFSET(struct set_keyboard_repeat_request, delay) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_keyboard_repeat_request, period) == 20 );
+C_ASSERT( sizeof(struct set_keyboard_repeat_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_keyboard_repeat_reply, enable) == 8 );
+C_ASSERT( sizeof(struct set_keyboard_repeat_reply) == 16 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 
