@@ -1217,8 +1217,8 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     HKEY hkey, subkey;
     DWORD len;
 
-    TRACE( "%s %04X %04X %08X %02X\n", debugstr_a( name ), pci_id->vendor, pci_id->device,
-           pci_id->subsystem, pci_id->revision );
+    TRACE( "%s %04X %04X %08X %02X %s\n", debugstr_a( name ), pci_id->vendor, pci_id->device,
+           pci_id->subsystem, pci_id->revision, debugstr_guid( vulkan_uuid ) );
 
     if (!enum_key && !(enum_key = reg_create_ascii_key( NULL, enum_keyA, 0, NULL )))
         return;
