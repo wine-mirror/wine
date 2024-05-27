@@ -1252,6 +1252,8 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     if (vulkan_uuid) ctx->gpu.vulkan_uuid = *vulkan_uuid;
     else if (vulkan_gpu) ctx->gpu.vulkan_uuid = vulkan_gpu->uuid;
 
+    if (!pci_id->vendor && !pci_id->device && vulkan_gpu) pci_id = &vulkan_gpu->pci_id;
+
     if ((!name || !strcmp( name, "Wine GPU" )) && vulkan_gpu) name = vulkan_gpu->name;
     if (name) RtlUTF8ToUnicodeN( ctx->gpu.name, sizeof(ctx->gpu.name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
