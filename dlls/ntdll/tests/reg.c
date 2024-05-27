@@ -2720,17 +2720,17 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"Some default", 4 * sizeof(WCHAR) }},
-        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_DATA
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_DATA
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_DATA
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, WINE_TODO_RET | WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
+        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
     },
     /* DIRECT with a multi-string default value crashes on Windows */
     /* {
