@@ -1252,7 +1252,7 @@ static void add_gpu( const char *name, const struct pci_id *pci_id, const GUID *
     if (vulkan_uuid) ctx->gpu.vulkan_uuid = *vulkan_uuid;
     else if (vulkan_gpu) ctx->gpu.vulkan_uuid = vulkan_gpu->uuid;
 
-    if (!name && vulkan_gpu) name = vulkan_gpu->name;
+    if ((!name || !strcmp( name, "Wine GPU" )) && vulkan_gpu) name = vulkan_gpu->name;
     if (name) RtlUTF8ToUnicodeN( ctx->gpu.name, sizeof(ctx->gpu.name) - sizeof(WCHAR), &len, name, strlen( name ) );
 
     snprintf( ctx->gpu.path, sizeof(ctx->gpu.path), "PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\%08X",
@@ -1799,7 +1799,7 @@ static NTSTATUS default_update_display_devices( struct device_manager_ctx *ctx )
     struct gdi_monitor monitor = {0};
     DEVMODEW mode = {.dmSize = sizeof(mode)};
 
-    add_gpu( "Default GPU", &pci_id, NULL, ctx );
+    add_gpu( "Wine GPU", &pci_id, NULL, ctx );
     add_source( "Default", source_flags, ctx );
 
     if (!read_source_mode( ctx->source_key, ENUM_CURRENT_SETTINGS, &mode ))

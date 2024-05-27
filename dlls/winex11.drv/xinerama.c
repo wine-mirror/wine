@@ -199,7 +199,7 @@ static BOOL xinerama_get_gpus( struct x11drv_gpu **new_gpus, int *count, BOOL ge
     if (!gpus)
         return FALSE;
 
-    gpus[0].name = strdup( "Xinerama GPU" );
+    gpus[0].name = strdup( "Wine GPU" );
     *new_gpus = gpus;
     *count = 1;
 
