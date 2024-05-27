@@ -30,7 +30,6 @@
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
-#include "mmdeviceapi.h"
 #include "uuids.h"
 #include "wmcodecdsp.h"
 #include "nserror.h"
@@ -40,6 +39,8 @@
 #include "wine/test.h"
 
 #include "initguid.h"
+#include "mmdeviceapi.h"
+#include "devpkey.h"
 #include "evr9.h"
 
 #define DEFINE_EXPECT(func) \
@@ -6426,6 +6427,113 @@ static void test_media_session_Start(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 }
 
+static void test_MFEnumDeviceSources(void)
+{
+    static const WCHAR devinterface_audio_capture_wstr[] = L"{2eef81be-33fa-4800-9670-1cd474972c3f}";
+    static const WCHAR mmdev_path_prefix[] = L"\\\\?\\SWD#MMDEVAPI#";
+    IMMDeviceEnumerator *devenum;
+    IMMDeviceCollection *devices;
+    UINT32 i, count, count2;
+    IMFActivate **sources;
+    IMFAttributes *attrs;
+    IMMDevice *device;
+    HRESULT hr;
+    GUID guid;
+
+    hr = MFCreateAttributes(&attrs, 3);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    sources = (void *)0xdeadbeef;
+    count = 0xdeadbeef;
+    hr = MFEnumDeviceSources(attrs, &sources, &count);
+    todo_wine ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+    todo_wine ok(count == 0xdeadbeef, "got %#x.\n", count);
+    ok(sources == (void *)0xdeadbeef, "got %p.\n", sources);
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IMFAttributes_SetGUID(attrs, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = MFEnumDeviceSources(attrs, &sources, &count);
+    todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+
+    hr = IMFAttributes_SetGUID(attrs, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    /* Some random guid. */
+    hr = IMFAttributes_SetUINT32(attrs, &CLSID_MMDeviceEnumerator, 1);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = MFEnumDeviceSources(attrs, &sources, &count);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void **)&devenum);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMMDeviceEnumerator_EnumAudioEndpoints(devenum, eCapture, DEVICE_STATE_ACTIVE, &devices);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IMMDeviceCollection_GetCount(devices, &count2);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    todo_wine ok(count2 == count, "got %u, %u.\n", count, count2);
+
+    for (i = 0; i < count; ++i)
+    {
+        WCHAR str[512], expect_str[512], *device_id;
+        IMFActivate *source = sources[i];
+        IPropertyStore *ps;
+        PROPVARIANT pv;
+
+        hr = IMMDeviceCollection_Item(devices, i, &device);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+
+        hr = IMFActivate_GetString(source, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, str, sizeof(str), NULL);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = IMMDevice_GetId(device, &device_id);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        ok(!wcscmp(str, device_id), "got %s, %s.\n", debugstr_w(str), debugstr_w(device_id));
+
+        hr = IMFActivate_GetString(source, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_SYMBOLIC_LINK, str, sizeof(str), NULL);
+        ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "got %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+            swprintf(expect_str, ARRAY_SIZE(expect_str), L"%s%s#%s", mmdev_path_prefix, device_id, devinterface_audio_capture_wstr);
+            ok(!wcscmp(str, expect_str), "got %s, expected %s.\n", debugstr_w(str), debugstr_w(expect_str));
+        }
+
+        hr = IMFActivate_GetGUID(source, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, &guid);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        ok(IsEqualGUID(&guid, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID), "got %s.\n", debugstr_guid(&guid));
+
+        hr = IMFActivate_GetUINT32(source, &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ROLE, &count2);
+        /* The attribute is filled if specified in input attributes as a filter. */
+        ok(hr == MF_E_ATTRIBUTENOTFOUND, "got %#lx.\n", hr);
+
+        hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        hr = IPropertyStore_GetValue(ps, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        IPropertyStore_Release(ps);
+
+        ok(pv.vt == VT_LPWSTR, "got %#x.\n", pv.vt);
+        hr = IMFActivate_GetString(source, &MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, str, sizeof(str), NULL);
+        ok(hr == S_OK, "got %#lx.\n", hr);
+        ok(!wcscmp(str, pv.pwszVal), "got %s, %s.\n", debugstr_w(str), debugstr_w(pv.pwszVal));
+
+        PropVariantClear(&pv);
+
+        CoTaskMemFree(device_id);
+        IMMDevice_Release(device);
+        IMFActivate_Release(source);
+    }
+
+    IMMDeviceCollection_Release(devices);
+    IMMDeviceEnumerator_Release(devenum);
+    IMFAttributes_Release(attrs);
+
+    CoTaskMemFree(sources);
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -6459,4 +6567,5 @@ START_TEST(mf)
     test_mpeg4_media_sink();
     test_MFCreateSequencerSegmentOffset();
     test_media_session_Start();
+    test_MFEnumDeviceSources();
 }
