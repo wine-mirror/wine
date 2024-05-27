@@ -242,7 +242,7 @@ NTSTATUS WINAPI RtlOpenCurrentUser(
 static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                                         PRTL_QUERY_REGISTRY_TABLE pQuery, PVOID pContext, PVOID pEnvironment)
 {
-    PUNICODE_STRING str;
+    PUNICODE_STRING str = pQuery->EntryContext;
     UNICODE_STRING src, dst;
     LONG *bin;
     ULONG offset;
@@ -256,7 +256,15 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
     if (pInfo == NULL)
     {
         if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
-            return STATUS_INVALID_PARAMETER;
+        {
+            ULONG default_size = pQuery->DefaultLength;
+            if (!default_size && pQuery->DefaultType == REG_SZ && pQuery->DefaultData)
+                default_size = wcslen(pQuery->DefaultData) + 1;
+            if (str->MaximumLength < default_size)
+                return STATUS_BUFFER_TOO_SMALL;
+            memcpy(str->Buffer, pQuery->DefaultData, default_size);
+            return STATUS_SUCCESS;
+        }
         else
         {
             status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
@@ -268,8 +276,6 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 
     if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
     {
-        str = pQuery->EntryContext;
-
         switch(pInfo->Type)
         {
         case REG_EXPAND_SZ:
