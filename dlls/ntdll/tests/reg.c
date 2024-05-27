@@ -2653,15 +2653,16 @@ static void test_NtRegLoadKeyEx(void)
 
 START_TEST(reg)
 {
-    static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
+    LSTATUS status;
+
     if(!InitFunctionPtrs())
         return;
-    pRtlFormatCurrentUserKeyPath(&winetestpath);
-    winetestpath.Buffer = pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, winetestpath.Buffer,
-                           winetestpath.MaximumLength + sizeof(winetest)*sizeof(WCHAR));
-    winetestpath.MaximumLength = winetestpath.MaximumLength + sizeof(winetest)*sizeof(WCHAR);
 
-    pRtlAppendUnicodeToString(&winetestpath, winetest);
+    pRtlFormatCurrentUserKeyPath(&winetestpath);
+    winetestpath.MaximumLength = winetestpath.MaximumLength + sizeof(L"\\WineTest");
+    winetestpath.Buffer = pRtlReAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, winetestpath.Buffer,
+                                             winetestpath.MaximumLength);
+    pRtlAppendUnicodeToString(&winetestpath, L"\\WineTest");
 
     test_NtCreateKey();
     test_NtOpenKey();
@@ -2682,6 +2683,9 @@ START_TEST(reg)
     test_redirection();
     test_NtRenameKey();
     test_NtRegLoadKeyEx();
+
+    status = RegDeleteTreeW(HKEY_CURRENT_USER, L"WineTest");
+    ok(status == ERROR_SUCCESS, "Failed to delete the WineTest registry key: %lu\n", status);
 
     pRtlFreeUnicodeString(&winetestpath);
 
