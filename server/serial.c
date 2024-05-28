@@ -51,6 +51,12 @@
 #include "thread.h"
 #include "request.h"
 
+struct wait_req
+{
+    struct serial *serial;
+    struct timeout_user *timeout;
+};
+
 static void serial_dump( struct object *obj, int verbose );
 static struct fd *serial_get_fd( struct object *obj );
 static void serial_destroy(struct object *obj);
@@ -64,6 +70,8 @@ struct serial
 {
     struct object       obj;
     struct fd          *fd;
+
+    struct async_queue  wait_q; /* queue for asynchronous WAIT_ON_MASK */
 
     struct timeout_user *read_timer;
     SERIAL_TIMEOUTS     timeouts;
@@ -138,6 +146,7 @@ struct object *create_serial( struct fd *fd )
     serial->pending_write = 0;
     serial->pending_wait = 0;
     memset( &serial->timeouts, 0, sizeof(serial->timeouts) );
+    init_async_queue( &serial->wait_q );
     serial->fd = (struct fd *)grab_object( fd );
     set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
@@ -153,6 +162,7 @@ static void serial_destroy( struct object *obj)
 {
     struct serial *serial = (struct serial *)obj;
     if (serial->read_timer) remove_timeout_user( serial->read_timer );
+    free_async_queue( &serial->wait_q );
     release_object( serial->fd );
 }
 
@@ -171,6 +181,25 @@ static struct serial *get_serial_obj( struct process *process, obj_handle_t hand
 static enum server_fd_type serial_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_SERIAL;
+}
+
+#define WAIT_ON_MASK_POLL_INTERVAL -10000
+
+static void free_wait_req( void *private )
+{
+    struct wait_req *req = private;
+
+    if (req->timeout) remove_timeout_user( req->timeout );
+    release_object( req->serial );
+    free( req );
+}
+
+static void async_wait_timeout( void *private )
+{
+    struct wait_req *req = private;
+
+    async_wake_up( &req->serial->wait_q, STATUS_ALERTED );
+    req->timeout = add_timeout_user( WAIT_ON_MASK_POLL_INTERVAL, async_wait_timeout, req );
 }
 
 static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -216,6 +245,26 @@ static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
         serial->generation++;
         fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
         return;
+
+    case IOCTL_SERIAL_WAIT_ON_MASK:
+    {
+        struct wait_req *req;
+
+        if (!(req = mem_alloc(sizeof(*req))))
+            return;
+
+        req->serial = (struct serial *)grab_object( serial );
+        if (!(req->timeout = add_timeout_user( WAIT_ON_MASK_POLL_INTERVAL, async_wait_timeout, req )))
+        {
+            free( req );
+            return;
+        }
+
+        async_set_completion_callback( async, free_wait_req, req );
+        queue_async( &serial->wait_q, async );
+        set_error( STATUS_ALERTED );
+        return;
+    }
 
     default:
         set_error( STATUS_NOT_SUPPORTED );

@@ -979,10 +979,8 @@ typedef struct serial_irq_info
  */
 typedef struct async_commio
 {
-    HANDLE              hDevice;
+    struct async_fileio io;
     DWORD*              events;
-    client_ptr_t        iosb;
-    HANDLE              hEvent;
     UINT                evtmask;
     UINT                cookie;
     UINT                mstat;
@@ -1083,84 +1081,87 @@ static DWORD check_events(int fd, UINT mask,
     return ret & mask;
 }
 
-/***********************************************************************
- *             wait_for_event      (INTERNAL)
- *
- *  We need to poll for what is interesting
- *  TIOCMIWAIT only checks modem status line and may not be aborted by a changing mask
- *
- */
-static void CALLBACK wait_for_event(LPVOID arg)
+static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
-    async_commio *commio = arg;
+    async_commio *commio = user;
     int fd, needs_close;
 
-    if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
+    if (*status != STATUS_ALERTED)
+    {
+        release_fileio( &commio->io );
+        return TRUE;
+    }
+
+    if (!server_get_unix_fd( commio->io.handle, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
         UINT new_mstat, dummy, cookie;
-        LARGE_INTEGER time;
 
-        TRACE("device=%p fd=0x%08x mask=0x%08x buffer=%p event=%p irq_info=%p\n",
-              commio->hDevice, fd, commio->evtmask, commio->events, commio->hEvent, &commio->irq_info);
+        TRACE( "device=%p fd=0x%08x mask=0x%08x buffer=%p irq_info=%p\n",
+               commio->io.handle, fd, commio->evtmask, commio->events, &commio->irq_info );
 
-        time.QuadPart = (ULONGLONG)10000;
-        time.QuadPart = -time.QuadPart;
-        for (;;)
+        /*
+         * FIXME:
+         * We don't handle the EV_RXFLAG (the eventchar)
+         */
+        get_irq_info(fd, &new_irq_info);
+        if (get_modem_status(fd, &new_mstat))
         {
-            /*
-             * TIOCMIWAIT is not adequate
-             *
-             * FIXME:
-             * We don't handle the EV_RXFLAG (the eventchar)
-             */
-            NtDelayExecution(FALSE, &time);
-            get_irq_info(fd, &new_irq_info);
-            if (get_modem_status(fd, &new_mstat))
+            TRACE("get_modem_status failed\n");
+            *commio->events = 0;
+            *status = STATUS_CANCELLED;
+            *info = 0;
+        }
+        else
+        {
+            DWORD events = check_events( fd, commio->evtmask,
+                                         &new_irq_info, &commio->irq_info,
+                                         new_mstat, commio->mstat, commio->pending_write );
+            TRACE("events %#x\n", (int)events);
+            if (events)
             {
-                TRACE("get_modem_status failed\n");
-                *commio->events = 0;
-                break;
+                *commio->events = events;
+                *status = STATUS_SUCCESS;
+                *info = sizeof(events);
             }
-            *commio->events = check_events(fd, commio->evtmask,
-                                           &new_irq_info, &commio->irq_info,
-                                           new_mstat, commio->mstat, commio->pending_write);
-            if (*commio->events) break;
-            get_wait_mask(commio->hDevice, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, FALSE);
-            if (commio->cookie != cookie)
+            else
             {
-                *commio->events = 0;
-                break;
+                get_wait_mask( commio->io.handle, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, FALSE );
+                if (commio->cookie != cookie)
+                {
+                    *commio->events = 0;
+                    *status = STATUS_CANCELLED;
+                    *info = 0;
+                }
+                else
+                {
+                    if (needs_close) close( fd );
+                    return FALSE;
+                }
             }
         }
+
         if (needs_close) close( fd );
     }
-    if (*commio->events) set_async_iosb( commio->iosb, STATUS_SUCCESS, sizeof(DWORD) );
-    else set_async_iosb( commio->iosb, STATUS_CANCELLED, 0 );
-    stop_waiting(commio->hDevice);
-    if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
-    free( commio );
-    NtTerminateThread( GetCurrentThread(), 0 );
+    stop_waiting( commio->io.handle );
+    release_fileio( &commio->io );
+    return TRUE;
 }
 
-static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, client_ptr_t iosb_ptr, DWORD* events)
+static NTSTATUS wait_on( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
+                         void *apc_user, IO_STATUS_BLOCK *io, DWORD *out_buffer )
 {
     async_commio*       commio;
     NTSTATUS            status;
-    HANDLE handle;
+    HANDLE wait_handle;
+    ULONG options;
 
-    if ((status = NtResetEvent(hEvent, NULL)))
-        return status;
+    if (!(commio = (async_commio *)alloc_fileio( sizeof(*commio), async_wait_proc, handle )))
+        return STATUS_NO_MEMORY;
 
-    commio = malloc( sizeof(async_commio) );
-    if (!commio) return STATUS_NO_MEMORY;
-
-    commio->hDevice = hDevice;
-    commio->events  = events;
-    commio->iosb    = iosb_ptr;
-    commio->hEvent  = hEvent;
+    commio->events = out_buffer;
     commio->pending_write = 0;
-    status = get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, TRUE);
+    status = get_wait_mask( handle, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, TRUE );
     if (status)
     {
         free( commio );
@@ -1209,23 +1210,42 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, client_ptr_t iosb
         (commio->evtmask & (EV_CTS | EV_DSR| EV_RING| EV_RLSD)))
 	goto out_now;
 
-    /* We might have received something or the TX buffer is delivered */
-    *events = check_events(fd, commio->evtmask,
-                               &commio->irq_info, &commio->irq_info,
-                               commio->mstat, commio->mstat, commio->pending_write);
-    if (*events)
+    SERVER_START_REQ( ioctl )
     {
-        status = STATUS_SUCCESS;
-        goto out_now;
+        req->code   = IOCTL_SERIAL_WAIT_ON_MASK;
+        req->async  = server_async( handle, &commio->io, event, apc, apc_user, iosb_client_ptr(io) );
+        status = wine_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        options     = reply->options;
+    }
+    SERVER_END_REQ;
+
+    if (status == STATUS_ALERTED)
+    {
+        /* We might have received something or the TX buffer is delivered */
+        DWORD events = check_events(fd, commio->evtmask,
+                                    &commio->irq_info, &commio->irq_info,
+                                    commio->mstat, commio->mstat, commio->pending_write);
+        if (events)
+        {
+            status = STATUS_SUCCESS;
+            io->Status = STATUS_SUCCESS;
+            io->Information = sizeof(events);
+            *out_buffer = events;
+            set_async_direct_result( &wait_handle, STATUS_SUCCESS, sizeof(events), FALSE );
+        }
+        else
+        {
+            status = STATUS_PENDING;
+            set_async_direct_result( &wait_handle, STATUS_PENDING, 0, TRUE );
+        }
     }
 
-    /* create the worker thread for the task */
-    /* FIXME: should use async I/O instead */
-    status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL, GetCurrentProcess(),
-                               wait_for_event, commio, 0, 0, 0, 0, NULL );
-    if (status != STATUS_SUCCESS) goto out_now;
-    NtClose( handle );
-    return STATUS_PENDING;
+    if (status != STATUS_PENDING)
+        release_fileio( &commio->io );
+
+    if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
+    return status;
 
 #if !defined(TIOCINQ) || (!(defined(TIOCSERGETLSR) && defined(TIOCSER_TEMT)) || !defined(TIOCINQ)) || !defined(TIOCMGET) || !defined(TIOCM_CTS) ||!defined(TIOCM_DSR) || !defined(TIOCM_RNG) || !defined(TIOCM_CAR)
 error_caps:
@@ -1233,7 +1253,6 @@ error_caps:
     status = STATUS_INVALID_PARAMETER;
 #endif
 out_now:
-    stop_waiting(commio->hDevice);
     free( commio );
     return status;
 }
@@ -1247,9 +1266,9 @@ static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, const char* ptr)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                            IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
-                            UINT in_size, void *out_buffer, UINT out_size )
+NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                 IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                                 UINT in_size, void *out_buffer, UINT out_size )
 {
     DWORD sz = 0, access = FILE_READ_DATA;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1447,11 +1466,14 @@ static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, vo
     case IOCTL_SERIAL_WAIT_ON_MASK:
         if (out_buffer && out_size == sizeof(DWORD))
         {
-            if (!(status = wait_on(device, fd, event, iosb_client_ptr(io), out_buffer)))
-                sz = sizeof(DWORD);
+            status = wait_on( device, fd, event, apc, apc_user, io, out_buffer );
+            if (needs_close) close( fd );
+            return status;
         }
         else
+        {
             status = STATUS_INVALID_PARAMETER;
+        }
         break;
     default:
         FIXME("Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n",
@@ -1464,54 +1486,7 @@ static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, vo
  error:
     io->Status = status;
     io->Information = sz;
-    if (event && status != STATUS_PENDING) NtSetEvent(event, NULL);
-    return status;
-}
-
-/******************************************************************
- *		serial_DeviceIoControl
- */
-NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                                 IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
-                                 UINT in_size, void *out_buffer, UINT out_size )
-{
-    NTSTATUS    status;
-
-    if (code == IOCTL_SERIAL_WAIT_ON_MASK)
-    {
-        HANDLE hev = event;
-
-        /* this is an ioctl we implement in a non blocking way if event is not null
-         * so we have to explicitly wait if no event is provided
-         */
-        if (!hev)
-        {
-            OBJECT_ATTRIBUTES   attr;
-
-            attr.Length                   = sizeof(attr);
-            attr.RootDirectory            = 0;
-            attr.ObjectName               = NULL;
-            attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
-            attr.SecurityDescriptor       = NULL;
-            attr.SecurityQualityOfService = NULL;
-            status = NtCreateEvent(&hev, EVENT_ALL_ACCESS, &attr, SynchronizationEvent, FALSE);
-
-            if (status) return status;
-        }
-        status = io_control( device, hev, apc, apc_user, io, code,
-                             in_buffer, in_size, out_buffer, out_size );
-        if (hev != event)
-        {
-            if (status == STATUS_PENDING)
-            {
-                NtWaitForSingleObject(hev, FALSE, NULL);
-                status = STATUS_SUCCESS;
-            }
-            NtClose(hev);
-        }
-    }
-    else status = io_control( device, event, apc, apc_user, io, code,
-                              in_buffer, in_size, out_buffer, out_size );
+    if (event) NtSetEvent(event, NULL);
     return status;
 }
 
