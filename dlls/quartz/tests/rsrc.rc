@@ -39,3 +39,7 @@ test.wav RCDATA "test.wav"
 /* ffmpeg -f lavfi -i smptebars -f lavfi -i "sine=frequency=1000" -t 2.04 -r 25 -f mpeg -vcodec mpeg1video -vf scale=64x48 -acodec mp2 -ar 32k -ab 96k test2.mpg */
 /* @makedep: test2.mpg */
 test2.mpg RCDATA "test2.mpg"
+
+/* ffmpeg -f lavfi -i smptebars -t 5 -r 1 -f avi -vcodec cinepak -pix_fmt rgb24 -vf scale=32x24 test_cinepak.avi */
+/* @makedep: test_cinepak.avi */
+test_cinepak.avi RCDATA "test_cinepak.avi"
