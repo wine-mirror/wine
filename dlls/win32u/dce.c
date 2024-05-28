@@ -156,6 +156,8 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
 
 void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struct window_surface **surface )
 {
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct offscreen_window_surface *impl;
     SIZE_T size;
     RECT surface_rect = *visible_rect;
@@ -175,20 +177,23 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
     }
     else if (*surface) window_surface_release( *surface );
 
+    memset( info, 0, sizeof(*info) );
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = surface_rect.right;
+    info->bmiHeader.biHeight      = -surface_rect.bottom; /* top-down */
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biSizeImage   = get_dib_image_size( info );
+    info->bmiHeader.biCompression = BI_RGB;
+
     /* create a new window surface */
     *surface = NULL;
-    size = surface_rect.right * surface_rect.bottom * 4;
+    size = info->bmiHeader.biSizeImage;
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
-    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, &surface_rect );
+    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, info, 0 );
 
     impl->header.color_bits = (char *)&impl->info.bmiColors[0];
-    impl->info.bmiHeader.biSize        = sizeof( impl->info );
-    impl->info.bmiHeader.biWidth       = surface_rect.right;
-    impl->info.bmiHeader.biHeight      = surface_rect.bottom;
-    impl->info.bmiHeader.biPlanes      = 1;
-    impl->info.bmiHeader.biBitCount    = 32;
-    impl->info.bmiHeader.biCompression = BI_RGB;
-    impl->info.bmiHeader.biSizeImage   = size;
+    impl->info = *info;
 
     TRACE( "created window surface %p\n", &impl->header );
 
@@ -197,14 +202,27 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
 
 /* window surface common helpers */
 
-W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, HWND hwnd, const RECT *rect )
+W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
+                                  HWND hwnd, BITMAPINFO *info, HBITMAP bitmap )
 {
+    struct bitblt_coords coords = {0};
+    struct gdi_image_bits bits;
+    BITMAPOBJ *bmp;
+
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
-    surface->rect = *rect;
+    SetRect( &surface->rect, 0, 0, info->bmiHeader.biWidth, abs( info->bmiHeader.biHeight ) );
     pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
+
+    if (!bitmap) return TRUE;
+    if (!(bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP ))) return FALSE;
+    get_image_from_bitmap( bmp, info, &bits, &coords );
+    surface->color_bits = bits.ptr;
+    GDI_ReleaseObj( bitmap );
+
+    return TRUE;
 }
 
 W32KAPI void window_surface_add_ref( struct window_surface *surface )

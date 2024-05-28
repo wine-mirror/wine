@@ -781,26 +781,30 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 {
     struct android_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+
+    memset( info, 0, sizeof(*info) );
+    set_color_info( info, src_alpha );
+    info->bmiHeader.biWidth     = width;
+    info->bmiHeader.biHeight    = -height; /* top-down */
+    info->bmiHeader.biPlanes    = 1;
+    info->bmiHeader.biSizeImage = get_dib_image_size( info );
 
     surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
-    window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect );
-
-    set_color_info( &surface->info, src_alpha );
-    surface->info.bmiHeader.biWidth       = width;
-    surface->info.bmiHeader.biHeight      = -height; /* top-down */
-    surface->info.bmiHeader.biPlanes      = 1;
-    surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
+    if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, info, 0 )) goto failed;
+    memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window       = get_ioctl_window( hwnd );
     surface->alpha        = alpha;
     set_color_key( surface, color_key );
 
-    if (!(surface->header.color_bits = malloc( surface->info.bmiHeader.biSizeImage )))
+    if (!(surface->header.color_bits = malloc( info->bmiHeader.biSizeImage )))
         goto failed;
 
     TRACE( "created %p hwnd %p %s color_bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
-           surface->header.color_bits, (char *)surface->header.color_bits + surface->info.bmiHeader.biSizeImage );
+           surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage );
 
     return &surface->header;
 

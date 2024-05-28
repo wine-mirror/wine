@@ -1961,24 +1961,28 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
                                        COLORREF color_key, BOOL use_alpha )
 {
     const XPixmapFormatValues *format = pixmap_formats[vis->depth];
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct x11drv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     int colors = format->bits_per_pixel <= 8 ? 1 << format->bits_per_pixel : 3;
 
+    memset( info, 0, sizeof(*info) );
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = width;
+    info->bmiHeader.biHeight      = -height; /* top-down */
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = format->bits_per_pixel;
+    info->bmiHeader.biSizeImage   = get_dib_image_size( info );
+    if (format->bits_per_pixel > 8) set_color_info( vis, info, use_alpha );
+
     surface = calloc( 1, FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] ));
     if (!surface) return NULL;
-    window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, rect );
-
-    surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
-    surface->info.bmiHeader.biWidth       = width;
-    surface->info.bmiHeader.biHeight      = -height; /* top-down */
-    surface->info.bmiHeader.biPlanes      = 1;
-    surface->info.bmiHeader.biBitCount    = format->bits_per_pixel;
-    surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
-    if (format->bits_per_pixel > 8) set_color_info( vis, &surface->info, use_alpha );
+    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, 0 )) goto failed;
+    memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;
-    surface->is_argb = (use_alpha && vis->depth == 32 && surface->info.bmiHeader.biCompression == BI_RGB);
+    surface->is_argb = (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
 
 #ifdef HAVE_LIBXXSHM
@@ -1989,7 +1993,7 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
         surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
                                        width, height, 32, 0 );
         if (!surface->image) goto failed;
-        surface->image->data = malloc( surface->info.bmiHeader.biSizeImage );
+        surface->image->data = malloc( info->bmiHeader.biSizeImage );
         if (!surface->image->data) goto failed;
     }
 
@@ -2003,13 +2007,13 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     if (surface->byteswap || format->bits_per_pixel == 4 || format->bits_per_pixel == 8)
     {
         /* allocate separate surface bits if byte swapping or palette mapping is required */
-        if (!(surface->header.color_bits  = calloc( 1, surface->info.bmiHeader.biSizeImage )))
+        if (!(surface->header.color_bits  = calloc( 1, info->bmiHeader.biSizeImage )))
             goto failed;
     }
     else surface->header.color_bits = surface->image->data;
 
     TRACE( "created %p for %lx %s color_bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
-           surface->header.color_bits, (char *)surface->header.color_bits + surface->info.bmiHeader.biSizeImage,
+           surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
            surface->image->data );
 
     return &surface->header;

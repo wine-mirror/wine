@@ -452,24 +452,27 @@ static const struct window_surface_funcs wayland_window_surface_funcs =
  */
 struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect)
 {
+    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct wayland_window_surface *wws;
     int width = rect->right - rect->left;
     int height = rect->bottom - rect->top;
 
     TRACE("hwnd %p rect %s\n", hwnd, wine_dbgstr_rect(rect));
 
+    memset(info, 0, sizeof(*info));
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = width;
+    info->bmiHeader.biHeight      = -height; /* top-down */
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biSizeImage   = width * height * 4;
+    info->bmiHeader.biCompression = BI_RGB;
+
     wws = calloc(1, sizeof(*wws));
     if (!wws) return NULL;
-    window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect);
-
-    wws->info.bmiHeader.biSize = sizeof(wws->info.bmiHeader);
-    wws->info.bmiHeader.biClrUsed = 0;
-    wws->info.bmiHeader.biBitCount = 32;
-    wws->info.bmiHeader.biCompression = BI_RGB;
-    wws->info.bmiHeader.biWidth = width;
-    wws->info.bmiHeader.biHeight = -height; /* top-down */
-    wws->info.bmiHeader.biPlanes = 1;
-    wws->info.bmiHeader.biSizeImage = width * height * 4;
+    if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, info, 0)) goto failed;
+    wws->info = *info;
 
     if (!(wws->header.color_bits = malloc(wws->info.bmiHeader.biSizeImage)))
         goto failed;

@@ -133,37 +133,34 @@ struct window_surface *create_surface(HWND hwnd, macdrv_window window, const REC
 {
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
-    DWORD *colors;
     DWORD window_background;
+    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+
+    memset(info, 0, sizeof(*info));
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = width;
+    info->bmiHeader.biHeight      = -height; /* top-down */
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biSizeImage   = get_dib_image_size(info);
+    info->bmiHeader.biCompression = BI_RGB;
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
-    window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect);
-
-    surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
-    surface->info.bmiHeader.biWidth       = width;
-    surface->info.bmiHeader.biHeight      = -height; /* top-down */
-    surface->info.bmiHeader.biPlanes      = 1;
-    surface->info.bmiHeader.biBitCount    = 32;
-    surface->info.bmiHeader.biSizeImage   = get_dib_image_size(&surface->info);
-    surface->info.bmiHeader.biCompression = BI_RGB;
-    surface->info.bmiHeader.biClrUsed     = 0;
-
-    colors = (DWORD *)((char *)&surface->info + surface->info.bmiHeader.biSize);
-    colors[0] = 0x00ff0000;
-    colors[1] = 0x0000ff00;
-    colors[2] = 0x000000ff;
+    if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, info, 0)) goto failed;
+    memcpy(&surface->info, info, offsetof(BITMAPINFO, bmiColors[3]));
 
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
     surface->use_alpha = use_alpha;
-    surface->header.color_bits = malloc(surface->info.bmiHeader.biSizeImage);
+    surface->header.color_bits = malloc(info->bmiHeader.biSizeImage);
     if (!surface->header.color_bits) goto failed;
     window_background = macdrv_window_background_color();
-    memset_pattern4(surface->header.color_bits, &window_background, surface->info.bmiHeader.biSizeImage);
+    memset_pattern4(surface->header.color_bits, &window_background, info->bmiHeader.biSizeImage);
 
     TRACE("created %p for %p %s color_bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-          surface->header.color_bits, (char *)surface->header.color_bits + surface->info.bmiHeader.biSizeImage);
+          surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage);
 
     return &surface->header;
 
