@@ -71,6 +71,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 #define WINE_GCPW_LOOSE_RTL 3
 #define WINE_GCPW_DIR_MASK 3
 #define WINE_GCPW_LOOSE_MASK 2
+#define WINE_GCPW_DISABLE_REORDERING 0x10000000
 
 #define odd(x) ((x) & 1)
 
@@ -350,7 +351,8 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
                           INT uCountOut,         /* [in] Size of output buffer */
                           UINT *lpOrder,         /* [out] Logical -> Visual order map */
                           WORD **lpGlyphs,       /* [out] reordered, mirrored, shaped glyphs to display */
-                          INT *cGlyphs )         /* [out] number of glyphs generated */
+                          INT *cGlyphs,          /* [out] number of glyphs generated */
+                          WORD **cluster_map )   /* [out] cluster map for returned glyphs */
 {
     WORD *chartype = NULL;
     BYTE *levels = NULL;
@@ -588,19 +590,30 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
             }
 
             for (j = 0; j < nItems; j++)
+            {
                 runOrder[j] = pItems[j].a.s.uBidiLevel;
+                visOrder[j] = j;
+                if (dwWineGCP_Flags & WINE_GCPW_DISABLE_REORDERING)
+                    pItems[j].a.fLogicalOrder = TRUE;
+            }
 
-            ScriptLayout(nItems, runOrder, visOrder, NULL);
+            if (!(dwWineGCP_Flags & WINE_GCPW_DISABLE_REORDERING))
+                ScriptLayout(nItems, runOrder, visOrder, NULL);
 
             for (j = 0; j < nItems; j++)
             {
+                const WCHAR *text;
+                WORD *cluster_map;
                 int k;
                 int cChars,cOutGlyphs;
+
                 curItem = &pItems[visOrder[j]];
 
                 cChars = pItems[visOrder[j]+1].iCharPos - curItem->iCharPos;
 
-                res = ScriptShape(hDC, &psc, lpString + done + curItem->iCharPos, cChars, cMaxGlyphs, &curItem->a, run_glyphs, pwLogClust, psva, &cOutGlyphs);
+                text = lpString + done + curItem->iCharPos;
+                cluster_map = pwLogClust + done + curItem->iCharPos;
+                res = ScriptShape(hDC, &psc, text, cChars, cMaxGlyphs, &curItem->a, run_glyphs, cluster_map, psva, &cOutGlyphs);
                 while (res == E_OUTOFMEMORY)
                 {
                     WORD *new_run_glyphs = HeapReAlloc(GetProcessHeap(), 0, run_glyphs, sizeof(*run_glyphs) * cMaxGlyphs * 2);
@@ -621,7 +634,7 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
                     run_glyphs = new_run_glyphs;
                     psva = new_psva;
                     cMaxGlyphs *= 2;
-                    res = ScriptShape(hDC, &psc, lpString + done + curItem->iCharPos, cChars, cMaxGlyphs, &curItem->a, run_glyphs, pwLogClust, psva, &cOutGlyphs);
+                    res = ScriptShape(hDC, &psc, text, cChars, cMaxGlyphs, &curItem->a, run_glyphs, cluster_map, psva, &cOutGlyphs);
                 }
                 if (res)
                 {
@@ -653,6 +666,11 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
                     *lpGlyphs = new_glyphs;
                     for (k = 0; k < cOutGlyphs; k++)
                         (*lpGlyphs)[glyph_i+k] = run_glyphs[k];
+
+                    /* Fix item cluster map indices to be usable with returned glyph array. */
+                    for (k = 0; k < cChars; ++k)
+                        cluster_map[k] += glyph_i;
+
                     glyph_i += cOutGlyphs;
                 }
             }
@@ -664,6 +682,11 @@ static BOOL BIDI_Reorder( HDC hDC,               /* [in] Display DC */
     }
     if (cGlyphs)
         *cGlyphs = glyph_i;
+    if (cluster_map)
+    {
+        *cluster_map = pwLogClust;
+        pwLogClust = NULL;
+    }
 
     ret = TRUE;
 cleanup:
@@ -952,7 +975,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
             ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR;
 
         BIDI_Reorder( hdc, str, count, GCP_REORDER, bidi_flags, NULL, 0, NULL,
-                      &glyphs, &glyphs_count );
+                      &glyphs, &glyphs_count, NULL );
 
         flags |= ETO_IGNORELANGUAGE;
         if (glyphs)
@@ -1185,7 +1208,7 @@ DWORD WINAPI GetCharacterPlacementW( HDC hdc, const WCHAR *str, INT count, INT m
     else
     {
         BIDI_Reorder( NULL, str, count, flags, WINE_GCPW_FORCE_LTR, result->lpOutString,
-                      set_cnt, result->lpOrder, NULL, NULL );
+                      set_cnt, result->lpOrder, NULL, NULL, NULL );
     }
 
     if (flags & GCP_USEKERNING)
@@ -1317,13 +1340,102 @@ INT WINAPI GetTextFaceW( HDC hdc, INT count, WCHAR *name )
     return NtGdiGetTextFaceW( hdc, count, name, FALSE );
 }
 
+static unsigned int get_char_cluster_size(unsigned int start, unsigned int count, const WORD *cluster_map,
+        WORD *first_glyph, WORD *last_glyph)
+{
+    unsigned int i, size = 1;
+
+    *first_glyph = cluster_map[start];
+    *last_glyph = *first_glyph;
+
+    for (i = start + 1; i < count; ++i)
+    {
+        if (cluster_map[i] != *first_glyph)
+        {
+            *last_glyph = cluster_map[i] - 1;
+            break;
+        }
+        size++;
+    }
+
+    return size;
+}
+
+static int get_cluster_extent(const INT *dxs, WORD first_glyph, WORD last_glyph)
+{
+    int extent = dxs[last_glyph];
+
+    if (first_glyph)
+        extent -= dxs[first_glyph - 1];
+    return extent;
+}
+
 /***********************************************************************
  *           GetTextExtentExPointW    (GDI32.@)
  */
 BOOL WINAPI GetTextExtentExPointW( HDC hdc, const WCHAR *str, INT count, INT max_ext,
                                    INT *nfit, INT *dxs, SIZE *size )
 {
-    return NtGdiGetTextExtentExW( hdc, str, count, max_ext, nfit, dxs, size, 0 );
+    WORD *glyphs = NULL, *cluster_map = NULL;
+    unsigned int i, j;
+    DC_ATTR *dc_attr;
+    int glyphs_count;
+    UINT bidi_flags;
+    BOOL ret = TRUE;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+
+    bidi_flags = dc_attr->text_align & TA_RTLREADING ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR;
+    bidi_flags |= WINE_GCPW_DISABLE_REORDERING;
+
+    if (nfit) *nfit = 0;
+
+    BIDI_Reorder( hdc, str, count, GCP_REORDER, bidi_flags, NULL, 0, NULL,
+                  &glyphs, &glyphs_count, &cluster_map );
+
+    if (glyphs)
+    {
+        BOOL need_extents = dxs || nfit;
+        INT *glyph_dxs = NULL;
+
+        if (need_extents)
+        {
+            if (!(glyph_dxs = HeapAlloc( GetProcessHeap(), 0, glyphs_count * sizeof(*glyph_dxs) )))
+                ret = FALSE;
+        }
+
+        if (ret)
+            ret = NtGdiGetTextExtentExW( hdc, glyphs, glyphs_count, 0, NULL, glyph_dxs, size, 1 );
+
+        if (ret && need_extents)
+        {
+            unsigned int cluster_size, cluster_extent;
+            WORD first_glyph, last_glyph;
+            int extents = 0;
+
+            for (i = 0; i < count; i += cluster_size)
+            {
+                cluster_size = get_char_cluster_size(i, count, cluster_map, &first_glyph, &last_glyph);
+                cluster_extent = get_cluster_extent(glyph_dxs, first_glyph, last_glyph);
+
+                if (extents + cluster_extent > max_ext) break;
+                if (nfit) *nfit += cluster_size;
+
+                for (j = 0; j < cluster_size; ++j)
+                    dxs[i + j] = extents + cluster_extent / cluster_size;
+
+                extents += cluster_extent;
+            }
+        }
+
+        HeapFree( GetProcessHeap(), 0, glyphs );
+        HeapFree( GetProcessHeap(), 0, glyph_dxs );
+        HeapFree( GetProcessHeap(), 0, cluster_map );
+    }
+    else
+        ret = NtGdiGetTextExtentExW( hdc, str, count, max_ext, nfit, dxs, size, 0 );
+
+    return ret;
 }
 
 /***********************************************************************
