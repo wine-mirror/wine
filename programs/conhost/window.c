@@ -1367,7 +1367,7 @@ static COLORREF get_color( struct dialog_info *di, unsigned int idc )
 {
     LONG_PTR index;
 
-    index = GetWindowLongPtrW(GetDlgItem( di->dialog, idc ), 0);
+    index = GetWindowLongW(GetDlgItem( di->dialog, idc ), 0);
     return di->config.color_map[index];
 }
 
