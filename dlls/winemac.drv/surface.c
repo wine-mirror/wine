@@ -251,6 +251,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
+    window_surface_init(&surface->header, &macdrv_surface_funcs, rect);
 
     if ((err = pthread_mutex_init(&surface->mutex, NULL)))
     {
@@ -272,9 +273,6 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     colors[1] = 0x0000ff00;
     colors[2] = 0x000000ff;
 
-    surface->header.funcs = &macdrv_surface_funcs;
-    surface->header.rect  = *rect;
-    surface->header.ref   = 1;
     surface->window = window;
     reset_bounds(&surface->bounds);
     if (old_mac_surface && old_mac_surface->drawn)

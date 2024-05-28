@@ -905,6 +905,8 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
     surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
+    window_surface_init( &surface->header, &android_surface_funcs, rect );
+
     set_color_info( &surface->info, src_alpha );
     surface->info.bmiHeader.biWidth       = width;
     surface->info.bmiHeader.biHeight      = -height; /* top-down */
@@ -913,9 +915,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
     pthread_mutex_init( &surface->mutex, NULL );
 
-    surface->header.funcs = &android_surface_funcs;
-    surface->header.rect  = *rect;
-    surface->header.ref   = 1;
     surface->hwnd         = hwnd;
     surface->window       = get_ioctl_window( hwnd );
     surface->alpha        = alpha;

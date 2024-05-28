@@ -219,10 +219,7 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     *surface = NULL;
     size = surface_rect.right * surface_rect.bottom * 4;
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
-
-    impl->header.funcs = &offscreen_window_surface_funcs;
-    impl->header.ref = 1;
-    impl->header.rect = surface_rect;
+    window_surface_init( &impl->header, &offscreen_window_surface_funcs, &surface_rect );
 
     pthread_mutex_init( &impl->mutex, NULL );
 
@@ -240,6 +237,26 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     TRACE( "created window surface %p\n", &impl->header );
 
     *surface = &impl->header;
+}
+
+/* window surface common helpers */
+
+W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, const RECT *rect )
+{
+    surface->funcs = funcs;
+    surface->ref = 1;
+    surface->rect = *rect;
+}
+
+W32KAPI void window_surface_add_ref( struct window_surface *surface )
+{
+    InterlockedIncrement( &surface->ref );
+}
+
+W32KAPI void window_surface_release( struct window_surface *surface )
+{
+    ULONG ret = InterlockedDecrement( &surface->ref );
+    if (!ret) surface->funcs->destroy( surface );
 }
 
 /*******************************************************************

@@ -512,6 +512,8 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 
     wws = calloc(1, sizeof(*wws));
     if (!wws) return NULL;
+    window_surface_init(&wws->header, &wayland_window_surface_funcs, rect);
+
     wws->info.bmiHeader.biSize = sizeof(wws->info.bmiHeader);
     wws->info.bmiHeader.biClrUsed = 0;
     wws->info.bmiHeader.biBitCount = 32;
@@ -523,9 +525,6 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 
     pthread_mutex_init(&wws->mutex, NULL);
 
-    wws->header.funcs = &wayland_window_surface_funcs;
-    wws->header.rect = *rect;
-    wws->header.ref = 1;
     wws->hwnd = hwnd;
     reset_bounds(&wws->bounds);
 

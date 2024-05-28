@@ -223,17 +223,9 @@ struct window_surface
     /* driver-specific fields here */
 };
 
-static inline ULONG window_surface_add_ref( struct window_surface *surface )
-{
-    return InterlockedIncrement( &surface->ref );
-}
-
-static inline ULONG window_surface_release( struct window_surface *surface )
-{
-    ULONG ret = InterlockedDecrement( &surface->ref );
-    if (!ret) surface->funcs->destroy( surface );
-    return ret;
-}
+W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, const RECT *rect );
+W32KAPI void window_surface_add_ref( struct window_surface *surface );
+W32KAPI void window_surface_release( struct window_surface *surface );
 
 /* display manager interface, used to initialize display device registry data */
 

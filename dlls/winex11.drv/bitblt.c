@@ -2021,6 +2021,8 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
 
     surface = calloc( 1, FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] ));
     if (!surface) return NULL;
+    window_surface_init( &surface->header, &x11drv_surface_funcs, rect );
+
     surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
     surface->info.bmiHeader.biWidth       = width;
     surface->info.bmiHeader.biHeight      = -height; /* top-down */
@@ -2031,9 +2033,6 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
 
     pthread_mutex_init( &surface->mutex, NULL );
 
-    surface->header.funcs = &x11drv_surface_funcs;
-    surface->header.rect  = *rect;
-    surface->header.ref   = 1;
     surface->window = window;
     surface->is_argb = (use_alpha && vis->depth == 32 && surface->info.bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
