@@ -1292,7 +1292,7 @@
 @ thiscall -arch=i386 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) msvcp120.?_Getmonths@_Locinfo@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp120.?_Getmonths@_Locinfo@std@@QEBAPEBDXZ
 @ cdecl -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QBAPBDXZ
-@ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QBEPBDXZ
+@ thiscall -arch=i386 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QEBAPEBDXZ
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) msvcp120.?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ
 @ thiscall -arch=i386 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ(ptr) msvcp120.?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ
