@@ -4,7 +4,7 @@
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@PEBD@Z(ptr ptr) __non_rtti_object_ctor
 @ thiscall -arch=i386 ??0bad_cast@@AAE@PBQBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@@AEAA@PEBQEBD@Z(ptr ptr) bad_cast_ctor
-@ thiscall -arch=win32 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
+@ thiscall -arch=i386 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBQEBD@Z(ptr ptr) bad_cast_ctor
 @ thiscall -arch=i386 ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBV0@@Z(ptr ptr) bad_cast_copy_ctor
@@ -69,7 +69,7 @@
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) type_info_before
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) type_info_before
-@ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ(ptr) type_info_name
+@ thiscall -arch=i386 ?name@type_info@@QBEPBDXZ(ptr) type_info_name
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDXZ(ptr) type_info_name
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) type_info_raw_name
 @ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) type_info_raw_name

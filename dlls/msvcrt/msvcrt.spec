@@ -80,20 +80,20 @@
 @ extern ??_7bad_cast@@6B@ bad_cast_vtable
 @ extern ??_7bad_typeid@@6B@ bad_typeid_vtable
 @ extern ??_7exception@@6B@ exception_vtable
-@ thiscall -arch=win32 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_cast@@UAEPAXI@Z(ptr long) bad_cast_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_vector_dtor
-@ thiscall -arch=win32 ??_Eexception@@UAEPAXI@Z(ptr long) exception_vector_dtor
+@ thiscall -arch=i386 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_vector_dtor
+@ thiscall -arch=i386 ??_Ebad_cast@@UAEPAXI@Z(ptr long) bad_cast_vector_dtor
+@ thiscall -arch=i386 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_vector_dtor
+@ thiscall -arch=i386 ??_Eexception@@UAEPAXI@Z(ptr long) exception_vector_dtor
 @ cdecl -arch=arm ??_Fbad_cast@@QAAXXZ(ptr) bad_cast_default_ctor
 @ thiscall -arch=i386 ??_Fbad_cast@@QAEXXZ(ptr) bad_cast_default_ctor
 @ cdecl -arch=win64 ??_Fbad_cast@@QEAAXXZ(ptr) bad_cast_default_ctor
 @ cdecl -arch=arm ??_Fbad_typeid@@QAAXXZ(ptr) bad_typeid_default_ctor
 @ thiscall -arch=i386 ??_Fbad_typeid@@QAEXXZ(ptr) bad_typeid_default_ctor
 @ cdecl -arch=win64 ??_Fbad_typeid@@QEAAXXZ(ptr) bad_typeid_default_ctor
-@ thiscall -arch=win32 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_cast@@UAEPAXI@Z(ptr long) bad_cast_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_scalar_dtor
-@ thiscall -arch=win32 ??_Gexception@@UAEPAXI@Z(ptr long) exception_scalar_dtor
+@ thiscall -arch=i386 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_scalar_dtor
+@ thiscall -arch=i386 ??_Gbad_cast@@UAEPAXI@Z(ptr long) bad_cast_scalar_dtor
+@ thiscall -arch=i386 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_scalar_dtor
+@ thiscall -arch=i386 ??_Gexception@@UAEPAXI@Z(ptr long) exception_scalar_dtor
 @ cdecl -arch=win32 ??_U@YAPAXI@Z(long) operator_new
 @ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) operator_new
 @ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) operator_new_dbg

@@ -5,7 +5,7 @@
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@AEBV0@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) __non_rtti_object_ctor
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@PEBD@Z(ptr ptr) __non_rtti_object_ctor
-@ thiscall -arch=win32 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
+@ thiscall -arch=i386 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@@QEAA@AEBQEBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@@AEAA@PEBQEBD@Z(ptr ptr) bad_cast_ctor
 @ cdecl -arch=arm ??0bad_cast@@QAA@ABV0@@Z(ptr ptr) bad_cast_copy_ctor
@@ -53,14 +53,14 @@
 @ extern ??_7bad_cast@@6B@ bad_cast_vtable
 @ extern ??_7bad_typeid@@6B@ bad_typeid_vtable
 @ extern ??_7exception@@6B@ exception_vtable
-@ thiscall -arch=win32 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_cast@@UAEPAXI@Z(ptr long) bad_cast_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_vector_dtor
-@ thiscall -arch=win32 ??_Eexception@@UAEPAXI@Z(ptr long) exception_vector_dtor
-@ thiscall -arch=win32 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_cast@@UAEPAXI@Z(ptr long) bad_cast_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_scalar_dtor
-@ thiscall -arch=win32 ??_Gexception@@UAEPAXI@Z(ptr long) exception_scalar_dtor
+@ thiscall -arch=i386 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_vector_dtor
+@ thiscall -arch=i386 ??_Ebad_cast@@UAEPAXI@Z(ptr long) bad_cast_vector_dtor
+@ thiscall -arch=i386 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_vector_dtor
+@ thiscall -arch=i386 ??_Eexception@@UAEPAXI@Z(ptr long) exception_vector_dtor
+@ thiscall -arch=i386 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) __non_rtti_object_scalar_dtor
+@ thiscall -arch=i386 ??_Gbad_cast@@UAEPAXI@Z(ptr long) bad_cast_scalar_dtor
+@ thiscall -arch=i386 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) bad_typeid_scalar_dtor
+@ thiscall -arch=i386 ??_Gexception@@UAEPAXI@Z(ptr long) exception_scalar_dtor
 @ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() _query_new_handler
 @ cdecl -arch=win64 ?_query_new_handler@@YAP6AH_K@ZXZ() _query_new_handler
 @ cdecl ?_query_new_mode@@YAHXZ() _query_new_mode
@@ -71,7 +71,7 @@
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) type_info_before
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) type_info_before
-@ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ(ptr) type_info_name
+@ thiscall -arch=i386 ?name@type_info@@QBEPBDXZ(ptr) type_info_name
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDXZ(ptr) type_info_name
 @ thiscall -arch=i386 ?raw_name@type_info@@QBEPBDXZ(ptr) type_info_raw_name
 @ cdecl -arch=win64 ?raw_name@type_info@@QEBAPEBDXZ(ptr) type_info_raw_name
