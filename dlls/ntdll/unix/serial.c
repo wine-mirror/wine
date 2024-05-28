@@ -452,21 +452,7 @@ static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
     return status;
 }
 
-static void stop_waiting( HANDLE handle )
-{
-    unsigned int status;
-
-    SERVER_START_REQ( set_serial_info )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->flags = SERIALINFO_PENDING_WAIT;
-        if ((status = wine_server_call( req )))
-            ERR("failed to clear waiting state: %#x\n", status);
-    }
-    SERVER_END_REQ;
-}
-
-static NTSTATUS get_wait_mask(HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pending_write, BOOL start_wait)
+static NTSTATUS get_wait_mask( HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pending_write )
 {
     unsigned int status;
 
@@ -474,7 +460,6 @@ static NTSTATUS get_wait_mask(HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pe
     {
         req->handle = wine_server_obj_handle( hDevice );
         req->flags = pending_write ? SERIALINFO_PENDING_WRITE : 0;
-        if (start_wait) req->flags |= SERIALINFO_PENDING_WAIT;
         if (!(status = wine_server_call( req )))
         {
             *mask = reply->eventmask;
@@ -1126,7 +1111,7 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
             }
             else
             {
-                get_wait_mask( commio->io.handle, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, FALSE );
+                get_wait_mask( commio->io.handle, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
                 if (commio->cookie != cookie)
                 {
                     *commio->events = 0;
@@ -1143,7 +1128,6 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
 
         if (needs_close) close( fd );
     }
-    stop_waiting( commio->io.handle );
     release_fileio( &commio->io );
     return TRUE;
 }
@@ -1161,7 +1145,7 @@ static NTSTATUS wait_on( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE ap
 
     commio->events = out_buffer;
     commio->pending_write = 0;
-    status = get_wait_mask( handle, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, TRUE );
+    status = get_wait_mask( handle, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
     if (status)
     {
         free( commio );

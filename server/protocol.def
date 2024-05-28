@@ -2256,7 +2256,6 @@ enum message_type
     int          flags;        /* bitmask to set values (see below) */
 @END
 #define SERIALINFO_PENDING_WRITE 0x04
-#define SERIALINFO_PENDING_WAIT  0x08
 
 /* Cancel all sync io on a thread */
 @REQ(cancel_sync)

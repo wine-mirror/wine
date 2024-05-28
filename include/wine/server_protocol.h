@@ -3035,7 +3035,6 @@ struct set_serial_info_reply
     struct reply_header __header;
 };
 #define SERIALINFO_PENDING_WRITE 0x04
-#define SERIALINFO_PENDING_WAIT  0x08
 
 
 struct cancel_sync_request
@@ -6534,7 +6533,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 806
+#define SERVER_PROTOCOL_VERSION 807
 
 /* ### protocol_version end ### */
 

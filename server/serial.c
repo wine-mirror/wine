@@ -78,7 +78,6 @@ struct serial
     unsigned int        eventmask;
     unsigned int        generation; /* event mask change counter */
     unsigned int        pending_write : 1;
-    unsigned int        pending_wait  : 1;
 
     struct termios      original;
 
@@ -144,7 +143,6 @@ struct object *create_serial( struct fd *fd )
     serial->eventmask    = 0;
     serial->generation   = 0;
     serial->pending_write = 0;
-    serial->pending_wait = 0;
     memset( &serial->timeouts, 0, sizeof(serial->timeouts) );
     init_async_queue( &serial->wait_q );
     serial->fd = (struct fd *)grab_object( fd );
@@ -250,6 +248,12 @@ static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
     {
         struct wait_req *req;
 
+        if (async_queued( &serial->wait_q ))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
         if (!(req = mem_alloc(sizeof(*req))))
             return;
 
@@ -329,17 +333,6 @@ DECL_HANDLER(get_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
-        if (req->flags & SERIALINFO_PENDING_WAIT)
-        {
-            if (serial->pending_wait)
-            {
-                release_object( serial );
-                set_error( STATUS_INVALID_PARAMETER );
-                return;
-            }
-            serial->pending_wait = 1;
-        }
-
         /* event mask */
         reply->eventmask    = serial->eventmask;
         reply->cookie       = serial->generation;
@@ -359,18 +352,6 @@ DECL_HANDLER(set_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
-        if (req->flags & SERIALINFO_PENDING_WAIT)
-        {
-            if (!serial->pending_wait)
-            {
-                release_object( serial );
-                set_error( STATUS_INVALID_PARAMETER );
-                return;
-            }
-            serial->pending_wait = 0;
-        }
-
-        /* pending write */
         if (req->flags & SERIALINFO_PENDING_WRITE)
             serial->pending_write = 1;
 
