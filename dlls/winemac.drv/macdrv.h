@@ -210,7 +210,6 @@ extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
 extern void activate_on_following_focus(void);
 extern struct window_surface *create_surface(macdrv_window window, const RECT *rect,
                                              struct window_surface *old_surface, BOOL use_alpha);
-extern void set_window_surface(macdrv_window window, struct window_surface *window_surface);
 extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha);
 extern void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect);
 

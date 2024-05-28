@@ -409,7 +409,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @property (retain, readwrite, nonatomic) WineEventQueue* queue;
 
 @property (nonatomic) void* surface;
-@property (nonatomic) pthread_mutex_t* surface_mutex;
 
 @property (nonatomic) BOOL shapeChangedSinceLastDraw;
 @property (readonly, nonatomic) BOOL needsTransparency;
@@ -525,21 +524,16 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if ([window contentView] != self)
             return;
 
-        if (window.closing || !window.surface || !window.surface_mutex)
+        if (window.closing || !window.surface)
             return;
 
-        pthread_mutex_lock(window.surface_mutex);
-        if (get_surface_blit_rects(window.surface, NULL, NULL))
-        {
-            imageRect = layer.bounds;
-            imageRect.origin.x *= layer.contentsScale;
-            imageRect.origin.y *= layer.contentsScale;
-            imageRect.size.width *= layer.contentsScale;
-            imageRect.size.height *= layer.contentsScale;
-            image = create_surface_image(window.surface, &imageRect, FALSE, window.colorKeyed,
-                                         window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
-        }
-        pthread_mutex_unlock(window.surface_mutex);
+        imageRect = layer.bounds;
+        imageRect.origin.x *= layer.contentsScale;
+        imageRect.origin.y *= layer.contentsScale;
+        imageRect.size.width *= layer.contentsScale;
+        imageRect.size.height *= layer.contentsScale;
+        image = macdrv_get_surface_display_image(window.surface, &imageRect, FALSE, window.colorKeyed,
+                                                 window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
 
         if (image)
         {
@@ -1004,7 +998,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     @synthesize disabled, noForeground, preventsAppActivation, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
     @synthesize drawnSinceShown;
-    @synthesize surface, surface_mutex;
+    @synthesize surface;
     @synthesize shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
@@ -3486,15 +3480,14 @@ void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
 /***********************************************************************
  *              macdrv_set_window_surface
  */
-void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex)
+void macdrv_set_window_surface(macdrv_window w, struct window_surface *window_surface)
 {
 @autoreleasepool
 {
     WineWindow* window = (WineWindow*)w;
 
     OnMainThread(^{
-        window.surface = surface;
-        window.surface_mutex = mutex;
+        window.surface = window_surface;
     });
 }
 }
