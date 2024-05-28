@@ -3113,10 +3113,6 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
     }
     if (needs_close) close( fd );
     if (!NT_ERROR(status))
-    {
-        io->Status = status;
-        io->Information = sz;
-        if (event) NtSetEvent(event, NULL);
-    }
+        file_complete_async( device, event, apc, apc_user, io, status, sz );
     return status;
 }
