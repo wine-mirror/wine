@@ -116,7 +116,7 @@ static const struct window_surface_funcs dummy_surface_funcs =
     dummy_surface_destroy
 };
 
-struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1, { 0, 0, 1, 1 } };
+struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1, { 0, 0, 1, 1 }, PTHREAD_MUTEX_INITIALIZER };
 
 /*******************************************************************
  * Off-screen window surface.
@@ -125,7 +125,6 @@ struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1,
 struct offscreen_window_surface
 {
     struct window_surface header;
-    pthread_mutex_t mutex;
     RECT bounds;
     char *bits;
     BITMAPINFO info;
@@ -139,16 +138,14 @@ static struct offscreen_window_surface *impl_from_window_surface( struct window_
     return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
 }
 
-static void offscreen_window_surface_lock( struct window_surface *base )
+static void offscreen_window_surface_lock( struct window_surface *surface )
 {
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    pthread_mutex_lock( &impl->mutex );
+    pthread_mutex_lock( &surface->mutex );
 }
 
-static void offscreen_window_surface_unlock( struct window_surface *base )
+static void offscreen_window_surface_unlock( struct window_surface *surface )
 {
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    pthread_mutex_unlock( &impl->mutex );
+    pthread_mutex_unlock( &surface->mutex );
 }
 
 static RECT *offscreen_window_surface_get_bounds( struct window_surface *base )
@@ -179,7 +176,6 @@ static void offscreen_window_surface_flush( struct window_surface *base )
 static void offscreen_window_surface_destroy( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    pthread_mutex_destroy( &impl->mutex );
     free( impl );
 }
 
@@ -221,8 +217,6 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
     window_surface_init( &impl->header, &offscreen_window_surface_funcs, &surface_rect );
 
-    pthread_mutex_init( &impl->mutex, NULL );
-
     reset_bounds( &impl->bounds );
 
     impl->bits = (char *)&impl->info.bmiColors[0];
@@ -246,6 +240,7 @@ W32KAPI void window_surface_init( struct window_surface *surface, const struct w
     surface->funcs = funcs;
     surface->ref = 1;
     surface->rect = *rect;
+    pthread_mutex_init( &surface->mutex, NULL );
 }
 
 W32KAPI void window_surface_add_ref( struct window_surface *surface )
@@ -256,7 +251,11 @@ W32KAPI void window_surface_add_ref( struct window_surface *surface )
 W32KAPI void window_surface_release( struct window_surface *surface )
 {
     ULONG ret = InterlockedDecrement( &surface->ref );
-    if (!ret) surface->funcs->destroy( surface );
+    if (!ret)
+    {
+        if (surface != &dummy_surface) pthread_mutex_destroy( &surface->mutex );
+        surface->funcs->destroy( surface );
+    }
 }
 
 /*******************************************************************

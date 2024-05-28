@@ -580,7 +580,6 @@ struct android_window_surface
     BYTE                  alpha;
     COLORREF              color_key;
     void                 *bits;
-    pthread_mutex_t       mutex;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -651,9 +650,7 @@ static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *
  */
 static void android_surface_lock( struct window_surface *window_surface )
 {
-    struct android_window_surface *surface = get_android_surface( window_surface );
-
-    pthread_mutex_lock( &surface->mutex );
+    pthread_mutex_lock( &window_surface->mutex );
 }
 
 /***********************************************************************
@@ -661,9 +658,7 @@ static void android_surface_lock( struct window_surface *window_surface )
  */
 static void android_surface_unlock( struct window_surface *window_surface )
 {
-    struct android_window_surface *surface = get_android_surface( window_surface );
-
-    pthread_mutex_unlock( &surface->mutex );
+    pthread_mutex_unlock( &window_surface->mutex );
 }
 
 /***********************************************************************
@@ -807,7 +802,6 @@ static void android_surface_destroy( struct window_surface *window_surface )
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
     release_ioctl_window( surface->window );
     free( surface->bits );
-    pthread_mutex_destroy( &surface->mutex );
     free( surface );
 }
 
@@ -913,8 +907,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
 
-    pthread_mutex_init( &surface->mutex, NULL );
-
     surface->hwnd         = hwnd;
     surface->window       = get_ioctl_window( hwnd );
     surface->alpha        = alpha;
@@ -931,7 +923,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     return &surface->header;
 
 failed:
-    android_surface_destroy( &surface->header );
+    window_surface_release( &surface->header );
     return NULL;
 }
 

@@ -1587,7 +1587,6 @@ struct x11drv_window_surface
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo       shminfo;
 #endif
-    pthread_mutex_t       mutex;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -1833,9 +1832,7 @@ failed:
  */
 static void x11drv_surface_lock( struct window_surface *window_surface )
 {
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-
-    pthread_mutex_lock( &surface->mutex );
+    pthread_mutex_lock( &window_surface->mutex );
 }
 
 /***********************************************************************
@@ -1843,9 +1840,7 @@ static void x11drv_surface_lock( struct window_surface *window_surface )
  */
 static void x11drv_surface_unlock( struct window_surface *window_surface )
 {
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-
-    pthread_mutex_unlock( &surface->mutex );
+    pthread_mutex_unlock( &window_surface->mutex );
 }
 
 /***********************************************************************
@@ -1993,7 +1988,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     }
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
 
-    pthread_mutex_destroy( &surface->mutex );
     free( surface );
 }
 
@@ -2030,8 +2024,6 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->info.bmiHeader.biBitCount    = format->bits_per_pixel;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
     if (format->bits_per_pixel > 8) set_color_info( vis, &surface->info, use_alpha );
-
-    pthread_mutex_init( &surface->mutex, NULL );
 
     surface->window = window;
     surface->is_argb = (use_alpha && vis->depth == 32 && surface->info.bmiHeader.biCompression == BI_RGB);
@@ -2072,7 +2064,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     return &surface->header;
 
 failed:
-    x11drv_surface_destroy( &surface->header );
+    window_surface_release( &surface->header );
     return NULL;
 }
 

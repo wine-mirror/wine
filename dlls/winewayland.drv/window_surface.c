@@ -48,7 +48,6 @@ struct wayland_window_surface
     struct wayland_buffer_queue *wayland_buffer_queue;
     RECT bounds;
     void *bits;
-    pthread_mutex_t mutex;
     BITMAPINFO info;
 };
 
@@ -224,8 +223,7 @@ static void wayland_buffer_queue_add_damage(struct wayland_buffer_queue *queue, 
  */
 static void wayland_window_surface_lock(struct window_surface *window_surface)
 {
-    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
-    pthread_mutex_lock(&wws->mutex);
+    pthread_mutex_lock(&window_surface->mutex);
 }
 
 /***********************************************************************
@@ -233,8 +231,7 @@ static void wayland_window_surface_lock(struct window_surface *window_surface)
  */
 static void wayland_window_surface_unlock(struct window_surface *window_surface)
 {
-    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
-    pthread_mutex_unlock(&wws->mutex);
+    pthread_mutex_unlock(&window_surface->mutex);
 }
 
 /***********************************************************************
@@ -481,7 +478,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
     TRACE("surface=%p\n", wws);
 
-    pthread_mutex_destroy(&wws->mutex);
     if (wws->wayland_buffer_queue)
         wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
     free(wws->bits);
@@ -523,8 +519,6 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     wws->info.bmiHeader.biPlanes = 1;
     wws->info.bmiHeader.biSizeImage = width * height * 4;
 
-    pthread_mutex_init(&wws->mutex, NULL);
-
     wws->hwnd = hwnd;
     reset_bounds(&wws->bounds);
 
@@ -537,7 +531,7 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     return &wws->header;
 
 failed:
-    wayland_window_surface_destroy(&wws->header);
+    window_surface_release(&wws->header);
     return NULL;
 }
 

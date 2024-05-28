@@ -25,6 +25,13 @@
 #error The GDI driver can only be used on the Unix side
 #endif
 
+#include <stdarg.h>
+#include <stddef.h>
+
+#include <pthread.h>
+
+#include "windef.h"
+#include "winbase.h"
 #include "winternl.h"
 #include "ntuser.h"
 #include "immdev.h"
@@ -219,6 +226,8 @@ struct window_surface
     struct list                        entry; /* entry in global list managed by user32 */
     LONG                               ref;   /* reference count */
     RECT                               rect;  /* constant, no locking needed */
+
+    pthread_mutex_t                    mutex;
     DWORD                              draw_start_ticks; /* start ticks of fresh draw */
     /* driver-specific fields here */
 };

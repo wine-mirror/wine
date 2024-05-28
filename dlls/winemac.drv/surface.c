@@ -70,7 +70,6 @@ struct macdrv_window_surface
     BOOL                    use_alpha;
     RGNDATA                *blit_data;
     BYTE                   *bits;
-    pthread_mutex_t         mutex;
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
@@ -102,9 +101,7 @@ static void update_blit_data(struct macdrv_window_surface *surface)
  */
 static void macdrv_surface_lock(struct window_surface *window_surface)
 {
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    pthread_mutex_lock(&surface->mutex);
+    pthread_mutex_lock(&window_surface->mutex);
 }
 
 /***********************************************************************
@@ -112,9 +109,7 @@ static void macdrv_surface_lock(struct window_surface *window_surface)
  */
 static void macdrv_surface_unlock(struct window_surface *window_surface)
 {
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    pthread_mutex_unlock(&surface->mutex);
+    pthread_mutex_unlock(&window_surface->mutex);
 }
 
 /***********************************************************************
@@ -215,7 +210,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     if (surface->drawn) NtGdiDeleteObjectApp(surface->drawn);
     free(surface->blit_data);
     free(surface->bits);
-    pthread_mutex_destroy(&surface->mutex);
     free(surface);
 }
 
@@ -246,18 +240,11 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     struct macdrv_window_surface *old_mac_surface = get_mac_surface(old_surface);
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD *colors;
-    int err;
     DWORD window_background;
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
     window_surface_init(&surface->header, &macdrv_surface_funcs, rect);
-
-    if ((err = pthread_mutex_init(&surface->mutex, NULL)))
-    {
-        free(surface);
-        return NULL;
-    }
 
     surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
     surface->info.bmiHeader.biWidth       = width;
@@ -298,7 +285,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     return &surface->header;
 
 failed:
-    macdrv_surface_destroy(&surface->header);
+    window_surface_release(&surface->header);
     return NULL;
 }
 
@@ -317,7 +304,7 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
 void set_window_surface(macdrv_window window, struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    macdrv_set_window_surface(window, window_surface, surface ? &surface->mutex : NULL);
+    macdrv_set_window_surface(window, window_surface, surface ? &window_surface->mutex : NULL);
 }
 
 /***********************************************************************
