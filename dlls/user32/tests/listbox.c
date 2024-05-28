@@ -1939,10 +1939,16 @@ static void test_set_count( void )
     GetUpdateRect( listbox, &r, TRUE );
     ok( IsRectEmpty( &r ), "got non-empty rect\n");
 
+    ret = GetWindowLongA( listbox, GWL_STYLE );
+    ok((ret & (WS_VSCROLL | WS_HSCROLL)) == 0, "Listbox should not have scroll bars\n");
+
     ret = SendMessageA( listbox, LB_SETCOUNT, 100, 0 );
     ok( ret == 0, "got %ld\n", ret );
     ret = SendMessageA( listbox, LB_GETCOUNT, 0, 0 );
     ok( ret == 100, "got %ld\n", ret );
+
+    ret = GetWindowLongA( listbox, GWL_STYLE );
+    ok((ret & (WS_VSCROLL | WS_HSCROLL)) == WS_VSCROLL, "Listbox should have vertical scroll bar\n");
 
     GetUpdateRect( listbox, &r, TRUE );
     ok( !IsRectEmpty( &r ), "got empty rect\n");
