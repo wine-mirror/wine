@@ -22,6 +22,12 @@
 typedef DWORD ARGB;
 typedef INT PixelFormat;
 
+#define ALPHA_SHIFT 24
+#define RED_SHIFT   16
+#define GREEN_SHIFT 8
+#define BLUE_SHIFT  0
+#define ALPHA_MASK  ((ARGB) 0xff << ALPHA_SHIFT)
+
 #define    PixelFormatIndexed   0x00010000
 #define    PixelFormatGDI       0x00020000
 #define    PixelFormatAlpha     0x00040000
