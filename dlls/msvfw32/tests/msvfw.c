@@ -190,6 +190,13 @@ static void test_Locate(void)
         if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
         bo.biHeight = - bo.biHeight;
 
+        bo.biCompression = mmioFOURCC('U','Y','V','Y');
+        bo.biBitCount = bi.biBitCount = 16;
+        h = ICLocate(ICTYPE_VIDEO, 0, &bi, &bo, ICMODE_DECOMPRESS);
+        ok(h == 0, "cvid->UYVY succeeded\n");
+        if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
+        bo.biCompression = BI_RGB;
+
         bo.biBitCount = bi.biBitCount = 32;
         h = ICLocate(ICTYPE_VIDEO, 0, &bi, &bo, ICMODE_DECOMPRESS);
         ok(h != 0, "cvid->RGB32 failed\n");
