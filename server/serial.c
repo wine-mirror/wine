@@ -76,7 +76,6 @@ struct serial
     struct timeout_user *read_timer;
     SERIAL_TIMEOUTS     timeouts;
     unsigned int        eventmask;
-    unsigned int        generation; /* event mask change counter */
     unsigned int        pending_write : 1;
 
     struct termios      original;
@@ -141,7 +140,6 @@ struct object *create_serial( struct fd *fd )
 
     serial->read_timer   = NULL;
     serial->eventmask    = 0;
-    serial->generation   = 0;
     serial->pending_write = 0;
     memset( &serial->timeouts, 0, sizeof(serial->timeouts) );
     init_async_queue( &serial->wait_q );
@@ -240,8 +238,7 @@ static void serial_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
             return;
         }
         serial->eventmask = *(unsigned int *)get_req_data();
-        serial->generation++;
-        fd_async_wake_up( serial->fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );
+        async_wake_up( &serial->wait_q, STATUS_CANCELLED );
         return;
 
     case IOCTL_SERIAL_WAIT_ON_MASK:
@@ -335,7 +332,6 @@ DECL_HANDLER(get_serial_info)
     {
         /* event mask */
         reply->eventmask    = serial->eventmask;
-        reply->cookie       = serial->generation;
 
         /* pending write */
         reply->pending_write = serial->pending_write;

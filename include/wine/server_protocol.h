@@ -3016,9 +3016,7 @@ struct get_serial_info_reply
 {
     struct reply_header __header;
     unsigned int eventmask;
-    unsigned int cookie;
     unsigned int pending_write;
-    char __pad_20[4];
 };
 
 
@@ -6533,7 +6531,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 807
+#define SERVER_PROTOCOL_VERSION 808
 
 /* ### protocol_version end ### */
 

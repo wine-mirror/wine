@@ -452,7 +452,7 @@ static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
     return status;
 }
 
-static NTSTATUS get_wait_mask( HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pending_write )
+static NTSTATUS get_wait_mask( HANDLE hDevice, UINT *mask, BOOL *pending_write )
 {
     unsigned int status;
 
@@ -463,7 +463,6 @@ static NTSTATUS get_wait_mask( HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *p
         if (!(status = wine_server_call( req )))
         {
             *mask = reply->eventmask;
-            if (cookie) *cookie = reply->cookie;
             if (pending_write) *pending_write = reply->pending_write;
         }
     }
@@ -967,7 +966,6 @@ typedef struct async_commio
     struct async_fileio io;
     DWORD*              events;
     UINT                evtmask;
-    UINT                cookie;
     UINT                mstat;
     BOOL                pending_write;
     serial_irq_info     irq_info;
@@ -1080,7 +1078,7 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
     if (!server_get_unix_fd( commio->io.handle, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
-        UINT new_mstat, dummy, cookie;
+        UINT new_mstat, dummy;
 
         TRACE( "device=%p fd=0x%08x mask=0x%08x buffer=%p irq_info=%p\n",
                commio->io.handle, fd, commio->evtmask, commio->events, &commio->irq_info );
@@ -1111,18 +1109,9 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
             }
             else
             {
-                get_wait_mask( commio->io.handle, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
-                if (commio->cookie != cookie)
-                {
-                    *commio->events = 0;
-                    *status = STATUS_CANCELLED;
-                    *info = 0;
-                }
-                else
-                {
-                    if (needs_close) close( fd );
-                    return FALSE;
-                }
+                get_wait_mask( commio->io.handle, &dummy, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
+                if (needs_close) close( fd );
+                return FALSE;
             }
         }
 
@@ -1145,7 +1134,7 @@ static NTSTATUS wait_on( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE ap
 
     commio->events = out_buffer;
     commio->pending_write = 0;
-    status = get_wait_mask( handle, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
+    status = get_wait_mask( handle, &commio->evtmask, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL );
     if (status)
     {
         free( commio );

@@ -2856,7 +2856,6 @@ static void dump_get_serial_info_request( const struct get_serial_info_request *
 static void dump_get_serial_info_reply( const struct get_serial_info_reply *req )
 {
     fprintf( stderr, " eventmask=%08x", req->eventmask );
-    fprintf( stderr, ", cookie=%08x", req->cookie );
     fprintf( stderr, ", pending_write=%08x", req->pending_write );
 }
 
