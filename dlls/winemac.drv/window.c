@@ -1871,7 +1871,6 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     struct window_surface *surface;
     struct macdrv_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    BYTE alpha;
     RECT rect, src_rect;
     HDC hdc;
     BOOL ret = FALSE;
@@ -1914,16 +1913,6 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
         return TRUE;
     }
 
-    if (info->dwFlags & ULW_ALPHA)
-    {
-        /* Apply SourceConstantAlpha via window alpha, not blend. */
-        alpha = info->pblend->SourceConstantAlpha;
-        blend = *info->pblend;
-        blend.SourceConstantAlpha = 0xff;
-    }
-    else
-        alpha = 0xff;
-
     if (!(hdc = NtGdiCreateCompatibleDC(0))) goto done;
     window_surface_lock(surface);
     NtGdiSelectBitmap(hdc, surface->color_bitmap);
@@ -1934,6 +1923,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
     NtGdiTransformPoints(info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP);
 
+    if (info->dwFlags & ULW_ALPHA) blend = *info->pblend;
     if (!(ret = NtGdiAlphaBlend(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
                                 info->hdcSrc, src_rect.left, src_rect.top,
                                 src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
@@ -1948,7 +1938,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     if ((data = get_win_data(hwnd)))
     {
         /* The ULW flags are a superset of the LWA flags. */
-        sync_window_opacity(data, info->crKey, alpha, TRUE, info->dwFlags);
+        sync_window_opacity(data, info->crKey, 255, TRUE, info->dwFlags);
         release_win_data(data);
     }
 
