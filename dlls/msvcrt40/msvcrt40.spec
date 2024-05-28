@@ -396,7 +396,7 @@
 @ cdecl -arch=win64 ??_Dstdiostream@@QEAAXXZ(ptr) msvcirt.??_Dstdiostream@@QEAAXXZ
 @ thiscall -arch=i386 ??_Dstrstream@@QAEXXZ(ptr) msvcirt.??_Dstrstream@@QAEXXZ
 @ cdecl -arch=win64 ??_Dstrstream@@QEAAXXZ(ptr) msvcirt.??_Dstrstream@@QEAAXXZ
-@ stub -arch=win32 ??_EIostream_init@@QAEPAXI@Z
+@ stub -arch=i386 ??_EIostream_init@@QAEPAXI@Z
 @ thiscall -arch=i386 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) msvcrt.??_E__non_rtti_object@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Ebad_cast@@UAEPAXI@Z(ptr long) msvcrt.??_Ebad_cast@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) msvcrt.??_Ebad_typeid@@UAEPAXI@Z
@@ -419,7 +419,7 @@
 @ thiscall -arch=i386 ??_Estreambuf@@UAEPAXI@Z(ptr long) msvcirt.??_Estreambuf@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Estrstream@@UAEPAXI@Z(ptr long) msvcirt.??_Estrstream@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Estrstreambuf@@UAEPAXI@Z(ptr long) msvcirt.??_Estrstreambuf@@UAEPAXI@Z
-@ stub -arch=win32 ??_GIostream_init@@QAEPAXI@Z
+@ stub -arch=i386 ??_GIostream_init@@QAEPAXI@Z
 @ thiscall -arch=i386 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) msvcrt.??_G__non_rtti_object@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Gbad_cast@@UAEPAXI@Z(ptr long) msvcrt.??_Gbad_cast@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) msvcrt.??_Gbad_typeid@@UAEPAXI@Z

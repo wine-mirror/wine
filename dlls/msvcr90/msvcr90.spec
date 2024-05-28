@@ -105,7 +105,7 @@
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
 @ cdecl -arch=win32 ?_sopen@@YAHPBDHHH@Z(str long long long) _sopen
 @ cdecl -arch=win64 ?_sopen@@YAHPEBDHHH@Z(str long long long) _sopen
-@ stub -arch=win32 ?_type_info_dtor_internal_method@type_info@@QAEXXZ  # public: void __thiscall type_info::_type_info_dtor_internal_method(void)
+@ stub -arch=i386 ?_type_info_dtor_internal_method@type_info@@QAEXXZ  # public: void __thiscall type_info::_type_info_dtor_internal_method(void)
 @ stub -arch=win64 ?_type_info_dtor_internal_method@type_info@@QEAAXXZ  # public: void __cdecl type_info::_type_info_dtor_internal_method(void) __ptr64
 @ cdecl -arch=win32 ?_wopen@@YAHPB_WHH@Z(wstr long long) _wopen
 @ cdecl -arch=win64 ?_wopen@@YAHPEB_WHH@Z(wstr long long) _wopen

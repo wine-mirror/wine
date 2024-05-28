@@ -343,7 +343,7 @@
 @ cdecl -arch=win64 ??_Dstdiostream@@QEAAXXZ(ptr) msvcirt.??_Dstdiostream@@QEAAXXZ
 @ thiscall -arch=i386 ??_Dstrstream@@QAEXXZ(ptr) msvcirt.??_Dstrstream@@QAEXXZ
 @ cdecl -arch=win64 ??_Dstrstream@@QEAAXXZ(ptr) msvcirt.??_Dstrstream@@QEAAXXZ
-@ stub -arch=win32 ??_EIostream_init@@QAEPAXI@Z
+@ stub -arch=i386 ??_EIostream_init@@QAEPAXI@Z
 @ thiscall -arch=i386 ??_Efilebuf@@UAEPAXI@Z(ptr long) msvcirt.??_Efilebuf@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Efstream@@UAEPAXI@Z(ptr long) msvcirt.??_Efstream@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Eifstream@@UAEPAXI@Z(ptr long) msvcirt.??_Eifstream@@UAEPAXI@Z
@@ -361,7 +361,7 @@
 @ thiscall -arch=i386 ??_Estreambuf@@UAEPAXI@Z(ptr long) msvcirt.??_Estreambuf@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Estrstream@@UAEPAXI@Z(ptr long) msvcirt.??_Estrstream@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Estrstreambuf@@UAEPAXI@Z(ptr long) msvcirt.??_Estrstreambuf@@UAEPAXI@Z
-@ stub -arch=win32 ??_GIostream_init@@QAEPAXI@Z
+@ stub -arch=i386 ??_GIostream_init@@QAEPAXI@Z
 @ thiscall -arch=i386 ??_Gfilebuf@@UAEPAXI@Z(ptr long) msvcirt.??_Gfilebuf@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Gfstream@@UAEPAXI@Z(ptr long) msvcirt.??_Gfstream@@UAEPAXI@Z
 @ thiscall -arch=i386 ??_Gifstream@@UAEPAXI@Z(ptr long) msvcirt.??_Gifstream@@UAEPAXI@Z
