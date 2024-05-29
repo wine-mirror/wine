@@ -695,8 +695,12 @@ static void android_surface_flush( struct window_surface *window_surface )
              surface->header.rect.bottom - surface->header.rect.top );
     needs_flush = intersect_rect( &rect, &rect, &window_surface->bounds );
     reset_bounds( &window_surface->bounds );
-    window_surface_unlock( window_surface );
-    if (!needs_flush) return;
+
+    if (!needs_flush)
+    {
+        window_surface_unlock( window_surface );
+        return;
+    }
 
     TRACE( "flushing %p hwnd %p surface %s rect %s bits %p alpha %02x key %08x region %u rects\n",
            surface, surface->hwnd, wine_dbgstr_rect( &surface->header.rect ),
@@ -760,6 +764,8 @@ static void android_surface_flush( struct window_surface *window_surface )
     }
     else TRACE( "Unable to lock surface %p window %p buffer %p\n",
                 surface, surface->hwnd, surface->window );
+
+    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
