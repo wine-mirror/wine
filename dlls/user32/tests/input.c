@@ -111,6 +111,7 @@ enum user_function
     MSG_TEST_WIN = 1,
     LL_HOOK_KEYBD,
     LL_HOOK_MOUSE,
+    RAW_INPUT_KEYBOARD,
 };
 
 struct user_call
@@ -143,6 +144,12 @@ struct user_call
             UINT time;
             UINT_PTR extra;
         } ll_hook_ms;
+        struct
+        {
+            HWND hwnd;
+            BYTE code;
+            RAWKEYBOARD kbd;
+        } raw_input;
     };
 
     BOOL todo;
@@ -225,6 +232,15 @@ static int ok_call_( const char *file, int line, const struct user_call *expecte
         if (0 && (ret = expected->ll_hook_ms.time - received->ll_hook_ms.time)) goto done;
         if ((ret = (expected->ll_hook_ms.extra - received->ll_hook_ms.extra))) goto done;
         break;
+    case RAW_INPUT_KEYBOARD:
+        if ((ret = expected->raw_input.hwnd - received->raw_input.hwnd)) goto done;
+        if ((ret = expected->raw_input.code - received->raw_input.code)) goto done;
+        if ((ret = expected->raw_input.kbd.MakeCode - received->raw_input.kbd.MakeCode)) goto done;
+        if ((ret = expected->raw_input.kbd.Flags - received->raw_input.kbd.Flags)) goto done;
+        if ((ret = expected->raw_input.kbd.VKey - received->raw_input.kbd.VKey)) goto done;
+        if ((ret = expected->raw_input.kbd.Message - received->raw_input.kbd.Message)) goto done;
+        if ((ret = expected->raw_input.kbd.ExtraInformation - received->raw_input.kbd.ExtraInformation)) goto done;
+        break;
     }
 
 done:
@@ -249,6 +265,13 @@ done:
                          wine_dbgstr_point(&received->ll_hook_ms.point), received->ll_hook_ms.data, received->ll_hook_ms.flags, received->ll_hook_ms.time,
                          received->ll_hook_ms.extra );
         return ret;
+    case RAW_INPUT_KEYBOARD:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "got WM_INPUT key hwnd %p, code %d, make_code %#x, flags %#x, vkey %s, message %s, extra %#lx\n",
+                         received->raw_input.hwnd, received->raw_input.code, received->raw_input.kbd.MakeCode,
+                         received->raw_input.kbd.Flags, debugstr_vk(received->raw_input.kbd.VKey),
+                         debugstr_wm(received->raw_input.kbd.Message), received->raw_input.kbd.ExtraInformation );
+        return ret;
     }
 
     switch (expected->func)
@@ -269,6 +292,13 @@ done:
         ok_(file, line)( !ret, "LL_HOOK_MOUSE msg %s, point %s, data %#x, flags %#x, time %u, extra %#Ix\n", debugstr_wm(received->ll_hook_ms.msg),
                          wine_dbgstr_point(&received->ll_hook_ms.point), received->ll_hook_ms.data, received->ll_hook_ms.flags, received->ll_hook_ms.time,
                          received->ll_hook_ms.extra );
+        return ret;
+    case RAW_INPUT_KEYBOARD:
+        todo_wine_if( expected->todo || expected->todo_value )
+        ok_(file, line)( !ret, "got WM_INPUT key hwnd %p, code %d, make_code %#x, flags %#x, vkey %s, message %s, extra %#lx\n",
+                         expected->raw_input.hwnd, expected->raw_input.code, expected->raw_input.kbd.MakeCode,
+                         expected->raw_input.kbd.Flags, debugstr_vk(expected->raw_input.kbd.VKey),
+                         debugstr_wm(expected->raw_input.kbd.Message), expected->raw_input.kbd.ExtraInformation );
         return ret;
     }
 
@@ -342,9 +372,32 @@ static void append_ll_hook_ms( UINT msg, const MSLLHOOKSTRUCT *info )
     }
 }
 
+static void append_rawinput_message( HWND hwnd, WPARAM wparam, HRAWINPUT handle )
+{
+    RAWINPUT rawinput;
+    UINT size = sizeof(rawinput), ret;
+
+    ret = GetRawInputData( handle, RID_INPUT, &rawinput, &size, sizeof(RAWINPUTHEADER) );
+    ok_ne( ret, (UINT)-1, UINT, "%u" );
+
+    if (rawinput.header.dwType == RIM_TYPEKEYBOARD)
+    {
+        struct user_call call =
+        {
+            .func = RAW_INPUT_KEYBOARD,
+            .raw_input = {.hwnd = hwnd, .code = GET_RAWINPUT_CODE_WPARAM(wparam), .kbd = rawinput.data.keyboard}
+        };
+        ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
+        ok( index < ARRAY_SIZE(current_sequence), "got %lu calls\n", index );
+        if (!append_message_hwnd) call.message.hwnd = 0;
+        current_sequence[index] = call;
+    }
+}
+
 static void append_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    if (!p_accept_message || p_accept_message( msg ))
+    if (msg == WM_INPUT) append_rawinput_message( hwnd, wparam, (HRAWINPUT)lparam );
+    else if (!p_accept_message || p_accept_message( msg ))
     {
         struct user_call call = {.func = MSG_TEST_WIN, .message = {.hwnd = hwnd, .msg = msg, .wparam = wparam, .lparam = lparam}};
         ULONG index = InterlockedIncrement( &current_sequence_len ) - 1;
@@ -1379,6 +1432,111 @@ static void test_keynames(void)
         len = GetKeyNameTextA(i << 16, buff, sizeof(buff));
         ok(len || !buff[0], "%d: Buffer is not zeroed\n", i);
     }
+}
+
+static BOOL accept_keyboard_messages_raw( UINT msg )
+{
+    return is_keyboard_message( msg ) || msg == WM_INPUT;
+}
+
+static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
+{
+#define WIN_MSG(m, w, l, ...) {.func = MSG_TEST_WIN, .message = {.msg = m, .wparam = w, .lparam = l}, ## __VA_ARGS__}
+#define RAW_KEY(s, f, v, m, ...) {.func = RAW_INPUT_KEYBOARD, .raw_input.kbd = {.MakeCode = s, .Flags = f, .VKey = v, .Message = m}, ## __VA_ARGS__}
+#define KEY_MSG(m, s, v,  ...) WIN_MSG( m, v, MAKELONG(1, (s) | (m == WM_KEYUP || m == WM_SYSKEYUP ? (KF_UP | KF_REPEAT) : 0)), ## __VA_ARGS__ )
+    struct send_input_keyboard_test raw_legacy[] =
+    {
+        {.vkey = vkey,
+         .expect = {RAW_KEY(1, RI_KEY_MAKE, vkey, WM_KEYDOWN), KEY_MSG(WM_KEYDOWN, 1, vkey), WIN_MSG(WM_CHAR, wch, MAKELONG(1, 1)), {0}}},
+        {.vkey = vkey, .flags = KEYEVENTF_KEYUP,
+         .expect = {RAW_KEY(2, RI_KEY_BREAK, vkey, WM_KEYUP), KEY_MSG(WM_KEYUP, 2, vkey), {0}}},
+        {0},
+    };
+    struct send_input_keyboard_test raw_nolegacy[] =
+    {
+        {.vkey = vkey, .expect = {RAW_KEY(1, RI_KEY_MAKE, vkey, WM_KEYDOWN), {0}}},
+        {.vkey = vkey, .flags = KEYEVENTF_KEYUP, .expect = {RAW_KEY(2, RI_KEY_BREAK, vkey, WM_KEYUP), {0}}},
+        {0},
+    };
+    struct send_input_keyboard_test raw_vk_packet_legacy[] =
+    {
+        {.vkey = VK_PACKET, .expect_state = {[VK_PACKET] = 0x80},
+         .expect = {RAW_KEY(1, RI_KEY_MAKE, VK_PACKET, WM_KEYDOWN), KEY_MSG(WM_KEYDOWN, 1, VK_PACKET), {0, .todo = TRUE}}},
+        {.vkey = VK_PACKET, .flags = KEYEVENTF_KEYUP,
+         .expect = {RAW_KEY(2, RI_KEY_BREAK, VK_PACKET, WM_KEYUP), KEY_MSG(WM_KEYUP, 2, VK_PACKET), {0}}},
+        {0},
+    };
+    struct send_input_keyboard_test raw_vk_packet_nolegacy[] =
+    {
+        {.vkey = VK_PACKET, .expect = {RAW_KEY(1, RI_KEY_MAKE, VK_PACKET, WM_KEYDOWN), {0}}},
+        {.vkey = VK_PACKET, .flags = KEYEVENTF_KEYUP, .expect = {RAW_KEY(2, RI_KEY_BREAK, VK_PACKET, WM_KEYUP), {0}}},
+        {0},
+    };
+#undef WIN_MSG
+#undef RAW_KEY
+#undef KEY_MSG
+    RAWINPUTDEVICE rid = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD};
+    int receive;
+    HWND hwnd;
+
+    raw_legacy[0].expect_state[vkey] = 0x80;
+
+    hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    wait_messages( 100, FALSE );
+
+    /* If we have had a spurious layout change, wch may be incorrect. */
+    if (GetKeyboardLayout( 0 ) != hkl)
+    {
+        win_skip( "Spurious keyboard layout changed detected (expected: %p got: %p)\n",
+                  hkl, GetKeyboardLayout( 0 ) );
+        ok_ret( 1, DestroyWindow( hwnd ) );
+        wait_messages( 100, FALSE );
+        ok_seq( empty_sequence );
+        return;
+    }
+
+    p_accept_message = accept_keyboard_messages_raw;
+
+    for (receive = 0; receive <= 1; receive++)
+    {
+        winetest_push_context( receive ? "receive" : "peek" );
+
+        if (receive)
+        {
+            /* test received messages */
+            LONG_PTR old_proc = SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)append_message_wndproc );
+            ok_ne( 0, old_proc, LONG_PTR, "%#Ix" );
+        }
+
+        rid.dwFlags = 0;
+        ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );
+
+        /* get both WM_INPUT and legacy messages */
+        check_send_input_keyboard_test( raw_legacy, !receive );
+        check_send_input_keyboard_test( raw_vk_packet_legacy, !receive );
+
+        rid.dwFlags = RIDEV_REMOVE;
+        ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );
+
+        rid.dwFlags = RIDEV_NOLEGACY;
+        ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );
+
+        /* get only WM_INPUT messages */
+        check_send_input_keyboard_test( raw_nolegacy, !receive );
+        check_send_input_keyboard_test( raw_vk_packet_nolegacy, !receive );
+
+        rid.dwFlags = RIDEV_REMOVE;
+        ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );
+
+        winetest_pop_context();
+    }
+
+    ok_ret( 1, DestroyWindow( hwnd ) );
+    wait_messages( 100, FALSE );
+    ok_seq( empty_sequence );
+
+    p_accept_message = NULL;
 }
 
 static void test_GetMouseMovePointsEx( char **argv )
@@ -5896,6 +6054,7 @@ static void test_input_desktop( char **argv )
     test_RegisterRawInputDevices();
     test_GetRawInputData();
     test_GetRawInputBuffer();
+    test_SendInput_raw_key_messages( 'F', wch, hkl );
 
     test_LoadKeyboardLayoutEx( hkl );
 
