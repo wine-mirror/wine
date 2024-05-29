@@ -1985,7 +1985,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
             memcpy(dst_bits, src_bits, bmi->bmiHeader.biSizeImage);
             add_bounds_rect(&surface->bounds, &rect);
             window_surface_unlock(surface);
-            surface->funcs->flush(surface);
+            window_surface_flush(surface);
         }
 
         /* The ULW flags are a superset of the LWA flags. */

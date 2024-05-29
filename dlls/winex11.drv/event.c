@@ -906,7 +906,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
                                  data->whole_rect.top - data->client_rect.top );
 
             if (data->vis.visualid != default_visual.visualid)
-                data->surface->funcs->flush( data->surface );
+                window_surface_flush( data->surface );
         }
         OffsetRect( &rect, data->whole_rect.left - data->client_rect.left,
                     data->whole_rect.top - data->client_rect.top );

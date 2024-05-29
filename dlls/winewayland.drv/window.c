@@ -756,7 +756,7 @@ void wayland_window_flush(HWND hwnd)
     if (!data) return;
 
     if (data->window_surface)
-        data->window_surface->funcs->flush(data->window_surface);
+        window_surface_flush(data->window_surface);
 
     wayland_win_data_release(data);
 }

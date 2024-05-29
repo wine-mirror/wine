@@ -112,21 +112,11 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 /***********************************************************************
  *              macdrv_surface_flush
  */
-static void macdrv_surface_flush(struct window_surface *window_surface)
+static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    RECT rect = window_surface->rect;
-    OffsetRect(&rect, -rect.left, -rect.top);
-
-    window_surface_lock(window_surface);
-
-    TRACE("flushing %p %s bounds %s bits %p\n", surface, wine_dbgstr_rect(&surface->header.rect),
-          wine_dbgstr_rect(&window_surface->bounds), surface->bits);
-
-    if (intersect_rect(&rect, &rect, &window_surface->bounds))
-        macdrv_window_needs_display(surface->window, cgrect_from_rect(rect));
-
-    window_surface_unlock(window_surface);
+    macdrv_window_needs_display(surface->window, cgrect_from_rect(*dirty));
+    return FALSE; /* bounds are reset asynchronously, from macdrv_get_surface_display_image */
 }
 
 /***********************************************************************

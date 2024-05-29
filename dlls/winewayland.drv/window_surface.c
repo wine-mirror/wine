@@ -56,12 +56,6 @@ static struct wayland_window_surface *wayland_window_surface_cast(
     return (struct wayland_window_surface *)window_surface;
 }
 
-static inline void reset_bounds(RECT *bounds)
-{
-    bounds->left = bounds->top = INT_MAX;
-    bounds->right = bounds->bottom = INT_MIN;
-}
-
 static void buffer_release(void *data, struct wl_buffer *buffer)
 {
     struct wayland_shm_buffer *shm_buffer = data;
@@ -341,18 +335,13 @@ static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
 /***********************************************************************
  *           wayland_window_surface_flush
  */
-static void wayland_window_surface_flush(struct window_surface *window_surface)
+static BOOL wayland_window_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
 {
     struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
     struct wayland_shm_buffer *shm_buffer = NULL;
     BOOL flushed = FALSE;
-    RECT damage_rect;
     HRGN surface_damage_region = NULL;
     HRGN copy_from_window_region;
-
-    window_surface_lock(window_surface);
-
-    if (!intersect_rect(&damage_rect, &wws->header.rect, &window_surface->bounds)) goto done;
 
     if (!wws->wayland_surface || !wws->wayland_buffer_queue)
     {
@@ -361,11 +350,7 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
         goto done;
     }
 
-    TRACE("surface=%p hwnd=%p surface_rect=%s bounds=%s\n", wws, wws->hwnd,
-          wine_dbgstr_rect(&wws->header.rect), wine_dbgstr_rect(&window_surface->bounds));
-
-    surface_damage_region = NtGdiCreateRectRgn(damage_rect.left, damage_rect.top,
-                                               damage_rect.right, damage_rect.bottom);
+    surface_damage_region = NtGdiCreateRectRgn(dirty->left, dirty->top, dirty->right, dirty->bottom);
     if (!surface_damage_region)
     {
         ERR("failed to create surface damage region\n");
@@ -438,9 +423,8 @@ static void wayland_window_surface_flush(struct window_surface *window_surface)
     wayland_shm_buffer_ref((wws->wayland_surface->latest_window_buffer = shm_buffer));
 
 done:
-    if (flushed) reset_bounds(&window_surface->bounds);
     if (surface_damage_region) NtGdiDeleteObjectApp(surface_damage_region);
-    window_surface_unlock(window_surface);
+    return flushed;
 }
 
 /***********************************************************************

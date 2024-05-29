@@ -1871,67 +1871,47 @@ static void x11drv_surface_set_region( struct window_surface *window_surface, HR
 /***********************************************************************
  *           x11drv_surface_flush
  */
-static void x11drv_surface_flush( struct window_surface *window_surface )
+static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
     unsigned char *src = surface->bits;
     unsigned char *dst = (unsigned char *)surface->image->data;
-    struct bitblt_coords coords;
 
-    window_surface_lock( window_surface );
-    coords.x = 0;
-    coords.y = 0;
-    coords.width  = surface->header.rect.right - surface->header.rect.left;
-    coords.height = surface->header.rect.bottom - surface->header.rect.top;
-    SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
-    if (intersect_rect( &coords.visrect, &coords.visrect, &window_surface->bounds ))
+    if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface );
+
+    if (src != dst)
     {
-        TRACE( "flushing %p %dx%d bounds %s bits %p\n", surface, coords.width, coords.height,
-               wine_dbgstr_rect( &window_surface->bounds ), surface->bits );
+        int map[256], *mapping = get_window_surface_mapping( surface->image->bits_per_pixel, map );
+        int width_bytes = surface->image->bytes_per_line;
 
-        if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface );
+        src += dirty->top * width_bytes;
+        dst += dirty->top * width_bytes;
+        copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes, dirty->bottom - dirty->top,
+                             surface->byteswap, mapping, ~0u, surface->alpha_bits );
+    }
+    else if (surface->alpha_bits)
+    {
+        int x, y, stride = surface->image->bytes_per_line / sizeof(ULONG);
+        ULONG *ptr = (ULONG *)dst + dirty->top * stride;
 
-        if (src != dst)
-        {
-            int map[256], *mapping = get_window_surface_mapping( surface->image->bits_per_pixel, map );
-            int width_bytes = surface->image->bytes_per_line;
-
-            src += coords.visrect.top * width_bytes;
-            dst += coords.visrect.top * width_bytes;
-            copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes,
-                                 coords.visrect.bottom - coords.visrect.top,
-                                 surface->byteswap, mapping, ~0u, surface->alpha_bits );
-        }
-        else if (surface->alpha_bits)
-        {
-            int x, y, stride = surface->image->bytes_per_line / sizeof(ULONG);
-            ULONG *ptr = (ULONG *)dst + coords.visrect.top * stride;
-
-            for (y = coords.visrect.top; y < coords.visrect.bottom; y++, ptr += stride)
-                for (x = coords.visrect.left; x < coords.visrect.right; x++)
-                    ptr[x] |= surface->alpha_bits;
-        }
+        for (y = dirty->top; y < dirty->bottom; y++, ptr += stride)
+            for (x = dirty->left; x < dirty->right; x++)
+                ptr[x] |= surface->alpha_bits;
+    }
 
 #ifdef HAVE_LIBXXSHM
-        if (surface->shminfo.shmid != -1)
-            XShmPutImage( gdi_display, surface->window, surface->gc, surface->image,
-                          coords.visrect.left, coords.visrect.top,
-                          surface->header.rect.left + coords.visrect.left,
-                          surface->header.rect.top + coords.visrect.top,
-                          coords.visrect.right - coords.visrect.left,
-                          coords.visrect.bottom - coords.visrect.top, False );
-        else
+    if (surface->shminfo.shmid != -1)
+        XShmPutImage( gdi_display, surface->window, surface->gc, surface->image, dirty->left,
+                      dirty->top, rect->left + dirty->left, rect->top + dirty->top,
+                      dirty->right - dirty->left, dirty->bottom - dirty->top, False );
+    else
 #endif
-        XPutImage( gdi_display, surface->window, surface->gc, surface->image,
-                   coords.visrect.left, coords.visrect.top,
-                   surface->header.rect.left + coords.visrect.left,
-                   surface->header.rect.top + coords.visrect.top,
-                   coords.visrect.right - coords.visrect.left,
-                   coords.visrect.bottom - coords.visrect.top );
-        XFlush( gdi_display );
-    }
-    reset_bounds( &window_surface->bounds );
-    window_surface_unlock( window_surface );
+        XPutImage( gdi_display, surface->window, surface->gc, surface->image, dirty->left,
+                   dirty->top, rect->left + dirty->left, rect->top + dirty->top,
+                   dirty->right - dirty->left, dirty->bottom - dirty->top );
+    XFlush( gdi_display );
+
+    return TRUE;
 }
 
 /***********************************************************************

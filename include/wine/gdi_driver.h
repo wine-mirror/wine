@@ -213,7 +213,7 @@ struct window_surface_funcs
 {
     void* (*get_info)( struct window_surface *surface, BITMAPINFO *info );
     void  (*set_region)( struct window_surface *surface, HRGN region );
-    void  (*flush)( struct window_surface *surface );
+    BOOL  (*flush)( struct window_surface *surface, const RECT *rect, const RECT *dirty );
     void  (*destroy)( struct window_surface *surface );
 };
 
@@ -235,6 +235,7 @@ W32KAPI void window_surface_add_ref( struct window_surface *surface );
 W32KAPI void window_surface_release( struct window_surface *surface );
 W32KAPI void window_surface_lock( struct window_surface *surface );
 W32KAPI void window_surface_unlock( struct window_surface *surface );
+W32KAPI void window_surface_flush( struct window_surface *surface );
 
 /* display manager interface, used to initialize display device registry data */
 

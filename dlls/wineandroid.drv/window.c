@@ -587,12 +587,6 @@ static struct android_window_surface *get_android_surface( struct window_surface
     return (struct android_window_surface *)surface;
 }
 
-static inline void reset_bounds( RECT *bounds )
-{
-    bounds->left = bounds->top = INT_MAX;
-    bounds->right = bounds->bottom = INT_MIN;
-}
-
 static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
 {
     if (rect->left >= rect->right || rect->top >= rect->bottom) return;
@@ -682,60 +676,41 @@ static void android_surface_set_region( struct window_surface *window_surface, H
 /***********************************************************************
  *           android_surface_flush
  */
-static void android_surface_flush( struct window_surface *window_surface )
+static BOOL android_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
     ANativeWindow_Buffer buffer;
     ARect rc;
-    RECT rect;
-    BOOL needs_flush;
 
-    window_surface_lock( window_surface );
-    SetRect( &rect, 0, 0, surface->header.rect.right - surface->header.rect.left,
-             surface->header.rect.bottom - surface->header.rect.top );
-    needs_flush = intersect_rect( &rect, &rect, &window_surface->bounds );
-    reset_bounds( &window_surface->bounds );
-
-    if (!needs_flush)
-    {
-        window_surface_unlock( window_surface );
-        return;
-    }
-
-    TRACE( "flushing %p hwnd %p surface %s rect %s bits %p alpha %02x key %08x region %u rects\n",
-           surface, surface->hwnd, wine_dbgstr_rect( &surface->header.rect ),
-           wine_dbgstr_rect( &rect ), surface->bits, surface->alpha, (int)surface->color_key,
-           surface->region_data ? (int)surface->region_data->rdh.nCount : 0 );
-
-    rc.left   = rect.left;
-    rc.top    = rect.top;
-    rc.right  = rect.right;
-    rc.bottom = rect.bottom;
+    rc.left   = dirty->left;
+    rc.top    = dirty->top;
+    rc.right  = dirty->right;
+    rc.bottom = dirty->bottom;
 
     if (!surface->window->perform( surface->window, NATIVE_WINDOW_LOCK, &buffer, &rc ))
     {
         const RECT *rgn_rect = NULL, *end = NULL;
         DWORD *src, *dst;
         int x, y, width;
+        RECT locked;
 
-        rect.left   = rc.left;
-        rect.top    = rc.top;
-        rect.right  = rc.right;
-        rect.bottom = rc.bottom;
-        intersect_rect( &rect, &rect, &surface->header.rect );
+        locked.left   = rc.left;
+        locked.top    = rc.top;
+        locked.right  = rc.right;
+        locked.bottom = rc.bottom;
+        intersect_rect( &locked, &locked, rect );
 
         if (surface->region_data)
         {
             rgn_rect = (RECT *)surface->region_data->Buffer;
             end = rgn_rect + surface->region_data->rdh.nCount;
         }
-        src = (DWORD *)surface->bits
-            + (rect.top - surface->header.rect.top) * surface->info.bmiHeader.biWidth
-            + (rect.left - surface->header.rect.left);
-        dst = (DWORD *)buffer.bits + rect.top * buffer.stride + rect.left;
-        width = min( rect.right - rect.left, buffer.stride );
+        src = (DWORD *)surface->bits + (locked.top - rect->top) * surface->info.bmiHeader.biWidth +
+              (locked.left - rect->left);
+        dst = (DWORD *)buffer.bits + locked.top * buffer.stride + locked.left;
+        width = min( locked.right - locked.left, buffer.stride );
 
-        for (y = rect.top; y < min( buffer.height, rect.bottom); y++)
+        for (y = locked.top; y < min( buffer.height, locked.bottom ); y++)
         {
             if (surface->info.bmiHeader.biCompression == BI_RGB)
                 memcpy( dst, src, width * sizeof(*dst) );
@@ -754,7 +729,7 @@ static void android_surface_flush( struct window_surface *window_surface )
             if (rgn_rect)
             {
                 while (rgn_rect < end && rgn_rect->bottom <= y) rgn_rect++;
-                apply_line_region( dst, width, rect.left, y, rgn_rect, end );
+                apply_line_region( dst, width, locked.left, y, rgn_rect, end );
             }
 
             src += surface->info.bmiHeader.biWidth;
@@ -765,7 +740,7 @@ static void android_surface_flush( struct window_surface *window_surface )
     else TRACE( "Unable to lock surface %p window %p buffer %p\n",
                 surface, surface->hwnd, surface->window );
 
-    window_surface_unlock( window_surface );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -1576,7 +1551,7 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
     }
 
     window_surface_unlock( surface );
-    surface->funcs->flush( surface );
+    window_surface_flush( surface );
 
 done:
     window_surface_release( surface );
@@ -1608,7 +1583,7 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
                 window_surface_lock( surface );
                 surface->bounds = surface->rect;
                 window_surface_unlock( surface );
-                if (is_argb_surface( surface )) surface->funcs->flush( surface );
+                if (is_argb_surface( surface )) window_surface_flush( surface );
             }
             release_win_data( data );
         }

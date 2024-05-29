@@ -1236,7 +1236,7 @@ static void map_window( HWND hwnd, DWORD new_style )
             XMapWindow( data->display, data->whole_window );
             XFlush( data->display );
             if (data->surface && data->vis.visualid != default_visual.visualid)
-                data->surface->funcs->flush( data->surface );
+                window_surface_flush( data->surface );
         }
         else set_xembed_flags( data, XEMBED_MAPPED );
 
@@ -2803,7 +2803,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     XFlush( data->display );  /* make sure changes are done before we start painting again */
     if (data->surface && data->vis.visualid != default_visual.visualid)
-        data->surface->funcs->flush( data->surface );
+        window_surface_flush( data->surface );
 
     release_win_data( data );
 }
@@ -3050,7 +3050,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     }
 
     window_surface_unlock( surface );
-    surface->funcs->flush( surface );
+    window_surface_flush( surface );
 
 done:
     window_surface_release( surface );

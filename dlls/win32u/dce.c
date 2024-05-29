@@ -79,9 +79,10 @@ static void dummy_surface_set_region( struct window_surface *window_surface, HRG
     /* nothing to do */
 }
 
-static void dummy_surface_flush( struct window_surface *window_surface )
+static BOOL dummy_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
 {
     /* nothing to do */
+    return TRUE;
 }
 
 static void dummy_surface_destroy( struct window_surface *window_surface )
@@ -129,11 +130,9 @@ static void offscreen_window_surface_set_region( struct window_surface *base, HR
 {
 }
 
-static void offscreen_window_surface_flush( struct window_surface *surface )
+static BOOL offscreen_window_surface_flush( struct window_surface *base, const RECT *rect, const RECT *dirty )
 {
-    window_surface_lock( surface );
-    reset_bounds( &surface->bounds );
-    window_surface_unlock( surface );
+    return TRUE;
 }
 
 static void offscreen_window_surface_destroy( struct window_surface *base )
@@ -229,6 +228,22 @@ W32KAPI void window_surface_unlock( struct window_surface *surface )
     pthread_mutex_unlock( &surface->mutex );
 }
 
+W32KAPI void window_surface_flush( struct window_surface *surface )
+{
+    RECT dirty = surface->rect;
+
+    window_surface_lock( surface );
+
+    if (intersect_rect( &dirty, &dirty, &surface->bounds ))
+    {
+        TRACE( "Flushing surface %p %s, bounds %s, dirty %s\n", surface, wine_dbgstr_rect( &surface->rect ),
+               wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
+        if (surface->funcs->flush( surface, &surface->rect, &dirty )) reset_bounds( &surface->bounds );
+    }
+
+    window_surface_unlock( surface );
+}
+
 /*******************************************************************
  *           register_window_surface
  *
@@ -263,7 +278,7 @@ void flush_window_surfaces( BOOL idle )
     else if ((int)(now - last_idle) < 50) goto done;
 
     LIST_FOR_EACH_ENTRY( surface, &window_surfaces, struct window_surface, entry )
-        surface->funcs->flush( surface );
+        window_surface_flush( surface );
 done:
     pthread_mutex_unlock( &surfaces_lock );
 }
