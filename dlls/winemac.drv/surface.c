@@ -64,7 +64,6 @@ struct macdrv_window_surface
 {
     struct window_surface   header;
     macdrv_window           window;
-    HRGN                    region;
     BOOL                    use_alpha;
     BYTE                   *bits;
     BITMAPINFO              info;   /* variable size, must be last */
@@ -85,28 +84,10 @@ static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surfac
 }
 
 /***********************************************************************
- *              macdrv_surface_set_region
+ *              macdrv_surface_set_clip
  */
-static void macdrv_surface_set_region(struct window_surface *window_surface, HRGN region)
+static void macdrv_surface_set_clip(struct window_surface *window_surface, const RECT *rects, UINT count)
 {
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    TRACE("updating surface %p with %p\n", surface, region);
-
-    window_surface_lock(window_surface);
-
-    if (region)
-    {
-        if (!surface->region) surface->region = NtGdiCreateRectRgn(0, 0, 0, 0);
-        NtGdiCombineRgn(surface->region, region, 0, RGN_COPY);
-    }
-    else
-    {
-        if (surface->region) NtGdiDeleteObjectApp(surface->region);
-        surface->region = 0;
-    }
-
-    window_surface_unlock(window_surface);
 }
 
 /***********************************************************************
@@ -127,7 +108,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p bits %p\n", surface, surface->bits);
-    if (surface->region) NtGdiDeleteObjectApp(surface->region);
     free(surface->bits);
     free(surface);
 }
@@ -135,7 +115,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
     macdrv_surface_get_bitmap_info,
-    macdrv_surface_set_region,
+    macdrv_surface_set_clip,
     macdrv_surface_flush,
     macdrv_surface_destroy,
 };

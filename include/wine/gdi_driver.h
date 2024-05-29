@@ -212,7 +212,7 @@ struct window_surface;
 struct window_surface_funcs
 {
     void* (*get_info)( struct window_surface *surface, BITMAPINFO *info );
-    void  (*set_region)( struct window_surface *surface, HRGN region );
+    void  (*set_clip)( struct window_surface *surface, const RECT *rects, UINT count );
     BOOL  (*flush)( struct window_surface *surface, const RECT *rect, const RECT *dirty );
     void  (*destroy)( struct window_surface *surface );
 };
@@ -227,6 +227,7 @@ struct window_surface
 
     pthread_mutex_t                    mutex;
     RECT                               bounds;  /* dirty area rect, requires locking */
+    HRGN                               clip_region;  /* visible region of the surface, fully visible if 0 */
     DWORD                              draw_start_ticks; /* start ticks of fresh draw */
     /* driver-specific fields here */
 };
@@ -237,6 +238,7 @@ W32KAPI void window_surface_release( struct window_surface *surface );
 W32KAPI void window_surface_lock( struct window_surface *surface );
 W32KAPI void window_surface_unlock( struct window_surface *surface );
 W32KAPI void window_surface_flush( struct window_surface *surface );
+W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region );
 
 /* display manager interface, used to initialize display device registry data */
 

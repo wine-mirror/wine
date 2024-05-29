@@ -74,7 +74,7 @@ static void *dummy_surface_get_bitmap_info( struct window_surface *window_surfac
     return &dummy_data;
 }
 
-static void dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void dummy_surface_set_clip( struct window_surface *window_surface, const RECT *rects, UINT count )
 {
     /* nothing to do */
 }
@@ -93,7 +93,7 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs dummy_surface_funcs =
 {
     dummy_surface_get_bitmap_info,
-    dummy_surface_set_region,
+    dummy_surface_set_clip,
     dummy_surface_flush,
     dummy_surface_destroy
 };
@@ -132,7 +132,7 @@ static void *offscreen_window_surface_get_bitmap_info( struct window_surface *ba
     return impl->bits;
 }
 
-static void offscreen_window_surface_set_region( struct window_surface *base, HRGN region )
+static void offscreen_window_surface_set_clip( struct window_surface *base, const RECT *rects, UINT count )
 {
 }
 
@@ -150,7 +150,7 @@ static void offscreen_window_surface_destroy( struct window_surface *base )
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
     offscreen_window_surface_get_bitmap_info,
-    offscreen_window_surface_set_region,
+    offscreen_window_surface_set_clip,
     offscreen_window_surface_flush,
     offscreen_window_surface_destroy
 };
@@ -219,6 +219,7 @@ W32KAPI void window_surface_release( struct window_surface *surface )
     if (!ret)
     {
         if (surface != &dummy_surface) pthread_mutex_destroy( &surface->mutex );
+        if (surface->clip_region) NtGdiDeleteObjectApp( surface->clip_region );
         surface->funcs->destroy( surface );
     }
 }
@@ -246,6 +247,39 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
         TRACE( "Flushing hwnd %p, surface %p %s, bounds %s, dirty %s\n", surface->hwnd, surface,
                wine_dbgstr_rect( &surface->rect ), wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
         if (surface->funcs->flush( surface, &surface->rect, &dirty )) reset_bounds( &surface->bounds );
+    }
+
+    window_surface_unlock( surface );
+}
+
+W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region )
+{
+    window_surface_lock( surface );
+
+    if (!clip_region && surface->clip_region)
+    {
+        TRACE( "hwnd %p, surface %p %s, clearing clip region\n", surface->hwnd, surface,
+               wine_dbgstr_rect( &surface->rect ) );
+
+        NtGdiDeleteObjectApp( surface->clip_region );
+        surface->clip_region = 0;
+        surface->funcs->set_clip( surface, NULL, 0 );
+    }
+    else if (clip_region && !NtGdiEqualRgn( clip_region, surface->clip_region ))
+    {
+        WINEREGION *data;
+
+        TRACE( "hwnd %p, surface %p %s, setting clip region %p\n", surface->hwnd, surface,
+               wine_dbgstr_rect( &surface->rect ), clip_region );
+
+        if (!surface->clip_region) surface->clip_region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( surface->clip_region, clip_region, 0, RGN_COPY );
+
+        if ((data = GDI_GetObjPtr( clip_region, NTGDI_OBJ_REGION )))
+        {
+            surface->funcs->set_clip( surface, data->rects, data->numRects );
+            GDI_ReleaseObj( clip_region );
+        }
     }
 
     window_surface_unlock( surface );

@@ -224,10 +224,10 @@ static void *wayland_window_surface_get_bitmap_info(struct window_surface *windo
 }
 
 /***********************************************************************
- *           wayland_window_surface_set_region
+ *           wayland_window_surface_set_clip
  */
-static void wayland_window_surface_set_region(struct window_surface *window_surface,
-                                              HRGN region)
+static void wayland_window_surface_set_clip(struct window_surface *window_surface,
+                                            const RECT *rects, UINT count)
 {
     /* TODO */
 }
@@ -444,7 +444,7 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
     wayland_window_surface_get_bitmap_info,
-    wayland_window_surface_set_region,
+    wayland_window_surface_set_clip,
     wayland_window_surface_flush,
     wayland_window_surface_destroy
 };

@@ -1781,12 +1781,12 @@ static void update_surface_region( HWND hwnd )
     }
 
     if (get_window_region( hwnd, TRUE, &region, &visible )) goto done;
-    if (!region) win->surface->funcs->set_region( win->surface, shape );
+    if (!region) window_surface_set_clip( win->surface, shape );
     else
     {
         NtGdiOffsetRgn( region, -visible.left, -visible.top );
         if (shape) NtGdiCombineRgn( region, region, shape, RGN_AND );
-        win->surface->funcs->set_region( win->surface, region );
+        window_surface_set_clip( win->surface, region );
         NtGdiDeleteObjectApp( region );
     }
 

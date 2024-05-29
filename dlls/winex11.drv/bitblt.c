@@ -1581,7 +1581,6 @@ struct x11drv_window_surface
     BOOL                  is_argb;
     DWORD                 alpha_bits;
     COLORREF              color_key;
-    HRGN                  region;
     void                 *bits;
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo       shminfo;
@@ -1837,35 +1836,41 @@ static void *x11drv_surface_get_bitmap_info( struct window_surface *window_surfa
     return surface->bits;
 }
 
-/***********************************************************************
- *           x11drv_surface_set_region
- */
-static void x11drv_surface_set_region( struct window_surface *window_surface, HRGN region )
+static XRectangle *xrectangles_from_rects( const RECT *rects, UINT count )
 {
-    RGNDATA *data;
+    XRectangle *xrects;
+    if (!(xrects = malloc( count * sizeof(*xrects) ))) return NULL;
+    while (count--)
+    {
+        if (rects[count].left > SHRT_MAX) continue;
+        if (rects[count].top > SHRT_MAX) continue;
+        if (rects[count].right < SHRT_MIN) continue;
+        if (rects[count].bottom < SHRT_MIN) continue;
+        xrects[count].x      = max( min( rects[count].left, SHRT_MAX), SHRT_MIN);
+        xrects[count].y      = max( min( rects[count].top, SHRT_MAX), SHRT_MIN);
+        xrects[count].width  = max( min( rects[count].right, SHRT_MAX ) - xrects[count].x, 0);
+        xrects[count].height = max( min( rects[count].bottom, SHRT_MAX ) - xrects[count].y, 0);
+    }
+    return xrects;
+}
+
+/***********************************************************************
+ *           x11drv_surface_set_clip
+ */
+static void x11drv_surface_set_clip( struct window_surface *window_surface, const RECT *rects, UINT count )
+{
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    XRectangle *xrects;
 
-    TRACE( "updating surface %p with %p\n", surface, region );
+    TRACE( "surface %p, rects %p, count %u\n", surface, rects, count );
 
-    window_surface_lock( window_surface );
-    if (!region)
-    {
-        if (surface->region) NtGdiDeleteObjectApp( surface->region );
-        surface->region = 0;
+    if (!count)
         XSetClipMask( gdi_display, surface->gc, None );
-    }
-    else
+    else if ((xrects = xrectangles_from_rects( rects, count )))
     {
-        if (!surface->region) surface->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
-        NtGdiCombineRgn( surface->region, region, 0, RGN_COPY );
-        if ((data = X11DRV_GetRegionData( surface->region, 0 )))
-        {
-            XSetClipRectangles( gdi_display, surface->gc, 0, 0,
-                                (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
-            free( data );
-        }
+        XSetClipRectangles( gdi_display, surface->gc, 0, 0, xrects, count, YXBanded );
+        free( xrects );
     }
-    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1938,7 +1943,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
         surface->image->data = NULL;
         XDestroyImage( surface->image );
     }
-    if (surface->region) NtGdiDeleteObjectApp( surface->region );
 
     free( surface );
 }
@@ -1946,7 +1950,7 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
     x11drv_surface_get_bitmap_info,
-    x11drv_surface_set_region,
+    x11drv_surface_set_clip,
     x11drv_surface_flush,
     x11drv_surface_destroy
 };
@@ -2038,7 +2042,6 @@ void set_surface_color_key( struct window_surface *window_surface, COLORREF colo
  */
 HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 {
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
     HRGN region = 0;
     RECT rc = *rect;
 
@@ -2047,10 +2050,10 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
     window_surface_lock( window_surface );
     OffsetRect( &rc, -window_surface->rect.left, -window_surface->rect.top );
     add_bounds_rect( &window_surface->bounds, &rc );
-    if (surface->region)
+    if (window_surface->clip_region)
     {
         region = NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
-        if (NtGdiCombineRgn( region, region, surface->region, RGN_DIFF ) <= NULLREGION)
+        if (NtGdiCombineRgn( region, region, window_surface->clip_region, RGN_DIFF ) <= NULLREGION)
         {
             NtGdiDeleteObjectApp( region );
             region = 0;
