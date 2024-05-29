@@ -15,7 +15,7 @@
 @ stub CoreUIOpenExisting
 @ stub CoreUIRouteToTestRegistrar
 @ stub CoreUIUninitializeTestService
-@ stub CreateDispatcherQueueController
+@ stdcall CreateDispatcherQueueController(long long long ptr)
 @ stub CreateDispatcherQueueForCurrentThread
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetActivationFactory
