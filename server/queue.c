@@ -1751,7 +1751,7 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
     struct message *msg;
     timeout_t timeout = 2000 * -10000;  /* FIXME: load from registry */
 
-    if (!(hook_thread = get_first_global_hook( id ))) return 0;
+    if (!(hook_thread = get_first_global_hook( desktop, id ))) return 0;
     if (!(queue = hook_thread->queue)) return 0;
     if (is_queue_hung( queue )) return 0;
 
