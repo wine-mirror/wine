@@ -2175,6 +2175,15 @@ void WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer, 
     FIXME("%p %p %lu %p: stub\n", table, buffer, size, element);
 }
 
+/******************************************************************************
+ *           RtlLookupElementGenericTableAvl  (NTDLL.@)
+ */
+void * WINAPI RtlLookupElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer)
+{
+    FIXME("(%p, %p) stub!\n", table, buffer);
+    return NULL;
+}
+
 /*********************************************************************
  *           RtlQueryPackageIdentity [NTDLL.@]
  */

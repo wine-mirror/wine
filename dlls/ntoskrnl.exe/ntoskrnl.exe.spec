@@ -1199,7 +1199,7 @@
 @ stub RtlLockBootStatusData
 @ stdcall RtlLookupAtomInAtomTable(ptr wstr ptr)
 @ stdcall RtlLookupElementGenericTable(ptr ptr)
-@ stub RtlLookupElementGenericTableAvl
+@ stdcall RtlLookupElementGenericTableAvl(ptr ptr)
 @ stub RtlLookupElementGenericTableFull
 @ stub RtlLookupElementGenericTableFullAvl
 @ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr)

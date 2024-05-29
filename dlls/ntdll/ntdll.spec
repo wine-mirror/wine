@@ -877,7 +877,7 @@
 # @ stub RtlLogStackBackTrace
 @ stdcall RtlLookupAtomInAtomTable(ptr wstr ptr)
 @ stdcall RtlLookupElementGenericTable(ptr ptr)
-# @ stub RtlLookupElementGenericTableAvl
+@ stdcall RtlLookupElementGenericTableAvl(ptr ptr)
 @ stdcall -arch=!i386 RtlLookupFunctionEntry(long ptr ptr)
 @ stdcall -arch=!i386 RtlLookupFunctionTable(long ptr ptr)
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)

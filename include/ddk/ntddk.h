@@ -280,6 +280,7 @@ void      WINAPI RtlInitializeGenericTable(PRTL_GENERIC_TABLE,PRTL_GENERIC_COMPA
 void      WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE,PRTL_AVL_COMPARE_ROUTINE,PRTL_AVL_ALLOCATE_ROUTINE, PRTL_AVL_FREE_ROUTINE,void *);
 void      WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE,void *,ULONG,BOOL*);
 void *    WINAPI RtlLookupElementGenericTable(PRTL_GENERIC_TABLE,void *);
+void *    WINAPI RtlLookupElementGenericTableAvl(PRTL_AVL_TABLE,void *);
 void      WINAPI RtlMapGenericMask(ACCESS_MASK*,const GENERIC_MAPPING*);
 ULONG     WINAPI RtlNumberGenericTableElements(PRTL_GENERIC_TABLE);
 BOOLEAN   WINAPI RtlPrefixUnicodeString(const UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
