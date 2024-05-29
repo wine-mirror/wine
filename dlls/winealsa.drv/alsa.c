@@ -2153,7 +2153,7 @@ static NTSTATUS alsa_get_device_period(void *args)
     if (params->def_period)
         *params->def_period = def_period;
     if (params->min_period)
-        *params->min_period = def_period;
+        *params->min_period = min_period;
 
     params->result = S_OK;
 
