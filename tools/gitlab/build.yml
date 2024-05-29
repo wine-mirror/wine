@@ -56,6 +56,10 @@ build-clang:
 
 build-mac:
   extends: .wine-build
+  image: winehq-sonoma-pristine
+  variables:
+    TART_EXECUTOR_SSH_USERNAME: "gitlab"
+    TART_EXECUTOR_SSH_PASSWORD: "gitlab"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   tags:
@@ -67,7 +71,6 @@ build-mac:
       - build32/config.log
   script:
     - mkdir -p build32 build64
-    - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
 
 build-winetest:

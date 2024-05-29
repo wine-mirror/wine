@@ -5,14 +5,36 @@ echo "---"
 
 set -Eeuxo pipefail
 
+X86_BREW_HOME='/usr/local'
+if [ "$(arch)" = 'arm64' ]; then
+    ARCH_BREW_HOME='/opt/homebrew'
+    ARCH_CMD='arch -x86_64'
+
+    # On the ARM runner, use Xcode's SDK. SDKROOT is independent of
+    # DEVELOPER_DIR/xcode-select, and will default to the command line tools.
+    # That's what we want on the old Intel runner.
+    export SDKROOT="$(xcode-select -p)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+else
+    ARCH_BREW_HOME="$X86_BREW_HOME"
+    ARCH_CMD=
+fi
+
+# Pick up dependencies from homebrew.
+export PATH="$X86_BREW_HOME/bin:$ARCH_BREW_HOME/bin:$PATH"
+export LIBRARY_PATH="$X86_BREW_HOME/lib"
+
+# x86 ccache wrappers. These need to go at the front of PATH.
+export PATH="$X86_BREW_HOME/opt/ccache/libexec:$PATH"
+
 ./tools/make_requests
 ./tools/make_makefiles
 autoreconf -f
 
 cd build64
-../configure -C --enable-win64 --with-mingw BISON=/usr/local/opt/bison/bin/bison
-make -s -j8
+$ARCH_CMD ../configure -C --enable-win64 --with-mingw BISON="$ARCH_BREW_HOME/opt/bison/bin/bison"
+$ARCH_CMD make -s -j$(sysctl -n hw.activecpu)
 cd ..
 
 git reset --hard
+
 sleep 2
