@@ -1321,8 +1321,11 @@ static HRESULT WINAPI HTMLWindow2_focus(IHTMLWindow2 *iface)
 static HRESULT WINAPI HTMLWindow2_get_closed(IHTMLWindow2 *iface, VARIANT_BOOL *p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p) semi-stub\n", This, p);
+
+    *p = VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_blur(IHTMLWindow2 *iface)
