@@ -182,3 +182,50 @@ typedef [v1_enum] enum DEVICE_SCALE_FACTOR
   SCALE_450_PERCENT = 450,
   SCALE_500_PERCENT = 500
 } DEVICE_SCALE_FACTOR;
+
+cpp_quote( "#ifndef LF_FACESIZE")
+#define LF_FACESIZE         32
+
+typedef struct tagLOGFONTA
+{
+    LONG lfHeight;
+    LONG lfWidth;
+    LONG lfEscapement;
+    LONG lfOrientation;
+    LONG lfWeight;
+    BYTE lfItalic;
+    BYTE lfUnderline;
+    BYTE lfStrikeOut;
+    BYTE lfCharSet;
+    BYTE lfOutPrecision;
+    BYTE lfClipPrecision;
+    BYTE lfQuality;
+    BYTE lfPitchAndFamily;
+    CHAR lfFaceName[LF_FACESIZE];
+} LOGFONTA;
+
+typedef struct tagLOGFONTW
+{
+    LONG lfHeight;
+    LONG lfWidth;
+    LONG lfEscapement;
+    LONG lfOrientation;
+    LONG lfWeight;
+    BYTE lfItalic;
+    BYTE lfUnderline;
+    BYTE lfStrikeOut;
+    BYTE lfCharSet;
+    BYTE lfOutPrecision;
+    BYTE lfClipPrecision;
+    BYTE lfQuality;
+    BYTE lfPitchAndFamily;
+    WCHAR lfFaceName[LF_FACESIZE];
+} LOGFONTW;
+
+#ifdef UNICODE
+  typedef LOGFONTW LOGFONT;
+#else
+  typedef LOGFONTA LOGFONT;
+#endif
+
+cpp_quote("#endif")
