@@ -2769,7 +2769,6 @@ static void test_FindFirstFileA(void)
         handle = FindFirstFileA(buffer2, &data);
         err = GetLastError();
         ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
-        todo_wine
         ok ( err == ERROR_DIRECTORY, "Bad Error number %x\n", err );
     }
 

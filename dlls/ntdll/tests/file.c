@@ -419,7 +419,6 @@ static void open_file_test(void)
     status = NtOpenFile( &handle, FILE_LIST_DIRECTORY | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT );
-    todo_wine
     ok( status == STATUS_NOT_A_DIRECTORY, "open %s failed %lx\n", wine_dbgstr_w(nameW.Buffer), status );
     CloseHandle( handle );
     pRtlFreeUnicodeString( &nameW );

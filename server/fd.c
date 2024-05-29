@@ -1942,7 +1942,7 @@ struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_nam
         if (fd->unix_fd == -1)
         {
             /* check for trailing slash on file path */
-            if ((errno == ENOENT || errno == ENOTDIR) && name[strlen(name) - 1] == '/')
+            if ((errno == ENOENT || (errno == ENOTDIR && !(options & FILE_DIRECTORY_FILE))) && name[strlen(name) - 1] == '/')
                 set_error( STATUS_OBJECT_NAME_INVALID );
             else
                 file_set_error();
