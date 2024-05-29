@@ -48,6 +48,8 @@ struct avi_decompressor
 
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
+
+    CRITICAL_SECTION late_cs;
     REFERENCE_TIME late;
 };
 
@@ -77,7 +79,9 @@ static HRESULT avi_decompressor_sink_query_accept(struct strmbase_pin *iface, co
 static HRESULT avi_decompressor_sink_end_flush(struct strmbase_sink *iface)
 {
     struct avi_decompressor *filter = impl_from_strmbase_filter(iface->pin.filter);
+    EnterCriticalSection(&filter->late_cs);
     filter->late = -1;
+    LeaveCriticalSection(&filter->late_cs);
     if (filter->source.pin.peer)
         return IPin_EndFlush(filter->source.pin.peer);
     return S_OK;
@@ -167,8 +171,10 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     if (IMediaSample_IsSyncPoint(pSample) != S_OK)
         flags |= ICDECOMPRESS_NOTKEYFRAME;
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
+    EnterCriticalSection(&This->late_cs);
     if (hr == S_OK && AVIDec_DropSample(This, tStart))
         flags |= ICDECOMPRESS_HURRYUP;
+    LeaveCriticalSection(&This->late_cs);
 
     res = ICDecompress(This->hvid, flags, This->pBihIn, pbSrcStream, &source_format->bmiHeader, pbDstStream);
     if (res != ICERR_OK)
@@ -482,12 +488,13 @@ static HRESULT WINAPI avi_decompressor_source_qc_Notify(IQualityControl *iface,
     TRACE("filter %p, sender %p, type %#x, proportion %ld, late %s, timestamp %s.\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
-    EnterCriticalSection(&filter->filter.stream_cs);
+    /* can't take the stream CS here, Submarine Titans calls this function from a foreign thread while inside sink_Receive */
+    EnterCriticalSection(&filter->late_cs);
     if (q.Late > 0)
         filter->late = q.Late + q.TimeStamp;
     else
         filter->late = -1;
-    LeaveCriticalSection(&filter->filter.stream_cs);
+    LeaveCriticalSection(&filter->late_cs);
     return S_OK;
 }
 
@@ -532,6 +539,9 @@ static void avi_decompressor_destroy(struct strmbase_filter *iface)
         IPin_Disconnect(filter->source.pin.peer);
     IPin_Disconnect(&filter->source.pin.IPin_iface);
 
+    filter->late_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->late_cs);
+
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->source);
     strmbase_passthrough_cleanup(&filter->passthrough);
@@ -550,7 +560,9 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
     if (!filter->source.pin.peer)
         return S_OK;
 
+    EnterCriticalSection(&filter->late_cs);
     filter->late = -1;
+    LeaveCriticalSection(&filter->late_cs);
 
     source_format = (VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
     if ((res = ICDecompressBegin(filter->hvid, filter->pBihIn, &source_format->bmiHeader)))
@@ -617,6 +629,9 @@ HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
     strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
     ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
             &object->sink.pin.IPin_iface);
+
+    InitializeCriticalSectionEx(&object->late_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+    object->late_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": object.late_cs");
 
     TRACE("Created AVI decompressor %p.\n", object);
     *out = &object->filter.IUnknown_inner;
