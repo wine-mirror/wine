@@ -994,6 +994,13 @@ static HRESULT get_builtin_func(dispex_data_t *data, DISPID id, func_info_t **re
 static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID *ret)
 {
     int min, max, n, c;
+    HRESULT hres;
+
+    if(This->info->desc->vtbl->lookup_dispid) {
+        hres = This->info->desc->vtbl->lookup_dispid(This, name, grfdex, ret);
+        if(hres != DISP_E_UNKNOWNNAME)
+            return hres;
+    }
 
     min = 0;
     max = This->info->func_cnt-1;
@@ -1017,8 +1024,6 @@ static HRESULT get_builtin_id(DispatchEx *This, BSTR name, DWORD grfdex, DISPID 
     }
 
     if(This->info->desc->vtbl->get_dispid) {
-        HRESULT hres;
-
         hres = This->info->desc->vtbl->get_dispid(This, name, grfdex, ret);
         if(hres != DISP_E_UNKNOWNNAME)
             return hres;
@@ -1799,6 +1804,9 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR nam
     HRESULT hres;
 
     TRACE("%s (%p)->(%s %lx)\n", This->info->desc->name, This, debugstr_w(name), grfdex);
+
+    if(dispex_compat_mode(This) < COMPAT_MODE_IE8 && !This->info->desc->vtbl->delete)
+        return E_NOTIMPL;
 
     hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, name, grfdex & ~fdexNameEnsure, &id);
     if(FAILED(hres)) {

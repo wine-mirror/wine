@@ -374,6 +374,9 @@ typedef struct {
     /* Similar to get_dispid, but called only when a dynamic property can't be found */
     HRESULT (*find_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
 
+    /* Similar to get_dispid, but called before any other lookup */
+    HRESULT (*lookup_dispid)(DispatchEx*,BSTR,DWORD,DISPID*);
+
     /* These are called when the object implements GetMemberName, InvokeEx, DeleteMemberByDispID and GetNextDispID for custom props */
     HRESULT (*get_name)(DispatchEx*,DISPID,BSTR*);
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);

@@ -3699,16 +3699,8 @@ HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, 
 static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
-    HTMLInnerWindow *window = This->inner_window;
-    HRESULT hres;
 
-    TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
-
-    hres = search_window_props(window, bstrName, grfdex, pid);
-    if(hres != DISP_E_UNKNOWNNAME)
-        return hres;
-
-    return IDispatchEx_GetDispID(&window->base.inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
+    return IDispatchEx_GetDispID(&This->inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
 }
 
 static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -4069,6 +4061,13 @@ static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
     return (*name = SysAllocString(This->global_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
 }
 
+static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+
+    return search_window_props(This, name, grfdex, dispid);
+}
+
 static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
 {
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
@@ -4401,6 +4400,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .unlink              = HTMLWindow_unlink,
         .last_release        = HTMLWindow_last_release,
         .get_name            = HTMLWindow_get_name,
+        .lookup_dispid       = HTMLWindow_lookup_dispid,
         .find_dispid         = HTMLWindow_find_dispid,
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
