@@ -1202,15 +1202,13 @@ static NTSTATUS wait_on( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE ap
         if (events)
         {
             status = STATUS_SUCCESS;
-            io->Status = STATUS_SUCCESS;
-            io->Information = sizeof(events);
             *out_buffer = events;
-            set_async_direct_result( &wait_handle, STATUS_SUCCESS, sizeof(events), FALSE );
+            set_async_direct_result( &wait_handle, io, STATUS_SUCCESS, sizeof(events), FALSE );
         }
         else
         {
             status = STATUS_PENDING;
-            set_async_direct_result( &wait_handle, STATUS_PENDING, 0, TRUE );
+            set_async_direct_result( &wait_handle, io, STATUS_PENDING, 0, TRUE );
         }
     }
 

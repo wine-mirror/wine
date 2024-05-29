@@ -875,12 +875,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = try_recv( fd, async, &information );
         if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
             status = STATUS_PENDING;
-        if (!NT_ERROR(status) && status != STATUS_PENDING)
-        {
-            io->Status = status;
-            io->Information = information;
-        }
-        set_async_direct_result( &wait_handle, status, information, FALSE );
+        set_async_direct_result( &wait_handle, io, status, information, FALSE );
     }
 
     if (status != STATUS_PENDING)
@@ -1125,8 +1120,6 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
     if (status == STATUS_ALERTED)
     {
-        ULONG_PTR information;
-
         status = try_send( fd, async );
         if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
             status = STATUS_PENDING;
@@ -1138,14 +1131,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         if (status == STATUS_DEVICE_NOT_READY && async->sent_len)
             status = STATUS_SUCCESS;
 
-        information = async->sent_len;
-        if (!NT_ERROR(status) && status != STATUS_PENDING)
-        {
-            io->Status = status;
-            io->Information = information;
-        }
-
-        set_async_direct_result( &wait_handle, status, information, FALSE );
+        set_async_direct_result( &wait_handle, io, status, async->sent_len, FALSE );
     }
 
     if (status != STATUS_PENDING)
@@ -1401,13 +1387,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
             status = STATUS_PENDING;
 
         information = async->head_cursor + async->file_cursor + async->tail_cursor;
-        if (!NT_ERROR(status) && status != STATUS_PENDING)
-        {
-            io->Status = status;
-            io->Information = information;
-        }
-
-        set_async_direct_result( &wait_handle, status, information, TRUE );
+        set_async_direct_result( &wait_handle, io, status, information, TRUE );
     }
 
     if (status != STATUS_PENDING)
