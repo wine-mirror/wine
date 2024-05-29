@@ -149,7 +149,7 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
 /***********************************************************************
  *              create_surface
  */
-struct window_surface *create_surface(macdrv_window window, const RECT *rect,
+struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
                                       struct window_surface *old_surface, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface;
@@ -159,7 +159,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
-    window_surface_init(&surface->header, &macdrv_surface_funcs, rect);
+    window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect);
 
     surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
     surface->info.bmiHeader.biWidth       = width;

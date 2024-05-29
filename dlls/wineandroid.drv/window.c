@@ -571,7 +571,6 @@ static int wait_events( int timeout )
 struct android_window_surface
 {
     struct window_surface header;
-    HWND                  hwnd;
     ANativeWindow        *window;
     BOOL                  byteswap;
     RGNDATA              *region_data;
@@ -656,7 +655,7 @@ static void android_surface_set_region( struct window_surface *window_surface, H
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
-    TRACE( "updating surface %p hwnd %p with %p\n", surface, surface->hwnd, region );
+    TRACE( "updating surface %p hwnd %p with %p\n", surface, window_surface->hwnd, region );
 
     window_surface_lock( window_surface );
     if (!region)
@@ -738,7 +737,7 @@ static BOOL android_surface_flush( struct window_surface *window_surface, const 
         surface->window->perform( surface->window, NATIVE_WINDOW_UNLOCK_AND_POST );
     }
     else TRACE( "Unable to lock surface %p window %p buffer %p\n",
-                surface, surface->hwnd, surface->window );
+                surface, window_surface->hwnd, surface->window );
 
     return TRUE;
 }
@@ -806,7 +805,7 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
 
     if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
 
-    if (!(win_data = get_win_data( surface->hwnd ))) return;
+    if (!(win_data = get_win_data( window_surface->hwnd ))) return;
     offset_x = win_data->window_rect.left - win_data->whole_rect.left;
     offset_y = win_data->window_rect.top - win_data->whole_rect.top;
     release_win_data( win_data );
@@ -815,7 +814,7 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
     {
         region = NtGdiCreateRectRgn( 0, 0, win_data->window_rect.right - win_data->window_rect.left,
                                      win_data->window_rect.bottom - win_data->window_rect.top );
-        if (NtUserGetWindowRgnEx( surface->hwnd, region, 0 ) == ERROR && !surface->region) goto done;
+        if (NtUserGetWindowRgnEx( window_surface->hwnd, region, 0 ) == ERROR && !surface->region) goto done;
     }
 
     NtGdiOffsetRgn( region, offset_x, offset_y );
@@ -850,7 +849,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
     surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
-    window_surface_init( &surface->header, &android_surface_funcs, rect );
+    window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect );
 
     set_color_info( &surface->info, src_alpha );
     surface->info.bmiHeader.biWidth       = width;
@@ -858,7 +857,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
 
-    surface->hwnd         = hwnd;
     surface->window       = get_ioctl_window( hwnd );
     surface->alpha        = alpha;
     set_color_key( surface, color_key );

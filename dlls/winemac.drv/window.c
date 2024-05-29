@@ -1915,7 +1915,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     surface = data->surface;
     if (!surface || !EqualRect(&surface->rect, &rect))
     {
-        data->surface = create_surface(data->cocoa_window, &rect, NULL, TRUE);
+        data->surface = create_surface(data->hwnd, data->cocoa_window, &rect, NULL, TRUE);
         macdrv_set_window_surface(data->cocoa_window, data->surface);
         if (surface) window_surface_release(surface);
         surface = data->surface;
@@ -2094,7 +2094,7 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
     }
     else if (!(swp_flags & SWP_SHOWWINDOW) && !(style & WS_VISIBLE)) goto done;
 
-    *surface = create_surface(data->cocoa_window, &surface_rect, data->surface, FALSE);
+    *surface = create_surface(data->hwnd, data->cocoa_window, &surface_rect, data->surface, FALSE);
 
 done:
     release_win_data(data);

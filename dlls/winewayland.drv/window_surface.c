@@ -43,7 +43,6 @@ struct wayland_buffer_queue
 struct wayland_window_surface
 {
     struct window_surface header;
-    HWND hwnd;
     struct wayland_surface *wayland_surface;
     struct wayland_buffer_queue *wayland_buffer_queue;
     void *bits;
@@ -463,7 +462,7 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 
     wws = calloc(1, sizeof(*wws));
     if (!wws) return NULL;
-    window_surface_init(&wws->header, &wayland_window_surface_funcs, rect);
+    window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect);
 
     wws->info.bmiHeader.biSize = sizeof(wws->info.bmiHeader);
     wws->info.bmiHeader.biClrUsed = 0;
@@ -473,8 +472,6 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     wws->info.bmiHeader.biHeight = -height; /* top-down */
     wws->info.bmiHeader.biPlanes = 1;
     wws->info.bmiHeader.biSizeImage = width * height * 4;
-
-    wws->hwnd = hwnd;
 
     if (!(wws->bits = malloc(wws->info.bmiHeader.biSizeImage)))
         goto failed;
@@ -499,7 +496,7 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
 
     window_surface_lock(window_surface);
 
-    TRACE("surface=%p hwnd=%p wayland_surface=%p\n", wws, wws->hwnd, wayland_surface);
+    TRACE("surface=%p hwnd=%p wayland_surface=%p\n", wws, window_surface->hwnd, wayland_surface);
 
     wws->wayland_surface = wayland_surface;
 

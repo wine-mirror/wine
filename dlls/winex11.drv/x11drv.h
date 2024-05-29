@@ -265,7 +265,7 @@ extern Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const B
                                         const struct gdi_image_bits *bits, UINT coloruse );
 extern DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo *vis,
                                BITMAPINFO *info, struct gdi_image_bits *bits );
-extern struct window_surface *create_surface( Window window, const XVisualInfo *vis, const RECT *rect,
+extern struct window_surface *create_surface( HWND hwnd, Window window, const XVisualInfo *vis, const RECT *rect,
                                               COLORREF color_key, BOOL use_alpha );
 extern void set_surface_color_key( struct window_surface *window_surface, COLORREF color_key );
 extern HRGN expose_surface( struct window_surface *window_surface, const RECT *rect );

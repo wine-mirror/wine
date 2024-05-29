@@ -1954,7 +1954,7 @@ static const struct window_surface_funcs x11drv_surface_funcs =
 /***********************************************************************
  *           create_surface
  */
-struct window_surface *create_surface( Window window, const XVisualInfo *vis, const RECT *rect,
+struct window_surface *create_surface( HWND hwnd, Window window, const XVisualInfo *vis, const RECT *rect,
                                        COLORREF color_key, BOOL use_alpha )
 {
     const XPixmapFormatValues *format = pixmap_formats[vis->depth];
@@ -1964,7 +1964,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
 
     surface = calloc( 1, FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] ));
     if (!surface) return NULL;
-    window_surface_init( &surface->header, &x11drv_surface_funcs, rect );
+    window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, rect );
 
     surface->info.bmiHeader.biSize        = sizeof(surface->info.bmiHeader);
     surface->info.bmiHeader.biWidth       = width;

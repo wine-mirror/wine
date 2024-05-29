@@ -1814,7 +1814,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     {
         window_surface_release( new_surface );
         if ((new_surface = win->surface)) window_surface_add_ref( new_surface );
-        create_offscreen_window_surface( &visible_rect, &new_surface );
+        create_offscreen_window_surface( hwnd, &visible_rect, &new_surface );
     }
 
     old_visible_rect = win->visible_rect;

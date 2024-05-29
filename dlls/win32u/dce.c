@@ -98,7 +98,13 @@ static const struct window_surface_funcs dummy_surface_funcs =
     dummy_surface_destroy
 };
 
-struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1, { 0, 0, 1, 1 }, PTHREAD_MUTEX_INITIALIZER };
+struct window_surface dummy_surface =
+{
+    .funcs = &dummy_surface_funcs,
+    .ref = 1,
+    .rect = {.right = 1, .bottom = 1},
+    .mutex = PTHREAD_MUTEX_INITIALIZER,
+};
 
 /*******************************************************************
  * Off-screen window surface.
@@ -149,13 +155,13 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
     offscreen_window_surface_destroy
 };
 
-void create_offscreen_window_surface( const RECT *visible_rect, struct window_surface **surface )
+void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struct window_surface **surface )
 {
     struct offscreen_window_surface *impl;
     SIZE_T size;
     RECT surface_rect = *visible_rect;
 
-    TRACE( "visible_rect %s, surface %p.\n", wine_dbgstr_rect( visible_rect ), surface );
+    TRACE( "hwnd %p, visible_rect %s, surface %p.\n", hwnd, wine_dbgstr_rect( visible_rect ), surface );
 
     OffsetRect( &surface_rect, -surface_rect.left, -surface_rect.top );
     surface_rect.right  = (surface_rect.right + 0x1f) & ~0x1f;
@@ -174,7 +180,7 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
     *surface = NULL;
     size = surface_rect.right * surface_rect.bottom * 4;
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
-    window_surface_init( &impl->header, &offscreen_window_surface_funcs, &surface_rect );
+    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, &surface_rect );
 
     impl->bits = (char *)&impl->info.bmiColors[0];
     impl->info.bmiHeader.biSize        = sizeof( impl->info );
@@ -192,10 +198,11 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
 
 /* window surface common helpers */
 
-W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, const RECT *rect )
+W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, HWND hwnd, const RECT *rect )
 {
     surface->funcs = funcs;
     surface->ref = 1;
+    surface->hwnd = hwnd;
     surface->rect = *rect;
     pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
@@ -236,8 +243,8 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
 
     if (intersect_rect( &dirty, &dirty, &surface->bounds ))
     {
-        TRACE( "Flushing surface %p %s, bounds %s, dirty %s\n", surface, wine_dbgstr_rect( &surface->rect ),
-               wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
+        TRACE( "Flushing hwnd %p, surface %p %s, bounds %s, dirty %s\n", surface->hwnd, surface,
+               wine_dbgstr_rect( &surface->rect ), wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
         if (surface->funcs->flush( surface, &surface->rect, &dirty )) reset_bounds( &surface->bounds );
     }
 

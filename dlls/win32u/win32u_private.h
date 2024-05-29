@@ -45,7 +45,7 @@ extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param );
 
 /* dce.c */
 extern struct window_surface dummy_surface;
-extern void create_offscreen_window_surface( const RECT *visible_rect,
+extern void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect,
                                              struct window_surface **surface );
 extern void erase_now( HWND hwnd, UINT rdw_flags );
 extern void flush_window_surfaces( BOOL idle );

@@ -222,6 +222,7 @@ struct window_surface
     const struct window_surface_funcs *funcs; /* driver-specific implementations  */
     struct list                        entry; /* entry in global list managed by user32 */
     LONG                               ref;   /* reference count */
+    HWND                               hwnd;  /* window the surface was created for */
     RECT                               rect;  /* constant, no locking needed */
 
     pthread_mutex_t                    mutex;
@@ -230,7 +231,7 @@ struct window_surface
     /* driver-specific fields here */
 };
 
-W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, const RECT *rect );
+W32KAPI void window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs, HWND hwnd, const RECT *rect );
 W32KAPI void window_surface_add_ref( struct window_surface *surface );
 W32KAPI void window_surface_release( struct window_surface *surface );
 W32KAPI void window_surface_lock( struct window_surface *surface );
