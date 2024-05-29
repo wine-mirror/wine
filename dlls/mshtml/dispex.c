@@ -1691,6 +1691,11 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     hres = get_dynamic_prop(This, bstrName, grfdex & ~fdexNameEnsure, &dprop);
     if(FAILED(hres)) {
+        if(This->info->desc->vtbl->find_dispid) {
+            hres = This->info->desc->vtbl->find_dispid(This, bstrName, grfdex, pid);
+            if(SUCCEEDED(hres))
+                return hres;
+        }
         if(grfdex & fdexNameEnsure)
             hres = alloc_dynamic_prop(This, bstrName, dprop, &dprop);
         if(FAILED(hres))

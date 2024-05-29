@@ -3700,9 +3700,6 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
 {
     HTMLWindow *This = impl_from_IDispatchEx(iface);
     HTMLInnerWindow *window = This->inner_window;
-    HTMLOuterWindow *frame;
-    global_prop_t *prop;
-    IHTMLElement *elem;
     HRESULT hres;
 
     TRACE("(%p)->(%s %lx %p)\n", This, debugstr_w(bstrName), grfdex, pid);
@@ -3711,34 +3708,7 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    hres = IDispatchEx_GetDispID(&window->base.inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
-    if(hres != DISP_E_UNKNOWNNAME)
-        return hres;
-
-    hres = get_frame_by_name(This->outer_window, bstrName, FALSE, &frame);
-    if(SUCCEEDED(hres) && frame) {
-        prop = alloc_global_prop(window, GLOBAL_FRAMEVAR, bstrName);
-        if(!prop)
-            return E_OUTOFMEMORY;
-
-        *pid = prop_to_dispid(window, prop);
-        return S_OK;
-    }
-
-    hres = IHTMLDocument3_getElementById(&window->base.inner_window->doc->IHTMLDocument3_iface,
-                                         bstrName, &elem);
-    if(SUCCEEDED(hres) && elem) {
-        IHTMLElement_Release(elem);
-
-        prop = alloc_global_prop(window, GLOBAL_ELEMENTVAR, bstrName);
-        if(!prop)
-            return E_OUTOFMEMORY;
-
-        *pid = prop_to_dispid(window, prop);
-        return S_OK;
-    }
-
-    return DISP_E_UNKNOWNNAME;
+    return IDispatchEx_GetDispID(&window->base.inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
 }
 
 static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -4099,6 +4069,39 @@ static HRESULT HTMLWindow_get_name(DispatchEx *dispex, DISPID id, BSTR *name)
     return (*name = SysAllocString(This->global_props[idx].name)) ? S_OK : E_OUTOFMEMORY;
 }
 
+static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+{
+    HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    HTMLOuterWindow *frame;
+    global_prop_t *prop;
+    IHTMLElement *elem;
+    HRESULT hres;
+
+    hres = get_frame_by_name(This->base.outer_window, name, FALSE, &frame);
+    if(SUCCEEDED(hres) && frame) {
+        prop = alloc_global_prop(This, GLOBAL_FRAMEVAR, name);
+        if(!prop)
+            return E_OUTOFMEMORY;
+
+        *dispid = prop_to_dispid(This, prop);
+        return S_OK;
+    }
+
+    hres = IHTMLDocument3_getElementById(&This->doc->IHTMLDocument3_iface, name, &elem);
+    if(SUCCEEDED(hres) && elem) {
+        IHTMLElement_Release(elem);
+
+        prop = alloc_global_prop(This, GLOBAL_ELEMENTVAR, name);
+        if(!prop)
+            return E_OUTOFMEMORY;
+
+        *dispid = prop_to_dispid(This, prop);
+        return S_OK;
+    }
+
+    return DISP_E_UNKNOWNNAME;
+}
+
 static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -4398,6 +4401,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
         .unlink              = HTMLWindow_unlink,
         .last_release        = HTMLWindow_last_release,
         .get_name            = HTMLWindow_get_name,
+        .find_dispid         = HTMLWindow_find_dispid,
         .invoke              = HTMLWindow_invoke,
         .next_dispid         = HTMLWindow_next_dispid,
         .get_compat_mode     = HTMLWindow_get_compat_mode,
