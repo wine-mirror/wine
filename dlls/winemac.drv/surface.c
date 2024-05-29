@@ -65,7 +65,6 @@ struct macdrv_window_surface
     struct window_surface   header;
     macdrv_window           window;
     BOOL                    use_alpha;
-    BYTE                   *bits;
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
@@ -80,7 +79,7 @@ static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surfac
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     memcpy(info, &surface->info, get_dib_info_size(&surface->info, DIB_RGB_COLORS));
-    return surface->bits;
+    return window_surface->color_bits;
 }
 
 /***********************************************************************
@@ -107,8 +106,8 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
-    TRACE("freeing %p bits %p\n", surface, surface->bits);
-    free(surface->bits);
+    TRACE("freeing %p bits %p\n", surface, window_surface->color_bits);
+    free(window_surface->color_bits);
     free(surface);
 }
 
@@ -158,13 +157,13 @@ struct window_surface *create_surface(HWND hwnd, macdrv_window window, const REC
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
     surface->use_alpha = use_alpha;
-    surface->bits = malloc(surface->info.bmiHeader.biSizeImage);
-    if (!surface->bits) goto failed;
+    surface->header.color_bits = malloc(surface->info.bmiHeader.biSizeImage);
+    if (!surface->header.color_bits) goto failed;
     window_background = macdrv_window_background_color();
-    memset_pattern4(surface->bits, &window_background, surface->info.bmiHeader.biSizeImage);
+    memset_pattern4(surface->header.color_bits, &window_background, surface->info.bmiHeader.biSizeImage);
 
-    TRACE("created %p for %p %s bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-          surface->bits, surface->bits + surface->info.bmiHeader.biSizeImage);
+    TRACE("created %p for %p %s color_bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
+          surface->header.color_bits, (char *)surface->header.color_bits + surface->info.bmiHeader.biSizeImage);
 
     return &surface->header;
 
@@ -229,12 +228,12 @@ CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surfac
 
         if (copy_data)
         {
-            CFDataRef data = CFDataCreate(NULL, (UInt8*)surface->bits + offset, size);
+            CFDataRef data = CFDataCreate(NULL, (UInt8 *)window_surface->color_bits + offset, size);
             provider = CGDataProviderCreateWithCFData(data);
             CFRelease(data);
         }
         else
-            provider = CGDataProviderCreateWithData(NULL, surface->bits + offset, size, NULL);
+            provider = CGDataProviderCreateWithData(NULL, (UInt8 *)window_surface->color_bits + offset, size, NULL);
 
         alphaInfo = surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst;
         cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),

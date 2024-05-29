@@ -45,7 +45,6 @@ struct wayland_window_surface
     struct window_surface header;
     struct wayland_surface *wayland_surface;
     struct wayland_buffer_queue *wayland_buffer_queue;
-    void *bits;
     BITMAPINFO info;
 };
 
@@ -220,7 +219,7 @@ static void *wayland_window_surface_get_bitmap_info(struct window_surface *windo
     /* We don't store any additional information at the end of our BITMAPINFO, so
      * just copy the structure itself. */
     memcpy(info, &surface->info, sizeof(*info));
-    return surface->bits;
+    return window_surface->color_bits;
 }
 
 /***********************************************************************
@@ -308,17 +307,15 @@ static void copy_pixel_region(char *src_pixels, RECT *src_rect,
 }
 
 /**********************************************************************
- *          wayland_window_surface_copy_to_buffer
+ *          wayland_shm_buffer_copy_data
  */
-static void wayland_window_surface_copy_to_buffer(struct wayland_window_surface *wws,
-                                                  struct wayland_shm_buffer *buffer,
-                                                  HRGN region)
+static void wayland_shm_buffer_copy_data(struct wayland_shm_buffer *buffer,
+                                         char *bits, RECT *rect,
+                                         HRGN region)
 {
-    RECT wws_rect = {0, 0, wws->info.bmiHeader.biWidth,
-                     abs(wws->info.bmiHeader.biHeight)};
     RECT buffer_rect = {0, 0, buffer->width, buffer->height};
-    TRACE("wws=%p buffer=%p\n", wws, buffer);
-    copy_pixel_region(wws->bits, &wws_rect, buffer->map_data, &buffer_rect, region);
+    TRACE("buffer=%p bits=%p rect=%s\n", buffer, bits, wine_dbgstr_rect(rect));
+    copy_pixel_region(bits, rect, buffer->map_data, &buffer_rect, region);
 }
 
 static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
@@ -396,7 +393,8 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
         copy_from_window_region = shm_buffer->damage_region;
     }
 
-    wayland_window_surface_copy_to_buffer(wws, shm_buffer, copy_from_window_region);
+    wayland_shm_buffer_copy_data(shm_buffer, window_surface->color_bits,
+                                 &window_surface->rect, copy_from_window_region);
 
     pthread_mutex_lock(&wws->wayland_surface->mutex);
     if (wayland_surface_reconfigure(wws->wayland_surface))
@@ -437,7 +435,7 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
     if (wws->wayland_buffer_queue)
         wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
-    free(wws->bits);
+    free(window_surface->color_bits);
     free(wws);
 }
 
@@ -473,11 +471,11 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     wws->info.bmiHeader.biPlanes = 1;
     wws->info.bmiHeader.biSizeImage = width * height * 4;
 
-    if (!(wws->bits = malloc(wws->info.bmiHeader.biSizeImage)))
+    if (!(wws->header.color_bits = malloc(wws->info.bmiHeader.biSizeImage)))
         goto failed;
 
-    TRACE("created %p hwnd %p %s bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),
-          wws->bits, (char *)wws->bits + wws->info.bmiHeader.biSizeImage);
+    TRACE("created %p hwnd %p %s color_bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),
+          wws->header.color_bits, (char *)wws->header.color_bits + wws->info.bmiHeader.biSizeImage);
 
     return &wws->header;
 

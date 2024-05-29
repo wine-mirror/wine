@@ -113,7 +113,6 @@ struct window_surface dummy_surface =
 struct offscreen_window_surface
 {
     struct window_surface header;
-    char *bits;
     BITMAPINFO info;
 };
 
@@ -129,7 +128,7 @@ static void *offscreen_window_surface_get_bitmap_info( struct window_surface *ba
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     info->bmiHeader = impl->info.bmiHeader;
-    return impl->bits;
+    return base->color_bits;
 }
 
 static void offscreen_window_surface_set_clip( struct window_surface *base, const RECT *rects, UINT count )
@@ -182,7 +181,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
     if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
     window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, &surface_rect );
 
-    impl->bits = (char *)&impl->info.bmiColors[0];
+    impl->header.color_bits = (char *)&impl->info.bmiColors[0];
     impl->info.bmiHeader.biSize        = sizeof( impl->info );
     impl->info.bmiHeader.biWidth       = surface_rect.right;
     impl->info.bmiHeader.biHeight      = surface_rect.bottom;

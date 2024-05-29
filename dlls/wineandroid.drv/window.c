@@ -575,7 +575,6 @@ struct android_window_surface
     RECT                 *clip_rects;
     BYTE                  alpha;
     COLORREF              color_key;
-    void                 *bits;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -643,7 +642,7 @@ static void *android_surface_get_bitmap_info( struct window_surface *window_surf
     struct android_window_surface *surface = get_android_surface( window_surface );
 
     memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
-    return surface->bits;
+    return window_surface->color_bits;
 }
 
 /***********************************************************************
@@ -688,7 +687,7 @@ static BOOL android_surface_flush( struct window_surface *window_surface, const 
         locked.bottom = rc.bottom;
         intersect_rect( &locked, &locked, rect );
 
-        src = (DWORD *)surface->bits + (locked.top - rect->top) * surface->info.bmiHeader.biWidth +
+        src = (DWORD *)window_surface->color_bits + (locked.top - rect->top) * surface->info.bmiHeader.biWidth +
               (locked.left - rect->left);
         dst = (DWORD *)buffer.bits + locked.top * buffer.stride + locked.left;
         width = min( locked.right - locked.left, buffer.stride );
@@ -733,11 +732,11 @@ static void android_surface_destroy( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
-    TRACE( "freeing %p bits %p\n", surface, surface->bits );
+    TRACE( "freeing %p bits %p\n", surface, window_surface->color_bits );
 
     free( surface->clip_rects );
     release_ioctl_window( surface->window );
-    free( surface->bits );
+    free( window_surface->color_bits );
     free( surface );
 }
 
@@ -797,11 +796,11 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->alpha        = alpha;
     set_color_key( surface, color_key );
 
-    if (!(surface->bits = malloc( surface->info.bmiHeader.biSizeImage )))
+    if (!(surface->header.color_bits = malloc( surface->info.bmiHeader.biSizeImage )))
         goto failed;
 
-    TRACE( "created %p hwnd %p %s bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
-           surface->bits, (char *)surface->bits + surface->info.bmiHeader.biSizeImage );
+    TRACE( "created %p hwnd %p %s color_bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
+           surface->header.color_bits, (char *)surface->header.color_bits + surface->info.bmiHeader.biSizeImage );
 
     return &surface->header;
 

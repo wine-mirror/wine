@@ -225,10 +225,11 @@ struct window_surface
     HWND                               hwnd;  /* window the surface was created for */
     RECT                               rect;  /* constant, no locking needed */
 
-    pthread_mutex_t                    mutex;
-    RECT                               bounds;  /* dirty area rect, requires locking */
+    pthread_mutex_t                    mutex;        /* mutex needed for any field below */
+    RECT                               bounds;       /* dirty area rectangle */
     HRGN                               clip_region;  /* visible region of the surface, fully visible if 0 */
     DWORD                              draw_start_ticks; /* start ticks of fresh draw */
+    void                              *color_bits;   /* pixel bits of the surface color */
     /* driver-specific fields here */
 };
 
