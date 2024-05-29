@@ -1,31 +1,44 @@
 # MS VC++2005 runtime library
 
+@ cdecl -arch=arm ??0__non_rtti_object@std@@QAA@ABV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ thiscall -arch=i386 ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ cdecl -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z(ptr ptr) __non_rtti_object_copy_ctor
 @ cdecl -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z(ptr ptr) __non_rtti_object_ctor
 @ cdecl -arch=win64 ??0bad_cast@std@@AEAA@PEBQEBD@Z(ptr ptr) bad_cast_ctor
+@ cdecl -arch=arm ??0bad_cast@std@@QAA@ABV01@@Z(ptr ptr) bad_cast_copy_ctor
 @ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) bad_cast_copy_ctor
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) bad_cast_copy_ctor
+@ cdecl -arch=arm ??0bad_cast@std@@QAA@PBD@Z(ptr str) bad_cast_ctor_charptr
 @ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) bad_cast_ctor_charptr
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) bad_cast_ctor_charptr
+@ cdecl -arch=arm ??0bad_typeid@std@@QAA@ABV01@@Z(ptr ptr) bad_typeid_copy_ctor
 @ thiscall -arch=i386 ??0bad_typeid@std@@QAE@ABV01@@Z(ptr ptr) bad_typeid_copy_ctor
 @ cdecl -arch=win64 ??0bad_typeid@std@@QEAA@AEBV01@@Z(ptr ptr) bad_typeid_copy_ctor
+@ cdecl -arch=arm ??0bad_typeid@std@@QAA@PBD@Z(ptr str) bad_typeid_ctor
 @ thiscall -arch=i386 ??0bad_typeid@std@@QAE@PBD@Z(ptr str) bad_typeid_ctor
 @ cdecl -arch=win64 ??0bad_typeid@std@@QEAA@PEBD@Z(ptr str) bad_typeid_ctor
+@ cdecl -arch=arm ??0exception@std@@QAA@ABQBD@Z(ptr ptr) exception_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@ABQBD@Z(ptr ptr) exception_ctor
 @ cdecl -arch=win64 ??0exception@std@@QEAA@AEBQEBD@Z(ptr ptr) exception_ctor
+@ cdecl -arch=arm ??0exception@std@@QAA@ABQBDH@Z(ptr ptr long) exception_ctor_noalloc
 @ thiscall -arch=i386 ??0exception@std@@QAE@ABQBDH@Z(ptr ptr long) exception_ctor_noalloc
 @ cdecl -arch=win64 ??0exception@std@@QEAA@AEBQEBDH@Z(ptr ptr long) exception_ctor_noalloc
+@ cdecl -arch=arm ??0exception@std@@QAA@ABV01@@Z(ptr ptr) exception_copy_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@ABV01@@Z(ptr ptr) exception_copy_ctor
 @ cdecl -arch=win64 ??0exception@std@@QEAA@AEBV01@@Z(ptr ptr) exception_copy_ctor
+@ cdecl -arch=arm ??0exception@std@@QAA@XZ(ptr) exception_default_ctor
 @ thiscall -arch=i386 ??0exception@std@@QAE@XZ(ptr) exception_default_ctor
 @ cdecl -arch=win64 ??0exception@std@@QEAA@XZ(ptr) exception_default_ctor
+@ cdecl -arch=arm ??1__non_rtti_object@std@@UAA@XZ(ptr) __non_rtti_object_dtor
 @ thiscall -arch=i386 ??1__non_rtti_object@std@@UAE@XZ(ptr) __non_rtti_object_dtor
 @ cdecl -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ(ptr) __non_rtti_object_dtor
+@ cdecl -arch=arm ??1bad_cast@std@@UAA@XZ(ptr) bad_cast_dtor
 @ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) bad_cast_dtor
 @ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) bad_cast_dtor
+@ cdecl -arch=arm ??1bad_typeid@std@@UAA@XZ(ptr) bad_typeid_dtor
 @ thiscall -arch=i386 ??1bad_typeid@std@@UAE@XZ(ptr) bad_typeid_dtor
 @ cdecl -arch=win64 ??1bad_typeid@std@@UEAA@XZ(ptr) bad_typeid_dtor
+@ cdecl -arch=arm ??1exception@std@@UAA@XZ(ptr) exception_dtor
 @ thiscall -arch=i386 ??1exception@std@@UAE@XZ(ptr) exception_dtor
 @ cdecl -arch=win64 ??1exception@std@@UEAA@XZ(ptr) exception_dtor
 @ cdecl -arch=arm ??1type_info@@UAA@XZ(ptr) type_info_dtor
@@ -37,12 +50,16 @@
 @ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) operator_new_dbg
 @ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
 @ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) operator_delete
+@ cdecl -arch=arm ??4__non_rtti_object@std@@QAAAAV01@ABV01@@Z(ptr ptr) __non_rtti_object_opequals
 @ thiscall -arch=i386 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr ptr) __non_rtti_object_opequals
 @ cdecl -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) __non_rtti_object_opequals
+@ cdecl -arch=arm ??4bad_cast@std@@QAAAAV01@ABV01@@Z(ptr ptr) bad_cast_opequals
 @ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) bad_cast_opequals
 @ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) bad_cast_opequals
+@ cdecl -arch=arm ??4bad_typeid@std@@QAAAAV01@ABV01@@Z(ptr ptr) bad_typeid_opequals
 @ thiscall -arch=i386 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z(ptr ptr) bad_typeid_opequals
 @ cdecl -arch=win64 ??4bad_typeid@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) bad_typeid_opequals
+@ cdecl -arch=arm ??4exception@std@@QAAAAV01@ABV01@@Z(ptr ptr) exception_opequals
 @ thiscall -arch=i386 ??4exception@std@@QAEAAV01@ABV01@@Z(ptr ptr) exception_opequals
 @ cdecl -arch=win64 ??4exception@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) exception_opequals
 @ cdecl -arch=arm ??8type_info@@QBA_NABV0@@Z(ptr ptr) type_info_opequals_equals
@@ -56,8 +73,10 @@
 @ extern ??_7bad_typeid@std@@6B@ bad_typeid_vtable
 @ extern ??_7exception@@6B@ exception_old_vtable
 @ extern ??_7exception@std@@6B@ exception_vtable
+@ cdecl -arch=arm ??_Fbad_cast@std@@QAAXXZ(ptr) bad_cast_default_ctor
 @ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) bad_cast_default_ctor
 @ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) bad_cast_default_ctor
+@ cdecl -arch=arm ??_Fbad_typeid@std@@QAAXXZ(ptr) bad_typeid_default_ctor
 @ thiscall -arch=i386 ??_Fbad_typeid@std@@QAEXXZ(ptr) bad_typeid_default_ctor
 @ cdecl -arch=win64 ??_Fbad_typeid@std@@QEAAXXZ(ptr) bad_typeid_default_ctor
 @ cdecl -arch=win32 ??_U@YAPAXI@Z(long) operator_new
@@ -105,14 +124,17 @@
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
 @ cdecl -arch=win32 ?_sopen@@YAHPBDHHH@Z(str long long long) _sopen
 @ cdecl -arch=win64 ?_sopen@@YAHPEBDHHH@Z(str long long long) _sopen
+@ stub -arch=arm ?_type_info_dtor_internal_method@type_info@@QAAXXZ
 @ stub -arch=i386 ?_type_info_dtor_internal_method@type_info@@QAEXXZ  # public: void __thiscall type_info::_type_info_dtor_internal_method(void)
 @ stub -arch=win64 ?_type_info_dtor_internal_method@type_info@@QEAAXXZ  # public: void __cdecl type_info::_type_info_dtor_internal_method(void) __ptr64
 @ cdecl -arch=win32 ?_wopen@@YAHPB_WHH@Z(wstr long long) _wopen
 @ cdecl -arch=win64 ?_wopen@@YAHPEB_WHH@Z(wstr long long) _wopen
 @ cdecl -arch=win32 ?_wsopen@@YAHPB_WHHH@Z(wstr long long long) _wsopen
 @ cdecl -arch=win64 ?_wsopen@@YAHPEB_WHHH@Z(wstr long long long) _wsopen
+@ cdecl -arch=arm ?before@type_info@@QBAHABV1@@Z(ptr ptr) type_info_before
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) type_info_before
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) type_info_before
+@ cdecl -arch=arm ?name@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ thiscall -arch=i386 ?name@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) type_info_raw_name
@@ -128,6 +150,7 @@
 @ cdecl ?terminate@@YAXXZ() terminate
 @ cdecl ?unexpected@@YAXXZ() unexpected
 @ cdecl ?vswprintf@@YAHPA_WIPB_WPAD@Z(ptr long wstr ptr) _vsnwprintf
+@ cdecl -arch=arm ?what@exception@std@@UBAPBDXZ(ptr) exception_what
 @ thiscall -arch=i386 ?what@exception@std@@UBEPBDXZ(ptr) exception_what
 @ cdecl -arch=win64 ?what@exception@std@@UEBAPEBDXZ(ptr) exception_what
 @ stub @_calloc_crt@8
