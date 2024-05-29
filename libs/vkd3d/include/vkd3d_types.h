@@ -41,6 +41,8 @@ enum vkd3d_result
 {
     /** Success. */
     VKD3D_OK = 0,
+    /** Success as a result of there being nothing to do. \since 1.12 */
+    VKD3D_FALSE = 1,
     /** An unspecified failure occurred. */
     VKD3D_ERROR = -1,
     /** There are not enough resources available to complete the operation. */
@@ -51,6 +53,12 @@ enum vkd3d_result
     VKD3D_ERROR_INVALID_SHADER = -4,
     /** The operation is not implemented in this version of vkd3d. */
     VKD3D_ERROR_NOT_IMPLEMENTED = -5,
+    /** The object or entry already exists. \since 1.12 */
+    VKD3D_ERROR_KEY_ALREADY_EXISTS = -6,
+    /** The requested object was not found. \since 1.12 */
+    VKD3D_ERROR_NOT_FOUND = -7,
+    /** The output buffer is larger than the requested object \since 1.12. */
+    VKD3D_ERROR_MORE_DATA = -8,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_RESULT),
 };

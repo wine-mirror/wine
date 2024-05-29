@@ -20,7 +20,7 @@
 # define _WIN32_WINNT 0x0600    /* For InitOnceExecuteOnce(). */
 #endif
 
-#include "vkd3d_debug.h"
+#include "vkd3d_common.h"
 
 #include <assert.h>
 #include <ctype.h>

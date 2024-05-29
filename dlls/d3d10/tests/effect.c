@@ -9941,7 +9941,6 @@ static void test_effect_compiler(void)
 
     cb = effect->lpVtbl->GetConstantBufferByIndex(effect, 1);
     hr = cb->lpVtbl->GetDesc(cb, &var_desc);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
         ok(!strcmp(var_desc.Name, "cb1"), "Unexpected variable name %s.\n", var_desc.Name);

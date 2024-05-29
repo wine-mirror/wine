@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "vkd3d_debug.h"
+#include "vkd3d_common.h"
 
 static inline void *vkd3d_malloc(size_t size)
 {
@@ -62,6 +62,15 @@ static inline char *vkd3d_strdup(const char *string)
 
     if ((ptr = vkd3d_malloc(len)))
         memcpy(ptr, string, len);
+    return ptr;
+}
+
+static inline void *vkd3d_memdup(const void *mem, size_t size)
+{
+    void *ptr;
+
+    if ((ptr = vkd3d_malloc(size)))
+        memcpy(ptr, mem, size);
     return ptr;
 }
 

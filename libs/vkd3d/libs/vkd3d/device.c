@@ -89,11 +89,13 @@ static const struct vkd3d_optional_extension_info optional_device_extensions[] =
     VK_EXTENSION(KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE, KHR_sampler_mirror_clamp_to_edge),
     VK_EXTENSION(KHR_TIMELINE_SEMAPHORE, KHR_timeline_semaphore),
     /* EXT extensions */
+    VK_EXTENSION(EXT_4444_FORMATS, EXT_4444_formats),
     VK_EXTENSION(EXT_CALIBRATED_TIMESTAMPS, EXT_calibrated_timestamps),
     VK_EXTENSION(EXT_CONDITIONAL_RENDERING, EXT_conditional_rendering),
     VK_EXTENSION(EXT_DEBUG_MARKER, EXT_debug_marker),
     VK_EXTENSION(EXT_DEPTH_CLIP_ENABLE, EXT_depth_clip_enable),
     VK_EXTENSION(EXT_DESCRIPTOR_INDEXING, EXT_descriptor_indexing),
+    VK_EXTENSION(EXT_FRAGMENT_SHADER_INTERLOCK, EXT_fragment_shader_interlock),
     VK_EXTENSION(EXT_MUTABLE_DESCRIPTOR_TYPE, EXT_mutable_descriptor_type),
     VK_EXTENSION(EXT_ROBUSTNESS_2, EXT_robustness2),
     VK_EXTENSION(EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION, EXT_shader_demote_to_helper_invocation),
@@ -270,13 +272,15 @@ static bool has_extension(const VkExtensionProperties *extensions,
 
     for (i = 0; i < count; ++i)
     {
-        if (is_extension_disabled(extension_name))
-        {
-            WARN("Extension %s is disabled.\n", debugstr_a(extension_name));
-            continue;
-        }
         if (!strcmp(extensions[i].extensionName, extension_name))
+        {
+            if (is_extension_disabled(extension_name))
+            {
+                WARN("Extension %s is disabled.\n", debugstr_a(extension_name));
+                return false;
+            }
             return true;
+        }
     }
     return false;
 }
@@ -420,8 +424,6 @@ static HRESULT vkd3d_init_instance_caps(struct vkd3d_instance *instance,
         ERR("Failed to enumerate instance extensions, vr %d.\n", vr);
         return hresult_from_vk_result(vr);
     }
-    if (!count)
-        return S_OK;
 
     if (!(vk_extensions = vkd3d_calloc(count, sizeof(*vk_extensions))))
         return E_OUTOFMEMORY;
@@ -557,12 +559,14 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
     const struct vkd3d_optional_instance_extensions_info *optional_extensions;
     const struct vkd3d_application_info *vkd3d_application_info;
     const struct vkd3d_host_time_domain_info *time_domain_info;
+    PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
     bool *user_extension_supported = NULL;
     VkApplicationInfo application_info;
     VkInstanceCreateInfo instance_info;
     char application_name[PATH_MAX];
     uint32_t extension_count;
     const char **extensions;
+    uint32_t vk_api_version;
     VkInstance vk_instance;
     VkResult vr;
     HRESULT hr;
@@ -614,6 +618,16 @@ static HRESULT vkd3d_instance_init(struct vkd3d_instance *instance,
     application_info.engineVersion = vkd3d_get_vk_version();
     application_info.apiVersion = VK_API_VERSION_1_0;
     instance->api_version = VKD3D_API_VERSION_1_0;
+
+    /* vkEnumerateInstanceVersion was added in Vulkan 1.1, and its absence indicates only 1.0 is supported. */
+    vkEnumerateInstanceVersion = (void *)vk_global_procs->vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
+    if (vkEnumerateInstanceVersion && vkEnumerateInstanceVersion(&vk_api_version) >= 0
+            && vk_api_version >= VK_API_VERSION_1_1)
+    {
+        TRACE("Vulkan API version 1.1 is available; requesting it.\n");
+        application_info.apiVersion = VK_API_VERSION_1_1;
+    }
+    instance->vk_api_version = application_info.apiVersion;
 
     if ((vkd3d_application_info = vkd3d_find_struct(create_info->next, APPLICATION_INFO)))
     {
@@ -774,6 +788,11 @@ VkInstance vkd3d_instance_get_vk_instance(struct vkd3d_instance *instance)
     return instance->vk_instance;
 }
 
+static bool d3d12_device_environment_is_vulkan_min_1_1(struct d3d12_device *device)
+{
+    return device->environment == VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_1;
+}
+
 struct vkd3d_physical_device_info
 {
     /* properties */
@@ -782,6 +801,7 @@ struct vkd3d_physical_device_info
     VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT texel_buffer_alignment_properties;
     VkPhysicalDeviceTransformFeedbackPropertiesEXT xfb_properties;
     VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT vertex_divisor_properties;
+    VkPhysicalDeviceSubgroupProperties subgroup_properties;
 
     VkPhysicalDeviceProperties2KHR properties2;
 
@@ -789,6 +809,7 @@ struct vkd3d_physical_device_info
     VkPhysicalDeviceConditionalRenderingFeaturesEXT conditional_rendering_features;
     VkPhysicalDeviceDepthClipEnableFeaturesEXT depth_clip_features;
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features;
+    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT fragment_shader_interlock_features;
     VkPhysicalDeviceRobustness2FeaturesEXT robustness2_features;
     VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT demote_features;
     VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT texel_buffer_alignment_features;
@@ -796,6 +817,7 @@ struct vkd3d_physical_device_info
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
     VkPhysicalDeviceTimelineSemaphoreFeaturesKHR timeline_semaphore_features;
     VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT mutable_features;
+    VkPhysicalDevice4444FormatsFeaturesEXT formats4444_features;
 
     VkPhysicalDeviceFeatures2 features2;
 };
@@ -808,6 +830,7 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *vertex_divisor_properties;
     VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT *buffer_alignment_properties;
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT *descriptor_indexing_features;
+    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT *fragment_shader_interlock_features;
     VkPhysicalDeviceRobustness2FeaturesEXT *robustness2_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
     VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *buffer_alignment_features;
@@ -818,13 +841,16 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     VkPhysicalDeviceMaintenance3Properties *maintenance3_properties;
     VkPhysicalDeviceTransformFeedbackPropertiesEXT *xfb_properties;
     VkPhysicalDevice physical_device = device->vk_physical_device;
+    VkPhysicalDevice4444FormatsFeaturesEXT *formats4444_features;
     VkPhysicalDeviceTransformFeedbackFeaturesEXT *xfb_features;
     struct vkd3d_vulkan_info *vulkan_info = &device->vk_info;
+    VkPhysicalDeviceSubgroupProperties *subgroup_properties;
 
     memset(info, 0, sizeof(*info));
     conditional_rendering_features = &info->conditional_rendering_features;
     depth_clip_features = &info->depth_clip_features;
     descriptor_indexing_features = &info->descriptor_indexing_features;
+    fragment_shader_interlock_features = &info->fragment_shader_interlock_features;
     robustness2_features = &info->robustness2_features;
     descriptor_indexing_properties = &info->descriptor_indexing_properties;
     maintenance3_properties = &info->maintenance3_properties;
@@ -835,31 +861,49 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     vertex_divisor_properties = &info->vertex_divisor_properties;
     timeline_semaphore_features = &info->timeline_semaphore_features;
     mutable_features = &info->mutable_features;
+    formats4444_features = &info->formats4444_features;
     xfb_features = &info->xfb_features;
     xfb_properties = &info->xfb_properties;
+    subgroup_properties = &info->subgroup_properties;
 
     info->features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
     conditional_rendering_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, conditional_rendering_features);
+    if (vulkan_info->EXT_conditional_rendering)
+        vk_prepend_struct(&info->features2, conditional_rendering_features);
     depth_clip_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, depth_clip_features);
+    if (vulkan_info->EXT_depth_clip_enable)
+        vk_prepend_struct(&info->features2, depth_clip_features);
     descriptor_indexing_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, descriptor_indexing_features);
+    if (vulkan_info->EXT_descriptor_indexing)
+        vk_prepend_struct(&info->features2, descriptor_indexing_features);
+    fragment_shader_interlock_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
+    if (vulkan_info->EXT_fragment_shader_interlock)
+        vk_prepend_struct(&info->features2, fragment_shader_interlock_features);
     robustness2_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, robustness2_features);
+    if (vulkan_info->EXT_robustness2)
+        vk_prepend_struct(&info->features2, robustness2_features);
     demote_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, demote_features);
+    if (vulkan_info->EXT_shader_demote_to_helper_invocation)
+        vk_prepend_struct(&info->features2, demote_features);
     buffer_alignment_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, buffer_alignment_features);
+    if (vulkan_info->EXT_texel_buffer_alignment)
+        vk_prepend_struct(&info->features2, buffer_alignment_features);
     xfb_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, xfb_features);
+    if (vulkan_info->EXT_transform_feedback)
+        vk_prepend_struct(&info->features2, xfb_features);
     vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, vertex_divisor_features);
+    if (vulkan_info->EXT_vertex_attribute_divisor)
+        vk_prepend_struct(&info->features2, vertex_divisor_features);
     timeline_semaphore_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
-    vk_prepend_struct(&info->features2, timeline_semaphore_features);
+    if (vulkan_info->KHR_timeline_semaphore)
+        vk_prepend_struct(&info->features2, timeline_semaphore_features);
     mutable_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT;
-    vk_prepend_struct(&info->features2, mutable_features);
+    if (vulkan_info->EXT_mutable_descriptor_type)
+        vk_prepend_struct(&info->features2, mutable_features);
+    formats4444_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT;
+    if (vulkan_info->EXT_4444_formats)
+        vk_prepend_struct(&info->features2, formats4444_features);
 
     if (vulkan_info->KHR_get_physical_device_properties2)
         VK_CALL(vkGetPhysicalDeviceFeatures2KHR(physical_device, &info->features2));
@@ -869,15 +913,23 @@ static void vkd3d_physical_device_info_init(struct vkd3d_physical_device_info *i
     info->properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
     maintenance3_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
-    vk_prepend_struct(&info->properties2, maintenance3_properties);
+    if (vulkan_info->KHR_maintenance3)
+        vk_prepend_struct(&info->properties2, maintenance3_properties);
     descriptor_indexing_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
-    vk_prepend_struct(&info->properties2, descriptor_indexing_properties);
+    if (vulkan_info->EXT_descriptor_indexing)
+        vk_prepend_struct(&info->properties2, descriptor_indexing_properties);
     buffer_alignment_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT;
-    vk_prepend_struct(&info->properties2, buffer_alignment_properties);
+    if (vulkan_info->EXT_texel_buffer_alignment)
+        vk_prepend_struct(&info->properties2, buffer_alignment_properties);
     xfb_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
-    vk_prepend_struct(&info->properties2, xfb_properties);
+    if (vulkan_info->EXT_transform_feedback)
+        vk_prepend_struct(&info->properties2, xfb_properties);
     vertex_divisor_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT;
-    vk_prepend_struct(&info->properties2, vertex_divisor_properties);
+    if (vulkan_info->EXT_vertex_attribute_divisor)
+        vk_prepend_struct(&info->properties2, vertex_divisor_properties);
+    subgroup_properties->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+    if (d3d12_device_environment_is_vulkan_min_1_1(device))
+        vk_prepend_struct(&info->properties2, subgroup_properties);
 
     if (vulkan_info->KHR_get_physical_device_properties2)
         VK_CALL(vkGetPhysicalDeviceProperties2KHR(physical_device, &info->properties2));
@@ -1158,6 +1210,7 @@ static void vkd3d_trace_physical_device_limits(const struct vkd3d_physical_devic
 
 static void vkd3d_trace_physical_device_features(const struct vkd3d_physical_device_info *info)
 {
+    const VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT *fragment_shader_interlock_features;
     const VkPhysicalDeviceConditionalRenderingFeaturesEXT *conditional_rendering_features;
     const VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT *demote_features;
     const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *buffer_alignment_features;
@@ -1278,6 +1331,15 @@ static void vkd3d_trace_physical_device_features(const struct vkd3d_physical_dev
     depth_clip_features = &info->depth_clip_features;
     TRACE("  VkPhysicalDeviceDepthClipEnableFeaturesEXT:\n");
     TRACE("    depthClipEnable: %#x.\n", depth_clip_features->depthClipEnable);
+
+    fragment_shader_interlock_features = &info->fragment_shader_interlock_features;
+    TRACE("  VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT:\n");
+    TRACE("    fragmentShaderSampleInterlock: %#x.\n",
+            fragment_shader_interlock_features->fragmentShaderSampleInterlock);
+    TRACE("    fragmentShaderPixelInterlock: %#x.\n",
+            fragment_shader_interlock_features->fragmentShaderPixelInterlock);
+    TRACE("    fragmentShaderShadingRateInterlock: %#x.\n",
+            fragment_shader_interlock_features->fragmentShaderShadingRateInterlock);
 
     demote_features = &info->demote_features;
     TRACE("  VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT:\n");
@@ -1470,22 +1532,92 @@ static bool d3d12_device_supports_typed_uav_load_additional_formats(const struct
     return true;
 }
 
+static HRESULT vkd3d_check_device_extensions(struct d3d12_device *device,
+        const struct vkd3d_device_create_info *create_info, VkExtensionProperties **vk_extensions,
+        uint32_t *vk_extension_count, uint32_t *device_extension_count, bool **user_extension_supported)
+{
+    const struct vkd3d_vk_instance_procs *vk_procs = &device->vkd3d_instance->vk_procs;
+    const struct vkd3d_optional_device_extensions_info *optional_extensions;
+    VkPhysicalDevice physical_device = device->vk_physical_device;
+    struct vkd3d_vulkan_info *vulkan_info = &device->vk_info;
+    VkResult vr;
+
+    *device_extension_count = 0;
+
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, vk_extension_count, NULL))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %d.\n", vr);
+        return hresult_from_vk_result(vr);
+    }
+
+    if (!(*vk_extensions = vkd3d_calloc(*vk_extension_count, sizeof(**vk_extensions))))
+        return E_OUTOFMEMORY;
+
+    TRACE("Enumerating %u device extensions.\n", *vk_extension_count);
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, vk_extension_count, *vk_extensions))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %d.\n", vr);
+        vkd3d_free(*vk_extensions);
+        return hresult_from_vk_result(vr);
+    }
+
+    optional_extensions = vkd3d_find_struct(create_info->next, OPTIONAL_DEVICE_EXTENSIONS_INFO);
+    if (optional_extensions && optional_extensions->extension_count)
+    {
+        if (!(*user_extension_supported = vkd3d_calloc(optional_extensions->extension_count, sizeof(bool))))
+        {
+            vkd3d_free(*vk_extensions);
+            return E_OUTOFMEMORY;
+        }
+    }
+    else
+    {
+        *user_extension_supported = NULL;
+    }
+
+    *device_extension_count = vkd3d_check_extensions(*vk_extensions, *vk_extension_count,
+            required_device_extensions, ARRAY_SIZE(required_device_extensions),
+            optional_device_extensions, ARRAY_SIZE(optional_device_extensions),
+            create_info->device_extensions, create_info->device_extension_count,
+            optional_extensions ? optional_extensions->extensions : NULL,
+            optional_extensions ? optional_extensions->extension_count : 0,
+            *user_extension_supported, vulkan_info, "device",
+            device->vkd3d_instance->config_flags & VKD3D_CONFIG_FLAG_VULKAN_DEBUG);
+
+    return S_OK;
+}
+
 static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
         const struct vkd3d_device_create_info *create_info,
         struct vkd3d_physical_device_info *physical_device_info,
         uint32_t *device_extension_count, bool **user_extension_supported)
 {
+    const VkPhysicalDeviceSubgroupProperties *subgroup_properties = &physical_device_info->subgroup_properties;
     const struct vkd3d_vk_instance_procs *vk_procs = &device->vkd3d_instance->vk_procs;
-    const struct vkd3d_optional_device_extensions_info *optional_extensions;
+    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT *fragment_shader_interlock;
     VkPhysicalDeviceDescriptorIndexingFeaturesEXT *descriptor_indexing;
     VkPhysicalDevice physical_device = device->vk_physical_device;
     struct vkd3d_vulkan_info *vulkan_info = &device->vk_info;
     VkExtensionProperties *vk_extensions;
     VkPhysicalDeviceFeatures *features;
-    uint32_t count;
-    VkResult vr;
+    uint32_t vk_extension_count;
+    HRESULT hr;
 
-    *device_extension_count = 0;
+    /* SHUFFLE is required to implement WaveReadLaneAt with dynamically uniform index before SPIR-V 1.5 / Vulkan 1.2. */
+    static const VkSubgroupFeatureFlags required_subgroup_features = VK_SUBGROUP_FEATURE_ARITHMETIC_BIT
+            | VK_SUBGROUP_FEATURE_BASIC_BIT
+            | VK_SUBGROUP_FEATURE_BALLOT_BIT
+            | VK_SUBGROUP_FEATURE_SHUFFLE_BIT
+            | VK_SUBGROUP_FEATURE_QUAD_BIT
+            | VK_SUBGROUP_FEATURE_VOTE_BIT;
+
+    static const VkSubgroupFeatureFlags required_stages = VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    if (FAILED(hr = vkd3d_check_device_extensions(device, create_info, &vk_extensions, &vk_extension_count,
+            device_extension_count, user_extension_supported)))
+        return hr;
+
+    vkd3d_physical_device_info_init(physical_device_info, device);
 
     vkd3d_trace_physical_device(physical_device, physical_device_info, vk_procs);
     vkd3d_trace_physical_device_features(physical_device_info);
@@ -1539,8 +1671,6 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
 
     device->feature_options.TypedUAVLoadAdditionalFormats = features->shaderStorageImageReadWithoutFormat
             && d3d12_device_supports_typed_uav_load_additional_formats(device);
-    /* GL_INTEL_fragment_shader_ordering, no Vulkan equivalent. */
-    device->feature_options.ROVsSupported = FALSE;
     /* GL_INTEL_conservative_rasterization, no Vulkan equivalent. */
     device->feature_options.ConservativeRasterizationTier = D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
     device->feature_options.MaxGPUVirtualAddressBitsPerResource = 40; /* FIXME */
@@ -1550,10 +1680,12 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     device->feature_options.ResourceHeapTier = D3D12_RESOURCE_HEAP_TIER_2;
 
     /* Shader Model 6 support. */
-    device->feature_options1.WaveOps = FALSE;
-    device->feature_options1.WaveLaneCountMin = 0;
-    device->feature_options1.WaveLaneCountMax = 0;
-    device->feature_options1.TotalLaneCount = 0;
+    device->feature_options1.WaveOps = subgroup_properties->subgroupSize >= 4
+            && (subgroup_properties->supportedOperations & required_subgroup_features) == required_subgroup_features
+            && (subgroup_properties->supportedStages & required_stages) == required_stages;
+    device->feature_options1.WaveLaneCountMin = subgroup_properties->subgroupSize;
+    device->feature_options1.WaveLaneCountMax = subgroup_properties->subgroupSize;
+    device->feature_options1.TotalLaneCount = 32 * subgroup_properties->subgroupSize; /* approx. */
     device->feature_options1.ExpandedComputeResourceStates = TRUE;
     device->feature_options1.Int64ShaderOps = features->shaderInt64;
 
@@ -1577,47 +1709,11 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     device->feature_options5.RenderPassesTier = D3D12_RENDER_PASS_TIER_0;
     device->feature_options5.RaytracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 
-    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
-    {
-        ERR("Failed to enumerate device extensions, vr %d.\n", vr);
-        return hresult_from_vk_result(vr);
-    }
-    if (!count)
-        return S_OK;
-
-    if (!(vk_extensions = vkd3d_calloc(count, sizeof(*vk_extensions))))
-        return E_OUTOFMEMORY;
-
-    TRACE("Enumerating %u device extensions.\n", count);
-    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, vk_extensions))) < 0)
-    {
-        ERR("Failed to enumerate device extensions, vr %d.\n", vr);
-        vkd3d_free(vk_extensions);
-        return hresult_from_vk_result(vr);
-    }
-
-    optional_extensions = vkd3d_find_struct(create_info->next, OPTIONAL_DEVICE_EXTENSIONS_INFO);
-    if (optional_extensions && optional_extensions->extension_count)
-    {
-        if (!(*user_extension_supported = vkd3d_calloc(optional_extensions->extension_count, sizeof(bool))))
-        {
-            vkd3d_free(vk_extensions);
-            return E_OUTOFMEMORY;
-        }
-    }
-    else
-    {
-        *user_extension_supported = NULL;
-    }
-
-    *device_extension_count = vkd3d_check_extensions(vk_extensions, count,
-            required_device_extensions, ARRAY_SIZE(required_device_extensions),
-            optional_device_extensions, ARRAY_SIZE(optional_device_extensions),
-            create_info->device_extensions, create_info->device_extension_count,
-            optional_extensions ? optional_extensions->extensions : NULL,
-            optional_extensions ? optional_extensions->extension_count : 0,
-            *user_extension_supported, vulkan_info, "device",
-            device->vkd3d_instance->config_flags & VKD3D_CONFIG_FLAG_VULKAN_DEBUG);
+    fragment_shader_interlock = &physical_device_info->fragment_shader_interlock_features;
+    if (!fragment_shader_interlock->fragmentShaderSampleInterlock
+            || !fragment_shader_interlock->fragmentShaderPixelInterlock)
+        vulkan_info->EXT_fragment_shader_interlock = false;
+    device->feature_options.ROVsSupported = vulkan_info->EXT_fragment_shader_interlock;
 
     if (!physical_device_info->conditional_rendering_features.conditionalRendering)
         vulkan_info->EXT_conditional_rendering = false;
@@ -1634,9 +1730,11 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     if (!physical_device_info->timeline_semaphore_features.timelineSemaphore)
         vulkan_info->KHR_timeline_semaphore = false;
 
+    physical_device_info->formats4444_features.formatA4B4G4R4 = VK_FALSE;
+
     vulkan_info->texel_buffer_alignment_properties = physical_device_info->texel_buffer_alignment_properties;
 
-    if (get_spec_version(vk_extensions, count, VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME) >= 3)
+    if (get_spec_version(vk_extensions, vk_extension_count, VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME) >= 3)
     {
         const VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *divisor_features;
         divisor_features = &physical_device_info->vertex_divisor_features;
@@ -1674,6 +1772,10 @@ static HRESULT vkd3d_init_device_caps(struct d3d12_device *device,
     if (vulkan_info->EXT_descriptor_indexing)
         vulkan_info->shader_extensions[vulkan_info->shader_extension_count++]
                 = VKD3D_SHADER_SPIRV_EXTENSION_EXT_DESCRIPTOR_INDEXING;
+
+    if (vulkan_info->EXT_fragment_shader_interlock)
+        vulkan_info->shader_extensions[vulkan_info->shader_extension_count++]
+                = VKD3D_SHADER_SPIRV_EXTENSION_EXT_FRAGMENT_SHADER_INTERLOCK;
 
     if (vulkan_info->EXT_shader_stencil_export)
         vulkan_info->shader_extensions[vulkan_info->shader_extension_count++]
@@ -2028,8 +2130,6 @@ static HRESULT vkd3d_create_vk_device(struct d3d12_device *device,
             device_queue_info.family_index[VKD3D_QUEUE_FAMILY_TRANSFER]);
 
     VK_CALL(vkGetPhysicalDeviceMemoryProperties(physical_device, &device->memory_properties));
-
-    vkd3d_physical_device_info_init(&physical_device_info, device);
 
     if (FAILED(hr = vkd3d_init_device_caps(device, create_info, &physical_device_info,
             &extension_count, &user_extension_supported)))
@@ -2498,18 +2598,310 @@ static void vkd3d_desc_object_cache_cleanup(struct vkd3d_desc_object_cache *cach
     }
 }
 
-/* ID3D12Device */
-static inline struct d3d12_device *impl_from_ID3D12Device7(ID3D12Device7 *iface)
+/* ID3D12ShaderCacheSession */
+struct d3d12_cache_session
 {
-    return CONTAINING_RECORD(iface, struct d3d12_device, ID3D12Device7_iface);
+    ID3D12ShaderCacheSession ID3D12ShaderCacheSession_iface;
+    unsigned int refcount;
+
+    struct list cache_list_entry;
+
+    struct d3d12_device *device;
+    struct vkd3d_private_store private_store;
+    D3D12_SHADER_CACHE_SESSION_DESC desc;
+    struct vkd3d_shader_cache *cache;
+};
+
+static struct vkd3d_mutex cache_list_mutex = VKD3D_MUTEX_INITIALIZER;
+static struct list cache_list = LIST_INIT(cache_list);
+
+static inline struct d3d12_cache_session *impl_from_ID3D12ShaderCacheSession(ID3D12ShaderCacheSession *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_cache_session, ID3D12ShaderCacheSession_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_QueryInterface(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_QueryInterface(ID3D12ShaderCacheSession *iface,
+        REFIID iid, void **object)
+{
+    TRACE("iface %p, iid %s, object %p.\n", iface, debugstr_guid(iid), object);
+
+    if (!object)
+    {
+        WARN("Output pointer is NULL, returning E_POINTER.\n");
+        return E_POINTER;
+    }
+
+    if (IsEqualGUID(iid, &IID_ID3D12ShaderCacheSession)
+            || IsEqualGUID(iid, &IID_ID3D12DeviceChild)
+            || IsEqualGUID(iid, &IID_ID3D12Object)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID3D12ShaderCacheSession_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d12_cache_session_AddRef(ID3D12ShaderCacheSession *iface)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+    unsigned int refcount = vkd3d_atomic_increment_u32(&session->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", session, refcount);
+
+    return refcount;
+}
+
+static void d3d12_cache_session_destroy(struct d3d12_cache_session *session)
+{
+    struct d3d12_device *device = session->device;
+
+    TRACE("Destroying cache session %p.\n", session);
+
+    vkd3d_mutex_lock(&cache_list_mutex);
+    list_remove(&session->cache_list_entry);
+    vkd3d_mutex_unlock(&cache_list_mutex);
+
+    vkd3d_shader_cache_decref(session->cache);
+    vkd3d_private_store_destroy(&session->private_store);
+    vkd3d_free(session);
+
+    d3d12_device_release(device);
+}
+
+static ULONG STDMETHODCALLTYPE d3d12_cache_session_Release(ID3D12ShaderCacheSession *iface)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+    unsigned int refcount = vkd3d_atomic_decrement_u32(&session->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", session, refcount);
+
+    if (!refcount)
+        d3d12_cache_session_destroy(session);
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_GetPrivateData(ID3D12ShaderCacheSession *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return vkd3d_get_private_data(&session->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_SetPrivateData(ID3D12ShaderCacheSession *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return vkd3d_set_private_data(&session->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_SetPrivateDataInterface(
+        ID3D12ShaderCacheSession *iface, REFGUID guid, const IUnknown *data)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return vkd3d_set_private_data_interface(&session->private_store, guid, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_SetName(ID3D12ShaderCacheSession *iface,
+        const WCHAR *name)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(name, session->device->wchar_size));
+
+    return name ? S_OK : E_INVALIDARG;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_GetDevice(ID3D12ShaderCacheSession *iface,
+        REFIID iid, void **device)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p, iid %s, device %p.\n", iface, debugstr_guid(iid), device);
+
+    return d3d12_device_query_interface(session->device, iid, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_FindValue(ID3D12ShaderCacheSession *iface,
+        const void *key, UINT key_size, void *value, UINT *value_size)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+    enum vkd3d_result ret;
+    size_t size;
+
+    TRACE("iface %p, key %p, key_size %#x, value %p, value_size %p.\n",
+            iface, key, key_size, value, value_size);
+
+    if (!value_size)
+    {
+        WARN("value_size is NULL, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
+    size = *value_size;
+    ret = vkd3d_shader_cache_get(session->cache, key, key_size, value, &size);
+    *value_size = size;
+
+    return hresult_from_vkd3d_result(ret);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_cache_session_StoreValue(ID3D12ShaderCacheSession *iface,
+        const void *key, UINT key_size, const void *value, UINT value_size)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+    enum vkd3d_result ret;
+
+    TRACE("iface %p, key %p, key_size %#x, value %p, value_size %u.\n",
+            iface, key, key_size, value, value_size);
+
+    if (!key || !key_size || !value || !value_size)
+    {
+        WARN("Invalid input parameters, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
+    ret = vkd3d_shader_cache_put(session->cache, key, key_size, value, value_size);
+    return hresult_from_vkd3d_result(ret);
+}
+
+static void STDMETHODCALLTYPE d3d12_cache_session_SetDeleteOnDestroy(ID3D12ShaderCacheSession *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+}
+
+static D3D12_SHADER_CACHE_SESSION_DESC * STDMETHODCALLTYPE d3d12_cache_session_GetDesc(
+        ID3D12ShaderCacheSession *iface, D3D12_SHADER_CACHE_SESSION_DESC *desc)
+{
+    struct d3d12_cache_session *session = impl_from_ID3D12ShaderCacheSession(iface);
+
+    TRACE("iface %p.\n", iface);
+    *desc = session->desc;
+    return desc;
+}
+
+static const struct ID3D12ShaderCacheSessionVtbl d3d12_cache_session_vtbl =
+{
+    /* IUnknown methods */
+    d3d12_cache_session_QueryInterface,
+    d3d12_cache_session_AddRef,
+    d3d12_cache_session_Release,
+    /* ID3D12Object methods */
+    d3d12_cache_session_GetPrivateData,
+    d3d12_cache_session_SetPrivateData,
+    d3d12_cache_session_SetPrivateDataInterface,
+    d3d12_cache_session_SetName,
+    /* ID3D12DeviceChild methods */
+    d3d12_cache_session_GetDevice,
+    /* ID3D12ShaderCacheSession methods */
+    d3d12_cache_session_FindValue,
+    d3d12_cache_session_StoreValue,
+    d3d12_cache_session_SetDeleteOnDestroy,
+    d3d12_cache_session_GetDesc,
+};
+
+static HRESULT d3d12_cache_session_init(struct d3d12_cache_session *session,
+        struct d3d12_device *device, const D3D12_SHADER_CACHE_SESSION_DESC *desc)
+{
+    struct d3d12_cache_session *i;
+    enum vkd3d_result ret;
+    HRESULT hr;
+
+    session->ID3D12ShaderCacheSession_iface.lpVtbl = &d3d12_cache_session_vtbl;
+    session->refcount = 1;
+    session->desc = *desc;
+    session->cache = NULL;
+
+    if (!session->desc.MaximumValueFileSizeBytes)
+        session->desc.MaximumValueFileSizeBytes = 128 * 1024 * 1024;
+    if (!session->desc.MaximumInMemoryCacheSizeBytes)
+        session->desc.MaximumInMemoryCacheSizeBytes = 1024 * 1024;
+    if (!session->desc.MaximumInMemoryCacheEntries)
+        session->desc.MaximumInMemoryCacheEntries = 128;
+
+    if (FAILED(hr = vkd3d_private_store_init(&session->private_store)))
+        return hr;
+
+    vkd3d_mutex_lock(&cache_list_mutex);
+
+    /* We expect the number of open caches to be small. */
+    LIST_FOR_EACH_ENTRY(i, &cache_list, struct d3d12_cache_session, cache_list_entry)
+    {
+        if (!memcmp(&i->desc.Identifier, &desc->Identifier, sizeof(desc->Identifier)))
+        {
+            TRACE("Found an existing cache %p from session %p.\n", i->cache, i);
+            if (desc->Version == i->desc.Version)
+            {
+                session->desc = i->desc;
+                vkd3d_shader_cache_incref(session->cache = i->cache);
+                break;
+            }
+            else
+            {
+                WARN("version mismatch: Existing %"PRIu64" new %"PRIu64".\n",
+                        i->desc.Version, desc->Version);
+                hr = DXGI_ERROR_ALREADY_EXISTS;
+                goto error;
+            }
+        }
+    }
+
+    if (!session->cache)
+    {
+        if (session->desc.Mode == D3D12_SHADER_CACHE_MODE_DISK)
+            FIXME("Disk caches are not yet implemented.\n");
+
+        ret = vkd3d_shader_open_cache(&session->cache);
+        if (ret)
+        {
+            WARN("Failed to open shader cache.\n");
+            hr = hresult_from_vkd3d_result(ret);
+            goto error;
+        }
+    }
+
+    /* Add it to the list even if we reused an existing cache. The other session might be destroyed,
+     * but the cache stays alive and can be opened a third time. */
+    list_add_tail(&cache_list, &session->cache_list_entry);
+    d3d12_device_add_ref(session->device = device);
+
+    vkd3d_mutex_unlock(&cache_list_mutex);
+    return S_OK;
+
+error:
+    vkd3d_private_store_destroy(&session->private_store);
+    vkd3d_mutex_unlock(&cache_list_mutex);
+    return hr;
+}
+
+/* ID3D12Device */
+static inline struct d3d12_device *impl_from_ID3D12Device9(ID3D12Device9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d12_device, ID3D12Device9_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_QueryInterface(ID3D12Device9 *iface,
         REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_ID3D12Device7)
+    if (IsEqualGUID(riid, &IID_ID3D12Device9)
+            || IsEqualGUID(riid, &IID_ID3D12Device8)
+            || IsEqualGUID(riid, &IID_ID3D12Device7)
             || IsEqualGUID(riid, &IID_ID3D12Device6)
             || IsEqualGUID(riid, &IID_ID3D12Device5)
             || IsEqualGUID(riid, &IID_ID3D12Device4)
@@ -2520,7 +2912,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_QueryInterface(ID3D12Device7 *ifac
             || IsEqualGUID(riid, &IID_ID3D12Object)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        ID3D12Device_AddRef(iface);
+        ID3D12Device9_AddRef(iface);
         *object = iface;
         return S_OK;
     }
@@ -2531,9 +2923,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_QueryInterface(ID3D12Device7 *ifac
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d3d12_device_AddRef(ID3D12Device7 *iface)
+static ULONG STDMETHODCALLTYPE d3d12_device_AddRef(ID3D12Device9 *iface)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     unsigned int refcount = vkd3d_atomic_increment_u32(&device->refcount);
 
     TRACE("%p increasing refcount to %u.\n", device, refcount);
@@ -2563,9 +2955,9 @@ static HRESULT device_worker_stop(struct d3d12_device *device)
     return S_OK;
 }
 
-static ULONG STDMETHODCALLTYPE d3d12_device_Release(ID3D12Device7 *iface)
+static ULONG STDMETHODCALLTYPE d3d12_device_Release(ID3D12Device9 *iface)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     unsigned int refcount = vkd3d_atomic_decrement_u32(&device->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", device, refcount);
@@ -2602,10 +2994,10 @@ static ULONG STDMETHODCALLTYPE d3d12_device_Release(ID3D12Device7 *iface)
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_GetPrivateData(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_GetPrivateData(ID3D12Device9 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -2613,10 +3005,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_GetPrivateData(ID3D12Device7 *ifac
     return vkd3d_get_private_data(&device->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetPrivateData(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetPrivateData(ID3D12Device9 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -2624,19 +3016,19 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetPrivateData(ID3D12Device7 *ifac
     return vkd3d_set_private_data(&device->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetPrivateDataInterface(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetPrivateDataInterface(ID3D12Device9 *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
     return vkd3d_set_private_data_interface(&device->private_store, guid, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetName(ID3D12Device7 *iface, const WCHAR *name)
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetName(ID3D12Device9 *iface, const WCHAR *name)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, name %s.\n", iface, debugstr_w(name, device->wchar_size));
 
@@ -2644,17 +3036,17 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetName(ID3D12Device7 *iface, cons
             VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT, name);
 }
 
-static UINT STDMETHODCALLTYPE d3d12_device_GetNodeCount(ID3D12Device7 *iface)
+static UINT STDMETHODCALLTYPE d3d12_device_GetNodeCount(ID3D12Device9 *iface)
 {
     TRACE("iface %p.\n", iface);
 
     return 1;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandQueue(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandQueue(ID3D12Device9 *iface,
         const D3D12_COMMAND_QUEUE_DESC *desc, REFIID riid, void **command_queue)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_command_queue *object;
     HRESULT hr;
 
@@ -2668,10 +3060,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandQueue(ID3D12Device7 *
             riid, command_queue);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandAllocator(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandAllocator(ID3D12Device9 *iface,
         D3D12_COMMAND_LIST_TYPE type, REFIID riid, void **command_allocator)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_command_allocator *object;
     HRESULT hr;
 
@@ -2685,10 +3077,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandAllocator(ID3D12Devic
             riid, command_allocator);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateGraphicsPipelineState(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateGraphicsPipelineState(ID3D12Device9 *iface,
         const D3D12_GRAPHICS_PIPELINE_STATE_DESC *desc, REFIID riid, void **pipeline_state)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_pipeline_state *object;
     HRESULT hr;
 
@@ -2702,10 +3094,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateGraphicsPipelineState(ID3D12
             &IID_ID3D12PipelineState, riid, pipeline_state);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateComputePipelineState(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateComputePipelineState(ID3D12Device9 *iface,
         const D3D12_COMPUTE_PIPELINE_STATE_DESC *desc, REFIID riid, void **pipeline_state)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_pipeline_state *object;
     HRESULT hr;
 
@@ -2719,11 +3111,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateComputePipelineState(ID3D12D
             &IID_ID3D12PipelineState, riid, pipeline_state);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList(ID3D12Device9 *iface,
         UINT node_mask, D3D12_COMMAND_LIST_TYPE type, ID3D12CommandAllocator *command_allocator,
         ID3D12PipelineState *initial_pipeline_state, REFIID riid, void **command_list)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_command_list *object;
     HRESULT hr;
 
@@ -2846,10 +3238,10 @@ bool d3d12_device_is_uma(struct d3d12_device *device, bool *coherent)
     return true;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 *iface,
         D3D12_FEATURE feature, void *feature_data, UINT feature_data_size)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, feature %#x, feature_data %p, feature_data_size %u.\n",
             iface, feature, feature_data, feature_data_size);
@@ -3095,9 +3487,21 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device7 
                 return E_INVALIDARG;
             }
 
+            if (data->HighestShaderModel != D3D_SHADER_MODEL_5_1
+                    && (data->HighestShaderModel < D3D_SHADER_MODEL_6_0
+                    || data->HighestShaderModel > D3D_HIGHEST_SHADER_MODEL))
+            {
+                WARN("Unknown shader model %#x.\n", data->HighestShaderModel);
+                return E_INVALIDARG;
+            }
+
             TRACE("Request shader model %#x.\n", data->HighestShaderModel);
 
-            data->HighestShaderModel = D3D_SHADER_MODEL_5_1;
+#ifdef VKD3D_SHADER_UNSUPPORTED_DXIL
+            data->HighestShaderModel = min(data->HighestShaderModel, D3D_SHADER_MODEL_6_0);
+#else
+            data->HighestShaderModel = min(data->HighestShaderModel, D3D_SHADER_MODEL_5_1);
+#endif
 
             TRACE("Shader model %#x.\n", data->HighestShaderModel);
             return S_OK;
@@ -3515,16 +3919,101 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device7 
             return S_OK;
         }
 
+        case D3D12_FEATURE_D3D12_OPTIONS14:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS14 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+            }
+
+            data->AdvancedTextureOpsSupported = FALSE;
+            data->WriteableMSAATexturesSupported = FALSE;
+            data->IndependentFrontAndBackStencilRefMaskSupported = FALSE;
+
+            TRACE("Advanced texture ops %#x.\n", data->AdvancedTextureOpsSupported);
+            TRACE("Writeable MSAA textures %#x.\n", data->WriteableMSAATexturesSupported);
+            TRACE("Independent front and back stencil ref mask %#x.\n", data->IndependentFrontAndBackStencilRefMaskSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS15:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS15 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+            }
+
+            data->TriangleFanSupported = FALSE;
+            data->DynamicIndexBufferStripCutSupported = FALSE;
+
+            TRACE("Triangle fan %#x.\n", data->TriangleFanSupported);
+            TRACE("Dynamic index buffer strip cut %#x.\n", data->DynamicIndexBufferStripCutSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS16:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS16 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+            }
+
+            data->DynamicDepthBiasSupported = FALSE;
+            data->GPUUploadHeapSupported = FALSE;
+
+            TRACE("Dynamic depth bias %#x.\n", data->DynamicDepthBiasSupported);
+            TRACE("GPU upload heap %#x.\n", data->GPUUploadHeapSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS17:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS17 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+            }
+
+            data->NonNormalizedCoordinateSamplersSupported = FALSE;
+            data->ManualWriteTrackingResourceSupported = FALSE;
+
+            TRACE("Non-normalized coordinate samplers %#x.\n", data->NonNormalizedCoordinateSamplersSupported);
+            TRACE("Manual write tracking resource %#x.\n", data->ManualWriteTrackingResourceSupported);
+            return S_OK;
+        }
+
+        case D3D12_FEATURE_D3D12_OPTIONS18:
+        {
+            D3D12_FEATURE_DATA_D3D12_OPTIONS18 *data = feature_data;
+
+            if (feature_data_size != sizeof(*data))
+            {
+                WARN("Invalid size %u.\n", feature_data_size);
+            }
+
+            data->RenderPassesValid = FALSE;
+
+            TRACE("Render passes valid %#x.\n", data->RenderPassesValid);
+            return S_OK;
+        }
+
         default:
             FIXME("Unhandled feature %#x.\n", feature);
             return E_NOTIMPL;
     }
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateDescriptorHeap(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateDescriptorHeap(ID3D12Device9 *iface,
         const D3D12_DESCRIPTOR_HEAP_DESC *desc, REFIID riid, void **descriptor_heap)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_descriptor_heap *object;
     HRESULT hr;
 
@@ -3538,7 +4027,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateDescriptorHeap(ID3D12Device7
             &IID_ID3D12DescriptorHeap, riid, descriptor_heap);
 }
 
-static UINT STDMETHODCALLTYPE d3d12_device_GetDescriptorHandleIncrementSize(ID3D12Device7 *iface,
+static UINT STDMETHODCALLTYPE d3d12_device_GetDescriptorHandleIncrementSize(ID3D12Device9 *iface,
         D3D12_DESCRIPTOR_HEAP_TYPE descriptor_heap_type)
 {
     TRACE("iface %p, descriptor_heap_type %#x.\n", iface, descriptor_heap_type);
@@ -3561,11 +4050,11 @@ static UINT STDMETHODCALLTYPE d3d12_device_GetDescriptorHandleIncrementSize(ID3D
     }
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateRootSignature(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateRootSignature(ID3D12Device9 *iface,
         UINT node_mask, const void *bytecode, SIZE_T bytecode_length,
         REFIID riid, void **root_signature)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_root_signature *object;
     HRESULT hr;
 
@@ -3581,10 +4070,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateRootSignature(ID3D12Device7 
             &IID_ID3D12RootSignature, riid, root_signature);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateConstantBufferView(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateConstantBufferView(ID3D12Device9 *iface,
         const D3D12_CONSTANT_BUFFER_VIEW_DESC *desc, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_desc tmp = {0};
 
     TRACE("iface %p, desc %p, descriptor %s.\n", iface, desc, debug_cpu_handle(descriptor));
@@ -3593,11 +4082,11 @@ static void STDMETHODCALLTYPE d3d12_device_CreateConstantBufferView(ID3D12Device
     d3d12_desc_write_atomic(d3d12_desc_from_cpu_handle(descriptor), &tmp, device);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateShaderResourceView(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateShaderResourceView(ID3D12Device9 *iface,
         ID3D12Resource *resource, const D3D12_SHADER_RESOURCE_VIEW_DESC *desc,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_desc tmp = {0};
 
     TRACE("iface %p, resource %p, desc %p, descriptor %s.\n",
@@ -3607,11 +4096,11 @@ static void STDMETHODCALLTYPE d3d12_device_CreateShaderResourceView(ID3D12Device
     d3d12_desc_write_atomic(d3d12_desc_from_cpu_handle(descriptor), &tmp, device);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateUnorderedAccessView(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateUnorderedAccessView(ID3D12Device9 *iface,
         ID3D12Resource *resource, ID3D12Resource *counter_resource,
         const D3D12_UNORDERED_ACCESS_VIEW_DESC *desc, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_desc tmp = {0};
 
     TRACE("iface %p, resource %p, counter_resource %p, desc %p, descriptor %s.\n",
@@ -3622,7 +4111,7 @@ static void STDMETHODCALLTYPE d3d12_device_CreateUnorderedAccessView(ID3D12Devic
     d3d12_desc_write_atomic(d3d12_desc_from_cpu_handle(descriptor), &tmp, device);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateRenderTargetView(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateRenderTargetView(ID3D12Device9 *iface,
         ID3D12Resource *resource, const D3D12_RENDER_TARGET_VIEW_DESC *desc,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
@@ -3630,10 +4119,10 @@ static void STDMETHODCALLTYPE d3d12_device_CreateRenderTargetView(ID3D12Device7 
             iface, resource, desc, debug_cpu_handle(descriptor));
 
     d3d12_rtv_desc_create_rtv(d3d12_rtv_desc_from_cpu_handle(descriptor),
-            impl_from_ID3D12Device7(iface), unsafe_impl_from_ID3D12Resource(resource), desc);
+            impl_from_ID3D12Device9(iface), unsafe_impl_from_ID3D12Resource(resource), desc);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateDepthStencilView(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateDepthStencilView(ID3D12Device9 *iface,
         ID3D12Resource *resource, const D3D12_DEPTH_STENCIL_VIEW_DESC *desc,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
@@ -3641,13 +4130,13 @@ static void STDMETHODCALLTYPE d3d12_device_CreateDepthStencilView(ID3D12Device7 
             iface, resource, desc, debug_cpu_handle(descriptor));
 
     d3d12_dsv_desc_create_dsv(d3d12_dsv_desc_from_cpu_handle(descriptor),
-            impl_from_ID3D12Device7(iface), unsafe_impl_from_ID3D12Resource(resource), desc);
+            impl_from_ID3D12Device9(iface), unsafe_impl_from_ID3D12Resource(resource), desc);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CreateSampler(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CreateSampler(ID3D12Device9 *iface,
         const D3D12_SAMPLER_DESC *desc, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_desc tmp = {0};
 
     TRACE("iface %p, desc %p, descriptor %s.\n", iface, desc, debug_cpu_handle(descriptor));
@@ -3656,14 +4145,14 @@ static void STDMETHODCALLTYPE d3d12_device_CreateSampler(ID3D12Device7 *iface,
     d3d12_desc_write_atomic(d3d12_desc_from_cpu_handle(descriptor), &tmp, device);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CopyDescriptors(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CopyDescriptors(ID3D12Device9 *iface,
         UINT dst_descriptor_range_count, const D3D12_CPU_DESCRIPTOR_HANDLE *dst_descriptor_range_offsets,
         const UINT *dst_descriptor_range_sizes,
         UINT src_descriptor_range_count, const D3D12_CPU_DESCRIPTOR_HANDLE *src_descriptor_range_offsets,
         const UINT *src_descriptor_range_sizes,
         D3D12_DESCRIPTOR_HEAP_TYPE descriptor_heap_type)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     unsigned int dst_range_idx, dst_idx, src_range_idx, src_idx;
     unsigned int dst_range_size, src_range_size;
     struct d3d12_descriptor_heap *dst_heap;
@@ -3719,7 +4208,7 @@ static void STDMETHODCALLTYPE d3d12_device_CopyDescriptors(ID3D12Device7 *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d12_device_CopyDescriptorsSimple(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_CopyDescriptorsSimple(ID3D12Device9 *iface,
         UINT descriptor_count, const D3D12_CPU_DESCRIPTOR_HANDLE dst_descriptor_range_offset,
         const D3D12_CPU_DESCRIPTOR_HANDLE src_descriptor_range_offset,
         D3D12_DESCRIPTOR_HEAP_TYPE descriptor_heap_type)
@@ -3850,10 +4339,10 @@ static void d3d12_device_get_resource_allocation_info(struct d3d12_device *devic
 }
 
 static D3D12_RESOURCE_ALLOCATION_INFO * STDMETHODCALLTYPE d3d12_device_GetResourceAllocationInfo(
-        ID3D12Device7 *iface, D3D12_RESOURCE_ALLOCATION_INFO *info, UINT visible_mask,
+        ID3D12Device9 *iface, D3D12_RESOURCE_ALLOCATION_INFO *info, UINT visible_mask,
         UINT count, const D3D12_RESOURCE_DESC *resource_descs)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, info %p, visible_mask 0x%08x, count %u, resource_descs %p.\n",
             iface, info, visible_mask, count, resource_descs);
@@ -3865,10 +4354,10 @@ static D3D12_RESOURCE_ALLOCATION_INFO * STDMETHODCALLTYPE d3d12_device_GetResour
     return info;
 }
 
-static D3D12_HEAP_PROPERTIES * STDMETHODCALLTYPE d3d12_device_GetCustomHeapProperties(ID3D12Device7 *iface,
+static D3D12_HEAP_PROPERTIES * STDMETHODCALLTYPE d3d12_device_GetCustomHeapProperties(ID3D12Device9 *iface,
         D3D12_HEAP_PROPERTIES *heap_properties, UINT node_mask, D3D12_HEAP_TYPE heap_type)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     bool coherent;
 
     TRACE("iface %p, heap_properties %p, node_mask 0x%08x, heap_type %#x.\n",
@@ -3908,12 +4397,12 @@ static D3D12_HEAP_PROPERTIES * STDMETHODCALLTYPE d3d12_device_GetCustomHeapPrope
     return heap_properties;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource(ID3D12Device9 *iface,
         const D3D12_HEAP_PROPERTIES *heap_properties, D3D12_HEAP_FLAGS heap_flags,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
         const D3D12_CLEAR_VALUE *optimized_clear_value, REFIID iid, void **resource)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     D3D12_RESOURCE_DESC1 resource_desc;
     struct d3d12_resource *object;
     HRESULT hr;
@@ -3935,10 +4424,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource(ID3D12Devi
     return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap(ID3D12Device9 *iface,
         const D3D12_HEAP_DESC *desc, REFIID iid, void **heap)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_heap *object;
     HRESULT hr;
 
@@ -3954,12 +4443,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap(ID3D12Device7 *iface,
     return return_interface(&object->ID3D12Heap_iface, &IID_ID3D12Heap, iid, heap);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePlacedResource(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePlacedResource(ID3D12Device9 *iface,
         ID3D12Heap *heap, UINT64 heap_offset,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
         const D3D12_CLEAR_VALUE *optimized_clear_value, REFIID iid, void **resource)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     D3D12_RESOURCE_DESC1 resource_desc;
     struct d3d12_heap *heap_object;
     struct d3d12_resource *object;
@@ -3980,11 +4469,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePlacedResource(ID3D12Device7
     return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource(ID3D12Device9 *iface,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
         const D3D12_CLEAR_VALUE *optimized_clear_value, REFIID iid, void **resource)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     D3D12_RESOURCE_DESC1 resource_desc;
     struct d3d12_resource *object;
     HRESULT hr;
@@ -4001,11 +4490,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource(ID3D12Devic
     return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateSharedHandle(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateSharedHandle(ID3D12Device9 *iface,
         ID3D12DeviceChild *object, const SECURITY_ATTRIBUTES *attributes, DWORD access,
         const WCHAR *name, HANDLE *handle)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     FIXME("iface %p, object %p, attributes %p, access %#x, name %s, handle %p stub!\n",
             iface, object, attributes, (uint32_t)access, debugstr_w(name, device->wchar_size), handle);
@@ -4013,7 +4502,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateSharedHandle(ID3D12Device7 *
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandle(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandle(ID3D12Device9 *iface,
         HANDLE handle, REFIID riid, void **object)
 {
     FIXME("iface %p, handle %p, riid %s, object %p stub!\n",
@@ -4022,10 +4511,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandle(ID3D12Device7 *if
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandleByName(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandleByName(ID3D12Device9 *iface,
         const WCHAR *name, DWORD access, HANDLE *handle)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     FIXME("iface %p, name %s, access %#x, handle %p stub!\n",
             iface, debugstr_w(name, device->wchar_size), (uint32_t)access, handle);
@@ -4033,7 +4522,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_OpenSharedHandleByName(ID3D12Devic
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_MakeResident(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_MakeResident(ID3D12Device9 *iface,
         UINT object_count, ID3D12Pageable * const *objects)
 {
     ID3D12Fence *fence;
@@ -4041,17 +4530,17 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_MakeResident(ID3D12Device7 *iface,
 
     TRACE("iface %p, object_count %u, objects %p.\n", iface, object_count, objects);
 
-    if (FAILED(hr = ID3D12Device7_CreateFence(iface, 0, 0, &IID_ID3D12Fence, (void **)&fence)))
+    if (FAILED(hr = ID3D12Device9_CreateFence(iface, 0, 0, &IID_ID3D12Fence, (void **)&fence)))
         return hr;
 
-    hr = ID3D12Device7_EnqueueMakeResident(iface, 0, object_count, objects, fence, 1);
+    hr = ID3D12Device9_EnqueueMakeResident(iface, 0, object_count, objects, fence, 1);
     if (SUCCEEDED(hr))
         ID3D12Fence_SetEventOnCompletion(fence, 1, NULL);
     ID3D12Fence_Release(fence);
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_Evict(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_Evict(ID3D12Device9 *iface,
         UINT object_count, ID3D12Pageable * const *objects)
 {
     FIXME_ONCE("iface %p, object_count %u, objects %p stub!\n",
@@ -4060,10 +4549,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_Evict(ID3D12Device7 *iface,
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateFence(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateFence(ID3D12Device9 *iface,
         UINT64 initial_value, D3D12_FENCE_FLAGS flags, REFIID riid, void **fence)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_fence *object;
     HRESULT hr;
 
@@ -4076,9 +4565,9 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateFence(ID3D12Device7 *iface,
     return return_interface(&object->ID3D12Fence1_iface, &IID_ID3D12Fence1, riid, fence);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_GetDeviceRemovedReason(ID3D12Device7 *iface)
+static HRESULT STDMETHODCALLTYPE d3d12_device_GetDeviceRemovedReason(ID3D12Device9 *iface)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -4163,12 +4652,12 @@ static void d3d12_device_get_copyable_footprints(struct d3d12_device *device,
         *total_bytes = total;
 }
 
-static void STDMETHODCALLTYPE d3d12_device_GetCopyableFootprints(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_GetCopyableFootprints(ID3D12Device9 *iface,
         const D3D12_RESOURCE_DESC *desc, UINT first_sub_resource, UINT sub_resource_count,
         UINT64 base_offset, D3D12_PLACED_SUBRESOURCE_FOOTPRINT *layouts,
         UINT *row_counts, UINT64 *row_sizes, UINT64 *total_bytes)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     D3D12_RESOURCE_DESC1 resource_desc;
 
     TRACE("iface %p, desc %p, first_sub_resource %u, sub_resource_count %u, base_offset %#"PRIx64", "
@@ -4182,10 +4671,10 @@ static void STDMETHODCALLTYPE d3d12_device_GetCopyableFootprints(ID3D12Device7 *
             base_offset, layouts, row_counts, row_sizes, total_bytes);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateQueryHeap(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateQueryHeap(ID3D12Device9 *iface,
         const D3D12_QUERY_HEAP_DESC *desc, REFIID iid, void **heap)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_query_heap *object;
     HRESULT hr;
 
@@ -4198,18 +4687,18 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateQueryHeap(ID3D12Device7 *ifa
     return return_interface(&object->ID3D12QueryHeap_iface, &IID_ID3D12QueryHeap, iid, heap);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetStablePowerState(ID3D12Device7 *iface, BOOL enable)
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetStablePowerState(ID3D12Device9 *iface, BOOL enable)
 {
     FIXME("iface %p, enable %#x stub!\n", iface, enable);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandSignature(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandSignature(ID3D12Device9 *iface,
         const D3D12_COMMAND_SIGNATURE_DESC *desc, ID3D12RootSignature *root_signature,
         REFIID iid, void **command_signature)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_command_signature *object;
     HRESULT hr;
 
@@ -4223,14 +4712,14 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandSignature(ID3D12Devic
             &IID_ID3D12CommandSignature, iid, command_signature);
 }
 
-static void STDMETHODCALLTYPE d3d12_device_GetResourceTiling(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_GetResourceTiling(ID3D12Device9 *iface,
         ID3D12Resource *resource, UINT *total_tile_count,
         D3D12_PACKED_MIP_INFO *packed_mip_info, D3D12_TILE_SHAPE *standard_tile_shape,
         UINT *sub_resource_tiling_count, UINT first_sub_resource_tiling,
         D3D12_SUBRESOURCE_TILING *sub_resource_tilings)
 {
     const struct d3d12_resource *resource_impl = impl_from_ID3D12Resource(resource);
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, resource %p, total_tile_count %p, packed_mip_info %p, "
             "standard_title_shape %p, sub_resource_tiling_count %p, "
@@ -4243,9 +4732,9 @@ static void STDMETHODCALLTYPE d3d12_device_GetResourceTiling(ID3D12Device7 *ifac
             sub_resource_tiling_count, first_sub_resource_tiling, sub_resource_tilings);
 }
 
-static LUID * STDMETHODCALLTYPE d3d12_device_GetAdapterLuid(ID3D12Device7 *iface, LUID *luid)
+static LUID * STDMETHODCALLTYPE d3d12_device_GetAdapterLuid(ID3D12Device9 *iface, LUID *luid)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, luid %p.\n", iface, luid);
 
@@ -4254,7 +4743,7 @@ static LUID * STDMETHODCALLTYPE d3d12_device_GetAdapterLuid(ID3D12Device7 *iface
     return luid;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineLibrary(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineLibrary(ID3D12Device9 *iface,
         const void *blob, SIZE_T blob_size, REFIID iid, void **lib)
 {
     FIXME("iface %p, blob %p, blob_size %"PRIuPTR", iid %s, lib %p stub!\n",
@@ -4263,7 +4752,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineLibrary(ID3D12Device
     return DXGI_ERROR_UNSUPPORTED;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(ID3D12Device9 *iface,
         ID3D12Fence *const *fences, const UINT64 *values, UINT fence_count,
         D3D12_MULTIPLE_FENCE_WAIT_FLAGS flags, HANDLE event)
 {
@@ -4273,7 +4762,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetEventOnMultipleFenceCompletion(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetResidencyPriority(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetResidencyPriority(ID3D12Device9 *iface,
         UINT object_count, ID3D12Pageable *const *objects, const D3D12_RESIDENCY_PRIORITY *priorities)
 {
     FIXME_ONCE("iface %p, object_count %u, objects %p, priorities %p stub!\n", iface, object_count, objects, priorities);
@@ -4281,10 +4770,10 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetResidencyPriority(ID3D12Device7
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineState(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineState(ID3D12Device9 *iface,
         const D3D12_PIPELINE_STATE_STREAM_DESC *desc, REFIID iid, void **pipeline_state)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_pipeline_state *object;
     HRESULT hr;
 
@@ -4296,7 +4785,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePipelineState(ID3D12Device7 
     return return_interface(&object->ID3D12PipelineState_iface, &IID_ID3D12PipelineState, iid, pipeline_state);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromAddress(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromAddress(ID3D12Device9 *iface,
         const void *address, REFIID iid, void **heap)
 {
     FIXME("iface %p, address %p, iid %s, heap %p stub!\n", iface, address, debugstr_guid(iid), heap);
@@ -4304,7 +4793,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromAddress(ID3D12
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromFileMapping(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromFileMapping(ID3D12Device9 *iface,
         HANDLE file_mapping, REFIID iid, void **heap)
 {
     FIXME("iface %p, file_mapping %p, iid %s, heap %p stub!\n", iface, file_mapping, debugstr_guid(iid), heap);
@@ -4312,7 +4801,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_OpenExistingHeapFromFileMapping(ID
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_EnqueueMakeResident(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_EnqueueMakeResident(ID3D12Device9 *iface,
         D3D12_RESIDENCY_FLAGS flags, UINT num_objects, ID3D12Pageable *const *objects,
         ID3D12Fence *fence, UINT64 fence_value)
 {
@@ -4323,7 +4812,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_EnqueueMakeResident(ID3D12Device7 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList1(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList1(ID3D12Device9 *iface,
         UINT node_mask, D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_LIST_FLAGS flags,
         REFIID iid, void **command_list)
 {
@@ -4333,7 +4822,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandList1(ID3D12Device7 *
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession(ID3D12Device9 *iface,
         const D3D12_PROTECTED_RESOURCE_SESSION_DESC *desc, REFIID iid, void **session)
 {
     FIXME("iface %p, desc %p, iid %s, session %p stub!\n", iface, desc, debugstr_guid(iid), session);
@@ -4341,13 +4830,13 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession(ID3
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource1(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource1(ID3D12Device9 *iface,
         const D3D12_HEAP_PROPERTIES *heap_properties, D3D12_HEAP_FLAGS heap_flags,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
         const D3D12_CLEAR_VALUE *optimized_clear_value,
         ID3D12ProtectedResourceSession *protected_session, REFIID iid, void **resource)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     D3D12_RESOURCE_DESC1 resource_desc;
     struct d3d12_resource *object;
     HRESULT hr;
@@ -4369,11 +4858,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource1(ID3D12Dev
     return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap1(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap1(ID3D12Device9 *iface,
         const D3D12_HEAP_DESC *desc, ID3D12ProtectedResourceSession *protected_session,
         REFIID iid, void **heap)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
     struct d3d12_heap *object;
     HRESULT hr;
 
@@ -4389,7 +4878,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateHeap1(ID3D12Device7 *iface,
     return return_interface(&object->ID3D12Heap_iface, &IID_ID3D12Heap, iid, heap);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource1(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource1(ID3D12Device9 *iface,
         const D3D12_RESOURCE_DESC *desc, D3D12_RESOURCE_STATES initial_state,
         const D3D12_CLEAR_VALUE *optimized_clear_value,
         ID3D12ProtectedResourceSession *protected_session, REFIID iid, void **resource)
@@ -4403,11 +4892,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateReservedResource1(ID3D12Devi
 }
 
 static D3D12_RESOURCE_ALLOCATION_INFO * STDMETHODCALLTYPE d3d12_device_GetResourceAllocationInfo1(
-        ID3D12Device7 *iface, D3D12_RESOURCE_ALLOCATION_INFO *info, UINT visible_mask,
+        ID3D12Device9 *iface, D3D12_RESOURCE_ALLOCATION_INFO *info, UINT visible_mask,
         UINT count, const D3D12_RESOURCE_DESC *resource_descs,
         D3D12_RESOURCE_ALLOCATION_INFO1 *info1)
 {
-    struct d3d12_device *device = impl_from_ID3D12Device7(iface);
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
 
     TRACE("iface %p, info %p, visible_mask 0x%08x, count %u, resource_descs %p, info1 %p.\n",
             iface, info, visible_mask, count, resource_descs, info1);
@@ -4419,7 +4908,7 @@ static D3D12_RESOURCE_ALLOCATION_INFO * STDMETHODCALLTYPE d3d12_device_GetResour
     return info;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateLifetimeTracker(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateLifetimeTracker(ID3D12Device9 *iface,
         ID3D12LifetimeOwner *owner, REFIID iid, void **tracker)
 {
     FIXME("iface %p, owner %p, iid %s, tracker %p stub!\n", iface, owner, debugstr_guid(iid), tracker);
@@ -4427,12 +4916,12 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateLifetimeTracker(ID3D12Device
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d3d12_device_RemoveDevice(ID3D12Device7 *iface)
+static void STDMETHODCALLTYPE d3d12_device_RemoveDevice(ID3D12Device9 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommands(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommands(ID3D12Device9 *iface,
         UINT *num_meta_commands, D3D12_META_COMMAND_DESC *command_desc)
 {
     FIXME("iface %p, num_meta_commands %p, command_desc %p stub!\n", iface,
@@ -4441,7 +4930,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommands(ID3D12Device
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommandParameters(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommandParameters(ID3D12Device9 *iface,
         REFGUID command_id, D3D12_META_COMMAND_PARAMETER_STAGE stage,
         UINT *size_in_bytes, UINT *parameter_count,
         D3D12_META_COMMAND_PARAMETER_DESC *parameter_desc)
@@ -4453,7 +4942,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_EnumerateMetaCommandParameters(ID3
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateMetaCommand(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateMetaCommand(ID3D12Device9 *iface,
         REFGUID command_id, UINT node_mask, const void *parameters_data,
         SIZE_T data_size_in_bytes, REFIID iid, void **meta_command)
 {
@@ -4465,7 +4954,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateMetaCommand(ID3D12Device7 *i
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateStateObject(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateStateObject(ID3D12Device9 *iface,
         const D3D12_STATE_OBJECT_DESC *desc, REFIID iid, void **state_object)
 {
     FIXME("iface %p, desc %p, iid %s, state_object %p stub!\n", iface, desc, debugstr_guid(iid), state_object);
@@ -4473,14 +4962,14 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateStateObject(ID3D12Device7 *i
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d3d12_device_GetRaytracingAccelerationStructurePrebuildInfo(ID3D12Device7 *iface,
+static void STDMETHODCALLTYPE d3d12_device_GetRaytracingAccelerationStructurePrebuildInfo(ID3D12Device9 *iface,
         const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS *desc,
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO *info)
 {
     FIXME("iface %p, desc %p, info %p stub!\n", iface, desc, info);
 }
 
-static D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS STDMETHODCALLTYPE d3d12_device_CheckDriverMatchingIdentifier(ID3D12Device7 *iface,
+static D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS STDMETHODCALLTYPE d3d12_device_CheckDriverMatchingIdentifier(ID3D12Device9 *iface,
         D3D12_SERIALIZED_DATA_TYPE data_type, const D3D12_SERIALIZED_DATA_DRIVER_MATCHING_IDENTIFIER *identifier)
 {
     FIXME("iface %p, data_type %u, identifier %p stub!\n", iface, data_type, identifier);
@@ -4488,7 +4977,7 @@ static D3D12_DRIVER_MATCHING_IDENTIFIER_STATUS STDMETHODCALLTYPE d3d12_device_Ch
     return D3D12_DRIVER_MATCHING_IDENTIFIER_UNRECOGNIZED;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_SetBackgroundProcessingMode(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_SetBackgroundProcessingMode(ID3D12Device9 *iface,
         D3D12_BACKGROUND_PROCESSING_MODE mode, D3D12_MEASUREMENTS_ACTION action, HANDLE event,
         BOOL *further_measurements_desired)
 {
@@ -4498,7 +4987,8 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_SetBackgroundProcessingMode(ID3D12
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_AddToStateObject(ID3D12Device7 *iface,
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_AddToStateObject(ID3D12Device9 *iface,
         const D3D12_STATE_OBJECT_DESC *addition, ID3D12StateObject *state_object_to_grow_from,
         REFIID riid, void **new_state_object)
 {
@@ -4508,7 +4998,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_AddToStateObject(ID3D12Device7 *if
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession1(ID3D12Device7 *iface,
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession1(ID3D12Device9 *iface,
         const D3D12_PROTECTED_RESOURCE_SESSION_DESC1 *desc, REFIID riid, void **session)
 {
     FIXME("iface %p, desc %p, riid %s, session %p stub!\n", iface, desc, debugstr_guid(riid), session);
@@ -4516,7 +5006,167 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CreateProtectedResourceSession1(ID
     return E_NOTIMPL;
 }
 
-static const struct ID3D12Device7Vtbl d3d12_device_vtbl =
+static D3D12_RESOURCE_ALLOCATION_INFO * STDMETHODCALLTYPE d3d12_device_GetResourceAllocationInfo2(ID3D12Device9 *iface,
+        D3D12_RESOURCE_ALLOCATION_INFO *info, UINT visible_mask, UINT count,
+        const D3D12_RESOURCE_DESC1 *resource_descs, D3D12_RESOURCE_ALLOCATION_INFO1 *info1)
+{
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+
+    TRACE("iface %p, info %p, visible_mask 0x%08x, count %u, resource_descs %p, info1 %p.\n",
+            iface, info, visible_mask, count, resource_descs, info1);
+
+    debug_ignored_node_mask(visible_mask);
+
+    d3d12_device_get_resource1_allocation_info(device, info1, count, resource_descs, info);
+
+    return info;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommittedResource2(ID3D12Device9 *iface,
+        const D3D12_HEAP_PROPERTIES *heap_properties, D3D12_HEAP_FLAGS heap_flags, const D3D12_RESOURCE_DESC1 *desc,
+        D3D12_RESOURCE_STATES initial_state, const D3D12_CLEAR_VALUE *optimized_clear_value,
+        ID3D12ProtectedResourceSession *protected_session, REFIID iid, void **resource)
+{
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+    struct d3d12_resource *object;
+    HRESULT hr;
+
+    TRACE("iface %p, heap_properties %p, heap_flags %#x, desc %p, initial_state %#x, "
+            "optimized_clear_value %p, protected_session %p, iid %s, resource %p.\n",
+            iface, heap_properties, heap_flags, desc, initial_state,
+            optimized_clear_value, protected_session, debugstr_guid(iid), resource);
+
+    if (FAILED(hr = d3d12_committed_resource_create(device, heap_properties, heap_flags,
+            desc, initial_state, optimized_clear_value, protected_session, &object)))
+    {
+        *resource = NULL;
+        return hr;
+    }
+
+    return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreatePlacedResource1(ID3D12Device9 *iface,
+        ID3D12Heap *heap, UINT64 heap_offset, const D3D12_RESOURCE_DESC1 *resource_desc,
+        D3D12_RESOURCE_STATES initial_state, const D3D12_CLEAR_VALUE *optimized_clear_value,
+        REFIID iid, void **resource)
+{
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+    struct d3d12_heap *heap_object;
+    struct d3d12_resource *object;
+    HRESULT hr;
+
+    TRACE("iface %p, heap %p, heap_offset %#"PRIx64", desc %p, initial_state %#x, "
+            "optimized_clear_value %p, iid %s, resource %p.\n",
+            iface, heap, heap_offset, resource_desc, initial_state,
+            optimized_clear_value, debugstr_guid(iid), resource);
+
+    heap_object = unsafe_impl_from_ID3D12Heap(heap);
+
+    if (FAILED(hr = d3d12_placed_resource_create(device, heap_object, heap_offset,
+            resource_desc, initial_state, optimized_clear_value, &object)))
+        return hr;
+
+    return return_interface(&object->ID3D12Resource2_iface, &IID_ID3D12Resource2, iid, resource);
+}
+
+static void STDMETHODCALLTYPE d3d12_device_CreateSamplerFeedbackUnorderedAccessView(ID3D12Device9 *iface,
+        ID3D12Resource *target_resource, ID3D12Resource *feedback_resource, D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+{
+    FIXME("iface %p, target_resource %p, feedback_resource %p, descriptor %s stub!\n",
+            iface, target_resource, feedback_resource, debug_cpu_handle(descriptor));
+}
+
+static void STDMETHODCALLTYPE d3d12_device_GetCopyableFootprints1(ID3D12Device9 *iface,
+        const D3D12_RESOURCE_DESC1 *desc, UINT first_sub_resource, UINT sub_resource_count,
+        UINT64 base_offset, D3D12_PLACED_SUBRESOURCE_FOOTPRINT *layouts, UINT *row_counts,
+        UINT64 *row_sizes, UINT64 *total_bytes)
+{
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+
+    TRACE("iface %p, desc %p, first_sub_resource %u, sub_resource_count %u, base_offset %#"PRIx64", "
+            "layouts %p, row_counts %p, row_sizes %p, total_bytes %p.\n",
+            iface, desc, first_sub_resource, sub_resource_count, base_offset,
+            layouts, row_counts, row_sizes, total_bytes);
+
+    d3d12_device_get_copyable_footprints(device, desc, first_sub_resource, sub_resource_count,
+            base_offset, layouts, row_counts, row_sizes, total_bytes);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateShaderCacheSession(ID3D12Device9 *iface,
+        const D3D12_SHADER_CACHE_SESSION_DESC *desc, REFIID iid, void **session)
+{
+    struct d3d12_device *device = impl_from_ID3D12Device9(iface);
+    struct d3d12_cache_session *object;
+    static const GUID guid_null = {0};
+    HRESULT hr;
+
+    static const UINT valid_flags = D3D12_SHADER_CACHE_FLAG_DRIVER_VERSIONED
+            | D3D12_SHADER_CACHE_FLAG_USE_WORKING_DIR;
+
+    TRACE("iface %p, desc %p, iid %s, session %p.\n", iface, desc, debugstr_guid(iid), session);
+
+    if (!desc || !memcmp(&desc->Identifier, &guid_null, sizeof(desc->Identifier)))
+    {
+        WARN("No description or identifier, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+    if (desc->MaximumValueFileSizeBytes > 1024 * 1024 * 1024)
+    {
+        WARN("Requested size is larger than 1GiB, returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+    if (desc->Flags & ~valid_flags)
+    {
+        WARN("Invalid flags %#x, returning E_INVALIDARG.\n", desc->Flags);
+        return E_INVALIDARG;
+    }
+    if (desc->Mode != D3D12_SHADER_CACHE_MODE_MEMORY && desc->Mode != D3D12_SHADER_CACHE_MODE_DISK)
+    {
+        WARN("Invalid mode %#x, returning E_INVALIDARG.\n", desc->Mode);
+        return E_INVALIDARG;
+    }
+    if (!session)
+    {
+        WARN("No output pointer, returning S_FALSE.\n");
+        return S_FALSE;
+    }
+    *session = NULL;
+
+    if (!(object = vkd3d_malloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d12_cache_session_init(object, device, desc)))
+    {
+        vkd3d_free(object);
+        return hr;
+    }
+
+    hr = ID3D12ShaderCacheSession_QueryInterface(&object->ID3D12ShaderCacheSession_iface, iid,
+            session);
+    ID3D12ShaderCacheSession_Release(&object->ID3D12ShaderCacheSession_iface);
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_ShaderCacheControl(ID3D12Device9 *iface,
+        D3D12_SHADER_CACHE_KIND_FLAGS kinds, D3D12_SHADER_CACHE_CONTROL_FLAGS control)
+{
+    FIXME("iface %p, kinds %#x control %#x stub!\n", iface, kinds, control);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d12_device_CreateCommandQueue1(ID3D12Device9 *iface,
+        const D3D12_COMMAND_QUEUE_DESC *desc, REFIID creator_id, REFIID iid,
+        void **command_queue)
+{
+    FIXME("iface %p, desc %p, creator %s, iid %s, queue %p stub!\n", iface, desc,
+            debugstr_guid(creator_id), debugstr_guid(iid), command_queue);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D12Device9Vtbl d3d12_device_vtbl =
 {
     /* IUnknown methods */
     d3d12_device_QueryInterface,
@@ -4596,14 +5246,24 @@ static const struct ID3D12Device7Vtbl d3d12_device_vtbl =
     /* ID3D12Device7 methods */
     d3d12_device_AddToStateObject,
     d3d12_device_CreateProtectedResourceSession1,
+    /* ID3D12Device8 methods */
+    d3d12_device_GetResourceAllocationInfo2,
+    d3d12_device_CreateCommittedResource2,
+    d3d12_device_CreatePlacedResource1,
+    d3d12_device_CreateSamplerFeedbackUnorderedAccessView,
+    d3d12_device_GetCopyableFootprints1,
+    /* ID3D12Device9 methods */
+    d3d12_device_CreateShaderCacheSession,
+    d3d12_device_ShaderCacheControl,
+    d3d12_device_CreateCommandQueue1,
 };
 
-struct d3d12_device *unsafe_impl_from_ID3D12Device7(ID3D12Device7 *iface)
+struct d3d12_device *unsafe_impl_from_ID3D12Device9(ID3D12Device9 *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == &d3d12_device_vtbl);
-    return impl_from_ID3D12Device7(iface);
+    return impl_from_ID3D12Device9(iface);
 }
 
 static void *device_worker_main(void *arg)
@@ -4646,13 +5306,15 @@ static HRESULT d3d12_device_init(struct d3d12_device *device,
     const struct vkd3d_vk_device_procs *vk_procs;
     HRESULT hr;
 
-    device->ID3D12Device7_iface.lpVtbl = &d3d12_device_vtbl;
+    device->ID3D12Device9_iface.lpVtbl = &d3d12_device_vtbl;
     device->refcount = 1;
 
     vkd3d_instance_incref(device->vkd3d_instance = instance);
     device->vk_info = instance->vk_info;
     device->signal_event = instance->signal_event;
     device->wchar_size = instance->wchar_size;
+    device->environment = (instance->vk_api_version >= VK_API_VERSION_1_1)
+            ? VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_1 : VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0;
 
     device->adapter_luid = create_info->adapter_luid;
     device->removed_reason = S_OK;
@@ -4894,28 +5556,28 @@ HRESULT vkd3d_join_thread(struct vkd3d_instance *instance, union vkd3d_thread_ha
 
 IUnknown *vkd3d_get_device_parent(ID3D12Device *device)
 {
-    struct d3d12_device *d3d12_device = impl_from_ID3D12Device7((ID3D12Device7 *)device);
+    struct d3d12_device *d3d12_device = impl_from_ID3D12Device9((ID3D12Device9 *)device);
 
     return d3d12_device->parent;
 }
 
 VkDevice vkd3d_get_vk_device(ID3D12Device *device)
 {
-    struct d3d12_device *d3d12_device = impl_from_ID3D12Device7((ID3D12Device7 *)device);
+    struct d3d12_device *d3d12_device = impl_from_ID3D12Device9((ID3D12Device9 *)device);
 
     return d3d12_device->vk_device;
 }
 
 VkPhysicalDevice vkd3d_get_vk_physical_device(ID3D12Device *device)
 {
-    struct d3d12_device *d3d12_device = impl_from_ID3D12Device7((ID3D12Device7 *)device);
+    struct d3d12_device *d3d12_device = impl_from_ID3D12Device9((ID3D12Device9 *)device);
 
     return d3d12_device->vk_physical_device;
 }
 
 struct vkd3d_instance *vkd3d_instance_from_device(ID3D12Device *device)
 {
-    struct d3d12_device *d3d12_device = impl_from_ID3D12Device7((ID3D12Device7 *)device);
+    struct d3d12_device *d3d12_device = impl_from_ID3D12Device9((ID3D12Device9 *)device);
 
     return d3d12_device->vkd3d_instance;
 }

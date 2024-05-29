@@ -25,10 +25,10 @@
 static bool fold_abs(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -116,10 +116,10 @@ static int32_t double_to_int(double x)
 static bool fold_bit_not(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -158,7 +158,7 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
-        switch (src->node.data_type->base_type)
+        switch (src->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -200,7 +200,7 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
                 vkd3d_unreachable();
         }
 
-        switch (dst_type->base_type)
+        switch (dst_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -231,10 +231,10 @@ static bool fold_cast(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_ceil(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -257,10 +257,10 @@ static bool fold_ceil(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_exp2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -283,10 +283,10 @@ static bool fold_exp2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_floor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -309,11 +309,11 @@ static bool fold_floor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_fract(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
     float i;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -336,10 +336,10 @@ static bool fold_fract(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_log2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src, const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -381,10 +381,10 @@ static bool fold_log2(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
 static bool fold_neg(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -415,10 +415,10 @@ static bool fold_neg(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_not(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
         const struct hlsl_type *dst_type, const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -439,10 +439,10 @@ static bool fold_not(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst,
 static bool fold_rcp(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src, const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -484,10 +484,10 @@ static bool fold_rcp(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_rsq(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src, const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -524,10 +524,10 @@ static bool fold_rsq(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_sat(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -550,10 +550,10 @@ static bool fold_sat(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_sqrt(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src, const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src->node.data_type->base_type);
+    assert(type == src->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -595,11 +595,11 @@ static bool fold_sqrt(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
 static bool fold_add(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -632,11 +632,11 @@ static bool fold_add(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_and(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -659,11 +659,11 @@ static bool fold_and(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_or(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -686,11 +686,11 @@ static bool fold_or(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const
 static bool fold_bit_xor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -712,11 +712,11 @@ static bool fold_bit_xor(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, 
 static bool fold_dot(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
     assert(src1->node.data_type->dimx == src2->node.data_type->dimx);
 
     dst->u[0].f = 0.0f;
@@ -740,12 +740,12 @@ static bool fold_dot(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_dp2add(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2, const struct hlsl_ir_constant *src3)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
-    assert(type == src3->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
+    assert(type == src3->node.data_type->e.numeric.type);
     assert(src1->node.data_type->dimx == src2->node.data_type->dimx);
     assert(src3->node.data_type->dimx == 1);
 
@@ -771,11 +771,11 @@ static bool fold_div(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2,
         const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -841,12 +841,12 @@ static bool fold_equal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, co
 {
     unsigned int k;
 
-    assert(dst_type->base_type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->base_type == src2->node.data_type->base_type);
+    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -877,12 +877,12 @@ static bool fold_gequal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->base_type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->base_type == src2->node.data_type->base_type);
+    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -916,12 +916,12 @@ static bool fold_less(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, con
 {
     unsigned int k;
 
-    assert(dst_type->base_type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->base_type == src2->node.data_type->base_type);
+    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -955,14 +955,14 @@ static bool fold_lshift(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->base_type == src1->node.data_type->base_type);
-    assert(src2->node.data_type->base_type == HLSL_TYPE_INT);
+    assert(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
+    assert(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
         unsigned int shift = src2->value.u[k].u % 32;
 
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_INT:
                 dst->u[k].i = src1->value.u[k].i << shift;
@@ -983,11 +983,11 @@ static bool fold_lshift(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 static bool fold_max(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1021,11 +1021,11 @@ static bool fold_max(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_min(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1060,11 +1060,11 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2,
         const struct vkd3d_shader_location *loc)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1102,11 +1102,11 @@ static bool fold_mod(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, cons
 static bool fold_mul(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, const struct hlsl_type *dst_type,
         const struct hlsl_ir_constant *src1, const struct hlsl_ir_constant *src2)
 {
-    enum hlsl_base_type type = dst_type->base_type;
+    enum hlsl_base_type type = dst_type->e.numeric.type;
     unsigned int k;
 
-    assert(type == src1->node.data_type->base_type);
-    assert(type == src2->node.data_type->base_type);
+    assert(type == src1->node.data_type->e.numeric.type);
+    assert(type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
@@ -1139,12 +1139,12 @@ static bool fold_nequal(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->base_type == HLSL_TYPE_BOOL);
-    assert(src1->node.data_type->base_type == src2->node.data_type->base_type);
+    assert(dst_type->e.numeric.type == HLSL_TYPE_BOOL);
+    assert(src1->node.data_type->e.numeric.type == src2->node.data_type->e.numeric.type);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_FLOAT:
             case HLSL_TYPE_HALF:
@@ -1175,32 +1175,13 @@ static bool fold_ternary(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, 
 {
     unsigned int k;
 
-    assert(dst_type->base_type == src2->node.data_type->base_type);
-    assert(dst_type->base_type == src3->node.data_type->base_type);
+    assert(dst_type->e.numeric.type == src2->node.data_type->e.numeric.type);
+    assert(dst_type->e.numeric.type == src3->node.data_type->e.numeric.type);
+    assert(src1->node.data_type->e.numeric.type == HLSL_TYPE_BOOL);
 
     for (k = 0; k < dst_type->dimx; ++k)
-    {
-        switch (src1->node.data_type->base_type)
-        {
-            case HLSL_TYPE_FLOAT:
-            case HLSL_TYPE_HALF:
-                dst->u[k] = src1->value.u[k].f != 0.0f ? src2->value.u[k] : src3->value.u[k];
-                break;
+        dst->u[k] = src1->value.u[k].u ? src2->value.u[k] : src3->value.u[k];
 
-            case HLSL_TYPE_DOUBLE:
-                dst->u[k] = src1->value.u[k].d != 0.0 ? src2->value.u[k] : src3->value.u[k];
-                break;
-
-            case HLSL_TYPE_INT:
-            case HLSL_TYPE_UINT:
-            case HLSL_TYPE_BOOL:
-                dst->u[k] = src1->value.u[k].u ? src2->value.u[k] : src3->value.u[k];
-                break;
-
-            default:
-                vkd3d_unreachable();
-        }
-    }
     return true;
 }
 
@@ -1209,14 +1190,14 @@ static bool fold_rshift(struct hlsl_ctx *ctx, struct hlsl_constant_value *dst, c
 {
     unsigned int k;
 
-    assert(dst_type->base_type == src1->node.data_type->base_type);
-    assert(src2->node.data_type->base_type == HLSL_TYPE_INT);
+    assert(dst_type->e.numeric.type == src1->node.data_type->e.numeric.type);
+    assert(src2->node.data_type->e.numeric.type == HLSL_TYPE_INT);
 
     for (k = 0; k < dst_type->dimx; ++k)
     {
         unsigned int shift = src2->value.u[k].u % 32;
 
-        switch (src1->node.data_type->base_type)
+        switch (src1->node.data_type->e.numeric.type)
         {
             case HLSL_TYPE_INT:
                 dst->u[k].i = src1->value.u[k].i >> shift;
@@ -1413,6 +1394,136 @@ bool hlsl_fold_constant_exprs(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, 
         hlsl_replace_node(&expr->node, res_node);
     }
     return success;
+}
+
+static bool constant_is_zero(struct hlsl_ir_constant *const_arg)
+{
+    struct hlsl_type *data_type = const_arg->node.data_type;
+    unsigned int k;
+
+    for (k = 0; k < data_type->dimx; ++k)
+    {
+        switch (data_type->e.numeric.type)
+        {
+            case HLSL_TYPE_FLOAT:
+            case HLSL_TYPE_HALF:
+                if (const_arg->value.u[k].f != 0.0f)
+                    return false;
+                break;
+
+            case HLSL_TYPE_DOUBLE:
+                if (const_arg->value.u[k].d != 0.0)
+                    return false;
+                break;
+
+            case HLSL_TYPE_UINT:
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_BOOL:
+                if (const_arg->value.u[k].u != 0)
+                    return false;
+                break;
+
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+static bool constant_is_one(struct hlsl_ir_constant *const_arg)
+{
+    struct hlsl_type *data_type = const_arg->node.data_type;
+    unsigned int k;
+
+    for (k = 0; k < data_type->dimx; ++k)
+    {
+        switch (data_type->e.numeric.type)
+        {
+            case HLSL_TYPE_FLOAT:
+            case HLSL_TYPE_HALF:
+                if (const_arg->value.u[k].f != 1.0f)
+                    return false;
+                break;
+
+            case HLSL_TYPE_DOUBLE:
+                if (const_arg->value.u[k].d != 1.0)
+                    return false;
+                break;
+
+            case HLSL_TYPE_UINT:
+            case HLSL_TYPE_INT:
+            case HLSL_TYPE_BOOL:
+                if (const_arg->value.u[k].u != 1)
+                    return false;
+                break;
+
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
+bool hlsl_fold_constant_identities(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)
+{
+    struct hlsl_ir_constant *const_arg = NULL;
+    struct hlsl_ir_node *mut_arg = NULL;
+    struct hlsl_ir_node *res_node;
+    struct hlsl_ir_expr *expr;
+    unsigned int i;
+
+    if (instr->type != HLSL_IR_EXPR)
+        return false;
+    expr = hlsl_ir_expr(instr);
+
+    if (instr->data_type->class > HLSL_CLASS_VECTOR)
+        return false;
+
+    /* Verify that the expression has two operands. */
+    for (i = 0; i < ARRAY_SIZE(expr->operands); ++i)
+    {
+        if (!!expr->operands[i].node != (i < 2))
+            return false;
+    }
+
+    if (expr->operands[0].node->type == HLSL_IR_CONSTANT)
+    {
+        const_arg = hlsl_ir_constant(expr->operands[0].node);
+        mut_arg = expr->operands[1].node;
+    }
+    else if (expr->operands[1].node->type == HLSL_IR_CONSTANT)
+    {
+        mut_arg = expr->operands[0].node;
+        const_arg = hlsl_ir_constant(expr->operands[1].node);
+    }
+    else
+    {
+        return false;
+    }
+
+    res_node = NULL;
+    switch (expr->op)
+    {
+        case HLSL_OP2_ADD:
+            if (constant_is_zero(const_arg))
+                res_node = mut_arg;
+            break;
+
+        case HLSL_OP2_MUL:
+            if (constant_is_one(const_arg))
+                res_node = mut_arg;
+            break;
+
+        default:
+            break;
+    }
+
+    if (res_node)
+    {
+        hlsl_replace_node(&expr->node, res_node);
+        return true;
+    }
+    return false;
 }
 
 bool hlsl_fold_constant_swizzles(struct hlsl_ctx *ctx, struct hlsl_ir_node *instr, void *context)

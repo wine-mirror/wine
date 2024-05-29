@@ -71,11 +71,11 @@ HRESULT vkd3d_create_device(const struct vkd3d_device_create_info *create_info,
 
     if (!device)
     {
-        ID3D12Device_Release(&object->ID3D12Device7_iface);
+        ID3D12Device9_Release(&object->ID3D12Device9_iface);
         return S_FALSE;
     }
 
-    return return_interface(&object->ID3D12Device7_iface, &IID_ID3D12Device, iid, device);
+    return return_interface(&object->ID3D12Device9_iface, &IID_ID3D12Device, iid, device);
 }
 
 /* ID3D12RootSignatureDeserializer */
@@ -453,11 +453,10 @@ HRESULT vkd3d_serialize_root_signature(const D3D12_ROOT_SIGNATURE_DESC *desc,
     if ((ret = vkd3d_shader_serialize_root_signature(&vkd3d_desc, &dxbc, &messages)) < 0)
     {
         WARN("Failed to serialize root signature, vkd3d result %d.\n", ret);
-        if (error_blob && messages)
-        {
-            if (FAILED(hr = vkd3d_blob_create(messages, strlen(messages), error_blob)))
-                ERR("Failed to create error blob, hr %s.\n", debugstr_hresult(hr));
-        }
+        if (!error_blob)
+            vkd3d_shader_free_messages(messages);
+        else if (messages && FAILED(hr = vkd3d_blob_create(messages, strlen(messages), error_blob)))
+            ERR("Failed to create error blob, hr %s.\n", debugstr_hresult(hr));
         return hresult_from_vkd3d_result(ret);
     }
     vkd3d_shader_free_messages(messages);
@@ -494,11 +493,10 @@ HRESULT vkd3d_serialize_versioned_root_signature(const D3D12_VERSIONED_ROOT_SIGN
     if ((ret = vkd3d_shader_serialize_root_signature(vkd3d_desc, &dxbc, &messages)) < 0)
     {
         WARN("Failed to serialize root signature, vkd3d result %d.\n", ret);
-        if (error_blob && messages)
-        {
-            if (FAILED(hr = vkd3d_blob_create(messages, strlen(messages), error_blob)))
-                ERR("Failed to create error blob, hr %s.\n", debugstr_hresult(hr));
-        }
+        if (!error_blob)
+            vkd3d_shader_free_messages(messages);
+        else if (messages && FAILED(hr = vkd3d_blob_create(messages, strlen(messages), error_blob)))
+            ERR("Failed to create error blob, hr %s.\n", debugstr_hresult(hr));
         return hresult_from_vkd3d_result(ret);
     }
     vkd3d_shader_free_messages(messages);

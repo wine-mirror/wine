@@ -21,6 +21,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <vkd3d_types.h>
 
 #ifdef __cplusplus
@@ -53,6 +54,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_9,
     VKD3D_SHADER_API_VERSION_1_10,
     VKD3D_SHADER_API_VERSION_1_11,
+    VKD3D_SHADER_API_VERSION_1_12,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -148,6 +150,12 @@ enum vkd3d_shader_compile_option_formatting_flags
     VKD3D_SHADER_COMPILE_OPTION_FORMATTING_OFFSETS = 0x00000004,
     VKD3D_SHADER_COMPILE_OPTION_FORMATTING_HEADER  = 0x00000008,
     VKD3D_SHADER_COMPILE_OPTION_FORMATTING_RAW_IDS = 0x00000010,
+    /**
+     * Emit the signatures when disassembling a shader.
+     *
+     * \since 1.12
+     */
+    VKD3D_SHADER_COMPILE_OPTION_FORMATTING_IO_SIGNATURES = 0x00000020,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_FORMATTING_FLAGS),
 };
@@ -208,8 +216,31 @@ enum vkd3d_shader_compile_option_feature_flags
      * This corresponds to the "shaderFloat64" feature in the Vulkan API, and
      * the "GL_ARB_gpu_shader_fp64" extension in the OpenGL API. */
     VKD3D_SHADER_COMPILE_OPTION_FEATURE_FLOAT64       = 0x00000002,
+    /** The SPIR-V target environment supports wave operations.
+     * This flag is valid only in VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_1
+     * or greater, and corresponds to the following minimum requirements in
+     * VkPhysicalDeviceSubgroupProperties:
+     * - subgroupSize >= 4.
+     * - supportedOperations has BASIC, VOTE, ARITHMETIC, BALLOT, SHUFFLE and
+     *       QUAD bits set.
+     * - supportedStages include COMPUTE and FRAGMENT. \since 1.12 */
+    VKD3D_SHADER_COMPILE_OPTION_FEATURE_WAVE_OPS      = 0x00000004,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_FEATURE_FLAGS),
+};
+
+/**
+ * Flags for vkd3d_shader_parse_dxbc().
+ *
+ * \since 1.12
+ */
+enum vkd3d_shader_parse_dxbc_flags
+{
+    /** Ignore the checksum and continue parsing even if it is
+     * incorrect. */
+    VKD3D_SHADER_PARSE_DXBC_IGNORE_CHECKSUM           = 0x00000001,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARSE_DXBC_FLAGS),
 };
 
 enum vkd3d_shader_compile_option_name
@@ -279,6 +310,36 @@ enum vkd3d_shader_compile_option_name
      * \since 1.11
      */
     VKD3D_SHADER_COMPILE_OPTION_FEATURE = 0x0000000a,
+    /**
+     * If \a value is non-zero compilation will produce a child effect using
+     * shared object descriptions, as instructed by the "shared" modifier.
+     * Child effects are supported with fx_4_0, and fx_4_1 profiles. This option
+     * and "shared" modifiers are ignored for the fx_5_0 profile and non-fx profiles.
+     * The fx_2_0 profile does not have a separate concept of child effects, variables
+     * marked with "shared" modifier will be marked as such in a binary.
+     *
+     * \since 1.12
+     */
+    VKD3D_SHADER_COMPILE_OPTION_CHILD_EFFECT = 0x0000000b,
+    /**
+     * If \a value is nonzero, emit a compile warning warn when vectors or
+     * matrices are truncated in an implicit conversion.
+     * If warnings are disabled, this option has no effect.
+     * This option has no effects for targets other than HLSL.
+     *
+     * The default value is nonzero, i.e. enable implicit truncation warnings.
+     *
+     * \since 1.12
+     */
+    VKD3D_SHADER_COMPILE_OPTION_WARN_IMPLICIT_TRUNCATION = 0x0000000c,
+    /**
+     * If \a value is nonzero, empty constant buffers descriptions are
+     * written out in the output effect binary. This option applies only
+     * to fx_4_0 and fx_4_1 profiles and is otherwise ignored.
+     *
+     * \since 1.12
+     */
+    VKD3D_SHADER_COMPILE_OPTION_INCLUDE_EMPTY_BUFFERS_IN_EFFECTS = 0x0000000d,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_COMPILE_OPTION_NAME),
 };
@@ -872,6 +933,8 @@ enum vkd3d_shader_spirv_environment
     VKD3D_SHADER_SPIRV_ENVIRONMENT_NONE,
     VKD3D_SHADER_SPIRV_ENVIRONMENT_OPENGL_4_5,
     VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0, /* default target */
+    /** \since 1.12 */
+    VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_1,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SPIRV_ENVIRONMENT),
 };
@@ -886,6 +949,8 @@ enum vkd3d_shader_spirv_extension
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_STENCIL_EXPORT,
     /** \since 1.11 */
     VKD3D_SHADER_SPIRV_EXTENSION_EXT_VIEWPORT_INDEX_LAYER,
+    /** \since 1.12 */
+    VKD3D_SHADER_SPIRV_EXTENSION_EXT_FRAGMENT_SHADER_INTERLOCK,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_SPIRV_EXTENSION),
 };
@@ -1995,8 +2060,12 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - VKD3D_SHADER_SOURCE_D3D_BYTECODE to VKD3D_SHADER_TARGET_SPIRV_TEXT
  *   (if vkd3d was compiled with SPIRV-Tools)
  * - VKD3D_SHADER_SOURCE_D3D_BYTECODE to VKD3D_SHADER_TARGET_D3D_ASM
- * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_DXBC_TPF
+ * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_SPIRV_BINARY
+ * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_SPIRV_TEXT
+ *   (if vkd3d was compiled with SPIRV-Tools)
+ * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_D3D_ASM
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_D3D_BYTECODE
+ * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_DXBC_TPF
  * - VKD3D_SHADER_SOURCE_HLSL to VKD3D_SHADER_TARGET_FX
  *
  * Supported transformations can also be detected at runtime with the functions
@@ -2377,9 +2446,8 @@ VKD3D_SHADER_API void vkd3d_shader_free_dxbc(struct vkd3d_shader_dxbc_desc *dxbc
  *
  * \param dxbc A vkd3d_shader_code structure containing the DXBC blob to parse.
  *
- * \param flags A set of flags modifying the behaviour of the function. No
- * flags are defined for this version of vkd3d-shader, and this parameter
- * should be set to 0.
+ * \param flags A combination of zero or more elements of enum
+ * vkd3d_shader_parse_dxbc_flags.
  *
  * \param desc A vkd3d_shader_dxbc_desc structure describing the contents of
  * the DXBC blob. Its vkd3d_shader_dxbc_section_desc structures will contain

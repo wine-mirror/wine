@@ -16,12 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __MINGW32__
+#define WIDL_C_INLINE_WRAPPERS
+#endif
 #define COBJMACROS
 #define CONST_VTABLE
 #include "vkd3d.h"
 #include "vkd3d_blob.h"
-#include "vkd3d_debug.h"
 #include "vkd3d_memory.h"
+#include "d3d12shader.h"
 
 struct vkd3d_blob
 {

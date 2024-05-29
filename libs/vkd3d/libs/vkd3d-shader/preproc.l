@@ -20,7 +20,6 @@
 
 %{
 
-#include "preproc.h"
 #include "preproc.tab.h"
 
 #undef ERROR  /* defined in wingdi.h */
@@ -66,7 +65,7 @@ static void update_location(struct preproc_ctx *ctx);
 %s LINE
 
 NEWLINE         \r?\n
-WS              [ \t]
+WS              [ \t\r]
 IDENTIFIER      [A-Za-z_][A-Za-z0-9_]*
 INT_SUFFIX      [uUlL]{0,2}
 

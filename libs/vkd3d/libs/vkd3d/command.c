@@ -2052,20 +2052,15 @@ static bool vk_barrier_parameters_from_d3d12_resource_state(unsigned int state, 
              * state when GPU finishes execution of a command list. */
             if (is_swapchain_image)
             {
-                if (resource->present_state == D3D12_RESOURCE_STATE_PRESENT)
-                {
-                    *access_mask = VK_ACCESS_MEMORY_READ_BIT;
-                    *stage_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                    if (image_layout)
-                        *image_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                    return true;
-                }
-                else if (resource->present_state != D3D12_RESOURCE_STATE_COMMON)
-                {
-                    vk_barrier_parameters_from_d3d12_resource_state(resource->present_state, 0,
+                if (resource->present_state != D3D12_RESOURCE_STATE_PRESENT)
+                    return vk_barrier_parameters_from_d3d12_resource_state(resource->present_state, 0,
                             resource, vk_queue_flags, vk_info, access_mask, stage_flags, image_layout);
-                    return true;
-                }
+
+                *access_mask = VK_ACCESS_MEMORY_READ_BIT;
+                *stage_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                if (image_layout)
+                    *image_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                return true;
             }
 
             *access_mask = VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT;
@@ -5413,6 +5408,26 @@ static const struct vkd3d_format *vkd3d_fixup_clear_uav_uint_colour(struct d3d12
                     | ((colour->uint32[1] & 0x7ff) << 11)
                     | ((colour->uint32[2] & 0x3ff) << 22);
             return vkd3d_get_format(device, DXGI_FORMAT_R32_UINT, false);
+
+        case DXGI_FORMAT_B5G6R5_UNORM:
+            colour->uint32[0] = (colour->uint32[2] & 0x1f)
+                    | ((colour->uint32[1] & 0x3f) << 5)
+                    | ((colour->uint32[0] & 0x1f) << 11);
+            return vkd3d_get_format(device, DXGI_FORMAT_R16_UINT, false);
+
+        case DXGI_FORMAT_B5G5R5A1_UNORM:
+            colour->uint32[0] = (colour->uint32[2] & 0x1f)
+                    | ((colour->uint32[1] & 0x1f) << 5)
+                    | ((colour->uint32[0] & 0x1f) << 10)
+                    | ((colour->uint32[3] & 0x1) << 15);
+            return vkd3d_get_format(device, DXGI_FORMAT_R16_UINT, false);
+
+        case DXGI_FORMAT_B4G4R4A4_UNORM:
+            colour->uint32[0] = (colour->uint32[2] & 0xf)
+                    | ((colour->uint32[1] & 0xf) << 4)
+                    | ((colour->uint32[0] & 0xf) << 8)
+                    | ((colour->uint32[3] & 0xf) << 12);
+            return vkd3d_get_format(device, DXGI_FORMAT_R16_UINT, false);
 
         default:
             return NULL;

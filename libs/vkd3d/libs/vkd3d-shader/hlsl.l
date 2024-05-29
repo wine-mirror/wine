@@ -76,6 +76,7 @@ case                    {return KW_CASE;                }
 cbuffer                 {return KW_CBUFFER;             }
 centroid                {return KW_CENTROID;            }
 column_major            {return KW_COLUMN_MAJOR;        }
+ComputeShader           {return KW_COMPUTESHADER;       }
 compile                 {return KW_COMPILE;             }
 const                   {return KW_CONST;               }
 continue                {return KW_CONTINUE;            }
@@ -83,15 +84,18 @@ DepthStencilState       {return KW_DEPTHSTENCILSTATE;   }
 DepthStencilView        {return KW_DEPTHSTENCILVIEW;    }
 default                 {return KW_DEFAULT;             }
 discard                 {return KW_DISCARD;             }
+DomainShader            {return KW_DOMAINSHADER;        }
 do                      {return KW_DO;                  }
 double                  {return KW_DOUBLE;              }
 else                    {return KW_ELSE;                }
+export                  {return KW_EXPORT;              }
 extern                  {return KW_EXTERN;              }
 false                   {return KW_FALSE;               }
 for                     {return KW_FOR;                 }
 fxgroup                 {return KW_FXGROUP;             }
 GeometryShader          {return KW_GEOMETRYSHADER;      }
 groupshared             {return KW_GROUPSHARED;         }
+HullShader              {return KW_HULLSHADER;          }
 if                      {return KW_IF;                  }
 in                      {return KW_IN;                  }
 inline                  {return KW_INLINE;              }
@@ -105,7 +109,7 @@ out                     {return KW_OUT;                 }
 packoffset              {return KW_PACKOFFSET;          }
 pass                    {return KW_PASS;                }
 PixelShader             {return KW_PIXELSHADER;         }
-precise                 {return KW_PRECISE;             }
+pixelshader             {return KW_PIXELSHADER;         }
 RasterizerOrderedBuffer           {return KW_RASTERIZERORDEREDBUFFER;            }
 RasterizerOrderedStructuredBuffer {return KW_RASTERIZERORDEREDSTRUCTUREDBUFFER;  }
 RasterizerOrderedTexture1D        {return KW_RASTERIZERORDEREDTEXTURE1D;         }
@@ -163,6 +167,7 @@ typedef                 {return KW_TYPEDEF;             }
 uniform                 {return KW_UNIFORM;             }
 vector                  {return KW_VECTOR;              }
 VertexShader            {return KW_VERTEXSHADER;        }
+vertexshader            {return KW_VERTEXSHADER;        }
 void                    {return KW_VOID;                }
 volatile                {return KW_VOLATILE;            }
 while                   {return KW_WHILE;               }
@@ -186,7 +191,7 @@ while                   {return KW_WHILE;               }
 %=                      {return OP_MODASSIGN;           }
 &=                      {return OP_ANDASSIGN;           }
 \|=                     {return OP_ORASSIGN;            }
-^=                      {return OP_XORASSIGN;           }
+\^=                     {return OP_XORASSIGN;           }
 
 {IDENTIFIER}            {
                             struct hlsl_ctx *ctx = yyget_extra(yyscanner);
