@@ -95,7 +95,6 @@ extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM
 extern void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
                                                 DWORD flags );
 extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent );
-extern void ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw );
 extern void ANDROID_SetCapture( HWND hwnd, UINT flags );
 extern void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style );
 extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );

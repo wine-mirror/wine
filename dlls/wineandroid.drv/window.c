@@ -70,8 +70,6 @@ static inline int context_idx( HWND hwnd )
     return LOWORD( hwnd ) >> 1;
 }
 
-static void set_surface_region( struct window_surface *window_surface, HRGN win_region );
-
 /* only for use on sanitized BITMAPINFO structures */
 static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
 {
@@ -654,6 +652,8 @@ static void *android_surface_get_bitmap_info( struct window_surface *window_surf
 static void android_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
+    RGNDATA *data;
+    UINT size;
 
     TRACE( "updating surface %p hwnd %p with %p\n", surface, window_surface->hwnd, region );
 
@@ -668,8 +668,19 @@ static void android_surface_set_region( struct window_surface *window_surface, H
         if (!surface->region) surface->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         NtGdiCombineRgn( surface->region, region, 0, RGN_COPY );
     }
+
+    if (!(size = NtGdiGetRegionData( region, 0, NULL ))) goto done;
+    if (!(data = malloc( size ))) goto done;
+    if (!NtGdiGetRegionData( region, size, data ))
+    {
+        free( data );
+        data = NULL;
+    }
+    free( surface->region_data );
+    surface->region_data = data;
+
+done:
     window_surface_unlock( window_surface );
-    set_surface_region( &surface->header, (HRGN)1 );
 }
 
 /***********************************************************************
@@ -792,53 +803,6 @@ static void set_color_key( struct android_window_surface *surface, COLORREF key 
 }
 
 /***********************************************************************
- *           set_surface_region
- */
-static void set_surface_region( struct window_surface *window_surface, HRGN win_region )
-{
-    struct android_window_surface *surface = get_android_surface( window_surface );
-    struct android_win_data *win_data;
-    HRGN region = win_region;
-    RGNDATA *data = NULL;
-    DWORD size;
-    int offset_x, offset_y;
-
-    if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
-
-    if (!(win_data = get_win_data( window_surface->hwnd ))) return;
-    offset_x = win_data->window_rect.left - win_data->whole_rect.left;
-    offset_y = win_data->window_rect.top - win_data->whole_rect.top;
-    release_win_data( win_data );
-
-    if (win_region == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
-    {
-        region = NtGdiCreateRectRgn( 0, 0, win_data->window_rect.right - win_data->window_rect.left,
-                                     win_data->window_rect.bottom - win_data->window_rect.top );
-        if (NtUserGetWindowRgnEx( window_surface->hwnd, region, 0 ) == ERROR && !surface->region) goto done;
-    }
-
-    NtGdiOffsetRgn( region, offset_x, offset_y );
-    if (surface->region) NtGdiCombineRgn( region, region, surface->region, RGN_AND );
-
-    if (!(size = NtGdiGetRegionData( region, 0, NULL ))) goto done;
-    if (!(data = malloc( size ))) goto done;
-
-    if (!NtGdiGetRegionData( region, size, data ))
-    {
-        free( data );
-        data = NULL;
-    }
-
-done:
-    window_surface_lock( window_surface );
-    free( surface->region_data );
-    surface->region_data = data;
-    window_surface->bounds = surface->header.rect;
-    window_surface_unlock( window_surface );
-    if (region != win_region) NtGdiDeleteObjectApp( region );
-}
-
-/***********************************************************************
  *           create_surface
  */
 static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
@@ -860,7 +824,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->window       = get_ioctl_window( hwnd );
     surface->alpha        = alpha;
     set_color_key( surface, color_key );
-    set_surface_region( &surface->header, (HRGN)1 );
 
     if (!(surface->bits = malloc( surface->info.bmiHeader.biSizeImage )))
         goto failed;
@@ -1432,22 +1395,6 @@ void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
         else if (data->surface) set_surface_layered( data->surface, 255, CLR_INVALID );
     }
     release_win_data( data );
-}
-
-
-/***********************************************************************
- *           ANDROID_SetWindowRgn
- */
-void ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
-{
-    struct android_win_data *data;
-
-    if ((data = get_win_data( hwnd )))
-    {
-        if (data->surface) set_surface_region( data->surface, hrgn );
-        release_win_data( data );
-    }
-    else FIXME( "not supported on other process window %p\n", hwnd );
 }
 
 
