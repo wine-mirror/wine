@@ -239,6 +239,7 @@ SOURCES = \
 	dinput.h \
 	dinputd.h \
 	directmanipulation.idl \
+	dispatcherqueue.idl \
 	dispdib.h \
 	dispex.idl \
 	dlgs.h \
