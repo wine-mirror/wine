@@ -950,6 +950,30 @@ sync_test("elem_by_id", function() {
         ok(v < 9 && e.number === 0xa01b6 - 0x80000000, "Setting document.testid threw = " + e.number);
     }
 
+    window.testid2 = 1;
+    document.testid2 = 2;
+    document.body.innerHTML = '<form id="testid2" name="testname"></form>';
+    ok(window.testid2 == 1, "window.testid2 = " + window.testid2);
+    id_elem = document.body.firstChild;
+    todo_wine_if(v < 9).
+    ok(document.testid2 == (v < 9 ? id_elem : 2), "document.testid2 = " + document.testid2);
+    document.body.innerHTML = '';
+    ok(window.testid2 == 1, "window.testid2 = " + window.testid2);
+    ok(document.testid2 == 2, "document.testid2 = " + document.testid2 + " expected 2");
+
+    ok(document.title === "", "document.title = " + document.title);
+    document.body.innerHTML = '<form id="title" name="testname"></form>';
+    id_elem = document.body.firstChild;
+    todo_wine_if(v < 9).
+    ok(document.title === (v < 9 ? id_elem : ""), "document.title = " + document.title);
+    document.body.innerHTML = '';
+    ok(document.title === "", "document.title = " + document.title);
+
+    ok(window.closed === false, "window.closed = " + window.closed);
+    document.body.innerHTML = '<form id="closed" name="testname"></form>';
+    id_elem = document.body.firstChild;
+    ok(window.closed === false, "window.closed = " + window.closed);
+
     // these tags expose name as props, and id only if they have a name
     var tags = [ "embed", "form", "iframe", "img" ];
     for(i in tags) {
@@ -3010,4 +3034,18 @@ async_test("postMessage", function() {
     window.postMessage(10, (v < 10 ? "*" : { toString: function() { return "*"; } }));
     ok(onmessage_called == (v < 9 ? true : false), "onmessage not called");
     if(v < 9) next_test();
+});
+
+sync_test("form", function() {
+    document.body.innerHTML = "";
+    var form = document.createElement("form");
+    document.body.appendChild(form);
+
+    form[0] = "test";
+    form.innerHTML = "<input type=\"text\" id = \"i1\" /><input type=\"text\" id = \"i2\" />";
+    ok(form.length === 2, "form.length = " + form.length);
+    ok(typeof(form[0]) === "object", "form[0] = " + form[0]);
+    ok(typeof(form[1]) === "object", "form[1] = " + form[1]);
+    form.innerHTML = "";
+    ok(form[0] === "test", "form[0] = " + form[0]);
 });
