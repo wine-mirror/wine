@@ -1027,6 +1027,7 @@ enable_compstui
 enable_comsvcs
 enable_concrt140
 enable_connect
+enable_coremessaging
 enable_credui
 enable_crtdll
 enable_crypt32
@@ -21985,6 +21986,7 @@ wine_fn_config_makefile dlls/comsvcs/tests enable_tests
 wine_fn_config_makefile dlls/concrt140 enable_concrt140
 wine_fn_config_makefile dlls/concrt140/tests enable_tests
 wine_fn_config_makefile dlls/connect enable_connect
+wine_fn_config_makefile dlls/coremessaging enable_coremessaging
 wine_fn_config_makefile dlls/credui enable_credui
 wine_fn_config_makefile dlls/credui/tests enable_tests
 wine_fn_config_makefile dlls/crtdll enable_crtdll
