@@ -662,19 +662,23 @@ static const char *find_export_from_rva( UINT rva )
     const IMAGE_EXPORT_DIRECTORY *dir;
     const char *ret = NULL;
 
-    if (!(dir = get_dir( IMAGE_FILE_EXPORT_DIRECTORY ))) return NULL;
-    if (!(funcs = RVA( dir->AddressOfFunctions, dir->NumberOfFunctions * sizeof(DWORD) ))) return NULL;
+    if (!(dir = get_dir( IMAGE_FILE_EXPORT_DIRECTORY ))) return "";
+    if (!(funcs = RVA( dir->AddressOfFunctions, dir->NumberOfFunctions * sizeof(DWORD) ))) return "";
     names = RVA( dir->AddressOfNames, dir->NumberOfNames * sizeof(DWORD) );
     ordinals = RVA( dir->AddressOfNameOrdinals, dir->NumberOfNames * sizeof(WORD) );
     func_names = calloc( dir->NumberOfFunctions, sizeof(*func_names) );
 
     for (i = 0; i < dir->NumberOfNames; i++) func_names[ordinals[i]] = names[i];
-    for (i = 0; i < dir->NumberOfFunctions && !ret; i++)
-        if (funcs[i] == rva) ret = get_symbol_str( RVA( func_names[i], sizeof(DWORD) ));
+    for (i = 0; i < dir->NumberOfFunctions; i++)
+    {
+        if (funcs[i] != rva) continue;
+        if (func_names[i]) ret = get_symbol_str( RVA( func_names[i], sizeof(DWORD) ));
+        break;
+    }
 
     free( func_names );
-    if (!ret && rva == PE_nt_headers->OptionalHeader.AddressOfEntryPoint) return "<EntryPoint>";
-    return ret;
+    if (!ret && rva == PE_nt_headers->OptionalHeader.AddressOfEntryPoint) return " <EntryPoint>";
+    return ret ? strmake( " (%s)", ret ) : "";
 }
 
 static	void	dump_dir_exported_functions(void)
@@ -854,7 +858,8 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
     const struct unwind_info_x86_64 *info;
     unsigned int i, count;
 
-    printf( "\nFunction %08x-%08x:\n", function->BeginAddress, function->EndAddress );
+    printf( "\nFunction %08x-%08x:%s\n", function->BeginAddress, function->EndAddress,
+            find_export_from_rva( function->BeginAddress ));
     if (function->UnwindData & 1)
     {
         const struct runtime_function_x86_64 *next = RVA( function->UnwindData & ~1, sizeof(*next) );
@@ -1000,9 +1005,10 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
         WORD pf = 0, ef = 0, fpoffset = 0, stack = fnc->StackAdjust;
         const char *pfx = "    ...     ";
 
-        printf( "\nFunction %08x-%08x: (flag=%u ret=%u H=%u reg=%u R=%u L=%u C=%u)\n",
+        printf( "\nFunction %08x-%08x: flag=%u ret=%u H=%u reg=%u R=%u L=%u C=%u%s\n",
                 fnc->BeginAddress & ~1, (fnc->BeginAddress & ~1) + fnc->FunctionLength * 2,
-                fnc->Flag, fnc->Ret, fnc->H, fnc->Reg, fnc->R, fnc->L, fnc->C );
+                fnc->Flag, fnc->Ret, fnc->H, fnc->Reg, fnc->R, fnc->L, fnc->C,
+                find_export_from_rva( fnc->BeginAddress ));
 
         if (fnc->StackAdjust >= 0x03f4)
         {
@@ -1124,9 +1130,9 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
     count = info->count;
     words = info->words;
 
-    printf( "\nFunction %08x-%08x: (ver=%u X=%u E=%u F=%u)\n", fnc->BeginAddress & ~1,
+    printf( "\nFunction %08x-%08x: ver=%u X=%u E=%u F=%u%s\n", fnc->BeginAddress & ~1,
             (fnc->BeginAddress & ~1) + info->function_length * 2,
-            info->version, info->x, info->e, info->f );
+            info->version, info->x, info->e, info->f, find_export_from_rva( fnc->BeginAddress | 1 ));
 
     if (!info->count && !info->words)
     {
@@ -1654,8 +1660,8 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     {
     case 1:
     case 2:
-        printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
-                func->BeginAddress + func->FunctionLength * 4 );
+        printf( "\nFunction %08x-%08x:%s\n", func->BeginAddress,
+                func->BeginAddress + func->FunctionLength * 4, find_export_from_rva( func->BeginAddress ));
         printf( "    len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
                 func->FunctionLength, func->Flag, func->RegF, func->RegI,
                 func->H, func->CR, func->FrameSize );
@@ -1664,8 +1670,9 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     case 3:
         rva = func->UnwindData & ~3;
         parent_func = RVA( rva, sizeof(*parent_func) );
-        printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
-                func->BeginAddress + 12 /* adrl x16, <dest>; br x16 */ );
+        printf( "\nFunction %08x-%08x:%s\n", func->BeginAddress,
+                func->BeginAddress + 12 /* adrl x16, <dest>; br x16 */,
+                find_export_from_rva( func->BeginAddress ));
         printf( "    forward to parent %08x\n", parent_func->BeginAddress );
         return;
     }
@@ -1947,10 +1954,8 @@ static void dump_hybrid_metadata(void)
             for (i = 0; i < data->CodeRangesToEntryPointsCount; i++)
             {
                 const char *name = find_export_from_rva( map[i].EntryPoint );
-                printf(  "  %08x - %08x   %08x",
-                         (int)map[i].StartRva, (int)map[i].EndRva, (int)map[i].EntryPoint );
-                if (name) printf( "  %s", name );
-                printf( "\n" );
+                printf(  "  %08x - %08x   %08x%s\n",
+                         (int)map[i].StartRva, (int)map[i].EndRva, (int)map[i].EntryPoint, name );
             }
         }
 
@@ -1963,9 +1968,7 @@ static void dump_hybrid_metadata(void)
             for (i = 0; i < data->RedirectionMetadataCount; i++)
             {
                 const char *name = find_export_from_rva( map[i].Source );
-                printf(  "  %08x -> %08x", (int)map[i].Source, (int)map[i].Destination );
-                if (name) printf( "  (%s)", name );
-                printf( "\n" );
+                printf(  "  %08x -> %08x%s\n", (int)map[i].Source, (int)map[i].Destination, name );
             }
         }
         break;
