@@ -1471,6 +1471,35 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
         {.vkey = VK_PACKET, .flags = KEYEVENTF_KEYUP, .expect = {RAW_KEY(2, RI_KEY_BREAK, VK_PACKET, WM_KEYUP), {0}}},
         {0},
     };
+    struct send_input_keyboard_test raw_unicode_legacy[] =
+    {
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_PACKET] = 0x80},
+         .expect = {KEY_MSG(WM_KEYDOWN, 0, VK_PACKET, .todo_value = TRUE), WIN_MSG(WM_CHAR, 0x3c0, 1), {0}}},
+        {.scan = 0x3c0, .flags = KEYEVENTF_KEYUP | KEYEVENTF_UNICODE,
+         .expect = {KEY_MSG(WM_KEYUP, 0, VK_PACKET, .todo_value = TRUE), {0}}},
+        {0},
+    };
+    struct send_input_keyboard_test raw_unicode_nolegacy[] =
+    {
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE},
+        {.scan = 0x3c0, .flags = KEYEVENTF_KEYUP | KEYEVENTF_UNICODE},
+        {0},
+    };
+    struct send_input_keyboard_test raw_unicode_vkey_ctrl_legacy[] =
+    {
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE,
+         .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_MSG(WM_KEYDOWN, 0xc0, VK_CONTROL), {0}}},
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+         .expect = {KEY_MSG(WM_KEYUP, 0xc0, VK_CONTROL), {0}}},
+        {0},
+    };
+    struct send_input_keyboard_test raw_unicode_vkey_ctrl_nolegacy[] =
+    {
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE},
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP},
+        {0},
+    };
 #undef WIN_MSG
 #undef RAW_KEY
 #undef KEY_MSG
@@ -1514,6 +1543,9 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
         /* get both WM_INPUT and legacy messages */
         check_send_input_keyboard_test( raw_legacy, !receive );
         check_send_input_keyboard_test( raw_vk_packet_legacy, !receive );
+        /* no WM_INPUT message for unicode */
+        check_send_input_keyboard_test( raw_unicode_legacy, !receive );
+        check_send_input_keyboard_test( raw_unicode_vkey_ctrl_legacy, !receive );
 
         rid.dwFlags = RIDEV_REMOVE;
         ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );
@@ -1524,6 +1556,9 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
         /* get only WM_INPUT messages */
         check_send_input_keyboard_test( raw_nolegacy, !receive );
         check_send_input_keyboard_test( raw_vk_packet_nolegacy, !receive );
+        /* no WM_INPUT message for unicode */
+        check_send_input_keyboard_test( raw_unicode_nolegacy, !receive );
+        check_send_input_keyboard_test( raw_unicode_vkey_ctrl_nolegacy, !receive );
 
         rid.dwFlags = RIDEV_REMOVE;
         ok_ret( 1, RegisterRawInputDevices( &rid, 1, sizeof(rid) ) );

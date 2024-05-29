@@ -2099,6 +2099,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     unsigned int message_code, time;
     lparam_t lparam = input->kbd.scan << 16;
     unsigned int flags = 0;
+    BOOL unicode = input->kbd.flags & KEYEVENTF_UNICODE;
     int wait;
 
     if (!(time = input->kbd.time)) time = get_tick_count();
@@ -2188,7 +2189,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
        }
     }
 
-    if ((foreground = get_foreground_thread( desktop, win )))
+    if (!unicode && (foreground = get_foreground_thread( desktop, win )))
     {
         struct rawinput_message raw_msg = {0};
         raw_msg.foreground = foreground;
@@ -2216,7 +2217,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     msg->msg       = message_code;
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
-    if (input->kbd.flags & KEYEVENTF_UNICODE && !vkey)
+    if (unicode && !vkey)
     {
         vkey = hook_vkey = VK_PACKET;
     }
