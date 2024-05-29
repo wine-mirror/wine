@@ -646,32 +646,15 @@ static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This)
     return This->dynamic_data;
 }
 
-static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags, dynamic_prop_t **ret)
+static HRESULT alloc_dynamic_prop(DispatchEx *This, const WCHAR *name, dynamic_prop_t *prop, dynamic_prop_t **ret)
 {
-    const BOOL alloc = flags & fdexNameEnsure;
-    dispex_dynamic_data_t *data;
-    dynamic_prop_t *prop;
+    dispex_dynamic_data_t *data = This->dynamic_data;
 
-    data = get_dynamic_data(This);
-    if(!data)
-        return E_OUTOFMEMORY;
-
-    for(prop = data->props; prop < data->props+data->prop_cnt; prop++) {
-        if(flags & fdexNameCaseInsensitive ? !wcsicmp(prop->name, name) : !wcscmp(prop->name, name)) {
-            if(prop->flags & DYNPROP_DELETED) {
-                if(!alloc)
-                    return DISP_E_UNKNOWNNAME;
-                prop->flags &= ~DYNPROP_DELETED;
-            }
-            *ret = prop;
-            return S_OK;
-        }
+    if(prop) {
+        prop->flags &= ~DYNPROP_DELETED;
+        *ret = prop;
+        return S_OK;
     }
-
-    if(!alloc)
-        return DISP_E_UNKNOWNNAME;
-
-    TRACE("creating dynamic prop %s\n", debugstr_w(name));
 
     if(!data->buf_size) {
         data->props = malloc(sizeof(dynamic_prop_t) * 4);
@@ -700,6 +683,35 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
     data->prop_cnt++;
     *ret = prop;
     return S_OK;
+}
+
+static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags, dynamic_prop_t **ret)
+{
+    const BOOL alloc = flags & fdexNameEnsure;
+    dispex_dynamic_data_t *data;
+    dynamic_prop_t *prop;
+
+    data = get_dynamic_data(This);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    for(prop = data->props; prop < data->props+data->prop_cnt; prop++) {
+        if(flags & fdexNameCaseInsensitive ? !wcsicmp(prop->name, name) : !wcscmp(prop->name, name)) {
+            *ret = prop;
+            if(prop->flags & DYNPROP_DELETED) {
+                if(!alloc)
+                    return DISP_E_UNKNOWNNAME;
+                prop->flags &= ~DYNPROP_DELETED;
+            }
+            return S_OK;
+        }
+    }
+
+    if(!alloc)
+        return DISP_E_UNKNOWNNAME;
+
+    TRACE("creating dynamic prop %s\n", debugstr_w(name));
+    return alloc_dynamic_prop(This, name, NULL, ret);
 }
 
 HRESULT dispex_get_dprop_ref(DispatchEx *This, const WCHAR *name, BOOL alloc, VARIANT **ret)
@@ -1662,7 +1674,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
-    dynamic_prop_t *dprop;
+    dynamic_prop_t *dprop = NULL;
     HRESULT hres;
 
     TRACE("%s (%p)->(%s %lx %p)\n", This->info->desc->name, This, debugstr_w(bstrName), grfdex, pid);
@@ -1677,9 +1689,13 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     if(hres != DISP_E_UNKNOWNNAME)
         return hres;
 
-    hres = get_dynamic_prop(This, bstrName, grfdex, &dprop);
-    if(FAILED(hres))
-        return hres;
+    hres = get_dynamic_prop(This, bstrName, grfdex & ~fdexNameEnsure, &dprop);
+    if(FAILED(hres)) {
+        if(grfdex & fdexNameEnsure)
+            hres = alloc_dynamic_prop(This, bstrName, dprop, &dprop);
+        if(FAILED(hres))
+            return hres;
+    }
 
     *pid = DISPID_DYNPROP_0 + (dprop - This->dynamic_data->props);
     return S_OK;
