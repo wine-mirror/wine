@@ -191,7 +191,7 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
  *            must not use Win32 or Wine functions, including debug
  *            logging.
  */
-CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surface, CGRect *rect, int copy_data, int color_keyed,
+CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surface, CGRect *rect, int color_keyed,
         CGFloat key_red, CGFloat key_green, CGFloat key_blue)
 {
     CGImageRef cgimage = NULL;
@@ -220,15 +220,7 @@ CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surfac
         offset = CGRectGetMinX(visrect) * 4 + CGRectGetMinY(visrect) * bytes_per_row;
         size = min(CGRectGetHeight(visrect) * bytes_per_row,
                    surface->info.bmiHeader.biSizeImage - offset);
-
-        if (copy_data)
-        {
-            CFDataRef data = CFDataCreate(NULL, (UInt8 *)window_surface->color_bits + offset, size);
-            provider = CGDataProviderCreateWithCFData(data);
-            CFRelease(data);
-        }
-        else
-            provider = CGDataProviderCreateWithData(NULL, (UInt8 *)window_surface->color_bits + offset, size, NULL);
+        provider = CGDataProviderCreateWithData(NULL, (UInt8 *)window_surface->color_bits + offset, size, NULL);
 
         alphaInfo = surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst;
         cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),

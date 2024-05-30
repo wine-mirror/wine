@@ -553,7 +553,7 @@ extern void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_fra
 extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame);
 extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent);
 extern void macdrv_set_window_surface(macdrv_window w, struct window_surface *window_surface);
-extern CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surface, CGRect *rect, int copy_data, int color_keyed,
+extern CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surface, CGRect *rect, int color_keyed,
         CGFloat key_red, CGFloat key_green, CGFloat key_blue);
 extern void macdrv_window_needs_display(macdrv_window w, CGRect rect);
 extern void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count);

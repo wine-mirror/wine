@@ -532,7 +532,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         imageRect.origin.y *= layer.contentsScale;
         imageRect.size.width *= layer.contentsScale;
         imageRect.size.height *= layer.contentsScale;
-        image = macdrv_get_surface_display_image(window.surface, &imageRect, FALSE, window.colorKeyed,
+        image = macdrv_get_surface_display_image(window.surface, &imageRect, window.colorKeyed,
                                                  window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
 
         if (image)
