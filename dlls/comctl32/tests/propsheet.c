@@ -1663,7 +1663,6 @@ static void test_hotkey_navigation(void)
     inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
     SendInput(4, inputs, sizeof(INPUT));
     WaitForSingleObject(active_page_changed, 1000);
-    todo_wine
     ok(active_page == 1, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
     WaitForSingleObject(hotkey_dialog_idle, INFINITE);
@@ -1692,7 +1691,6 @@ static void test_hotkey_navigation(void)
     inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
     SendInput(4, inputs, sizeof(INPUT));
     WaitForSingleObject(active_page_changed, 1000);
-    todo_wine
     ok(active_page == 1, "Got %ld\n", active_page);
     PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
     WaitForSingleObject(hotkey_dialog_idle, INFINITE);

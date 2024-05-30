@@ -2903,6 +2903,59 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
   GlobalFree(psInfo);
 }
 
+/******************************************************************************
+ *            PROPSHEET_IsDialogMessage
+ */
+static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg)
+{
+   PropSheetInfo* psInfo = GetPropW(hwnd, PropSheetInfoStr);
+
+   TRACE("\n");
+   if (!psInfo || (hwnd != lpMsg->hwnd && !IsChild(hwnd, lpMsg->hwnd)))
+      return FALSE;
+
+   if (lpMsg->message == WM_KEYDOWN && (GetKeyState(VK_CONTROL) & 0x8000))
+   {
+      int new_page = 0;
+      INT dlgCode = SendMessageW(lpMsg->hwnd, WM_GETDLGCODE, 0, (LPARAM)lpMsg);
+
+      if (!(dlgCode & DLGC_WANTMESSAGE))
+      {
+         switch (lpMsg->wParam)
+         {
+            case VK_TAB:
+               if (GetKeyState(VK_SHIFT) & 0x8000)
+                   new_page = -1;
+                else
+                   new_page = 1;
+               break;
+
+            case VK_NEXT:   new_page = 1;  break;
+            case VK_PRIOR:  new_page = -1; break;
+         }
+      }
+
+      if (new_page)
+      {
+         if (PROPSHEET_CanSetCurSel(hwnd) != FALSE)
+         {
+            new_page += psInfo->active_page;
+
+            if (new_page < 0)
+               new_page = psInfo->nPages - 1;
+            else if (new_page >= psInfo->nPages)
+               new_page = 0;
+
+            PROPSHEET_SetCurSel(hwnd, new_page, 1, 0);
+         }
+
+         return TRUE;
+      }
+   }
+
+   return IsDialogMessageW(hwnd, lpMsg);
+}
+
 static INT do_loop(const PropSheetInfo *psInfo)
 {
     MSG msg = { 0 };
@@ -2915,7 +2968,7 @@ static INT do_loop(const PropSheetInfo *psInfo)
         if(ret == -1)
             break;
 
-        if(!IsDialogMessageW(hwnd, &msg))
+        if(!PROPSHEET_IsDialogMessage(hwnd, &msg))
         {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
@@ -3251,59 +3304,6 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hpsp)
 
     Free(hpsp);
     return TRUE;
-}
-
-/******************************************************************************
- *            PROPSHEET_IsDialogMessage
- */
-static BOOL PROPSHEET_IsDialogMessage(HWND hwnd, LPMSG lpMsg)
-{
-   PropSheetInfo* psInfo = GetPropW(hwnd, PropSheetInfoStr);
-
-   TRACE("\n");
-   if (!psInfo || (hwnd != lpMsg->hwnd && !IsChild(hwnd, lpMsg->hwnd)))
-      return FALSE;
-
-   if (lpMsg->message == WM_KEYDOWN && (GetKeyState(VK_CONTROL) & 0x8000))
-   {
-      int new_page = 0;
-      INT dlgCode = SendMessageW(lpMsg->hwnd, WM_GETDLGCODE, 0, (LPARAM)lpMsg);
-
-      if (!(dlgCode & DLGC_WANTMESSAGE))
-      {
-         switch (lpMsg->wParam)
-         {
-            case VK_TAB:
-               if (GetKeyState(VK_SHIFT) & 0x8000)
-                   new_page = -1;
-                else
-                   new_page = 1;
-               break;
-
-            case VK_NEXT:   new_page = 1;  break;
-            case VK_PRIOR:  new_page = -1; break;
-         }
-      }
-
-      if (new_page)
-      {
-         if (PROPSHEET_CanSetCurSel(hwnd) != FALSE)
-         {
-            new_page += psInfo->active_page;
-
-            if (new_page < 0)
-               new_page = psInfo->nPages - 1;
-            else if (new_page >= psInfo->nPages)
-               new_page = 0;
-
-            PROPSHEET_SetCurSel(hwnd, new_page, 1, 0);
-         }
-
-         return TRUE;
-      }
-   }
-
-   return IsDialogMessageW(hwnd, lpMsg);
 }
 
 /******************************************************************************
