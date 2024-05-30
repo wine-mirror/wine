@@ -417,6 +417,7 @@ static int CC_CheckDigitsInEdit( CCPRIV *infoPtr, HWND hwnd, int maxval )
  value = atoi(buffer);
  if (value > maxval)       /* build a new string */
  {
+  value = maxval;
   sprintf(buffer, "%d", maxval);
   result = 2;
  }
