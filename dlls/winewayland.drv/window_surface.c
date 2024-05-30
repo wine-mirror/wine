@@ -45,7 +45,6 @@ struct wayland_window_surface
     struct window_surface header;
     struct wayland_surface *wayland_surface;
     struct wayland_buffer_queue *wayland_buffer_queue;
-    BITMAPINFO info;
 };
 
 static struct wayland_window_surface *wayland_window_surface_cast(
@@ -460,7 +459,6 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     wws = calloc(1, sizeof(*wws));
     if (!wws) return NULL;
     if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect, info, 0)) goto failed;
-    wws->info = *info;
 
     TRACE("created %p hwnd %p %s\n", wws, hwnd, wine_dbgstr_rect(rect));
 
