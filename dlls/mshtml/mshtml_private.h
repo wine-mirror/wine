@@ -418,19 +418,7 @@ struct DispatchEx {
     dispex_dynamic_data_t *dynamic_data;
 };
 
-#define DISPEX_IDISPATCH_IMPL(prefix, iface_name, dispex)                                      \
-    static HRESULT WINAPI prefix##_QueryInterface(iface_name *iface, REFIID riid, void **ppv)  \
-    {                                                                                          \
-        return IDispatchEx_QueryInterface(&(dispex).IDispatchEx_iface, riid, ppv);             \
-    }                                                                                          \
-    static ULONG WINAPI prefix##_AddRef(iface_name *iface)                                     \
-    {                                                                                          \
-        return IDispatchEx_AddRef(&(dispex).IDispatchEx_iface);                                \
-    }                                                                                          \
-    static ULONG WINAPI prefix##_Release(iface_name *iface)                                    \
-    {                                                                                          \
-        return IDispatchEx_Release(&(dispex).IDispatchEx_iface);                               \
-    }                                                                                          \
+#define DISPEX_IDISPATCH_NOUNK_IMPL(prefix, iface_name, dispex)                                \
     static HRESULT WINAPI prefix##_GetTypeInfoCount(iface_name *iface, UINT *count)            \
     {                                                                                          \
         return IDispatchEx_GetTypeInfoCount(&(dispex).IDispatchEx_iface, count);               \
@@ -452,6 +440,21 @@ struct DispatchEx {
         return IDispatchEx_Invoke(&(dispex).IDispatchEx_iface, dispid,                         \
                 riid, lcid, flags, params, res, ei, err);                                      \
     }
+
+#define DISPEX_IDISPATCH_IMPL(prefix, iface_name, dispex)                                      \
+    static HRESULT WINAPI prefix##_QueryInterface(iface_name *iface, REFIID riid, void **ppv)  \
+    {                                                                                          \
+        return IDispatchEx_QueryInterface(&(dispex).IDispatchEx_iface, riid, ppv);             \
+    }                                                                                          \
+    static ULONG WINAPI prefix##_AddRef(iface_name *iface)                                     \
+    {                                                                                          \
+        return IDispatchEx_AddRef(&(dispex).IDispatchEx_iface);                                \
+    }                                                                                          \
+    static ULONG WINAPI prefix##_Release(iface_name *iface)                                    \
+    {                                                                                          \
+        return IDispatchEx_Release(&(dispex).IDispatchEx_iface);                               \
+    }                                                                                          \
+    DISPEX_IDISPATCH_NOUNK_IMPL(prefix, iface_name, dispex)
 
 typedef struct {
     void *vtbl;
