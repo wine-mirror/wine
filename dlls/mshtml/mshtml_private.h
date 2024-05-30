@@ -953,7 +953,6 @@ typedef struct nsDocumentEventListener nsDocumentEventListener;
 struct HTMLDocumentNode {
     HTMLDOMNode node;
 
-    IDispatchEx                  IDispatchEx_iface;
     IHTMLDocument2               IHTMLDocument2_iface;
     IHTMLDocument3               IHTMLDocument3_iface;
     IHTMLDocument4               IHTMLDocument4_iface;

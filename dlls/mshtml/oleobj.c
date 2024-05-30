@@ -3535,35 +3535,67 @@ static inline HTMLDocumentObj *impl_from_IDispatchEx(IDispatchEx *iface)
 }
 
 HTMLDOCUMENTOBJ_IUNKNOWN_METHODS(DispatchEx)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_1(DispatchEx, GetTypeInfoCount, UINT*)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_3(DispatchEx, GetTypeInfo, UINT,LCID,ITypeInfo**)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_5(DispatchEx, GetIDsOfNames, REFIID,LPOLESTR*,UINT,LCID,DISPID*)
+DISPEX_IDISPATCH_NOUNK_IMPL(DocObjDispatchEx, IDispatchEx,
+                            impl_from_IDispatchEx(iface)->doc_node->node.event_target.dispex)
 
-static HRESULT WINAPI DocObjDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
-        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+static HRESULT WINAPI DocObjDispatchEx_GetDispID(IDispatchEx *iface, BSTR name, DWORD grfdex, DISPID *pid)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_InvokeEx(&This->doc_node->IDispatchEx_iface, dispIdMember, lcid, wFlags, pDispParams,
-            pVarResult, pExcepInfo, NULL);
+    return IDispatchEx_GetDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, name, grfdex, pid);
 }
-
-HTMLDOCUMENTOBJ_FWD_TO_NODE_3(DispatchEx, GetDispID, BSTR,DWORD,DISPID*)
 
 static HRESULT WINAPI DocObjDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_InvokeEx(&This->doc_node->IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    return IDispatchEx_InvokeEx(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, lcid,
+                                wFlags, pdp, pvarRes, pei, pspCaller);
 }
 
-HTMLDOCUMENTOBJ_FWD_TO_NODE_2(DispatchEx, DeleteMemberByName, BSTR,DWORD)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_1(DispatchEx, DeleteMemberByDispID, DISPID)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_3(DispatchEx, GetMemberProperties, DISPID,DWORD,DWORD*)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_2(DispatchEx, GetMemberName, DISPID,BSTR*)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_3(DispatchEx, GetNextDispID, DWORD,DISPID,DISPID*)
-HTMLDOCUMENTOBJ_FWD_TO_NODE_1(DispatchEx, GetNameSpaceParent, IUnknown**)
+static HRESULT WINAPI DocObjDispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_DeleteMemberByName(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex);
+}
+
+static HRESULT WINAPI DocObjDispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_DeleteMemberByDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id);
+}
+
+static HRESULT WINAPI DocObjDispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_GetMemberProperties(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, grfdexFetch,
+            pgrfdex);
+}
+
+static HRESULT WINAPI DocObjDispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *name)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_GetMemberName(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, name);
+}
+
+static HRESULT WINAPI DocObjDispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_GetNextDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, grfdex, id, pid);
+}
+
+static HRESULT WINAPI DocObjDispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
+
+    return IDispatchEx_GetNameSpaceParent(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, ppunk);
+}
 
 static const IDispatchExVtbl DocObjDispatchExVtbl = {
     DocObjDispatchEx_QueryInterface,

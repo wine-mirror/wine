@@ -4537,11 +4537,6 @@ static const ISupportErrorInfoVtbl SupportErrorInfoVtbl = {
     SupportErrorInfo_InterfaceSupportsErrorInfo
 };
 
-static inline HTMLDocumentNode *impl_from_IDispatchEx(IDispatchEx *iface)
-{
-    return CONTAINING_RECORD(iface, HTMLDocumentNode, IDispatchEx_iface);
-}
-
 static HRESULT has_elem_name(nsIDOMHTMLDocument *html_document, const WCHAR *name)
 {
     static const WCHAR fmt[] = L":-moz-any(applet,embed,form,iframe,img,object)[name=\"%s\"]";
@@ -4641,84 +4636,6 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, 
     *dispid = MSHTML_DISPID_CUSTOM_MIN+This->elem_vars_cnt++;
     return S_OK;
 }
-
-DISPEX_IDISPATCH_IMPL(DocDispatchEx, IDispatchEx,
-                      impl_from_IDispatchEx(iface)->node.event_target.dispex)
-
-static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
-}
-
-static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
-        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_InvokeEx(&This->node.event_target.dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
-}
-
-static HRESULT WINAPI DocDispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_DeleteMemberByName(&This->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex);
-}
-
-static HRESULT WINAPI DocDispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_DeleteMemberByDispID(&This->node.event_target.dispex.IDispatchEx_iface, id);
-}
-
-static HRESULT WINAPI DocDispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_GetMemberProperties(&This->node.event_target.dispex.IDispatchEx_iface, id, grfdexFetch, pgrfdex);
-}
-
-static HRESULT WINAPI DocDispatchEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_GetMemberName(&This->node.event_target.dispex.IDispatchEx_iface, id, pbstrName);
-}
-
-static HRESULT WINAPI DocDispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_GetNextDispID(&This->node.event_target.dispex.IDispatchEx_iface, grfdex, id, pid);
-}
-
-static HRESULT WINAPI DocDispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
-{
-    HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-
-    return IDispatchEx_GetNameSpaceParent(&This->node.event_target.dispex.IDispatchEx_iface, ppunk);
-}
-
-static const IDispatchExVtbl DocDispatchExVtbl = {
-    DocDispatchEx_QueryInterface,
-    DocDispatchEx_AddRef,
-    DocDispatchEx_Release,
-    DocDispatchEx_GetTypeInfoCount,
-    DocDispatchEx_GetTypeInfo,
-    DocDispatchEx_GetIDsOfNames,
-    DocDispatchEx_Invoke,
-    DocDispatchEx_GetDispID,
-    DocDispatchEx_InvokeEx,
-    DocDispatchEx_DeleteMemberByName,
-    DocDispatchEx_DeleteMemberByDispID,
-    DocDispatchEx_GetMemberProperties,
-    DocDispatchEx_GetMemberName,
-    DocDispatchEx_GetNextDispID,
-    DocDispatchEx_GetNameSpaceParent
-};
 
 static inline HTMLDocumentNode *impl_from_IProvideMultipleClassInfo(IProvideMultipleClassInfo *iface)
 {
@@ -5255,8 +5172,6 @@ static void *HTMLDocumentNode_query_interface(DispatchEx *dispex, REFIID riid)
 {
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
 
-    if(IsEqualGUID(&IID_IDispatch, riid) || IsEqualGUID(&IID_IDispatchEx, riid))
-        return &This->IDispatchEx_iface;
     if(IsEqualGUID(&IID_IHTMLDocument, riid) || IsEqualGUID(&IID_IHTMLDocument2, riid))
         return &This->IHTMLDocument2_iface;
     if(IsEqualGUID(&IID_IHTMLDocument3, riid))
@@ -5748,7 +5663,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
     if(!doc)
         return NULL;
 
-    doc->IDispatchEx_iface.lpVtbl = &DocDispatchExVtbl;
     doc->IHTMLDocument2_iface.lpVtbl = &HTMLDocumentVtbl;
     doc->IHTMLDocument3_iface.lpVtbl = &HTMLDocument3Vtbl;
     doc->IHTMLDocument4_iface.lpVtbl = &HTMLDocument4Vtbl;
