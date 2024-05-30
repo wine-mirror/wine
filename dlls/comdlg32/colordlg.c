@@ -1011,6 +1011,7 @@ static LRESULT CC_WMCommand(CCPRIV *lpp, WPARAM wParam, LPARAM lParam, WORD noti
 			    CC_EditSetRGB(lpp);
 			    CC_PaintCross(lpp);
 			    CC_PaintTriangle(lpp);
+			    CC_PaintLumBar(lpp);
 			   }
 			 }
 	       break;
