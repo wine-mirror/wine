@@ -819,8 +819,8 @@ static void write_generic_handle_routines(FILE *header)
 
 static void write_typedef(FILE *header, type_t *type, bool define)
 {
-    type_t *t = type_alias_get_aliasee_type(type);
-    if (winrt_mode && t->namespace && !is_global_namespace(t->namespace))
+    type_t *t = type_alias_get_aliasee_type(type), *root = type_pointer_get_root_type(t);
+    if (winrt_mode && root->namespace && !is_global_namespace(root->namespace))
     {
         fprintf(header, "#ifndef __cplusplus\n");
         fprintf(header, "typedef ");
@@ -829,12 +829,12 @@ static void write_typedef(FILE *header, type_t *type, bool define)
         if (type_get_type_detect_alias(t) != TYPE_ENUM)
         {
             fprintf(header, "#else /* __cplusplus */\n");
-            write_namespace_start(header, t->namespace);
+            if (t->namespace && !is_global_namespace(t->namespace)) write_namespace_start(header, t->namespace);
             indent(header, 0);
             fprintf(header, "typedef ");
             write_type_v(header, type_alias_get_aliasee(type), FALSE, false, type->name, NAME_DEFAULT);
             fprintf(header, ";\n");
-            write_namespace_end(header, t->namespace);
+            if (t->namespace && !is_global_namespace(t->namespace)) write_namespace_end(header, t->namespace);
         }
         fprintf(header, "#endif /* __cplusplus */\n\n");
     }
