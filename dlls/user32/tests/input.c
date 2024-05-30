@@ -1224,11 +1224,10 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
 
     struct send_input_keyboard_test unicode_vkey_ctrl[] =
     {
-        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE,
-          .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80}, .todo_state = {[VK_LCONTROL] = TRUE},
-         .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 0xc0, VK_CONTROL), {0}}},
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 0xc0, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 0xc0, VK_CONTROL), {0}}},
         {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
-         .expect = {KEY_HOOK(WM_KEYUP, 0xc0, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 0xc0, VK_CONTROL), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, 0xc0, VK_LCONTROL), KEY_MSG(WM_KEYUP, 0xc0, VK_CONTROL), {0}}},
         {0},
     };
 
