@@ -408,8 +408,42 @@ static int xattr_fset( int filedes, const char *name, const void *value, size_t 
 }
 
 
+/* On macOS, getxattr() is significantly slower than listxattr()
+ * (even for files with no extended attributes).
+ */
+#ifdef __APPLE__
+static BOOL xattr_exists( const char **path, int *filedes, const char *name )
+{
+    char xattrs[1024];
+    ssize_t i = 0, ret;
+
+    if (path)
+        ret = listxattr( *path, xattrs, sizeof(xattrs), 0 );
+    else
+        ret = flistxattr( *filedes, xattrs, sizeof(xattrs), 0 );
+    if (ret == -1)
+        return errno == ERANGE;
+
+    while (i < ret)
+    {
+        if (!strcmp( name, &xattrs[i] ))
+            return TRUE;
+        i += strlen(&xattrs[i]) + 1;
+    }
+
+    errno = ENOATTR;
+    return FALSE;
+}
+#endif
+
+
 static int xattr_get( const char *path, const char *name, void *value, size_t size )
 {
+#ifdef __APPLE__
+    if (!xattr_exists( &path, NULL, name ))
+        return -1;
+#endif
+
 #ifdef HAVE_SYS_XATTR_H
 # ifdef XATTR_ADDITIONAL_OPTIONS
     return getxattr( path, name, value, size, 0, 0 );
@@ -428,6 +462,11 @@ static int xattr_get( const char *path, const char *name, void *value, size_t si
 
 static int xattr_fget( int filedes, const char *name, void *value, size_t size )
 {
+#ifdef __APPLE__
+    if (!xattr_exists( NULL, &filedes, name ))
+        return -1;
+#endif
+
 #ifdef HAVE_SYS_XATTR_H
 # ifdef XATTR_ADDITIONAL_OPTIONS
     return fgetxattr( filedes, name, value, size, 0, 0 );
