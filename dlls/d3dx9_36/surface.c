@@ -1902,12 +1902,13 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 }
 
 static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct pixel_format_desc *desc,
-        BOOL is_dst, void **out_memory, uint32_t *out_row_pitch, const struct pixel_format_desc **out_desc)
+        BOOL is_dst, void **out_memory, uint32_t *out_row_pitch, uint32_t *out_slice_pitch,
+        const struct pixel_format_desc **out_desc)
 {
     void (*fetch_dxt_texel)(int srcRowStride, const BYTE *pixdata, int i, int j, void *texel);
+    uint32_t x, y, z, tmp_pitch, uncompressed_slice_pitch, uncompressed_row_pitch;
     const struct pixel_format_desc *uncompressed_desc = NULL;
     const struct volume *size = &pixels->size;
-    uint32_t x, y, tmp_pitch;
     BYTE *uncompressed_mem;
 
     switch (desc->format)
@@ -1931,7 +1932,9 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
             return E_NOTIMPL;
     }
 
-    if (!(uncompressed_mem = malloc(size->width * size->height * size->depth * uncompressed_desc->bytes_per_pixel)))
+    uncompressed_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
+    uncompressed_slice_pitch = uncompressed_row_pitch * size->height;
+    if (!(uncompressed_mem = malloc(size->depth * uncompressed_slice_pitch)))
         return E_OUTOFMEMORY;
 
     /*
@@ -1954,31 +1957,37 @@ static HRESULT d3dx_pixels_decompress(struct d3dx_pixels *pixels, const struct p
 
     TRACE("Decompressing pixels.\n");
     tmp_pitch = pixels->row_pitch * desc->block_width / desc->block_byte_count;
-    for (y = 0; y < size->height; ++y)
+    for (z = 0; z < size->depth; ++z)
     {
-        BYTE *ptr = &uncompressed_mem[y * size->width * uncompressed_desc->bytes_per_pixel];
-        for (x = 0; x < size->width; ++x)
-        {
-            const POINT pt = { x, y };
+        const BYTE *slice_data = ((BYTE *)pixels->data) + (pixels->slice_pitch * z);
 
-            if (!is_dst)
-                fetch_dxt_texel(tmp_pitch, (BYTE *)pixels->data, x + pixels->unaligned_rect.left,
-                        y + pixels->unaligned_rect.top, ptr);
-            else if (!PtInRect(&pixels->unaligned_rect, pt))
-                fetch_dxt_texel(tmp_pitch, (BYTE *)pixels->data, x, y, ptr);
-            ptr += uncompressed_desc->bytes_per_pixel;
+        for (y = 0; y < size->height; ++y)
+        {
+            BYTE *ptr = &uncompressed_mem[(z * uncompressed_slice_pitch) + (y * uncompressed_row_pitch)];
+            for (x = 0; x < size->width; ++x)
+            {
+                const POINT pt = { x, y };
+
+                if (!is_dst)
+                    fetch_dxt_texel(tmp_pitch, slice_data, x + pixels->unaligned_rect.left,
+                            y + pixels->unaligned_rect.top, ptr);
+                else if (!PtInRect(&pixels->unaligned_rect, pt))
+                    fetch_dxt_texel(tmp_pitch, slice_data, x, y, ptr);
+                ptr += uncompressed_desc->bytes_per_pixel;
+            }
         }
     }
 
 exit:
     *out_memory = uncompressed_mem;
-    *out_row_pitch = size->width * uncompressed_desc->bytes_per_pixel;
+    *out_row_pitch = uncompressed_row_pitch;
+    *out_slice_pitch = uncompressed_slice_pitch;
     *out_desc = uncompressed_desc;
 
     return S_OK;
 }
 
-static HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
+HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, D3DFORMAT format, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom,
         uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
 {
@@ -2026,7 +2035,7 @@ static const char *debug_d3dx_pixels(struct d3dx_pixels *pixels)
             pixels->size.width, pixels->size.height, pixels->size.depth, wine_dbgstr_rect(&pixels->unaligned_rect));
 }
 
-static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
+HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
        const struct pixel_format_desc *dst_desc, struct d3dx_pixels *src_pixels,
        const struct pixel_format_desc *src_desc, uint32_t filter_flags, uint32_t color_key)
 {
@@ -2054,6 +2063,7 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
     if (src_desc->format == dst_desc->format
             && (dst_size.width == src_size.width && !(dst_size.width % dst_desc->block_width))
             && (dst_size.height == src_size.height && !(dst_size.height % dst_desc->block_height))
+            && (dst_size.depth == src_size.depth)
             && color_key == 0
             && !(src_pixels->unaligned_rect.left & (src_desc->block_width - 1))
             && !(src_pixels->unaligned_rect.top & (src_desc->block_height - 1))
@@ -2080,19 +2090,19 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
      */
     if (src_desc->type == FORMAT_DXT)
     {
+        uint32_t uncompressed_row_pitch, uncompressed_slice_pitch;
         const struct pixel_format_desc *uncompressed_desc;
-        uint32_t uncompressed_row_pitch;
         void *uncompressed_mem = NULL;
 
         hr = d3dx_pixels_decompress(src_pixels, src_desc, FALSE, &uncompressed_mem, &uncompressed_row_pitch,
-                &uncompressed_desc);
+                &uncompressed_slice_pitch, &uncompressed_desc);
         if (SUCCEEDED(hr))
         {
             struct d3dx_pixels uncompressed_pixels;
 
-            d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, 0, NULL, uncompressed_desc->format,
-                    0, 0, src_pixels->size.width, src_pixels->size.height, 0, src_pixels->size.depth,
-                    &uncompressed_pixels);
+            d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, uncompressed_slice_pitch, NULL,
+                    uncompressed_desc->format, 0, 0, src_pixels->size.width, src_pixels->size.height,
+                    0, src_pixels->size.depth, &uncompressed_pixels);
 
             hr = d3dx_load_pixels_from_pixels(dst_pixels, dst_desc, &uncompressed_pixels, uncompressed_desc,
                     filter_flags, color_key);
@@ -2104,25 +2114,27 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
     /* Same as the above, need to decompress the destination prior to modifying. */
     if (dst_desc->type == FORMAT_DXT)
     {
+        uint32_t uncompressed_row_pitch, uncompressed_slice_pitch;
         const struct pixel_format_desc *uncompressed_desc;
         struct d3dx_pixels uncompressed_pixels;
-        uint32_t uncompressed_row_pitch;
         void *uncompressed_mem = NULL;
 
         hr = d3dx_pixels_decompress(dst_pixels, dst_desc, TRUE, &uncompressed_mem, &uncompressed_row_pitch,
-                &uncompressed_desc);
+                &uncompressed_slice_pitch, &uncompressed_desc);
         if (FAILED(hr))
             goto exit;
 
-        d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, 0, NULL,
+        d3dx_pixels_init(uncompressed_mem, uncompressed_row_pitch, uncompressed_slice_pitch, NULL,
                 uncompressed_desc->format, dst_pixels->unaligned_rect.left, dst_pixels->unaligned_rect.top,
-                dst_pixels->unaligned_rect.right, dst_pixels->unaligned_rect.bottom, 0, 1, &uncompressed_pixels);
+                dst_pixels->unaligned_rect.right, dst_pixels->unaligned_rect.bottom, 0, dst_pixels->size.depth,
+                &uncompressed_pixels);
 
         hr = d3dx_load_pixels_from_pixels(&uncompressed_pixels, uncompressed_desc, src_pixels, src_desc, filter_flags,
                 color_key);
         if (SUCCEEDED(hr))
         {
             GLenum gl_format = 0;
+            uint32_t i;
 
             TRACE("Compressing DXTn surface.\n");
             switch (dst_desc->format)
@@ -2141,8 +2153,15 @@ static HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
                 default:
                     ERR("Unexpected destination compressed format %u.\n", dst_desc->format);
             }
-            tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, uncompressed_mem, gl_format,
-                    (BYTE *)dst_pixels->data, dst_pixels->row_pitch);
+
+            for (i = 0; i < dst_size_aligned.depth; ++i)
+            {
+                BYTE *uncompressed_mem_slice = (BYTE *)uncompressed_mem + (i * uncompressed_slice_pitch);
+                BYTE *dst_memory_slice = ((BYTE *)dst_pixels->data) + (i * dst_pixels->slice_pitch);
+
+                tx_compress_dxtn(4, dst_size_aligned.width, dst_size_aligned.height, uncompressed_mem_slice, gl_format,
+                        dst_memory_slice, dst_pixels->row_pitch);
+            }
         }
         free(uncompressed_mem);
         goto exit;
@@ -2170,6 +2189,22 @@ exit:
     if (FAILED(hr))
         WARN("Failed to load pixels, hr %#lx.\n", hr);
     return hr;
+}
+
+void get_aligned_rect(uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t width, uint32_t height,
+        const struct pixel_format_desc *fmt_desc, RECT *aligned_rect)
+{
+    SetRect(aligned_rect, left, top, right, bottom);
+    if (aligned_rect->left & (fmt_desc->block_width - 1))
+        aligned_rect->left = aligned_rect->left & ~(fmt_desc->block_width - 1);
+    if (aligned_rect->top & (fmt_desc->block_height - 1))
+        aligned_rect->top = aligned_rect->top & ~(fmt_desc->block_height - 1);
+    if (aligned_rect->right & (fmt_desc->block_width - 1) && aligned_rect->right != width)
+        aligned_rect->right = min((aligned_rect->right + fmt_desc->block_width - 1)
+                & ~(fmt_desc->block_width - 1), width);
+    if (aligned_rect->bottom & (fmt_desc->block_height - 1) && aligned_rect->bottom != height)
+        aligned_rect->bottom = min((aligned_rect->bottom + fmt_desc->block_height - 1)
+                & ~(fmt_desc->block_height - 1), height);
 }
 
 /************************************************************
@@ -2268,18 +2303,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
         }
     }
 
-    dst_rect_aligned = *dst_rect;
-    if (dst_rect_aligned.left & (destformatdesc->block_width - 1))
-        dst_rect_aligned.left = dst_rect_aligned.left & ~(destformatdesc->block_width - 1);
-    if (dst_rect_aligned.top & (destformatdesc->block_height - 1))
-        dst_rect_aligned.top = dst_rect_aligned.top & ~(destformatdesc->block_height - 1);
-    if (dst_rect_aligned.right & (destformatdesc->block_width - 1) && dst_rect_aligned.right != surfdesc.Width)
-        dst_rect_aligned.right = min((dst_rect_aligned.right + destformatdesc->block_width - 1)
-                & ~(destformatdesc->block_width - 1), surfdesc.Width);
-    if (dst_rect_aligned.bottom & (destformatdesc->block_height - 1) && dst_rect_aligned.bottom != surfdesc.Height)
-        dst_rect_aligned.bottom = min((dst_rect_aligned.bottom + destformatdesc->block_height - 1)
-                & ~(destformatdesc->block_height - 1), surfdesc.Height);
-
     if (filter == D3DX_DEFAULT)
         filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
 
@@ -2288,6 +2311,8 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
     if (FAILED(hr))
         return hr;
 
+    get_aligned_rect(dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, surfdesc.Width, surfdesc.Height,
+        destformatdesc, &dst_rect_aligned);
     if (FAILED(hr = lock_surface(dst_surface, &dst_rect_aligned, &lockrect, &surface, TRUE)))
         return hr;
 

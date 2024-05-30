@@ -71,16 +71,29 @@ HRESULT WINAPI D3DXLoadVolumeFromFileW(IDirect3DVolume9 *dst_volume, const PALET
     return hr;
 }
 
+static void set_d3dbox(D3DBOX *box, uint32_t left, uint32_t top, uint32_t right, uint32_t bottom, uint32_t front,
+        uint32_t back)
+{
+    box->Left = left;
+    box->Top = top;
+    box->Right = right;
+    box->Bottom = bottom;
+    box->Front = front;
+    box->Back = back;
+}
+
 HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
         const PALETTEENTRY *dst_palette, const D3DBOX *dst_box, const void *src_memory,
         D3DFORMAT src_format, UINT src_row_pitch, UINT src_slice_pitch,
         const PALETTEENTRY *src_palette, const D3DBOX *src_box, DWORD filter, D3DCOLOR color_key)
 {
-    HRESULT hr;
-    D3DVOLUME_DESC desc;
-    D3DLOCKED_BOX locked_box;
-    struct volume dst_size, src_size;
     const struct pixel_format_desc *src_format_desc, *dst_format_desc;
+    struct d3dx_pixels src_pixels, dst_pixels;
+    RECT dst_rect_aligned, dst_rect_unaligned;
+    D3DBOX dst_box_aligned, dst_box_tmp;
+    D3DLOCKED_BOX locked_box;
+    D3DVOLUME_DESC desc;
+    HRESULT hr;
 
     TRACE("dst_volume %p, dst_palette %p, dst_box %p, src_memory %p, src_format %#x, "
             "src_row_pitch %u, src_slice_pitch %u, src_palette %p, src_box %p, filter %#lx, color_key 0x%08lx.\n",
@@ -98,17 +111,19 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
     if (filter == D3DX_DEFAULT)
         filter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
 
-    IDirect3DVolume9_GetDesc(dst_volume, &desc);
+    src_format_desc = get_format_info(src_format);
+    if (src_format_desc->type == FORMAT_UNKNOWN)
+        return E_NOTIMPL;
 
-    src_size.width = src_box->Right - src_box->Left;
-    src_size.height = src_box->Bottom - src_box->Top;
-    src_size.depth = src_box->Back - src_box->Front;
+    IDirect3DVolume9_GetDesc(dst_volume, &desc);
+    dst_format_desc = get_format_info(desc.Format);
+    if (dst_format_desc->type == FORMAT_UNKNOWN)
+        return E_NOTIMPL;
 
     if (!dst_box)
     {
-        dst_size.width = desc.Width;
-        dst_size.height = desc.Height;
-        dst_size.depth = desc.Depth;
+        set_d3dbox(&dst_box_tmp, 0, 0, desc.Width, desc.Height, 0, desc.Depth);
+        dst_box = &dst_box_tmp;
     }
     else
     {
@@ -118,94 +133,33 @@ HRESULT WINAPI D3DXLoadVolumeFromMemory(IDirect3DVolume9 *dst_volume,
             return D3DERR_INVALIDCALL;
         if (dst_box->Front >= dst_box->Back || dst_box->Back > desc.Depth)
             return D3DERR_INVALIDCALL;
-
-        dst_size.width = dst_box->Right - dst_box->Left;
-        dst_size.height = dst_box->Bottom - dst_box->Top;
-        dst_size.depth = dst_box->Back - dst_box->Front;
     }
 
-    src_format_desc = get_format_info(src_format);
-    if (src_format_desc->type == FORMAT_UNKNOWN)
-        return E_NOTIMPL;
+    hr = d3dx_pixels_init(src_memory, src_row_pitch, src_slice_pitch,
+        src_palette, src_format, src_box->Left, src_box->Top, src_box->Right, src_box->Bottom,
+        src_box->Front, src_box->Back, &src_pixels);
+    if (FAILED(hr))
+        return hr;
 
-    dst_format_desc = get_format_info(desc.Format);
-    if (dst_format_desc->type == FORMAT_UNKNOWN)
-        return E_NOTIMPL;
+    get_aligned_rect(dst_box->Left, dst_box->Top, dst_box->Right, dst_box->Bottom, desc.Width, desc.Height,
+        dst_format_desc, &dst_rect_aligned);
+    set_d3dbox(&dst_box_aligned, dst_rect_aligned.left, dst_rect_aligned.top, dst_rect_aligned.right,
+            dst_rect_aligned.bottom, dst_box->Front, dst_box->Back);
 
-    if (desc.Format == src_format
-            && dst_size.width == src_size.width
-            && dst_size.height == src_size.height
-            && dst_size.depth == src_size.depth
-            && color_key == 0)
-    {
-        const BYTE *src_addr;
+    hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, &dst_box_aligned, 0);
+    if (FAILED(hr))
+        return hr;
 
-        if (src_box->Left & (src_format_desc->block_width - 1)
-                || src_box->Top & (src_format_desc->block_height - 1)
-                || (src_box->Right & (src_format_desc->block_width - 1)
-                    && src_size.width != desc.Width)
-                || (src_box->Bottom & (src_format_desc->block_height - 1)
-                    && src_size.height != desc.Height))
-        {
-            FIXME("Source box (%u, %u, %u, %u) is misaligned\n",
-                    src_box->Left, src_box->Top, src_box->Right, src_box->Bottom);
-            return E_NOTIMPL;
-        }
+    SetRect(&dst_rect_unaligned, dst_box->Left, dst_box->Top, dst_box->Right, dst_box->Bottom);
+    OffsetRect(&dst_rect_unaligned, -dst_rect_aligned.left, -dst_rect_aligned.top);
+    set_d3dx_pixels(&dst_pixels, locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, dst_palette,
+            (dst_box_aligned.Right - dst_box_aligned.Left), (dst_box_aligned.Bottom - dst_box_aligned.Top),
+            (dst_box_aligned.Back - dst_box_aligned.Front), &dst_rect_unaligned);
 
-        src_addr = src_memory;
-        src_addr += src_box->Front * src_slice_pitch;
-        src_addr += (src_box->Top / src_format_desc->block_height) * src_row_pitch;
-        src_addr += (src_box->Left / src_format_desc->block_width) * src_format_desc->block_byte_count;
-
-        hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, dst_box, 0);
-        if (FAILED(hr)) return hr;
-
-        copy_pixels(src_addr, src_row_pitch, src_slice_pitch,
-                locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch,
-                &dst_size, dst_format_desc);
-
-        IDirect3DVolume9_UnlockBox(dst_volume);
-    }
-    else
-    {
-        const BYTE *src_addr;
-
-        if (!is_conversion_from_supported(src_format_desc)
-                || !is_conversion_to_supported(dst_format_desc))
-        {
-            FIXME("Pixel format conversion is not implemented %#x -> %#x\n",
-                    src_format_desc->format, dst_format_desc->format);
-            return E_NOTIMPL;
-        }
-
-        src_addr = src_memory;
-        src_addr += src_box->Front * src_slice_pitch;
-        src_addr += src_box->Top * src_row_pitch;
-        src_addr += src_box->Left * src_format_desc->bytes_per_pixel;
-
-        hr = IDirect3DVolume9_LockBox(dst_volume, &locked_box, dst_box, 0);
-        if (FAILED(hr)) return hr;
-
-        if ((filter & 0xf) == D3DX_FILTER_NONE)
-        {
-            convert_argb_pixels(src_memory, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key,
-                    src_palette);
-        }
-        else
-        {
-            if ((filter & 0xf) != D3DX_FILTER_POINT)
-                FIXME("Unhandled filter %#lx.\n", filter);
-
-            point_filter_argb_pixels(src_addr, src_row_pitch, src_slice_pitch, &src_size, src_format_desc,
-                    locked_box.pBits, locked_box.RowPitch, locked_box.SlicePitch, &dst_size, dst_format_desc, color_key,
-                    src_palette);
-        }
-
-        IDirect3DVolume9_UnlockBox(dst_volume);
-    }
-
-    return D3D_OK;
+    hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_format_desc, &src_pixels, src_format_desc, filter,
+            color_key);
+    IDirect3DVolume9_UnlockBox(dst_volume);
+    return hr;
 }
 
 HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *dst_palette,
