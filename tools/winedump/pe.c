@@ -681,6 +681,89 @@ static const char *find_export_from_rva( UINT rva )
     return ret ? strmake( " (%s)", ret ) : "";
 }
 
+static const char *find_import_from_rva( UINT rva )
+{
+    const IMAGE_IMPORT_DESCRIPTOR *imp;
+
+    if (!(imp = get_dir( IMAGE_FILE_IMPORT_DIRECTORY ))) return "";
+
+    /* check for import thunk */
+    switch (PE_nt_headers->FileHeader.Machine)
+    {
+    case IMAGE_FILE_MACHINE_AMD64:
+    {
+        const BYTE *ptr = RVA( rva, 6 );
+        if (!ptr) return "";
+        if (ptr[0] == 0xff && ptr[1] == 0x25)
+        {
+            rva += 6 + *(int *)(ptr + 2);
+            break;
+        }
+        if (ptr[0] == 0x48 && ptr[1] == 0xff && ptr[2] == 0x25)
+        {
+            rva += 7 + *(int *)(ptr + 3);
+            break;
+        }
+        return "";
+    }
+    case IMAGE_FILE_MACHINE_ARM64:
+    {
+        const UINT *ptr = RVA( rva, sizeof(DWORD) );
+        if ((ptr[0] & 0x9f00001f) == 0x90000010 &&  /* adrp x16, page */
+            (ptr[1] & 0xffc003ff) == 0xf9400210 &&  /* ldr x16, [x16, #off] */
+            ptr[2] == 0xd61f0200)                   /* br x16 */
+        {
+            rva &= ~0xfff;
+            rva += ((ptr[0] & 0x00ffffe0) << 9) + ((ptr[0] & 0x60000000) >> 17);
+            rva += (ptr[1] & 0x003ffc00) >> 7;
+            break;
+        }
+        return "";
+    }
+    default:
+        return "";
+    }
+
+    for ( ; imp->Name && imp->FirstThunk; imp++)
+    {
+        UINT imp_rva = imp->OriginalFirstThunk ? imp->OriginalFirstThunk : imp->FirstThunk;
+        UINT thunk_rva = imp->FirstThunk;
+
+        if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        {
+            const IMAGE_THUNK_DATA64 *il = RVA( imp_rva, sizeof(DWORD) );
+            for ( ; il && il->u1.Ordinal; il++, thunk_rva += sizeof(LONGLONG))
+            {
+                if (thunk_rva != rva) continue;
+                if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
+                    return strmake( " (-> #%u)", (WORD)IMAGE_ORDINAL64( il->u1.Ordinal ));
+                else
+                    return strmake( " (-> %s)", get_symbol_str( RVA( (DWORD)il->u1.AddressOfData + 2, 1 )));
+            }
+        }
+        else
+        {
+            const IMAGE_THUNK_DATA32 *il = RVA( imp_rva, sizeof(DWORD) );
+            for ( ; il && il->u1.Ordinal; il++, thunk_rva += sizeof(LONG))
+            {
+                if (thunk_rva != rva) continue;
+                if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
+                    return strmake( " (-> #%u)", (WORD)IMAGE_ORDINAL32( il->u1.Ordinal ));
+                else
+                    return strmake( " (-> %s)", get_symbol_str( RVA( (DWORD)il->u1.AddressOfData + 2, 1 )));
+            }
+        }
+    }
+    return "";
+}
+
+static const char *get_function_name( UINT rva )
+{
+    const char *name = find_export_from_rva( rva );
+    if (!*name) name = find_import_from_rva( rva );
+    return name;
+}
+
 static	void	dump_dir_exported_functions(void)
 {
     unsigned int size;
@@ -975,8 +1058,12 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
         return;
     }
     if (info->flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
-        printf( "    handler %08x data at %08x\n", handler_data->handler,
-                (UINT)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
+    {
+        UINT rva = function->UnwindData + ((const char *)(&handler_data->handler + 1) - (const char *)info);
+        const char *name = get_function_name( handler_data->handler );
+
+        printf( "    handler %08x%s data at %08x\n", handler_data->handler, name, rva );
+    }
 }
 
 static const BYTE armnt_code_lengths[256] =
@@ -1365,11 +1452,12 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
     if (info->x)
     {
         const unsigned int *handler;
+        const char *name;
 
         handler = RVA( rva, sizeof(*handler) );
         rva = rva + sizeof(*handler);
-
-        printf( "    handler %08x data at %08x\n", *handler, rva);
+        name = get_function_name( *handler );
+        printf( "    handler %08x%s data at %08x\n", *handler, name, rva );
     }
 }
 
@@ -1708,13 +1796,15 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     }
     ptr = RVA( rva, codes * 4);
     rva += codes * 4;
+    dump_arm64_codes( ptr, codes * 4 );
     if (info->x)
     {
         const UINT *handler = RVA( rva, sizeof(*handler) );
+        const char *name = get_function_name( *handler );
+
         rva += sizeof(*handler);
-        printf( "    handler: %08x data %08x\n", *handler, rva );
+        printf( "    handler: %08x%s data %08x\n", *handler, name, rva );
     }
-    dump_arm64_codes( ptr, codes * 4 );
 }
 
 static void dump_dir_exceptions(void)
