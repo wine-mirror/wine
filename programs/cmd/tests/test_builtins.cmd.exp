@@ -1016,6 +1016,24 @@ B D
 --- nested FORs and args tempering
 @todo_wine@inner argument {-foo, bar}
 @todo_wine@inner argument {-x, y}
+--- nesting and delayed expansion
+a 1 2
+@todo_wine@1-A2
+@todo_wine@1-B1
+@todo_wine@2-A1
+@todo_wine@2-B2
+@todo_wine@b 1 3
+@todo_wine@1-A2
+@todo_wine@1-B1
+@todo_wine@2-A2
+@todo_wine@2-B2
+@todo_wine@3-A1
+@todo_wine@3-B2
+--- nesting if/for
+@todo_wine@"f"
+@todo_wine@"g"
+@todo_wine@"h"
+@todo_wine@---
 --- basic wildcards
 bazbaz
 --- wildcards in subdirs
@@ -1302,6 +1320,16 @@ kkk
 a
 b
 c
+------ quoting and file access
+Aa
+Ab
+Bf.zzz
+Df2.zzz
+Ea
+Eb
+Fa
+Fb
+Jf*.zzz
 ------ command argument
 Passed1@or_broken@Missing functionality - Broken1
 Passed2@or_broken@Missing functionality - Broken2
@@ -1357,7 +1385,7 @@ h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
 h=%h i=b j=c k= l= m=%m n=%n o=%o@or_broken@h=%h i=b j=c k= l= m= n=%n o=%o
 1:3.14,%B
 2:3.14,
-4:3,14
+@todo_wine@4:3,14
 ------ parameter splitting
 :forFParameterSplittingFunc myparam1=myvalue1 myparam2=myparam2 mytest@space@@space@@space@
 :forFParameterSplittingFunc myparam1=myvalue1 myparam2=myparam2 mytest@space@@space@@space@

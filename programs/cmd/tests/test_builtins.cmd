@@ -1440,6 +1440,24 @@ for /F "tokens=1,* delims= " %%a in ("%WINE_ARGS%") do (
     goto :test_for_loop_params_parse
 )
 set "WINE_ARGS="
+echo --- nesting and delayed expansion
+setlocal enabledelayedexpansion
+set WINE_ARGS=1
+for %%a in (a b) do (
+  set /a WINE_ARGS+=1
+  echo %%a %WINE_ARGS% !WINE_ARGS!
+  for /l %%b in (1 1 !WINE_ARGS!) do (
+    if !WINE_ARGS!==%%b (echo %%b-A1) else echo %%b-A2
+    if %WINE_ARGS%==%%b (echo %%b-B1) else echo %%b-B2
+  )
+)
+setlocal disabledelayedexpansion
+echo --- nesting if/for
+for %%a in ("f"
+"g"
+"h"
+) do if #==# (echo %%a)
+echo ---
 
 mkdir foobar & cd foobar
 mkdir foo
@@ -1990,6 +2008,21 @@ echo.>> bar
 echo kkk>>bar
 for /f %%k in (foo bar) do echo %%k
 for /f %%k in (bar foo) do echo %%k
+echo ------ quoting and file access
+echo a >  f.zzz
+echo b >> f.zzz
+erase f2.zzz
+for /f %%a in (f.zzz) do echo A%%a
+for /f %%a in ("f.zzz") do echo B%%a
+for /f %%a in (f2.zzz) do echo C%%a
+for /f %%a in ("f2.zzz") do echo D%%a
+for /f "usebackq" %%a in (f.zzz) do echo E%%a
+for /f "usebackq" %%a in ("f.zzz") do echo F%%a
+for /f "usebackq" %%a in (f2.zzz) do echo G%%a
+for /f "usebackq" %%a in ("f2.zzz") do echo H%%a
+for /f %%a in (f*.zzz) do echo I%%a
+for /f %%a in ("f*.zzz") do echo J%%a
+erase f.zzz
 echo ------ command argument
 rem Not implemented on NT4, need to skip it as no way to get output otherwise
 if "%CD%"=="" goto :SkipFORFcmdNT4
@@ -2085,7 +2118,7 @@ echo 3.14>testfile
 FOR /F "tokens=*"  %%A IN (testfile) DO @echo 1:%%A,%%B
 FOR /F "tokens=1*" %%A IN (testfile) DO @echo 2:%%A,%%B
 FOR /F "tokens=2*" %%A IN (testfile) DO @echo 3:%%A,%%B
-FOR /F "tokens=1,* delims=." %%A IN (testfile) DO @echo 4:%%A,%%B
+FOR /F "tokens=1,*@tab@delims=." %%A IN (testfile) DO @echo 4:%%A,%%B
 del testfile
 cd ..
 rd /s/q foobar
