@@ -2111,16 +2111,19 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         case VK_LMENU:
         case VK_RMENU:
             vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RMENU : VK_LMENU;
+            if ((input->kbd.vkey & 0xff) == VK_MENU) hook_vkey = vkey;
             break;
         case VK_CONTROL:
         case VK_LCONTROL:
         case VK_RCONTROL:
             vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RCONTROL : VK_LCONTROL;
+            if ((input->kbd.vkey & 0xff) == VK_CONTROL) hook_vkey = vkey;
             break;
         case VK_SHIFT:
         case VK_LSHIFT:
         case VK_RSHIFT:
             vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
+            if ((input->kbd.vkey & 0xff) == VK_SHIFT) hook_vkey = vkey;
             break;
         }
     }

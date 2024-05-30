@@ -907,9 +907,9 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     static const struct send_input_keyboard_test shift[] =
     {
         {.vkey = VK_SHIFT, .expect_state = {[VK_SHIFT] = 0x80, [VK_LSHIFT] = 0x80},
-         .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LSHIFT), KEY_MSG(WM_KEYDOWN, 1, VK_SHIFT), {0}}},
         {.vkey = VK_SHIFT, .flags = KEYEVENTF_KEYUP,
-         .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LSHIFT, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LSHIFT), KEY_MSG(WM_KEYUP, 2, VK_SHIFT), {0}}},
         {0},
     };
     static const struct send_input_keyboard_test shift_ext[] =
@@ -948,17 +948,17 @@ static void test_SendInput_keyboard_messages( WORD vkey, WORD scan, WCHAR wch, W
     static const struct send_input_keyboard_test control[] =
     {
         {.vkey = VK_CONTROL, .expect_state = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80},
-         .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYDOWN, 1, VK_CONTROL), {0}}},
+         .expect = {KEY_HOOK(WM_KEYDOWN, 1, VK_LCONTROL), KEY_MSG(WM_KEYDOWN, 1, VK_CONTROL), {0}}},
         {.vkey = VK_CONTROL, .flags = KEYEVENTF_KEYUP, .expect_state = {0},
-         .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LCONTROL, .todo_value = TRUE), KEY_MSG(WM_KEYUP, 2, VK_CONTROL), {0}}},
+         .expect = {KEY_HOOK(WM_KEYUP, 2, VK_LCONTROL), KEY_MSG(WM_KEYUP, 2, VK_CONTROL), {0}}},
         {0},
     };
     static const struct send_input_keyboard_test control_ext[] =
     {
         {.vkey = VK_CONTROL, .flags = KEYEVENTF_EXTENDEDKEY, .expect_state = {[VK_CONTROL] = 0x80, [VK_RCONTROL] = 0x80},
-         .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_KEYDOWN, 1, VK_CONTROL, KF_EXTENDED), {0}}},
+         .expect = {KEY_HOOK_(WM_KEYDOWN, 1, VK_RCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYDOWN, 1, VK_CONTROL, KF_EXTENDED), {0}}},
         {.vkey = VK_CONTROL, .flags = KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY,
-         .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RCONTROL, LLKHF_EXTENDED, .todo_value = TRUE), KEY_MSG_(WM_KEYUP, 2, VK_CONTROL, KF_EXTENDED), {0}}},
+         .expect = {KEY_HOOK_(WM_KEYUP, 2, VK_RCONTROL, LLKHF_EXTENDED), KEY_MSG_(WM_KEYUP, 2, VK_CONTROL, KF_EXTENDED), {0}}},
         {0},
     };
 
