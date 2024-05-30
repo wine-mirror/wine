@@ -2916,7 +2916,11 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
                 messages_equal(expected, actual, TRUE, file, line);
             }
         }
-        if (is_wine) goto done;
+        if (is_wine && !failcount) /* succeeded yet marked todo */
+            todo_wine {
+                dump++;
+                ok_( file, line)( TRUE, "marked \"todo_wine\" but succeeds\n");
+            }
     }
     else
     {
@@ -2926,11 +2930,6 @@ static void ok_sequence_(const struct message *expected_list, const char *contex
             messages_equal(expected, actual, TRUE, file, line);
         }
     }
-    if (todo && !failcount && !strcmp(winetest_platform, "wine")) /* succeeded yet marked todo */
-        todo_wine {
-            dump++;
-            ok_( file, line)( TRUE, "marked \"todo_wine\" but succeeds\n");
-        }
 
 done:
     winetest_pop_context();
