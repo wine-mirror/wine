@@ -955,7 +955,6 @@ sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid2" name="testname"></form>';
     ok(window.testid2 == 1, "window.testid2 = " + window.testid2);
     id_elem = document.body.firstChild;
-    todo_wine_if(v < 9).
     ok(document.testid2 == (v < 9 ? id_elem : 2), "document.testid2 = " + document.testid2);
     document.body.innerHTML = '';
     ok(window.testid2 == 1, "window.testid2 = " + window.testid2);

@@ -5057,21 +5057,8 @@ static HRESULT WINAPI DocDispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMemb
 static HRESULT WINAPI DocDispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
-    HRESULT hres;
 
-    hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex & ~fdexNameEnsure, pid);
-    if(hres != DISP_E_UNKNOWNNAME)
-        return hres;
-
-    if(This->html_document) {
-        hres = get_elem_by_name_or_id(This->html_document, bstrName, NULL);
-        if(SUCCEEDED(hres))
-            hres = dispid_from_elem_name(This, bstrName, pid);
-    }
-
-    if(hres == DISP_E_UNKNOWNNAME && (grfdex & fdexNameEnsure))
-        hres = dispex_get_dynid(&This->node.event_target.dispex, bstrName, FALSE, pid);
-    return hres;
+    return IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
 }
 
 static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -5891,6 +5878,34 @@ static HRESULT HTMLDocumentNode_get_name(DispatchEx *dispex, DISPID id, BSTR *na
     return (*name = SysAllocString(This->elem_vars[idx])) ? S_OK : E_OUTOFMEMORY;
 }
 
+static HRESULT HTMLDocumentNode_get_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    HRESULT hres = DISP_E_UNKNOWNNAME;
+
+    if(This->html_document && dispex_compat_mode(&This->node.event_target.dispex) < COMPAT_MODE_IE9) {
+        hres = get_elem_by_name_or_id(This->html_document, name, NULL);
+        if(SUCCEEDED(hres))
+            hres = dispid_from_elem_name(This, name, dispid);
+    }
+
+    return hres;
+}
+
+static HRESULT HTMLDocumentNode_find_dispid(DispatchEx *dispex, BSTR name, DWORD grfdex, DISPID *dispid)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+    HRESULT hres = DISP_E_UNKNOWNNAME;
+
+    if(This->html_document && dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE9) {
+        hres = get_elem_by_name_or_id(This->html_document, name, NULL);
+        if(SUCCEEDED(hres))
+            hres = dispid_from_elem_name(This, name, dispid);
+    }
+
+    return hres;
+}
+
 static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -6093,6 +6108,8 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         .traverse            = HTMLDocumentNode_traverse,
         .unlink              = HTMLDocumentNode_unlink,
         .get_name            = HTMLDocumentNode_get_name,
+        .get_dispid          = HTMLDocumentNode_get_dispid,
+        .find_dispid         = HTMLDocumentNode_find_dispid,
         .invoke              = HTMLDocumentNode_invoke,
         .next_dispid         = HTMLDocumentNode_next_dispid,
         .get_compat_mode     = HTMLDocumentNode_get_compat_mode,
