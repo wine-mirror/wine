@@ -20538,6 +20538,113 @@ static void test_hook_changing_window_proc(void)
     DestroyWindow( hwnd );
 }
 
+static void test_radiobutton_focus(void)
+{
+    HWND hwnd, button;
+    DWORD style;
+    int i;
+    DWORD types[] = { BS_RADIOBUTTON, BS_AUTORADIOBUTTON };
+
+    static const struct message set_focus_default_seq[] =
+    {
+        { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_BUTTON, BN_SETFOCUS) },
+        { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_BUTTON, BN_CLICKED) },
+        { 0 }
+    };
+
+    static const struct message set_focus_checked_seq[] =
+    {
+        { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_BUTTON, BN_SETFOCUS) },
+        { 0 }
+    };
+
+    static const struct message WM_LBUTTONDOWN_seq[] =
+    {
+        { WM_KILLFOCUS, sent|parent },
+        { WM_IME_SETCONTEXT, sent|optional|parent },
+        { WM_IME_SETCONTEXT, sent|optional|defwinproc },
+        { WM_COMMAND, sent|parent },
+        { 0 }
+    };
+
+    static const struct message set_focus_without_notify_seq[] =
+    {
+        { WM_COMMAND, sent|parent|wparam, ID_BUTTON },
+        { 0 }
+    };
+
+    hwnd = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "Failed to create parent window\n");
+
+    for (i = 0; i < ARRAY_SIZE(types); i++)
+    {
+        /* Test default button */
+        style = types[i] | WS_CHILD | WS_VISIBLE | BS_NOTIFY;
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        ok(button != NULL, "failed to create a button, 0x%08lx, %p\n", style, hwnd);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        flush_events();
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on default radiobutton", TRUE);
+        DestroyWindow(button);
+
+        /* Test already checked button */
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        SendMessageA(button, BM_SETCHECK, BST_CHECKED, 0);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        flush_events();
+        ok_sequence(set_focus_checked_seq, "WM_SETFOCUS on checked radiobutton", FALSE);
+        DestroyWindow(button);
+
+        /* Test already focused button */
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        SendMessageA(button, BM_SETCHECK, BST_UNCHECKED, 0);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        flush_events();
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on focused radiobutton", TRUE);
+        DestroyWindow(button);
+
+        /* Test WM_LBUTTONDOWN */
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_LBUTTONDOWN, 0, MAKELPARAM(7, 7));
+        flush_events();
+        ok_sequence(WM_LBUTTONDOWN_seq, "WM_LBUTTONDOWN on radiobutton", FALSE);
+        DestroyWindow(button);
+
+        /* Test without BS_NOTIFY */
+        style = types[i] | WS_CHILD | WS_VISIBLE;
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        flush_events();
+        ok_sequence(set_focus_without_notify_seq, "WM_SETFOCUS on radiobutton without BS_NOTIFY", TRUE);
+        DestroyWindow(button);
+
+        /* Test disabled button */
+        style = types[i] | WS_CHILD | WS_VISIBLE | BS_NOTIFY;
+        button = CreateWindowExA(0, WC_BUTTONA, "test", style, 0, 0, 50, 14, hwnd, (HMENU)ID_BUTTON, 0, NULL);
+        EnableWindow(button, FALSE);
+        flush_events();
+        flush_sequence();
+        SendMessageA(button, WM_SETFOCUS, 0, 0);
+        flush_events();
+        ok_sequence(set_focus_default_seq, "WM_SETFOCUS on disabled radiobutton", TRUE);
+        DestroyWindow(button);
+    }
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -20585,6 +20692,7 @@ START_TEST(msg)
     test_setparent_status();
     test_InSendMessage();
     test_SetFocus();
+    test_radiobutton_focus();
     test_SetParent();
     test_PostMessage();
     test_broadcast();
