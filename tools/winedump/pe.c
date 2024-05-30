@@ -931,6 +931,353 @@ struct unwind_info_epilogue_armnt
 #define UNW_FLAG_UHANDLER  2
 #define UNW_FLAG_CHAININFO 4
 
+static void dump_c_exception_data( unsigned int rva )
+{
+    unsigned int i;
+    const struct
+    {
+        UINT count;
+        struct
+        {
+            UINT begin;
+            UINT end;
+            UINT handler;
+            UINT target;
+        } rec[];
+    } *table = RVA( rva, sizeof(*table) );
+
+    if (!table) return;
+    printf( "    C exception data at %08x count %u\n", rva, table->count );
+    for (i = 0; i < table->count; i++)
+        printf( "      %u: %08x-%08x handler %08x target %08x\n", i,
+                table->rec[i].begin, table->rec[i].end, table->rec[i].handler, table->rec[i].target );
+}
+
+static void dump_cxx_exception_data( unsigned int rva, unsigned int func_rva )
+{
+    unsigned int i, j, flags = 0;
+    const unsigned int *ptr = RVA( rva, sizeof(*ptr) );
+
+    const struct
+    {
+        int  prev;
+        UINT handler;
+    } *unwind_info;
+
+    const struct
+    {
+        int  start;
+        int  end;
+        int  catch;
+        int  catchblock_count;
+        UINT catchblock;
+    } *tryblock;
+
+    const struct
+    {
+        UINT flags;
+        UINT type_info;
+        int  offset;
+        UINT handler;
+        UINT frame;
+    } *catchblock;
+
+    const struct
+    {
+        UINT ip;
+        int  state;
+    } *ipmap;
+
+    const struct
+    {
+        UINT magic;
+        UINT unwind_count;
+        UINT unwind_table;
+        UINT tryblock_count;
+        UINT tryblock;
+        UINT ipmap_count;
+        UINT ipmap;
+        int  unwind_help;
+        UINT expect_list;
+        UINT flags;
+    } *func;
+
+    if (!ptr || !*ptr) return;
+    rva = *ptr;
+    if (!(func = RVA( rva, sizeof(*func) ))) return;
+    if (func->magic < 0x19930520 || func->magic > 0x19930522) return;
+    if (func->magic > 0x19930521) flags = func->flags;
+    printf( "    C++ exception data at %08x magic %08x", rva, func->magic );
+    if (flags & 1) printf( " sync" );
+    if (flags & 4) printf( " noexcept" );
+    printf( "\n" );
+    printf( "      unwind help %+d\n", func->unwind_help );
+    if (func->magic > 0x19930520 && func->expect_list)
+        printf( "      expect_list %08x\n", func->expect_list );
+    if (func->unwind_count)
+    {
+        printf( "      unwind table at %08x count %u\n", func->unwind_table, func->unwind_count );
+        if ((unwind_info = RVA( func->unwind_table, func->unwind_count * sizeof(*unwind_info) )))
+        {
+            for (i = 0; i < func->unwind_count; i++)
+                printf( "        %u: prev %d func %08x\n", i,
+                        unwind_info[i].prev, unwind_info[i].handler );
+        }
+    }
+    if (func->tryblock_count)
+    {
+        printf( "      try table at %08x count %u\n", func->tryblock, func->tryblock_count );
+        if ((tryblock = RVA( func->tryblock, func->tryblock_count * sizeof(*tryblock) )))
+        {
+            for (i = 0; i < func->tryblock_count; i++)
+            {
+                catchblock = RVA( tryblock[i].catchblock, sizeof(*catchblock) );
+                printf( "        %d: start %d end %d catch %d count %u\n", i,
+                        tryblock[i].start, tryblock[i].end, tryblock[i].catch,
+                        tryblock[i].catchblock_count );
+                for (j = 0; j < tryblock[i].catchblock_count; j++)
+                {
+                    const char *type = "<none>";
+                    if (catchblock[j].type_info)
+                    {
+                        if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+                            type = RVA( catchblock[j].type_info + 16, 1 );
+                        else
+                            type = RVA( catchblock[j].type_info + 8, 1 );
+                    }
+                    printf( "          %d: flags %x offset %+d handler %08x frame %x type %s\n", j,
+                            catchblock[j].flags, catchblock[j].offset,
+                            catchblock[j].handler, catchblock[j].frame, type );
+                }
+            }
+        }
+    }
+    if (func->ipmap_count)
+    {
+        printf( "      ip map at %08x count %u\n", func->ipmap, func->ipmap_count );
+        if ((ipmap = RVA( func->ipmap, func->ipmap_count * sizeof(*ipmap) )))
+        {
+            for (i = 0; i < func->ipmap_count; i++)
+                printf( "        %u: ip %08x state %d\n", i, ipmap[i].ip, ipmap[i].state );
+        }
+    }
+}
+
+static UINT v4_decode_uint( const BYTE **b )
+{
+    UINT ret;
+    const BYTE *p = *b;
+
+    if ((*p & 1) == 0)
+    {
+        ret = p[0] >> 1;
+        p += 1;
+    }
+    else if ((*p & 3) == 1)
+    {
+        ret = (p[0] >> 2) + (p[1] << 6);
+        p += 2;
+    }
+    else if ((*p & 7) == 3)
+    {
+        ret = (p[0] >> 3) + (p[1] << 5) + (p[2] << 13);
+        p += 3;
+    }
+    else if ((*p & 15) == 7)
+    {
+        ret = (p[0] >> 4) + (p[1] << 4) + (p[2] << 12) + (p[3] << 20);
+        p += 4;
+    }
+    else
+    {
+        ret = 0;
+        p += 5;
+    }
+
+    *b = p;
+    return ret;
+}
+
+static UINT v4_read_rva( const BYTE **b )
+{
+    UINT ret = *(UINT *)*b;
+    *b += sizeof(UINT);
+    return ret;
+}
+
+#define FUNC_DESCR_IS_CATCH      0x01
+#define FUNC_DESCR_IS_SEPARATED  0x02
+#define FUNC_DESCR_BBT           0x04
+#define FUNC_DESCR_UNWIND_MAP    0x08
+#define FUNC_DESCR_TRYBLOCK_MAP  0x10
+#define FUNC_DESCR_EHS           0x20
+#define FUNC_DESCR_NO_EXCEPT     0x40
+#define FUNC_DESCR_RESERVED      0x80
+
+#define CATCHBLOCK_FLAGS         0x01
+#define CATCHBLOCK_TYPE_INFO     0x02
+#define CATCHBLOCK_OFFSET        0x04
+#define CATCHBLOCK_SEPARATED     0x08
+#define CATCHBLOCK_RET_ADDR_MASK 0x30
+#define CATCHBLOCK_RET_ADDR      0x10
+#define CATCHBLOCK_TWO_RET_ADDRS 0x20
+
+static void dump_cxx_exception_data_v4( unsigned int rva, unsigned int func_rva )
+{
+    const unsigned int *ptr = RVA( rva, sizeof(*ptr) );
+    const BYTE *p;
+    BYTE flags;
+    UINT unwind_map = 0, tryblock_map = 0, ip_map, count, i, j, k;
+
+    if (!ptr || !*ptr) return;
+    rva = *ptr;
+    if (!(p = RVA( rva, 1 ))) return;
+    flags = *p++;
+    printf( "    C++ v4 exception data at %08x", rva );
+    if (flags & FUNC_DESCR_BBT) printf( " bbt %08x", v4_decode_uint( &p ));
+    if (flags & FUNC_DESCR_UNWIND_MAP) unwind_map = v4_read_rva( &p );
+    if (flags & FUNC_DESCR_TRYBLOCK_MAP) tryblock_map = v4_read_rva( &p );
+    ip_map = v4_read_rva(&p);
+    if (flags & FUNC_DESCR_IS_CATCH) printf( " frame %08x", v4_decode_uint( &p ));
+    if (flags & FUNC_DESCR_EHS) printf( " sync" );
+    if (flags & FUNC_DESCR_NO_EXCEPT) printf( " noexcept" );
+    printf( "\n" );
+
+    if (unwind_map)
+    {
+        int *offsets;
+        const BYTE *start, *p = RVA( unwind_map, 1 );
+        count = v4_decode_uint( &p );
+        printf( "      unwind map at %08x count %u\n", unwind_map, count );
+        offsets = calloc( count, sizeof(*offsets) );
+        start = p;
+        for (i = 0; i < count; i++)
+        {
+            UINT handler, object, type;
+            int offset = p - start, off, prev = -2;
+
+            offsets[i] = offset;
+            type = v4_decode_uint( &p );
+            off = (type >> 2);
+            if (off > offset) prev = -1;
+            else for (j = 0; j < i; j++) if (offsets[j] == offset - off) prev = j;
+
+            switch (type & 3)
+            {
+            case 0:
+                printf( "        %u: prev %d no handler\n", i, prev );
+                break;
+            case 1:
+                handler = v4_read_rva( &p );
+                object = v4_decode_uint( &p );
+                printf( "        %u: prev %d dtor obj handler %08x obj %+d\n",
+                        i, prev, handler, (int)object );
+                break;
+            case 2:
+                handler = v4_read_rva( &p );
+                object = v4_decode_uint( &p );
+                printf( "        %u: prev %d dtor ptr handler %08x obj %+d\n",
+                        i, prev, handler, (int)object );
+                break;
+            case 3:
+                handler = v4_read_rva( &p );
+                printf( "        %u: prev %d handler %08x\n", i, prev, handler );
+                break;
+            }
+        }
+        free( offsets );
+    }
+
+    if (tryblock_map)
+    {
+        const BYTE *p = RVA( tryblock_map, 1 );
+        count = v4_decode_uint( &p );
+        printf( "      tryblock map at %08x count %u\n", tryblock_map, count );
+        for (i = 0; i < count; i++)
+        {
+            int start = v4_decode_uint( &p );
+            int end = v4_decode_uint( &p );
+            int catch = v4_decode_uint( &p );
+            UINT catchblock = v4_read_rva( &p );
+
+            printf( "        %u: start %d end %d catch %d\n", i, start, end, catch );
+            if (catchblock)
+            {
+                UINT cont[3];
+                const BYTE *p = RVA( catchblock, 1 );
+                count = v4_decode_uint( &p );
+                for (j = 0; j < count; j++)
+                {
+                    BYTE flags = *p++;
+                    printf( "          %u:", j );
+                    if (flags & CATCHBLOCK_FLAGS)
+                        printf( " flags %08x", v4_decode_uint( &p ));
+                    if (flags & CATCHBLOCK_TYPE_INFO)
+                        printf( " type %08x", v4_read_rva( &p ));
+                    if (flags & CATCHBLOCK_OFFSET)
+                        printf( " offset %08x", v4_decode_uint( &p ));
+                    printf( " handler %08x", v4_read_rva( &p ));
+                    for (k = 0; k < ((flags >> 4) & 3); k++)
+                        if (flags & CATCHBLOCK_SEPARATED) cont[k] = v4_read_rva( &p );
+                        else cont[k] = func_rva + v4_decode_uint( &p );
+                    if (k == 1) printf( " cont %08x", cont[0] );
+                    else if (k == 2) printf( " cont %08x,%08x", cont[0], cont[1] );
+                    printf( "\n" );
+                }
+            }
+        }
+    }
+
+    if (ip_map && (flags & FUNC_DESCR_IS_SEPARATED))
+    {
+        const BYTE *p = RVA( ip_map, 1 );
+
+        count = v4_decode_uint( &p );
+        printf( "      separated ip map at %08x count %u\n", ip_map, count );
+        for (i = 0; i < count; i++)
+        {
+            UINT ip = v4_read_rva( &p );
+            UINT map = v4_read_rva( &p );
+
+            if (map)
+            {
+                UINT state, count2;
+                const BYTE *p = RVA( map, 1 );
+
+                count2 = v4_decode_uint( &p );
+                printf( "        %u: start %08x map %08x\n", i, ip, map );
+                for (j = 0; j < count2; j++)
+                {
+                    ip += v4_decode_uint( &p );
+                    state = v4_decode_uint( &p );
+                    printf( "          %u: ip %08x state %d\n", i, ip, state );
+                }
+            }
+        }
+    }
+    else if (ip_map)
+    {
+        UINT ip = func_rva, state;
+        const BYTE *p = RVA( ip_map, 1 );
+
+        count = v4_decode_uint( &p );
+        printf( "      ip map at %08x count %u\n", ip_map, count );
+        for (i = 0; i < count; i++)
+        {
+            ip += v4_decode_uint( &p );
+            state = v4_decode_uint( &p );
+            printf( "        %u: ip %08x state %d\n", i, ip, state );
+        }
+    }
+}
+
+static void dump_exception_data( unsigned int rva, unsigned int func_rva, const char *name )
+{
+    if (strstr( name, "__C_specific_handler" )) dump_c_exception_data( rva );
+    if (strstr( name, "__CxxFrameHandler4" )) dump_cxx_exception_data_v4( rva, func_rva );
+    else dump_cxx_exception_data( rva, func_rva );
+}
+
 static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *function )
 {
     static const char * const reg_names[16] =
@@ -1063,6 +1410,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
         const char *name = get_function_name( handler_data->handler );
 
         printf( "    handler %08x%s data at %08x\n", handler_data->handler, name, rva );
+        dump_exception_data( rva, function->BeginAddress, name );
     }
 }
 
@@ -1458,6 +1806,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
         rva = rva + sizeof(*handler);
         name = get_function_name( *handler );
         printf( "    handler %08x%s data at %08x\n", *handler, name, rva );
+        dump_exception_data( rva, fnc->BeginAddress & ~1, name );
     }
 }
 
@@ -1804,6 +2153,7 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
 
         rva += sizeof(*handler);
         printf( "    handler: %08x%s data %08x\n", *handler, name, rva );
+        dump_exception_data( rva, func->BeginAddress, name );
     }
 }
 
