@@ -5681,6 +5681,29 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
     ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%ld, expected %d\n", V_I4(&out), load_state%5);
 
+    /* check on document node too */
+    if(load_state == LD_COMPLETE) {
+        IHTMLDocument2 *doc_node;
+        IHTMLWindow2 *window;
+
+        hres = IHTMLDocument2_get_parentWindow(htmldoc, &window);
+        ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+
+        hres = IHTMLWindow2_get_document(window, &doc_node);
+        ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+
+        VariantInit(&out);
+        hres = IHTMLDocument2_Invoke(doc_node, DISPID_READYSTATE, &IID_NULL, 0, DISPATCH_PROPERTYGET,
+                                     &dispparams, &out, NULL, NULL);
+        ok(hres == S_OK, "Invoke(DISPID_READYSTATE) failed: %08lx\n", hres);
+
+        ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
+        ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%ld, expected %d\n", V_I4(&out), load_state%5);
+
+        IHTMLDocument2_Release(doc_node);
+        IHTMLWindow2_Release(window);
+    }
+
     test_doscroll((IUnknown*)htmldoc);
 
     IHTMLDocument2_Release(htmldoc);

@@ -5066,22 +5066,6 @@ static HRESULT WINAPI DocDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID
 {
     HTMLDocumentNode *This = impl_from_IDispatchEx(iface);
 
-    if(This->window) {
-        switch(id) {
-        case DISPID_READYSTATE:
-            TRACE("DISPID_READYSTATE\n");
-
-            if(!(wFlags & DISPATCH_PROPERTYGET))
-                return E_INVALIDARG;
-
-            V_VT(pvarRes) = VT_I4;
-            V_I4(pvarRes) = This->window->base.outer_window->readystate;
-            return S_OK;
-        default:
-            break;
-        }
-    }
-
     return IDispatchEx_InvokeEx(&This->node.event_target.dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 }
 
@@ -5939,6 +5923,30 @@ static HRESULT HTMLDocumentNode_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
     return S_OK;
 }
 
+static HRESULT HTMLDocumentNode_disp_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLDocumentNode *This = impl_from_DispatchEx(dispex);
+
+    if(This->window) {
+        switch(id) {
+        case DISPID_READYSTATE:
+            TRACE("DISPID_READYSTATE\n");
+
+            if(!(flags & DISPATCH_PROPERTYGET))
+                return E_INVALIDARG;
+
+            V_VT(res) = VT_I4;
+            V_I4(res) = This->window->base.outer_window->readystate;
+            return S_OK;
+        default:
+            break;
+        }
+    }
+
+    return S_FALSE;
+}
+
 static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
@@ -6111,6 +6119,7 @@ static const event_target_vtbl_t HTMLDocumentNode_event_target_vtbl = {
         .get_dispid          = HTMLDocumentNode_get_dispid,
         .find_dispid         = HTMLDocumentNode_find_dispid,
         .invoke              = HTMLDocumentNode_invoke,
+        .disp_invoke         = HTMLDocumentNode_disp_invoke,
         .next_dispid         = HTMLDocumentNode_next_dispid,
         .get_compat_mode     = HTMLDocumentNode_get_compat_mode,
     },

@@ -1725,6 +1725,12 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(wFlags == (DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF))
         wFlags = DISPATCH_PROPERTYPUT;
 
+    if(This->info->desc->vtbl->disp_invoke) {
+        hres = This->info->desc->vtbl->disp_invoke(This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+        if(hres != S_FALSE)
+            return hres;
+    }
+
     switch(get_dispid_type(id)) {
     case DISPEXPROP_CUSTOM:
         if(!This->info->desc->vtbl->invoke)
