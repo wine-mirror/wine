@@ -577,7 +577,6 @@ struct HTMLWindow {
     IHTMLWindow6       IHTMLWindow6_iface;
     IHTMLWindow7       IHTMLWindow7_iface;
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
-    IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
     ITravelLogClient   ITravelLogClient_iface;
     IObjectIdentity    IObjectIdentity_iface;
@@ -592,6 +591,7 @@ struct HTMLWindow {
 struct HTMLOuterWindow {
     HTMLWindow base;
     IEventTarget IEventTarget_iface;
+    IDispatchEx  IDispatchEx_iface;
 
     nsCycleCollectingAutoRefCnt ccref;
     LONG task_magic;
