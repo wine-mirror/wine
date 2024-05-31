@@ -1872,12 +1872,8 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     struct macdrv_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
     BYTE alpha;
-    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-    BITMAPINFO *bmi = (BITMAPINFO *)buffer;
-    void *src_bits, *dst_bits;
     RECT rect, src_rect;
-    HDC hdc = 0;
-    HBITMAP dib;
+    HDC hdc;
     BOOL ret = FALSE;
 
     if (!(data = get_win_data(hwnd))) return FALSE;
@@ -1928,20 +1924,11 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     else
         alpha = 0xff;
 
-    dst_bits = surface->funcs->get_info(surface, bmi);
-
-    if (!(dib = NtGdiCreateDIBSection(info->hdcDst, NULL, 0, bmi, DIB_RGB_COLORS,
-                                      0, 0, 0, &src_bits))) goto done;
     if (!(hdc = NtGdiCreateCompatibleDC(0))) goto done;
+    window_surface_lock(surface);
+    NtGdiSelectBitmap(hdc, surface->color_bitmap);
 
-    NtGdiSelectBitmap(hdc, dib);
-    if (info->prcDirty)
-    {
-        intersect_rect(&rect, &rect, info->prcDirty);
-        window_surface_lock(surface);
-        memcpy(src_bits, dst_bits, bmi->bmiHeader.biSizeImage);
-        window_surface_unlock(surface);
-    }
+    if (info->prcDirty) intersect_rect(&rect, &rect, info->prcDirty);
     NtGdiPatBlt(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS);
     src_rect = rect;
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
@@ -1952,28 +1939,21 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                 src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
                                 *(DWORD *)&blend, 0)))
         goto done;
+    if (ret) add_bounds_rect( &surface->bounds, &rect );
+
+    NtGdiDeleteObjectApp( hdc );
+    window_surface_unlock( surface );
+    window_surface_flush( surface );
 
     if ((data = get_win_data(hwnd)))
     {
-        if (surface == data->surface)
-        {
-            window_surface_lock(surface);
-            memcpy(dst_bits, src_bits, bmi->bmiHeader.biSizeImage);
-            add_bounds_rect(&surface->bounds, &rect);
-            window_surface_unlock(surface);
-            window_surface_flush(surface);
-        }
-
         /* The ULW flags are a superset of the LWA flags. */
         sync_window_opacity(data, info->crKey, alpha, TRUE, info->dwFlags);
-
         release_win_data(data);
     }
 
 done:
     window_surface_release(surface);
-    if (hdc) NtGdiDeleteObjectApp(hdc);
-    if (dib) NtGdiDeleteObjectApp(dib);
     return ret;
 }
 
