@@ -151,49 +151,6 @@ static inline int ip_to_state(ipmap_info *ipmap, UINT count, int ip)
     return ipmap[low].state;
 }
 
-static inline void copy_exception(void *object, ULONG64 frame,
-                                  DISPATCHER_CONTEXT *dispatch,
-                                  const catchblock_info *catchblock,
-                                  const cxx_type_info *type, ULONG64 exc_base)
-{
-    const type_info *catch_ti = rva_to_ptr(catchblock->type_info, dispatch->ImageBase);
-    void **dest = rva_to_ptr(catchblock->offset, frame);
-
-    if (!catch_ti || !catch_ti->mangled[0]) return;
-    if (!catchblock->offset) return;
-
-    if (catchblock->flags & TYPE_FLAG_REFERENCE)
-    {
-        *dest = get_this_pointer(&type->offsets, object);
-    }
-    else if (type->flags & CLASS_IS_SIMPLE_TYPE)
-    {
-        memmove(dest, object, type->size);
-        /* if it is a pointer, adjust it */
-        if (type->size == sizeof(void*)) *dest = get_this_pointer(&type->offsets, *dest);
-    }
-    else  /* copy the object */
-    {
-        if (type->copy_ctor)
-        {
-            if (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS)
-            {
-                void (__cdecl *copy_ctor)(void*, void*, int) =
-                    rva_to_ptr(type->copy_ctor, exc_base);
-                copy_ctor(dest, get_this_pointer(&type->offsets, object), 1);
-            }
-            else
-            {
-                void (__cdecl *copy_ctor)(void*, void*) =
-                    rva_to_ptr(type->copy_ctor, exc_base);
-                copy_ctor(dest, get_this_pointer(&type->offsets, object));
-            }
-        }
-        else
-            memmove(dest, get_this_pointer(&type->offsets,object), type->size);
-    }
-}
-
 static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
                              const cxx_function_descr *descr, int last_level)
 {
@@ -365,16 +322,17 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
 
             if (info)
             {
-                const cxx_type_info *type = find_caught_type(info, exc_base,
-                        rva_to_ptr(catchblock->type_info, dispatch->ImageBase),
-                        catchblock->flags);
-                if (!type) continue;
+                const type_info *catch_ti = NULL;
+                const cxx_type_info *type;
+
+                if (catchblock->type_info) catch_ti = rtti_rva( catchblock->type_info, dispatch->ImageBase );
+                if (!(type = find_caught_type( info, exc_base, catch_ti, catchblock->flags ))) continue;
 
                 TRACE("matched type %p in tryblock %d catchblock %d\n", type, i, j);
 
                 /* copy the exception to its destination on the stack */
-                copy_exception((void*)rec->ExceptionInformation[1],
-                        orig_frame, dispatch, catchblock, type, exc_base);
+                copy_exception( (void *)rec->ExceptionInformation[1], orig_frame,
+                                catchblock->offset, catchblock->flags, catch_ti, type, exc_base );
             }
             else
             {

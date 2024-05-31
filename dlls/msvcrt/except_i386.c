@@ -206,36 +206,6 @@ static void dump_function_descr( const cxx_function_descr *descr )
     TRACE( "flags: %08x\n", descr->flags );
 }
 
-/* copy the exception object where the catch block wants it */
-static void copy_exception( void *object, cxx_exception_frame *frame,
-                            const catchblock_info *catchblock, const cxx_type_info *type )
-{
-    void **dest_ptr;
-
-    if (!catchblock->type_info || !catchblock->type_info->mangled[0]) return;
-    if (!catchblock->offset) return;
-    dest_ptr = (void **)((char *)&frame->ebp + catchblock->offset);
-
-    if (catchblock->flags & TYPE_FLAG_REFERENCE)
-    {
-        *dest_ptr = get_this_pointer( &type->offsets, object );
-    }
-    else if (type->flags & CLASS_IS_SIMPLE_TYPE)
-    {
-        memmove( dest_ptr, object, type->size );
-        /* if it is a pointer, adjust it */
-        if (type->size == sizeof(void *)) *dest_ptr = get_this_pointer( &type->offsets, *dest_ptr );
-    }
-    else  /* copy the object */
-    {
-        if (type->copy_ctor)
-            call_copy_ctor( type->copy_ctor, dest_ptr, get_this_pointer(&type->offsets,object),
-                            (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
-        else
-            memmove( dest_ptr, get_this_pointer(&type->offsets,object), type->size );
-    }
-}
-
 /* unwind the local function up to a given trylevel */
 static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_descr *descr, int last_level)
 {
@@ -344,7 +314,8 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
                 TRACE( "matched type %p in tryblock %d catchblock %d\n", type, i, j );
 
                 /* copy the exception to its destination on the stack */
-                copy_exception( object, frame, catchblock, type );
+                copy_exception( object, (uintptr_t)&frame->ebp, catchblock->offset,
+                                catchblock->flags, catchblock->type_info, type, 0 );
             }
             else
             {

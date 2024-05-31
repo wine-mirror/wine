@@ -230,6 +230,37 @@ static inline const cxx_type_info *find_caught_type( cxx_exception_type *exc_typ
     return NULL;
 }
 
+/* copy the exception object where the catch block wants it */
+static inline void copy_exception( void *object, uintptr_t frame, int offset, UINT catch_flags,
+                                   const type_info *catch_ti, const cxx_type_info *type, uintptr_t base )
+{
+    void **dest;
+
+    if (!catch_ti || !catch_ti->mangled[0]) return;
+    if (!offset) return;
+    dest = (void **)(frame + offset);
+
+    if (catch_flags & TYPE_FLAG_REFERENCE)
+    {
+        *dest = get_this_pointer( &type->offsets, object );
+    }
+    else if (type->flags & CLASS_IS_SIMPLE_TYPE)
+    {
+        memmove( dest, object, type->size );
+        /* if it is a pointer, adjust it */
+        if (type->size == sizeof(void*)) *dest = get_this_pointer( &type->offsets, *dest );
+    }
+    else  /* copy the object */
+    {
+        if (type->copy_ctor)
+            call_copy_ctor( rtti_rva( type->copy_ctor, base ), dest,
+                            get_this_pointer( &type->offsets, object ),
+                            (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
+        else
+            memmove( dest, get_this_pointer( &type->offsets, object ), type->size );
+    }
+}
+
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"
 #else
