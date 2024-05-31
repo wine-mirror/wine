@@ -1542,7 +1542,7 @@ static HRESULT uia_provider_get_special_prop_val(struct uia_provider *prov,
     case UIA_RuntimeIdPropertyId:
     {
         IRawElementProviderFragment *elfrag;
-        SAFEARRAY *sa;
+        SAFEARRAY *sa = NULL;
         LONG lbound;
         int val;
 
