@@ -2106,6 +2106,9 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
     switch (vkey)
     {
+    case 0:
+        if (unicode) vkey = hook_vkey = VK_PACKET;
+        break;
     case VK_MENU:
     case VK_LMENU:
     case VK_RMENU:
@@ -2217,11 +2220,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
     msg->msg       = message_code;
     if (origin == IMO_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
-    if (unicode && !vkey)
-    {
-        vkey = hook_vkey = VK_PACKET;
-    }
-    else
+    if (!unicode || input->kbd.vkey)
     {
         if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
         /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */

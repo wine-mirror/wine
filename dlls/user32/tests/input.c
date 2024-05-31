@@ -1502,8 +1502,7 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     };
     struct send_input_keyboard_test raw_unicode_nolegacy[] =
     {
-        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .async = TRUE,
-         .expect_async = {[VK_PACKET] = 0x80}, .todo_async = {[VK_PACKET] = TRUE}},
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .async = TRUE, .expect_async = {[VK_PACKET] = 0x80}},
         {.scan = 0x3c0, .flags = KEYEVENTF_KEYUP | KEYEVENTF_UNICODE},
         {0},
     };
