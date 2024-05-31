@@ -45,7 +45,7 @@ typedef struct
     UINT ip_count;
     UINT ip_map;
     UINT frame;
-} cxx_function_descr;
+} cxx_function_descr_v4;
 #define FUNC_DESCR_IS_CATCH     0x01
 #define FUNC_DESCR_IS_SEPARATED 0x02
 #define FUNC_DESCR_BBT          0x04
@@ -61,7 +61,7 @@ typedef struct
     BYTE *prev;
     UINT handler;
     UINT object;
-} unwind_info;
+} unwind_info_v4;
 
 typedef struct
 {
@@ -71,7 +71,7 @@ typedef struct
     int offset;
     UINT handler;
     UINT ret_addr[2];
-} catchblock_info;
+} catchblock_info_v4;
 #define CATCHBLOCK_FLAGS     0x01
 #define CATCHBLOCK_TYPE_INFO 0x02
 #define CATCHBLOCK_OFFSET    0x04
@@ -80,31 +80,12 @@ typedef struct
 #define CATCHBLOCK_RET_ADDR      0x10
 #define CATCHBLOCK_TWO_RET_ADDRS 0x20
 
-#define TYPE_FLAG_CONST      1
-#define TYPE_FLAG_VOLATILE   2
-#define TYPE_FLAG_REFERENCE  8
-
 #define UNWIND_TYPE_NO_HANDLER 0
 #define UNWIND_TYPE_DTOR_OBJ   1
 #define UNWIND_TYPE_DTOR_PTR   2
 #define UNWIND_TYPE_FRAME      3
 
 #define CONSOLIDATE_UNWIND_PARAMETER_COUNT 10
-
-typedef struct
-{
-    UINT start_level;
-    UINT end_level;
-    UINT catch_level;
-    UINT catchblock_count;
-    UINT catchblock;
-} tryblock_info;
-
-typedef struct
-{
-    UINT ip_off; /* relative to start of function or earlier ipmap_info */
-    INT state;
-} ipmap_info;
 
 typedef struct
 {
@@ -121,7 +102,7 @@ typedef struct
     ULONG64 orig_frame;
     EXCEPTION_RECORD *seh_rec;
     DISPATCHER_CONTEXT *dispatch;
-    const cxx_function_descr *descr;
+    const cxx_function_descr_v4 *descr;
     int trylevel;
 } se_translator_ctx;
 
@@ -173,7 +154,7 @@ static inline void* rva_to_ptr(UINT rva, ULONG64 base)
     return rva ? (void*)(base+rva) : NULL;
 }
 
-static void read_unwind_info(BYTE **b, unwind_info *ui)
+static void read_unwind_info(BYTE **b, unwind_info_v4 *ui)
 {
     BYTE *p = *b;
 
@@ -221,7 +202,7 @@ static void read_tryblock_info(BYTE **b, tryblock_info *ti, ULONG64 image_base)
     }
 }
 
-static BOOL read_catchblock_info(BYTE **b, catchblock_info *ci, DWORD func_rva)
+static BOOL read_catchblock_info(BYTE **b, catchblock_info_v4 *ci, DWORD func_rva)
 {
     BYTE ret_addr_type;
     memset(ci, 0, sizeof(*ci));
@@ -264,7 +245,7 @@ static BOOL read_catchblock_info(BYTE **b, catchblock_info *ci, DWORD func_rva)
 
 static void read_ipmap_info(BYTE **b, ipmap_info *ii)
 {
-    ii->ip_off = decode_uint(b);
+    ii->ip = decode_uint(b);
     ii->state = (INT)decode_uint(b) - 1;
 }
 
@@ -294,7 +275,7 @@ static void dump_exception_type(const cxx_exception_type *type, ULONG64 base)
     }
 }
 
-static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPATCHER_CONTEXT *dispatch)
+static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DISPATCHER_CONTEXT *dispatch)
 {
     ULONG64 image_base = dispatch->ImageBase;
     BYTE *unwind_map = rva_to_ptr(descr->unwind_map, image_base);
@@ -310,7 +291,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
     for (i = 0; i < descr->unwind_count; i++)
     {
         BYTE *entry = unwind_map;
-        unwind_info ui;
+        unwind_info_v4 ui;
 
         read_unwind_info(&unwind_map, &ui);
         if (ui.prev < (BYTE*)rva_to_ptr(descr->unwind_map, image_base)) ui.prev = NULL;
@@ -332,7 +313,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
                 ti.catchblock, catchblock, ti.catchblock_count);
         for (j = 0; j < ti.catchblock_count; j++)
         {
-            catchblock_info ci;
+            catchblock_info_v4 ci;
             if (!read_catchblock_info(&catchblock, &ci,
                         dispatch->FunctionEntry->BeginAddress)) return FALSE;
             TRACE("        %d: header 0x%x offset %d handler 0x%x(%p) "
@@ -350,8 +331,8 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
         ipmap_info ii;
 
         read_ipmap_info(&ip_map, &ii);
-        ip += ii.ip_off;
-        TRACE("    %d: ip offset 0x%x (%p) state %d\n", i, ii.ip_off, ip, ii.state);
+        ip += ii.ip;
+        TRACE("    %d: ip offset 0x%x (%p) state %d\n", i, ii.ip, ip, ii.state);
     }
 
     TRACE("establisher frame: %x\n", descr->frame);
@@ -369,7 +350,7 @@ static inline int ip_to_state4(BYTE *ip_map, UINT count, DISPATCHER_CONTEXT *dis
     for (i = 0; i < count; i++)
     {
         read_ipmap_info(&ip_map, &ii);
-        state_ip += ii.ip_off;
+        state_ip += ii.ip;
         if (ip < state_ip) break;
         ret = ii.state;
     }
@@ -405,7 +386,7 @@ static const cxx_type_info *find_caught_type(cxx_exception_type *exc_type, ULONG
 }
 
 static inline void copy_exception(void *object, ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
-        const catchblock_info *catchblock, const cxx_type_info *type, ULONG64 exc_base)
+        const catchblock_info_v4 *catchblock, const cxx_type_info *type, ULONG64 exc_base)
 {
     const type_info *catch_ti = rva_to_ptr(catchblock->type_info, dispatch->ImageBase);
     void **dest = rva_to_ptr(catchblock->offset, frame);
@@ -446,11 +427,11 @@ static inline void copy_exception(void *object, ULONG64 frame, DISPATCHER_CONTEX
 }
 
 static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
-        const cxx_function_descr *descr, int trylevel, int last_level)
+        const cxx_function_descr_v4 *descr, int trylevel, int last_level)
 {
     void (__cdecl *handler_dtor)(void *obj, ULONG64 frame);
     BYTE *unwind_data, *last;
-    unwind_info ui;
+    unwind_info_v4 ui;
     void *obj;
     int i;
 
@@ -592,7 +573,7 @@ static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
 
 static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
         EXCEPTION_RECORD *untrans_rec, ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
-        const cxx_function_descr *descr, cxx_exception_type *info,
+        const cxx_function_descr_v4 *descr, cxx_exception_type *info,
         ULONG64 orig_frame, int trylevel)
 {
     ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
@@ -626,7 +607,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
         catchblock = rva_to_ptr(tryblock.catchblock, dispatch->ImageBase);
         for (j=0; j<tryblock.catchblock_count; j++)
         {
-            catchblock_info ci;
+            catchblock_info_v4 ci;
 
             read_catchblock_info(&catchblock, &ci, dispatch->FunctionEntry->BeginAddress);
 
@@ -709,7 +690,7 @@ static inline _se_translator_function get_se_translator(void)
     return __current_exception()[-2];
 }
 
-static void check_noexcept( PEXCEPTION_RECORD rec, const cxx_function_descr *descr )
+static void check_noexcept( PEXCEPTION_RECORD rec, const cxx_function_descr_v4 *descr )
 {
     if (!(descr->header & FUNC_DESCR_IS_CATCH) &&
             rec->ExceptionCode == CXX_EXCEPTION &&
@@ -722,7 +703,7 @@ static void check_noexcept( PEXCEPTION_RECORD rec, const cxx_function_descr *des
 
 static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
-        const cxx_function_descr *descr, int trylevel)
+        const cxx_function_descr_v4 *descr, int trylevel)
 {
     cxx_exception_type *exc_type;
     ULONG64 orig_frame = frame;
@@ -807,7 +788,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
 EXCEPTION_DISPOSITION __cdecl __CxxFrameHandler4(EXCEPTION_RECORD *rec,
         ULONG64 frame, CONTEXT *context, DISPATCHER_CONTEXT *dispatch)
 {
-    cxx_function_descr descr;
+    cxx_function_descr_v4 descr;
     BYTE *p, *count, *count_end;
     int trylevel;
 

@@ -42,53 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 typedef struct
 {
-    int  prev;
-    UINT handler;
-} unwind_info;
-
-typedef struct
-{
-    UINT flags;
-    UINT type_info;
-    int  offset;
-    UINT handler;
-    UINT frame;
-} catchblock_info;
-#define TYPE_FLAG_CONST      1
-#define TYPE_FLAG_VOLATILE   2
-#define TYPE_FLAG_REFERENCE  8
-
-typedef struct
-{
-    int  start_level;
-    int  end_level;
-    int  catch_level;
-    int  catchblock_count;
-    UINT catchblock;
-} tryblock_info;
-
-typedef struct
-{
-    int ip;
-    int state;
-} ipmap_info;
-
-typedef struct __cxx_function_descr
-{
-    UINT magic;
-    UINT unwind_count;
-    UINT unwind_table;
-    UINT tryblock_count;
-    UINT tryblock;
-    UINT ipmap_count;
-    UINT ipmap;
-    UINT unwind_help;
-    UINT expect_list;
-    UINT flags;
-} cxx_function_descr;
-
-typedef struct
-{
     cxx_frame_info frame_info;
     BOOL rethrow;
     EXCEPTION_RECORD *prev_rec;
