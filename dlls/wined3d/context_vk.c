@@ -3726,11 +3726,11 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_blend_state *b = state->blend_state;
+    VkSampleCountFlagBits prev_sample_count, sample_count;
     bool dual_source_blend = b && b->dual_source;
     struct wined3d_rendertarget_view *dsv;
     struct wined3d_rendertarget_view *rtv;
     struct wined3d_buffer_vk *buffer_vk;
-    VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
     unsigned int i, invalidate_rt = 0;
     uint32_t null_buffer_binding;
@@ -3752,6 +3752,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_DOMAIN)))
         context_vk->c.shader_update_mask |= (1u << WINED3D_SHADER_TYPE_DOMAIN);
 
+    prev_sample_count = context_vk->sample_count;
     context_vk->sample_count = 0;
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
@@ -3796,6 +3797,10 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if (!context_vk->sample_count)
         context_vk->sample_count = VK_SAMPLE_COUNT_1_BIT;
+
+    if (context_vk->sample_count != prev_sample_count)
+        context_vk->c.update_multisample_state = 1;
+
     if (context_vk->c.shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
     {
         device_vk->d.shader_backend->shader_apply_draw_state(device_vk->d.shader_priv, &context_vk->c, state);
