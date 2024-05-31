@@ -78,7 +78,7 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
 {
     const unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, dispatch->ImageBase);
     void (__cdecl *handler)(ULONG64 unk, ULONG64 rbp);
-    int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
+    int *unwind_help = (int *)(frame + descr->unwind_help);
     int trylevel;
 
     if (unwind_help[0] == -2)
@@ -137,7 +137,7 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
     CONTEXT *context = (void*)rec->ExceptionInformation[7];
     void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
-    int *unwind_help = rva_to_ptr(descr->unwind_help, frame);
+    int *unwind_help = (int *)(frame + descr->unwind_help);
     EXCEPTION_POINTERS ep = { prev_rec, context };
     cxx_catch_ctx ctx;
     void *ret_addr = NULL;
@@ -214,7 +214,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
     if (!i)
         in_catch = NULL;
 
-    unwind_help = rva_to_ptr(descr->unwind_help, orig_frame);
+    unwind_help = (int *)(orig_frame + descr->unwind_help);
     if (trylevel > unwind_help[1])
         unwind_help[0] = unwind_help[1] = trylevel;
     else
@@ -336,7 +336,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                 {
                     TRACE("nested exception detected\n");
                     unwindlevel = tryblock->end_level;
-                    orig_frame = *(ULONG64*)rva_to_ptr(catchblock->frame, frame);
+                    orig_frame = *(ULONG64*)(frame + catchblock->frame);
                     TRACE("setting orig_frame to %I64x\n", orig_frame);
                 }
             }

@@ -375,7 +375,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
         if (ui.handler)
         {
             handler_dtor = rva_to_ptr(ui.handler, dispatch->ImageBase);
-            obj = rva_to_ptr(ui.object, frame);
+            obj = (void *)(frame + ui.object);
             if(ui.type == UNWIND_TYPE_DTOR_PTR)
                 obj = *(void**)obj;
             TRACE("handler: %p object: %p\n", handler_dtor, obj);
@@ -619,7 +619,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
     if (descr->header & FUNC_DESCR_IS_CATCH)
     {
         TRACE("nested exception detected\n");
-        orig_frame = *(ULONG64*)rva_to_ptr(descr->frame, frame);
+        orig_frame = *(ULONG64 *)(frame + descr->frame);
         TRACE("setting orig_frame to %Ix\n", orig_frame);
     }
 
