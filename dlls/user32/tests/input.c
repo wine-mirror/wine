@@ -628,6 +628,9 @@ struct send_input_keyboard_test
     struct user_call expect[8];
     BYTE expect_state[256];
     BOOL todo_state[256];
+    BOOL async;
+    BYTE expect_async[256];
+    BOOL todo_async[256];
 };
 
 static LRESULT CALLBACK ll_hook_kbd_proc(int code, WPARAM wparam, LPARAM lparam)
@@ -665,6 +668,22 @@ static void check_keyboard_state_( int line, const BYTE expect_state[256], const
         todo_wine_if( todo_state[i] )
         ok_(__FILE__, line)( (expect_state[i] & 0x80) == (state[i] & 0x80),
                              "got %s: %#x\n", debugstr_vk( i ), state[i] );
+    }
+}
+
+#define check_keyboard_async( a, b ) check_keyboard_async_( __LINE__, a, b )
+static void check_keyboard_async_( int line, const BYTE expect_state[256], const BOOL todo_state[256] )
+{
+    UINT i;
+
+    /* TODO: figure out if the async state for vkey 0 provides any information and
+     * add it to the check. */
+    for (i = 1; i < 256; i++)
+    {
+        BYTE state = GetAsyncKeyState(i) >> 8;
+        todo_wine_if( todo_state[i] )
+        ok_(__FILE__, line)( (expect_state[i] & 0x80) == (state & 0x80),
+                             "async got %s: %#x\n", debugstr_vk( i ), state );
     }
 }
 
@@ -713,6 +732,7 @@ static void check_send_input_keyboard_test_( const struct send_input_keyboard_te
 
         ok_seq( test->expect );
         check_keyboard_state( test->expect_state, test->todo_state );
+        if (test->async) check_keyboard_async( test->expect_async, test->todo_async );
 
         winetest_pop_context();
     }
@@ -1453,7 +1473,7 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     };
     struct send_input_keyboard_test raw_nolegacy[] =
     {
-        {.vkey = vkey, .expect = {RAW_KEY(1, RI_KEY_MAKE, vkey, WM_KEYDOWN), {0}}},
+        {.vkey = vkey, .async = TRUE, .expect = {RAW_KEY(1, RI_KEY_MAKE, vkey, WM_KEYDOWN), {0}}},
         {.vkey = vkey, .flags = KEYEVENTF_KEYUP, .expect = {RAW_KEY(2, RI_KEY_BREAK, vkey, WM_KEYUP), {0}}},
         {0},
     };
@@ -1467,7 +1487,8 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     };
     struct send_input_keyboard_test raw_vk_packet_nolegacy[] =
     {
-        {.vkey = VK_PACKET, .expect = {RAW_KEY(1, RI_KEY_MAKE, VK_PACKET, WM_KEYDOWN), {0}}},
+        {.vkey = VK_PACKET, .async = TRUE, .expect_async = {[VK_PACKET] = 0x80},
+         .expect = {RAW_KEY(1, RI_KEY_MAKE, VK_PACKET, WM_KEYDOWN), {0}}},
         {.vkey = VK_PACKET, .flags = KEYEVENTF_KEYUP, .expect = {RAW_KEY(2, RI_KEY_BREAK, VK_PACKET, WM_KEYUP), {0}}},
         {0},
     };
@@ -1481,7 +1502,8 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     };
     struct send_input_keyboard_test raw_unicode_nolegacy[] =
     {
-        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE},
+        {.scan = 0x3c0, .flags = KEYEVENTF_UNICODE, .async = TRUE,
+         .expect_async = {[VK_PACKET] = 0x80}, .todo_async = {[VK_PACKET] = TRUE}},
         {.scan = 0x3c0, .flags = KEYEVENTF_KEYUP | KEYEVENTF_UNICODE},
         {0},
     };
@@ -1496,7 +1518,8 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     };
     struct send_input_keyboard_test raw_unicode_vkey_ctrl_nolegacy[] =
     {
-        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE},
+        {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE, .async = TRUE,
+         .expect_async = {[VK_CONTROL] = 0x80, [VK_LCONTROL] = 0x80}},
         {.scan = 0x3c0, .vkey = VK_CONTROL, .flags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP},
         {0},
     };
@@ -1508,6 +1531,7 @@ static void test_SendInput_raw_key_messages( WORD vkey, WORD wch, HKL hkl )
     HWND hwnd;
 
     raw_legacy[0].expect_state[vkey] = 0x80;
+    raw_nolegacy[0].expect_async[vkey] = 0x80;
 
     hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( NULL, hwnd, HWND, "%p" );
