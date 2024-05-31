@@ -198,8 +198,9 @@ static void test_SQLExecDirect( void )
     SQLHDBC con;
     SQLHSTMT stmt;
     SQLRETURN ret;
-    SQLLEN count, len_id, len_name;
-    SQLINTEGER id;
+    SQLLEN count, len_id[2], len_name[2];
+    SQLULEN rows_fetched;
+    SQLINTEGER id[2];
     SQLCHAR name[32];
 
     ret = SQLAllocEnv( &env );
@@ -232,6 +233,11 @@ static void test_SQLExecDirect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
 
+    ret = SQLExecDirect( stmt, (SQLCHAR *)"INSERT INTO winetest VALUES (1, 'Mary')",
+                         ARRAYSIZE("INSERT INTO winetest VALUES (1, 'Mary')") - 1 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
     ret = SQLExecDirect( stmt, (SQLCHAR *)"SELECT * FROM winetest", ARRAYSIZE("SELECT * FROM winetest") - 1 );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
@@ -239,17 +245,17 @@ static void test_SQLExecDirect( void )
     count = 0xdeadbeef;
     ret = SQLRowCount( stmt, &count );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( count != 0xdeadbeef, "got %d\n", (int)count );
+    ok( count == 2, "got %d\n", (int)count );
 
     ret = SQLFetch( stmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
-    id = -1;
-    len_id = 0;
-    ret = SQLGetData( stmt, 1, SQL_C_SLONG, &id, sizeof(id), &len_id );
+    id[0] = -1;
+    len_id[0] = 0;
+    ret = SQLGetData( stmt, 1, SQL_C_SLONG, id, sizeof(id[0]), len_id );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( !id, "id not set\n" );
-    ok( len_id == sizeof(id), "got %d\n", (int)len_id );
+    ok( !id[0], "id not set\n" );
+    ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
 
     ret = SQLFreeStmt( stmt, 0 );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
@@ -261,25 +267,110 @@ static void test_SQLExecDirect( void )
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
 
-    id = -1;
-    len_id = 0;
-    ret = SQLBindCol( stmt, 1, SQL_C_SLONG, &id, sizeof(id), &len_id );
+    ret = SQLSetStmtAttr( stmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)2,  0 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    rows_fetched = 0xdeadbeef;
+    ret = SQLSetStmtAttr( stmt, SQL_ATTR_ROWS_FETCHED_PTR, (SQLPOINTER)&rows_fetched,  0 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    id[0] = -1;
+    id[1] = -1;
+    len_id[0] = 0;
+    len_id[1] = 0;
+    ret = SQLBindCol( stmt, 1, SQL_C_SLONG, id, sizeof(id), len_id );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
 
     memset( name, 0, sizeof(name) );
-    len_name = 0;
-    ret = SQLBindCol( stmt, 2, SQL_C_CHAR, name, sizeof(name), &len_name );
+    len_name[0] = 0;
+    len_name[1] = 0;
+    ret = SQLBindCol( stmt, 2, SQL_C_CHAR, name, sizeof(name), len_name );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
     if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
 
     ret = SQLFetch( stmt );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
-    ok( !id, "id not set\n" );
-    ok( len_id == sizeof(id), "got %d\n", (int)len_id );
+    ok( rows_fetched == 2, "got %d\n", (int)rows_fetched );
+    ok( id[0] == 0, "got %d\n", id[0] );
+    ok( id[1] == 1, "got %d\n", id[1] );
+    ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
+    ok( len_id[1] == sizeof(id[1]), "got %d\n", (int)len_id[1] );
     ok( !strcmp( (const char *)name, "John" ), "got %s\n", name );
-    ok( len_name == sizeof("John") - 1, "got %d\n", (int)len_name );
+    ok( len_name[0] == sizeof("John") - 1, "got %d\n", (int)len_name[0] );
+    ok( len_name[1] == sizeof("Mary") - 1, "got %d\n", (int)len_name[1] );
 
+    ret = SQLFreeStmt( stmt, 0 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLAllocStmt( con, &stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLPrepare( stmt, (SQLCHAR *)"SELECT * FROM winetest WHERE Id = ? AND Name = ?",
+                      ARRAYSIZE("SELECT * FROM winetest WHERE Id = ? AND Name = ?") - 1 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    id[0] = 1;
+    len_id[0] = sizeof(id[0]);
+    ret = SQLBindParam( stmt, 1, SQL_INTEGER, SQL_INTEGER, 0, 0, id, len_id );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    memcpy( name, "Mary", sizeof("Mary") );
+    len_name[0] = sizeof( "Mary" ) - 1;
+    ret = SQLBindParam( stmt, 2, SQL_CHAR, SQL_VARCHAR, 0, 0, name, len_name );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    ret = SQLExecute( stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    ret = SQLFetch( stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+    ok( id[0] == 1, "got %d\n", id[0] );
+    ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
+    ok( !strcmp( (const char *)name, "Mary" ), "got %s\n", name );
+    ok( len_name[0] == sizeof("Mary") - 1, "got %d\n", (int)len_name[0] );
+
+    ret = SQLFreeStmt( stmt, 0 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLAllocStmt( con, &stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+
+    ret = SQLPrepare( stmt, (SQLCHAR *)"SELECT * FROM winetest WHERE Id = ? AND Name = ?",
+                      ARRAYSIZE("SELECT * FROM winetest WHERE Id = ? AND Name = ?") - 1 );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    id[0] = 1;
+    len_id[0] = sizeof(id[0]);
+    ret = SQLBindParameter( stmt, 1, SQL_PARAM_INPUT, SQL_INTEGER, SQL_INTEGER, 0, 0, id, 0, len_id );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    memcpy( name, "Mary", sizeof("Mary") );
+    len_name[0] = sizeof( "Mary" ) - 1;
+    ret = SQLBindParameter( stmt, 2, SQL_PARAM_INPUT, SQL_CHAR, SQL_VARCHAR, 0, 0, name, 0, len_name );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    ret = SQLExecute( stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+
+    ret = SQLFetch( stmt );
+    ok( ret == SQL_SUCCESS, "got %d\n", ret );
+    if (ret == SQL_ERROR) diag( stmt, SQL_HANDLE_STMT );
+    ok( id[0] == 1, "got %d\n", id[0] );
+    ok( len_id[0] == sizeof(id[0]), "got %d\n", (int)len_id[0] );
+    ok( !strcmp( (const char *)name, "Mary" ), "got %s\n", name );
+    ok( len_name[0] == sizeof("Mary") - 1, "got %d\n", (int)len_name[0] );
     ret = SQLFreeStmt( stmt, SQL_UNBIND );
     ok( ret == SQL_SUCCESS, "got %d\n", ret );
 
