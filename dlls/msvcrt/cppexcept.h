@@ -261,6 +261,10 @@ static inline void copy_exception( void *object, uintptr_t frame, int offset, UI
     }
 }
 
+extern void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
+                                 const tryblock_info *tryblock,
+                                 cxx_exception_type *exc_type, uintptr_t image_base );
+
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"
 #else

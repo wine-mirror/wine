@@ -272,13 +272,14 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
                                     cxx_exception_type *info, ULONG64 orig_frame)
 {
     ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
+    void *handler, *object = (void *)rec->ExceptionInformation[1];
     int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
             descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
     thread_data_t *data = msvcrt_get_thread_data();
     const tryblock_info *in_catch;
     EXCEPTION_RECORD catch_record;
     CONTEXT ctx;
-    UINT i, j;
+    UINT i;
     INT *unwind_help;
 
     data->processing_throw++;
@@ -314,50 +315,23 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
             if(tryblock->end_level > in_catch->catch_level) continue;
         }
 
-        /* got a try block */
-        for (j=0; j<tryblock->catchblock_count; j++)
-        {
-            const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
-            catchblock = &catchblock[j];
+        handler = find_catch_handler( object, orig_frame, exc_base, tryblock, info, dispatch->ImageBase );
+        if (!handler) continue;
 
-            if (info)
-            {
-                const type_info *catch_ti = NULL;
-                const cxx_type_info *type;
-
-                if (catchblock->type_info) catch_ti = rtti_rva( catchblock->type_info, dispatch->ImageBase );
-                if (!(type = find_caught_type( info, exc_base, catch_ti, catchblock->flags ))) continue;
-
-                TRACE("matched type %p in tryblock %d catchblock %d\n", type, i, j);
-
-                /* copy the exception to its destination on the stack */
-                copy_exception( (void *)rec->ExceptionInformation[1], orig_frame,
-                                catchblock->offset, catchblock->flags, catch_ti, type, exc_base );
-            }
-            else
-            {
-                /* no CXX_EXCEPTION only proceed with a catch(...) block*/
-                if (catchblock->type_info)
-                    continue;
-                TRACE("found catch(...) block\n");
-            }
-
-            /* unwind stack and call catch */
-            memset(&catch_record, 0, sizeof(catch_record));
-            catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
-            catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-            catch_record.NumberParameters = 8;
-            catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block;
-            catch_record.ExceptionInformation[1] = orig_frame;
-            catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
-            catch_record.ExceptionInformation[3] = tryblock->start_level;
-            catch_record.ExceptionInformation[4] = (ULONG_PTR)rec;
-            catch_record.ExceptionInformation[5] =
-                (ULONG_PTR)rva_to_ptr(catchblock->handler, dispatch->ImageBase);
-            catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
-            catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
-            RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
-        }
+        /* unwind stack and call catch */
+        memset(&catch_record, 0, sizeof(catch_record));
+        catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
+        catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+        catch_record.NumberParameters = 8;
+        catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block;
+        catch_record.ExceptionInformation[1] = orig_frame;
+        catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
+        catch_record.ExceptionInformation[3] = tryblock->start_level;
+        catch_record.ExceptionInformation[4] = (ULONG_PTR)rec;
+        catch_record.ExceptionInformation[5] = (ULONG_PTR)handler;
+        catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
+        catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
+        RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
     }
 
     TRACE("no matching catch block found\n");

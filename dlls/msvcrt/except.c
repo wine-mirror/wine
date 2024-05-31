@@ -46,6 +46,40 @@ static MSVCRT_security_error_handler security_error_handler;
 
 static __sighandler_t sighandlers[NSIG] = { SIG_DFL };
 
+void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
+                          const tryblock_info *tryblock,
+                          cxx_exception_type *exc_type, uintptr_t image_base )
+{
+    unsigned int i;
+    const catchblock_info *catchblock = rtti_rva( tryblock->catchblock, image_base );
+    const cxx_type_info *type;
+    const type_info *catch_ti;
+
+    for (i = 0; i < tryblock->catchblock_count; i++)
+    {
+        if (exc_type)
+        {
+            catch_ti = catchblock[i].type_info ? rtti_rva( catchblock[i].type_info, image_base ) : NULL;
+            type = find_caught_type( exc_type, exc_base, catch_ti, catchblock[i].flags );
+            if (!type) continue;
+
+            TRACE( "matched type %p in catchblock %d\n", type, i );
+
+            /* copy the exception to its destination on the stack */
+            copy_exception( object, frame, catchblock[i].offset, catchblock[i].flags,
+                            catch_ti, type, exc_base );
+        }
+        else
+        {
+            /* no CXX_EXCEPTION only proceed with a catch(...) block*/
+            if (catchblock[i].type_info) continue;
+            TRACE( "found catch(...) block\n" );
+        }
+        return rtti_rva( catchblock[i].handler, image_base );
+    }
+    return NULL;
+}
+
 static BOOL WINAPI msvcrt_console_handler(DWORD ctrlType)
 {
     BOOL ret = FALSE;

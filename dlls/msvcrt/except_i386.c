@@ -283,8 +283,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
                                      cxx_exception_type *info )
 {
     UINT i;
-    int j;
-    void *addr, *object = (void *)rec->ExceptionInformation[1];
+    void *addr, *handler, *object = (void *)rec->ExceptionInformation[1];
     catch_func_nested_frame nested_frame;
     int trylevel = frame->trylevel;
     DWORD save_esp = ((DWORD*)frame)[-1];
@@ -301,65 +300,41 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
         if (trylevel < tryblock->start_level) continue;
         if (trylevel > tryblock->end_level) continue;
 
-        /* got a try block */
-        for (j = 0; j < tryblock->catchblock_count; j++)
-        {
-            const catchblock_info *catchblock = &tryblock->catchblock[j];
-            if(info)
-            {
-                const cxx_type_info *type = find_caught_type( info, 0,
-                        catchblock->type_info, catchblock->flags );
-                if (!type) continue;
+        handler = find_catch_handler( object, (uintptr_t)&frame->ebp, 0, tryblock, info, 0 );
+        if (!handler) continue;
 
-                TRACE( "matched type %p in tryblock %d catchblock %d\n", type, i, j );
+        /* Add frame info here so exception is not freed inside RtlUnwind call */
+        _CreateFrameInfo(&nested_frame.frame_info.frame_info, object);
 
-                /* copy the exception to its destination on the stack */
-                copy_exception( object, (uintptr_t)&frame->ebp, catchblock->offset,
-                                catchblock->flags, catchblock->type_info, type, 0 );
-            }
-            else
-            {
-                /* no CXX_EXCEPTION only proceed with a catch(...) block*/
-                if(catchblock->type_info)
-                    continue;
-                TRACE("found catch(...) block\n");
-            }
+        /* unwind the stack */
+        RtlUnwind( catch_frame ? &catch_frame->frame : &frame->frame, 0, rec, 0 );
+        cxx_local_unwind( frame, descr, tryblock->start_level );
+        frame->trylevel = tryblock->end_level + 1;
 
-            /* Add frame info here so exception is not freed inside RtlUnwind call */
-            _CreateFrameInfo(&nested_frame.frame_info.frame_info,
-                    (void*)rec->ExceptionInformation[1]);
+        nested_frame.frame_info.rec = data->exc_record;
+        nested_frame.frame_info.context = data->ctx_record;
+        data->exc_record = rec;
+        data->ctx_record = context;
+        data->processing_throw--;
 
-            /* unwind the stack */
-            RtlUnwind( catch_frame ? &catch_frame->frame : &frame->frame, 0, rec, 0 );
-            cxx_local_unwind( frame, descr, tryblock->start_level );
-            frame->trylevel = tryblock->end_level + 1;
+        /* call the catch block */
+        TRACE( "calling handler %p ebp %p\n", handler, &frame->ebp );
 
-            nested_frame.frame_info.rec = data->exc_record;
-            nested_frame.frame_info.context = data->ctx_record;
-            data->exc_record = rec;
-            data->ctx_record = context;
-            data->processing_throw--;
+        /* setup an exception block for nested exceptions */
+        nested_frame.frame.Handler = catch_function_nested_handler;
+        nested_frame.cxx_frame = frame;
+        nested_frame.descr     = descr;
+        nested_frame.trylevel  = tryblock->end_level + 1;
 
-            /* call the catch block */
-            TRACE( "calling catch block %p addr %p ebp %p\n",
-                   catchblock, catchblock->handler, &frame->ebp );
+        __wine_push_frame( &nested_frame.frame );
+        addr = call_handler( handler, &frame->ebp );
+        __wine_pop_frame( &nested_frame.frame );
 
-            /* setup an exception block for nested exceptions */
-            nested_frame.frame.Handler = catch_function_nested_handler;
-            nested_frame.cxx_frame = frame;
-            nested_frame.descr     = descr;
-            nested_frame.trylevel  = tryblock->end_level + 1;
+        ((DWORD*)frame)[-1] = save_esp;
+        __CxxUnregisterExceptionObject(&nested_frame.frame_info, FALSE);
+        TRACE( "done, continuing at %p\n", addr );
 
-            __wine_push_frame( &nested_frame.frame );
-            addr = call_handler( catchblock->handler, &frame->ebp );
-            __wine_pop_frame( &nested_frame.frame );
-
-            ((DWORD*)frame)[-1] = save_esp;
-            __CxxUnregisterExceptionObject(&nested_frame.frame_info, FALSE);
-            TRACE( "done, continuing at %p\n", addr );
-
-            continue_after_catch( frame, addr );
-        }
+        continue_after_catch( frame, addr );
     }
     data->processing_throw--;
 }
