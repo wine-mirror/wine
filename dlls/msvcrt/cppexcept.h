@@ -261,6 +261,23 @@ static inline void copy_exception( void *object, uintptr_t frame, int offset, UI
     }
 }
 
+#define TRACE_EXCEPTION_TYPE(type,base) do { \
+    const cxx_type_info_table *table = rtti_rva( type->type_info_table, base ); \
+    unsigned int i; \
+    TRACE( "flags %x destr %p handler %p type info %p\n", \
+           type->flags, rtti_rva( type->destructor, base ), \
+           type->custom_handler ? rtti_rva( type->custom_handler, base ) : NULL, table ); \
+    for (i = 0; i < table->count; i++) \
+    { \
+        const cxx_type_info *type = rtti_rva( table->info[i], base ); \
+        const type_info *info = rtti_rva( type->type_info, base ); \
+        TRACE( "    %d: flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n", \
+               i, type->flags, info, dbgstr_type_info( info ), \
+               type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset, \
+               type->size, rtti_rva( type->copy_ctor, base )); \
+    } \
+} while(0)
+
 extern void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
                                  const tryblock_info *tryblock,
                                  cxx_exception_type *exc_type, uintptr_t image_base );

@@ -249,32 +249,6 @@ static void read_ipmap_info(BYTE **b, ipmap_info *ii)
     ii->state = (INT)decode_uint(b) - 1;
 }
 
-static inline void dump_type(UINT type_rva, ULONG64 base)
-{
-    const cxx_type_info *type = rva_to_ptr(type_rva, base);
-
-    TRACE("flags %x type %x %s offsets %d,%d,%d size %d copy ctor %x(%p)\n",
-            type->flags, type->type_info, dbgstr_type_info(rva_to_ptr(type->type_info, base)),
-            type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset,
-            type->size, type->copy_ctor, rva_to_ptr(type->copy_ctor, base));
-}
-
-static void dump_exception_type(const cxx_exception_type *type, ULONG64 base)
-{
-    const cxx_type_info_table *type_info_table = rva_to_ptr(type->type_info_table, base);
-    UINT i;
-
-    TRACE("flags %x destr %x(%p) handler %x(%p) type info %x(%p)\n",
-            type->flags, type->destructor, rva_to_ptr(type->destructor, base),
-            type->custom_handler, rva_to_ptr(type->custom_handler, base),
-            type->type_info_table, type_info_table);
-    for (i = 0; i < type_info_table->count; i++)
-    {
-        TRACE("    %d: ", i);
-        dump_type(type_info_table->info[i], base);
-    }
-}
-
 static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DISPATCHER_CONTEXT *dispatch)
 {
     ULONG64 image_base = dispatch->ImageBase;
@@ -680,7 +654,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         if (TRACE_ON(seh))
         {
             TRACE("handling C++ exception rec %p frame %Ix descr %p\n", rec, frame,  descr);
-            dump_exception_type(exc_type, rec->ExceptionInformation[3]);
+            TRACE_EXCEPTION_TYPE(exc_type, rec->ExceptionInformation[3]);
         }
     }
     else

@@ -152,27 +152,6 @@ __ASM_GLOBAL_FUNC( call_handler,
                    "popl %ebp\n\t"
                    "ret" );
 
-static inline void dump_type( const cxx_type_info *type )
-{
-    TRACE( "flags %x type %p %s offsets %d,%d,%d size %d copy ctor %p\n",
-             type->flags, type->type_info, dbgstr_type_info(type->type_info),
-             type->offsets.this_offset, type->offsets.vbase_descr, type->offsets.vbase_offset,
-             type->size, type->copy_ctor );
-}
-
-static void dump_exception_type( const cxx_exception_type *type )
-{
-    UINT i;
-
-    TRACE( "flags %x destr %p handler %p type info %p\n",
-             type->flags, type->destructor, type->custom_handler, type->type_info_table );
-    for (i = 0; i < type->type_info_table->count; i++)
-    {
-        TRACE( "    %d: ", i );
-        dump_type( type->type_info_table->info[i] );
-    }
-}
-
 static void dump_function_descr( const cxx_function_descr *descr )
 {
     UINT i;
@@ -488,7 +467,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         {
             TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
                   rec, frame, frame->trylevel, descr, nested_frame );
-            dump_exception_type( exc_type );
+            TRACE_EXCEPTION_TYPE( exc_type, 0 );
             dump_function_descr( descr );
         }
     }
