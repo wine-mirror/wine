@@ -151,33 +151,6 @@ static inline int ip_to_state(ipmap_info *ipmap, UINT count, int ip)
     return ipmap[low].state;
 }
 
-/* check if the exception type is caught by a given catch block, and return the type that matched */
-static const cxx_type_info *find_caught_type(cxx_exception_type *exc_type, ULONG64 exc_base,
-                                             const type_info *catch_ti, UINT catch_flags)
-{
-    const cxx_type_info_table *type_info_table = rva_to_ptr(exc_type->type_info_table, exc_base);
-    UINT i;
-
-    for (i = 0; i < type_info_table->count; i++)
-    {
-        const cxx_type_info *type = rva_to_ptr(type_info_table->info[i], exc_base);
-        const type_info *ti = rva_to_ptr(type->type_info, exc_base);
-
-        if (!catch_ti) return type;   /* catch(...) matches any type */
-        if (catch_ti != ti)
-        {
-            if (strcmp( catch_ti->mangled, ti->mangled )) continue;
-        }
-        /* type is the same, now check the flags */
-        if ((exc_type->flags & TYPE_FLAG_CONST) &&
-                !(catch_flags & TYPE_FLAG_CONST)) continue;
-        if ((exc_type->flags & TYPE_FLAG_VOLATILE) &&
-                !(catch_flags & TYPE_FLAG_VOLATILE)) continue;
-        return type;  /* it matched */
-    }
-    return NULL;
-}
-
 static inline void copy_exception(void *object, ULONG64 frame,
                                   DISPATCHER_CONTEXT *dispatch,
                                   const catchblock_info *catchblock,

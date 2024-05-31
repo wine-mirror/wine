@@ -206,32 +206,6 @@ static void dump_function_descr( const cxx_function_descr *descr )
     TRACE( "flags: %08x\n", descr->flags );
 }
 
-/* check if the exception type is caught by a given catch block, and return the type that matched */
-static const cxx_type_info *find_caught_type( cxx_exception_type *exc_type,
-                                              const type_info *catch_ti, UINT catch_flags )
-{
-    UINT i;
-
-    for (i = 0; i < exc_type->type_info_table->count; i++)
-    {
-        const cxx_type_info *type = exc_type->type_info_table->info[i];
-
-        if (!catch_ti) return type;   /* catch(...) matches any type */
-        if (catch_ti != type->type_info)
-        {
-            if (strcmp( catch_ti->mangled, type->type_info->mangled )) continue;
-        }
-        /* type is the same, now check the flags */
-        if ((exc_type->flags & TYPE_FLAG_CONST) &&
-            !(catch_flags & TYPE_FLAG_CONST)) continue;
-        if ((exc_type->flags & TYPE_FLAG_VOLATILE) &&
-            !(catch_flags & TYPE_FLAG_VOLATILE)) continue;
-        return type;  /* it matched */
-    }
-    return NULL;
-}
-
-
 /* copy the exception object where the catch block wants it */
 static void copy_exception( void *object, cxx_exception_frame *frame,
                             const catchblock_info *catchblock, const cxx_type_info *type )
@@ -363,7 +337,7 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
             const catchblock_info *catchblock = &tryblock->catchblock[j];
             if(info)
             {
-                const cxx_type_info *type = find_caught_type( info,
+                const cxx_type_info *type = find_caught_type( info, 0,
                         catchblock->type_info, catchblock->flags );
                 if (!type) continue;
 
@@ -444,7 +418,7 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
         if (!rec) return EXCEPTION_CONTINUE_SEARCH;
     }
 
-    type = find_caught_type( (cxx_exception_type*)rec->ExceptionInformation[2], ti, flags );
+    type = find_caught_type( (cxx_exception_type*)rec->ExceptionInformation[2], 0, ti, flags );
     if (!type) return EXCEPTION_CONTINUE_SEARCH;
 
     if (copy)

@@ -203,6 +203,33 @@ static inline void call_dtor( void *func, void *this )
 }
 #endif
 
+/* check if the exception type is caught by a given catch block, and return the type that matched */
+static inline const cxx_type_info *find_caught_type( cxx_exception_type *exc_type, uintptr_t base,
+                                                     const type_info *catch_ti, UINT catch_flags )
+{
+    const cxx_type_info_table *type_info_table = rtti_rva( exc_type->type_info_table, base );
+    UINT i;
+
+    for (i = 0; i < type_info_table->count; i++)
+    {
+        const cxx_type_info *type = rtti_rva( type_info_table->info[i], base );
+        const type_info *ti = rtti_rva( type->type_info, base );
+
+        if (!catch_ti) return type;   /* catch(...) matches any type */
+        if (catch_ti != ti)
+        {
+            if (strcmp( catch_ti->mangled, ti->mangled )) continue;
+        }
+        /* type is the same, now check the flags */
+        if ((exc_type->flags & TYPE_FLAG_CONST) &&
+            !(catch_flags & TYPE_FLAG_CONST)) continue;
+        if ((exc_type->flags & TYPE_FLAG_VOLATILE) &&
+            !(catch_flags & TYPE_FLAG_VOLATILE)) continue;
+        return type;  /* it matched */
+    }
+    return NULL;
+}
+
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"
 #else
