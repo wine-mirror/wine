@@ -152,39 +152,6 @@ __ASM_GLOBAL_FUNC( call_handler,
                    "popl %ebp\n\t"
                    "ret" );
 
-static void dump_function_descr( const cxx_function_descr *descr )
-{
-    UINT i;
-    int j;
-
-    TRACE( "magic %x\n", descr->magic );
-    TRACE( "unwind table: %p %d\n", descr->unwind_table, descr->unwind_count );
-    for (i = 0; i < descr->unwind_count; i++)
-    {
-        TRACE( "    %d: prev %d func %p\n", i,
-                 descr->unwind_table[i].prev, descr->unwind_table[i].handler );
-    }
-    TRACE( "try table: %p %d\n", descr->tryblock, descr->tryblock_count );
-    for (i = 0; i < descr->tryblock_count; i++)
-    {
-        TRACE( "    %d: start %d end %d catchlevel %d catch %p %d\n", i,
-                 descr->tryblock[i].start_level, descr->tryblock[i].end_level,
-                 descr->tryblock[i].catch_level, descr->tryblock[i].catchblock,
-                 descr->tryblock[i].catchblock_count );
-        for (j = 0; j < descr->tryblock[i].catchblock_count; j++)
-        {
-            const catchblock_info *ptr = &descr->tryblock[i].catchblock[j];
-            TRACE( "        %d: flags %x offset %d handler %p type %p %s\n",
-                     j, ptr->flags, ptr->offset, ptr->handler,
-                     ptr->type_info, dbgstr_type_info( ptr->type_info ) );
-        }
-    }
-    if (descr->magic <= CXX_FRAME_MAGIC_VC6) return;
-    TRACE( "expect list: %p\n", descr->expect_list );
-    if (descr->magic <= CXX_FRAME_MAGIC_VC7) return;
-    TRACE( "flags: %08x\n", descr->flags );
-}
-
 /* unwind the local function up to a given trylevel */
 static void cxx_local_unwind( cxx_exception_frame* frame, const cxx_function_descr *descr, int last_level)
 {
@@ -468,7 +435,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
             TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
                   rec, frame, frame->trylevel, descr, nested_frame );
             TRACE_EXCEPTION_TYPE( exc_type, 0 );
-            dump_function_descr( descr );
+            dump_function_descr( descr, 0 );
         }
     }
     else

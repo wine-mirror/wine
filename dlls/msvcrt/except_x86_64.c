@@ -61,50 +61,6 @@ static inline void* rva_to_ptr(UINT rva, ULONG64 base)
     return rva ? (void*)(base+rva) : NULL;
 }
 
-static void dump_function_descr(const cxx_function_descr *descr, ULONG64 image_base)
-{
-    unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, image_base);
-    tryblock_info *tryblock = rva_to_ptr(descr->tryblock, image_base);
-    ipmap_info *ipmap = rva_to_ptr(descr->ipmap, image_base);
-    UINT i, j;
-
-    TRACE("magic %x\n", descr->magic);
-    TRACE("unwind table: %x(%p) %d\n", descr->unwind_table, unwind_table, descr->unwind_count);
-    for (i=0; i<descr->unwind_count; i++)
-    {
-        TRACE("    %d: prev %d func %x(%p)\n", i, unwind_table[i].prev,
-                unwind_table[i].handler, rva_to_ptr(unwind_table[i].handler, image_base));
-    }
-    TRACE("try table: %x(%p) %d\n", descr->tryblock, tryblock, descr->tryblock_count);
-    for (i=0; i<descr->tryblock_count; i++)
-    {
-        catchblock_info *catchblock = rva_to_ptr(tryblock[i].catchblock, image_base);
-
-        TRACE("    %d: start %d end %d catchlevel %d catch %x(%p) %d\n", i,
-                tryblock[i].start_level, tryblock[i].end_level,
-                tryblock[i].catch_level, tryblock[i].catchblock,
-                catchblock, tryblock[i].catchblock_count);
-        for (j=0; j<tryblock[i].catchblock_count; j++)
-        {
-            TRACE("        %d: flags %x offset %d handler %x(%p) frame %x type %x %s\n",
-                    j, catchblock[j].flags, catchblock[j].offset, catchblock[j].handler,
-                    rva_to_ptr(catchblock[j].handler, image_base), catchblock[j].frame,
-                    catchblock[j].type_info,
-                    dbgstr_type_info(rva_to_ptr(catchblock[j].type_info, image_base)));
-        }
-    }
-    TRACE("ipmap: %x(%p) %d\n", descr->ipmap, ipmap, descr->ipmap_count);
-    for (i=0; i<descr->ipmap_count; i++)
-    {
-        TRACE("    %d: ip %x state %d\n", i, ipmap[i].ip, ipmap[i].state);
-    }
-    TRACE("unwind_help %d\n", descr->unwind_help);
-    if (descr->magic <= CXX_FRAME_MAGIC_VC6) return;
-    TRACE("expect list: %x\n", descr->expect_list);
-    if (descr->magic <= CXX_FRAME_MAGIC_VC7) return;
-    TRACE("flags: %08x\n", descr->flags);
-}
-
 static inline int ip_to_state(ipmap_info *ipmap, UINT count, int ip)
 {
     UINT low = 0, high = count-1, med;

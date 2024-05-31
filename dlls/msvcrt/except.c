@@ -46,6 +46,52 @@ static MSVCRT_security_error_handler security_error_handler;
 
 static __sighandler_t sighandlers[NSIG] = { SIG_DFL };
 
+void dump_function_descr( const cxx_function_descr *descr, uintptr_t base )
+{
+    unwind_info *unwind_table = rtti_rva( descr->unwind_table, base );
+    tryblock_info *tryblock = rtti_rva( descr->tryblock, base );
+    ipmap_info *ipmap = rtti_rva( descr->ipmap, base );
+    UINT i, j;
+
+    TRACE( "magic %x\n", descr->magic );
+    TRACE( "unwind table: %p %d\n", unwind_table, descr->unwind_count );
+    for (i = 0; i < descr->unwind_count; i++)
+    {
+        TRACE("    %d: prev %d func %p\n", i, unwind_table[i].prev,
+              unwind_table[i].handler ? rtti_rva( unwind_table[i].handler, base ) : NULL );
+    }
+    TRACE( "try table: %p %d\n", tryblock, descr->tryblock_count );
+    for (i = 0; i < descr->tryblock_count; i++)
+    {
+        catchblock_info *catchblock = rtti_rva( tryblock[i].catchblock, base );
+
+        TRACE( "    %d: start %d end %d catchlevel %d catch %p %d\n", i,
+               tryblock[i].start_level, tryblock[i].end_level,
+               tryblock[i].catch_level, catchblock, tryblock[i].catchblock_count);
+        for (j = 0; j < tryblock[i].catchblock_count; j++)
+        {
+            type_info *type_info = catchblock[j].type_info ? rtti_rva( catchblock[j].type_info, base ) : NULL;
+            TRACE( "        %d: flags %x offset %d handler %p",
+                   j, catchblock[j].flags, catchblock[j].offset,
+                   catchblock[j].handler ? rtti_rva(catchblock[j].handler, base) : NULL );
+#ifdef RTTI_USE_RVA
+            TRACE( " frame %x", catchblock[j].frame );
+#endif
+            TRACE( " type %p %s\n", type_info, dbgstr_type_info(type_info) );
+        }
+    }
+    TRACE( "ipmap: %p %d\n", ipmap, descr->ipmap_count );
+    for (i = 0; i < descr->ipmap_count; i++)
+        TRACE( "    %d: ip %x state %d\n", i, ipmap[i].ip, ipmap[i].state );
+#ifdef RTTI_USE_RVA
+    TRACE( "unwind_help %+d\n", descr->unwind_help );
+#endif
+    if (descr->magic <= CXX_FRAME_MAGIC_VC6) return;
+    TRACE( "expect list: %p\n", rtti_rva( descr->expect_list, base ) );
+    if (descr->magic <= CXX_FRAME_MAGIC_VC7) return;
+    TRACE( "flags: %08x\n", descr->flags );
+}
+
 void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
                           const tryblock_info *tryblock,
                           cxx_exception_type *exc_type, uintptr_t image_base )

@@ -278,6 +278,7 @@ static inline void copy_exception( void *object, uintptr_t frame, int offset, UI
     } \
 } while(0)
 
+extern void dump_function_descr( const cxx_function_descr *descr, uintptr_t base );
 extern void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
                                  const tryblock_info *tryblock,
                                  cxx_exception_type *exc_type, uintptr_t image_base );
