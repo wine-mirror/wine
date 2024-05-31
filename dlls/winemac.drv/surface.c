@@ -48,7 +48,6 @@ struct macdrv_window_surface
     struct window_surface   header;
     macdrv_window           window;
     CGDataProviderRef       provider;
-    BITMAPINFO              info;   /* variable size, must be last */
 };
 
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
@@ -166,9 +165,8 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     }
     if (desc.hDeviceDc) NtUserReleaseDC(hwnd, desc.hDeviceDc);
 
-    if (!(surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3])))) goto failed;
+    if (!(surface = calloc(1, sizeof(*surface)))) goto failed;
     if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, bitmap)) goto failed;
-    memcpy(&surface->info, info, offsetof(BITMAPINFO, bmiColors[3]));
 
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
