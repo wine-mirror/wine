@@ -26,6 +26,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d11_4.h"
+#include "d3dcompiler.h"
 #include "winternl.h"
 #include "wine/wined3d.h"
 #include "wine/test.h"
@@ -129,6 +130,23 @@ struct swapchain_desc
     DXGI_SWAP_EFFECT swap_effect;
     DWORD flags;
 };
+
+static ID3D10Blob *compile_shader(const char *source, size_t len, const char *profile)
+{
+    ID3D10Blob *bytecode = NULL, *errors = NULL;
+    HRESULT hr;
+
+    hr = D3DCompile(source, len, NULL, NULL, NULL, "main", profile, 0, 0, &bytecode, &errors);
+    ok(hr == S_OK, "Cannot compile shader, hr %#lx.\n", hr);
+    ok(!!bytecode, "Compilation didn't produce any bytecode.\n");
+    if (errors)
+    {
+        trace("Compilation errors:\n%s\n", (char *)ID3D10Blob_GetBufferPointer(errors));
+        ID3D10Blob_Release(errors);
+    }
+
+    return bytecode;
+}
 
 static void queue_test_entry(const struct test_entry *t)
 {
@@ -1131,6 +1149,40 @@ static void check_readback_data_u8_(unsigned int line, struct resource_readback 
             {
                 value = get_readback_u8(rb, x, y, z);
                 if (!compare_uint(value, expected_value, max_diff))
+                    goto done;
+            }
+        }
+    }
+    all_match = TRUE;
+
+done:
+    ok_(__FILE__, line)(all_match,
+            "Got 0x%02x, expected 0x%02x at (%u, %u, %u), sub-resource %u.\n",
+            value, expected_value, x, y, z, rb->sub_resource_idx);
+}
+
+#define check_readback_data_u8_with_buffer(a, b, c, d) check_readback_data_u8_with_buffer_(__LINE__, a, b, c, d)
+static void check_readback_data_u8_with_buffer_(unsigned int line, struct resource_readback *rb,
+        const char *content, uint32_t depth_pitch, uint32_t slice_pitch)
+{
+    BYTE value = 0, expected_value = 0;
+    unsigned int x = 0, y = 0, z = 0;
+    BOOL all_match = FALSE;
+
+    ok_(__FILE__, line)(rb->map_desc.RowPitch == depth_pitch, "Got row pitch %u instead of %u.\n",
+            rb->map_desc.RowPitch, depth_pitch);
+    ok_(__FILE__, line)(rb->map_desc.DepthPitch == slice_pitch, "Got depth pitch %u instead of %u.\n",
+            rb->map_desc.DepthPitch, depth_pitch);
+
+    for (z = 0; z < rb->depth; ++z)
+    {
+        for (y = 0; y < rb->height; ++y)
+        {
+            for (x = 0; x < rb->width; ++x)
+            {
+                value = get_readback_u8(rb, x, y, z);
+                expected_value = content[z * slice_pitch + y * depth_pitch + x];
+                if (value != expected_value)
                     goto done;
             }
         }
@@ -36164,6 +36216,267 @@ static void test_high_resource_count(void)
     release_test_context(&test_context);
 }
 
+static void test_nv12(void)
+{
+    struct d3d11_test_context test_context;
+    ID3D11PixelShader *luma_ps, *chroma_ps;
+    ID3D11DeviceContext *device_context;
+    ID3D11ComputeShader *cs;
+    unsigned int test_idx;
+    ID3D10Blob *bytecode;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    static const uint32_t clear_values[4] = {0xabcdef00, 0xabcdef00, 0xabcdef00, 0xabcdef00};
+    static const float clear_values_float[4] = {100.0, 100.0, 100.0, 100.0};
+
+    static const char cs_code[] =
+            "Texture2D<uint> luma : register(t0);\n"
+            "Texture2D<uint2> chroma : register(t1);\n"
+            "RWTexture2D<uint> check : register(u1);\n"
+            "\n"
+            "uint2 size;\n"
+            "\n"
+            "[numthreads(1, 1, 1)]\n"
+            "void main(uint3 threadID : SV_DispatchThreadID)\n"
+            "{\n"
+            "    const uint2 coords = threadID.xy;\n"
+            "    check[coords] = luma[coords];\n"
+            "    if (any(coords % 2 != 0))\n"
+            "        return;\n"
+            "    const uint2 luma_coords = uint2(coords.x, size.y + coords.y / 2);\n"
+            "    check[luma_coords] = chroma[coords / 2].x;\n"
+            "    check[luma_coords + uint2(1, 0)] = chroma[coords / 2].y;\n"
+            "}\n";
+
+    static const char luma_ps_code[] =
+            "uint main(float4 pos : SV_Position) : SV_Target\n"
+            "{\n"
+            "    uint2 coords = pos.xy;\n"
+            "    return (coords.y & 7) << 3 | (coords.x & 7);\n"
+            "}\n";
+
+    static const char chroma_ps_code[] =
+            "uint2 main(float4 pos : SV_Position) : SV_Target\n"
+            "{\n"
+            "    uint2 coords = pos.xy;\n"
+            "    return uint2(1 << 6 | (coords.y & 7) << 3 | (coords.x & 7),\n"
+            "            1 << 7 | (coords.y & 7) << 3 | (coords.x & 7));\n"
+            "}\n";
+
+    static const struct
+    {
+        uint32_t width;
+        uint32_t height;
+    }
+    tests[] =
+    {
+        {640, 480},
+        {640, 481},
+        {641, 480},
+        {641, 481},
+        {642, 480},
+        {642, 481},
+        {642, 482},
+        {644, 482},
+        {644, 484},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    device_context = test_context.immediate_context;
+
+    bytecode = compile_shader(cs_code, sizeof(cs_code) - 1, "cs_5_0");
+    hr = ID3D11Device_CreateComputeShader(device, ID3D10Blob_GetBufferPointer(bytecode),
+            ID3D10Blob_GetBufferSize(bytecode), NULL, &cs);
+    ID3D10Blob_Release(bytecode);
+
+    bytecode = compile_shader(luma_ps_code, sizeof(luma_ps_code) - 1, "ps_4_0");
+    hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(bytecode),
+            ID3D10Blob_GetBufferSize(bytecode), NULL, &luma_ps);
+    ID3D10Blob_Release(bytecode);
+
+    bytecode = compile_shader(chroma_ps_code, sizeof(chroma_ps_code) - 1, "ps_4_0");
+    hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(bytecode),
+            ID3D10Blob_GetBufferSize(bytecode), NULL, &chroma_ps);
+    ID3D10Blob_Release(bytecode);
+
+    for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
+    {
+        /* I need only two uints in the cbuffer, but the size must be a multiple of 16. */
+        uint32_t cbuffer_data[4], expected_row_pitch, expected_depth_pitch;
+        D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {0};
+        D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {0};
+        D3D11_SUBRESOURCE_DATA subresource_data = {0};
+        D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {0};
+        ID3D11Texture2D *texture, *check_texture;
+        ID3D11UnorderedAccessView *check_uav;
+        ID3D11RenderTargetView *rtv1, *rtv2;
+        ID3D11ShaderResourceView *srvs[2];
+        D3D11_TEXTURE2D_DESC desc = {0};
+        struct resource_readback rb;
+        ID3D11Buffer *cbuffer;
+        HRESULT expected_hr;
+        unsigned int i, j;
+        char *content;
+
+        const uint32_t width = tests[test_idx].width;
+        const uint32_t height = tests[test_idx].height;
+
+        winetest_push_context("test %u (%ux%u)", test_idx, width, height);
+
+        expected_row_pitch = (width + 3) & ~3;
+        expected_depth_pitch = expected_row_pitch * height * 3 / 2;
+
+        desc.Width = width;
+        desc.Height = height;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_NV12;
+        desc.SampleDesc.Count = 1;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+        content = calloc(expected_depth_pitch, 1);
+        ok(!!content, "Failed to allocate memory.\n");
+
+        for (i = 0; i < height; ++i)
+        {
+            for (j = 0; j < width; ++j)
+            {
+                unsigned int idx = i * expected_row_pitch + j;
+
+                content[idx] = (i & 7) << 3 | (j & 7);
+            }
+        }
+
+        for (i = 0; i < height / 2; ++i)
+        {
+            for (j = 0; j < width / 2; ++j)
+            {
+                unsigned int idx = expected_row_pitch * (height + i) + j * 2;
+
+                content[idx] = 1 << 6 | (i & 7) << 3 | (j & 7);
+                content[idx + 1] = 1 << 7 | (i & 7) << 3 | (j & 7);
+            }
+        }
+
+        subresource_data.pSysMem = content;
+        subresource_data.SysMemPitch = expected_row_pitch;
+        subresource_data.SysMemSlicePitch = expected_depth_pitch;
+
+        expected_hr = (width & 1 || height & 1) ? E_INVALIDARG : S_OK;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, &subresource_data, &texture);
+        todo_wine_if(SUCCEEDED(expected_hr))
+        ok(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+
+        if (FAILED(hr))
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        desc.Height += height / 2;
+        desc.Format = DXGI_FORMAT_R8_UINT;
+        desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
+
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &check_texture);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        srv_desc.Format = DXGI_FORMAT_R8_UINT;
+        srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        srv_desc.Texture2D.MostDetailedMip = 0;
+        srv_desc.Texture2D.MipLevels = 1;
+
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[0]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        srv_desc.Format = DXGI_FORMAT_R8G8_UINT;
+
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, &srv_desc, &srvs[1]);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        uav_desc.Format = DXGI_FORMAT_R8_UINT;
+        uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+        uav_desc.Texture2D.MipSlice = 0;
+
+        hr = ID3D11Device_CreateUnorderedAccessView(device,
+                (ID3D11Resource *)check_texture, &uav_desc, &check_uav);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        cbuffer_data[0] = width;
+        cbuffer_data[1] = height;
+
+        cbuffer = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cbuffer_data), cbuffer_data);
+
+        ID3D11DeviceContext_ClearUnorderedAccessViewUint(device_context, check_uav, clear_values);
+        ID3D11DeviceContext_CSSetShader(device_context, cs, NULL, 0);
+        ID3D11DeviceContext_CSSetShaderResources(device_context, 0, ARRAY_SIZE(srvs), srvs);
+        ID3D11DeviceContext_CSSetUnorderedAccessViews(device_context, 1, 1, &check_uav, NULL);
+        ID3D11DeviceContext_CSSetConstantBuffers(device_context, 0, 1, &cbuffer);
+        ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
+
+        get_texture_readback(check_texture, 0, &rb);
+        check_readback_data_u8_with_buffer(&rb, content, expected_row_pitch, expected_depth_pitch);
+        release_resource_readback(&rb);
+
+        rtv_desc.Format = DXGI_FORMAT_R8_UINT;
+        rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtv_desc.Texture2D.MipSlice = 0;
+
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv1);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        rtv_desc.Format = DXGI_FORMAT_R8G8_UINT;
+
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, &rtv_desc, &rtv2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        ID3D11DeviceContext_ClearRenderTargetView(device_context, rtv1, clear_values_float);
+        set_viewport(device_context, 0.0, 0.0, width, height, 0.0, 1.0);
+        ID3D11DeviceContext_OMSetRenderTargets(device_context, 1, &rtv1, NULL);
+        ID3D11DeviceContext_PSSetShader(device_context, luma_ps, NULL, 0);
+        draw_quad(&test_context);
+
+        ID3D11DeviceContext_ClearRenderTargetView(device_context, rtv2, clear_values_float);
+        set_viewport(device_context, 0.0, 0.0, width, height, 0.0, 1.0);
+        ID3D11DeviceContext_OMSetRenderTargets(device_context, 1, &rtv2, NULL);
+        ID3D11DeviceContext_PSSetShader(device_context, chroma_ps, NULL, 0);
+        draw_quad(&test_context);
+
+        ID3D11DeviceContext_OMSetRenderTargets(device_context, 0, NULL, NULL);
+
+        ID3D11DeviceContext_ClearUnorderedAccessViewUint(device_context, check_uav, clear_values);
+        ID3D11DeviceContext_CSSetShader(device_context, cs, NULL, 0);
+        ID3D11DeviceContext_CSSetShaderResources(device_context, 0, ARRAY_SIZE(srvs), srvs);
+        ID3D11DeviceContext_CSSetUnorderedAccessViews(device_context, 1, 1, &check_uav, NULL);
+        ID3D11DeviceContext_CSSetConstantBuffers(device_context, 0, 1, &cbuffer);
+        ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
+
+        get_texture_readback(check_texture, 0, &rb);
+        check_readback_data_u8_with_buffer(&rb, content, expected_row_pitch, expected_depth_pitch);
+        release_resource_readback(&rb);
+
+        ID3D11RenderTargetView_Release(rtv2);
+        ID3D11RenderTargetView_Release(rtv1);
+        ID3D11Buffer_Release(cbuffer);
+        ID3D11UnorderedAccessView_Release(check_uav);
+        ID3D11ShaderResourceView_Release(srvs[1]);
+        ID3D11ShaderResourceView_Release(srvs[0]);
+        ID3D11Texture2D_Release(check_texture);
+        ID3D11Texture2D_Release(texture);
+        free(content);
+
+        winetest_pop_context();
+    }
+
+    ID3D11PixelShader_Release(chroma_ps);
+    ID3D11PixelShader_Release(luma_ps);
+    ID3D11ComputeShader_Release(cs);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -36363,6 +36676,7 @@ START_TEST(d3d11)
     queue_test(test_clear_during_render);
     queue_test(test_stencil_export);
     queue_test(test_high_resource_count);
+    queue_test(test_nv12);
 
     run_queued_tests();
 
