@@ -1944,21 +1944,24 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
 /***********************************************************************
  *           x11drv_surface_set_shape
  */
-static void x11drv_surface_set_shape( struct window_surface *window_surface, const RECT *rects, UINT count )
+static void x11drv_surface_set_shape( struct window_surface *window_surface,
+                                      const BITMAPINFO *shape_info, const void *shape_bits )
 {
 #ifdef HAVE_LIBXSHAPE
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-    XRectangle *xrects;
 
-    TRACE( "surface %p, rects %p, count %u\n", surface, rects, count );
-
-    if (!count)
+    if (!shape_bits)
         XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
-    else if ((xrects = xrectangles_from_rects( rects, count )))
+    else
     {
-        XShapeCombineRectangles( gdi_display, surface->window, ShapeBounding, 0, 0,
-                                 xrects, count, ShapeSet, YXBanded );
-        free( xrects );
+        struct gdi_image_bits bits = {.ptr = (void *)shape_bits};
+        XVisualInfo vis = default_visual;
+        Pixmap shape;
+
+        vis.depth = 1;
+        shape = create_pixmap_from_image( 0, &vis, shape_info, &bits, DIB_RGB_COLORS );
+        XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, shape, ShapeSet );
+        XFreePixmap( gdi_display, shape );
     }
     XFlush( gdi_display );
 #endif /* HAVE_LIBXSHAPE */

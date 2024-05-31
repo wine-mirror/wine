@@ -77,7 +77,8 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 /***********************************************************************
  *              macdrv_surface_set_shape
  */
-static void macdrv_surface_set_shape(struct window_surface *window_surface, const RECT *rects, UINT count)
+static void macdrv_surface_set_shape(struct window_surface *window_surface,
+                                     const BITMAPINFO *shape_info, const void *shape_bits)
 {
     /* TODO */
 }

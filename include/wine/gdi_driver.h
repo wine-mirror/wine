@@ -212,7 +212,8 @@ struct window_surface;
 struct window_surface_funcs
 {
     void  (*set_clip)( struct window_surface *surface, const RECT *rects, UINT count );
-    void  (*set_shape)( struct window_surface *surface, const RECT *rects, UINT count );
+    void  (*set_shape)( struct window_surface *surface, const BITMAPINFO *shape_info,
+                        const void *shape_bits );
     BOOL  (*flush)( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                     const BITMAPINFO *color_info, const void *color_bits );
     void  (*destroy)( struct window_surface *surface );

@@ -220,7 +220,8 @@ static void wayland_window_surface_set_clip(struct window_surface *window_surfac
 /***********************************************************************
  *           wayland_window_surface_set_shape
  */
-static void wayland_window_surface_set_shape(struct window_surface *window_surface, const RECT *rects, UINT count)
+static void wayland_window_surface_set_shape(struct window_surface *window_surface,
+                                             const BITMAPINFO *shape_info, const void *shape_bits)
 {
     /* TODO */
 }

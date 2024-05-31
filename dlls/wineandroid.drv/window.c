@@ -621,7 +621,8 @@ static void android_surface_set_clip( struct window_surface *window_surface, con
 /***********************************************************************
  *           android_surface_set_shape
  */
-static void android_surface_set_shape( struct window_surface *window_surface, const RECT *rects, UINT count )
+static void android_surface_set_shape( struct window_surface *window_surface,
+                                       const BITMAPINFO *shape_info, const void *shape_bits )
 {
 }
 
