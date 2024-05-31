@@ -1589,7 +1589,6 @@ struct x11drv_window_surface
     GC                    gc;
     struct x11drv_image  *image;
     BOOL                  byteswap;
-    BITMAPINFO            info;   /* variable size, must be last */
 };
 
 static struct x11drv_window_surface *get_x11_surface( struct window_surface *surface )
@@ -2029,12 +2028,11 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct x11drv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
-    int colors = format->bits_per_pixel <= 8 ? 1 << format->bits_per_pixel : 3;
     struct x11drv_image *image;
     D3DDDIFORMAT d3d_format;
     HBITMAP bitmap = 0;
     BOOL byteswap;
-    UINT size, status;
+    UINT status;
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -2045,7 +2043,6 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
     if (format->bits_per_pixel > 8) set_color_info( vis, info, use_alpha );
 
-    size = FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] );
     if (!(image = x11drv_image_create( info, vis ))) return NULL;
 
     /* wrap the XImage data in a HBITMAP if we can write to the surface pixels directly */
@@ -2074,7 +2071,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
         if (desc.hDeviceDc) NtUserReleaseDC( hwnd, desc.hDeviceDc );
     }
 
-    if (!(surface = calloc( 1, size )))
+    if (!(surface = calloc( 1, sizeof(*surface) )))
     {
         if (bitmap) NtGdiDeleteObjectApp( bitmap );
         x11drv_image_destroy( image );
@@ -2084,7 +2081,6 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     surface->byteswap = byteswap;
 
     if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, rect, info, bitmap )) goto failed;
-    memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
