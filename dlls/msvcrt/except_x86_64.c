@@ -61,24 +61,16 @@ static inline void* rva_to_ptr(UINT rva, ULONG64 base)
     return rva ? (void*)(base+rva) : NULL;
 }
 
-static inline int ip_to_state(ipmap_info *ipmap, UINT count, int ip)
+static inline int ip_to_state( const cxx_function_descr *descr, uintptr_t ip, uintptr_t base )
 {
-    UINT low = 0, high = count-1, med;
+    const ipmap_info *ipmap = rtti_rva( descr->ipmap, base );
+    unsigned int i;
+    int ret;
 
-    while (low < high) {
-        med = low + (high-low)/2;
-
-        if (ipmap[med].ip <= ip && ipmap[med+1].ip > ip)
-        {
-            low = med;
-            break;
-        }
-        if (ipmap[med].ip < ip) low = med+1;
-        else high = med-1;
-    }
-
-    TRACE("%x -> %d\n", ip, ipmap[low].state);
-    return ipmap[low].state;
+    for (i = 0; i < descr->ipmap_count; i++) if (base + ipmap[i].ip > ip) break;
+    ret = i ? ipmap[i - 1].state : -1;
+    TRACE( "%Ix -> %d\n", ip, ret );
+    return ret;
 }
 
 static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
@@ -91,8 +83,7 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
 
     if (unwind_help[0] == -2)
     {
-        trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
-                descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+        trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
     }
     else
     {
@@ -203,8 +194,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
 {
     ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
     void *handler, *object = (void *)rec->ExceptionInformation[1];
-    int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
-            descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+    int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
     thread_data_t *data = msvcrt_get_thread_data();
     const tryblock_info *in_catch;
     EXCEPTION_RECORD catch_record;
@@ -304,8 +294,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
 {
-    int trylevel = ip_to_state(rva_to_ptr(descr->ipmap, dispatch->ImageBase),
-            descr->ipmap_count, dispatch->ControlPc-dispatch->ImageBase);
+    int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
     cxx_exception_type *exc_type;
     ULONG64 orig_frame = frame;
     ULONG64 throw_base;
