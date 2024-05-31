@@ -70,16 +70,6 @@ static inline int context_idx( HWND hwnd )
     return LOWORD( hwnd ) >> 1;
 }
 
-/* only for use on sanitized BITMAPINFO structures */
-static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
-{
-    if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
-    if (coloruse == DIB_PAL_COLORS)
-        return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
-    return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
-}
-
 static inline int get_dib_stride( int width, int bpp )
 {
     return ((width * bpp + 31) >> 3) & ~3;
@@ -564,7 +554,6 @@ struct android_window_surface
     ANativeWindow        *window;
     UINT                  clip_count;
     RECT                 *clip_rects;
-    BITMAPINFO            info;   /* variable size, must be last */
 };
 
 static struct android_window_surface *get_android_surface( struct window_surface *surface )
@@ -742,10 +731,8 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     info->bmiHeader.biPlanes    = 1;
     info->bmiHeader.biSizeImage = get_dib_image_size( info );
 
-    surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
-    if (!surface) return NULL;
+    if (!(surface = calloc( 1, sizeof(*surface) ))) return NULL;
     if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect, info, 0 )) goto failed;
-    memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = get_ioctl_window( hwnd );
 
