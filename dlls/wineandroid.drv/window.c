@@ -1392,12 +1392,8 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
     struct android_win_data *data;
     BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
     COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
-    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    BITMAPINFO *bmi = (BITMAPINFO *)buffer;
-    void *src_bits, *dst_bits;
     RECT rect, src_rect;
-    HDC hdc = 0;
-    HBITMAP dib;
+    HDC hdc;
     BOOL ret = FALSE;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -1430,21 +1426,11 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
         return TRUE;
     }
 
-    dst_bits = surface->funcs->get_info( surface, bmi );
-
-    if (!(dib = NtGdiCreateDIBSection( info->hdcDst, NULL, 0, bmi, DIB_RGB_COLORS, 0, 0, 0, &src_bits )))
-        goto done;
     if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
-
-    NtGdiSelectBitmap( hdc, dib );
-
     window_surface_lock( surface );
+    NtGdiSelectBitmap( hdc, surface->color_bitmap );
 
-    if (info->prcDirty)
-    {
-        intersect_rect( &rect, &rect, info->prcDirty );
-        memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
-    }
+    if (info->prcDirty) intersect_rect( &rect, &rect, info->prcDirty );
     NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     src_rect = rect;
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
@@ -1455,19 +1441,14 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
                            info->hdcSrc, src_rect.left, src_rect.top,
                            src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
                            *(DWORD *)&blend, 0 );
-    if (ret)
-    {
-        memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
-        add_bounds_rect( &surface->bounds, &rect );
-    }
+    if (ret) add_bounds_rect( &surface->bounds, &rect );
 
+    NtGdiDeleteObjectApp( hdc );
     window_surface_unlock( surface );
     window_surface_flush( surface );
 
 done:
     window_surface_release( surface );
-    if (hdc) NtGdiDeleteObjectApp( hdc );
-    if (dib) NtGdiDeleteObjectApp( dib );
     return ret;
 }
 
