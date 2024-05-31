@@ -1592,14 +1592,18 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
       /* Special case BAT and CMD */
       if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"))) {
+        RETURN_CODE return_code;
         BOOL oldinteractive = interactive;
+
         interactive = FALSE;
-        WCMD_batch(thisDir, command, NULL, INVALID_HANDLE_VALUE);
+        return_code = WCMD_batch(thisDir, command, NULL, INVALID_HANDLE_VALUE);
         interactive = oldinteractive;
         if (context && !called) {
           TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
           context->skip_rest = TRUE;
         }
+        if (return_code != RETURN_CODE_ABORTED && return_code != RETURN_CODE_OLD_CHAINING)
+            errorlevel = return_code;
         return;
       } else {
         DWORD exit_code;
@@ -3713,8 +3717,10 @@ RETURN_CODE node_execute(CMD_NODE *node)
     case CMD_ONFAILURE:
         return_code = node_execute(node->left);
         return_code = temp_fixup_return_code(node->left, return_code, ERROR_INVALID_FUNCTION);
-        if (return_code != NO_ERROR)
+        if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
         {
+            /* that's needed for commands (POPD, RMDIR) that don't set errorlevel in case of failure. */
+            errorlevel = return_code;
             return_code = node_execute(node->right);
             temp_fixup_return_code(node->right, return_code, 0 /* not used */);
         }
