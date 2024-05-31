@@ -154,6 +154,7 @@ enum sql_funcs
 
 struct param
 {
+    INT16 type;
     UINT8 *len;  /* result length array stored in Unix lib */
     void  *ptr;  /* result length ptr passed by client */
 };
