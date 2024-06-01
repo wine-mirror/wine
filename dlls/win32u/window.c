@@ -3494,8 +3494,9 @@ done:
 /* NtUserSetWindowPos implementation */
 BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 {
-    RECT old_window_rect, old_client_rect, new_window_rect, new_client_rect, valid_rects[2], visible_rect, surface_rect;
+    RECT valid_rects[2], surface_rect;
     struct window_surface *surface;
+    struct window_rects old_rects, new_rects;
     UINT orig_flags, context;
     BOOL ret = FALSE;
 
@@ -3540,11 +3541,11 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( winpos->hwnd ));
 
-    if (!calc_winpos( winpos, &old_window_rect, &old_client_rect,
-                      &new_window_rect, &new_client_rect )) goto done;
+    if (!calc_winpos( winpos, &old_rects.window, &old_rects.client,
+                      &new_rects.window, &new_rects.client )) goto done;
 
     /* Fix redundant flags */
-    if (!fixup_swp_flags( winpos, &old_window_rect, parent_x, parent_y )) goto done;
+    if (!fixup_swp_flags( winpos, &old_rects.window, parent_x, parent_y )) goto done;
 
     if((winpos->flags & (SWP_NOZORDER | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) != SWP_NOZORDER)
     {
@@ -3554,13 +3555,13 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 
     /* Common operations */
 
-    calc_ncsize( winpos, &old_window_rect, &old_client_rect,
-                 &new_window_rect, &new_client_rect, valid_rects, parent_x, parent_y );
+    calc_ncsize( winpos, &old_rects.window, &old_rects.client,
+                 &new_rects.window, &new_rects.client, valid_rects, parent_x, parent_y );
 
-    surface = create_window_surface( winpos->hwnd, winpos->flags, FALSE, &new_window_rect, &new_client_rect,
-                                     &visible_rect, &surface_rect );
+    surface = create_window_surface( winpos->hwnd, winpos->flags, FALSE, &new_rects.window, &new_rects.client,
+                                     &new_rects.visible, &surface_rect );
     if (!apply_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags, surface,
-                           &new_window_rect, &new_client_rect, &visible_rect, valid_rects ))
+                           &new_rects.window, &new_rects.client, &new_rects.visible, valid_rects ))
     {
         if (surface) window_surface_release( surface );
         goto done;
@@ -3619,10 +3620,10 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
            and always contains final window position.
          */
-        winpos->x  = new_window_rect.left;
-        winpos->y  = new_window_rect.top;
-        winpos->cx = new_window_rect.right - new_window_rect.left;
-        winpos->cy = new_window_rect.bottom - new_window_rect.top;
+        winpos->x  = new_rects.window.left;
+        winpos->y  = new_rects.window.top;
+        winpos->cx = new_rects.window.right - new_rects.window.left;
+        winpos->cy = new_rects.window.bottom - new_rects.window.top;
         send_message( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
     }
 
