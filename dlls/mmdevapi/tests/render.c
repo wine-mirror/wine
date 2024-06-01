@@ -1419,6 +1419,7 @@ static void test_session(void)
     WAVEFORMATEX *pwfx;
     ULONG ref;
     HRESULT hr;
+    WCHAR *str;
 
     hr = CoCreateGuid(&ses1_guid);
     ok(hr == S_OK, "CoCreateGuid failed: %08lx\n", hr);
@@ -1540,6 +1541,40 @@ static void test_session(void)
     hr = IAudioSessionControl2_GetState(ses1_ctl2, &state);
     ok(hr == S_OK, "GetState failed: %08lx\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    /* Test GetDisplayName / SetDisplayName */
+
+    hr = IAudioSessionControl2_GetDisplayName(ses1_ctl2, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetDisplayName failed: %08lx\n", hr);
+
+    str = NULL;
+    hr = IAudioSessionControl2_GetDisplayName(ses1_ctl2, &str);
+    todo_wine
+    ok(hr == S_OK, "GetDisplayName failed: %08lx\n", hr);
+    todo_wine
+    ok(str && !wcscmp(str, L""), "Got %s\n", wine_dbgstr_w(str));
+    if (str)
+        CoTaskMemFree(str);
+
+    hr = IAudioSessionControl2_SetDisplayName(ses1_ctl2, NULL, NULL);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "SetDisplayName failed: %08lx\n", hr);
+
+    hr = IAudioSessionControl2_SetDisplayName(ses1_ctl2, L"WineDisplayName", NULL);
+    todo_wine
+    ok(hr == S_OK, "SetDisplayName failed: %08lx\n", hr);
+
+    str = NULL;
+    hr = IAudioSessionControl2_GetDisplayName(ses1_ctl2, &str);
+    todo_wine
+    ok(hr == S_OK, "GetDisplayName failed: %08lx\n", hr);
+    todo_wine
+    ok(str && !wcscmp(str, L"WineDisplayName"), "Got %s\n", wine_dbgstr_w(str));
+    if (str)
+        CoTaskMemFree(str);
+
+    /* Test capture */
 
     if(cap_ctl){
         hr = IAudioSessionControl2_GetState(cap_ctl, &state);
