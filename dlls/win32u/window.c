@@ -5234,11 +5234,12 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 {
     UINT win_dpi, thread_dpi = get_thread_dpi(), context;
     struct window_surface *surface;
+    struct window_rects new_rects;
     CBT_CREATEWNDW cbtc;
     HWND hwnd, owner = 0;
     CREATESTRUCTW cs;
     INT sw = SW_SHOW;
-    RECT rect, visible_rect, surface_rect;
+    RECT surface_rect;
     WND *win;
 
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
@@ -5407,13 +5408,16 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (cx < 0) cx = 0;
     if (cy < 0) cy = 0;
-    SetRect( &rect, cs.x, cs.y, cs.x + cx, cs.y + cy );
+    SetRect( &new_rects.window, cs.x, cs.y, cs.x + cx, cs.y + cy );
     /* check for wraparound */
-    if (cs.x > 0x7fffffff - cx) rect.right = 0x7fffffff;
-    if (cs.y > 0x7fffffff - cy) rect.bottom = 0x7fffffff;
+    if (cs.x > 0x7fffffff - cx) new_rects.window.right = 0x7fffffff;
+    if (cs.y > 0x7fffffff - cy) new_rects.window.bottom = 0x7fffffff;
+    new_rects.client = new_rects.window;
 
-    surface = create_window_surface( hwnd, SWP_NOZORDER | SWP_NOACTIVATE, FALSE, &rect, &rect, &visible_rect, &surface_rect );
-    if (!apply_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, surface, &rect, &rect, &visible_rect, NULL ))
+    surface = create_window_surface( hwnd, SWP_NOZORDER | SWP_NOACTIVATE, FALSE, &new_rects.window, &new_rects.client,
+                                     &new_rects.visible, &surface_rect );
+    if (!apply_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, surface, &new_rects.window, &new_rects.client,
+                           &new_rects.visible, NULL ))
     {
         if (surface) window_surface_release( surface );
         goto failed;
@@ -5422,7 +5426,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     /* send WM_NCCREATE */
 
-    TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs.x, cs.y, cs.cx, cs.cy, wine_dbgstr_rect(&rect) );
+    TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs.x, cs.y, cs.cx, cs.cy, debugstr_window_rects(&new_rects) );
     if (!send_message_timeout( hwnd, WM_NCCREATE, 0, (LPARAM)&cs, SMTO_NORMAL, 0, ansi ))
     {
         WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
@@ -5440,19 +5444,21 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     /* send WM_NCCALCSIZE */
 
-    if (get_window_rects( hwnd, COORDS_PARENT, &rect, NULL, win_dpi ))
+    if (get_window_rects( hwnd, COORDS_PARENT, &new_rects.window, NULL, win_dpi ))
     {
         /* yes, even if the CBT hook was called with HWND_TOP */
         HWND insert_after = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-        RECT client_rect = rect;
+        new_rects.client = new_rects.window;
 
         /* the rectangle is in screen coords for WM_NCCALCSIZE when wparam is FALSE */
-        map_window_points( parent, 0, (POINT *)&client_rect, 2, win_dpi );
-        send_message( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
-        map_window_points( 0, parent, (POINT *)&client_rect, 2, win_dpi );
+        map_window_points( parent, 0, (POINT *)&new_rects.client, 2, win_dpi );
+        send_message( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&new_rects.client );
+        map_window_points( 0, parent, (POINT *)&new_rects.client, 2, win_dpi );
 
-        surface = create_window_surface( hwnd, SWP_NOACTIVATE, FALSE, &rect, &client_rect, &visible_rect, &surface_rect );
-        apply_window_pos( hwnd, insert_after, SWP_NOACTIVATE, surface, &rect, &client_rect, &visible_rect, NULL );
+        surface = create_window_surface( hwnd, SWP_NOACTIVATE, FALSE, &new_rects.window, &new_rects.client,
+                                         &new_rects.visible, &surface_rect );
+        apply_window_pos( hwnd, insert_after, SWP_NOACTIVATE, surface, &new_rects.window, &new_rects.client,
+                          &new_rects.visible, NULL );
         if (surface) window_surface_release( surface );
     }
     else goto failed;
@@ -5471,9 +5477,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (!(win_get_flags( hwnd ) & WIN_NEED_SIZE))
     {
+        RECT rect;
         get_window_rects( hwnd, COORDS_PARENT, NULL, &rect, win_dpi );
-        send_message( hwnd, WM_SIZE, SIZE_RESTORED,
-                      MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
+        send_message( hwnd, WM_SIZE, SIZE_RESTORED, MAKELONG( rect.right - rect.left, rect.bottom - rect.top ) );
         send_message( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
     }
 
