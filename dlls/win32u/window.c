@@ -4344,8 +4344,9 @@ void update_window_state( HWND hwnd )
     static const UINT swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
                                   SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
     UINT context;
-    RECT window_rect, client_rect, valid_rects[2], visible_rect, surface_rect;
+    RECT valid_rects[2], surface_rect;
     struct window_surface *surface;
+    struct window_rects new_rects;
 
     if (!is_current_thread_window( hwnd ))
     {
@@ -4354,11 +4355,13 @@ void update_window_state( HWND hwnd )
     }
 
     context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
-    get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
-    valid_rects[0] = valid_rects[1] = client_rect;
+    get_window_rects( hwnd, COORDS_PARENT, &new_rects.window, &new_rects.client, get_thread_dpi() );
+    valid_rects[0] = valid_rects[1] = new_rects.client;
 
-    surface = create_window_surface( hwnd, swp_flags, FALSE, &window_rect, &client_rect, &visible_rect, &surface_rect );
-    apply_window_pos( hwnd, 0, swp_flags, surface, &window_rect, &client_rect, &visible_rect, valid_rects );
+    surface = create_window_surface( hwnd, swp_flags, FALSE, &new_rects.window, &new_rects.client,
+                                     &new_rects.visible, &surface_rect );
+    apply_window_pos( hwnd, 0, swp_flags, surface, &new_rects.window, &new_rects.client,
+                      &new_rects.visible, valid_rects );
     if (surface) window_surface_release( surface );
 
     set_thread_dpi_awareness_context( context );
