@@ -2439,7 +2439,7 @@ done:
  * Point is in screen coordinates.
  * Returned list must be freed by caller.
  */
-static HWND *list_children_from_point( HWND hwnd, POINT pt )
+static HWND *list_children_from_point( HWND hwnd, POINT pt, UINT dpi )
 {
     int i, size = 128;
     HWND *list;
@@ -2455,7 +2455,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt )
             req->parent = wine_server_user_handle( hwnd );
             req->x = pt.x;
             req->y = pt.y;
-            req->dpi = get_thread_dpi();
+            req->dpi = dpi;
             wine_server_set_reply( req, list, (size-1) * sizeof(user_handle_t) );
             if (!wine_server_call( req )) count = reply->count;
         }
@@ -2492,7 +2492,7 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
 
     *hittest = HTNOWHERE;
 
-    if (!(list = list_children_from_point( hwnd, pt ))) return 0;
+    if (!(list = list_children_from_point( hwnd, pt, dpi ))) return 0;
 
     /* now determine the hittest */
 
