@@ -57,6 +57,7 @@
 #define FAudio_strlcpy(ptr1, ptr2, size) lstrcpynA(ptr1, ptr2, size)
 
 #define FAudio_pow(x, y) pow(x, y)
+#define FAudio_powf(x, y) powf(x, y)
 #define FAudio_log(x) log(x)
 #define FAudio_log10(x) log10(x)
 #define FAudio_sin(x) sin(x)
@@ -138,6 +139,7 @@ extern void FAudio_Log(char const *msg);
 #define FAudio_strlcpy(ptr1, ptr2, size) SDL_strlcpy(ptr1, ptr2, size)
 
 #define FAudio_pow(x, y) SDL_pow(x, y)
+#define FAudio_powf(x, y) SDL_powf(x, y)
 #define FAudio_log(x) SDL_log(x)
 #define FAudio_log10(x) SDL_log10(x)
 #define FAudio_sin(x) SDL_sin(x)

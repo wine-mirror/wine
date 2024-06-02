@@ -183,7 +183,7 @@ static inline void DspBiQuad_Change(
 	float q,
 	float gain
 ) {
-	const float TWOPI = 6.283185307179586476925286766559005;
+	const float TWOPI = (float)6.283185307179586476925286766559005;
 	float theta_c = (TWOPI * frequency) / (float) filter->sampleRate;
 	float mu = DbGainToFactor(gain);
 	float beta = (type == DSP_BIQUAD_LOWSHELVING) ?

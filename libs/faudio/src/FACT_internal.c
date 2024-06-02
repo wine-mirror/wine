@@ -85,7 +85,7 @@ static inline float FACT_INTERNAL_CalculateFilterFrequency(
 	 *
 	 * -@Woflox
 	 */
-	float freq = 2 * FAudio_sin(
+	float freq = 2.0f * FAudio_sinf(
 		F3DAUDIO_PI *
 		FAudio_min(desiredFrequency / sampleRate, 0.5f)
 	);
@@ -1027,21 +1027,21 @@ float FACT_INTERNAL_CalculateRPC(
 			}
 			else if (rpc->points[i].type == 1) /* Fast */
 			{
-				result += maxY * (1.0f - FAudio_pow(1.0f - FAudio_pow(deltaXNormalized, 1.0f / 1.5f), 1.5f));
+				result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.0f / 1.5f), 1.5f));
 			}
 			else if (rpc->points[i].type == 2) /* Slow */
 			{
-				result += maxY * (1.0f - FAudio_pow(1.0f - FAudio_pow(deltaXNormalized, 1.5f), 1.0f / 1.5f));
+				result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_powf(deltaXNormalized, 1.5f), 1.0f / 1.5f));
 			}
 			else if (rpc->points[i].type == 3) /* SinCos */
 			{
 				if (maxY > 0.0f)
 				{
-					result += maxY * (1.0f - FAudio_pow(1.0f - FAudio_sqrtf(deltaXNormalized), 2.0f));
+					result += maxY * (1.0f - FAudio_powf(1.0f - FAudio_sqrtf(deltaXNormalized), 2.0f));
 				}
 				else
 				{
-					result += maxY * (1.0f - FAudio_sqrtf(1.0f - FAudio_pow(deltaXNormalized, 2.0f)));
+					result += maxY * (1.0f - FAudio_sqrtf(1.0f - FAudio_powf(deltaXNormalized, 2.0f)));
 				}
 			}
 			else
@@ -2066,8 +2066,8 @@ uint32_t FACT_INTERNAL_ParseAudioEngine(
 			rpcOffset,
 			dspPresetOffset,
 			dspParameterOffset;
-	uint16_t blob1Count, blob2Count;
-	uint8_t version, tool;
+	uint16_t blob1Count, blob2Count, tool;
+	uint8_t version;
 	uint8_t se;
 	uint32_t magic;
 	size_t memsize;
