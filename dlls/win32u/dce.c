@@ -106,7 +106,6 @@ static BOOL offscreen_window_surface_flush( struct window_surface *surface, cons
 
 static void offscreen_window_surface_destroy( struct window_surface *surface )
 {
-    free( surface );
 }
 
 static const struct window_surface_funcs offscreen_window_surface_funcs =
@@ -119,8 +118,8 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
 void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **window_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct window_surface *surface, *previous;
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
 
     TRACE( "hwnd %p, surface_rect %s, window_surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), window_surface );
 
@@ -136,14 +135,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
     info->bmiHeader.biCompression = BI_RGB;
 
-    /* create a new window surface */
-    if (!(surface = calloc(1, sizeof(*surface)))) return;
-    window_surface_init( surface, &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
-
-    TRACE( "created window surface %p\n", surface );
-    *window_surface = surface;
-
-    if (previous) window_surface_release( previous );
+    *window_surface = window_surface_create( sizeof(*surface), &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
 }
 
 /* window surface common helpers */
@@ -344,9 +336,12 @@ static BOOL update_surface_shape( struct window_surface *surface, const RECT *re
         return clear_surface_shape( surface );
 }
 
-W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
-                                  HWND hwnd, const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
+W32KAPI struct window_surface *window_surface_create( UINT size, const struct window_surface_funcs *funcs, HWND hwnd,
+                                                      const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
 {
+    struct window_surface *surface;
+
+    if (!(surface = calloc( 1, size ))) return NULL;
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
@@ -354,13 +349,19 @@ W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct w
     surface->color_key = CLR_INVALID;
     surface->alpha_bits = -1;
     surface->alpha_mask = 0;
-    pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
 
     if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
-    if (!(surface->color_bitmap = bitmap)) return FALSE;
+    if (!(surface->color_bitmap = bitmap))
+    {
+        free( surface );
+        return NULL;
+    }
 
-    return TRUE;
+    pthread_mutex_init( &surface->mutex, NULL );
+
+    TRACE( "created surface %p for hwnd %p rect %s\n", surface, hwnd, wine_dbgstr_rect( &surface->rect ) );
+    return surface;
 }
 
 W32KAPI void window_surface_add_ref( struct window_surface *surface )
@@ -378,6 +379,7 @@ W32KAPI void window_surface_release( struct window_surface *surface )
         if (surface->color_bitmap) NtGdiDeleteObjectApp( surface->color_bitmap );
         if (surface->shape_bitmap) NtGdiDeleteObjectApp( surface->shape_bitmap );
         surface->funcs->destroy( surface );
+        if (surface != &dummy_surface) free( surface );
     }
 }
 

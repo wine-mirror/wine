@@ -425,7 +425,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
     if (wws->wayland_buffer_queue)
         wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
-    free(wws);
 }
 
 static const struct window_surface_funcs wayland_window_surface_funcs =
@@ -457,17 +456,7 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     info->bmiHeader.biSizeImage   = width * height * 4;
     info->bmiHeader.biCompression = BI_RGB;
 
-    wws = calloc(1, sizeof(*wws));
-    if (!wws) return NULL;
-    if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect, info, 0)) goto failed;
-
-    TRACE("created %p hwnd %p %s\n", wws, hwnd, wine_dbgstr_rect(rect));
-
-    return &wws->header;
-
-failed:
-    window_surface_release(&wws->header);
-    return NULL;
+    return window_surface_create(sizeof(*wws), &wayland_window_surface_funcs, hwnd, rect, info, 0);
 }
 
 /***********************************************************************

@@ -1868,7 +1868,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     TRACE( "freeing %p\n", surface );
     if (surface->gc) XFreeGC( gdi_display, surface->gc );
     if (surface->image) x11drv_image_destroy( surface->image );
-    free( surface );
 }
 
 static const struct window_surface_funcs x11drv_surface_funcs =
@@ -1889,6 +1888,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct x11drv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
+    struct window_surface *window_surface;
     struct x11drv_image *image;
     D3DDDIFORMAT d3d_format;
     HBITMAP bitmap = 0;
@@ -1932,28 +1932,22 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
         if (desc.hDeviceDc) NtUserReleaseDC( hwnd, desc.hDeviceDc );
     }
 
-    if (!(surface = calloc( 1, sizeof(*surface) )))
+    if (!(window_surface = window_surface_create( sizeof(*surface), &x11drv_surface_funcs, hwnd, rect, info, bitmap )))
     {
         if (bitmap) NtGdiDeleteObjectApp( bitmap );
         x11drv_image_destroy( image );
-        return NULL;
     }
-    surface->image = image;
-    surface->byteswap = byteswap;
+    else
+    {
+        surface = get_x11_surface( window_surface );
+        surface->image = image;
+        surface->byteswap = byteswap;
+        surface->window = window;
+        surface->gc = XCreateGC( gdi_display, window, 0, NULL );
+        XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
+    }
 
-    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, rect, info, bitmap )) goto failed;
-
-    surface->window = window;
-    surface->gc = XCreateGC( gdi_display, window, 0, NULL );
-    XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
-
-    TRACE( "created %p for %lx %s image %p\n", surface, window, wine_dbgstr_rect(rect), surface->image->ximage->data );
-
-    return &surface->header;
-
-failed:
-    window_surface_release( &surface->header );
-    return NULL;
+    return window_surface;
 }
 
 
