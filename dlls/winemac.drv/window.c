@@ -403,68 +403,18 @@ static void set_cocoa_window_properties(struct macdrv_win_data *data)
  */
 static void sync_window_region(struct macdrv_win_data *data, HRGN win_region)
 {
-    HRGN hrgn = win_region;
-    RGNDATA *region_data;
-    const CGRect* rects;
-    int count;
-
     if (!data->cocoa_window) return;
-    data->shaped = FALSE;
 
     if (IsRectEmpty(&data->window_rect))  /* set an empty shape */
     {
+        data->shaped = FALSE;
         TRACE("win %p/%p setting empty shape for zero-sized window\n", data->hwnd, data->cocoa_window);
         macdrv_set_window_shape(data->cocoa_window, &CGRectZero, 1);
         return;
     }
 
-    if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
-    {
-        if (!(hrgn = NtGdiCreateRectRgn(0, 0, 0, 0))) return;
-        if (NtUserGetWindowRgnEx(data->hwnd, hrgn, 0) == ERROR)
-        {
-            NtGdiDeleteObjectApp(hrgn);
-            hrgn = 0;
-        }
-    }
-
-    if (hrgn && NtUserGetWindowLongW(data->hwnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
-        NtUserMirrorRgn(data->hwnd, hrgn);
-    if (hrgn)
-    {
-        NtGdiOffsetRgn(hrgn, data->window_rect.left - data->whole_rect.left,
-                       data->window_rect.top - data->whole_rect.top);
-    }
-    region_data = get_region_data(hrgn, 0);
-    if (region_data)
-    {
-        rects = (CGRect*)region_data->Buffer;
-        count = region_data->rdh.nCount;
-        /* Special case optimization.  If the region entirely encloses the Cocoa
-           window, it's the same as there being no region.  It's potentially
-           hard/slow to test this for arbitrary regions, so we just check for
-           very simple regions. */
-        if (count == 1 && CGRectContainsRect(rects[0],
-            CGRectOffset(cgrect_from_rect(data->whole_rect), -data->whole_rect.left, -data->whole_rect.top)))
-        {
-            TRACE("optimizing for simple region that contains Cocoa content rect\n");
-            rects = NULL;
-            count = 0;
-        }
-    }
-    else
-    {
-        rects = NULL;
-        count = 0;
-    }
-
-    TRACE("win %p/%p win_region %p rects %p count %d\n", data->hwnd, data->cocoa_window, win_region, rects, count);
-    macdrv_set_window_shape(data->cocoa_window, rects, count);
-
-    free(region_data);
-    data->shaped = (region_data != NULL);
-
-    if (hrgn && hrgn != win_region) NtGdiDeleteObjectApp(hrgn);
+    /* use surface shape instead */
+    macdrv_set_window_shape(data->cocoa_window, NULL, 0);
 }
 
 
