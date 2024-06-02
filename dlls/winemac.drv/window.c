@@ -1863,17 +1863,14 @@ done:
 
 
 /***********************************************************************
- *              UpdateLayeredWindow   (MACDRV.@)
+ *              CreateLayeredWindow   (MACDRV.@)
  */
-BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                const RECT *window_rect)
+BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                struct window_surface **window_surface)
 {
     struct window_surface *surface;
     struct macdrv_win_data *data;
-    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    RECT rect, src_rect;
-    HDC hdc;
-    BOOL ret = FALSE;
+    RECT rect;
 
     if (!(data = get_win_data(hwnd))) return FALSE;
 
@@ -1898,7 +1895,7 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     }
     else set_surface_use_alpha(surface, TRUE);
 
-    if (surface) window_surface_add_ref(surface);
+    if ((*window_surface = surface)) window_surface_add_ref(surface);
 
     /* Since layered attributes are now set, can now show the window */
     if (data->cocoa_window && !data->on_screen && NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)
@@ -1906,14 +1903,27 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
 
     release_win_data(data);
 
-    if (!surface) return FALSE;
-    if (!info->hdcSrc)
-    {
-        window_surface_release(surface);
-        return TRUE;
-    }
+    return TRUE;
+}
 
-    if (!(hdc = NtGdiCreateCompatibleDC(0))) goto done;
+/***********************************************************************
+ *              UpdateLayeredWindow   (MACDRV.@)
+ */
+BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                const RECT *window_rect, struct window_surface *surface)
+{
+    struct macdrv_win_data *data;
+    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
+    RECT rect, src_rect;
+    HDC hdc;
+    BOOL ret = FALSE;
+
+    rect = *window_rect;
+    OffsetRect(&rect, -window_rect->left, -window_rect->top);
+
+    if (!info->hdcSrc) return TRUE;
+
+    if (!(hdc = NtGdiCreateCompatibleDC(0))) return FALSE;
     window_surface_lock(surface);
     NtGdiSelectBitmap(hdc, surface->color_bitmap);
 
@@ -1943,7 +1953,6 @@ BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     }
 
 done:
-    window_surface_release(surface);
     return ret;
 }
 

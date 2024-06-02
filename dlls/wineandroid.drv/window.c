@@ -1383,18 +1383,14 @@ void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DW
 
 
 /*****************************************************************************
- *           ANDROID_UpdateLayeredWindow
+ *           ANDROID_CreateLayeredWindow
  */
-BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                  const RECT *window_rect )
+BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                  struct window_surface **window_surface )
 {
     struct window_surface *surface;
     struct android_win_data *data;
-    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
-    RECT rect, src_rect;
-    HDC hdc;
-    BOOL ret = FALSE;
+    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
@@ -1416,17 +1412,29 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
     }
     else set_surface_layered( surface, 255, color_key );
 
-    if (surface) window_surface_add_ref( surface );
+    if ((*window_surface = surface)) window_surface_add_ref( surface );
     release_win_data( data );
 
-    if (!surface) return FALSE;
-    if (!info->hdcSrc)
-    {
-        window_surface_release( surface );
-        return TRUE;
-    }
+    return TRUE;
+}
 
-    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
+/*****************************************************************************
+ *              ANDROID_UpdateLayeredWindow
+ */
+BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                  const RECT *window_rect, struct window_surface *surface )
+{
+    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
+    RECT rect, src_rect;
+    HDC hdc;
+    BOOL ret;
+
+    rect = *window_rect;
+    OffsetRect( &rect, -window_rect->left, -window_rect->top );
+
+    if (!info->hdcSrc) return TRUE;
+
+    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) return FALSE;
     window_surface_lock( surface );
     NtGdiSelectBitmap( hdc, surface->color_bitmap );
 
@@ -1447,8 +1455,6 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
     window_surface_unlock( surface );
     window_surface_flush( surface );
 
-done:
-    window_surface_release( surface );
     return ret;
 }
 

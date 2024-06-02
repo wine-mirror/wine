@@ -348,6 +348,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pSetParent = ANDROID_SetParent,
     .pSetWindowStyle = ANDROID_SetWindowStyle,
     .pShowWindow = ANDROID_ShowWindow,
+    .pCreateLayeredWindow = ANDROID_CreateLayeredWindow,
     .pUpdateLayeredWindow = ANDROID_UpdateLayeredWindow,
     .pWindowMessage = ANDROID_WindowMessage,
     .pWindowPosChanging = ANDROID_WindowPosChanging,

@@ -2121,9 +2121,11 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
                                        const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty )
 {
     DWORD swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
+    struct window_surface *surface;
     RECT window_rect, client_rect;
     UPDATELAYEREDWINDOWINFO info;
     SIZE offset;
+    BOOL ret;
 
     if (flags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
         !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
@@ -2169,6 +2171,9 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
 
     apply_window_pos( hwnd, 0, swp_flags, &window_rect, &client_rect, NULL );
 
+    if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
+    if (!(user_driver->pCreateLayeredWindow( hwnd, &window_rect, key, &surface )) || !surface) return FALSE;
+
     info.cbSize   = sizeof(info);
     info.hdcDst   = hdc_dst;
     info.pptDst   = pts_dst;
@@ -2179,7 +2184,10 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     info.pblend   = blend;
     info.dwFlags  = flags;
     info.prcDirty = dirty;
-    return user_driver->pUpdateLayeredWindow( hwnd, &info, &window_rect );
+    ret = user_driver->pUpdateLayeredWindow( hwnd, &info, &window_rect, surface );
+
+    window_surface_release( surface );
+    return ret;
 }
 
 /***********************************************************************

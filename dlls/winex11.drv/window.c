@@ -2960,18 +2960,15 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 
 
 /*****************************************************************************
- *              UpdateLayeredWindow  (X11DRV.@)
+ *              CreateLayeredWindow  (X11DRV.@)
  */
-BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                 const RECT *window_rect )
+BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                 struct window_surface **window_surface )
 {
     struct window_surface *surface;
     struct x11drv_win_data *data;
-    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    COLORREF color_key = (info->dwFlags & ULW_COLORKEY) ? info->crKey : CLR_INVALID;
-    RECT rect, src_rect;
-    HDC hdc;
-    BOOL mapped, ret = FALSE;
+    BOOL mapped;
+    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
@@ -2991,7 +2988,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     }
     else set_surface_color_key( surface, color_key );
 
-    if (surface) window_surface_add_ref( surface );
+    if ((*window_surface = surface)) window_surface_add_ref( surface );
     mapped = data->mapped;
     release_win_data( data );
 
@@ -3004,14 +3001,26 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
             map_window( hwnd, style );
     }
 
-    if (!surface) return FALSE;
-    if (!info->hdcSrc)
-    {
-        window_surface_release( surface );
-        return TRUE;
-    }
+    return TRUE;
+}
 
-    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
+/*****************************************************************************
+ *              UpdateLayeredWindow  (X11DRV.@)
+ */
+BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                 const RECT *window_rect, struct window_surface *surface )
+{
+    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
+    RECT rect, src_rect;
+    HDC hdc;
+    BOOL ret;
+
+    rect = *window_rect;
+    OffsetRect( &rect, -window_rect->left, -window_rect->top );
+
+    if (!info->hdcSrc) return TRUE;
+
+    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) return FALSE;
     window_surface_lock( surface );
     NtGdiSelectBitmap( hdc, surface->color_bitmap );
 
@@ -3032,8 +3041,6 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     window_surface_unlock( surface );
     window_surface_flush( surface );
 
-done:
-    window_surface_release( surface );
     return ret;
 }
 

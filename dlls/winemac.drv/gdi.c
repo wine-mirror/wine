@@ -301,6 +301,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pToUnicodeEx = macdrv_ToUnicodeEx,
     .pUnregisterHotKey = macdrv_UnregisterHotKey,
     .pUpdateClipboard = macdrv_UpdateClipboard,
+    .pCreateLayeredWindow = macdrv_CreateLayeredWindow,
     .pUpdateLayeredWindow = macdrv_UpdateLayeredWindow,
     .pVkKeyScanEx = macdrv_VkKeyScanEx,
     .pImeProcessKey = macdrv_ImeProcessKey,

@@ -98,8 +98,10 @@ extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent );
 extern void ANDROID_SetCapture( HWND hwnd, UINT flags );
 extern void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style );
 extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );
+extern BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                         struct window_surface **surface );
 extern BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                         const RECT *window_rect );
+                                         const RECT *window_rect, struct window_surface *surface );
 extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                        const RECT *window_rect, const RECT *client_rect,
