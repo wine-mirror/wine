@@ -34,6 +34,7 @@ typedef struct audio_session {
 
     WCHAR *display_name;
     WCHAR *icon_path;
+    GUID grouping_param;
 
     struct list entry;
 } AudioSession;
