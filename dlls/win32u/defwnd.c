@@ -250,16 +250,13 @@ BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT type, UINT flags, UINT width )
     return retval;
 }
 
-/***********************************************************************
- *           AdjustWindowRectEx (win32u.so)
- */
-BOOL WINAPI AdjustWindowRectEx( RECT *rect, DWORD style, BOOL menu, DWORD ex_style )
+/* see AdjustWindowRectExForDpi */
+BOOL adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD ex_style, UINT dpi )
 {
-    NONCLIENTMETRICSW ncm;
+    NONCLIENTMETRICSW ncm = {.cbSize = sizeof(ncm)};
     int adjust = 0;
 
-    ncm.cbSize = sizeof(ncm);
-    NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+    NtUserSystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
 
     if ((ex_style & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
         adjust = 1; /* for the outer frame always present */
@@ -1856,7 +1853,7 @@ static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
 
     if (!(style & WS_MINIMIZE))
     {
-        AdjustWindowRectEx( &rect, style, FALSE, ex_style & ~WS_EX_CLIENTEDGE );
+        adjust_window_rect( &rect, style, FALSE, ex_style & ~WS_EX_CLIENTEDGE, get_system_dpi() );
 
         win_rect->left   -= rect.left;
         win_rect->top    -= rect.top;

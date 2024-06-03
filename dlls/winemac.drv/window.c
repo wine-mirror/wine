@@ -46,6 +46,15 @@ static CFMutableDictionaryRef win_datas;
 static unsigned int activate_on_focus_time;
 
 
+/**********************************************************************
+ *       get_win_monitor_dpi
+ */
+static UINT get_win_monitor_dpi(HWND hwnd)
+{
+    return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
+}
+
+
 /***********************************************************************
  *              get_cocoa_window_features
  */
@@ -133,6 +142,7 @@ static void get_mac_rect_offset(struct macdrv_win_data *data, unsigned int style
                                 const RECT *window_rect, const RECT *client_rect)
 {
     unsigned int ex_style, style_mask = 0, ex_style_mask = 0;
+    UINT dpi = get_win_monitor_dpi(data->hwnd);
 
     rect->top = rect->bottom = rect->left = rect->right = 0;
 
@@ -155,7 +165,7 @@ static void get_mac_rect_offset(struct macdrv_win_data *data, unsigned int style
         }
     }
 
-    AdjustWindowRectEx(rect, style & style_mask, FALSE, ex_style & ex_style_mask);
+    NtUserAdjustWindowRect(rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi);
 
     TRACE("%p/%p style %08x ex_style %08x shaped %d -> %s\n", data->hwnd, data->cocoa_window,
           style, ex_style, data->shaped, wine_dbgstr_rect(rect));
@@ -522,6 +532,7 @@ static void sync_window_min_max_info(HWND hwnd)
 {
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     LONG exstyle = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
+    UINT dpi = get_win_monitor_dpi(hwnd);
     RECT win_rect, primary_monitor_rect;
     MINMAXINFO minmax;
     LONG adjustedStyle;
@@ -529,6 +540,7 @@ static void sync_window_min_max_info(HWND hwnd)
     WINDOWPLACEMENT wpl;
     HMONITOR monitor;
     struct macdrv_win_data *data;
+    BOOL menu;
 
     TRACE("win %p\n", hwnd);
 
@@ -546,8 +558,8 @@ static void sync_window_min_max_info(HWND hwnd)
     primary_monitor_rect.left = primary_monitor_rect.top = 0;
     primary_monitor_rect.right = NtUserGetSystemMetrics(SM_CXSCREEN);
     primary_monitor_rect.bottom = NtUserGetSystemMetrics(SM_CYSCREEN);
-    AdjustWindowRectEx(&primary_monitor_rect, adjustedStyle,
-                       ((style & WS_POPUP) && NtUserGetWindowLongPtrW(hwnd, GWLP_ID)), exstyle);
+    menu = ((style & WS_POPUP) && NtUserGetWindowLongPtrW(hwnd, GWLP_ID));
+    NtUserAdjustWindowRect(&primary_monitor_rect, adjustedStyle, menu, exstyle, dpi);
 
     xinc = -primary_monitor_rect.left;
     yinc = -primary_monitor_rect.top;
@@ -1313,6 +1325,7 @@ static HMONITOR monitor_from_point(POINT pt, UINT flags)
  */
 static LRESULT move_window(HWND hwnd, WPARAM wparam)
 {
+    UINT dpi = get_win_monitor_dpi(hwnd);
     MSG msg;
     RECT origRect, movedRect, desktopRect;
     int hittest = (int)(wparam & 0x0f);
@@ -1334,7 +1347,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     TRACE("hwnd %p hittest %d, pos %d,%d\n", hwnd, hittest, (int)capturePoint.x, (int)capturePoint.y);
 
     origRect.left = origRect.right = origRect.top = origRect.bottom = 0;
-    if (AdjustWindowRectEx(&origRect, style, FALSE, NtUserGetWindowLongW(hwnd, GWL_EXSTYLE)))
+    if (NtUserAdjustWindowRect(&origRect, style, FALSE, NtUserGetWindowLongW(hwnd, GWL_EXSTYLE), dpi))
         captionHeight = -origRect.top;
     else
         captionHeight = 0;

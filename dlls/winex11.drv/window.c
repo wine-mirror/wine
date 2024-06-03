@@ -113,6 +113,15 @@ static const WCHAR clip_window_prop[] =
 static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
+/**********************************************************************
+ *       get_win_monitor_dpi
+ */
+static UINT get_win_monitor_dpi( HWND hwnd )
+{
+    return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
+}
+
+
 /***********************************************************************
  * http://standards.freedesktop.org/startup-notification-spec
  */
@@ -1301,10 +1310,12 @@ static void get_decoration_rect( struct x11drv_win_data *data, RECT *rect,
 {
     DWORD style, ex_style, style_mask = 0, ex_style_mask = 0;
     unsigned long decor;
+    UINT dpi;
 
     SetRectEmpty( rect );
     if (!data->managed) return;
 
+    dpi = get_win_monitor_dpi( data->hwnd );
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     ex_style = NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE );
     decor = get_mwm_decorations( data, style, ex_style, window_rect, client_rect );
@@ -1316,7 +1327,7 @@ static void get_decoration_rect( struct x11drv_win_data *data, RECT *rect,
         ex_style_mask |= WS_EX_DLGMODALFRAME;
     }
 
-    AdjustWindowRectEx( rect, style & style_mask, FALSE, ex_style & ex_style_mask );
+    NtUserAdjustWindowRect( rect, style & style_mask, FALSE, ex_style & ex_style_mask, dpi );
 }
 
 

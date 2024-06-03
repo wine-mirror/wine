@@ -22,41 +22,8 @@
 #include "controls.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
 
 #define SC_ABOUTWINE            (SC_SCREENSAVE+1)
-
-
-static void adjust_window_rect( RECT *rect, DWORD style, BOOL menu, DWORD exStyle, NONCLIENTMETRICSW *ncm )
-{
-    int adjust = 0;
-
-    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
-        adjust = 1; /* for the outer frame always present */
-    else if ((exStyle & WS_EX_DLGMODALFRAME) || (style & (WS_THICKFRAME|WS_DLGFRAME)))
-        adjust = 2; /* outer */
-
-    if (style & WS_THICKFRAME)
-        adjust += ncm->iBorderWidth + ncm->iPaddedBorderWidth; /* The resize border */
-
-    if ((style & (WS_BORDER|WS_DLGFRAME)) || (exStyle & WS_EX_DLGMODALFRAME))
-        adjust++; /* The other border */
-
-    InflateRect (rect, adjust, adjust);
-
-    if ((style & WS_CAPTION) == WS_CAPTION)
-    {
-        if (exStyle & WS_EX_TOOLWINDOW)
-            rect->top -= ncm->iSmCaptionHeight + 1;
-        else
-            rect->top -= ncm->iCaptionHeight + 1;
-    }
-    if (menu) rect->top -= ncm->iMenuHeight + 1;
-
-    if (exStyle & WS_EX_CLIENTEDGE)
-        InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
-}
-
 
 /***********************************************************************
  *		DrawCaption (USER32.@) Draws a caption bar
@@ -89,51 +56,6 @@ BOOL WINAPI DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
     }
     return ret;
 }
-
-
-/***********************************************************************
- *		AdjustWindowRect (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
-{
-    return AdjustWindowRectEx( rect, style, menu, 0 );
-}
-
-
-/***********************************************************************
- *		AdjustWindowRectEx (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
-{
-    NONCLIENTMETRICSW ncm;
-
-    TRACE("(%s) %08lx %d %08lx\n", wine_dbgstr_rect(rect), style, menu, exStyle );
-
-    ncm.cbSize = sizeof(ncm);
-    SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
-
-    adjust_window_rect( rect, style, menu, exStyle, &ncm );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *		AdjustWindowRectExForDpi (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style, BOOL menu,
-                                                        DWORD exStyle, UINT dpi )
-{
-    NONCLIENTMETRICSW ncm;
-
-    TRACE("(%s) %08lx %d %08lx %u\n", wine_dbgstr_rect(rect), style, menu, exStyle, dpi );
-
-    ncm.cbSize = sizeof(ncm);
-    SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
-
-    adjust_window_rect( rect, style, menu, exStyle, &ncm );
-    return TRUE;
-}
-
 
 
 /***********************************************************************

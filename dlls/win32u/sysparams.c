@@ -6505,6 +6505,12 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserCallTwoParam_UnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
 
+    case NtUserCallTwoParam_AdjustWindowRect:
+    {
+        struct adjust_window_rect_params *params = (void *)arg2;
+        return adjust_window_rect( (RECT *)arg1, params->style, params->menu, params->ex_style, params->dpi );
+    }
+
     /* temporary exports */
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );

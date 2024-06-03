@@ -1054,6 +1054,7 @@ enum
     NtUserCallTwoParam_SetCaretPos,
     NtUserCallTwoParam_SetIconParam,
     NtUserCallTwoParam_UnhookWindowsHook,
+    NtUserCallTwoParam_AdjustWindowRect,
     /* temporary exports */
     NtUserAllocWinProc,
 };
@@ -1099,6 +1100,26 @@ static inline UINT_PTR NtUserSetIconParam( HICON icon, ULONG_PTR param )
 static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
 {
     return NtUserCallTwoParam( id, (UINT_PTR)proc, NtUserCallTwoParam_UnhookWindowsHook );
+}
+
+struct adjust_window_rect_params
+{
+    DWORD style;
+    DWORD ex_style;
+    BOOL menu;
+    UINT dpi;
+};
+
+static inline BOOL NtUserAdjustWindowRect( RECT *rect, DWORD style, BOOL menu, DWORD ex_style, UINT dpi )
+{
+    struct adjust_window_rect_params params =
+    {
+        .style = style,
+        .ex_style = ex_style,
+        .menu = menu,
+        .dpi = dpi,
+    };
+    return NtUserCallTwoParam( (ULONG_PTR)rect, (ULONG_PTR)&params, NtUserCallTwoParam_AdjustWindowRect );
 }
 
 /* NtUserCallHwnd codes, not compatible with Windows */
