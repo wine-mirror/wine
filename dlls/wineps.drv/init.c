@@ -467,7 +467,7 @@ BOOL PSDRV_ResetDC( print_ctx *ctx, const DEVMODEW *devmode )
         dump_devmode( devmode );
         PSDRV_MergeDevmodes( ctx->Devmode, devmode, ctx->pi );
     }
-    return TRUE;
+    return !!ResetDCW( ctx->hdc, devmode );
 }
 
 static PRINTER_ENUM_VALUESW *load_font_sub_table( HANDLE printer, DWORD *num_entries )
