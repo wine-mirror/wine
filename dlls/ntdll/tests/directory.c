@@ -453,13 +453,12 @@ static void test_NtQueryDirectoryFile(void)
     {
         const WCHAR *mask;
         int found[ARRAY_SIZE(testfiles)];
-        BOOL todo_missing;
     }
     mask_tests[] =
     {
-        {L"*.", {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}, TRUE},
-        {L"*.*", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}, TRUE},
-        {L"*.**", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}, TRUE},
+        {L"*.", {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}},
+        {L"*.*", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}},
+        {L"*.**", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}},
         {L"*", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
         {L"**", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
         {L"??.???", {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0}},
@@ -517,10 +516,7 @@ static void test_NtQueryDirectoryFile(void)
         RtlInitUnicodeString(&mask, mask_tests[i].mask);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, FALSE, TRUE);
         for (j = 0; j < test_dir_count; j++)
-        {
-            todo_wine_if(mask_tests[i].todo_missing && !mask_tests[i].found[j])
             ok(testfiles[j].nfound == mask_tests[i].found[j], "%S, got %d.\n", testfiles[j].name, testfiles[j].nfound);
-        }
         winetest_pop_context();
     }
 

@@ -1487,8 +1487,8 @@ static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRI
             break;
         }
     }
-    while (mask < mask_end && ((*mask == '.') || (*mask == '*')))
-        mask++;  /* Ignore trailing '.' or '*' in mask */
+    while (mask < mask_end && *mask == '*')
+        mask++;
     return (name == name_end && mask == mask_end);
 }
 
