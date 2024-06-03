@@ -1132,8 +1132,7 @@ exit:
     return hr;
 }
 
-static HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size,
-        struct d3dx_image *image, uint32_t flags)
+HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image, uint32_t flags)
 {
     if (!src_data || !src_data_size || !image)
         return D3DERR_INVALIDCALL;
@@ -1145,13 +1144,13 @@ static HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size,
     return d3dx_initialize_image_from_wic(src_data, src_data_size, image, flags);
 }
 
-static void d3dx_image_cleanup(struct d3dx_image *image)
+void d3dx_image_cleanup(struct d3dx_image *image)
 {
     free(image->image_buf);
     free(image->palette);
 }
 
-static HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels)
+HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels)
 {
     uint32_t row_pitch, slice_pitch;
     RECT unaligned_rect;
@@ -1168,7 +1167,7 @@ static HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixel
     return D3D_OK;
 }
 
-static void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image)
+void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image)
 {
     info->ImageFileFormat = image->image_file_format;
     info->Width = image->width;

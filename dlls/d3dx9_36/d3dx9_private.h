@@ -122,6 +122,11 @@ struct d3dx_image
     D3DXIMAGE_FILEFORMAT image_file_format;
 };
 
+HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image, uint32_t flags);
+void d3dx_image_cleanup(struct d3dx_image *image);
+HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels);
+void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image);
+
 struct d3dx_include_from_file
 {
     ID3DXInclude ID3DXInclude_iface;

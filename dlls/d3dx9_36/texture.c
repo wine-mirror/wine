@@ -571,6 +571,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     unsigned int loaded_miplevels, skip_levels;
     IDirect3DTexture9 *staging_tex, *tex;
     IDirect3DSurface9 *surface;
+    struct d3dx_image image;
     D3DXIMAGE_INFO imginfo;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -586,12 +587,14 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *texture = NULL;
-    hr = D3DXGetImageInfoFromFileInMemory(srcdata, srcdatasize, &imginfo);
+    hr = d3dx_image_init(srcdata, srcdatasize, &image, 0);
     if (FAILED(hr))
     {
         FIXME("Unrecognized file format, returning failure.\n");
         return hr;
     }
+
+    d3dximage_info_from_d3dx_image(&imginfo, &image);
 
     /* handle default values */
     if (width == 0 || width == D3DX_DEFAULT_NONPOW2)
@@ -692,8 +695,16 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     TRACE("Texture created correctly. Now loading the texture data into it.\n");
     if (imginfo.ImageFileFormat != D3DXIFF_DDS)
     {
+        const RECT src_rect = { 0, 0, imginfo.Width, imginfo.Height };
+        struct d3dx_pixels pixels;
+
+        hr = d3dx_image_get_pixels(&image, &pixels);
+        if (FAILED(hr))
+            goto err;
+
         IDirect3DTexture9_GetSurfaceLevel(tex, 0, &surface);
-        hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
+        hr = D3DXLoadSurfaceFromMemory(surface, palette, NULL, pixels.data, imginfo.Format,
+                pixels.row_pitch, pixels.palette, &src_rect, filter, colorkey);
         IDirect3DSurface9_Release(surface);
         loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(tex), imginfo.MipLevels);
     }
@@ -731,12 +742,14 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         *texture = tex;
     }
 
+    d3dx_image_cleanup(&image);
     if (srcinfo)
         *srcinfo = imginfo;
 
     return hr;
 
 err:
+    d3dx_image_cleanup(&image);
     if (tex)
         IDirect3DTexture9_Release(tex);
 
