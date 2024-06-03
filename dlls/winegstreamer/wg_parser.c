@@ -608,17 +608,14 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_FLUSH_START:
             pthread_mutex_lock(&parser->mutex);
 
-            if (stream->enabled)
-            {
-                stream->flushing = true;
-                pthread_cond_signal(&stream->event_empty_cond);
+            stream->flushing = true;
+            pthread_cond_signal(&stream->event_empty_cond);
 
-                if (stream->buffer)
-                {
-                    gst_buffer_unmap(stream->buffer, &stream->map_info);
-                    gst_buffer_unref(stream->buffer);
-                    stream->buffer = NULL;
-                }
+            if (stream->buffer)
+            {
+                gst_buffer_unmap(stream->buffer, &stream->map_info);
+                gst_buffer_unref(stream->buffer);
+                stream->buffer = NULL;
             }
 
             pthread_mutex_unlock(&parser->mutex);
@@ -636,8 +633,7 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
             pthread_mutex_lock(&parser->mutex);
 
             stream->eos = false;
-            if (stream->enabled)
-                stream->flushing = false;
+            stream->flushing = false;
 
             pthread_mutex_unlock(&parser->mutex);
             break;
