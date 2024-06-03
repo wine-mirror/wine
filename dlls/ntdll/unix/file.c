@@ -1487,9 +1487,17 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
             break;
         }
         case '?':
-        case '>':
             mask++;
             name++;
+            break;
+        case '>':
+            mask++;
+            if (*name == '.')
+            {
+                while (mask < mask_end && *mask == '>') mask++;
+                if (mask == mask_end) name++;
+            }
+            else name++;
             break;
         default:
             c = *mask == '"' ? '.' : *mask;
@@ -1500,7 +1508,7 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
             break;
         }
     }
-    while (mask < mask_end && (*mask == '*' || *mask == '<' || *mask == '"'))
+    while (mask < mask_end && (*mask == '*' || *mask == '<' || *mask == '"' || *mask == '>'))
         mask++;
     return (name == name_end && mask == mask_end);
 }
