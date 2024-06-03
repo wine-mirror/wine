@@ -220,7 +220,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         break;
 
     case SB_CTL:
-        get_client_rect( hwnd, rect );
+        get_client_rect( hwnd, rect, get_thread_dpi() );
         vertical = (win->dwStyle & SBS_VERT) != 0;
         break;
 
@@ -312,7 +312,7 @@ static void draw_scroll_bar( HWND hwnd, HDC hdc, int bar, enum SCROLL_HITTEST hi
 
     if (bar == SB_CTL && get_window_long( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX))
     {
-        get_client_rect( hwnd, &params.rect );
+        get_client_rect( hwnd, &params.rect, get_thread_dpi() );
         params.arrow_size = 0;
         params.thumb_pos = 0;
         params.thumb_size = 0;
@@ -580,7 +580,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
             g_tracking_info.hit_test = hittest = SCROLL_THUMB;
             break;
         case WM_MOUSEMOVE:
-            get_client_rect( get_parent( get_parent( hwnd )), &rect );
+            get_client_rect( get_parent( get_parent( hwnd )), &rect, get_thread_dpi() );
             prev_pt = pt;
             break;
         case WM_LBUTTONUP:

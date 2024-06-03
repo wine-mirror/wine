@@ -1262,14 +1262,13 @@ enum
     NtUserCallHwndParam_GetClassLongPtrA,
     NtUserCallHwndParam_GetClassLongPtrW,
     NtUserCallHwndParam_GetClassWord,
-    NtUserCallHwndParam_GetClientRect,
     NtUserCallHwndParam_GetScrollInfo,
     NtUserCallHwndParam_GetWindowInfo,
     NtUserCallHwndParam_GetWindowLongA,
     NtUserCallHwndParam_GetWindowLongW,
     NtUserCallHwndParam_GetWindowLongPtrA,
     NtUserCallHwndParam_GetWindowLongPtrW,
-    NtUserCallHwndParam_GetWindowRect,
+    NtUserCallHwndParam_GetWindowRects,
     NtUserCallHwndParam_GetWindowRelative,
     NtUserCallHwndParam_GetWindowThread,
     NtUserCallHwndParam_GetWindowWord,
@@ -1286,6 +1285,13 @@ enum
     NtUserCallHwndParam_SendHardwareInput,
     /* temporary exports */
     NtUserSetWindowStyle,
+};
+
+struct get_window_rects_params
+{
+    RECT *rect;
+    BOOL client;
+    UINT dpi;
 };
 
 static inline BOOL NtUserClientToScreen( HWND hwnd, POINT *pt )
@@ -1328,9 +1334,10 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
     return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassWord );
 }
 
-static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect )
+static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetClientRect );
+    struct get_window_rects_params params = {.rect = rect, .client = TRUE, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
 }
 
 struct get_scroll_info_params
@@ -1370,9 +1377,10 @@ static inline LONG NtUserGetWindowLongW( HWND hwnd, INT offset )
     return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowLongW );
 }
 
-static inline BOOL NtUserGetWindowRect( HWND hwnd, RECT *rect )
+static inline BOOL NtUserGetWindowRect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetWindowRect );
+    struct get_window_rects_params params = {.rect = rect, .client = FALSE, .dpi = dpi};
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, NtUserCallHwndParam_GetWindowRects );
 }
 
 static inline HWND NtUserGetWindowRelative( HWND hwnd, UINT rel )

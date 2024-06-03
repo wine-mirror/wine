@@ -716,7 +716,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     if (style & WS_CHILD)
     {
         parent = get_parent( hwnd );
-        get_client_rect( parent, &mouse_rect );
+        get_client_rect( parent, &mouse_rect, get_thread_dpi() );
         map_window_points( parent, 0, (POINT *)&mouse_rect, 2, dpi );
         map_window_points( parent, 0, (POINT *)&sizing_rect, 2, dpi );
     }
@@ -2522,7 +2522,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                     RECT rc;
                     int x, y;
 
-                    get_client_rect( hwnd, &rc );
+                    get_client_rect( hwnd, &rc, get_thread_dpi() );
                     x = (rc.right - rc.left - get_system_metrics( SM_CXICON )) / 2;
                     y = (rc.bottom - rc.top - get_system_metrics( SM_CYICON )) / 2;
                     TRACE( "Painting class icon: vis rect=(%s)\n", wine_dbgstr_rect(&ps.rcPaint) );
@@ -2585,7 +2585,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             if (get_class_long( hwnd, GCL_STYLE, FALSE ) & CS_PARENTDC)
             {
                 /* can't use GetClipBox with a parent DC or we fill the whole parent */
-                get_client_rect( hwnd, &rect );
+                get_client_rect( hwnd, &rect, get_thread_dpi() );
                 NtGdiTransformPoints( hdc, (POINT *)&rect, (POINT *)&rect, 1, NtGdiDPtoLP );
             }
             else NtGdiGetAppClipBox( hdc, &rect );

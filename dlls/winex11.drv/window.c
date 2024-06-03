@@ -116,7 +116,7 @@ static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 /**********************************************************************
  *       get_win_monitor_dpi
  */
-static UINT get_win_monitor_dpi( HWND hwnd )
+UINT get_win_monitor_dpi( HWND hwnd )
 {
     return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
 }
@@ -178,7 +178,6 @@ static void remove_startup_notification(Display *display, Window window)
         xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO);
     }
 }
-
 
 static BOOL is_managed( HWND hwnd )
 {
@@ -1693,7 +1692,7 @@ Window create_client_window( HWND hwnd, const XVisualInfo *visual, Colormap colo
         HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
         if (parent == NtUserGetDesktopWindow() || NtUserGetAncestor( parent, GA_PARENT )) return 0;
         if (!(data = alloc_win_data( thread_init_display(), hwnd ))) return 0;
-        NtUserGetClientRect( hwnd, &data->client_rect );
+        NtUserGetClientRect( hwnd, &data->client_rect, get_win_monitor_dpi( hwnd ) );
         data->window_rect = data->whole_rect = data->client_rect;
     }
 

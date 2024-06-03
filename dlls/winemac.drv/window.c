@@ -546,7 +546,7 @@ static void sync_window_min_max_info(HWND hwnd)
 
     if (!macdrv_get_cocoa_window(hwnd, FALSE)) return;
 
-    NtUserGetWindowRect(hwnd, &win_rect);
+    NtUserGetWindowRect(hwnd, &win_rect, get_win_monitor_dpi(hwnd));
     minmax.ptReserved.x = win_rect.left;
     minmax.ptReserved.y = win_rect.top;
 
@@ -1352,7 +1352,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     else
         captionHeight = 0;
 
-    NtUserGetWindowRect(hwnd, &origRect);
+    NtUserGetWindowRect(hwnd, &origRect, get_win_monitor_dpi(hwnd));
     movedRect = origRect;
 
     if (!hittest)

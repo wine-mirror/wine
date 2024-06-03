@@ -104,7 +104,7 @@ static BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
 /**********************************************************************
  *	     get_win_monitor_dpi
  */
-static UINT get_win_monitor_dpi( HWND hwnd )
+UINT get_win_monitor_dpi( HWND hwnd )
 {
     return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
 }

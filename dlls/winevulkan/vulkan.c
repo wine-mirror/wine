@@ -37,6 +37,16 @@ static PFN_vkCreateInstance p_vkCreateInstance;
 static PFN_vkEnumerateInstanceVersion p_vkEnumerateInstanceVersion;
 static PFN_vkEnumerateInstanceExtensionProperties p_vkEnumerateInstanceExtensionProperties;
 
+
+/**********************************************************************
+ *       get_win_monitor_dpi
+ */
+static UINT get_win_monitor_dpi( HWND hwnd )
+{
+    return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
+}
+
+
 static int window_surface_compare(const void *key, const struct rb_entry *entry)
 {
     const struct wine_surface *surface = RB_ENTRY_VALUE(entry, struct wine_surface, window_entry);
@@ -1643,7 +1653,7 @@ VkResult wine_vkAcquireNextImage2KHR(VkDevice device_handle, const VkAcquireNext
     acquire_info_host.swapchain = swapchain->host_swapchain;
     res = device->funcs.p_vkAcquireNextImage2KHR(device->host_device, &acquire_info_host, image_index);
 
-    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect) &&
+    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect, get_win_monitor_dpi(surface->hwnd)) &&
         !extents_equals(&swapchain->extents, &client_rect))
     {
         WARN("Swapchain size %dx%d does not match client rect %s, returning VK_SUBOPTIMAL_KHR\n",
@@ -1666,7 +1676,7 @@ VkResult wine_vkAcquireNextImageKHR(VkDevice device_handle, VkSwapchainKHR swapc
     res = device->funcs.p_vkAcquireNextImageKHR(device->host_device, swapchain->host_swapchain, timeout,
                                                 semaphore, fence, image_index);
 
-    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect) &&
+    if (res == VK_SUCCESS && NtUserGetClientRect(surface->hwnd, &client_rect, get_win_monitor_dpi(surface->hwnd)) &&
         !extents_equals(&swapchain->extents, &client_rect))
     {
         WARN("Swapchain size %dx%d does not match client rect %s, returning VK_SUBOPTIMAL_KHR\n",
@@ -1774,7 +1784,7 @@ VkResult wine_vkQueuePresentKHR(VkQueue queue_handle, const VkPresentInfoKHR *pr
         RECT client_rect;
 
         if (swapchain_res < VK_SUCCESS) continue;
-        if (!NtUserGetClientRect(surface->hwnd, &client_rect))
+        if (!NtUserGetClientRect(surface->hwnd, &client_rect, get_win_monitor_dpi(surface->hwnd)))
         {
             WARN("Swapchain window %p is invalid, returning VK_ERROR_OUT_OF_DATE_KHR\n", surface->hwnd);
             if (present_info->pResults) present_info->pResults[i] = VK_ERROR_OUT_OF_DATE_KHR;
@@ -2136,7 +2146,8 @@ static void adjust_surface_capabilities(struct wine_instance *instance, struct w
         capabilities->maxImageCount = max(capabilities->minImageCount, 16);
 
     /* Update the image extents to match what the Win32 WSI would provide. */
-    NtUserGetClientRect(surface->hwnd, &client_rect);
+    /* FIXME: handle DPI scaling, somehow */
+    NtUserGetClientRect(surface->hwnd, &client_rect, get_win_monitor_dpi(surface->hwnd));
     capabilities->minImageExtent.width = client_rect.right - client_rect.left;
     capabilities->minImageExtent.height = client_rect.bottom - client_rect.top;
     capabilities->maxImageExtent.width = client_rect.right - client_rect.left;

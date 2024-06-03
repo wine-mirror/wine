@@ -1316,7 +1316,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
     RECT rect;
     int width, height;
 
-    NtUserGetClientRect( hwnd, &rect );
+    NtUserGetClientRect( hwnd, &rect, get_win_monitor_dpi( hwnd ) );
     width  = min( max( 1, rect.right ), 65535 );
     height = min( max( 1, rect.bottom ), 65535 );
 

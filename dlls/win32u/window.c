@@ -1682,9 +1682,9 @@ BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi )
 }
 
 /* see GetClientRect */
-BOOL get_client_rect( HWND hwnd, RECT *rect )
+BOOL get_client_rect( HWND hwnd, RECT *rect, UINT dpi )
 {
-    return get_window_rects( hwnd, COORDS_CLIENT, NULL, rect, get_thread_dpi() );
+    return get_window_rects( hwnd, COORDS_CLIENT, NULL, rect, dpi );
 }
 
 /* see GetWindowInfo */
@@ -2307,7 +2307,7 @@ HWND WINAPI NtUserChildWindowFromPointEx( HWND parent, LONG x, LONG y, UINT flag
     RECT rect;
     HWND ret;
 
-    get_client_rect( parent, &rect );
+    get_client_rect( parent, &rect, get_thread_dpi() );
     if (!PtInRect( &rect, pt )) return 0;
     if (!(list = list_window_children( 0, parent, NULL, 0 ))) return parent;
 
@@ -3872,7 +3872,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
     else
         adjusted_style = style;
 
-    get_client_rect( NtUserGetAncestor( hwnd, GA_PARENT ), &rc );
+    get_client_rect( NtUserGetAncestor( hwnd, GA_PARENT ), &rc, get_thread_dpi() );
     adjust_window_rect( &rc, adjusted_style, (style & WS_POPUP) && get_menu( hwnd ), exstyle, get_system_dpi() );
 
     xinc = -rc.left;
@@ -4022,7 +4022,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
         get_monitor_info( monitor, &mon_info );
         parent_rect = mon_info.rcWork;
     }
-    else get_client_rect( parent, &parent_rect );
+    else get_client_rect( parent, &parent_rect, get_thread_dpi() );
 
     if (pt.x >= parent_rect.left && (pt.x + get_system_metrics( SM_CXMINIMIZED ) < parent_rect.right) &&
         pt.y >= parent_rect.top  && (pt.y + get_system_metrics( SM_CYMINIMIZED ) < parent_rect.bottom))
@@ -4206,7 +4206,7 @@ static UINT arrange_iconic_windows( HWND parent )
         get_monitor_info( monitor, &mon_info );
         parent_rect = mon_info.rcWork;
     }
-    else get_client_rect( parent, &parent_rect );
+    else get_client_rect( parent, &parent_rect, get_thread_dpi() );
 
     pt = get_first_minimized_child_pos( &parent_rect, &metrics, width, height );
 
@@ -5533,9 +5533,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_GetClassWord:
         return get_class_word( hwnd, param );
 
-    case NtUserCallHwndParam_GetClientRect:
-        return get_client_rect( hwnd, (RECT *)param );
-
     case NtUserCallHwndParam_GetScrollInfo:
         {
             struct get_scroll_info_params *params = (void *)param;
@@ -5557,8 +5554,12 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_GetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
 
-    case NtUserCallHwndParam_GetWindowRect:
-        return get_window_rect( hwnd, (RECT *)param, get_thread_dpi() );
+    case NtUserCallHwndParam_GetWindowRects:
+    {
+        struct get_window_rects_params *params = (void *)param;
+        return params->client ? get_client_rect( hwnd, params->rect, params->dpi )
+                              : get_window_rect( hwnd, params->rect, params->dpi );
+    }
 
     case NtUserCallHwndParam_GetWindowRelative:
         return HandleToUlong( get_window_relative( hwnd, param ));

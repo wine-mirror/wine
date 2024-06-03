@@ -2837,7 +2837,7 @@ static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
 
     TRACE( "wnd=%p dc=%p menu=%p\n", hwnd, hdc, hmenu );
 
-    get_client_rect( hwnd, &rect );
+    get_client_rect( hwnd, &rect, get_thread_dpi() );
 
     if (menu && menu->hbrBack) brush = menu->hbrBack;
     if ((prev_hrush = NtGdiSelectBrush( hdc, brush ))

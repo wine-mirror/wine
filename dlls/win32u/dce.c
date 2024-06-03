@@ -1634,7 +1634,7 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
     if (!is_window_drawable( hwnd, TRUE )) return ERROR;
     hwnd = get_full_window_handle( hwnd );
 
-    get_client_rect( hwnd, &rc );
+    get_client_rect( hwnd, &rc, get_thread_dpi() );
     if (clip_rect) intersect_rect( &cliprc, &rc, clip_rect );
     else cliprc = rc;
 
