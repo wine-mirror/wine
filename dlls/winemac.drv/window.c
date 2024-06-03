@@ -1586,8 +1586,6 @@ void macdrv_resize_desktop(void)
     if (!NtUserGetWindowRect(hwnd, &current_desktop_rect) ||
         !CGRectEqualToRect(cgrect_from_rect(current_desktop_rect), new_desktop_rect))
     {
-        send_message_timeout(HWND_BROADCAST, WM_MACDRV_RESET_DEVICE_METRICS, 0, 0,
-                             SMTO_ABORTIFHUNG, 2000, NULL);
         NtUserSetWindowPos(hwnd, 0, CGRectGetMinX(new_desktop_rect), CGRectGetMinY(new_desktop_rect),
                            CGRectGetWidth(new_desktop_rect), CGRectGetHeight(new_desktop_rect),
                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
@@ -2020,10 +2018,8 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             release_win_data(data);
         }
         return 0;
-    case WM_MACDRV_RESET_DEVICE_METRICS:
-        macdrv_reset_device_metrics();
-        return 0;
     case WM_MACDRV_DISPLAYCHANGE:
+        macdrv_reset_device_metrics();
         macdrv_reassert_window_position(hwnd);
         return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
