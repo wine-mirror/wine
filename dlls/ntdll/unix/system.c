@@ -1700,6 +1700,32 @@ static GUID *get_system_uuid( GUID *uuid )
     return uuid;
 }
 
+static const char *get_system_serial( char *str, size_t size )
+{
+    get_smbios_string( "/sys/class/dmi/id/product_serial", str, size );
+    if (!str[0]) strcpy( str, "System Serial Number" );
+    return str;
+}
+
+static const char *get_chassis_serial( char *str, size_t size )
+{
+    get_smbios_string( "/sys/class/dmi/id/chassis_serial", str, size );
+    if (!str[0]) strcpy( str, "Chassis Serial Number" );
+    return str;
+}
+
+static const char *get_board_serial( char *str, size_t size, const GUID *uuid )
+{
+    get_smbios_string( "/sys/class/dmi/id/board_serial", str, size );
+    if (!str[0])
+    {
+        const BYTE *p = (const BYTE *)uuid;
+        snprintf( str, 33, "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X", p[0], p[1],
+                  p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15] );
+    }
+    return str;
+}
+
 static struct smbios_prologue *create_smbios_data(void)
 {
     char vendor[128], version[128], date[128], product[128], serial[128];
@@ -1718,7 +1744,7 @@ static struct smbios_prologue *create_smbios_data(void)
                           get_smbios_string( "/sys/class/dmi/id/sys_vendor", S(vendor) ),
                           get_smbios_string( "/sys/class/dmi/id/product_name", S(product) ),
                           get_smbios_string( "/sys/class/dmi/id/product_version", S(version) ),
-                          get_smbios_string( "/sys/class/dmi/id/product_serial", S(serial) ),
+                          get_system_serial( S(serial) ),
                           get_smbios_string( "/sys/class/dmi/id/product_sku", S(sku) ),
                           get_smbios_string( "/sys/class/dmi/id/product_family", S(family) ),
                           get_system_uuid( &uuid ));
@@ -1727,14 +1753,14 @@ static struct smbios_prologue *create_smbios_data(void)
     chassis = append_smbios_chassis( &buf, atoi(type),
                                      get_smbios_string( "/sys/class/dmi/id/chassis_vendor", S(vendor) ),
                                      get_smbios_string( "/sys/class/dmi/id/chassis_version", S(version) ),
-                                     get_smbios_string( "/sys/class/dmi/id/chassis_serial", S(serial) ),
+                                     get_chassis_serial( S(serial) ),
                                      get_smbios_string( "/sys/class/dmi/id/chassis_tag", S(asset_tag) ));
 
     append_smbios_board( &buf, chassis,
                          get_smbios_string( "/sys/class/dmi/id/board_vendor", S(vendor) ),
                          get_smbios_string( "/sys/class/dmi/id/board_name", S(product) ),
                          get_smbios_string( "/sys/class/dmi/id/board_version", S(version) ),
-                         get_smbios_string( "/sys/class/dmi/id/board_serial", S(serial) ),
+                         get_board_serial( S(serial), &uuid ),
                          get_smbios_string( "/sys/class/dmi/id/board_asset_tag", S(asset_tag) ));
 #undef S
 
