@@ -163,7 +163,7 @@ extern LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, int *height );
 extern INT get_display_depth( UNICODE_STRING *name );
 extern RECT get_display_rect( const WCHAR *display );
 extern UINT get_monitor_dpi( HMONITOR monitor );
-extern BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info );
+extern BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi );
 extern UINT get_win_monitor_dpi( HWND hwnd );
 extern RECT get_primary_monitor_rect( UINT dpi );
 extern DWORD get_process_layout(void);

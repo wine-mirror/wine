@@ -3594,10 +3594,9 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
     return ret;
 }
 
-BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
+BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info, UINT dpi )
 {
     struct monitor *monitor;
-    UINT dpi = get_thread_dpi();
 
     if (info->cbSize != sizeof(MONITORINFOEXW) && info->cbSize != sizeof(MONITORINFO)) return FALSE;
 
@@ -6484,7 +6483,7 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return get_menu_info( UlongToHandle(arg1), (MENUINFO *)arg2 );
 
     case NtUserCallTwoParam_GetMonitorInfo:
-        return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2 );
+        return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2, get_thread_dpi() );
 
     case NtUserCallTwoParam_GetSystemMetricsForDpi:
         return get_system_metrics_for_dpi( arg1, arg2 );

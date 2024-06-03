@@ -2355,7 +2355,7 @@ static BOOL get_work_rect( HWND hwnd, RECT *rect )
     if (!monitor) return FALSE;
 
     mon_info.cbSize = sizeof(mon_info);
-    get_monitor_info( monitor, &mon_info );
+    get_monitor_info( monitor, &mon_info, get_thread_dpi() );
     *rect = mon_info.rcMonitor;
 
     style = get_window_long( hwnd, GWL_STYLE );
@@ -2508,7 +2508,7 @@ static void make_rect_onscreen( RECT *rect )
     HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
 
     info.cbSize = sizeof(info);
-    if (!monitor || !get_monitor_info( monitor, &info )) return;
+    if (!monitor || !get_monitor_info( monitor, &info, get_thread_dpi() )) return;
     /* FIXME: map coordinates from rcWork to rcMonitor */
     if (rect->right <= info.rcWork.left)
     {
@@ -4019,7 +4019,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
         HMONITOR monitor = monitor_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
 
         mon_info.cbSize = sizeof( mon_info );
-        get_monitor_info( monitor, &mon_info );
+        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
         parent_rect = mon_info.rcWork;
     }
     else get_client_rect( parent, &parent_rect, get_thread_dpi() );
@@ -4203,7 +4203,7 @@ static UINT arrange_iconic_windows( HWND parent )
         HMONITOR monitor = monitor_from_window( 0, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
 
         mon_info.cbSize = sizeof( mon_info );
-        get_monitor_info( monitor, &mon_info );
+        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
         parent_rect = mon_info.rcWork;
     }
     else get_client_rect( parent, &parent_rect, get_thread_dpi() );
@@ -5035,7 +5035,7 @@ static void fix_cs_coordinates( CREATESTRUCTW *cs, INT *sw )
 
         monitor = monitor_from_window( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
         mon_info.cbSize = sizeof(mon_info);
-        get_monitor_info( monitor, &mon_info );
+        get_monitor_info( monitor, &mon_info, get_thread_dpi() );
 
         if (is_default_coord( cs->x ))
         {

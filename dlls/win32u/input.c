@@ -2520,7 +2520,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
 
     if (!(monitor = NtUserMonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST ))) return FALSE;
-    if (!NtUserGetMonitorInfo( monitor, &monitor_info )) return FALSE;
+    if (!get_monitor_info( monitor, &monitor_info, 0 )) return FALSE;
     if (!grab_fullscreen)
     {
         RECT virtual_rect = NtUserGetVirtualScreenRect();

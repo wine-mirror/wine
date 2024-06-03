@@ -826,7 +826,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
                 mon = newmon;
 
             info.cbSize = sizeof(info);
-            if (mon && get_monitor_info( mon, &info ))
+            if (mon && get_monitor_info( mon, &info, get_thread_dpi() ))
             {
                 pt.x = max( pt.x, info.rcWork.left );
                 pt.x = min( pt.x, info.rcWork.right - 1 );
