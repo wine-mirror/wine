@@ -2295,7 +2295,7 @@ RECT get_virtual_screen_rect( UINT dpi )
     return rect;
 }
 
-static BOOL is_window_rect_full_screen( const RECT *rect )
+static BOOL is_window_rect_full_screen( const RECT *rect, UINT dpi )
 {
     struct monitor *monitor;
     BOOL ret = FALSE;
@@ -2308,7 +2308,7 @@ static BOOL is_window_rect_full_screen( const RECT *rect )
 
         if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
 
-        monrect = get_monitor_rect( monitor, get_thread_dpi() );
+        monrect = get_monitor_rect( monitor, dpi );
         if (rect->left <= monrect.left && rect->right >= monrect.right &&
             rect->top <= monrect.top && rect->bottom >= monrect.bottom)
         {
@@ -6421,9 +6421,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetSysColor:
         return get_sys_color( arg );
 
-    case NtUserCallOneParam_IsWindowRectFullScreen:
-        return is_window_rect_full_screen( (const RECT *)arg );
-
     case NtUserCallOneParam_RealizePalette:
         return realize_palette( UlongToHandle(arg) );
 
@@ -6512,6 +6509,9 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         struct adjust_window_rect_params *params = (void *)arg2;
         return adjust_window_rect( (RECT *)arg1, params->style, params->menu, params->ex_style, params->dpi );
     }
+
+    case NtUserCallTwoParam_IsWindowRectFullScreen:
+        return is_window_rect_full_screen( (const RECT *)arg1, arg2 );
 
     /* temporary exports */
     case NtUserAllocWinProc:

@@ -36,6 +36,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
+
+/**********************************************************************
+ *       get_win_monitor_dpi
+ */
+static UINT get_win_monitor_dpi(HWND hwnd)
+{
+    return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
+}
+
+
 /* private window data */
 struct wayland_win_data
 {
@@ -171,7 +181,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
 
     /* The fullscreen state is implied by the window position and style. */
-    if (NtUserIsWindowRectFullScreen(&conf->rect))
+    if (NtUserIsWindowRectFullScreen(&conf->rect, get_win_monitor_dpi(data->hwnd)))
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             window_state |= WAYLAND_SURFACE_CONFIG_STATE_MAXIMIZED;

@@ -904,7 +904,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_IsWindowRectFullScreen,
     NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_ReplyMessage,
@@ -1006,11 +1005,6 @@ static inline RECT NtUserGetVirtualScreenRect(void)
     return virtual;
 }
 
-static inline BOOL NtUserIsWindowRectFullScreen( const RECT *rect )
-{
-    return NtUserCallOneParam( (UINT_PTR)rect, NtUserCallOneParam_IsWindowRectFullScreen );
-}
-
 static inline BOOL NtUserMessageBeep( UINT i )
 {
     return NtUserCallOneParam( i, NtUserCallOneParam_MessageBeep );
@@ -1055,6 +1049,7 @@ enum
     NtUserCallTwoParam_SetIconParam,
     NtUserCallTwoParam_UnhookWindowsHook,
     NtUserCallTwoParam_AdjustWindowRect,
+    NtUserCallTwoParam_IsWindowRectFullScreen,
     /* temporary exports */
     NtUserAllocWinProc,
 };
@@ -1120,6 +1115,11 @@ static inline BOOL NtUserAdjustWindowRect( RECT *rect, DWORD style, BOOL menu, D
         .dpi = dpi,
     };
     return NtUserCallTwoParam( (ULONG_PTR)rect, (ULONG_PTR)&params, NtUserCallTwoParam_AdjustWindowRect );
+}
+
+static inline BOOL NtUserIsWindowRectFullScreen( const RECT *rect, UINT dpi )
+{
+    return NtUserCallTwoParam( (UINT_PTR)rect, dpi, NtUserCallTwoParam_IsWindowRectFullScreen );
 }
 
 /* NtUserCallHwnd codes, not compatible with Windows */

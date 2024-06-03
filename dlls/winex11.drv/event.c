@@ -1046,7 +1046,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     struct x11drv_win_data *data;
     RECT rect;
     POINT pos;
-    UINT flags;
+    UINT flags, dpi;
     HWND parent;
     BOOL root_coords;
     int cx, cy, x = event->x, y = event->y;
@@ -1068,6 +1068,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 
     /* Get geometry */
 
+    dpi = get_win_monitor_dpi( data->hwnd );
     parent = NtUserGetAncestor( hwnd, GA_PARENT );
     root_coords = event->send_event;  /* synthetic events are always in root coords */
 
@@ -1119,7 +1120,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
                (int)(data->window_rect.bottom - data->window_rect.top), cx, cy );
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
-    if ((style & WS_CAPTION) == WS_CAPTION || !NtUserIsWindowRectFullScreen( &data->whole_rect ))
+    if ((style & WS_CAPTION) == WS_CAPTION || !NtUserIsWindowRectFullScreen( &data->whole_rect, dpi ))
     {
         read_net_wm_states( event->display, data );
         if ((data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))

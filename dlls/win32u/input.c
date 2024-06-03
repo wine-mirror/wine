@@ -2500,6 +2500,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     RECT rect;
     HMONITOR monitor;
     DWORD style;
+    UINT dpi;
     BOOL ret;
 
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
@@ -2511,8 +2512,9 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
 
-    if (!NtUserGetWindowRect( hwnd, &rect, get_thread_dpi() )) return FALSE;
-    if (!NtUserIsWindowRectFullScreen( &rect )) return FALSE;
+    dpi = get_dpi_for_window( hwnd );
+    if (!NtUserGetWindowRect( hwnd, &rect, dpi )) return FALSE;
+    if (!NtUserIsWindowRectFullScreen( &rect, dpi )) return FALSE;
     if (is_captured_by_system()) return FALSE;
     if (NtGetTickCount() - thread_info->clipping_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_info->clipping_cursor) return FALSE;  /* already clipping */
