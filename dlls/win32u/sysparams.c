@@ -3208,7 +3208,7 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
 {
     static const WCHAR restorerW[] = {'_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
                                       's','e','t','t','i','n','g','s','_','r','e','s','t','o','r','e','r',0};
-    UNICODE_STRING restoter_str = RTL_CONSTANT_STRING( restorerW );
+    UNICODE_STRING restorer_str = RTL_CONSTANT_STRING( restorerW );
     WCHAR primary_name[CCHDEVICENAME];
     struct source *primary, *source;
     DEVMODEW *mode, *displays;
@@ -3261,7 +3261,7 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
     free( displays );
     if (ret) return ret;
 
-    if ((restorer_window = NtUserFindWindowEx( NULL, NULL, &restoter_str, NULL, 0 )))
+    if ((restorer_window = NtUserFindWindowEx( NULL, NULL, &restorer_str, NULL, 0 )))
     {
         if (NtUserGetWindowThread( restorer_window, NULL ) != GetCurrentThreadId())
         {
