@@ -24,6 +24,7 @@
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
+import "windows.applicationmodel.activation.idl";
 import "windows.applicationmodel.core.idl";
 #endif
 
@@ -35,6 +36,8 @@ namespace Windows.ApplicationModel {
     typedef struct PackageVersion PackageVersion;
 
     interface IAppDisplayInfo;
+    interface IEnteredBackgroundEventArgs;
+    interface ILeavingBackgroundEventArgs;
     interface IPackage;
     interface IPackage2;
     interface IPackage3;
@@ -42,17 +45,28 @@ namespace Windows.ApplicationModel {
     interface IPackageId;
     interface IPackageIdWithMetadata;
     interface IPackageStatics;
+    interface ISuspendingDeferral;
+    interface ISuspendingEventArgs;
+    interface ISuspendingOperation;
 
     runtimeclass AppDisplayInfo;
+    runtimeclass EnteredBackgroundEventArgs;
+    runtimeclass LeavingBackgroundEventArgs;
     runtimeclass Package;
     runtimeclass PackageId;
     runtimeclass PackageStatus;
+    runtimeclass SuspendingDeferral;
+    runtimeclass SuspendingEventArgs;
+    runtimeclass SuspendingOperation;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.Package *>;
         interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.Package *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Package *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *>;
+        interface Windows.Foundation.EventHandler<Windows.ApplicationModel.EnteredBackgroundEventArgs *>;
+        interface Windows.Foundation.EventHandler<Windows.ApplicationModel.LeavingBackgroundEventArgs *>;
+        interface Windows.Foundation.EventHandler<Windows.ApplicationModel.SuspendingEventArgs *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *> *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.Core.AppListEntry *> *>;
     }
@@ -78,6 +92,24 @@ namespace Windows.ApplicationModel {
         [propget] HRESULT DisplayName([out, retval] HSTRING *value);
         [propget] HRESULT Description([out, retval] HSTRING *value);
         HRESULT GetLogo([in] Windows.Foundation.Size size, [out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(f722dcc2-9827-403d-aaed-ecca9ac17398)
+    ]
+    interface IEnteredBackgroundEventArgs : IInspectable
+    {
+        HRESULT GetDeferral([out] [retval] Windows.Foundation.Deferral **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(39c6ec9a-ae6e-46f9-a07a-cfc23f88733e)
+    ]
+    interface ILeavingBackgroundEventArgs : IInspectable
+    {
+        HRESULT GetDeferral([out] [retval] Windows.Foundation.Deferral **value);
     }
 
     [
@@ -182,12 +214,58 @@ namespace Windows.ApplicationModel {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(59140509-8bc9-4eb4-b636-dabdc4f46f66)
+    ]
+    interface ISuspendingDeferral : IInspectable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(96061c05-2dba-4d08-b0bd-2b30a131c6aa)
+    ]
+    interface ISuspendingEventArgs : IInspectable
+    {
+        [propget] HRESULT SuspendingOperation([out, retval] Windows.ApplicationModel.SuspendingOperation **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(9da4ca41-20e1-4e9b-9f65-a9f435340c3a)
+    ]
+    interface ISuspendingOperation : IInspectable
+    {
+        HRESULT GetDeferral([out, retval] Windows.ApplicationModel.SuspendingDeferral **deferral);
+        [propget] HRESULT Deadline([out, retval] Windows.Foundation.DateTime *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         threading(both)
     ]
     runtimeclass AppDisplayInfo
     {
         [default] interface Windows.ApplicationModel.IAppDisplayInfo;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass EnteredBackgroundEventArgs
+    {
+        [default] interface Windows.ApplicationModel.IEnteredBackgroundEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass LeavingBackgroundEventArgs
+    {
+        [default] interface Windows.ApplicationModel.ILeavingBackgroundEventArgs;
     }
 
     [
@@ -227,5 +305,32 @@ namespace Windows.ApplicationModel {
     {
         [default] interface Windows.ApplicationModel.IPackageId;
         [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageIdWithMetadata;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SuspendingDeferral
+    {
+        [default] interface Windows.ApplicationModel.ISuspendingDeferral;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SuspendingEventArgs
+    {
+        [default] interface Windows.ApplicationModel.ISuspendingEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass SuspendingOperation
+    {
+        [default] interface Windows.ApplicationModel.ISuspendingOperation;
     }
 }

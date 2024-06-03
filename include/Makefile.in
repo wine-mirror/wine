@@ -826,6 +826,8 @@ SOURCES = \
 	windef.h \
 	windns.h \
 	windot11.h \
+	windows.applicationmodel.activation.idl \
+	windows.applicationmodel.background.idl \
 	windows.applicationmodel.core.idl \
 	windows.applicationmodel.idl \
 	windows.devices.bluetooth.idl \
