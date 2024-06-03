@@ -1576,17 +1576,22 @@ typedef XShmSegmentInfo x11drv_xshm_info_t;
 typedef struct { int shmid; } x11drv_xshm_info_t;
 #endif
 
+struct x11drv_image
+{
+    XImage               *ximage;    /* XImage used for X11 drawing */
+    x11drv_xshm_info_t    shminfo;   /* XSHM extension info */
+};
+
 struct x11drv_window_surface
 {
     struct window_surface header;
     Window                window;
     GC                    gc;
-    XImage               *image;
+    struct x11drv_image  *image;
     BOOL                  byteswap;
     BOOL                  is_argb;
     DWORD                 alpha_bits;
     COLORREF              color_key;
-    x11drv_xshm_info_t    shminfo;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -1869,6 +1874,37 @@ static BOOL put_shm_image( XImage *image, x11drv_xshm_info_t *shminfo, Window wi
 
 #endif /* HAVE_LIBXXSHM */
 
+static void x11drv_image_destroy( struct x11drv_image *image )
+{
+    if (!destroy_shm_image( image->ximage, &image->shminfo ))
+        free( image->ximage->data );
+
+    image->ximage->data = NULL;
+    XDestroyImage( image->ximage );
+    free( image );
+}
+
+static struct x11drv_image *x11drv_image_create( const BITMAPINFO *info, const XVisualInfo *vis )
+{
+    UINT width = info->bmiHeader.biWidth, height = abs( info->bmiHeader.biHeight );
+    struct x11drv_image *image;
+
+    if (!(image = calloc( 1, sizeof(*image) ))) return NULL;
+
+    if (!(image->ximage = create_shm_image( vis, width, height, &image->shminfo )))
+    {
+        if (!(image->ximage = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap,
+                                            0, NULL, width, height, 32, 0 ))) goto failed;
+        if (!(image->ximage->data = malloc( info->bmiHeader.biSizeImage ))) goto failed;
+    }
+
+    return image;
+
+failed:
+    x11drv_image_destroy( image );
+    return NULL;
+}
+
 /***********************************************************************
  *           x11drv_surface_get_bitmap_info
  */
@@ -1923,15 +1959,16 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
 static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    XImage *ximage = surface->image->ximage;
     unsigned char *src = window_surface->color_bits;
-    unsigned char *dst = (unsigned char *)surface->image->data;
+    unsigned char *dst = (unsigned char *)ximage->data;
 
     if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface, window_surface->color_bits );
 
     if (src != dst)
     {
-        int map[256], *mapping = get_window_surface_mapping( surface->image->bits_per_pixel, map );
-        int width_bytes = surface->image->bytes_per_line;
+        int map[256], *mapping = get_window_surface_mapping( ximage->bits_per_pixel, map );
+        int width_bytes = ximage->bytes_per_line;
 
         src += dirty->top * width_bytes;
         dst += dirty->top * width_bytes;
@@ -1940,7 +1977,7 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
     }
     else if (surface->alpha_bits)
     {
-        int x, y, stride = surface->image->bytes_per_line / sizeof(ULONG);
+        int x, y, stride = ximage->bytes_per_line / sizeof(ULONG);
         ULONG *ptr = (ULONG *)dst + dirty->top * stride;
 
         for (y = dirty->top; y < dirty->bottom; y++, ptr += stride)
@@ -1948,8 +1985,8 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
                 ptr[x] |= surface->alpha_bits;
     }
 
-    if (!put_shm_image( surface->image, &surface->shminfo, surface->window, surface->gc, rect, dirty ))
-        XPutImage( gdi_display, surface->window, surface->gc, surface->image, dirty->left,
+    if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
+        XPutImage( gdi_display, surface->window, surface->gc, ximage, dirty->left,
                    dirty->top, rect->left + dirty->left, rect->top + dirty->top,
                    dirty->right - dirty->left, dirty->bottom - dirty->top );
 
@@ -1969,11 +2006,9 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     if (surface->gc) XFreeGC( gdi_display, surface->gc );
     if (surface->image)
     {
-        if (surface->image->data != window_surface->color_bits) free( window_surface->color_bits );
-        if (!destroy_shm_image( surface->image, &surface->shminfo ))
-            free( surface->image->data );
-        surface->image->data = NULL;
-        XDestroyImage( surface->image );
+        if (surface->image->ximage->data != window_surface->color_bits)
+            free( window_surface->color_bits );
+        x11drv_image_destroy( surface->image );
     }
 
     free( surface );
@@ -1999,6 +2034,8 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     struct x11drv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     int colors = format->bits_per_pixel <= 8 ? 1 << format->bits_per_pixel : 3;
+    struct x11drv_image *image;
+    UINT size;
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -2009,8 +2046,15 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
     if (format->bits_per_pixel > 8) set_color_info( vis, info, use_alpha );
 
-    surface = calloc( 1, FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] ));
-    if (!surface) return NULL;
+    size = FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] );
+    if (!(image = x11drv_image_create( info, vis ))) return NULL;
+    if (!(surface = calloc( 1, size )))
+    {
+        x11drv_image_destroy( image );
+        return NULL;
+    }
+    surface->image = image;
+
     if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, 0 )) goto failed;
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
@@ -2018,19 +2062,9 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     surface->is_argb = (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
 
-    surface->image = create_shm_image( vis, width, height, &surface->shminfo );
-    if (!surface->image)
-    {
-        surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
-                                       width, height, 32, 0 );
-        if (!surface->image) goto failed;
-        surface->image->data = malloc( info->bmiHeader.biSizeImage );
-        if (!surface->image->data) goto failed;
-    }
-
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
-    surface->byteswap = image_needs_byteswap( surface->image, is_r8g8b8(vis), format->bits_per_pixel );
+    surface->byteswap = image_needs_byteswap( surface->image->ximage, is_r8g8b8(vis), format->bits_per_pixel );
 
     if (vis->depth == 32 && !surface->is_argb)
         surface->alpha_bits = ~(vis->red_mask | vis->green_mask | vis->blue_mask);
@@ -2041,11 +2075,11 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
         if (!(surface->header.color_bits  = calloc( 1, info->bmiHeader.biSizeImage )))
             goto failed;
     }
-    else surface->header.color_bits = surface->image->data;
+    else surface->header.color_bits = surface->image->ximage->data;
 
     TRACE( "created %p for %lx %s color_bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
-           surface->image->data );
+           surface->image->ximage->data );
 
     return &surface->header;
 
