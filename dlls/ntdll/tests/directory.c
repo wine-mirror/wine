@@ -683,7 +683,7 @@ static void test_NtQueryDirectoryFile(void)
     memset( data, 0x55, data_size );
     io.Status = 0xdeadbeef;
     io.Information = 0xdeadbeef;
-    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, data_size + 16,
+    status = pNtQueryDirectoryFile( dirh, 0, NULL, NULL, &io, data, data_size + 32,
                                     FileBothDirectoryInformation, FALSE, NULL, TRUE );
     ok( status == STATUS_SUCCESS, "wrong status %lx\n", status );
     ok( io.Status == STATUS_SUCCESS, "wrong status %lx\n", io.Status );
