@@ -186,16 +186,34 @@ static HRESULT WINAPI control_SetDisplayName(IAudioSessionControl2 *iface, const
 static HRESULT WINAPI control_GetIconPath(IAudioSessionControl2 *iface, WCHAR **path)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, path);
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p) - stub\n", This, path);
+
+    if (!path)
+        return E_POINTER;
+
+    *path = duplicate_wstr(session->icon_path);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_SetIconPath(IAudioSessionControl2 *iface, const WCHAR *path,
-                                      const GUID *session)
+                                      const GUID *event_context)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%s, %s) - stub\n", This, debugstr_w(path), debugstr_guid(session));
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%s, %s) - stub\n", This, debugstr_w(path), debugstr_guid(event_context));
+    FIXME("Ignoring event_context\n");
+
+    if (!path)
+        return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+
+    free(session->icon_path);
+    session->icon_path = wcsdup(path);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_GetGroupingParam(IAudioSessionControl2 *iface, GUID *group)

@@ -33,6 +33,7 @@ typedef struct audio_session {
     BOOL mute;
 
     WCHAR *display_name;
+    WCHAR *icon_path;
 
     struct list entry;
 } AudioSession;
