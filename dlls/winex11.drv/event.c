@@ -922,10 +922,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
         SERVER_START_REQ( update_window_zorder )
         {
             req->window      = wine_server_user_handle( hwnd );
-            req->rect.left   = abs_rect.left;
-            req->rect.top    = abs_rect.top;
-            req->rect.right  = abs_rect.right;
-            req->rect.bottom = abs_rect.bottom;
+            req->rect        = wine_server_rectangle( abs_rect );
             wine_server_call( req );
         }
         SERVER_END_REQ;

@@ -1667,20 +1667,8 @@ other_process:
         req->dpi = dpi;
         if ((ret = !wine_server_call_err( req )))
         {
-            if (window_rect)
-            {
-                window_rect->left   = reply->window.left;
-                window_rect->top    = reply->window.top;
-                window_rect->right  = reply->window.right;
-                window_rect->bottom = reply->window.bottom;
-            }
-            if (client_rect)
-            {
-                client_rect->left   = reply->client.left;
-                client_rect->top    = reply->client.top;
-                client_rect->right  = reply->client.right;
-                client_rect->bottom = reply->client.bottom;
-            }
+            if (window_rect) *window_rect = wine_server_get_rect( reply->window );
+            if (client_rect) *client_rect = wine_server_get_rect( reply->client );
         }
     }
     SERVER_END_REQ;
@@ -1743,10 +1731,7 @@ static NTSTATUS get_window_region( HWND hwnd, BOOL surface, HRGN *region, RECT *
                     data->rdh.nCount   = reply_size / sizeof(RECT);
                     data->rdh.nRgnSize = reply_size;
                     *region = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-                    visible->left = reply->visible_rect.left;
-                    visible->top = reply->visible_rect.top;
-                    visible->right = reply->visible_rect.right;
-                    visible->bottom = reply->visible_rect.bottom;
+                    *visible = wine_server_get_rect( reply->visible_rect );
                 }
             }
             else size = reply->total_size;
@@ -1861,14 +1846,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         req->handle        = wine_server_user_handle( hwnd );
         req->previous      = wine_server_user_handle( insert_after );
         req->swp_flags     = swp_flags;
-        req->window.left   = window_rect->left;
-        req->window.top    = window_rect->top;
-        req->window.right  = window_rect->right;
-        req->window.bottom = window_rect->bottom;
-        req->client.left   = client_rect->left;
-        req->client.top    = client_rect->top;
-        req->client.right  = client_rect->right;
-        req->client.bottom = client_rect->bottom;
+        req->window        = wine_server_rectangle( *window_rect );
+        req->client        = wine_server_rectangle( *client_rect );
         if (!EqualRect( window_rect, &visible_rect ) || new_surface || valid_rects)
         {
             extra_rects[0] = extra_rects[1] = visible_rect;

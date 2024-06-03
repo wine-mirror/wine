@@ -2218,10 +2218,7 @@ BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height 
         if ((ret = !wine_server_call_err( req )))
         {
             prev      = wine_server_ptr_handle( reply->previous );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
@@ -2261,10 +2258,7 @@ BOOL destroy_caret(void)
         if ((ret = !wine_server_call_err( req )))
         {
             prev      = wine_server_ptr_handle( reply->previous );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
@@ -2351,10 +2345,7 @@ BOOL set_caret_pos( int x, int y )
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
@@ -2393,10 +2384,7 @@ BOOL WINAPI NtUserShowCaret( HWND hwnd )
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             hidden    = reply->old_hide;
         }
     }
@@ -2431,10 +2419,7 @@ BOOL WINAPI NtUserHideCaret( HWND hwnd )
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             old_state = reply->old_state;
             hidden    = reply->old_hide;
         }
@@ -2466,10 +2451,7 @@ void toggle_caret( HWND hwnd )
         if ((ret = !wine_server_call( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
-            r.left    = reply->old_rect.left;
-            r.top     = reply->old_rect.top;
-            r.right   = reply->old_rect.right;
-            r.bottom  = reply->old_rect.bottom;
+            r         = wine_server_get_rect( reply->old_rect );
             hidden    = reply->old_hide;
         }
     }
@@ -2549,10 +2531,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     SERVER_START_REQ( set_cursor )
     {
         req->flags = SET_CURSOR_CLIP | SET_CURSOR_FSCLIP;
-        req->clip.left   = monitor_info.rcMonitor.left;
-        req->clip.top    = monitor_info.rcMonitor.top;
-        req->clip.right  = monitor_info.rcMonitor.right;
-        req->clip.bottom = monitor_info.rcMonitor.bottom;
+        req->clip  = wine_server_rectangle( monitor_info.rcMonitor );
         ret = !wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2583,12 +2562,7 @@ BOOL get_clip_cursor( RECT *rect )
     {
         req->flags = 0;
         if ((ret = !wine_server_call( req )))
-        {
-            rect->left   = reply->new_clip.left;
-            rect->top    = reply->new_clip.top;
-            rect->right  = reply->new_clip.right;
-            rect->bottom = reply->new_clip.bottom;
-        }
+            *rect = wine_server_get_rect( reply->new_clip );
     }
     SERVER_END_REQ;
 
@@ -2663,10 +2637,7 @@ BOOL WINAPI NtUserClipCursor( const RECT *rect )
         if (rect)
         {
             req->flags       = SET_CURSOR_CLIP;
-            req->clip.left   = rect->left;
-            req->clip.top    = rect->top;
-            req->clip.right  = rect->right;
-            req->clip.bottom = rect->bottom;
+            req->clip        = wine_server_rectangle( *rect );
         }
         else req->flags = SET_CURSOR_NOCLIP;
 

@@ -118,6 +118,32 @@ static inline void *wine_server_get_ptr( client_ptr_t ptr )
     return (void *)(ULONG_PTR)ptr;
 }
 
+/* convert a server rectangle_t to a RECT */
+static inline RECT wine_server_get_rect( rectangle_t rectangle )
+{
+    RECT rect =
+    {
+        .left = rectangle.left,
+        .top = rectangle.top,
+        .right = rectangle.right,
+        .bottom = rectangle.bottom,
+    };
+    return rect;
+}
+
+/* convert a RECT to a server rectangle_t */
+static inline rectangle_t wine_server_rectangle( RECT rect )
+{
+    rectangle_t rectangle =
+    {
+        .left = rect.left,
+        .top = rect.top,
+        .right = rect.right,
+        .bottom = rect.bottom,
+    };
+    return rectangle;
+}
+
 
 /* macros for server requests */
 

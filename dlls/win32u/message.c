@@ -2160,10 +2160,7 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
             info->hwndMenuOwner  = wine_server_ptr_handle( reply->menu_owner );
             info->hwndMoveSize   = wine_server_ptr_handle( reply->move_size );
             info->hwndCaret      = wine_server_ptr_handle( reply->caret );
-            info->rcCaret.left   = reply->rect.left;
-            info->rcCaret.top    = reply->rect.top;
-            info->rcCaret.right  = reply->rect.right;
-            info->rcCaret.bottom = reply->rect.bottom;
+            info->rcCaret        = wine_server_get_rect( reply->rect );
             if (reply->menu_owner) info->flags |= GUI_INMENUMODE;
             if (reply->move_size) info->flags |= GUI_INMOVESIZE;
             if (reply->caret) info->flags |= GUI_CARETBLINKING;
