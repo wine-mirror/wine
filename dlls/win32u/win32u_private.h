@@ -103,7 +103,7 @@ extern BOOL set_caret_pos( int x, int y );
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse );
 extern void toggle_caret( HWND hwnd );
 extern void update_mouse_tracking_info( HWND hwnd );
-extern BOOL get_clip_cursor( RECT *rect );
+extern BOOL get_clip_cursor( RECT *rect, UINT dpi );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout );
