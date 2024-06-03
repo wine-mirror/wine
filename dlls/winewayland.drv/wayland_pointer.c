@@ -659,12 +659,19 @@ clear_cursor:
     }
 }
 
+static void reapply_cursor_clipping(void)
+{
+    RECT rect;
+    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE);
+    if (NtUserGetClipCursor(&rect)) NtUserClipCursor(&rect);
+    NtUserSetThreadDpiAwarenessContext(context);
+}
+
 static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
     struct wayland_surface *surface;
     double scale;
-    RECT clip;
     BOOL reapply_clip = FALSE;
 
     if ((surface = wayland_surface_lock_hwnd(hwnd)))
@@ -697,7 +704,7 @@ static void wayland_set_cursor(HWND hwnd, HCURSOR hcursor, BOOL use_hcursor)
 
     /* Reapply cursor clip since cursor visibility affects pointer constraint
      * behavior. */
-    if (reapply_clip && NtUserGetClipCursor(&clip)) NtUserClipCursor(&clip);
+    if (reapply_clip) reapply_cursor_clipping();
 }
 
 /**********************************************************************
