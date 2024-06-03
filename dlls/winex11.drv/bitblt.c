@@ -1588,6 +1588,7 @@ struct x11drv_window_surface
     Window                window;
     GC                    gc;
     struct x11drv_image  *image;
+    HBITMAP               bitmap;    /* bitmap exposed to win32u */
     BOOL                  byteswap;
     BOOL                  is_argb;
     DWORD                 alpha_bits;
@@ -1874,6 +1875,29 @@ static BOOL put_shm_image( XImage *image, x11drv_xshm_info_t *shminfo, Window wi
 
 #endif /* HAVE_LIBXXSHM */
 
+static UINT get_dib_d3dddifmt( const BITMAPINFO *info )
+{
+    if (info->bmiHeader.biCompression == BI_RGB)
+    {
+        if (info->bmiHeader.biBitCount == 8) return D3DDDIFMT_P8;
+        if (info->bmiHeader.biBitCount == 24) return D3DDDIFMT_R8G8B8;
+        if (info->bmiHeader.biBitCount == 32) return D3DDDIFMT_A8R8G8B8;
+        return D3DDDIFMT_UNKNOWN;
+    }
+
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *colors = (DWORD *)info->bmiColors;
+        if (info->bmiHeader.biBitCount != 16) return D3DDDIFMT_UNKNOWN;
+        if (colors[0] == 0x0000f800 && colors[1] == 0x000007e0 && colors[2] == 0x0000001f) return D3DDDIFMT_R5G6B5;
+        if (colors[0] == 0x00007c00 && colors[1] == 0x000003e0 && colors[2] == 0x0000001f) return D3DDDIFMT_A1R5G5B5;
+        if (colors[0] == 0x00000f00 && colors[1] == 0x000000f0 && colors[2] == 0x0000000f) return D3DDDIFMT_A4R4G4B4;
+        return D3DDDIFMT_UNKNOWN;
+    }
+
+    return D3DDDIFMT_UNKNOWN;
+}
+
 static void x11drv_image_destroy( struct x11drv_image *image )
 {
     if (!destroy_shm_image( image->ximage, &image->shminfo ))
@@ -2004,13 +2028,8 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 
     TRACE( "freeing %p bits %p\n", surface, window_surface->color_bits );
     if (surface->gc) XFreeGC( gdi_display, surface->gc );
-    if (surface->image)
-    {
-        if (surface->image->ximage->data != window_surface->color_bits)
-            free( window_surface->color_bits );
-        x11drv_image_destroy( surface->image );
-    }
-
+    if (surface->image) x11drv_image_destroy( surface->image );
+    if (surface->bitmap) NtGdiDeleteObjectApp( surface->bitmap );
     free( surface );
 }
 
@@ -2035,6 +2054,9 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     int colors = format->bits_per_pixel <= 8 ? 1 << format->bits_per_pixel : 3;
     struct x11drv_image *image;
+    D3DDDIFORMAT d3d_format;
+    HBITMAP bitmap = 0;
+    BOOL byteswap;
     UINT size;
 
     memset( info, 0, sizeof(*info) );
@@ -2048,14 +2070,40 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
 
     size = FIELD_OFFSET( struct x11drv_window_surface, info.bmiColors[colors] );
     if (!(image = x11drv_image_create( info, vis ))) return NULL;
-    if (!(surface = calloc( 1, size )))
+
+    /* wrap the XImage data in a HBITMAP if we can write to the surface pixels directly */
+    if (!(byteswap = image_needs_byteswap( image->ximage, is_r8g8b8( vis ), info->bmiHeader.biBitCount )) &&
+        info->bmiHeader.biBitCount > 8 && (d3d_format = get_dib_d3dddifmt( info )))
     {
+        D3DKMT_CREATEDCFROMMEMORY desc =
+        {
+            .Width = info->bmiHeader.biWidth,
+            .Height = info->bmiHeader.biHeight,
+            .Pitch = info->bmiHeader.biWidth * info->bmiHeader.biBitCount / 8,
+            .Format = d3d_format,
+            .pMemory = image->ximage->data,
+        };
+
+        if (!NtGdiDdDDICreateDCFromMemory( &desc ))
+        {
+            bitmap = desc.hBitmap;
+            NtGdiDeleteObjectApp( desc.hDc );
+        }
+    }
+
+    if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
+
+    if (!bitmap || !(surface = calloc( 1, size )))
+    {
+        if (bitmap) NtGdiDeleteObjectApp( bitmap );
         x11drv_image_destroy( image );
         return NULL;
     }
     surface->image = image;
+    surface->bitmap = bitmap;
+    surface->byteswap = byteswap;
 
-    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, 0 )) goto failed;
+    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, bitmap )) goto failed;
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;
@@ -2064,20 +2112,11 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
 
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
-    surface->byteswap = image_needs_byteswap( surface->image->ximage, is_r8g8b8(vis), format->bits_per_pixel );
 
     if (vis->depth == 32 && !surface->is_argb)
         surface->alpha_bits = ~(vis->red_mask | vis->green_mask | vis->blue_mask);
 
-    if (surface->byteswap || format->bits_per_pixel == 4 || format->bits_per_pixel == 8)
-    {
-        /* allocate separate surface bits if byte swapping or palette mapping is required */
-        if (!(surface->header.color_bits  = calloc( 1, info->bmiHeader.biSizeImage )))
-            goto failed;
-    }
-    else surface->header.color_bits = surface->image->ximage->data;
-
-    TRACE( "created %p for %lx %s color_bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
+    TRACE( "created %p for %lx %s bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
            surface->image->ximage->data );
 
