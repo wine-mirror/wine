@@ -1570,6 +1570,11 @@ DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo 
     return ret;
 }
 
+#ifdef HAVE_X11_EXTENSIONS_XSHM_H
+typedef XShmSegmentInfo x11drv_xshm_info_t;
+#else
+typedef struct { int shmid; } x11drv_xshm_info_t;
+#endif
 
 struct x11drv_window_surface
 {
@@ -1581,9 +1586,7 @@ struct x11drv_window_surface
     BOOL                  is_argb;
     DWORD                 alpha_bits;
     COLORREF              color_key;
-#ifdef HAVE_LIBXXSHM
-    XShmSegmentInfo       shminfo;
-#endif
+    x11drv_xshm_info_t    shminfo;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -1786,7 +1789,7 @@ static int xshm_error_handler( Display *display, XErrorEvent *event, void *arg )
     return 1;  /* FIXME: should check event contents */
 }
 
-static XImage *create_shm_image( const XVisualInfo *vis, int width, int height, XShmSegmentInfo *shminfo )
+static XImage *create_shm_image( const XVisualInfo *vis, int width, int height, x11drv_xshm_info_t *shminfo )
 {
     XImage *image;
 
@@ -1822,6 +1825,48 @@ failed:
     XDestroyImage( image );
     return NULL;
 }
+
+static BOOL destroy_shm_image( XImage *image, x11drv_xshm_info_t *shminfo )
+{
+    if (shminfo->shmid == -1) return FALSE;
+
+    XShmDetach( gdi_display, shminfo );
+    shmdt( shminfo->shmaddr );
+
+    return TRUE;
+}
+
+static BOOL put_shm_image( XImage *image, x11drv_xshm_info_t *shminfo, Window window,
+                           GC gc, const RECT *rect, const RECT *dirty )
+{
+    if (shminfo->shmid == -1) return FALSE;
+
+    XShmPutImage( gdi_display, window, gc, image, dirty->left,
+                  dirty->top, rect->left + dirty->left, rect->top + dirty->top,
+                  dirty->right - dirty->left, dirty->bottom - dirty->top, False );
+
+    return TRUE;
+}
+
+#else /* HAVE_LIBXXSHM */
+
+static XImage *create_shm_image( const XVisualInfo *vis, int width, int height, x11drv_xshm_info_t *shminfo )
+{
+    shminfo->shmid = -1;
+    return NULL;
+}
+
+static BOOL destroy_shm_image( XImage *image )
+{
+    return FALSE;
+}
+
+static BOOL put_shm_image( XImage *image, x11drv_xshm_info_t *shminfo, Window window,
+                           GC gc, const RECT *rect, const RECT *dirty )
+{
+    return FALSE;
+}
+
 #endif /* HAVE_LIBXXSHM */
 
 /***********************************************************************
@@ -1903,16 +1948,11 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
                 ptr[x] |= surface->alpha_bits;
     }
 
-#ifdef HAVE_LIBXXSHM
-    if (surface->shminfo.shmid != -1)
-        XShmPutImage( gdi_display, surface->window, surface->gc, surface->image, dirty->left,
-                      dirty->top, rect->left + dirty->left, rect->top + dirty->top,
-                      dirty->right - dirty->left, dirty->bottom - dirty->top, False );
-    else
-#endif
+    if (!put_shm_image( surface->image, &surface->shminfo, surface->window, surface->gc, rect, dirty ))
         XPutImage( gdi_display, surface->window, surface->gc, surface->image, dirty->left,
                    dirty->top, rect->left + dirty->left, rect->top + dirty->top,
                    dirty->right - dirty->left, dirty->bottom - dirty->top );
+
     XFlush( gdi_display );
 
     return TRUE;
@@ -1930,15 +1970,8 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     if (surface->image)
     {
         if (surface->image->data != window_surface->color_bits) free( window_surface->color_bits );
-#ifdef HAVE_LIBXXSHM
-        if (surface->shminfo.shmid != -1)
-        {
-            XShmDetach( gdi_display, &surface->shminfo );
-            shmdt( surface->shminfo.shmaddr );
-        }
-        else
-#endif
-        free( surface->image->data );
+        if (!destroy_shm_image( surface->image, &surface->shminfo ))
+            free( surface->image->data );
         surface->image->data = NULL;
         XDestroyImage( surface->image );
     }
@@ -1985,10 +2018,8 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     surface->is_argb = (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB);
     set_color_key( surface, color_key );
 
-#ifdef HAVE_LIBXXSHM
     surface->image = create_shm_image( vis, width, height, &surface->shminfo );
     if (!surface->image)
-#endif
     {
         surface->image = XCreateImage( gdi_display, vis->visual, vis->depth, ZPixmap, 0, NULL,
                                        width, height, 32, 0 );
