@@ -772,7 +772,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
 
     if (event->detail == NotifyPointer) return FALSE;
     /* when focusing in the virtual desktop window, re-apply the cursor clipping rect */
-    if (is_virtual_desktop() && hwnd == NtUserGetDesktopWindow()) retry_grab_clipping_window();
+    if (is_virtual_desktop() && hwnd == NtUserGetDesktopWindow()) reapply_cursor_clipping();
     if (hwnd == NtUserGetDesktopWindow()) return FALSE;
 
     x11drv_thread_data()->keymapnotify_hwnd = hwnd;
@@ -780,7 +780,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     /* when keyboard grab is released, re-apply the cursor clipping rect */
     was_grabbed = keyboard_grabbed;
     keyboard_grabbed = event->mode == NotifyGrab || event->mode == NotifyWhileGrabbed;
-    if (was_grabbed > keyboard_grabbed) retry_grab_clipping_window();
+    if (was_grabbed > keyboard_grabbed) reapply_cursor_clipping();
     /* ignore wm specific NotifyUngrab / NotifyGrab events w.r.t focus */
     if (event->mode == NotifyGrab || event->mode == NotifyUngrab) return FALSE;
 

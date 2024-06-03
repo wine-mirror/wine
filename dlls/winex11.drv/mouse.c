@@ -458,15 +458,14 @@ void ungrab_clipping_window(void)
 }
 
 /***********************************************************************
- *      retry_grab_clipping_window
- *
- * Restore the current clip rectangle.
+ *      reapply_cursor_clipping
  */
-void retry_grab_clipping_window(void)
+void reapply_cursor_clipping(void)
 {
     RECT rect;
-    NtUserGetClipCursor( &rect );
-    NtUserClipCursor( &rect );
+    UINT context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE );
+    if (NtUserGetClipCursor( &rect )) NtUserClipCursor( &rect );
+    NtUserSetThreadDpiAwarenessContext( context );
 }
 
 

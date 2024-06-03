@@ -674,7 +674,7 @@ extern UINT get_win_monitor_dpi( HWND hwnd );
 extern BOOL is_current_process_focused(void);
 extern void X11DRV_SetFocus( HWND hwnd );
 extern void set_window_cursor( Window window, HCURSOR handle );
-extern void retry_grab_clipping_window(void);
+extern void reapply_cursor_clipping(void);
 extern void ungrab_clipping_window(void);
 extern void move_resize_window( HWND hwnd, int dir );
 extern void X11DRV_InitKeyboard( Display *display );
