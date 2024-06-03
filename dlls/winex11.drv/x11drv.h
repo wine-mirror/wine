@@ -580,7 +580,6 @@ enum x11drv_window_messages
 {
     WM_X11DRV_UPDATE_CLIPBOARD = WM_WINE_FIRST_DRIVER_MSG,
     WM_X11DRV_SET_WIN_REGION,
-    WM_X11DRV_DESKTOP_RESIZED,
     WM_X11DRV_DELETE_TAB,
     WM_X11DRV_ADD_TAB
 };
@@ -751,7 +750,6 @@ struct x11drv_settings_handler
 extern void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *handler);
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height );
-extern void X11DRV_resize_desktop(void);
 extern BOOL is_virtual_desktop(void);
 extern BOOL is_desktop_fullscreen(void);
 extern BOOL is_detached_mode(const DEVMODEW *);

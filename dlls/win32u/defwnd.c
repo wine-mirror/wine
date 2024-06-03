@@ -2979,7 +2979,32 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     case WM_NCCALCSIZE:
         return 0;
     case WM_DISPLAYCHANGE:
-        return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
+    {
+        static RECT virtual_rect;
+
+        RECT new_rect = NtUserGetVirtualScreenRect(), old_rect = virtual_rect;
+        UINT context, flags = 0;
+
+        if (EqualRect( &new_rect, &old_rect )) return TRUE;
+        virtual_rect = new_rect;
+
+        TRACE( "desktop %p change from %s to %s\n", hwnd, wine_dbgstr_rect( &old_rect ), wine_dbgstr_rect( &new_rect ) );
+
+        if (new_rect.right - new_rect.left == old_rect.right - old_rect.left &&
+            new_rect.bottom - new_rect.top == old_rect.bottom - old_rect.top)
+            flags |= SWP_NOSIZE;
+        if (new_rect.left == old_rect.left && new_rect.top == old_rect.top)
+            flags |= SWP_NOMOVE;
+
+        context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE );
+        NtUserSetWindowPos( hwnd, 0, new_rect.left, new_rect.top,
+                            new_rect.right - new_rect.left, new_rect.bottom - new_rect.top,
+                            flags | SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
+        NtUserSetThreadDpiAwarenessContext( context );
+
+        return send_message_timeout( HWND_BROADCAST, WM_WINE_DESKTOP_RESIZED, old_rect.left,
+                                     old_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
+    }
     default:
         if (msg >= WM_USER && hwnd == get_desktop_window())
             return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );

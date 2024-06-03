@@ -100,25 +100,3 @@ BOOL is_desktop_fullscreen(void)
     return (primary_rect.right - primary_rect.left == host_primary_rect.right - host_primary_rect.left &&
             primary_rect.bottom - primary_rect.top == host_primary_rect.bottom - host_primary_rect.top);
 }
-
-/***********************************************************************
- *		X11DRV_resize_desktop
- */
-void X11DRV_resize_desktop(void)
-{
-    static RECT old_virtual_rect;
-
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
-    HWND hwnd = NtUserGetDesktopWindow();
-    INT width = virtual_rect.right - virtual_rect.left, height = virtual_rect.bottom - virtual_rect.top;
-
-    TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
-    NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top, width, height,
-                        SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-
-    if (old_virtual_rect.left != virtual_rect.left || old_virtual_rect.top != virtual_rect.top)
-        send_message_timeout( HWND_BROADCAST, WM_X11DRV_DESKTOP_RESIZED, old_virtual_rect.left,
-                              old_virtual_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
-
-    old_virtual_rect = virtual_rect;
-}

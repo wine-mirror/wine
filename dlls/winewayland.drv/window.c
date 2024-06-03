@@ -502,16 +502,6 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     wayland_win_data_release(data);
 }
 
-static void wayland_resize_desktop(void)
-{
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
-    NtUserSetWindowPos(NtUserGetDesktopWindow(), 0,
-                       virtual_rect.left, virtual_rect.top,
-                       virtual_rect.right - virtual_rect.left,
-                       virtual_rect.bottom - virtual_rect.top,
-                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE);
-}
-
 static void wayland_configure_window(HWND hwnd)
 {
     struct wayland_surface *surface;
@@ -652,13 +642,6 @@ LRESULT WAYLAND_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
  */
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    switch (msg)
-    {
-    case WM_DISPLAYCHANGE:
-        wayland_resize_desktop();
-        break;
-    }
-
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
 

@@ -416,7 +416,6 @@ static void pull_events(void)
  */
 static int process_events( DWORD mask )
 {
-    UINT context;
     struct java_event *event, *next, *previous;
     unsigned int count = 0;
 
@@ -457,13 +456,9 @@ static int process_events( DWORD mask )
         {
         case DESKTOP_CHANGED:
             TRACE( "DESKTOP_CHANGED %ux%u\n", event->data.desktop.width, event->data.desktop.height );
-            context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE );
             screen_width = event->data.desktop.width;
             screen_height = event->data.desktop.height;
             init_monitors( screen_width, screen_height );
-            NtUserSetWindowPos( NtUserGetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
-                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
-            NtUserSetThreadDpiAwarenessContext( context );
             break;
 
         case CONFIG_CHANGED:

@@ -95,7 +95,6 @@ extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
 enum macdrv_window_messages
 {
     WM_MACDRV_SET_WIN_REGION = WM_WINE_FIRST_DRIVER_MSG,
-    WM_MACDRV_DISPLAYCHANGE,
     WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS,
 };
 
@@ -268,7 +267,6 @@ extern void macdrv_status_item_mouse_button(const macdrv_event *event);
 extern void macdrv_status_item_mouse_move(const macdrv_event *event);
 
 extern void check_retina_status(void);
-extern void macdrv_resize_desktop(void);
 extern void init_user_driver(void);
 
 /* unixlib interface */
