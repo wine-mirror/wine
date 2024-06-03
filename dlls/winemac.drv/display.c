@@ -1112,10 +1112,7 @@ void macdrv_displays_changed(const macdrv_event *event)
        process it (by sending it to the desktop window). */
     if (event->displays_changed.activating ||
         NtUserGetWindowThread(hwnd, NULL) == GetCurrentThreadId())
-    {
-        NtUserCallNoParam(NtUserCallNoParam_UpdateDisplayCache);
-        macdrv_resize_desktop();
-    }
+        NtUserCallNoParam(NtUserCallNoParam_DisplayModeChanged);
 }
 
 UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param)

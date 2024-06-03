@@ -3203,6 +3203,50 @@ static BOOL all_detached_settings( const DEVMODEW *displays )
     return TRUE;
 }
 
+static BOOL get_primary_source_mode( DEVMODEW *mode )
+{
+    struct source *primary;
+    BOOL ret;
+
+    if (!(primary = find_source( NULL ))) return FALSE;
+    ret = source_get_current_settings( primary, mode );
+    source_release( primary );
+
+    return ret;
+}
+
+static void display_mode_changed( BOOL broadcast )
+{
+    DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
+
+    if (!update_display_cache( TRUE ))
+    {
+        ERR( "Failed to update display cache after mode change.\n" );
+        return;
+    }
+    if (!get_primary_source_mode( &current_mode ))
+    {
+        ERR( "Failed to get primary source current display settings.\n" );
+        return;
+    }
+
+    if (!broadcast)
+        send_message( get_desktop_window(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
+                      MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ) );
+    else
+    {
+        /* broadcast to all the windows as well if an application changed the display settings */
+        NtUserClipCursor( NULL );
+        send_notify_message( get_desktop_window(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
+                             MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ), FALSE );
+        send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
+                              MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
+                              SMTO_ABORTIFHUNG, 2000, FALSE );
+        /* post clip_fullscreen_window request to the foreground window */
+        NtUserPostMessage( NtUserGetForegroundWindow(), WM_WINE_CLIPCURSOR, SET_CURSOR_FSCLIP, 0 );
+    }
+}
+
 static LONG apply_display_settings( struct source *target, const DEVMODEW *devmode,
                                     HWND hwnd, DWORD flags, void *lparam )
 {
@@ -3270,26 +3314,7 @@ static LONG apply_display_settings( struct source *target, const DEVMODEW *devmo
         }
     }
 
-    if (!update_display_cache( TRUE ))
-        WARN( "Failed to update display cache after mode change.\n" );
-
-    if ((source = find_source( NULL )))
-    {
-        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
-
-        if (!source_get_current_settings( source, &current_mode )) WARN( "Failed to get primary source current display settings.\n" );
-        source_release( source );
-
-        NtUserClipCursor( NULL );
-        send_notify_message( NtUserGetDesktopWindow(), WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
-                             MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ), FALSE );
-        send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, current_mode.dmBitsPerPel,
-                              MAKELPARAM( current_mode.dmPelsWidth, current_mode.dmPelsHeight ),
-                              SMTO_ABORTIFHUNG, 2000, FALSE );
-        /* post clip_fullscreen_window request to the foreground window */
-        NtUserPostMessage( NtUserGetForegroundWindow(), WM_WINE_CLIPCURSOR, SET_CURSOR_FSCLIP, 0 );
-    }
-
+    display_mode_changed( TRUE );
     return ret;
 }
 
@@ -6306,8 +6331,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_ReleaseCapture:
         return release_capture();
 
-    case NtUserCallNoParam_UpdateDisplayCache:
-        return update_display_cache( TRUE );
+    case NtUserCallNoParam_DisplayModeChanged:
+        display_mode_changed( FALSE );
+        return TRUE;
 
     /* temporary exports */
     case NtUserExitingThread:

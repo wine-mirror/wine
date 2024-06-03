@@ -833,7 +833,7 @@ enum
     NtUserCallNoParam_GetShellWindow,
     NtUserCallNoParam_GetTaskmanWindow,
     NtUserCallNoParam_ReleaseCapture,
-    NtUserCallNoParam_UpdateDisplayCache,
+    NtUserCallNoParam_DisplayModeChanged,
     /* temporary exports */
     NtUserExitingThread,
     NtUserThreadDetach,
