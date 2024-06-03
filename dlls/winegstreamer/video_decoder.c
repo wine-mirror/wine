@@ -1638,7 +1638,7 @@ HRESULT h264_decoder_create(REFIID riid, void **out)
     decoder->output_info.cbSize = 1920 * 1088 * 2;
 
     decoder->wg_transform_attrs.output_plane_align = 15;
-    decoder->wg_transform_attrs.allow_size_change = TRUE;
+    decoder->wg_transform_attrs.allow_format_change = TRUE;
 
     TRACE("Created h264 transform %p.\n", &decoder->IMFTransform_iface);
 

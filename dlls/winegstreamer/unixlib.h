@@ -302,7 +302,7 @@ struct wg_transform_attrs
 {
     UINT32 output_plane_align;
     UINT32 input_queue_length;
-    BOOL allow_size_change;
+    BOOL allow_format_change;
     BOOL low_latency;
 };
 

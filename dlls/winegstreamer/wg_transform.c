@@ -194,7 +194,7 @@ static GstCaps *transform_format_to_caps(struct wg_transform *transform, const s
 
     if (format->major_type == WG_MAJOR_TYPE_VIDEO)
     {
-        if (transform->attrs.allow_size_change)
+        if (transform->attrs.allow_format_change)
             copy.u.video.width = copy.u.video.height = 0;
         copy.u.video.fps_n = copy.u.video.fps_d = 0;
     }
