@@ -1,3 +1,5 @@
+<img src="https://upload.wikimedia.org/wikipedia/commons/e/ed/WINE-logo.png" width="125" />
+
 ## INTRODUCTION
 
 Wine is a program which allows running Microsoft Windows programs
