@@ -219,16 +219,33 @@ static HRESULT WINAPI control_SetIconPath(IAudioSessionControl2 *iface, const WC
 static HRESULT WINAPI control_GetGroupingParam(IAudioSessionControl2 *iface, GUID *group)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, group);
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p) - stub\n", This, group);
+
+    if (!group)
+        return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+
+    *group = session->grouping_param;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_SetGroupingParam(IAudioSessionControl2 *iface, const GUID *group,
-                                           const GUID *session)
+                                           const GUID *event_context)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%s, %s) - stub\n", This, debugstr_guid(group), debugstr_guid(session));
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%s, %s) - stub\n", This, debugstr_guid(group), debugstr_guid(event_context));
+    FIXME("Ignoring event_context\n");
+
+    if (!group)
+        return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+
+    session->grouping_param = *group;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_RegisterAudioSessionNotification(IAudioSessionControl2 *iface,
@@ -630,6 +647,8 @@ static struct audio_session *session_create(const GUID *guid, IMMDevice *device,
     session_init_vols(ret, channels);
 
     ret->master_vol = 1.f;
+
+    CoCreateGuid(&ret->grouping_param);
 
     return ret;
 }
