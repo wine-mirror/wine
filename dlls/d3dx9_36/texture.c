@@ -569,9 +569,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 {
     BOOL dynamic_texture, format_specified = FALSE;
     unsigned int loaded_miplevels, skip_levels;
+    IDirect3DTexture9 *staging_tex, *tex;
     IDirect3DSurface9 *surface;
-    IDirect3DTexture9 **texptr;
-    IDirect3DTexture9 *buftex;
     D3DXIMAGE_INFO imginfo;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -586,11 +585,11 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     if (!device || !texture || !srcdata || !srcdatasize)
         return D3DERR_INVALIDCALL;
 
+    staging_tex = tex = *texture = NULL;
     hr = D3DXGetImageInfoFromFileInMemory(srcdata, srcdatasize, &imginfo);
     if (FAILED(hr))
     {
         FIXME("Unrecognized file format, returning failure.\n");
-        *texture = NULL;
         return hr;
     }
 
@@ -652,8 +651,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     if (FAILED(hr))
     {
         FIXME("Couldn't find suitable texture parameters.\n");
-        *texture = NULL;
-        return hr;
+        goto err;
     }
 
     if (colorkey && !format_specified)
@@ -667,79 +665,82 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     }
 
     if (FAILED(IDirect3DDevice9_GetDeviceCaps(device, &caps)))
-        return D3DERR_INVALIDCALL;
+    {
+        hr = D3DERR_INVALIDCALL;
+        goto err;
+    }
 
     /* Create the to-be-filled texture */
     dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
     if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
-        hr = D3DXCreateTexture(device, width, height, miplevels, 0, format, D3DPOOL_SYSTEMMEM, &buftex);
-        texptr = &buftex;
+        TRACE("Creating staging texture.\n");
+        hr = D3DXCreateTexture(device, width, height, miplevels, 0, format, D3DPOOL_SYSTEMMEM, &staging_tex);
+        tex = staging_tex;
     }
     else
     {
-        hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, pool, texture);
-        texptr = texture;
+        hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, pool, &tex);
     }
 
     if (FAILED(hr))
     {
         FIXME("Texture creation failed.\n");
-        *texture = NULL;
-        return hr;
+        goto err;
     }
 
     TRACE("Texture created correctly. Now loading the texture data into it.\n");
     if (imginfo.ImageFileFormat != D3DXIFF_DDS)
     {
-        IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
+        IDirect3DTexture9_GetSurfaceLevel(tex, 0, &surface);
         hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
         IDirect3DSurface9_Release(surface);
-        loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(*texptr), imginfo.MipLevels);
+        loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(tex), imginfo.MipLevels);
     }
     else
     {
-        hr = load_texture_from_dds(*texptr, srcdata, palette, filter, colorkey, &imginfo, skip_levels,
+        hr = load_texture_from_dds(tex, srcdata, palette, filter, colorkey, &imginfo, skip_levels,
                 &loaded_miplevels);
     }
 
     if (FAILED(hr))
     {
         FIXME("Texture loading failed.\n");
-        IDirect3DTexture9_Release(*texptr);
-        *texture = NULL;
-        return hr;
+        goto err;
     }
 
-    hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, loaded_miplevels - 1, mipfilter);
+    hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)tex, palette, loaded_miplevels - 1, mipfilter);
     if (FAILED(hr))
     {
         FIXME("Texture filtering failed.\n");
-        IDirect3DTexture9_Release(*texptr);
-        *texture = NULL;
-        return hr;
+        goto err;
     }
 
     /* Move the data to the actual texture if necessary */
-    if (texptr == &buftex)
+    if (staging_tex)
     {
         hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, pool, texture);
-
         if (FAILED(hr))
-        {
-            IDirect3DTexture9_Release(buftex);
-            *texture = NULL;
-            return hr;
-        }
+            goto err;
 
-        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9*)buftex, (IDirect3DBaseTexture9*)(*texture));
-        IDirect3DTexture9_Release(buftex);
+        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)staging_tex, (IDirect3DBaseTexture9 *)(*texture));
+        IDirect3DTexture9_Release(staging_tex);
+    }
+    else
+    {
+        *texture = tex;
     }
 
     if (srcinfo)
         *srcinfo = imginfo;
 
-    return D3D_OK;
+    return hr;
+
+err:
+    if (tex)
+        IDirect3DTexture9_Release(tex);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DXCreateTextureFromFileInMemory(struct IDirect3DDevice9 *device,
