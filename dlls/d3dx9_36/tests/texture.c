@@ -24,6 +24,7 @@
 #include "wine/test.h"
 #include "d3dx9tex.h"
 #include "resources.h"
+#include <stdint.h>
 
 static int has_2d_dxt1, has_2d_dxt3, has_2d_dxt5, has_cube_dxt5, has_3d_dxt3;
 
@@ -144,6 +145,92 @@ static inline void expect_vec4_(unsigned int line, const D3DXVECTOR4 *expected, 
         "Expected (%f, %f, %f, %f), got (%f, %f, %f, %f)\n",
         expected->x, expected->y, expected->z, expected->w,
         got->x, got->y, got->z, got->w);
+}
+
+#define check_image_info(info, width, height, depth, mip_levels, format, resource_type, image_file_format, wine_todo) \
+    check_image_info_(__LINE__, info, width, height, depth, mip_levels, format, resource_type, image_file_format, \
+            wine_todo)
+static inline void check_image_info_(uint32_t line, const D3DXIMAGE_INFO *info, uint32_t width, uint32_t height,
+        uint32_t depth, uint32_t mip_levels, D3DFORMAT format, D3DRESOURCETYPE resource_type,
+        D3DXIMAGE_FILEFORMAT image_file_format, BOOL wine_todo)
+{
+    const D3DXIMAGE_INFO expected_info = { width, height, depth, mip_levels, format, resource_type, image_file_format };
+    BOOL matched;
+
+    matched = !memcmp(&expected_info, info, sizeof(*info));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected image info values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && info->Width != width)
+        ok_(__FILE__, line)(info->Width == width, "Expected width %u, got %u.\n", width, info->Width);
+    todo_wine_if(wine_todo && info->Height != height)
+        ok_(__FILE__, line)(info->Height == height, "Expected height %u, got %u.\n", height, info->Height);
+    todo_wine_if(wine_todo && info->Depth != depth)
+        ok_(__FILE__, line)(info->Depth == depth, "Expected depth %u, got %u.\n", depth, info->Depth);
+    todo_wine_if(wine_todo && info->MipLevels != mip_levels)
+        ok_(__FILE__, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
+                info->MipLevels);
+    ok_(__FILE__, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
+    ok_(__FILE__, line)(info->ResourceType == resource_type, "Expected resource_type %d, got %d.\n", resource_type,
+            info->ResourceType);
+    ok_(__FILE__, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
+            image_file_format, info->ImageFileFormat);
+}
+
+#define check_texture_level_desc(tex, level, format, usage, pool, multi_sample_type, multi_sample_quality, width, \
+                                 height, wine_todo) \
+    check_texture_level_desc_(__LINE__, tex, level, format, usage, pool, multi_sample_type, multi_sample_quality, \
+            width, height, wine_todo)
+static inline void check_texture_level_desc_(uint32_t line, IDirect3DTexture9 *tex, uint32_t level, D3DFORMAT format,
+        uint32_t usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multi_sample_type,
+        uint32_t multi_sample_quality, uint32_t width, uint32_t height, BOOL wine_todo)
+{
+    const D3DSURFACE_DESC expected_desc = { format, D3DRTYPE_SURFACE, usage, pool, multi_sample_type,
+                                            multi_sample_quality, width, height };
+    D3DSURFACE_DESC desc;
+    BOOL matched;
+    HRESULT hr;
+
+    hr = IDirect3DTexture9_GetLevelDesc(tex, level, &desc);
+    todo_wine_if(wine_todo && FAILED(hr))
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get texture level desc with hr %#lx.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    matched = !memcmp(&expected_desc, &desc, sizeof(desc));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected surface desc values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && desc.Format != format)
+        ok_(__FILE__, line)(desc.Format == format, "Expected surface format %d, got %d.\n", format, desc.Format);
+    ok_(__FILE__, line)(desc.Type == D3DRTYPE_SURFACE, "Expected D3DRTYPE_SURFACE, got %d.\n", desc.Type);
+    todo_wine_if(wine_todo && desc.Usage != usage)
+        ok_(__FILE__, line)(desc.Usage == usage, "Expected usage %u, got %lu.\n", usage, desc.Usage);
+    todo_wine_if(wine_todo && desc.Pool != pool)
+        ok_(__FILE__, line)(desc.Pool == pool, "Expected pool %d, got %d.\n", pool, desc.Pool);
+    todo_wine_if(wine_todo && desc.MultiSampleType != multi_sample_type)
+        ok_(__FILE__, line)(desc.MultiSampleType == multi_sample_type, "Expected multi sample type %d, got %d.\n",
+                multi_sample_type, desc.MultiSampleType);
+    todo_wine_if(wine_todo && desc.MultiSampleQuality != multi_sample_quality)
+        ok_(__FILE__, line)(desc.MultiSampleQuality == multi_sample_quality, "Expected multi sample quality %u, got %lu.\n",
+                multi_sample_quality, desc.MultiSampleQuality);
+    todo_wine_if(wine_todo && desc.Width != width)
+        ok_(__FILE__, line)(desc.Width == width, "Expected width %u, got %u.\n", width, desc.Width);
+    todo_wine_if(wine_todo && desc.Height != height)
+        ok_(__FILE__, line)(desc.Height == height, "Expected height %u, got %u.\n", height, desc.Height);
+}
+
+#define check_texture_mip_levels(tex, expected_mip_levels, wine_todo) \
+    check_texture_mip_levels_(__LINE__, ((IDirect3DBaseTexture9 *)tex), expected_mip_levels, wine_todo)
+static inline void check_texture_mip_levels_(uint32_t line, IDirect3DBaseTexture9 *tex, uint32_t expected_mip_levels,
+        BOOL wine_todo)
+{
+    uint32_t mip_levels = IDirect3DBaseTexture9_GetLevelCount(tex);
+
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(mip_levels == expected_mip_levels, "Got miplevels %u, expected %u.\n",
+            mip_levels, expected_mip_levels);
 }
 
 static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
@@ -1936,6 +2023,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     IDirect3DTexture9 *texture;
     unsigned int miplevels;
     IDirect3DSurface9 *surface;
+    D3DXIMAGE_INFO img_info;
     D3DSURFACE_DESC desc;
 
     hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
@@ -2055,6 +2143,50 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     IDirect3DSurface9_GetDesc(surface, &desc);
     ok(desc.Format == D3DFMT_L8, "Returned format %u, expected %u.\n", desc.Format, D3DFMT_L8);
     IDirect3DSurface9_Release(surface);
+    IDirect3DTexture9_Release(texture);
+
+    /* Test values returned in the D3DXIMAGE_INFO structure. */
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(0, D3DX_FILTER_POINT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(texture, 2, FALSE);
+    check_image_info(&img_info, 2, 2, 1, 2, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+    check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 2, 2, FALSE);
+    check_texture_level_desc(texture, 1, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
+
+    IDirect3DTexture9_Release(texture);
+
+    /*
+     * The values returned in the D3DXIMAGE_INFO structure represent the mip
+     * level the texture data was retrieved from, i.e if we skip the first mip
+     * level, we will get the values of the second mip level.
+     */
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(1, D3DX_FILTER_POINT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(texture, 1, FALSE);
+    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
+
+    IDirect3DTexture9_Release(texture);
+
+    /*
+     * Request skipping 3 mip levels in a file that only has 2 mip levels. In this
+     * case, it stops at the final mip level.
+     */
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(3, D3DX_FILTER_POINT), 0, &img_info, NULL, &texture);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_texture_mip_levels(texture, 1, TRUE);
+    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, TRUE);
+
     IDirect3DTexture9_Release(texture);
 }
 
