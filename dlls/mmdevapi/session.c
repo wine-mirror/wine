@@ -37,6 +37,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 extern void sessions_lock(void);
 extern void sessions_unlock(void);
 
+static WCHAR *duplicate_wstr(const WCHAR *str)
+{
+    const WCHAR *source = str ? str : L"";
+    int len = (wcslen(source) + 1) * sizeof(WCHAR);
+    WCHAR *ret = CoTaskMemAlloc(len);
+    memcpy(ret, source, len);
+    return ret;
+}
+
 extern void set_stream_volumes(struct audio_client *This);
 
 static struct list sessions = LIST_INIT(sessions);
@@ -144,16 +153,34 @@ static HRESULT WINAPI control_GetState(IAudioSessionControl2 *iface, AudioSessio
 static HRESULT WINAPI control_GetDisplayName(IAudioSessionControl2 *iface, WCHAR **name)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p) - stub\n", This, name);
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p) - stub\n", This, name);
+
+    if (!name)
+        return E_POINTER;
+
+    *name = duplicate_wstr(session->display_name);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_SetDisplayName(IAudioSessionControl2 *iface, const WCHAR *name,
-                                         const GUID *session)
+                                         const GUID *event_context)
 {
     struct audio_session_wrapper *This = impl_from_IAudioSessionControl2(iface);
-    FIXME("(%p)->(%p, %s) - stub\n", This, name, debugstr_guid(session));
-    return E_NOTIMPL;
+    struct audio_session *session = This->session;
+
+    TRACE("(%p)->(%p, %s) - stub\n", This, name, debugstr_guid(event_context));
+    FIXME("Ignoring event_context\n");
+
+    if (!name)
+        return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+
+    free(session->display_name);
+    session->display_name = wcsdup(name);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI control_GetIconPath(IAudioSessionControl2 *iface, WCHAR **path)
