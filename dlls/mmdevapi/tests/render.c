@@ -1420,6 +1420,7 @@ static void test_session(void)
     ULONG ref;
     HRESULT hr;
     WCHAR *str;
+    GUID guid1 = GUID_NULL, guid2 = GUID_NULL;
 
     hr = CoCreateGuid(&ses1_guid);
     ok(hr == S_OK, "CoCreateGuid failed: %08lx\n", hr);
@@ -1605,6 +1606,35 @@ static void test_session(void)
     ok(str && !wcscmp(str, L"WineIconPath"), "Got %s\n", wine_dbgstr_w(str));
     if (str)
         CoTaskMemFree(str);
+
+    /* Test GetGroupingParam / SetGroupingParam */
+
+    hr = IAudioSessionControl2_GetGroupingParam(ses1_ctl2, NULL);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "GetGroupingParam failed: %08lx\n", hr);
+
+    hr = IAudioSessionControl2_GetGroupingParam(ses1_ctl2, &guid1);
+    todo_wine
+    ok(hr == S_OK, "GetGroupingParam failed: %08lx\n", hr);
+    todo_wine
+    ok(!IsEqualGUID(&guid1, &guid2), "Expected non null GUID\n"); /* MSDN is wrong here, it is not GUID_NULL */
+
+    hr = IAudioSessionControl2_SetGroupingParam(ses1_ctl2, NULL, NULL);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "SetGroupingParam failed: %08lx\n", hr);
+
+    hr = CoCreateGuid(&guid2);
+    ok(hr == S_OK, "CoCreateGuid failed: %08lx\n", hr);
+
+    hr = IAudioSessionControl2_SetGroupingParam(ses1_ctl2, &guid2, NULL);
+    todo_wine
+    ok(hr == S_OK, "SetGroupingParam failed: %08lx\n", hr);
+
+    hr = IAudioSessionControl2_GetGroupingParam(ses1_ctl2, &guid1);
+    todo_wine
+    ok(hr == S_OK, "GetGroupingParam failed: %08lx\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&guid1, &guid2), "Got %s\n", wine_dbgstr_guid(&guid1));
 
     /* Test capture */
 
