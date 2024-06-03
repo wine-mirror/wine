@@ -229,7 +229,8 @@ struct window_surface
     RECT                               bounds;       /* dirty area rectangle */
     HRGN                               clip_region;  /* visible region of the surface, fully visible if 0 */
     DWORD                              draw_start_ticks; /* start ticks of fresh draw */
-    void                              *color_bits;   /* pixel bits of the surface color */
+    HBITMAP                            color_bitmap; /* bitmap for the surface colors */
+    void                              *color_bits;   /* pixel bits of the color bitmap */
     /* driver-specific fields here */
 };
 

@@ -1588,7 +1588,6 @@ struct x11drv_window_surface
     Window                window;
     GC                    gc;
     struct x11drv_image  *image;
-    HBITMAP               bitmap;    /* bitmap exposed to win32u */
     BOOL                  byteswap;
     BOOL                  is_argb;
     DWORD                 alpha_bits;
@@ -2026,10 +2025,9 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
 
-    TRACE( "freeing %p bits %p\n", surface, window_surface->color_bits );
+    TRACE( "freeing %p\n", surface );
     if (surface->gc) XFreeGC( gdi_display, surface->gc );
     if (surface->image) x11drv_image_destroy( surface->image );
-    if (surface->bitmap) NtGdiDeleteObjectApp( surface->bitmap );
     free( surface );
 }
 
@@ -2091,16 +2089,13 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
         }
     }
 
-    if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
-
-    if (!bitmap || !(surface = calloc( 1, size )))
+    if (!(surface = calloc( 1, size )))
     {
         if (bitmap) NtGdiDeleteObjectApp( bitmap );
         x11drv_image_destroy( image );
         return NULL;
     }
     surface->image = image;
-    surface->bitmap = bitmap;
     surface->byteswap = byteswap;
 
     if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, bitmap )) goto failed;

@@ -435,7 +435,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
     if (wws->wayland_buffer_queue)
         wayland_buffer_queue_destroy(wws->wayland_buffer_queue);
-    free(window_surface->color_bits);
     free(wws);
 }
 
@@ -474,10 +473,7 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
     if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, info, 0)) goto failed;
     wws->info = *info;
 
-    if (!(wws->header.color_bits = malloc(wws->info.bmiHeader.biSizeImage)))
-        goto failed;
-
-    TRACE("created %p hwnd %p %s color_bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),
+    TRACE("created %p hwnd %p %s bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),
           wws->header.color_bits, (char *)wws->header.color_bits + wws->info.bmiHeader.biSizeImage);
 
     return &wws->header;

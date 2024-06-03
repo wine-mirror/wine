@@ -732,11 +732,10 @@ static void android_surface_destroy( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
-    TRACE( "freeing %p bits %p\n", surface, window_surface->color_bits );
+    TRACE( "freeing %p\n", surface );
 
     free( surface->clip_rects );
     release_ioctl_window( surface->window );
-    free( window_surface->color_bits );
     free( surface );
 }
 
@@ -800,10 +799,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->alpha        = alpha;
     set_color_key( surface, color_key );
 
-    if (!(surface->header.color_bits = malloc( info->bmiHeader.biSizeImage )))
-        goto failed;
-
-    TRACE( "created %p hwnd %p %s color_bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
+    TRACE( "created %p hwnd %p %s bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage );
 
     return &surface->header;

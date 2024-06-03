@@ -159,7 +159,6 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct offscreen_window_surface *impl;
-    SIZE_T size;
     RECT surface_rect = *visible_rect;
 
     TRACE( "hwnd %p, visible_rect %s, surface %p.\n", hwnd, wine_dbgstr_rect( visible_rect ), surface );
@@ -188,11 +187,8 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
 
     /* create a new window surface */
     *surface = NULL;
-    size = info->bmiHeader.biSizeImage;
-    if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
+    if (!(impl = calloc(1, sizeof(*impl)))) return;
     window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, info, 0 );
-
-    impl->header.color_bits = (char *)&impl->info.bmiColors[0];
     impl->info = *info;
 
     TRACE( "created window surface %p\n", &impl->header );
@@ -216,8 +212,8 @@ W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct w
     pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
 
-    if (!bitmap) return TRUE;
-    if (!(bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP ))) return FALSE;
+    if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
+    if (!(surface->color_bitmap = bitmap) || !(bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP ))) return FALSE;
     get_image_from_bitmap( bmp, info, &bits, &coords );
     surface->color_bits = bits.ptr;
     GDI_ReleaseObj( bitmap );
@@ -237,6 +233,7 @@ W32KAPI void window_surface_release( struct window_surface *surface )
     {
         if (surface != &dummy_surface) pthread_mutex_destroy( &surface->mutex );
         if (surface->clip_region) NtGdiDeleteObjectApp( surface->clip_region );
+        if (surface->color_bitmap) NtGdiDeleteObjectApp( surface->color_bitmap );
         surface->funcs->destroy( surface );
     }
 }

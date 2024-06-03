@@ -106,8 +106,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
-    TRACE("freeing %p bits %p\n", surface, window_surface->color_bits);
-    free(window_surface->color_bits);
+    TRACE("freeing %p\n", surface);
     free(surface);
 }
 
@@ -154,8 +153,7 @@ struct window_surface *create_surface(HWND hwnd, macdrv_window window, const REC
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
     surface->use_alpha = use_alpha;
-    surface->header.color_bits = malloc(info->bmiHeader.biSizeImage);
-    if (!surface->header.color_bits) goto failed;
+
     window_background = macdrv_window_background_color();
     memset_pattern4(surface->header.color_bits, &window_background, info->bmiHeader.biSizeImage);
 
