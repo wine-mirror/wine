@@ -1574,6 +1574,38 @@ static void test_session(void)
     if (str)
         CoTaskMemFree(str);
 
+    /* Test GetIconPath / SetIconPath */
+
+    hr = IAudioSessionControl2_GetIconPath(ses1_ctl2, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetIconPath failed: %08lx\n", hr);
+
+    str = NULL;
+    hr = IAudioSessionControl2_GetIconPath(ses1_ctl2, &str);
+    todo_wine
+    ok(hr == S_OK, "GetIconPath failed: %08lx\n", hr);
+    todo_wine
+    ok(str && !wcscmp(str, L""), "Got %s\n", wine_dbgstr_w(str));
+    if(str)
+        CoTaskMemFree(str);
+
+    hr = IAudioSessionControl2_SetIconPath(ses1_ctl2, NULL, NULL);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "SetIconPath failed: %08lx\n", hr);
+
+    hr = IAudioSessionControl2_SetIconPath(ses1_ctl2, L"WineIconPath", NULL);
+    todo_wine
+    ok(hr == S_OK, "SetIconPath failed: %08lx\n", hr);
+
+    str = NULL;
+    hr = IAudioSessionControl2_GetIconPath(ses1_ctl2, &str);
+    todo_wine
+    ok(hr == S_OK, "GetIconPath failed: %08lx\n", hr);
+    todo_wine
+    ok(str && !wcscmp(str, L"WineIconPath"), "Got %s\n", wine_dbgstr_w(str));
+    if (str)
+        CoTaskMemFree(str);
+
     /* Test capture */
 
     if(cap_ctl){
