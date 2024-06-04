@@ -167,6 +167,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
     static const char space_cmd[] = {'@','s','p','a','c','e','@'};
     static const char spaces_cmd[] = {'@','s','p','a','c','e','s','@'};
     static const char tab_cmd[]   = {'@','t','a','b','@'};
+    static const char formfeed_cmd[]   = {'@','f','o','r','m', 'f', 'e', 'e', 'd', '@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
     while(exp_ptr < exp_end) {
@@ -237,6 +238,15 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     && !memcmp(exp_ptr, tab_cmd, sizeof(tab_cmd))) {
                 exp_ptr += sizeof(tab_cmd);
                 if(out_ptr < out_end && *out_ptr == '\t') {
+                    out_ptr++;
+                    continue;
+                } else {
+                    err = out_end;
+                }
+            }else if(exp_ptr+sizeof(formfeed_cmd) <= exp_end
+                    && !memcmp(exp_ptr, formfeed_cmd, sizeof(formfeed_cmd))) {
+                exp_ptr += sizeof(formfeed_cmd);
+                if(out_ptr < out_end && *out_ptr == '\f') {
                     out_ptr++;
                     continue;
                 } else {

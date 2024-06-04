@@ -598,6 +598,28 @@ FAILURE 1
 SUCCESS 0
 --- success/failure for PROMPT command
 SUCCESS 0
+--- success/failure for CLS command
+@todo_wine@@formfeed@SUCCESS 666
+@todo_wine@@formfeed@SUCCESS 666
+@todo_wine@FAILURE 1
+--- success/failure for COLOR command
+@todo_wine@FAILURE 1
+--- success/failure for TITLE command
+SUCCESS 666
+SUCCESS 666
+--- success/failure for CHOICE command
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 2
+@todo_wine@FAILURE 1
+@todo_wine@--- success/failure for MORE command
+SUCCESS 0
+@todo_wine@SUCCESS 0
+foo@space@
+@todo_wine@
+@todo_wine@SUCCESS 0
+@todo_wine@--- success/failure for PAUSE command
+@todo_wine@FAILURE 1
 ---
 ------------ Testing 'set' ------------
 1

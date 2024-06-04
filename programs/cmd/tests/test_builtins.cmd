@@ -669,6 +669,30 @@ call :setError 666 & help ACommandThatLikelyDoesntExist >NUL &&echo SUCCESS !err
 echo --- success/failure for PROMPT command
 call :setError 666 & prompt >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 rem doesn't seem to set errors either on invalid $ escapes, nor qualifiers
+
+echo --- success/failure for CLS command
+call :setError 666 & (cls &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cls foobar &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (cls /X &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for COLOR command
+call :setError 666 & (color fc < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem TODO: color is also hard to test: it requires fd 1 to be bound to a console, so we can't redirect its output
+echo --- success/failure for TITLE command
+call :setError 666 & (title a new title &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (title &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for CHOICE command
+call :setError 666 & (choice <NUL >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (choice /c <NUL >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo A | choice /C:BA) >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (choice /C:BA <NUL >NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem syntax errors in command return INVALID_FUNCTION, need to find a test for returning 255
+echo --- success/failure for MORE command
+call :setError 666 & (more NUL &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (more I\dont\exist.txt > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (echo foo | more &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --- success/failure for PAUSE command
+call :setError 666 & (pause < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem TODO: pause is harder to test when fd 1 is a console handle as we don't control output
 echo ---
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
