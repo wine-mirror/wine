@@ -526,18 +526,10 @@ INT PSDRV_WriteEndPage( print_ctx *ctx )
 
 INT PSDRV_WriteNewPage( print_ctx *ctx )
 {
-    char *buf;
-    char name[100];
     signed int xtrans, ytrans, rotation;
-    int ret = 1;
+    char buf[256], name[16];
 
     sprintf(name, "%d", ctx->job.PageNo);
-
-    buf = HeapAlloc( GetProcessHeap(), 0, sizeof(psnewpage) + 200 );
-    if(!buf) {
-        WARN("HeapAlloc failed\n");
-        return 0;
-    }
 
     if(ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
         if(ctx->pi->ppd->LandscapeOrientation == -90) {
@@ -564,10 +556,9 @@ INT PSDRV_WriteNewPage( print_ctx *ctx )
 
     if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
-        ret = 0;
+        return 0;
     }
-    HeapFree( GetProcessHeap(), 0, buf );
-    return ret;
+    return 1;
 }
 
 
