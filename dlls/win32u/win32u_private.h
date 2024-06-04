@@ -53,7 +53,7 @@ extern void move_window_bits( HWND hwnd, const RECT *visible_rect, const RECT *o
                               const RECT *window_rect, const RECT *valid_rects );
 extern void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window_surface *old_surface,
                                       const RECT *old_visible_rect, const RECT *valid_rects );
-extern void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect,
+extern void move_window_bits_parent( HWND hwnd, const RECT *window_rect,
                                      const RECT *valid_rects );
 extern void register_window_surface( struct window_surface *old,
                                      struct window_surface *new );

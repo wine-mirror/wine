@@ -1265,7 +1265,7 @@ void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window
  *
  * Move the window bits in the parent surface when a child is moved.
  */
-void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, const RECT *valid_rects )
+void move_window_bits_parent( HWND hwnd, const RECT *window_rect, const RECT *valid_rects )
 {
     RECT dst = valid_rects[0];
     RECT src = valid_rects[1];
@@ -1273,7 +1273,6 @@ void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, c
     if (src.left != dst.left || src.top != dst.top)
     {
         TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
-        map_window_points( NtUserGetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2, get_thread_dpi() );
         OffsetRect( &src, -window_rect->left, -window_rect->top );
         OffsetRect( &dst, -window_rect->left, -window_rect->top );
 

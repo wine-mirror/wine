@@ -1959,7 +1959,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                     rects[1] = old_visible_rect;
                     valid_rects = rects;
                 }
-                move_window_bits_parent( hwnd, surface_win, window_rect, valid_rects );
+                move_window_bits_parent( hwnd, window_rect, valid_rects );
                 valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
             }
         }
