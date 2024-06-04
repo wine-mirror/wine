@@ -368,6 +368,7 @@ typedef struct
     PSDRV_DEVMODE	*Devmode;
     PRINTERINFO		*pi;
     int                 pathdepth;
+    RECT                bbox;
 } print_ctx;
 
 extern print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
