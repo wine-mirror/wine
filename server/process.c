@@ -1686,7 +1686,7 @@ DECL_HANDLER(get_process_idle_event)
     reply->event = 0;
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
-        if (process->idle_event && process != current->process)
+        if (process->idle_event)
             reply->event = alloc_handle( current->process, process->idle_event,
                                          EVENT_ALL_ACCESS, 0 );
         release_object( process );
