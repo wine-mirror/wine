@@ -343,7 +343,7 @@ SQLRETURN WINAPI SQLColAttribute(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
 
     params.StatementHandle  = handle->unix_handle;
     params.NumericAttribute = &num_attr;
-    if (SUCCESS(( ret = ODBC_CALL( SQLColAttribute, &params )))) *NumericAttribute = num_attr;
+    if (SUCCESS(( ret = ODBC_CALL( SQLColAttribute, &params ))) && NumericAttribute) *NumericAttribute = num_attr;
     TRACE("Returning %d\n", ret);
     return ret;
 }
@@ -2300,7 +2300,7 @@ SQLRETURN WINAPI SQLColAttributeW(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnN
 
     params.StatementHandle  = handle->unix_handle;
     params.NumericAttribute = &attr;
-    if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params )))) *NumericAttribute = attr;
+    if (SUCCESS((ret = ODBC_CALL( SQLColAttributeW, &params ))) && NumericAttribute) *NumericAttribute = attr;
 
     if (ret == SQL_SUCCESS && CharacterAttribute != NULL && SQLColAttributes_KnownStringAttribute(FieldIdentifier) &&
         StringLength && *StringLength != wcslen(CharacterAttribute) * 2)
