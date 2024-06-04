@@ -111,6 +111,9 @@ _ACRTIMP float __cdecl truncf(float);
 _ACRTIMP int __cdecl ilogb(double);
 _ACRTIMP int __cdecl ilogbf(float);
 
+_ACRTIMP float __cdecl fmaf(float x, float y, float z);
+_ACRTIMP double __cdecl fma(double x, double y, double z);
+
 _ACRTIMP __int64 __cdecl llrint(double);
 _ACRTIMP __int64 __cdecl llrintf(float);
 _ACRTIMP __int64 __cdecl llround(double);
