@@ -302,6 +302,8 @@ static void test_disableowner(void)
     DestroyWindow(parenthwnd);
 }
 
+HANDLE active_page_changed;
+
 static INT_PTR CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch(msg){
@@ -312,6 +314,8 @@ static INT_PTR CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             case PSN_SETACTIVE:
                 active_page = /* PropSheet_HwndToIndex(hdr->hwndFrom, hwnd); */
                     (int)SendMessageA(hdr->hwndFrom, PSM_HWNDTOINDEX, (WPARAM)hwnd, 0);
+                if (active_page_changed)
+                    SetEvent(active_page_changed);
                 return TRUE;
             case PSN_KILLACTIVE:
                 /* prevent navigation away from the fourth page */
@@ -1539,6 +1543,186 @@ static void test_init_page_creation(void)
     DestroyWindow(hp);
 }
 
+#define WM_DIALOG_IDLE (WM_USER + 0x99)
+
+static WNDPROC old_hotkeys_dialog_proc;
+static HWND hotkey_dialog;
+static HANDLE hotkey_dialog_idle;
+
+static LRESULT CALLBACK new_hotkeys_dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+        hotkey_dialog = hwnd;
+        PostMessageW(hwnd, WM_DIALOG_IDLE, 0, 0);
+        break;
+
+    case WM_DIALOG_IDLE:
+        SetEvent(hotkey_dialog_idle);
+        return TRUE;
+    }
+
+    return CallWindowProcW(old_hotkeys_dialog_proc, hwnd, msg, wparam, lparam);
+}
+
+
+static LRESULT CALLBACK hook_proc_hotkeys(int code, WPARAM wparam, LPARAM lparam)
+{
+    static BOOL done;
+    if (code == HCBT_CREATEWND)
+    {
+        CBT_CREATEWNDW *c = (CBT_CREATEWNDW *)lparam;
+
+        /* The first dialog created will be the parent dialog */
+        if (!done && c->lpcs->lpszClass == (LPWSTR)WC_DIALOG)
+        {
+            old_hotkeys_dialog_proc = (WNDPROC)SetWindowLongPtrW((HWND)wparam, GWLP_WNDPROC, (LONG_PTR)new_hotkeys_dialog_proc);
+            done = TRUE;
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wparam, lparam);
+}
+
+static DWORD WINAPI hotkey_dialog_thread(void *arg)
+{
+    HPROPSHEETPAGE hpsp[2];
+    PROPSHEETPAGEA psp[2];
+    PROPSHEETHEADERA psh;
+    HHOOK hook;
+    int i;
+
+    /* set up a hook proc in order to subclass the main dialog early on */
+    hook = SetWindowsHookExW(WH_CBT, hook_proc_hotkeys, NULL, GetCurrentThreadId());
+
+    /* create the property sheet pages */
+    memset(psp, 0, sizeof(PROPSHEETPAGEA) * ARRAY_SIZE(psp));
+
+    for (i = 0; i < ARRAY_SIZE(psp); i++)
+    {
+        psp[i].dwSize = sizeof(PROPSHEETPAGEA);
+        psp[i].hInstance = GetModuleHandleA(NULL);
+        psp[i].pszTemplate = (LPCSTR)MAKEINTRESOURCE(IDD_PROP_PAGE_RADIO);
+        psp[i].pfnDlgProc = nav_page_proc;
+        hpsp[i] = pCreatePropertySheetPageA(&psp[i]);
+    }
+
+    /* set up the property sheet dialog */
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = PROPSHEETHEADERA_V1_SIZE;
+    psh.dwFlags = PSH_WIZARD;
+    psh.pszCaption = "A Wizard";
+    psh.nPages = ARRAY_SIZE(psp);
+    psh.hwndParent = GetDesktopWindow();
+    psh.phpage = hpsp;
+    pPropertySheetA(&psh);
+
+    UnhookWindowsHookEx(hook);
+
+    return 0;
+}
+
+static void test_hotkey_navigation(void)
+{
+    HWND control;
+    HANDLE thread;
+    int i;
+    INPUT inputs[6] = {0};
+    BOOL success;
+
+    for (i = 0; i < ARRAY_SIZE(inputs); i++)
+    {
+        inputs[i].type = INPUT_KEYBOARD;
+    }
+
+    active_page_changed = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(active_page_changed != NULL, "CreateEvent failed, error %lu\n", GetLastError());
+    hotkey_dialog_idle = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(hotkey_dialog_idle != NULL, "CreateEvent failed, error %lu\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, hotkey_dialog_thread, NULL, 0, NULL);
+
+    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+    ResetEvent(active_page_changed);
+    success = SetForegroundWindow(hotkey_dialog);
+    ok(success, "SetForegroundWindow failed\n");
+    SetFocus(hotkey_dialog);
+
+    control = (HWND)SendMessageA(hotkey_dialog, PSM_GETCURRENTPAGEHWND, 0, 0);
+    active_page = (LONG)SendMessageA(hotkey_dialog, PSM_HWNDTOINDEX, (WPARAM)control, 0);
+    ok(active_page == 0, "Got %ld\n", active_page);
+
+    inputs[0].ki.wVk = VK_CONTROL;
+    inputs[0].ki.dwFlags = 0;
+    inputs[1].ki.wVk = VK_NEXT;
+    inputs[1].ki.dwFlags = 0;
+    inputs[2].ki.wVk = VK_NEXT;
+    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputs[3].ki.wVk = VK_CONTROL;
+    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(4, inputs, sizeof(INPUT));
+    WaitForSingleObject(active_page_changed, 1000);
+    todo_wine
+    ok(active_page == 1, "Got %ld\n", active_page);
+    PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
+    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+
+    inputs[0].ki.wVk = VK_CONTROL;
+    inputs[0].ki.dwFlags = 0;
+    inputs[1].ki.wVk = VK_PRIOR;
+    inputs[1].ki.dwFlags = 0;
+    inputs[2].ki.wVk = VK_PRIOR;
+    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputs[3].ki.wVk = VK_CONTROL;
+    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(4, inputs, sizeof(INPUT));
+    WaitForSingleObject(active_page_changed, 1000);
+    ok(active_page == 0, "Got %ld\n", active_page);
+    PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
+    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+
+    inputs[0].ki.wVk = VK_CONTROL;
+    inputs[0].ki.dwFlags = 0;
+    inputs[1].ki.wVk = VK_TAB;
+    inputs[1].ki.dwFlags = 0;
+    inputs[2].ki.wVk = VK_TAB;
+    inputs[2].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputs[3].ki.wVk = VK_CONTROL;
+    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(4, inputs, sizeof(INPUT));
+    WaitForSingleObject(active_page_changed, 1000);
+    todo_wine
+    ok(active_page == 1, "Got %ld\n", active_page);
+    PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
+    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+
+    inputs[0].ki.wVk = VK_CONTROL;
+    inputs[0].ki.dwFlags = 0;
+    inputs[1].ki.wVk = VK_SHIFT;
+    inputs[1].ki.dwFlags = 0;
+    inputs[2].ki.wVk = VK_TAB;
+    inputs[2].ki.dwFlags = 0;
+    inputs[3].ki.wVk = VK_TAB;
+    inputs[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputs[4].ki.wVk = VK_SHIFT;
+    inputs[4].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputs[5].ki.wVk = VK_CONTROL;
+    inputs[5].ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(6, inputs, sizeof(INPUT));
+    WaitForSingleObject(active_page_changed, 1000);
+    ok(active_page == 0, "Got %ld\n", active_page);
+    PostMessageW(hotkey_dialog, WM_DIALOG_IDLE, 0, 0);
+    WaitForSingleObject(hotkey_dialog_idle, INFINITE);
+
+    PostMessageA(hotkey_dialog, WM_CLOSE, 0, 0);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    CloseHandle(hotkey_dialog_idle);
+    CloseHandle(active_page_changed);
+    active_page_changed = NULL;
+}
+
 static void init_comctl32_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1595,6 +1779,7 @@ START_TEST(propsheet)
     test_invalid_hpropsheetpage();
     test_init_page_creation();
     test_QueryInitialFocus();
+    test_hotkey_navigation();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
