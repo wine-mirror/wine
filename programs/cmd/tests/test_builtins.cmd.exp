@@ -542,11 +542,11 @@ SUCCESS 666
 @todo_wine@SUCCESS@space@
 SUCCESS 0
 --- success/failure for DATE command
-@todo_wine@SUCCESS 0
-@todo_wine@FAILURE 1
+SUCCESS 0
+FAILURE 1
 --- success/failure for TIME command
-@todo_wine@SUCCESS 0
-@todo_wine@FAILURE 1
+SUCCESS 0
+FAILURE 1
 --- success/failure for BREAK command
 @todo_wine@SUCCESS 666
 @todo_wine@SUCCESS 666

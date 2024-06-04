@@ -2547,8 +2547,9 @@ RETURN_CODE WCMD_setshow_default(const WCHAR *args)
  * FIXME: Can't change date yet
  */
 
-void WCMD_setshow_date (void) {
-
+RETURN_CODE WCMD_setshow_date(void)
+{
+  RETURN_CODE return_code = NO_ERROR;
   WCHAR curdate[64], buffer[64];
   DWORD count;
 
@@ -2566,8 +2567,10 @@ void WCMD_setshow_date (void) {
     else WCMD_print_error ();
   }
   else {
+    return_code = ERROR_INVALID_FUNCTION;
     WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************
@@ -3333,8 +3336,9 @@ void WCMD_setshow_prompt (void) {
  * FIXME: Can't change time yet
  */
 
-void WCMD_setshow_time (void) {
-
+RETURN_CODE WCMD_setshow_time(void)
+{
+  RETURN_CODE return_code = NO_ERROR;
   WCHAR curtime[64], buffer[64];
   DWORD count;
   SYSTEMTIME st;
@@ -3354,8 +3358,10 @@ void WCMD_setshow_time (void) {
     else WCMD_print_error ();
   }
   else {
+    return_code = ERROR_INVALID_FUNCTION;
     WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************

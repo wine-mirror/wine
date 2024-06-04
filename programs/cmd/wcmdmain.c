@@ -1830,7 +1830,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_change_tty ();
         break;
       case WCMD_DATE:
-        WCMD_setshow_date ();
+        return_code = WCMD_setshow_date();
 	break;
       case WCMD_DEL:
       case WCMD_ERASE:
@@ -1893,7 +1893,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_start (parms_start);
         break;
       case WCMD_TIME:
-        WCMD_setshow_time ();
+        return_code = WCMD_setshow_time();
         break;
       case WCMD_TITLE:
         if (lstrlenW(&whichcmd[count]) > 0)
