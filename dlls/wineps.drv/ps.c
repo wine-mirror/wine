@@ -397,6 +397,17 @@ static void write_cups_job_ticket( print_ctx *ctx, const struct ticket_info *inf
         write_spool( ctx, cups_ap_d_inputslot, sizeof(cups_ap_d_inputslot) - 1 );
 }
 
+INT PSDRV_WritePageSize( print_ctx *ctx )
+{
+    PAGESIZE *page = find_pagesize( ctx->pi->ppd, &ctx->Devmode->dmPublic );
+
+    if (page && page->InvocationString)
+        PSDRV_WriteFeature( ctx, "*PageSize", page->Name, page->InvocationString );
+    else
+        WARN("Page size not set\n");
+    return 1;
+}
+
 INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
 {
     char *buf, *escaped_title;
@@ -444,8 +455,7 @@ INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
     if (slot && slot->InvocationString)
         PSDRV_WriteFeature( ctx, "*InputSlot", slot->Name, slot->InvocationString );
 
-    if (page && page->InvocationString)
-        PSDRV_WriteFeature( ctx, "*PageSize", page->Name, page->InvocationString );
+    PSDRV_WritePageSize( ctx );
 
     if (duplex && duplex->InvocationString)
         PSDRV_WriteFeature( ctx, "*Duplex", duplex->Name, duplex->InvocationString );

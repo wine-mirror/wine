@@ -466,6 +466,7 @@ extern char PSDRV_UnicodeToANSI(int u);
 
 extern INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title );
 extern INT PSDRV_WriteFooter( print_ctx *ctx );
+extern INT PSDRV_WritePageSize( print_ctx *ctx );
 extern INT PSDRV_WriteNewPage( print_ctx *ctx );
 extern INT PSDRV_WriteEndPage( print_ctx *ctx );
 extern BOOL PSDRV_WriteMoveTo(print_ctx *ctx, INT x, INT y);
