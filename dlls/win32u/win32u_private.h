@@ -49,10 +49,10 @@ extern void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect
                                              struct window_surface **surface );
 extern void erase_now( HWND hwnd, UINT rdw_flags );
 extern void flush_window_surfaces( BOOL idle );
-extern void move_window_bits( HWND hwnd, struct window_surface *old_surface,
-                              struct window_surface *new_surface,
-                              const RECT *visible_rect, const RECT *old_visible_rect,
+extern void move_window_bits( HWND hwnd, const RECT *visible_rect, const RECT *old_visible_rect,
                               const RECT *window_rect, const RECT *valid_rects );
+extern void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window_surface *old_surface,
+                                      const RECT *old_visible_rect, const RECT *valid_rects );
 extern void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect,
                                      const RECT *valid_rects );
 extern void register_window_surface( struct window_surface *old,

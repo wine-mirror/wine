@@ -1929,8 +1929,10 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         {
             if (valid_rects)
             {
-                move_window_bits( hwnd, old_surface, new_surface, &visible_rect,
-                                  &old_visible_rect, window_rect, valid_rects );
+                if (old_surface != new_surface)
+                    move_window_bits_surface( hwnd, window_rect, old_surface, &old_visible_rect, valid_rects );
+                else
+                    move_window_bits( hwnd, &visible_rect, &old_visible_rect, window_rect, valid_rects );
                 valid_rects = NULL;  /* prevent the driver from trying to also move the bits */
             }
             window_surface_release( old_surface );
