@@ -3063,11 +3063,9 @@ static void test_FindFirstFile_wildcards(void)
         {0, "* ..", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
         {0, " *..", ""},
         {0, "..* ", ", '.', '..', '..a', '..a.a'"},
-        {1, "a*.", ", '..a', '.a', '.aaa', 'a', 'aa', 'aaa', 'aaaa'"},
+        {0, "a*.", ", '..a', '.a', '.aaa', 'a', 'aa', 'aaa', 'aaaa'"},
         {0, "*a ", ", '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa', ' .a'"},
-
-        /* a.a.a not found due to short name mismatch, a.a.a -> "AA6BF5~1.A on Windows. */
-        {1, "*aa*", ", '.aaa', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
+        {0, "*aa*", ", '.aaa', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
 
         {1, "<.<.<", ", '..a', '..a.a', '.a..a', '.a.a', 'a..a', 'a.a.a'"},
         {1, "<.<.", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a..a', 'a.a', 'a.a.a', ' .a'"},

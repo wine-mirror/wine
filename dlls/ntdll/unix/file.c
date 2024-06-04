@@ -1383,13 +1383,17 @@ static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer 
     }
 
     /* Find last dot for start of the extension */
-    for (p = name + 1, ext = NULL; p < end - 1; p++) if (*p == '.') ext = p;
+    p = name;
+    while (*p == '.') ++p;
+    for (p = p + 1, ext = NULL; p < end - 1; p++) if (*p == '.') ext = p;
 
     /* Copy first 4 chars, replacing invalid chars with '_' */
-    for (i = 4, p = name, dst = buffer; i > 0; i--, p++)
+    for (i = 4, p = name, dst = buffer; i > 0; p++)
     {
         if (p == end || p == ext) break;
+        if (*p == '.') continue;
         *dst++ = is_invalid_dos_char(*p) ? '_' : *p;
+        i--;
     }
     /* Pad to 5 chars with '~' */
     while (i-- >= 0) *dst++ = '~';
