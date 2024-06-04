@@ -93,8 +93,10 @@ static const char psendfeature[] =
 "\n%%EndFeature\n"
 "} stopped cleartomark\n";
 
-static const char psnewpage[] = /* name, number, orientation, xres, yres, xtrans, ytrans, rot */
+static const char psnewpage[] = /* name, number, llx, lly, urx, ury, orientation,
+                                   xres, yres, xtrans, ytrans, rot */
 "%%%%Page: %s %d\n"
+"%%%%PageBoundingBox: %ld %ld %ld %ld\n"
 "%%%%PageOrientation: %s\n"
 "%%%%BeginPageSetup\n"
 "/pgsave save def\n"
@@ -560,6 +562,7 @@ INT PSDRV_WriteNewPage( print_ctx *ctx )
     }
 
     sprintf(buf, psnewpage, name, ctx->job.PageNo,
+            bbox.left, bbox.top, bbox.right, bbox.bottom,
             ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait",
             GetDeviceCaps(ctx->hdc, ASPECTX), GetDeviceCaps(ctx->hdc, ASPECTY),
             xtrans, ytrans, rotation);
