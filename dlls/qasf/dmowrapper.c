@@ -202,6 +202,20 @@ static void dmo_wrapper_sink_disconnect(struct strmbase_sink *iface)
     IMediaObject_Release(dmo);
 }
 
+static void release_output_samples(struct dmo_wrapper *filter)
+{
+    DWORD i;
+
+    for (i = 0; i < filter->source_count; ++i)
+    {
+        if (filter->sources[i].buffer.sample)
+        {
+            IMediaSample_Release(filter->sources[i].buffer.sample);
+            filter->sources[i].buffer.sample = NULL;
+        }
+    }
+}
+
 static HRESULT get_output_samples(struct dmo_wrapper *filter)
 {
     HRESULT hr;
@@ -215,6 +229,7 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
                     &filter->sources[i].buffer.sample, NULL, NULL, 0)))
             {
                 ERR("Failed to get sample for source %lu, hr %#lx.\n", i, hr);
+                release_output_samples(filter);
                 return hr;
             }
             filter->buffers[i].pBuffer = &filter->sources[i].buffer.IMediaBuffer_iface;
@@ -235,7 +250,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
     HRESULT hr;
 
     if (FAILED(hr = get_output_samples(filter)))
-        goto out;
+        return hr;
 
     do
     {
@@ -275,7 +290,8 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
                 if (FAILED(hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)))
                 {
                     WARN("Downstream sink returned %#lx.\n", hr);
-                    goto out;
+                    release_output_samples(filter);
+                    return hr;
                 }
                 IMediaSample_SetActualDataLength(sample, 0);
             }
@@ -283,16 +299,7 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
         }
     } while (more_data);
 
-out:
-    for (i = 0; i < filter->source_count; ++i)
-    {
-        if (filter->sources[i].buffer.sample)
-        {
-            IMediaSample_Release(filter->sources[i].buffer.sample);
-            filter->sources[i].buffer.sample = NULL;
-        }
-    }
-
+    release_output_samples(filter);
     return hr;
 }
 
