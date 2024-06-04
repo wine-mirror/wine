@@ -3538,8 +3538,10 @@ void WCMD_start(WCHAR *args)
  *
  * Set the console title
  */
-void WCMD_title (const WCHAR *args) {
-  SetConsoleTitleW(args);
+RETURN_CODE WCMD_title(const WCHAR *args)
+{
+    SetConsoleTitleW(args);
+    return NO_ERROR;
 }
 
 /****************************************************************************

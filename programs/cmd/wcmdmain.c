@@ -1895,8 +1895,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_setshow_time();
         break;
       case WCMD_TITLE:
-        if (lstrlenW(&whichcmd[count]) > 0)
-          WCMD_title(&whichcmd[count+1]);
+        return_code = WCMD_title(parms_start);
         break;
       case WCMD_TYPE:
         return_code = WCMD_type(parms_start);
