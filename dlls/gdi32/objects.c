@@ -886,89 +886,15 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT start, UINT count, const RGBQUAD *co
     return NtGdiDoPalette( hdc, start, count, (void *)colors, NtGdiSetDIBColorTable, FALSE );
 }
 
-static HANDLE get_display_device_init_mutex( void )
-{
-    HANDLE mutex = CreateMutexW( NULL, FALSE, L"display_device_init" );
-
-    WaitForSingleObject( mutex, INFINITE );
-    return mutex;
-}
-
-static void release_display_device_init_mutex( HANDLE mutex )
-{
-    ReleaseMutex( mutex );
-    CloseHandle( mutex );
-}
-
 /***********************************************************************
  *           D3DKMTOpenAdapterFromGdiDisplayName    (GDI32.@)
  */
 NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
 {
-    WCHAR *end, key_nameW[MAX_PATH], bufferW[MAX_PATH];
-    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
-    NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DKMT_OPENADAPTERFROMLUID luid_desc;
-    SP_DEVINFO_DATA device_data;
-    DWORD size, state_flags;
-    DEVPROPTYPE type;
-    HANDLE mutex;
-    int index;
-
     TRACE("(%p)\n", desc);
 
-    if (!desc)
-        return STATUS_UNSUCCESSFUL;
-
-    TRACE("DeviceName: %s\n", wine_dbgstr_w( desc->DeviceName ));
-    if (wcsnicmp( desc->DeviceName, L"\\\\.\\DISPLAY", lstrlenW(L"\\\\.\\DISPLAY") ))
-        return STATUS_UNSUCCESSFUL;
-
-    index = wcstol( desc->DeviceName + lstrlenW(L"\\\\.\\DISPLAY"), &end, 10 ) - 1;
-    if (*end)
-        return STATUS_UNSUCCESSFUL;
-
-    /* Get adapter LUID from SetupAPI */
-    mutex = get_display_device_init_mutex();
-
-    size = sizeof( bufferW );
-    swprintf( key_nameW, MAX_PATH, L"\\Device\\Video%d", index );
-    if (RegGetValueW( HKEY_LOCAL_MACHINE, L"HARDWARE\\DEVICEMAP\\VIDEO", key_nameW,
-                      RRF_RT_REG_SZ, NULL, bufferW, &size ))
-        goto done;
-
-    /* Strip \Registry\Machine\ prefix and retrieve Wine specific data set by the display driver */
-    lstrcpyW( key_nameW, bufferW + 18 );
-    size = sizeof( state_flags );
-    if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, L"StateFlags", RRF_RT_REG_DWORD, NULL,
-                      &state_flags, &size ))
-        goto done;
-
-    if (!(state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
-        goto done;
-
-    size = sizeof( bufferW );
-    if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, L"GPUID", RRF_RT_REG_SZ, NULL, bufferW, &size ))
-        goto done;
-
-    devinfo = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_DISPLAY, NULL );
-    device_data.cbSize = sizeof( device_data );
-    SetupDiOpenDeviceInfoW( devinfo, bufferW, NULL, 0, &device_data );
-    if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
-                                    (BYTE *)&luid_desc.AdapterLuid, sizeof( luid_desc.AdapterLuid ),
-                                    NULL, 0))
-        goto done;
-
-    if ((status = NtGdiDdDDIOpenAdapterFromLuid( &luid_desc ))) goto done;
-
-    desc->hAdapter = luid_desc.hAdapter;
-    desc->AdapterLuid = luid_desc.AdapterLuid;
-    desc->VidPnSourceId = index;
-
-done:
-    SetupDiDestroyDeviceInfoList( devinfo );
-    release_display_device_init_mutex( mutex );
-    return status;
+    if (!desc) return STATUS_UNSUCCESSFUL;
+    return NtUserD3DKMTOpenAdapterFromGdiDisplayName( desc );
 }
 
 /***********************************************************************

@@ -2730,6 +2730,34 @@ static void monitor_get_interface_name( struct monitor *monitor, WCHAR *interfac
     asciiz_to_unicode( interface_name, buffer );
 }
 
+/* see D3DKMTOpenAdapterFromGdiDisplayName */
+static NTSTATUS d3dkmt_open_adapter_from_gdi_display_name( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    D3DKMT_OPENADAPTERFROMLUID luid_desc;
+    struct source *source;
+    UNICODE_STRING name;
+
+    TRACE( "desc %p, name %s\n", desc, debugstr_w( desc->DeviceName ) );
+
+    RtlInitUnicodeString( &name, desc->DeviceName );
+    if (!name.Length) return STATUS_UNSUCCESSFUL;
+    if (!(source = find_source( &name ))) return STATUS_UNSUCCESSFUL;
+
+    luid_desc.AdapterLuid = source->gpu->luid;
+    if ((source->state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) &&
+        !(status = NtGdiDdDDIOpenAdapterFromLuid( &luid_desc )))
+    {
+        desc->hAdapter = luid_desc.hAdapter;
+        desc->AdapterLuid = luid_desc.AdapterLuid;
+        desc->VidPnSourceId = source->id + 1;
+    }
+
+    source_release( source );
+    return status;
+}
+
+
 /***********************************************************************
  *	     NtUserEnumDisplayDevices    (win32u.@)
  */
@@ -6432,6 +6460,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_SetThreadDpiAwarenessContext:
         return set_thread_dpi_awareness_context( arg );
+
+    case NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName:
+        return d3dkmt_open_adapter_from_gdi_display_name( (void *)arg );
 
     /* temporary exports */
     case NtUserGetDeskPattern:

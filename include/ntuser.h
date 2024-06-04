@@ -912,6 +912,7 @@ enum
     NtUserCallOneParam_SetProcessDefaultLayout,
     NtUserCallOneParam_SetKeyboardAutoRepeat,
     NtUserCallOneParam_SetThreadDpiAwarenessContext,
+    NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName,
     /* temporary exports */
     NtUserGetDeskPattern,
 };
@@ -1033,6 +1034,13 @@ static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
 static inline UINT NtUserSetThreadDpiAwarenessContext( UINT context )
 {
     return NtUserCallOneParam( context, NtUserCallOneParam_SetThreadDpiAwarenessContext );
+}
+
+typedef struct _D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME;
+
+static inline NTSTATUS NtUserD3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
+{
+    return NtUserCallOneParam( (UINT_PTR)desc, NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName );
 }
 
 /* NtUserCallTwoParam codes, not compatible with Windows */
