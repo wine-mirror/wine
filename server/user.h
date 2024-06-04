@@ -113,6 +113,7 @@ extern void set_queue_hooks( struct thread *thread, struct hook_table *hooks );
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int init_thread_queue( struct thread *thread );
+extern void check_thread_queue_idle( struct thread *thread );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void detach_thread_input( struct thread *thread_from );
 extern void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect,

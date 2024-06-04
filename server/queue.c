@@ -1098,7 +1098,6 @@ static int is_queue_hung( struct msg_queue *queue )
 static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    struct process *process = get_wait_queue_thread(entry)->process;
 
     /* a thread can only wait on its own queue */
     if (get_wait_queue_thread(entry)->queue != queue)
@@ -1106,7 +1105,6 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    if (process->idle_event && !(queue->wake_mask & QS_SMRESULT)) set_event( process->idle_event );
 
     if (queue->fd && list_empty( &obj->wait_queue ))  /* first on the queue */
         set_fd_events( queue->fd, POLLIN );
@@ -1253,6 +1251,14 @@ static int check_queue_input_window( struct msg_queue *queue, user_handle_t wind
     else set_error( STATUS_INVALID_HANDLE );
 
     return ret;
+}
+
+/* check if the thread queue is idle and set the process idle event if so */
+void check_thread_queue_idle( struct thread *thread )
+{
+    struct msg_queue *queue = thread->queue;
+    if ((queue->wake_mask & QS_SMRESULT)) return;
+    if (thread->process->idle_event) set_event( thread->process->idle_event );
 }
 
 /* make sure the specified thread has a queue */
