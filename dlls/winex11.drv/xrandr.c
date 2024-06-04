@@ -49,6 +49,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #include "wine/vulkan_driver.h"
 
 static void *xrandr_handle;
+static void *vulkan_handle;
+static void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XRRConfigCurrentConfiguration)
@@ -134,6 +136,45 @@ sym_not_found:
         if (!r)  TRACE("Unable to load function ptrs from XRandR library\n");
     }
     return r;
+}
+
+#ifdef SONAME_LIBVULKAN
+
+static void vulkan_init_once(void)
+{
+    if (!(vulkan_handle = dlopen( SONAME_LIBVULKAN, RTLD_NOW )))
+    {
+        ERR( "Failed to load %s\n", SONAME_LIBVULKAN );
+        return;
+    }
+
+#define LOAD_FUNCPTR( f )                                                                          \
+    if (!(p_##f = dlsym( vulkan_handle, #f )))                                                     \
+    {                                                                                              \
+        ERR( "Failed to find " #f "\n" );                                                          \
+        dlclose( vulkan_handle );                                                                  \
+        vulkan_handle = NULL;                                                                      \
+        return;                                                                                    \
+    }
+
+    LOAD_FUNCPTR( vkGetInstanceProcAddr );
+#undef LOAD_FUNCPTR
+}
+
+#else /* SONAME_LIBVULKAN */
+
+static void vulkan_init_once(void)
+{
+    ERR( "Wine was built without Vulkan support.\n" );
+}
+
+#endif /* SONAME_LIBVULKAN */
+
+static BOOL vulkan_init(void)
+{
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+    pthread_once( &init_once, vulkan_init_once );
+    return !!vulkan_handle;
 }
 
 static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
@@ -641,11 +682,11 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
         "VK_KHR_display",
         VK_KHR_SURFACE_EXTENSION_NAME,
     };
-    const struct vulkan_funcs *vulkan_funcs = __wine_get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
     VkResult (*pvkGetRandROutputDisplayEXT)( VkPhysicalDevice, Display *, RROutput, VkDisplayKHR * );
     PFN_vkGetPhysicalDeviceProperties2KHR pvkGetPhysicalDeviceProperties2KHR;
     PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
     uint32_t device_count, device_idx, output_idx, i;
+    PFN_vkDestroyInstance pvkDestroyInstance = NULL;
     VkPhysicalDevice *vk_physical_devices = NULL;
     VkPhysicalDeviceProperties2 properties2;
     PFN_vkCreateInstance pvkCreateInstance;
@@ -656,8 +697,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     BOOL ret = FALSE;
     VkResult vr;
 
-    if (!vulkan_funcs)
-        goto done;
+    if (!vulkan_init()) goto done;
 
     memset( &create_info, 0, sizeof(create_info) );
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -665,7 +705,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     create_info.ppEnabledExtensionNames = extensions;
 
 #define LOAD_VK_FUNC(f)                                                             \
-    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, #f ))) \
+    if (!(p##f = (void *)p_vkGetInstanceProcAddr( vk_instance, #f ))) \
     {                                                                               \
         WARN("Failed to load " #f ".\n");                                           \
         goto done;                                                                  \
@@ -683,6 +723,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
     LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2KHR)
     LOAD_VK_FUNC(vkGetRandROutputDisplayEXT)
+    LOAD_VK_FUNC(vkDestroyInstance)
 #undef LOAD_VK_FUNC
 
     vr = pvkEnumeratePhysicalDevices( vk_instance, &device_count, NULL );
@@ -747,12 +788,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
 
 done:
     free( vk_physical_devices );
-    if (vk_instance)
-    {
-        PFN_vkDestroyInstance p_vkDestroyInstance;
-        p_vkDestroyInstance = vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, "vkDestroyInstance" );
-        p_vkDestroyInstance( vk_instance, NULL );
-    }
+    if (vk_instance && pvkDestroyInstance) pvkDestroyInstance( vk_instance, NULL );
     return ret;
 }
 
