@@ -439,14 +439,10 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
 /***********************************************************************
  *		wglGetLayerPaletteEntries (OPENGL32.@)
  */
-int WINAPI wglGetLayerPaletteEntries(HDC hdc,
-				     int iLayerPlane,
-				     int iStart,
-				     int cEntries,
-				     const COLORREF *pcr) {
-  FIXME("(): stub!\n");
-
-  return 0;
+int WINAPI wglGetLayerPaletteEntries( HDC hdc, int plane, int start, int count, COLORREF *colors )
+{
+    FIXME( "hdc %p, plane %d, start %d, count %d, colors %p, stub!\n", hdc, plane, start, count, colors );
+    return 0;
 }
 
 /***********************************************************************
