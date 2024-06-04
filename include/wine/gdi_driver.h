@@ -271,8 +271,6 @@ struct gdi_device_manager
 
 #define WINE_DM_UNSUPPORTED 0x80000000
 
-struct tagUPDATELAYEREDWINDOWINFO;
-
 struct vulkan_driver_funcs;
 
 struct user_driver_funcs
@@ -337,7 +335,7 @@ struct user_driver_funcs
     UINT    (*pShowWindow)(HWND,INT,RECT*,UINT);
     LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM);
     BOOL    (*pCreateLayeredWindow)(HWND,const RECT *,COLORREF,struct window_surface **);
-    BOOL    (*pUpdateLayeredWindow)(HWND,const struct tagUPDATELAYEREDWINDOWINFO*,const RECT*,struct window_surface*);
+    void    (*pUpdateLayeredWindow)(HWND,const RECT *,COLORREF,BYTE,UINT);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
     BOOL    (*pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,
                                   struct window_surface**);

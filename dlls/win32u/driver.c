@@ -874,10 +874,9 @@ static BOOL nulldrv_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COL
     return TRUE;
 }
 
-static BOOL nulldrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                         const RECT *window_rect, struct window_surface *surface )
+static void nulldrv_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                         BYTE alpha, UINT flags )
 {
-    return TRUE;
 }
 
 static LRESULT nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -1221,10 +1220,10 @@ static BOOL loaderdrv_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, C
     return load_driver()->pCreateLayeredWindow( hwnd, window_rect, color_key, surface );
 }
 
-static BOOL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                           const RECT *window_rect, struct window_surface *surface )
+static void loaderdrv_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                           BYTE alpha, UINT flags )
 {
-    return load_driver()->pUpdateLayeredWindow( hwnd, info, window_rect, surface );
+    load_driver()->pUpdateLayeredWindow( hwnd, window_rect, color_key, alpha, flags );
 }
 
 static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )

@@ -1909,51 +1909,17 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
 /***********************************************************************
  *              UpdateLayeredWindow   (MACDRV.@)
  */
-BOOL macdrv_UpdateLayeredWindow(HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                const RECT *window_rect, struct window_surface *surface)
+void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                BYTE alpha, UINT flags)
 {
     struct macdrv_win_data *data;
-    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    RECT rect, src_rect;
-    HDC hdc;
-    BOOL ret = FALSE;
-
-    rect = *window_rect;
-    OffsetRect(&rect, -window_rect->left, -window_rect->top);
-
-    if (!info->hdcSrc) return TRUE;
-
-    if (!(hdc = NtGdiCreateCompatibleDC(0))) return FALSE;
-    window_surface_lock(surface);
-    NtGdiSelectBitmap(hdc, surface->color_bitmap);
-
-    if (info->prcDirty) intersect_rect(&rect, &rect, info->prcDirty);
-    NtGdiPatBlt(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS);
-    src_rect = rect;
-    if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
-    NtGdiTransformPoints(info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP);
-
-    if (info->dwFlags & ULW_ALPHA) blend = *info->pblend;
-    if (!(ret = NtGdiAlphaBlend(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                                info->hdcSrc, src_rect.left, src_rect.top,
-                                src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                                *(DWORD *)&blend, 0)))
-        goto done;
-    if (ret) add_bounds_rect( &surface->bounds, &rect );
-
-    NtGdiDeleteObjectApp( hdc );
-    window_surface_unlock( surface );
-    window_surface_flush( surface );
 
     if ((data = get_win_data(hwnd)))
     {
         /* The ULW flags are a superset of the LWA flags. */
-        sync_window_opacity(data, info->crKey, 255, TRUE, info->dwFlags);
+        sync_window_opacity(data, color_key, 255, TRUE, flags);
         release_win_data(data);
     }
-
-done:
-    return ret;
 }
 
 

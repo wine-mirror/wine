@@ -421,7 +421,6 @@ static const struct user_driver_funcs x11drv_funcs =
     .pClipboardWindowProc = X11DRV_ClipboardWindowProc,
     .pUpdateClipboard = X11DRV_UpdateClipboard,
     .pCreateLayeredWindow = X11DRV_CreateLayeredWindow,
-    .pUpdateLayeredWindow = X11DRV_UpdateLayeredWindow,
     .pWindowMessage = X11DRV_WindowMessage,
     .pWindowPosChanging = X11DRV_WindowPosChanging,
     .pWindowPosChanged = X11DRV_WindowPosChanged,

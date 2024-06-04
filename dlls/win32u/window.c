@@ -2123,9 +2123,8 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     DWORD swp_flags = SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW;
     struct window_surface *surface;
     RECT window_rect, client_rect;
-    UPDATELAYEREDWINDOWINFO info;
     SIZE offset;
-    BOOL ret;
+    BOOL ret = FALSE;
 
     if (flags & ~(ULW_COLORKEY | ULW_ALPHA | ULW_OPAQUE | ULW_EX_NORESIZE) ||
         !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
@@ -2174,18 +2173,41 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     if (!(flags & ULW_COLORKEY)) key = CLR_INVALID;
     if (!(user_driver->pCreateLayeredWindow( hwnd, &window_rect, key, &surface )) || !surface) return FALSE;
 
-    info.cbSize   = sizeof(info);
-    info.hdcDst   = hdc_dst;
-    info.pptDst   = pts_dst;
-    info.psize    = size;
-    info.hdcSrc   = hdc_src;
-    info.pptSrc   = pts_src;
-    info.crKey    = key;
-    info.pblend   = blend;
-    info.dwFlags  = flags;
-    info.prcDirty = dirty;
-    ret = user_driver->pUpdateLayeredWindow( hwnd, &info, &window_rect, surface );
+    if (!hdc_src) ret = TRUE;
+    else
+    {
+        BLENDFUNCTION src_blend = { AC_SRC_OVER, 0, 255, 0 };
+        RECT rect = window_rect, src_rect;
+        UINT alpha = 0xff;
+        HDC hdc = NULL;
 
+        OffsetRect( &rect, -rect.left, -rect.top );
+
+        if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
+        window_surface_lock( surface );
+        NtGdiSelectBitmap( hdc, surface->color_bitmap );
+
+        if (dirty) intersect_rect( &rect, &rect, dirty );
+        NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+
+        src_rect = rect;
+        if (pts_src) OffsetRect( &src_rect, pts_src->x, pts_src->y );
+        NtGdiTransformPoints( hdc_src, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
+
+        if (flags & ULW_ALPHA) src_blend = *blend;
+        ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                               hdc_src, src_rect.left, src_rect.top, src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
+                               *(DWORD *)&src_blend, 0 );
+        if (ret) add_bounds_rect( &surface->bounds, &rect );
+
+        NtGdiDeleteObjectApp( hdc );
+        window_surface_unlock( surface );
+        window_surface_flush( surface );
+
+        user_driver->pUpdateLayeredWindow( hwnd, &window_rect, key, alpha, flags );
+    }
+
+done:
     window_surface_release( surface );
     return ret;
 }

@@ -578,15 +578,6 @@ static struct android_window_surface *get_android_surface( struct window_surface
     return (struct android_window_surface *)surface;
 }
 
-static inline void add_bounds_rect( RECT *bounds, const RECT *rect )
-{
-    if (rect->left >= rect->right || rect->top >= rect->bottom) return;
-    bounds->left   = min( bounds->left, rect->left );
-    bounds->top    = min( bounds->top, rect->top );
-    bounds->right  = max( bounds->right, rect->right );
-    bounds->bottom = max( bounds->bottom, rect->bottom );
-}
-
 /* store the palette or color mask data in the bitmap info structure */
 static void set_color_info( BITMAPINFO *info, BOOL has_alpha )
 {
@@ -1416,46 +1407,6 @@ BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF c
     release_win_data( data );
 
     return TRUE;
-}
-
-/*****************************************************************************
- *              ANDROID_UpdateLayeredWindow
- */
-BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                  const RECT *window_rect, struct window_surface *surface )
-{
-    BLENDFUNCTION blend = { AC_SRC_OVER, 0, 255, 0 };
-    RECT rect, src_rect;
-    HDC hdc;
-    BOOL ret;
-
-    rect = *window_rect;
-    OffsetRect( &rect, -window_rect->left, -window_rect->top );
-
-    if (!info->hdcSrc) return TRUE;
-
-    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) return FALSE;
-    window_surface_lock( surface );
-    NtGdiSelectBitmap( hdc, surface->color_bitmap );
-
-    if (info->prcDirty) intersect_rect( &rect, &rect, info->prcDirty );
-    NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
-    src_rect = rect;
-    if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
-    NtGdiTransformPoints( info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
-
-    if (info->dwFlags & ULW_ALPHA) blend = *info->pblend;
-    ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                           info->hdcSrc, src_rect.left, src_rect.top,
-                           src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                           *(DWORD *)&blend, 0 );
-    if (ret) add_bounds_rect( &surface->bounds, &rect );
-
-    NtGdiDeleteObjectApp( hdc );
-    window_surface_unlock( surface );
-    window_surface_flush( surface );
-
-    return ret;
 }
 
 
