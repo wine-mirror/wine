@@ -51,12 +51,11 @@ static const char cups_collate_false[] = "%cupsJobTicket: collate=false\n";
 static const char cups_collate_true[] = "%cupsJobTicket: collate=true\n";
 static const char cups_ap_d_inputslot[] = "%cupsJobTicket: AP_D_InputSlot=\n"; /* intentionally empty value */
 
-static const char psheader[] = /* title llx lly urx ury orientation */
+static const char psheader[] = /* title llx lly urx ury */
 "%%%%Creator: Wine PostScript Driver\n"
 "%%%%Title: %s\n"
 "%%%%BoundingBox: %d %d %d %d\n"
 "%%%%Pages: (atend)\n"
-"%%%%Orientation: %s\n"
 "%%%%EndComments\n";
 
 static const char psbeginprolog[] =
@@ -94,8 +93,9 @@ static const char psendfeature[] =
 "\n%%EndFeature\n"
 "} stopped cleartomark\n";
 
-static const char psnewpage[] = /* name, number, xres, yres, xtrans, ytrans, rot */
+static const char psnewpage[] = /* name, number, orientation, xres, yres, xtrans, ytrans, rot */
 "%%%%Page: %s %d\n"
+"%%%%PageOrientation: %s\n"
 "%%%%BeginPageSetup\n"
 "/pgsave save def\n"
 "72 %d div 72 %d div scale\n"
@@ -402,7 +402,6 @@ INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
     DUPLEX *duplex = find_duplex( ctx->pi->ppd, &ctx->Devmode->dmPublic );
     int llx, lly, urx, ury;
     int ret, len;
-    const char * dmOrientation;
 
     struct ticket_info ticket_info = { page, duplex };
 
@@ -459,8 +458,7 @@ INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title )
     }
     /* FIXME should do something better with BBox */
 
-    dmOrientation = (ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait");
-    sprintf(buf, psheader, escaped_title, llx, lly, urx, ury, dmOrientation);
+    sprintf(buf, psheader, escaped_title, llx, lly, urx, ury);
 
     HeapFree(GetProcessHeap(), 0, escaped_title);
 
@@ -551,8 +549,9 @@ INT PSDRV_WriteNewPage( print_ctx *ctx )
     }
 
     sprintf(buf, psnewpage, name, ctx->job.PageNo,
-	    GetDeviceCaps(ctx->hdc, ASPECTX), GetDeviceCaps(ctx->hdc, ASPECTY),
-	    xtrans, ytrans, rotation);
+            ctx->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE ? "Landscape" : "Portrait",
+            GetDeviceCaps(ctx->hdc, ASPECTX), GetDeviceCaps(ctx->hdc, ASPECTY),
+            xtrans, ytrans, rotation);
 
     if( write_spool( ctx, buf, strlen(buf) ) != strlen(buf) ) {
         WARN("WriteSpool error\n");
