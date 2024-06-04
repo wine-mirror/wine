@@ -792,7 +792,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
     surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
-    if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, info, 0 )) goto failed;
+    if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect, info, 0 )) goto failed;
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window       = get_ioctl_window( hwnd );

@@ -235,7 +235,7 @@ struct window_surface
 };
 
 W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
-                                  HWND hwnd, BITMAPINFO *info, HBITMAP bitmap );
+                                  HWND hwnd, const RECT *rect, BITMAPINFO *info, HBITMAP bitmap );
 W32KAPI void window_surface_add_ref( struct window_surface *surface );
 W32KAPI void window_surface_release( struct window_surface *surface );
 W32KAPI void window_surface_lock( struct window_surface *surface );

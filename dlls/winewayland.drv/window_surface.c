@@ -470,7 +470,7 @@ struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect
 
     wws = calloc(1, sizeof(*wws));
     if (!wws) return NULL;
-    if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, info, 0)) goto failed;
+    if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect, info, 0)) goto failed;
     wws->info = *info;
 
     TRACE("created %p hwnd %p %s bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),

@@ -188,7 +188,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
     /* create a new window surface */
     *surface = NULL;
     if (!(impl = calloc(1, sizeof(*impl)))) return;
-    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, info, 0 );
+    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, &surface_rect, info, 0 );
     impl->info = *info;
 
     TRACE( "created window surface %p\n", &impl->header );
@@ -199,7 +199,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
 /* window surface common helpers */
 
 W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
-                                  HWND hwnd, BITMAPINFO *info, HBITMAP bitmap )
+                                  HWND hwnd, const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
 {
     struct bitblt_coords coords = {0};
     struct gdi_image_bits bits;
@@ -208,7 +208,7 @@ W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct w
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
-    SetRect( &surface->rect, 0, 0, info->bmiHeader.biWidth, abs( info->bmiHeader.biHeight ) );
+    surface->rect = *rect;
     pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
 
@@ -256,6 +256,7 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
 
     window_surface_lock( surface );
 
+    OffsetRect( &dirty, -dirty.left, -dirty.top );
     if (intersect_rect( &dirty, &dirty, &surface->bounds ))
     {
         TRACE( "Flushing hwnd %p, surface %p %s, bounds %s, dirty %s\n", surface->hwnd, surface,

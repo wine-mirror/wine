@@ -2098,7 +2098,7 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     surface->image = image;
     surface->byteswap = byteswap;
 
-    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, info, bitmap )) goto failed;
+    if (!window_surface_init( &surface->header, &x11drv_surface_funcs, hwnd, rect, info, bitmap )) goto failed;
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;

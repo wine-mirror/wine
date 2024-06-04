@@ -147,7 +147,7 @@ struct window_surface *create_surface(HWND hwnd, macdrv_window window, const REC
 
     surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
     if (!surface) return NULL;
-    if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, info, 0)) goto failed;
+    if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, 0)) goto failed;
     memcpy(&surface->info, info, offsetof(BITMAPINFO, bmiColors[3]));
 
     surface->window = window;
