@@ -1190,25 +1190,9 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
 }
 
 /***********************************************************************
- *           copy_bits_from_surface
- *
- * Copy bits from a window surface; helper for move_window_bits and move_window_bits_parent.
- */
-static void copy_bits_from_surface( HWND hwnd, const RECT *dst, const RECT *src )
-{
-    UINT flags = UPDATE_NOCHILDREN | UPDATE_CLIPCHILDREN;
-    HRGN rgn = get_update_region( hwnd, &flags, NULL );
-    HDC hdc = NtUserGetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
-
-    NtGdiStretchBlt( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
-                     hdc, src->left, src->top, src->right - src->left, src->bottom - src->top, SRCCOPY, 0 );
-    NtUserReleaseDC( hwnd, hdc );
-}
-
-/***********************************************************************
  *           move_window_bits
  *
- * Move the window bits when a window is resized.
+ * Move the window bits when a window is resized, or moved within a parent window.
  */
 void move_window_bits( HWND hwnd, const RECT *visible_rect, const RECT *old_visible_rect,
                        const RECT *window_rect, const RECT *valid_rects )
@@ -1219,10 +1203,17 @@ void move_window_bits( HWND hwnd, const RECT *visible_rect, const RECT *old_visi
     if (src.left - old_visible_rect->left != dst.left - visible_rect->left ||
         src.top - old_visible_rect->top != dst.top - visible_rect->top)
     {
+        UINT flags = UPDATE_NOCHILDREN | UPDATE_CLIPCHILDREN;
+        HRGN rgn = get_update_region( hwnd, &flags, NULL );
+        HDC hdc = NtUserGetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
+
         TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
         OffsetRect( &src, -window_rect->left, -window_rect->top );
         OffsetRect( &dst, -window_rect->left, -window_rect->top );
-        copy_bits_from_surface( hwnd, &dst, &src );
+
+        NtGdiStretchBlt( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
+                         hdc, src.left, src.top, src.right - src.left, src.bottom - src.top, SRCCOPY, 0 );
+        NtUserReleaseDC( hwnd, hdc );
     }
 }
 
@@ -1259,26 +1250,6 @@ void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window
     NtUserReleaseDC( hwnd, hdc );
 }
 
-
-/***********************************************************************
- *           move_window_bits_parent
- *
- * Move the window bits in the parent surface when a child is moved.
- */
-void move_window_bits_parent( HWND hwnd, const RECT *window_rect, const RECT *valid_rects )
-{
-    RECT dst = valid_rects[0];
-    RECT src = valid_rects[1];
-
-    if (src.left != dst.left || src.top != dst.top)
-    {
-        TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
-        OffsetRect( &src, -window_rect->left, -window_rect->top );
-        OffsetRect( &dst, -window_rect->left, -window_rect->top );
-
-        copy_bits_from_surface( hwnd, &dst, &src );
-    }
-}
 
 /***********************************************************************
  *           NtUserBeginPaint (win32u.@)
