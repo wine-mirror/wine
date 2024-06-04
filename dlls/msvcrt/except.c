@@ -448,6 +448,25 @@ BOOL CDECL __uncaught_exception(void)
     return msvcrt_get_thread_data()->processing_throw != 0;
 }
 
+/*********************************************************************
+ *              _fpieee_flt (MSVCRT.@)
+ */
+int __cdecl _fpieee_flt( __msvcrt_ulong code, EXCEPTION_POINTERS *ep,
+                         int (__cdecl *handler)(_FPIEEE_RECORD*) )
+{
+    switch (code)
+    {
+    case STATUS_FLOAT_DIVIDE_BY_ZERO:
+    case STATUS_FLOAT_INEXACT_RESULT:
+    case STATUS_FLOAT_INVALID_OPERATION:
+    case STATUS_FLOAT_OVERFLOW:
+    case STATUS_FLOAT_UNDERFLOW:
+        return handle_fpieee_flt( code, ep, handler );
+    default:
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+}
+
 #if _MSVCR_VER>=70 && _MSVCR_VER<=71
 
 /*********************************************************************

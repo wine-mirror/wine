@@ -58,10 +58,10 @@ __ASM_GLOBAL_FUNC( _setjmp, "b _setjmpex" );
 
 
 /*********************************************************************
- *              _fpieee_flt (MSVCRT.@)
+ *              handle_fpieee_flt
  */
-int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
-        int (__cdecl *handler)(_FPIEEE_RECORD*))
+int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
+                       int (__cdecl *handler)(_FPIEEE_RECORD*) )
 {
     FIXME("(%lx %p %p)\n", exception_code, ep, handler);
     return EXCEPTION_CONTINUE_SEARCH;

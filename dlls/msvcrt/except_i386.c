@@ -856,27 +856,14 @@ void __stdcall _seh_longjmp_unwind4(_JUMP_BUFFER *jmp)
 }
 
 /*********************************************************************
- *              _fpieee_flt (MSVCRT.@)
+ *              handle_fpieee_flt
  */
-int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
-        int (__cdecl *handler)(_FPIEEE_RECORD*))
+int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
+                       int (__cdecl *handler)(_FPIEEE_RECORD*) )
 {
     FLOATING_SAVE_AREA *ctx = &ep->ContextRecord->FloatSave;
     _FPIEEE_RECORD rec;
     int ret;
-
-    TRACE("(%lx %p %p)\n", exception_code, ep, handler);
-
-    switch(exception_code) {
-    case STATUS_FLOAT_DIVIDE_BY_ZERO:
-    case STATUS_FLOAT_INEXACT_RESULT:
-    case STATUS_FLOAT_INVALID_OPERATION:
-    case STATUS_FLOAT_OVERFLOW:
-    case STATUS_FLOAT_UNDERFLOW:
-        break;
-    default:
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
 
     memset(&rec, 0, sizeof(rec));
     rec.RoundingMode = ctx->ControlWord >> 10;
@@ -902,7 +889,8 @@ int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
     rec.Cause.Underflow = rec.Enable.Underflow & rec.Status.Underflow;
     rec.Cause.Inexact = rec.Enable.Inexact & rec.Status.Inexact;
 
-    TRACE("opcode: %lx\n", *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
+    TRACE("code %lx handler %p opcode %lx\n", exception_code, handler,
+          *(ULONG*)ep->ContextRecord->FloatSave.ErrorOffset);
 
     if(*(WORD*)ctx->ErrorOffset == 0x35dc) { /* fdiv m64fp */
         if(exception_code==STATUS_FLOAT_DIVIDE_BY_ZERO || exception_code==STATUS_FLOAT_INVALID_OPERATION) {

@@ -21,6 +21,7 @@
 #ifndef __MSVCRT_CPPEXCEPT_H
 #define __MSVCRT_CPPEXCEPT_H
 
+#include <fpieee.h>
 #include "cxx.h"
 
 #define CXX_FRAME_MAGIC_VC6 0x19930520
@@ -276,6 +277,8 @@ extern void dump_function_descr( const cxx_function_descr *descr, uintptr_t base
 extern void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
                                  const tryblock_info *tryblock,
                                  cxx_exception_type *exc_type, uintptr_t image_base );
+extern int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
+                              int (__cdecl *handler)(_FPIEEE_RECORD*) );
 
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"

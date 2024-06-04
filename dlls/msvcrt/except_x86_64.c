@@ -454,10 +454,10 @@ void __cdecl _local_unwind( void *frame, void *target )
 }
 
 /*********************************************************************
- *              _fpieee_flt (MSVCRT.@)
+ *              handle_fpieee_flt
  */
-int __cdecl _fpieee_flt(__msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
-        int (__cdecl *handler)(_FPIEEE_RECORD*))
+int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
+                       int (__cdecl *handler)(_FPIEEE_RECORD*) )
 {
     FIXME("(%lx %p %p) opcode: %#I64x\n", exception_code, ep, handler,
             *(ULONG64*)ep->ContextRecord->Rip);
