@@ -3542,7 +3542,7 @@ static HRESULT WINAPI DocObjDispatchEx_GetDispID(IDispatchEx *iface, BSTR name, 
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_GetDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, name, grfdex, pid);
+    return IWineJSDispatchHost_GetDispID(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, name, grfdex, pid);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -3550,29 +3550,29 @@ static HRESULT WINAPI DocObjDispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, L
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_InvokeEx(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, lcid,
-                                wFlags, pdp, pvarRes, pei, pspCaller);
+    return IWineJSDispatchHost_InvokeEx(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, id, lcid,
+                                    wFlags, pdp, pvarRes, pei, pspCaller);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_DeleteMemberByName(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, bstrName, grfdex);
+    return IWineJSDispatchHost_DeleteMemberByName(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, bstrName, grfdex);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_DeleteMemberByDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id);
+    return IWineJSDispatchHost_DeleteMemberByDispID(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, id);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_GetMemberProperties(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, grfdexFetch,
+    return IWineJSDispatchHost_GetMemberProperties(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, id, grfdexFetch,
             pgrfdex);
 }
 
@@ -3580,21 +3580,21 @@ static HRESULT WINAPI DocObjDispatchEx_GetMemberName(IDispatchEx *iface, DISPID 
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_GetMemberName(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, id, name);
+    return IWineJSDispatchHost_GetMemberName(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, id, name);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_GetNextDispID(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, grfdex, id, pid);
+    return IWineJSDispatchHost_GetNextDispID(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, grfdex, id, pid);
 }
 
 static HRESULT WINAPI DocObjDispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
 {
     HTMLDocumentObj *This = impl_from_IDispatchEx(iface);
 
-    return IDispatchEx_GetNameSpaceParent(&This->doc_node->node.event_target.dispex.IDispatchEx_iface, ppunk);
+    return IWineJSDispatchHost_GetNameSpaceParent(&This->doc_node->node.event_target.dispex.IWineJSDispatchHost_iface, ppunk);
 }
 
 static const IDispatchExVtbl DocObjDispatchExVtbl = {

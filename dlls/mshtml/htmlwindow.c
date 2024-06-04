@@ -211,8 +211,8 @@ static HRESULT WINAPI outer_window_QueryInterface(IHTMLWindow2 *iface, REFIID ri
     }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
         *ppv = &This->base.IHTMLWindow2_iface;
         return S_OK;
-    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        *ppv = &This->IDispatchEx_iface;
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid) || IsEqualGUID(&IID_IWineJSDispatchHost, riid)) {
+        *ppv = &This->IWineJSDispatchHost_iface;
     }else if(IsEqualGUID(&IID_IEventTarget, riid)) {
         if(!This->base.inner_window->doc || This->base.inner_window->doc->document_mode < COMPAT_MODE_IE9)
             return E_NOINTERFACE;
@@ -3277,34 +3277,34 @@ static const IWineHTMLWindowCompatPrivateVtbl WineHTMLWindowCompatPrivateVtbl = 
     window_compat_private_get_performance,
 };
 
-static inline HTMLOuterWindow *impl_from_IDispatchEx(IDispatchEx *iface)
+static inline HTMLOuterWindow *impl_from_IWineJSDispatchHost(IWineJSDispatchHost *iface)
 {
-    return CONTAINING_RECORD(iface, HTMLOuterWindow, IDispatchEx_iface);
+    return CONTAINING_RECORD(iface, HTMLOuterWindow, IWineJSDispatchHost_iface);
 }
 
-static HRESULT WINAPI WindowDispEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI WindowDispEx_QueryInterface(IWineJSDispatchHost *iface, REFIID riid, void **ppv)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     return IHTMLWindow2_QueryInterface(&This->base.IHTMLWindow2_iface, riid, ppv);
 }
 
-static ULONG WINAPI WindowDispEx_AddRef(IDispatchEx *iface)
+static ULONG WINAPI WindowDispEx_AddRef(IWineJSDispatchHost *iface)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     return IHTMLWindow2_AddRef(&This->base.IHTMLWindow2_iface);
 }
 
-static ULONG WINAPI WindowDispEx_Release(IDispatchEx *iface)
+static ULONG WINAPI WindowDispEx_Release(IWineJSDispatchHost *iface)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     return IHTMLWindow2_Release(&This->base.IHTMLWindow2_iface);
 }
 
-DISPEX_IDISPATCH_NOUNK_IMPL(WindowDispEx, IDispatchEx,
-                            impl_from_IDispatchEx(iface)->base.inner_window->event_target.dispex)
+DISPEX_IDISPATCH_NOUNK_IMPL(WindowDispEx, IWineJSDispatchHost,
+                            impl_from_IWineJSDispatchHost(iface)->base.inner_window->event_target.dispex)
 
 static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_t type, BSTR name)
 {
@@ -3369,69 +3369,70 @@ HRESULT search_window_props(HTMLInnerWindow *This, BSTR bstrName, DWORD grfdex, 
     return DISP_E_UNKNOWNNAME;
 }
 
-static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+static HRESULT WINAPI WindowDispEx_GetDispID(IWineJSDispatchHost *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
-    return IDispatchEx_GetDispID(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex, pid);
+    return IWineJSDispatchHost_GetDispID(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, bstrName, grfdex, pid);
 }
 
-static HRESULT WINAPI WindowDispEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+static HRESULT WINAPI WindowDispEx_InvokeEx(IWineJSDispatchHost *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
-    return IDispatchEx_InvokeEx(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
+    return IWineJSDispatchHost_InvokeEx(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id, lcid, wFlags,
+                                    pdp, pvarRes, pei, pspCaller);
 }
 
-static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+static HRESULT WINAPI WindowDispEx_DeleteMemberByName(IWineJSDispatchHost *iface, BSTR bstrName, DWORD grfdex)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%s %lx)\n", This, debugstr_w(bstrName), grfdex);
 
-    return IDispatchEx_DeleteMemberByName(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, bstrName, grfdex);
+    return IWineJSDispatchHost_DeleteMemberByName(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, bstrName, grfdex);
 }
 
-static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+static HRESULT WINAPI WindowDispEx_DeleteMemberByDispID(IWineJSDispatchHost *iface, DISPID id)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%lx)\n", This, id);
 
-    return IDispatchEx_DeleteMemberByDispID(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, id);
+    return IWineJSDispatchHost_DeleteMemberByDispID(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id);
 }
 
-static HRESULT WINAPI WindowDispEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
+static HRESULT WINAPI WindowDispEx_GetMemberProperties(IWineJSDispatchHost *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%lx %lx %p)\n", This, id, grfdexFetch, pgrfdex);
 
-    return IDispatchEx_GetMemberProperties(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, id, grfdexFetch,
+    return IWineJSDispatchHost_GetMemberProperties(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id, grfdexFetch,
             pgrfdex);
 }
 
-static HRESULT WINAPI WindowDispEx_GetMemberName(IDispatchEx *iface, DISPID id, BSTR *pbstrName)
+static HRESULT WINAPI WindowDispEx_GetMemberName(IWineJSDispatchHost *iface, DISPID id, BSTR *pbstrName)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%lx %p)\n", This, id, pbstrName);
 
-    return IDispatchEx_GetMemberName(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, id, pbstrName);
+    return IWineJSDispatchHost_GetMemberName(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, id, pbstrName);
 }
 
-static HRESULT WINAPI WindowDispEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex, DISPID id, DISPID *pid)
+static HRESULT WINAPI WindowDispEx_GetNextDispID(IWineJSDispatchHost *iface, DWORD grfdex, DISPID id, DISPID *pid)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%lx %lx %p)\n", This, grfdex, id, pid);
 
-    return IDispatchEx_GetNextDispID(&This->base.inner_window->event_target.dispex.IDispatchEx_iface, grfdex, id, pid);
+    return IWineJSDispatchHost_GetNextDispID(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface, grfdex, id, pid);
 }
 
-static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IWineJSDispatchHost *iface, IUnknown **ppunk)
 {
-    HTMLOuterWindow *This = impl_from_IDispatchEx(iface);
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
     TRACE("(%p)->(%p)\n", This, ppunk);
 
@@ -3439,7 +3440,7 @@ static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IDispatchEx *iface, IUnkno
     return S_OK;
 }
 
-static const IDispatchExVtbl WindowDispExVtbl = {
+static const IWineJSDispatchHostVtbl WindowDispExVtbl = {
     WindowDispEx_QueryInterface,
     WindowDispEx_AddRef,
     WindowDispEx_Release,
@@ -3810,7 +3811,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 
             prop->type = GLOBAL_DISPEXVAR;
             prop->id = dispex_id;
-            return IDispatchEx_InvokeEx(&This->event_target.dispex.IDispatchEx_iface, dispex_id, 0, flags, params, res, ei, caller);
+            return IWineJSDispatchHost_InvokeEx(&This->event_target.dispex.IWineJSDispatchHost_iface, dispex_id, 0, flags, params, res, ei, caller);
         }
         default:
             FIXME("Not supported flags: %x\n", flags);
@@ -3838,7 +3839,7 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
             return E_NOTIMPL;
         }
     case GLOBAL_DISPEXVAR:
-        return IDispatchEx_InvokeEx(&This->event_target.dispex.IDispatchEx_iface, prop->id, 0, flags, params, res, ei, caller);
+        return IWineJSDispatchHost_InvokeEx(&This->event_target.dispex.IWineJSDispatchHost_iface, prop->id, 0, flags, params, res, ei, caller);
     default:
         ERR("invalid type %d\n", prop->type);
         hres = DISP_E_MEMBERNOTFOUND;
@@ -3901,7 +3902,7 @@ static HRESULT IHTMLWindow2_location_hook(DispatchEx *dispex, WORD flags, DISPPA
     if(FAILED(hres))
         return hres;
 
-    hres = IDispatchEx_InvokeEx(&location->dispex.IDispatchEx_iface, DISPID_VALUE, 0, flags, dp, res, ei, caller);
+    hres = IWineJSDispatchHost_InvokeEx(&location->dispex.IWineJSDispatchHost_iface, DISPID_VALUE, 0, flags, dp, res, ei, caller);
     IHTMLLocation_Release(&location->IHTMLLocation_iface);
     return hres;
 }
@@ -4204,7 +4205,7 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
     if(!window)
         return E_OUTOFMEMORY;
     window->base.IHTMLWindow2_iface.lpVtbl = &outer_window_HTMLWindow2Vtbl;
-    window->IDispatchEx_iface.lpVtbl = &WindowDispExVtbl;
+    window->IWineJSDispatchHost_iface.lpVtbl = &WindowDispExVtbl;
     window->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
 
     window->base.outer_window = window;

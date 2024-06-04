@@ -258,3 +258,12 @@ interface IWineXMLHttpRequestPrivate : IDispatch
 }
 
 } /* library MSHTML_private */
+
+[
+    object,
+    uuid(d359f2fe-5531-741b-a41a-5cf92edc971b),
+    local
+]
+interface IWineJSDispatchHost : IDispatchEx
+{
+}

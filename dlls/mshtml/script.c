@@ -1573,7 +1573,7 @@ static EventTarget *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *
     }else if(!wcscmp(target_id, L"window")) {
         if(doc->window) {
             event_target = &doc->window->event_target;
-            IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
+            IWineJSDispatchHost_AddRef(&event_target->dispex.IWineJSDispatchHost_iface);
         }
     }else {
         HTMLElement *target_elem;
@@ -1731,14 +1731,14 @@ void bind_event_scripts(HTMLDocumentNode *doc)
         if(event_disp) {
             event_target = find_event_target(doc, script_elem);
             if(event_target) {
-                hres = IDispatchEx_QueryInterface(&event_target->dispex.IDispatchEx_iface, &IID_HTMLPluginContainer,
+                hres = IWineJSDispatchHost_QueryInterface(&event_target->dispex.IWineJSDispatchHost_iface, &IID_HTMLPluginContainer,
                         (void**)&plugin_container);
                 if(SUCCEEDED(hres))
                     bind_activex_event(doc, plugin_container, event, event_disp);
                 else
                     bind_target_event(doc, event_target, event, event_disp);
 
-                IDispatchEx_Release(&event_target->dispex.IDispatchEx_iface);
+                IWineJSDispatchHost_Release(&event_target->dispex.IWineJSDispatchHost_iface);
                 if(plugin_container)
                     node_release(&plugin_container->element.node);
             }

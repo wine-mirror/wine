@@ -2313,7 +2313,7 @@ static nsresult NSAPI media_query_list_callback_HandleChange(nsIDOMMediaQueryLis
         DISPPARAMS dp = { args, NULL, 1, 0 };
 
         V_VT(args) = VT_DISPATCH;
-        V_DISPATCH(args) = (IDispatch*)&media_query_list->dispex.IDispatchEx_iface;
+        V_DISPATCH(args) = (IDispatch*)&media_query_list->dispex.IWineJSDispatchHost_iface;
         V_VT(&v) = VT_EMPTY;
 
         TRACE("%p >>>\n", media_query_list);

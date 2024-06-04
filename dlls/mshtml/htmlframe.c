@@ -893,7 +893,7 @@ static HRESULT HTMLFrameElement_invoke(DispatchEx *dispex, DISPID id, LCID lcid,
         return E_FAIL;
     }
 
-    return IDispatchEx_InvokeEx(&This->framebase.content_window->IDispatchEx_iface, id, lcid,
+    return IWineJSDispatchHost_InvokeEx(&This->framebase.content_window->IWineJSDispatchHost_iface, id, lcid,
             flags, params, res, ei, caller);
 }
 
@@ -1330,7 +1330,7 @@ static HRESULT HTMLIFrame_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
         return E_FAIL;
     }
 
-    return IDispatchEx_InvokeEx(&This->framebase.content_window->IDispatchEx_iface, id, lcid,
+    return IWineJSDispatchHost_InvokeEx(&This->framebase.content_window->IWineJSDispatchHost_iface, id, lcid,
             flags, params, res, ei, caller);
 }
 

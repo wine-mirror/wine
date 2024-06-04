@@ -1301,6 +1301,6 @@ HRESULT create_mutation_observer_ctor(compat_mode_t compat_mode, IDispatch **ret
 
     init_dispatch(&obj->dispex, &mutation_observer_ctor_dispex, compat_mode);
 
-    *ret = (IDispatch *)&obj->dispex.IDispatchEx_iface;
+    *ret = (IDispatch *)&obj->dispex.IWineJSDispatchHost_iface;
     return S_OK;
 }

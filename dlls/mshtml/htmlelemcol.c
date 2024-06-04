@@ -315,7 +315,7 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
 static HRESULT get_item_idx(HTMLElementCollection *This, UINT idx, IDispatch **ret)
 {
     if(idx < This->len) {
-        *ret = (IDispatch*)&This->elems[idx]->node.event_target.dispex.IDispatchEx_iface;
+        *ret = (IDispatch*)&This->elems[idx]->node.event_target.dispex.IWineJSDispatchHost_iface;
         IDispatch_AddRef(*ret);
     }
 

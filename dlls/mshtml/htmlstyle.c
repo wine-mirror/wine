@@ -2917,7 +2917,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         DISPID dispid;
         unsigned i;
 
-        hres = IDispatchEx_GetDispID(&This->css_style.dispex.IDispatchEx_iface, strAttributeName,
+        hres = IWineJSDispatchHost_GetDispID(&This->css_style.dispex.IWineJSDispatchHost_iface, strAttributeName,
                 (lFlags&1) ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
         if(hres != S_OK) {
             *pfSuccess = VARIANT_FALSE;

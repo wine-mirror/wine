@@ -5529,8 +5529,8 @@ static HRESULT HTMLDocumentNode_location_hook(DispatchEx *dispex, WORD flags, DI
     if(!This->window->base.outer_window)
         return E_FAIL;
 
-    return IDispatchEx_InvokeEx(&This->window->event_target.dispex.IDispatchEx_iface, DISPID_IHTMLWINDOW2_LOCATION,
-                                0, flags, dp, res, ei, caller);
+    return IWineJSDispatchHost_InvokeEx(&This->window->event_target.dispex.IWineJSDispatchHost_iface,
+                                    DISPID_IHTMLWINDOW2_LOCATION, 0, flags, dp, res, ei, caller);
 }
 
 static HRESULT HTMLDocumentNode_pre_handle_event(DispatchEx* dispex, DOMEvent *event)
