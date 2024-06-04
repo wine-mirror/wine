@@ -111,9 +111,12 @@ void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_base,
 
             TRACE( "matched type %p in catchblock %d\n", type, i );
 
-            /* copy the exception to its destination on the stack */
-            copy_exception( object, frame, catchblock[i].offset, catchblock[i].flags,
-                            catch_ti, type, exc_base );
+            if (catch_ti && catch_ti->mangled[0] && catchblock[i].offset)
+            {
+                /* copy the exception to its destination on the stack */
+                void **dest = (void **)(frame + catchblock[i].offset);
+                copy_exception( object, dest, catchblock[i].flags, type, exc_base );
+            }
         }
         else
         {

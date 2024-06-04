@@ -313,29 +313,8 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
     type = find_caught_type( (cxx_exception_type*)rec->ExceptionInformation[2], 0, ti, flags );
     if (!type) return EXCEPTION_CONTINUE_SEARCH;
 
-    if (copy)
-    {
-        void *object = (void *)rec->ExceptionInformation[1];
+    if (copy) copy_exception( (void *)rec->ExceptionInformation[1], copy, flags, type, 0 );
 
-        if (flags & TYPE_FLAG_REFERENCE)
-        {
-            *copy = get_this_pointer( &type->offsets, object );
-        }
-        else if (type->flags & CLASS_IS_SIMPLE_TYPE)
-        {
-            memmove( copy, object, type->size );
-            /* if it is a pointer, adjust it */
-            if (type->size == sizeof(void*)) *copy = get_this_pointer( &type->offsets, *copy );
-        }
-        else  /* copy the object */
-        {
-            if (type->copy_ctor)
-                call_copy_ctor( type->copy_ctor, copy, get_this_pointer(&type->offsets,object),
-                        (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
-            else
-                memmove( copy, get_this_pointer(&type->offsets,object), type->size );
-        }
-    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 

@@ -528,9 +528,12 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
 
                 TRACE("matched type %p in tryblock %d catchblock %d\n", type, i, j);
 
-                /* copy the exception to its destination on the stack */
-                copy_exception( (void *)rec->ExceptionInformation[1], orig_frame,
-                                ci.offset, ci.flags, catch_ti, type, exc_base );
+                if (catch_ti && catch_ti->mangled[0] && ci.offset)
+                {
+                    /* copy the exception to its destination on the stack */
+                    void **dest = (void **)(orig_frame + ci.offset);
+                    copy_exception( (void *)rec->ExceptionInformation[1], dest, ci.flags, type, exc_base );
+                }
             }
             else
             {

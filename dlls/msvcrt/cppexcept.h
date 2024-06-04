@@ -231,15 +231,9 @@ static inline const cxx_type_info *find_caught_type( cxx_exception_type *exc_typ
 }
 
 /* copy the exception object where the catch block wants it */
-static inline void copy_exception( void *object, uintptr_t frame, int offset, UINT catch_flags,
-                                   const type_info *catch_ti, const cxx_type_info *type, uintptr_t base )
+static inline void copy_exception( void *object, void **dest, UINT catch_flags,
+                                   const cxx_type_info *type, uintptr_t base )
 {
-    void **dest;
-
-    if (!catch_ti || !catch_ti->mangled[0]) return;
-    if (!offset) return;
-    dest = (void **)(frame + offset);
-
     if (catch_flags & TYPE_FLAG_REFERENCE)
     {
         *dest = get_this_pointer( &type->offsets, object );
