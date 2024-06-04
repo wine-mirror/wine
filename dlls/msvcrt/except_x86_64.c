@@ -56,11 +56,6 @@ typedef struct
     const cxx_function_descr *descr;
 } se_translator_ctx;
 
-static inline void* rva_to_ptr(UINT rva, ULONG64 base)
-{
-    return rva ? (void*)(base+rva) : NULL;
-}
-
 static inline int ip_to_state( const cxx_function_descr *descr, uintptr_t ip, uintptr_t base )
 {
     const ipmap_info *ipmap = rtti_rva( descr->ipmap, base );
@@ -76,7 +71,7 @@ static inline int ip_to_state( const cxx_function_descr *descr, uintptr_t ip, ui
 static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
                              const cxx_function_descr *descr, int last_level)
 {
-    const unwind_info *unwind_table = rva_to_ptr(descr->unwind_table, dispatch->ImageBase);
+    const unwind_info *unwind_table = rtti_rva(descr->unwind_table, dispatch->ImageBase);
     void (__cdecl *handler)(ULONG64 unk, ULONG64 rbp);
     int *unwind_help = (int *)(frame + descr->unwind_help);
     int trylevel;
@@ -98,9 +93,9 @@ static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
             ERR("invalid trylevel %d\n", trylevel);
             terminate();
         }
-        handler = rva_to_ptr(unwind_table[trylevel].handler, dispatch->ImageBase);
-        if (handler)
+        if (unwind_table[trylevel].handler)
         {
+            handler = rtti_rva(unwind_table[trylevel].handler, dispatch->ImageBase);
             TRACE("handler: %p\n", handler);
             handler(0, frame);
         }
@@ -205,7 +200,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
     data->processing_throw++;
     for (i=descr->tryblock_count; i>0; i--)
     {
-        in_catch = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        in_catch = rtti_rva(descr->tryblock, dispatch->ImageBase);
         in_catch = &in_catch[i-1];
 
         if (trylevel>in_catch->end_level && trylevel<=in_catch->catch_level)
@@ -223,7 +218,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
 
     for (i=0; i<descr->tryblock_count; i++)
     {
-        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        const tryblock_info *tryblock = rtti_rva(descr->tryblock, dispatch->ImageBase);
         tryblock = &tryblock[i];
 
         if (trylevel < tryblock->start_level) continue;
@@ -318,21 +313,21 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
     /* update orig_frame if it's a nested exception */
     throw_func_off = RtlLookupFunctionEntry(dispatch->ControlPc, &throw_base, NULL)->BeginAddress;
-    throw_func = rva_to_ptr(throw_func_off, throw_base);
+    throw_func = rtti_rva(throw_func_off, throw_base);
     TRACE("reconstructed handler pointer: %p\n", throw_func);
     for (i=descr->tryblock_count; i>0; i--)
     {
-        const tryblock_info *tryblock = rva_to_ptr(descr->tryblock, dispatch->ImageBase);
+        const tryblock_info *tryblock = rtti_rva(descr->tryblock, dispatch->ImageBase);
         tryblock = &tryblock[i-1];
 
         if (trylevel>tryblock->end_level && trylevel<=tryblock->catch_level)
         {
             for (j=0; j<tryblock->catchblock_count; j++)
             {
-                const catchblock_info *catchblock = rva_to_ptr(tryblock->catchblock, dispatch->ImageBase);
+                const catchblock_info *catchblock = rtti_rva(tryblock->catchblock, dispatch->ImageBase);
                 catchblock = &catchblock[j];
 
-                if (rva_to_ptr(catchblock->handler, dispatch->ImageBase) == throw_func)
+                if (rtti_rva(catchblock->handler, dispatch->ImageBase) == throw_func)
                 {
                     TRACE("nested exception detected\n");
                     unwindlevel = tryblock->end_level;
@@ -418,7 +413,7 @@ EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 fr
 {
     TRACE( "%p %I64x %p %p\n", rec, frame, context, dispatch );
     return cxx_frame_handler( rec, frame, context, dispatch,
-            rva_to_ptr(*(UINT*)dispatch->HandlerData, dispatch->ImageBase) );
+                              rtti_rva(*(UINT *)dispatch->HandlerData, dispatch->ImageBase) );
 }
 
 
