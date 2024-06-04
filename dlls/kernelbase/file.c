@@ -54,11 +54,9 @@ typedef struct
     FINDEX_INFO_LEVELS level;      /* Level passed to FindFirst */
     UNICODE_STRING    path;        /* NT path used to open the directory */
     BOOL              is_root;     /* is directory the root of the drive? */
-    BOOL              wildcard;    /* did the mask contain wildcard characters? */
     UINT              data_pos;    /* current position in dir data */
     UINT              data_len;    /* length of dir data */
     UINT              data_size;   /* size of data buffer, or 0 when everything has been read */
-    WCHAR            *mask;        /* mask string to match if wildcards are used */
     BYTE              data[1];     /* directory data */
 } FIND_FIRST_INFO;
 
@@ -1148,6 +1146,34 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExA( const char *filename, FINDEX_I
 }
 
 
+/***********************************************************************
+ *     fixup_mask
+ *
+ * Fixup mask with wildcards for use with NtQueryDirectoryFile().
+ */
+static WCHAR *fixup_mask( const WCHAR *mask )
+{
+    unsigned int len = lstrlenW( mask ), i;
+    BOOL no_ext;
+    WCHAR *ret;
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(*mask) ))) return NULL;
+    memcpy( ret, mask, (len + 1) * sizeof(*mask) );
+    if (!len) return ret;
+    no_ext = ret[len - 1] == '.';
+    while (len && (ret[len - 1] == '.' || ret[len - 1] == ' ')) --len;
+
+    for (i = 0; i < len; ++i)
+    {
+        if (ret[i] == '.' && (ret[i + 1] == '*' || ret[i + 1] == '?')) ret[i] = '\"';
+        else if (ret[i] == '?')                                        ret[i] = '>';
+    }
+    ret[len] = 0;
+    if (no_ext && len && ret[len - 1] == '*') ret[len - 1] = '<';
+    return ret;
+}
+
+
 /******************************************************************************
  *	FindFirstFileExW   (kernelbase.@)
  */
@@ -1162,7 +1188,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    DWORD size, mask_size = 0, device = 0;
+    DWORD size, device = 0;
 
     TRACE( "%s %d %p %d %p %lx\n", debugstr_w(filename), level, data, search_op, filter, flags );
 
@@ -1223,17 +1249,16 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
     else
     {
         nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
-        has_wildcard = wcspbrk( mask, L"*?" ) != NULL;
+        has_wildcard = wcspbrk( mask, L"*?<>" ) != NULL;
         if (has_wildcard)
         {
             size = 8192;
             mask = PathFindFileNameW( filename );
-            mask_size = (lstrlenW( mask ) + 1) * sizeof(*mask);
         }
         else size = max_entry_size;
     }
 
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, offsetof( FIND_FIRST_INFO, data[size + mask_size] ))))
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, offsetof( FIND_FIRST_INFO, data[size] ))))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         goto error;
@@ -1271,19 +1296,11 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
     info->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FIND_FIRST_INFO.cs");
     info->path      = nt_name;
     info->magic     = FIND_FIRST_MAGIC;
-    info->wildcard  = has_wildcard;
     info->data_pos  = 0;
     info->data_len  = 0;
     info->data_size = size;
     info->search_op = search_op;
     info->level     = level;
-    if (mask_size)
-    {
-        info->mask = (WCHAR *)(info->data + size);
-        memcpy( info->mask, mask, mask_size );
-        mask = NULL;
-    }
-    else info->mask = NULL;
 
     if (device)
     {
@@ -1297,11 +1314,17 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
     }
     else
     {
+        WCHAR *fixedup_mask = mask;
         UNICODE_STRING mask_str;
 
-        RtlInitUnicodeString( &mask_str, mask );
-        status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
-                                       FileBothDirectoryInformation, FALSE, has_wildcard ? NULL : &mask_str, TRUE );
+        if (has_wildcard && !(fixedup_mask = fixup_mask( mask ))) status = STATUS_NO_MEMORY;
+        else
+        {
+            RtlInitUnicodeString( &mask_str, fixedup_mask );
+            status = NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, info->data_size,
+                                           FileBothDirectoryInformation, FALSE, &mask_str, TRUE );
+        }
+        if (fixedup_mask != mask) HeapFree( GetProcessHeap(), 0, fixedup_mask );
         if (status)
         {
             FindClose( info );
@@ -1384,95 +1407,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *da
 }
 
 
-/***********************************************************************
- *	name_has_ext
- *
- * Check if the file name has extension (skipping leading dots).
- */
-static BOOL name_has_ext( const WCHAR *name, const WCHAR *name_end )
-{
-    while (name != name_end && *name == '.') ++name;
-    while (name != name_end && *name != '.') ++name;
-    return name != name_end;
-}
-
-
-/***********************************************************************
- *	match_filename
- *
- * Check if the file name matches mask containing wildcards.
- */
-static BOOL match_filename( const WCHAR *name, int length, const WCHAR *mask )
-{
-    BOOL mismatch;
-    const WCHAR *name_end = name + length;
-    const WCHAR *mask_end = mask + lstrlenW( mask );
-    const WCHAR *lastjoker = NULL;
-    const WCHAR *next_to_retry = NULL;
-    const WCHAR *asterisk;
-
-    if (mask != mask_end && mask_end[-1] == '.' && (asterisk = wcschr( mask, '*' )) && asterisk == wcsrchr( mask, '*' )
-        && name_has_ext( name, name_end ))
-    {
-        /* Single '*' mask ending with '.' only matches files without extension. */
-        return FALSE;
-    }
-
-    while (name < name_end && mask < mask_end)
-    {
-        switch(*mask)
-        {
-        case '*':
-            mask++;
-            while (mask < mask_end && *mask == '*') mask++;
-            if (mask == mask_end) return TRUE; /* end of mask is all '*', so match */
-            lastjoker = mask;
-
-            /* skip to the next match after the joker(s) */
-            while (name < name_end && towupper( *name ) != towupper( *mask )) name++;
-            next_to_retry = name;
-            break;
-        case '?':
-        case '>':
-            mask++;
-            name++;
-            break;
-        default:
-            mismatch = towupper( *mask ) != towupper( *name );
-
-            if (!mismatch)
-            {
-                mask++;
-                name++;
-                if (mask == mask_end)
-                {
-                    if (name == name_end) return TRUE;
-                    if (lastjoker) mask = lastjoker;
-                }
-            }
-            else /* mismatch ! */
-            {
-                if (lastjoker) /* we had an '*', so we can try unlimitedly */
-                {
-                    mask = lastjoker;
-
-                    /* this scan sequence was a mismatch, so restart
-                     * 1 char after the first char we checked last time */
-                    next_to_retry++;
-                    name = next_to_retry;
-                }
-                else return FALSE;
-            }
-            break;
-        }
-    }
-
-    while (mask < mask_end && (*mask == ' ' || *mask == '.' || *mask == '*'))
-        mask++;
-    return (name == name_end && mask == mask_end);
-}
-
-
 /******************************************************************************
  *	FindNextFileW   (kernelbase.@)
  */
@@ -1531,14 +1465,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *da
             if (dir_info->FileNameLength == sizeof(WCHAR) && file_name[0] == '.') continue;
             if (dir_info->FileNameLength == 2 * sizeof(WCHAR) &&
                 file_name[0] == '.' && file_name[1] == '.') continue;
-        }
-
-        if (info->mask)
-        {
-            if (!match_filename( dir_info->FileName, dir_info->FileNameLength / sizeof(WCHAR), info->mask )
-                && (!dir_info->ShortNameLength
-                    || !match_filename( dir_info->ShortName, dir_info->ShortNameLength  / sizeof(WCHAR), info->mask )))
-            continue;
         }
 
         data->dwFileAttributes = dir_info->FileAttributes;
