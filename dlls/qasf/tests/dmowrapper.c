@@ -1703,9 +1703,7 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     hr = IMemAllocator_Decommit(testsink->sink.pAllocator);
     ok(hr == S_OK, "Decommit returned %#lx.\n", hr);
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine
     ok(hr == VFW_E_NOT_COMMITTED, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
     ok(got_ProcessOutput == 0, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
     ok(got_Receive == 0, "Got %u calls to Receive().\n", got_Receive);
@@ -1720,7 +1718,6 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     hr = IMemInputPin_Receive(input, sample);
     todo_wine
     ok(hr == VFW_E_WRONG_STATE, "Receive returned %#lx.\n", hr);
-    todo_wine
     ok(got_ProcessInput == 0, "Got %u calls to ProcessInput().\n", got_ProcessInput);
     ok(got_ProcessOutput == 0, "Got %u calls to ProcessOutput().\n", got_ProcessOutput);
     ok(got_Receive == 0, "Got %u calls to Receive().\n", got_Receive);
