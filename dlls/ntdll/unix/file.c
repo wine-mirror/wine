@@ -320,13 +320,19 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
     }
 }
 
+static BOOL is_wildcard( WCHAR c )
+{
+    return c == '*' || c == '?' || c == '>' || c == '<' || c == '\"';
+}
+
 static inline BOOL has_wildcard( const UNICODE_STRING *mask )
 {
     int i;
 
     if (!mask) return TRUE;
     for (i = 0; i < mask->Length / sizeof(WCHAR); i++)
-        if (mask->Buffer[i] == '*' || mask->Buffer[i] == '?') return TRUE;
+        if (is_wildcard( mask->Buffer[i] )) return TRUE;
+
     return FALSE;
 }
 
