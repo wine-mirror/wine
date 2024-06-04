@@ -285,39 +285,6 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, CONTEXT *context,
     data->processing_throw--;
 }
 
-/*********************************************************************
- *		__CxxExceptionFilter (MSVCRT.@)
- */
-int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
-                                const type_info *ti, int flags, void **copy)
-{
-    const cxx_type_info *type;
-    PEXCEPTION_RECORD rec;
-
-    TRACE( "%p %p %x %p\n", ptrs, ti, flags, copy );
-
-    if (!ptrs) return EXCEPTION_CONTINUE_SEARCH;
-
-    /* handle catch(...) */
-    if (!ti) return EXCEPTION_EXECUTE_HANDLER;
-
-    rec = ptrs->ExceptionRecord;
-    if (!is_cxx_exception( rec )) return EXCEPTION_CONTINUE_SEARCH;
-
-    if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
-    {
-        rec = msvcrt_get_thread_data()->exc_record;
-        if (!rec) return EXCEPTION_CONTINUE_SEARCH;
-    }
-
-    type = find_caught_type( (cxx_exception_type*)rec->ExceptionInformation[2], 0, ti, flags );
-    if (!type) return EXCEPTION_CONTINUE_SEARCH;
-
-    if (copy) copy_exception( (void *)rec->ExceptionInformation[1], copy, flags, type, 0 );
-
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
 static LONG CALLBACK se_translation_filter( EXCEPTION_POINTERS *ep, void *c )
 {
     se_translator_ctx *ctx = (se_translator_ctx *)c;

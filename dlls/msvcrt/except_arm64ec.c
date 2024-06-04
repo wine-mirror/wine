@@ -32,23 +32,12 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "msvcrt.h"
-#include "wine/exception.h"
 #include "excpt.h"
 #include "wine/debug.h"
 
 #include "cppexcept.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
-
-/*********************************************************************
- *		__CxxExceptionFilter (MSVCRT.@)
- */
-int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
-                                const type_info *ti, int flags, void **copy )
-{
-    FIXME( "%p %p %x %p: not implemented\n", ptrs, ti, flags, copy );
-    return EXCEPTION_CONTINUE_SEARCH;
-}
 
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)

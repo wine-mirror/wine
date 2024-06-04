@@ -390,6 +390,40 @@ BOOL CDECL __CxxDetectRethrow(PEXCEPTION_POINTERS ptrs)
 }
 
 /*********************************************************************
+ *		__CxxExceptionFilter (MSVCRT.@)
+ */
+int CDECL __CxxExceptionFilter( EXCEPTION_POINTERS *ptrs, const type_info *ti, UINT flags, void **copy)
+{
+    const cxx_type_info *type;
+    EXCEPTION_RECORD *rec;
+    uintptr_t exc_base;
+
+    TRACE( "%p %p %x %p\n", ptrs, ti, flags, copy );
+
+    if (!ptrs) return EXCEPTION_CONTINUE_SEARCH;
+
+    /* handle catch(...) */
+    if (!ti) return EXCEPTION_EXECUTE_HANDLER;
+
+    rec = ptrs->ExceptionRecord;
+    if (!is_cxx_exception( rec )) return EXCEPTION_CONTINUE_SEARCH;
+
+    if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+    {
+        rec = msvcrt_get_thread_data()->exc_record;
+        if (!rec) return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    exc_base = rec->ExceptionInformation[3];
+    type = find_caught_type( (cxx_exception_type *)rec->ExceptionInformation[2], exc_base, ti, flags );
+    if (!type) return EXCEPTION_CONTINUE_SEARCH;
+
+    if (copy) copy_exception( (void *)rec->ExceptionInformation[1], copy, flags, type, exc_base );
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+/*********************************************************************
  *		__CxxQueryExceptionSize (MSVCRT.@)
  */
 unsigned int CDECL __CxxQueryExceptionSize(void)
