@@ -584,42 +584,6 @@ HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *d
         row_pitch, slice_pitch, NULL, src_box, filter, color_key);
 }
 
-HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key,
-        const struct d3dx_image *image, unsigned int *loaded_miplevels)
-{
-    HRESULT hr;
-    RECT src_rect;
-    UINT src_pitch;
-    UINT mip_level;
-    UINT mip_levels;
-    UINT mip_level_size;
-    IDirect3DSurface9 *surface;
-    const BYTE *pixels = image->pixels;
-    struct volume mip_size = image->size;
-
-    mip_levels = min(image->mip_levels, IDirect3DTexture9_GetLevelCount(texture));
-    for (mip_level = 0; mip_level < mip_levels; ++mip_level)
-    {
-        hr = d3dx_calculate_pixels_size(image->format, mip_size.width, mip_size.height, &src_pitch, &mip_level_size);
-        if (FAILED(hr)) return hr;
-
-        SetRect(&src_rect, 0, 0, mip_size.width, mip_size.height);
-        IDirect3DTexture9_GetSurfaceLevel(texture, mip_level, &surface);
-        hr = D3DXLoadSurfaceFromMemory(surface, palette, NULL, pixels, image->format, src_pitch,
-                NULL, &src_rect, filter, color_key);
-        IDirect3DSurface9_Release(surface);
-        if (FAILED(hr))
-            return hr;
-
-        pixels += mip_level_size * mip_size.depth;
-        d3dx_get_next_mip_level_size(&mip_size);
-    }
-
-    *loaded_miplevels = mip_levels;
-
-    return D3D_OK;
-}
-
 HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info)
 {
@@ -1163,19 +1127,37 @@ void d3dx_image_cleanup(struct d3dx_image *image)
     free(image->palette);
 }
 
-HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels)
+HRESULT d3dx_image_get_pixels(struct d3dx_image *image, uint32_t mip_level, struct d3dx_pixels *pixels)
 {
-    uint32_t row_pitch, slice_pitch;
+    struct volume mip_level_size = image->size;
+    const BYTE *pixels_ptr = image->pixels;
+    uint32_t row_pitch, slice_pitch, i;
     RECT unaligned_rect;
     HRESULT hr = S_OK;
 
-    hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
-    if (FAILED(hr))
-        return hr;
+    if (mip_level >= image->mip_levels)
+    {
+        ERR("Tried to retrieve mip level %u, but image only has %u mip levels.\n", mip_level, image->mip_levels);
+        return E_FAIL;
+    }
 
-    SetRect(&unaligned_rect, 0, 0, image->size.width, image->size.height);
-    set_d3dx_pixels(pixels, image->pixels, row_pitch, slice_pitch, image->palette, image->size.width, image->size.height,
-            image->size.depth, &unaligned_rect);
+    slice_pitch = row_pitch = 0;
+    for (i = 0; i < image->mip_levels; i++)
+    {
+        hr = d3dx_calculate_pixels_size(image->format, mip_level_size.width, mip_level_size.height, &row_pitch, &slice_pitch);
+        if (FAILED(hr))
+            return hr;
+
+        if (i == mip_level)
+            break;
+
+        pixels_ptr += slice_pitch * mip_level_size.depth;
+        d3dx_get_next_mip_level_size(&mip_level_size);
+    }
+
+    SetRect(&unaligned_rect, 0, 0, mip_level_size.width, mip_level_size.height);
+    set_d3dx_pixels(pixels, pixels_ptr, row_pitch, slice_pitch, image->palette, mip_level_size.width,
+            mip_level_size.height, mip_level_size.depth, &unaligned_rect);
 
     return D3D_OK;
 }
@@ -1384,7 +1366,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     else
         SetRect(&src_rect, 0, 0, img_info.Width, img_info.Height);
 
-    hr = d3dx_image_get_pixels(&image, &pixels);
+    hr = d3dx_image_get_pixels(&image, 0, &pixels);
     if (FAILED(hr))
         goto exit;
 
