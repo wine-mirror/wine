@@ -984,6 +984,14 @@ static void dump_cxx_exception_data( unsigned int rva, unsigned int func_rva )
 
     const struct
     {
+        UINT flags;
+        UINT type_info;
+        int  offset;
+        UINT handler;
+    } *catchblock32;
+
+    const struct
+    {
         UINT ip;
         int  state;
     } *ipmap;
@@ -1032,22 +1040,28 @@ static void dump_cxx_exception_data( unsigned int rva, unsigned int func_rva )
             for (i = 0; i < func->tryblock_count; i++)
             {
                 catchblock = RVA( tryblock[i].catchblock, sizeof(*catchblock) );
+                catchblock32 = RVA( tryblock[i].catchblock, sizeof(*catchblock32) );
                 printf( "        %d: start %d end %d catch %d count %u\n", i,
                         tryblock[i].start, tryblock[i].end, tryblock[i].catch,
                         tryblock[i].catchblock_count );
                 for (j = 0; j < tryblock[i].catchblock_count; j++)
                 {
                     const char *type = "<none>";
-                    if (catchblock[j].type_info)
+
+                    if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                     {
-                        if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-                            type = RVA( catchblock[j].type_info + 16, 1 );
-                        else
-                            type = RVA( catchblock[j].type_info + 8, 1 );
+                        if (catchblock[j].type_info) type = RVA( catchblock[j].type_info + 16, 1 );
+                        printf( "          %d: flags %x offset %+d handler %08x frame %x type %s\n", j,
+                                catchblock[j].flags, catchblock[j].offset,
+                                catchblock[j].handler, catchblock[j].frame, type );
                     }
-                    printf( "          %d: flags %x offset %+d handler %08x frame %x type %s\n", j,
-                            catchblock[j].flags, catchblock[j].offset,
-                            catchblock[j].handler, catchblock[j].frame, type );
+                    else
+                    {
+                        if (catchblock32[j].type_info) type = RVA( catchblock32[j].type_info + 8, 1 );
+                        printf( "          %d: flags %x offset %+d handler %08x type %s\n", j,
+                                catchblock32[j].flags, catchblock32[j].offset,
+                                catchblock32[j].handler, type );
+                    }
                 }
             }
         }
