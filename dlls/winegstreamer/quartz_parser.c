@@ -100,6 +100,9 @@ struct parser_source
     bool need_segment;
 
     bool eos;
+
+    bool interpolate_timestamps;
+    UINT64 prev_end_pts;
 };
 
 static inline struct parser *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1182,30 +1185,34 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         return S_OK;
     }
 
-    if (buffer->has_pts)
+    if (buffer->has_pts || (pin->interpolate_timestamps && pin->prev_end_pts != 0))
     {
-        REFERENCE_TIME start_pts = buffer->pts;
+        UINT64 start_pts = (buffer->has_pts ? buffer->pts : pin->prev_end_pts);
+        REFERENCE_TIME start_reftime = start_pts;
 
         if (offset)
-            start_pts += scale_uint64(offset, 10000000, bytes_per_second);
-        start_pts -= pin->seek.llCurrent;
-        start_pts *= pin->seek.dRate;
+            start_reftime += scale_uint64(offset, 10000000, bytes_per_second);
+        start_reftime -= pin->seek.llCurrent;
+        start_reftime *= pin->seek.dRate;
 
         if (buffer->has_duration)
         {
-            REFERENCE_TIME end_pts = buffer->pts + buffer->duration;
+            UINT64 end_pts = start_pts + buffer->duration;
+            REFERENCE_TIME end_reftime = end_pts;
 
+            pin->prev_end_pts = end_pts;
             if (offset + size < buffer->size)
-                end_pts = buffer->pts + scale_uint64(offset + size, 10000000, bytes_per_second);
-            end_pts -= pin->seek.llCurrent;
-            end_pts *= pin->seek.dRate;
+                end_reftime = end_reftime + scale_uint64(offset + size, 10000000, bytes_per_second);
+            end_reftime -= pin->seek.llCurrent;
+            end_reftime *= pin->seek.dRate;
 
-            IMediaSample_SetTime(sample, &start_pts, &end_pts);
-            IMediaSample_SetMediaTime(sample, &start_pts, &end_pts);
+            IMediaSample_SetTime(sample, &start_reftime, &end_reftime);
+            IMediaSample_SetMediaTime(sample, &start_reftime, &end_reftime);
         }
         else
         {
-            IMediaSample_SetTime(sample, &start_pts, NULL);
+            pin->prev_end_pts = 0;
+            IMediaSample_SetTime(sample, &start_reftime, NULL);
             IMediaSample_SetMediaTime(sample, NULL, NULL);
         }
     }
@@ -2320,6 +2327,7 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 static BOOL avi_splitter_filter_init_gst(struct parser *filter)
 {
     wg_parser_t parser = filter->wg_parser;
+    struct parser_source *src;
     uint32_t i, stream_count;
     WCHAR source_name[20];
 
@@ -2327,8 +2335,10 @@ static BOOL avi_splitter_filter_init_gst(struct parser *filter)
     for (i = 0; i < stream_count; ++i)
     {
         swprintf(source_name, ARRAY_SIZE(source_name), L"Stream %02u", i);
-        if (!create_pin(filter, wg_parser_get_stream(parser, i), source_name))
+        src = create_pin(filter, wg_parser_get_stream(parser, i), source_name);
+        if (!src)
             return FALSE;
+        src->interpolate_timestamps = TRUE;
     }
 
     return TRUE;
