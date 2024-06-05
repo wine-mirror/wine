@@ -72,7 +72,6 @@ struct sid_attrs
 
 const struct sid world_sid = { SID_REVISION, 1, SECURITY_WORLD_SID_AUTHORITY, { SECURITY_WORLD_RID } };
 const struct sid local_system_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_LOCAL_SYSTEM_RID } };
-const struct sid high_label_sid = { SID_REVISION, 1, SECURITY_MANDATORY_LABEL_AUTHORITY, { SECURITY_MANDATORY_HIGH_RID } };
 const struct sid local_user_sid = { SID_REVISION, 5, SECURITY_NT_AUTHORITY, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, 1000 } };
 const struct sid builtin_admins_sid = { SID_REVISION, 2, SECURITY_NT_AUTHORITY, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS } };
 const struct sid builtin_users_sid = { SID_REVISION, 2, SECURITY_NT_AUTHORITY, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS } };
@@ -82,6 +81,7 @@ static const struct sid local_sid = { SID_REVISION, 1, SECURITY_LOCAL_SID_AUTHOR
 static const struct sid interactive_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_INTERACTIVE_RID } };
 static const struct sid anonymous_logon_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const struct sid authenticated_user_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_AUTHENTICATED_USER_RID } };
+static const struct sid high_label_sid = { SID_REVISION, 1, SECURITY_MANDATORY_LABEL_AUTHORITY, { SECURITY_MANDATORY_HIGH_RID } };
 
 static struct luid prev_luid_value = { 1000, 0 };
 
@@ -649,6 +649,24 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
     if (sd) default_set_sd( &token->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
                             DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
 
+    if (src_token->obj.sd)
+    {
+        const struct acl *sacl;
+        const struct ace *ace;
+        unsigned int i;
+        int present;
+
+        sacl = sd_get_sacl( src_token->obj.sd, &present );
+        if (present)
+        {
+            for (i = 0, ace = ace_first( sacl ); i < sacl->count; i++, ace = ace_next( ace ))
+            {
+                if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
+                token_assign_label( token, (const struct sid *)(ace + 1) );
+            }
+        }
+    }
+
     return token;
 }
 
@@ -784,6 +802,15 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
                           NULL, 4 /* domain_users */, impersonation_level, elevation );
     /* we really need a primary group */
     assert( token->primary_group );
+
+    /* Assign a high security label to the token. The default would be medium
+     * but Wine provides admin access to all applications right now so high
+     * makes more sense for the time being. */
+    if (!token_assign_label( token, &high_label_sid ))
+    {
+        release_object( token );
+        return NULL;
+    }
 
     free( default_dacl );
     return token;

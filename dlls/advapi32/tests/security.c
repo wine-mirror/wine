@@ -7376,23 +7376,19 @@ static void test_token_security_descriptor(void)
     defaulted = TRUE;
     ret = GetSecurityDescriptorDacl(sd2, &present, &acl2, &defaulted);
     ok(ret, "GetSecurityDescriptorDacl failed with error %lu\n", GetLastError());
-    todo_wine
     ok(present, "DACL not present\n");
 
-    if (present)
-    {
-        ok(acl2 != (void *)0xdeadbeef, "DACL not set\n");
-        ok(!defaulted, "DACL defaulted\n");
+    ok(acl2 != (void *)0xdeadbeef, "DACL not set\n");
+    ok(!defaulted, "DACL defaulted\n");
 
-        index = 0;
-        found = FALSE;
-        while (GetAce(acl2, index++, (void **)&ace))
-        {
-            if (ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && EqualSid(&ace->SidStart, psid))
-                found = TRUE;
-        }
-        ok(!found, "Access allowed ACE was inherited\n");
+    index = 0;
+    found = FALSE;
+    while (GetAce(acl2, index++, (void **)&ace))
+    {
+        if (ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && EqualSid(&ace->SidStart, psid))
+            found = TRUE;
     }
+    ok(!found, "Access allowed ACE was inherited\n");
 
     free(sd2);
 

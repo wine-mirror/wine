@@ -735,12 +735,6 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     if (!process->handles || !process->token) goto error;
     process->session_id = token_get_session_id( process->token );
 
-    /* Assign a high security label to the token. The default would be medium
-     * but Wine provides admin access to all applications right now so high
-     * makes more sense for the time being. */
-    if (!token_assign_label( process->token, &high_label_sid ))
-        goto error;
-
     set_fd_events( process->msg_fd, POLLIN );  /* start listening to events */
     return process;
 
