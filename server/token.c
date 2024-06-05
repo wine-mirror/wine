@@ -134,6 +134,8 @@ struct group
 
 static void token_dump( struct object *obj, int verbose );
 static void token_destroy( struct object *obj );
+static int token_set_sd( struct object *obj, const struct security_descriptor *sd,
+                         unsigned int set_info );
 
 static const struct object_ops token_ops =
 {
@@ -148,7 +150,7 @@ static const struct object_ops token_ops =
     no_get_fd,                 /* get_fd */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
-    default_set_sd,            /* set_sd */
+    token_set_sd,              /* set_sd */
     no_get_full_name,          /* get_full_name */
     no_lookup_name,            /* lookup_name */
     no_link_name,              /* link_name */
@@ -165,6 +167,12 @@ static void token_dump( struct object *obj, int verbose )
     assert( obj->ops == &token_ops );
     fprintf( stderr, "Token id=%d.%u primary=%u impersonation level=%d\n", token->token_id.high_part,
              token->token_id.low_part, token->primary, token->impersonation_level );
+}
+
+static int token_set_sd( struct object *obj, const struct security_descriptor *sd,
+                         unsigned int set_info )
+{
+    return default_set_sd( obj, sd, set_info & ~LABEL_SECURITY_INFORMATION );
 }
 
 void security_set_thread_token( struct thread *thread, obj_handle_t handle )
