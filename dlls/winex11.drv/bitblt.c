@@ -1079,7 +1079,7 @@ static inline BOOL image_needs_byteswap( XImage *image, BOOL is_r8g8b8, int bit_
 }
 
 /* copy image bits with byte swapping and/or pixel mapping */
-static void copy_image_byteswap( BITMAPINFO *info, const unsigned char *src, unsigned char *dst,
+static void copy_image_byteswap( const BITMAPINFO *info, const unsigned char *src, unsigned char *dst,
                                  int src_stride, int dst_stride, int height, BOOL byteswap,
                                  const int *mapping, unsigned int zeropad_mask, unsigned int alpha_bits )
 {
@@ -1624,13 +1624,12 @@ static inline void add_row( HRGN rgn, RGNDATA *data, int x, int y, int len )
 /***********************************************************************
  *           update_surface_region
  */
-static void update_surface_region( struct x11drv_window_surface *surface, const void *color_bits,
+static void update_surface_region( struct x11drv_window_surface *surface, const BITMAPINFO *info, const void *color_bits,
                                    COLORREF color_key, UINT alpha_mask )
 {
 #ifdef HAVE_LIBXSHAPE
     char buffer[4096];
     RGNDATA *data = (RGNDATA *)buffer;
-    BITMAPINFO *info = &surface->info;
     UINT *masks = (UINT *)info->bmiColors;
     int x, y, start, width;
     HRGN rgn;
@@ -1957,17 +1956,17 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
 /***********************************************************************
  *           x11drv_surface_flush
  */
-static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
+static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
+                                  const BITMAPINFO *color_info, const void *color_bits )
 {
     UINT alpha_mask = window_surface->alpha_mask, alpha_bits = window_surface->alpha_bits;
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
     COLORREF color_key = window_surface->color_key;
-    const BITMAPINFO *color_info = &surface->info;
     XImage *ximage = surface->image->ximage;
-    unsigned char *src = window_surface->color_bits;
+    const unsigned char *src = color_bits;
     unsigned char *dst = (unsigned char *)ximage->data;
 
-    if (alpha_mask || color_key != CLR_INVALID) update_surface_region( surface, window_surface->color_bits, color_key, alpha_mask );
+    if (alpha_mask || color_key != CLR_INVALID) update_surface_region( surface, color_info, color_bits, color_key, alpha_mask );
 
     if (alpha_bits == -1)
     {
@@ -1987,7 +1986,7 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
 
         src += dirty->top * width_bytes;
         dst += dirty->top * width_bytes;
-        copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes, dirty->bottom - dirty->top,
+        copy_image_byteswap( color_info, src, dst, width_bytes, width_bytes, dirty->bottom - dirty->top,
                              surface->byteswap, mapping, ~0u, alpha_bits );
     }
     else if (alpha_bits)

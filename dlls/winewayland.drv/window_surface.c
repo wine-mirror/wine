@@ -254,7 +254,7 @@ RGNDATA *get_region_data(HRGN region)
 /**********************************************************************
  *          copy_pixel_region
  */
-static void copy_pixel_region(char *src_pixels, RECT *src_rect,
+static void copy_pixel_region(const char *src_pixels, RECT *src_rect,
                               char *dst_pixels, RECT *dst_rect,
                               HRGN region)
 {
@@ -274,7 +274,8 @@ static void copy_pixel_region(char *src_pixels, RECT *src_rect,
 
     for (;rgn_rect < rgn_rect_end; rgn_rect++)
     {
-        char *src, *dst;
+        const char *src;
+        char *dst;
         int y, width_bytes, height;
         RECT rc;
 
@@ -310,7 +311,7 @@ static void copy_pixel_region(char *src_pixels, RECT *src_rect,
  *          wayland_shm_buffer_copy_data
  */
 static void wayland_shm_buffer_copy_data(struct wayland_shm_buffer *buffer,
-                                         char *bits, RECT *rect,
+                                         const char *bits, RECT *rect,
                                          HRGN region)
 {
     RECT buffer_rect = {0, 0, buffer->width, buffer->height};
@@ -331,8 +332,10 @@ static void wayland_shm_buffer_copy(struct wayland_shm_buffer *src,
 /***********************************************************************
  *           wayland_window_surface_flush
  */
-static BOOL wayland_window_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
+static BOOL wayland_window_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
+                                         const BITMAPINFO *color_info, const void *color_bits)
 {
+    RECT surface_rect = {.right = color_info->bmiHeader.biWidth, .bottom = abs(color_info->bmiHeader.biHeight)};
     struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
     struct wayland_shm_buffer *shm_buffer = NULL;
     BOOL flushed = FALSE;
@@ -394,8 +397,7 @@ static BOOL wayland_window_surface_flush(struct window_surface *window_surface, 
         copy_from_window_region = shm_buffer->damage_region;
     }
 
-    wayland_shm_buffer_copy_data(shm_buffer, window_surface->color_bits,
-                                 &window_surface->rect, copy_from_window_region);
+    wayland_shm_buffer_copy_data(shm_buffer, color_bits, &surface_rect, copy_from_window_region);
 
     pthread_mutex_lock(&wws->wayland_surface->mutex);
     if (wayland_surface_reconfigure(wws->wayland_surface))

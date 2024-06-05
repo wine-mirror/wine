@@ -79,7 +79,8 @@ static void dummy_surface_set_clip( struct window_surface *window_surface, const
     /* nothing to do */
 }
 
-static BOOL dummy_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
+static BOOL dummy_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
+                                 const BITMAPINFO *color_info, const void *color_bits )
 {
     /* nothing to do */
     return TRUE;
@@ -135,7 +136,8 @@ static void offscreen_window_surface_set_clip( struct window_surface *base, cons
 {
 }
 
-static BOOL offscreen_window_surface_flush( struct window_surface *base, const RECT *rect, const RECT *dirty )
+static BOOL offscreen_window_surface_flush( struct window_surface *base, const RECT *rect, const RECT *dirty,
+                                            const BITMAPINFO *color_info, const void *color_bits )
 {
     return TRUE;
 }
@@ -276,16 +278,20 @@ W32KAPI void window_surface_unlock( struct window_surface *surface )
 
 W32KAPI void window_surface_flush( struct window_surface *surface )
 {
+    char color_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *color_info = (BITMAPINFO *)color_buf;
     RECT dirty = surface->rect;
+    void *color_bits;
 
     window_surface_lock( surface );
+    color_bits = surface->funcs->get_info( surface, color_info );
 
     OffsetRect( &dirty, -dirty.left, -dirty.top );
     if (intersect_rect( &dirty, &dirty, &surface->bounds ))
     {
         TRACE( "Flushing hwnd %p, surface %p %s, bounds %s, dirty %s\n", surface->hwnd, surface,
                wine_dbgstr_rect( &surface->rect ), wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
-        if (surface->funcs->flush( surface, &surface->rect, &dirty )) reset_bounds( &surface->bounds );
+        if (surface->funcs->flush( surface, &surface->rect, &dirty, color_info, color_bits )) reset_bounds( &surface->bounds );
     }
 
     window_surface_unlock( surface );

@@ -101,11 +101,11 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 /***********************************************************************
  *              macdrv_surface_flush
  */
-static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
+static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
+                                 const BITMAPINFO *color_info, const void *color_bits)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     CGImageAlphaInfo alpha_info = (window_surface->alpha_mask ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
-    BITMAPINFO *color_info = &surface->info;
     CGColorSpaceRef colorspace;
     CGImageRef image;
 
@@ -199,10 +199,10 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     surface->provider = provider;
 
     window_background = macdrv_window_background_color();
-    memset_pattern4(surface->header.color_bits, &window_background, info->bmiHeader.biSizeImage);
+    memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
 
     TRACE("created %p for %p %s color_bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-          surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage);
+          bits, (char *)bits + info->bmiHeader.biSizeImage);
 
     if (use_alpha) window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0xff000000 );
     else window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0 );

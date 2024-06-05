@@ -643,7 +643,8 @@ static void android_surface_set_clip( struct window_surface *window_surface, con
 /***********************************************************************
  *           android_surface_flush
  */
-static BOOL android_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
+static BOOL android_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
+                                   const BITMAPINFO *color_info, const void *color_bits )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
     ANativeWindow_Buffer buffer;
@@ -670,7 +671,7 @@ static BOOL android_surface_flush( struct window_surface *window_surface, const 
         locked.bottom = rc.bottom;
         intersect_rect( &locked, &locked, rect );
 
-        src = (DWORD *)window_surface->color_bits + (locked.top - rect->top) * surface->info.bmiHeader.biWidth +
+        src = (DWORD *)color_bits + (locked.top - rect->top) * color_info->bmiHeader.biWidth +
               (locked.left - rect->left);
         dst = (DWORD *)buffer.bits + locked.top * buffer.stride + locked.left;
         width = min( locked.right - locked.left, buffer.stride );
@@ -697,7 +698,7 @@ static BOOL android_surface_flush( struct window_surface *window_surface, const 
                 apply_line_region( dst, width, locked.left, y, rgn_rect, end );
             }
 
-            src += surface->info.bmiHeader.biWidth;
+            src += color_info->bmiHeader.biWidth;
             dst += buffer.stride;
         }
         surface->window->perform( surface->window, NATIVE_WINDOW_UNLOCK_AND_POST );
