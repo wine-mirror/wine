@@ -306,15 +306,16 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr_v4 *descr, DIS
     return TRUE;
 }
 
-static inline int ip_to_state4(BYTE *ip_map, UINT count, DISPATCHER_CONTEXT *dispatch, ULONG64 ip)
+static inline int ip_to_state4(const cxx_function_descr_v4 *descr, DISPATCHER_CONTEXT *dispatch, ULONG64 ip)
 {
+    BYTE *ip_map = rtti_rva( descr->ip_map, dispatch->ImageBase );
     ULONG64 state_ip;
     ipmap_info ii;
     int ret = -1;
     UINT i;
 
     state_ip = dispatch->ImageBase + dispatch->FunctionEntry->BeginAddress;
-    for (i = 0; i < count; i++)
+    for (i = 0; i < descr->ip_count; i++)
     {
         read_ipmap_info(&ip_map, &ii);
         state_ip += ii.ip;
@@ -322,7 +323,7 @@ static inline int ip_to_state4(BYTE *ip_map, UINT count, DISPATCHER_CONTEXT *dis
         ret = ii.state;
     }
 
-    TRACE("state %d\n", ret);
+    TRACE("%I64x -> state %d\n", ip, ret);
     return ret;
 }
 
@@ -335,11 +336,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
     void *obj;
     int i;
 
-    if (trylevel == -2)
-    {
-        trylevel = ip_to_state4(rtti_rva(descr->ip_map, dispatch->ImageBase),
-                descr->ip_count, dispatch, dispatch->ControlPc);
-    }
+    if (trylevel == -2) trylevel = ip_to_state4( descr, dispatch, get_exception_pc(dispatch) );
 
     TRACE("current level: %d, last level: %d\n", trylevel, last_level);
 
@@ -403,16 +400,12 @@ static void CALLBACK cxx_catch_cleanup(BOOL normal, void *c)
 
 static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
 {
-    ULONG64 frame = rec->ExceptionInformation[1];
     EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
     EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
     CONTEXT *context = (void*)rec->ExceptionInformation[7];
-    void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
     EXCEPTION_POINTERS ep = { prev_rec, context };
     cxx_catch_ctx ctx;
     void *ret_addr = NULL;
-
-    TRACE("calling handler %p\n", handler);
 
     ctx.rethrow = FALSE;
     __CxxRegisterExceptionObject(&ep, &ctx.frame_info);
@@ -424,7 +417,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
     {
         __TRY
         {
-            ret_addr = handler(0, frame);
+            ret_addr = call_catch_handler( rec );
         }
         __EXCEPT_CTX(cxx_rethrow_filter, &ctx)
         {
@@ -485,11 +478,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
 
     (*processing_throw)++;
 
-    if (trylevel == -2)
-    {
-        trylevel = ip_to_state4(rtti_rva(descr->ip_map, dispatch->ImageBase),
-                descr->ip_count, dispatch, dispatch->ControlPc);
-    }
+    if (trylevel == -2) trylevel = ip_to_state4( descr, dispatch, get_exception_pc(dispatch) );
     TRACE("current trylevel: %d\n", trylevel);
 
     tryblock_map = rtti_rva(descr->tryblock_map, dispatch->ImageBase);
@@ -624,8 +613,7 @@ static DWORD cxx_frame_handler4(EXCEPTION_RECORD *rec, ULONG64 frame,
         if ((rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND) && cxx_is_consolidate(rec))
             last_level = rec->ExceptionInformation[3];
         else if ((rec->ExceptionFlags & EXCEPTION_TARGET_UNWIND) && rec->ExceptionCode == STATUS_LONGJUMP)
-            last_level = ip_to_state4(rtti_rva(descr->ip_map, dispatch->ImageBase),
-                    descr->ip_count, dispatch, dispatch->TargetIp);
+            last_level = ip_to_state4( descr, dispatch, dispatch->TargetIp );
 
         cxx_local_unwind4(orig_frame, dispatch, descr, trylevel, last_level);
         return ExceptionContinueSearch;
