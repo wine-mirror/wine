@@ -66,6 +66,7 @@ struct macdrv_window_surface
     macdrv_window           window;
     BOOL                    use_alpha;
     CGDataProviderRef       provider;
+    CGImageRef              color_image;
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
@@ -111,6 +112,18 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
+    CGImageAlphaInfo alpha_info = (surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
+    BITMAPINFO *color_info = &surface->info;
+    CGColorSpaceRef colorspace;
+
+    if (surface->color_image) CGImageRelease(surface->color_image);
+
+    colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    surface->color_image = CGImageCreate(color_info->bmiHeader.biWidth, abs(color_info->bmiHeader.biHeight), 8, 32,
+                                         color_info->bmiHeader.biSizeImage / abs(color_info->bmiHeader.biHeight), colorspace,
+                                         alpha_info | kCGBitmapByteOrder32Little, surface->provider, NULL, retina_on, kCGRenderingIntentDefault);
+    CGColorSpaceRelease(colorspace);
+
     macdrv_window_needs_display(surface->window, cgrect_from_rect(*dirty));
     return FALSE; /* bounds are reset asynchronously, from macdrv_get_surface_display_image */
 }
@@ -123,6 +136,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p\n", surface);
+    if (surface->color_image) CGImageRelease(surface->color_image);
     CGDataProviderRelease(surface->provider);
     free(surface);
 }
@@ -237,39 +251,11 @@ CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surfac
 {
     CGImageRef cgimage = NULL;
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    RECT surface_rect = window_surface->rect;
-    int width, height;
 
     pthread_mutex_lock(&window_surface->mutex);
-    if (IsRectEmpty(&window_surface->bounds)) goto done;
-
-    width  = surface_rect.right - surface_rect.left;
-    height = surface_rect.bottom - surface_rect.top;
-    *rect = CGRectIntersection(cgrect_from_rect(surface_rect), *rect);
-    if (!CGRectIsEmpty(*rect))
+    if (surface->color_image && !IsRectEmpty(&window_surface->bounds))
     {
-        CGRect visrect;
-        CGColorSpaceRef colorspace;
-        CGDataProviderRef provider;
-        int bytes_per_row, offset, size;
-        CGImageAlphaInfo alphaInfo;
-
-        visrect = CGRectOffset(*rect, -surface_rect.left, -surface_rect.top);
-
-        colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-        bytes_per_row = get_dib_stride(width, 32);
-        offset = CGRectGetMinX(visrect) * 4 + CGRectGetMinY(visrect) * bytes_per_row;
-        size = min(CGRectGetHeight(visrect) * bytes_per_row,
-                   surface->info.bmiHeader.biSizeImage - offset);
-        provider = CGDataProviderCreateWithData(NULL, (UInt8 *)window_surface->color_bits + offset, size, NULL);
-
-        alphaInfo = surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst;
-        cgimage = CGImageCreate(CGRectGetWidth(visrect), CGRectGetHeight(visrect),
-                                8, 32, bytes_per_row, colorspace,
-                                alphaInfo | kCGBitmapByteOrder32Little,
-                                provider, NULL, retina_on, kCGRenderingIntentDefault);
-        CGDataProviderRelease(provider);
-        CGColorSpaceRelease(colorspace);
+        cgimage = CGImageCreateWithImageInRect(surface->color_image, *rect);
 
         if (color_keyed)
         {
@@ -286,7 +272,6 @@ CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surfac
         }
     }
 
-done:
     reset_bounds(&window_surface->bounds);
     pthread_mutex_unlock(&window_surface->mutex);
     return cgimage;
