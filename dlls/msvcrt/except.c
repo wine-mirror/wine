@@ -164,7 +164,6 @@ static void cxx_local_unwind(ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch,
                              const cxx_function_descr *descr, int last_level)
 {
     const unwind_info *unwind_table = rtti_rva(descr->unwind_table, dispatch->ImageBase);
-    void (__cdecl *handler)(ULONG_PTR unk, ULONG_PTR frame);
     int *unwind_help = (int *)(frame + descr->unwind_help);
     int trylevel;
 
@@ -187,9 +186,8 @@ static void cxx_local_unwind(ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch,
         }
         if (unwind_table[trylevel].handler)
         {
-            handler = rtti_rva(unwind_table[trylevel].handler, dispatch->ImageBase);
-            TRACE("handler: %p\n", handler);
-            handler(0, frame);
+            void *handler = rtti_rva( unwind_table[trylevel].handler, dispatch->ImageBase );
+            call_unwind_handler( handler, frame, dispatch );
         }
         trylevel = unwind_table[trylevel].prev;
     }
@@ -223,13 +221,10 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
     EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
     CONTEXT *context = (void*)rec->ExceptionInformation[7];
-    void* (__cdecl *handler)(ULONG_PTR unk, ULONG_PTR frame) = (void*)rec->ExceptionInformation[5];
     int *unwind_help = (int *)(frame + descr->unwind_help);
     EXCEPTION_POINTERS ep = { prev_rec, context };
     cxx_catch_ctx ctx;
     void *ret_addr = NULL;
-
-    TRACE("calling handler %p\n", handler);
 
     ctx.rethrow = FALSE;
     ctx.prev_rec = prev_rec;
@@ -239,7 +234,7 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
     {
         __TRY
         {
-            ret_addr = handler(0, frame);
+            ret_addr = call_catch_handler( rec );
         }
         __EXCEPT_CTX(cxx_rethrow_filter, &ctx)
         {
@@ -269,8 +264,9 @@ static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 
 static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
 {
-    return rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==8 &&
-           rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block;
+    return (rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE &&
+            rec->NumberParameters > 10 &&
+            rec->ExceptionInformation[0] == (ULONG_PTR)call_catch_block);
 }
 
 static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
@@ -329,7 +325,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
         memset(&catch_record, 0, sizeof(catch_record));
         catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
         catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-        catch_record.NumberParameters = 8;
+        catch_record.NumberParameters = 11;
         catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block;
         catch_record.ExceptionInformation[1] = orig_frame;
         catch_record.ExceptionInformation[2] = (ULONG_PTR)descr;
@@ -338,6 +334,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
         catch_record.ExceptionInformation[5] = (ULONG_PTR)handler;
         catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
         catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
+        catch_record.ExceptionInformation[10] = -1;
         RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
     }
 

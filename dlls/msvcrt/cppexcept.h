@@ -281,6 +281,10 @@ extern void *find_catch_handler( void *object, uintptr_t frame, uintptr_t exc_ba
                                  cxx_exception_type *exc_type, uintptr_t image_base );
 extern int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
                               int (__cdecl *handler)(_FPIEEE_RECORD*) );
+#ifndef __i386__
+extern void *call_catch_handler( EXCEPTION_RECORD *rec );
+extern void *call_unwind_handler( void *func, uintptr_t frame, DISPATCHER_CONTEXT *dispatch );
+#endif
 
 #if _MSVCR_VER >= 80
 #define EXCEPTION_MANGLED_NAME ".?AVexception@std@@"

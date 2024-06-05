@@ -39,6 +39,40 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 
+extern void *call_exc_handler( void *handler, ULONG_PTR frame, UINT flags, BYTE *nonvol_regs );
+__ASM_GLOBAL_FUNC( call_exc_handler,
+                   "push {r1,r4-r11,lr}\n\t"
+                   ".seh_save_regs_w {r1,r4-r11,lr}\n\t"
+                   ".seh_endprologue\n\t"
+                   "ldm r3, {r4-r11}\n\t"
+                   "blx r0\n\t"
+                   "pop {r3-r11,pc}" )
+
+
+/*******************************************************************
+ *		call_catch_handler
+ */
+void *call_catch_handler( EXCEPTION_RECORD *rec )
+{
+    ULONG_PTR frame = rec->ExceptionInformation[1];
+    void *handler = (void *)rec->ExceptionInformation[5];
+    BYTE *nonvol_regs = (BYTE *)rec->ExceptionInformation[10];
+
+    TRACE( "calling %p frame %Ix\n", handler, frame );
+    return call_exc_handler( handler, frame, 0x100, nonvol_regs );
+}
+
+
+/*******************************************************************
+ *		call_unwind_handler
+ */
+void *call_unwind_handler( void *handler, ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch )
+{
+    TRACE( "calling %p frame %Ix\n", handler, frame );
+    return call_exc_handler( handler, frame, 0x100, dispatch->NonVolatileRegisters );
+}
+
+
 /*********************************************************************
  *              handle_fpieee_flt
  */

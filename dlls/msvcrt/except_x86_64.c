@@ -40,6 +40,43 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+extern void *call_exc_handler( void *handler, ULONG_PTR frame, UINT flags );
+__ASM_GLOBAL_FUNC( call_exc_handler,
+                   "subq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   __ASM_SEH(".seh_stackalloc 0x28\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
+                   "movq %rcx, 0x0(%rsp)\n\t"
+                   "movl %r8d, 0x8(%rsp)\n\t"
+                   "movq %rdx, 0x10(%rsp)\n\t"
+                   "callq *%rcx\n\t"
+                   "addq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                   "ret" )
+
+
+/*******************************************************************
+ *		call_catch_handler
+ */
+void *call_catch_handler( EXCEPTION_RECORD *rec )
+{
+    ULONG_PTR frame = rec->ExceptionInformation[1];
+    void *handler = (void *)rec->ExceptionInformation[5];
+
+    TRACE( "calling %p frame %Ix\n", handler, frame );
+    return call_exc_handler( handler, frame, 0x100 );
+}
+
+
+/*******************************************************************
+ *		call_unwind_handler
+ */
+void *call_unwind_handler( void *handler, ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch )
+{
+    TRACE( "calling %p frame %Ix\n", handler, frame );
+    return call_exc_handler( handler, frame, 0x100 );
+}
+
 
 /*******************************************************************
  *		longjmp (MSVCRT.@)
