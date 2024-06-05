@@ -743,9 +743,7 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
         return D3DXERR_INVALIDDATA;
 
     TRACE("File type is DDS.\n");
-    image->width = header->width;
-    image->height = header->height;
-    image->depth = 1;
+    set_volume_struct(&image->size, header->width, header->height, 1);
     image->mip_levels = header->miplevels ? header->miplevels : 1;
     image->format = dds_pixel_format_to_d3dformat(&header->pixel_format);
 
@@ -755,7 +753,7 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
     TRACE("Pixel format is %#x.\n", image->format);
     if (header->caps2 & DDS_CAPS2_VOLUME)
     {
-        image->depth = header->depth;
+        image->size.depth = header->depth;
         image->resource_type = D3DRTYPE_VOLUMETEXTURE;
     }
     else if (header->caps2 & DDS_CAPS2_CUBEMAP)
@@ -773,8 +771,8 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
     else
         image->resource_type = D3DRTYPE_TEXTURE;
 
-    expected_src_data_size = calculate_dds_file_size(image->format, image->width, image->height,
-            image->depth, image->mip_levels, faces);
+    expected_src_data_size = calculate_dds_file_size(image->format, image->size.width, image->size.height,
+            image->size.depth, image->mip_levels, faces);
     if (src_data_size < expected_src_data_size)
     {
         WARN("File is too short %u, expected at least %u bytes.\n", src_data_size, expected_src_data_size);
@@ -863,18 +861,18 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
             && image->image_file_format != D3DXIFF_TGA))
         return FALSE;
 
-    size = image->width * image->height * 4;
+    size = image->size.width * image->size.height * 4;
     if (!(buffer = malloc(size)))
         return FALSE;
 
-    if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, image->width * 4, size, buffer)))
+    if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, image->size.width * 4, size, buffer)))
     {
         ERR("Failed to copy pixels, hr %#lx.\n", hr);
         free(buffer);
         return FALSE;
     }
 
-    for (i = 0; i < image->width * image->height; ++i)
+    for (i = 0; i < image->size.width * image->size.height; ++i)
     {
         if (buffer[i * 4 + 3])
         {
@@ -952,7 +950,7 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
     HRESULT hr;
 
     fmt_desc = get_format_info(image->format);
-    hr = d3dx_calculate_pixels_size(image->format, image->width, image->height, &row_pitch, &slice_pitch);
+    hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
     if (FAILED(hr))
         return hr;
 
@@ -1088,7 +1086,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
     if (FAILED(hr))
         goto exit;
 
-    hr = IWICBitmapFrameDecode_GetSize(bitmap_frame, &image->width, &image->height);
+    hr = IWICBitmapFrameDecode_GetSize(bitmap_frame, &image->size.width, &image->size.height);
     if (FAILED(hr))
         goto exit;
 
@@ -1113,7 +1111,7 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
             goto exit;
     }
 
-    image->depth = 1;
+    image->size.depth = 1;
     image->mip_levels = 1;
     image->resource_type = D3DRTYPE_TEXTURE;
 
@@ -1156,13 +1154,13 @@ HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixe
     RECT unaligned_rect;
     HRESULT hr = S_OK;
 
-    hr = d3dx_calculate_pixels_size(image->format, image->width, image->height, &row_pitch, &slice_pitch);
+    hr = d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
     if (FAILED(hr))
         return hr;
 
-    SetRect(&unaligned_rect, 0, 0, image->width, image->height);
-    set_d3dx_pixels(pixels, image->pixels, row_pitch, slice_pitch, image->palette, image->width, image->height,
-            image->depth, &unaligned_rect);
+    SetRect(&unaligned_rect, 0, 0, image->size.width, image->size.height);
+    set_d3dx_pixels(pixels, image->pixels, row_pitch, slice_pitch, image->palette, image->size.width, image->size.height,
+            image->size.depth, &unaligned_rect);
 
     return D3D_OK;
 }
@@ -1170,9 +1168,9 @@ HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixe
 void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image)
 {
     info->ImageFileFormat = image->image_file_format;
-    info->Width = image->width;
-    info->Height = image->height;
-    info->Depth = image->depth;
+    info->Width = image->size.width;
+    info->Height = image->size.height;
+    info->Depth = image->size.depth;
     info->MipLevels = image->mip_levels;
     info->Format = image->format;
     info->ResourceType = image->resource_type;

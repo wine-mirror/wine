@@ -104,9 +104,7 @@ struct d3dx_image
     D3DRESOURCETYPE resource_type;
     D3DFORMAT format;
 
-    uint32_t width;
-    uint32_t height;
-    uint32_t depth;
+    struct volume size;
     uint32_t mip_levels;
 
     BYTE *pixels;
