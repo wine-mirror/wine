@@ -598,43 +598,15 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     d3dximage_info_from_d3dx_image(&imginfo, &image);
 
     /* handle default values */
-    if (width == 0 || width == D3DX_DEFAULT_NONPOW2)
-        width = imginfo.Width;
+    if (!width || width == D3DX_DEFAULT_NONPOW2 || width == D3DX_FROM_FILE || width == D3DX_DEFAULT)
+        width = (width == D3DX_DEFAULT) ? make_pow2(imginfo.Width) : imginfo.Width;
+    if (!height || height == D3DX_DEFAULT_NONPOW2 || height == D3DX_FROM_FILE || height == D3DX_DEFAULT)
+        height = (height == D3DX_DEFAULT) ? make_pow2(imginfo.Height) : imginfo.Height;
 
-    if (height == 0 || height == D3DX_DEFAULT_NONPOW2)
-        height = imginfo.Height;
-
-    if (width == D3DX_DEFAULT)
-        width = make_pow2(imginfo.Width);
-
-    if (height == D3DX_DEFAULT)
-        height = make_pow2(imginfo.Height);
-
-    if (format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
+    format_specified = (format != D3DFMT_UNKNOWN && format != D3DX_DEFAULT);
+    if (format == D3DFMT_FROM_FILE || format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
         format = imginfo.Format;
-    else
-        format_specified = TRUE;
-
-    if (width == D3DX_FROM_FILE)
-    {
-        width = imginfo.Width;
-    }
-
-    if (height == D3DX_FROM_FILE)
-    {
-        height = imginfo.Height;
-    }
-
-    if (format == D3DFMT_FROM_FILE)
-    {
-        format = imginfo.Format;
-    }
-
-    if (miplevels == D3DX_FROM_FILE)
-    {
-        miplevels = imginfo.MipLevels;
-    }
-
+    miplevels = (miplevels == D3DX_FROM_FILE) ? imginfo.MipLevels : miplevels;
 
     /* Fix up texture creation parameters. */
     hr = D3DXCheckTextureRequirements(device, &width, &height, &miplevels, usage, &format, pool);
