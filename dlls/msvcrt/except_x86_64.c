@@ -49,8 +49,8 @@ typedef struct
 
 typedef struct
 {
-    ULONG64 dest_frame;
-    ULONG64 orig_frame;
+    ULONG_PTR dest_frame;
+    ULONG_PTR orig_frame;
     EXCEPTION_RECORD *seh_rec;
     DISPATCHER_CONTEXT *dispatch;
     const cxx_function_descr *descr;
@@ -68,11 +68,11 @@ static inline int ip_to_state( const cxx_function_descr *descr, uintptr_t ip, ui
     return ret;
 }
 
-static void cxx_local_unwind(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
+static void cxx_local_unwind(ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch,
                              const cxx_function_descr *descr, int last_level)
 {
     const unwind_info *unwind_table = rtti_rva(descr->unwind_table, dispatch->ImageBase);
-    void (__cdecl *handler)(ULONG64 unk, ULONG64 rbp);
+    void (__cdecl *handler)(ULONG_PTR unk, ULONG_PTR frame);
     int *unwind_help = (int *)(frame + descr->unwind_help);
     int trylevel;
 
@@ -126,12 +126,12 @@ static void CALLBACK cxx_catch_cleanup(BOOL normal, void *c)
 
 static void* WINAPI call_catch_block(EXCEPTION_RECORD *rec)
 {
-    ULONG64 frame = rec->ExceptionInformation[1];
+    ULONG_PTR frame = rec->ExceptionInformation[1];
     const cxx_function_descr *descr = (void*)rec->ExceptionInformation[2];
     EXCEPTION_RECORD *prev_rec = (void*)rec->ExceptionInformation[4];
     EXCEPTION_RECORD *untrans_rec = (void*)rec->ExceptionInformation[6];
     CONTEXT *context = (void*)rec->ExceptionInformation[7];
-    void* (__cdecl *handler)(ULONG64 unk, ULONG64 rbp) = (void*)rec->ExceptionInformation[5];
+    void* (__cdecl *handler)(ULONG_PTR unk, ULONG_PTR frame) = (void*)rec->ExceptionInformation[5];
     int *unwind_help = (int *)(frame + descr->unwind_help);
     EXCEPTION_POINTERS ep = { prev_rec, context };
     cxx_catch_ctx ctx;
@@ -183,11 +183,11 @@ static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
 
 static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
                                     EXCEPTION_RECORD *untrans_rec,
-                                    ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
+                                    ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch,
                                     const cxx_function_descr *descr,
-                                    cxx_exception_type *info, ULONG64 orig_frame)
+                                    cxx_exception_type *info, ULONG_PTR orig_frame)
 {
-    ULONG64 exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
+    ULONG_PTR exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
     void *handler, *object = (void *)rec->ExceptionInformation[1];
     int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
     thread_data_t *data = msvcrt_get_thread_data();
@@ -285,14 +285,14 @@ static void check_noexcept( PEXCEPTION_RECORD rec,
     }
 }
 
-static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
+static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG_PTR frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
 {
     int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
     cxx_exception_type *exc_type;
-    ULONG64 orig_frame = frame;
-    ULONG64 throw_base;
+    ULONG_PTR orig_frame = frame;
+    ULONG_PTR throw_base;
     DWORD throw_func_off;
     void *throw_func;
     UINT i, j;
@@ -329,10 +329,9 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
                 if (rtti_rva(catchblock->handler, dispatch->ImageBase) == throw_func)
                 {
-                    TRACE("nested exception detected\n");
                     unwindlevel = tryblock->end_level;
-                    orig_frame = *(ULONG64*)(frame + catchblock->frame);
-                    TRACE("setting orig_frame to %I64x\n", orig_frame);
+                    orig_frame = *(ULONG_PTR *)(frame + catchblock->frame);
+                    TRACE("nested exception detected, setting orig_frame to %Ix\n", orig_frame);
                 }
             }
         }
@@ -365,7 +364,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 
         if (TRACE_ON(seh))
         {
-            TRACE("handling C++ exception rec %p frame %I64x descr %p\n", rec, frame,  descr);
+            TRACE("handling C++ exception rec %p frame %Ix descr %p\n", rec, frame,  descr);
             TRACE_EXCEPTION_TYPE(exc_type, rec->ExceptionInformation[3]);
             dump_function_descr(descr, dispatch->ImageBase);
         }
@@ -375,7 +374,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
         thread_data_t *data = msvcrt_get_thread_data();
 
         exc_type = NULL;
-        TRACE("handling C exception code %lx rec %p frame %I64x descr %p\n",
+        TRACE("handling C exception code %lx rec %p frame %Ix descr %p\n",
                 rec->ExceptionCode, rec, frame, descr);
 
         if (data->se_translator) {
@@ -408,10 +407,10 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG64 frame,
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
-EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG64 frame,
+EXCEPTION_DISPOSITION CDECL __CxxFrameHandler( EXCEPTION_RECORD *rec, ULONG_PTR frame,
                                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch )
 {
-    TRACE( "%p %I64x %p %p\n", rec, frame, context, dispatch );
+    TRACE( "%p %Ix %p %p\n", rec, frame, context, dispatch );
     return cxx_frame_handler( rec, frame, context, dispatch,
                               rtti_rva(*(UINT *)dispatch->HandlerData, dispatch->ImageBase) );
 }
