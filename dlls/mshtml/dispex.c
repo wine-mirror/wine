@@ -1161,8 +1161,8 @@ static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *
     return hres;
 }
 
-static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISPPARAMS *dp,
-                                       VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+static HRESULT call_builtin_function(DispatchEx *This, func_info_t *func, DISPPARAMS *dp,
+                                     VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     VARIANT arg_buf[MAX_ARGS], *arg_ptrs[MAX_ARGS], *arg, retv, ret_ref, vhres;
     unsigned i, nconv = 0;
@@ -1268,7 +1268,7 @@ static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, DISP
     return V_ERROR(&vhres);
 }
 
-static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
+static HRESULT invoke_builtin_function(DispatchEx *This, func_info_t *func, WORD flags, DISPPARAMS *dp, VARIANT *res,
         EXCEPINFO *ei, IServiceProvider *caller)
 {
     HRESULT hres;
@@ -1299,7 +1299,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
             }
         }
 
-        hres = invoke_builtin_function(This, func, dp, res, ei, caller);
+        hres = call_builtin_function(This, func, dp, res, ei, caller);
         break;
     case DISPATCH_PROPERTYGET: {
         func_obj_entry_t *entry;
@@ -1365,7 +1365,7 @@ static HRESULT invoke_builtin_prop(DispatchEx *This, DISPID id, LCID lcid, WORD 
         return hres;
 
     if(func->func_disp_idx >= 0)
-        return function_invoke(This, func, flags, dp, res, ei, caller);
+        return invoke_builtin_function(This, func, flags, dp, res, ei, caller);
 
     if(func->hook) {
         hres = func->hook(This, flags, dp, res, ei, caller);
@@ -1422,7 +1422,7 @@ HRESULT dispex_call_builtin(DispatchEx *dispex, DISPID id, DISPPARAMS *dp,
     if(FAILED(hres))
         return hres;
 
-    return invoke_builtin_function(dispex, func, dp, res, ei, caller);
+    return call_builtin_function(dispex, func, dp, res, ei, caller);
 }
 
 HRESULT remove_attribute(DispatchEx *This, DISPID id, VARIANT_BOOL *success)
