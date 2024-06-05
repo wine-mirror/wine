@@ -7198,7 +7198,7 @@ static void test_maximum_allowed(void)
     CloseHandle(handle);
 }
 
-static void test_token_label(void)
+static void check_token_label(HANDLE token, DWORD *level, BOOL sacl_inherited)
 {
     static SID medium_sid = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
                              {SECURITY_MANDATORY_MEDIUM_RID}};
@@ -7210,18 +7210,8 @@ static void test_token_label(void)
     SECURITY_DESCRIPTOR *sd;
     ACL *sacl = NULL, *dacl;
     DWORD size, revision;
-    HANDLE token;
     char *str;
     SID *sid;
-
-    if (!pAddMandatoryAce)
-    {
-        win_skip("Mandatory integrity control is not supported.\n");
-        return;
-    }
-
-    ret = OpenProcessToken(GetCurrentProcess(), READ_CONTROL | WRITE_OWNER, &token);
-    ok(ret, "OpenProcessToken failed with error %lu\n", GetLastError());
 
     ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, NULL, 0, &size);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
@@ -7233,8 +7223,12 @@ static void test_token_label(void)
 
     ret = GetSecurityDescriptorControl(sd, &control, &revision);
     ok(ret, "GetSecurityDescriptorControl failed with error %lu\n", GetLastError());
-    todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_AUTO_INHERITED | SE_SACL_PRESENT),
-                 "Unexpected security descriptor control %#x\n", control);
+    if (sacl_inherited)
+        todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_AUTO_INHERITED | SE_SACL_PRESENT),
+                     "Unexpected security descriptor control %#x\n", control);
+    else
+        todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_PRESENT),
+                     "Unexpected security descriptor control %#x\n", control);
     ok(revision == 1, "Unexpected security descriptor revision %lu\n", revision);
 
     sid = (void *)0xdeadbeef;
@@ -7270,6 +7264,7 @@ static void test_token_label(void)
     sid = (SID *)&ace->SidStart;
     ConvertSidToStringSidA(sid, &str);
     ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
+    *level = sid->SubAuthority[0];
     LocalFree(str);
 
     ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
@@ -7277,6 +7272,89 @@ static void test_token_label(void)
     todo_wine ok(!present, "DACL present\n");
 
     free(sd);
+}
+
+static void test_token_label(void)
+{
+    SID low_sid = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
+                   {SECURITY_MANDATORY_LOW_RID}};
+    char sacl_buffer[50];
+    SECURITY_ATTRIBUTES attr = {.nLength = sizeof(SECURITY_ATTRIBUTES)};
+    ACL *sacl = (ACL *)sacl_buffer;
+    TOKEN_LINKED_TOKEN linked;
+    DWORD level, level2, size;
+    PSECURITY_DESCRIPTOR sd;
+    HANDLE token, token2;
+    BOOL ret;
+
+    if (!pAddMandatoryAce)
+    {
+        win_skip("Mandatory integrity control is not supported.\n");
+        return;
+    }
+
+    ret = OpenProcessToken(GetCurrentProcess(), READ_CONTROL | TOKEN_QUERY | TOKEN_DUPLICATE, &token);
+    ok(ret, "OpenProcessToken failed with error %lu\n", GetLastError());
+
+    check_token_label(token, &level, TRUE);
+
+    ret = DuplicateTokenEx(token, READ_CONTROL, NULL, SecurityAnonymous, TokenPrimary, &token2);
+    ok(ret, "Failed to duplicate token, error %lu\n", GetLastError());
+
+    check_token_label(token2, &level2, TRUE);
+    ok(level2 == level, "Expected level %#lx, got %#lx.\n", level, level2);
+
+    CloseHandle(token2);
+
+    ret = DuplicateTokenEx(token, READ_CONTROL, NULL, SecurityImpersonation, TokenImpersonation, &token2);
+    ok(ret, "Failed to duplicate token, error %lu\n", GetLastError());
+
+    check_token_label(token2, &level2, TRUE);
+    ok(level2 == level, "Expected level %#lx, got %#lx.\n", level, level2);
+
+    CloseHandle(token2);
+
+    /* Any label set in the SD when calling DuplicateTokenEx() is ignored. */
+
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+
+    sd = malloc(size);
+    ret = GetKernelObjectSecurity(token, LABEL_SECURITY_INFORMATION, sd, size, &size);
+    ok(ret, "GetKernelObjectSecurity failed with error %lu\n", GetLastError());
+
+    InitializeAcl(sacl, sizeof(sacl_buffer), ACL_REVISION);
+    AddMandatoryAce(sacl, ACL_REVISION, 0, SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, &low_sid);
+    SetSecurityDescriptorSacl(sd, TRUE, sacl, FALSE);
+
+    attr.lpSecurityDescriptor = sd;
+    ret = DuplicateTokenEx(token, TOKEN_ALL_ACCESS, &attr, SecurityImpersonation, TokenImpersonation, &token2);
+    ok(ret, "Failed to duplicate token, error %lu\n", GetLastError());
+
+    check_token_label(token2, &level2, TRUE);
+    ok(level2 == level, "Expected level %#lx, got %#lx.\n", level, level2);
+
+    /* Trying to set a SD on the token also claims success but has no effect. */
+
+    ret = SetKernelObjectSecurity(token2, LABEL_SECURITY_INFORMATION, sd);
+    ok(ret, "Failed to set SD, error %lu\n", GetLastError());
+
+    check_token_label(token2, &level2, FALSE);
+    ok(level2 == level, "Expected level %#lx, got %#lx.\n", level, level2);
+
+    free(sd);
+
+    /* Test the linked token. */
+
+    ret = GetTokenInformation(token, TokenLinkedToken, &linked, sizeof(linked), &size);
+    ok(ret, "Failed to get linked token, error %lu\n", GetLastError());
+
+    check_token_label(linked.LinkedToken, &level2, TRUE);
+    ok(level2 == level, "Expected level %#lx, got %#lx.\n", level, level2);
+
+    CloseHandle(linked.LinkedToken);
+
     CloseHandle(token);
 }
 
