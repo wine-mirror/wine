@@ -72,7 +72,14 @@ static struct testfile_s {
     { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p'},  "normal" },
     { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a'},                  "normal" },
     { 0, FILE_ATTRIBUTE_DIRECTORY, {'.'},                  ". directory" },
-    { 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" }
+    { 0, FILE_ATTRIBUTE_DIRECTORY, {'.','.'},              ".. directory" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'e','a','.','t','m','p','.','t','m','p'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'.','a'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'.','a','.','a'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'a','.'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'.','.','a'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'.','a','a'}, "normal" },
+    { 0, FILE_ATTRIBUTE_NORMAL,    {'a','.', '.'}, "normal" },
 };
 static const int test_dir_count = ARRAY_SIZE(testfiles);
 static const int max_test_dir_size = ARRAY_SIZE(testfiles) + 5;  /* size of above plus some for .. etc */
@@ -96,7 +103,8 @@ static void set_up_attribute_test(const WCHAR *testdir)
 
         if (lstrcmpW(testfiles[i].name, dotW) == 0 || lstrcmpW(testfiles[i].name, dotdotW) == 0)
             continue;
-        lstrcpyW( buf, testdir );
+        lstrcpyW( buf, L"\\\\?\\" );
+        lstrcatW( buf, testdir );
         lstrcatW( buf, backslashW );
         lstrcatW( buf, testfiles[i].name );
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
@@ -131,7 +139,8 @@ static void tear_down_attribute_test(const WCHAR *testdir)
         WCHAR buf[MAX_PATH];
         if (lstrcmpW(testfiles[i].name, dotW) == 0 || lstrcmpW(testfiles[i].name, dotdotW) == 0)
             continue;
-        lstrcpyW( buf, testdir );
+        lstrcpyW( buf, L"\\\\?\\" );
+        lstrcatW( buf, testdir );
         lstrcatW( buf, backslashW );
         lstrcatW( buf, testfiles[i].name );
         if (testfiles[i].attr & FILE_ATTRIBUTE_DIRECTORY) {
@@ -456,12 +465,12 @@ static void test_NtQueryDirectoryFile(void)
     }
     mask_tests[] =
     {
-        {L"*.", {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1}},
-        {L"*.*", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}},
-        {L"*.**", {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1}},
-        {L"*", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
-        {L"**", {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
-        {L"??.???", {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0}},
+        {L"*.",                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1}},
+        {L"*.*",                   {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"*.**",                  {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"*",                     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"**",                    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {L"??.???",                {0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     };
 
     OBJECT_ATTRIBUTES attr;
