@@ -587,7 +587,8 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return D3DERR_INVALIDCALL;
 
     staging_tex = tex = *texture = NULL;
-    hr = d3dx_image_init(srcdata, srcdatasize, &image, 0);
+    skip_levels = mipfilter != D3DX_DEFAULT ? mipfilter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
+    hr = d3dx_image_init(srcdata, srcdatasize, &image, skip_levels, 0);
     if (FAILED(hr))
     {
         FIXME("Unrecognized file format, returning failure.\n");
@@ -634,20 +635,6 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         miplevels = imginfo.MipLevels;
     }
 
-    skip_levels = mipfilter != D3DX_DEFAULT ? mipfilter >> D3DX_SKIP_DDS_MIP_LEVELS_SHIFT : 0;
-    if (skip_levels && imginfo.MipLevels > skip_levels)
-    {
-        TRACE("Skipping the first %u (of %u) levels of a DDS mipmapped texture.\n",
-                skip_levels, imginfo.MipLevels);
-        TRACE("Texture level 0 dimensions are %ux%u.\n", imginfo.Width, imginfo.Height);
-        width >>= skip_levels;
-        height >>= skip_levels;
-        miplevels -= skip_levels;
-    }
-    else
-    {
-        skip_levels = 0;
-    }
 
     /* Fix up texture creation parameters. */
     hr = D3DXCheckTextureRequirements(device, &width, &height, &miplevels, usage, &format, pool);
@@ -710,8 +697,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
     }
     else
     {
-        hr = load_texture_from_dds(tex, srcdata, palette, filter, colorkey, &imginfo, skip_levels,
-                &loaded_miplevels);
+        hr = load_texture_from_dds(tex, palette, filter, colorkey, &image, &loaded_miplevels);
     }
 
     if (FAILED(hr))

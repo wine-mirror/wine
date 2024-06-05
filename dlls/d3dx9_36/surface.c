@@ -437,6 +437,20 @@ static HRESULT d3dformat_to_dds_pixel_format(struct dds_pixel_format *pixel_form
     return E_NOTIMPL;
 }
 
+static void d3dx_get_next_mip_level_size(struct volume *size)
+{
+    size->width  = max(size->width  / 2, 1);
+    size->height = max(size->height / 2, 1);
+    size->depth  = max(size->depth  / 2, 1);
+}
+
+static const char *debug_volume(const struct volume *volume)
+{
+    if (!volume)
+        return "(null)";
+    return wine_dbg_sprintf("(%ux%ux%u)", volume->width, volume->height, volume->depth);
+}
+
 static HRESULT d3dx_calculate_pixels_size(D3DFORMAT format, uint32_t width, uint32_t height,
     uint32_t *pitch, uint32_t *size)
 {
@@ -570,9 +584,8 @@ HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *d
         row_pitch, slice_pitch, NULL, src_box, filter, color_key);
 }
 
-HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
-        DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info, unsigned int skip_levels,
-        unsigned int *loaded_miplevels)
+HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key,
+        const struct d3dx_image *image, unsigned int *loaded_miplevels)
 {
     HRESULT hr;
     RECT src_rect;
@@ -580,49 +593,29 @@ HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, 
     UINT mip_level;
     UINT mip_levels;
     UINT mip_level_size;
-    UINT width, height;
     IDirect3DSurface9 *surface;
-    const struct dds_header *header = src_data;
-    const BYTE *pixels = (BYTE *)(header + 1);
+    const BYTE *pixels = image->pixels;
+    struct volume mip_size = image->size;
 
-    /* Loading a cube texture as a simple texture is also supported
-     * (only first face texture is taken). Same with volume textures. */
-    if ((src_info->ResourceType != D3DRTYPE_TEXTURE)
-            && (src_info->ResourceType != D3DRTYPE_CUBETEXTURE)
-            && (src_info->ResourceType != D3DRTYPE_VOLUMETEXTURE))
+    mip_levels = min(image->mip_levels, IDirect3DTexture9_GetLevelCount(texture));
+    for (mip_level = 0; mip_level < mip_levels; ++mip_level)
     {
-        WARN("Trying to load a %u resource as a 2D texture, returning failure.\n", src_info->ResourceType);
-        return D3DXERR_INVALIDDATA;
-    }
-
-    width = src_info->Width;
-    height = src_info->Height;
-    mip_levels = min(src_info->MipLevels, IDirect3DTexture9_GetLevelCount(texture));
-    if (src_info->ResourceType == D3DRTYPE_VOLUMETEXTURE)
-        mip_levels = 1;
-    for (mip_level = 0; mip_level < mip_levels + skip_levels; ++mip_level)
-    {
-        hr = d3dx_calculate_pixels_size(src_info->Format, width, height, &src_pitch, &mip_level_size);
+        hr = d3dx_calculate_pixels_size(image->format, mip_size.width, mip_size.height, &src_pitch, &mip_level_size);
         if (FAILED(hr)) return hr;
 
-        if (mip_level >= skip_levels)
-        {
-            SetRect(&src_rect, 0, 0, width, height);
+        SetRect(&src_rect, 0, 0, mip_size.width, mip_size.height);
+        IDirect3DTexture9_GetSurfaceLevel(texture, mip_level, &surface);
+        hr = D3DXLoadSurfaceFromMemory(surface, palette, NULL, pixels, image->format, src_pitch,
+                NULL, &src_rect, filter, color_key);
+        IDirect3DSurface9_Release(surface);
+        if (FAILED(hr))
+            return hr;
 
-            IDirect3DTexture9_GetSurfaceLevel(texture, mip_level - skip_levels, &surface);
-            hr = D3DXLoadSurfaceFromMemory(surface, palette, NULL, pixels, src_info->Format, src_pitch,
-                    NULL, &src_rect, filter, color_key);
-            IDirect3DSurface9_Release(surface);
-            if (FAILED(hr))
-                return hr;
-        }
-
-        pixels += mip_level_size;
-        width = max(1, width / 2);
-        height = max(1, height / 2);
+        pixels += mip_level_size * mip_size.depth;
+        d3dx_get_next_mip_level_size(&mip_size);
     }
 
-    *loaded_miplevels = mip_levels - skip_levels;
+    *loaded_miplevels = mip_levels;
 
     return D3D_OK;
 }
@@ -733,7 +726,7 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
 }
 
 static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src_data_size,
-        struct d3dx_image *image)
+        struct d3dx_image *image, uint32_t starting_mip_level)
 {
     const struct dds_header *header = src_data;
     uint32_t expected_src_data_size;
@@ -781,6 +774,27 @@ static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src
 
     image->pixels = ((BYTE *)src_data) + sizeof(*header);
     image->image_file_format = D3DXIFF_DDS;
+    if (starting_mip_level && (image->mip_levels > 1))
+    {
+        uint32_t i, row_pitch, slice_pitch, initial_mip_levels;
+        const struct volume initial_size = image->size;
+
+        initial_mip_levels = image->mip_levels;
+        for (i = 0; i < starting_mip_level; i++)
+        {
+            d3dx_calculate_pixels_size(image->format, image->size.width, image->size.height, &row_pitch, &slice_pitch);
+
+            image->pixels += slice_pitch * image->size.depth;
+            d3dx_get_next_mip_level_size(&image->size);
+            if (--image->mip_levels == 1)
+                break;
+        }
+
+        TRACE("Requested starting mip level %u, actual starting mip level is %u (of %u total in image).\n",
+                starting_mip_level, (initial_mip_levels - image->mip_levels), initial_mip_levels);
+        TRACE("Original dimensions %s, new dimensions %s.\n", debug_volume(&initial_size), debug_volume(&image->size));
+    }
+
     return D3D_OK;
 }
 
@@ -1130,14 +1144,15 @@ exit:
     return hr;
 }
 
-HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image, uint32_t flags)
+HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
+        uint32_t starting_mip_level, uint32_t flags)
 {
     if (!src_data || !src_data_size || !image)
         return D3DERR_INVALIDCALL;
 
     memset(image, 0, sizeof(*image));
     if ((src_data_size >= 4) && !memcmp(src_data, "DDS ", 4))
-        return d3dx_initialize_image_from_dds(src_data, src_data_size, image);
+        return d3dx_initialize_image_from_dds(src_data, src_data_size, image, starting_mip_level);
 
     return d3dx_initialize_image_from_wic(src_data, src_data_size, image, flags);
 }
@@ -1210,7 +1225,7 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
     if (!info)
         return D3D_OK;
 
-    hr = d3dx_image_init(data, datasize, &image, D3DX_IMAGE_INFO_ONLY);
+    hr = d3dx_image_init(data, datasize, &image, 0, D3DX_IMAGE_INFO_ONLY);
     if (FAILED(hr)) {
         TRACE("Invalid or unsupported image file\n");
         return D3DXERR_INVALIDDATA;
@@ -1359,7 +1374,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (!pDestSurface || !pSrcData || !SrcDataSize)
         return D3DERR_INVALIDCALL;
 
-    hr = d3dx_image_init(pSrcData, SrcDataSize, &image, 0);
+    hr = d3dx_image_init(pSrcData, SrcDataSize, &image, 0, 0);
     if (FAILED(hr))
         return D3DXERR_INVALIDDATA;
 

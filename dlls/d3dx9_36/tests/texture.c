@@ -2393,7 +2393,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     check_texture_mip_levels(texture, 1, FALSE);
-    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
+    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
     check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
 
     IDirect3DTexture9_Release(texture);
@@ -2407,9 +2407,9 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
             D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(3, D3DX_FILTER_POINT), 0, &img_info, NULL, &texture);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-    check_texture_mip_levels(texture, 1, TRUE);
-    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, TRUE);
-    check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, TRUE);
+    check_texture_mip_levels(texture, 1, FALSE);
+    check_image_info(&img_info, 1, 1, 1, 1, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+    check_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 0, 0, 1, 1, FALSE);
 
     IDirect3DTexture9_Release(texture);
 
@@ -2463,7 +2463,6 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
     for (mip_level = 0; mip_level < ARRAY_SIZE(dds_volume_24bit_4_4_4_expected); ++mip_level)
     {
         const uint32_t expected_color = dds_volume_24bit_4_4_4_expected[mip_level];
-        BOOL todo = !!mip_level;
         uint32_t x, y;
 
         IDirect3DTexture9_GetLevelDesc(texture, mip_level, &desc);
@@ -2472,7 +2471,7 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         {
             for (x = 0; x < desc.Width; ++x)
             {
-                check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, todo);
+                check_readback_pixel_4bpp(&surface_rb, x, y, expected_color, FALSE);
             }
         }
         release_surface_readback(&surface_rb);

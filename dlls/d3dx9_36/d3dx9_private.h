@@ -120,7 +120,8 @@ struct d3dx_image
     D3DXIMAGE_FILEFORMAT image_file_format;
 };
 
-HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image, uint32_t flags);
+HRESULT d3dx_image_init(const void *src_data, uint32_t src_data_size, struct d3dx_image *image,
+        uint32_t starting_mip_level, uint32_t flags);
 void d3dx_image_cleanup(struct d3dx_image *image);
 HRESULT d3dx_image_get_pixels(struct d3dx_image *image, struct d3dx_pixels *pixels);
 void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *image);
@@ -171,9 +172,8 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
     BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *dst_size,
     const struct pixel_format_desc *dst_format, D3DCOLOR color_key, const PALETTEENTRY *palette);
 
-HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const void *src_data, const PALETTEENTRY *palette,
-        DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info, unsigned int skip_levels,
-        unsigned int *loaded_miplevels);
+HRESULT load_texture_from_dds(IDirect3DTexture9 *texture, const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key,
+        const struct d3dx_image *image, unsigned int *loaded_miplevels);
 HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info);
 HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *dst_palette,
