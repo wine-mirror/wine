@@ -117,6 +117,17 @@ void *call_unwind_handler( void *handler, ULONG_PTR frame, DISPATCHER_CONTEXT *d
 }
 
 
+/*******************************************************************
+ *		get_exception_pc
+ */
+ULONG_PTR get_exception_pc( DISPATCHER_CONTEXT *dispatch )
+{
+    ULONG_PTR pc = dispatch->ControlPc;
+    if (RtlIsEcCode( pc ) && ((DISPATCHER_CONTEXT_ARM64EC *)dispatch)->ControlPcIsUnwound) pc -= 4;
+    return pc;
+}
+
+
 /*********************************************************************
  *              handle_fpieee_flt
  */

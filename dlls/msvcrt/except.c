@@ -165,16 +165,9 @@ static void cxx_local_unwind(ULONG_PTR frame, DISPATCHER_CONTEXT *dispatch,
 {
     const unwind_info *unwind_table = rtti_rva(descr->unwind_table, dispatch->ImageBase);
     int *unwind_help = (int *)(frame + descr->unwind_help);
-    int trylevel;
+    int trylevel = unwind_help[0];
 
-    if (unwind_help[0] == -2)
-    {
-        trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
-    }
-    else
-    {
-        trylevel = unwind_help[0];
-    }
+    if (trylevel == -2) trylevel = ip_to_state( descr, get_exception_pc(dispatch), dispatch->ImageBase );
 
     TRACE("current level: %d, last level: %d\n", trylevel, last_level);
     while (trylevel > last_level)
@@ -277,7 +270,7 @@ static inline void find_catch_block(EXCEPTION_RECORD *rec, CONTEXT *context,
 {
     ULONG_PTR exc_base = (rec->NumberParameters == 4 ? rec->ExceptionInformation[3] : 0);
     void *handler, *object = (void *)rec->ExceptionInformation[1];
-    int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
+    int trylevel = ip_to_state( descr, get_exception_pc(dispatch), dispatch->ImageBase );
     thread_data_t *data = msvcrt_get_thread_data();
     const tryblock_info *in_catch;
     EXCEPTION_RECORD catch_record;
@@ -378,7 +371,7 @@ static DWORD cxx_frame_handler(EXCEPTION_RECORD *rec, ULONG_PTR frame,
                                CONTEXT *context, DISPATCHER_CONTEXT *dispatch,
                                const cxx_function_descr *descr)
 {
-    int trylevel = ip_to_state( descr, dispatch->ControlPc, dispatch->ImageBase );
+    int trylevel = ip_to_state( descr, get_exception_pc(dispatch), dispatch->ImageBase );
     cxx_exception_type *exc_type;
     ULONG_PTR orig_frame = frame;
     ULONG_PTR throw_base;

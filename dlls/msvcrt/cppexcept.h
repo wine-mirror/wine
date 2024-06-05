@@ -284,6 +284,7 @@ extern int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS 
 #ifndef __i386__
 extern void *call_catch_handler( EXCEPTION_RECORD *rec );
 extern void *call_unwind_handler( void *func, uintptr_t frame, DISPATCHER_CONTEXT *dispatch );
+extern ULONG_PTR get_exception_pc( DISPATCHER_CONTEXT *dispatch );
 #endif
 
 #if _MSVCR_VER >= 80

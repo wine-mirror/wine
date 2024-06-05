@@ -79,6 +79,15 @@ void *call_unwind_handler( void *handler, ULONG_PTR frame, DISPATCHER_CONTEXT *d
 
 
 /*******************************************************************
+ *		get_exception_pc
+ */
+ULONG_PTR get_exception_pc( DISPATCHER_CONTEXT *dispatch )
+{
+    return dispatch->ControlPc;
+}
+
+
+/*******************************************************************
  *		longjmp (MSVCRT.@)
  */
 #ifndef __WINE_PE_BUILD

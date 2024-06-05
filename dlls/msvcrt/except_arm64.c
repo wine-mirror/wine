@@ -99,6 +99,17 @@ void *call_unwind_handler( void *handler, ULONG_PTR frame, DISPATCHER_CONTEXT *d
 
 
 /*******************************************************************
+ *		get_exception_pc
+ */
+ULONG_PTR get_exception_pc( DISPATCHER_CONTEXT *dispatch )
+{
+    ULONG_PTR pc = dispatch->ControlPc;
+    if (dispatch->ControlPcIsUnwound) pc -= 4;
+    return pc;
+}
+
+
+/*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
 __ASM_GLOBAL_FUNC( _setjmp, "b _setjmpex" );
