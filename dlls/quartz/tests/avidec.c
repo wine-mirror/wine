@@ -873,6 +873,20 @@ static HRESULT testsink_connect(struct strmbase_sink *iface, IPin *peer, const A
     return S_OK;
 }
 
+static DWORD WINAPI call_qc_notify(void *ptr)
+{
+    struct testfilter *filter = ptr;
+    IQualityControl *qc;
+    Quality q = { Famine, 2000, -10000000, 10000000 };
+
+    IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void**)&qc);
+    /* don't worry too much about what it returns, just check that it doesn't deadlock */
+    IQualityControl_Notify(qc, &filter->filter.IBaseFilter_iface, q);
+    IQualityControl_Release(qc);
+
+    return 0;
+}
+
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
@@ -919,6 +933,13 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     todo_wine_if (testmode == 3) ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IMediaSample_IsSyncPoint(sample);
     todo_wine_if (testmode == 5 || testmode == 6) ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (testmode == 7)
+    {
+        HANDLE h = CreateThread(NULL, 0, call_qc_notify, filter, 0, NULL);
+        ok(WaitForSingleObject(h, 1000) == WAIT_OBJECT_0, "Didn't expect deadlock.\n");
+        CloseHandle(h);
+    }
 
     return S_OK;
 }
@@ -1129,6 +1150,15 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine ok(!sink->got_sample, "Got %u calls to Receive().\n", sink->got_sample);
 
+    testmode = 7;
+    hr = IMediaSample_SetSyncPoint(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    sink->got_sample = 0;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -1174,7 +1204,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
     ok(!testsink->got_eos, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
     hr = IPin_EndOfStream(sink);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!testsink->got_sample, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(!testsink->got_sample, "Got %u calls to Receive().\n", testsink->got_sample);
     ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
     testsink->got_eos = 0;
 
@@ -1185,7 +1215,7 @@ static void test_streaming_events(IMediaControl *control, IPin *sink,
     testmode = 0;
     hr = IMemInputPin_Receive(input, sample);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
     testsink->got_sample = 0;
 
     ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
