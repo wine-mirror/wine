@@ -288,7 +288,6 @@ struct send_message_info
 };
 
 static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, IMO_UNAVAILABLE };
-static BOOL keyboard_auto_repeat_enabled;
 
 /* flag for messages that contain pointers */
 /* 32 messages per entry, messages 0..31 map to bits 0..31 */
@@ -514,13 +513,6 @@ static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
 {
     if (!hwnd_filter || hwnd_filter == get_desktop_window()) return TRUE;
     return (msg->hwnd == hwnd_filter || is_child( hwnd_filter, msg->hwnd ));
-}
-
-BOOL set_keyboard_auto_repeat( BOOL enable )
-{
-    BOOL enabled = keyboard_auto_repeat_enabled;
-    keyboard_auto_repeat_enabled = enable;
-    return enabled;
 }
 
 /***********************************************************************
@@ -2306,21 +2298,6 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
     }
 }
 
-
-static void handle_keyboard_repeat_message( HWND hwnd )
-{
-    struct user_thread_info *thread_info = get_user_thread_info();
-    MSG *msg = &thread_info->key_repeat_msg;
-    UINT speed;
-
-    msg->lParam = (msg->lParam & ~(LPARAM)0xffff) + ((msg->lParam + 1) & 0xffff);
-
-    if (NtUserSystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &speed, 0 ))
-        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_KEY_REPEAT, 400 / (speed + 1) );
-
-    NtUserPostMessage( hwnd, msg->message, msg->wParam, msg->lParam );
-}
-
 /***********************************************************************
  *          process_pointer_message
  *
@@ -2412,37 +2389,6 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
     if (remove && (msg->message == WM_KEYDOWN || msg->message == WM_KEYUP))
         if (ImmProcessKey( msg->hwnd, NtUserGetKeyboardLayout(0), msg->wParam, msg->lParam, 0 ))
             msg->wParam = VK_PROCESSKEY;
-
-    /* set/kill timers for key auto-repeat */
-    if (remove && keyboard_auto_repeat_enabled)
-    {
-        struct user_thread_info *thread_info = get_user_thread_info();
-
-        switch (msg->message)
-        {
-        case WM_KEYDOWN:
-        case WM_SYSKEYDOWN:
-        {
-            UINT delay;
-
-            if (msg->wParam == VK_PROCESSKEY) break;
-
-            if (thread_info->key_repeat_msg.hwnd != msg->hwnd)
-                kill_system_timer( thread_info->key_repeat_msg.hwnd, SYSTEM_TIMER_KEY_REPEAT );
-            thread_info->key_repeat_msg = *msg;
-            if (NtUserSystemParametersInfo( SPI_GETKEYBOARDDELAY, 0, &delay, 0 ))
-                NtUserSetSystemTimer( msg->hwnd, SYSTEM_TIMER_KEY_REPEAT, (delay + 1) * 250 );
-            break;
-        }
-
-        case WM_KEYUP:
-        case WM_SYSKEYUP:
-            /* Only stop repeat if the scan codes match. */
-            if ((thread_info->key_repeat_msg.lParam & 0x01ff0000) == (msg->lParam & 0x01ff0000))
-                kill_system_timer( thread_info->key_repeat_msg.hwnd, SYSTEM_TIMER_KEY_REPEAT );
-            break;
-        }
-    }
 
     return TRUE;
 }
@@ -3651,10 +3597,6 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
 
             case SYSTEM_TIMER_TRACK_MOUSE:
                 update_mouse_tracking_info( msg->hwnd );
-                return 0;
-
-            case SYSTEM_TIMER_KEY_REPEAT:
-                handle_keyboard_repeat_message( msg->hwnd );
                 return 0;
         }
     }

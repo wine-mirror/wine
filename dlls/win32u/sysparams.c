@@ -3793,6 +3793,25 @@ BOOL WINAPI NtUserPerMonitorDPIPhysicalToLogicalPoint( HWND hwnd, POINT *pt )
     return ret;
 }
 
+/* Set server auto-repeat properties. delay and speed are expressed in terms of
+ * SPI_KEYBOARDDELAY and SPI_KEYBOARDSPEED values. Returns whether auto-repeat
+ * was enabled before this request. */
+static BOOL set_server_keyboard_repeat( int enable, int delay, int speed )
+{
+    BOOL enabled = FALSE;
+
+    SERVER_START_REQ( set_keyboard_repeat )
+    {
+        req->enable = enable >= 0 ? (enable > 0) : -1;
+        req->delay = delay >= 0 ? (delay + 1) * 250 : -1;
+        req->period = speed >= 0 ? 400 / (speed + 1) : -1;
+        if (!wine_server_call( req )) enabled = reply->enable;
+    }
+    SERVER_END_REQ;
+
+    return enabled;
+}
+
 /* retrieve the cached base keys for a given entry */
 static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volatile_key )
 {
@@ -5023,7 +5042,8 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
         break;
     case SPI_SETKEYBOARDSPEED:
         if (val > 31) val = 31;
-        ret = set_entry( &entry_KEYBOARDSPEED, val, ptr, winini );
+        if ((ret = set_entry( &entry_KEYBOARDSPEED, val, ptr, winini )))
+            set_server_keyboard_repeat( -1,  -1, val );
         break;
 
     WINE_SPI_WARN(SPI_LANGDRIVER); /* not implemented in Windows */
@@ -5067,7 +5087,8 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
         ret = get_entry( &entry_KEYBOARDDELAY, val, ptr );
         break;
     case SPI_SETKEYBOARDDELAY:
-        ret = set_entry( &entry_KEYBOARDDELAY, val, ptr, winini );
+        if ((ret = set_entry( &entry_KEYBOARDDELAY, val, ptr, winini )))
+            set_server_keyboard_repeat( -1,  val, -1 );
         break;
     case SPI_ICONVERTICALSPACING:
         if (ptr != NULL)
@@ -6321,6 +6342,15 @@ static void thread_detach(void)
     NtClose( thread_info->server_queue );
 
     exiting_thread_id = 0;
+}
+
+static BOOL set_keyboard_auto_repeat( BOOL enable )
+{
+    UINT delay, speed;
+
+    get_entry( &entry_KEYBOARDDELAY, 0, &delay );
+    get_entry( &entry_KEYBOARDSPEED, 0, &speed );
+    return set_server_keyboard_repeat( enable, delay, speed );
 }
 
 /***********************************************************************
