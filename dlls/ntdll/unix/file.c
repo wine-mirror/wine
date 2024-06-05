@@ -1442,10 +1442,13 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
             while (name < name_end)
             {
                 c = *mask == '"' ? '.' : *mask;
-                if (is_case_sensitive)
-                    while (name < name_end && (*name != c)) name++;
-                else
-                    while (name < name_end && (towupper(*name) != towupper(c))) name++;
+                if (!is_wildcard(c))
+                {
+                    if (is_case_sensitive)
+                        while (name < name_end && (*name != c)) name++;
+                    else
+                        while (name < name_end && (towupper(*name) != towupper(c))) name++;
+                }
                 if (match_filename_part( name, name_end, mask, mask_end )) return TRUE;
                 ++name;
             }
