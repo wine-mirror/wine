@@ -352,6 +352,58 @@ sync_test("builtin_toString", function() {
     }
 });
 
+sync_test("builtin_obj", function() {
+    var v = document.documentMode;
+    var f = document.createElement;
+    var e;
+
+    if(v < 9) {
+        ok(!(window instanceof Object), "window instance of Object");
+        ok(!(document instanceof Object), "document instance of Object");
+        ok(!("arguments" in f), "arguments in f");
+        ok(!("length" in f), "length in f");
+        e = 0;
+        try {
+            f.toString();
+        }catch(ex) {
+            e = ex.number;
+        }
+        ok(e === 0xa01b6 - 0x80000000, "[f.toString] e = " + e);
+        try {
+            window.toString.call(null);
+            ok(false, "expected exception calling window.toString with null context");
+        }catch(ex) {}
+    }
+
+    e = 0;
+    try {
+        f.call(Object, "div");
+    }catch(ex) {
+        e = ex.number;
+    }
+    todo_wine_if(v >= 9).
+    ok(e === (v < 9 ? 0xa0005 : 0x0ffff) - 0x80000000, "[f.call(Object, 'div')] e = " + e);
+
+    e = 0;
+    try {
+        f.call(null, "div");
+    }catch(ex) {
+        e = ex.number;
+    }
+    todo_wine_if(v >= 9).
+    ok(e === (v < 9 ? 0xa0005 : 0x0ffff) - 0x80000000, "[f.call(null, 'div')] e = " + e);
+
+    var elem1 = f.call(document, "div");
+    var elem2 = f.call(document, "br");
+    document.body.appendChild(elem1);
+    document.body.appendChild(elem2);
+    elem1.onclick = function() { ok(false, "unexpected elem1.onclick"); };
+    var clicked = false;
+    elem2.onclick = function() { clicked = true; };
+    elem1.click.call(elem2);
+    ok(clicked === true, "elem2.onclick not called");
+});
+
 sync_test("elem_props", function() {
     var elem = document.documentElement;
 

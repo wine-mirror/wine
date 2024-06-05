@@ -3440,6 +3440,15 @@ static HRESULT WINAPI WindowDispEx_GetNameSpaceParent(IWineJSDispatchHost *iface
     return S_OK;
 }
 
+static HRESULT WINAPI WindowDispEx_CallFunction(IWineJSDispatchHost *iface, DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret,
+                                                EXCEPINFO *ei, IServiceProvider *caller)
+{
+    HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
+
+    return IWineJSDispatchHost_CallFunction(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface,
+                                        id, iid, dp, ret, ei, caller);
+}
+
 static const IWineJSDispatchHostVtbl WindowDispExVtbl = {
     WindowDispEx_QueryInterface,
     WindowDispEx_AddRef,
@@ -3455,7 +3464,8 @@ static const IWineJSDispatchHostVtbl WindowDispExVtbl = {
     WindowDispEx_GetMemberProperties,
     WindowDispEx_GetMemberName,
     WindowDispEx_GetNextDispID,
-    WindowDispEx_GetNameSpaceParent
+    WindowDispEx_GetNameSpaceParent,
+    WindowDispEx_CallFunction,
 };
 
 static inline HTMLOuterWindow *impl_from_IEventTarget(IEventTarget *iface)

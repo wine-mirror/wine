@@ -266,4 +266,5 @@ interface IWineXMLHttpRequestPrivate : IDispatch
 ]
 interface IWineJSDispatchHost : IDispatchEx
 {
+    HRESULT CallFunction(DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
 }
