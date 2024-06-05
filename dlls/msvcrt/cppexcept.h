@@ -90,7 +90,9 @@ typedef struct
     UINT type_info;
     int  offset;
     UINT handler;
+#ifdef _WIN64
     UINT frame;
+#endif
 } catchblock_info;
 
 typedef struct

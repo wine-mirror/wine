@@ -74,7 +74,7 @@ void dump_function_descr( const cxx_function_descr *descr, uintptr_t base )
             TRACE( "        %d: flags %x offset %d handler %p",
                    j, catchblock[j].flags, catchblock[j].offset,
                    catchblock[j].handler ? rtti_rva(catchblock[j].handler, base) : NULL );
-#ifdef RTTI_USE_RVA
+#ifdef _WIN64
             TRACE( " frame %x", catchblock[j].frame );
 #endif
             TRACE( " type %p %s\n", type_info, dbgstr_type_info(type_info) );
