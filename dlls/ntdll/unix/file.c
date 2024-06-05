@@ -1421,30 +1421,13 @@ static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer 
 
 
 /***********************************************************************
- *           match_filename
+ *           match_filename_part
  *
- * Check a long file name against a mask.
+ * Recursive helper for match_filename().
  *
- * Tests (done in W95 DOS shell - case insensitive):
- * *.txt			test1.test.txt				*
- * *st1*			test1.txt				*
- * *.t??????.t*			test1.ta.tornado.txt			*
- * *tornado*			test1.ta.tornado.txt			*
- * t*t				test1.ta.tornado.txt			*
- * ?est*			test1.txt				*
- * ?est???			test1.txt				-
- * *test1.txt*			test1.txt				*
- * h?l?o*t.dat			hellothisisatest.dat			*
  */
-static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRING *mask_str )
+static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, const WCHAR *mask, const WCHAR *mask_end )
 {
-    BOOL mismatch;
-    const WCHAR *mask = mask_str->Buffer;
-    const WCHAR *name_end = name + length;
-    const WCHAR *mask_end = mask + mask_str->Length / sizeof(WCHAR);
-    const WCHAR *lastjoker = NULL;
-    const WCHAR *next_to_retry = NULL;
-
     while (name < name_end && mask < mask_end)
     {
         switch(*mask)
@@ -1453,14 +1436,16 @@ static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRI
             mask++;
             while (mask < mask_end && *mask == '*') mask++;  /* Skip consecutive '*' */
             if (mask == mask_end) return TRUE; /* end of mask is all '*', so match */
-            lastjoker = mask;
 
-            /* skip to the next match after the joker(s) */
-            if (is_case_sensitive)
-                while (name < name_end && (*name != *mask)) name++;
-            else
-                while (name < name_end && (towupper(*name) != towupper(*mask))) name++;
-            next_to_retry = name;
+            while (name < name_end)
+            {
+                if (is_case_sensitive)
+                    while (name < name_end && (*name != *mask)) name++;
+                else
+                    while (name < name_end && (towupper(*name) != towupper(*mask))) name++;
+                if (match_filename_part( name, name_end, mask, mask_end )) return TRUE;
+                ++name;
+            }
             break;
         case '?':
         case '>':
@@ -1468,38 +1453,29 @@ static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRI
             name++;
             break;
         default:
-            if (is_case_sensitive) mismatch = (*mask != *name);
-            else mismatch = (towupper(*mask) != towupper(*name));
-
-            if (!mismatch)
-            {
-                mask++;
-                name++;
-                if (mask == mask_end)
-                {
-                    if (name == name_end) return TRUE;
-                    if (lastjoker) mask = lastjoker;
-                }
-            }
-            else /* mismatch ! */
-            {
-                if (lastjoker) /* we had an '*', so we can try unlimitedly */
-                {
-                    mask = lastjoker;
-
-                    /* this scan sequence was a mismatch, so restart
-                     * 1 char after the first char we checked last time */
-                    next_to_retry++;
-                    name = next_to_retry;
-                }
-                else return FALSE; /* bad luck */
-            }
+            if (is_case_sensitive && *mask != *name) return FALSE;
+            if (!is_case_sensitive && towupper(*mask) != towupper(*name)) return FALSE;
+            mask++;
+            name++;
             break;
         }
     }
     while (mask < mask_end && *mask == '*')
         mask++;
     return (name == name_end && mask == mask_end);
+}
+
+
+/***********************************************************************
+ *           match_filename
+ *
+ * Check a file name against a mask.
+ *
+ */
+static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRING *mask_str )
+{
+    return match_filename_part( name, name + length, mask_str->Buffer,
+                                mask_str->Buffer + mask_str->Length / sizeof(WCHAR));
 }
 
 
