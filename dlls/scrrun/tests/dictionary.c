@@ -243,7 +243,6 @@ static HRESULT WINAPI test_unk_no_QI(IUnknown *iface, REFIID riid, void **obj)
 
 static ULONG WINAPI test_unk_AddRef(IUnknown *iface)
 {
-    ok(0, "unexpected\n");
     return 2;
 }
 
@@ -1168,6 +1167,45 @@ static void test_IEnumVARIANT(void)
     IDictionary_Release(dict);
 }
 
+static void test_putref_Item(void)
+{
+    IUnknown *obj = &test_unk;
+    VARIANT key, item, item2;
+    IDictionary *dict;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_Dictionary, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDictionary, (void **)&dict);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 10;
+    V_VT(&item) = VT_UNKNOWN;
+    V_UNKNOWN(&item) = obj;
+    hr = IDictionary_putref_Item(dict, &key, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    VariantInit(&item2);
+    hr = IDictionary_get_Item(dict, &key, &item2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&item2) == VT_UNKNOWN, "Unexpected type.\n");
+    ok(V_UNKNOWN(&item2) == obj, "Unexpected value.\n");
+    VariantClear(&item2);
+
+    V_VT(&key) = VT_I2;
+    V_I2(&key) = 11;
+    V_VT(&item) = VT_UNKNOWN|VT_BYREF;
+    V_UNKNOWNREF(&item) = &obj;
+    hr = IDictionary_putref_Item(dict, &key, &item);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDictionary_get_Item(dict, &key, &item2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&item2) == VT_UNKNOWN, "Unexpected type.\n");
+    ok(V_UNKNOWN(&item2) == obj, "Unexpected value.\n");
+
+    IDictionary_Release(dict);
+}
+
 START_TEST(dictionary)
 {
     IDispatch *disp;
@@ -1193,6 +1231,7 @@ START_TEST(dictionary)
     test_Item();
     test_Add();
     test_IEnumVARIANT();
+    test_putref_Item();
 
     CoUninitialize();
 }
