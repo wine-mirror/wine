@@ -40,17 +40,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 
-/*********************************************************************
- *		__CxxFrameHandler (MSVCRT.@)
- */
-EXCEPTION_DISPOSITION CDECL __CxxFrameHandler(EXCEPTION_RECORD *rec, ULONG64 frame, CONTEXT *context,
-                                              DISPATCHER_CONTEXT *dispatch)
-{
-    FIXME("%p %I64x %p %p: not implemented\n", rec, frame, context, dispatch);
-    return ExceptionContinueSearch;
-}
-
-
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */

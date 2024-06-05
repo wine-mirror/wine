@@ -40,17 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 
 /*********************************************************************
- *		__CxxFrameHandler (MSVCRT.@)
- */
-EXCEPTION_DISPOSITION CDECL __CxxFrameHandler(EXCEPTION_RECORD *rec, DWORD frame, CONTEXT *context,
-                                              DISPATCHER_CONTEXT *dispatch)
-{
-    FIXME("%p %lx %p %p: not implemented\n", rec, frame, context, dispatch);
-    return ExceptionContinueSearch;
-}
-
-
-/*********************************************************************
  *              handle_fpieee_flt
  */
 int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
