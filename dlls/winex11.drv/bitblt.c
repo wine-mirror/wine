@@ -1887,10 +1887,22 @@ static UINT get_dib_d3dddifmt( const BITMAPINFO *info )
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
     {
         DWORD *colors = (DWORD *)info->bmiColors;
-        if (info->bmiHeader.biBitCount != 16) return D3DDDIFMT_UNKNOWN;
-        if (colors[0] == 0x0000f800 && colors[1] == 0x000007e0 && colors[2] == 0x0000001f) return D3DDDIFMT_R5G6B5;
-        if (colors[0] == 0x00007c00 && colors[1] == 0x000003e0 && colors[2] == 0x0000001f) return D3DDDIFMT_A1R5G5B5;
-        if (colors[0] == 0x00000f00 && colors[1] == 0x000000f0 && colors[2] == 0x0000000f) return D3DDDIFMT_A4R4G4B4;
+
+        if (info->bmiHeader.biBitCount == 16)
+        {
+            if (colors[0] == 0x0000f800 && colors[1] == 0x000007e0 && colors[2] == 0x0000001f) return D3DDDIFMT_R5G6B5;
+            if (colors[0] == 0x00007c00 && colors[1] == 0x000003e0 && colors[2] == 0x0000001f) return D3DDDIFMT_A1R5G5B5;
+            if (colors[0] == 0x00000f00 && colors[1] == 0x000000f0 && colors[2] == 0x0000000f) return D3DDDIFMT_A4R4G4B4;
+        }
+        else if (info->bmiHeader.biBitCount == 24)
+        {
+            if (colors[0] == 0x00ff0000 && colors[1] == 0x0000ff00 && colors[2] == 0x000000ff) return D3DDDIFMT_R8G8B8;
+        }
+        else if (info->bmiHeader.biBitCount == 32)
+        {
+            if (colors[0] == 0x00ff0000 && colors[1] == 0x0000ff00 && colors[2] == 0x000000ff) return D3DDDIFMT_X8R8G8B8;
+        }
+
         return D3DDDIFMT_UNKNOWN;
     }
 
