@@ -1474,6 +1474,9 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
  */
 static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRING *mask_str )
 {
+    /* Special handling for parent directory. */
+    if (length == 2 && name[0] == '.' && name[1] == '.') --length;
+
     return match_filename_part( name, name + length, mask_str->Buffer,
                                 mask_str->Buffer + mask_str->Length / sizeof(WCHAR));
 }
