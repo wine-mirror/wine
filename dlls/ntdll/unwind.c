@@ -894,7 +894,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
 
             if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
             {
-                EXCEPTION_POINTERS ptrs = { rec, context };
+                EXCEPTION_POINTERS ptrs = { rec, (CONTEXT *)context };
 
                 handler = (void *)(base + table->ScopeRecord[i].HandlerAddress);
                 TRACE( "scope %u calling filter %p ptrs %p frame %p\n", i, handler, &ptrs, frame );
@@ -910,7 +910,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
             }
             TRACE( "unwinding to target %Ix\n", base + table->ScopeRecord[i].JumpTarget );
             RtlUnwindEx( frame, (char *)base + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
+                         rec, 0, (CONTEXT *)dispatch->ContextRecord, dispatch->HistoryTable );
         }
     }
     return ExceptionContinueSearch;
