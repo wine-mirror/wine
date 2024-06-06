@@ -2067,7 +2067,7 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     D3DDDIFORMAT d3d_format;
     HBITMAP bitmap = 0;
     BOOL byteswap;
-    UINT size;
+    UINT size, status;
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -2082,23 +2082,29 @@ struct window_surface *create_surface( HWND hwnd, Window window, const XVisualIn
     if (!(image = x11drv_image_create( info, vis ))) return NULL;
 
     /* wrap the XImage data in a HBITMAP if we can write to the surface pixels directly */
-    if (!(byteswap = image_needs_byteswap( image->ximage, is_r8g8b8( vis ), info->bmiHeader.biBitCount )) &&
-        info->bmiHeader.biBitCount > 8 && (d3d_format = get_dib_d3dddifmt( info )))
+    if ((byteswap = image_needs_byteswap( image->ximage, is_r8g8b8( vis ), info->bmiHeader.biBitCount )) ||
+        info->bmiHeader.biBitCount <= 8 || !(d3d_format = get_dib_d3dddifmt( info )))
+        WARN( "Cannot use direct rendering, falling back to copies\n" );
+    else
     {
         D3DKMT_CREATEDCFROMMEMORY desc =
         {
             .Width = info->bmiHeader.biWidth,
-            .Height = info->bmiHeader.biHeight,
-            .Pitch = info->bmiHeader.biWidth * info->bmiHeader.biBitCount / 8,
+            .Height = abs( info->bmiHeader.biHeight ),
+            .Pitch = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight ),
             .Format = d3d_format,
             .pMemory = image->ximage->data,
+            .hDeviceDc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW ),
         };
 
-        if (!NtGdiDdDDICreateDCFromMemory( &desc ))
+        if ((status = NtGdiDdDDICreateDCFromMemory( &desc )))
+            ERR( "Failed to create HBITMAP falling back to copies, status %#x\n", status );
+        else
         {
             bitmap = desc.hBitmap;
             NtGdiDeleteObjectApp( desc.hDc );
         }
+        if (desc.hDeviceDc) NtUserReleaseDC( hwnd, desc.hDeviceDc );
     }
 
     if (!(surface = calloc( 1, size )))
