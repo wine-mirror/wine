@@ -5266,6 +5266,19 @@ static void test_MapCharacters(void)
     IDWriteFactory2_Release(factory2);
 }
 
+static BOOL is_font_name_match(const WCHAR *name, const WCHAR *list)
+{
+     WCHAR *p, str[256];
+
+     wcscpy(str, list);
+     for (p = wcstok(str, L";"); p; p = wcstok(NULL, L";"))
+     {
+         if (!wcscmp(p, name))
+             return TRUE;
+     }
+     return FALSE;
+}
+
 static void test_system_fallback(void)
 {
     static const struct fallback_test
@@ -5275,7 +5288,7 @@ static void test_system_fallback(void)
     }
     tests[] =
     {
-        { { 0x25d4, 0}, L"Segoe UI Symbol" },
+        { { 0x25d4, 0}, L"Segoe UI Symbol;Meiryo UI" },
     };
     IDWriteFontFallback *fallback;
     IDWriteFactory2 *factory;
@@ -5310,7 +5323,7 @@ static void test_system_fallback(void)
 
         get_font_name(font, name, ARRAY_SIZE(name));
         todo_wine
-        ok(!wcscmp(name, tests[i].name), "%u: unexpected name %s.\n", i, wine_dbgstr_w(name));
+        ok(is_font_name_match(name, tests[i].name), "%u: unexpected name %s.\n", i, wine_dbgstr_w(name));
 
         hr = IDWriteFont_HasCharacter(font, g_source[0], &exists);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
