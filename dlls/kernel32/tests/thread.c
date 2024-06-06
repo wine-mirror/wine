@@ -1889,7 +1889,13 @@ struct fpu_thread_ctx
 
 static inline unsigned long get_fpu_cw(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef __arm64ec__
+    extern NTSTATUS (*__os_arm64x_get_x64_information)(ULONG,void*,void*);
+    unsigned int cw, sse;
+    __os_arm64x_get_x64_information( 0, &sse, NULL );
+    __os_arm64x_get_x64_information( 2, &cw, NULL );
+    return MAKELONG( cw, sse );
+#elif defined(__i386__) || defined(__x86_64__)
     WORD cw = 0;
     unsigned int sse = 0;
 #ifdef _MSC_VER
