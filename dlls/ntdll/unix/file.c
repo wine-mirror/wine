@@ -1441,10 +1441,11 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
 
             while (name < name_end)
             {
+                c = *mask == '"' ? '.' : *mask;
                 if (is_case_sensitive)
-                    while (name < name_end && (*name != *mask)) name++;
+                    while (name < name_end && (*name != c)) name++;
                 else
-                    while (name < name_end && (towupper(*name) != towupper(*mask))) name++;
+                    while (name < name_end && (towupper(*name) != towupper(c))) name++;
                 if (match_filename_part( name, name_end, mask, mask_end )) return TRUE;
                 ++name;
             }
@@ -1469,7 +1470,7 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
                 {
                     while (name < next_dot)
                     {
-                        c = *mask;
+                        c = *mask == '"' ? '.' : *mask;
                         if (!is_wildcard(c))
                         {
                             if (is_case_sensitive)
@@ -1491,14 +1492,15 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
             name++;
             break;
         default:
-            if (is_case_sensitive && *mask != *name) return FALSE;
-            if (!is_case_sensitive && towupper(*mask) != towupper(*name)) return FALSE;
+            c = *mask == '"' ? '.' : *mask;
+            if (is_case_sensitive && c != *name) return FALSE;
+            if (!is_case_sensitive && towupper(c) != towupper(*name)) return FALSE;
             mask++;
             name++;
             break;
         }
     }
-    while (mask < mask_end && (*mask == '*' || *mask == '<'))
+    while (mask < mask_end && (*mask == '*' || *mask == '<' || *mask == '"'))
         mask++;
     return (name == name_end && mask == mask_end);
 }
