@@ -365,6 +365,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @interface WineContentView : WineBaseView <NSTextInputClient, NSViewLayerContentScaleDelegate>
 {
+    CGImageRef colorImage;
+
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
     BOOL _everHadGLContext;
@@ -501,6 +503,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [markedText release];
         [glContexts release];
         [pendingGlContexts release];
+        CGImageRelease(colorImage);
         [super dealloc];
     }
 
@@ -517,7 +520,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) updateLayer
     {
         WineWindow* window = (WineWindow*)[self window];
-        CGImageRef image = NULL;
+        CGImageRef image;
         CGRect imageRect;
         CALayer* layer = [self layer];
 
@@ -532,8 +535,22 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         imageRect.origin.y *= layer.contentsScale;
         imageRect.size.width *= layer.contentsScale;
         imageRect.size.height *= layer.contentsScale;
-        image = macdrv_get_surface_display_image(window.surface, &imageRect, window.colorKeyed,
-                                                 window.colorKeyRed, window.colorKeyGreen, window.colorKeyBlue);
+
+        image = CGImageCreateWithImageInRect(colorImage, imageRect);
+
+        if (window.colorKeyed)
+        {
+            CGImageRef maskedImage;
+            CGFloat components[] = { window.colorKeyRed   - 0.5, window.colorKeyRed   + 0.5,
+                                     window.colorKeyGreen - 0.5, window.colorKeyGreen + 0.5,
+                                     window.colorKeyBlue  - 0.5, window.colorKeyBlue  + 0.5 };
+            maskedImage = CGImageCreateWithMaskingColors(image, components);
+            if (maskedImage)
+            {
+                CGImageRelease(image);
+                image = maskedImage;
+            }
+        }
 
         if (image)
         {
@@ -550,6 +567,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [window invalidateShadow];
             }
         }
+    }
+
+    - (void) setColorImage:(CGImageRef)image
+    {
+        CGImageRelease(colorImage);
+        colorImage = CGImageRetain(image);
     }
 
     - (void) viewWillDraw
@@ -3493,19 +3516,26 @@ void macdrv_set_window_surface(macdrv_window w, struct window_surface *window_su
 }
 
 /***********************************************************************
- *              macdrv_window_needs_display
+ *              macdrv_window_set_color_image
  *
- * Mark a window as needing display in a specified rect (in non-client
+ * Push a window surface color pixel update in a specified rect (in non-client
  * area coordinates).
  */
-void macdrv_window_needs_display(macdrv_window w, CGRect rect)
+void macdrv_window_set_color_image(macdrv_window w, CGImageRef image, CGRect rect, CGRect dirty)
 {
 @autoreleasepool
 {
     WineWindow* window = (WineWindow*)w;
 
+    CGImageRetain(image);
+
     OnMainThreadAsync(^{
-        [[window contentView] setNeedsDisplayInRect:NSRectFromCGRect(cgrect_mac_from_win(rect))];
+        WineContentView *view = [window contentView];
+
+        [view setColorImage:image];
+        [view setNeedsDisplayInRect:NSRectFromCGRect(cgrect_mac_from_win(dirty))];
+
+        CGImageRelease(image);
     });
 }
 }

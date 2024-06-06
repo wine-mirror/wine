@@ -53,12 +53,6 @@ static inline int get_dib_image_size(const BITMAPINFO *info)
         * abs(info->bmiHeader.biHeight);
 }
 
-static inline void reset_bounds(RECT *bounds)
-{
-    bounds->left = bounds->top = INT_MAX;
-    bounds->right = bounds->bottom = INT_MIN;
-}
-
 
 struct macdrv_window_surface
 {
@@ -66,7 +60,6 @@ struct macdrv_window_surface
     macdrv_window           window;
     BOOL                    use_alpha;
     CGDataProviderRef       provider;
-    CGImageRef              color_image;
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
@@ -115,17 +108,18 @@ static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RE
     CGImageAlphaInfo alpha_info = (surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
     BITMAPINFO *color_info = &surface->info;
     CGColorSpaceRef colorspace;
-
-    if (surface->color_image) CGImageRelease(surface->color_image);
+    CGImageRef image;
 
     colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    surface->color_image = CGImageCreate(color_info->bmiHeader.biWidth, abs(color_info->bmiHeader.biHeight), 8, 32,
-                                         color_info->bmiHeader.biSizeImage / abs(color_info->bmiHeader.biHeight), colorspace,
-                                         alpha_info | kCGBitmapByteOrder32Little, surface->provider, NULL, retina_on, kCGRenderingIntentDefault);
+    image = CGImageCreate(color_info->bmiHeader.biWidth, abs(color_info->bmiHeader.biHeight), 8, 32,
+                          color_info->bmiHeader.biSizeImage / abs(color_info->bmiHeader.biHeight), colorspace,
+                          alpha_info | kCGBitmapByteOrder32Little, surface->provider, NULL, retina_on, kCGRenderingIntentDefault);
     CGColorSpaceRelease(colorspace);
 
-    macdrv_window_needs_display(surface->window, cgrect_from_rect(*dirty));
-    return FALSE; /* bounds are reset asynchronously, from macdrv_get_surface_display_image */
+    macdrv_window_set_color_image(surface->window, image, cgrect_from_rect(*rect), cgrect_from_rect(*dirty));
+    CGImageRelease(image);
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -136,7 +130,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p\n", surface);
-    if (surface->color_image) CGImageRelease(surface->color_image);
     CGDataProviderRelease(surface->provider);
     free(surface);
 }
@@ -229,52 +222,6 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     if (surface) surface->use_alpha = use_alpha;
-}
-
-/***********************************************************************
- *              create_surface_image
- *
- * Caller must hold the surface lock.  On input, *rect is the requested
- * image rect, relative to the window whole_rect, a.k.a. visible_rect.
- * On output, it's been intersected with that part backed by the surface
- * and is the actual size of the returned image.  copy_data indicates if
- * the caller will keep the returned image beyond the point where the
- * surface bits can be guaranteed to remain valid and unchanged.  If so,
- * the bits are copied instead of merely referenced by the image.
- *
- * IMPORTANT: This function is called from non-Wine threads, so it
- *            must not use Win32 or Wine functions, including debug
- *            logging.
- */
-CGImageRef macdrv_get_surface_display_image(struct window_surface *window_surface, CGRect *rect, int color_keyed,
-        CGFloat key_red, CGFloat key_green, CGFloat key_blue)
-{
-    CGImageRef cgimage = NULL;
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    pthread_mutex_lock(&window_surface->mutex);
-    if (surface->color_image && !IsRectEmpty(&window_surface->bounds))
-    {
-        cgimage = CGImageCreateWithImageInRect(surface->color_image, *rect);
-
-        if (color_keyed)
-        {
-            CGImageRef maskedImage;
-            CGFloat components[] = { key_red   - 0.5, key_red   + 0.5,
-                                     key_green - 0.5, key_green + 0.5,
-                                     key_blue  - 0.5, key_blue  + 0.5 };
-            maskedImage = CGImageCreateWithMaskingColors(cgimage, components);
-            if (maskedImage)
-            {
-                CGImageRelease(cgimage);
-                cgimage = maskedImage;
-            }
-        }
-    }
-
-    reset_bounds(&window_surface->bounds);
-    pthread_mutex_unlock(&window_surface->mutex);
-    return cgimage;
 }
 
 /***********************************************************************
