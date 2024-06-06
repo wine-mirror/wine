@@ -1189,10 +1189,11 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
         D3DKMT_CREATEDCFROMMEMORY desc =
         {
             .Width = info->bmiHeader.biWidth,
-            .Height = info->bmiHeader.biHeight,
-            .Pitch = info->bmiHeader.biWidth * info->bmiHeader.biBitCount / 8,
+            .Height = abs( info->bmiHeader.biHeight ),
+            .Pitch = info->bmiHeader.biSizeImage / abs( info->bmiHeader.biHeight ),
         };
         struct saved_bitmap *bitmap;
+        UINT status;
         int color;
 
         if (info->bmiHeader.biBitCount <= 8)
@@ -1230,7 +1231,14 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
             desc.pMemory = &info->bmiColors[0];
         }
 
-        if (NtGdiDdDDICreateDCFromMemory( &desc )) return 0;
+        if (!(desc.hDeviceDc = NtGdiCreateCompatibleDC( 0 ))) return 0;
+        if ((status = NtGdiDdDDICreateDCFromMemory( &desc )))
+        {
+            NtGdiDeleteObjectApp( desc.hDeviceDc );
+            ERR( "Failed to create HBITMAP over memory, status %#x\n", status );
+            return 0;
+        }
+        NtGdiDeleteObjectApp( desc.hDeviceDc );
 
         if ((bitmap = HeapAlloc( GetProcessHeap(), 0, sizeof(*bitmap) )))
         {
