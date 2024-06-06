@@ -152,9 +152,42 @@ enum sql_funcs
     unix_funcs_count
 };
 
+struct bind_col_args
+{
+    INT16 target_type;
+    void *target_value;
+    INT64 buffer_length;
+};
+
+struct bind_param_args
+{
+    INT16  value_type;
+    INT16  parameter_type;
+    UINT64 length_precision;
+    INT16  parameter_scale;
+    void  *parameter_value;
+};
+
+struct bind_parameter_args
+{
+    INT16  input_output_type;
+    INT16  value_type;
+    INT16  parameter_type;
+    UINT64 column_size;
+    INT16  decimal_digits;
+    void  *parameter_value;
+    INT64  buffer_length;
+};
+
 struct param
 {
     INT16 type;
+    union
+    {
+        struct bind_col_args col;
+        struct bind_param_args param;
+        struct bind_parameter_args parameter;
+    };
     UINT8 *len;  /* result length array stored in Unix lib */
     void  *ptr;  /* result length ptr passed by client */
 };

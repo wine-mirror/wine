@@ -234,6 +234,10 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
         return SQL_ERROR;
     }
     if (!alloc_binding( &handle->bind_col, SQL_PARAM_INPUT_OUTPUT, ColumnNumber, handle->row_count )) return SQL_ERROR;
+    handle->bind_col.param[i].col.target_type   = TargetType;
+    handle->bind_col.param[i].col.target_value  = TargetValue;
+    handle->bind_col.param[i].col.buffer_length = BufferLength;
+
     params.StatementHandle = handle->unix_handle;
     if (StrLen_or_Ind) params.StrLen_or_Ind = handle->bind_col.param[i].len;
     if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = StrLen_or_Ind;
@@ -274,6 +278,11 @@ SQLRETURN WINAPI SQLBindParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNu
         return SQL_ERROR;
     }
     if (!alloc_binding( &handle->bind_param, SQL_PARAM_INPUT, ParameterNumber, handle->row_count )) return SQL_ERROR;
+    handle->bind_param.param[i].param.value_type       = ValueType;
+    handle->bind_param.param[i].param.parameter_type   = ParameterType;
+    handle->bind_param.param[i].param.length_precision = LengthPrecision;
+    handle->bind_param.param[i].param.parameter_scale  = ParameterScale;
+    handle->bind_param.param[i].param.parameter_value  = ParameterValue;
 
     params.StatementHandle = handle->unix_handle;
     params.StrLen_or_Ind   = handle->bind_param.param[i].len;
@@ -1376,20 +1385,76 @@ static BOOL resize_result_lengths( struct handle *handle, UINT size )
     UINT i;
     for (i = 0; i < handle->bind_col.count; i++)
     {
-        UINT8 *tmp = realloc( handle->bind_col.param[i].len, size * sizeof(UINT64) );
-        if (!tmp) return FALSE;
+        UINT8 *tmp;
+        if (!handle->bind_col.param[i].ptr) continue;
+        if (!(tmp = realloc( handle->bind_col.param[i].len, size * sizeof(UINT64) ))) return FALSE;
+        if (tmp != handle->bind_col.param[i].len)
+        {
+            struct SQLBindCol_params params;
+
+            params.StatementHandle = handle->unix_handle;
+            params.ColumnNumber    = i + 1;
+            params.TargetType      = handle->bind_col.param[i].col.target_type;
+            params.TargetValue     = handle->bind_col.param[i].col.target_value;
+            params.BufferLength    = handle->bind_col.param[i].col.buffer_length;
+            params.StrLen_or_Ind   = tmp;
+            if (!SUCCESS(ODBC_CALL( SQLBindCol, &params )))
+            {
+                free( tmp );
+                return FALSE;
+            }
+        }
         handle->bind_col.param[i].len = tmp;
     }
     for (i = 0; i < handle->bind_param.count; i++)
     {
-        UINT8 *tmp = realloc( handle->bind_param.param[i].len, size * sizeof(UINT64) );
-        if (!tmp) return FALSE;
+        UINT8 *tmp;
+        if (!handle->bind_param.param[i].ptr) continue;
+        if (!(tmp = realloc( handle->bind_param.param[i].len, size * sizeof(UINT64) ))) return FALSE;
+        if (tmp != handle->bind_param.param[i].len)
+        {
+            struct SQLBindParam_params params;
+
+            params.StatementHandle = handle->unix_handle;
+            params.ParameterNumber = i + 1;
+            params.ValueType       = handle->bind_param.param[i].param.value_type;
+            params.ParameterType   = handle->bind_param.param[i].param.parameter_type;
+            params.LengthPrecision = handle->bind_param.param[i].param.length_precision;
+            params.ParameterScale  = handle->bind_param.param[i].param.parameter_scale;
+            params.ParameterValue  = handle->bind_param.param[i].param.parameter_value;
+            params.StrLen_or_Ind   = tmp;
+            if (!SUCCESS(ODBC_CALL( SQLBindParam, &params )))
+            {
+                free( tmp );
+                return FALSE;
+            }
+        }
         handle->bind_param.param[i].len = tmp;
     }
     for (i = 0; i < handle->bind_parameter.count; i++)
     {
-        UINT8 *tmp = realloc( handle->bind_parameter.param[i].len, size * sizeof(UINT64) );
-        if (!tmp) return FALSE;
+        UINT8 *tmp;
+        if (!(tmp = realloc( handle->bind_parameter.param[i].len, size * sizeof(UINT64) ))) return FALSE;
+        if (tmp != handle->bind_parameter.param[i].len)
+        {
+            struct SQLBindParameter_params params;
+
+            params.StatementHandle = handle->unix_handle;
+            params.ParameterNumber = i + 1;
+            params.InputOutputType = handle->bind_parameter.param[i].parameter.input_output_type;
+            params.ValueType       = handle->bind_parameter.param[i].parameter.value_type;
+            params.ParameterType   = handle->bind_parameter.param[i].parameter.parameter_type;
+            params.ColumnSize      = handle->bind_parameter.param[i].parameter.column_size;
+            params.DecimalDigits   = handle->bind_parameter.param[i].parameter.decimal_digits;
+            params.ParameterValue  = handle->bind_parameter.param[i].parameter.parameter_value;
+            params.BufferLength    = handle->bind_parameter.param[i].parameter.buffer_length;
+            params.StrLen_or_Ind   = tmp;
+            if (!SUCCESS(ODBC_CALL( SQLBindParameter, &params )))
+            {
+                free( tmp );
+                return FALSE;
+            }
+        }
         handle->bind_parameter.param[i].len = tmp;
     }
     return TRUE;
@@ -1984,6 +2049,13 @@ SQLRETURN WINAPI SQLBindParameter(SQLHSTMT StatementHandle, SQLUSMALLINT Paramet
         return SQL_ERROR;
     }
     if (!alloc_binding( &handle->bind_parameter, InputOutputType, ParameterNumber, handle->row_count )) return SQL_ERROR;
+    handle->bind_parameter.param[i].parameter.input_output_type = InputOutputType;
+    handle->bind_parameter.param[i].parameter.value_type        = ValueType;
+    handle->bind_parameter.param[i].parameter.parameter_type    = ParameterType;
+    handle->bind_parameter.param[i].parameter.column_size       = ColumnSize;
+    handle->bind_parameter.param[i].parameter.decimal_digits    = DecimalDigits;
+    handle->bind_parameter.param[i].parameter.parameter_value   = ParameterValue;
+    handle->bind_parameter.param[i].parameter.buffer_length     = BufferLength;
 
     params.StatementHandle = handle->unix_handle;
     params.StrLen_or_Ind   = handle->bind_parameter.param[i].len;
