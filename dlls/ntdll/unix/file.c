@@ -1428,6 +1428,8 @@ static ULONG hash_short_file_name( const WCHAR *name, int length, LPWSTR buffer 
  */
 static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, const WCHAR *mask, const WCHAR *mask_end )
 {
+    WCHAR c;
+
     while (name < name_end && mask < mask_end)
     {
         switch(*mask)
@@ -1447,6 +1449,42 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
                 ++name;
             }
             break;
+        case '<':
+        {
+            const WCHAR *next_dot;
+            BOOL had_dot = FALSE;
+
+            ++mask;
+            while (name < name_end)
+            {
+                next_dot = name;
+                while (next_dot < name_end && *next_dot != '.') ++next_dot;
+                if (next_dot == name_end && had_dot) break;
+                if (next_dot < name_end)
+                {
+                    had_dot = TRUE;
+                    ++next_dot;
+                }
+                if (mask < mask_end)
+                {
+                    while (name < next_dot)
+                    {
+                        c = *mask;
+                        if (!is_wildcard(c))
+                        {
+                            if (is_case_sensitive)
+                                while (name < next_dot && (*name != c)) name++;
+                            else
+                                while (name < next_dot && (towupper(*name) != towupper(c))) name++;
+                        }
+                        if (match_filename_part( name, name_end, mask, mask_end )) return TRUE;
+                        ++name;
+                    }
+                }
+                name = next_dot;
+            }
+            break;
+        }
         case '?':
         case '>':
             mask++;
@@ -1460,7 +1498,7 @@ static BOOLEAN match_filename_part( const WCHAR *name, const WCHAR *name_end, co
             break;
         }
     }
-    while (mask < mask_end && *mask == '*')
+    while (mask < mask_end && (*mask == '*' || *mask == '<'))
         mask++;
     return (name == name_end && mask == mask_end);
 }
