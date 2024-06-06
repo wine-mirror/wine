@@ -1486,6 +1486,9 @@ static NTSTATUS WINAPI LdrpGetX64Information( ULONG type, void *output, void *ex
         *(UINT *)output = fpcsr_to_mxcsr( fpcr, fpsr );
         return STATUS_SUCCESS;
     }
+    case 2:
+        *(UINT *)output = 0x27f;  /* hard-coded x87 control word */
+        return STATUS_SUCCESS;
     default:
         FIXME( "not implemented type %u\n", type );
         return STATUS_INVALID_PARAMETER;
