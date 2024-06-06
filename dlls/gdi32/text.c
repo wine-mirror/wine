@@ -1421,8 +1421,11 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, const WCHAR *str, INT count, INT max
                 if (extents + cluster_extent > max_ext) break;
                 if (nfit) *nfit += cluster_size;
 
-                for (j = 0; j < cluster_size; ++j)
-                    dxs[i + j] = extents + cluster_extent / cluster_size;
+                if (dxs)
+                {
+                    for (j = 0; j < cluster_size; ++j)
+                        dxs[i + j] = extents + cluster_extent / cluster_size;
+                }
 
                 extents += cluster_extent;
             }
