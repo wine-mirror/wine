@@ -240,6 +240,11 @@ struct _object_header_t
     WH_TYPE htype;
     const object_vtbl_t *vtbl;
     HINTERNET hInternet;
+    ULONG  connect_timeout;
+    ULONG  send_timeout;
+    ULONG  receive_timeout;
+    ULONG  data_send_timeout;
+    ULONG  data_receive_timeout;
     BOOL valid_handle;
     DWORD  dwFlags;
     DWORD_PTR dwContext;
@@ -262,7 +267,6 @@ typedef struct
     LPWSTR  proxyUsername;
     LPWSTR  proxyPassword;
     DWORD   accessType;
-    DWORD   connect_timeout;
 } appinfo_t;
 
 typedef struct
@@ -273,9 +277,6 @@ typedef struct
     LPWSTR  userName;
     LPWSTR  password;
     INTERNET_PORT hostPort; /* the final destination port of the request */
-    DWORD connect_timeout;
-    DWORD send_timeout;
-    DWORD receive_timeout;
 } http_session_t;
 
 #define HDR_ISREQUEST		0x0001
@@ -317,9 +318,6 @@ typedef struct
     LPWSTR verb;
     netconn_t *netconn;
     DWORD security_flags;
-    DWORD connect_timeout;
-    DWORD send_timeout;
-    DWORD receive_timeout;
     LPWSTR version;
     DWORD status_code;
     LPWSTR statusText;

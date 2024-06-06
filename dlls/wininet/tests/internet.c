@@ -282,13 +282,59 @@ static void test_InternetQueryOptionA(void)
 
   InternetCloseHandle(hinet);
 
+  /* Connect timeout */
   val = 12345;
   res = InternetSetOptionA(NULL, INTERNET_OPTION_CONNECT_TIMEOUT, &val, sizeof(val));
   ok(res, "InternetSetOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed (%lu)\n", GetLastError());
 
   len = sizeof(val);
   res = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
-  ok(res, "InternetQueryOptionA failed %ld)\n", GetLastError());
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 12345, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Receive Timeout */
+  val = 54321;
+  res = InternetSetOptionA(NULL, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(NULL, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 54321, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Send Timeout */
+  val = 12345;
+  res = InternetSetOptionA(NULL, INTERNET_OPTION_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(NULL, INTERNET_OPTION_SEND_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 12345, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Data Receive Timeout */
+  val = 54321;
+  res = InternetSetOptionA(NULL, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(NULL, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 54321, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Data Send Timeout */
+  val = 12345;
+  res = InternetSetOptionA(NULL, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  len = sizeof(val);
+  res = InternetQueryOptionA(NULL, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed %ld)\n", GetLastError());
   ok(val == 12345, "val = %ld\n", val);
   ok(len == sizeof(val), "len = %ld\n", len);
 
@@ -308,6 +354,7 @@ static void test_InternetQueryOptionA(void)
   ok(!res, "InternetQueryOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
   ok(GetLastError() == ERROR_INTERNET_INVALID_OPERATION, "GetLastError() = %lu\n", GetLastError());
 
+  /* Connect Timeout */
   val = 2;
   res = InternetSetOptionA(hinet, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &val, sizeof(val));
   ok(!res, "InternetSetOptionA(INTERNET_OPTION_MAX_CONNS_PER_SERVER) succeeded\n");
@@ -315,7 +362,7 @@ static void test_InternetQueryOptionA(void)
 
   len = sizeof(val);
   res = InternetQueryOptionA(hinet, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
-  ok(res, "InternetQueryOptionA failed %ld)\n", GetLastError());
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed %ld)\n", GetLastError());
   ok(val == 12345, "val = %ld\n", val);
   ok(len == sizeof(val), "len = %ld\n", len);
 
@@ -325,16 +372,141 @@ static void test_InternetQueryOptionA(void)
 
   len = sizeof(val);
   res = InternetQueryOptionA(hinet, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
-  ok(res, "InternetQueryOptionA failed %ld)\n", GetLastError());
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed %ld)\n", GetLastError());
   ok(val == 1, "val = %ld\n", val);
   ok(len == sizeof(val), "len = %ld\n", len);
 
+  /* Receive Timeout */
+  val = 60;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
   len = sizeof(val);
-  res = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
-  ok(res, "InternetQueryOptionA failed %ld)\n", GetLastError());
-  ok(val == 12345, "val = %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 60, "val = %ld\n", val);
   ok(len == sizeof(val), "len = %ld\n", len);
 
+  /* Send Timeout */
+  val = 120;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_SEND_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 120, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Data Receive Timeout */
+  val = 60;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 60, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Data Send Timeout */
+  val = 120;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  len = sizeof(val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, &len);
+  ok(res, "InternetQueryOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed %ld)\n", GetLastError());
+  ok(val == 120, "val = %ld\n", val);
+  ok(len == sizeof(val), "len = %ld\n", len);
+
+  /* Timeout inheritance */
+  val = 15000;
+  len = sizeof(val);
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_CONNECT_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed (%lu)\n", GetLastError());
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  hurl = InternetConnectA(hinet,"www.winehq.org",INTERNET_DEFAULT_HTTP_PORT,NULL,NULL,INTERNET_SERVICE_HTTP,0,0);
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
+  ok(val == 15000, "failed to inherit INTERNET_OPTION_CONNECT_TIMEOUT on child connection (found %ld) - Error: %ld)\n", val, GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_SEND_TIMEOUT, &val, &len);
+  ok(val == 15000, "failed to inherit INTERNET_OPTION_SEND_TIMEOUT on child connection (found %ld) - Error: %ld)\n", val, GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 15000, "failed to inherit INTERNET_OPTION_RECEIVE_TIMEOUT on child connection (found %ld) - Error: %ld)\n", val, GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, &len);
+  ok(val == 15000, "failed to inherit INTERNET_OPTION_DATA_SEND_TIMEOUTt on child connection (found %ld) - Error: %ld)\n", val, GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 15000, "failed to inherit INTERNET_OPTION_DATA_RECEIVE_TIMEOUT on child connection (found %ld) - Error: %ld)\n", val, GetLastError());
+
+  val = 12345;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_CONNECT_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_CONNECT_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
+  ok(val == 15000, "Connection handle inherited value (INTERNET_OPTION_CONNECT_TIMEOUT) as %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_CONNECT_TIMEOUT, &val, &len);
+  ok(val == 12345, "Parent handle set from inherited value (INTERNET_OPTION_CONNECT_TIMEOUT) as %ld\n", val);
+
+  val = 12345;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_SEND_TIMEOUT, &val, &len);
+  ok(val == 15000, "Connection handle inherited value (INTERNET_OPTION_SEND_TIMEOUT) as %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_SEND_TIMEOUT, &val, &len);
+  ok(val == 12345, "Parent handle set from inherited value (INTERNET_OPTION_SEND_TIMEOUT) as %ld\n", val);
+
+  val = 12345;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 15000, "Connection handle inherited value (INTERNET_OPTION_RECEIVE_TIMEOUT) as %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 12345, "Parent handle set from inherited value (INTERNET_OPTION_RECEIVE_TIMEOUT) as %ld\n", val);
+
+  val = 12345;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_SEND_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, &len);
+  ok(val == 15000, "Connection handle inherited value (INTERNET_OPTION_DATA_SEND_TIMEOUT) as %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_DATA_SEND_TIMEOUT, &val, &len);
+  ok(val == 12345, "Parent handle set from inherited value (INTERNET_OPTION_DATA_SEND_TIMEOUT) as %ld\n", val);
+
+  val = 12345;
+  res = InternetSetOptionA(hinet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, sizeof(val));
+  ok(res, "InternetSetOptionA(INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) failed (%lu)\n", GetLastError());
+
+  val = 0xdeadbeef;
+  res = InternetQueryOptionA(hurl, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 15000, "Connection handle inherited value (INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) as %ld\n", val);
+  res = InternetQueryOptionA(hinet, INTERNET_OPTION_DATA_RECEIVE_TIMEOUT, &val, &len);
+  ok(val == 12345, "Parent handle set from inherited value (INTERNET_OPTION_DATA_RECEIVE_TIMEOUT) as %ld\n", val);
+
+  InternetCloseHandle(hurl);
   InternetCloseHandle(hinet);
 }
 

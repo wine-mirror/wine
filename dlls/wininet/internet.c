@@ -106,6 +106,11 @@ typedef struct {
 
 static ULONG max_conns = 2, max_1_0_conns = 4;
 static ULONG connect_timeout = 60000;
+static ULONG send_timeout = 60000;
+static ULONG receive_timeout = 60000;
+static ULONG data_send_timeout = 60000;
+static ULONG data_receive_timeout = 60000;
+
 
 static const WCHAR szInternetSettings[] =
     L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
@@ -174,6 +179,17 @@ void *alloc_object(object_header_t *parent, const object_vtbl_t *vtbl, size_t si
     if(parent) {
         ret->lpfnStatusCB = parent->lpfnStatusCB;
         ret->dwInternalFlags = parent->dwInternalFlags & INET_CALLBACKW;
+        ret->connect_timeout = parent->connect_timeout;
+        ret->send_timeout = parent->send_timeout;
+        ret->receive_timeout = parent->receive_timeout;
+        ret->data_send_timeout = parent->data_send_timeout;
+        ret->data_receive_timeout = parent->data_receive_timeout;
+    } else {
+        ret->connect_timeout = connect_timeout;
+        ret->send_timeout = send_timeout;
+        ret->receive_timeout = receive_timeout;
+        ret->data_send_timeout = data_send_timeout;
+        ret->data_receive_timeout = data_receive_timeout;
     }
 
     return ret;
@@ -1147,17 +1163,6 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             return ERROR_SUCCESS;
         }
 
-    case INTERNET_OPTION_CONNECT_TIMEOUT:
-        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
-
-        if (*size < sizeof(ULONG))
-            return ERROR_INSUFFICIENT_BUFFER;
-
-        *(ULONG*)buffer = ai->connect_timeout;
-        *size = sizeof(ULONG);
-
-        return ERROR_SUCCESS;
-
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
         INTERNET_PER_CONN_OPTION_LISTW *con = buffer;
         INTERNET_PER_CONN_OPTION_LISTA *conA = buffer;
@@ -1241,16 +1246,6 @@ static DWORD APPINFO_SetOption(object_header_t *hdr, DWORD option, void *buf, DW
     appinfo_t *ai = (appinfo_t*)hdr;
 
     switch(option) {
-    case INTERNET_OPTION_CONNECT_TIMEOUT:
-        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
-
-        if(size != sizeof(connect_timeout))
-            return ERROR_INTERNET_BAD_OPTION_LENGTH;
-        if(!*(ULONG*)buf)
-            return ERROR_BAD_ARGUMENTS;
-
-        ai->connect_timeout = *(ULONG*)buf;
-        return ERROR_SUCCESS;
     case INTERNET_OPTION_USER_AGENT:
         free(ai->agent);
         if (!(ai->agent = wcsdup(buf))) return ERROR_OUTOFMEMORY;
@@ -1381,7 +1376,6 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->accessType = dwAccessType;
     lpwai->proxyUsername = NULL;
     lpwai->proxyPassword = NULL;
-    lpwai->connect_timeout = connect_timeout;
 
     lpwai->agent = wcsdup(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
@@ -3092,6 +3086,50 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
         *size = sizeof(ULONG);
 
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = send_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_RECEIVE_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = receive_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_SEND_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = data_send_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_RECEIVE_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = data_receive_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
     }
 
     FIXME("Stub for %ld\n", option);
@@ -3125,6 +3163,57 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
     case INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER:
         WARN("Called on global option %lu\n", option);
         return ERROR_INTERNET_INVALID_OPERATION;
+
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        TRACE("INTERNET_OPTION_CONNECT_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *(ULONG*)buffer = hdr->connect_timeout;
+        *size = sizeof(ULONG);
+
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(ULONG);
+        *(ULONG *)buffer = hdr->send_timeout;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_RECEIVE_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(ULONG);
+        *(ULONG *)buffer = hdr->receive_timeout;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_SEND_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(ULONG);
+        *(ULONG *)buffer = hdr->data_send_timeout;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_RECEIVE_TIMEOUT\n");
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(ULONG);
+        *(ULONG *)buffer = hdr->data_receive_timeout;
+        return ERROR_SUCCESS;
     }
 
     /* FIXME: we shouldn't call it here */
@@ -3213,6 +3302,26 @@ DWORD INET_SetOption(object_header_t *hdr, DWORD option, void *buf, DWORD size)
         return ERROR_INTERNET_INVALID_OPERATION;
     case INTERNET_OPTION_REFRESH:
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+    case INTERNET_OPTION_CONNECT_TIMEOUT:
+        if (!buf || size != sizeof(ULONG)) return ERROR_INVALID_PARAMETER;
+        hdr->connect_timeout = *(ULONG *)buf;
+        return ERROR_SUCCESS;
+    case INTERNET_OPTION_SEND_TIMEOUT:
+        if (!buf || size != sizeof(ULONG)) return ERROR_INVALID_PARAMETER;
+        hdr->send_timeout = *(ULONG *)buf;
+        return ERROR_SUCCESS;
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        if (!buf || size != sizeof(ULONG)) return ERROR_INVALID_PARAMETER;
+        hdr->receive_timeout = *(ULONG *)buf;
+        return ERROR_SUCCESS;
+    case INTERNET_OPTION_DATA_SEND_TIMEOUT:
+        if (!buf || size != sizeof(ULONG)) return ERROR_INVALID_PARAMETER;
+        hdr->data_send_timeout = *(ULONG *)buf;
+        return ERROR_SUCCESS;
+    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
+        if (!buf || size != sizeof(ULONG)) return ERROR_INVALID_PARAMETER;
+        hdr->data_receive_timeout = *(ULONG *)buf;
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
@@ -3256,6 +3365,50 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
             return ERROR_BAD_ARGUMENTS;
 
         connect_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_SEND_TIMEOUT\n");
+
+        if(size != sizeof(send_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        send_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_RECEIVE_TIMEOUT\n");
+
+        if(size != sizeof(receive_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        receive_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_SEND_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_SEND_TIMEOUT\n");
+
+        if(size != sizeof(data_send_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        data_send_timeout = *(ULONG*)buf;
+        return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
+        TRACE("INTERNET_OPTION_DATA_RECEIVE_TIMEOUT\n");
+
+        if(size != sizeof(data_receive_timeout))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+        if(!*(ULONG*)buf)
+            return ERROR_BAD_ARGUMENTS;
+
+        data_receive_timeout = *(ULONG*)buf;
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_SUPPRESS_BEHAVIOR:
@@ -3383,18 +3536,6 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%ld): STUB\n", priority);
       }
       break;
-    case INTERNET_OPTION_CONNECT_TIMEOUT:
-      {
-        ULONG connecttimeout = *(ULONG *)lpBuffer;
-        FIXME("Option INTERNET_OPTION_CONNECT_TIMEOUT (%ld): STUB\n", connecttimeout);
-      }
-      break;
-    case INTERNET_OPTION_DATA_RECEIVE_TIMEOUT:
-      {
-        ULONG receivetimeout = *(ULONG *)lpBuffer;
-        FIXME("Option INTERNET_OPTION_DATA_RECEIVE_TIMEOUT (%ld): STUB\n", receivetimeout);
-      }
-      break;
     case INTERNET_OPTION_RESET_URLCACHE_SESSION:
         FIXME("Option INTERNET_OPTION_RESET_URLCACHE_SESSION: STUB\n");
         break;
@@ -3412,14 +3553,6 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_IGNORE_OFFLINE:
         FIXME("Option INTERNET_OPTION_IGNORE_OFFLINE: STUB\n");
         break;
-    case INTERNET_OPTION_SEND_TIMEOUT:
-    case INTERNET_OPTION_RECEIVE_TIMEOUT:
-    case INTERNET_OPTION_DATA_SEND_TIMEOUT:
-    {
-        ULONG timeout = *(ULONG *)lpBuffer;
-        FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT/DATA_SEND_TIMEOUT %ld\n", timeout);
-        break;
-    }
     case INTERNET_OPTION_CONNECT_RETRIES:
     {
         ULONG retries = *(ULONG *)lpBuffer;
