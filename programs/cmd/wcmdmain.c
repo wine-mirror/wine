@@ -322,8 +322,8 @@ void WCMD_print_error (void) {
  *
  */
 
-static void WCMD_show_prompt (BOOL newLine) {
-
+static void WCMD_show_prompt(void)
+{
   int status;
   WCHAR out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
   WCHAR *p, *q;
@@ -335,10 +335,6 @@ static void WCMD_show_prompt (BOOL newLine) {
   }
   p = prompt_string;
   q = out_string;
-  if (newLine) {
-    *q++ = '\r';
-    *q++ = '\n';
-  }
   *q = '\0';
   while (*p != '\0') {
     if (*p != '$') {
@@ -2570,7 +2566,8 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* bu
             const size_t len = wcslen(L"echo.");
             size_t curr_size = wcslen(buffer);
             size_t min_len = curr_size < len ? curr_size : len;
-            WCMD_show_prompt(TRUE);
+            WCMD_output_asis(L"\r\n");
+            WCMD_show_prompt();
             WCMD_output_asis(buffer);
             /* I don't know why Windows puts a space here but it does */
             /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
@@ -3644,7 +3641,6 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   WCHAR  *cmd     = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
-  BOOL promptNewLine = TRUE;
   BOOL opt_q;
   int opt_t = 0;
   WCHAR comspec[MAX_PATH];
@@ -3998,16 +3994,17 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   interactive = TRUE;
   if (!opt_k) WCMD_version ();
+  if (echo_mode) WCMD_output_asis(L"\r\n");
   while (TRUE) {
 
     /* Read until EOF (which for std input is never, but if redirect
        in place, may occur                                          */
-    if (echo_mode) WCMD_show_prompt(promptNewLine);
+    if (echo_mode) WCMD_show_prompt();
     if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
       break;
     WCMD_process_commands(toExecute, FALSE, FALSE);
     node_dispose_tree(toExecute);
-    promptNewLine = !!toExecute;
+    if (toExecute && echo_mode) WCMD_output_asis(L"\r\n");
     toExecute = NULL;
   }
   return 0;
