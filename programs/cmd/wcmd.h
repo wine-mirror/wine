@@ -70,9 +70,7 @@ typedef struct _CMD_IF_CONDITION
              op;
     union
     {
-        /* CMD_IF_ERRORLEVEL */
-        int level;
-        /* CMD_IF_EXIST, CMD_IF_DEFINED */
+        /* CMD_IF_ERRORLEVEL, CMD_IF_EXIST, CMD_IF_DEFINED */
         const WCHAR *operand;
         /* CMD_BINOP_EQUAL, CMD_BINOP_LSS, CMD_BINOP_LEQ, CMD_BINOP_EQU, CMD_BINOP_NEQ, CMD_BINOP_GEQ, CMD_BINOP_GTR */
         struct
