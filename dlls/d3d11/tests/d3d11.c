@@ -36264,18 +36264,30 @@ static void test_nv12(void)
     {
         uint32_t width;
         uint32_t height;
+        uint32_t copy_x;
+        uint32_t copy_y;
+        uint32_t copy_width;
+        uint32_t copy_height;
     }
     tests[] =
     {
-        {640, 480},
-        {640, 481},
-        {641, 480},
-        {641, 481},
-        {642, 480},
-        {642, 481},
-        {642, 482},
-        {644, 482},
-        {644, 484},
+        {640, 480, 10, 20, 4, 6},
+        {640, 480, 10, 20, 4, 7},
+        {640, 480, 10, 20, 5, 6},
+        {640, 480, 10, 20, 5, 7},
+
+        {640, 480, 10, 21, 4, 6},
+        {640, 480, 11, 20, 4, 6},
+        {640, 480, 11, 21, 4, 6},
+
+        {640, 481, 10, 20, 4, 6},
+        {641, 480, 10, 20, 4, 6},
+        {641, 481, 10, 20, 4, 6},
+        {642, 480, 10, 20, 4, 6},
+        {642, 481, 10, 20, 4, 6},
+        {642, 482, 10, 20, 4, 6},
+        {644, 482, 10, 20, 4, 6},
+        {644, 484, 10, 20, 4, 6},
     };
 
     if (!init_test_context(&test_context, NULL))
@@ -36319,6 +36331,7 @@ static void test_nv12(void)
         D3D11_SUBRESOURCE_DATA subresource_data = {0};
         D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {0};
         ID3D11Texture2D *texture, *check_texture;
+        char *content, *content2, *copy_source;
         ID3D11UnorderedAccessView *check_uav;
         ID3D11RenderTargetView *rtv1, *rtv2;
         ID3D11ShaderResourceView *srvs[2];
@@ -36328,12 +36341,17 @@ static void test_nv12(void)
         ID3D11Buffer *cbuffer;
         HRESULT expected_hr;
         unsigned int i, j;
-        char *content;
+        D3D11_BOX box;
 
         const uint32_t width = tests[test_idx].width;
         const uint32_t height = tests[test_idx].height;
+        const uint32_t copy_x = tests[test_idx].copy_x;
+        const uint32_t copy_y = tests[test_idx].copy_y;
+        const uint32_t copy_width = tests[test_idx].copy_width;
+        const uint32_t copy_height = tests[test_idx].copy_height;
 
-        winetest_push_context("test %u (%ux%u)", test_idx, width, height);
+        winetest_push_context("test %u (%ux%u, %u,%u,%ux%u)", test_idx, width, height,
+                copy_x, copy_y, copy_width, copy_height);
 
         /* Apparently no Vulkan implementation supports rendering to a NV12 texture, so here we do
          * not request D3D11_BIND_RENDER_TARGET. We will recreate it later for render target usage. */
@@ -36347,7 +36365,9 @@ static void test_nv12(void)
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
         content = calloc(width * height * 3 / 2, 1);
-        ok(!!content, "Failed to allocate memory.\n");
+        content2 = calloc(width * height * 3 / 2, 1);
+        copy_source = calloc(copy_width * copy_height * 3 / 2, 1);
+        ok(content && content2 && copy_source, "Failed to allocate memory.\n");
 
         for (i = 0; i < height; ++i)
         {
@@ -36428,6 +36448,56 @@ static void test_nv12(void)
         get_texture_readback(check_texture, 0, &rb);
         check_readback_data_u8_with_buffer(&rb, content, width, 0);
         release_resource_readback(&rb);
+
+        memcpy(content2, content, width * height * 3 / 2);
+        if (copy_x % 2 == 0 && copy_y % 2 == 0 && copy_width % 2 == 0 && copy_height % 2 == 0)
+        {
+            for (i = copy_y; i < copy_y + copy_height; ++i)
+            {
+                for (j = copy_x; j < copy_x + copy_width; ++j)
+                {
+                    content2[i * width + j] = 0xab;
+                    if (i % 2 == 0 && j % 2 == 0)
+                    {
+                        content2[width * (height + i / 2) + j] = 0xcd;
+                        content2[width * (height + i / 2) + j + 1] = 0xef;
+                    }
+                }
+            }
+            for (i = 0; i < copy_height; ++i)
+            {
+                for (j = 0; j < copy_width; ++j)
+                {
+                    copy_source[i * copy_width + j] = 0xab;
+                    if (i % 2 == 0 && j % 2 == 0)
+                    {
+                        copy_source[copy_width * (copy_height + i / 2) + j] = 0xcd;
+                        copy_source[copy_width * (copy_height + i / 2) + j + 1] = 0xef;
+                    }
+                }
+            }
+        }
+
+        /* UpdateSubresource() copies the specified box on the luma plane and also the corresponding
+         * box on the chroma plane. It does nothing as soon as any coordinate of the box is not a
+         * multiple of 2. AMD seems to have a bug and copies data with the wrong pitch. */
+        if (!is_amd_device(device))
+        {
+            set_box(&box, copy_x, copy_y, 0, copy_x + copy_width, copy_y + copy_height, 1);
+            ID3D11DeviceContext_UpdateSubresource(device_context,
+                    (ID3D11Resource *)texture, 0, &box, copy_source, copy_width, 0);
+
+            ID3D11DeviceContext_ClearUnorderedAccessViewUint(device_context, check_uav, clear_values);
+            ID3D11DeviceContext_CSSetShader(device_context, cs, NULL, 0);
+            ID3D11DeviceContext_CSSetShaderResources(device_context, 0, ARRAY_SIZE(srvs), srvs);
+            ID3D11DeviceContext_CSSetUnorderedAccessViews(device_context, 1, 1, &check_uav, NULL);
+            ID3D11DeviceContext_CSSetConstantBuffers(device_context, 0, 1, &cbuffer);
+            ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
+
+            get_texture_readback(check_texture, 0, &rb);
+            check_readback_data_u8_with_buffer(&rb, content2, width, 0);
+            release_resource_readback(&rb);
+        }
 
         ID3D11ShaderResourceView_Release(srvs[0]);
         ID3D11ShaderResourceView_Release(srvs[1]);
