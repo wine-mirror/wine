@@ -2374,6 +2374,7 @@ static BOOL after_end_dialog, test_def_id, paint_loop_done, wm_copydata_done;
 static int sequence_cnt, sequence_size;
 static struct recvd_message* sequence;
 static int log_all_parent_messages;
+static int log_painting_messages;
 static CRITICAL_SECTION sequence_cs;
 
 /* user32 functions */
@@ -17229,6 +17230,26 @@ static const struct message wm_lb_dblclick_0[] =
     { WM_LBUTTONUP, sent|wparam|lparam, 0, 0 },
     { 0 }
 };
+static const struct message wm_lb_setcount[] =
+{
+    { LB_SETCOUNT, sent|wparam|lparam, 100, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { WM_NCPAINT, sent|parent|optional },
+    { WM_ERASEBKGND, sent|parent },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_VSCROLL, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_WINDOW, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam|msg_todo, OBJID_VSCROLL, 0 },
+    { WM_USER, sent|wparam|lparam, 0, 0 },
+    { WM_NCPAINT, sent|wparam|lparam, 1, 0 },
+    { WM_ERASEBKGND, sent },
+    { WM_CTLCOLORLISTBOX, sent|parent },
+    { WM_USER+1, sent|wparam|lparam, 0, 0 },
+    { 0 }
+};
 
 #define check_lb_state(a1, a2, a3, a4, a5) check_lb_state_dbg(a1, a2, a3, a4, a5, __LINE__)
 
@@ -17241,10 +17262,11 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
     struct recvd_message msg;
 
     /* do not log painting messages */
-    if (message != WM_PAINT &&
+    if ((log_painting_messages ||
+        (message != WM_PAINT &&
         message != WM_NCPAINT &&
         message != WM_SYNCPAINT &&
-        message != WM_ERASEBKGND &&
+        message != WM_ERASEBKGND)) &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         !ignore_message( message ))
@@ -17289,11 +17311,57 @@ static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
 
 static void test_listbox_messages(void)
 {
+    PAINTSTRUCT ps;
+    RECT rc, rc1;
     HWND parent, listbox;
     LRESULT ret;
 
     parent = CreateWindowExA(0, "TestParentClass", NULL, WS_OVERLAPPEDWINDOW  | WS_VISIBLE,
                              100, 100, 200, 200, 0, 0, 0, NULL);
+
+    /* test listbox redrawing after LB_SETCOUNT */
+    listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
+                              LBS_OWNERDRAWFIXED | LBS_NODATA | WS_CHILD | WS_VSCROLL | WS_VISIBLE,
+                              10, 10, 80, 80, parent, (HMENU)ID_LISTBOX, 0, NULL);
+    listbox_orig_proc = (WNDPROC)SetWindowLongPtrA(listbox, GWLP_WNDPROC, (ULONG_PTR)listbox_hook_proc);
+
+    UpdateWindow(listbox);
+
+    check_lb_state(listbox, 0, LB_ERR, 0, 0);
+
+    flush_sequence();
+
+    log_all_parent_messages++;
+    log_painting_messages++;
+
+    ret = GetWindowLongA(listbox, GWL_STYLE);
+    ok((ret & (WS_VSCROLL | WS_HSCROLL)) == 0, "Listbox should not have scroll bars\n");
+
+    ret = SendMessageA(listbox, LB_SETCOUNT, 100, 0);
+    ok(ret == 0, "got %Id\n", ret);
+    ret = GetWindowLongA(listbox, GWL_STYLE);
+    ok((ret & (WS_VSCROLL | WS_HSCROLL)) == WS_VSCROLL, "Listbox should have vertical scroll bar\n");
+
+    SendMessageA(listbox, WM_USER, 0, 0); /* Mark */
+    BeginPaint(listbox, &ps);
+    GetClientRect(parent, &rc1);
+    MapWindowPoints(parent, listbox, (POINT *)&rc1, 2);
+    GetClipBox(ps.hdc, &rc);
+    todo_wine
+    ok(EqualRect(&rc, &rc1), "hdc clipbox %s != parent client rect %s\n", wine_dbgstr_rect(&rc), wine_dbgstr_rect(&rc1));
+    GetClientRect(listbox, &rc);
+    ok(EqualRect(&ps.rcPaint, &rc), "rcPaint %s != listbox client rect %s\n", wine_dbgstr_rect(&ps.rcPaint), wine_dbgstr_rect(&rc));
+    EndPaint(listbox, &ps);
+    SendMessageA(listbox, WM_USER+1, 0, 0); /* Mark */
+
+    ok_sequence(wm_lb_setcount, "LB_SETCOUNT", FALSE);
+    flush_sequence();
+
+    log_painting_messages--;
+    log_all_parent_messages--;
+
+    DestroyWindow(listbox);
+
     /* with LBS_HASSTRINGS */
     listbox = CreateWindowExA(WS_EX_NOPARENTNOTIFY, "ListBox", NULL,
                               WS_CHILD | LBS_NOTIFY | LBS_OWNERDRAWVARIABLE | LBS_HASSTRINGS | WS_VISIBLE,
