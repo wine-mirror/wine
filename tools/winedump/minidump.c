@@ -76,7 +76,7 @@ void mdmp_dump(void)
 
     if (!hdr)
     {
-        printf("Cannot get Minidump header\n");
+        printf("Corrupt file, cannot get Minidump header\n");
         return;
     }
 
@@ -89,13 +89,21 @@ void mdmp_dump(void)
     printf("  TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
     printf("Flags: %s\n", get_hexint64_str(hdr->Flags));
 
+    if (!PRD(hdr->StreamDirectoryRva, hdr->NumberOfStreams * sizeof(MINIDUMP_DIRECTORY)))
+    {
+        printf("Corrupt file, can't read all minidump directories\n");
+        return;
+    }
     for (idx = 0; idx < hdr->NumberOfStreams; ++idx)
     {
         dir = PRD(hdr->StreamDirectoryRva + idx * sizeof(MINIDUMP_DIRECTORY), sizeof(*dir));
-        if (!dir) break;
 
         stream = PRD(dir->Location.Rva, dir->Location.DataSize);
-
+        if (!stream)
+        {
+            printf("Stream [%u]: corrupt file, stream is larger that file\n", idx);
+            continue;
+        }
         switch (dir->StreamType)
         {
         case UnusedStream:
