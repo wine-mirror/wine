@@ -1836,6 +1836,17 @@ static void dump_dup_handle_reply( const struct dup_handle_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_allocate_reserve_object_request( const struct allocate_reserve_object_request *req )
+{
+    fprintf( stderr, " type=%d", req->type );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
+}
+
+static void dump_allocate_reserve_object_reply( const struct allocate_reserve_object_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static void dump_compare_objects_request( const struct compare_objects_request *req )
 {
     fprintf( stderr, " first=%04x", req->first );
@@ -4785,6 +4796,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
+    (dump_func)dump_allocate_reserve_object_request,
     (dump_func)dump_compare_objects_request,
     (dump_func)dump_set_object_permanence_request,
     (dump_func)dump_open_process_request,
@@ -5076,6 +5088,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
+    (dump_func)dump_allocate_reserve_object_reply,
     NULL,
     NULL,
     (dump_func)dump_open_process_reply,
@@ -5367,6 +5380,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "close_handle",
     "set_handle_info",
     "dup_handle",
+    "allocate_reserve_object",
     "compare_objects",
     "set_object_permanence",
     "open_process",

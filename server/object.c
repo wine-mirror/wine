@@ -41,6 +41,8 @@
 #include "thread.h"
 #include "unicode.h"
 #include "security.h"
+#include "handle.h"
+#include "request.h"
 
 
 struct namespace
@@ -60,6 +62,90 @@ struct type_descr no_type =
         STANDARD_RIGHTS_EXECUTE,
         STANDARD_RIGHTS_REQUIRED
     },
+};
+
+struct reserve
+{
+    struct object obj;          /* object header */
+    int    type;                /* reserve object type. See MEMORY_RESERVE_OBJECT_TYPE */
+    /* BYTE *memory */;         /* reserved memory */
+};
+
+static const WCHAR apc_reserve_type_name[] = {'U','s','e','r','A','p','c','R','e','s','e','r','v','e'};
+static const WCHAR completion_reserve_name[] = {'I','o','C','o','m','p','l','e','t','i','o','n','R','e','s','e','r','v','e'};
+
+struct type_descr apc_reserve_type =
+{
+    { apc_reserve_type_name, sizeof(apc_reserve_type_name) },       /* name */
+    STANDARD_RIGHTS_REQUIRED | 0x3,                                 /* valid_access */
+    {                                                               /* mapping */
+        STANDARD_RIGHTS_READ | 0x1,
+        STANDARD_RIGHTS_WRITE | 0x2,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_REQUIRED | 0x3
+    },
+};
+
+struct type_descr completion_reserve_type =
+{
+    { completion_reserve_name, sizeof(completion_reserve_name) },   /* name */
+    STANDARD_RIGHTS_REQUIRED | 0x3,                                 /* valid_access */
+    {                                                               /* mapping */
+        STANDARD_RIGHTS_READ | 0x1,
+        STANDARD_RIGHTS_WRITE | 0x2,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_REQUIRED | 0x3
+    },
+};
+
+static void dump_reserve( struct object *obj, int verbose );
+
+static const struct object_ops apc_reserve_ops =
+{
+    sizeof(struct reserve),     /* size */
+    &apc_reserve_type,          /* type */
+    dump_reserve,               /* dump */
+    no_add_queue,               /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
+    no_get_fd,                  /* get_fd */
+    default_map_access,         /* map_access */
+    default_get_sd,             /* get_sd */
+    default_set_sd,             /* set_sd */
+    default_get_full_name,      /* get_full_name */
+    no_lookup_name,             /* lookup_name */
+    directory_link_name,        /* link_name */
+    default_unlink_name,        /* unlink_name */
+    no_open_file,               /* open_file */
+    no_kernel_obj_list,         /* get_kernel_obj_list */
+    no_close_handle,            /* close_handle */
+    no_destroy                  /* destroy */
+};
+
+static const struct object_ops completion_reserve_ops =
+{
+    sizeof(struct reserve),    /* size */
+    &completion_reserve_type,  /* type */
+    dump_reserve,              /* dump */
+    no_add_queue,              /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    no_satisfied,              /* satisfied */
+    no_signal,                 /* signal */
+    no_get_fd,                 /* get_fd */
+    default_map_access,        /* map_access */
+    default_get_sd,            /* get_sd */
+    default_set_sd,            /* set_sd */
+    default_get_full_name,     /* get_full_name */
+    no_lookup_name,            /* lookup_name */
+    directory_link_name,       /* link_name */
+    default_unlink_name,       /* unlink_name */
+    no_open_file,              /* open_file */
+    no_kernel_obj_list,        /* get_kernel_obj_list */
+    no_close_handle,           /* close_handle */
+    no_destroy                 /* destroy */
 };
 
 #ifdef DEBUG_OBJECTS
@@ -728,4 +814,63 @@ int no_close_handle( struct object *obj, struct process *process, obj_handle_t h
 
 void no_destroy( struct object *obj )
 {
+}
+
+static void dump_reserve( struct object *obj, int verbose )
+{
+    struct reserve *reserve = (struct reserve *) obj;
+
+    assert( obj->ops == &apc_reserve_ops || obj->ops == &completion_reserve_ops );
+    fprintf( stderr, "reserve type=%d\n", reserve->type);
+}
+
+static struct reserve *create_reserve( struct object *root, const struct unicode_str *name,
+                                       unsigned int attr, int type, const struct security_descriptor *sd )
+{
+    struct reserve *reserve;
+
+    if (name->len)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return NULL;
+    }
+
+    if (type == MemoryReserveObjectTypeUserApc)
+    {
+        reserve = create_named_object( root, &apc_reserve_ops, name, attr, sd );
+    }
+    else if (type == MemoryReserveObjectTypeIoCompletion)
+    {
+        reserve = create_named_object( root, &completion_reserve_ops, name, attr, sd );
+    }
+    else
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (reserve && get_error() != STATUS_OBJECT_NAME_EXISTS) reserve->type = type;
+
+    return reserve;
+}
+
+/* Allocate a reserve object for pre-allocating memory for object types */
+DECL_HANDLER(allocate_reserve_object)
+{
+    struct unicode_str name;
+    struct object *root;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+    struct reserve *reserve;
+
+    if (!objattr) return;
+
+    if ((reserve = create_reserve( root, &name, objattr->attributes, req->type, sd )))
+    {
+        reply->handle = alloc_handle_no_access_check( current->process, reserve, GENERIC_READ | GENERIC_WRITE,
+                                                      objattr->attributes );
+        release_object( reserve );
+    }
+
+    if (root) release_object( root );
 }

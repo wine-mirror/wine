@@ -331,6 +331,8 @@ extern struct type_descr completion_type;
 extern struct type_descr file_type;
 extern struct type_descr mapping_type;
 extern struct type_descr key_type;
+extern struct type_descr apc_reserve_type;
+extern struct type_descr completion_reserve_type;
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002

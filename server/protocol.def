@@ -1254,6 +1254,15 @@ typedef struct
 @END
 
 
+/* Allocate a reserve object for pre-allocating memory for object types */
+@REQ(allocate_reserve_object)
+    int type;                   /* reserve object type. See MEMORY_RESERVE_OBJECT_TYPE */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;        /* reserve object handle */
+@END
+
+
 /* Test if two handles refer to the same object */
 @REQ(compare_objects)
     obj_handle_t first;         /* first object handle */

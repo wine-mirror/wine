@@ -2401,7 +2401,6 @@ static void test_object_types(void)
             break;
         }
 
-        todo_wine_if(!lstrcmpW( tests[i].name, L"IoCompletionReserve" ) || !lstrcmpW( tests[i].name, L"UserApcReserve" ))
         ok( j < ARRAY_SIZE(all_types), "type %s not found\n", debugstr_w(tests[i].name) );
     }
     for (j = 0; j < ARRAY_SIZE(all_types); j++)

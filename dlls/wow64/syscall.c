@@ -424,6 +424,23 @@ NTSTATUS WINAPI wow64_NtAllocateLocallyUniqueId( UINT *args )
     return NtAllocateLocallyUniqueId( luid );
 }
 
+/**********************************************************************
+ *           wow64_NtAllocateReserveObject
+ */
+NTSTATUS WINAPI wow64_NtAllocateReserveObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    MEMORY_RESERVE_OBJECT_TYPE type = get_ulong( &args );
+    NTSTATUS status;
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+
+    status = NtAllocateReserveObject( &handle, objattr_32to64( &attr, attr32 ), type );
+    put_handle( handle_ptr, handle );
+    return status;
+}
 
 /**********************************************************************
  *           wow64_NtAllocateUuids

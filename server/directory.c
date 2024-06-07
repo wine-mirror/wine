@@ -161,6 +161,8 @@ static struct type_descr *types[] =
     &file_type,
     &mapping_type,
     &key_type,
+    &apc_reserve_type,
+    &completion_reserve_type,
 };
 
 static void object_type_dump( struct object *obj, int verbose )

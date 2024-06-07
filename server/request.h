@@ -143,6 +143,7 @@ DECL_HANDLER(get_apc_result);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
+DECL_HANDLER(allocate_reserve_object);
 DECL_HANDLER(compare_objects);
 DECL_HANDLER(set_object_permanence);
 DECL_HANDLER(open_process);
@@ -437,6 +438,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_close_handle,
     (req_handler)req_set_handle_info,
     (req_handler)req_dup_handle,
+    (req_handler)req_allocate_reserve_object,
     (req_handler)req_compare_objects,
     (req_handler)req_set_object_permanence,
     (req_handler)req_open_process,
@@ -924,6 +926,10 @@ C_ASSERT( FIELD_OFFSET(struct dup_handle_request, options) == 32 );
 C_ASSERT( sizeof(struct dup_handle_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct dup_handle_reply, handle) == 8 );
 C_ASSERT( sizeof(struct dup_handle_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct allocate_reserve_object_request, type) == 12 );
+C_ASSERT( sizeof(struct allocate_reserve_object_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct allocate_reserve_object_reply, handle) == 8 );
+C_ASSERT( sizeof(struct allocate_reserve_object_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct compare_objects_request, first) == 12 );
 C_ASSERT( FIELD_OFFSET(struct compare_objects_request, second) == 16 );
 C_ASSERT( sizeof(struct compare_objects_request) == 24 );

@@ -1719,6 +1719,31 @@ void server_init_thread( void *entry_point, BOOL *suspend )
     close( reply_pipe );
 }
 
+NTSTATUS WINAPI NtAllocateReserveObject( HANDLE *handle, const OBJECT_ATTRIBUTES *attr,
+                                         MEMORY_RESERVE_OBJECT_TYPE type )
+{
+    struct object_attributes *objattr;
+    unsigned int ret;
+    data_size_t len;
+
+    TRACE("(%p, %p, %d)\n", handle, attr, type);
+
+    *handle = 0;
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( allocate_reserve_object )
+    {
+        req->type = type;
+        wine_server_add_data( req, objattr, len );
+        if (!(ret = wine_server_call( req )))
+            *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    free( objattr );
+    return ret;
+}
+
 
 /******************************************************************************
  *           NtDuplicateObject

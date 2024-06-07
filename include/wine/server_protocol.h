@@ -1385,6 +1385,21 @@ struct dup_handle_reply
 
 
 
+struct allocate_reserve_object_request
+{
+    struct request_header __header;
+    int type;
+    /* VARARG(objattr,object_attributes); */
+};
+struct allocate_reserve_object_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
+
 struct compare_objects_request
 {
     struct request_header __header;
@@ -5837,6 +5852,7 @@ enum request
     REQ_close_handle,
     REQ_set_handle_info,
     REQ_dup_handle,
+    REQ_allocate_reserve_object,
     REQ_compare_objects,
     REQ_set_object_permanence,
     REQ_open_process,
@@ -6132,6 +6148,7 @@ union generic_request
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
     struct dup_handle_request dup_handle_request;
+    struct allocate_reserve_object_request allocate_reserve_object_request;
     struct compare_objects_request compare_objects_request;
     struct set_object_permanence_request set_object_permanence_request;
     struct open_process_request open_process_request;
@@ -6425,6 +6442,7 @@ union generic_reply
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
     struct dup_handle_reply dup_handle_reply;
+    struct allocate_reserve_object_reply allocate_reserve_object_reply;
     struct compare_objects_reply compare_objects_reply;
     struct set_object_permanence_reply set_object_permanence_reply;
     struct open_process_reply open_process_reply;
@@ -6693,7 +6711,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 842
+#define SERVER_PROTOCOL_VERSION 843
 
 /* ### protocol_version end ### */
 
