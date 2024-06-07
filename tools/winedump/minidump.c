@@ -854,6 +854,36 @@ void mdmp_dump(void)
                 }
             }
             break;
+        case CommentStreamA:
+            {
+                /* MSDN states an ANSI string, so stopping at first '\0' if any */
+                const char *end = memchr(stream, '\0', dir->Location.DataSize);
+                printf("Stream [%u]: CommentA\n", idx);
+                printf("--- start of comment\n");
+                write(1, stream, end ? end - (const char*)stream : dir->Location.DataSize);
+                printf("---  end  of comment\n");
+                if (globals_dump_sect("content"))
+                    dump_mdmp_data(&dir->Location, "  ");
+            }
+            break;
+        case CommentStreamW:
+            {
+                const WCHAR *ptr;
+
+                /* MSDN states an UNICODE string, so stopping at first L'\0' if any */
+                printf("Stream [%u]: CommentW\n", idx);
+                printf("--- start of comment\n");
+                for (ptr = stream; ptr + 1 <= (const WCHAR *)((const char *)stream + dir->Location.DataSize) && *ptr; ptr++)
+                {
+                    if (*ptr== L'\n' || *ptr== L'\r' || *ptr== L'\t' || (*ptr >= L' ' && *ptr < 127))
+                        putchar((char)*ptr);
+                    else printf("\\u%04x", *ptr);
+                }
+                printf("---  end  of comment\n");
+                if (globals_dump_sect("content"))
+                    dump_mdmp_data(&dir->Location, "  ");
+            }
+            break;
         default:
             printf("Stream [%u]: NIY %d\n", idx, dir->StreamType);
             printf("  RVA: %#x\n", (UINT)dir->Location.Rva);
