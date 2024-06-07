@@ -144,7 +144,25 @@ int handle_fpieee_flt( __msvcrt_ulong exception_code, EXCEPTION_POINTERS *ep,
  */
 void __cdecl __crtCapturePreviousContext( CONTEXT *ctx )
 {
-    FIXME("not implemented\n");
+    UNWIND_HISTORY_TABLE table;
+    RUNTIME_FUNCTION *func;
+    PEXCEPTION_ROUTINE handler;
+    ULONG_PTR pc, frame, base;
+    void *data;
+    ULONG i;
+
+    RtlCaptureContext( ctx );
+    for (i = 0; i < 2; i++)
+    {
+        pc = ctx->Rip;
+        if ((ctx->ContextFlags & CONTEXT_UNWOUND_TO_CALL) && RtlIsEcCode( pc )) pc -= 4;
+        if (!(func = RtlLookupFunctionEntry( pc, &base, &table ))) break;
+        if (RtlVirtualUnwind2( UNW_FLAG_NHANDLER, base, pc, func, ctx, NULL,
+                               &data, &frame, NULL, NULL, NULL, &handler, 0 ))
+            break;
+        if (!ctx->Rip) break;
+        if (!frame) break;
+    }
 }
 #endif
 
