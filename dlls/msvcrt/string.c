@@ -2786,7 +2786,7 @@ int __cdecl memcmp(const void *ptr1, const void *ptr2, size_t n)
     return memcmp_blocks(p1, p2, n);
 }
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
 
 #ifdef __i386__
 
@@ -3052,7 +3052,7 @@ __ASM_GLOBAL_FUNC( sse2_memmove,
 #endif
 void * __cdecl memmove(void *dst, const void *src, size_t n)
 {
-#ifdef __x86_64__
+#if defined(__x86_64__) && !defined(__arm64ec__)
     return sse2_memmove(dst, src, n);
 #else
     unsigned char *d = dst;
