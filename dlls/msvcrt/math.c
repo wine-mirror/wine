@@ -698,14 +698,36 @@ __int64 CDECL _abs64( __int64 n )
 }
 
 #if defined(__i386__) || defined(__x86_64__)
+
+static unsigned int get_mxcsr(void)
+{
+    unsigned int ret;
+#ifdef __arm64ec__
+    extern NTSTATUS (*__os_arm64x_get_x64_information)(ULONG,void*,void*);
+    __os_arm64x_get_x64_information( 0, &ret, NULL );
+#else
+    __asm__ __volatile__( "stmxcsr %0" : "=m" (ret) );
+#endif
+    return ret;
+}
+
+static void set_mxcsr( unsigned int val )
+{
+#ifdef __arm64ec__
+    extern NTSTATUS (*__os_arm64x_set_x64_information)(ULONG,ULONG_PTR,void*);
+    __os_arm64x_set_x64_information( 0, val, NULL );
+#else
+    __asm__ __volatile__( "ldmxcsr %0" : : "m" (val) );
+#endif
+}
+
 static void _setfp_sse( unsigned int *cw, unsigned int cw_mask,
         unsigned int *sw, unsigned int sw_mask )
 {
 #if defined(__GNUC__) || defined(__clang__)
-    unsigned long old_fpword, fpword;
+    unsigned int old_fpword, fpword = get_mxcsr();
     unsigned int flags;
 
-    __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
     old_fpword = fpword;
 
     cw_mask &= _MCW_EM | _MCW_RC | _MCW_DN;
@@ -785,8 +807,7 @@ static void _setfp_sse( unsigned int *cw, unsigned int cw_mask,
         }
     }
 
-    if (fpword != old_fpword)
-        __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
+    if (fpword != old_fpword) set_mxcsr( fpword );
 #else
     FIXME("not implemented\n");
     if (cw) *cw = 0;
@@ -993,7 +1014,7 @@ static void _setfp( unsigned int *cw, unsigned int cw_mask,
         __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
     if (old_fpcr != fpcr)
         __asm__ __volatile__( "msr fpcr, %0" :: "r" (fpcr) );
-#elif defined(__arm__) && !defined(__SOFTFP__)
+#elif defined(__arm__)
     DWORD old_fpscr, fpscr;
     unsigned int flags;
 
