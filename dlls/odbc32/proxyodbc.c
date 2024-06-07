@@ -235,8 +235,7 @@ SQLRETURN WINAPI SQLBindCol(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNumber,
     }
     if (!alloc_binding( &handle->bind_col, SQL_PARAM_INPUT_OUTPUT, ColumnNumber, handle->row_count )) return SQL_ERROR;
     params.StatementHandle = handle->unix_handle;
-    params.StrLen_or_Ind   = handle->bind_col.param[i].len;
-    *(UINT64 *)params.StrLen_or_Ind = *StrLen_or_Ind;
+    if (StrLen_or_Ind) params.StrLen_or_Ind = handle->bind_col.param[i].len;
     if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) handle->bind_col.param[i].ptr = StrLen_or_Ind;
     TRACE ("Returning %d\n", ret);
     return ret;
