@@ -997,16 +997,28 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                     if(lstrcmpiW(driverW, entry) == 0 || lstrcmpiW(setupW, entry) == 0 ||
                        lstrcmpiW(translator, entry) == 0)
                     {
-                        len = lstrlenW(path) + lstrlenW(slash) + lstrlenW(divider) + 1;
-                        value = malloc(len * sizeof(WCHAR));
-                        if(!value)
+                        if(GetFileAttributesW(divider) == INVALID_FILE_ATTRIBUTES)
                         {
-                            ERR("Out of memory\n");
-                            return;
-                        }
+                            len = lstrlenW(path) + lstrlenW(slash) + lstrlenW(divider) + 1;
+                            value = malloc(len * sizeof(WCHAR));
+                            if(!value)
+                            {
+                                ERR("Out of memory\n");
+                                return;
+                            }
 
-                        lstrcpyW(value, path);
-                        lstrcatW(value, slash);
+                            lstrcpyW(value, path);
+                            lstrcatW(value, slash);
+                        }
+                        else
+                        {
+                            value = calloc(1, (lstrlenW(divider)+1) * sizeof(WCHAR));
+                            if(!value)
+                            {
+                                ERR("Out of memory\n");
+                                return;
+                            }
+                        }
                         lstrcatW(value, divider);
                     }
                     else
