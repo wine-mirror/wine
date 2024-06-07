@@ -1585,10 +1585,12 @@ class VkMember(VkVariable):
         elif self.is_static_array():
             bytes_count = "{0} * sizeof({1})".format(self.array_len, self.type)
             return "memcpy({0}{1}, {2}{1}, {3});\n".format(output, self.name, input, bytes_count)
-        elif direction == Direction.INPUT:
-            return "{0}{1} = {2};\n".format(output, self.name, self.value(input, conv))
         elif conv and direction == Direction.OUTPUT and self.is_pointer():
             return "{0}{1} = PtrToUlong({2}{1});\n".format(output, self.name, input)
+        elif conv and direction == Direction.INPUT and self.is_pointer():
+            return "{0}{1} = UlongToPtr({2}{1});\n".format(output, self.name, input)
+        elif direction == Direction.INPUT:
+            return "{0}{1} = {2};\n".format(output, self.name, self.value(input, conv))
         else:
             return "{0}{1} = {2}{1};\n".format(output, self.name, input)
 
