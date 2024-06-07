@@ -1003,6 +1003,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                             value = malloc(len * sizeof(WCHAR));
                             if(!value)
                             {
+                                RegCloseKey(hkeydriver);
                                 ERR("Out of memory\n");
                                 return;
                             }
@@ -1015,6 +1016,7 @@ static void write_registry_values(const WCHAR *regkey, const WCHAR *driver, cons
                             value = calloc(1, (lstrlenW(divider)+1) * sizeof(WCHAR));
                             if(!value)
                             {
+                                RegCloseKey(hkeydriver);
                                 ERR("Out of memory\n");
                                 return;
                             }
