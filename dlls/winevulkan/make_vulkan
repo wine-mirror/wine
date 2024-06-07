@@ -830,11 +830,14 @@ class VkFunction(object):
         for p in self.params:
             if p.needs_variable(conv, self.unwrap):
                 if p.is_dynamic_array():
-                    body += "    {2}{0} *{1}_host;\n".format(
-                        p.type, p.name, "const " if p.is_const() else "")
+                    body += "    {3}{0}{1} *{2}_host;\n".format(
+                        p.type, p.pointer[:-1] if p.pointer else "",
+                        p.name, "const " if p.is_const() else "")
                 elif p.optional:
                     body += "    {0} *{1}_host = NULL;\n".format(p.type, p.name)
                     needs_alloc = True
+                elif p.pointer:
+                    body += "    {0} {1}{2}_host;\n".format(p.type, p.pointer[:-1], p.name)
                 else:
                     body += "    {0} {1}_host;\n".format(p.type, p.name)
             if p.needs_alloc(conv, self.unwrap):
@@ -1286,12 +1289,15 @@ class VkVariable(object):
     def is_pointer(self):
         return self.pointer is not None
 
+    def is_pointer_pointer(self):
+        return self.pointer and self.pointer.count('*') > 1
+
     def is_pointer_size(self):
         if self.type in ["size_t", "HWND", "HINSTANCE"]:
             return True
         if self.is_handle() and self.handle.is_dispatchable():
             return True
-        return False
+        return self.is_pointer_pointer()
 
     def is_handle(self):
         return self.handle is not None
@@ -1726,6 +1732,7 @@ class VkParam(VkVariable):
         const = param.text.strip() if param.text else None
         type_elem = param.find("type")
         pointer = type_elem.tail.strip() if type_elem.tail.strip() != "" else None
+        assert not pointer or pointer.count('*') <= 2 # only pointers and pointer of pointers are supported
 
         attr = param.get("optional")
         optional = attr and attr.startswith("true")
@@ -1817,7 +1824,7 @@ class VkParam(VkVariable):
         else:
             if self.is_dynamic_array():
                 return "    convert_{0}_array_{1}({2}_host, {3}, {4});\n".format(
-                    self.type, suffix, self.name, self.value(prefix, conv),
+                    self.type, suffix, self.name, self.value(prefix, conv).replace('const ', ''),
                     self.get_dyn_array_len(prefix, conv))
             elif self.is_struct():
                 ref_part = "" if self.optional else "&"
@@ -1884,6 +1891,10 @@ class VkParam(VkVariable):
 
     def needs_conversion(self, conv, unwrap, direction, parent_const=False):
         """ Check if param needs conversion. """
+
+        if self.is_pointer_pointer() and self.type != 'void':
+            if direction == Direction.INPUT or not self.is_const():
+                return conv
 
         if self.is_struct():
             return self.struct.needs_conversion(conv, unwrap, direction, self.is_const())
@@ -2534,6 +2545,7 @@ class ArrayConversionFunction(object):
             body += "#ifdef _WIN64\n"
 
         needs_alloc = self.direction != Direction.OUTPUT and self.array.needs_alloc(self.conv, self.unwrap)
+        pointer_array = self.array.pointer_array or self.array.is_pointer_pointer()
 
         win_type = self.type
         if self.conv:
@@ -2546,10 +2558,13 @@ class ArrayConversionFunction(object):
         pointer_part = self.array.pointer if self.array.pointer else "*"
 
         if self.direction == Direction.OUTPUT:
-            params = ["const {0} {1}in".format(self.type, pointer_part),
-                      "{0} {1}out".format(win_type, pointer_part), "uint32_t count"]
+            if self.conv and pointer_array:
+                out = "PTR32 *out"
+            else:
+                out = "{0} {1}out".format(win_type, pointer_part)
+            params = ["const {0} {1}in".format(self.type, pointer_part), out, "uint32_t count"]
             return_type = None
-        elif self.conv and self.array.pointer_array:
+        elif self.conv and pointer_array:
             params = ["const PTR32 *in", "uint32_t count"]
             return_type = self.type
         else:
@@ -2571,7 +2586,8 @@ class ArrayConversionFunction(object):
         body += ")\n{\n"
 
         if return_type:
-            body += "    {0} {1}out;\n".format(return_type, "**" if self.array.pointer_array else "*")
+            pointer = self.array.pointer.replace('const*', '*').replace(' *', '*')
+            body += "    {0} {1}out;\n".format(return_type, pointer)
         if needs_copy:
             body += "    unsigned int i;\n\n"
 
@@ -2595,7 +2611,7 @@ class ArrayConversionFunction(object):
                 if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap):
                     ctx_part = "ctx, "
 
-                if not self.array.pointer_array:
+                if not pointer_array:
                     body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
                         struct.name, suffix, ctx_part)
                 else:
@@ -2615,7 +2631,7 @@ class ArrayConversionFunction(object):
                     else:
                         body += "        out[i] = UlongToPtr(in[i]);\n"
             elif self.array.is_handle():
-                if self.array.pointer_array:
+                if pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
                 handle = self.array.handle
                 if not self.conv or not handle.is_dispatchable():
@@ -2631,15 +2647,18 @@ class ArrayConversionFunction(object):
                     body += "        out[i] = {0};\n".format(handle.unwrap_handle(input, self.unwrap))
                 else:
                     LOGGER.warning("Unhandled handle output conversion")
-            elif self.array.pointer_array:
-                body += "        out[i] = UlongToPtr(in[i]);\n"
+            elif pointer_array:
+                if self.direction == Direction.INPUT:
+                    body += "        out[i] = UlongToPtr(in[i]);\n"
+                else:
+                    body += "        out[i] = PtrToUlong(in[i]);\n"
             else:
                 body += "        out[i] = in[i];\n"
 
             body += "    }\n"
 
         if return_type:
-            body += "\n    return {0}out;\n".format("(void *)" if self.array.pointer_array else "")
+            body += "\n    return {0}out;\n".format("(void *)" if pointer_array else "")
         body += "}\n"
 
         if not self.conv:

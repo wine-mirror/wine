@@ -8101,6 +8101,22 @@ static inline const VkAccelerationStructureBuildGeometryInfoKHR *convert_VkAccel
     return out;
 }
 
+static inline const VkAccelerationStructureBuildRangeInfoKHR * const*convert_VkAccelerationStructureBuildRangeInfoKHR_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
+{
+    VkAccelerationStructureBuildRangeInfoKHR **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = UlongToPtr(in[i]);
+    }
+
+    return (void *)out;
+}
+
 static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT *out)
 {
     if (!in) return;
@@ -8831,6 +8847,34 @@ static inline void convert_VkAccelerationStructureInfoNV_win32_to_host(struct co
     out->pGeometries = convert_VkGeometryNV_array_win32_to_host(ctx, (const VkGeometryNV32 *)UlongToPtr(in->pGeometries), in->geometryCount);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
+}
+
+static inline const uint32_t * const*convert_uint32_t_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
+{
+    uint32_t **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = UlongToPtr(in[i]);
+    }
+
+    return (void *)out;
+}
+
+static inline void convert_uint32_t_array_host_to_win32(const uint32_t * const*in, PTR32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        out[i] = PtrToUlong(in[i]);
+    }
 }
 
 static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(const VkCopyAccelerationStructureInfoKHR32 *in, VkCopyAccelerationStructureInfoKHR *out)
@@ -30974,6 +31018,7 @@ static NTSTATUS thunk32_vkBuildAccelerationStructuresKHR(void *args)
         VkResult result;
     } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
+    const VkAccelerationStructureBuildRangeInfoKHR* const *ppBuildRangeInfos_host;
     struct conversion_context local_ctx;
     struct conversion_context *ctx = &local_ctx;
 
@@ -30984,7 +31029,8 @@ static NTSTATUS thunk32_vkBuildAccelerationStructuresKHR(void *args)
     else
         ctx = &wine_deferred_operation_from_handle(params->deferredOperation)->ctx;
     pInfos_host = convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(ctx, (const VkAccelerationStructureBuildGeometryInfoKHR32 *)UlongToPtr(params->pInfos), params->infoCount);
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBuildAccelerationStructuresKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->deferredOperation ? wine_deferred_operation_from_handle(params->deferredOperation)->host_deferred_operation : 0, params->infoCount, pInfos_host, (const VkAccelerationStructureBuildRangeInfoKHR * const*)UlongToPtr(params->ppBuildRangeInfos));
+    ppBuildRangeInfos_host = convert_VkAccelerationStructureBuildRangeInfoKHR_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(params->ppBuildRangeInfos), params->infoCount);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBuildAccelerationStructuresKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->deferredOperation ? wine_deferred_operation_from_handle(params->deferredOperation)->host_deferred_operation : 0, params->infoCount, pInfos_host, ppBuildRangeInfos_host);
     if (params->deferredOperation == VK_NULL_HANDLE)
         free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -31786,12 +31832,15 @@ static void thunk32_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
         PTR32 ppMaxPrimitiveCounts;
     } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
+    const uint32_t* const *ppMaxPrimitiveCounts_host;
     struct conversion_context local_ctx;
     struct conversion_context *ctx = &local_ctx;
 
     init_conversion_context(ctx);
     pInfos_host = convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(ctx, (const VkAccelerationStructureBuildGeometryInfoKHR32 *)UlongToPtr(params->pInfos), params->infoCount);
-    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, params->infoCount, pInfos_host, (const VkDeviceAddress *)UlongToPtr(params->pIndirectDeviceAddresses), (const uint32_t *)UlongToPtr(params->pIndirectStrides), (const uint32_t * const*)UlongToPtr(params->ppMaxPrimitiveCounts));
+    ppMaxPrimitiveCounts_host = convert_uint32_t_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(params->ppMaxPrimitiveCounts), params->infoCount);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBuildAccelerationStructuresIndirectKHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, params->infoCount, pInfos_host, (const VkDeviceAddress *)UlongToPtr(params->pIndirectDeviceAddresses), (const uint32_t *)UlongToPtr(params->pIndirectStrides), ppMaxPrimitiveCounts_host);
+    convert_uint32_t_array_host_to_win32(ppMaxPrimitiveCounts_host, (PTR32 *)UlongToPtr(params->ppMaxPrimitiveCounts), params->infoCount);
     free_conversion_context(ctx);
 }
 
@@ -31814,12 +31863,14 @@ static void thunk32_vkCmdBuildAccelerationStructuresKHR(void *args)
         PTR32 ppBuildRangeInfos;
     } *params = args;
     const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
+    const VkAccelerationStructureBuildRangeInfoKHR* const *ppBuildRangeInfos_host;
     struct conversion_context local_ctx;
     struct conversion_context *ctx = &local_ctx;
 
     init_conversion_context(ctx);
     pInfos_host = convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(ctx, (const VkAccelerationStructureBuildGeometryInfoKHR32 *)UlongToPtr(params->pInfos), params->infoCount);
-    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, params->infoCount, pInfos_host, (const VkAccelerationStructureBuildRangeInfoKHR * const*)UlongToPtr(params->ppBuildRangeInfos));
+    ppBuildRangeInfos_host = convert_VkAccelerationStructureBuildRangeInfoKHR_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(params->ppBuildRangeInfos), params->infoCount);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->funcs.p_vkCmdBuildAccelerationStructuresKHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host_command_buffer, params->infoCount, pInfos_host, ppBuildRangeInfos_host);
     free_conversion_context(ctx);
 }
 
@@ -37208,7 +37259,7 @@ static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
     init_conversion_context(ctx);
     pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win32_to_host(ctx, (const VkComputePipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateComputePipelines(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, (VkPipeline *)UlongToPtr(params->pPipelines));
-    convert_VkComputePipelineCreateInfo_array_host_to_win32(pCreateInfos_host, (const VkComputePipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
+    convert_VkComputePipelineCreateInfo_array_host_to_win32(pCreateInfos_host, (VkComputePipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -37752,7 +37803,7 @@ static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
     init_conversion_context(ctx);
     pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(ctx, (const VkGraphicsPipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateGraphicsPipelines(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, (VkPipeline *)UlongToPtr(params->pPipelines));
-    convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(pCreateInfos_host, (const VkGraphicsPipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
+    convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(pCreateInfos_host, (VkGraphicsPipelineCreateInfo32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -38184,7 +38235,7 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
         ctx = &wine_deferred_operation_from_handle(params->deferredOperation)->ctx;
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(ctx, (const VkRayTracingPipelineCreateInfoKHR32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateRayTracingPipelinesKHR(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->deferredOperation ? wine_deferred_operation_from_handle(params->deferredOperation)->host_deferred_operation : 0, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, (VkPipeline *)UlongToPtr(params->pPipelines));
-    convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(pCreateInfos_host, (const VkRayTracingPipelineCreateInfoKHR32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
+    convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(pCreateInfos_host, (VkRayTracingPipelineCreateInfoKHR32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     if (params->deferredOperation == VK_NULL_HANDLE)
         free_conversion_context(ctx);
     return STATUS_SUCCESS;
@@ -38229,7 +38280,7 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
     init_conversion_context(ctx);
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(ctx, (const VkRayTracingPipelineCreateInfoNV32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateRayTracingPipelinesNV(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, (VkPipeline *)UlongToPtr(params->pPipelines));
-    convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(pCreateInfos_host, (const VkRayTracingPipelineCreateInfoNV32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
+    convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(pCreateInfos_host, (VkRayTracingPipelineCreateInfoNV32 *)UlongToPtr(params->pCreateInfos), params->createInfoCount);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -40990,10 +41041,13 @@ static NTSTATUS thunk32_vkGetDescriptorSetHostMappingVALVE(void *args)
         VkDescriptorSet DECLSPEC_ALIGN(8) descriptorSet;
         PTR32 ppData;
     } *params = args;
+    void *ppData_host;
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->descriptorSet), params->ppData);
 
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetDescriptorSetHostMappingVALVE(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->descriptorSet, (void **)UlongToPtr(params->ppData));
+    ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetDescriptorSetHostMappingVALVE(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->host_device, params->descriptorSet, &ppData_host);
+    *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
     return STATUS_SUCCESS;
 }
 
@@ -45055,10 +45109,13 @@ static NTSTATUS thunk32_vkMapMemory(void *args)
         PTR32 ppData;
         VkResult result;
     } *params = args;
+    void *ppData_host;
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
-    params->result = wine_vkMapMemory((VkDevice)UlongToPtr(params->device), params->memory, params->offset, params->size, params->flags, (void **)UlongToPtr(params->ppData));
+    ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
+    params->result = wine_vkMapMemory((VkDevice)UlongToPtr(params->device), params->memory, params->offset, params->size, params->flags, &ppData_host);
+    *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
     return STATUS_SUCCESS;
 }
 
@@ -45084,6 +45141,7 @@ static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
         VkResult result;
     } *params = args;
     VkMemoryMapInfoKHR pMemoryMapInfo_host;
+    void *ppData_host;
     struct conversion_context local_ctx;
     struct conversion_context *ctx = &local_ctx;
 
@@ -45091,7 +45149,9 @@ static NTSTATUS thunk32_vkMapMemory2KHR(void *args)
 
     init_conversion_context(ctx);
     convert_VkMemoryMapInfoKHR_win32_to_unwrapped_host(ctx, (const VkMemoryMapInfoKHR32 *)UlongToPtr(params->pMemoryMapInfo), &pMemoryMapInfo_host);
-    params->result = wine_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, (void **)UlongToPtr(params->ppData));
+    ppData_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->ppData));
+    params->result = wine_vkMapMemory2KHR((VkDevice)UlongToPtr(params->device), &pMemoryMapInfo_host, &ppData_host);
+    *(PTR32 *)UlongToPtr(params->ppData) = PtrToUlong(ppData_host);
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
