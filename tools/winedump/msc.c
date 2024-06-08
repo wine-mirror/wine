@@ -52,9 +52,7 @@ struct full_value
     } v;
 };
 
-/* wrapper for migration to FAM */
-#define full_numeric_leaf(f, l) _full_numeric_leaf((f), (const unsigned char *)(l))
-static int _full_numeric_leaf(struct full_value *fv, const unsigned char *leaf)
+static int full_numeric_leaf(struct full_value *fv, const unsigned char *leaf)
 {
     unsigned short int type = *(const unsigned short *)leaf;
     int length = 2;
@@ -187,12 +185,10 @@ static const char* full_value_string(const struct full_value* fv)
     return tmp;
 }
 
-/* wrapper for migration to FAM */
-#define numeric_leaf(v, l) _numeric_leaf((v), (const unsigned char *)(l))
-static int _numeric_leaf(int* value, const unsigned char* leaf)
+static int numeric_leaf(int* value, const unsigned char* leaf)
 {
     struct full_value fv;
-    int len = _full_numeric_leaf(&fv, leaf);
+    int len = full_numeric_leaf(&fv, leaf);
 
     switch (fv.type)
     {
@@ -831,20 +827,20 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                curr_type, type->pointer_v2.datatype);
         break;
     case LF_ARRAY_V1:
-        leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
+        leaf_len = numeric_leaf(&value, type->array_v1.data);
         printf("\t%x => Array V1-'%s'[%u type:%x] type:%x\n",
-               curr_type, p_string(PSTRING(&type->array_v1.arrlen, leaf_len)),
+               curr_type, p_string((const struct p_string *)&type->array_v1.data[leaf_len]),
                value, type->array_v1.idxtype, type->array_v1.elemtype);
         break;
     case LF_ARRAY_V2:
-        leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
+        leaf_len = numeric_leaf(&value, type->array_v2.data);
         printf("\t%x => Array V2-'%s'[%u type:%x] type:%x\n",
-               curr_type, p_string(PSTRING(&type->array_v2.arrlen, leaf_len)),
+               curr_type, p_string((const struct p_string *)&type->array_v2.data[leaf_len]),
                value, type->array_v2.idxtype, type->array_v2.elemtype);
         break;
     case LF_ARRAY_V3:
-        leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
-        str = (const char*)&type->array_v3.arrlen + leaf_len;
+        leaf_len = numeric_leaf(&value, type->array_v3.data);
+        str = (const char*)&type->array_v3.data[leaf_len];
         printf("\t%x => Array V3-'%s'[%u type:%x] type:%x\n",
                curr_type, str, value,
                type->array_v3.idxtype, type->array_v3.elemtype);
@@ -875,10 +871,10 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_STRUCTURE_V1:
     case LF_CLASS_V1:
-        leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
+        leaf_len = numeric_leaf(&value, type->struct_v1.data);
         printf("\t%x => %s V1 '%s' elts:%u property:%s fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V1 ? "Class" : "Struct",
-               p_string(PSTRING(&type->struct_v1.structlen, leaf_len)),
+               p_string((const struct p_string *)&type->struct_v1.data[leaf_len]),
                type->struct_v1.n_element, get_property(type->struct_v1.property),
                type->struct_v1.fieldlist, type->struct_v1.derived,
                type->struct_v1.vshape, value);
@@ -886,11 +882,11 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_STRUCTURE_V2:
     case LF_CLASS_V2:
-        leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
+        leaf_len = numeric_leaf(&value, type->struct_v2.data);
         printf("\t%x => %s V2 '%s' elts:%u property:%s\n"
                "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V2 ? "Class" : "Struct",
-               p_string(PSTRING(&type->struct_v2.structlen, leaf_len)),
+               p_string((const struct p_string *)&type->struct_v2.data[leaf_len]),
                type->struct_v2.n_element, get_property(type->struct_v2.property),
                type->struct_v2.fieldlist, type->struct_v2.derived,
                type->struct_v2.vshape, value);
@@ -898,8 +894,8 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_STRUCTURE_V3:
     case LF_CLASS_V3:
-        leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
-        str = (const char*)&type->struct_v3.structlen + leaf_len;
+        leaf_len = numeric_leaf(&value, type->struct_v3.data);
+        str = (const char*)&type->struct_v3.data[leaf_len];
         printf("\t%x => %s V3 '%s' elts:%u property:%s\n"
                "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
                curr_type, type->generic.id == LF_CLASS_V3 ? "Class" : "Struct",
@@ -911,24 +907,24 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
         break;
 
     case LF_UNION_V1:
-        leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
+        leaf_len = numeric_leaf(&value, type->union_v1.data);
         printf("\t%x => Union V1 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
-               curr_type, p_string(PSTRING(&type->union_v1.un_len, leaf_len)),
+               curr_type, p_string((const struct p_string *)&type->union_v1.data[leaf_len]),
                type->union_v1.count, get_property(type->union_v1.property),
                type->union_v1.fieldlist, value);
         break;
 
     case LF_UNION_V2:
-        leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
+        leaf_len = numeric_leaf(&value, type->union_v2.data);
         printf("\t%x => Union V2 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
-               curr_type, p_string(PSTRING(&type->union_v2.un_len, leaf_len)),
+               curr_type, p_string((const struct p_string *)&type->union_v2.data[leaf_len]),
                type->union_v2.count, get_property(type->union_v2.property),
                type->union_v2.fieldlist, value);
         break;
 
     case LF_UNION_V3:
-        leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
-        str = (const char*)&type->union_v3.un_len + leaf_len;
+        leaf_len = numeric_leaf(&value, type->union_v3.data);
+        str = (const char*)&type->union_v3.data[leaf_len];
         printf("\t%x => Union V3 '%s' count:%u property:%s fieldlist-type:%x size:%u\n",
                curr_type, str, type->union_v3.count,
                get_property(type->union_v3.property),

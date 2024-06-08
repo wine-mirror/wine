@@ -183,10 +183,9 @@ union codeview_type
         unsigned short int      id;
         cv_typ16_t              elemtype;
         cv_typ16_t              idxtype;
-        unsigned short int      arrlen;     /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       arrlen; */
+        /* struct p_string      p_name; */
     } array_v1;
 
     struct
@@ -195,10 +194,9 @@ union codeview_type
         unsigned short int      id;
         cv_typ_t                elemtype;
         cv_typ_t                idxtype;
-        unsigned short int      arrlen;    /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       arrlen; */
+        /* struct p_string      p_name; */
     } array_v2;
 
     struct
@@ -207,10 +205,9 @@ union codeview_type
         unsigned short int      id;
         cv_typ_t                elemtype;
         cv_typ_t                idxtype;
-        unsigned short int      arrlen;    /* numeric leaf */
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       arrlen; */
+        /* char                 name[]; */
     } array_v3;
 
     struct
@@ -222,10 +219,9 @@ union codeview_type
         cv_property_t           property;
         cv_typ16_t              derived;
         cv_typ16_t              vshape;
-        unsigned short int      structlen;  /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       structlen; */
+        /* struct p_string      p_name; */
     } struct_v1;
 
     struct
@@ -237,10 +233,9 @@ union codeview_type
         cv_typ_t                fieldlist;
         cv_typ_t                derived;
         cv_typ_t                vshape;
-        unsigned short int      structlen;  /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       structlen; */
+        /* struct p_string      p_name; */
     } struct_v2;
 
     struct
@@ -252,10 +247,9 @@ union codeview_type
         cv_typ_t                fieldlist;
         cv_typ_t                derived;
         cv_typ_t                vshape;
-        unsigned short int      structlen;  /* numeric leaf */
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       structlen; */
+        /* char                 name[]; */
     } struct_v3;
 
     struct
@@ -265,10 +259,9 @@ union codeview_type
         short int               count;
         cv_typ16_t              fieldlist;
         cv_property_t           property;
-        unsigned short int      un_len;     /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       unionlen; */
+        /* struct p_string      p_name; */
     } union_v1;
 
     struct
@@ -278,10 +271,9 @@ union codeview_type
         short int               count;
         cv_property_t           property;
         cv_typ_t                fieldlist;
-        unsigned short int      un_len;     /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       unionlen; */
+        /* struct p_string      p_name; */
     } union_v2;
 
     struct
@@ -291,10 +283,9 @@ union codeview_type
         short int               count;
         cv_property_t           property;
         cv_typ_t                fieldlist;
-        unsigned short int      un_len;     /* numeric leaf */
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       unionlen; */
+        /* char                 name[]; */
     } union_v3;
 
     struct

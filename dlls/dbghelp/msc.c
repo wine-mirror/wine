@@ -728,31 +728,31 @@ static BOOL codeview_type_extract_name(const union codeview_type* cvtype,
     {
     case LF_STRUCTURE_V1:
     case LF_CLASS_V1:
-        leaf_len = numeric_leaf(&value, &cvtype->struct_v1.structlen);
-        p_name = (const struct p_string*)((const unsigned char*)&cvtype->struct_v1.structlen + leaf_len);
+        leaf_len = numeric_leaf(&value, cvtype->struct_v1.data);
+        p_name = (const struct p_string*)&cvtype->struct_v1.data[leaf_len];
         break;
     case LF_STRUCTURE_V2:
     case LF_CLASS_V2:
-        leaf_len = numeric_leaf(&value, &cvtype->struct_v2.structlen);
-        p_name = (const struct p_string*)((const unsigned char*)&cvtype->struct_v2.structlen + leaf_len);
+        leaf_len = numeric_leaf(&value, cvtype->struct_v2.data);
+        p_name = (const struct p_string*)&cvtype->struct_v2.data[leaf_len];
         break;
     case LF_STRUCTURE_V3:
     case LF_CLASS_V3:
-        leaf_len = numeric_leaf(&value, &cvtype->struct_v3.structlen);
-        c_name = (const char*)&cvtype->struct_v3.structlen + leaf_len;
+        leaf_len = numeric_leaf(&value, cvtype->struct_v3.data);
+        c_name = (const char*)&cvtype->struct_v3.data[leaf_len];
         decorated = cvtype->struct_v3.property.has_decorated_name;
         break;
     case LF_UNION_V1:
-        leaf_len = numeric_leaf(&value, &cvtype->union_v1.un_len);
-        p_name = (const struct p_string*)((const unsigned char*)&cvtype->union_v1.un_len + leaf_len);
+        leaf_len = numeric_leaf(&value, cvtype->union_v1.data);
+        p_name = (const struct p_string*)&cvtype->union_v1.data[leaf_len];
         break;
     case LF_UNION_V2:
-        leaf_len = numeric_leaf(&value, &cvtype->union_v2.un_len);
-        p_name = (const struct p_string*)((const unsigned char*)&cvtype->union_v2.un_len + leaf_len);
+        leaf_len = numeric_leaf(&value, cvtype->union_v2.data);
+        p_name = (const struct p_string*)&cvtype->union_v2.data[leaf_len];
         break;
     case LF_UNION_V3:
-        leaf_len = numeric_leaf(&value, &cvtype->union_v3.un_len);
-        c_name = (const char*)&cvtype->union_v3.un_len + leaf_len;
+        leaf_len = numeric_leaf(&value, cvtype->union_v3.data);
+        c_name = (const char*)&cvtype->union_v3.data[leaf_len];
         decorated = cvtype->union_v3.property.has_decorated_name;
         break;
     case LF_ENUM_V1:
@@ -1268,23 +1268,23 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         break;
 
     case LF_ARRAY_V1:
-        leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
-        p_name = (const struct p_string*)((const unsigned char*)&type->array_v1.arrlen + leaf_len);
+        leaf_len = numeric_leaf(&value, type->array_v1.data);
+        p_name = (const struct p_string*)&type->array_v1.data[leaf_len];
         symt = codeview_add_type_array(ctp, terminate_string(p_name),
                                        type->array_v1.elemtype,
                                        type->array_v1.idxtype, value);
         break;
     case LF_ARRAY_V2:
-        leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
-        p_name = (const struct p_string*)((const unsigned char*)&type->array_v2.arrlen + leaf_len);
+        leaf_len = numeric_leaf(&value, type->array_v2.data);
+        p_name = (const struct p_string*)&type->array_v2.data[leaf_len];
 
         symt = codeview_add_type_array(ctp, terminate_string(p_name),
                                        type->array_v2.elemtype,
                                        type->array_v2.idxtype, value);
         break;
     case LF_ARRAY_V3:
-        leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
-        c_name = (const char*)&type->array_v3.arrlen + leaf_len;
+        leaf_len = numeric_leaf(&value, type->array_v3.data);
+        c_name = (const char*)&type->array_v3.data[leaf_len];
 
         symt = codeview_add_type_array(ctp, c_name,
                                        type->array_v3.elemtype,
@@ -1418,43 +1418,43 @@ static struct symt* codeview_load_forwardable_type(struct codeview_type_parse* c
     {
     case LF_STRUCTURE_V1:
     case LF_CLASS_V1:
-        leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
-        p_name = (const struct p_string*)((const unsigned char*)&type->struct_v1.structlen + leaf_len);
+        leaf_len = numeric_leaf(&value, type->struct_v1.data);
+        p_name = (const struct p_string*)&type->struct_v1.data[leaf_len];
         symt = &symt_new_udt(ctp->module, terminate_string(p_name), value,
                              type->generic.id == LF_CLASS_V1 ? UdtClass : UdtStruct)->symt;
         break;
 
     case LF_STRUCTURE_V2:
     case LF_CLASS_V2:
-        leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
-        p_name = (const struct p_string*)((const unsigned char*)&type->struct_v2.structlen + leaf_len);
+        leaf_len = numeric_leaf(&value, type->struct_v2.data);
+        p_name = (const struct p_string*)&type->struct_v2.data[leaf_len];
         symt = &symt_new_udt(ctp->module, terminate_string(p_name), value,
                              type->generic.id == LF_CLASS_V2 ? UdtClass : UdtStruct)->symt;
         break;
 
     case LF_STRUCTURE_V3:
     case LF_CLASS_V3:
-        leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
-        c_name = (const char*)&type->struct_v3.structlen + leaf_len;
+        leaf_len = numeric_leaf(&value, type->struct_v3.data);
+        c_name = (const char*)&type->struct_v3.data[leaf_len];
         symt = &symt_new_udt(ctp->module, c_name, value,
                              type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct)->symt;
         break;
 
     case LF_UNION_V1:
-        leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
-        p_name = (const struct p_string*)((const unsigned char*)&type->union_v1.un_len + leaf_len);
+        leaf_len = numeric_leaf(&value, type->union_v1.data);
+        p_name = (const struct p_string*)&type->union_v1.data[leaf_len];
         symt = &symt_new_udt(ctp->module, terminate_string(p_name), value, UdtUnion)->symt;
         break;
 
     case LF_UNION_V2:
-        leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
-        p_name = (const struct p_string*)((const unsigned char*)&type->union_v2.un_len + leaf_len);
+        leaf_len = numeric_leaf(&value, type->union_v2.data);
+        p_name = (const struct p_string*)&type->union_v2.data[leaf_len];
         symt = &symt_new_udt(ctp->module, terminate_string(p_name), value, UdtUnion)->symt;
         break;
 
     case LF_UNION_V3:
-        leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
-        c_name = (const char*)&type->union_v3.un_len + leaf_len;
+        leaf_len = numeric_leaf(&value, type->union_v3.data);
+        c_name = (const char*)&type->union_v3.data[leaf_len];
         symt = &symt_new_udt(ctp->module, c_name, value, UdtUnion)->symt;
         break;
 
