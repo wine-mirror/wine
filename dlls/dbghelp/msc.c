@@ -3296,12 +3296,12 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
         sfile->symbol_size  = sym_file->symbol_size;
         sfile->lineno_size  = sym_file->lineno_size;
         sfile->lineno2_size = sym_file->lineno2_size;
-        *size = sizeof(PDB_SYMBOL_FILE) - 1;
+        *size = sizeof(PDB_SYMBOL_FILE);
     }
     else
     {
         memcpy(sfile, image, sizeof(PDB_SYMBOL_FILE_EX));
-        *size = sizeof(PDB_SYMBOL_FILE_EX) - 1;
+        *size = sizeof(PDB_SYMBOL_FILE_EX);
     }
 }
 
