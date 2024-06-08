@@ -2466,6 +2466,18 @@ static void test_video_window(void)
     hr = IVideoWindow_GetMaxIdealImageSize(window, &width, &height);
     todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
 
+    IVideoWindow_Release(window);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IVideoWindow, (void **)&window);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    l = 0xdeadbeef;
+    hr = IVideoWindow_get_FullScreenMode(window, &l);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(l == OAFALSE, "Got fullscreenmode %ld.\n", l);
+    hr = IVideoWindow_put_FullScreenMode(window, l);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
     IFilterGraph2_Release(graph);
     IVideoWindow_Release(window);
     IOverlay_Release(overlay);

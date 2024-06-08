@@ -2966,6 +2966,14 @@ static void test_control_delegation(void)
     hr = IVideoWindow_SetWindowForeground(window, OAFALSE);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#lx.\n", hr);
 
+    val = 0xdeadbeef;
+    hr = IVideoWindow_get_FullScreenMode(window, &val);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(val == OAFALSE, "Got fullscreen %lu\n", val);
+
+    hr = IVideoWindow_put_FullScreenMode(window, OAFALSE);
+    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
     hr = IFilterGraph2_RemoveFilter(graph, renderer);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
