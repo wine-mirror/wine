@@ -2585,8 +2585,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 struct symt*            se;
                 VARIANT                 v;
 
-                vlen = leaf_as_variant(&v, &sym->constant_v1.cvalue);
-                name = (const struct p_string*)((const char*)&sym->constant_v1.cvalue + vlen);
+                vlen = leaf_as_variant(&v, sym->constant_v1.data);
+                name = (const struct p_string*)&sym->constant_v1.data[vlen];
                 se = codeview_get_type(sym->constant_v1.type, FALSE);
 
                 TRACE("S-Constant-V1 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v1.type);
@@ -2601,8 +2601,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 struct symt*            se;
                 VARIANT                 v;
 
-                vlen = leaf_as_variant(&v, &sym->constant_v2.cvalue);
-                name = (const struct p_string*)((const char*)&sym->constant_v2.cvalue + vlen);
+                vlen = leaf_as_variant(&v, sym->constant_v2.data);
+                name = (const struct p_string*)&sym->constant_v2.data[vlen];
                 se = codeview_get_type(sym->constant_v2.type, FALSE);
 
                 TRACE("S-Constant-V2 %u %s %x\n", V_INT(&v), terminate_string(name), sym->constant_v2.type);
@@ -2617,8 +2617,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                 struct symt*            se;
                 VARIANT                 v;
 
-                vlen = leaf_as_variant(&v, &sym->constant_v3.cvalue);
-                name = (const char*)&sym->constant_v3.cvalue + vlen;
+                vlen = leaf_as_variant(&v, sym->constant_v3.data);
+                name = (const char*)&sym->constant_v3.data[vlen];
                 se = codeview_get_type(sym->constant_v3.type, FALSE);
 
                 TRACE("S-Constant-V3 %u %s %x\n", V_INT(&v), name, sym->constant_v3.type);

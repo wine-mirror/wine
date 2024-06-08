@@ -1703,9 +1703,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 int             vlen;
                 struct full_value fv;
 
-                vlen = full_numeric_leaf(&fv, &sym->constant_v2.cvalue);
+                vlen = full_numeric_leaf(&fv, sym->constant_v2.data);
                 printf("Constant V2 '%s' = %s type:%x\n",
-                       p_string(PSTRING(&sym->constant_v2.cvalue, vlen)),
+                       p_string((const struct p_string *)&sym->constant_v2.data[vlen]),
                        full_value_string(&fv), sym->constant_v2.type);
             }
             break;
@@ -1715,9 +1715,9 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 int             vlen;
                 struct full_value fv;
 
-                vlen = full_numeric_leaf(&fv, &sym->constant_v3.cvalue);
+                vlen = full_numeric_leaf(&fv, sym->constant_v3.data);
                 printf("Constant V3 '%s' =  %s type:%x\n",
-                       (const char*)&sym->constant_v3.cvalue + vlen,
+                       (const char*)&sym->constant_v3.data[vlen],
                        full_value_string(&fv), sym->constant_v3.type);
             }
             break;
@@ -1893,6 +1893,7 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
         case S_INLINEES:
             {
                 unsigned i, ninvoc;
+                const cv_typ_t *functions;
                 const unsigned* invoc;
                 const char* tag;
 
@@ -1900,12 +1901,15 @@ BOOL codeview_dump_symbols(const void* root, unsigned long start, unsigned long 
                 else if (sym->generic.id == S_CALLEES) tag = "Callees";
                 else tag = "Inlinees";
                 printf("%s V3 count:%u\n", tag, sym->function_list_v3.count);
-                invoc = (const unsigned*)&sym->function_list_v3.funcs[sym->function_list_v3.count];
+                functions = (const cv_typ_t *)&sym->function_list_v3.data;
+                invoc = (const unsigned*)&functions[sym->function_list_v3.count];
                 ninvoc = (const unsigned*)get_last(sym) - invoc;
+                if (ninvoc < sym->function_list_v3.count) ninvoc = sym->function_list_v3.count;
 
-                for (i = 0; i < sym->function_list_v3.count; ++i)
+                for (i = 0; i < ninvoc; ++i)
                     printf("%*s| func:%x invoc:%u\n",
-                           indent, "", sym->function_list_v3.funcs[i], i < ninvoc ? invoc[i] : 0);
+                           indent, "", functions[i], invoc[i]);
+                if (i < sym->function_list_v3.count) printf("Number of entries exceed symbol serialized size\n");
             }
             break;
 

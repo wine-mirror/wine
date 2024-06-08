@@ -1661,10 +1661,9 @@ union codeview_symbol
         unsigned short int      len;
         unsigned short int      id;
         cv_typ16_t              type;
-        unsigned short          cvalue;         /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       cvalue; */
+        /* struct p_string      p_name; */
     } constant_v1;
 
     struct
@@ -1672,10 +1671,9 @@ union codeview_symbol
         unsigned short int      len;
         unsigned short int      id;
         cv_typ_t                type;
-        unsigned short          cvalue;         /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       cvalue; */
+        /* struct p_string      p_name; */
     } constant_v2;
 
     struct
@@ -1683,10 +1681,9 @@ union codeview_symbol
         unsigned short int      len;
         unsigned short int      id;
         cv_typ_t                type;
-        unsigned short          cvalue;
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       cvalue; */
+        /* char                 name; */
     } constant_v3;
 
     struct
@@ -1896,7 +1893,7 @@ union codeview_symbol
         unsigned short int      id;
         unsigned int            program;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_v3;
 
     struct
@@ -1906,7 +1903,7 @@ union codeview_symbol
         unsigned int            program;
         unsigned int            offParent;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_subfield_v3;
 
     struct
@@ -1916,7 +1913,7 @@ union codeview_symbol
         unsigned short          reg;
         unsigned short          attr;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_register_v3;
 
     struct
@@ -1925,7 +1922,7 @@ union codeview_symbol
         unsigned short int      id;
         int                     offFramePointer;
         struct cv_addr_range    range;
-        struct cv_addr_gap      gaps[0];
+        struct cv_addr_gap      gaps[];
     } defrange_frameptrrel_v3;
 
     struct
@@ -2003,10 +2000,9 @@ union codeview_symbol
         unsigned short int      len;
         unsigned short int      id;
         unsigned int            count;
-        cv_typ_t                funcs[0];  /* array of cuntions, count entries */
-#if 0
-        unsigned int            invocations[0]; /* array of count entries, paires with funcs */
-#endif
+        unsigned char           data[];
+        /* cv_typ_t             functions[count]; */
+        /* unsigned int         invocations[count]; */
     } function_list_v3;
 
     struct
