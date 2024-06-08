@@ -2180,6 +2180,7 @@ static void dump_dir_exceptions(void)
     const IMAGE_ARM64EC_METADATA *metadata;
 
     funcs = get_dir_and_size(IMAGE_FILE_EXCEPTION_DIRECTORY, &size);
+    if (!funcs) return;
 
     switch (file_header->Machine)
     {
