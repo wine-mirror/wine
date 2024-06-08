@@ -3521,6 +3521,10 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         winpos->cy = new_window_rect.bottom - new_window_rect.top;
         send_message( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
     }
+
+    if ((winpos->flags & (SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED)) != (SWP_NOSIZE|SWP_NOMOVE))
+        NtUserNotifyWinEvent( EVENT_OBJECT_LOCATIONCHANGE, winpos->hwnd, OBJID_WINDOW, 0 );
+
     ret = TRUE;
 done:
     set_thread_dpi_awareness_context( context );
