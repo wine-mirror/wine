@@ -52,11 +52,14 @@ struct full_value
     } v;
 };
 
-static int full_numeric_leaf(struct full_value* fv, const unsigned short int* leaf)
+/* wrapper for migration to FAM */
+#define full_numeric_leaf(f, l) _full_numeric_leaf((f), (const unsigned char *)(l))
+static int _full_numeric_leaf(struct full_value *fv, const unsigned char *leaf)
 {
-    unsigned short int type = *leaf++;
+    unsigned short int type = *(const unsigned short *)leaf;
     int length = 2;
 
+    leaf += length;
     fv->type = fv_integer;
     if (type < LF_NUMERIC)
     {
@@ -184,10 +187,12 @@ static const char* full_value_string(const struct full_value* fv)
     return tmp;
 }
 
-static int numeric_leaf(int* value, const unsigned short int* leaf)
+/* wrapper for migration to FAM */
+#define numeric_leaf(v, l) _numeric_leaf((v), (const unsigned char *)(l))
+static int _numeric_leaf(int* value, const unsigned char* leaf)
 {
     struct full_value fv;
-    int len = full_numeric_leaf(&fv, leaf);
+    int len = _full_numeric_leaf(&fv, leaf);
 
     switch (fv.type)
     {
@@ -518,24 +523,24 @@ static void do_field(const unsigned char* start, const unsigned char* end)
         switch (fieldtype->generic.id)
         {
         case LF_ENUMERATE_V1:
-            leaf_len = full_numeric_leaf(&full_value, &fieldtype->enumerate_v1.value);
-            pstr = PSTRING(&fieldtype->enumerate_v1.value, leaf_len);
+            leaf_len = full_numeric_leaf(&full_value, fieldtype->enumerate_v1.data);
+            pstr = (const struct p_string*)&fieldtype->enumerate_v1.data[leaf_len];
             printf("\t\tEnumerate V1: '%s' value:%s\n",
                    p_string(pstr), full_value_string(&full_value));
             ptr += 2 + 2 + leaf_len + 1 + pstr->namelen;
             break;
 
         case LF_ENUMERATE_V3:
-            leaf_len = full_numeric_leaf(&full_value, &fieldtype->enumerate_v3.value);
-            cstr = (const char*)&fieldtype->enumerate_v3.value + leaf_len;
+            leaf_len = full_numeric_leaf(&full_value, fieldtype->enumerate_v3.data);
+            cstr = (const char*)&fieldtype->enumerate_v3.data[leaf_len];
             printf("\t\tEnumerate V3: '%s' value:%s\n",
                    cstr, full_value_string(&full_value));
             ptr += 2 + 2 + leaf_len + strlen(cstr) + 1;
             break;
 
         case LF_MEMBER_V1:
-            leaf_len = numeric_leaf(&value, &fieldtype->member_v1.offset);
-            pstr = PSTRING(&fieldtype->member_v1.offset, leaf_len);
+            leaf_len = numeric_leaf(&value, fieldtype->member_v1.data);
+            pstr = (const struct p_string *)&fieldtype->member_v1.data[leaf_len];
             printf("\t\tMember V1: '%s' type:%x attr:%s @%d\n",
                    p_string(pstr), fieldtype->member_v1.type,
                    get_attr(fieldtype->member_v1.attribute), value);
@@ -543,8 +548,8 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             break;
 
         case LF_MEMBER_V2:
-            leaf_len = numeric_leaf(&value, &fieldtype->member_v2.offset);
-            pstr = PSTRING(&fieldtype->member_v2.offset, leaf_len);
+            leaf_len = numeric_leaf(&value, fieldtype->member_v2.data);
+            pstr = (const struct p_string *)&fieldtype->member_v2.data[leaf_len];
             printf("\t\tMember V2: '%s' type:%x attr:%s @%d\n",
                    p_string(pstr), fieldtype->member_v2.type,
                    get_attr(fieldtype->member_v2.attribute), value);
@@ -552,10 +557,10 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             break;
 
         case LF_MEMBER_V3:
-            leaf_len = numeric_leaf(&value, &fieldtype->member_v3.offset);
-            cstr = (const char*)&fieldtype->member_v3.offset + leaf_len;
+            leaf_len = numeric_leaf(&value, fieldtype->member_v3.data);
+            cstr = (const char*)&fieldtype->member_v3.data[leaf_len];
             printf("\t\tMember V3: '%s' type:%x attr:%s @%d\n",
-                   cstr, fieldtype->member_v3.type, 
+                   cstr, fieldtype->member_v3.type,
                    get_attr(fieldtype->member_v3.attribute), value);
             ptr += 2 + 2 + 4 + leaf_len + strlen(cstr) + 1;
             break;
@@ -693,43 +698,43 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             break;
 
         case LF_BCLASS_V1:
-            leaf_len = numeric_leaf(&value, &fieldtype->bclass_v1.offset);
+            leaf_len = numeric_leaf(&value, fieldtype->bclass_v1.data);
             printf("\t\tBase class V1: type:%x attr:%s @%d\n",
-                   fieldtype->bclass_v1.type, 
+                   fieldtype->bclass_v1.type,
                    get_attr(fieldtype->bclass_v1.attribute), value);
             ptr += 2 + 2 + 2 + leaf_len;
             break;
 
         case LF_BCLASS_V2:
-            leaf_len = numeric_leaf(&value, &fieldtype->bclass_v2.offset);
+            leaf_len = numeric_leaf(&value, fieldtype->bclass_v2.data);
             printf("\t\tBase class V2: type:%x attr:%s @%d\n",
-                   fieldtype->bclass_v2.type, 
+                   fieldtype->bclass_v2.type,
                    get_attr(fieldtype->bclass_v2.attribute), value);
             ptr += 2 + 2 + 4 + leaf_len;
             break;
 
         case LF_VBCLASS_V1:
         case LF_IVBCLASS_V1:
-            leaf_len = numeric_leaf(&value, &fieldtype->vbclass_v1.vbpoff);
+            leaf_len = numeric_leaf(&value, fieldtype->vbclass_v1.data);
             printf("\t\t%sirtual base class V1: type:%x (ptr:%x) attr:%s vbpoff:%d ",
                    (fieldtype->generic.id == LF_VBCLASS_V2) ? "V" : "Indirect v",
                    fieldtype->vbclass_v1.btype, fieldtype->vbclass_v1.vbtype,
                    get_attr(fieldtype->vbclass_v1.attribute), value);
             ptr += 2 + 2 + 2 + 2 + leaf_len;
-            leaf_len = numeric_leaf(&value, (const unsigned short*)ptr);
+            leaf_len = numeric_leaf(&value, ptr);
             printf("vboff:%d\n", value);
             ptr += leaf_len;
             break;
 
         case LF_VBCLASS_V2:
         case LF_IVBCLASS_V2:
-            leaf_len = numeric_leaf(&value, &fieldtype->vbclass_v1.vbpoff);
+            leaf_len = numeric_leaf(&value, fieldtype->vbclass_v1.data);
             printf("\t\t%sirtual base class V2: type:%x (ptr:%x) attr:%s vbpoff:%d ",
                    (fieldtype->generic.id == LF_VBCLASS_V2) ? "V" : "Indirect v",
                    fieldtype->vbclass_v2.btype, fieldtype->vbclass_v2.vbtype,
                    get_attr(fieldtype->vbclass_v2.attribute), value);
             ptr += 2 + 2 + 4 + 4 + leaf_len;
-            leaf_len = numeric_leaf(&value, (const unsigned short*)ptr);
+            leaf_len = numeric_leaf(&value, ptr);
             printf("vboff:%d\n", value);
             ptr += leaf_len;
             break;

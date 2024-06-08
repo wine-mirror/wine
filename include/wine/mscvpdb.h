@@ -525,7 +525,8 @@ union codeview_fieldtype
         unsigned short int      id;
         cv_typ16_t		type;
         short int		attribute;
-        unsigned short int	offset;     /* numeric leaf */
+        unsigned char           data[];
+        /* <numeric leaf>       offset; */
     } bclass_v1;
 
     struct
@@ -533,7 +534,8 @@ union codeview_fieldtype
         unsigned short int      id;
         short int		attribute;
         cv_typ_t	        type;
-        unsigned short int	offset;     /* numeric leaf */
+        unsigned char           data[];
+        /* <numeric leaf>       offset; */
     } bclass_v2;
 
     struct
@@ -542,10 +544,9 @@ union codeview_fieldtype
         cv_typ16_t		btype;
         cv_typ16_t		vbtype;
         short int		attribute;
-        unsigned short int	vbpoff;     /* numeric leaf */
-#if 0
-        unsigned short int	vboff;      /* numeric leaf */
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       vbpoff; */
+        /* <numeric leaf>       vboff; */
     } vbclass_v1;
 
     struct
@@ -554,30 +555,27 @@ union codeview_fieldtype
         short int		attribute;
         cv_typ_t	        btype;
         cv_typ_t	        vbtype;
-        unsigned short int	vbpoff;     /* numeric leaf */
-#if 0
-        unsigned short int	vboff;      /* numeric leaf */
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       vbpoff; */
+        /* <numeric leaf>       vboff; */
     } vbclass_v2;
 
     struct
     {
         unsigned short int      id;
         short int		attribute;
-        unsigned short int	value;     /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       value; */
+        /* struct p_string      p_name; */
     } enumerate_v1;
 
    struct
     {
         unsigned short int      id;
         short int               attribute;
-        unsigned short int      value;     /* numeric leaf */
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       value; */
+        /* char                 name[]; */
     } enumerate_v3;
 
     struct
@@ -608,10 +606,9 @@ union codeview_fieldtype
         unsigned short int      id;
         cv_typ16_t		type;
         short int		attribute;
-        unsigned short int	offset;    /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       offset; */
+        /* struct p_string      p_name; */
     } member_v1;
 
     struct
@@ -619,10 +616,9 @@ union codeview_fieldtype
         unsigned short int      id;
         short int		attribute;
         cv_typ_t	        type;
-        unsigned short int	offset;    /* numeric leaf */
-#if 0
-        struct p_string         p_name;
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       offset; */
+        /* struct p_string      p_name; */
     } member_v2;
 
     struct
@@ -630,10 +626,9 @@ union codeview_fieldtype
         unsigned short int      id;
         short int               attribute;
         cv_typ_t                type;
-        unsigned short int      offset; /* numeric leaf */
-#if 0
-        char                    name[1];
-#endif
+        unsigned char           data[];
+        /* <numeric leaf>       offset; */
+        /* char                 name[]; */
     }
     member_v3;
 

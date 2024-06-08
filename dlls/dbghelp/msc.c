@@ -269,10 +269,13 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8],  ptrsz)->symt;
 }
 
-static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
+/* wrapper for migration to FAM */
+#define leaf_as_variant(v, l) _leaf_as_variant((v), (const unsigned char*)(l))
+static int _leaf_as_variant(VARIANT *v, const unsigned char *leaf)
 {
-    unsigned short int type = *leaf++;
+    unsigned short int type = *(const unsigned short *)leaf;
     int length = 2;
+    leaf += length;
 
     if (type < LF_NUMERIC)
     {
@@ -394,10 +397,13 @@ static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
     return length;
 }
 
-static int numeric_leaf(int* value, const unsigned short int* leaf)
+/* wrapper for migration to FAM */
+#define numeric_leaf(v, l) _numeric_leaf(v, (const unsigned char *)(l))
+static int _numeric_leaf(int *value, const unsigned char *leaf)
 {
-    unsigned short int type = *leaf++;
+    unsigned short int type = *(const unsigned short int *)leaf;
     int length = 2;
+    leaf += length;
 
     if (type < LF_NUMERIC)
     {
@@ -888,8 +894,8 @@ static BOOL codeview_add_type_enum_field_list(struct codeview_type_parse* ctp,
         {
         case LF_ENUMERATE_V1:
         {
-            int value, vlen = numeric_leaf(&value, &type->enumerate_v1.value);
-            const struct p_string* p_name = (const struct p_string*)((const unsigned char*)&type->enumerate_v1.value + vlen);
+            int value, vlen = numeric_leaf(&value, type->enumerate_v1.data);
+            const struct p_string* p_name = (const struct p_string*)&type->enumerate_v1.data[vlen];
 
             symt_add_enum_element(ctp->module, symt, terminate_string(p_name), value);
             ptr += 2 + 2 + vlen + (1 + p_name->namelen);
@@ -897,8 +903,8 @@ static BOOL codeview_add_type_enum_field_list(struct codeview_type_parse* ctp,
         }
         case LF_ENUMERATE_V3:
         {
-            int value, vlen = numeric_leaf(&value, &type->enumerate_v3.value);
-            const char* name = (const char*)&type->enumerate_v3.value + vlen;
+            int value, vlen = numeric_leaf(&value, type->enumerate_v3.data);
+            const char* name = (const char*)&type->enumerate_v3.data[vlen];
 
             symt_add_enum_element(ctp->module, symt, name, value);
             ptr += 2 + 2 + vlen + (1 + strlen(name));
@@ -990,7 +996,7 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
         switch (type->generic.id)
         {
         case LF_BCLASS_V1:
-            leaf_len = numeric_leaf(&value, &type->bclass_v1.offset);
+            leaf_len = numeric_leaf(&value, type->bclass_v1.data);
 
             /* FIXME: ignored for now */
 
@@ -998,7 +1004,7 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             break;
 
         case LF_BCLASS_V2:
-            leaf_len = numeric_leaf(&value, &type->bclass_v2.offset);
+            leaf_len = numeric_leaf(&value, type->bclass_v2.data);
 
             /* FIXME: ignored for now */
 
@@ -1008,10 +1014,10 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
         case LF_VBCLASS_V1:
         case LF_IVBCLASS_V1:
             {
-                const unsigned short int* p_vboff;
+                const unsigned char* p_vboff;
                 int vpoff, vplen;
-                leaf_len = numeric_leaf(&value, &type->vbclass_v1.vbpoff);
-                p_vboff = (const unsigned short int*)((const char*)&type->vbclass_v1.vbpoff + leaf_len);
+                leaf_len = numeric_leaf(&value, type->vbclass_v1.data);
+                p_vboff = &type->vbclass_v1.data[leaf_len];
                 vplen = numeric_leaf(&vpoff, p_vboff);
 
                 /* FIXME: ignored for now */
@@ -1023,10 +1029,10 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
         case LF_VBCLASS_V2:
         case LF_IVBCLASS_V2:
             {
-                const unsigned short int* p_vboff;
+                const unsigned char* p_vboff;
                 int vpoff, vplen;
-                leaf_len = numeric_leaf(&value, &type->vbclass_v2.vbpoff);
-                p_vboff = (const unsigned short int*)((const char*)&type->vbclass_v2.vbpoff + leaf_len);
+                leaf_len = numeric_leaf(&value, type->vbclass_v2.data);
+                p_vboff = &type->vbclass_v2.data[leaf_len];
                 vplen = numeric_leaf(&vpoff, p_vboff);
 
                 /* FIXME: ignored for now */
@@ -1036,28 +1042,28 @@ static int codeview_add_type_struct_field_list(struct codeview_type_parse* ctp,
             break;
 
         case LF_MEMBER_V1:
-            leaf_len = numeric_leaf(&value, &type->member_v1.offset);
-            p_name = (const struct p_string*)((const char*)&type->member_v1.offset + leaf_len);
+            leaf_len = numeric_leaf(&value, type->member_v1.data);
+            p_name = (const struct p_string*)&type->member_v1.data[leaf_len];
 
-            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value, 
+            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value,
                                      type->member_v1.type);
 
             ptr += 2 + 2 + 2 + leaf_len + (1 + p_name->namelen);
             break;
 
         case LF_MEMBER_V2:
-            leaf_len = numeric_leaf(&value, &type->member_v2.offset);
-            p_name = (const struct p_string*)((const unsigned char*)&type->member_v2.offset + leaf_len);
+            leaf_len = numeric_leaf(&value, type->member_v2.data);
+            p_name = (const struct p_string*)&type->member_v2.data[leaf_len];
 
-            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value, 
+            codeview_add_udt_element(ctp, symt, terminate_string(p_name), value,
                                      type->member_v2.type);
 
             ptr += 2 + 2 + 4 + leaf_len + (1 + p_name->namelen);
             break;
 
         case LF_MEMBER_V3:
-            leaf_len = numeric_leaf(&value, &type->member_v3.offset);
-            c_name = (const char*)&type->member_v3.offset + leaf_len;
+            leaf_len = numeric_leaf(&value, type->member_v3.data);
+            c_name = (const char*)&type->member_v3.data[leaf_len];
 
             codeview_add_udt_element(ctp, symt, c_name, value, type->member_v3.type);
 
