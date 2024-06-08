@@ -9356,7 +9356,7 @@ static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR pare
                 ok( !!rgn_ok, "Parent update region shall match expected region\n" );
             }
 
-            if (!rgn_ok && winetest_debug > 1)
+            if (!rgn_ok)
             {
                 trace( "Expected parent update region: " );
                 dump_region( hrgn_expect );
@@ -9417,7 +9417,7 @@ static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR pare
                 ok( !!rgn_ok, "Child update region shall match expected region\n" );
             }
 
-            if (!rgn_ok && winetest_debug > 1)
+            if (!rgn_ok)
             {
                 trace( "Expected child update region: " );
                 dump_region( hrgn_expect_child );
