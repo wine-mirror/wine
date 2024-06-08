@@ -335,15 +335,43 @@ static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
         { L"Write", DB_MODE_WRITE },
     };
     struct mode_propval *prop;
+    WCHAR mode[64];
+    WCHAR *pos = NULL;
+    const WCHAR *lastpos = src;
 
-    if ((prop = bsearch(src, mode_propvals, ARRAY_SIZE(mode_propvals),
-                        sizeof(struct mode_propval), dbmodeprop_compare)))
+    V_VT(dest) = VT_I4;
+    V_I4(dest) = 0;
+
+    pos = wcschr(src, '|');
+    while (pos != NULL)
     {
-        V_VT(dest) = VT_I4;
-        V_I4(dest) = prop->value;
-        TRACE("%s = %#lx\n", debugstr_w(src), prop->value);
-        return S_OK;
+        lstrcpynW(mode, lastpos, pos - lastpos + 1);
+
+        if (!(prop = bsearch(mode, mode_propvals, ARRAY_SIZE(mode_propvals),
+                            sizeof(struct mode_propval), dbmodeprop_compare)))
+            goto done;
+
+        V_I4(dest) |= prop->value;
+
+        lastpos = pos + 1;
+        pos = wcschr(lastpos, '|');
     }
+
+    if (lastpos)
+    {
+        lstrcpyW(mode, lastpos);
+        if (!(prop = bsearch(mode, mode_propvals, ARRAY_SIZE(mode_propvals),
+                            sizeof(struct mode_propval), dbmodeprop_compare)))
+            goto done;
+
+        V_I4(dest) |= prop->value;
+    }
+
+    TRACE("%s = %#lx\n", debugstr_w(src), V_I4(dest));
+    return S_OK;
+
+done:
+    FIXME("Failed to parse Mode (%s)\n", debugstr_w(src));
 
     return E_FAIL;
 }

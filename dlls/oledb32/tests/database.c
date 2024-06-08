@@ -557,6 +557,8 @@ static void test_initializationstring(void)
     static const WCHAR *initstring_mode = L"Provider=MSDASQL.1;Data Source=dummy;Mode=invalid";
     static const WCHAR *initstring_mode2 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=WriteRead";
     static const WCHAR *initstring_mode3 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=ReadWRITE";
+    static const WCHAR *initstring_mode4 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=ReadWrite|Share Deny None";
+    static const WCHAR *initstring_mode5 = L"Provider=MSDASQL.1;Data Source=dummy;Mode=ReadWrite|Share Deny None|Share Exclusive";
     static const WCHAR *initstring_quote_semicolon = L"Provider=MSDASQL.1;"
                                                      "Data Source=dummy;"
                                                      "Extended Properties=\"ConnectTo=11.0;Cell Error Mode=TextValue;Optimize Response=3;\"";
@@ -622,6 +624,18 @@ static void test_initializationstring(void)
 
             dbinit = NULL;
             hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode3,
+                &IID_IDBInitialize, (IUnknown **)&dbinit);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
+            IDBInitialize_Release(dbinit);
+
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode4,
+                &IID_IDBInitialize, (IUnknown **)&dbinit);
+            ok(hr == S_OK, "got 0x%08lx\n", hr);
+            IDBInitialize_Release(dbinit);
+
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR *)initstring_mode5,
                 &IID_IDBInitialize, (IUnknown **)&dbinit);
             ok(hr == S_OK, "got 0x%08lx\n", hr);
             IDBInitialize_Release(dbinit);
