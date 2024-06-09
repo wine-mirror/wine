@@ -3358,6 +3358,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
 
         wined3d_color_from_d3dcolor(&constants.ambient, state->rs[WINED3D_RS_AMBIENT]);
+        for (unsigned int i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
+        {
+            if (state->light_state->lights[i])
+                constants.lights[i] = state->light_state->lights[i]->constants;
+        }
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,
                 offsetof(struct wined3d_ffp_vs_constants, light), sizeof(constants), &constants);
     }

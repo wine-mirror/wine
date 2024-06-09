@@ -1536,10 +1536,9 @@ static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context
 }
 
 static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl *context_gl,
-        const struct wined3d_state *state, unsigned int light, const struct wined3d_light_info *light_info,
-        struct glsl_shader_prog_link *prog)
+        const struct wined3d_state *state, unsigned int light, enum wined3d_light_type type,
+        const struct wined3d_light_constants *constants, struct glsl_shader_prog_link *prog)
 {
-    const struct wined3d_light_constants *constants = &light_info->constants;
     const struct wined3d_matrix *view = &state->transforms[WINED3D_TS_VIEW];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_vec4 vec4;
@@ -1548,7 +1547,7 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].specular, 1, &constants->specular.r));
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].ambient, 1, &constants->ambient.r));
 
-    switch (light_info->OriginalParms.type)
+    switch (type)
     {
         case WINED3D_LIGHT_POINT:
             wined3d_vec4_transform(&vec4, &constants->position, view);
@@ -1586,7 +1585,7 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
             break;
 
         default:
-            FIXME("Unrecognized light type %#x.\n", light_info->OriginalParms.type);
+            FIXME("Unrecognized light type %#x.\n", type);
     }
     checkGLcall("setting FFP lights uniforms");
 }
@@ -1834,7 +1833,8 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
                     FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
                     continue;
             }
-            shader_glsl_ffp_vertex_light_uniform(context_gl, state, idx, light_info, prog);
+            shader_glsl_ffp_vertex_light_uniform(context_gl, state, idx,
+                    light_info->OriginalParms.type, &constants->light.lights[i], prog);
         }
     }
 
@@ -11937,12 +11937,6 @@ static void glsl_vertex_pipe_material(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
 }
 
-static void glsl_vertex_pipe_light(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_LIGHTS;
-}
-
 static void glsl_vertex_pipe_pointsize(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -12012,14 +12006,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
     /* Lights */
     {STATE_LIGHT_TYPE,                                           {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(0),                                       {STATE_ACTIVELIGHT(0),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(1),                                       {STATE_ACTIVELIGHT(1),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(2),                                       {STATE_ACTIVELIGHT(2),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(3),                                       {STATE_ACTIVELIGHT(3),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(4),                                       {STATE_ACTIVELIGHT(4),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(5),                                       {STATE_ACTIVELIGHT(5),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(6),                                       {STATE_ACTIVELIGHT(6),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
-    {STATE_ACTIVELIGHT(7),                                       {STATE_ACTIVELIGHT(7),                                       glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
     /* Viewport */
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             glsl_vertex_pipe_viewport}, WINED3D_GL_EXT_NONE        },
     /* Transform states */

@@ -1750,10 +1750,8 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 
 #define STATE_LIGHT_TYPE (STATE_VIEWPORT + 1)
 #define STATE_IS_LIGHT_TYPE(a) ((a) == STATE_LIGHT_TYPE)
-#define STATE_ACTIVELIGHT(a) (STATE_LIGHT_TYPE + 1 + (a))
-#define STATE_IS_ACTIVELIGHT(a) ((a) >= STATE_ACTIVELIGHT(0) && (a) < STATE_ACTIVELIGHT(WINED3D_MAX_ACTIVE_LIGHTS))
 
-#define STATE_SCISSORRECT (STATE_ACTIVELIGHT(WINED3D_MAX_ACTIVE_LIGHTS - 1) + 1)
+#define STATE_SCISSORRECT (STATE_LIGHT_TYPE + 1)
 #define STATE_IS_SCISSORRECT(a) ((a) == STATE_SCISSORRECT)
 
 #define STATE_CLIPPLANE(a) (STATE_SCISSORRECT + 1 + (a))
@@ -2776,6 +2774,7 @@ struct wined3d_ffp_vs_constants
     struct wined3d_ffp_light_constants
     {
         struct wined3d_color ambient;
+        struct wined3d_light_constants lights[8];
     } light;
 };
 

@@ -2061,7 +2061,6 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
     {
         if (light_info->OriginalParms.type != op->light.OriginalParms.type)
             device_invalidate_state(cs->c.device, STATE_LIGHT_TYPE);
-        device_invalidate_state(cs->c.device, STATE_ACTIVELIGHT(light_info->glIndex));
     }
 
     light_info->OriginalParms = op->light.OriginalParms;
@@ -2085,7 +2084,6 @@ static void wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *
     const struct wined3d_cs_set_light_enable *op = data;
     struct wined3d_device *device = cs->c.device;
     struct wined3d_light_info *light_info;
-    int prev_idx;
 
     if (!(light_info = wined3d_light_state_get_light(&cs->state.light_state, op->idx)))
     {
@@ -2093,12 +2091,8 @@ static void wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *
         return;
     }
 
-    prev_idx = light_info->glIndex;
     if (wined3d_light_state_enable_light(&cs->state.light_state, &device->adapter->d3d_info, light_info, op->enable))
-    {
         device_invalidate_state(device, STATE_LIGHT_TYPE);
-        device_invalidate_state(device, STATE_ACTIVELIGHT(op->enable ? light_info->glIndex : prev_idx));
-    }
 }
 
 void wined3d_device_context_emit_set_light_enable(struct wined3d_device_context *context, unsigned int idx, BOOL enable)
