@@ -2768,6 +2768,7 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 
 struct wined3d_ffp_vs_constants
 {
+    struct wined3d_matrix projection_matrix;
     struct wined3d_matrix texture_matrices[WINED3D_MAX_FFP_TEXTURES];
     struct wined3d_material material;
     struct wined3d_ffp_light_constants

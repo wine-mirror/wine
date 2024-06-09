@@ -1478,7 +1478,7 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
 }
 
 static void get_projection_matrix(const struct wined3d_context *context,
-        const struct wined3d_state *state, struct wined3d_matrix *mat)
+        const struct wined3d_ffp_vs_constants *constants, const struct wined3d_state *state, struct wined3d_matrix *mat)
 {
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     bool clip_control, flip;
@@ -1558,7 +1558,7 @@ static void get_projection_matrix(const struct wined3d_context *context,
             x_offset, y_offset, z_offset, 1.0f,
         };
 
-        multiply_matrix(mat, &projection, &state->transforms[WINED3D_TS_PROJECTION]);
+        multiply_matrix(mat, &projection, &constants->projection_matrix);
     }
 }
 
@@ -1814,9 +1814,12 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_PROJ)
     {
+        const struct wined3d_ffp_vs_constants *constants;
         struct wined3d_matrix projection;
 
-        get_projection_matrix(context, state, &projection);
+        constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
+
+        get_projection_matrix(context, constants, state, &projection);
         GL_EXTCALL(glUniformMatrix4fv(prog->vs.projection_matrix_location, 1, FALSE, &projection._11));
         checkGLcall("glUniformMatrix4fv");
     }
@@ -11922,18 +11925,15 @@ static void glsl_vertex_pipe_projection(struct wined3d_context *context,
     if (state->render_states[WINED3D_RS_FOGENABLE]
             && state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
 }
 
 static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    if (!isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
-        glsl_vertex_pipe_projection(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE))
             && state->render_states[WINED3D_RS_POINTSCALEENABLE])
         context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
-    context->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
+    context->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP | WINED3D_SHADER_CONST_FFP_PROJ;
 }
 
 static void glsl_vertex_pipe_pointsize(struct wined3d_context *context,

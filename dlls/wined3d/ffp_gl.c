@@ -759,8 +759,8 @@ static void depth(struct wined3d_context *context, const struct wined3d_state *s
         }
     }
 
-    if (context->stream_info.position_transformed && !isStateDirty(context, STATE_TRANSFORM(WINED3D_TS_PROJECTION)))
-        context_apply_state(context, state, STATE_TRANSFORM(WINED3D_TS_PROJECTION));
+    if (context->stream_info.position_transformed)
+        context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PROJ;
 }
 
 static void depth_stencil(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)

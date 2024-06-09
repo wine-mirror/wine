@@ -2251,6 +2251,8 @@ static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblo
     stateblock->changed.lights = 1;
     stateblock->changed.texture_matrices = 1;
     stateblock->changed.material = 1;
+    stateblock->changed.transforms = 1;
+    wined3d_bitmap_set(stateblock->changed.transform, WINED3D_TS_PROJECTION);
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3332,6 +3334,16 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 {
                     changed->lights = 1;
                     changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+                }
+
+                if (idx == WINED3D_TS_PROJECTION)
+                {
+                    wined3d_device_context_push_constants(context,
+                            WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
+                            offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
+                            sizeof(state->transforms[idx]), &state->transforms[idx]);
+                    /* wined3d_ffp_vs_settings.ortho_fog still needs the
+                     * device state to be set. */
                 }
 
                 if (!(idx >= WINED3D_TS_TEXTURE0 && idx <= WINED3D_TS_TEXTURE7))
