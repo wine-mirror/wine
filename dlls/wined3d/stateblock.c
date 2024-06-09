@@ -2749,19 +2749,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_set_ps_consts_b(device, range.offset, range.size, &state->ps_consts_b[range.offset]);
     }
 
-    if (changed->lights)
-    {
-        struct wined3d_light_info *light, *cursor;
-
-        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &changed->changed_lights, struct wined3d_light_info, changed_entry)
-        {
-            wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
-            wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
-            list_remove(&light->changed_entry);
-            light->changed = false;
-        }
-    }
-
     for (i = 0; i < ARRAY_SIZE(changed->renderState); ++i)
     {
         map = changed->renderState[i];
@@ -3335,6 +3322,19 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     {
         i = wined3d_bit_scan(&map);
         wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+    }
+
+    if (changed->lights)
+    {
+        struct wined3d_light_info *light, *cursor;
+
+        LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &changed->changed_lights, struct wined3d_light_info, changed_entry)
+        {
+            wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
+            wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
+            list_remove(&light->changed_entry);
+            light->changed = false;
+        }
     }
 
     if (changed->ffp_ps_constants)
