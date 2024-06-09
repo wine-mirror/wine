@@ -2184,12 +2184,45 @@ unsigned int CDECL wined3d_calculate_format_pitch(const struct wined3d_adapter *
 }
 
 HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d_output *output,
-        enum wined3d_device_type device_type, enum wined3d_format_id src_format,
-        enum wined3d_format_id dst_format)
+        enum wined3d_device_type device_type, enum wined3d_format_id src_format_id,
+        enum wined3d_format_id dst_format_id)
 {
-    FIXME("output %p, device_type %s, src_format %s, dst_format %s stub!\n",
-            output, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),
-            debug_d3dformat(dst_format));
+    const struct wined3d_format *src_format = wined3d_get_format(output->adapter, src_format_id, 0);
+    const struct wined3d_format *dst_format = wined3d_get_format(output->adapter, dst_format_id, 0);
+
+    TRACE("output %p, device_type %s, src_format %s, dst_format %s.\n",
+            output, debug_d3ddevicetype(device_type), debug_d3dformat(src_format_id),
+            debug_d3dformat(dst_format_id));
+
+    if (!(src_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_BLIT))
+    {
+        TRACE("Source format does not support blitting.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if (!(dst_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_BLIT))
+    {
+        TRACE("Destination format does not support blitting.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* Source cannot be depth/stencil (although it can be YUV or compressed,
+     * and AMD also allows blitting from luminance formats). */
+    if (src_format->depth_size || src_format->stencil_size)
+    {
+        TRACE("Source format is depth/stencil.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* The destination format must be a simple RGB format (no luminance, YUV,
+     * compression, etc.) All such formats have a nonzero red_size; the only
+     * exceptions are X24G8 (not supported in d3d9) and A8 (which, it turns out,
+     * no vendor reports support for converting to). */
+    if (!dst_format->red_size)
+    {
+        TRACE("Destination format is not a simple RGB format.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
 
     return WINED3D_OK;
 }

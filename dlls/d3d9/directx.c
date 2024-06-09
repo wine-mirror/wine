@@ -414,6 +414,9 @@ static HRESULT WINAPI d3d9_CheckDeviceFormatConversion(IDirect3D9Ex *iface, UINT
     if (output_idx >= d3d9->wined3d_output_count)
         return D3DERR_INVALIDCALL;
 
+    if (src_format == dst_format)
+        return S_OK;
+
     wined3d_mutex_lock();
     hr = wined3d_check_device_format_conversion(d3d9->wined3d_outputs[output_idx],
             wined3d_device_type_from_d3d(device_type), wined3dformat_from_d3dformat(src_format),

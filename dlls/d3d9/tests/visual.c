@@ -28682,6 +28682,141 @@ static void test_default_attribute_components(void)
     release_test_context(&context);
 }
 
+static void test_format_conversion(void)
+{
+    D3DADAPTER_IDENTIFIER9 identifier;
+    struct d3d9_test_context context;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3DFORMAT src_format;
+        D3DFORMAT dst_format;
+        HRESULT expect_hr;
+        bool broken_warp;
+    }
+    tests[] =
+    {
+        {D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, S_OK},
+        {D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, S_OK},
+        {D3DFMT_R5G6B5, D3DFMT_X8R8G8B8, S_OK},
+        {D3DFMT_YUY2, D3DFMT_X8R8G8B8, S_OK, .broken_warp = true},
+        {D3DFMT_YUY2, D3DFMT_R5G6B5, S_OK, .broken_warp = true},
+        {D3DFMT_R32F, D3DFMT_R16F, D3DERR_NOTAVAILABLE},
+
+        {D3DFMT_L8, D3DFMT_L8, S_OK},
+        {D3DFMT_X8R8G8B8, D3DFMT_L8, D3DERR_NOTAVAILABLE},
+        {D3DFMT_A8, D3DFMT_L8, D3DERR_NOTAVAILABLE},
+        {D3DFMT_A8L8, D3DFMT_L8, D3DERR_NOTAVAILABLE},
+        {D3DFMT_L16, D3DFMT_L8, D3DERR_NOTAVAILABLE},
+        {D3DFMT_L8, D3DFMT_A8, D3DERR_NOTAVAILABLE},
+        {D3DFMT_L8, D3DFMT_L16, D3DERR_NOTAVAILABLE},
+        {D3DFMT_L8, D3DFMT_A8L8, D3DERR_NOTAVAILABLE},
+    };
+
+    static const D3DFORMAT all_formats[] =
+    {
+        D3DFMT_R8G8B8,
+        D3DFMT_A8R8G8B8,
+        D3DFMT_X8R8G8B8,
+        D3DFMT_R5G6B5,
+        D3DFMT_X1R5G5B5,
+        D3DFMT_A1R5G5B5,
+        D3DFMT_A4R4G4B4,
+        D3DFMT_R3G3B2,
+        D3DFMT_A8,
+        D3DFMT_A8R3G3B2,
+        D3DFMT_X4R4G4B4,
+        D3DFMT_A2B10G10R10,
+        D3DFMT_A8B8G8R8,
+        D3DFMT_X8B8G8R8,
+        D3DFMT_G16R16,
+        D3DFMT_A2R10G10B10,
+        D3DFMT_A16B16G16R16,
+        D3DFMT_A8P8,
+        D3DFMT_P8,
+        D3DFMT_L8,
+        D3DFMT_A8L8,
+        D3DFMT_A4L4,
+        D3DFMT_V8U8,
+        D3DFMT_L6V5U5,
+        D3DFMT_X8L8V8U8,
+        D3DFMT_Q8W8V8U8,
+        D3DFMT_V16U16,
+        D3DFMT_A2W10V10U10,
+        D3DFMT_UYVY,
+        D3DFMT_YUY2,
+        D3DFMT_DXT1,
+        D3DFMT_DXT2,
+        D3DFMT_DXT3,
+        D3DFMT_DXT4,
+        D3DFMT_DXT5,
+        D3DFMT_MULTI2_ARGB8,
+        D3DFMT_G8R8_G8B8,
+        D3DFMT_R8G8_B8G8,
+        D3DFMT_D16_LOCKABLE,
+        D3DFMT_D32,
+        D3DFMT_D15S1,
+        D3DFMT_D24S8,
+        D3DFMT_D24X8,
+        D3DFMT_D24X4S4,
+        D3DFMT_D16,
+        D3DFMT_L16,
+        D3DFMT_D32F_LOCKABLE,
+        D3DFMT_D24FS8,
+        D3DFMT_D32_LOCKABLE,
+        D3DFMT_S8_LOCKABLE,
+        D3DFMT_VERTEXDATA,
+        D3DFMT_INDEX16,
+        D3DFMT_INDEX32,
+        D3DFMT_Q16W16V16U16,
+        D3DFMT_R16F,
+        D3DFMT_G16R16F,
+        D3DFMT_A16B16G16R16F,
+        D3DFMT_R32F,
+        D3DFMT_G32R32F,
+        D3DFMT_A32B32G32R32F,
+        D3DFMT_CxV8U8,
+        D3DFMT_A1,
+        D3DFMT_A2B10G10R10_XR_BIAS,
+        D3DFMT_BINARYBUFFER,
+        200,
+    };
+
+    if (!init_test_context(&context))
+        return;
+
+    hr = IDirect3D9_GetAdapterIdentifier(context.d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(hr == S_OK, "Failed to get adapter identifier, hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirect3D9_CheckDeviceFormatConversion(context.d3d, D3DADAPTER_DEFAULT,
+                D3DDEVTYPE_HAL, tests[i].src_format, tests[i].dst_format);
+        todo_wine_if (i == 5)
+            ok(hr == tests[i].expect_hr
+                    || broken(tests[i].broken_warp && adapter_is_warp(&identifier) && hr == D3DERR_NOTAVAILABLE),
+                    "Got hr %#lx for %u to %u.\n", hr, tests[i].src_format, tests[i].dst_format);
+    }
+
+    for (unsigned int src_format = 0; src_format < ARRAY_SIZE(all_formats); ++src_format)
+    {
+        for (unsigned int dst_format = 0; dst_format < ARRAY_SIZE(all_formats); ++dst_format)
+        {
+            hr = IDirect3D9_CheckDeviceFormatConversion(context.d3d, D3DADAPTER_DEFAULT,
+                    D3DDEVTYPE_HAL, all_formats[src_format], all_formats[dst_format]);
+            if (src_format == dst_format)
+                ok(hr == S_OK, "Got hr %#lx for %u to %u.\n",
+                        hr, all_formats[src_format], all_formats[dst_format]);
+            else
+                ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE, "Got hr %#lx for %u to %u.\n",
+                        hr, all_formats[src_format], all_formats[dst_format]);
+        }
+    }
+
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -28838,4 +28973,5 @@ START_TEST(visual)
     test_mipmap_upload();
     test_default_diffuse();
     test_default_attribute_components();
+    test_format_conversion();
 }
