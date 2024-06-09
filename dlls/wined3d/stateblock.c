@@ -61,6 +61,7 @@ struct wined3d_saved_states
     /* Flags only consumed by wined3d_device_apply_stateblock(), concerned with
      * translation from stateblock formats to wined3d_state formats. */
     uint32_t ffp_ps_constants : 1;
+    uint32_t texture_matrices : 1;
 };
 
 struct stage_state
@@ -1544,6 +1545,10 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
         wined3d_vertex_declaration_decref(stateblock->stateblock_state.vertex_declaration);
     stateblock->stateblock_state.vertex_declaration = declaration;
     stateblock->changed.vertexDecl = TRUE;
+    /* Texture matrices depend on the format of the TEXCOORD attributes. */
+    /* FIXME: They also depend on whether the draw is pretransformed,
+     * but that should go away. */
+    stateblock->changed.texture_matrices = TRUE;
 }
 
 void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateblock,
@@ -1618,8 +1623,20 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
     stateblock->stateblock_state.texture_states[stage][state] = value;
     stateblock->changed.textureState[stage] |= 1u << state;
 
-    if (state == WINED3D_TSS_CONSTANT)
-        stateblock->changed.ffp_ps_constants = 1;
+    switch (state)
+    {
+        case WINED3D_TSS_CONSTANT:
+            stateblock->changed.ffp_ps_constants = 1;
+            break;
+
+        case WINED3D_TSS_TEXCOORD_INDEX:
+        case WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS:
+            stateblock->changed.texture_matrices = 1;
+            break;
+
+        default:
+            break;
+    }
 }
 
 void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
@@ -1653,6 +1670,9 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
     stateblock->stateblock_state.transforms[d3dts] = *matrix;
     stateblock->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
     stateblock->changed.transforms = 1;
+
+    if (d3dts >= WINED3D_TS_TEXTURE0 && d3dts <= WINED3D_TS_TEXTURE7)
+        stateblock->changed.texture_matrices = 1;
 }
 
 void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
@@ -2229,6 +2249,7 @@ static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblo
 {
     stateblock->changed.ffp_ps_constants = 1;
     stateblock->changed.lights = 1;
+    stateblock->changed.texture_matrices = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3319,7 +3340,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
                 }
 
-                wined3d_device_set_transform(device, idx, &state->transforms[idx]);
+                if (!(idx >= WINED3D_TS_TEXTURE0 && idx <= WINED3D_TS_TEXTURE7))
+                    wined3d_device_set_transform(device, idx, &state->transforms[idx]);
             }
         }
 
@@ -3490,6 +3512,23 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,
                 offsetof(struct wined3d_ffp_vs_constants, light), sizeof(constants), &constants);
+    }
+
+    if (changed->texture_matrices)
+    {
+        struct wined3d_ffp_vs_constants constants;
+        struct wined3d_stream_info si;
+
+        /* FIXME: This is a bit fragile. Ideally we should be calculating
+         * stream info from the stateblock state. */
+        wined3d_stream_info_from_declaration(&si, context->state, &device->adapter->d3d_info);
+
+        for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+            get_texture_matrix(&si, state, i, &constants.texture_matrices[i]);
+        wined3d_device_context_push_constants(context,
+                WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_TEXMATRIX,
+                offsetof(struct wined3d_ffp_vs_constants, texture_matrices),
+                sizeof(constants.texture_matrices), constants.texture_matrices);
     }
 
     if (changed->ffp_ps_constants)

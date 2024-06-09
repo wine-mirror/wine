@@ -5747,7 +5747,7 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
 }
 
 void get_texture_matrix(const struct wined3d_stream_info *si,
-        const struct wined3d_state *state, const unsigned int tex, struct wined3d_matrix *mat)
+        const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat)
 {
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;

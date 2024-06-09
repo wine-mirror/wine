@@ -2771,6 +2771,7 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 
 struct wined3d_ffp_vs_constants
 {
+    struct wined3d_matrix texture_matrices[WINED3D_MAX_FFP_TEXTURES];
     struct wined3d_ffp_light_constants
     {
         struct wined3d_color ambient;
@@ -4383,7 +4384,7 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         struct wined3d_matrix *mat);
 void get_texture_matrix(const struct wined3d_stream_info *si,
-        const struct wined3d_state *state, const unsigned int tex, struct wined3d_matrix *mat);
+        const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max);
 void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,
