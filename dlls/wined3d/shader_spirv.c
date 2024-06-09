@@ -1256,7 +1256,6 @@ static const struct wined3d_state_entry_template spirv_fragment_pipe_vk_fp_state
     {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),     {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),     state_nop}},
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE), {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE), state_nop}},
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),   {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),   state_nop}},
-    {STATE_POINT_ENABLE,                         {STATE_POINT_ENABLE,                         state_nop}},
     {0}, /* Terminate */
 };
 

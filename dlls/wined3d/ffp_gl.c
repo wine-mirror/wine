@@ -1710,7 +1710,6 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         STATE_RASTERIZER,
         STATE_BASEVERTEXINDEX,
         STATE_FRAMEBUFFER,
-        STATE_POINT_ENABLE,
         STATE_BLEND,
         STATE_BLEND_FACTOR,
         STATE_DEPTH_STENCIL,

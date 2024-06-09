@@ -1035,7 +1035,10 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
         if ((geometry_shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]) && !geometry_shader->function)
             device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY));
         if (state->primitive_type == WINED3D_PT_POINTLIST || op->primitive_type == WINED3D_PT_POINTLIST)
-            device_invalidate_state(cs->c.device, STATE_POINT_ENABLE);
+        {
+            device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
+            device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
+        }
         state->primitive_type = op->primitive_type;
         for (i = 0; i < device->context_count; ++i)
             device->contexts[i]->update_primitive_type = 1;

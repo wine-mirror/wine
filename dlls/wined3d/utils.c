@@ -5377,8 +5377,6 @@ const char *debug_d3dstate(uint32_t state)
         return "STATE_BASEVERTEXINDEX";
     if (STATE_IS_FRAMEBUFFER(state))
         return "STATE_FRAMEBUFFER";
-    if (STATE_IS_POINT_ENABLE(state))
-        return "STATE_POINT_ENABLE";
     if (STATE_IS_STREAM_OUTPUT(state))
         return "STATE_STREAM_OUTPUT";
     if (STATE_IS_BLEND(state))
