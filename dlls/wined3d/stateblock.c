@@ -3530,21 +3530,28 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->modelview_matrices)
     {
-        struct wined3d_matrix matrices[MAX_VERTEX_BLENDS];
+        union wined3d_ffp_vs_modelview_matrices matrices;
 
-        get_modelview_matrix(state, 0, &matrices[0]);
-        wined3d_device_context_push_constants(context,
-                WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_MODELVIEW,
-                offsetof(struct wined3d_ffp_vs_constants, modelview_matrices[0]), sizeof(matrices[0]), &matrices[0]);
+        get_modelview_matrix(state, 0, &matrices.modelview_matrices[0]);
 
         if (state->rs[WINED3D_RS_VERTEXBLEND])
         {
             for (i = 1; i < MAX_VERTEX_BLENDS; ++i)
-                get_modelview_matrix(state, i, &matrices[i]);
-            wined3d_device_context_push_constants(context,
-                    WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_VERTEXBLEND,
-                    offsetof(struct wined3d_ffp_vs_constants, modelview_matrices[1]),
-                    sizeof(matrices) - sizeof(matrices[0]), &matrices[1]);
+                get_modelview_matrix(state, i, &matrices.modelview_matrices[i]);
+
+            wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP,
+                    WINED3D_SHADER_CONST_FFP_MODELVIEW | WINED3D_SHADER_CONST_FFP_VERTEXBLEND,
+                    offsetof(struct wined3d_ffp_vs_constants, modelview), sizeof(matrices), &matrices);
+        }
+        else
+        {
+            compute_normal_matrix(matrices.not_blended.normal_matrix,
+                    device->adapter->d3d_info.wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING,
+                    &matrices.not_blended.modelview_matrix);
+
+            wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP,
+                    WINED3D_SHADER_CONST_FFP_MODELVIEW,
+                    offsetof(struct wined3d_ffp_vs_constants, modelview), sizeof(matrices.not_blended), &matrices);
         }
     }
 

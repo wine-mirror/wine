@@ -1566,15 +1566,12 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
         const struct wined3d_ffp_vs_constants *constants, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    float mat[3 * 3];
 
     if (prog->vs.normal_matrix_location == -1)
         return;
 
-    compute_normal_matrix(mat, context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING,
-            &constants->modelview_matrices[0]);
-
-    GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location, 1, FALSE, mat));
+    GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location,
+            1, FALSE, constants->modelview.not_blended.normal_matrix));
     checkGLcall("glUniformMatrix3fv");
 }
 
@@ -1792,7 +1789,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
         constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
 
         GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[0], 1,
-                FALSE, &constants->modelview_matrices[0]._11));
+                FALSE, &constants->modelview.modelview_matrices[0]._11));
         checkGLcall("glUniformMatrix4fv");
 
         shader_glsl_ffp_vertex_normalmatrix_uniform(context_gl, constants, prog);
@@ -1810,7 +1807,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
                 break;
 
             GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[i],
-                    1, FALSE, &constants->modelview_matrices[i]._11));
+                    1, FALSE, &constants->modelview.modelview_matrices[i]._11));
             checkGLcall("glUniformMatrix4fv");
         }
     }
