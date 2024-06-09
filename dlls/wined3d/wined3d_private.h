@@ -1757,10 +1757,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_CLIPPLANE(a) (STATE_SCISSORRECT + 1 + (a))
 #define STATE_IS_CLIPPLANE(a) ((a) >= STATE_CLIPPLANE(0) && (a) <= STATE_CLIPPLANE(WINED3D_MAX_CLIP_DISTANCES - 1))
 
-#define STATE_MATERIAL (STATE_CLIPPLANE(WINED3D_MAX_CLIP_DISTANCES))
-#define STATE_IS_MATERIAL(a) ((a) == STATE_MATERIAL)
-
-#define STATE_RASTERIZER (STATE_MATERIAL + 1)
+#define STATE_RASTERIZER (STATE_CLIPPLANE(WINED3D_MAX_CLIP_DISTANCES))
 #define STATE_IS_RASTERIZER(a) ((a) == STATE_RASTERIZER)
 
 #define STATE_DEPTH_BOUNDS (STATE_RASTERIZER + 1)
@@ -2772,6 +2769,7 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 struct wined3d_ffp_vs_constants
 {
     struct wined3d_matrix texture_matrices[WINED3D_MAX_FFP_TEXTURES];
+    struct wined3d_material material;
     struct wined3d_ffp_light_constants
     {
         struct wined3d_color ambient;
@@ -2889,7 +2887,6 @@ struct wined3d_state
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
-    struct wined3d_material material;
     struct wined3d_viewport viewports[WINED3D_MAX_VIEWPORTS];
     unsigned int viewport_count;
     RECT scissor_rects[WINED3D_MAX_VIEWPORTS];
@@ -3702,8 +3699,6 @@ void wined3d_device_context_emit_set_light(struct wined3d_device_context *contex
         const struct wined3d_light_info *light);
 void wined3d_device_context_emit_set_light_enable(struct wined3d_device_context *context, unsigned int idx,
         BOOL enable);
-void wined3d_device_context_emit_set_material(struct wined3d_device_context *context,
-        const struct wined3d_material *material);
 void wined3d_device_context_emit_set_predication(struct wined3d_device_context *context,
         struct wined3d_query *predicate, BOOL value);
 void wined3d_device_context_emit_set_rasterizer_state(struct wined3d_device_context *context,

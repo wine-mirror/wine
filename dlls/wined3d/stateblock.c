@@ -2250,6 +2250,7 @@ static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblo
     stateblock->changed.ffp_ps_constants = 1;
     stateblock->changed.lights = 1;
     stateblock->changed.texture_matrices = 1;
+    stateblock->changed.material = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -2608,14 +2609,6 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
         wined3d_shader_resource_view_decref(prev);
 
     return;
-}
-
-static void wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
-{
-    TRACE("device %p, material %p.\n", device, material);
-
-    device->cs->c.state->material = *material;
-    wined3d_device_context_emit_set_material(&device->cs->c, material);
 }
 
 static void wined3d_device_set_transform(struct wined3d_device *device,
@@ -3355,8 +3348,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     wined3d_device_set_base_vertex_index(device, state->base_vertex_index);
     if (changed->vertexDecl)
         wined3d_device_context_set_vertex_declaration(context, state->vertex_declaration);
-    if (changed->material)
-        wined3d_device_set_material(device, &state->material);
     if (changed->viewport)
         wined3d_device_context_set_viewports(context, 1, &state->viewport);
     if (changed->scissorRect)
@@ -3425,6 +3416,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
         }
     }
+
+    if (changed->material)
+        wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_MATERIAL,
+                offsetof(struct wined3d_ffp_vs_constants, material), sizeof(state->material), &state->material);
 
     if (changed->lights)
     {

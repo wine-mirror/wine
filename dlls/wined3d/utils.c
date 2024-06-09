@@ -5369,8 +5369,6 @@ const char *debug_d3dstate(uint32_t state)
         return "STATE_SCISSORRECT";
     if (STATE_IS_CLIPPLANE(state))
         return wine_dbg_sprintf("STATE_CLIPPLANE(%#x)", state - STATE_CLIPPLANE(0));
-    if (STATE_IS_MATERIAL(state))
-        return "STATE_MATERIAL";
     if (STATE_IS_RASTERIZER(state))
         return "STATE_RASTERIZER";
     if (STATE_IS_DEPTH_BOUNDS(state))

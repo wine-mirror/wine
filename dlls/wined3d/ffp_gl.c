@@ -1684,7 +1684,6 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     };
     static const unsigned int simple_states[] =
     {
-        STATE_MATERIAL,
         STATE_VDECL,
         STATE_STREAMSRC,
         STATE_INDEXBUFFER,

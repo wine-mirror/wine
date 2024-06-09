@@ -1509,16 +1509,20 @@ static void shader_glsl_ffp_vertex_texmatrix_uniform(const struct wined3d_contex
     checkGLcall("glUniformMatrix4fv");
 }
 
-static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context_gl *context_gl,
+static void shader_glsl_ffp_vertex_material_uniform(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    const struct wined3d_ffp_vs_constants *constants;
 
-    GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, &state->material.specular.r));
-    GL_EXTCALL(glUniform1f(prog->vs.material_shininess_location, state->material.power));
-    GL_EXTCALL(glUniform4fv(prog->vs.material_ambient_location, 1, &state->material.ambient.r));
-    GL_EXTCALL(glUniform4fv(prog->vs.material_diffuse_location, 1, &state->material.diffuse.r));
-    GL_EXTCALL(glUniform4fv(prog->vs.material_emissive_location, 1, &state->material.emissive.r));
+    constants = wined3d_buffer_load_sysmem(
+            context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], &context_gl->c);
+
+    GL_EXTCALL(glUniform4fv(prog->vs.material_specular_location, 1, &constants->material.specular.r));
+    GL_EXTCALL(glUniform1f(prog->vs.material_shininess_location, constants->material.power));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_ambient_location, 1, &constants->material.ambient.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_diffuse_location, 1, &constants->material.diffuse.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.material_emissive_location, 1, &constants->material.emissive.r));
     checkGLcall("setting FFP material uniforms");
 }
 
@@ -11847,12 +11851,6 @@ static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_POS_FIXUP;
 }
 
-static void glsl_vertex_pipe_material(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MATERIAL;
-}
-
 static void glsl_vertex_pipe_pointsize(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -11902,7 +11900,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     {STATE_SHADER(WINED3D_SHADER_TYPE_HULL),                     glsl_vertex_pipe_hs    }, WINED3D_GL_EXT_NONE          },
     {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 {STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),                 glsl_vertex_pipe_geometry_shader}, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_vertex_pipe_pixel_shader}, WINED3D_GL_EXT_NONE    },
-    {STATE_MATERIAL,                                             {STATE_MATERIAL,                                             glsl_vertex_pipe_material}, WINED3D_GL_EXT_NONE        },
     /* Clip planes */
     {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         glsl_vertex_pipe_clip_plane}, WINED3D_GLSL_130         },
     {STATE_CLIPPLANE(0),                                         {STATE_CLIPPLANE(0),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
