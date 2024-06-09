@@ -1610,6 +1610,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
 
         case WINED3D_RS_VERTEXBLEND:
             stateblock->changed.modelview_matrices = 1;
+            stateblock->changed.ffp_vs_settings = 1;
             break;
 
         case WINED3D_RS_POINTSCALEENABLE:
