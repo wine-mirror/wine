@@ -1670,17 +1670,6 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context_gl *cont
     GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &plane.x));
 }
 
-/* Context activation is done by the caller (state handler). */
-static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
-        const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
-{
-    struct wined3d_color float_key[2];
-    const struct wined3d_texture *texture = wined3d_state_get_ffp_texture(state, 0);
-
-    wined3d_format_get_float_color_key(texture->resource.format, &texture->async.src_blt_color_key, float_key);
-    GL_EXTCALL(glUniform4fv(ps->color_key_location, 2, &float_key[0].r));
-}
-
 static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
         struct wined3d_context *context, const struct wined3d_state *state)
 {
@@ -1889,7 +1878,12 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
     }
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_COLOR_KEY)
-        shader_glsl_load_color_key_constant(&prog->ps, gl_info, state);
+    {
+        const struct wined3d_ffp_ps_constants *constants = wined3d_buffer_load_sysmem(
+                context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP], &context_gl->c);
+
+        GL_EXTCALL(glUniform4fv(prog->ps.color_key_location, 2, &constants->color_key[0].r));
+    }
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_PS)
     {
@@ -12326,12 +12320,6 @@ static void glsl_fragment_pipe_core_alpha_test_ref(struct wined3d_context *conte
     context->constant_update_mask |= WINED3D_SHADER_CONST_PS_ALPHA_TEST;
 }
 
-static void glsl_fragment_pipe_color_key(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_COLOR_KEY;
-}
-
 static void glsl_fragment_pipe_shademode(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -12422,7 +12410,6 @@ static const struct wined3d_state_entry_template glsl_fragment_pipe_state_templa
     {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                  {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                   glsl_fragment_pipe_alpha_test          }, WINED3D_GL_LEGACY_CONTEXT},
     {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                  {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                   glsl_fragment_pipe_core_alpha_test     }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                   {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
-    {STATE_COLOR_KEY,                                           { STATE_COLOR_KEY,                                           glsl_fragment_pipe_color_key           }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGENABLE),                        {STATE_RENDER(WINED3D_RS_FOGENABLE),                         glsl_fragment_pipe_fog                 }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),                     {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),                    {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                                   }, WINED3D_GL_EXT_NONE },

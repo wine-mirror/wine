@@ -3314,8 +3314,20 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     map = changed->textures;
     while (map)
     {
+        struct wined3d_color float_key[2];
+        struct wined3d_texture *texture;
+
         i = wined3d_bit_scan(&map);
-        wined3d_device_set_texture(device, i, state->textures[i]);
+        texture = state->textures[i];
+        wined3d_device_set_texture(device, i, texture);
+
+        if (!i && texture)
+        {
+            wined3d_format_get_float_color_key(texture->resource.format, &texture->src_blt_color_key, float_key);
+            wined3d_device_context_push_constants(context,
+                    WINED3D_PUSH_CONSTANTS_PS_FFP, WINED3D_SHADER_CONST_FFP_COLOR_KEY,
+                    offsetof(struct wined3d_ffp_ps_constants, color_key), sizeof(float_key), float_key);
+        }
     }
 
     map = changed->clipplane;
@@ -3339,7 +3351,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         constants.specular_enable = state->rs[WINED3D_RS_SPECULARENABLE] ? specular_enabled : specular_disabled;
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
-                WINED3D_SHADER_CONST_FFP_PS, 0, sizeof(constants), &constants);
+                WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
     }
 
     assert(list_empty(&stateblock->changed.changed_lights));
