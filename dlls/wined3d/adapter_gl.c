@@ -4928,6 +4928,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->feature_level = feature_level_from_caps(gl_info, &shader_caps, &d3d_info->ffp_fragment_caps);
     d3d_info->filling_convention_offset = gl_info->filling_convention_offset;
     d3d_info->persistent_map = !!gl_info->supported[ARB_BUFFER_STORAGE];
+    d3d_info->ffp_hlsl = wined3d_settings.ffp_hlsl;
 
     if (gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
         d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;

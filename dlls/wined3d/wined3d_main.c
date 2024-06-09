@@ -463,6 +463,11 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
             TRACE("Forcing all constant buffers to be write-mappable.\n");
             wined3d_settings.cb_access_map_w = TRUE;
         }
+        if (!get_config_key_dword(hkey, appkey, env, "ffp_hlsl", &tmpvalue))
+        {
+            ERR_(winediag)("Using the HLSL-based FFP backend.\n");
+            wined3d_settings.ffp_hlsl = tmpvalue;
+        }
     }
 
     if (appkey) RegCloseKey( appkey );

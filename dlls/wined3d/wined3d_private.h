@@ -476,7 +476,6 @@ struct wined3d_settings
     char *logo;
     unsigned int multisample_textures;
     unsigned int sample_count;
-    BOOL check_float_constants;
     unsigned int strict_shader_math;
     unsigned int max_sm_vs;
     unsigned int max_sm_hs;
@@ -486,7 +485,9 @@ struct wined3d_settings
     unsigned int max_sm_cs;
     enum wined3d_renderer renderer;
     enum wined3d_shader_backend shader_backend;
-    BOOL cb_access_map_w;
+    bool check_float_constants;
+    bool cb_access_map_w;
+    bool ffp_hlsl;
 };
 
 extern struct wined3d_settings wined3d_settings;

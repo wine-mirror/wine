@@ -2123,15 +2123,23 @@ static void wined3d_cs_exec_push_constants(struct wined3d_cs *cs, const void *da
 {
     const struct wined3d_cs_push_constants *op = data;
     struct wined3d_device *device = cs->c.device;
+    unsigned int ffp_start_idx, ffp_end_idx;
     unsigned int context_count, i;
 
     /* The constant buffers were already updated; this op is just to mark the
      * constants as invalid in the device state. */
 
+    ffp_start_idx = op->start_idx / sizeof(struct wined3d_vec4);
+    ffp_end_idx = (op->start_idx + op->count + sizeof(struct wined3d_vec4)) / sizeof(struct wined3d_vec4);
+
     if (op->type == WINED3D_PUSH_CONSTANTS_VS_F)
         device->shader_backend->shader_update_float_vertex_constants(device, op->start_idx, op->count);
     else if (op->type == WINED3D_PUSH_CONSTANTS_PS_F)
         device->shader_backend->shader_update_float_pixel_constants(device, op->start_idx, op->count);
+    else if (op->type == WINED3D_PUSH_CONSTANTS_VS_FFP)
+        device->shader_backend->shader_update_float_vertex_constants(device, ffp_start_idx, ffp_end_idx - ffp_start_idx);
+    else if (op->type == WINED3D_PUSH_CONSTANTS_PS_FFP)
+        device->shader_backend->shader_update_float_pixel_constants(device, ffp_start_idx, ffp_end_idx - ffp_start_idx);
 
     for (i = 0, context_count = device->context_count; i < context_count; ++i)
         device->contexts[i]->constant_update_mask |= op->update_mask;
