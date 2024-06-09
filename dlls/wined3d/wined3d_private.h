@@ -4321,7 +4321,7 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     float center_offset, x = 0.0f, y = 0.0f;
     unsigned int i;
 
-    /* See get_projection_matrix() in utils.c for a discussion of the position fixup.
+    /* See get_projection_matrix() in glsl_shader.c for a discussion of the position fixup.
      * This function here also applies to d3d10+ which does not need adjustment for
      * integer pixel centers, but it may need the filling convention offset. */
     if (context->d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
@@ -4376,8 +4376,6 @@ static inline BOOL shader_sampler_is_shadow(const struct wined3d_shader *shader,
 void get_identity_matrix(struct wined3d_matrix *mat);
 void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         unsigned int index, struct wined3d_matrix *mat);
-void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
-        struct wined3d_matrix *mat);
 void get_texture_matrix(const struct wined3d_stream_info *si,
         const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,

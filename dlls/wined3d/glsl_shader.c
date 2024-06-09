@@ -1477,6 +1477,91 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
     WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry)->constant_version = 0;
 }
 
+static void get_projection_matrix(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct wined3d_matrix *mat)
+{
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    bool clip_control, flip;
+    float center_offset;
+
+    /* There are a couple of additional things we have to take into account
+     * here besides the projection transformation itself:
+     *   - We need to flip along the y-axis in case of offscreen rendering.
+     *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
+     *   - <= D3D9 coordinates refer to pixel centers while GL coordinates
+     *     refer to pixel corners. D3D10 fixed this particular oddity.
+     *   - D3D has a top-left filling convention while GL does not specify
+     *     a particular behavior, other than that that the GL implementation
+     *     needs to be consistent.
+     *
+     * In order to handle the pixel center, we translate by 0.5 / VPw and
+     * 0.5 / VPh. We test the filling convention during adapter init and
+     * add a small offset to correct it if necessary. See
+     * wined3d_caps_gl_ctx_test_filling_convention() for more details on how
+     * we test GL and considerations regarding the added offset value.
+     *
+     * If we have GL_ARB_clip_control we take care of all this through
+     * viewport properties and don't have to translate geometry. */
+
+    /* Projection matrices are <= d3d9, which all have integer pixel centers. */
+    if (!(d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER))
+        ERR("Did not expect to enter this codepath without WINED3D_PIXEL_CENTER_INTEGER.\n");
+
+    clip_control = d3d_info->clip_control;
+    flip = !clip_control;
+    if (!clip_control)
+        center_offset = 1.0f + d3d_info->filling_convention_offset;
+    else
+        center_offset = 0.0f;
+
+    if (context->stream_info.position_transformed)
+    {
+        /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
+        float x = state->viewports[0].x;
+        float y = state->viewports[0].y;
+        float w = state->viewports[0].width;
+        float h = state->viewports[0].height;
+        float x_scale = 2.0f / w;
+        float x_offset = (center_offset - (2.0f * x) - w) / w;
+        float y_scale = flip ? 2.0f / h : 2.0f / -h;
+        float y_offset = flip
+                ? (center_offset - (2.0f * y) - h) / h
+                : (center_offset - (2.0f * y) - h) / -h;
+        bool zenable = state->fb.depth_stencil ?
+                (state->depth_stencil_state ? state->depth_stencil_state->desc.depth : true) : false;
+        float z_scale = zenable ? clip_control ? 1.0f : 2.0f : 0.0f;
+        float z_offset = zenable ? clip_control ? 0.0f : -1.0f : 0.0f;
+        const struct wined3d_matrix projection =
+        {
+             x_scale,     0.0f,      0.0f, 0.0f,
+                0.0f,  y_scale,      0.0f, 0.0f,
+                0.0f,     0.0f,   z_scale, 0.0f,
+            x_offset, y_offset,  z_offset, 1.0f,
+        };
+
+        *mat = projection;
+    }
+    else
+    {
+        float y_scale = flip ? -1.0f : 1.0f;
+        float x_offset = center_offset / state->viewports[0].width;
+        float y_offset = flip
+                ? center_offset / state->viewports[0].height
+                : -center_offset / state->viewports[0].height;
+        float z_scale = clip_control ? 1.0f : 2.0f;
+        float z_offset = clip_control ? 0.0f : -1.0f;
+        const struct wined3d_matrix projection =
+        {
+                1.0f,     0.0f,     0.0f, 0.0f,
+                0.0f,  y_scale,     0.0f, 0.0f,
+                0.0f,     0.0f,  z_scale, 0.0f,
+            x_offset, y_offset, z_offset, 1.0f,
+        };
+
+        multiply_matrix(mat, &projection, &state->transforms[WINED3D_TS_PROJECTION]);
+    }
+}
+
 static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
