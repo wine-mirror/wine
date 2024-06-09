@@ -1748,10 +1748,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_VIEWPORT (STATE_VDECL + 1)
 #define STATE_IS_VIEWPORT(a) ((a) == STATE_VIEWPORT)
 
-#define STATE_LIGHT_TYPE (STATE_VIEWPORT + 1)
-#define STATE_IS_LIGHT_TYPE(a) ((a) == STATE_LIGHT_TYPE)
-
-#define STATE_SCISSORRECT (STATE_LIGHT_TYPE + 1)
+#define STATE_SCISSORRECT (STATE_VIEWPORT + 1)
 #define STATE_IS_SCISSORRECT(a) ((a) == STATE_SCISSORRECT)
 
 #define STATE_CLIPPLANE(a) (STATE_SCISSORRECT + 1 + (a))

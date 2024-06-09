@@ -5363,8 +5363,6 @@ const char *debug_d3dstate(uint32_t state)
         return "STATE_VDECL";
     if (STATE_IS_VIEWPORT(state))
         return "STATE_VIEWPORT";
-    if (STATE_IS_LIGHT_TYPE(state))
-        return "STATE_LIGHT_TYPE";
     if (STATE_IS_SCISSORRECT(state))
         return "STATE_SCISSORRECT";
     if (STATE_IS_CLIPPLANE(state))

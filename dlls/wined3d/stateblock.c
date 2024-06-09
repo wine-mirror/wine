@@ -1939,6 +1939,10 @@ HRESULT CDECL wined3d_stateblock_set_light(struct wined3d_stateblock *stateblock
             return WINED3DERR_INVALIDCALL;
     }
 
+    if (!(object = wined3d_light_state_get_light(stateblock->stateblock_state.light_state, light_idx))
+            || light->type != object->OriginalParms.type)
+        stateblock->changed.ffp_vs_settings = 1;
+
     if (SUCCEEDED(hr = wined3d_light_state_set_light(stateblock->stateblock_state.light_state, light_idx, light, &object)))
         set_light_changed(stateblock, object);
     return hr;
@@ -1962,6 +1966,7 @@ HRESULT CDECL wined3d_stateblock_set_light_enable(struct wined3d_stateblock *sta
     if (wined3d_light_state_enable_light(light_state, &stateblock->device->adapter->d3d_info, light_info, enable))
         set_light_changed(stateblock, light_info);
 
+    stateblock->changed.ffp_vs_settings = 1;
     return S_OK;
 }
 

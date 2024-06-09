@@ -1703,7 +1703,6 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING,
         STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING,
         STATE_VIEWPORT,
-        STATE_LIGHT_TYPE,
         STATE_SCISSORRECT,
         STATE_RASTERIZER,
         STATE_BASEVERTEXINDEX,
