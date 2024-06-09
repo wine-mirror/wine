@@ -2064,6 +2064,14 @@ void context_state_drawbuf(struct wined3d_context *context,
 void context_state_fb(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 
+struct wined3d_light_constants
+{
+    struct wined3d_color diffuse, specular, ambient;
+    struct wined3d_vec4 position, direction;
+    float range, falloff, theta, phi;
+    float const_att, linear_att, quad_att;
+};
+
 /*****************************************************************************
  * Internal representation of a light
  */
@@ -2074,9 +2082,8 @@ struct wined3d_light_info
     LONG         glIndex;
     BOOL         enabled;
 
-    /* Converted parms to speed up swapping lights */
-    struct wined3d_vec4 position;
-    struct wined3d_vec4 direction;
+    /* Computed constants used by the vertex pipe. */
+    struct wined3d_light_constants constants;
 
     struct rb_entry entry;
     struct list changed_entry;

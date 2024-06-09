@@ -1539,48 +1539,49 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
         const struct wined3d_state *state, unsigned int light, const struct wined3d_light_info *light_info,
         struct glsl_shader_prog_link *prog)
 {
+    const struct wined3d_light_constants *constants = &light_info->constants;
     const struct wined3d_matrix *view = &state->transforms[WINED3D_TS_VIEW];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_vec4 vec4;
 
-    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].diffuse, 1, &light_info->OriginalParms.diffuse.r));
-    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].specular, 1, &light_info->OriginalParms.specular.r));
-    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].ambient, 1, &light_info->OriginalParms.ambient.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].diffuse, 1, &constants->diffuse.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].specular, 1, &constants->specular.r));
+    GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].ambient, 1, &constants->ambient.r));
 
     switch (light_info->OriginalParms.type)
     {
         case WINED3D_LIGHT_POINT:
-            wined3d_vec4_transform(&vec4, &light_info->position, view);
+            wined3d_vec4_transform(&vec4, &constants->position, view);
             GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, light_info->OriginalParms.range));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, light_info->OriginalParms.attenuation0));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, light_info->OriginalParms.attenuation1));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].q_att, light_info->OriginalParms.attenuation2));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, constants->range));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, constants->const_att));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, constants->linear_att));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].q_att, constants->quad_att));
             break;
 
         case WINED3D_LIGHT_SPOT:
-            wined3d_vec4_transform(&vec4, &light_info->position, view);
+            wined3d_vec4_transform(&vec4, &constants->position, view);
             GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
 
-            wined3d_vec4_transform(&vec4, &light_info->direction, view);
+            wined3d_vec4_transform(&vec4, &constants->direction, view);
             GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &vec4.x));
 
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, light_info->OriginalParms.range));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].falloff, light_info->OriginalParms.falloff));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, light_info->OriginalParms.attenuation0));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, light_info->OriginalParms.attenuation1));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].q_att, light_info->OriginalParms.attenuation2));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_htheta, cosf(light_info->OriginalParms.theta / 2.0f)));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_hphi, cosf(light_info->OriginalParms.phi / 2.0f)));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, constants->range));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].falloff, constants->falloff));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, constants->const_att));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, constants->linear_att));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].q_att, constants->quad_att));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_htheta, cosf(constants->theta / 2.0f)));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_hphi, cosf(constants->phi / 2.0f)));
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:
-            wined3d_vec4_transform(&vec4, &light_info->direction, view);
+            wined3d_vec4_transform(&vec4, &constants->direction, view);
             GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &vec4.x));
             break;
 
         case WINED3D_LIGHT_PARALLELPOINT:
-            wined3d_vec4_transform(&vec4, &light_info->position, view);
+            wined3d_vec4_transform(&vec4, &constants->position, view);
             GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
             break;
 

@@ -2065,8 +2065,7 @@ static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
     }
 
     light_info->OriginalParms = op->light.OriginalParms;
-    light_info->position = op->light.position;
-    light_info->direction = op->light.direction;
+    light_info->constants = op->light.constants;
 }
 
 void wined3d_device_context_emit_set_light(struct wined3d_device_context *context,

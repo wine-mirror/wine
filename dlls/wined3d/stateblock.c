@@ -661,6 +661,7 @@ static void set_light_changed(struct wined3d_stateblock *stateblock, struct wine
 static HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, unsigned int light_idx,
         const struct wined3d_light *params, struct wined3d_light_info **light_info)
 {
+    struct wined3d_light_constants *constants;
     struct wined3d_light_info *object;
 
     if (!(object = wined3d_light_state_get_light(state, light_idx)))
@@ -677,6 +678,8 @@ static HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, 
         rb_put(&state->lights_tree, (void *)(ULONG_PTR)light_idx, &object->entry);
     }
 
+    constants = &object->constants;
+
     object->OriginalParms = *params;
 
     /* Initialize the object. */
@@ -689,46 +692,58 @@ static HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, 
             params->direction.x, params->direction.y, params->direction.z,
             params->range, params->falloff, params->theta, params->phi);
 
+    constants->diffuse = params->diffuse;
+    constants->specular = params->specular;
+    constants->ambient = params->ambient;
+
+    constants->range = params->range;
+    constants->falloff = params->falloff;
+    constants->const_att = params->attenuation0;
+    constants->linear_att = params->attenuation1;
+    constants->quad_att = params->attenuation2;
+    constants->theta = params->theta;
+    constants->phi = params->phi;
+
     switch (params->type)
     {
         case WINED3D_LIGHT_POINT:
             /* Position */
-            object->position.x = params->position.x;
-            object->position.y = params->position.y;
-            object->position.z = params->position.z;
-            object->position.w = 1.0f;
+            constants->position.x = params->position.x;
+            constants->position.y = params->position.y;
+            constants->position.z = params->position.z;
+            constants->position.w = 1.0f;
             /* FIXME: Range */
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:
             /* Direction */
-            object->direction.x = -params->direction.x;
-            object->direction.y = -params->direction.y;
-            object->direction.z = -params->direction.z;
-            object->direction.w = 0.0f;
+            constants->direction.x = -params->direction.x;
+            constants->direction.y = -params->direction.y;
+            constants->direction.z = -params->direction.z;
+            constants->direction.w = 0.0f;
             break;
 
         case WINED3D_LIGHT_SPOT:
             /* Position */
-            object->position.x = params->position.x;
-            object->position.y = params->position.y;
-            object->position.z = params->position.z;
-            object->position.w = 1.0f;
+            constants->position.x = params->position.x;
+            constants->position.y = params->position.y;
+            constants->position.z = params->position.z;
+            constants->position.w = 1.0f;
 
             /* Direction */
-            object->direction.x = params->direction.x;
-            object->direction.y = params->direction.y;
-            object->direction.z = params->direction.z;
-            object->direction.w = 0.0f;
+            constants->direction.x = params->direction.x;
+            constants->direction.y = params->direction.y;
+            constants->direction.z = params->direction.z;
+            constants->direction.w = 0.0f;
 
             /* FIXME: Range */
             break;
 
         case WINED3D_LIGHT_PARALLELPOINT:
-            object->position.x = params->position.x;
-            object->position.y = params->position.y;
-            object->position.z = params->position.z;
-            object->position.w = 1.0f;
+            constants->position.x = params->position.x;
+            constants->position.y = params->position.y;
+            constants->position.z = params->position.z;
+            constants->position.w = 1.0f;
             break;
 
         default:
