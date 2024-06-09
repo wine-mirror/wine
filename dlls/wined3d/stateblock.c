@@ -1623,9 +1623,13 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_COLORVERTEX:
         case WINED3D_RS_DIFFUSEMATERIALSOURCE:
         case WINED3D_RS_EMISSIVEMATERIALSOURCE:
+        case WINED3D_RS_FOGENABLE:
+        case WINED3D_RS_FOGTABLEMODE:
+        case WINED3D_RS_FOGVERTEXMODE:
         case WINED3D_RS_LIGHTING:
         case WINED3D_RS_LOCALVIEWER:
         case WINED3D_RS_NORMALIZENORMALS:
+        case WINED3D_RS_RANGEFOGENABLE:
         case WINED3D_RS_SPECULARMATERIALSOURCE:
             stateblock->changed.ffp_vs_settings = 1;
             break;
