@@ -249,6 +249,19 @@ static const DWORD vertex_states_sampler[] =
     WINED3D_SAMP_DMAP_OFFSET,
 };
 
+static void transpose_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m)
+{
+    struct wined3d_matrix temp;
+
+    for (unsigned int i = 0; i < 4; ++i)
+    {
+        for (unsigned int j = 0; j < 4; ++j)
+            (&temp._11)[4 * j + i] = (&m->_11)[4 * i + j];
+    }
+
+    *out = temp;
+}
+
 static inline void stateblock_set_all_bits(uint32_t *map, UINT map_size)
 {
     DWORD mask = (1u << (map_size & 0x1f)) - 1;
@@ -2709,7 +2722,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
     if (changed->vertexShader)
+    {
         wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, state->vs);
+        /* Clip planes are affected by the view matrix, but only if not using
+         * vertex shaders. */
+        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+    }
     if (changed->pixelShader)
         wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, state->ps);
 
@@ -3296,11 +3314,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 idx = i * word_bit_count + j;
 
                 if (idx == WINED3D_TS_VIEW)
+                {
                     changed->lights = 1;
+                    changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+                }
 
                 wined3d_device_set_transform(device, idx, &state->transforms[idx]);
             }
         }
+
+        /* Clip planes are affected by the view matrix. */
+        changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
     }
 
     if (changed->indices)
@@ -3345,7 +3369,38 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     while (map)
     {
         i = wined3d_bit_scan(&map);
-        wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+
+        /* In Direct3D, clipping is done based on the position as transformed
+         * by the world (model) matrix, but not the view matrix.
+         *
+         * GL and Vulkan do not distinguish the world and view, so we pass them
+         * as a single uniform. That means, however, that we need to unapply the
+         * view matrix from the clip planes that we are applying. We do this by
+         * multiplying by the transpose of the inverse of the view matrix.
+         *
+         * This works mathematically (c = clip plane, p = position):
+         *
+         * clip distance = dot((V⁻¹)ᵀc, VMp)
+         *               = ((V⁻¹)ᵀc)ᵀVMp
+         *               = cᵀV⁻¹VMp
+         *               = cᵀMp
+         *               = dot(c, Mp)
+         */
+
+        if (!state->vs)
+        {
+            struct wined3d_matrix matrix;
+            struct wined3d_vec4 plane;
+
+            invert_matrix(&matrix, &state->transforms[WINED3D_TS_VIEW]);
+            transpose_matrix(&matrix, &matrix);
+            wined3d_vec4_transform(&plane, &state->clip_planes[i], &matrix);
+            wined3d_device_set_clip_plane(device, i, &plane);
+        }
+        else
+        {
+            wined3d_device_set_clip_plane(device, i, &state->clip_planes[i]);
+        }
     }
 
     if (changed->lights)

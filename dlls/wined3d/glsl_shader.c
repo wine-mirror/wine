@@ -1477,18 +1477,6 @@ static void reset_program_constant_version(struct wine_rb_entry *entry, void *co
     WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry)->constant_version = 0;
 }
 
-static void transpose_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m)
-{
-    struct wined3d_matrix temp;
-    unsigned int i, j;
-
-    for (i = 0; i < 4; ++i)
-        for (j = 0; j < 4; ++j)
-            (&temp._11)[4 * j + i] = (&m->_11)[4 * i + j];
-
-    *out = temp;
-}
-
 static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
@@ -1636,20 +1624,8 @@ static void shader_glsl_clip_plane_uniform(const struct wined3d_context_gl *cont
         const struct wined3d_state *state, unsigned int index, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_matrix matrix;
-    struct wined3d_vec4 plane;
 
-    plane = state->clip_planes[index];
-
-    /* Clip planes are affected by the view transform in d3d for FFP draws. */
-    if (!use_vs(state))
-    {
-        invert_matrix(&matrix, &state->transforms[WINED3D_TS_VIEW]);
-        transpose_matrix(&matrix, &matrix);
-        wined3d_vec4_transform(&plane, &plane, &matrix);
-    }
-
-    GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &plane.x));
+    GL_EXTCALL(glUniform4fv(prog->vs.clip_planes_location + index, 1, &state->clip_planes[index].x));
 }
 
 static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
@@ -11747,9 +11723,6 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
 
     if (!use_vs(state))
     {
-        if (context->last_was_vshader)
-            context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
-
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 
         /* Because of settings->texcoords, we have to regenerate the vertex
@@ -11768,12 +11741,6 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.major == 1
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.minor <= 3)
             context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
-    }
-    else
-    {
-        /* Vertex shader clipping ignores the view matrix. Update all clip planes. */
-        if (!context->last_was_vshader)
-            context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
     }
 
     context->last_was_vshader = use_vs(state);
@@ -11849,8 +11816,7 @@ static void glsl_vertex_pipe_vertexblend(struct wined3d_context *context,
 static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
-            | WINED3D_SHADER_CONST_FFP_VERTEXBLEND
-            | WINED3D_SHADER_CONST_VS_CLIP_PLANES;
+            | WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
 }
 
 static void glsl_vertex_pipe_projection(struct wined3d_context *context,

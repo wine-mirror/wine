@@ -1046,17 +1046,7 @@ void ffp_vertex_update_clip_plane_constants(const struct wined3d_gl_info *gl_inf
 
         gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
         gl_info->gl_ops.gl.p_glPushMatrix();
-
-        /* Clip plane settings are affected by the model view in OpenGL,
-         * and the view transform in Direct3D.
-         *
-         * With vertex shaders, Direct3D clip planes are not transformed,
-         * whereas in OpenGL they are still transformed by the model view
-         * matrix. */
-        if (!use_vs(state))
-            gl_info->gl_ops.gl.p_glLoadMatrixf(&state->transforms[WINED3D_TS_VIEW]._11);
-        else
-            gl_info->gl_ops.gl.p_glLoadIdentity();
+        gl_info->gl_ops.gl.p_glLoadIdentity();
 
         plane[0] = state->clip_planes[i].x;
         plane[1] = state->clip_planes[i].y;
