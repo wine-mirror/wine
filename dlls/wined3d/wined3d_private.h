@@ -2068,7 +2068,7 @@ struct wined3d_light_constants
 {
     struct wined3d_color diffuse, specular, ambient;
     struct wined3d_vec4 position, direction;
-    float range, falloff, theta, phi;
+    float range, falloff, cos_half_theta, cos_half_phi;
     float const_att, linear_att, quad_att;
 };
 

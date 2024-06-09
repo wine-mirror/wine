@@ -1571,8 +1571,8 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, constants->const_att));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, constants->linear_att));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].q_att, constants->quad_att));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_htheta, cosf(constants->theta / 2.0f)));
-            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_hphi, cosf(constants->phi / 2.0f)));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_htheta, constants->cos_half_theta));
+            GL_EXTCALL(glUniform1f(prog->vs.light_location[light].cos_hphi, constants->cos_half_phi));
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:

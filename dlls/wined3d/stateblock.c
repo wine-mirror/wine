@@ -701,8 +701,8 @@ static HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, 
     constants->const_att = params->attenuation0;
     constants->linear_att = params->attenuation1;
     constants->quad_att = params->attenuation2;
-    constants->theta = params->theta;
-    constants->phi = params->phi;
+    constants->cos_half_theta = cosf(params->theta / 2.0f);
+    constants->cos_half_phi = cosf(params->phi / 2.0f);
 
     switch (params->type)
     {
