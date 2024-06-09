@@ -796,7 +796,37 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
                 && (settings->op[i - 1].cop == WINED3D_TOP_BUMPENVMAP
                 || settings->op[i - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE))
         {
-            FIXME("I could not speak, and my eyes failed.\n");
+            shader_addline(buffer, "ret.xy = mul(transpose((float2x2)c.bumpenv_matrices[%u]), tex%u.xy);\n", i - 1, i - 1);
+
+            /* With projective textures, texbem only divides the static texture
+             * coordinate, not the displacement, so multiply the displacement
+             * with the dividing parameter before sampling. */
+            if (settings->op[i].projected != WINED3D_PROJECTION_NONE)
+            {
+                if (settings->op[i].projected == WINED3D_PROJECTION_COUNT4)
+                {
+                    shader_addline(buffer, "ret.xy = (ret.xy * texcoord[%u].w) + texcoord[%u].xy;\n", i, i);
+                    shader_addline(buffer, "ret.zw = texcoord[%u].ww;\n", i);
+                }
+                else
+                {
+                    shader_addline(buffer, "ret.xy = (ret.xy * texcoord[%u].z) + texcoord[%u].xy;\n", i, i);
+                    shader_addline(buffer, "ret.zw = texcoord[%u].zz;\n", i);
+                }
+            }
+            else
+            {
+                shader_addline(buffer, "ret = texcoord[%u] + ret.xyxy;\n", i);
+            }
+
+            shader_addline(buffer, "tex%u = %s%s(ps_sampler%u, ret.%s);\n",
+                    i, texture_function, proj ? "proj" : "", i, coord_mask);
+
+            if (settings->op[i - 1].cop == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
+            {
+                shader_addline(buffer, "tex%u *= saturate(tex%u.z * c.bumpenv_lscale[%u][%u] + c.bumpenv_loffset[%u][%u]);\n",
+                        i, i - 1, (i - 1) / 4, (i - 1) % 4, (i - 1) / 4, (i - 1) % 4);
+            }
         }
         else if (settings->op[i].projected == WINED3D_PROJECTION_COUNT3)
         {
