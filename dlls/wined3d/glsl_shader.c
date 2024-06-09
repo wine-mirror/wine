@@ -11815,15 +11815,8 @@ static void glsl_vertex_pipe_shader(struct wined3d_context *context,
 static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_vertex_declaration *vdecl = state->vertex_declaration;
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
-    bool point_size = vdecl && vdecl->point_size;
-    bool specular = vdecl && vdecl->specular;
-    bool diffuse = vdecl && vdecl->diffuse;
-    bool normal = vdecl && vdecl->normal;
 
     context->last_was_rhw = transformed;
 
@@ -11838,29 +11831,12 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
 
     if (!use_vs(state))
     {
-        /* Because of settings->texcoords, we have to regenerate the vertex
-         * shader on a vdecl change if there aren't enough varyings to just
-         * always output all the texture coordinates.
-         *
-         * Likewise, we have to invalidate the shader when using per-vertex
-         * colours and specular attribute presence changes, or when
-         * normal, diffuse, or point size presence changes. */
-        if (!shader_glsl_full_ffp_varyings(gl_info) || diffuse != context->last_was_diffuse
-                || (state->render_states[WINED3D_RS_COLORVERTEX] && specular != context->last_was_specular)
-                || normal != context->last_was_normal || point_size != context->last_was_point_size)
-            context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
-
+        /* Because of args->tex_transform. */
         if (use_ps(state)
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.major == 1
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.minor <= 3)
             context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
     }
-
-    context->last_was_vshader = use_vs(state);
-    context->last_was_diffuse = diffuse;
-    context->last_was_specular = specular;
-    context->last_was_normal = normal;
-    context->last_was_point_size = point_size;
 }
 
 static void glsl_vertex_pipe_vs(struct wined3d_context *context,

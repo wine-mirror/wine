@@ -1541,18 +1541,43 @@ HRESULT CDECL wined3d_stateblock_get_ps_consts_b(struct wined3d_stateblock *stat
 void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *stateblock,
         struct wined3d_vertex_declaration *declaration)
 {
+    struct wined3d_vertex_declaration *prev = stateblock->stateblock_state.vertex_declaration;
+
     TRACE("stateblock %p, declaration %p.\n", stateblock, declaration);
 
     if (declaration)
         wined3d_vertex_declaration_incref(declaration);
-    if (stateblock->stateblock_state.vertex_declaration)
-        wined3d_vertex_declaration_decref(stateblock->stateblock_state.vertex_declaration);
+    if (prev)
+        wined3d_vertex_declaration_decref(prev);
     stateblock->stateblock_state.vertex_declaration = declaration;
     stateblock->changed.vertexDecl = TRUE;
     /* Texture matrices depend on the format of the TEXCOORD attributes. */
     /* FIXME: They also depend on whether the draw is pretransformed,
      * but that should go away. */
     stateblock->changed.texture_matrices = TRUE;
+
+    if (declaration && prev)
+    {
+        if (!stateblock->stateblock_state.vs)
+        {
+            /* Because of settings->texcoords, we have to regenerate the vertex
+             * shader on a vdecl change if there aren't enough varyings to just
+             * always output all the texture coordinates.
+             *
+             * Likewise, we have to invalidate the shader when using per-vertex
+             * colours and diffuse/specular attribute presence changes, or when
+             * normal presence changes. */
+            if (!stateblock->device->adapter->d3d_info.full_ffp_varyings
+                    || (stateblock->stateblock_state.rs[WINED3D_RS_COLORVERTEX]
+                            && (declaration->diffuse != prev->diffuse || declaration->specular != prev->specular))
+                    || declaration->normal != prev->normal || declaration->point_size != prev->point_size)
+                stateblock->changed.ffp_vs_settings = 1;
+        }
+    }
+    else
+    {
+        stateblock->changed.ffp_vs_settings = 1;
+    }
 }
 
 void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateblock,
