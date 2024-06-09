@@ -201,9 +201,6 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
 {
     struct wined3d_string_buffer texcoord;
 
-    if (settings->point_size)
-        FIXME("Ignoring point size.\n");
-
     if (settings->vertexblends)
         FIXME("Ignoring vertex blend.\n");
 
@@ -256,6 +253,7 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     }
     if (settings->fog_mode == WINED3D_FFP_VS_FOG_DEPTH || settings->fog_mode == WINED3D_FFP_VS_FOG_RANGE)
         shader_addline(buffer, "    float fogcoord : FOG;\n");
+    shader_addline(buffer, "    float point_size : PSIZE;\n");
     shader_addline(buffer, "};\n\n");
 
     shader_addline(buffer, "float3 ffp_normalize(float3 n)\n{\n");
@@ -349,6 +347,11 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
                 shader_addline(buffer, "    o.fogcoord = abs(o.pos.z);\n");
             break;
     }
+
+    shader_addline(buffer, "    o.point_size = %s / sqrt(c.point_params.x"
+            " + c.point_params.y * length(ec_pos.xyz)"
+            " + c.point_params.z * dot(ec_pos.xyz, ec_pos.xyz));\n",
+            settings->per_vertex_point_size ? "i.point_size" : "c.point_params.w");
 
     shader_addline(buffer, "}\n");
 
