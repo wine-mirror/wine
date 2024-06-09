@@ -1688,8 +1688,15 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
 
     if (update_mask & WINED3D_SHADER_CONST_VS_CLIP_PLANES)
     {
-        for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
-            shader_glsl_clip_plane_uniform(context_gl, state, i, prog);
+        if (gl_info->supported[WINED3D_GLSL_130])
+        {
+            for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
+                shader_glsl_clip_plane_uniform(context_gl, state, i, prog);
+        }
+        else
+        {
+            ffp_vertex_update_clip_plane_constants(gl_info, state);
+        }
     }
 
     if (update_mask & WINED3D_SHADER_CONST_VS_POINTSIZE)
@@ -11720,14 +11727,12 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     const struct wined3d_vertex_declaration *vdecl = state->vertex_declaration;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const BOOL legacy_clip_planes = needs_legacy_glsl_syntax(gl_info);
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
     bool point_size = vdecl && vdecl->point_size;
     bool specular = vdecl && vdecl->specular;
     bool diffuse = vdecl && vdecl->diffuse;
     bool normal = vdecl && vdecl->normal;
-    unsigned int i;
 
     context->last_was_rhw = transformed;
 
@@ -11743,13 +11748,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     if (!use_vs(state))
     {
         if (context->last_was_vshader)
-        {
-            if (legacy_clip_planes)
-                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
-                    clipplane(context, state, STATE_CLIPPLANE(i));
-            else
-                context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
-        }
+            context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
 
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 
@@ -11772,15 +11771,9 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     }
     else
     {
+        /* Vertex shader clipping ignores the view matrix. Update all clip planes. */
         if (!context->last_was_vshader)
-        {
-            /* Vertex shader clipping ignores the view matrix. Update all clip planes. */
-            if (legacy_clip_planes)
-                for (i = 0; i < gl_info->limits.user_clip_distances; ++i)
-                    clipplane(context, state, STATE_CLIPPLANE(i));
-            else
-                context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
-        }
+            context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
     }
 
     context->last_was_vshader = use_vs(state);
@@ -11855,25 +11848,9 @@ static void glsl_vertex_pipe_vertexblend(struct wined3d_context *context,
 
 static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    unsigned int k;
-
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
-            | WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
-
-    if (needs_legacy_glsl_syntax(gl_info))
-    {
-        for (k = 0; k < gl_info->limits.user_clip_distances; ++k)
-        {
-            if (!isStateDirty(context, STATE_CLIPPLANE(k)))
-                clipplane(context, state, STATE_CLIPPLANE(k));
-        }
-    }
-    else
-    {
-        context->constant_update_mask |= WINED3D_SHADER_CONST_VS_CLIP_PLANES;
-    }
+            | WINED3D_SHADER_CONST_FFP_VERTEXBLEND
+            | WINED3D_SHADER_CONST_VS_CLIP_PLANES;
 }
 
 static void glsl_vertex_pipe_projection(struct wined3d_context *context,
