@@ -1505,7 +1505,7 @@ static void shader_glsl_ffp_vertex_texmatrix_uniform(const struct wined3d_contex
     if (prog->vs.texture_matrix_location[tex] == -1)
         return;
 
-    get_texture_matrix(&context_gl->c, state, tex, &mat);
+    get_texture_matrix(&context_gl->c.stream_info, state, tex, &mat);
     GL_EXTCALL(glUniformMatrix4fv(prog->vs.texture_matrix_location[tex], 1, FALSE, &mat._11));
     checkGLcall("glUniformMatrix4fv");
 }

@@ -4382,8 +4382,8 @@ void get_modelview_matrix(const struct wined3d_context *context, const struct wi
         unsigned int index, struct wined3d_matrix *mat);
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
         struct wined3d_matrix *mat);
-void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
-        unsigned int tex, struct wined3d_matrix *mat);
+void get_texture_matrix(const struct wined3d_stream_info *si,
+        const struct wined3d_state *state, const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max);
 void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,

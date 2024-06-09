@@ -5746,20 +5746,23 @@ static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t
     *out_matrix = mat;
 }
 
-void get_texture_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
-        const unsigned int tex, struct wined3d_matrix *mat)
+void get_texture_matrix(const struct wined3d_stream_info *si,
+        const struct wined3d_state *state, const unsigned int tex, struct wined3d_matrix *mat)
 {
     BOOL generated = (state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0xffff0000)
             != WINED3DTSS_TCI_PASSTHRU;
     unsigned int coord_idx = min(state->texture_states[tex][WINED3D_TSS_TEXCOORD_INDEX] & 0x0000ffff,
             WINED3D_MAX_FFP_TEXTURES - 1);
+    enum wined3d_format_id attribute_format;
+
+    if (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx)))
+        attribute_format = si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->id;
+    else
+        attribute_format = WINED3DFMT_UNKNOWN;
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, context->stream_info.position_transformed,
-            context->stream_info.use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coord_idx))
-            ? context->stream_info.elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format->id
-            : WINED3DFMT_UNKNOWN, mat);
+            generated, si->position_transformed, attribute_format, mat);
 }
 
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
