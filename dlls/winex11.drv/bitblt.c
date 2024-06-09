@@ -1861,7 +1861,7 @@ static XImage *create_shm_image( const XVisualInfo *vis, int width, int height, 
     return NULL;
 }
 
-static BOOL destroy_shm_image( XImage *image )
+static BOOL destroy_shm_image( XImage *image, x11drv_xshm_info_t *shminfo )
 {
     return FALSE;
 }
