@@ -30,14 +30,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings *settings,
         struct wined3d_string_buffer *buffer)
 {
+    struct wined3d_string_buffer texcoord;
+
     if (settings->lighting)
         FIXME("Ignoring lighting.\n");
 
     if (settings->point_size)
         FIXME("Ignoring point size.\n");
-
-    if (settings->transformed)
-        FIXME("Ignoring pretransformed vertices.\n");
 
     if (settings->vertexblends)
         FIXME("Ignoring vertex blend.\n");
@@ -99,12 +98,27 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
 
     shader_addline(buffer, "void main(in struct input i, out struct output o)\n");
     shader_addline(buffer, "{\n");
-    shader_addline(buffer, "    float4 ec_pos = 0.0;\n\n");
 
-    shader_addline(buffer, "    ec_pos += mul(c.modelview_matrices[0], float4(i.pos.xyz, 1.0));\n\n");
+    if (settings->transformed)
+    {
+        shader_addline(buffer, "    float4 ec_pos = float4(i.pos.xyz, 1.0);\n");
+        /* We reuse the projection matrix to undo the transformation from clip
+         * coordinates to pixel coordinates. */
+        shader_addline(buffer, "    float4 out_pos = mul(c.projection_matrix, ec_pos);\n\n");
 
-    shader_addline(buffer, "    o.pos = mul(c.projection_matrix, ec_pos);\n");
-    shader_addline(buffer, "    ec_pos /= ec_pos.w;\n\n");
+        /* Use a ternary; this is not the most natural way to write it but is
+         * nicer to the compiler. */
+        shader_addline(buffer, "    o.pos = (i.pos.w == 0.0 ? out_pos : out_pos / i.pos.w);\n");
+    }
+    else
+    {
+        shader_addline(buffer, "    float4 ec_pos = 0.0;\n\n");
+
+        shader_addline(buffer, "    ec_pos += mul(c.modelview_matrices[0], float4(i.pos.xyz, 1.0));\n\n");
+
+        shader_addline(buffer, "    o.pos = mul(c.projection_matrix, ec_pos);\n");
+        shader_addline(buffer, "    ec_pos /= ec_pos.w;\n\n");
+    }
 
     /* No lighting. */
     if (settings->diffuse)
@@ -113,14 +127,16 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
         shader_addline(buffer, "    o.diffuse = 1.0;\n");
     shader_addline(buffer, "    o.specular = i.specular;\n\n");
 
+    string_buffer_init(&texcoord);
     for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
+        string_buffer_clear(&texcoord);
+
         switch (settings->texgen[i] & 0xffff0000)
         {
             case WINED3DTSS_TCI_PASSTHRU:
                 if (settings->texcoords & (1u << i))
-                    shader_addline(buffer, "    o.texcoord%u = mul(c.texture_matrices[%u], i.texcoord[%u]);\n",
-                            i, i, settings->texgen[i] & 0x0000ffff);
+                    shader_addline(&texcoord, "i.texcoord[%u]", settings->texgen[i] & 0x0000ffff);
                 else
                     continue;
                 break;
@@ -129,7 +145,13 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
                 FIXME("Unhandled texgen %#x.\n", settings->texgen[i]);
                 break;
         }
+
+        if (settings->transformed)
+            shader_addline(buffer, "    o.texcoord%u = %s;\n", i, texcoord.buffer);
+        else
+            shader_addline(buffer, "    o.texcoord%u = mul(c.texture_matrices[%u], %s);\n", i, i, texcoord.buffer);
     }
+    string_buffer_free(&texcoord);
 
     switch (settings->fog_mode)
     {

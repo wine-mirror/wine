@@ -67,6 +67,7 @@ struct wined3d_saved_states
     uint32_t ffp_vs_settings : 1;
     uint32_t ffp_ps_settings : 1;
     uint32_t rasterizer_state : 1;
+    uint32_t position_transformed : 1;
 };
 
 struct stage_state
@@ -1577,10 +1578,18 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
         }
 
         if (declaration->position_transformed != prev->position_transformed)
+        {
+            /* We reuse the projection matrix to undo the translation between
+             * clip coordinates and pixel coordinates, so we need to invalidate
+             * it here. */
             stateblock->changed.ffp_vs_settings = 1;
+            stateblock->changed.position_transformed = 1;
+            stateblock->changed.transforms = 1;
+        }
     }
     else
     {
+        stateblock->changed.position_transformed = 1;
         stateblock->changed.ffp_vs_settings = 1;
     }
 }
@@ -3537,33 +3546,57 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
     }
 
-    if (changed->transforms)
+    if (state->vertex_declaration && state->vertex_declaration->position_transformed)
     {
-        for (i = 0; i < ARRAY_SIZE(changed->transform); ++i)
+        /* We reuse the projection matrix to undo the translation between
+         * clip coordinates and pixel coordinates. */
+        if (changed->position_transformed || changed->viewport)
         {
-            map = changed->transform[i];
-            while (map)
+            float x = state->viewport.x;
+            float y = state->viewport.y;
+            float w = state->viewport.width;
+            float h = state->viewport.height;
+            float x_scale = 2.0f / w;
+            float x_offset = (-(2.0f * x) - w) / w;
+            float y_scale = 2.0f / -h;
+            float y_offset = (-(2.0f * y) - h) / -h;
+            float z_scale = state->rs[WINED3D_RS_ZENABLE] ? 1.0f : 0.0f;
+            const struct wined3d_matrix matrix =
             {
-                j = wined3d_bit_scan(&map);
-                idx = i * word_bit_count + j;
+                 x_scale,     0.0f,    0.0f, 0.0f,
+                    0.0f,  y_scale,    0.0f, 0.0f,
+                    0.0f,     0.0f, z_scale, 0.0f,
+                x_offset, y_offset,    0.0f, 1.0f,
+            };
 
-                if (idx == WINED3D_TS_VIEW)
-                {
-                    changed->lights = 1;
-                    changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
-                }
+            wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
+                    offsetof(struct wined3d_ffp_vs_constants, projection_matrix), sizeof(matrix), &matrix);
+        }
 
-                if (idx == WINED3D_TS_PROJECTION)
-                {
-                    wined3d_device_context_push_constants(context,
-                            WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
-                            offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
-                            sizeof(state->transforms[idx]), &state->transforms[idx]);
-                    /* wined3d_ffp_vs_settings.ortho_fog and vs_compile_args.ortho_fog
-                     * still need the device state to be set. */
-                    wined3d_device_set_transform(device, idx, &state->transforms[idx]);
-                }
-            }
+        if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION))
+        {
+            /* wined3d_ffp_vs_settings.ortho_fog still needs the
+             * device state to be set. */
+            wined3d_device_set_transform(device, WINED3D_TS_PROJECTION, &state->transforms[WINED3D_TS_PROJECTION]);
+        }
+    }
+    else if (changed->transforms)
+    {
+        if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_VIEW))
+        {
+            changed->lights = 1;
+            changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);
+        }
+
+        if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION) || changed->position_transformed)
+        {
+            wined3d_device_context_push_constants(context,
+                    WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
+                    offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
+                    sizeof(state->transforms[WINED3D_TS_PROJECTION]), &state->transforms[WINED3D_TS_PROJECTION]);
+            /* wined3d_ffp_vs_settings.ortho_fog and vs_compile_args.ortho_fog
+             * still need the device state to be set. */
+            wined3d_device_set_transform(device, WINED3D_TS_PROJECTION, &state->transforms[WINED3D_TS_PROJECTION]);
         }
 
         /* Clip planes are affected by the view matrix. */
