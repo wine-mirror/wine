@@ -5353,8 +5353,6 @@ const char *debug_d3dstate(uint32_t state)
         return "STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING";
     if (STATE_IS_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING(state))
         return "STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING";
-    if (STATE_IS_TRANSFORM(state))
-        return wine_dbg_sprintf("STATE_TRANSFORM(%s)", debug_d3dtstype(state - STATE_TRANSFORM(0)));
     if (STATE_IS_STREAMSRC(state))
         return "STATE_STREAMSRC";
     if (STATE_IS_INDEXBUFFER(state))

@@ -11899,15 +11899,6 @@ static void glsl_vertex_pipe_pixel_shader(struct wined3d_context *context,
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 }
 
-static void glsl_vertex_pipe_projection(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    /* Table fog behavior depends on the projection matrix. */
-    if (state->render_states[WINED3D_RS_FOGENABLE]
-            && state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
-        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
-}
-
 static void glsl_vertex_pipe_viewport(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -11975,8 +11966,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_CLIPPLANE(7),                                         {STATE_CLIPPLANE(7),                                         clipplane              }, WINED3D_GL_EXT_NONE          },
     /* Viewport */
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             glsl_vertex_pipe_viewport}, WINED3D_GL_EXT_NONE        },
-    /* Transform states */
-    {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     glsl_vertex_pipe_projection}, WINED3D_GL_EXT_NONE      },
     /* Fog */
     {STATE_RENDER(WINED3D_RS_FOGENABLE),                         {STATE_RENDER(WINED3D_RS_FOGENABLE),                         glsl_vertex_pipe_shader}, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),                      {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },

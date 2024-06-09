@@ -1638,22 +1638,6 @@ static void prune_invalid_states(struct wined3d_state_entry *state_table, const 
         state_table[i].representative = 0;
         state_table[i].apply = state_undefined;
     }
-
-    start = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + d3d_info->ffp_fragment_caps.max_blend_stages);
-    last = STATE_TRANSFORM(WINED3D_TS_TEXTURE0 + WINED3D_MAX_FFP_TEXTURES - 1);
-    for (i = start; i <= last; ++i)
-    {
-        state_table[i].representative = 0;
-        state_table[i].apply = state_undefined;
-    }
-
-    start = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(d3d_info->limits.ffp_vertex_blend_matrices));
-    last = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255));
-    for (i = start; i <= last; ++i)
-    {
-        state_table[i].representative = 0;
-        state_table[i].apply = state_undefined;
-    }
 }
 
 static void validate_state_table(struct wined3d_state_entry *state_table)
