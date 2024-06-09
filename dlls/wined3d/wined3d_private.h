@@ -2779,6 +2779,10 @@ struct wined3d_ffp_vs_constants
     } modelview;
     struct wined3d_matrix projection_matrix;
     struct wined3d_matrix texture_matrices[WINED3D_MAX_FFP_TEXTURES];
+    struct wined3d_ffp_point_constants
+    {
+        float scale_const, scale_linear, scale_quad;
+    } point;
     struct wined3d_material material;
     struct wined3d_ffp_light_constants
     {
@@ -4389,8 +4393,6 @@ void get_texture_matrix(const struct wined3d_stream_info *si,
         const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max);
-void get_pointsize(const struct wined3d_context *context, const struct wined3d_state *state,
-        float *out_pointsize, float *out_att);
 void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,
         float *start, float *end);
 
