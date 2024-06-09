@@ -68,6 +68,7 @@ struct wined3d_saved_states
     uint32_t ffp_ps_settings : 1;
     uint32_t rasterizer_state : 1;
     uint32_t position_transformed : 1;
+    uint32_t bumpenv_constants : 1;
 };
 
 struct stage_state
@@ -1762,6 +1763,15 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
             stateblock->changed.ffp_ps_settings = 1;
             break;
 
+        case WINED3D_TSS_BUMPENV_LOFFSET:
+        case WINED3D_TSS_BUMPENV_LSCALE:
+        case WINED3D_TSS_BUMPENV_MAT00:
+        case WINED3D_TSS_BUMPENV_MAT01:
+        case WINED3D_TSS_BUMPENV_MAT10:
+        case WINED3D_TSS_BUMPENV_MAT11:
+            stateblock->changed.bumpenv_constants = 1;
+            break;
+
         default:
             break;
     }
@@ -2434,6 +2444,7 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     stateblock->changed.point_scale = 1;
     stateblock->changed.ffp_vs_settings = 1;
     stateblock->changed.ffp_ps_settings = 1;
+    stateblock->changed.bumpenv_constants = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3521,6 +3532,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
             switch (j)
             {
+                case WINED3D_TSS_BUMPENV_LOFFSET:
+                case WINED3D_TSS_BUMPENV_LSCALE:
+                case WINED3D_TSS_BUMPENV_MAT00:
+                case WINED3D_TSS_BUMPENV_MAT01:
+                case WINED3D_TSS_BUMPENV_MAT10:
+                case WINED3D_TSS_BUMPENV_MAT11:
                 case WINED3D_TSS_CONSTANT:
                     break;
 
@@ -3855,6 +3872,24 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_VS_POINTSIZE,
                 offsetof(struct wined3d_ffp_vs_constants, point), sizeof(constants), &constants);
+    }
+
+    if (changed->bumpenv_constants)
+    {
+        struct wined3d_ffp_bumpenv_constants constants;
+
+        for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
+        {
+            constants.matrices[i]._00 = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]);
+            constants.matrices[i]._01 = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT01]);
+            constants.matrices[i]._10 = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT10]);
+            constants.matrices[i]._11 = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_MAT11]);
+            constants.loffset[i] = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET]);
+            constants.lscale[i] = int_to_float(state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE]);
+        }
+
+        wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP, WINED3D_SHADER_CONST_PS_BUMP_ENV,
+                offsetof(struct wined3d_ffp_ps_constants, bumpenv), sizeof(constants), &constants);
     }
 
     if (changed->ffp_ps_constants)

@@ -2806,6 +2806,15 @@ struct wined3d_ffp_ps_constants
      * specular color. */
     struct wined3d_color specular_enable;
     struct wined3d_color color_key[2];
+    struct wined3d_ffp_bumpenv_constants
+    {
+        struct
+        {
+            float _00, _01, _10, _11;
+        } matrices[WINED3D_MAX_FFP_TEXTURES];
+        float lscale[WINED3D_MAX_FFP_TEXTURES];
+        float loffset[WINED3D_MAX_FFP_TEXTURES];
+    } bumpenv;
 };
 
 enum wined3d_push_constants

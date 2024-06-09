@@ -701,6 +701,10 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
     shader_addline(buffer, "    float4 texture_factor;\n");
     shader_addline(buffer, "    float4 specular_enable;\n");
     shader_addline(buffer, "    float4 color_key[2];\n");
+    /* Bumpenv constants are manually packed. */
+    shader_addline(buffer, "    float4 bumpenv_matrices[%u];\n", WINED3D_MAX_FFP_TEXTURES);
+    shader_addline(buffer, "    float4 bumpenv_lscale[2];\n");
+    shader_addline(buffer, "    float4 bumpenv_loffset[2];\n");
     shader_addline(buffer, "} c;\n");
 
     shader_addline(buffer, "struct input\n");

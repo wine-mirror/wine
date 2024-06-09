@@ -1915,7 +1915,8 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
     {
         static const uint32_t ps_update_mask = WINED3D_SHADER_CONST_PS_F
                 | WINED3D_SHADER_CONST_FFP_COLOR_KEY
-                | WINED3D_SHADER_CONST_FFP_PS;
+                | WINED3D_SHADER_CONST_FFP_PS
+                | WINED3D_SHADER_CONST_PS_BUMP_ENV;
 
         if (context->constant_update_mask & ps_update_mask)
             shader_glsl_load_constants_f(pshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP],
@@ -1938,20 +1939,23 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
 
     if (update_mask & WINED3D_SHADER_CONST_PS_BUMP_ENV)
     {
+        const struct wined3d_ffp_ps_constants *constants = wined3d_buffer_load_sysmem(
+                context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP], &context_gl->c);
+
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
         {
             if (prog->ps.bumpenv_mat_location[i] == -1)
                 continue;
 
             GL_EXTCALL(glUniformMatrix2fv(prog->ps.bumpenv_mat_location[i], 1, 0,
-                    (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00]));
+                    &constants->bumpenv.matrices[i]._00));
 
             if (prog->ps.bumpenv_lum_scale_location[i] != -1)
             {
                 GL_EXTCALL(glUniform1fv(prog->ps.bumpenv_lum_scale_location[i], 1,
-                        (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE]));
+                        &constants->bumpenv.lscale[i]));
                 GL_EXTCALL(glUniform1fv(prog->ps.bumpenv_lum_offset_location[i], 1,
-                        (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET]));
+                        &constants->bumpenv.loffset[i]));
             }
         }
 
