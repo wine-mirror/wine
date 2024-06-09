@@ -27,22 +27,185 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+static const char *get_material_colour_source(enum wined3d_material_color_source mcs, const char *material)
+{
+    switch (mcs)
+    {
+        case WINED3D_MCS_MATERIAL:
+            return material;
+        case WINED3D_MCS_COLOR1:
+            return "i.diffuse";
+        case WINED3D_MCS_COLOR2:
+            return "i.specular";
+        default:
+            ERR("Invalid material color source %#x.\n", mcs);
+            return "<invalid>";
+    }
+}
+
+static void generate_lighting_footer(struct wined3d_string_buffer *buffer,
+        const struct wined3d_ffp_vs_settings *settings, unsigned int idx, bool legacy_lighting)
+{
+    shader_addline(buffer, "        diffuse += saturate(dot(dir, normal)) * c.lights[%u].diffuse.xyz * att;\n", idx);
+    if (settings->localviewer)
+        shader_addline(buffer, "        t = dot(normal, ffp_normalize(dir - ffp_normalize(ec_pos.xyz)));\n");
+    else
+        shader_addline(buffer, "        t = dot(normal, ffp_normalize(dir + float3(0.0, 0.0, -1.0)));\n");
+    if (settings->specular_enable)
+    {
+        shader_addline(buffer, "        if (dot(dir, normal) > 0.0 && t > 0.0");
+        if (legacy_lighting)
+            shader_addline(buffer, " && c.material.power > 0.0");
+        shader_addline(buffer, ")\n");
+        shader_addline(buffer, "            specular += pow(t, c.material.power) * c.lights[%u].specular * att;\n", idx);
+    }
+}
+
+static void generate_lighting(struct wined3d_string_buffer *buffer,
+        const struct wined3d_ffp_vs_settings *settings, bool legacy_lighting)
+{
+    const char *ambient, *diffuse, *specular, *emissive;
+    unsigned int idx = 0;
+
+    if (!settings->lighting)
+    {
+        if (settings->diffuse)
+            shader_addline(buffer, "    o.diffuse = i.diffuse;\n");
+        else
+            shader_addline(buffer, "    o.diffuse = 1.0;\n");
+        shader_addline(buffer, "    o.specular = i.specular;\n");
+        return;
+    }
+
+    shader_addline(buffer, "    float3 ambient = c.ambient_colour.xyz;\n");
+    shader_addline(buffer, "    float3 diffuse = 0.0;\n");
+    shader_addline(buffer, "    float3 dir, dst;\n");
+    shader_addline(buffer, "    float att, t, range, falloff, cos_htheta, cos_hphi;\n");
+
+    if (settings->specular_enable)
+        shader_addline(buffer, "    float4 specular = 0.0;\n");
+
+    ambient = get_material_colour_source(settings->ambient_source, "c.material.ambient");
+    diffuse = get_material_colour_source(settings->diffuse_source, "c.material.diffuse");
+    specular = get_material_colour_source(settings->specular_source, "c.material.specular");
+    emissive = get_material_colour_source(settings->emissive_source, "c.material.emissive");
+
+    for (unsigned int i = 0; i < settings->point_light_count; ++i)
+    {
+        shader_addline(buffer, "    dir = c.lights[%u].position.xyz - ec_pos.xyz;\n", idx);
+        shader_addline(buffer, "    dst.z = dot(dir, dir);\n");
+        shader_addline(buffer, "    dst.y = sqrt(dst.z);\n");
+        shader_addline(buffer, "    dst.x = 1.0;\n");
+
+        shader_addline(buffer, "    range = c.lights[%u].packed_params.x;\n", idx);
+
+        if (legacy_lighting)
+        {
+            shader_addline(buffer, "    dst.y = (range - dst.y) / range;\n");
+            shader_addline(buffer, "    dst.z = dst.y * dst.y;\n");
+            shader_addline(buffer, "    if (dst.y > 0.0)\n{\n");
+            shader_addline(buffer, "        att = dot(dst.xyz, c.lights[%u].attenuation.xyz);\n", idx);
+        }
+        else
+        {
+            shader_addline(buffer, "    if (dst.y <= range)\n{\n");
+            shader_addline(buffer, "        att = 1.0 / dot(dst.xyz, c.lights[%u].attenuation.xyz);\n", idx);
+        }
+        shader_addline(buffer, "        ambient += c.lights[%u].ambient.xyz * att;\n", idx);
+        if (settings->normal)
+        {
+            shader_addline(buffer, "        dir = ffp_normalize(dir);\n");
+            generate_lighting_footer(buffer, settings, idx, legacy_lighting);
+        }
+        shader_addline(buffer, "    }\n");
+
+        ++idx;
+    }
+
+    for (unsigned int i = 0; i < settings->spot_light_count; ++i)
+    {
+        shader_addline(buffer, "    dir = c.lights[%u].position.xyz - ec_pos.xyz;\n", idx);
+        shader_addline(buffer, "    dst.z = dot(dir, dir);\n");
+        shader_addline(buffer, "    dst.y = sqrt(dst.z);\n");
+        shader_addline(buffer, "    dst.x = 1.0;\n");
+
+        shader_addline(buffer, "    range = c.lights[%u].packed_params.x;\n", idx);
+        shader_addline(buffer, "    falloff = c.lights[%u].packed_params.y;\n", idx);
+        shader_addline(buffer, "    cos_htheta = c.lights[%u].packed_params.z;\n", idx);
+        shader_addline(buffer, "    cos_hphi = c.lights[%u].packed_params.w;\n", idx);
+
+        if (legacy_lighting)
+        {
+            shader_addline(buffer, "    dst.y = (range - dst.y) / range;\n");
+            shader_addline(buffer, "    dst.z = dst.y * dst.y;\n");
+            shader_addline(buffer, "    if (dst.y > 0.0)\n{\n");
+        }
+        else
+        {
+            shader_addline(buffer, "    if (dst.y <= range)\n{\n");
+        }
+        shader_addline(buffer, "        dir = ffp_normalize(dir);\n");
+        shader_addline(buffer, "        t = dot(-dir, ffp_normalize(c.lights[%u].direction.xyz));\n", idx);
+        shader_addline(buffer, "        if (t > cos_htheta) att = 1.0;\n");
+        shader_addline(buffer, "        else if (t <= cos_hphi) att = 0.0;\n");
+        shader_addline(buffer, "        else att = pow((t - cos_hphi) / (cos_htheta - cos_hphi), falloff);\n");
+        if (legacy_lighting)
+            shader_addline(buffer, "        att *= dot(dst.xyz, c.lights[%u].attenuation.xyz);\n", idx);
+        else
+            shader_addline(buffer, "        att /= dot(dst.xyz, c.lights[%u].attenuation.xyz);\n", idx);
+        shader_addline(buffer, "        ambient += c.lights[%u].ambient.xyz * att;\n", idx);
+        if (settings->normal)
+            generate_lighting_footer(buffer, settings, idx, legacy_lighting);
+        shader_addline(buffer, "    }\n");
+
+        ++idx;
+    }
+
+    for (unsigned int i = 0; i < settings->directional_light_count; ++i)
+    {
+        shader_addline(buffer, "    ambient += c.lights[%u].ambient.xyz;\n", idx);
+        if (settings->normal)
+        {
+            shader_addline(buffer, "    att = 1.0;\n");
+            shader_addline(buffer, "    dir = ffp_normalize(c.lights[%u].direction.xyz);\n", idx);
+            generate_lighting_footer(buffer, settings, idx, legacy_lighting);
+        }
+
+        ++idx;
+    }
+
+    for (unsigned int i = 0; i < settings->parallel_point_light_count; ++i)
+    {
+        shader_addline(buffer, "    ambient += c.lights[%u].ambient.xyz;\n", idx);
+        if (settings->normal)
+        {
+            shader_addline(buffer, "    att = 1.0;\n");
+            shader_addline(buffer, "    dir = ffp_normalize(c.lights[%u].position.xyz);\n", idx);
+            generate_lighting_footer(buffer, settings, idx, legacy_lighting);
+        }
+
+        ++idx;
+    }
+
+    shader_addline(buffer, "    o.diffuse.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
+            ambient, diffuse, emissive);
+    shader_addline(buffer, "    o.diffuse.w = %s.w;\n", diffuse);
+    if (settings->specular_enable)
+        shader_addline(buffer, "    o.specular = %s * specular;\n", specular);
+    else
+        shader_addline(buffer, "    o.specular = i.specular;\n");
+}
+
 static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings *settings,
-        struct wined3d_string_buffer *buffer)
+        struct wined3d_string_buffer *buffer, bool legacy_lighting)
 {
     struct wined3d_string_buffer texcoord;
-
-    if (settings->lighting)
-        FIXME("Ignoring lighting.\n");
 
     if (settings->point_size)
         FIXME("Ignoring point size.\n");
 
     if (settings->vertexblends)
         FIXME("Ignoring vertex blend.\n");
-
-    if (settings->normal)
-        FIXME("Ignoring normals.\n");
 
     if (settings->fog_mode != WINED3D_FFP_VS_FOG_OFF)
         FIXME("Ignoring fog.\n");
@@ -96,6 +259,11 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     }
     shader_addline(buffer, "};\n\n");
 
+    shader_addline(buffer, "float3 ffp_normalize(float3 n)\n{\n");
+    shader_addline(buffer, "    float lensq = dot(n, n);\n");
+    shader_addline(buffer, "    return lensq == 0.0 ? n : (n * rsqrt(lensq));\n");
+    shader_addline(buffer, "}\n\n");
+
     shader_addline(buffer, "void main(in struct input i, out struct output o)\n");
     shader_addline(buffer, "{\n");
 
@@ -120,12 +288,19 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
         shader_addline(buffer, "    ec_pos /= ec_pos.w;\n\n");
     }
 
-    /* No lighting. */
-    if (settings->diffuse)
-        shader_addline(buffer, "    o.diffuse = i.diffuse;\n");
-    else
-        shader_addline(buffer, "    o.diffuse = 1.0;\n");
-    shader_addline(buffer, "    o.specular = i.specular;\n\n");
+    shader_addline(buffer, "    float3 normal = 0.0;\n");
+    if (settings->normal)
+    {
+        if (settings->transformed)
+            shader_addline(buffer, "    normal = i.normal;\n");
+        else
+            shader_addline(buffer, "    normal = mul((float3x3)c.modelview_matrices[1], i.normal);\n");
+
+        if (settings->normalize)
+            shader_addline(buffer, "    normal = ffp_normalize(normal);\n");
+    }
+
+    generate_lighting(buffer, settings, legacy_lighting);
 
     string_buffer_init(&texcoord);
     for (unsigned int i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
@@ -698,7 +873,8 @@ static bool compile_hlsl_shader(const struct wined3d_string_buffer *hlsl,
     return true;
 }
 
-bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader_desc *shader_desc)
+bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings,
+        struct wined3d_shader_desc *shader_desc, struct wined3d_device *device)
 {
     struct wined3d_string_buffer string;
     struct vkd3d_shader_code sm1;
@@ -706,13 +882,13 @@ bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings, struct 
     if (!string_buffer_init(&string))
         return false;
 
-    if (!ffp_hlsl_generate_vertex_shader(settings, &string))
+    if (!ffp_hlsl_generate_vertex_shader(settings, &string, device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING))
     {
         string_buffer_free(&string);
         return false;
     }
 
-    if (!compile_hlsl_shader(&string, &sm1, "vs_2_0"))
+    if (!compile_hlsl_shader(&string, &sm1, "vs_2_a"))
     {
         string_buffer_free(&string);
         return false;
@@ -738,7 +914,7 @@ bool ffp_hlsl_compile_ps(const struct ffp_frag_settings *settings, struct wined3
         return false;
     }
 
-    if (!compile_hlsl_shader(&string, &sm1, "ps_2_0"))
+    if (!compile_hlsl_shader(&string, &sm1, "ps_2_a"))
     {
         string_buffer_free(&string);
         return false;

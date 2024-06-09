@@ -4298,7 +4298,8 @@ BOOL shader_match_semantic(const char *semantic_name, enum wined3d_decl_usage us
 
 enum vkd3d_shader_visibility vkd3d_shader_visibility_from_wined3d(enum wined3d_shader_type shader_type);
 
-bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings, struct wined3d_shader_desc *shader_desc);
+bool ffp_hlsl_compile_vs(const struct wined3d_ffp_vs_settings *settings,
+        struct wined3d_shader_desc *shader_desc, struct wined3d_device *device);
 bool ffp_hlsl_compile_ps(const struct ffp_frag_settings *settings, struct wined3d_shader_desc *shader_desc);
 
 static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)

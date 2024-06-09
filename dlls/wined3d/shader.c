@@ -2555,7 +2555,7 @@ static void wined3d_shader_init_object(void *object)
         struct wined3d_ffp_vs_settings *settings = shader->byte_code;
         struct wined3d_shader_desc desc;
 
-        if (!ffp_hlsl_compile_vs(settings, &desc))
+        if (!ffp_hlsl_compile_vs(settings, &desc, device))
             return;
         free(settings);
         shader_set_function(shader, &desc, WINED3D_SHADER_TYPE_VERTEX, NULL,
