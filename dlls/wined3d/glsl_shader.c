@@ -1768,11 +1768,11 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_LIGHTS)
     {
-        unsigned int point_idx, spot_idx, directional_idx, parallel_point_idx;
         const struct wined3d_ffp_vs_constants *constants;
         DWORD point_count = 0;
         DWORD spot_count = 0;
         DWORD directional_count = 0;
+        DWORD parallel_point_count = 0;
 
         constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
 
@@ -1793,49 +1793,29 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
                     ++directional_count;
                     break;
                 case WINED3D_LIGHT_PARALLELPOINT:
+                    ++parallel_point_count;
                     break;
                 default:
                     FIXME("Unhandled light type %#x.\n", state->light_state.lights[i]->OriginalParms.type);
                     break;
             }
         }
-        point_idx = 0;
-        spot_idx = point_idx + point_count;
-        directional_idx = spot_idx + spot_count;
-        parallel_point_idx = directional_idx + directional_count;
 
         GL_EXTCALL(glUniform3fv(prog->vs.light_ambient_location, 1, &constants->light.ambient.r));
         checkGLcall("glUniform3fv");
 
-        for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
-        {
-            const struct wined3d_light_info *light_info = state->light_state.lights[i];
-            unsigned int idx;
-
-            if (!light_info)
-                continue;
-
-            switch (light_info->OriginalParms.type)
-            {
-                case WINED3D_LIGHT_POINT:
-                    idx = point_idx++;
-                    break;
-                case WINED3D_LIGHT_SPOT:
-                    idx = spot_idx++;
-                    break;
-                case WINED3D_LIGHT_DIRECTIONAL:
-                    idx = directional_idx++;
-                    break;
-                case WINED3D_LIGHT_PARALLELPOINT:
-                    idx = parallel_point_idx++;
-                    break;
-                default:
-                    FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
-                    continue;
-            }
-            shader_glsl_ffp_vertex_light_uniform(context_gl, state, idx,
-                    light_info->OriginalParms.type, &constants->light.lights[i], prog);
-        }
+        for (i = 0; i < point_count; ++i)
+            shader_glsl_ffp_vertex_light_uniform(context_gl, state, i,
+                    WINED3D_LIGHT_POINT, &constants->light.lights[i], prog);
+        for (; i < point_count + spot_count; ++i)
+            shader_glsl_ffp_vertex_light_uniform(context_gl, state, i,
+                    WINED3D_LIGHT_SPOT, &constants->light.lights[i], prog);
+        for (; i < point_count + spot_count + directional_count; ++i)
+            shader_glsl_ffp_vertex_light_uniform(context_gl, state, i,
+                    WINED3D_LIGHT_DIRECTIONAL, &constants->light.lights[i], prog);
+        for (; i < point_count + spot_count + directional_count + parallel_point_count; ++i)
+            shader_glsl_ffp_vertex_light_uniform(context_gl, state, i,
+                    WINED3D_LIGHT_PARALLELPOINT, &constants->light.lights[i], prog);
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)

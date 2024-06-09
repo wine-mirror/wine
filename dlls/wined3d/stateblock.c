@@ -3346,6 +3346,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->lights)
     {
+        unsigned int point_idx, spot_idx, directional_idx, parallel_point_idx;
+        unsigned int point_count = 0, spot_count = 0, directional_count = 0;
         struct wined3d_ffp_light_constants constants;
         struct wined3d_light_info *light, *cursor;
 
@@ -3358,11 +3360,64 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
 
         wined3d_color_from_d3dcolor(&constants.ambient, state->rs[WINED3D_RS_AMBIENT]);
+
         for (unsigned int i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
         {
-            if (state->light_state->lights[i])
-                constants.lights[i] = state->light_state->lights[i]->constants;
+            if (!state->light_state->lights[i])
+                continue;
+
+            switch (state->light_state->lights[i]->OriginalParms.type)
+            {
+                case WINED3D_LIGHT_POINT:
+                    ++point_count;
+                    break;
+                case WINED3D_LIGHT_SPOT:
+                    ++spot_count;
+                    break;
+                case WINED3D_LIGHT_DIRECTIONAL:
+                    ++directional_count;
+                    break;
+                case WINED3D_LIGHT_PARALLELPOINT:
+                    break;
+                default:
+                    FIXME("Unhandled light type %#x.\n", state->light_state->lights[i]->OriginalParms.type);
+                    break;
+            }
         }
+        point_idx = 0;
+        spot_idx = point_idx + point_count;
+        directional_idx = spot_idx + spot_count;
+        parallel_point_idx = directional_idx + directional_count;
+
+        for (unsigned int i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
+        {
+            const struct wined3d_light_info *light_info = state->light_state->lights[i];
+            unsigned int idx;
+
+            if (!light_info)
+                continue;
+
+            switch (light_info->OriginalParms.type)
+            {
+                case WINED3D_LIGHT_POINT:
+                    idx = point_idx++;
+                    break;
+                case WINED3D_LIGHT_SPOT:
+                    idx = spot_idx++;
+                    break;
+                case WINED3D_LIGHT_DIRECTIONAL:
+                    idx = directional_idx++;
+                    break;
+                case WINED3D_LIGHT_PARALLELPOINT:
+                    idx = parallel_point_idx++;
+                    break;
+                default:
+                    FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
+                    continue;
+            }
+            constants.lights[idx] = state->light_state->lights[i]->constants;
+        }
+
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,
                 offsetof(struct wined3d_ffp_vs_constants, light), sizeof(constants), &constants);
     }
