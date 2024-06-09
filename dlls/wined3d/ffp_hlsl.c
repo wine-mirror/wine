@@ -619,9 +619,6 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
     uint8_t tex_map = 0;
     unsigned int i;
 
-    if (settings->color_key_enabled)
-        FIXME("Ignoring color key.\n");
-
     /* Find out which textures are read. */
     for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
@@ -838,6 +835,12 @@ static bool ffp_hlsl_generate_pixel_shader(const struct ffp_frag_settings *setti
             shader_addline(buffer, "    tex%u = %s%s(ps_sampler%u, texcoord[%u].%s);\n",
                     i, texture_function, proj ? "proj" : "", i, i, coord_mask);
         }
+    }
+
+    if (settings->color_key_enabled)
+    {
+        shader_addline(buffer, "    if (all(tex0 >= c.color_key[0]) && all(tex0 < c.color_key[1]))\n");
+        shader_addline(buffer, "        discard;\n");
     }
 
     shader_addline(buffer, "    ret = i.diffuse;\n");
