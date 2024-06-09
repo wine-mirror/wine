@@ -201,9 +201,6 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
 {
     struct wined3d_string_buffer texcoord;
 
-    if (settings->vertexblends)
-        FIXME("Ignoring vertex blend.\n");
-
     /* This must be kept in sync with struct wined3d_ffp_vs_constants. */
     shader_addline(buffer, "uniform struct\n");
     shader_addline(buffer, "{\n");
@@ -264,6 +261,8 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     shader_addline(buffer, "void main(in struct input i, out struct output o)\n");
     shader_addline(buffer, "{\n");
 
+    shader_addline(buffer, "    i.blend_weight[%u] = 1.0;\n", settings->vertexblends);
+
     if (settings->transformed)
     {
         shader_addline(buffer, "    float4 ec_pos = float4(i.pos.xyz, 1.0);\n");
@@ -277,9 +276,12 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     }
     else
     {
-        shader_addline(buffer, "    float4 ec_pos = 0.0;\n\n");
+        for (unsigned int i = 0; i < settings->vertexblends; ++i)
+            shader_addline(buffer, "    i.blend_weight[%u] -= i.blend_weight[%u];\n", settings->vertexblends, i);
 
-        shader_addline(buffer, "    ec_pos += mul(c.modelview_matrices[0], float4(i.pos.xyz, 1.0));\n\n");
+        shader_addline(buffer, "    float4 ec_pos = 0.0;\n\n");
+        for (unsigned int i = 0; i < settings->vertexblends + 1; ++i)
+            shader_addline(buffer, "    ec_pos += i.blend_weight[%u] * mul(c.modelview_matrices[%u], float4(i.pos.xyz, 1.0));\n", i, i);
 
         shader_addline(buffer, "    o.pos = mul(c.projection_matrix, ec_pos);\n");
         shader_addline(buffer, "    ec_pos /= ec_pos.w;\n\n");
@@ -288,10 +290,24 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     shader_addline(buffer, "    float3 normal = 0.0;\n");
     if (settings->normal)
     {
-        if (settings->transformed)
-            shader_addline(buffer, "    normal = i.normal;\n");
+        if (!settings->vertexblends)
+        {
+            if (settings->transformed)
+                shader_addline(buffer, "    normal = i.normal;\n");
+            else
+                shader_addline(buffer, "    normal = mul((float3x3)c.modelview_matrices[1], i.normal);\n");
+        }
         else
-            shader_addline(buffer, "    normal = mul((float3x3)c.modelview_matrices[1], i.normal);\n");
+        {
+            for (unsigned int i = 0; i < settings->vertexblends + 1; ++i)
+            {
+                if (settings->transformed)
+                    shader_addline(buffer, "    normal += i.blend_weight[%u] * i.normal;\n", i);
+                else
+                    shader_addline(buffer, "    normal += i.blend_weight[%u]"
+                            " * mul((float3x3)c.modelview_matrices[%u], i.normal);\n", i, i);
+            }
+        }
 
         if (settings->normalize)
             shader_addline(buffer, "    normal = ffp_normalize(normal);\n");
