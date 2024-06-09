@@ -1670,9 +1670,47 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
     }
 }
 
+static bool texture_binding_might_invalidate_fs_settings(const struct wined3d_stateblock *stateblock,
+        const struct wined3d_texture *texture, const struct wined3d_texture *prev, unsigned int stage)
+{
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+    const struct wined3d_format *old_format, *new_format;
+    unsigned int old_usage, new_usage;
+
+    /* The source arguments for color and alpha ops have different meanings when
+     * a NULL texture is bound. */
+    if (!texture)
+        return !!prev;
+    if (!prev)
+        return true;
+
+    old_usage = prev->resource.usage;
+    new_usage = texture->resource.usage;
+    if (texture->resource.type != prev->resource.type
+            || ((old_usage & WINED3DUSAGE_LEGACY_CUBEMAP) != (new_usage & WINED3DUSAGE_LEGACY_CUBEMAP)))
+        return true;
+
+    if (!stage && stateblock->stateblock_state.rs[WINED3D_RS_COLORKEYENABLE]
+            && (texture->color_key_flags & WINED3D_CKEY_SRC_BLT))
+        return true;
+
+    old_format = prev->resource.format;
+    new_format = texture->resource.format;
+
+    if (is_same_fixup(old_format->color_fixup, new_format->color_fixup))
+        return false;
+
+    if (can_use_texture_swizzle(d3d_info, new_format) && can_use_texture_swizzle(d3d_info, old_format))
+        return false;
+
+    return true;
+}
+
 void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
         UINT stage, struct wined3d_texture *texture)
 {
+    struct wined3d_texture *prev = stateblock->stateblock_state.textures[stage];
+
     TRACE("stateblock %p, stage %u, texture %p.\n", stateblock, stage, texture);
 
     if (stage >= ARRAY_SIZE(stateblock->stateblock_state.textures))
@@ -1683,10 +1721,13 @@ void CDECL wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock,
 
     if (texture)
         wined3d_texture_incref(texture);
-    if (stateblock->stateblock_state.textures[stage])
-        wined3d_texture_decref(stateblock->stateblock_state.textures[stage]);
+    if (prev)
+        wined3d_texture_decref(prev);
     stateblock->stateblock_state.textures[stage] = texture;
     stateblock->changed.textures |= 1u << stage;
+
+    if (texture_binding_might_invalidate_fs_settings(stateblock, texture, prev, stage))
+        stateblock->changed.ffp_ps_settings = 1;
 }
 
 void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *stateblock,
