@@ -62,6 +62,7 @@ struct wined3d_saved_states
      * translation from stateblock formats to wined3d_state formats. */
     uint32_t ffp_ps_constants : 1;
     uint32_t texture_matrices : 1;
+    uint32_t modelview_matrices : 1;
 };
 
 struct stage_state
@@ -1580,6 +1581,10 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             stateblock->changed.ffp_ps_constants = 1;
             break;
 
+        case WINED3D_RS_VERTEXBLEND:
+            stateblock->changed.modelview_matrices = 1;
+            break;
+
         default:
             break;
     }
@@ -1673,6 +1678,8 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
 
     if (d3dts >= WINED3D_TS_TEXTURE0 && d3dts <= WINED3D_TS_TEXTURE7)
         stateblock->changed.texture_matrices = 1;
+    else if (d3dts == WINED3D_TS_VIEW || d3dts >= WINED3D_TS_WORLD)
+        stateblock->changed.modelview_matrices = 1;
 }
 
 void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
@@ -2252,7 +2259,8 @@ static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblo
     stateblock->changed.texture_matrices = 1;
     stateblock->changed.material = 1;
     stateblock->changed.transforms = 1;
-    wined3d_bitmap_set(stateblock->changed.transform, WINED3D_TS_PROJECTION);
+    memset(stateblock->changed.transform, 0xff, sizeof(stateblock->changed.transform));
+    stateblock->changed.modelview_matrices = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3344,10 +3352,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                             sizeof(state->transforms[idx]), &state->transforms[idx]);
                     /* wined3d_ffp_vs_settings.ortho_fog still needs the
                      * device state to be set. */
-                }
-
-                if (!(idx >= WINED3D_TS_TEXTURE0 && idx <= WINED3D_TS_TEXTURE7))
                     wined3d_device_set_transform(device, idx, &state->transforms[idx]);
+                }
             }
         }
 
@@ -3520,6 +3526,26 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,
                 offsetof(struct wined3d_ffp_vs_constants, light), sizeof(constants), &constants);
+    }
+
+    if (changed->modelview_matrices)
+    {
+        struct wined3d_matrix matrices[MAX_VERTEX_BLENDS];
+
+        get_modelview_matrix(state, 0, &matrices[0]);
+        wined3d_device_context_push_constants(context,
+                WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_MODELVIEW,
+                offsetof(struct wined3d_ffp_vs_constants, modelview_matrices[0]), sizeof(matrices[0]), &matrices[0]);
+
+        if (state->rs[WINED3D_RS_VERTEXBLEND])
+        {
+            for (i = 1; i < MAX_VERTEX_BLENDS; ++i)
+                get_modelview_matrix(state, i, &matrices[i]);
+            wined3d_device_context_push_constants(context,
+                    WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_VERTEXBLEND,
+                    offsetof(struct wined3d_ffp_vs_constants, modelview_matrices[1]),
+                    sizeof(matrices) - sizeof(matrices[0]), &matrices[1]);
+        }
     }
 
     if (changed->texture_matrices)

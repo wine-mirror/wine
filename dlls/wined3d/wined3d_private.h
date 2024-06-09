@@ -2768,6 +2768,7 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
 
 struct wined3d_ffp_vs_constants
 {
+    struct wined3d_matrix modelview_matrices[MAX_VERTEX_BLENDS];
     struct wined3d_matrix projection_matrix;
     struct wined3d_matrix texture_matrices[WINED3D_MAX_FFP_TEXTURES];
     struct wined3d_material material;
@@ -4375,7 +4376,7 @@ static inline BOOL shader_sampler_is_shadow(const struct wined3d_shader *shader,
 }
 
 void get_identity_matrix(struct wined3d_matrix *mat);
-void get_modelview_matrix(const struct wined3d_state *state, unsigned int index, struct wined3d_matrix *mat);
+void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned int index, struct wined3d_matrix *mat);
 void get_texture_matrix(const struct wined3d_stream_info *si,
         const struct wined3d_stateblock_state *state, const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,

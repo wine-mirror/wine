@@ -1563,17 +1563,16 @@ static void get_projection_matrix(const struct wined3d_context *context,
 }
 
 static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_context_gl *context_gl,
-        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
+        const struct wined3d_ffp_vs_constants *constants, struct glsl_shader_prog_link *prog)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_matrix mv;
     float mat[3 * 3];
 
     if (prog->vs.normal_matrix_location == -1)
         return;
 
-    get_modelview_matrix(state, 0, &mv);
-    compute_normal_matrix(mat, context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING, &mv);
+    compute_normal_matrix(mat, context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING,
+            &constants->modelview_matrices[0]);
 
     GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location, 1, FALSE, mat));
     checkGLcall("glUniformMatrix3fv");
@@ -1788,26 +1787,30 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_MODELVIEW)
     {
-        struct wined3d_matrix mat;
+        const struct wined3d_ffp_vs_constants *constants;
 
-        get_modelview_matrix(state, 0, &mat);
-        GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[0], 1, FALSE, &mat._11));
+        constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
+
+        GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[0], 1,
+                FALSE, &constants->modelview_matrices[0]._11));
         checkGLcall("glUniformMatrix4fv");
 
-        shader_glsl_ffp_vertex_normalmatrix_uniform(context_gl, state, prog);
+        shader_glsl_ffp_vertex_normalmatrix_uniform(context_gl, constants, prog);
     }
 
     if (update_mask & WINED3D_SHADER_CONST_FFP_VERTEXBLEND)
     {
-        struct wined3d_matrix mat;
+        const struct wined3d_ffp_vs_constants *constants;
+
+        constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
 
         for (i = 1; i < MAX_VERTEX_BLENDS; ++i)
         {
             if (prog->vs.modelview_matrix_location[i] == -1)
                 break;
 
-            get_modelview_matrix(state, i, &mat);
-            GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[i], 1, FALSE, &mat._11));
+            GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[i],
+                    1, FALSE, &constants->modelview_matrices[i]._11));
             checkGLcall("glUniformMatrix4fv");
         }
     }
@@ -11908,24 +11911,6 @@ static void glsl_vertex_pipe_pixel_shader(struct wined3d_context *context,
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 }
 
-static void glsl_vertex_pipe_world(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW;
-}
-
-static void glsl_vertex_pipe_vertexblend(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
-}
-
-static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
-            | WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
-}
-
 static void glsl_vertex_pipe_projection(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -12015,12 +12000,7 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     /* Viewport */
     {STATE_VIEWPORT,                                             {STATE_VIEWPORT,                                             glsl_vertex_pipe_viewport}, WINED3D_GL_EXT_NONE        },
     /* Transform states */
-    {STATE_TRANSFORM(WINED3D_TS_VIEW),                           {STATE_TRANSFORM(WINED3D_TS_VIEW),                           glsl_vertex_pipe_view  }, WINED3D_GL_EXT_NONE          },
     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     {STATE_TRANSFORM(WINED3D_TS_PROJECTION),                     glsl_vertex_pipe_projection}, WINED3D_GL_EXT_NONE      },
-    {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)),                {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(0)),                glsl_vertex_pipe_world }, WINED3D_GL_EXT_NONE          },
-    {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(1)),                {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(1)),                glsl_vertex_pipe_vertexblend }, WINED3D_GL_EXT_NONE    },
-    {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(2)),                {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(2)),                glsl_vertex_pipe_vertexblend }, WINED3D_GL_EXT_NONE    },
-    {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(3)),                {STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(3)),                glsl_vertex_pipe_vertexblend }, WINED3D_GL_EXT_NONE    },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
