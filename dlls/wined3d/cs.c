@@ -1569,7 +1569,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
     device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
 
     if (new_use_color_key != old_use_color_key)
-        device_invalidate_state(cs->c.device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
+        device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 }
 
 void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context,
@@ -1945,7 +1945,7 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
                 if (texture == wined3d_state_get_ffp_texture(&cs->state, 0))
                 {
                     if (!(texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT))
-                        device_invalidate_state(cs->c.device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
+                        device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
                 }
 
                 texture->async.src_blt_color_key = op->color_key;
@@ -1973,7 +1973,7 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
             case WINED3D_CKEY_SRC_BLT:
                 if (texture == wined3d_state_get_ffp_texture(&cs->state, 0)
                         && texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
-                    device_invalidate_state(cs->c.device, STATE_RENDER(WINED3D_RS_COLORKEYENABLE));
+                    device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
                 texture->async.color_key_flags &= ~WINED3D_CKEY_SRC_BLT;
                 break;

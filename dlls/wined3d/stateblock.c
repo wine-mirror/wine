@@ -1594,6 +1594,10 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             stateblock->changed.point_scale = 1;
             break;
 
+        case WINED3D_RS_COLORKEYENABLE:
+            stateblock->changed.ffp_ps_settings = 1;
+            break;
+
         default:
             break;
     }
