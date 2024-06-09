@@ -1542,6 +1542,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             }
             break;
 
+        case WINED3D_RS_SPECULARENABLE:
         case WINED3D_RS_TEXTUREFACTOR:
             stateblock->changed.ffp_ps_constants = 1;
             break;
@@ -3326,12 +3327,16 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->ffp_ps_constants)
     {
+        static const struct wined3d_color specular_enabled = {1.0f, 1.0f, 1.0f, 0.0f};
+        static const struct wined3d_color specular_disabled;
         struct wined3d_ffp_ps_constants constants;
 
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
             wined3d_color_from_d3dcolor(&constants.texture_constants[i], state->texture_states[i][WINED3D_TSS_CONSTANT]);
 
         wined3d_color_from_d3dcolor(&constants.texture_factor, state->rs[WINED3D_RS_TEXTUREFACTOR]);
+
+        constants.specular_enable = state->rs[WINED3D_RS_SPECULARENABLE] ? specular_enabled : specular_disabled;
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, sizeof(constants), &constants);

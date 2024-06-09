@@ -1901,10 +1901,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
         if (prog->ps.tex_factor_location != -1)
             GL_EXTCALL(glUniform4fv(prog->ps.tex_factor_location, 1, &constants->texture_factor.r));
 
-        if (state->render_states[WINED3D_RS_SPECULARENABLE])
-            GL_EXTCALL(glUniform4f(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
-        else
-            GL_EXTCALL(glUniform4f(prog->ps.specular_enable_location, 0.0f, 0.0f, 0.0f, 0.0f));
+        GL_EXTCALL(glUniform4fv(prog->ps.specular_enable_location, 1, &constants->specular_enable.r));
 
         for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
         {
@@ -12286,12 +12283,6 @@ static void glsl_fragment_pipe_tex_transform(struct wined3d_context *context,
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
-static void glsl_fragment_pipe_invalidate_constants(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_PS;
-}
-
 static void glsl_fragment_pipe_alpha_test_func(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -12451,7 +12442,6 @@ static const struct wined3d_state_entry_template glsl_fragment_pipe_state_templa
     {STATE_TEXTURESTAGE(5,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(6,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(7,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                   {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_POINT_ENABLE,                                        {STATE_POINT_ENABLE,                                         glsl_fragment_pipe_shader              }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_fragment_pipe_shademode           }, WINED3D_GLSL_130    },
     {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         state_shademode                        }, WINED3D_GL_EXT_NONE },

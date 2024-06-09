@@ -2771,6 +2771,9 @@ struct wined3d_ffp_ps_constants
 {
     struct wined3d_color texture_constants[WINED3D_MAX_FFP_TEXTURES];
     struct wined3d_color texture_factor;
+    /* (1, 1, 1, 0) or (0, 0, 0, 0), which shaders will multiply with the
+     * specular color. */
+    struct wined3d_color specular_enable;
 };
 
 enum wined3d_push_constants

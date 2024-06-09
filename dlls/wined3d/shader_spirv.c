@@ -1253,7 +1253,6 @@ static const struct wined3d_state_entry_template spirv_fragment_pipe_vk_fp_state
     {STATE_RENDER(WINED3D_RS_ALPHAREF),          {STATE_RENDER(WINED3D_RS_ALPHAREF),          state_nop}},
     {STATE_RENDER(WINED3D_RS_ALPHAFUNC),         {STATE_RENDER(WINED3D_RS_ALPHAFUNC),         state_nop}},
     {STATE_RENDER(WINED3D_RS_FOGENABLE),         {STATE_RENDER(WINED3D_RS_FOGENABLE),         state_nop}},
-    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),    state_nop}},
     {STATE_RENDER(WINED3D_RS_FOGCOLOR),          {STATE_RENDER(WINED3D_RS_FOGCOLOR),          state_nop}},
     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),      {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),      state_nop}},
     {STATE_RENDER(WINED3D_RS_FOGSTART),          {STATE_RENDER(WINED3D_RS_FOGSTART),          state_nop}},
