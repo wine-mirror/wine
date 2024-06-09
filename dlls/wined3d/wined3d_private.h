@@ -2050,10 +2050,11 @@ void context_state_fb(struct wined3d_context *context,
 
 struct wined3d_light_constants
 {
+    /* Padding is needed for the HLSL backend. */
     struct wined3d_color diffuse, specular, ambient;
     struct wined3d_vec4 position, direction;
     float range, falloff, cos_half_theta, cos_half_phi;
-    float const_att, linear_att, quad_att;
+    float const_att, linear_att, quad_att, padding;
 };
 
 /*****************************************************************************
@@ -2783,8 +2784,10 @@ struct wined3d_ffp_vs_constants
     struct wined3d_ffp_point_constants
     {
         float scale_const, scale_linear, scale_quad;
+        float padding; /* For the HLSL backend. */
     } point;
     struct wined3d_material material;
+    float padding[3]; /* For the HLSL backend. */
     struct wined3d_ffp_light_constants
     {
         struct wined3d_color ambient;
