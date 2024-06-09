@@ -3294,6 +3294,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             {
                 j = wined3d_bit_scan(&map);
                 idx = i * word_bit_count + j;
+
+                if (idx == WINED3D_TS_VIEW)
+                    changed->lights = 1;
+
                 wined3d_device_set_transform(device, idx, &state->transforms[idx]);
             }
         }
@@ -3392,12 +3396,16 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         for (unsigned int i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
         {
             const struct wined3d_light_info *light_info = state->light_state->lights[i];
+            const struct wined3d_light_constants *light_constants;
+            enum wined3d_light_type type;
             unsigned int idx;
 
             if (!light_info)
                 continue;
+            type = light_info->OriginalParms.type;
+            light_constants = &state->light_state->lights[i]->constants;
 
-            switch (light_info->OriginalParms.type)
+            switch (type)
             {
                 case WINED3D_LIGHT_POINT:
                     idx = point_idx++;
@@ -3412,10 +3420,17 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     idx = parallel_point_idx++;
                     break;
                 default:
-                    FIXME("Unhandled light type %#x.\n", light_info->OriginalParms.type);
+                    FIXME("Unhandled light type %#x.\n", type);
                     continue;
             }
-            constants.lights[idx] = state->light_state->lights[i]->constants;
+            constants.lights[idx] = *light_constants;
+
+            if (type != WINED3D_LIGHT_DIRECTIONAL)
+                wined3d_vec4_transform(&constants.lights[idx].position,
+                        &light_constants->position, &state->transforms[WINED3D_TS_VIEW]);
+            if (type == WINED3D_LIGHT_SPOT || type == WINED3D_LIGHT_DIRECTIONAL)
+                wined3d_vec4_transform(&constants.lights[idx].direction,
+                        &light_constants->direction, &state->transforms[WINED3D_TS_VIEW]);
         }
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,

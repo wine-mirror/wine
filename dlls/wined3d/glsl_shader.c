@@ -1539,9 +1539,7 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
         const struct wined3d_state *state, unsigned int light, enum wined3d_light_type type,
         const struct wined3d_light_constants *constants, struct glsl_shader_prog_link *prog)
 {
-    const struct wined3d_matrix *view = &state->transforms[WINED3D_TS_VIEW];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_vec4 vec4;
 
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].diffuse, 1, &constants->diffuse.r));
     GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].specular, 1, &constants->specular.r));
@@ -1550,8 +1548,7 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
     switch (type)
     {
         case WINED3D_LIGHT_POINT:
-            wined3d_vec4_transform(&vec4, &constants->position, view);
-            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
+            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &constants->position.x));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, constants->range));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].c_att, constants->const_att));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].l_att, constants->linear_att));
@@ -1559,11 +1556,9 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
             break;
 
         case WINED3D_LIGHT_SPOT:
-            wined3d_vec4_transform(&vec4, &constants->position, view);
-            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
+            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &constants->position.x));
 
-            wined3d_vec4_transform(&vec4, &constants->direction, view);
-            GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &vec4.x));
+            GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &constants->direction.x));
 
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].range, constants->range));
             GL_EXTCALL(glUniform1f(prog->vs.light_location[light].falloff, constants->falloff));
@@ -1575,13 +1570,11 @@ static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl
             break;
 
         case WINED3D_LIGHT_DIRECTIONAL:
-            wined3d_vec4_transform(&vec4, &constants->direction, view);
-            GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &vec4.x));
+            GL_EXTCALL(glUniform3fv(prog->vs.light_location[light].direction, 1, &constants->direction.x));
             break;
 
         case WINED3D_LIGHT_PARALLELPOINT:
-            wined3d_vec4_transform(&vec4, &constants->position, view);
-            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &vec4.x));
+            GL_EXTCALL(glUniform4fv(prog->vs.light_location[light].position, 1, &constants->position.x));
             break;
 
         default:
@@ -11867,7 +11860,6 @@ static void glsl_vertex_pipe_view(struct wined3d_context *context, const struct 
     unsigned int k;
 
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_MODELVIEW
-            | WINED3D_SHADER_CONST_FFP_LIGHTS
             | WINED3D_SHADER_CONST_FFP_VERTEXBLEND;
 
     if (needs_legacy_glsl_syntax(gl_info))
