@@ -34,13 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-struct wined3d_matrix_3x3
-{
-    float _11, _12, _13;
-    float _21, _22, _23;
-    float _31, _32, _33;
-};
-
 struct light_transformed
 {
     struct wined3d_color diffuse, specular, ambient;
@@ -54,7 +47,7 @@ struct lights_settings
     struct light_transformed lights[WINED3D_MAX_SOFTWARE_ACTIVE_LIGHTS];
     struct wined3d_color ambient_light;
     struct wined3d_matrix modelview_matrix;
-    struct wined3d_matrix_3x3 normal_matrix;
+    struct wined3d_matrix normal_matrix;
     struct wined3d_vec4 position_transformed;
 
     float fog_start, fog_end, fog_density;
@@ -2894,7 +2887,7 @@ static void wined3d_vec3_normalise(struct wined3d_vec3 *v)
 }
 
 static void wined3d_vec3_transform(struct wined3d_vec3 *dst,
-        const struct wined3d_vec3 *v, const struct wined3d_matrix_3x3 *m)
+        const struct wined3d_vec3 *v, const struct wined3d_matrix *m)
 {
     struct wined3d_vec3 tmp;
 
@@ -2951,7 +2944,7 @@ static void init_transformed_lights(struct lights_settings *ls,
     if (!compute_lighting)
         return;
 
-    compute_normal_matrix(&ls->normal_matrix._11, legacy_lighting, &ls->modelview_matrix);
+    compute_normal_matrix(&ls->normal_matrix, legacy_lighting, &ls->modelview_matrix);
 
     wined3d_color_from_d3dcolor(&ls->ambient_light, state->rs[WINED3D_RS_AMBIENT]);
     ls->legacy_lighting = !!legacy_lighting;

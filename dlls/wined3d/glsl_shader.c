@@ -1570,9 +1570,9 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
     if (prog->vs.normal_matrix_location == -1)
         return;
 
-    GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location,
-            1, FALSE, constants->modelview.not_blended.normal_matrix));
-    checkGLcall("glUniformMatrix3fv");
+    GL_EXTCALL(glUniformMatrix4fv(prog->vs.normal_matrix_location,
+            1, FALSE, &constants->modelview.not_blended.normal_matrix._11));
+    checkGLcall("glUniformMatrix4fv");
 }
 
 static void shader_glsl_ffp_vertex_texmatrix_uniform(const struct wined3d_context_gl *context_gl,
@@ -9144,7 +9144,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     shader_addline(buffer, "uniform mat4 ffp_modelview_matrix[%u];\n", MAX_VERTEX_BLENDS);
     shader_addline(buffer, "uniform mat4 ffp_projection_matrix;\n");
-    shader_addline(buffer, "uniform mat3 ffp_normal_matrix;\n");
+    shader_addline(buffer, "uniform mat4 ffp_normal_matrix;\n");
     shader_addline(buffer, "uniform mat4 ffp_texture_matrix[%u];\n", WINED3D_MAX_FFP_TEXTURES);
 
     shader_addline(buffer, "uniform struct\n{\n");
@@ -9261,7 +9261,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
             if (settings->transformed)
                 shader_addline(buffer, "normal = ffp_attrib_normal;\n");
             else
-                shader_addline(buffer, "normal = ffp_normal_matrix * ffp_attrib_normal;\n");
+                shader_addline(buffer, "normal = mat3(ffp_normal_matrix) * ffp_attrib_normal;\n");
         }
         else
         {

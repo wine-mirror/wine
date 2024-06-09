@@ -3545,7 +3545,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
         else
         {
-            compute_normal_matrix(matrices.not_blended.normal_matrix,
+            compute_normal_matrix(&matrices.not_blended.normal_matrix,
                     device->adapter->d3d_info.wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING,
                     &matrices.not_blended.modelview_matrix);
 

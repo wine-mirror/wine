@@ -7065,11 +7065,10 @@ static BOOL invert_matrix_3d(struct wined3d_matrix *out, const struct wined3d_ma
     return TRUE;
 }
 
-void compute_normal_matrix(float *normal_matrix, BOOL legacy_lighting,
+void compute_normal_matrix(struct wined3d_matrix *normal_matrix, BOOL legacy_lighting,
         const struct wined3d_matrix *modelview)
 {
     struct wined3d_matrix mv;
-    unsigned int i, j;
 
     mv = *modelview;
     if (legacy_lighting)
@@ -7079,9 +7078,16 @@ void compute_normal_matrix(float *normal_matrix, BOOL legacy_lighting,
     /* Tests show that singular modelview matrices are used unchanged as normal
      * matrices on D3D3 and older. There seems to be no clearly consistent
      * behavior on newer D3D versions so always follow older ddraw behavior. */
-    for (i = 0; i < 3; ++i)
-        for (j = 0; j < 3; ++j)
-            normal_matrix[i * 3 + j] = (&mv._11)[j * 4 + i];
+
+    normal_matrix->_11 = mv._11;
+    normal_matrix->_12 = mv._21;
+    normal_matrix->_13 = mv._31;
+    normal_matrix->_21 = mv._12;
+    normal_matrix->_22 = mv._22;
+    normal_matrix->_23 = mv._32;
+    normal_matrix->_31 = mv._13;
+    normal_matrix->_32 = mv._23;
+    normal_matrix->_33 = mv._33;
 }
 
 static void wined3d_allocator_release_block(struct wined3d_allocator *allocator,

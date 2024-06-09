@@ -2774,7 +2774,7 @@ struct wined3d_ffp_vs_constants
         struct
         {
             struct wined3d_matrix modelview_matrix;
-            float normal_matrix[9];
+            struct wined3d_matrix normal_matrix;
         } not_blended;
     } modelview;
     struct wined3d_matrix projection_matrix;
@@ -4722,7 +4722,7 @@ static inline void wined3d_vec4_transform(struct wined3d_vec4 *dst,
 
 BOOL invert_matrix(struct wined3d_matrix *out, const struct wined3d_matrix *m);
 
-void compute_normal_matrix(float *normal_matrix, BOOL legacy_lighting,
+void compute_normal_matrix(struct wined3d_matrix *normal_matrix, BOOL legacy_lighting,
         const struct wined3d_matrix *modelview);
 
 static inline struct wined3d_context *context_acquire(struct wined3d_device *device,
