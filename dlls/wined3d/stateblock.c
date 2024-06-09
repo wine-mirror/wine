@@ -2193,6 +2193,14 @@ static void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state
 
 }
 
+/* FFP push constant buffers do not have a "default" state on the CS side.
+ * We need to explicitly invalidate them when initializing the context or
+ * resetting. */
+static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblock *stateblock)
+{
+    stateblock->changed.ffp_ps_constants = 1;
+}
+
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
         struct wined3d_device *device, enum wined3d_stateblock_type type)
 {
@@ -2207,9 +2215,7 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const stru
     stateblock->changed.store_stream_offset = 1;
     list_init(&stateblock->changed.changed_lights);
 
-    /* FFP push constant buffers need to be set if used; the backend does not
-     * have a default state for them. */
-    stateblock->changed.ffp_ps_constants = 1;
+    wined3d_stateblock_invalidate_push_constants(stateblock);
 
     if (type == WINED3D_SBT_RECORDED || type == WINED3D_SBT_PRIMARY)
         return WINED3D_OK;
@@ -2286,6 +2292,7 @@ void CDECL wined3d_stateblock_reset(struct wined3d_stateblock *stateblock)
     memset(&stateblock->stateblock_state, 0, sizeof(stateblock->stateblock_state));
     stateblock->stateblock_state.light_state = &stateblock->light_state;
     wined3d_stateblock_state_init(&stateblock->stateblock_state, stateblock->device, WINED3D_STATE_INIT_DEFAULT);
+    wined3d_stateblock_invalidate_push_constants(stateblock);
 }
 
 static void wined3d_device_set_base_vertex_index(struct wined3d_device *device, int base_index)

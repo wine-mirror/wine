@@ -5020,6 +5020,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_texture_decref(device->cursor_texture);
             device->cursor_texture = NULL;
         }
+        for (unsigned int i = 0; i < ARRAY_SIZE(device->push_constants); ++i)
+        {
+            if (device->push_constants[i])
+                wined3d_buffer_decref(device->push_constants[i]);
+            device->push_constants[i] = NULL;
+        }
         state_unbind_resources(state);
     }
 
