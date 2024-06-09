@@ -1198,6 +1198,7 @@ static void spirv_fragment_pipe_vk_fp_disable(const struct wined3d_context *cont
 static void spirv_fragment_pipe_vk_fp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
+    caps->max_blend_stages = WINED3D_MAX_FFP_TEXTURES;
 }
 
 static unsigned int spirv_fragment_pipe_vk_fp_get_emul_mask(const struct wined3d_adapter *adapter)
