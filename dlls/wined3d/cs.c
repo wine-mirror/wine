@@ -1541,10 +1541,8 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
             if (!prev && op->bind_index < d3d_info->ffp_fragment_caps.max_blend_stages)
             {
                 /* The source arguments for color and alpha ops have different
-                 * meanings when a NULL texture is bound, so the COLOR_OP and
-                 * ALPHA_OP have to be dirtified. */
-                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_COLOR_OP));
-                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_ALPHA_OP));
+                 * meanings when a NULL texture is bound. */
+                device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
             }
 
             if (!op->bind_index && texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
@@ -1561,10 +1559,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
         if (op->shader_type == WINED3D_SHADER_TYPE_PIXEL)
         {
             if (!op->view && op->bind_index < d3d_info->ffp_fragment_caps.max_blend_stages)
-            {
-                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_COLOR_OP));
-                device_invalidate_state(cs->c.device, STATE_TEXTURESTAGE(op->bind_index, WINED3D_TSS_ALPHA_OP));
-            }
+                device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
             if (!op->bind_index && prev_texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT)
                 old_use_color_key = TRUE;

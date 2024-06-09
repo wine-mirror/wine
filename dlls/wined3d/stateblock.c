@@ -64,6 +64,7 @@ struct wined3d_saved_states
     uint32_t texture_matrices : 1;
     uint32_t modelview_matrices : 1;
     uint32_t point_scale : 1;
+    uint32_t ffp_ps_settings : 1;
 };
 
 struct stage_state
@@ -1645,6 +1646,19 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
         case WINED3D_TSS_TEXCOORD_INDEX:
         case WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS:
             stateblock->changed.texture_matrices = 1;
+            stateblock->changed.ffp_ps_settings = 1;
+            break;
+
+        case WINED3D_TSS_ALPHA_ARG0:
+        case WINED3D_TSS_ALPHA_ARG1:
+        case WINED3D_TSS_ALPHA_ARG2:
+        case WINED3D_TSS_ALPHA_OP:
+        case WINED3D_TSS_COLOR_ARG0:
+        case WINED3D_TSS_COLOR_ARG1:
+        case WINED3D_TSS_COLOR_ARG2:
+        case WINED3D_TSS_COLOR_OP:
+        case WINED3D_TSS_RESULT_ARG:
+            stateblock->changed.ffp_ps_settings = 1;
             break;
 
         default:
@@ -3624,6 +3638,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
+    }
+
+    if (changed->ffp_ps_settings && !state->ps)
+    {
+        /* Force invalidation of the pixel shader. */
+        wined3d_device_context_emit_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, NULL);
     }
 
     assert(list_empty(&stateblock->changed.changed_lights));
