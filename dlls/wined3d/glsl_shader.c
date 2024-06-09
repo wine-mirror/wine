@@ -1535,17 +1535,6 @@ static void shader_glsl_ffp_vertex_material_uniform(const struct wined3d_context
     checkGLcall("setting FFP material uniforms");
 }
 
-static void shader_glsl_ffp_vertex_lightambient_uniform(const struct wined3d_context_gl *context_gl,
-        const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_color color;
-
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_AMBIENT]);
-    GL_EXTCALL(glUniform3fv(prog->vs.light_ambient_location, 1, &color.r));
-    checkGLcall("glUniform3fv");
-}
-
 static void shader_glsl_ffp_vertex_light_uniform(const struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, unsigned int light, const struct wined3d_light_info *light_info,
         struct glsl_shader_prog_link *prog)
@@ -1780,9 +1769,12 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
     if (update_mask & WINED3D_SHADER_CONST_FFP_LIGHTS)
     {
         unsigned int point_idx, spot_idx, directional_idx, parallel_point_idx;
+        const struct wined3d_ffp_vs_constants *constants;
         DWORD point_count = 0;
         DWORD spot_count = 0;
         DWORD directional_count = 0;
+
+        constants = wined3d_buffer_load_sysmem(context->device->push_constants[WINED3D_PUSH_CONSTANTS_VS_FFP], context);
 
         for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
         {
@@ -1812,7 +1804,9 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
         directional_idx = spot_idx + spot_count;
         parallel_point_idx = directional_idx + directional_count;
 
-        shader_glsl_ffp_vertex_lightambient_uniform(context_gl, state, prog);
+        GL_EXTCALL(glUniform3fv(prog->vs.light_ambient_location, 1, &constants->light.ambient.r));
+        checkGLcall("glUniform3fv");
+
         for (i = 0; i < WINED3D_MAX_ACTIVE_LIGHTS; ++i)
         {
             const struct wined3d_light_info *light_info = state->light_state.lights[i];
@@ -12066,7 +12060,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_CLIPPING),                          {STATE_RENDER(WINED3D_RS_CLIPPING),                          state_clipping         }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),                   {STATE_RENDER(WINED3D_RS_CLIPPING),                          NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_LIGHTING),                          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_AMBIENT),                           {STATE_RENDER(WINED3D_RS_AMBIENT),                           glsl_vertex_pipe_light }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_COLORVERTEX),                       {STATE_RENDER(WINED3D_RS_COLORVERTEX),                       glsl_vertex_pipe_shader}, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_LOCALVIEWER),                       {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),                  {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },

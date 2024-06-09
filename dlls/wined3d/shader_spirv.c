@@ -1160,7 +1160,6 @@ static const struct wined3d_state_entry_template spirv_vertex_pipe_vk_vp_states[
     {STATE_RENDER(WINED3D_RS_RANGEFOGENABLE),           {STATE_RENDER(WINED3D_RS_RANGEFOGENABLE),           state_nop}},
     {STATE_RENDER(WINED3D_RS_CLIPPING),                 {STATE_RENDER(WINED3D_RS_CLIPPING),                 state_nop}},
     {STATE_RENDER(WINED3D_RS_LIGHTING),                 {STATE_RENDER(WINED3D_RS_LIGHTING),                 state_nop}},
-    {STATE_RENDER(WINED3D_RS_AMBIENT),                  {STATE_RENDER(WINED3D_RS_AMBIENT),                  state_nop}},
     {STATE_RENDER(WINED3D_RS_COLORVERTEX),              {STATE_RENDER(WINED3D_RS_COLORVERTEX),              state_nop}},
     {STATE_RENDER(WINED3D_RS_LOCALVIEWER),              {STATE_RENDER(WINED3D_RS_LOCALVIEWER),              state_nop}},
     {STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),         {STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),         state_nop}},

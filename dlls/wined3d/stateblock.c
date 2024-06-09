@@ -2200,6 +2200,7 @@ static void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state
 static void wined3d_stateblock_invalidate_push_constants(struct wined3d_stateblock *stateblock)
 {
     stateblock->changed.ffp_ps_constants = 1;
+    stateblock->changed.lights = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -2682,8 +2683,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     bool set_blend_state = false, set_depth_stencil_state = false, set_rasterizer_state = false;
 
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
-    const struct wined3d_saved_states *changed = &stateblock->changed;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
+    struct wined3d_saved_states *changed = &stateblock->changed;
     struct wined3d_device_context *context = &device->cs->c;
     unsigned int i, j, start, idx;
     bool set_depth_bounds = false;
@@ -2808,6 +2809,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_ADAPTIVETESS_Z:
                 case WINED3D_RS_ADAPTIVETESS_W:
                     set_depth_bounds = true;
+                    break;
+
+                case WINED3D_RS_AMBIENT:
+                    changed->lights = 1;
                     break;
 
                 case WINED3D_RS_ADAPTIVETESS_Y:
@@ -3326,6 +3331,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->lights)
     {
+        struct wined3d_ffp_light_constants constants;
         struct wined3d_light_info *light, *cursor;
 
         LIST_FOR_EACH_ENTRY_SAFE(light, cursor, &changed->changed_lights, struct wined3d_light_info, changed_entry)
@@ -3335,6 +3341,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             list_remove(&light->changed_entry);
             light->changed = false;
         }
+
+        wined3d_color_from_d3dcolor(&constants.ambient, state->rs[WINED3D_RS_AMBIENT]);
+        wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_LIGHTS,
+                offsetof(struct wined3d_ffp_vs_constants, light), sizeof(constants), &constants);
     }
 
     if (changed->ffp_ps_constants)

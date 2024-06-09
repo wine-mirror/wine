@@ -1679,7 +1679,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 39,  40},
         { 42,  47},
         { 49, 135},
-        {138, 138},
+        {138, 139},
         {144, 144},
         {149, 150},
         {153, 153},

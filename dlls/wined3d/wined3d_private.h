@@ -2764,6 +2764,14 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size);
  * i.e. only used when shaders are disabled.
  */
 
+struct wined3d_ffp_vs_constants
+{
+    struct wined3d_ffp_light_constants
+    {
+        struct wined3d_color ambient;
+    } light;
+};
+
 struct wined3d_ffp_ps_constants
 {
     struct wined3d_color texture_constants[WINED3D_MAX_FFP_TEXTURES];
@@ -2782,6 +2790,7 @@ enum wined3d_push_constants
     WINED3D_PUSH_CONSTANTS_PS_I,
     WINED3D_PUSH_CONSTANTS_VS_B,
     WINED3D_PUSH_CONSTANTS_PS_B,
+    WINED3D_PUSH_CONSTANTS_VS_FFP,
     WINED3D_PUSH_CONSTANTS_PS_FFP,
     WINED3D_PUSH_CONSTANTS_COUNT,
 };
