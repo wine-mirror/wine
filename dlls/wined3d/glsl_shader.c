@@ -1572,7 +1572,7 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
     if (prog->vs.normal_matrix_location == -1)
         return;
 
-    get_modelview_matrix(&context_gl->c, state, 0, &mv);
+    get_modelview_matrix(state, 0, &mv);
     compute_normal_matrix(mat, context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_LEGACY_FFP_LIGHTING, &mv);
 
     GL_EXTCALL(glUniformMatrix3fv(prog->vs.normal_matrix_location, 1, FALSE, mat));
@@ -1790,7 +1790,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
     {
         struct wined3d_matrix mat;
 
-        get_modelview_matrix(context, state, 0, &mat);
+        get_modelview_matrix(state, 0, &mat);
         GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[0], 1, FALSE, &mat._11));
         checkGLcall("glUniformMatrix4fv");
 
@@ -1806,7 +1806,7 @@ static void shader_glsl_load_constants(struct shader_glsl_priv *priv,
             if (prog->vs.modelview_matrix_location[i] == -1)
                 break;
 
-            get_modelview_matrix(context, state, i, &mat);
+            get_modelview_matrix(state, i, &mat);
             GL_EXTCALL(glUniformMatrix4fv(prog->vs.modelview_matrix_location[i], 1, FALSE, &mat._11));
             checkGLcall("glUniformMatrix4fv");
         }
@@ -9258,12 +9258,20 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     {
         if (!settings->vertexblends)
         {
-            shader_addline(buffer, "normal = ffp_normal_matrix * ffp_attrib_normal;\n");
+            if (settings->transformed)
+                shader_addline(buffer, "normal = ffp_attrib_normal;\n");
+            else
+                shader_addline(buffer, "normal = ffp_normal_matrix * ffp_attrib_normal;\n");
         }
         else
         {
             for (i = 0; i < settings->vertexblends + 1; ++i)
-                shader_addline(buffer, "normal += ffp_attrib_blendweight[%u] * (mat3(ffp_modelview_matrix[%u]) * ffp_attrib_normal);\n", i, i);
+            {
+                if (settings->transformed)
+                    shader_addline(buffer, "normal += ffp_attrib_blendweight[%u] * ffp_attrib_normal;\n", i);
+                else
+                    shader_addline(buffer, "normal += ffp_attrib_blendweight[%u] * (mat3(ffp_modelview_matrix[%u]) * ffp_attrib_normal);\n", i, i);
+            }
         }
 
         if (settings->normalize)

@@ -5589,13 +5589,9 @@ void get_identity_matrix(struct wined3d_matrix *mat)
     *mat = identity;
 }
 
-void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
-        unsigned int index, struct wined3d_matrix *mat)
+void get_modelview_matrix(const struct wined3d_state *state, unsigned int index, struct wined3d_matrix *mat)
 {
-    if (context->stream_info.position_transformed)
-        get_identity_matrix(mat);
-    else
-        multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(index)]);
+    multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(index)]);
 }
 
 /* Setup this textures matrix according to the texture flags. */
