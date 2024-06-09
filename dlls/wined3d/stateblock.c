@@ -1641,6 +1641,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
                 stateblock->changed.alpha_to_coverage = 1;
                 stateblock->stateblock_state.alpha_to_coverage = (value == WINED3D_ALPHA_TO_COVERAGE_ENABLE);
             }
+            stateblock->changed.point_scale = 1;
             break;
 
         case WINED3D_RS_TEXTUREFACTOR:
@@ -3834,6 +3835,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     if (changed->point_scale)
     {
         struct wined3d_ffp_point_constants constants;
+
+        constants.size = int_to_float(state->rs[WINED3D_RS_POINTSIZE]);
 
         if (state->rs[WINED3D_RS_POINTSCALEENABLE])
         {

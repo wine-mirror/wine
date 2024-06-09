@@ -2787,7 +2787,7 @@ struct wined3d_ffp_vs_constants
     struct wined3d_ffp_point_constants
     {
         float scale_const, scale_linear, scale_quad;
-        float padding; /* For the HLSL backend. */
+        float size;
     } point;
     struct wined3d_material material;
     float padding[3]; /* For the HLSL backend. */
