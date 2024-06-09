@@ -207,9 +207,6 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
     if (settings->vertexblends)
         FIXME("Ignoring vertex blend.\n");
 
-    if (settings->fog_mode != WINED3D_FFP_VS_FOG_OFF)
-        FIXME("Ignoring fog.\n");
-
     /* This must be kept in sync with struct wined3d_ffp_vs_constants. */
     shader_addline(buffer, "uniform struct\n");
     shader_addline(buffer, "{\n");
@@ -257,6 +254,8 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
         if (((settings->texgen[i] & 0xffff0000) != WINED3DTSS_TCI_PASSTHRU) || (settings->texcoords & (1u << i)))
             shader_addline(buffer, "    float4 texcoord%u : TEXCOORD%u;\n", i, i);
     }
+    if (settings->fog_mode == WINED3D_FFP_VS_FOG_DEPTH || settings->fog_mode == WINED3D_FFP_VS_FOG_RANGE)
+        shader_addline(buffer, "    float fogcoord : FOG;\n");
     shader_addline(buffer, "};\n\n");
 
     shader_addline(buffer, "float3 ffp_normalize(float3 n)\n{\n");
@@ -333,8 +332,21 @@ static bool ffp_hlsl_generate_vertex_shader(const struct wined3d_ffp_vs_settings
         case WINED3D_FFP_VS_FOG_OFF:
             break;
 
-        default:
-            FIXME("Unhandled fog mode %#x.\n", settings->fog_mode);
+        case WINED3D_FFP_VS_FOG_FOGCOORD:
+            /* This is FOGTABLEMODE == NONE, FOGVERTEXMODE == NONE.
+             * The specular W is used in that case, even if we output fogcoord,
+             * so there's no point in outputting fogcoord. */
+            break;
+
+        case WINED3D_FFP_VS_FOG_RANGE:
+            shader_addline(buffer, "    o.fogcoord = length(ec_pos.xyz);\n");
+            break;
+
+        case WINED3D_FFP_VS_FOG_DEPTH:
+            if (settings->transformed)
+                shader_addline(buffer, "    o.fogcoord = ec_pos.z;\n");
+            else
+                shader_addline(buffer, "    o.fogcoord = abs(o.pos.z);\n");
             break;
     }
 
