@@ -64,6 +64,7 @@ struct wined3d_saved_states
     uint32_t texture_matrices : 1;
     uint32_t modelview_matrices : 1;
     uint32_t point_scale : 1;
+    uint32_t ffp_vs_settings : 1;
     uint32_t ffp_ps_settings : 1;
 };
 
@@ -1592,6 +1593,10 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_POINTSCALE_B:
         case WINED3D_RS_POINTSCALE_C:
             stateblock->changed.point_scale = 1;
+            break;
+
+        case WINED3D_RS_NORMALIZENORMALS:
+            stateblock->changed.ffp_vs_settings = 1;
             break;
 
         case WINED3D_RS_COLORKEYENABLE:
@@ -3683,6 +3688,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
+    }
+
+    if (changed->ffp_vs_settings && !state->vs)
+    {
+        /* Force invalidation of the vertex shader. */
+        wined3d_device_context_emit_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, NULL);
     }
 
     if (changed->ffp_ps_settings && !state->ps)
