@@ -9189,46 +9189,52 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
-        BOOL output_legacy_texcoord = legacy_syntax;
+        struct wined3d_string_buffer *texcoord = string_buffer_get(&priv->string_buffers);
+        bool output_texcoord = true;
+
+        if (!settings->transformed)
+            shader_addline(texcoord, "ffp_texture_matrix[%u] * ", i);
 
         switch (settings->texgen[i] & 0xffff0000)
         {
             case WINED3DTSS_TCI_PASSTHRU:
                 if (settings->texcoords & (1u << i))
-                    shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u] * ffp_attrib_texcoord%u;\n",
-                            i, i, i);
+                    shader_addline(texcoord, "ffp_attrib_texcoord%u", i);
                 else if (shader_glsl_full_ffp_varyings(gl_info))
-                    shader_addline(buffer, "ffp_varying_texcoord[%u] = vec4(0.0);\n", i);
+                    shader_addline(texcoord, "vec4(0.0)");
                 else
-                    output_legacy_texcoord = FALSE;
+                    output_texcoord = false;
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACENORMAL:
-                shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u] * vec4(normal, 1.0);\n", i, i);
+                shader_addline(texcoord, "vec4(normal, 1.0)");
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACEPOSITION:
-                shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u] * ec_pos;\n", i, i);
+                shader_addline(texcoord, "ec_pos");
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
-                shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u]"
-                        " * vec4(reflect(ffp_normalize(ec_pos.xyz), normal), 1.0);\n", i, i);
+                shader_addline(texcoord, "vec4(reflect(ffp_normalize(ec_pos.xyz), normal), 1.0)");
                 break;
 
             case WINED3DTSS_TCI_SPHEREMAP:
                 shader_addline(buffer, "r = reflect(ffp_normalize(ec_pos.xyz), normal);\n");
                 shader_addline(buffer, "m = 2.0 * length(vec3(r.x, r.y, r.z + 1.0));\n");
-                shader_addline(buffer, "ffp_varying_texcoord[%u] = ffp_texture_matrix[%u]"
-                        " * vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0);\n", i, i);
+                shader_addline(texcoord, "vec4(r.x / m + 0.5, r.y / m + 0.5, 0.0, 1.0)");
                 break;
 
             default:
                 ERR("Unhandled texgen %#x.\n", settings->texgen[i]);
                 break;
         }
-        if (output_legacy_texcoord)
-            shader_addline(buffer, "gl_TexCoord[%u] = ffp_varying_texcoord[%u];\n", i, i);
+        if (output_texcoord)
+        {
+            shader_addline(buffer, "ffp_varying_texcoord[%u] = %s;\n", i, texcoord->buffer);
+            if (legacy_syntax)
+                shader_addline(buffer, "gl_TexCoord[%u] = ffp_varying_texcoord[%u];\n", i, i);
+        }
+        string_buffer_release(&priv->string_buffers, texcoord);
     }
 
     switch (settings->fog_mode)

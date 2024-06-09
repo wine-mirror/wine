@@ -5687,11 +5687,11 @@ void get_projection_matrix(const struct wined3d_context *context, const struct w
 
 /* Setup this textures matrix according to the texture flags. */
 static void compute_texture_matrix(const struct wined3d_matrix *matrix, uint32_t flags, BOOL calculated_coords,
-        BOOL transformed, enum wined3d_format_id format_id, struct wined3d_matrix *out_matrix)
+        enum wined3d_format_id format_id, struct wined3d_matrix *out_matrix)
 {
     struct wined3d_matrix mat;
 
-    if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1 || transformed)
+    if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1)
     {
         get_identity_matrix(out_matrix);
         return;
@@ -5762,7 +5762,7 @@ void get_texture_matrix(const struct wined3d_stream_info *si,
 
     compute_texture_matrix(&state->transforms[WINED3D_TS_TEXTURE0 + tex],
             state->texture_states[tex][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS],
-            generated, si->position_transformed, attribute_format, mat);
+            generated, attribute_format, mat);
 }
 
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
