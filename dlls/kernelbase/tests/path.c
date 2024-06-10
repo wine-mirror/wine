@@ -1218,7 +1218,7 @@ static void test_PathCchCanonicalizeEx(void)
     path_outW[0] = 0xff;
     hr = pPathCchCanonicalizeEx(path_outW, 0, path_inW, 0);
     ok(hr == E_INVALIDARG, "expect hr %#lx, got %#lx\n", E_INVALIDARG, hr);
-    ok(path_outW[0] = 0xff, "expect path_outW unchanged\n");
+    ok(path_outW[0] == 0xff, "expect path_outW unchanged\n");
 
     /* Test path length */
     hr = pPathCchCanonicalizeEx(path_outW, ARRAY_SIZE(path_outW), path_inW, PATHCCH_ALLOW_LONG_PATHS);
