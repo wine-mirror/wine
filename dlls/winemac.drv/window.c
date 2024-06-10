@@ -55,6 +55,25 @@ static UINT get_win_monitor_dpi(HWND hwnd)
 }
 
 
+/* per-monitor DPI aware NtUserSetWindowPos call */
+static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
+    BOOL ret = NtUserSetWindowPos(hwnd, after, x, y, cx, cy, flags);
+    NtUserSetThreadDpiAwarenessContext(context);
+    return ret;
+}
+
+
+/* per-monitor DPI aware NtUserSetInternalWindowPos call */
+static void set_internal_window_pos(HWND hwnd, UINT cmd, RECT *rect, POINT *pt)
+{
+    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
+    NtUserSetInternalWindowPos(hwnd, cmd, rect, pt);
+    NtUserSetThreadDpiAwarenessContext(context);
+}
+
+
 /***********************************************************************
  *              get_cocoa_window_features
  */
@@ -930,10 +949,8 @@ static void set_focus(HWND hwnd, BOOL raise)
 
     if (!(hwnd = NtUserGetAncestor(hwnd, GA_ROOT))) return;
 
-    if (raise && hwnd == NtUserGetForegroundWindow() && hwnd != NtUserGetDesktopWindow() &&
-        !is_all_the_way_front(hwnd))
-        NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
-                           SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+    if (raise && hwnd == NtUserGetForegroundWindow() && hwnd != NtUserGetDesktopWindow() && !is_all_the_way_front(hwnd))
+        set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     if (!(data = get_win_data(hwnd))) return;
 
@@ -1480,8 +1497,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
                 capturePoint = pt;
 
                 send_message(hwnd, WM_MOVING, 0, (LPARAM)&movedRect);
-                NtUserSetWindowPos(hwnd, 0, movedRect.left, movedRect.top, 0, 0,
-                                   SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+                set_window_pos(hwnd, 0, movedRect.left, movedRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
             }
         }
     }
@@ -1494,8 +1510,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     /* if the move is canceled, restore the previous position */
     if (moved && msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)
     {
-        NtUserSetWindowPos(hwnd, 0, origRect.left, origRect.top, 0, 0,
-                           SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+        set_window_pos(hwnd, 0, origRect.left, origRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
     }
 
     return 0;
@@ -2259,7 +2274,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
         if (send_sizemove)
             send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-        NtUserSetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
+        set_window_pos(hwnd, 0, rect.left, rect.top, width, height, flags);
         if (send_sizemove)
             send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
     }
@@ -2429,7 +2444,7 @@ done:
 void macdrv_window_brought_forward(HWND hwnd)
 {
     TRACE("win %p\n", hwnd);
-    NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 
@@ -2469,7 +2484,7 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
 
             release_win_data(data);
 
-            NtUserSetInternalWindowPos(hwnd, SW_SHOW, &rect, NULL);
+            set_internal_window_pos(hwnd, SW_SHOW, &rect, NULL);
         }
     }
 
