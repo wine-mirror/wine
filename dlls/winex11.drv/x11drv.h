@@ -885,6 +885,15 @@ static inline BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSendNotifyMessage, FALSE );
 }
 
+/* per-monitor DPI aware NtUserSetWindowPos call */
+static inline BOOL set_window_pos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
+{
+    UINT context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE_V2 );
+    BOOL ret = NtUserSetWindowPos( hwnd, after, x, y, cx, cy, flags );
+    NtUserSetThreadDpiAwarenessContext( context );
+    return ret;
+}
+
 static inline HWND get_focus(void)
 {
     GUITHREADINFO info;

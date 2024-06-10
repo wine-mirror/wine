@@ -908,15 +908,15 @@ static void set_initial_wm_hints( Display *display, Window window )
  */
 static void make_owner_managed( HWND hwnd )
 {
+    static const UINT flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW |
+                              SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED;
     HWND owner;
 
     if (!(owner = NtUserGetWindowRelative( hwnd, GW_OWNER ))) return;
     if (is_managed( owner )) return;
     if (!is_managed( hwnd )) return;
 
-    NtUserSetWindowPos( owner, 0, 0, 0, 0, 0,
-                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOMOVE |
-                        SWP_NOREDRAW | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_STATECHANGED );
+    set_window_pos( owner, 0, 0, 0, 0, 0, flags );
 }
 
 

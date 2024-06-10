@@ -974,7 +974,7 @@ static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x, int y )
 {
     HWND parent, old_parent;
-    DWORD style;
+    DWORD style, flags = 0;
 
     style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     if (xparent == root_window)
@@ -991,9 +991,9 @@ static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x,
     NtUserShowWindow( hwnd, SW_HIDE );
     old_parent = NtUserSetParent( hwnd, parent );
     NtUserSetWindowLong( hwnd, GWL_STYLE, style, FALSE );
-    NtUserSetWindowPos( hwnd, HWND_TOP, x, y, 0, 0,
-                        SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS |
-                        ((style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
+
+    if (style & WS_VISIBLE) flags = SWP_SHOWWINDOW;
+    set_window_pos( hwnd, HWND_TOP, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOCOPYBITS | flags );
 
     /* make old parent destroy itself if it no longer has children */
     if (old_parent != NtUserGetDesktopWindow()) NtUserPostMessage( old_parent, WM_CLOSE, 0, 0 );
@@ -1145,7 +1145,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     if ((flags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE))
     {
         release_win_data( data );
-        NtUserSetWindowPos( hwnd, 0, x, y, cx, cy, flags );
+        set_window_pos( hwnd, 0, x, y, cx, cy, flags );
         return TRUE;
     }
 
@@ -1183,7 +1183,7 @@ static BOOL X11DRV_GravityNotify( HWND hwnd, XEvent *xev )
     release_win_data( data );
 
     if (window_rect.left != x || window_rect.top != y)
-        NtUserSetWindowPos( hwnd, 0, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
+        set_window_pos( hwnd, 0, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS );
 
     return TRUE;
 }
