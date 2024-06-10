@@ -2784,6 +2784,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
         if (win == WND_OTHER_PROCESS) goto other_process;
         if (win != WND_DESKTOP)
         {
+            UINT dpi_from = dpi ? dpi : get_win_monitor_dpi( hwnd_from );
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
                 mirror_from = TRUE;
@@ -2805,7 +2806,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
                 }
             }
             if (win && win != WND_DESKTOP) release_win_ptr( win );
-            offset = map_dpi_point( offset, get_dpi_for_window( hwnd_from ), dpi );
+            offset = map_dpi_point( offset, get_dpi_for_window( hwnd_from ), dpi_from );
         }
     }
 
@@ -2820,6 +2821,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
         if (win == WND_OTHER_PROCESS) goto other_process;
         if (win != WND_DESKTOP)
         {
+            UINT dpi_to = dpi ? dpi : get_win_monitor_dpi( hwnd_to );
             POINT pt = { 0, 0 };
             if (win->dwExStyle & WS_EX_LAYOUTRTL)
             {
@@ -2842,7 +2844,7 @@ static BOOL get_windows_offset( HWND hwnd_from, HWND hwnd_to, UINT dpi, BOOL *mi
                 }
             }
             if (win && win != WND_DESKTOP) release_win_ptr( win );
-            pt = map_dpi_point( pt, get_dpi_for_window( hwnd_to ), dpi );
+            pt = map_dpi_point( pt, get_dpi_for_window( hwnd_to ), dpi_to );
             offset.x -= pt.x;
             offset.y -= pt.y;
         }
