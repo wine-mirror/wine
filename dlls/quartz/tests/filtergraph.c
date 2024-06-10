@@ -46,7 +46,7 @@ static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
     ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %lu.\n",
             wine_dbgstr_w(pathW), GetLastError());
     WriteFile(file, data, size, &written, NULL);
-    ok(written = size, "Failed to write file data, error %lu.\n", GetLastError());
+    ok(written == size, "Failed to write file data, error %lu.\n", GetLastError());
     CloseHandle(file);
 
     return pathW;
