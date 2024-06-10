@@ -2972,7 +2972,7 @@ static void test_control_delegation(void)
     ok(val == OAFALSE, "Got fullscreen %lu\n", val);
 
     hr = IVideoWindow_put_FullScreenMode(window, OAFALSE);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IFilterGraph2_RemoveFilter(graph, renderer);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
