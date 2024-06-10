@@ -894,6 +894,15 @@ static inline BOOL set_window_pos( HWND hwnd, HWND after, INT x, INT y, INT cx, 
     return ret;
 }
 
+/* per-monitor DPI aware NtUserRedrawWindow call */
+static inline BOOL redraw_window( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
+{
+    UINT context = NtUserSetThreadDpiAwarenessContext( NTUSER_DPI_PER_MONITOR_AWARE_V2 );
+    BOOL ret = NtUserRedrawWindow( hwnd, rect, hrgn, flags );
+    NtUserSetThreadDpiAwarenessContext( context );
+    return ret;
+}
+
 static inline HWND get_focus(void)
 {
     GUITHREADINFO info;

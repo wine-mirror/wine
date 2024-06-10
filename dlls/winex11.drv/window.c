@@ -1551,10 +1551,9 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
             /* map region to client rect since we are using DCX_WINDOW */
             NtGdiOffsetRgn( rgn, new_window_rect->left - new_client_rect->left,
                        new_window_rect->top - new_client_rect->top );
-            NtUserRedrawWindow( hwnd, NULL, rgn,
-                                RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
+            redraw_window( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
         }
-        else NtUserRedrawWindow( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+        else redraw_window( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
         NtGdiDeleteObjectApp( rgn );
     }
 }

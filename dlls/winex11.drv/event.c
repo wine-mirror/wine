@@ -931,7 +931,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     release_win_data( data );
 
-    if (flags) NtUserRedrawWindow( hwnd, &rect, surface_region, flags );
+    if (flags) redraw_window( hwnd, &rect, surface_region, flags );
     if (surface_region) NtGdiDeleteObjectApp( surface_region );
     return TRUE;
 }
