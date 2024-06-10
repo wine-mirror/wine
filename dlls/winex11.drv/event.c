@@ -1418,7 +1418,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
     if (!(NtUserGetWindowLongW( hQueryWnd, GWL_STYLE ) & WS_MINIMIZE))
     {
         POINT pt = *lpPt;
-        NtUserScreenToClient( hQueryWnd, &pt );
+        NtUserMapWindowPoints( 0, hQueryWnd, &pt, 1 );
         NtUserGetClientRect( hQueryWnd, &tempRect, dpi );
 
         if (PtInRect( &tempRect, pt))
@@ -1435,7 +1435,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
     if(!(NtUserGetWindowLongW( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return 0;
     
-    NtUserScreenToClient( hQueryWnd, lpPt );
+    NtUserMapWindowPoints( 0, hQueryWnd, lpPt, 1 );
 
     return hQueryWnd;
 }
