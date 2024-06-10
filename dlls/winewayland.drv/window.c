@@ -444,8 +444,7 @@ void WAYLAND_DestroyWindow(HWND hwnd)
 /***********************************************************************
  *           WAYLAND_WindowPosChanging
  */
-BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
-                               const RECT *window_rect, const RECT *client_rect,
+BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
                                RECT *visible_rect, struct window_surface **surface)
 {
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
@@ -453,9 +452,9 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
     BOOL visible;
     RECT surface_rect;
 
-    TRACE("hwnd %p window %s client %s visible %s after %p flags %08x\n",
+    TRACE("hwnd %p window %s client %s visible %s flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-          wine_dbgstr_rect(visible_rect), insert_after, swp_flags);
+          wine_dbgstr_rect(visible_rect), swp_flags);
 
     if (!data && !(data = wayland_win_data_create(hwnd, window_rect, client_rect)))
         return TRUE;

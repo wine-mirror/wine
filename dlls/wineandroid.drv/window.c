@@ -1136,9 +1136,8 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 /***********************************************************************
  *           ANDROID_WindowPosChanging
  */
-BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
-                                struct window_surface **surface )
+BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
+                                RECT *visible_rect, struct window_surface **surface )
 {
     struct android_win_data *data = get_win_data( hwnd );
     RECT surface_rect;

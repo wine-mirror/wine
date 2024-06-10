@@ -1800,8 +1800,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         window_surface_add_ref( new_surface );
     }
     visible_rect = *window_rect;
-    if (!(ret = user_driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
-                                                 window_rect, client_rect, &visible_rect, &new_surface )))
+    if (!(ret = user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect,
+                                                 &visible_rect, &new_surface )))
     {
         if (IsRectEmpty( window_rect )) visible_rect = *window_rect;
         else

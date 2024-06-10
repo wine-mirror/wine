@@ -2000,15 +2000,14 @@ static inline RECT get_surface_rect(const RECT *visible_rect)
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
-BOOL macdrv_WindowPosChanging(HWND hwnd, HWND insert_after, UINT swp_flags,
-                              const RECT *window_rect, const RECT *client_rect,
+BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
                               RECT *visible_rect, struct window_surface **surface)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     RECT surface_rect;
 
-    TRACE("%p after %p swp %04x window %s client %s visible %s surface %p\n", hwnd, insert_after,
+    TRACE("%p swp %04x window %s client %s visible %s surface %p\n", hwnd,
           swp_flags, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), surface);
 
