@@ -46,6 +46,16 @@ static UINT get_win_monitor_dpi(HWND hwnd)
 }
 
 
+/* per-monitor DPI aware NtUserSetWindowPos call */
+static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
+{
+    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
+    BOOL ret = NtUserSetWindowPos(hwnd, after, x, y, cx, cy, flags);
+    NtUserSetThreadDpiAwarenessContext(context);
+    return ret;
+}
+
+
 /* private window data */
 struct wayland_win_data
 {
@@ -628,7 +638,7 @@ static void wayland_configure_window(HWND hwnd)
         flags |= SWP_NOSENDCHANGING;
     }
 
-    NtUserSetWindowPos(hwnd, 0, 0, 0, window_width, window_height, flags);
+    set_window_pos(hwnd, 0, 0, 0, window_width, window_height, flags);
 }
 
 /**********************************************************************
