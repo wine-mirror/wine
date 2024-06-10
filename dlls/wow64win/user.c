@@ -1717,12 +1717,14 @@ NTSTATUS WINAPI wow64_NtUserCallHwndParam( UINT *args )
                 ULONG hwnd_to;
                 ULONG points;
                 UINT count;
+                UINT dpi;
             } *params32 = UlongToPtr( param );
             struct map_window_points_params params;
 
             params.hwnd_to = LongToHandle( params32->hwnd_to );
             params.points = UlongToPtr( params32->points );
             params.count = params32->count;
+            params.dpi = params32->dpi;
             return NtUserCallHwndParam( hwnd, (UINT_PTR)&params, code );
         }
 

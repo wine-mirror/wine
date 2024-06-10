@@ -1414,14 +1414,16 @@ struct map_window_points_params
     HWND hwnd_to;
     POINT *points;
     UINT count;
+    UINT dpi;
 };
 
-static inline int NtUserMapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count )
+static inline int NtUserMapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count, UINT dpi )
 {
     struct map_window_points_params params;
     params.hwnd_to = hwnd_to;
     params.points = points;
     params.count = count;
+    params.dpi = dpi;
     return NtUserCallHwndParam( hwnd_from, (UINT_PTR)&params,
                                 NtUserCallHwndParam_MapWindowPoints );
 }

@@ -2230,7 +2230,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 
     rect = rect_from_cgrect(event->window_frame_changed.frame);
     macdrv_mac_to_window_rect(data, &rect);
-    NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2);
+    NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
 
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
@@ -2465,7 +2465,7 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
 
             rect = rect_from_cgrect(event->window_restore_requested.frame);
             macdrv_mac_to_window_rect(data, &rect);
-            NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2);
+            NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
 
             release_win_data(data);
 

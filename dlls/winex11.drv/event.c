@@ -917,7 +917,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
         if (NtUserGetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
             mirror_rect( &data->client_rect, &rect );
         abs_rect = rect;
-        NtUserMapWindowPoints( hwnd, 0, (POINT *)&abs_rect, 2 );
+        NtUserMapWindowPoints( hwnd, 0, (POINT *)&abs_rect, 2, 0 /* per-monitor DPI */ );
 
         SERVER_START_REQ( update_window_zorder )
         {
@@ -1088,7 +1088,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     else pos = root_to_virtual_screen( x, y );
 
     X11DRV_X_to_window_rect( data, &rect, pos.x, pos.y, event->width, event->height );
-    if (root_coords) NtUserMapWindowPoints( 0, parent, (POINT *)&rect, 2 );
+    if (root_coords) NtUserMapWindowPoints( 0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */ );
 
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, data->whole_window, (int)rect.left, (int)rect.top,
@@ -1418,7 +1418,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
     if (!(NtUserGetWindowLongW( hQueryWnd, GWL_STYLE ) & WS_MINIMIZE))
     {
         POINT pt = *lpPt;
-        NtUserMapWindowPoints( 0, hQueryWnd, &pt, 1 );
+        NtUserMapWindowPoints( 0, hQueryWnd, &pt, 1, 0 /* per-monitor DPI */ );
         NtUserGetClientRect( hQueryWnd, &tempRect, dpi );
 
         if (PtInRect( &tempRect, pt))
@@ -1435,7 +1435,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
     if(!(NtUserGetWindowLongW( hQueryWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)) return 0;
     
-    NtUserMapWindowPoints( 0, hQueryWnd, lpPt, 1 );
+    NtUserMapWindowPoints( 0, hQueryWnd, lpPt, 1, 0 /* per-monitor DPI */ );
 
     return hQueryWnd;
 }

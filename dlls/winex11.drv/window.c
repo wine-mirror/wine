@@ -2442,7 +2442,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         if (escape.drawable)
         {
             POINT pt = { 0, 0 };
-            NtUserMapWindowPoints( 0, parent, &pt, 1 );
+            NtUserMapWindowPoints( 0, parent, &pt, 1, 0 /* per-monitor DPI */ );
             escape.dc_rect = *win_rect;
             OffsetRect( &escape.dc_rect, pt.x, pt.y );
             if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;

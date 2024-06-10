@@ -519,7 +519,7 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
 
             if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
                 pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
-            NtUserMapWindowPoints( hwnd, 0, &pt, 1 );
+            NtUserMapWindowPoints( hwnd, 0, &pt, 1, 0 /* per-monitor DPI */ );
         }
         release_win_data( data );
     }

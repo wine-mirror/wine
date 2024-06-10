@@ -315,7 +315,10 @@ BOOL query_ime_char_rect(macdrv_query* query)
 
     if (NtUserGetGUIThreadInfo(0, &info))
     {
-        NtUserMapWindowPoints(info.hwndCaret, 0, (POINT*)&info.rcCaret, 2);
+        /* NtUserGetGUIThreadInfo always return client-relative rcCaret in window DPI */
+        NtUserMapWindowPoints(info.hwndCaret, 0, (POINT *)&info.rcCaret, 2, NtUserGetDpiForWindow(info.hwndCaret));
+        NtUserLogicalToPerMonitorDPIPhysicalPoint(info.hwndCaret, (POINT *)&info.rcCaret.left);
+        NtUserLogicalToPerMonitorDPIPhysicalPoint(info.hwndCaret, (POINT *)&info.rcCaret.right);
         if (range->length && info.rcCaret.left == info.rcCaret.right) info.rcCaret.right++;
         query->ime_char_rect.rect = cgrect_from_rect(info.rcCaret);
         ret = TRUE;
