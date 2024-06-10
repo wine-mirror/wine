@@ -2025,8 +2025,8 @@ static void test_chsize( void )
     LONG cur, pos, count;
     char temptext[] = "012345678";
     char *tempfile = _tempnam( ".", "tst" );
-    
-    ok( tempfile != NULL, "Couldn't create test file: %s\n", tempfile );
+
+    ok( tempfile != NULL, "Couldn't create test file\n" );
 
     fd = _open( tempfile, _O_CREAT|_O_TRUNC|_O_RDWR, _S_IREAD|_S_IWRITE );
     ok( fd > 0, "Couldn't open test file\n" );
