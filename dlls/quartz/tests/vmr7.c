@@ -2473,10 +2473,10 @@ static void test_video_window(void)
 
     l = 0xdeadbeef;
     hr = IVideoWindow_get_FullScreenMode(window, &l);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(l == OAFALSE, "Got fullscreenmode %ld.\n", l);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(l == OAFALSE, "Got fullscreenmode %ld.\n", l);
     hr = IVideoWindow_put_FullScreenMode(window, l);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IFilterGraph2_Release(graph);
     IVideoWindow_Release(window);

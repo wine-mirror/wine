@@ -4504,6 +4504,11 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface, LONG *
 
     if (hr == S_OK)
         hr = IVideoWindow_get_FullScreenMode(pVideoWindow, FullScreenMode);
+    if (hr == E_NOTIMPL)
+    {
+        *FullScreenMode = OAFALSE;
+        hr = S_OK;
+    }
 
     LeaveCriticalSection(&This->cs);
 
@@ -4524,6 +4529,8 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG F
 
     if (hr == S_OK)
         hr = IVideoWindow_put_FullScreenMode(pVideoWindow, FullScreenMode);
+    if (hr == E_NOTIMPL && FullScreenMode == OAFALSE)
+        hr = S_FALSE;
 
     LeaveCriticalSection(&This->cs);
 
