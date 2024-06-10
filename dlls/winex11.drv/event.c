@@ -1423,8 +1423,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
         if (PtInRect( &tempRect, pt))
         {
-            HWND ret = NtUserChildWindowFromPointEx( hQueryWnd, pt.x, pt.y,
-                                                     CWP_SKIPINVISIBLE|CWP_SKIPDISABLED );
+            HWND ret = child_window_from_point( hQueryWnd, pt.x, pt.y, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED );
             if (ret && ret != hQueryWnd)
             {
                 ret = find_drop_window( ret, lpPt );
