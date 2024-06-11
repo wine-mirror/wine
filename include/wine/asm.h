@@ -274,13 +274,13 @@
                        ".seh_endprologue\n\t" \
                        "movw ip, #(" #id ")\n\t" \
                        "mov r3, lr\n\t" \
-                       "bl " __ASM_NAME("__wine_syscall") "\n\t" \
+                       "bl __wine_syscall\n\t" \
                        "add sp, #16\n\t" \
                        "bx lr" )
 # define DEFINE_SYSCALL_HELPER32() \
     __ASM_GLOBAL_FUNC( __wine_syscall, \
-                       "movw r0, :lower16:" __ASM_NAME("__wine_syscall_dispatcher") "\n\t" \
-                       "movt r0, :upper16:" __ASM_NAME("__wine_syscall_dispatcher") "\n\t" \
+                       "movw r0, :lower16:__wine_syscall_dispatcher\n\t" \
+                       "movt r0, :upper16:__wine_syscall_dispatcher\n\t" \
                        "ldr r0, [r0]\n\t" \
                        "bx r0" )
 #endif

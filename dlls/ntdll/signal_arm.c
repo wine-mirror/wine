@@ -85,10 +85,8 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                     "str r1, [r0, #0x3c]\n\t"  /* context->Lr */
                     "add r0, #0x0c\n\t"
                     "stm r0, {r2-r12}\n\t"     /* context->R2..R12 */
-#ifndef __SOFTFP__
                     "add r0, #0x44\n\t"        /* 0x50 - 0x0c */
                     "vstm r0, {d0-d15}\n\t"    /* context->D0-D15 */
-#endif
                     "bx lr" )
 
 
@@ -293,7 +291,7 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                    ".seh_endprologue\n\t"
                    "add r0, sp, #0x1a0\n\t"     /* rec (context + 1) */
                    "mov r1, sp\n\t"             /* context */
-                   "bl " __ASM_NAME("dispatch_exception") "\n\t"
+                   "bl dispatch_exception\n\t"
                    "udf #1" )
 
 
@@ -312,7 +310,7 @@ __ASM_GLOBAL_FUNC( KiUserApcDispatcher,
                    "blx ip\n\t"
                    "add r0, sp, #0x18\n\t"        /* context */
                    "ldr r1, [sp, #0x10]\n\t"      /* alertable */
-                   "bl " __ASM_NAME("NtContinue") "\n\t"
+                   "bl NtContinue\n\t"
                    "udf #1" )
 
 
@@ -334,14 +332,14 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    "ldr r3, [r3, 0x2c]\n\t"         /* peb->KernelCallbackTable */
                    "ldr ip, [r3, r2, lsl #2]\n\t"
                    "blx ip\n\t"
-                   ".seh_handler " __ASM_NAME("user_callback_handler") ", %except\n\t"
-                   ".globl " __ASM_NAME("KiUserCallbackDispatcherReturn") "\n"
-                   __ASM_NAME("KiUserCallbackDispatcherReturn") ":\n\t"
+                   ".seh_handler user_callback_handler, %except\n\t"
+                   ".globl KiUserCallbackDispatcherReturn\n"
+                   "KiUserCallbackDispatcherReturn:\n\t"
                    "mov r2, r0\n\t"  /* status */
                    "mov r1, #0\n\t"  /* ret_len */
                    "mov r0, r1\n\t"  /* ret_ptr */
-                   "bl " __ASM_NAME("NtCallbackReturn") "\n\t"
-                   "bl " __ASM_NAME("RtlRaiseStatus") "\n\t"
+                   "bl NtCallbackReturn\n\t"
+                   "bl RtlRaiseStatus\n\t"
                    "udf #1" )
 
 
@@ -612,7 +610,7 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                     ".seh_stackalloc 0x1a0\n\t"
                     ".seh_endprologue\n\t"
                     "mov r0, sp\n\t"  /* context */
-                    "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
+                    "bl RtlCaptureContext\n\t"
                     "ldr r0, [sp, #0x1a0]\n\t" /* rec */
                     "ldr r1, [sp, #0x1a4]\n\t"
                     "str r1, [sp, #0x3c]\n\t"  /* context->Lr */
@@ -631,10 +629,10 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                     "ldr r3, [r3, #0x30]\n\t"  /* peb */
                     "ldrb r2, [r3, #2]\n\t"    /* peb->BeingDebugged */
                     "cbnz r2, 1f\n\t"
-                    "bl " __ASM_NAME("dispatch_exception") "\n"
+                    "bl dispatch_exception\n"
                     "1:\tmov r2, #1\n\t"
-                    "bl " __ASM_NAME("NtRaiseException") "\n\t"
-                    "bl " __ASM_NAME("RtlRaiseStatus") )
+                    "bl NtRaiseException\n\t"
+                    "bl RtlRaiseStatus" )
 
 
 /***********************************************************************
@@ -687,8 +685,8 @@ __ASM_GLOBAL_FUNC( RtlUserThreadStart,
                    "ldr ip, [ip]\n\t"
                    "blx ip\n\t"
                    "nop\n"
-                   "1:\t.long " __ASM_NAME("pBaseThreadInitThunk") "\n\t"
-                   ".seh_handler " __ASM_NAME("call_unhandled_exception_handler") ", %except" )
+                   "1:\t.long pBaseThreadInitThunk\n\t"
+                   ".seh_handler call_unhandled_exception_handler, %except" )
 
 /******************************************************************
  *		LdrInitializeThunk (NTDLL.@)
@@ -725,9 +723,9 @@ __ASM_GLOBAL_FUNC( DbgUiRemoteBreakin,
                    "ldr r0, [r0, #0x30]\n\t"        /* NtCurrentTeb()->Peb */
                    "ldrb r0, [r0, 0x02]\n\t"        /* peb->BeingDebugged */
                    "cbz r0, 1f\n\t"
-                   "bl " __ASM_NAME("DbgBreakPoint") "\n"
+                   "bl DbgBreakPoint\n"
                    "1:\tmov r0, #0\n\t"
-                   "bl " __ASM_NAME("RtlExitUserThread") "\n"
+                   "bl RtlExitUserThread\n"
                    "DbgUiRemoteBreakin_handler:\n\t"
                    "mov sp, r1\n\t"                 /* frame */
                    "b 1b" )

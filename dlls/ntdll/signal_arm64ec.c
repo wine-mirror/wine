@@ -1795,7 +1795,7 @@ __ASM_GLOBAL_FUNC( "#KiUserCallbackDispatcher",
                    "nop\n\t"
                    ".seh_save_reg lr, 0x18\n\t"
                    ".seh_endprologue\n\t"
-                   ".seh_handler " __ASM_NAME("user_callback_handler") ", @except\n\t"
+                   ".seh_handler user_callback_handler, @except\n\t"
                    "ldr x0, [sp]\n\t"             /* args */
                    "ldp w1, w2, [sp, #0x08]\n\t"  /* len, id */
                    "ldr x3, [x18, 0x60]\n\t"      /* peb */
