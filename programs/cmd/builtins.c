@@ -3724,10 +3724,22 @@ void WCMD_verify (const WCHAR *args) {
  * Display version info.
  */
 
-void WCMD_version (void) {
+RETURN_CODE WCMD_version(void)
+{
+    RETURN_CODE return_code;
 
-  WCMD_output_asis (version_string);
-
+    WCMD_output_asis(L"\r\n");
+    if (*quals)
+    {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+        return_code = ERROR_INVALID_FUNCTION;
+    }
+    else
+    {
+        WCMD_output_asis(version_string);
+        return_code = NO_ERROR;
+    }
+    return errorlevel = return_code;
 }
 
 /****************************************************************************

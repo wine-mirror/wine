@@ -1903,8 +1903,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_type(parms_start);
         break;
       case WCMD_VER:
-        WCMD_output_asis(L"\r\n");
-        WCMD_version ();
+        return_code = WCMD_version();
         break;
       case WCMD_VERIFY:
         WCMD_verify (parms_start);
@@ -4181,7 +4180,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
  */
 
   interactive = TRUE;
-  if (!opt_k) WCMD_version ();
+  if (!opt_k) WCMD_output_asis(version_string);
   if (echo_mode) WCMD_output_asis(L"\r\n");
   /* Read until EOF (which for std input is never, but if redirect in place, may occur */
   while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE))) != RPL_EOF)
