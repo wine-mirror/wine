@@ -36225,6 +36225,7 @@ static void test_nv12(void)
     unsigned int test_idx;
     ID3D10Blob *bytecode;
     ID3D11Device *device;
+    UINT support;
     HRESULT hr;
 
     static const uint32_t clear_values[4] = {0xabcdef00, 0xabcdef00, 0xabcdef00, 0xabcdef00};
@@ -36286,6 +36287,16 @@ static void test_nv12(void)
         return;
     device = test_context.device;
     device_context = test_context.immediate_context;
+
+    hr = ID3D11Device_CheckFormatSupport(device, DXGI_FORMAT_NV12, &support);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (!(support & D3D11_FORMAT_SUPPORT_TEXTURE2D))
+    {
+        skip("NV12 textures are not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
 
     bytecode = compile_shader(cs_code, sizeof(cs_code) - 1, "cs_5_0");
     hr = ID3D11Device_CreateComputeShader(device, ID3D10Blob_GetBufferPointer(bytecode),
