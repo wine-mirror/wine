@@ -24,7 +24,6 @@
 #include "limits.h"
 #include "math.h"
 #include "mbctype.h"
-#include "stdio.h"
 #include "wchar.h"
 #include "wctype.h"
 #include "uchar.h"

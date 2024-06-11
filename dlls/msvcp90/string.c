@@ -19,7 +19,6 @@
 #include <stdarg.h>
 
 #include "msvcp90.h"
-#include "stdio.h"
 
 #include "windef.h"
 #include "winbase.h"

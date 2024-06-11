@@ -17,7 +17,6 @@
  */
 
 #include <stdarg.h>
-#include <stdio.h>
 #include <limits.h>
 #include <share.h>
 
@@ -3028,8 +3027,19 @@ void __thiscall basic_filebuf_char__Init(basic_filebuf_char *this, FILE *file, b
 
     basic_streambuf_char__Init_empty(&this->base);
     if(file)
-        basic_streambuf_char__Init(&this->base, &file->_base, &file->_ptr,
-                &file->_cnt, &file->_base, &file->_ptr, &file->_cnt);
+    {
+        char **base, **ptr;
+        int *cnt;
+
+#if _MSVCP_VER >= 140
+        _get_stream_buffer_pointers(file, &base, &ptr, &cnt);
+#else
+        base = &file->_base;
+        ptr = &file->_ptr;
+        cnt = &file->_cnt;
+#endif
+        basic_streambuf_char__Init(&this->base, base, ptr, cnt, base, ptr, cnt);
+    }
 }
 
 /* ?_Initcvt@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAV?$codecvt@DDH@2@@Z */

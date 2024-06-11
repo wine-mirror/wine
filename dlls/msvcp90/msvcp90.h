@@ -17,6 +17,7 @@
  */
 
 #include "stdbool.h"
+#include <stdio.h>
 #include "stdlib.h"
 #include "windef.h"
 #include "winbase.h"
@@ -736,3 +737,7 @@ void __cdecl DECLSPEC_NORETURN _Xruntime_error(const char*);
 void DECLSPEC_NORETURN throw_exception(const char*);
 void DECLSPEC_NORETURN throw_failure(const char*);
 void DECLSPEC_NORETURN throw_range_error(const char*);
+
+#if _MSVCP_VER >= 140
+int CDECL _get_stream_buffer_pointers(FILE*,char***,char***,int**);
+#endif
