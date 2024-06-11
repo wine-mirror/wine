@@ -159,6 +159,8 @@ typedef int RETURN_CODE;
 /* temporary to detect builtin commands not migrated to handle return code */
 #define RETURN_CODE_OLD_CHAINING         (-999998)
 
+BOOL WCMD_print_volume_information(const WCHAR *);
+
 void WCMD_assoc (const WCHAR *, BOOL);
 RETURN_CODE WCMD_batch(const WCHAR *, WCHAR *, const WCHAR *, HANDLE);
 RETURN_CODE WCMD_call(WCHAR *command);
@@ -205,7 +207,8 @@ void WCMD_title (const WCHAR *);
 RETURN_CODE WCMD_type(WCHAR *);
 RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
-int  WCMD_volume (BOOL set_label, const WCHAR *args);
+RETURN_CODE WCMD_volume(void);
+int  WCMD_old_volume (BOOL set_label, const WCHAR *args);
 void WCMD_mklink(WCHAR *args);
 
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);

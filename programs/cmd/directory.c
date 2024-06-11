@@ -934,14 +934,14 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       lastDrive = towupper(thisEntry->dirName[0]);
 
       if (!bare) {
-         WCHAR drive[3];
-
+         WCHAR drive[4];
          WINE_TRACE("Writing volume for '%c:'\n", thisEntry->dirName[0]);
-         memcpy(drive, thisEntry->dirName, 2 * sizeof(WCHAR));
-         drive[2] = 0x00;
-         status = WCMD_volume (0, drive);
+         drive[0] = thisEntry->dirName[0];
+         drive[1] = thisEntry->dirName[1];
+         drive[2] = L'\\';
+         drive[3] = L'\0';
          trailerReqd = TRUE;
-         if (!status) {
+         if (!WCMD_print_volume_information(drive)) {
            errorlevel = ERROR_INVALID_FUNCTION;
            goto exit;
          }

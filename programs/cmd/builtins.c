@@ -3739,6 +3739,22 @@ RETURN_CODE WCMD_version(void)
     return errorlevel = return_code;
 }
 
+BOOL WCMD_print_volume_information(const WCHAR *path)
+{
+    WCHAR label[MAX_PATH];
+    DWORD serial;
+
+    if (!GetVolumeInformationW(path, label, ARRAY_SIZE(label), &serial, NULL, NULL, NULL, 0))
+        return FALSE;
+    if (label[0])
+        WCMD_output(WCMD_LoadMessage(WCMD_VOLUMELABEL), path[0], label);
+    else
+        WCMD_output(WCMD_LoadMessage(WCMD_VOLUMENOLABEL), path[0]);
+
+    WCMD_output(WCMD_LoadMessage(WCMD_VOLUMESERIALNO), HIWORD(serial), LOWORD(serial));
+    return TRUE;
+}
+
 /****************************************************************************
  * WCMD_volume
  *
@@ -3747,7 +3763,7 @@ RETURN_CODE WCMD_version(void)
  * Returns 1 on success, 0 otherwise
  */
 
-int WCMD_volume(BOOL set_label, const WCHAR *path)
+int WCMD_old_volume(BOOL set_label, const WCHAR *path)
 {
   DWORD count, serial;
   WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
@@ -3798,6 +3814,34 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
     }
   }
   return 1;
+}
+
+RETURN_CODE WCMD_volume(void)
+{
+    WCHAR curdir[MAX_PATH];
+    RETURN_CODE return_code = NO_ERROR;
+
+    if (*quals)
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    if (!*param1)
+    {
+        if (!GetCurrentDirectoryW(ARRAY_SIZE(curdir), curdir))
+            return errorlevel = ERROR_INVALID_FUNCTION;
+    }
+    else if (param1[1] == L':' && !param1[2])
+    {
+        memcpy(curdir, param1, 2 * sizeof(WCHAR));
+    }
+    else
+        return errorlevel = ERROR_INVALID_FUNCTION;
+    curdir[2] = L'\\';
+    curdir[3] = L'\0';
+    if (!WCMD_print_volume_information(curdir))
+    {
+        return_code = GetLastError();
+        WCMD_print_error();
+    }
+    return errorlevel = return_code;
 }
 
 /**************************************************************************
