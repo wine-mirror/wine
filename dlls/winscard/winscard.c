@@ -292,7 +292,7 @@ LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DW
     params.names_len = &names_len_utf8;
     params.state = &state64;
     params.protocol = &protocol64;
-    params.atr = NULL;
+    params.atr = atr;
     if (!atr_len) params.atr_len = NULL;
     else
     {
