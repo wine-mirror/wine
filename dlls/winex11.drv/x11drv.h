@@ -242,6 +242,8 @@ extern LRESULT X11DRV_ClipboardWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARA
 extern void X11DRV_UpdateClipboard(void);
 extern BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
                                         struct window_surface **surface );
+extern void X11DRV_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                        BYTE alpha, UINT flags );
 extern LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect );
 extern BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface );

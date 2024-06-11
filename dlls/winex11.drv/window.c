@@ -2991,7 +2991,6 @@ BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF co
 {
     struct window_surface *surface;
     struct x11drv_win_data *data;
-    BOOL mapped;
     RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
@@ -3013,6 +3012,22 @@ BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF co
     else set_surface_color_key( surface, color_key );
 
     if ((*window_surface = surface)) window_surface_add_ref( surface );
+    release_win_data( data );
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              UpdateLayeredWindow   (X11DRV.@)
+ */
+void X11DRV_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                 BYTE alpha, UINT flags )
+{
+    struct x11drv_win_data *data;
+    BOOL mapped;
+
+    if (!(data = get_win_data( hwnd ))) return;
     mapped = data->mapped;
     release_win_data( data );
 
@@ -3024,9 +3039,8 @@ BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF co
         if ((style & WS_VISIBLE) && ((style & WS_MINIMIZE) || is_window_rect_mapped( window_rect )))
             map_window( hwnd, style );
     }
-
-    return TRUE;
 }
+
 
 /* Add a window to taskbar */
 static void taskbar_add_tab( HWND hwnd )
