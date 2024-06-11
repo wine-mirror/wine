@@ -597,9 +597,10 @@ static int is_native_arch_disabled( struct makefile *make )
 /*******************************************************************
  *         get_link_arch
  */
-static int get_link_arch( struct makefile *make, unsigned int arch, unsigned int *link_arch )
+static int get_link_arch( const struct makefile *make, unsigned int arch, unsigned int *link_arch )
 {
     unsigned int hybrid_arch = hybrid_archs[arch];
+
     if (native_archs[arch]) return 0;
     if (hybrid_arch && make->disabled[hybrid_arch]) hybrid_arch = 0;
     if (make->disabled[arch] && !hybrid_arch) return 0;
@@ -2287,9 +2288,9 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
                                         struct strarray imports, enum import_type type, unsigned int arch )
 {
     struct strarray ret = empty_strarray;
-    unsigned int i;
+    unsigned int i, link_arch;
 
-    if (native_archs[arch]) arch = native_archs[arch];
+    if (!get_link_arch( make, arch, &link_arch )) return ret;
 
     for (i = 0; i < imports.count; i++)
     {
@@ -2310,7 +2311,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
         }
         else name = get_base_name( name );
 
-        if ((submake = get_static_lib( name, arch )))
+        if ((submake = get_static_lib( name, link_arch )))
         {
             const char *ext = (type == IMPORT_TYPE_DELAYED && !delay_load_flags[arch]) ? ".delay.a" : ".a";
             const char *lib = obj_dir_path( submake, strmake( "%slib%s%s", arch_dirs[arch], name, ext ));
@@ -3389,8 +3390,6 @@ static void output_module( struct makefile *make, unsigned int arch )
     char *spec_file = NULL;
     unsigned int i, link_arch;
 
-    if (!get_link_arch( make, arch, &link_arch )) return;
-
     if (!make->is_exe)
     {
         if (make->data_only || strarray_exists( &make->extradllflags, "-Wl,--subsystem,native" ))
@@ -3404,6 +3403,8 @@ static void output_module( struct makefile *make, unsigned int arch )
 
     if (!make->data_only)
     {
+        if (!get_link_arch( make, arch, &link_arch )) return;
+
         module_name = arch_module_name( make->module, arch );
 
         if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
@@ -3422,14 +3423,21 @@ static void output_module( struct makefile *make, unsigned int arch )
             }
         }
     }
-    else module_name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
+    else
+    {
+        if (native_archs[arch]) return;
+        if (make->disabled[arch]) return;
+        link_arch = arch;
 
-    strarray_add( &make->all_targets[arch], module_name );
+        module_name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
+    }
+
+    strarray_add( &make->all_targets[link_arch], module_name );
     if (make->data_only)
-        add_install_rule( make, make->module, arch, module_name,
+        add_install_rule( make, make->module, link_arch, module_name,
                           strmake( "d$(dlldir)/%s%s", arch_pe_dirs[arch], make->module ));
     else
-        add_install_rule( make, make->module, arch, module_name,
+        add_install_rule( make, make->module, link_arch, module_name,
                           strmake( "%c%s%s%s", '0' + arch, arch_install_dirs[arch], make->module,
                                    dll_ext[arch] ));
 
