@@ -555,9 +555,9 @@ SUCCESS 0
 SUCCESS 0
 FAILURE 1
 --- success/failure for VERIFY command
-@todo_wine@SUCCESS 0
-@todo_wine@SUCCESS 0
-@todo_wine@FAILURE 1
+SUCCESS 0
+SUCCESS 0
+FAILURE 1
 --- success/failure for VOL command
 @todo_wine@SUCCESS 0
 @todo_wine@SUCCESS 0

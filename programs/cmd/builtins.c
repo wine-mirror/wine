@@ -3697,25 +3697,22 @@ void WCMD_more (WCHAR *args) {
  * it...
  */
 
-void WCMD_verify (const WCHAR *args) {
+RETURN_CODE WCMD_verify(void)
+{
+    RETURN_CODE return_code = NO_ERROR;
 
-  int count;
-
-  count = lstrlenW(args);
-  if (count == 0) {
-    if (verify_mode) WCMD_output(WCMD_LoadMessage(WCMD_VERIFYPROMPT), L"ON");
-    else WCMD_output (WCMD_LoadMessage(WCMD_VERIFYPROMPT), L"OFF");
-    return;
-  }
-  if (lstrcmpiW(args, L"ON") == 0) {
-    verify_mode = TRUE;
-    return;
-  }
-  else if (lstrcmpiW(args, L"OFF") == 0) {
-    verify_mode = FALSE;
-    return;
-  }
-  else WCMD_output_stderr(WCMD_LoadMessage(WCMD_VERIFYERR));
+    if (!param1[0])
+        WCMD_output(WCMD_LoadMessage(WCMD_VERIFYPROMPT), verify_mode ? L"ON" : L"OFF");
+    else if (lstrcmpiW(param1, L"ON") == 0)
+        verify_mode = TRUE;
+    else if (lstrcmpiW(param1, L"OFF") == 0)
+        verify_mode = FALSE;
+    else
+    {
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_VERIFYERR));
+        return_code = ERROR_INVALID_FUNCTION;
+    }
+    return errorlevel = return_code;
 }
 
 /****************************************************************************

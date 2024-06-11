@@ -203,7 +203,7 @@ void WCMD_shift (const WCHAR *args);
 void WCMD_start (WCHAR *args);
 void WCMD_title (const WCHAR *);
 RETURN_CODE WCMD_type(WCHAR *);
-void WCMD_verify (const WCHAR *args);
+RETURN_CODE WCMD_verify(void);
 RETURN_CODE WCMD_version(void);
 int  WCMD_volume (BOOL set_label, const WCHAR *args);
 void WCMD_mklink(WCHAR *args);

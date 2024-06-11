@@ -1906,7 +1906,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         return_code = WCMD_version();
         break;
       case WCMD_VERIFY:
-        WCMD_verify (parms_start);
+        return_code = WCMD_verify();
         break;
       case WCMD_VOL:
         WCMD_volume (FALSE, parms_start);
