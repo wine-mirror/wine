@@ -755,7 +755,7 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
         release_menu_ptr( parent_menu );
 
         /* Refresh the frame to reflect the change */
-        get_window_rects( hwnd, COORDS_CLIENT, &rc, NULL, get_thread_dpi() );
+        get_window_rect_rel( hwnd, COORDS_CLIENT, &rc, get_thread_dpi() );
         rc.bottom = 0;
         NtUserRedrawWindow( hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN );
     }

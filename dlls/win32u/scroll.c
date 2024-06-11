@@ -196,7 +196,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
     switch(bar)
     {
     case SB_HORZ:
-        get_window_rects( hwnd, COORDS_WINDOW, NULL, rect, get_thread_dpi() );
+        get_client_rect_rel( hwnd, COORDS_WINDOW, rect, get_thread_dpi() );
         rect->top = rect->bottom;
         rect->bottom += get_system_metrics( SM_CYHSCROLL );
         if (win->dwStyle & WS_VSCROLL) rect->right++;
@@ -204,7 +204,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
         break;
 
     case SB_VERT:
-        get_window_rects( hwnd, COORDS_WINDOW, NULL, rect, get_thread_dpi() );
+        get_client_rect_rel( hwnd, COORDS_WINDOW, rect, get_thread_dpi() );
         if (win->dwExStyle & WS_EX_LEFTSCROLLBAR)
         {
             rect->right = rect->left;
@@ -817,7 +817,7 @@ void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt )
 
     if (scrollbar != SB_CTL)
     {
-        get_window_rects( hwnd, COORDS_CLIENT, &rect, NULL, get_thread_dpi() );
+        get_window_rect_rel( hwnd, COORDS_CLIENT, &rect, get_thread_dpi() );
         screen_to_client( hwnd, &pt );
         pt.x -= rect.left;
         pt.y -= rect.top;

@@ -492,7 +492,7 @@ static void handle_window_pos_changed( HWND hwnd, const WINDOWPOS *winpos )
 {
     RECT rect;
 
-    get_window_rects( hwnd, COORDS_PARENT, NULL, &rect, get_thread_dpi() );
+    get_client_rect_rel( hwnd, COORDS_PARENT, &rect, get_thread_dpi() );
     if (!(winpos->flags & SWP_NOCLIENTMOVE))
         send_message( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ));
 
@@ -711,7 +711,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
 
     minmax = get_min_max_info( hwnd );
     dpi = get_thread_dpi();
-    get_window_rects( hwnd, COORDS_PARENT, &sizing_rect, NULL, dpi );
+    get_window_rect_rel( hwnd, COORDS_PARENT, &sizing_rect, dpi );
     orig_rect = sizing_rect;
     if (style & WS_CHILD)
     {
@@ -1029,7 +1029,7 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 static void get_inside_rect( HWND hwnd, enum coords_relative relative, RECT *rect,
                              DWORD style, DWORD ex_style )
 {
-    get_window_rects( hwnd, relative, rect, NULL, get_thread_dpi() );
+    get_window_rect_rel( hwnd, relative, rect, get_thread_dpi() );
 
     /* Remove frame from rectangle */
     if (has_thick_frame( style, ex_style ))
@@ -1718,7 +1718,7 @@ static void nc_paint( HWND hwnd, HRGN clip )
 
     TRACE( "%p %d\n", hwnd, active );
 
-    get_window_rects( hwnd, COORDS_SCREEN, NULL, &rectClient, get_thread_dpi() );
+    get_client_rect_rel( hwnd, COORDS_SCREEN, &rectClient, get_thread_dpi() );
     hrgn = NtGdiCreateRectRgn( rectClient.left, rectClient.top,
                                rectClient.right, rectClient.bottom );
 
@@ -1738,7 +1738,7 @@ static void nc_paint( HWND hwnd, HRGN clip )
         return;
     }
 
-    get_window_rects( hwnd, COORDS_WINDOW, &rect, NULL, get_thread_dpi() );
+    get_window_rect_rel( hwnd, COORDS_WINDOW, &rect, get_thread_dpi() );
     NtGdiGetAppClipBox( hdc, &clip_rect );
 
     NtGdiSelectPen( hdc, get_sys_color_pen( COLOR_WINDOWFRAME ));
@@ -2355,7 +2355,7 @@ static LRESULT handle_nc_mouse_move( HWND hwnd, WPARAM wparam, LPARAM lparam )
     if (wparam != HTHSCROLL && wparam != HTVSCROLL)
         return 0;
 
-    get_window_rects( hwnd, COORDS_CLIENT, &rect, NULL, get_thread_dpi() );
+    get_window_rect_rel( hwnd, COORDS_CLIENT, &rect, get_thread_dpi() );
 
     pt.x = (short)LOWORD( lparam );
     pt.y = (short)HIWORD( lparam );

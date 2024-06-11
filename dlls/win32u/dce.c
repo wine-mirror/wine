@@ -1963,7 +1963,7 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
 
             for (i = 0; list[i]; i++)
             {
-                get_window_rects( list[i], COORDS_PARENT, &r, NULL, get_thread_dpi() );
+                get_window_rect_rel( list[i], COORDS_PARENT, &r, get_thread_dpi() );
                 if (!rect || intersect_rect( &dummy, &r, rect ))
                     NtUserSetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
                                         SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |
