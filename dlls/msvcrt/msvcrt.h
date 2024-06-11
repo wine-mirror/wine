@@ -301,14 +301,13 @@ extern BOOL msvcrt_create_io_inherit_block(WORD*, BYTE**);
 #define _RT_CRNL        252
 #define _RT_BANNER      255
 
-extern FILE MSVCRT__iob[];
-
 #define MSVCRT_NO_CONSOLE_FD (-2)
 #define MSVCRT_NO_CONSOLE ((HANDLE)MSVCRT_NO_CONSOLE_FD)
 
-#define MSVCRT_stdin       (MSVCRT__iob+STDIN_FILENO)
-#define MSVCRT_stdout      (MSVCRT__iob+STDOUT_FILENO)
-#define MSVCRT_stderr      (MSVCRT__iob+STDERR_FILENO)
+#if _MSVCR_VER < 140
+extern FILE MSVCRT__iob[];
+#define __acrt_iob_func(idx) (MSVCRT__iob+(idx))
+#endif
 
 /* internal file._flag flags */
 #define MSVCRT__USERBUF  0x0100

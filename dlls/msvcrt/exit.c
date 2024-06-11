@@ -302,7 +302,7 @@ void DECLSPEC_NORETURN CDECL _wassert(const wchar_t* str, const wchar_t* file, u
     DoMessageBoxW(L"Assertion failed!", text);
   }
   else
-    fwprintf(MSVCRT_stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
+    fwprintf(stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
   raise(SIGABRT);
   _exit(3);

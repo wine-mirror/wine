@@ -3915,7 +3915,7 @@ int CDECL _fgetc_nolock(FILE* file)
  */
 int CDECL _fgetchar(void)
 {
-  return fgetc(MSVCRT_stdin);
+  return fgetc(stdin);
 }
 
 /*********************************************************************
@@ -4047,7 +4047,7 @@ wint_t CDECL getwc(FILE* file)
  */
 wint_t CDECL _fgetwchar(void)
 {
-  return fgetwc(MSVCRT_stdin);
+  return fgetwc(stdin);
 }
 
 /*********************************************************************
@@ -4266,7 +4266,7 @@ wint_t CDECL _fputwc_nolock(wint_t wc, FILE* file)
  */
 wint_t CDECL _fputwchar(wint_t wc)
 {
-  return fputwc(wc, MSVCRT_stdout);
+  return fputwc(wc, stdout);
 }
 
 /*********************************************************************
@@ -4424,7 +4424,7 @@ int CDECL _fputc_nolock(int c, FILE* file)
  */
 int CDECL _fputchar(int c)
 {
-  return fputc(c, MSVCRT_stdout);
+  return fputc(c, stdout);
 }
 
 /*********************************************************************
@@ -4839,7 +4839,7 @@ int CDECL fputws(const wchar_t *s, FILE* file)
  */
 int CDECL getchar(void)
 {
-  return fgetc(MSVCRT_stdin);
+  return fgetc(stdin);
 }
 
 /*********************************************************************
@@ -4861,10 +4861,10 @@ char * CDECL gets_s(char *buf, size_t len)
     if (!MSVCRT_CHECK_PMT(buf != NULL)) return NULL;
     if (!MSVCRT_CHECK_PMT(len != 0)) return NULL;
 
-    _lock_file(MSVCRT_stdin);
-    for(cc = _fgetc_nolock(MSVCRT_stdin);
+    _lock_file(stdin);
+    for(cc = _fgetc_nolock(stdin);
             len != 0 && cc != EOF && cc != '\n';
-            cc = _fgetc_nolock(MSVCRT_stdin))
+            cc = _fgetc_nolock(stdin))
     {
         if (cc != '\r')
         {
@@ -4872,7 +4872,7 @@ char * CDECL gets_s(char *buf, size_t len)
             len--;
         }
     }
-    _unlock_file(MSVCRT_stdin);
+    _unlock_file(stdin);
 
     if (!len)
     {
@@ -4908,14 +4908,14 @@ wchar_t* CDECL _getws(wchar_t* buf)
     wint_t cc;
     wchar_t* ws = buf;
 
-    _lock_file(MSVCRT_stdin);
-    for (cc = _fgetwc_nolock(MSVCRT_stdin); cc != WEOF && cc != '\n';
-         cc = _fgetwc_nolock(MSVCRT_stdin))
+    _lock_file(stdin);
+    for (cc = _fgetwc_nolock(stdin); cc != WEOF && cc != '\n';
+         cc = _fgetwc_nolock(stdin))
     {
         if (cc != '\r')
             *buf++ = (wchar_t)cc;
     }
-    _unlock_file(MSVCRT_stdin);
+    _unlock_file(stdin);
 
     if ((cc == WEOF) && (ws == buf))
     {
@@ -4941,7 +4941,7 @@ int CDECL putc(int c, FILE* file)
  */
 int CDECL putchar(int c)
 {
-  return fputc(c, MSVCRT_stdout);
+  return fputc(c, stdout);
 }
 
 /*********************************************************************
@@ -4952,14 +4952,14 @@ int CDECL puts(const char *s)
     size_t len = strlen(s);
     int ret;
 
-    _lock_file(MSVCRT_stdout);
-    if(_fwrite_nolock(s, sizeof(*s), len, MSVCRT_stdout) != len) {
-        _unlock_file(MSVCRT_stdout);
+    _lock_file(stdout);
+    if(_fwrite_nolock(s, sizeof(*s), len, stdout) != len) {
+        _unlock_file(stdout);
         return EOF;
     }
 
-    ret = _fwrite_nolock("\n",1,1,MSVCRT_stdout) == 1 ? 0 : EOF;
-    _unlock_file(MSVCRT_stdout);
+    ret = _fwrite_nolock("\n",1,1,stdout) == 1 ? 0 : EOF;
+    _unlock_file(stdout);
     return ret;
 }
 
@@ -4970,11 +4970,11 @@ int CDECL _putws(const wchar_t *s)
 {
     int ret;
 
-    _lock_file(MSVCRT_stdout);
-    ret = fputws(s, MSVCRT_stdout);
+    _lock_file(stdout);
+    ret = fputws(s, stdout);
     if(ret >= 0)
-        ret = _fputwc_nolock('\n', MSVCRT_stdout);
-    _unlock_file(MSVCRT_stdout);
+        ret = _fputwc_nolock('\n', stdout);
+    _unlock_file(stdout);
     return ret >= 0 ? 0 : WEOF;
 }
 
@@ -5546,7 +5546,7 @@ int CDECL _vfwprintf_p(FILE* file, const wchar_t *format, va_list valist)
  */
 int CDECL vprintf(const char *format, va_list valist)
 {
-  return vfprintf(MSVCRT_stdout,format,valist);
+  return vfprintf(stdout,format,valist);
 }
 
 /*********************************************************************
@@ -5554,7 +5554,7 @@ int CDECL vprintf(const char *format, va_list valist)
  */
 int CDECL vprintf_s(const char *format, va_list valist)
 {
-  return vfprintf_s(MSVCRT_stdout,format,valist);
+  return vfprintf_s(stdout,format,valist);
 }
 
 /*********************************************************************
@@ -5562,7 +5562,7 @@ int CDECL vprintf_s(const char *format, va_list valist)
  */
 int CDECL vwprintf(const wchar_t *format, va_list valist)
 {
-  return vfwprintf(MSVCRT_stdout,format,valist);
+  return vfwprintf(stdout,format,valist);
 }
 
 /*********************************************************************
@@ -5570,7 +5570,7 @@ int CDECL vwprintf(const wchar_t *format, va_list valist)
  */
 int CDECL vwprintf_s(const wchar_t *format, va_list valist)
 {
-  return vfwprintf_s(MSVCRT_stdout,format,valist);
+  return vfwprintf_s(stdout,format,valist);
 }
 
 /*********************************************************************
@@ -5738,7 +5738,7 @@ int WINAPIV printf(const char *format, ...)
     va_list valist;
     int res;
     va_start(valist, format);
-    res = vfprintf(MSVCRT_stdout, format, valist);
+    res = vfprintf(stdout, format, valist);
     va_end(valist);
     return res;
 }
