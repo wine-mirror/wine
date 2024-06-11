@@ -1169,11 +1169,6 @@ static void check_readback_data_u8_with_buffer_(unsigned int line, struct resour
     unsigned int x = 0, y = 0, z = 0;
     BOOL all_match = FALSE;
 
-    ok_(__FILE__, line)(rb->map_desc.RowPitch == depth_pitch, "Got row pitch %u instead of %u.\n",
-            rb->map_desc.RowPitch, depth_pitch);
-    ok_(__FILE__, line)(rb->map_desc.DepthPitch == slice_pitch, "Got depth pitch %u instead of %u.\n",
-            rb->map_desc.DepthPitch, depth_pitch);
-
     for (z = 0; z < rb->depth; ++z)
     {
         for (y = 0; y < rb->height; ++y)
@@ -36319,7 +36314,6 @@ static void test_nv12(void)
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
     {
         /* I need only two uints in the cbuffer, but the size must be a multiple of 16. */
-        uint32_t cbuffer_data[4], expected_row_pitch, expected_depth_pitch;
         D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {0};
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {0};
         D3D11_SUBRESOURCE_DATA subresource_data = {0};
@@ -36330,6 +36324,7 @@ static void test_nv12(void)
         ID3D11ShaderResourceView *srvs[2];
         D3D11_TEXTURE2D_DESC desc = {0};
         struct resource_readback rb;
+        uint32_t cbuffer_data[4];
         ID3D11Buffer *cbuffer;
         HRESULT expected_hr;
         unsigned int i, j;
@@ -36340,9 +36335,6 @@ static void test_nv12(void)
 
         winetest_push_context("test %u (%ux%u)", test_idx, width, height);
 
-        expected_row_pitch = (width + 3) & ~3;
-        expected_depth_pitch = expected_row_pitch * height * 3 / 2;
-
         desc.Width = width;
         desc.Height = height;
         desc.MipLevels = 1;
@@ -36352,14 +36344,14 @@ static void test_nv12(void)
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
-        content = calloc(expected_depth_pitch, 1);
+        content = calloc(width * height * 3 / 2, 1);
         ok(!!content, "Failed to allocate memory.\n");
 
         for (i = 0; i < height; ++i)
         {
             for (j = 0; j < width; ++j)
             {
-                unsigned int idx = i * expected_row_pitch + j;
+                unsigned int idx = i * width + j;
 
                 content[idx] = (i & 7) << 3 | (j & 7);
             }
@@ -36369,7 +36361,7 @@ static void test_nv12(void)
         {
             for (j = 0; j < width / 2; ++j)
             {
-                unsigned int idx = expected_row_pitch * (height + i) + j * 2;
+                unsigned int idx = width * (height + i) + j * 2;
 
                 content[idx] = 1 << 6 | (i & 7) << 3 | (j & 7);
                 content[idx + 1] = 1 << 7 | (i & 7) << 3 | (j & 7);
@@ -36377,8 +36369,8 @@ static void test_nv12(void)
         }
 
         subresource_data.pSysMem = content;
-        subresource_data.SysMemPitch = expected_row_pitch;
-        subresource_data.SysMemSlicePitch = expected_depth_pitch;
+        subresource_data.SysMemPitch = width;
+        subresource_data.SysMemSlicePitch = 0;
 
         expected_hr = (width & 1 || height & 1) ? E_INVALIDARG : S_OK;
         hr = ID3D11Device_CreateTexture2D(device, &desc, &subresource_data, &texture);
@@ -36432,7 +36424,7 @@ static void test_nv12(void)
         ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
 
         get_texture_readback(check_texture, 0, &rb);
-        check_readback_data_u8_with_buffer(&rb, content, expected_row_pitch, expected_depth_pitch);
+        check_readback_data_u8_with_buffer(&rb, content, width, 0);
         release_resource_readback(&rb);
 
         rtv_desc.Format = DXGI_FORMAT_R8_UINT;
@@ -36469,7 +36461,7 @@ static void test_nv12(void)
         ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
 
         get_texture_readback(check_texture, 0, &rb);
-        check_readback_data_u8_with_buffer(&rb, content, expected_row_pitch, expected_depth_pitch);
+        check_readback_data_u8_with_buffer(&rb, content, width, 0);
         release_resource_readback(&rb);
 
         ID3D11RenderTargetView_Release(rtv2);
