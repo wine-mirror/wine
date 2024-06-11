@@ -449,7 +449,7 @@ static const struct window_surface_funcs wayland_window_surface_funcs =
 /***********************************************************************
  *           wayland_window_surface_create
  */
-struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect)
+static struct window_surface *wayland_window_surface_create(HWND hwnd, const RECT *rect)
 {
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
@@ -515,4 +515,41 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
     }
 
     window_surface_unlock(window_surface);
+}
+
+
+/***********************************************************************
+ *           WAYLAND_CreateWindowSurface
+ */
+BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface)
+{
+    struct wayland_win_data *data;
+    RECT surface_rect;
+
+    TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
+
+    if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
+
+    /* Release the dummy surface wine provides for toplevels. */
+    if (*surface) window_surface_release(*surface);
+    *surface = NULL;
+
+    surface_rect = *visible_rect;
+    OffsetRect(&surface_rect, -surface_rect.left, -surface_rect.top);
+
+    /* Check if we can reuse our current window surface. */
+    if (data->window_surface &&
+        EqualRect(&data->window_surface->rect, &surface_rect))
+    {
+        window_surface_add_ref(data->window_surface);
+        *surface = data->window_surface;
+        TRACE("reusing surface %p\n", *surface);
+        goto done;
+    }
+
+    *surface = wayland_window_surface_create(data->hwnd, &surface_rect);
+
+done:
+    wayland_win_data_release(data);
+    return TRUE;
 }
