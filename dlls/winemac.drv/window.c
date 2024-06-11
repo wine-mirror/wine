@@ -1925,10 +1925,6 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
 
     if ((*window_surface = surface)) window_surface_add_ref(surface);
 
-    /* Since layered attributes are now set, can now show the window */
-    if (data->cocoa_window && !data->on_screen && NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)
-        show_window(data);
-
     release_win_data(data);
 
     return TRUE;
@@ -1944,6 +1940,10 @@ void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
 
     if ((data = get_win_data(hwnd)))
     {
+        /* Since layered attributes are now set, can now show the window */
+        if (data->cocoa_window && !data->on_screen && NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE)
+            show_window(data);
+
         /* The ULW flags are a superset of the LWA flags. */
         sync_window_opacity(data, color_key, 255, TRUE, flags);
         release_win_data(data);
