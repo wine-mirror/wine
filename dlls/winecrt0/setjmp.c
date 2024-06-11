@@ -67,8 +67,8 @@ int __cdecl __attribute__((naked)) __wine_setjmpex( __wine_jmp_buf *buf, EXCEPTI
          "stp d10, d11, [x0, #0xa0]\n\t"   /* jmp_buf->Xmm10,Xmm11 */
          "stp d12, d13, [x0, #0xc0]\n\t"   /* jmp_buf->Xmm12,Xmm13 */
          "stp d14, d15, [x0, #0xe0]\n\t"   /* jmp_buf->Xmm14,Xmm15 */
-         "adrp x8, " __ASM_NAME("__os_arm64x_get_x64_information") "\n\t"
-         "ldr x8, [x8, :lo12:" __ASM_NAME("__os_arm64x_get_x64_information") "]\n\t"
+         "adrp x8, __os_arm64x_get_x64_information\n\t"
+         "ldr x8, [x8, :lo12:__os_arm64x_get_x64_information]\n\t"
          "add x1, x0, #0x58\n\t"           /* jmp_buf->Mxcsr */
          "mov x0, #0\n\t"
          "blr x8\n\t"
@@ -81,8 +81,8 @@ void __cdecl __attribute__((naked)) __wine_longjmp( __wine_jmp_buf *buf, int ret
 {
     asm( "mov x19, x0\n\t"
          "mov x20, x1\n\t"
-         "adrp x8, " __ASM_NAME("__os_arm64x_set_x64_information") "\n\t"
-         "ldr x8, [x8, :lo12:" __ASM_NAME("__os_arm64x_set_x64_information") "]\n\t"
+         "adrp x8, __os_arm64x_set_x64_information\n\t"
+         "ldr x8, [x8, :lo12:__os_arm64x_set_x64_information]\n\t"
          "ldr w1, [x0, #0x58]\n\t"         /* jmp_buf->Mxcsr */
          "mov x0, #0\n\t"
          "blr x8\n\t"
@@ -166,12 +166,10 @@ __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
                    "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
                    "vmrs r2, fpscr\n\t"
                    "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
                    "add r0, r0, #0x30\n\t"
                    "vstm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
-#endif
                    "mov r0, #0\n\t"
                    "bx lr" )
 
@@ -179,12 +177,10 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "ldm r0, {r3-r11}\n\t"          /* jmp_buf->Frame,R4..R11 */
                    "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
-#ifndef __SOFTFP__
                    "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
                    "vmsr fpscr, r3\n\t"
                    "add r0, r0, #0x30\n\t"
                    "vldm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
-#endif
                    "mov r0, r1\n\t"                /* retval */
                    "bx r2" )
 

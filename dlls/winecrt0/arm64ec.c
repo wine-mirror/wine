@@ -59,17 +59,17 @@ asm( ".section .data,\"drw\"\n"
 
 __ASM_GLOBAL_FUNC( __icall_helper_arm64ec,
                    "stp fp, lr, [sp, #-0x10]!\n\t"
-                   __ASM_SEH( ".seh_save_fplr_x 16\n\t" )
+                   ".seh_save_fplr_x 16\n\t"
                    "mov fp, sp\n\t"
-                   __ASM_SEH( ".seh_set_fp\n\t" )
-                   __ASM_SEH( ".seh_endprologue\n\t" )
+                   ".seh_set_fp\n\t"
+                   ".seh_endprologue\n\t"
                    "adrp x16, __os_arm64x_dispatch_icall\n\t"
                    "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_icall]\n\t"
                    "blr x16\n\t"
-                   __ASM_SEH( ".seh_startepilogue\n\t" )
+                   ".seh_startepilogue\n\t"
                    "ldp fp, lr, [sp], #0x10\n\t"
-                   __ASM_SEH( ".seh_save_fplr_x 0x10\n\t" )
-                   __ASM_SEH( ".seh_endepilogue\n\t" )
+                   ".seh_save_fplr_x 0x10\n\t"
+                   ".seh_endepilogue\n\t"
 		   "br x11" )
 
 asm( "\t.section .rdata,\"dr\"\n"
