@@ -20,6 +20,23 @@
 #ifndef __WINE_MSVCRT_H
 #define __WINE_MSVCRT_H
 
+#if _MSVCR_VER >= 140
+#ifndef _FILE_DEFINED
+#define _FILE_DEFINED
+typedef struct _iobuf
+{
+  char* _ptr;
+  char* _base;
+  int   _cnt;
+  int   _flag;
+  int   _file;
+  int   _charbuf;
+  int   _bufsiz;
+  char* _tmpfname;
+} FILE;
+#endif
+#endif
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>

@@ -25,6 +25,9 @@ extern "C" {
 #include <pshpack8.h>
 typedef struct _iobuf
 {
+#ifdef _UCRT
+  void *_Placeholder;
+#else
   char* _ptr;
   int   _cnt;
   char* _base;
@@ -33,6 +36,7 @@ typedef struct _iobuf
   int   _charbuf;
   int   _bufsiz;
   char* _tmpfname;
+#endif
 } FILE;
 #include <poppack.h>
 #endif  /* _FILE_DEFINED */
