@@ -36290,16 +36290,19 @@ static void test_nv12(void)
     bytecode = compile_shader(cs_code, sizeof(cs_code) - 1, "cs_5_0");
     hr = ID3D11Device_CreateComputeShader(device, ID3D10Blob_GetBufferPointer(bytecode),
             ID3D10Blob_GetBufferSize(bytecode), NULL, &cs);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D10Blob_Release(bytecode);
 
     bytecode = compile_shader(luma_ps_code, sizeof(luma_ps_code) - 1, "ps_4_0");
     hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(bytecode),
             ID3D10Blob_GetBufferSize(bytecode), NULL, &luma_ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D10Blob_Release(bytecode);
 
     bytecode = compile_shader(chroma_ps_code, sizeof(chroma_ps_code) - 1, "ps_4_0");
     hr = ID3D11Device_CreatePixelShader(device, ID3D10Blob_GetBufferPointer(bytecode),
             ID3D10Blob_GetBufferSize(bytecode), NULL, &chroma_ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ID3D10Blob_Release(bytecode);
 
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
