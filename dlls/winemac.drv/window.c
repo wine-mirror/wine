@@ -529,7 +529,7 @@ static void sync_window_min_max_info(HWND hwnd)
         CGSize min_size, max_size;
 
         SetRect(&min_rect, 0, 0, minmax.ptMinTrackSize.x, minmax.ptMinTrackSize.y);
-        macdrv_window_to_mac_rect(data, style, &min_rect, &data->rects.window, &data->rects.client);
+        min_rect = visible_rect_from_window(&data->rects, min_rect);
         min_size = CGSizeMake(min_rect.right - min_rect.left, min_rect.bottom - min_rect.top);
 
         if (minmax.ptMaxTrackSize.x == NtUserGetSystemMetrics(SM_CXMAXTRACK) &&
@@ -538,7 +538,7 @@ static void sync_window_min_max_info(HWND hwnd)
         else
         {
             SetRect(&max_rect, 0, 0, minmax.ptMaxTrackSize.x, minmax.ptMaxTrackSize.y);
-            macdrv_window_to_mac_rect(data, style, &max_rect, &data->rects.window, &data->rects.client);
+            max_rect = visible_rect_from_window(&data->rects, max_rect);
             max_size = CGSizeMake(max_rect.right - max_rect.left, max_rect.bottom - max_rect.top);
         }
 
@@ -2400,8 +2400,7 @@ BOOL query_resize_size(HWND hwnd, macdrv_query *query)
 
     if (send_message(hwnd, WM_SIZING, corner, (LPARAM)&rect))
     {
-        macdrv_window_to_mac_rect(data, NtUserGetWindowLongW(hwnd, GWL_STYLE), &rect,
-                                  &data->rects.window, &data->rects.client);
+        rect = visible_rect_from_window(&data->rects, rect);
         query->resize_size.rect = cgrect_from_rect(rect);
         ret = TRUE;
     }

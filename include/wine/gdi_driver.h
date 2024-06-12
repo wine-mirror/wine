@@ -71,6 +71,19 @@ static inline RECT window_rect_from_visible( struct window_rects *rects, RECT vi
     return rect;
 }
 
+/* convert a window rect to the corresponding visible rect, using the window_rects offsets */
+static inline RECT visible_rect_from_window( struct window_rects *rects, RECT window_rect )
+{
+    RECT rect = window_rect;
+
+    rect.left += rects->visible.left - rects->window.left;
+    rect.top += rects->visible.top - rects->window.top;
+    rect.right += rects->visible.right - rects->window.right;
+    rect.bottom += rects->visible.bottom - rects->window.bottom;
+
+    return rect;
+}
+
 typedef struct gdi_physdev
 {
     const struct gdi_dc_funcs *funcs;
