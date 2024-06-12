@@ -266,8 +266,6 @@ extern Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const B
                                         const struct gdi_image_bits *bits, UINT coloruse );
 extern DWORD get_pixmap_image( Pixmap pixmap, int width, int height, const XVisualInfo *vis,
                                BITMAPINFO *info, struct gdi_image_bits *bits );
-extern struct window_surface *create_surface( HWND hwnd, Window window, const XVisualInfo *vis, const RECT *rect,
-                                              COLORREF color_key, BOOL use_alpha );
 extern void set_surface_color_key( struct window_surface *window_surface, COLORREF color_key );
 extern HRGN expose_surface( struct window_surface *window_surface, const RECT *rect );
 
@@ -687,6 +685,7 @@ typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void
 
 extern void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg );
 extern int X11DRV_check_error(void);
+extern BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect );
 extern void X11DRV_X_to_window_rect( struct x11drv_win_data *data, RECT *rect, int x, int y, int cx, int cy );
 extern POINT virtual_screen_to_root( INT x, INT y );
 extern POINT root_to_virtual_screen( INT x, INT y );
