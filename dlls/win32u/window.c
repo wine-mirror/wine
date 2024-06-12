@@ -4265,7 +4265,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 {
     WND *win;
     HWND parent;
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    LONG style = get_window_long( hwnd, GWL_STYLE ), new_style;
     BOOL was_visible = (style & WS_VISIBLE) != 0;
     BOOL show_flag = TRUE;
     RECT newPos = {0, 0, 0, 0};
@@ -4367,6 +4367,15 @@ static BOOL show_window( HWND hwnd, INT cmd )
     else
         NtUserSetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
                             newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
+
+    new_style = get_window_long( hwnd, GWL_STYLE );
+    if (((style ^ new_style) & WS_MINIMIZE) != 0)
+    {
+        if ((new_style & WS_MINIMIZE) != 0)
+            NtUserNotifyWinEvent( EVENT_SYSTEM_MINIMIZESTART, hwnd, OBJID_WINDOW, 0 );
+        else
+            NtUserNotifyWinEvent( EVENT_SYSTEM_MINIMIZEEND, hwnd, OBJID_WINDOW, 0 );
+    }
 
     if (cmd == SW_HIDE)
     {

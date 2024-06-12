@@ -622,7 +622,7 @@ static const struct message WmShowRestoreMinOverlappedSeq[] = {
     { WM_ERASEBKGND, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook|optional },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|optional, 0 },
@@ -655,7 +655,7 @@ static const struct message WmShowMinOverlappedSeq[] = {
     { WM_NCCALCSIZE, sent|optional },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Not sent on win10. */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { WM_NCACTIVATE, sent|wparam|optional, 0 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|optional },
@@ -1537,7 +1537,7 @@ static const struct message WmShowChildInvisibleParentSeq_1[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
@@ -1575,7 +1575,7 @@ static const struct message WmShowChildInvisibleParentSeq_3[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { WM_GETTEXT, sent|optional },
     { 0 }
 };
@@ -1594,7 +1594,7 @@ static const struct message WmShowChildInvisibleParentSeq_4[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     /* FIXME: Wine creates an icon/title window while Windows doesn't */
     { WM_GETTEXT, sent|optional },
     { 0 }
@@ -3987,7 +3987,7 @@ static const struct message WmRestoreMDIchildVisibleSeq_2[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 }, /* MDI child */
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 }, /* MDI child */
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 }, /* MDI child */
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
@@ -4005,7 +4005,7 @@ static const struct message WmMinimizeMDIchildVisibleSeq[] = {
     { WM_SIZE, sent|defwinproc|wparam|lparam, SIZE_MINIMIZED, 0 },
     { WM_CHILDACTIVATE, sent|wparam|lparam|defwinproc, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 }, /* MDI child */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 }, /* MDI child */
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 }, /* MDI child */
     { 0 }
 };
 /* ShowWindow(SW_RESTORE) for a not visible MDI child window */
@@ -15033,6 +15033,7 @@ static const struct message WmShowNoActivate_2[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|wine_only, 0, 0 },
     { HCBT_SETFOCUS, hook|optional },
     { HCBT_ACTIVATE, hook|optional }, /* win2003 doesn't send it */
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|wine_only, 0, 0 },
@@ -15073,7 +15074,7 @@ static const struct message WmRestore_1[] = {
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook|optional }, /* win2000 sends it */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { 0 }
@@ -15106,9 +15107,9 @@ static const struct message WmRestore_3[] = {
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook|optional }, /* win2003 sends it */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|wine_only, OBJID_CLIENT, 0 },
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { 0 }
 };
 static const struct message WmRestore_4[] = {
@@ -15174,7 +15175,7 @@ static const struct message WmShowMinimized_1[] = {
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmMinimize_1[] = {
@@ -15188,7 +15189,7 @@ static const struct message WmMinimize_1[] = {
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmMinimize_2[] = {
@@ -15201,7 +15202,7 @@ static const struct message WmMinimize_2[] = {
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmMinimize_3[] = {
@@ -15219,7 +15220,7 @@ static const struct message WmMinimize_3[] = {
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmShowMinNoActivate[] = {
@@ -15277,7 +15278,7 @@ static const struct message WmShowMaximized_1[] = {
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook|optional }, /* win2003 sends it */
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { 0 }
@@ -15300,7 +15301,7 @@ static const struct message WmShowMaximized_2[] = {
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam|optional, 0, 0 }, /* Win7 seems to send this twice. */
-    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook|optional },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 },
     { 0 }
