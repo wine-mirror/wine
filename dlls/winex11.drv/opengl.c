@@ -1553,11 +1553,11 @@ void destroy_gl_drawable( HWND hwnd )
 
 
 /**
- * glxdrv_DescribePixelFormat
+ * describe_pixel_format
  *
- * Get the pixel-format descriptor associated to the given id
+ * Get the wgl_pixel_format description for the given id
  */
-static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd )
+static int describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf )
 {
     int value;
     int rb, gb, bb, ab;
@@ -1575,16 +1575,16 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd 
         return 0;
     }
 
-    memset( ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR) );
-    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    ppfd->nVersion = 1;
+    memset( pf, 0, sizeof(*pf) );
+    pf->pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pf->pfd.nVersion = 1;
 
     /* These flags are always the same... */
-    ppfd->dwFlags = PFD_SUPPORT_OPENGL;
+    pf->pfd.dwFlags = PFD_SUPPORT_OPENGL;
     /* Now the flags extracted from the Visual */
 
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value );
-    if (value & GLX_WINDOW_BIT) ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
+    if (value & GLX_WINDOW_BIT) pf->pfd.dwFlags |= PFD_DRAW_TO_WINDOW;
 
     /* On Windows bitmap rendering is only offered using the GDI Software
      * renderer. We reserve some formats (see get_formats for more info) for
@@ -1593,7 +1593,7 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd 
      * Radeon 9000 indicated that all bitmap formats have PFD_SUPPORT_GDI.
      * Except for 2 formats on the Radeon 9000 none of the hw accelerated
      * formats offered the GDI bit either. */
-    ppfd->dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
+    pf->pfd.dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
 
     /* PFD_GENERIC_FORMAT - gdi software rendering
      * PFD_GENERIC_ACCELERATED - some parts are accelerated by a display driver
@@ -1601,56 +1601,56 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd 
      *
      * We only set PFD_GENERIC_FORMAT on bitmap formats (see get_formats) as
      * that's what ATI and Nvidia Windows drivers do  */
-    ppfd->dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
+    pf->pfd.dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
 
-    if (!(ppfd->dwFlags & PFD_GENERIC_FORMAT)) ppfd->dwFlags |= PFD_SUPPORT_COMPOSITION;
+    if (!(pf->pfd.dwFlags & PFD_GENERIC_FORMAT)) pf->pfd.dwFlags |= PFD_SUPPORT_COMPOSITION;
 
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value );
     if (value)
     {
-        ppfd->dwFlags |= PFD_DOUBLEBUFFER;
-        ppfd->dwFlags &= ~PFD_SUPPORT_GDI;
+        pf->pfd.dwFlags |= PFD_DOUBLEBUFFER;
+        pf->pfd.dwFlags &= ~PFD_SUPPORT_GDI;
     }
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_STEREO, &value );
-    if (value) ppfd->dwFlags |= PFD_STEREO;
+    if (value) pf->pfd.dwFlags |= PFD_STEREO;
 
     /* Pixel type */
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value );
-    if (value & GLX_RGBA_BIT) ppfd->iPixelType = PFD_TYPE_RGBA;
-    else ppfd->iPixelType = PFD_TYPE_COLORINDEX;
+    if (value & GLX_RGBA_BIT) pf->pfd.iPixelType = PFD_TYPE_RGBA;
+    else pf->pfd.iPixelType = PFD_TYPE_COLORINDEX;
 
     /* Color bits */
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, &value );
-    ppfd->cColorBits = value;
+    pf->pfd.cColorBits = value;
 
     /* Red, green, blue and alpha bits / shifts */
-    if (ppfd->iPixelType == PFD_TYPE_RGBA)
+    if (pf->pfd.iPixelType == PFD_TYPE_RGBA)
     {
         pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_RED_SIZE, &rb );
         pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_GREEN_SIZE, &gb );
         pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_BLUE_SIZE, &bb );
         pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &ab );
 
-        ppfd->cBlueBits = bb;
-        ppfd->cBlueShift = 0;
-        ppfd->cGreenBits = gb;
-        ppfd->cGreenShift = bb;
-        ppfd->cRedBits = rb;
-        ppfd->cRedShift = gb + bb;
-        ppfd->cAlphaBits = ab;
-        if (ab) ppfd->cAlphaShift = rb + gb + bb;
-        else ppfd->cAlphaShift = 0;
+        pf->pfd.cBlueBits = bb;
+        pf->pfd.cBlueShift = 0;
+        pf->pfd.cGreenBits = gb;
+        pf->pfd.cGreenShift = bb;
+        pf->pfd.cRedBits = rb;
+        pf->pfd.cRedShift = gb + bb;
+        pf->pfd.cAlphaBits = ab;
+        if (ab) pf->pfd.cAlphaShift = rb + gb + bb;
+        else pf->pfd.cAlphaShift = 0;
     }
     else
     {
-        ppfd->cRedBits = 0;
-        ppfd->cRedShift = 0;
-        ppfd->cBlueBits = 0;
-        ppfd->cBlueShift = 0;
-        ppfd->cGreenBits = 0;
-        ppfd->cGreenShift = 0;
-        ppfd->cAlphaBits = 0;
-        ppfd->cAlphaShift = 0;
+        pf->pfd.cRedBits = 0;
+        pf->pfd.cRedShift = 0;
+        pf->pfd.cBlueBits = 0;
+        pf->pfd.cBlueShift = 0;
+        pf->pfd.cGreenBits = 0;
+        pf->pfd.cGreenShift = 0;
+        pf->pfd.cAlphaBits = 0;
+        pf->pfd.cAlphaShift = 0;
     }
 
     /* Accum RGBA bits */
@@ -1659,27 +1659,27 @@ static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd 
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_BLUE_SIZE, &bb );
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_ALPHA_SIZE, &ab );
 
-    ppfd->cAccumBits = rb + gb + bb + ab;
-    ppfd->cAccumRedBits = rb;
-    ppfd->cAccumGreenBits = gb;
-    ppfd->cAccumBlueBits = bb;
-    ppfd->cAccumAlphaBits = ab;
+    pf->pfd.cAccumBits = rb + gb + bb + ab;
+    pf->pfd.cAccumRedBits = rb;
+    pf->pfd.cAccumGreenBits = gb;
+    pf->pfd.cAccumBlueBits = bb;
+    pf->pfd.cAccumAlphaBits = ab;
 
     /* Aux bits */
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &value );
-    ppfd->cAuxBuffers = value;
+    pf->pfd.cAuxBuffers = value;
 
     /* Depth bits */
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value );
-    ppfd->cDepthBits = value;
+    pf->pfd.cDepthBits = value;
 
     /* stencil bits */
     pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &value );
-    ppfd->cStencilBits = value;
+    pf->pfd.cStencilBits = value;
 
-    ppfd->iLayerType = PFD_MAIN_PLANE;
+    pf->pfd.iLayerType = PFD_MAIN_PLANE;
 
-    if (TRACE_ON(wgl)) dump_PIXELFORMATDESCRIPTOR( ppfd );
+    if (TRACE_ON(wgl)) dump_PIXELFORMATDESCRIPTOR( &pf->pfd );
 
     return nb_onscreen_formats;
 }
@@ -2523,7 +2523,7 @@ struct choose_pixel_format_arb_format
 {
     int format;
     int original_index;
-    PIXELFORMATDESCRIPTOR pfd;
+    struct wgl_pixel_format pf;
     int depth, stencil;
 };
 
@@ -2540,7 +2540,7 @@ static int compare_formats(const void *a, const void *b)
 
     if (offscreen_a != offscreen_b)
         return offscreen_a - offscreen_b;
-    if (memcmp(&fmt_a->pfd, &fmt_b->pfd, sizeof(fmt_a->pfd)))
+    if (memcmp(&fmt_a->pf.pfd, &fmt_b->pf.pfd, sizeof(fmt_a->pf.pfd)))
         return fmt_a->original_index - fmt_b->original_index;
     if (fmt_a->depth != fmt_b->depth)
         return fmt_a->depth - fmt_b->depth;
@@ -2655,16 +2655,16 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
         format->format = i + 1;
         format->original_index = it;
 
-        memset(&format->pfd, 0, sizeof(format->pfd));
-        if (!describe_pixel_format(format->format, &format->pfd))
+        memset(&format->pf, 0, sizeof(format->pf));
+        if (!describe_pixel_format(format->format, &format->pf))
             ERR("describe_pixel_format failed, format %d.\n", format->format);
 
-        format->depth = format->pfd.cDepthBits;
-        format->stencil = format->pfd.cStencilBits;
-        if (!depth_bits && !(format->pfd.dwFlags & PFD_GENERIC_FORMAT))
+        format->depth = format->pf.pfd.cDepthBits;
+        format->stencil = format->pf.pfd.cStencilBits;
+        if (!depth_bits && !(format->pf.pfd.dwFlags & PFD_GENERIC_FORMAT))
         {
-            format->pfd.cDepthBits = 0;
-            format->pfd.cStencilBits = 0;
+            format->pf.pfd.cDepthBits = 0;
+            format->pf.pfd.cStencilBits = 0;
         }
 
         ++format_count;
@@ -2694,7 +2694,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
     int hTest;
     int tmp;
     int curGLXAttr = 0;
-    PIXELFORMATDESCRIPTOR pfd;
+    struct wgl_pixel_format pf;
 
     TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues);
 
@@ -2711,10 +2711,10 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
         WARN("Unable to convert iPixelFormat %d to a GLX one!\n", iPixelFormat);
     }
 
-    if (!describe_pixel_format(iPixelFormat, &pfd))
+    if (!describe_pixel_format(iPixelFormat, &pf))
     {
         WARN("describe_pixel_format failed.\n");
-        memset(&pfd, 0, sizeof(pfd));
+        memset(&pf, 0, sizeof(pf));
     }
 
     for (i = 0; i < nAttributes; ++i) {
@@ -2819,20 +2819,20 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                 break;
 
             case WGL_RED_SHIFT_ARB:
-                if (!pfd.nSize) goto pix_error;
-                piValues[i] = pfd.cRedShift;
+                if (!pf.pfd.nSize) goto pix_error;
+                piValues[i] = pf.pfd.cRedShift;
                 continue;
             case WGL_GREEN_SHIFT_ARB:
-                if (!pfd.nSize) goto pix_error;
-                piValues[i] = pfd.cGreenShift;
+                if (!pf.pfd.nSize) goto pix_error;
+                piValues[i] = pf.pfd.cGreenShift;
                 continue;
             case WGL_BLUE_SHIFT_ARB:
-                if (!pfd.nSize) goto pix_error;
-                piValues[i] = pfd.cBlueShift;
+                if (!pf.pfd.nSize) goto pix_error;
+                piValues[i] = pf.pfd.cBlueShift;
                 continue;
             case WGL_ALPHA_SHIFT_ARB:
-                if (!pfd.nSize) goto pix_error;
-                piValues[i] = pfd.cAlphaShift;
+                if (!pf.pfd.nSize) goto pix_error;
+                piValues[i] = pf.pfd.cAlphaShift;
                 continue;
 
             case WGL_SUPPORT_GDI_ARB:
@@ -3413,7 +3413,7 @@ static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
     if (formats)
     {
         for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
-            describe_pixel_format( i + 1, &formats[i].pfd );
+            describe_pixel_format( i + 1, &formats[i] );
     }
     *num_formats = nb_pixel_formats;
     *num_onscreen_formats = nb_onscreen_formats;
