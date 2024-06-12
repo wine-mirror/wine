@@ -25,6 +25,7 @@
 #include "ntuser.h"
 #include "shellapi.h"
 #include "wine/list.h"
+#include "wine/vulkan.h"
 
 
 #define WM_POPUPSYSTEMMENU  0x0313
@@ -250,6 +251,10 @@ extern int peek_message( MSG *msg, const struct peek_message_filter *filter );
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* vulkan.c */
+extern void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
+extern void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
+
+extern BOOL vulkan_init(void);
 extern void vulkan_detach_surfaces( struct list *surfaces );
 
 /* window.c */
