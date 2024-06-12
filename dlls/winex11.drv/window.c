@@ -2602,7 +2602,7 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
     COLORREF key;
     BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return TRUE;
+    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return TRUE; /* use default surface */
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))
@@ -2610,27 +2610,24 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
         release_win_data( data );
         unmap_window( hwnd );
-        if (!(data = get_win_data( hwnd ))) return TRUE;
+        if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
         data->managed = TRUE;
     }
 
-    *visible_rect = *window_rect;
     X11DRV_window_to_X_rect( data, visible_rect, window_rect, client_rect );
 
-    /* create the window surface if necessary */
-
-    if (!data->whole_window && !data->embedded) goto done;
-    if (swp_flags & SWP_HIDEWINDOW) goto done;
-    if (data->use_alpha) goto done;
-    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
+    if (!data->whole_window && !data->embedded) goto done; /* use default surface */
+    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
+    if (data->use_alpha) goto done; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     if (*surface) window_surface_release( *surface );
     *surface = NULL;  /* indicate that we want to draw directly to the window */
 
-    if (data->embedded) goto done;
-    if (data->whole_window == root_window) goto done;
-    if (data->client_window) goto done;
-    if (!client_side_graphics && !layered) goto done;
+    if (data->embedded) goto done; /* draw directly to the window */
+    if (data->whole_window == root_window) goto done; /* draw directly to the window */
+    if (data->client_window) goto done; /* draw directly to the window */
+    if (!client_side_graphics && !layered) goto done; /* draw directly to the window */
 
     if (data->surface)
     {
