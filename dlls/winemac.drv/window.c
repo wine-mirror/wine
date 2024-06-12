@@ -155,7 +155,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
 /***********************************************************************
  *              get_mac_rect_offset
  *
- * Helper for macdrv_window_to_mac_rect and macdrv_mac_to_window_rect.
+ * Helper for macdrv_window_to_mac_rect.
  */
 static void get_mac_rect_offset(struct macdrv_win_data *data, unsigned int style, RECT *rect,
                                 const RECT *window_rect, const RECT *client_rect)
@@ -210,30 +210,6 @@ static void macdrv_window_to_mac_rect(struct macdrv_win_data *data, DWORD style,
     rect->right  -= rc.right;
     rect->top    -= rc.top;
     rect->bottom -= rc.bottom;
-    if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
-    if (rect->left >= rect->right) rect->right = rect->left + 1;
-}
-
-
-/***********************************************************************
- *              macdrv_mac_to_window_rect
- *
- * Opposite of macdrv_window_to_mac_rect
- */
-static void macdrv_mac_to_window_rect(struct macdrv_win_data *data, RECT *rect)
-{
-    RECT rc;
-    DWORD style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
-
-    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return;
-    if (IsRectEmpty(rect)) return;
-
-    get_mac_rect_offset(data, style, &rc, &data->rects.window, &data->rects.client);
-
-    rect->left   += rc.left;
-    rect->right  += rc.right;
-    rect->top    += rc.top;
-    rect->bottom += rc.bottom;
     if (rect->top >= rect->bottom) rect->bottom = rect->top + 1;
     if (rect->left >= rect->right) rect->right = rect->left + 1;
 }
@@ -1724,7 +1700,7 @@ UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp)
 
     macdrv_get_cocoa_window_frame(data->cocoa_window, &frame);
     *rect = rect_from_cgrect(frame);
-    macdrv_mac_to_window_rect(data, rect);
+    *rect = window_rect_from_visible(&data->rects, *rect);
     TRACE("rect %s -> %s\n", wine_dbgstr_cgrect(frame), wine_dbgstr_rect(rect));
     swp &= ~(SWP_NOMOVE | SWP_NOCLIENTMOVE | SWP_NOSIZE | SWP_NOCLIENTSIZE);
 
@@ -2008,7 +1984,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
           event->window_frame_changed.fullscreen, event->window_frame_changed.in_resize);
 
     rect = rect_from_cgrect(event->window_frame_changed.frame);
-    macdrv_mac_to_window_rect(data, &rect);
+    rect = window_rect_from_visible(&data->rects, rect);
     NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
 
     width = rect.right - rect.left;
@@ -2243,7 +2219,7 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
             HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
 
             rect = rect_from_cgrect(event->window_restore_requested.frame);
-            macdrv_mac_to_window_rect(data, &rect);
+            rect = window_rect_from_visible(&data->rects, rect);
             NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
 
             release_win_data(data);
@@ -2401,13 +2377,14 @@ void macdrv_app_quit_requested(const macdrv_event *event)
 BOOL query_resize_size(HWND hwnd, macdrv_query *query)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
-    RECT rect = rect_from_cgrect(query->resize_size.rect);
+    RECT rect;
     int corner;
     BOOL ret = FALSE;
 
     if (!data) return FALSE;
 
-    macdrv_mac_to_window_rect(data, &rect);
+    rect = rect_from_cgrect(query->resize_size.rect);
+    rect = window_rect_from_visible(&data->rects, rect);
 
     if (query->resize_size.from_left)
     {
