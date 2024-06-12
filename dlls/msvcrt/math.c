@@ -2568,7 +2568,7 @@ void __cdecl __libm_sse2_sqrt_precise(void)
         __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
         return;
     }
-    __asm__ __volatile__( "call " __ASM_NAME( "asm_sqrt" ) );
+    __asm__ __volatile__( "sqrtsd %xmm0, %xmm0" );
 }
 #endif  /* __i386__ */
 
