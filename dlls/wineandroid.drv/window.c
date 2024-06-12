@@ -1150,16 +1150,12 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_re
            hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
            (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
 
-    if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return TRUE;
+    if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return TRUE; /* use default surface */
 
-    *visible_rect = *window_rect;
-
-    /* create the window surface if necessary */
-
-    if (data->parent) goto done;
-    if (swp_flags & SWP_HIDEWINDOW) goto done;
-    if (is_argb_surface( data->surface )) goto done;
-    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
+    if (data->parent) goto done; /* use default surface */
+    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
+    if (is_argb_surface( data->surface )) goto done; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     if (data->surface)
     {
