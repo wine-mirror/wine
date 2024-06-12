@@ -2967,41 +2967,6 @@ pix_error:
 }
 
 /**
- * X11DRV_wglGetPixelFormatAttribfvARB
- *
- * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
- */
-static BOOL X11DRV_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane,
-                                                 UINT nAttributes, const int *piAttributes, FLOAT *pfValues )
-{
-    int *attr;
-    int ret;
-    UINT i;
-
-    TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
-
-    /* Allocate a temporary array to store integer values */
-    attr = malloc( nAttributes * sizeof(int) );
-    if (!attr) {
-        ERR("couldn't allocate %d array\n", nAttributes);
-        return GL_FALSE;
-    }
-
-    /* Piggy-back on wglGetPixelFormatAttribivARB */
-    ret = X11DRV_wglGetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, attr);
-    if (ret) {
-        /* Convert integer values to float. Should also check for attributes
-           that can give decimal values here */
-        for (i=0; i<nAttributes;i++) {
-            pfValues[i] = attr[i];
-        }
-    }
-
-    free( attr );
-    return ret;
-}
-
-/**
  * X11DRV_wglBindTexImageARB
  *
  * WGL_ARB_render_texture: wglBindTexImageARB
@@ -3260,7 +3225,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     register_extension( "WGL_ARB_pixel_format" );
     opengl_funcs.ext.p_wglChoosePixelFormatARB      = X11DRV_wglChoosePixelFormatARB;
-    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = X11DRV_wglGetPixelFormatAttribfvARB;
+    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = X11DRV_wglGetPixelFormatAttribivARB;
 
     if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))

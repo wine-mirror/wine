@@ -578,6 +578,34 @@ BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int index, int plane, UINT co
 }
 
 /***********************************************************************
+ *		wglGetPixelFormatAttribfvARB (OPENGL32.@)
+ */
+BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int index, int plane, UINT count,
+                                          const int *attributes, FLOAT *values )
+{
+    int *ivalues;
+    BOOL ret;
+    UINT i;
+
+    TRACE( "hdc %p, index %d, plane %d, count %u, attributes %p, values %p\n",
+           hdc, index, plane, count, attributes, values );
+
+    if (!(ivalues = malloc( count * sizeof(int) ))) return FALSE;
+
+    /* For now we can piggy-back on wglGetPixelFormatAttribivARB, since we don't support
+     * any non-integer attributes. */
+    ret = wglGetPixelFormatAttribivARB( hdc, index, plane, count, attributes, ivalues );
+    if (ret)
+    {
+        for (i = 0; i < count; i++)
+            values[i] = ivalues[i];
+    }
+
+    free( ivalues );
+    return ret;
+}
+
+/***********************************************************************
  *		wglGetPixelFormat (OPENGL32.@)
  */
 INT WINAPI wglGetPixelFormat(HDC hdc)

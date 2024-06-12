@@ -181,6 +181,7 @@ my %manual_win_thunks =
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,
      "wglGetPixelFormat" => 1,
+     "wglGetPixelFormatAttribfvARB" => 1,
      "wglGetPixelFormatAttribivARB" => 1,
      "wglGetProcAddress" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,

@@ -3392,45 +3392,6 @@ invalid_layer:
 
 
 /**********************************************************************
- *              macdrv_wglGetPixelFormatAttribfvARB
- *
- * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
- */
-static BOOL macdrv_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane,
-                                                UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
-{
-    int *attr;
-    int ret;
-
-    TRACE("hdc %p iPixelFormat %d iLayerPlane %d nAttributes %u piAttributes %p pfValues %p\n",
-          hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
-
-    /* Allocate a temporary array to store integer values */
-    attr = malloc(nAttributes * sizeof(int));
-    if (!attr)
-    {
-        ERR("couldn't allocate %d array\n", nAttributes);
-        return GL_FALSE;
-    }
-
-    /* Piggy-back on wglGetPixelFormatAttribivARB */
-    ret = macdrv_wglGetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, attr);
-    if (ret)
-    {
-        UINT i;
-
-        /* Convert integer values to float. Should also check for attributes
-           that can give decimal values here */
-        for (i = 0; i < nAttributes; i++)
-            pfValues[i] = attr[i];
-    }
-
-    free(attr);
-    return ret;
-}
-
-
-/**********************************************************************
  *              macdrv_wglGetSwapIntervalEXT
  *
  * WGL_EXT_swap_control: wglGetSwapIntervalEXT
@@ -4136,7 +4097,7 @@ static void load_extensions(void)
 
     register_extension("WGL_ARB_pixel_format");
     opengl_funcs.ext.p_wglChoosePixelFormatARB      = macdrv_wglChoosePixelFormatARB;
-    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = macdrv_wglGetPixelFormatAttribfvARB;
+    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = macdrv_wglGetPixelFormatAttribivARB;
 
     if (gluCheckExtension((GLubyte*)"GL_ARB_color_buffer_float", (GLubyte*)gl_info.glExtensions))

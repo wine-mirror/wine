@@ -24217,15 +24217,6 @@ static HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB hPbuffer )
     return args.ret;
 }
 
-static BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues )
-{
-    struct wglGetPixelFormatAttribfvARB_params args = { .teb = NtCurrentTeb(), .hdc = hdc, .iPixelFormat = iPixelFormat, .iLayerPlane = iLayerPlane, .nAttributes = nAttributes, .piAttributes = piAttributes, .pfValues = pfValues };
-    NTSTATUS status;
-    TRACE( "hdc %p, iPixelFormat %d, iLayerPlane %d, nAttributes %u, piAttributes %p, pfValues %p\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues );
-    if ((status = UNIX_CALL( wglGetPixelFormatAttribfvARB, &args ))) WARN( "wglGetPixelFormatAttribfvARB returned %#lx\n", status );
-    return args.ret;
-}
-
 static int WINAPI wglGetSwapIntervalEXT(void)
 {
     struct wglGetSwapIntervalEXT_params args = { .teb = NtCurrentTeb() };
@@ -24331,6 +24322,7 @@ extern GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer );
 extern HDC WINAPI wglGetCurrentReadDCARB(void);
 extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc );
 extern const char * WINAPI wglGetExtensionsStringEXT(void);
+extern BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues );
 extern BOOL WINAPI wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues );
 extern const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute );
 extern const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute );
