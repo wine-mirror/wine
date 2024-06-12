@@ -60,6 +60,7 @@ enum syscall_ids
 #define SYSCALL_ENTRY(id,name,args) __id_##name = id,
 ALL_SYSCALLS64
 #undef SYSCALL_ENTRY
+    __nb_syscalls
 };
 
 #define SYSCALL_API __attribute__((naked))
@@ -1463,7 +1464,7 @@ NTSTATUS SYSCALL_API wine_unix_to_nt_file_name( const char *name, WCHAR *buffer,
     SYSCALL_FUNC( wine_unix_to_nt_file_name );
 }
 
-static void * const arm64ec_syscalls[] =
+void * const arm64ec_syscalls[] =
 {
 #define SYSCALL_ENTRY(id,name,args) name,
     ALL_SYSCALLS64
@@ -2246,98 +2247,98 @@ NTSTATUS __attribute__((naked)) __wine_unix_call_arm64ec( unixlib_handle_t handl
 NTSTATUS (WINAPI *__wine_unix_call_dispatcher_arm64ec)( unixlib_handle_t, unsigned int, void * ) = __wine_unix_call_arm64ec;
 
 
-static int code_match( BYTE *code, const BYTE *seq, size_t len )
-{
-    for ( ; len; len--, code++, seq++) if (*seq && *code != *seq) return 0;
-    return 1;
-}
-
-void *check_call( void **target, void *exit_thunk, void *dest )
-{
-    static const BYTE jmp_sequence[] =
-    {
-        0xff, 0x25              /* jmp *xxx(%rip) */
-    };
-    static const BYTE fast_forward_sequence[] =
-    {
-        0x48, 0x8b, 0xc4,       /* mov  %rsp,%rax */
-        0x48, 0x89, 0x58, 0x20, /* mov  %rbx,0x20(%rax) */
-        0x55,                   /* push %rbp */
-        0x5d,                   /* pop  %rbp */
-        0xe9                    /* jmp  arm_code */
-    };
-    static const BYTE syscall_sequence[] =
-    {
-        0x4c, 0x8b, 0xd1,       /* mov  %rcx,%r10 */
-        0xb8, 0, 0, 0, 0,       /* mov  $xxx,%eax */
-        0xf6, 0x04, 0x25, 0x08, /* testb $0x1,0x7ffe0308 */
-        0x03, 0xfe, 0x7f, 0x01,
-        0x75, 0x03,             /* jne 1f */
-        0x0f, 0x05,             /* syscall */
-        0xc3,                   /* ret */
-        0xcd, 0x2e,             /* 1: int $0x2e */
-        0xc3                    /* ret */
-    };
-
-    for (;;)
-    {
-        if (RtlIsEcCode( (ULONG_PTR)dest )) return dest;
-        if (code_match( dest, jmp_sequence, sizeof(jmp_sequence) ))
-        {
-            int *off_ptr = (int *)((char *)dest + sizeof(jmp_sequence));
-            void **addr_ptr = (void **)((char *)(off_ptr + 1) + *off_ptr);
-            dest = *addr_ptr;
-            continue;
-        }
-        if (!((ULONG_PTR)dest & 15))  /* fast-forward and syscall thunks are always aligned */
-        {
-            if (code_match( dest, fast_forward_sequence, sizeof(fast_forward_sequence) ))
-            {
-                int *off_ptr = (int *)((char *)dest + sizeof(fast_forward_sequence));
-                return (char *)(off_ptr + 1) + *off_ptr;
-            }
-            if (code_match( dest, syscall_sequence, sizeof(syscall_sequence) ))
-            {
-                ULONG id = ((ULONG *)dest)[1];
-                if (id < ARRAY_SIZE(arm64ec_syscalls)) return arm64ec_syscalls[id];
-            }
-        }
-        *target = dest;
-        return exit_thunk;
-    }
-}
-
+/**************************************************************************
+ *		arm64x_check_call
+ *
+ * Implementation of __os_arm64x_check_call.
+ */
 static void __attribute__((naked)) arm64x_check_call(void)
 {
-    asm( "stp x29, x30, [sp,#-0xb0]!\n\t"
-         "mov x29, sp\n\t"
-         "stp x0, x1,   [sp, #0x10]\n\t"
-         "stp x2, x3,   [sp, #0x20]\n\t"
-         "stp x4, x5,   [sp, #0x30]\n\t"
-         "stp x6, x7,   [sp, #0x40]\n\t"
-         "stp x8, x9,   [sp, #0x50]\n\t"
-         "stp x10, x15, [sp, #0x60]\n\t"
-         "stp d0, d1,   [sp, #0x70]\n\t"
-         "stp d2, d3,   [sp, #0x80]\n\t"
-         "stp d4, d5,   [sp, #0x90]\n\t"
-         "stp d6, d7,   [sp, #0xa0]\n\t"
-         "add x0, sp, #0x58\n\t"  /* x9 = &target */
-         "mov x1, x10\n\t"        /* x10 = exit_thunk */
-         "mov x2, x11\n\t"        /* x11 = dest */
-         "bl \"#check_call\"\n\t"
-         "mov x11, x0\n\t"
-         "ldp x0, x1,   [sp, #0x10]\n\t"
-         "ldp x2, x3,   [sp, #0x20]\n\t"
-         "ldp x4, x5,   [sp, #0x30]\n\t"
-         "ldp x6, x7,   [sp, #0x40]\n\t"
-         "ldp x8, x9,   [sp, #0x50]\n\t"
-         "ldp x10, x15, [sp, #0x60]\n\t"
-         "ldp d0, d1,   [sp, #0x70]\n\t"
-         "ldp d2, d3,   [sp, #0x80]\n\t"
-         "ldp d4, d5,   [sp, #0x90]\n\t"
-         "ldp d6, d7,   [sp, #0xa0]\n\t"
-         "ldp x29, x30, [sp], #0xb0\n\t"
-         "ret" );
+    asm( ".seh_proc \"#arm64x_check_call\"\n\t"
+         ".seh_endprologue\n\t"
+         /* check for EC code */
+         "ldr x16, [x18, #0x60]\n\t"        /* peb */
+         "lsr x17, x11, #18\n\t"            /* dest / page_size / 64 */
+         "ldr x16, [x16, #0x368]\n\t"       /* peb->EcCodeBitMap */
+         "lsr x9, x11, #12\n\t"             /* dest / page_size */
+         "ldr x16, [x16, x17, lsl #3]\n\t"
+         "lsr x16, x16, x9\n\t"
+         "tbnz x16, #0, .Ldone\n\t"
+         /* check if dest is aligned */
+         "tst x11, #15\n\t"                 /* dest & 15 */
+         "b.ne .Ljmp\n\t"
+         "ldr x16, [x11]\n\t"               /* dest code */
+         /* check for fast-forward sequence */
+         "ldr x17, .Lffwd_seq\n\t"
+         "cmp x16, x17\n\t"
+         "b.ne .Lsyscall\n\t"
+         "ldr x16, [x11, #8]\n\t"
+         "ldr x17, .Lffwd_seq + 8\n\t"
+         "eor x17, x16, x17\n\t"            /* compare only first two bytes */
+         "tst x17, #0xffff\n\t"
+         "b.ne .Lexit\n\t"
+         "add x11, x11, #14\n\t"            /* address after jump */
+         "lsr x9, x16, #16\n\t"
+         "add x11, x11, w9, sxtw\n\t"       /* add offset */
+         "ret\n"
+         /* check for syscall sequence */
+         ".Lsyscall:\n\t"
+         "ldr w17, .Lsyscall_seq\n\t"
+         "cmp w16, w17\n\t"
+         "b.ne .Ljmp\n\t"
+         "ubfx x9, x16, #32, #12\n\t"       /* syscall number */
+         "ldr x16, [x11, #8]\n\t"
+         "ldr x17, .Lsyscall_seq + 8\n\t"
+         "cmp x16, x17\n\t"
+         "b.ne .Lexit\n\t"
+         "ldr x16, [x11, #16]\n\t"
+         "ldr x17, .Lsyscall_seq + 16\n\t"
+         "cmp x16, x17\n\t"
+         "b.ne .Lexit\n\t"
+         "cmp x9, #%0\n\t"
+         "b.hs .Lexit\n\t"
+         "adr x11, arm64ec_syscalls\n\t"
+         "ldr x11, [x11, x9, lsl #3]\n\t"
+         "ret\n"
+         /* check for jmp sequence */
+         ".Ljmp:\n\t"
+         "ldrb w16, [x11]\n\t"
+         "cmp w16, #0xff\n\t"
+         "b.ne .Lexit\n\t"
+         "ldrb w16, [x11, #1]\n\t"
+         "cmp w16, #0x25\n\t"               /* ff 25 jmp *xxx(%rip) */
+         "b.ne .Lexit\n\t"
+         "ldr w9, [x11, #2]\n\t"
+         "add x16, x11, #6\n\t"             /* address after jump */
+         "ldr x11, [x16, w9, sxtw]\n\t"
+         "b \"#arm64x_check_call\"\n"       /* restart checks with jump destination */
+         /* not a special sequence, call the exit thunk */
+         ".Lexit:\n\t"
+         "mov x9, x11\n\t"
+         "mov x11, x10\n\t"
+         ".Ldone:\n\t"
+         "ret\n"
+         ".seh_endproc\n\t"
+
+         ".Lffwd_seq:\n\t"
+         ".byte 0x48, 0x8b, 0xc4\n\t"       /* mov  %rsp,%rax */
+         ".byte 0x48, 0x89, 0x58, 0x20\n\t" /* mov  %rbx,0x20(%rax) */
+         ".byte 0x55\n"                     /* push %rbp */
+         ".byte 0x5d\n\t"                   /* pop  %rbp */
+         ".byte 0xe9\n\t"                   /* jmp  arm_code */
+         ".byte 0, 0, 0, 0, 0, 0\n"
+
+         ".Lsyscall_seq:\n\t"
+         ".byte 0x4c, 0x8b, 0xd1\n\t"       /* mov  %rcx,%r10 */
+         ".byte 0xb8, 0, 0, 0, 0\n\t"       /* mov  $xxx,%eax */
+         ".byte 0xf6, 0x04, 0x25, 0x08\n\t" /* testb $0x1,0x7ffe0308 */
+         ".byte 0x03, 0xfe, 0x7f, 0x01\n\t"
+         ".byte 0x75, 0x03\n\t"             /* jne 1f */
+         ".byte 0x0f, 0x05\n\t"             /* syscall */
+         ".byte 0xc3\n\t"                   /* ret */
+         ".byte 0xcd, 0x2e\n\t"             /* 1: int $0x2e */
+         ".byte 0xc3"                       /* ret */
+         :: "i" (__nb_syscalls) );
 }
 
 
