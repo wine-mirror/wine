@@ -92,34 +92,19 @@ struct window_surface dummy_surface =
  * Off-screen window surface.
  */
 
-struct offscreen_window_surface
-{
-    struct window_surface header;
-    BITMAPINFO info;
-};
-
-static const struct window_surface_funcs offscreen_window_surface_funcs;
-
-static struct offscreen_window_surface *impl_from_window_surface( struct window_surface *base )
-{
-    if (!base || base->funcs != &offscreen_window_surface_funcs) return NULL;
-    return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
-}
-
-static void offscreen_window_surface_set_clip( struct window_surface *base, const RECT *rects, UINT count )
+static void offscreen_window_surface_set_clip( struct window_surface *surface, const RECT *rects, UINT count )
 {
 }
 
-static BOOL offscreen_window_surface_flush( struct window_surface *base, const RECT *rect, const RECT *dirty,
+static BOOL offscreen_window_surface_flush( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                                             const BITMAPINFO *color_info, const void *color_bits )
 {
     return TRUE;
 }
 
-static void offscreen_window_surface_destroy( struct window_surface *base )
+static void offscreen_window_surface_destroy( struct window_surface *surface )
 {
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    free( impl );
+    free( surface );
 }
 
 static const struct window_surface_funcs offscreen_window_surface_funcs =
@@ -129,22 +114,19 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
     offscreen_window_surface_destroy
 };
 
-void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
+void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **window_surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
-    struct offscreen_window_surface *impl;
+    struct window_surface *surface, *previous;
 
-    TRACE( "hwnd %p, surface_rect %s, surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
+    TRACE( "hwnd %p, surface_rect %s, window_surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), window_surface );
 
     /* check that old surface is an offscreen_window_surface, or release it */
-    if ((impl = impl_from_window_surface( *surface )))
-    {
-        /* if the rect didn't change, keep the same surface */
-        if (EqualRect( surface_rect, &impl->header.rect )) return;
-        window_surface_release( &impl->header );
-    }
-    else if (*surface) window_surface_release( *surface );
+    if ((previous = *window_surface) && previous->funcs == &offscreen_window_surface_funcs &&
+        EqualRect( surface_rect, &previous->rect )) return;
+    if (previous) window_surface_release( previous );
+    *window_surface = NULL;
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -156,14 +138,11 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
     info->bmiHeader.biCompression = BI_RGB;
 
     /* create a new window surface */
-    *surface = NULL;
-    if (!(impl = calloc(1, sizeof(*impl)))) return;
-    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
-    impl->info = *info;
+    if (!(surface = calloc(1, sizeof(*surface)))) return;
+    window_surface_init( surface, &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
 
-    TRACE( "created window surface %p\n", &impl->header );
-
-    *surface = &impl->header;
+    TRACE( "created window surface %p\n", surface );
+    *window_surface = surface;
 }
 
 /* window surface common helpers */
