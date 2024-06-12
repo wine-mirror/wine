@@ -233,3 +233,13 @@ DNS_STATUS WINAPI DnsReplaceRecordSetW( DNS_RECORDW *set, DWORD options, HANDLE 
     FIXME( "(%p, %#lx, %p, %p, %p) stub\n", set, options, context, servers, reserved );
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ * DnsServiceBrowse                        [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsServiceBrowse( PDNS_SERVICE_BROWSE_REQUEST request, PDNS_SERVICE_CANCEL cancel)
+{
+    FIXME( "(%p, %p) stub\n", request, cancel );
+    return ERROR_SUCCESS;
+}

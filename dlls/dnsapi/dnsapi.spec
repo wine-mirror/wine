@@ -103,6 +103,7 @@
 @ stub DnsReplaceRecordSet_UTF8
 @ stdcall DnsReplaceRecordSetW(ptr long ptr ptr ptr)
 @ stub DnsReplaceRecordSet_W
+@ stdcall DnsServiceBrowse(ptr ptr)
 @ stub DnsServiceNotificationDeregister_A
 @ stub DnsServiceNotificationDeregister_UTF8
 @ stub DnsServiceNotificationDeregister_W
