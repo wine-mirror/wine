@@ -2011,17 +2011,15 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect
           swp_flags, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), surface);
 
-    if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return TRUE;
+    if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return TRUE; /* use default surface */
 
-    *visible_rect = *window_rect;
     macdrv_window_to_mac_rect(data, style, visible_rect, window_rect, client_rect);
     TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),
           wine_dbgstr_rect(visible_rect));
 
-    /* create the window surface if necessary */
-    if (!data->cocoa_window) goto done;
-    if (swp_flags & SWP_HIDEWINDOW) goto done;
-    if (data->ulw_layered) goto done;
+    if (!data->cocoa_window) goto done; /* use default surface */
+    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
+    if (data->ulw_layered) goto done; /* use default surface */
 
     if (*surface) window_surface_release(*surface);
     *surface = NULL;
