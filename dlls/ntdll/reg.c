@@ -265,7 +265,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             memcpy(str->Buffer, pQuery->DefaultData, default_size);
             return STATUS_SUCCESS;
         }
-        else
+        else if (pQuery->QueryRoutine)
         {
             status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
                                           pQuery->DefaultLength, pContext, pQuery->EntryContext);
@@ -336,7 +336,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
            break;
         }
     }
-    else
+    else if (pQuery->QueryRoutine)
     {
         if((pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND) ||
            (pInfo->Type != REG_EXPAND_SZ && pInfo->Type != REG_MULTI_SZ))

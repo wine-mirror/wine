@@ -2636,7 +2636,11 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* Name without query routine or DIRECT */
     {
         {{ NULL, 0, (WCHAR*)L"WindowsDrive" }},
-        STATUS_SUCCESS, 0, WINE_CRASH
+        STATUS_SUCCESS, 0
+    },
+    {
+        {{ NULL, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"Some default" }},
+        STATUS_SUCCESS, 0
     },
     /* The query routine is called for every value in current key */
     {
