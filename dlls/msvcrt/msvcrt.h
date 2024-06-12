@@ -34,6 +34,14 @@ typedef struct _iobuf
   int   _bufsiz;
   char* _tmpfname;
 } FILE;
+
+#define _IOREAD     0x0001
+#define _IOWRT      0x0002
+#define _IORW       0x0004
+#define _IOEOF      0x0008
+#define _IOERR      0x0010
+#define _IOMYBUF    0x0040
+#define _IOSTRG     0x1000
 #endif
 #endif
 

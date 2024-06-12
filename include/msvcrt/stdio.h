@@ -11,6 +11,7 @@
 #include <corecrt_wstdio.h>
 
 /* file._flag flags */
+#ifndef _UCRT
 #define _IOREAD          0x0001
 #define _IOWRT           0x0002
 #define _IOMYBUF         0x0008
@@ -18,6 +19,7 @@
 #define _IOERR           0x0020
 #define _IOSTRG          0x0040
 #define _IORW            0x0080
+#endif
 
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1

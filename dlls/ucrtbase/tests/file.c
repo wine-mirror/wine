@@ -110,7 +110,7 @@ static void test_iobuf_layout(void)
     ok(!(fp.iobuf->_flag & 0x40), "fp.iobuf->_flag = %x\n", fp.iobuf->_flag);
     r = fprintf(fp.f, "%s", "init");
     ok(r == 4, "fprintf returned %d\n", r);
-    todo_wine ok(fp.iobuf->_flag & 0x40, "fp.iobuf->_flag = %x\n", fp.iobuf->_flag);
+    ok(fp.iobuf->_flag & 0x40, "fp.iobuf->_flag = %x\n", fp.iobuf->_flag);
     ok(fp.iobuf->_cnt + 4 == fp.iobuf->_bufsiz, "_cnt = %d, _bufsiz = %d\n",
             fp.iobuf->_cnt, fp.iobuf->_bufsiz);
 
