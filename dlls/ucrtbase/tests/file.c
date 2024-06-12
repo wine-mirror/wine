@@ -129,6 +129,9 @@ static void test_iobuf_layout(void)
     ok(file_ptr == &fp.iobuf->_ptr, "_ptr = %p, expected %p\n", file_ptr, &fp.iobuf->_ptr);
     ok(file_cnt == &fp.iobuf->_cnt, "_cnt = %p, expected %p\n", file_cnt, &fp.iobuf->_cnt);
 
+    ok(TryEnterCriticalSection(&fp.iobuf->_crit), "TryEnterCriticalSection section returned FALSE\n");
+    LeaveCriticalSection(&fp.iobuf->_crit);
+
     fclose(fp.f);
     unlink(tempf);
 }

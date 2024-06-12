@@ -246,7 +246,34 @@ typedef struct {
     CRITICAL_SECTION crit;
 } file_crit;
 
+#if _MSVCR_VER >= 140
+file_crit MSVCRT__iob[_IOB_ENTRIES] = { 0 };
+
+static FILE* iob_get_file(int i)
+{
+    return &MSVCRT__iob[i].file;
+}
+
+static CRITICAL_SECTION* file_get_cs(FILE *f)
+{
+    return &((file_crit*)f)->crit;
+}
+#else
 FILE MSVCRT__iob[_IOB_ENTRIES] = { { 0 } };
+
+static FILE* iob_get_file(int i)
+{
+    return &MSVCRT__iob[i];
+}
+
+static CRITICAL_SECTION* file_get_cs(FILE *f)
+{
+    if (f < iob_get_file(0) || f >= iob_get_file(_IOB_ENTRIES))
+        return &((file_crit*)f)->crit;
+    return NULL;
+}
+#endif
+
 static file_crit* MSVCRT_fstream[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE];
 static int MSVCRT_max_streams = 512, MSVCRT_stream_idx;
 
@@ -502,7 +529,7 @@ static inline FILE* msvcrt_get_file(int i)
         return NULL;
 
     if(i < _IOB_ENTRIES)
-        return &MSVCRT__iob[i];
+        return iob_get_file(i);
 
     ret = MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE];
     if(!ret) {
@@ -604,10 +631,11 @@ static FILE* msvcrt_alloc_fp(void)
     {
       if (i == MSVCRT_stream_idx)
       {
-          if (file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+          CRITICAL_SECTION *cs = file_get_cs(file);
+          if (cs)
           {
-              InitializeCriticalSectionEx(&((file_crit*)file)->crit, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
-              ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+              InitializeCriticalSectionEx(cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+              cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
           }
           MSVCRT_stream_idx++;
       }
@@ -784,14 +812,22 @@ void msvcrt_init_io(void)
         get_ioinfo_nolock(STDOUT_FILENO)->handle,
         get_ioinfo_nolock(STDERR_FILENO)->handle);
 
-  memset(MSVCRT__iob,0,3*sizeof(FILE));
   for (i = 0; i < 3; i++)
   {
+    FILE *f = iob_get_file(i);
+    CRITICAL_SECTION *cs = file_get_cs(f);
+
     /* FILE structs for stdin/out/err are static and never deleted */
-    MSVCRT__iob[i]._file = get_ioinfo_nolock(i)->handle == MSVCRT_NO_CONSOLE ?
+    f->_file = get_ioinfo_nolock(i)->handle == MSVCRT_NO_CONSOLE ?
         MSVCRT_NO_CONSOLE_FD : i;
-    MSVCRT__iob[i]._tmpfname = NULL;
-    MSVCRT__iob[i]._flag = (i == 0) ? _IOREAD : _IOWRT;
+    f->_tmpfname = NULL;
+    f->_flag = (i == 0) ? _IOREAD : _IOWRT;
+
+    if (cs)
+    {
+      InitializeCriticalSectionEx(cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
+      cs->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+    }
   }
   MSVCRT_stream_idx = 3;
 }
@@ -936,7 +972,7 @@ static int msvcrt_int_to_base32_w(int num, wchar_t *str)
 #undef __iob_func
 FILE * CDECL __iob_func(void)
 {
- return &MSVCRT__iob[0];
+    return iob_get_file(0);
 }
 
 #if _MSVCR_VER >= 140
@@ -945,7 +981,7 @@ FILE * CDECL __iob_func(void)
  */
 FILE * CDECL __acrt_iob_func(unsigned idx)
 {
- return &MSVCRT__iob[idx];
+    return iob_get_file(idx);
 }
 #endif
 
@@ -1390,10 +1426,12 @@ void msvcrt_free_io(void)
     for(j=0; j<MSVCRT_stream_idx; j++)
     {
         FILE *file = msvcrt_get_file(j);
-        if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+        CRITICAL_SECTION *cs = file_get_cs(file);
+
+        if(cs)
         {
-            ((file_crit*)file)->crit.DebugInfo->Spare[0] = 0;
-            DeleteCriticalSection(&((file_crit*)file)->crit);
+            cs->DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(cs);
         }
     }
 
@@ -1461,10 +1499,11 @@ __msvcrt_long CDECL _lseek(int fd, __msvcrt_long offset, int whence)
  */
 void CDECL _lock_file(FILE *file)
 {
-    if(file>=MSVCRT__iob && file<MSVCRT__iob+_IOB_ENTRIES)
-        _lock(_STREAM_LOCKS+(file-MSVCRT__iob));
+    CRITICAL_SECTION *cs = file_get_cs(file);
+    if (!cs)
+        _lock(_STREAM_LOCKS + (file - iob_get_file(0)));
     else
-        EnterCriticalSection(&((file_crit*)file)->crit);
+        EnterCriticalSection(cs);
 }
 
 /*********************************************************************
@@ -1472,10 +1511,11 @@ void CDECL _lock_file(FILE *file)
  */
 void CDECL _unlock_file(FILE *file)
 {
-    if(file>=MSVCRT__iob && file<MSVCRT__iob+_IOB_ENTRIES)
-        _unlock(_STREAM_LOCKS+(file-MSVCRT__iob));
+    CRITICAL_SECTION *cs = file_get_cs(file);
+    if (!cs)
+        _unlock(_STREAM_LOCKS + (file - iob_get_file(0)));
     else
-        LeaveCriticalSection(&((file_crit*)file)->crit);
+        LeaveCriticalSection(cs);
 }
 
 /*********************************************************************
