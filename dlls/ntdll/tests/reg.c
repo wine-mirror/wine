@@ -2548,7 +2548,6 @@ struct query_reg_values_test
         WINE_TODO_TYPE = 0x80,
         WINE_TODO_SIZE = 0x100,
         WINE_TODO_DATA = 0x200,
-        WINE_CRASH = 0x400,
     }
     flags;
     ULONG expected_type;
@@ -2816,12 +2815,6 @@ static void test_RtlQueryRegistryValues(void)
         RTL_QUERY_REGISTRY_TABLE *query;
         const WCHAR *expected_data;
         ULONG expected_size;
-
-        if ((test->flags & WINE_CRASH) && !strcmp(winetest_platform, "wine"))
-        {
-            skip("Currently crashes on Wine\n");
-            continue;
-        }
 
         winetest_push_context("%u/%Iu", i, ARRAY_SIZE(query_reg_values_tests) - 1);
 
