@@ -211,7 +211,6 @@ struct window_surface;
 
 struct window_surface_funcs
 {
-    void* (*get_info)( struct window_surface *surface, BITMAPINFO *info );
     void  (*set_clip)( struct window_surface *surface, const RECT *rects, UINT count );
     BOOL  (*flush)( struct window_surface *surface, const RECT *rect, const RECT *dirty,
                     const BITMAPINFO *color_info, const void *color_bits );
@@ -234,7 +233,6 @@ struct window_surface
     UINT                               alpha_bits;   /* layered window global alpha bits, invalid if -1 */
     UINT                               alpha_mask;   /* layered window per-pixel alpha mask, invalid if 0 */
     HBITMAP                            color_bitmap; /* bitmap for the surface colors */
-    void                              *color_bits;   /* pixel bits of the color bitmap */
     /* driver-specific fields here */
 };
 

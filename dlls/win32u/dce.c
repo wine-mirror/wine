@@ -56,24 +56,6 @@ static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
  * Dummy window surface for windows that shouldn't get painted.
  */
 
-static void *dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
-{
-    static DWORD dummy_data;
-
-    info->bmiHeader.biSize          = sizeof( info->bmiHeader );
-    info->bmiHeader.biWidth         = dummy_surface.rect.right;
-    info->bmiHeader.biHeight        = dummy_surface.rect.bottom;
-    info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = 32;
-    info->bmiHeader.biCompression   = BI_RGB;
-    info->bmiHeader.biSizeImage     = 0;
-    info->bmiHeader.biXPelsPerMeter = 0;
-    info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
-    info->bmiHeader.biClrImportant  = 0;
-    return &dummy_data;
-}
-
 static void dummy_surface_set_clip( struct window_surface *window_surface, const RECT *rects, UINT count )
 {
     /* nothing to do */
@@ -93,7 +75,6 @@ static void dummy_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs dummy_surface_funcs =
 {
-    dummy_surface_get_bitmap_info,
     dummy_surface_set_clip,
     dummy_surface_flush,
     dummy_surface_destroy
@@ -125,13 +106,6 @@ static struct offscreen_window_surface *impl_from_window_surface( struct window_
     return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
 }
 
-static void *offscreen_window_surface_get_bitmap_info( struct window_surface *base, BITMAPINFO *info )
-{
-    struct offscreen_window_surface *impl = impl_from_window_surface( base );
-    info->bmiHeader = impl->info.bmiHeader;
-    return base->color_bits;
-}
-
 static void offscreen_window_surface_set_clip( struct window_surface *base, const RECT *rects, UINT count )
 {
 }
@@ -150,7 +124,6 @@ static void offscreen_window_surface_destroy( struct window_surface *base )
 
 static const struct window_surface_funcs offscreen_window_surface_funcs =
 {
-    offscreen_window_surface_get_bitmap_info,
     offscreen_window_surface_set_clip,
     offscreen_window_surface_flush,
     offscreen_window_surface_destroy
@@ -224,10 +197,6 @@ static COLORREF get_color_key( const BITMAPINFO *info, COLORREF color_key )
 W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
                                   HWND hwnd, const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
 {
-    struct bitblt_coords coords = {0};
-    struct gdi_image_bits bits;
-    BITMAPOBJ *bmp;
-
     surface->funcs = funcs;
     surface->ref = 1;
     surface->hwnd = hwnd;
@@ -239,10 +208,7 @@ W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct w
     reset_bounds( &surface->bounds );
 
     if (!bitmap) bitmap = NtGdiCreateDIBSection( 0, NULL, 0, info, DIB_RGB_COLORS, 0, 0, 0, NULL );
-    if (!(surface->color_bitmap = bitmap) || !(bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP ))) return FALSE;
-    get_image_from_bitmap( bmp, info, &bits, &coords );
-    surface->color_bits = bits.ptr;
-    GDI_ReleaseObj( bitmap );
+    if (!(surface->color_bitmap = bitmap)) return FALSE;
 
     return TRUE;
 }
@@ -276,6 +242,29 @@ W32KAPI void window_surface_unlock( struct window_surface *surface )
     pthread_mutex_unlock( &surface->mutex );
 }
 
+void *window_surface_get_color( struct window_surface *surface, BITMAPINFO *info )
+{
+    struct bitblt_coords coords = {0};
+    struct gdi_image_bits gdi_bits;
+    BITMAPOBJ *bmp;
+
+    if (surface == &dummy_surface)
+    {
+        static BITMAPINFOHEADER header = {.biSize = sizeof(header), .biWidth = 1, .biHeight = 1,
+                                          .biPlanes = 1, .biBitCount = 32, .biCompression = BI_RGB};
+        static DWORD dummy_data;
+
+        info->bmiHeader = header;
+        return &dummy_data;
+    }
+
+    if (!(bmp = GDI_GetObjPtr( surface->color_bitmap, NTGDI_OBJ_BITMAP ))) return NULL;
+    get_image_from_bitmap( bmp, info, &gdi_bits, &coords );
+    GDI_ReleaseObj( surface->color_bitmap );
+
+    return gdi_bits.ptr;
+}
+
 W32KAPI void window_surface_flush( struct window_surface *surface )
 {
     char color_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -284,10 +273,9 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
     void *color_bits;
 
     window_surface_lock( surface );
-    color_bits = surface->funcs->get_info( surface, color_info );
 
     OffsetRect( &dirty, -dirty.left, -dirty.top );
-    if (intersect_rect( &dirty, &dirty, &surface->bounds ))
+    if (intersect_rect( &dirty, &dirty, &surface->bounds ) && (color_bits = window_surface_get_color( surface, color_info )))
     {
         TRACE( "Flushing hwnd %p, surface %p %s, bounds %s, dirty %s\n", surface->hwnd, surface,
                wine_dbgstr_rect( &surface->rect ), wine_dbgstr_rect( &surface->bounds ), wine_dbgstr_rect( &dirty ) );
@@ -301,27 +289,28 @@ W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORRE
 {
     char color_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *color_info = (BITMAPINFO *)color_buf;
+    void *color_bits;
 
     window_surface_lock( surface );
-    surface->funcs->get_info( surface, color_info );
-
-    color_key = get_color_key( color_info, color_key );
-    if (color_key != surface->color_key)
+    if ((color_bits = window_surface_get_color( surface, color_info )))
     {
-        surface->color_key = color_key;
-        surface->bounds = surface->rect;
+        color_key = get_color_key( color_info, color_key );
+        if (color_key != surface->color_key)
+        {
+            surface->color_key = color_key;
+            surface->bounds = surface->rect;
+        }
+        if (alpha_bits != surface->alpha_bits)
+        {
+            surface->alpha_bits = alpha_bits;
+            surface->bounds = surface->rect;
+        }
+        if (alpha_mask != surface->alpha_mask)
+        {
+            surface->alpha_mask = alpha_mask;
+            surface->bounds = surface->rect;
+        }
     }
-    if (alpha_bits != surface->alpha_bits)
-    {
-        surface->alpha_bits = alpha_bits;
-        surface->bounds = surface->rect;
-    }
-    if (alpha_mask != surface->alpha_mask)
-    {
-        surface->alpha_mask = alpha_mask;
-        surface->bounds = surface->rect;
-    }
-
     window_surface_unlock( surface );
 
     window_surface_flush( surface );
@@ -1293,8 +1282,8 @@ void move_window_bits_surface( HWND hwnd, const RECT *window_rect, struct window
     OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
     OffsetRect( &dst, -window_rect->left, -window_rect->top );
 
-    bits = old_surface->funcs->get_info( old_surface, info );
     window_surface_lock( old_surface );
+    bits = window_surface_get_color( old_surface, info );
     NtGdiSetDIBitsToDeviceInternal( hdc, dst.left, dst.top, dst.right - dst.left, dst.bottom - dst.top,
                                     src.left - old_surface->rect.left, old_surface->rect.bottom - src.bottom,
                                     0, old_surface->rect.bottom - old_surface->rect.top,

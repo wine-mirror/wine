@@ -210,19 +210,6 @@ static void wayland_buffer_queue_add_damage(struct wayland_buffer_queue *queue, 
 }
 
 /***********************************************************************
- *           wayland_window_surface_get_bitmap_info
- */
-static void *wayland_window_surface_get_bitmap_info(struct window_surface *window_surface,
-                                                    BITMAPINFO *info)
-{
-    struct wayland_window_surface *surface = wayland_window_surface_cast(window_surface);
-    /* We don't store any additional information at the end of our BITMAPINFO, so
-     * just copy the structure itself. */
-    memcpy(info, &surface->info, sizeof(*info));
-    return window_surface->color_bits;
-}
-
-/***********************************************************************
  *           wayland_window_surface_set_clip
  */
 static void wayland_window_surface_set_clip(struct window_surface *window_surface,
@@ -443,7 +430,6 @@ static void wayland_window_surface_destroy(struct window_surface *window_surface
 
 static const struct window_surface_funcs wayland_window_surface_funcs =
 {
-    wayland_window_surface_get_bitmap_info,
     wayland_window_surface_set_clip,
     wayland_window_surface_flush,
     wayland_window_surface_destroy
@@ -476,8 +462,7 @@ static struct window_surface *wayland_window_surface_create(HWND hwnd, const REC
     if (!window_surface_init(&wws->header, &wayland_window_surface_funcs, hwnd, rect, info, 0)) goto failed;
     wws->info = *info;
 
-    TRACE("created %p hwnd %p %s bits [%p,%p)\n", wws, hwnd, wine_dbgstr_rect(rect),
-          wws->header.color_bits, (char *)wws->header.color_bits + wws->info.bmiHeader.biSizeImage);
+    TRACE("created %p hwnd %p %s\n", wws, hwnd, wine_dbgstr_rect(rect));
 
     return &wws->header;
 

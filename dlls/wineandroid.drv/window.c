@@ -615,17 +615,6 @@ static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *
 }
 
 /***********************************************************************
- *           android_surface_get_bitmap_info
- */
-static void *android_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
-{
-    struct android_window_surface *surface = get_android_surface( window_surface );
-
-    memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
-    return window_surface->color_bits;
-}
-
-/***********************************************************************
  *           android_surface_set_clip
  */
 static void android_surface_set_clip( struct window_surface *window_surface, const RECT *rects, UINT count )
@@ -725,7 +714,6 @@ static void android_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs android_surface_funcs =
 {
-    android_surface_get_bitmap_info,
     android_surface_set_clip,
     android_surface_flush,
     android_surface_destroy
@@ -761,8 +749,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 
     surface->window = get_ioctl_window( hwnd );
 
-    TRACE( "created %p hwnd %p %s bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
-           surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage );
+    TRACE( "created %p hwnd %p %s\n", surface, hwnd, wine_dbgstr_rect(rect) );
 
     if (src_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
     else window_surface_set_layered( &surface->header, color_key, alpha << 24, 0 );

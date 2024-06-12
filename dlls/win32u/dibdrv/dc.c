@@ -816,7 +816,7 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
         physdev->surface = surface;
 
         dibdrv = physdev->dibdrv;
-        bits = surface->funcs->get_info( surface, info );
+        bits = window_surface_get_color( surface, info );
         init_dib_info_from_bitmapinfo( &dibdrv->dib, info, bits );
         dibdrv->dib.rect = dc->attr->vis_rect;
         OffsetRect( &dibdrv->dib.rect, -dc->device_rect.left, -dc->device_rect.top );

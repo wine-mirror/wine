@@ -31,17 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 
-
-/* only for use on sanitized BITMAPINFO structures */
-static inline int get_dib_info_size(const BITMAPINFO *info, UINT coloruse)
-{
-    if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
-    if (coloruse == DIB_PAL_COLORS)
-        return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
-    return FIELD_OFFSET(BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed]);
-}
-
 static inline int get_dib_stride(int width, int bpp)
 {
     return ((width * bpp + 31) >> 3) & ~3;
@@ -77,18 +66,6 @@ static CGDataProviderRef data_provider_create(size_t size, void **bits)
     CFRelease(data);
 
     return provider;
-}
-
-/***********************************************************************
- *              macdrv_surface_get_bitmap_info
- */
-static void *macdrv_surface_get_bitmap_info(struct window_surface *window_surface,
-                                                  BITMAPINFO *info)
-{
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-
-    memcpy(info, &surface->info, get_dib_info_size(&surface->info, DIB_RGB_COLORS));
-    return window_surface->color_bits;
 }
 
 /***********************************************************************
@@ -135,7 +112,6 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
 
 static const struct window_surface_funcs macdrv_surface_funcs =
 {
-    macdrv_surface_get_bitmap_info,
     macdrv_surface_set_clip,
     macdrv_surface_flush,
     macdrv_surface_destroy,
@@ -201,8 +177,7 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     window_background = macdrv_window_background_color();
     memset_pattern4(bits, &window_background, info->bmiHeader.biSizeImage);
 
-    TRACE("created %p for %p %s color_bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
-          bits, (char *)bits + info->bmiHeader.biSizeImage);
+    TRACE("created %p for %p %s\n", surface, window, wine_dbgstr_rect(rect));
 
     if (use_alpha) window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0xff000000 );
     else window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0 );

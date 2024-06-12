@@ -1905,17 +1905,6 @@ failed:
     return NULL;
 }
 
-/***********************************************************************
- *           x11drv_surface_get_bitmap_info
- */
-static void *x11drv_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
-{
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-
-    memcpy( info, &surface->info, get_dib_info_size( &surface->info, DIB_RGB_COLORS ));
-    return window_surface->color_bits;
-}
-
 static XRectangle *xrectangles_from_rects( const RECT *rects, UINT count )
 {
     XRectangle *xrects;
@@ -2024,7 +2013,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
 
 static const struct window_surface_funcs x11drv_surface_funcs =
 {
-    x11drv_surface_get_bitmap_info,
     x11drv_surface_set_clip,
     x11drv_surface_flush,
     x11drv_surface_destroy
@@ -2102,9 +2090,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
 
-    TRACE( "created %p for %lx %s bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
-           surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
-           surface->image->ximage->data );
+    TRACE( "created %p for %lx %s image %p\n", surface, window, wine_dbgstr_rect(rect), surface->image->ximage->data );
 
     if (use_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
     else window_surface_set_layered( &surface->header, color_key, -1, 0 );
