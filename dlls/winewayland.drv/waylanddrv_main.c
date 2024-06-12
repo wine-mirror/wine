@@ -47,6 +47,7 @@ static const struct user_driver_funcs waylanddrv_funcs =
     .pWindowMessage = WAYLAND_WindowMessage,
     .pWindowPosChanged = WAYLAND_WindowPosChanged,
     .pWindowPosChanging = WAYLAND_WindowPosChanging,
+    .pCreateWindowSurface = WAYLAND_CreateWindowSurface,
     .pVulkanInit = WAYLAND_VulkanInit,
     .pwine_get_wgl_driver = WAYLAND_wine_get_wgl_driver,
 };

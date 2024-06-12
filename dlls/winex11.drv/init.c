@@ -423,6 +423,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pCreateLayeredWindow = X11DRV_CreateLayeredWindow,
     .pWindowMessage = X11DRV_WindowMessage,
     .pWindowPosChanging = X11DRV_WindowPosChanging,
+    .pCreateWindowSurface = X11DRV_CreateWindowSurface,
     .pWindowPosChanged = X11DRV_WindowPosChanged,
     .pSystemParametersInfo = X11DRV_SystemParametersInfo,
     .pVulkanInit = X11DRV_VulkanInit,

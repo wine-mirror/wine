@@ -1790,26 +1790,20 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 {
     WND *win;
     HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    BOOL ret, needs_update = FALSE;
-    RECT visible_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
+    BOOL ret, needs_surface, needs_update = FALSE;
+    RECT visible_rect = *window_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface = NULL;
+
+    needs_surface = user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect, &visible_rect );
 
     if (!parent || parent == get_desktop_window())
     {
         new_surface = &dummy_surface;  /* provide a default surface for top-level windows */
         window_surface_add_ref( new_surface );
     }
-    visible_rect = *window_rect;
-    if (!(ret = user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect,
-                                                 &visible_rect, &new_surface )))
-    {
-        if (IsRectEmpty( window_rect )) visible_rect = *window_rect;
-        else
-        {
-            visible_rect = get_virtual_screen_rect( get_thread_dpi() );
-            intersect_rect( &visible_rect, &visible_rect, window_rect );
-        }
-    }
+
+    if (!needs_surface || IsRectEmpty( &visible_rect )) needs_surface = FALSE; /* use default surface */
+    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, swp_flags, &visible_rect, &new_surface );
 
     get_window_rects( hwnd, COORDS_SCREEN, &old_window_rect, NULL, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;
@@ -1821,9 +1815,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     }
 
     /* create or update window surface for top-level windows if the driver doesn't implement WindowPosChanging */
-    if (!ret && new_surface && !IsRectEmpty( &visible_rect ) &&
-        (!(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
-           NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
+    if (needs_surface && new_surface && (!(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
+                                         NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
     {
         window_surface_release( new_surface );
         if ((new_surface = win->surface)) window_surface_add_ref( new_surface );

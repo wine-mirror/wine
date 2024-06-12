@@ -2000,18 +2000,17 @@ static inline RECT get_surface_rect(const RECT *visible_rect)
 /***********************************************************************
  *              WindowPosChanging   (MACDRV.@)
  */
-BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
-                              RECT *visible_rect, struct window_surface **surface)
+BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect)
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
-    RECT surface_rect;
+    BOOL ret = FALSE;
 
-    TRACE("%p swp %04x window %s client %s visible %s surface %p\n", hwnd,
+    TRACE("%p swp %04x window %s client %s visible %s\n", hwnd,
           swp_flags, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-          wine_dbgstr_rect(visible_rect), surface);
+          wine_dbgstr_rect(visible_rect));
 
-    if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return TRUE; /* use default surface */
+    if (!data && !(data = macdrv_create_win_data(hwnd, window_rect, client_rect))) return FALSE; /* use default surface */
 
     macdrv_window_to_mac_rect(data, style, visible_rect, window_rect, client_rect);
     TRACE("visible_rect %s -> %s\n", wine_dbgstr_rect(window_rect),
@@ -2020,6 +2019,27 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect
     if (!data->cocoa_window) goto done; /* use default surface */
     if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
     if (data->ulw_layered) goto done; /* use default surface */
+
+    ret = TRUE;
+
+done:
+    release_win_data(data);
+    return ret;
+}
+
+
+/***********************************************************************
+ *              CreateWindowSurface   (MACDRV.@)
+ */
+BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface)
+{
+    struct macdrv_win_data *data;
+    DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+    RECT surface_rect;
+
+    TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
+
+    if (!(data = get_win_data(hwnd))) return TRUE; /* use default surface */
 
     if (*surface) window_surface_release(*surface);
     *surface = NULL;

@@ -1136,25 +1136,46 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 /***********************************************************************
  *           ANDROID_WindowPosChanging
  */
-BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
-                                RECT *visible_rect, struct window_surface **surface )
+BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
 {
     struct android_win_data *data = get_win_data( hwnd );
+    RECT surface_rect;
+    BOOL ret = FALSE;
+
+    TRACE( "win %p window %s client %s style %08x flags %08x\n",
+           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
+           (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
+
+    if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return FALSE; /* use default surface */
+
+    if (data->parent) goto done; /* use default surface */
+    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
+    if (is_argb_surface( data->surface )) goto done; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
+
+    ret = TRUE;
+
+done:
+    release_win_data(data);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           ANDROID_CreateWindowSurface
+ */
+BOOL ANDROID_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface )
+{
+    struct android_win_data *data;
     RECT surface_rect;
     DWORD flags;
     COLORREF key;
     BYTE alpha;
     BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    TRACE( "win %p window %s client %s style %08x flags %08x\n",
-           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-           (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
+    TRACE( "hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect( visible_rect ), surface );
 
-    if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return TRUE; /* use default surface */
-
-    if (data->parent) goto done; /* use default surface */
-    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
-    if (is_argb_surface( data->surface )) goto done; /* use default surface */
+    if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
     if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     if (data->surface)

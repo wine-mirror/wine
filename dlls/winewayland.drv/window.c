@@ -444,34 +444,50 @@ void WAYLAND_DestroyWindow(HWND hwnd)
 /***********************************************************************
  *           WAYLAND_WindowPosChanging
  */
-BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
-                               RECT *visible_rect, struct window_surface **surface)
+BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect)
 {
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
     HWND parent;
-    BOOL visible;
-    RECT surface_rect;
+    BOOL visible, ret = FALSE;
 
     TRACE("hwnd %p window %s client %s visible %s flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
           wine_dbgstr_rect(visible_rect), swp_flags);
 
-    if (!data && !(data = wayland_win_data_create(hwnd, window_rect, client_rect)))
-        return TRUE;
-
-    /* Release the dummy surface wine provides for toplevels. */
-    if (*surface) window_surface_release(*surface);
-    *surface = NULL;
+    if (!data && !(data = wayland_win_data_create(hwnd, window_rect, client_rect))) return FALSE; /* use default surface */
 
     parent = NtUserGetAncestor(hwnd, GA_PARENT);
     visible = ((NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE) ||
                (swp_flags & SWP_SHOWWINDOW)) &&
               !(swp_flags & SWP_HIDEWINDOW);
 
-    /* Check if we don't want a dedicated window surface. */
-    if ((parent && parent != NtUserGetDesktopWindow()) || !visible) goto done;
+    if ((parent && parent != NtUserGetDesktopWindow()) || !visible) goto done; /* use default surface */
 
-    surface_rect = *window_rect;
+    ret = TRUE;
+
+done:
+    wayland_win_data_release(data);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           WAYLAND_CreateWindowSurface
+ */
+BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface)
+{
+    struct wayland_win_data *data;
+    RECT surface_rect;
+
+    TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
+
+    if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
+
+    /* Release the dummy surface wine provides for toplevels. */
+    if (*surface) window_surface_release(*surface);
+    *surface = NULL;
+
+    surface_rect = *visible_rect;
     OffsetRect(&surface_rect, -surface_rect.left, -surface_rect.top);
 
     /* Check if we can reuse our current window surface. */

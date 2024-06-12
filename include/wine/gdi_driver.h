@@ -337,8 +337,8 @@ struct user_driver_funcs
     BOOL    (*pCreateLayeredWindow)(HWND,const RECT *,COLORREF,struct window_surface **);
     void    (*pUpdateLayeredWindow)(HWND,const RECT *,COLORREF,BYTE,UINT);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
-    BOOL    (*pWindowPosChanging)(HWND,UINT,const RECT *,const RECT *,RECT *,
-                                  struct window_surface**);
+    BOOL    (*pWindowPosChanging)(HWND,UINT,const RECT *,const RECT *,RECT *);
+    BOOL    (*pCreateWindowSurface)(HWND,UINT,const RECT *,struct window_surface**);
     void    (*pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,
                                  const RECT *,struct window_surface*);
     /* system parameters */

@@ -2593,16 +2593,13 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
-BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
-                               RECT *visible_rect, struct window_surface **surface )
+BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
-    DWORD flags;
-    COLORREF key;
-    BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
+    BOOL ret = FALSE;
 
-    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return TRUE; /* use default surface */
+    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return FALSE; /* use default surface */
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))
@@ -2610,7 +2607,7 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
         release_win_data( data );
         unmap_window( hwnd );
-        if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
+        if (!(data = get_win_data( hwnd ))) return FALSE; /* use default surface */
         data->managed = TRUE;
     }
 
@@ -2621,6 +2618,29 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
     if (data->use_alpha) goto done; /* use default surface */
     if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
+    ret = TRUE;
+
+done:
+    release_win_data( data );
+    return ret;
+}
+
+
+/***********************************************************************
+ *      CreateWindowSurface   (X11DRV.@)
+ */
+BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface )
+{
+    struct x11drv_win_data *data;
+    RECT surface_rect;
+    DWORD flags;
+    COLORREF key;
+    BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
+
+    TRACE( "hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect( visible_rect ), surface );
+
+    if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
+
     if (*surface) window_surface_release( *surface );
     *surface = NULL;  /* indicate that we want to draw directly to the window */
 
@@ -2629,6 +2649,7 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
     if (data->client_window) goto done; /* draw directly to the window */
     if (!client_side_graphics && !layered) goto done; /* draw directly to the window */
 
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
     if (data->surface)
     {
         if (EqualRect( &data->surface->rect, &surface_rect ))
