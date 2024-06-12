@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 25
+#define WINE_WGL_DRIVER_VERSION 26
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -15,6 +15,31 @@ struct wgl_pbuffer;
 struct wgl_pixel_format
 {
     PIXELFORMATDESCRIPTOR pfd;
+    int swap_method;
+    int transparent;
+    int pixel_type;
+    int draw_to_pbuffer;
+    int max_pbuffer_pixels;
+    int max_pbuffer_width;
+    int max_pbuffer_height;
+    int transparent_red_value;
+    int transparent_red_value_valid;
+    int transparent_green_value;
+    int transparent_green_value_valid;
+    int transparent_blue_value;
+    int transparent_blue_value_valid;
+    int transparent_alpha_value;
+    int transparent_alpha_value_valid;
+    int transparent_index_value;
+    int transparent_index_value_valid;
+    int sample_buffers;
+    int samples;
+    int bind_to_texture_rgb;
+    int bind_to_texture_rgba;
+    int bind_to_texture_rectangle_rgb;
+    int bind_to_texture_rectangle_rgba;
+    int framebuffer_srgb_capable;
+    int float_components;
 };
 
 struct opengl_funcs

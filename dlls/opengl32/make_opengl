@@ -181,6 +181,7 @@ my %manual_win_thunks =
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,
      "wglGetPixelFormat" => 1,
+     "wglGetPixelFormatAttribivARB" => 1,
      "wglGetProcAddress" => 1,
      "wglQueryCurrentRendererStringWINE" => 1,
      "wglQueryRendererStringWINE" => 1,
@@ -884,6 +885,31 @@ print HEADER "struct wgl_pbuffer;\n\n";
 print HEADER "struct wgl_pixel_format\n";
 print HEADER "{\n";
 print HEADER "    PIXELFORMATDESCRIPTOR pfd;\n";
+print HEADER "    int swap_method;\n";
+print HEADER "    int transparent;\n";
+print HEADER "    int pixel_type;\n";
+print HEADER "    int draw_to_pbuffer;\n";
+print HEADER "    int max_pbuffer_pixels;\n";
+print HEADER "    int max_pbuffer_width;\n";
+print HEADER "    int max_pbuffer_height;\n";
+print HEADER "    int transparent_red_value;\n";
+print HEADER "    int transparent_red_value_valid;\n";
+print HEADER "    int transparent_green_value;\n";
+print HEADER "    int transparent_green_value_valid;\n";
+print HEADER "    int transparent_blue_value;\n";
+print HEADER "    int transparent_blue_value_valid;\n";
+print HEADER "    int transparent_alpha_value;\n";
+print HEADER "    int transparent_alpha_value_valid;\n";
+print HEADER "    int transparent_index_value;\n";
+print HEADER "    int transparent_index_value_valid;\n";
+print HEADER "    int sample_buffers;\n";
+print HEADER "    int samples;\n";
+print HEADER "    int bind_to_texture_rgb;\n";
+print HEADER "    int bind_to_texture_rgba;\n";
+print HEADER "    int bind_to_texture_rectangle_rgb;\n";
+print HEADER "    int bind_to_texture_rectangle_rgba;\n";
+print HEADER "    int framebuffer_srgb_capable;\n";
+print HEADER "    int float_components;\n";
 print HEADER "};\n\n";
 
 print HEADER "struct opengl_funcs\n{\n";
