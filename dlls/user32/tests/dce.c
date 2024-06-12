@@ -525,6 +525,55 @@ static void test_begin_paint(void)
     ReleaseDC( hwnd_parent, hdc );
 }
 
+static void test_cropped_parentdc_paint_clipbox(void)
+{
+    /* Use WS_BORDER to differentiate window and client rects */
+    const UINT common_style = WS_VISIBLE | WS_BORDER;
+    HWND hwnd_toplevel, hwnd_container, hwnd_child;
+    RECT parent_rect, expect_rect, toplevel_rect, rect;
+    POINT dot_pos = { 10, 10 };
+    PAINTSTRUCT ps;
+    COLORREF cr;
+    HDC hdc;
+
+    hwnd_toplevel = CreateWindowA( "static", NULL, WS_OVERLAPPED | common_style,
+                                   400, 200, 100, 100, NULL, NULL, NULL, NULL );
+
+    /* Container window extends "outside" the top-level window (hence cropped) */
+    hwnd_container = CreateWindowA( "static", NULL, WS_CHILD | common_style,
+                                    -40, -40, 180, 180, hwnd_toplevel, NULL, NULL, NULL );
+
+    hwnd_child = CreateWindowA( "parentdc_class", NULL, WS_CHILD | common_style,
+                                50, 50, 3, 3, hwnd_container, NULL, NULL, NULL );
+
+    RedrawWindow( hwnd_toplevel, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    RedrawWindow( hwnd_child, NULL, 0, RDW_INVALIDATE );
+
+    hdc = BeginPaint( hwnd_child, &ps );
+    GetClipBox( hdc, &rect );
+    cr = SetPixel( hdc, dot_pos.x, dot_pos.y, RGB(255, 0, 0) );
+    ok( cr != -1, "error drawing outside of window client area\n" );
+    EndPaint( hwnd_child, &ps );
+
+    GetClientRect( hwnd_toplevel, &toplevel_rect );
+    MapWindowPoints( hwnd_toplevel, hwnd_container, (POINT *)&toplevel_rect, 2);
+    GetClientRect( hwnd_container, &parent_rect );
+    IntersectRect( &expect_rect, &toplevel_rect, &parent_rect );
+
+    MapWindowPoints( hwnd_child, hwnd_container, (POINT *)&rect, 2 );
+    todo_wine
+    ok( EqualRect( &rect, &expect_rect ), "rect = %s, expected %s\n",
+        wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &expect_rect ) );
+
+    hdc = GetDC( hwnd_container );
+    MapWindowPoints( hwnd_child, hwnd_container, &dot_pos, 1 );
+    todo_wine
+    ok( GetPixel( hdc, dot_pos.x, dot_pos.y ) == cr, "error drawing outside of window client area\n" );
+    ReleaseDC( hwnd_container, hdc );
+
+    DestroyWindow( hwnd_toplevel );
+}
+
 /* test ScrollWindow with window DCs */
 static void test_scroll_window(void)
 {
@@ -780,6 +829,7 @@ START_TEST(dce)
     test_parameters();
     test_dc_visrgn();
     test_begin_paint();
+    test_cropped_parentdc_paint_clipbox();
     test_scroll_window();
     test_invisible_create();
     test_dc_layout();
