@@ -5719,15 +5719,221 @@ done:
 }
 
 
+#define MUI_SIGNATURE 0xfecdfecd
+struct mui_resource
+{
+    DWORD signature;
+    DWORD size;
+    DWORD version;
+    DWORD path_type;
+    DWORD file_type;
+    DWORD system_attributes;
+    DWORD fallback_location;
+    BYTE service_checksum[16];
+    BYTE checksum[16];
+    DWORD unk1[2];
+    DWORD mui_path_off;
+    DWORD mui_path_size;
+    DWORD unk2[2];
+    DWORD ln_type_name_off;
+    DWORD ln_type_name_size;
+    DWORD ln_type_id_off;
+    DWORD ln_type_id_size;
+    DWORD mui_type_name_off;
+    DWORD mui_type_name_size;
+    DWORD mui_type_id_off;
+    DWORD mui_type_id_size;
+    DWORD lang_off;
+    DWORD lang_size;
+    DWORD fallback_lang_off;
+    DWORD fallback_lang_size;
+};
+
+
+static BOOL validate_mui_resource(struct mui_resource *mui, DWORD size)
+{
+    if (size >= sizeof(DWORD) && mui->signature != MUI_SIGNATURE)
+    {
+        SetLastError(ERROR_MUI_INVALID_RC_CONFIG);
+        return FALSE;
+    }
+
+    size = min( size, mui->size );
+    if (size < sizeof(*mui) ||
+        mui->ln_type_name_off >= size || mui->ln_type_name_size > size - mui->ln_type_name_off ||
+        mui->ln_type_id_off >= size || mui->ln_type_id_size > size - mui->ln_type_id_off ||
+        mui->mui_type_name_off >= size || mui->mui_type_name_size > size - mui->mui_type_name_off ||
+        mui->mui_type_id_off >= size || mui->mui_type_id_size > size - mui->mui_type_id_off ||
+        mui->lang_off >= size || mui->lang_size > size - mui->lang_off ||
+        mui->fallback_lang_off >= size || mui->fallback_lang_size > size - mui->fallback_lang_off)
+    {
+        SetLastError(ERROR_BAD_EXE_FORMAT);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /******************************************************************************
  *	GetFileMUIInfo   (kernelbase.@)
  */
-BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetFileMUIInfo( DWORD flags, const WCHAR *path,
-                                                    FILEMUIINFO *info, DWORD *size )
+BOOL WINAPI DECLSPEC_HOTPATCH GetFileMUIInfo( DWORD flags, const WCHAR *path,
+                                              FILEMUIINFO *info, DWORD *size )
 {
-    FIXME( "stub: %lu, %s, %p, %p\n", flags, debugstr_w(path), info, size );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    DWORD off, mui_size, type = MUI_FILETYPE_NOT_LANGUAGE_NEUTRAL;
+    struct mui_resource *mui = NULL;
+    HMODULE hmod;
+    HRSRC hrsrc;
+
+    TRACE( "%lu, %s, %p, %p\n", flags, debugstr_w(path), info, size );
+
+    if (!path || !size || (*size && !info) ||
+            (info && (*size < sizeof(*info) || info->dwSize != *size ||
+                      info->dwVersion != MUI_FILEINFO_VERSION)))
+    {
+        if (size) *size = 0;
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!flags) flags = MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM;
+
+    hmod = LoadLibraryExW( path, NULL, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE );
+    if (!hmod) return FALSE;
+
+    hrsrc = FindResourceW( hmod, MAKEINTRESOURCEW(1), L"MUI" );
+    if (hrsrc)
+    {
+        mui = LockResource( LoadResource(hmod, hrsrc) );
+        if (mui) mui_size = SizeofResource( hmod, hrsrc );
+        if (!mui || !validate_mui_resource( mui, mui_size ))
+        {
+            FreeLibrary( hmod );
+            return FALSE;
+        }
+        if (mui->file_type & (MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN >> 1))
+            type = MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN;
+        else if (mui->file_type & (MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI >> 1))
+            type = MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI;
+    }
+    if (type == MUI_FILETYPE_NOT_LANGUAGE_NEUTRAL)
+    {
+        FreeLibrary( hmod );
+
+        if (!info)
+        {
+            *size = sizeof(*info);
+            return TRUE;
+        }
+        if (info->dwSize < sizeof(*info))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+
+        memset( info, 0, sizeof(*info) );
+        info->dwSize = *size;
+        info->dwVersion = MUI_FILEINFO_VERSION;
+        if (flags & MUI_QUERY_TYPE) info->dwFileType = type;
+        return TRUE;
+    }
+
+    off = offsetof(FILEMUIINFO, abBuffer);
+    if (flags & MUI_QUERY_LANGUAGE_NAME)
+    {
+        off += type == MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN ?
+            mui->fallback_lang_size : mui->lang_size;
+    }
+    if (flags & MUI_QUERY_RESOURCE_TYPES)
+    {
+        if (type == MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN)
+            off += mui->ln_type_name_size + mui->ln_type_id_size;
+        off += mui->mui_type_name_size + mui->mui_type_id_size;
+    }
+    if (off < sizeof(*info)) off = sizeof(*info);
+
+    if (!info || info->dwSize < off)
+    {
+        FreeLibrary( hmod );
+        *size = off;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    off = 0;
+    memset( info, 0, sizeof(*info) );
+    info->dwSize = *size;
+    info->dwVersion = MUI_FILEINFO_VERSION;
+    if (flags & MUI_QUERY_TYPE) info->dwFileType = type;
+    if (flags & MUI_QUERY_CHECKSUM)
+    {
+        memcpy( info->pChecksum, mui->checksum, sizeof(info->pChecksum) );
+        memcpy( info->pServiceChecksum, mui->service_checksum, sizeof(info->pServiceChecksum) );
+    }
+    if (flags & MUI_QUERY_LANGUAGE_NAME)
+    {
+        if (type == MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN && mui->fallback_lang_off)
+        {
+            info->dwLanguageNameOffset = offsetof(FILEMUIINFO, abBuffer);
+            memcpy(info->abBuffer, ((BYTE *)mui) + mui->fallback_lang_off,
+                    mui->fallback_lang_size);
+            off += mui->fallback_lang_size;
+        }
+        if (type == MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI && mui->lang_off)
+        {
+            info->dwLanguageNameOffset = offsetof(FILEMUIINFO, abBuffer);
+            memcpy(info->abBuffer, ((BYTE *)mui) + mui->lang_off, mui->lang_size);
+            off += mui->lang_size;
+        }
+    }
+    if (flags & MUI_QUERY_RESOURCE_TYPES && type & MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN)
+    {
+        if (mui->ln_type_id_size && mui->ln_type_id_off)
+        {
+            info->dwTypeIDMainSize = mui->ln_type_id_size / sizeof(DWORD);
+            info->dwTypeIDMainOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->ln_type_id_off, mui->ln_type_id_size);
+            off += mui->ln_type_id_size;
+        }
+        if (mui->ln_type_name_off)
+        {
+            info->dwTypeNameMainOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->ln_type_name_off, mui->ln_type_name_size);
+            off += mui->ln_type_name_size;
+        }
+        if (mui->mui_type_id_size && mui->mui_type_id_off)
+        {
+            info->dwTypeIDMUISize = mui->mui_type_id_size / sizeof(DWORD);
+            info->dwTypeIDMUIOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->mui_type_id_off, mui->mui_type_id_size);
+            off += mui->mui_type_id_size;
+        }
+        if (mui->mui_type_name_off)
+        {
+            info->dwTypeNameMUIOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->mui_type_name_off, mui->mui_type_name_size);
+            off += mui->mui_type_name_size;
+        }
+    }
+    else if(flags & MUI_QUERY_RESOURCE_TYPES)
+    {
+        if (mui->ln_type_id_size && mui->ln_type_id_off)
+        {
+            info->dwTypeIDMUISize = mui->ln_type_id_size / sizeof(DWORD);
+            info->dwTypeIDMUIOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->ln_type_id_off, mui->ln_type_id_size);
+            off += mui->ln_type_id_size;
+        }
+        if (mui->ln_type_name_off)
+        {
+            info->dwTypeNameMUIOffset = offsetof(FILEMUIINFO, abBuffer[off]);
+            memcpy(info->abBuffer + off, ((BYTE *)mui) + mui->ln_type_name_off, mui->ln_type_name_size);
+            off += mui->ln_type_name_size;
+        }
+    }
+
+    FreeLibrary( hmod );
+    return TRUE;
 }
 
 
