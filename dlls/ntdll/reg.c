@@ -255,11 +255,12 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 
     if (pInfo == NULL)
     {
+        ULONG default_size = pQuery->DefaultLength;
+        if (!default_size && pQuery->DefaultType == REG_SZ && pQuery->DefaultData)
+            default_size = (wcslen(pQuery->DefaultData) + 1) * sizeof(WCHAR);
+
         if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
         {
-            ULONG default_size = pQuery->DefaultLength;
-            if (!default_size && pQuery->DefaultType == REG_SZ && pQuery->DefaultData)
-                default_size = (wcslen(pQuery->DefaultData) + 1) * sizeof(WCHAR);
             if (str->MaximumLength < default_size)
                 return STATUS_BUFFER_TOO_SMALL;
             memcpy(str->Buffer, pQuery->DefaultData, default_size);
@@ -268,7 +269,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         else if (pQuery->QueryRoutine)
         {
             status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
-                                          pQuery->DefaultLength, pContext, pQuery->EntryContext);
+                                          default_size, pContext, pQuery->EntryContext);
         }
         return status;
     }

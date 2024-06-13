@@ -2716,7 +2716,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
@@ -2784,7 +2784,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"Some default" }},
-        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA
     },
 };
 
