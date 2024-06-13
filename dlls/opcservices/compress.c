@@ -184,6 +184,16 @@ void compress_finalize_archive(struct zip_archive *archive)
     free(archive);
 }
 
+static void *zalloc(void *opaque, unsigned int items, unsigned int size)
+{
+    return malloc(items * size);
+}
+
+static void zfree(void *opaque, void *ptr)
+{
+    free(ptr);
+}
+
 static void compress_write_content(struct zip_archive *archive, IStream *content,
         OPC_COMPRESSION_OPTIONS options, struct data_descriptor *data_desc)
 {
@@ -220,6 +230,8 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     }
 
     memset(&z_str, 0, sizeof(z_str));
+    z_str.zalloc = zalloc;
+    z_str.zfree = zfree;
     deflateInit2(&z_str, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 
     do
