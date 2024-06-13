@@ -1237,6 +1237,25 @@ static void record_key_input( struct console *console, BOOL down, WPARAM wparam,
     write_console_input( console, &ir, 1, TRUE );
 }
 
+/* generate input_record from WM_CHAR message. */
+static void record_char_input( struct console *console, WCHAR ch, LPARAM lparam )
+{
+    INPUT_RECORD ir;
+    SHORT sh = VkKeyScanW( ch );
+
+    if (sh == ~0) return;
+    ir.EventType = KEY_EVENT;
+    ir.Event.KeyEvent.bKeyDown          = TRUE;
+    ir.Event.KeyEvent.wRepeatCount      = 0;
+    ir.Event.KeyEvent.wVirtualKeyCode   = LOBYTE(sh);
+    ir.Event.KeyEvent.wVirtualScanCode  = MapVirtualKeyW( LOBYTE(sh), 0 );
+    ir.Event.KeyEvent.uChar.UnicodeChar = ch;
+    ir.Event.KeyEvent.dwControlKeyState = 0;
+    if (lparam & (1u << 24)) ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+
+    write_console_input( console, &ir, 1, TRUE );
+}
+
 static void record_mouse_input( struct console *console, COORD c, WPARAM wparam, DWORD event )
 {
     BYTE key_state[256];
@@ -2122,6 +2141,13 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
         record_key_input( console, msg == WM_SYSKEYDOWN, wparam, lparam );
+        break;
+
+    case WM_CHAR:
+        if (console->window && console->window->in_selection)
+            handle_selection_key( console, TRUE, LOBYTE( VkKeyScanW( (WCHAR)wparam ) ), lparam );
+        else
+            record_char_input( console, (WCHAR)wparam, lparam );
         break;
 
     case WM_LBUTTONDOWN:
