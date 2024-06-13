@@ -3185,7 +3185,7 @@ static void test_UDP(void)
     /* peer 0 receives data from all other peers */
     static const TIMEVAL timeout_zero = {0};
     struct sock_info peer[NUM_UDP_PEERS];
-    char buf[16];
+    char buf[16], sockaddr_buf[1024];
     int ss, i, n_recv, n_sent, ret;
     struct sockaddr_in addr;
     int sock;
@@ -3215,11 +3215,40 @@ static void test_UDP(void)
         ok ( peer[i].addr.sin_port != htons ( 0 ), "UDP: bind() did not associate port\n" );
     }
 
+    /* Test that specifying a too small fromlen for recvfrom() shouldn't write unnecessary data */
+    n_sent = sendto ( peer[1].s, buf, sizeof(buf), 0, (struct sockaddr *)&peer[0].addr, sizeof(peer[0].addr) );
+    ok ( n_sent == sizeof(buf), "UDP: sendto() sent wrong amount of data or socket error: %d\n", n_sent );
+
+    sockaddr_buf[0] = 'A';
+    ss = 1;
+    n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0, (struct sockaddr *)sockaddr_buf, &ss );
+    todo_wine
+    ok ( n_recv == SOCKET_ERROR, "UDP: recvfrom() succeeded\n" );
+    todo_wine
+    ok ( sockaddr_buf[0] == 'A', "UDP: marker got overwritten\n" );
+    if ( n_recv == SOCKET_ERROR )
+    {
+        ss = sizeof ( peer[0].addr );
+        n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0, (struct sockaddr *)sockaddr_buf, &ss );
+        ok ( n_recv == sizeof(buf), "UDP: recvfrom() failed\n" );
+    }
+
+    /* Test that specifying a large fromlen for recvfrom() shouldn't write unnecessary data besides the socket address */
+    n_sent = sendto ( peer[1].s, buf, sizeof(buf), 0, (struct sockaddr *)&peer[0].addr, sizeof(peer[0].addr) );
+    ok ( n_sent == sizeof(buf), "UDP: sendto() sent wrong amount of data or socket error: %d\n", n_sent );
+
+    sockaddr_buf[1023] = 'B';
+    ss = sizeof(sockaddr_buf);
+    n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0, (struct sockaddr *)sockaddr_buf, &ss );
+    ok ( n_recv == sizeof(buf), "UDP: recvfrom() received wrong amount of data or socket error: %d\n", n_recv );
+    todo_wine
+    ok ( sockaddr_buf[1023] == 'B', "UDP: marker got overwritten\n" );
+
     /* test getsockname() */
     ok ( peer[0].addr.sin_port == htons ( SERVERPORT ), "UDP: getsockname returned incorrect peer port\n" );
 
     for ( i = 1; i < NUM_UDP_PEERS; i++ ) {
-        /* send client's ip */
+        /* send client's port */
         memcpy( buf, &peer[i].addr.sin_port, sizeof(peer[i].addr.sin_port) );
         n_sent = sendto ( peer[i].s, buf, sizeof(buf), 0, (struct sockaddr*) &peer[0].addr, sizeof(peer[0].addr) );
         ok ( n_sent == sizeof(buf), "UDP: sendto() sent wrong amount of data or socket error: %d\n", n_sent );
