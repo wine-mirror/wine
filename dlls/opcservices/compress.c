@@ -257,7 +257,7 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
             z_str.avail_out = sizeof(archive->output_buffer);
             z_str.next_out = archive->output_buffer;
 
-            if ((ret = deflate(&z_str, flush)))
+            if ((ret = deflate(&z_str, flush)) < 0)
                 WARN("Failed to deflate, ret %d.\n", ret);
             have = sizeof(archive->output_buffer) - z_str.avail_out;
             compress_write(archive, archive->output_buffer, have);
