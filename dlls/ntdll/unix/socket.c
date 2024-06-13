@@ -298,8 +298,6 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
 
 static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_sockaddr *wsaddr, socklen_t wsaddrlen )
 {
-    memset( wsaddr, 0, wsaddrlen );
-
     switch (uaddr->addr.sa_family)
     {
     case AF_INET:

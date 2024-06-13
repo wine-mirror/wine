@@ -3224,7 +3224,6 @@ static void test_UDP(void)
     n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0, (struct sockaddr *)sockaddr_buf, &ss );
     todo_wine
     ok ( n_recv == SOCKET_ERROR, "UDP: recvfrom() succeeded\n" );
-    todo_wine
     ok ( sockaddr_buf[0] == 'A', "UDP: marker got overwritten\n" );
     if ( n_recv == SOCKET_ERROR )
     {
@@ -3241,7 +3240,6 @@ static void test_UDP(void)
     ss = sizeof(sockaddr_buf);
     n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0, (struct sockaddr *)sockaddr_buf, &ss );
     ok ( n_recv == sizeof(buf), "UDP: recvfrom() received wrong amount of data or socket error: %d\n", n_recv );
-    todo_wine
     ok ( sockaddr_buf[1023] == 'B', "UDP: marker got overwritten\n" );
 
     /* test getsockname() */
