@@ -520,6 +520,249 @@ static void test_internal_structure(void)
     ok( EndUpdateResourceW( res, TRUE ), "EndUpdateResourceW failed\n");
 }
 
+static const struct
+{
+    IMAGE_DOS_HEADER dos;
+    IMAGE_NT_HEADERS nt;
+    IMAGE_SECTION_HEADER section;
+} dll_image =
+{
+    { IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, { 0 }, 0, 0, { 0 },
+      sizeof(IMAGE_DOS_HEADER) },
+    {
+        IMAGE_NT_SIGNATURE, /* Signature */
+        {
+#if defined __i386__
+            IMAGE_FILE_MACHINE_I386, /* Machine */
+#elif defined __x86_64__
+            IMAGE_FILE_MACHINE_AMD64, /* Machine */
+#elif defined __arm__
+            IMAGE_FILE_MACHINE_ARMNT, /* Machine */
+#elif defined __aarch64__
+            IMAGE_FILE_MACHINE_ARM64, /* Machine */
+#else
+# error You must specify the machine type
+#endif
+            1, /* NumberOfSections */
+            0, /* TimeDateStamp */
+            0, /* PointerToSymbolTable */
+            0, /* NumberOfSymbols */
+            sizeof(IMAGE_OPTIONAL_HEADER), /* SizeOfOptionalHeader */
+            IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_DLL /* Characteristics */
+        },
+        { IMAGE_NT_OPTIONAL_HDR_MAGIC, /* Magic */
+          1, /* MajorLinkerVersion */
+          0, /* MinorLinkerVersion */
+          0, /* SizeOfCode */
+          0, /* SizeOfInitializedData */
+          0, /* SizeOfUninitializedData */
+          0, /* AddressOfEntryPoint */
+          0x1000, /* BaseOfCode */
+#ifndef _WIN64
+          0, /* BaseOfData */
+#endif
+          0x10000000, /* ImageBase */
+          0x1000, /* SectionAlignment */
+          0x1000, /* FileAlignment */
+          4, /* MajorOperatingSystemVersion */
+          0, /* MinorOperatingSystemVersion */
+          1, /* MajorImageVersion */
+          0, /* MinorImageVersion */
+          4, /* MajorSubsystemVersion */
+          0, /* MinorSubsystemVersion */
+          0, /* Win32VersionValue */
+          0x3000, /* SizeOfImage */
+          sizeof(IMAGE_DOS_HEADER) + sizeof(IMAGE_NT_HEADERS),
+          0, /* CheckSum */
+          IMAGE_SUBSYSTEM_WINDOWS_CUI, /* Subsystem */
+          IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE | IMAGE_DLLCHARACTERISTICS_NX_COMPAT, /* DllCharacteristics */
+          0, /* SizeOfStackReserve */
+          0, /* SizeOfStackCommit */
+          0, /* SizeOfHeapReserve */
+          0, /* SizeOfHeapCommit */
+          0, /* LoaderFlags */
+          IMAGE_FILE_RESOURCE_DIRECTORY + 1, /* NumberOfRvaAndSizes */
+          { { 0 }, { 0 }, { 0x1000, 0x1000 } } /* DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES] */
+        }
+    },
+    { ".rsrc\0\0", { 0 }, 0x1000, 0x1000, 0, 0, 0, 0, 0,
+        IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ }
+};
+
+static void create_test_dll( const WCHAR *name )
+{
+    DWORD dummy;
+    HANDLE handle = CreateFileW( name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0 );
+
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file err %lu\n", GetLastError() );
+    WriteFile( handle, &dll_image, sizeof(dll_image), &dummy, NULL );
+    SetFilePointer( handle, dll_image.nt.OptionalHeader.SizeOfImage, NULL, FILE_BEGIN );
+    SetEndOfFile( handle );
+    CloseHandle( handle );
+}
+
+static struct mui_res
+{
+    DWORD signature;
+    DWORD size;
+    DWORD version;
+    DWORD path_type;
+    DWORD file_type;
+    DWORD system_attributes;
+    DWORD fallback_location;
+    BYTE service_checksum[16];
+    BYTE checksum[16];
+    DWORD unk1[2];
+    DWORD mui_path_off;
+    DWORD mui_path_size;
+    DWORD unk2[2];
+    DWORD ln_type_name_off;
+    DWORD ln_type_name_size;
+    DWORD ln_type_id_off;
+    DWORD ln_type_id_size;
+    DWORD mui_type_name_off;
+    DWORD mui_type_name_size;
+    DWORD mui_type_id_off;
+    DWORD mui_type_id_size;
+    DWORD lang_off;
+    DWORD lang_size;
+    DWORD fallback_lang_off;
+    DWORD fallback_lang_size;
+    WCHAR ln_type_names[8];
+    DWORD ln_type_ids[1];
+    WCHAR mui_type_names[8];
+    DWORD mui_type_ids[1];
+    WCHAR lang[8];
+    WCHAR fallback_lang[8];
+} ln_mui_res = {
+    0xfecdfecd, sizeof(ln_mui_res), 0x10000, 0,
+    MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN >> 1,
+    0, 0, {'s','c'}, {'c'}, {0}, 0, 0, {0},
+    offsetof(struct mui_res, ln_type_names), sizeof(L"MUI\0"),
+    offsetof(struct mui_res, ln_type_ids), sizeof(ln_mui_res.ln_type_ids),
+    offsetof(struct mui_res, mui_type_names), sizeof(L"MUI\0"),
+    offsetof(struct mui_res, mui_type_ids), sizeof(ln_mui_res.mui_type_ids), 0, 0,
+    offsetof(struct mui_res, fallback_lang), sizeof(L"en-US"),
+    {'M','U','I',0,0}, {RT_CURSOR}, {'M','U','I',0,0}, {RT_STRING}, {0}, {'e','n','-','U','S',0},
+};
+
+static void test_mui(void)
+{
+    static const WCHAR ln_dll[] = L"test_mui.dll";
+    static const BYTE zeros[16] = { 0 };
+    BYTE buf[1024];
+    FILEMUIINFO *info = (FILEMUIINFO *)buf;
+    const WCHAR *str;
+    DWORD size, *id;
+    HANDLE res;
+    BOOL r;
+
+    size = 0;
+    r = GetFileMUIInfo( 0, ln_dll, NULL, &size);
+    ok( !r, "GetFileMUIInfo succeeded\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() = %ld\n", GetLastError() );
+
+    create_test_dll( ln_dll );
+
+    size = 0;
+    r = GetFileMUIInfo( 0, ln_dll, NULL, &size );
+    ok( r, "GetFileMUIInfo failed: %ld\n", GetLastError() );
+    ok( size == sizeof(*info), "unexpected size: %ld\n", size );
+
+    memset( buf, 0xfe, sizeof(buf) );
+    size = sizeof(buf);
+    info->dwSize = sizeof(buf);
+    info->dwVersion = 0;
+    r = GetFileMUIInfo( 0, ln_dll, info, &size );
+    ok( !r, "GetFileMUIInfo succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %ld\n", GetLastError() );
+    ok( !size, "size = %ld\n", size );
+
+    size = sizeof(buf);
+    info->dwVersion = MUI_FILEINFO_VERSION;
+    r = GetFileMUIInfo( 0, ln_dll, info, &size );
+    ok( r, "GetFileMUIInfo failed: %ld\n", GetLastError() );
+    ok( info->dwSize == sizeof(buf), "dwSize = %ld\n", info->dwSize );
+    ok( info->dwVersion == MUI_FILEINFO_VERSION, "dwVersion = %ld\n", info->dwVersion );
+    ok( info->dwFileType == MUI_FILETYPE_NOT_LANGUAGE_NEUTRAL, "dwFileType = %ld\n", info->dwFileType );
+    ok( !memcmp(info->pChecksum, zeros, sizeof(info->pChecksum)), "pChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pChecksum, sizeof(info->pChecksum)) );
+    ok( !memcmp(info->pServiceChecksum, zeros, sizeof(info->pServiceChecksum)), "pServiceChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pServiceChecksum, sizeof(info->pServiceChecksum)) );
+    ok( !info->dwLanguageNameOffset, "dwLanguageNameOffset = %ld\n", info->dwLanguageNameOffset );
+    ok( !info->dwTypeIDMainSize, "dwTypeIDMainSize = %ld\n", info->dwTypeIDMainSize );
+    ok( !info->dwTypeIDMainOffset, "dwTypeIDMainOffset = %ld\n", info->dwTypeIDMainOffset );
+    ok( !info->dwTypeNameMainOffset, "dwTypeNameMainOffset = %ld\n", info->dwTypeNameMainOffset );
+    ok( !info->dwTypeIDMUISize, "dwTypeIDMUISize = %ld\n", info->dwTypeIDMUISize );
+    ok( !info->dwTypeIDMUIOffset, "dwTypeIDMUIOffset = %ld\n", info->dwTypeIDMUIOffset );
+    ok( !info->dwTypeNameMUIOffset, "dwTypeNameMUIOffset = %ld\n", info->dwTypeNameMUIOffset );
+    ok( !memcmp(info->abBuffer, zeros, sizeof(info->abBuffer)), "abBuffer = %s\n",
+            wine_dbgstr_an((char *)info->abBuffer, sizeof(info->abBuffer)) );
+
+    res = BeginUpdateResourceW( ln_dll, TRUE );
+    ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
+    r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &ln_mui_res, 4 );
+    ok( r, "UpdateResource failed: %ld\n", GetLastError() );
+    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+
+    size = 0;
+    r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
+            | MUI_QUERY_RESOURCE_TYPES, ln_dll, NULL, &size );
+    ok( !r, "GetFileMUIInfo succeeded\n" );
+    ok( GetLastError() == ERROR_BAD_EXE_FORMAT, "GetLastError() = %ld\n", GetLastError() );
+
+    res = BeginUpdateResourceW( ln_dll, TRUE );
+    ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
+    r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &ln_mui_res, sizeof(ln_mui_res) );
+    ok( r, "UpdateResource failed: %ld\n", GetLastError() );
+    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+
+    size = 0;
+    r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
+            | MUI_QUERY_RESOURCE_TYPES, ln_dll, NULL, &size );
+    ok( !r, "GetFileMUIInfo succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetLastError() = %ld\n", GetLastError() );
+    ok( size, "size was not set\n" );
+
+    memset( buf, 0xfe, sizeof(buf) );
+    size = sizeof(buf);
+    info->dwSize = sizeof(buf);
+    info->dwVersion = MUI_FILEINFO_VERSION;
+    r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
+            | MUI_QUERY_RESOURCE_TYPES, ln_dll, info, &size );
+    ok( r, "GetFileMUIInfo failed: %ld\n", GetLastError() );
+    ok( info->dwSize == sizeof(buf), "dwSize = %ld\n", info->dwSize );
+    ok( info->dwVersion == MUI_FILEINFO_VERSION, "dwVersion = %ld\n", info->dwVersion );
+    ok( info->dwFileType == MUI_FILETYPE_LANGUAGE_NEUTRAL_MAIN, "dwFileType = %ld\n", info->dwFileType );
+    ok( info->pChecksum[0] == 'c', "pChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pChecksum, sizeof(info->pChecksum)) );
+    ok( info->pServiceChecksum[0] == 's', "pServiceChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pServiceChecksum, sizeof(info->pServiceChecksum)) );
+    ok( info->dwLanguageNameOffset == 72, "dwLanguageNameOffset = %ld\n", info->dwLanguageNameOffset );
+    str = (WCHAR *)(buf + info->dwLanguageNameOffset);
+    ok( !wcscmp(str, L"en-US"), "language name = %s\n", wine_dbgstr_w(str) );
+    ok( info->dwTypeIDMainSize == 1, "dwTypeIDMainSize = %ld\n", info->dwTypeIDMainSize );
+    ok( info->dwTypeIDMainOffset == 84, "dwTypeIDMainOffset = %ld\n", info->dwTypeIDMainOffset );
+    id = (DWORD *)(buf + info->dwTypeIDMainOffset);
+    ok( id[0] == RT_CURSOR, "type ID main[0] = %ld\n", id[0] );
+    ok( info->dwTypeNameMainOffset == 88, "dwTypeNameMainOffset = %ld\n", info->dwTypeNameMainOffset );
+    str = (WCHAR *)(buf + info->dwTypeNameMainOffset);
+    ok( !wcscmp(str, L"MUI"), "type name main[0] = %s\n", wine_dbgstr_w(str) );
+    str += wcslen(str) + 1;
+    ok( !str[0], "string list is not NULL terminated: %s\n", wine_dbgstr_w(str) );
+    ok( info->dwTypeIDMUISize == 1, "dwTypeIDMUISize = %ld\n", info->dwTypeIDMUISize );
+    ok( info->dwTypeIDMUIOffset == 98, "dwTypeIDMUIOffset = %ld\n", info->dwTypeIDMUIOffset );
+    id = (DWORD *)(buf + info->dwTypeIDMUIOffset);
+    ok( id[0] == RT_STRING, "type ID MUI[0] = %ld\n", id[0] );
+    ok( info->dwTypeNameMUIOffset == 102, "dwTypeNameMUIOffset = %ld\n", info->dwTypeNameMUIOffset );
+    str = (WCHAR *)(buf + info->dwTypeNameMUIOffset);
+    ok( !wcscmp(str, L"MUI"), "type name MUI[0] = %s\n", wine_dbgstr_w(str) );
+    str += wcslen(str) + 1;
+    ok( !str[0], "string list is not NULL terminated: %s\n", wine_dbgstr_w(str) );
+
+    DeleteFileW( ln_dll );
+}
+
 START_TEST(resource)
 {
     DWORD i;
@@ -552,4 +795,5 @@ START_TEST(resource)
         DeleteFileA( filename );
     }
     test_find_resource();
+    test_mui();
 }
