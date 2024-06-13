@@ -202,6 +202,7 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     LARGE_INTEGER move;
     ULONG num_read;
     HRESULT hr;
+    int init_ret;
 
     data_desc->crc32 = RtlComputeCrc32(0, NULL, 0);
     move.QuadPart = 0;
@@ -232,7 +233,8 @@ static void compress_write_content(struct zip_archive *archive, IStream *content
     memset(&z_str, 0, sizeof(z_str));
     z_str.zalloc = zalloc;
     z_str.zfree = zfree;
-    deflateInit2(&z_str, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+    if ((init_ret = deflateInit2(&z_str, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY)) != Z_OK)
+        WARN("Failed to allocate memory in deflateInit2, ret %d.\n", init_ret);
 
     do
     {
