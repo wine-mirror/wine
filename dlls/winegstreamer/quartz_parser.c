@@ -630,7 +630,7 @@ static bool amt_from_wg_format_video_cinepak(AM_MEDIA_TYPE *mt, const struct wg_
     return true;
 }
 
-static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_format *format)
+static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm)
 {
     VIDEOINFOHEADER *video_format;
     uint32_t frame_time;
@@ -671,7 +671,8 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     mt->pbFormat = (BYTE *)video_format;
 
     memset(video_format, 0, sizeof(*video_format));
-    SetRect(&video_format->rcSource, 0, 0, format->u.video.width, format->u.video.height);
+    if (wm)
+        SetRect(&video_format->rcSource, 0, 0, format->u.video.width, format->u.video.height);
     video_format->rcTarget = video_format->rcSource;
     if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
         video_format->AvgTimePerFrame = frame_time;
@@ -681,6 +682,8 @@ static bool amt_from_wg_format_video_wmv(AM_MEDIA_TYPE *mt, const struct wg_form
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biCompression = mt->subtype.Data1;
     video_format->bmiHeader.biBitCount = 24;
+    if (!wm)
+        video_format->bmiHeader.biSizeImage = 3 * format->u.video.width * format->u.video.height;
     video_format->dwBitRate = 0;
     memcpy(video_format+1, format->u.video.codec_data, format->u.video.codec_data_len);
 
@@ -747,7 +750,7 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
         return amt_from_wg_format_video_cinepak(mt, format);
 
     case WG_MAJOR_TYPE_VIDEO_WMV:
-        return amt_from_wg_format_video_wmv(mt, format);
+        return amt_from_wg_format_video_wmv(mt, format, wm);
 
     case WG_MAJOR_TYPE_VIDEO_MPEG1:
         return amt_from_wg_format_video_mpeg1(mt, format);
