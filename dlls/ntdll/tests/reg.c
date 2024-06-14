@@ -2662,7 +2662,12 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* DIRECT doesn't call the query routine and reads directly into a buffer */
     {
         {{ query_routine, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
-        STATUS_INVALID_PARAMETER, 0, WINE_TODO_RET | WINE_TODO_NAME | WINE_TODO_TYPE | WINE_TODO_SIZE | WINE_TODO_DATA
+        STATUS_INVALID_PARAMETER, 0
+    },
+    {
+        {{ query_routine, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"Some default" }},
+        STATUS_INVALID_PARAMETER, 0
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},

@@ -261,6 +261,8 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 
         if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
         {
+            if (pQuery->QueryRoutine)
+                return STATUS_INVALID_PARAMETER;
             if (str->MaximumLength < default_size)
                 return STATUS_BUFFER_TOO_SMALL;
             memcpy(str->Buffer, pQuery->DefaultData, default_size);
@@ -277,6 +279,9 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 
     if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
     {
+        if (pQuery->QueryRoutine)
+            return STATUS_INVALID_PARAMETER;
+
         switch(pInfo->Type)
         {
         case REG_EXPAND_SZ:
