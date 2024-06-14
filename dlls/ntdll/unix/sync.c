@@ -2667,40 +2667,6 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 
 #endif
 
-/* Notify direct completion of async and close the wait handle if it is no longer needed.
- */
-void set_async_direct_result( HANDLE *async_handle, IO_STATUS_BLOCK *io,
-                              NTSTATUS status, ULONG_PTR information, BOOL mark_pending )
-{
-    unsigned int ret;
-
-    /* if we got STATUS_ALERTED, we must have a valid async handle */
-    assert( *async_handle );
-
-    if (!NT_ERROR(status) && status != STATUS_PENDING)
-    {
-        io->Status = status;
-        io->Information = information;
-    }
-
-    SERVER_START_REQ( set_async_direct_result )
-    {
-        req->handle       = wine_server_obj_handle( *async_handle );
-        req->status       = status;
-        req->information  = information;
-        req->mark_pending = mark_pending;
-        ret = wine_server_call( req );
-        if (ret == STATUS_SUCCESS)
-            *async_handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    if (ret != STATUS_SUCCESS)
-        ERR( "cannot report I/O result back to server: %08x\n", ret );
-
-    return;
-}
-
 /***********************************************************************
  *           NtCreateTransaction (NTDLL.@)
  */
