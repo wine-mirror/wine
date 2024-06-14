@@ -311,7 +311,12 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             if (str->Buffer == NULL)
                 RtlCreateUnicodeString(str, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
             else
-                RtlAppendUnicodeToString(str, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+            {
+                if (str->MaximumLength < len)
+                    return STATUS_BUFFER_TOO_SMALL;
+                memcpy(str->Buffer, (char*)pInfo + pInfo->DataOffset, len);
+                str->Length = len - sizeof(WCHAR);
+            }
             break;
 
         case REG_MULTI_SZ:

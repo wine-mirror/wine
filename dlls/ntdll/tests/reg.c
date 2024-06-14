@@ -2673,6 +2673,11 @@ static struct query_reg_values_test query_reg_values_tests[] =
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
         STATUS_SUCCESS, 0, 0, REG_SZ, L"C:"
     },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive",
+           &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, 0, REG_SZ, L"%SYSTEMDRIVE%"
+    },
     /* DIRECT on a multi-string crashes on Windows without NOEXPAND */
     /* {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"CapitalsOfEurope", &query_reg_values_direct_str }},
