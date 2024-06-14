@@ -56,32 +56,32 @@ static void release_surface_readback(struct surface_readback *rb)
     IDirect3DSurface9_Release(rb->surface);
 }
 
-static void get_surface_decompressed_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *compressed_surface,
+static void get_surface_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *src_surface, D3DFORMAT rb_format,
         struct surface_readback *rb)
 {
     D3DSURFACE_DESC desc;
     HRESULT hr;
 
     memset(rb, 0, sizeof(*rb));
-    hr = IDirect3DSurface9_GetDesc(compressed_surface, &desc);
+    hr = IDirect3DSurface9_GetDesc(src_surface, &desc);
     if (FAILED(hr))
     {
-        trace("Failed to get compressed surface description, hr %#lx.\n", hr);
+        trace("Failed to get source surface description, hr %#lx.\n", hr);
         return;
     }
 
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM,
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height, rb_format, D3DPOOL_SYSTEMMEM,
             &rb->surface, NULL);
     if (FAILED(hr))
     {
-        trace("Can't create the decompressed surface, hr %#lx.\n", hr);
+        trace("Can't create the readback surface, hr %#lx.\n", hr);
         return;
     }
 
-    hr = D3DXLoadSurfaceFromSurface(rb->surface, NULL, NULL, compressed_surface, NULL, NULL, D3DX_FILTER_NONE, 0);
+    hr = D3DXLoadSurfaceFromSurface(rb->surface, NULL, NULL, src_surface, NULL, NULL, D3DX_FILTER_NONE, 0);
     if (FAILED(hr))
     {
-        trace("Can't load the decompressed surface, hr %#lx.\n", hr);
+        trace("Can't load the readback surface, hr %#lx.\n", hr);
         IDirect3DSurface9_Release(rb->surface);
         rb->surface = NULL;
         return;
@@ -94,6 +94,12 @@ static void get_surface_decompressed_readback(IDirect3DDevice9 *device, IDirect3
         IDirect3DSurface9_Release(rb->surface);
         rb->surface = NULL;
     }
+}
+
+static void get_surface_decompressed_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *compressed_surface,
+        struct surface_readback *rb)
+{
+    return get_surface_readback(device, compressed_surface, D3DFMT_A8R8G8B8, rb);
 }
 
 static HRESULT create_file(const char *filename, const unsigned char *data, const unsigned int size)
@@ -772,6 +778,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     static const DWORD pixdata_g16r16[] = { 0x07d23fbe, 0xdc7f44a4, 0xe4d8976b, 0x9a84fe89 };
     static const DWORD pixdata_a8b8g8r8[] = { 0xc3394cf0, 0x235ae892, 0x09b197fd, 0x8dc32bf6 };
     static const DWORD pixdata_a2r10g10b10[] = { 0x57395aff, 0x5b7668fd, 0xb0d856b5, 0xff2c61d6 };
+    static const uint32_t pixdata_a8r8g8b8[] = { 0x00102030, 0x40506070, 0x8090a0b0, 0xc0d0e0ff };
     BYTE buffer[4 * 8 * 4];
 
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
@@ -934,8 +941,60 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &newsurf, NULL);
     if (SUCCEEDED(hr))
     {
-       hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
+       struct surface_readback surface_rb;
+
+       /* D3DXLoadSurfaceFromMemory should return success with a multisampled render target. */
+       SetRect(&rect, 0, 0, 2, 2);
+       hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, pixdata_a8r8g8b8, D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
+       todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+       /* The call succeeds, but the surface isn't actually written to. */
+       get_surface_readback(device, newsurf, D3DFMT_A8R8G8B8, &surface_rb);
+       check_readback_pixel_4bpp(&surface_rb, 0, 0, 0x00000000, FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 0, 0x00000000, FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 0, 1, 0x00000000, FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 1, 0x00000000, FALSE);
+       release_surface_readback(&surface_rb);
+
+       /*
+        * Load the data into our non-multisampled render target, then load
+        * that into the multisampled render target.
+        */
+       SetRect(&rect, 0, 0, 2, 2);
+       hr = D3DXLoadSurfaceFromMemory(surf, NULL, &rect, pixdata_a8r8g8b8, D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+       get_surface_readback(device, surf, D3DFMT_A8R8G8B8, &surface_rb);
+       check_readback_pixel_4bpp(&surface_rb, 0, 0, pixdata_a8r8g8b8[0], FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 0, pixdata_a8r8g8b8[1], FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 0, 1, pixdata_a8r8g8b8[2], FALSE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 1, pixdata_a8r8g8b8[3], FALSE);
+       release_surface_readback(&surface_rb);
+
+       /*
+        * Loading from a non-multisampled surface into a multisampled surface
+        * does change the surface contents.
+        */
+       hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, &rect, surf, NULL, &rect, D3DX_FILTER_NONE, 0);
+       ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+       get_surface_readback(device, newsurf, D3DFMT_A8R8G8B8, &surface_rb);
+       check_readback_pixel_4bpp(&surface_rb, 0, 0, pixdata_a8r8g8b8[0], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 0, pixdata_a8r8g8b8[1], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 0, 1, pixdata_a8r8g8b8[2], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 1, pixdata_a8r8g8b8[3], TRUE);
+       release_surface_readback(&surface_rb);
+
+       /* Contents of the multisampled surface are preserved. */
+       hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_POINT, 0);
+       todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+       get_surface_readback(device, newsurf, D3DFMT_A8R8G8B8, &surface_rb);
+       check_readback_pixel_4bpp(&surface_rb, 0, 0, pixdata_a8r8g8b8[0], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 0, pixdata_a8r8g8b8[1], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 0, 1, pixdata_a8r8g8b8[2], TRUE);
+       check_readback_pixel_4bpp(&surface_rb, 1, 1, pixdata_a8r8g8b8[3], TRUE);
+       release_surface_readback(&surface_rb);
 
        IDirect3DSurface9_Release(newsurf);
     }
