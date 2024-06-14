@@ -5484,7 +5484,7 @@ static void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULO
 }
 
 /* notify direct completion of async and close the wait handle if it is no longer needed */
-void set_async_direct_result( HANDLE *async_handle, IO_STATUS_BLOCK *io,
+void set_async_direct_result( HANDLE *async_handle, unsigned int options, IO_STATUS_BLOCK *io,
                               NTSTATUS status, ULONG_PTR information, BOOL mark_pending )
 {
     unsigned int ret;
@@ -5493,10 +5493,7 @@ void set_async_direct_result( HANDLE *async_handle, IO_STATUS_BLOCK *io,
     assert( *async_handle );
 
     if (!NT_ERROR(status) && status != STATUS_PENDING)
-    {
-        io->Status = status;
-        io->Information = information;
-    }
+        set_sync_iosb( io, status, information, options );
 
     SERVER_START_REQ( set_async_direct_result )
     {
