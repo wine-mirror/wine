@@ -85,10 +85,23 @@ typedef struct _CMD_IF_CONDITION
 
 typedef struct _CMD_FOR_CONTROL
 {
-    enum for_control_operator {CMD_FOR_NUMBERS /* /L */} operator;
+    enum for_control_operator {
+                               CMD_FOR_FILE_SET /* /F */,
+                               CMD_FOR_NUMBERS /* /L */} operator;
     unsigned flags;               /* |-ed CMD_FOR_FLAG_* */
     int variable_index;
     const WCHAR *set;
+    union
+    {
+        struct                    /* for CMD_FOR_FILE_SET */
+        {
+            WCHAR eol;
+            BOOL use_backq;
+            int num_lines_to_skip;
+            const WCHAR *delims;
+            const WCHAR *tokens;
+        };
+    };
 } CMD_FOR_CONTROL;
 
 typedef struct _CMD_COMMAND
@@ -138,6 +151,9 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test);
 const char *debugstr_if_condition(const CMD_IF_CONDITION *cond);
 
 void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, int var_idx, CMD_FOR_CONTROL *for_ctrl);
+void for_control_create_fileset(unsigned flags, int var_idx, WCHAR eol, int num_lines_to_skip, BOOL use_backq,
+                                 const WCHAR *delims, const WCHAR *tokens,
+                                 CMD_FOR_CONTROL *for_ctrl);
 CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var);
 void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *string);
 void for_control_dump(const CMD_FOR_CONTROL *for_ctrl);

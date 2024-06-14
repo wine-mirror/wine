@@ -996,6 +996,10 @@ void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
     free((void*)for_ctrl->set);
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILE_SET:
+        free((void*)for_ctrl->delims);
+        free((void*)for_ctrl->tokens);
+        break;
     default:
         break;
     }
@@ -1003,7 +1007,7 @@ void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
 
 const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
 {
-    static const char* for_ctrl_strings[] = {"numbers"};
+    static const char* for_ctrl_strings[] = {"file", "numbers"};
     const char *flags, *options;
 
     if (for_ctrl->operator >= ARRAY_SIZE(for_ctrl_strings))
@@ -1015,6 +1019,15 @@ const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
     flags = "";
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILE_SET:
+        {
+            WCHAR eol_buf[4] = {L'\'', for_ctrl->eol, L'\'', L'\0'};
+            const WCHAR *eol = for_ctrl->eol ? eol_buf : L"<nul>";
+            options = wine_dbg_sprintf("eol=%ls skip=%d use_backq=%c delims=%s tokens=%s ",
+                                       eol, for_ctrl->num_lines_to_skip, for_ctrl->use_backq ? 'Y' : 'N',
+                                       wine_dbgstr_w(for_ctrl->delims), wine_dbgstr_w(for_ctrl->tokens));
+        }
+        break;
     default:
         options = "";
         break;
@@ -1035,6 +1048,22 @@ void for_control_create(enum for_control_operator for_op, unsigned flags, const 
     default:
         break;
     }
+}
+
+void for_control_create_fileset(unsigned flags, int var_idx, WCHAR eol, int num_lines_to_skip, BOOL use_backq,
+                                const WCHAR *delims, const WCHAR *tokens,
+                                CMD_FOR_CONTROL *for_ctrl)
+{
+    for_ctrl->operator = CMD_FOR_FILE_SET;
+    for_ctrl->flags = flags;
+    for_ctrl->variable_index = var_idx;
+    for_ctrl->set = NULL;
+
+    for_ctrl->eol = eol;
+    for_ctrl->use_backq = use_backq;
+    for_ctrl->num_lines_to_skip = num_lines_to_skip;
+    for_ctrl->delims = delims;
+    for_ctrl->tokens = tokens;
 }
 
 void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *set)
@@ -2152,6 +2181,19 @@ static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
     return FALSE;
 }
 
+static WCHAR *for_fileset_option_split(WCHAR *from, const WCHAR* key)
+{
+    size_t len = wcslen(key);
+
+    if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+                       from, len, key, len) != CSTR_EQUAL)
+        return NULL;
+    from += len;
+    if (len && key[len - 1] == L'=')
+        while (*from && *from != L' ' && *from != L'\t') from++;
+    return from;
+}
+
 CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
 {
     CMD_FOR_CONTROL *for_ctrl;
@@ -2200,8 +2242,28 @@ CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     case L'L':
         for_op = CMD_FOR_NUMBERS;
         break;
+    case L'F':
+        for_op = CMD_FOR_FILE_SET;
+        break;
     default:
         return NULL;
+    }
+
+    if (mode == L'F')
+    {
+        /* Retrieve next parameter to see if is root/options (raw form required
+         * with for /f, or unquoted in for /r)
+         */
+        arg = WCMD_parameter(opts_var, arg_index, NULL, for_op == CMD_FOR_FILE_SET, FALSE);
+
+        /* Next parm is either qualifier, path/options or variable -
+         * only care about it if it is the path/options
+         */
+        if (arg && *arg != L'/' && *arg != L'%')
+        {
+            arg_index++;
+            wcscpy(options, arg);
+        }
     }
 
     /* Ensure line continues with variable */
@@ -2209,7 +2271,74 @@ CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     if (!arg || *arg != L'%' || (var_idx = for_var_char_to_index(arg[1])) == -1)
         goto syntax_error; /* FIXME native prints the offending token "%<whatever>" was unexpected at this time */
     for_ctrl = xalloc(sizeof(*for_ctrl));
-    for_control_create(for_op, flags, options, var_idx, for_ctrl);
+    if (for_op == CMD_FOR_FILE_SET)
+    {
+        size_t len = wcslen(options);
+        WCHAR *p = options, *end;
+        WCHAR eol = L'\0';
+        int num_lines_to_skip = 0;
+        BOOL use_backq = FALSE;
+        WCHAR *delims = NULL, *tokens = NULL;
+        /* strip enclosing double-quotes when present */
+        if (len >= 2 && p[0] == L'"' && p[len - 1] == L'"')
+        {
+            p[len - 1] = L'\0';
+            p++;
+        }
+        for ( ; *p; p = end)
+        {
+            p = WCMD_skip_leading_spaces(p);
+            /* Save End of line character (Ignore line if first token (based on delims) starts with it) */
+            if ((end = for_fileset_option_split(p, L"eol=")))
+            {
+                /* assuming one char for eol marker */
+                if (end != p + 5) goto syntax_error;
+                eol = p[4];
+            }
+            /* Save number of lines to skip (Can be in base 10, hex (0x...) or octal (0xx) */
+            else if ((end = for_fileset_option_split(p, L"skip=")))
+            {
+                WCHAR *nextchar;
+                num_lines_to_skip = wcstoul(p + 5, &nextchar, 0);
+                if (end != nextchar) goto syntax_error;
+            }
+            /* Save if usebackq semantics are in effect */
+            else if ((end = for_fileset_option_split(p, L"usebackq")))
+                use_backq = TRUE;
+            /* Save the supplied delims */
+            else if ((end = for_fileset_option_split(p, L"delims=")))
+            {
+                size_t copy_len;
+
+                /* interpret space when last character of whole options string as part of delims= */
+                if (end[0] && !end[1]) end++;
+                copy_len = end - (p + 7) /* delims= */;
+                delims = xalloc((copy_len + 1) * sizeof(WCHAR));
+                memcpy(delims, p + 7, copy_len * sizeof(WCHAR));
+                delims[copy_len] = L'\0';
+            }
+            /* Save the tokens being requested */
+            else if ((end = for_fileset_option_split(p, L"tokens=")))
+            {
+                size_t copy_len;
+
+                copy_len = end - (p + 7) /* tokens= */;
+                tokens = xalloc((copy_len + 1) * sizeof(WCHAR));
+                memcpy(tokens, p + 7, copy_len * sizeof(WCHAR));
+                tokens[copy_len] = L'\0';
+            }
+            else
+            {
+                WARN("FOR option not found %ls\n", p);
+                goto syntax_error;
+            }
+        }
+        for_control_create_fileset(flags, var_idx, eol, num_lines_to_skip, use_backq,
+                                   delims ? delims : xstrdupW(L" \t"),
+                                   tokens ? tokens : xstrdupW(L"1"), for_ctrl);
+    }
+    else
+        for_control_create(for_op, flags, options, var_idx, for_ctrl);
     return for_ctrl;
 syntax_error:
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
@@ -2833,6 +2962,97 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
+static CMD_NODE *for_loop_fileset_parse_line(CMD_NODE *cmdList, int varidx, WCHAR *buffer,
+                                             WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
+{
+    WCHAR *parm;
+    int varoffset;
+    int nexttoken, lasttoken = -1;
+    BOOL starfound = FALSE;
+    BOOL thisduplicate = FALSE;
+    BOOL anyduplicates = FALSE;
+    int  totalfound;
+    static WCHAR emptyW[] = L"";
+
+    /* Extract the parameters based on the tokens= value (There will always
+       be some value, as if it is not supplied, it defaults to tokens=1).
+       Rough logic:
+       Count how many tokens are named in the line, identify the lowest
+       Empty (set to null terminated string) that number of named variables
+       While lasttoken != nextlowest
+       %letter = parameter number 'nextlowest'
+       letter++ (if >26 or >52 abort)
+       Go through token= string finding next lowest number
+       If token ends in * set %letter = raw position of token(nextnumber+1)
+    */
+    lasttoken = -1;
+    nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, &totalfound,
+                                   &starfound, &thisduplicate);
+
+    TRACE("Using var=%lc on %d max\n", for_var_index_to_char(varidx), totalfound);
+    /* Empty out variables */
+    for (varoffset = 0;
+         varoffset < totalfound && for_var_index_in_range(varidx, varoffset);
+         varoffset++)
+        WCMD_set_for_loop_variable(varidx + varoffset, emptyW);
+
+    /* Loop extracting the tokens
+     * Note: nexttoken of 0 means there were no tokens requested, to handle
+     * the special case of tokens=*
+     */
+    varoffset = 0;
+    TRACE("Parsing buffer into tokens: '%s'\n", wine_dbgstr_w(buffer));
+    while (nexttoken > 0 && (nexttoken > lasttoken))
+    {
+        anyduplicates |= thisduplicate;
+
+        if (!for_var_index_in_range(varidx, varoffset))
+        {
+            WARN("Out of range offset\n");
+            break;
+        }
+        /* Extract the token number requested and set into the next variable context */
+        parm = WCMD_parameter_with_delims(buffer, (nexttoken-1), NULL, TRUE, FALSE, forf_delims);
+        TRACE("Parsed token %d(%d) as parameter %s\n", nexttoken,
+              varidx + varoffset, wine_dbgstr_w(parm));
+        if (parm)
+        {
+            WCMD_set_for_loop_variable(varidx + varoffset, parm);
+            varoffset++;
+        }
+
+        /* Find the next token */
+        lasttoken = nexttoken;
+        nexttoken = WCMD_for_nexttoken(lasttoken, forf_tokens, NULL,
+                                       &starfound, &thisduplicate);
+    }
+    /* If all the rest of the tokens were requested, and there is still space in
+     * the variable range, write them now
+     */
+    if (!anyduplicates && starfound && for_var_index_in_range(varidx, varoffset))
+    {
+        nexttoken++;
+        WCMD_parameter_with_delims(buffer, (nexttoken-1), &parm, FALSE, FALSE, forf_delims);
+        TRACE("Parsed all remaining tokens (%d) as parameter %s\n",
+              varidx + varoffset, wine_dbgstr_w(parm));
+        if (parm)
+            WCMD_set_for_loop_variable(varidx + varoffset, parm);
+    }
+
+    /* Execute the body of the for loop with these values */
+    if (forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol)
+    {
+        /* +3 for "do " */
+        WCMD_part_execute(&cmdList, CMD_node_get_command(cmdList)->command + 3, FALSE, TRUE);
+    }
+    else
+    {
+        TRACE("Skipping line because of eol\n");
+        cmdList = NULL;
+    }
+    return cmdList;
+}
+
 void WCMD_save_for_loop_context(BOOL reset)
 {
     FOR_CONTEXT *new = xalloc(sizeof(*new));
@@ -2869,6 +3089,116 @@ void WCMD_set_for_loop_variable(int var_idx, const WCHAR *value)
         forloopcontext->previous->variable[var_idx] != forloopcontext->variable[var_idx])
         free(forloopcontext->variable[var_idx]);
     forloopcontext->variable[var_idx] = xstrdupW(value);
+}
+
+static BOOL match_ending_delim(WCHAR *string)
+{
+    WCHAR *to = string + wcslen(string);
+
+    /* strip trailing delim */
+    if (to > string) to--;
+    if (to > string && *to == string[0])
+    {
+        *to = L'\0';
+        return TRUE;
+    }
+    WARN("Can't find ending delimiter (%ls)\n", string);
+    return FALSE;
+}
+
+static CMD_NODE *for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE *input, CMD_NODE *cmdList)
+{
+    WCHAR buffer[MAXSTRING];
+    int skip_count = for_ctrl->num_lines_to_skip;
+    CMD_NODE *body = NULL;
+
+    /* Read line by line until end of file */
+    while (fgetws(buffer, ARRAY_SIZE(buffer), input))
+    {
+        size_t len;
+
+        if (skip_count)
+        {
+            TRACE("skipping %d\n", skip_count);
+            skip_count--;
+            continue;
+        }
+        len = wcslen(buffer);
+        /* Either our buffer isn't large enough to fit a full line, or there's a stray
+         * '\0' in the buffer.
+         */
+        if (!feof(input) && (len == 0 || (buffer[len - 1] != '\n' && buffer[len - 1] != '\r')))
+            break;
+        while (len && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
+            buffer[--len] = L'\0';
+        body = for_loop_fileset_parse_line(cmdList, for_ctrl->variable_index, buffer,
+                                           for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
+        buffer[0] = 0;
+    }
+    return body;
+}
+
+static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+{
+    WCHAR *args;
+    size_t len;
+    CMD_NODE *body = NULL;
+    FILE *input;
+    int i;
+
+    args = WCMD_skip_leading_spaces((WCHAR *)for_ctrl->set);
+    for (len = wcslen(args); len && (args[len - 1] == L' ' || args[len - 1] == L'\t'); len--)
+        args[len - 1] = L'\0';
+    if (args[0] == (for_ctrl->use_backq ? L'\'' : L'"') && match_ending_delim(args))
+    {
+        args++;
+        if (!for_ctrl->num_lines_to_skip)
+        {
+            body = for_loop_fileset_parse_line(cmdList, for_ctrl->variable_index, args,
+                                               for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
+        }
+    }
+    else if (args[0] == (for_ctrl->use_backq ? L'`' : L'\'') && match_ending_delim(args))
+    {
+        WCHAR  temp_cmd[MAX_PATH];
+
+        args++;
+        wsprintfW(temp_cmd, L"CMD.EXE /C %s", args);
+        TRACE("Reading output of '%s'\n", wine_dbgstr_w(temp_cmd));
+        input = _wpopen(temp_cmd, L"rt,ccs=unicode");
+        if (!input)
+        {
+            WCMD_print_error();
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), args);
+            errorlevel = 1;
+            return NULL; /* FOR loop aborts at first failure here */
+        }
+        body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
+        fclose(input);
+    }
+    else
+    {
+        for (i = 0; ; i++)
+        {
+            WCHAR *element = WCMD_parameter(args, i, NULL, TRUE, FALSE);
+            if (!element || !*element) break;
+            if (element[0] == L'"' && match_ending_delim(element)) element++;
+            /* Open the file, read line by line and process */
+            TRACE("Reading input to parse from '%s'\n", wine_dbgstr_w(element));
+            input = _wfopen(element, L"rt,ccs=unicode");
+            if (!input)
+            {
+                WCMD_print_error();
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), element);
+                errorlevel = 1;
+                return NULL; /* FOR loop aborts at first failure here */
+            }
+            body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
+            fclose(input);
+        }
+    }
+
+    return body;
 }
 
 static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
@@ -2916,6 +3246,9 @@ void for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE **cmdList)
 
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILE_SET:
+        last = for_control_execute_fileset(for_ctrl, *cmdList);
+        break;
     case CMD_FOR_NUMBERS:
         last = for_control_execute_numbers(for_ctrl, *cmdList);
         break;
