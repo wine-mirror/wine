@@ -263,10 +263,18 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         {
             if (pQuery->QueryRoutine)
                 return STATUS_INVALID_PARAMETER;
-            if (str->MaximumLength < default_size)
-                return STATUS_BUFFER_TOO_SMALL;
-            memcpy(str->Buffer, pQuery->DefaultData, default_size);
-            str->Length = default_size - sizeof(WCHAR);
+
+            if (pQuery->DefaultType == REG_SZ || pQuery->DefaultType == REG_EXPAND_SZ ||
+                pQuery->DefaultType == REG_MULTI_SZ || pQuery->DefaultType == REG_LINK)
+            {
+                if (!pQuery->DefaultData)
+                    return STATUS_DATA_OVERRUN;
+                if (str->MaximumLength < default_size)
+                    return STATUS_BUFFER_TOO_SMALL;
+                memcpy(str->Buffer, pQuery->DefaultData, default_size);
+                str->Length = default_size - sizeof(WCHAR);
+            }
+
             return STATUS_SUCCESS;
         }
         else if (pQuery->QueryRoutine)

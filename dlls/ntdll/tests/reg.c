@@ -2601,7 +2601,7 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
             expected_size = 0;
         }
 
-        if (!expected_size && expected_data)
+        if (!expected_size && expected_data && (expected_type == REG_SZ || expected_type == REG_EXPAND_SZ))
             expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
 
         todo_wine_if(test->flags & WINE_TODO_TYPE)
@@ -2611,11 +2611,11 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
         ok(value_data_size == expected_size, "Expected size %lu, got %lu\n", expected_size, value_data_size);
 
         todo_wine_if(test->flags & WINE_TODO_DATA && !(test->flags & SPLIT_MULTI && query_routine_calls == 0))
-        if (expected_data)
+        if (expected_data == query->DefaultData || expected_data == NULL)
+            ok(value_data == expected_data, "Expected data %p, got %p\n", expected_data, value_data);
+        else
             ok(!memcmp(value_data, expected_data, value_data_size),
                "Expected data %s, got %s\n", debugstr_w(expected_data), debugstr_w(value_data));
-        else
-            ok(!value_data, "Expected null data\n");
     }
 
     query_routine_calls++;
@@ -2732,6 +2732,10 @@ static struct query_reg_values_test query_reg_values_tests[] =
         STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE
     },
     {
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_DWORD, (WCHAR*)0xdeadbeef }},
+        STATUS_SUCCESS, 1, EXPECT_DEFAULT_DATA
+    },
+    {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"Some default", 4 * sizeof(WCHAR) }},
         STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
@@ -2764,12 +2768,18 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ }},
-        STATUS_DATA_OVERRUN, 0, WINE_TODO_RET | WINE_TODO_SIZE, REG_NONE, NULL, -1
+        STATUS_DATA_OVERRUN, 0, 0, REG_NONE, NULL, -1
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"Some default" }},
-        STATUS_SUCCESS, 0, WINE_TODO_SIZE, REG_NONE, NULL, -1
+        STATUS_SUCCESS, 0, 0, REG_NONE, NULL, -1
+    },
+    /* DIRECT additionally requires the default value to be a string */
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_DWORD, (WCHAR*)0xdeadbeef }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, NULL, -1
     },
     /* REQUIRED fails if the value doesn't exist and there is no default */
     {
@@ -2820,6 +2830,7 @@ static void test_RtlQueryRegistryValues(void)
         RTL_QUERY_REGISTRY_TABLE *query;
         const WCHAR *expected_data;
         ULONG expected_size;
+        ULONG expected_type;
 
         winetest_push_context("%u/%Iu", i, ARRAY_SIZE(query_reg_values_tests) - 1);
 
@@ -2850,16 +2861,18 @@ static void test_RtlQueryRegistryValues(void)
             {
                 if (test->flags & EXPECT_DEFAULT_DATA)
                 {
+                    expected_type = query->DefaultType;
                     expected_data = query->DefaultData;
                     expected_size = query->DefaultLength;
                 }
                 else
                 {
+                    expected_type = test->expected_type;
                     expected_data = test->expected_data;
                     expected_size = test->expected_data_size;
                 }
 
-                if (!expected_size && expected_data)
+                if (!expected_size && expected_data && (expected_type == REG_SZ || expected_type == REG_EXPAND_SZ))
                     expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
                 else if (expected_size == -1)
                     expected_size = query_reg_values_direct_str.MaximumLength;
