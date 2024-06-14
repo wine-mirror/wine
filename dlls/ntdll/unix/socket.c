@@ -1485,6 +1485,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
     TRACE( "handle %p, code %#x, in_buffer %p, in_size %u, out_buffer %p, out_size %u\n",
            handle, code, in_buffer, in_size, out_buffer, out_size );
 
+    /* many of the below internal codes return success but don't completely
+     * fill the iosb or signal completion; such sockopts are only called
+     * synchronously by ws2_32 */
+
     switch (code)
     {
         case IOCTL_AFD_BIND:
@@ -2527,8 +2531,6 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
     }
 
     if (needs_close) close( fd );
-
-    if (status != STATUS_PENDING && !NT_ERROR(status)) io->Status = status;
 
     return status;
 }
