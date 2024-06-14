@@ -2662,12 +2662,12 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* DIRECT doesn't call the query routine and reads directly into a buffer */
     {
         {{ query_routine, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
-        STATUS_INVALID_PARAMETER, 0
+        STATUS_INVALID_PARAMETER, 0, 0, REG_NONE, NULL, -1
     },
     {
         {{ query_routine, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"Some default" }},
-        STATUS_INVALID_PARAMETER, 0
+        STATUS_INVALID_PARAMETER, 0, 0, REG_NONE, NULL, -1
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
@@ -2681,7 +2681,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
            &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, 0, REG_SZ, L"Brussels\0Paris\0Madrid", sizeof(L"Brussels\0Paris\0Madrid")
+        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0Madrid\0", sizeof(L"Brussels\0Paris\0Madrid\0")
     },
     /* DIRECT with a null buffer crashes on Windows */
     /* {
@@ -2744,7 +2744,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
+        STATUS_SUCCESS, 0, WINE_TODO_SIZE | WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
     },
     /* DIRECT with a multi-string default value crashes on Windows */
     /* {
@@ -2764,12 +2764,12 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_SZ }},
-        STATUS_DATA_OVERRUN, 0, WINE_TODO_RET
+        STATUS_DATA_OVERRUN, 0, WINE_TODO_RET | WINE_TODO_SIZE, REG_NONE, NULL, -1
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"Some default" }},
-        STATUS_SUCCESS, 0
+        STATUS_SUCCESS, 0, WINE_TODO_SIZE, REG_NONE, NULL, -1
     },
     /* REQUIRED fails if the value doesn't exist and there is no default */
     {
@@ -2830,7 +2830,9 @@ static void test_RtlQueryRegistryValues(void)
         }
 
         query_routine_calls = 0;
-        wcscpy(query_reg_values_direct_str.Buffer, L"###");
+        query_reg_values_direct_str.Length = query_reg_values_direct_str.MaximumLength - sizeof(WCHAR);
+        memset(query_reg_values_direct_str.Buffer, 0x23, query_reg_values_direct_str.Length);
+        query_reg_values_direct_str.Buffer[query_reg_values_direct_str.Length] = 0;
 
         status = pRtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer, test->query_table, test, NULL);
 
@@ -2857,11 +2859,18 @@ static void test_RtlQueryRegistryValues(void)
                     expected_size = test->expected_data_size;
                 }
 
+                if (!expected_size && expected_data)
+                    expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
+                else if (expected_size == -1)
+                    expected_size = query_reg_values_direct_str.MaximumLength;
+
+                todo_wine_if(test->flags & WINE_TODO_SIZE)
+                ok(query_reg_values_direct_str.Length + sizeof(WCHAR) == expected_size,
+                   "Expected size %lu, got %Iu\n", expected_size,
+                   query_reg_values_direct_str.Length + sizeof(WCHAR));
+
                 if (expected_data)
                 {
-                    if (!expected_size)
-                        expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
-
                     todo_wine_if(test->flags & WINE_TODO_DATA)
                     ok(!memcmp(query_reg_values_direct_str.Buffer, expected_data, expected_size),
                        "Expected data %s, got %s\n", debugstr_w(expected_data),
