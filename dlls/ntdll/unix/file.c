@@ -5515,13 +5515,12 @@ void set_async_direct_result( HANDLE *async_handle, IO_STATUS_BLOCK *io,
 }
 
 /* complete async file I/O, signaling completion in all ways necessary */
-void file_complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+void file_complete_async( HANDLE handle, unsigned int options, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                           IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information )
 {
     ULONG_PTR iosb_ptr = iosb_client_ptr(io);
 
-    io->Status = status;
-    io->Information = information;
+    set_sync_iosb( io, status, information, options );
     if (event) NtSetEvent( event, NULL );
     if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
     else if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
@@ -6119,7 +6118,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     if (needs_close) close( unix_handle );
     if (status == STATUS_SUCCESS)
     {
-        file_complete_async( file, event, apc, apc_user, io, status, total );
+        file_complete_async( file, options, event, apc, apc_user, io, status, total );
         TRACE("= SUCCESS (%u)\n", total);
     }
     else
@@ -6224,6 +6223,8 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
                                  IO_STATUS_BLOCK *io, ULONG code, void *in_buffer, ULONG in_size,
                                  void *out_buffer, ULONG out_size )
 {
+    unsigned int options;
+    int fd, needs_close;
     ULONG_PTR size = 0;
     NTSTATUS status;
 
@@ -6232,6 +6233,11 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
            in_buffer, (int)in_size, out_buffer, (int)out_size );
 
     if (!io) return STATUS_INVALID_PARAMETER;
+
+    status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options );
+    if (status && status != STATUS_BAD_DEVICE_TYPE)
+        return status;
+    if (needs_close) close( fd );
 
     ignore_server_ioctl_struct_holes( code, in_buffer, in_size );
 
@@ -6318,7 +6324,7 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
     }
 
     if (!NT_ERROR(status) && status != STATUS_PENDING)
-        file_complete_async( handle, event, apc, apc_context, io, status, size );
+        file_complete_async( handle, options, event, apc, apc_context, io, status, size );
     return status;
 }
 

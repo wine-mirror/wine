@@ -354,7 +354,7 @@ extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MA
 extern NTSTATUS get_device_info( int fd, struct _FILE_FS_DEVICE_INFORMATION *info );
 extern void init_files(void);
 extern void init_cpu_info(void);
-extern void file_complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+extern void file_complete_async( HANDLE handle, unsigned int options, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                  IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information );
 extern void set_async_direct_result( HANDLE *async_handle, IO_STATUS_BLOCK *io,
                                      NTSTATUS status, ULONG_PTR information, BOOL mark_pending );

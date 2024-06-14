@@ -1245,6 +1245,7 @@ NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE ap
     NTSTATUS status = STATUS_SUCCESS;
     int fd = -1, needs_close = 0;
     enum server_fd_type type;
+    unsigned int options;
 
     TRACE("%p %s %p %d %p %d %p\n",
           device, iocode2str(code), in_buffer, in_size, out_buffer, out_size, io);
@@ -1259,7 +1260,7 @@ NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE ap
         return STATUS_NOT_SUPPORTED;
     }
 
-    if ((status = server_get_unix_fd( device, access, &fd, &needs_close, &type, NULL )))
+    if ((status = server_get_unix_fd( device, access, &fd, &needs_close, &type, &options )))
         return status;
     if (type != FD_TYPE_SERIAL)
     {
@@ -1455,7 +1456,7 @@ NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE ap
     if (needs_close) close( fd );
 
     if (!NT_ERROR(status))
-        file_complete_async( device, event, apc, apc_user, io, status, sz );
+        file_complete_async( device, options, event, apc, apc_user, io, status, sz );
     return status;
 }
 

@@ -1460,6 +1460,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                      UINT code, void *in_buffer, UINT in_size, void *out_buffer, UINT out_size )
 {
     int fd, needs_close = FALSE;
+    unsigned int options;
     NTSTATUS status;
 
     TRACE( "handle %p, code %#x, in_buffer %p, in_size %u, out_buffer %p, out_size %u\n",
@@ -1525,6 +1526,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 break;
             }
 
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+                return status;
+            if (needs_close) close( fd );
+
             SERVER_START_REQ( socket_get_events )
             {
                 req->handle = wine_server_obj_handle( handle );
@@ -1535,7 +1540,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             SERVER_END_REQ;
 
-            file_complete_async( handle, event, apc, apc_user, io, status, 0 );
+            file_complete_async( handle, options, event, apc, apc_user, io, status, 0 );
             return status;
         }
 
@@ -1681,8 +1686,12 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (in_size != sizeof(NTSTATUS))
                 return STATUS_BUFFER_TOO_SMALL;
 
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+                return status;
+            if (needs_close) close( fd );
+
             status = *(NTSTATUS *)in_buffer;
-            file_complete_async( handle, event, apc, apc_user, io, status, 0 );
+            file_complete_async( handle, options, event, apc, apc_user, io, status, 0 );
             return status;
         }
 
@@ -1696,7 +1705,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 break;
             }
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
                 return status;
 
 #ifdef linux
@@ -1708,7 +1717,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 {
                     *(int *)out_buffer = 0;
                     if (needs_close) close( fd );
-                    file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+                    file_complete_async( handle, options, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
                     return STATUS_SUCCESS;
                 }
             }
@@ -1721,7 +1730,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             *(int *)out_buffer = value;
             if (needs_close) close( fd );
-            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, options, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
@@ -1730,7 +1739,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             int value, ret;
             socklen_t len = sizeof(value);
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
                 return status;
 
             if (out_size < sizeof(int))
@@ -1760,7 +1769,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 *(int *)out_buffer = !value;
             }
             if (needs_close) close( fd );
-            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, options, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
@@ -1771,6 +1780,10 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             struct ifaddrs *ifaddrs, *ifaddr;
             unsigned int count = 0;
             ULONG ret_size;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+                return status;
+            if (needs_close) close( fd );
 
             if (getifaddrs( &ifaddrs ) < 0)
             {
@@ -1787,7 +1800,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (out_size < ret_size)
             {
                 freeifaddrs( ifaddrs );
-                file_complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
+                file_complete_async( handle, options, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
                 return STATUS_PENDING;
             }
 
@@ -1837,7 +1850,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             freeifaddrs( ifaddrs );
-            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
+            file_complete_async( handle, options, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
             return STATUS_PENDING;
 #else
             FIXME( "Interface list queries are currently not supported on this platform.\n" );
@@ -1855,7 +1868,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 return STATUS_BUFFER_TOO_SMALL;
             keepalive = !!k->onoff;
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
                 return status;
 
             if (setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(int) ) < 0)
@@ -1892,7 +1905,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             if (needs_close) close( fd );
-            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, options, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
