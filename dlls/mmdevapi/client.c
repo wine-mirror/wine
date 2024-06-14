@@ -99,25 +99,36 @@ static inline struct audio_client *impl_from_IAudioStreamVolume(IAudioStreamVolu
     return CONTAINING_RECORD(iface, struct audio_client, IAudioStreamVolume_iface);
 }
 
-static HRESULT adjust_timing(struct audio_client *This,
+static HRESULT get_periods(struct audio_client *client,
+                           REFERENCE_TIME *def_period, REFERENCE_TIME *min_period)
+{
+    static const REFERENCE_TIME min_def_period = 100000; /* 10 ms */
+    struct get_device_period_params params;
+
+    params.device     = client->device_name;
+    params.flow       = client->dataflow;
+    params.def_period = def_period;
+    params.min_period = min_period;
+
+    wine_unix_call(get_device_period, &params);
+
+    if (def_period) *def_period = max(*def_period, min_def_period);
+
+    return params.result;
+}
+
+static HRESULT adjust_timing(struct audio_client *client,
                              REFERENCE_TIME *duration, REFERENCE_TIME *period,
                              const AUDCLNT_SHAREMODE mode, const DWORD flags,
                              const WAVEFORMATEX *fmt)
 {
-    struct get_device_period_params params;
     REFERENCE_TIME def_period, min_period;
+    HRESULT hr;
 
     TRACE("Requested duration %lu and period %lu\n", (ULONG)*duration, (ULONG)*period);
 
-    params.device     = This->device_name;
-    params.flow       = This->dataflow;
-    params.def_period = &def_period;
-    params.min_period = &min_period;
-
-    wine_unix_call(get_device_period, &params);
-
-    if (FAILED(params.result))
-        return params.result;
+    if (FAILED(hr = get_periods(client, &def_period, &min_period)))
+        return hr;
 
     TRACE("Device periods: %lu default and %lu minimum\n", (ULONG)def_period, (ULONG)min_period);
 
@@ -129,21 +140,21 @@ static HRESULT adjust_timing(struct audio_client *This,
         const WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE *)fmt;
         if (fmtex->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
            (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
-            params.result = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         else {
             if (*period == 0)
                 *period = def_period;
             if (*period < min_period || *period > 5000000)
-                params.result = AUDCLNT_E_INVALID_DEVICE_PERIOD;
+                hr = AUDCLNT_E_INVALID_DEVICE_PERIOD;
             else if (*duration > 20000000) /* The smaller the period, the lower this limit. */
-                params.result = AUDCLNT_E_BUFFER_SIZE_ERROR;
+                hr = AUDCLNT_E_BUFFER_SIZE_ERROR;
             else if (flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) {
                 if (*duration != *period)
-                    params.result = AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
+                    hr = AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
 
                 FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
 
-                params.result = AUDCLNT_E_DEVICE_IN_USE;
+                hr = AUDCLNT_E_DEVICE_IN_USE;
             } else if (*duration < 8 * *period)
                 *duration = 8 * *period; /* May grow above 2s. */
         }
@@ -151,7 +162,7 @@ static HRESULT adjust_timing(struct audio_client *This,
 
     TRACE("Adjusted duration %lu and period %lu\n", (ULONG)*duration, (ULONG)*period);
 
-    return params.result;
+    return hr;
 }
 
 static void dump_fmt(const WAVEFORMATEX *fmt)
@@ -748,21 +759,13 @@ static HRESULT WINAPI client_GetDevicePeriod(IAudioClient3 *iface, REFERENCE_TIM
                                       REFERENCE_TIME *minperiod)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
-    struct get_device_period_params params;
 
     TRACE("(%p)->(%p, %p)\n", This, defperiod, minperiod);
 
     if (!defperiod && !minperiod)
         return E_POINTER;
 
-    params.device     = This->device_name;
-    params.flow       = This->dataflow;
-    params.def_period = defperiod;
-    params.min_period = minperiod;
-
-    wine_unix_call(get_device_period, &params);
-
-    return params.result;
+    return get_periods(This, defperiod, minperiod);
 }
 
 static HRESULT WINAPI client_Start(IAudioClient3 *iface)
