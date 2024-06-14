@@ -2277,6 +2277,7 @@ CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
         for_op = CMD_FOR_FILE_SET;
         break;
     default:
+        FIXME("Unexpected situation\n");
         return NULL;
     }
 
