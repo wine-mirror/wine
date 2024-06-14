@@ -1540,6 +1540,60 @@ NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 	return STATUS_SUCCESS;
 }
 
+/*************************************************************************
+ * RtlAreAllAccessesGranted   [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlAreAllAccessesGranted( ACCESS_MASK granted, ACCESS_MASK desired )
+{
+    return (granted & desired) == desired;
+}
+
+/*************************************************************************
+ * RtlAreAnyAccessesGranted   [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlAreAnyAccessesGranted( ACCESS_MASK granted, ACCESS_MASK desired )
+{
+    return (granted & desired) != 0;
+}
+
+/*************************************************************************
+ * RtlMapGenericMask   [NTDLL.@]
+ */
+void WINAPI RtlMapGenericMask( ACCESS_MASK *mask, const GENERIC_MAPPING *mapping )
+{
+    if (*mask & GENERIC_READ) *mask |= mapping->GenericRead;
+    if (*mask & GENERIC_WRITE) *mask |= mapping->GenericWrite;
+    if (*mask & GENERIC_EXECUTE) *mask |= mapping->GenericExecute;
+    if (*mask & GENERIC_ALL) *mask |= mapping->GenericAll;
+    *mask &= ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+/*************************************************************************
+ * RtlCopyLuid   [NTDLL.@]
+ */
+void WINAPI RtlCopyLuid( LUID *dest, const LUID *src )
+{
+    *dest = *src;
+}
+
+/*************************************************************************
+ * RtlEqualLuid   [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlEqualLuid( const LUID *luid1, const LUID *luid2 )
+{
+  return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
+}
+
+/*************************************************************************
+ * RtlCopyLuidAndAttributesArray   [NTDLL.@]
+ */
+void WINAPI RtlCopyLuidAndAttributesArray( ULONG count, const LUID_AND_ATTRIBUTES *src, PLUID_AND_ATTRIBUTES dest )
+{
+    ULONG i;
+
+    for (i = 0; i < count; i++) dest[i] = src[i];
+}
+
 /*
  *	misc
  */
