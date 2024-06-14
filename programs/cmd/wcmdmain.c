@@ -991,6 +991,65 @@ static void command_dispose(CMD_COMMAND *cmd)
     }
 }
 
+void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
+{
+    free((void*)for_ctrl->set);
+    switch (for_ctrl->operator)
+    {
+    default:
+        break;
+    }
+}
+
+const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
+{
+    static const char* for_ctrl_strings[] = {"numbers"};
+    const char *flags, *options;
+
+    if (for_ctrl->operator >= ARRAY_SIZE(for_ctrl_strings))
+    {
+        FIXME("Unexpected operator\n");
+        return wine_dbg_sprintf("<<%u>>", for_ctrl->operator);
+    }
+
+    flags = "";
+    switch (for_ctrl->operator)
+    {
+    default:
+        options = "";
+        break;
+    }
+    return wine_dbg_sprintf("[FOR] %s %s%s%%%c (%ls)",
+                            for_ctrl_strings[for_ctrl->operator], flags, options,
+                            for_var_index_to_char(for_ctrl->variable_index), for_ctrl->set);
+}
+
+void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, int var_idx, CMD_FOR_CONTROL *for_ctrl)
+{
+    for_ctrl->operator = for_op;
+    for_ctrl->flags = flags;
+    for_ctrl->variable_index = var_idx;
+    for_ctrl->set = NULL;
+    switch (for_ctrl->operator)
+    {
+    default:
+        break;
+    }
+}
+
+void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *set)
+{
+    if (for_ctrl->set)
+    {
+        for_ctrl->set = xrealloc((void*)for_ctrl->set,
+                                 (wcslen(for_ctrl->set) + 1 + wcslen(set) + 1) * sizeof(WCHAR));
+        wcscat((WCHAR*)for_ctrl->set, L" ");
+        wcscat((WCHAR*)for_ctrl->set, set);
+    }
+    else
+        for_ctrl->set = xstrdupW(set);
+}
+
 /***************************************************************************
  * node_dispose_tree
  *
@@ -2093,6 +2152,70 @@ static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
     return FALSE;
 }
 
+CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
+{
+    CMD_FOR_CONTROL *for_ctrl;
+    enum for_control_operator for_op;
+    WCHAR mode = L' ', option;
+    WCHAR options[MAXSTRING];
+    WCHAR *arg;
+    unsigned flags = 0;
+    int arg_index;
+    int var_idx;
+
+    options[0] = L'\0';
+    /* native allows two options only in the /D /R case, a repetition of the option
+     * and prints an error otherwise
+     */
+    for (arg_index = 0; ; arg_index++)
+    {
+        arg = WCMD_parameter(opts_var, arg_index, NULL, FALSE, FALSE);
+
+        if (!arg || *arg != L'/') break;
+        option = towupper(arg[1]);
+        if (mode != L' ' && (mode != L'D' || option != 'R') && mode != option)
+            break;
+        switch (option)
+        {
+        case L'R':
+            if (mode == L'D')
+            {
+                mode = L'X';
+                break;
+            }
+            /* fall thru */
+        case L'D':
+        case L'L':
+        case L'F':
+            mode = option;
+            break;
+        default:
+            /* error unexpected 'arg' at this time */
+            WARN("for qualifier '%c' unhandled\n", *arg);
+            goto syntax_error;
+        }
+    }
+    switch (mode)
+    {
+    case L'L':
+        for_op = CMD_FOR_NUMBERS;
+        break;
+    default:
+        return NULL;
+    }
+
+    /* Ensure line continues with variable */
+    arg = WCMD_parameter(opts_var, arg_index++, NULL, FALSE, FALSE);
+    if (!arg || *arg != L'%' || (var_idx = for_var_char_to_index(arg[1])) == -1)
+        goto syntax_error; /* FIXME native prints the offending token "%<whatever>" was unexpected at this time */
+    for_ctrl = xalloc(sizeof(*for_ctrl));
+    for_control_create(for_op, flags, options, var_idx, for_ctrl);
+    return for_ctrl;
+syntax_error:
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+    return NULL;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -2746,6 +2869,61 @@ void WCMD_set_for_loop_variable(int var_idx, const WCHAR *value)
         forloopcontext->previous->variable[var_idx] != forloopcontext->variable[var_idx])
         free(forloopcontext->variable[var_idx]);
     forloopcontext->variable[var_idx] = xstrdupW(value);
+}
+
+static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+{
+    WCHAR set[MAXSTRING];
+    CMD_NODE *body = NULL;
+    int numbers[3] = {0, 0, 0}, var;
+    int i;
+
+    wcscpy(set, for_ctrl->set);
+
+    /* Note: native doesn't check the actual number of parameters, and set
+     * them by default to 0.
+     * so (-10 1) is interpreted as (-10 1 0)
+     * and (10) loops for ever !!!
+     */
+    for (i = 0; i < ARRAY_SIZE(numbers); i++)
+    {
+        WCHAR *element = WCMD_parameter(set, i, NULL, FALSE, FALSE);
+        if (!element || !*element) break;
+        /* native doesn't no error handling */
+        numbers[i] = wcstol(element, NULL, 0);
+    }
+
+    for (var = numbers[0];
+         (numbers[1] < 0) ? var >= numbers[2] : var <= numbers[2];
+         var += numbers[1])
+    {
+        WCHAR tmp[32];
+
+        body = cmdList;
+        swprintf(tmp, ARRAY_SIZE(tmp), L"%d", var);
+        WCMD_set_for_loop_variable(for_ctrl->variable_index, tmp);
+        TRACE("Processing FOR number %s\n", wine_dbgstr_w(tmp));
+        WCMD_part_execute(&body, CMD_node_get_command(cmdList)->command + 3, FALSE, TRUE);
+    }
+    return body;
+}
+
+void for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE **cmdList)
+{
+    CMD_NODE *last;
+    WCMD_save_for_loop_context(FALSE);
+
+    switch (for_ctrl->operator)
+    {
+    case CMD_FOR_NUMBERS:
+        last = for_control_execute_numbers(for_ctrl, *cmdList);
+        break;
+    default:
+        last = NULL;
+        break;
+    }
+    WCMD_restore_for_loop_context();
+    *cmdList = last;
 }
 
 /***************************************************************************

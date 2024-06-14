@@ -83,6 +83,14 @@ typedef struct _CMD_IF_CONDITION
     };
 } CMD_IF_CONDITION;
 
+typedef struct _CMD_FOR_CONTROL
+{
+    enum for_control_operator {CMD_FOR_NUMBERS /* /L */} operator;
+    unsigned flags;               /* |-ed CMD_FOR_FLAG_* */
+    int variable_index;
+    const WCHAR *set;
+} CMD_FOR_CONTROL;
+
 typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
@@ -128,6 +136,18 @@ BOOL if_condition_create(WCHAR *start, WCHAR **end, CMD_IF_CONDITION *cond);
 void if_condition_dispose(CMD_IF_CONDITION *);
 BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test);
 const char *debugstr_if_condition(const CMD_IF_CONDITION *cond);
+
+void for_control_create(enum for_control_operator for_op, unsigned flags, const WCHAR *options, int var_idx, CMD_FOR_CONTROL *for_ctrl);
+CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var);
+void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *string);
+void for_control_dump(const CMD_FOR_CONTROL *for_ctrl);
+void for_control_dispose(CMD_FOR_CONTROL *for_ctrl);
+void for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE **cmdList);
+int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
+                       int *totalfound, BOOL *doall,
+                       BOOL *duplicates);
+void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
+                       BOOL isIF, BOOL executecmds);
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);

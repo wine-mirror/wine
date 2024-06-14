@@ -1546,8 +1546,8 @@ void WCMD_echo (const WCHAR *args)
  * first command to be executed may not be at the front of the
  * commands->thiscommand string (eg. it may point after a DO or ELSE)
  */
-static void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
-                              BOOL isIF, BOOL executecmds)
+void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
+                       BOOL isIF, BOOL executecmds)
 {
   CMD_NODE *curPosition = *cmdList;
   int myDepth = CMD_node_get_depth(*cmdList);
@@ -1850,11 +1850,11 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk)
  * are recursively passed. If any have duplicates, then the * token should
  * not be honoured.
  */
-static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
-                              int *totalfound, BOOL *doall,
-                              BOOL *duplicates)
+int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
+                       int *totalfound, BOOL *doall,
+                       BOOL *duplicates)
 {
-  WCHAR *pos = tokenstr;
+  const WCHAR *pos = tokenstr;
   int    nexttoken = -1;
 
   if (totalfound) *totalfound = 0;
@@ -2136,7 +2136,7 @@ static FILE *WCMD_forf_getinput(BOOL usebackq, WCHAR *itemstr, BOOL iscmd)
  *
  */
 
-void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
+static void WCMD_for_OLD (WCHAR *p, CMD_NODE **cmdList) {
 
   WIN32_FIND_DATAW fd;
   HANDLE hff;
@@ -2539,6 +2539,32 @@ void WCMD_for (WCHAR *p, CMD_NODE **cmdList) {
      we need to step over the closing bracket                                  */
   *cmdList = cmdEnd;
   if (cmdEnd && CMD_node_get_command(cmdEnd)->command == NULL) *cmdList = CMD_node_next(cmdEnd);
+}
+
+void WCMD_for(WCHAR *p, CMD_NODE **cmdList)
+{
+    CMD_FOR_CONTROL *for_ctrl;
+
+    for_ctrl = for_control_parse(p);
+    if (!for_ctrl)
+    {
+        /* temporary code: use OLD code for non migrated FOR constructs */
+        WCMD_for_OLD(p, cmdList);
+        return;
+    }
+
+    for (*cmdList = CMD_node_next(*cmdList); /* swallow options */
+         *cmdList && CMD_node_get_command(*cmdList)->command != NULL;
+         *cmdList = CMD_node_next(*cmdList))
+    {
+        for_control_append_set(for_ctrl, CMD_node_get_command(*cmdList)->command);
+    }
+
+    /* step over terminating NULL CMD_NODE of set */
+    *cmdList = CMD_node_next(*cmdList);
+
+    for_control_execute(for_ctrl, cmdList);
+    for_control_dispose(for_ctrl);
 }
 
 /**************************************************************************
