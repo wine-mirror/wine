@@ -2211,16 +2211,12 @@ static void test_iosb(void)
 
     status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
-    todo_wine
-    {
     ok( iosb32.Status == STATUS_SUCCESS, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == sizeof("data"), "info changed to %lx\n", iosb32.Information );
+    ok( iosb32.Information == sizeof("data"), "info changed to %Ix\n", iosb32.Information );
     ok( iosb64.Pointer == PtrToUlong(&iosb32), "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == 0xdeadbeef, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
-    if (iosb32.Information == sizeof("data"))
-        ok( !memcmp( buffer, "data", iosb32.Information ),
-            "got wrong data %s\n", debugstr_an(buffer, iosb32.Information) );
-    }
+    ok( !memcmp( buffer, "data", iosb32.Information ),
+        "got wrong data %s\n", debugstr_an(buffer, iosb32.Information) );
 
     /* syscalls which are always synchronous set iosb64 but not iosb32 */
 
@@ -2232,9 +2228,9 @@ static void test_iosb(void)
     status = call_func64( flush_func, ARRAY_SIZE(flush_args), flush_args );
     ok( status == STATUS_SUCCESS, "NtFlushBuffersFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
     ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
-    ok( iosb64.Information == 0, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    ok( iosb64.Information == 0, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
 
     CloseHandle( client );
     CloseHandle( server );
@@ -2262,7 +2258,7 @@ static void test_iosb(void)
     status = call_func64( read_func, ARRAY_SIZE(args), args );
     ok( status == STATUS_SUCCESS, "NtReadFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
     ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == sizeof("data"), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
     ok( !memcmp( buffer, "data", iosb64.Information ),
@@ -2281,7 +2277,7 @@ static void test_iosb(void)
     todo_wine
     {
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
     ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
     ok( iosb64.Information == sizeof("data"), "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
     ok( !memcmp( buffer, "data", iosb64.Information ),
@@ -2300,9 +2296,9 @@ static void test_iosb(void)
     status = call_func64( flush_func, ARRAY_SIZE(flush_args), flush_args );
     ok( status == STATUS_SUCCESS, "NtFlushBuffersFile returned %lx\n", status );
     ok( iosb32.Status == 0x55555555, "status changed to %lx\n", iosb32.Status );
-    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( iosb32.Information == 0x55555555, "info changed to %Ix\n", iosb32.Information );
     ok( iosb64.Pointer == STATUS_SUCCESS, "pointer changed to %I64x\n", iosb64.Pointer );
-    ok( iosb64.Information == 0, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    ok( iosb64.Information == 0, "info changed to %Ix\n", (ULONG_PTR)iosb64.Information );
 
     CloseHandle( client );
     CloseHandle( server );
