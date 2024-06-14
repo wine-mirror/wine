@@ -107,6 +107,22 @@ static void set_wow64_environment( WCHAR **env )
 
 
 /******************************************************************************
+ *  RtlAcquirePebLock		[NTDLL.@]
+ */
+void WINAPI RtlAcquirePebLock(void)
+{
+    RtlEnterCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
+}
+
+/******************************************************************************
+ *  RtlReleasePebLock		[NTDLL.@]
+ */
+void WINAPI RtlReleasePebLock(void)
+{
+    RtlLeaveCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
+}
+
+/******************************************************************************
  *  RtlCreateEnvironment		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlCreateEnvironment(BOOLEAN inherit, PWSTR* env)

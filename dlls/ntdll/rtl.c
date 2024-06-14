@@ -184,22 +184,6 @@ NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPC
 }
 
 /******************************************************************************
- *  RtlAcquirePebLock		[NTDLL.@]
- */
-VOID WINAPI RtlAcquirePebLock(void)
-{
-    RtlEnterCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
-}
-
-/******************************************************************************
- *  RtlReleasePebLock		[NTDLL.@]
- */
-VOID WINAPI RtlReleasePebLock(void)
-{
-    RtlLeaveCriticalSection( NtCurrentTeb()->Peb->FastPebLock );
-}
-
-/******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
 void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COMPARE_ROUTINE compare,
