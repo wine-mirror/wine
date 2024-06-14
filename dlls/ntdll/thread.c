@@ -415,6 +415,31 @@ BOOLEAN WINAPI RtlIsCurrentThread( HANDLE handle )
 
 
 /***********************************************************************
+ *              RtlSetThreadErrorMode  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetThreadErrorMode( DWORD mode, LPDWORD oldmode )
+{
+    if (mode & ~0x70)
+        return STATUS_INVALID_PARAMETER_1;
+
+    if (oldmode)
+        *oldmode = NtCurrentTeb()->HardErrorMode;
+
+    NtCurrentTeb()->HardErrorMode = mode;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              RtlGetThreadErrorMode  (NTDLL.@)
+ */
+DWORD WINAPI RtlGetThreadErrorMode( void )
+{
+    return NtCurrentTeb()->HardErrorMode;
+}
+
+
+/***********************************************************************
  *           _errno  (NTDLL.@)
  */
 int * CDECL _errno(void)
