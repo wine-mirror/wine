@@ -728,6 +728,7 @@ static HRESULT media_stream_send_sample(struct media_stream *stream, const struc
 
     if (!wg_parser_stream_copy_buffer(stream->wg_stream, data, 0, wg_buffer->size))
     {
+        hr = S_FALSE;
         wg_parser_stream_release_buffer(stream->wg_stream);
         IMFMediaBuffer_Unlock(buffer);
         goto out;
@@ -789,8 +790,12 @@ static HRESULT wait_on_sample(struct media_stream *stream, IUnknown *token)
 
     TRACE("%p, %p\n", stream, token);
 
-    if (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
-        return media_stream_send_sample(stream, &buffer, token);
+    while (wg_parser_stream_get_buffer(source->wg_parser, stream->wg_stream, &buffer))
+    {
+        HRESULT hr = media_stream_send_sample(stream, &buffer, token);
+        if (hr != S_FALSE)
+            return hr;
+    }
 
     return media_stream_send_eos(source, stream);
 }
