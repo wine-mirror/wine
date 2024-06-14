@@ -153,7 +153,7 @@ static struct
   {' ',' '}
 };
 
-static DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file)
+DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file)
 {
     DIRECTORY_STACK *new = xalloc(sizeof(DIRECTORY_STACK));
 
@@ -177,7 +177,7 @@ static DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *fil
     return new;
 }
 
-static DIRECTORY_STACK *WCMD_dir_stack_free(DIRECTORY_STACK *dir)
+DIRECTORY_STACK *WCMD_dir_stack_free(DIRECTORY_STACK *dir)
 {
     DIRECTORY_STACK *next;
 
@@ -1790,7 +1790,7 @@ static BOOL WCMD_parse_forf_options(WCHAR *options, WCHAR *eol, int *skip,
  * processed, and any other directory still to be processed, mimicking what
  * Windows does
  */
-static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk)
+void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk)
 {
     DIRECTORY_STACK *remainingDirs = dirsToWalk;
     WCHAR fullitem[MAX_PATH];

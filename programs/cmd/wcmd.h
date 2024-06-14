@@ -83,16 +83,20 @@ typedef struct _CMD_IF_CONDITION
     };
 } CMD_IF_CONDITION;
 
+#define CMD_FOR_FLAG_TREE_RECURSE (1u << 0)
+#define CMD_FOR_FLAG_TREE_INCLUDE_FILES (1u << 1)
+#define CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES (1u << 2)
+
 typedef struct _CMD_FOR_CONTROL
 {
-    enum for_control_operator {
-                               CMD_FOR_FILE_SET /* /F */,
+    enum for_control_operator {CMD_FOR_FILETREE, CMD_FOR_FILE_SET /* /F */,
                                CMD_FOR_NUMBERS /* /L */} operator;
     unsigned flags;               /* |-ed CMD_FOR_FLAG_* */
     int variable_index;
     const WCHAR *set;
     union
     {
+        const WCHAR *root_dir;    /* for CMD_FOR_FILETREE */
         struct                    /* for CMD_FOR_FILE_SET */
         {
             WCHAR eol;
@@ -164,6 +168,10 @@ int WCMD_for_nexttoken(int lasttoken, const WCHAR *tokenstr,
                        BOOL *duplicates);
 void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
                        BOOL isIF, BOOL executecmds);
+struct _DIRECTORY_STACK;
+void WCMD_add_dirstowalk(struct _DIRECTORY_STACK *dirsToWalk);
+struct _DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file);
+struct _DIRECTORY_STACK *WCMD_dir_stack_free(struct _DIRECTORY_STACK *dir);
 
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);

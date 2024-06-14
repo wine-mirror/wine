@@ -1000,6 +1000,9 @@ void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
         free((void*)for_ctrl->delims);
         free((void*)for_ctrl->tokens);
         break;
+    case CMD_FOR_FILETREE:
+        free((void*)for_ctrl->root_dir);
+        break;
     default:
         break;
     }
@@ -1007,7 +1010,7 @@ void for_control_dispose(CMD_FOR_CONTROL *for_ctrl)
 
 const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
 {
-    static const char* for_ctrl_strings[] = {"file", "numbers"};
+    static const char* for_ctrl_strings[] = {"tree", "file", "numbers"};
     const char *flags, *options;
 
     if (for_ctrl->operator >= ARRAY_SIZE(for_ctrl_strings))
@@ -1016,9 +1019,18 @@ const char *debugstr_for_control(const CMD_FOR_CONTROL *for_ctrl)
         return wine_dbg_sprintf("<<%u>>", for_ctrl->operator);
     }
 
-    flags = "";
+    if (for_ctrl->flags)
+        flags = wine_dbg_sprintf("flags=%s%s%s ",
+                                 (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE) ? "~recurse" : "",
+                                 (for_ctrl->flags & CMD_FOR_FLAG_TREE_INCLUDE_FILES) ? "~+files" : "",
+                                 (for_ctrl->flags & CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES) ? "~+dirs" : "");
+    else
+        flags = "";
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILETREE:
+        options = wine_dbg_sprintf("root=(%ls) ", for_ctrl->root_dir);
+        break;
     case CMD_FOR_FILE_SET:
         {
             WCHAR eol_buf[4] = {L'\'', for_ctrl->eol, L'\'', L'\0'};
@@ -1045,6 +1057,9 @@ void for_control_create(enum for_control_operator for_op, unsigned flags, const 
     for_ctrl->set = NULL;
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILETREE:
+        for_ctrl->root_dir = options && *options ? xstrdupW(options) : NULL;
+        break;
     default:
         break;
     }
@@ -2239,6 +2254,22 @@ CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
     }
     switch (mode)
     {
+    case L' ':
+        for_op = CMD_FOR_FILETREE;
+        flags = CMD_FOR_FLAG_TREE_INCLUDE_FILES;
+        break;
+    case L'D':
+        for_op = CMD_FOR_FILETREE;
+        flags = CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES;
+        break;
+    case L'X':
+        for_op = CMD_FOR_FILETREE;
+        flags = CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES | CMD_FOR_FLAG_TREE_RECURSE;
+        break;
+    case L'R':
+        for_op = CMD_FOR_FILETREE;
+        flags = CMD_FOR_FLAG_TREE_INCLUDE_FILES | /*CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES | */CMD_FOR_FLAG_TREE_RECURSE;
+        break;
     case L'L':
         for_op = CMD_FOR_NUMBERS;
         break;
@@ -2249,7 +2280,7 @@ CMD_FOR_CONTROL *for_control_parse(WCHAR *opts_var)
         return NULL;
     }
 
-    if (mode == L'F')
+    if (mode == L'F' || mode == L'R')
     {
         /* Retrieve next parameter to see if is root/options (raw form required
          * with for /f, or unquoted in for /r)
@@ -3205,6 +3236,104 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
     return body;
 }
 
+static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *from_dir, size_t ref_len, CMD_NODE *cmdList)
+{
+    CMD_NODE *body = NULL;
+    size_t len;
+    WCHAR set[MAXSTRING];
+    WCHAR buffer[MAX_PATH];
+    int i;
+
+    if (from_dir)
+    {
+        len = wcslen(from_dir) + 1;
+        if (len >= ARRAY_SIZE(buffer)) return NULL;
+        wcscpy(buffer, from_dir);
+        wcscat(buffer, L"\\");
+    }
+    else
+        len = 0;
+
+    wcscpy(set, for_ctrl->set);
+    for (i = 0; ; i++)
+    {
+        WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
+        if (!element || !*element) break;
+        if (len + wcslen(element) + 1 >= ARRAY_SIZE(buffer)) continue;
+
+        wcscpy(&buffer[len], element);
+
+        TRACE("Doing set element %ls\n", buffer);
+
+        if (wcspbrk(element, L"?*"))
+        {
+            WIN32_FIND_DATAW fd;
+            HANDLE hff = FindFirstFileW(buffer, &fd);
+            size_t insert_pos = (wcsrchr(buffer, L'\\') ? wcsrchr(buffer, L'\\') + 1 - buffer : 0);
+
+            if (hff == INVALID_HANDLE_VALUE)
+            {
+                TRACE("Couldn't FindFirstFile on %ls\n", buffer);
+                continue;
+            }
+            do
+            {
+                TRACE("Considering %ls\n", fd.cFileName);
+                if (!lstrcmpW(fd.cFileName, L"..") || !lstrcmpW(fd.cFileName, L".")) continue;
+                if (!(for_ctrl->flags & CMD_FOR_FLAG_TREE_INCLUDE_FILES) &&
+                    !(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                    continue;
+                if (!(for_ctrl->flags & CMD_FOR_FLAG_TREE_INCLUDE_DIRECTORIES) &&
+                    (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                    continue;
+
+                if (insert_pos + wcslen(fd.cFileName) + 1 >= ARRAY_SIZE(buffer)) continue;
+                wcscpy(&buffer[insert_pos], fd.cFileName);
+
+                body = cmdList;
+                WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
+                WCMD_part_execute(&body, CMD_node_get_command(body)->command + 3, FALSE, TRUE);
+            } while (FindNextFileW(hff, &fd) != 0);
+            FindClose(hff);
+        }
+        else
+        {
+            body = cmdList;
+            WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
+            WCMD_part_execute(&body, CMD_node_get_command(body)->command + 3, FALSE, TRUE);
+        }
+    }
+    return body;
+}
+
+static CMD_NODE *for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+{
+    DIRECTORY_STACK *dirs_to_walk;
+    size_t ref_len;
+    CMD_NODE *body = NULL;
+
+    if (for_ctrl->root_dir)
+    {
+        dirs_to_walk = WCMD_dir_stack_create(for_ctrl->root_dir, NULL);
+    }
+    else dirs_to_walk = WCMD_dir_stack_create(NULL, NULL);
+    ref_len = wcslen(dirs_to_walk->dirName);
+
+    while (dirs_to_walk)
+    {
+        TRACE("About to walk %p %ls for %s\n", dirs_to_walk, dirs_to_walk->dirName, debugstr_for_control(for_ctrl));
+        if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
+            WCMD_add_dirstowalk(dirs_to_walk);
+
+        body = for_control_execute_set(for_ctrl, dirs_to_walk->dirName, ref_len, cmdList);
+        /* If we are walking directories, move on to any which remain */
+        dirs_to_walk = WCMD_dir_stack_free(dirs_to_walk);
+    }
+    TRACE("Finished all directories.\n");
+
+    return body;
+}
+
 static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
 {
     WCHAR set[MAXSTRING];
@@ -3250,6 +3379,12 @@ void for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE **cmdList)
 
     switch (for_ctrl->operator)
     {
+    case CMD_FOR_FILETREE:
+        if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
+            last = for_control_execute_walk_files(for_ctrl, *cmdList);
+        else
+            last = for_control_execute_set(for_ctrl, NULL, 0, *cmdList);
+        break;
     case CMD_FOR_FILE_SET:
         last = for_control_execute_fileset(for_ctrl, *cmdList);
         break;
