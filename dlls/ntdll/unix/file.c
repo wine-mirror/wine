@@ -6225,14 +6225,12 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
         }
         else
         {
-            io->Information = 0;
             status = STATUS_BUFFER_TOO_SMALL;
         }
         break;
     }
 
     case FSCTL_GET_REPARSE_POINT:
-        io->Information = 0;
         if (out_buffer && out_size)
         {
             FIXME("FSCTL_GET_REPARSE_POINT semi-stub\n");
@@ -6247,7 +6245,6 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
         int fd, needs_close;
         struct stat st;
 
-        io->Information = 0;
         if (out_size >= sizeof(*info))
         {
             status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
@@ -6273,7 +6270,7 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
                                   in_buffer, in_size, out_buffer, out_size );
     }
 
-    if (status != STATUS_PENDING) io->Status = status;
+    if (!NT_ERROR(status) && status != STATUS_PENDING) io->Status = status;
     return status;
 }
 
