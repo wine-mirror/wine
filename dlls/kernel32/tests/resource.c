@@ -644,11 +644,20 @@ static struct mui_res
     offsetof(struct mui_res, mui_type_ids), sizeof(ln_mui_res.mui_type_ids), 0, 0,
     offsetof(struct mui_res, fallback_lang), sizeof(L"en-US"),
     {'M','U','I',0,0}, {RT_CURSOR}, {'M','U','I',0,0}, {RT_STRING}, {0}, {'e','n','-','U','S',0},
+}, en_mui_res = {
+    0xfecdfecd, sizeof(ln_mui_res), 0x10000, 0,
+    MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI >> 1,
+    0, 0, {'s','c'}, {'c'}, {0}, 0, 0, {0},
+    offsetof(struct mui_res, ln_type_names), sizeof(L"MUI\0"),
+    offsetof(struct mui_res, ln_type_ids), sizeof(ln_mui_res.ln_type_ids),
+    0, 0, 0, 0, offsetof(struct mui_res, lang), sizeof(L"en-US"), 0, 0,
+    {'M','U','I',0,0}, {RT_STRING}, {0}, {0}, {'e','n','-','U','S',0}
 };
 
 static void test_mui(void)
 {
     static const WCHAR ln_dll[] = L"test_mui.dll";
+    static const WCHAR en_dll[] = L"en-US\\test_mui.dll.mui";
     static const BYTE zeros[16] = { 0 };
     BYTE buf[1024];
     FILEMUIINFO *info = (FILEMUIINFO *)buf;
@@ -663,6 +672,8 @@ static void test_mui(void)
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetLastError() = %ld\n", GetLastError() );
 
     create_test_dll( ln_dll );
+    CreateDirectoryW( L"en-US", NULL );
+    create_test_dll( en_dll );
 
     size = 0;
     r = GetFileMUIInfo( 0, ln_dll, NULL, &size );
@@ -760,7 +771,45 @@ static void test_mui(void)
     str += wcslen(str) + 1;
     ok( !str[0], "string list is not NULL terminated: %s\n", wine_dbgstr_w(str) );
 
+    res = BeginUpdateResourceW( en_dll, TRUE );
+    ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
+    r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &en_mui_res, sizeof(en_mui_res) );
+    ok( r, "UpdateResource failed: %ld\n", GetLastError() );
+    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+
+    memset( buf, 0xfe, sizeof(buf) );
+    size = sizeof(buf);
+    info->dwSize = sizeof(buf);
+    info->dwVersion = MUI_FILEINFO_VERSION;
+    r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
+            | MUI_QUERY_RESOURCE_TYPES, en_dll, info, &size );
+    ok( r, "GetFileMUIInfo failed: %ld\n", GetLastError() );
+    ok( info->dwSize == sizeof(buf), "dwSize = %ld\n", info->dwSize );
+    ok( info->dwVersion == MUI_FILEINFO_VERSION, "dwVersion = %ld\n", info->dwVersion );
+    ok( info->dwFileType == MUI_FILETYPE_LANGUAGE_NEUTRAL_MUI, "dwFileType = %ld\n", info->dwFileType );
+    ok( info->pChecksum[0] == 'c', "pChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pChecksum, sizeof(info->pChecksum)) );
+    ok( info->pServiceChecksum[0] == 's', "pServiceChecksum = %s\n",
+            wine_dbgstr_an((char *)info->pServiceChecksum, sizeof(info->pServiceChecksum)) );
+    ok( info->dwLanguageNameOffset == 72, "dwLanguageNameOffset = %ld\n", info->dwLanguageNameOffset );
+    str = (WCHAR *)(buf + info->dwLanguageNameOffset);
+    ok( !wcscmp(str, L"en-US"), "language name = %s\n", wine_dbgstr_w(str) );
+    ok( !info->dwTypeIDMainSize, "dwTypeIDMainSize = %ld\n", info->dwTypeIDMainSize );
+    ok( !info->dwTypeIDMainOffset, "dwTypeIDMainOffset = %ld\n", info->dwTypeIDMainOffset );
+    ok( !info->dwTypeNameMainOffset, "dwTypeNameMainOffset = %ld\n", info->dwTypeNameMainOffset );
+    ok( info->dwTypeIDMUISize == 1, "dwTypeIDMUISize = %ld\n", info->dwTypeIDMUISize );
+    ok( info->dwTypeIDMUIOffset == 84, "dwTypeIDMUIOffset = %ld\n", info->dwTypeIDMUIOffset );
+    id = (DWORD *)(buf + info->dwTypeIDMUIOffset);
+    ok( id[0] == RT_STRING, "type ID MUI[0] = %ld\n", id[0] );
+    ok( info->dwTypeNameMUIOffset == 88, "dwTypeNameMUIOffset = %ld\n", info->dwTypeNameMUIOffset );
+    str = (WCHAR *)(buf + info->dwTypeNameMUIOffset);
+    ok( !wcscmp(str, L"MUI"), "type name MUI[0] = %s\n", wine_dbgstr_w(str) );
+    str += wcslen(str) + 1;
+    ok( !str[0], "string list is not NULL terminated: %s\n", wine_dbgstr_w(str) );
+
     DeleteFileW( ln_dll );
+    DeleteFileW( en_dll );
+    RemoveDirectoryW( L"en-US" );
 }
 
 START_TEST(resource)
