@@ -1425,18 +1425,6 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     return status;
 }
 
-static void complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                            IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information )
-{
-    ULONG_PTR iosb_ptr = iosb_client_ptr(io);
-
-    io->Status = status;
-    io->Information = information;
-    if (event) NtSetEvent( event, NULL );
-    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, iosb_ptr, 0 );
-    else if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
-}
-
 
 static NTSTATUS do_getsockopt( HANDLE handle, IO_STATUS_BLOCK *io, int level,
                                int option, void *out_buffer, ULONG out_size )
@@ -1563,7 +1551,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             SERVER_END_REQ;
 
-            complete_async( handle, event, apc, apc_user, io, status, 0 );
+            file_complete_async( handle, event, apc, apc_user, io, status, 0 );
             return status;
         }
 
@@ -1710,7 +1698,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 return STATUS_BUFFER_TOO_SMALL;
 
             status = *(NTSTATUS *)in_buffer;
-            complete_async( handle, event, apc, apc_user, io, status, 0 );
+            file_complete_async( handle, event, apc, apc_user, io, status, 0 );
             return status;
         }
 
@@ -1736,7 +1724,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 {
                     *(int *)out_buffer = 0;
                     if (needs_close) close( fd );
-                    complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+                    file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
                     return STATUS_SUCCESS;
                 }
             }
@@ -1749,7 +1737,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             *(int *)out_buffer = value;
             if (needs_close) close( fd );
-            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
@@ -1788,7 +1776,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 *(int *)out_buffer = !value;
             }
             if (needs_close) close( fd );
-            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
@@ -1815,7 +1803,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (out_size < ret_size)
             {
                 freeifaddrs( ifaddrs );
-                complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
+                file_complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
                 return STATUS_PENDING;
             }
 
@@ -1865,7 +1853,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             freeifaddrs( ifaddrs );
-            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
+            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
             return STATUS_PENDING;
 #else
             FIXME( "Interface list queries are currently not supported on this platform.\n" );
@@ -1920,7 +1908,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             if (needs_close) close( fd );
-            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
+            file_complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, 0 );
             return STATUS_SUCCESS;
         }
 
