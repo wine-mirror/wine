@@ -630,6 +630,38 @@ static IMFMediaType *mf_media_type_from_wg_format_h264(const struct wg_format *f
     return type;
 }
 
+static IMFMediaType *mf_media_type_from_wg_format_wmv(const struct wg_format *format)
+{
+    IMFMediaType *type;
+
+    if (FAILED(MFCreateMediaType(&type)))
+        return NULL;
+
+    IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+
+    if (format->u.video.format == WG_VIDEO_FORMAT_WMV1)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_WMV1);
+    else if (format->u.video.format == WG_VIDEO_FORMAT_WMV2)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_WMV2);
+    else if (format->u.video.format == WG_VIDEO_FORMAT_WMV3)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_WMV3);
+    else if (format->u.video.format == WG_VIDEO_FORMAT_WMVA)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_WMVA);
+    else if (format->u.video.format == WG_VIDEO_FORMAT_WVC1)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_WVC1);
+    else
+        FIXME("Unhandled format %#x.\n", format->u.video.format);
+
+    IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE,
+            make_uint64(format->u.video.width, format->u.video.height));
+    IMFMediaType_SetUINT32(type, &MF_MT_VIDEO_ROTATION, MFVideoRotationFormat_0);
+
+    if (format->u.video.codec_data_len)
+        IMFMediaType_SetBlob(type, &MF_MT_USER_DATA, format->u.video.codec_data, format->u.video.codec_data_len);
+
+    return type;
+}
+
 IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 {
     switch (format->major_type)
@@ -637,7 +669,6 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
-        case WG_MAJOR_TYPE_VIDEO_WMV:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
             FIXME("Format %u not implemented!\n", format->major_type);
@@ -656,6 +687,9 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
             return mf_media_type_from_wg_format_audio_mpeg4(format);
+
+        case WG_MAJOR_TYPE_VIDEO_WMV:
+            return mf_media_type_from_wg_format_wmv(format);
     }
 
     assert(0);
