@@ -586,6 +586,29 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
     return NULL;
 }
 
+static IMFMediaType *mf_media_type_from_wg_format_audio_mpeg4(const struct wg_format *format)
+{
+    IMFMediaType *type;
+
+    if (FAILED(MFCreateMediaType(&type)))
+        return NULL;
+
+    IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFAudioFormat_AAC);
+    IMFMediaType_SetGUID(type, &MF_MT_AM_FORMAT_TYPE, &FORMAT_WaveFormatEx);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, format->u.audio.rate);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, format->u.audio.channels);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, format->u.audio.channel_mask);
+    IMFMediaType_SetUINT32(type, &MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 0); /* unknown */
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, TRUE);
+    IMFMediaType_SetUINT32(type, &MF_MT_FIXED_SIZE_SAMPLES, TRUE);
+    IMFMediaType_SetUINT32(type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    IMFMediaType_SetBlob(type, &MF_MT_USER_DATA, format->u.audio.codec_data, format->u.audio.codec_data_len);
+
+    return type;
+}
+
 static IMFMediaType *mf_media_type_from_wg_format_h264(const struct wg_format *format)
 {
     IMFMediaType *type;
@@ -612,7 +635,6 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
     switch (format->major_type)
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
-        case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_WMV:
@@ -631,6 +653,9 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_VIDEO_H264:
             return mf_media_type_from_wg_format_h264(format);
+
+        case WG_MAJOR_TYPE_AUDIO_MPEG4:
+            return mf_media_type_from_wg_format_audio_mpeg4(format);
     }
 
     assert(0);
