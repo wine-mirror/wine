@@ -6334,8 +6334,6 @@ static void thread_detach(void)
     destroy_thread_windows();
     user_driver->pThreadDetach();
 
-    free( thread_info->key_state );
-    thread_info->key_state = 0;
     free( thread_info->rawinput );
 
     cleanup_imm_thread();

@@ -441,11 +441,9 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     if (ret)  /* reset the desktop windows */
     {
         struct user_thread_info *thread_info = get_user_thread_info();
-        struct user_key_state_info *key_state_info = thread_info->key_state;
         get_session_thread_data()->shared_desktop = find_shared_session_object( locator );
         thread_info->client_info.top_window = 0;
         thread_info->client_info.msg_window = 0;
-        if (key_state_info) key_state_info->time = 0;
         if (was_virtual_desktop != is_virtual_desktop()) update_display_cache( FALSE );
     }
     return ret;

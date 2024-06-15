@@ -116,7 +116,6 @@ struct user_thread_info
     HHOOK                         hook;                   /* Current hook */
     UINT                          active_hooks;           /* Bitmap of active hooks */
     struct received_message_info *receive_info;           /* Message being currently received */
-    struct user_key_state_info   *key_state;              /* Cache of global key state */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */
     HKL                           kbd_layout;             /* Current keyboard layout */
     UINT                          kbd_layout_id;          /* Current keyboard layout ID */
@@ -133,13 +132,6 @@ static inline struct user_thread_info *get_user_thread_info(void)
 {
     return CONTAINING_RECORD( NtUserGetThreadInfo(), struct user_thread_info, client_info );
 }
-
-struct user_key_state_info
-{
-    UINT  time;          /* Time of last key state refresh */
-    INT   counter;       /* Counter to invalidate the key state */
-    BYTE  state[256];    /* State for each key */
-};
 
 struct hook_extra_info
 {
