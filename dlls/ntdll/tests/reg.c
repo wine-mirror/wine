@@ -2644,7 +2644,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* The query routine is called for every value in current key */
     {
         {{ query_routine }},
-        STATUS_SUCCESS, 4, SKIP_NAME_CHECK | SKIP_DATA_CHECK | WINE_TODO_CALLS
+        STATUS_SUCCESS, 4, SKIP_NAME_CHECK | SKIP_DATA_CHECK
     },
     /* NOVALUE is ignored when the name is not null */
     {
@@ -2686,7 +2686,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
            &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0Madrid\0", sizeof(L"Brussels\0Paris\0Madrid\0")
+        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
     },
     /* DIRECT with a null buffer crashes on Windows */
     /* {
@@ -2710,14 +2710,14 @@ static struct query_reg_values_test query_reg_values_tests[] =
         {{ query_routine, RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive" }},
         STATUS_SUCCESS, 1, 0, REG_EXPAND_SZ, L"%SYSTEMDRIVE%"
     },
-    /* NOEXPAND calls the query routine once for each string in a multi-string */
+    /* NOEXPAND calls the query routine only once instead of once for each string in a multi-string */
     {
         {{ query_routine, 0, (WCHAR*)L"CapitalsOfEurope" }},
-        STATUS_SUCCESS, 3, SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE | WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0Madrid\0"
+        STATUS_SUCCESS, 3, SPLIT_MULTI, REG_SZ, L"Brussels\0Paris\0%PATH%\0"
     },
     {
         {{ query_routine, RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope" }},
-        STATUS_SUCCESS, 1, WINE_TODO_SIZE, REG_MULTI_SZ, L"Brussels\0Paris\0Madrid\0", sizeof(L"Brussels\0Paris\0Madrid\0")
+        STATUS_SUCCESS, 1, WINE_TODO_SIZE, REG_MULTI_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
     },
     /* The default value is used if the registry value does not exist */
     {
@@ -2733,7 +2733,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
         STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
     },
     {
-        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_MULTI_SZ, (WCHAR*)L"Brussels\0Paris\0Madrid\0" }},
+        {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_MULTI_SZ, (WCHAR*)L"Brussels\0Paris\0%PATH%\0" }},
         STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE
     },
     {
@@ -2818,7 +2818,7 @@ static void test_RtlQueryRegistryValues(void)
     ok(status == ERROR_SUCCESS, "Failed to create registry value WindowsDrive: %lu\n", status);
 
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"CapitalsOfEurope", REG_MULTI_SZ,
-                             L"Brussels\0Paris\0Madrid", sizeof(L"Brussels\0Paris\0Madrid"));
+                             L"Brussels\0Paris\0%PATH%", sizeof(L"Brussels\0Paris\0%PATH%"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value CapitalsOfEurope: %lu\n", status);
 
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest\\subkey", L"Color", REG_SZ,
