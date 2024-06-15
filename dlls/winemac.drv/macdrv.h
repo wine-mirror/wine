@@ -208,7 +208,6 @@ extern void init_win_context(void);
 extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
 extern void activate_on_following_focus(void);
-extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha);
 
 extern void macdrv_handle_event(const macdrv_event *event);
 

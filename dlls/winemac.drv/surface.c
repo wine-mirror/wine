@@ -127,7 +127,7 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
  *              create_surface
  */
 static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
-                                             struct window_surface *old_surface, BOOL use_alpha)
+                                             struct window_surface *old_surface)
 {
     struct macdrv_window_surface *surface = NULL;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
@@ -178,9 +178,6 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
 
     TRACE("created %p for %p %s\n", surface, window, wine_dbgstr_rect(rect));
 
-    if (use_alpha) window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0xff000000 );
-    else window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0 );
-
     return &surface->header;
 
 failed:
@@ -216,7 +213,7 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, const RECT *surface_rect, struct wind
         }
     }
 
-    *surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, data->surface, FALSE);
+    *surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, data->surface);
 
 done:
     release_win_data(data);
@@ -241,7 +238,7 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *surface_rect, COLORREF co
     surface = data->surface;
     if (!surface || !EqualRect(&surface->rect, surface_rect))
     {
-        data->surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, NULL, TRUE);
+        data->surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, NULL);
         if (surface) window_surface_release(surface);
         surface = data->surface;
         if (data->unminimized_surface)
@@ -250,7 +247,6 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *surface_rect, COLORREF co
             data->unminimized_surface = NULL;
         }
     }
-    else window_surface_set_layered(surface, color_key, -1, 0xff000000);
 
     if ((*window_surface = surface)) window_surface_add_ref(surface);
 
