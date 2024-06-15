@@ -1202,7 +1202,7 @@ static HWND set_window_owner( HWND hwnd, HWND owner )
 /* Helper function for SetWindowLong(). */
 LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOOL ansi )
 {
-    BOOL ok, made_visible = FALSE;
+    BOOL ok, made_visible = FALSE, layered = TRUE;
     LONG_PTR retval = 0;
     STYLESTRUCT style;
     WND *win;
@@ -1389,8 +1389,8 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
     }
     SERVER_END_REQ;
 
-    if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) ||
-        (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)))
+    if (offset == GWL_EXSTYLE && ((style.styleOld ^ style.styleNew) & WS_EX_LAYERED)) layered = TRUE;
+    if ((offset == GWL_STYLE && ((style.styleOld ^ style.styleNew) & WS_VISIBLE)) || layered)
     {
         made_visible = (win->dwStyle & WS_VISIBLE) != 0;
         invalidate_dce( win, NULL );
@@ -1404,7 +1404,7 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
         style.styleOld = retval;
         style.styleNew = newval;
         user_driver->pSetWindowStyle( hwnd, offset, &style );
-        if (made_visible) update_window_state( hwnd );
+        if (made_visible || layered) update_window_state( hwnd );
         send_message( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
     }
 
