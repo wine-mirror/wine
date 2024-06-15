@@ -662,12 +662,42 @@ static IMFMediaType *mf_media_type_from_wg_format_wmv(const struct wg_format *fo
     return type;
 }
 
+static IMFMediaType *mf_media_type_from_wg_format_wma(const struct wg_format *format)
+{
+    IMFMediaType *type;
+
+    if (FAILED(MFCreateMediaType(&type)))
+        return NULL;
+
+    IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+
+    if (format->u.audio.version == 1)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MEDIASUBTYPE_MSAUDIO1);
+    else if (format->u.audio.version == 2)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFAudioFormat_WMAudioV8);
+    else if (format->u.audio.version == 3)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFAudioFormat_WMAudioV9);
+    else if (format->u.audio.version == 4)
+        IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, &MFAudioFormat_WMAudio_Lossless);
+    else
+        FIXME("Unhandled version %#x.\n", format->u.audio.version);
+
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, format->u.audio.rate);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, format->u.audio.channels);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, format->u.audio.channel_mask);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, format->u.audio.bitrate / 8);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, TRUE);
+    IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, format->u.audio.block_align);
+    IMFMediaType_SetBlob(type, &MF_MT_USER_DATA, format->u.audio.codec_data, format->u.audio.codec_data_len);
+
+    return type;
+}
+
 IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 {
     switch (format->major_type)
     {
         case WG_MAJOR_TYPE_AUDIO_MPEG1:
-        case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_INDEO:
         case WG_MAJOR_TYPE_VIDEO_MPEG1:
@@ -690,6 +720,9 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 
         case WG_MAJOR_TYPE_VIDEO_WMV:
             return mf_media_type_from_wg_format_wmv(format);
+
+        case WG_MAJOR_TYPE_AUDIO_WMA:
+            return mf_media_type_from_wg_format_wma(format);
     }
 
     assert(0);
