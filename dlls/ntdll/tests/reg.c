@@ -2686,7 +2686,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
            &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, WINE_TODO_DATA, REG_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
+        STATUS_SUCCESS, 0, 0, REG_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
     },
     /* DIRECT with a null buffer crashes on Windows */
     /* {

@@ -321,13 +321,16 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             if (!(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND))
                 return STATUS_INVALID_PARAMETER;
 
+            len += sizeof(WCHAR);
             if (str->Buffer == NULL)
             {
                 str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
                 str->MaximumLength = len;
             }
             len = min(len, str->MaximumLength);
+            len -= sizeof(WCHAR);
             memcpy(str->Buffer, ((CHAR*)pInfo) + pInfo->DataOffset, len);
+            str->Buffer[len / sizeof(WCHAR)] = 0;
             str->Length = len;
             break;
 
