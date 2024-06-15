@@ -2666,6 +2666,8 @@ static BOOL can_skip_message(const struct message *expected)
 
     if ((expected->flags & msg_todo) && !strcmp(winetest_platform, "wine")) return TRUE;
 
+    if ((expected->flags & wine_only) && strcmp(winetest_platform, "wine")) return TRUE;
+
     return FALSE;
 }
 
