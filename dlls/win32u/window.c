@@ -1873,6 +1873,18 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
         create_offscreen_window_surface( hwnd, surface_rect, &new_surface );
     }
 
+    if (new_surface && !is_layered)
+    {
+        DWORD lwa_flags = 0;
+        COLORREF key;
+        BYTE alpha;
+
+        if (!NtUserGetLayeredWindowAttributes( hwnd, &key, &alpha, &lwa_flags )) lwa_flags = 0;
+        if (!(lwa_flags & LWA_ALPHA)) alpha = 255;
+        if (!(lwa_flags & LWA_COLORKEY)) key = CLR_INVALID;
+        window_surface_set_layered( new_surface, key, alpha << 24, 0 );
+    }
+
     return new_surface;
 }
 
@@ -2248,6 +2260,8 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
 
         NtGdiDeleteObjectApp( hdc );
         window_surface_unlock( surface );
+
+        window_surface_set_layered( surface, key, -1, 0xff000000 );
         window_surface_flush( surface );
 
         user_driver->pUpdateLayeredWindow( hwnd, &window_rect, key, alpha, flags );

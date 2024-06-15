@@ -479,8 +479,6 @@ W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORRE
         }
     }
     window_surface_unlock( surface );
-
-    window_surface_flush( surface );
 }
 
 W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region )
