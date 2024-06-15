@@ -489,8 +489,12 @@ failed:
 void wayland_window_surface_update_wayland_surface(struct window_surface *window_surface,
                                                    struct wayland_surface *wayland_surface)
 {
-    struct wayland_window_surface *wws = wayland_window_surface_cast(window_surface);
+    struct wayland_window_surface *wws;
 
+    /* ignore calls with the dummy surface */
+    if (window_surface->funcs != &wayland_window_surface_funcs) return;
+
+    wws = wayland_window_surface_cast(window_surface);
     window_surface_lock(window_surface);
 
     TRACE("surface=%p hwnd=%p wayland_surface=%p\n", wws, window_surface->hwnd, wayland_surface);
