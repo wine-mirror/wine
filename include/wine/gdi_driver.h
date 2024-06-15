@@ -229,6 +229,9 @@ struct window_surface
     RECT                               bounds;       /* dirty area rectangle */
     HRGN                               clip_region;  /* visible region of the surface, fully visible if 0 */
     DWORD                              draw_start_ticks; /* start ticks of fresh draw */
+    COLORREF                           color_key;    /* layered window surface color key, invalid if CLR_INVALID */
+    UINT                               alpha_bits;   /* layered window global alpha bits, invalid if -1 */
+    UINT                               alpha_mask;   /* layered window per-pixel alpha mask, invalid if 0 */
     HBITMAP                            color_bitmap; /* bitmap for the surface colors */
     void                              *color_bits;   /* pixel bits of the color bitmap */
     /* driver-specific fields here */

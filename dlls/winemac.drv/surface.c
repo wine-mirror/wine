@@ -58,7 +58,6 @@ struct macdrv_window_surface
 {
     struct window_surface   header;
     macdrv_window           window;
-    BOOL                    use_alpha;
     CGDataProviderRef       provider;
     BITMAPINFO              info;   /* variable size, must be last */
 };
@@ -105,7 +104,7 @@ static void macdrv_surface_set_clip(struct window_surface *window_surface, const
 static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    CGImageAlphaInfo alpha_info = (surface->use_alpha ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
+    CGImageAlphaInfo alpha_info = (window_surface->alpha_mask ? kCGImageAlphaPremultipliedFirst : kCGImageAlphaNoneSkipFirst);
     BITMAPINFO *color_info = &surface->info;
     CGColorSpaceRef colorspace;
     CGImageRef image;
@@ -197,7 +196,7 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
 
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
-    surface->use_alpha = use_alpha;
+    surface->header.alpha_mask = use_alpha ? 0xff000000 : 0;
     surface->provider = provider;
 
     window_background = macdrv_window_background_color();
@@ -221,7 +220,7 @@ failed:
 void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    if (surface) surface->use_alpha = use_alpha;
+    if (surface) surface->header.alpha_mask = use_alpha ? 0xff000000 : 0;
 }
 
 

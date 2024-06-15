@@ -1589,9 +1589,6 @@ struct x11drv_window_surface
     GC                    gc;
     struct x11drv_image  *image;
     BOOL                  byteswap;
-    BOOL                  is_argb;
-    DWORD                 alpha_bits;
-    COLORREF              color_key;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -1634,7 +1631,8 @@ static inline void add_row( HRGN rgn, RGNDATA *data, int x, int y, int len )
 /***********************************************************************
  *           update_surface_region
  */
-static void update_surface_region( struct x11drv_window_surface *surface, const void *color_bits )
+static void update_surface_region( struct x11drv_window_surface *surface, const void *color_bits,
+                                   COLORREF color_key, UINT alpha_mask )
 {
 #ifdef HAVE_LIBXSHAPE
     char buffer[4096];
@@ -1646,7 +1644,7 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
 
     if (!shape_layered_windows) return;
 
-    if (!surface->is_argb && surface->color_key == CLR_INVALID)
+    if (!alpha_mask && color_key == CLR_INVALID)
     {
         XShapeCombineMask( gdi_display, surface->window, ShapeBounding, 0, 0, None, ShapeSet );
         return;
@@ -1673,9 +1671,9 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
             x = 0;
             while (x < width)
             {
-                while (x < width && (bits[x] & mask) == surface->color_key) x++;
+                while (x < width && (bits[x] & mask) == color_key) x++;
                 start = x;
-                while (x < width && (bits[x] & mask) != surface->color_key) x++;
+                while (x < width && (bits[x] & mask) != color_key) x++;
                 add_row( rgn, data, surface->header.rect.left + start, y, x - start );
             }
         }
@@ -1692,15 +1690,15 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
             while (x < width)
             {
                 while (x < width &&
-                       (bits[x * 3] == GetBValue(surface->color_key)) &&
-                       (bits[x * 3 + 1] == GetGValue(surface->color_key)) &&
-                       (bits[x * 3 + 2] == GetRValue(surface->color_key)))
+                       (bits[x * 3] == GetBValue(color_key)) &&
+                       (bits[x * 3 + 1] == GetGValue(color_key)) &&
+                       (bits[x * 3 + 2] == GetRValue(color_key)))
                     x++;
                 start = x;
                 while (x < width &&
-                       ((bits[x * 3] != GetBValue(surface->color_key)) ||
-                        (bits[x * 3 + 1] != GetGValue(surface->color_key)) ||
-                        (bits[x * 3 + 2] != GetRValue(surface->color_key))))
+                       ((bits[x * 3] != GetBValue(color_key)) ||
+                        (bits[x * 3 + 1] != GetGValue(color_key)) ||
+                        (bits[x * 3 + 2] != GetRValue(color_key))))
                     x++;
                 add_row( rgn, data, surface->header.rect.left + start, y, x - start );
             }
@@ -1719,12 +1717,12 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
                 while (x < width)
                 {
                     while (x < width &&
-                           ((bits[x] & 0xffffff) == surface->color_key ||
-                            (surface->is_argb && !(bits[x] & 0xff000000)))) x++;
+                           ((bits[x] & 0xffffff) == color_key ||
+                            (alpha_mask && !(bits[x] & alpha_mask)))) x++;
                     start = x;
                     while (x < width &&
-                           !((bits[x] & 0xffffff) == surface->color_key ||
-                             (surface->is_argb && !(bits[x] & 0xff000000)))) x++;
+                           !((bits[x] & 0xffffff) == color_key ||
+                             (alpha_mask && !(bits[x] & alpha_mask)))) x++;
                     add_row( rgn, data, surface->header.rect.left + start, y, x - start );
                 }
             }
@@ -1737,9 +1735,9 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
                 x = 0;
                 while (x < width)
                 {
-                    while (x < width && (bits[x] & mask) == surface->color_key) x++;
+                    while (x < width && (bits[x] & mask) == color_key) x++;
                     start = x;
-                    while (x < width && (bits[x] & mask) != surface->color_key) x++;
+                    while (x < width && (bits[x] & mask) != color_key) x++;
                     add_row( rgn, data, surface->header.rect.left + start, y, x - start );
                 }
             }
@@ -1771,21 +1769,21 @@ static void set_color_key( struct x11drv_window_surface *surface, COLORREF key )
     UINT *masks = (UINT *)surface->info.bmiColors;
 
     if (key == CLR_INVALID)
-        surface->color_key = CLR_INVALID;
+        surface->header.color_key = CLR_INVALID;
     else if (surface->info.bmiHeader.biBitCount <= 8)
-        surface->color_key = CLR_INVALID;
+        surface->header.color_key = CLR_INVALID;
     else if (key & (1 << 24))  /* PALETTEINDEX */
-        surface->color_key = 0;
+        surface->header.color_key = 0;
     else if (key >> 16 == 0x10ff)  /* DIBINDEX */
-        surface->color_key = 0;
+        surface->header.color_key = 0;
     else if (surface->info.bmiHeader.biBitCount == 24)
-        surface->color_key = key;
+        surface->header.color_key = key;
     else if (surface->info.bmiHeader.biCompression == BI_RGB)
-        surface->color_key = (GetRValue(key) << 16) | (GetGValue(key) << 8) | GetBValue(key);
+        surface->header.color_key = (GetRValue(key) << 16) | (GetGValue(key) << 8) | GetBValue(key);
     else
-        surface->color_key = get_color_component( GetRValue(key), masks[0] ) |
-                             get_color_component( GetGValue(key), masks[1] ) |
-                             get_color_component( GetBValue(key), masks[2] );
+        surface->header.color_key = get_color_component( GetRValue(key), masks[0] ) |
+                                    get_color_component( GetGValue(key), masks[1] ) |
+                                    get_color_component( GetBValue(key), masks[2] );
 }
 
 #ifdef HAVE_LIBXXSHM
@@ -1993,12 +1991,26 @@ static void x11drv_surface_set_clip( struct window_surface *window_surface, cons
  */
 static BOOL x11drv_surface_flush( struct window_surface *window_surface, const RECT *rect, const RECT *dirty )
 {
+    UINT alpha_mask = window_surface->alpha_mask, alpha_bits = window_surface->alpha_bits;
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
+    COLORREF color_key = window_surface->color_key;
+    const BITMAPINFO *color_info = &surface->info;
     XImage *ximage = surface->image->ximage;
     unsigned char *src = window_surface->color_bits;
     unsigned char *dst = (unsigned char *)ximage->data;
 
-    if (surface->is_argb || surface->color_key != CLR_INVALID) update_surface_region( surface, window_surface->color_bits );
+    if (alpha_mask || color_key != CLR_INVALID) update_surface_region( surface, window_surface->color_bits, color_key, alpha_mask );
+
+    if (alpha_bits == -1)
+    {
+        if (alpha_mask || color_info->bmiHeader.biBitCount != 32) alpha_bits = 0;
+        else if (color_info->bmiHeader.biCompression == BI_RGB) alpha_bits = 0xff000000;
+        else
+        {
+            DWORD *colors = (DWORD *)color_info->bmiColors;
+            alpha_bits = ~(colors[0] | colors[1] | colors[2]);
+        }
+    }
 
     if (src != dst)
     {
@@ -2008,16 +2020,16 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
         src += dirty->top * width_bytes;
         dst += dirty->top * width_bytes;
         copy_image_byteswap( &surface->info, src, dst, width_bytes, width_bytes, dirty->bottom - dirty->top,
-                             surface->byteswap, mapping, ~0u, surface->alpha_bits );
+                             surface->byteswap, mapping, ~0u, alpha_bits );
     }
-    else if (surface->alpha_bits)
+    else if (alpha_bits)
     {
         int x, y, stride = ximage->bytes_per_line / sizeof(ULONG);
         ULONG *ptr = (ULONG *)dst + dirty->top * stride;
 
         for (y = dirty->top; y < dirty->bottom; y++, ptr += stride)
             for (x = dirty->left; x < dirty->right; x++)
-                ptr[x] |= surface->alpha_bits;
+                ptr[x] |= alpha_bits;
     }
 
     if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
@@ -2120,14 +2132,11 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;
-    surface->is_argb = (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB);
+    if (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB) surface->header.alpha_mask = 0xff000000;
     set_color_key( surface, color_key );
 
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
-
-    if (vis->depth == 32 && !surface->is_argb)
-        surface->alpha_bits = ~(vis->red_mask | vis->green_mask | vis->blue_mask);
 
     TRACE( "created %p for %lx %s bits %p-%p image %p\n", surface, window, wine_dbgstr_rect(rect),
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
@@ -2151,9 +2160,9 @@ void set_surface_color_key( struct window_surface *window_surface, COLORREF colo
     if (window_surface->funcs != &x11drv_surface_funcs) return;  /* we may get the null surface */
 
     window_surface_lock( window_surface );
-    prev = surface->color_key;
+    prev = surface->header.color_key;
     set_color_key( surface, color_key );
-    if (surface->color_key != prev) update_surface_region( surface, window_surface->color_bits );
+    if (surface->header.color_key != prev) update_surface_region( surface, window_surface->color_bits, surface->header.color_key, surface->header.alpha_mask );
     window_surface_unlock( window_surface );
 }
 

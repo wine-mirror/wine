@@ -204,6 +204,9 @@ W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct w
     surface->ref = 1;
     surface->hwnd = hwnd;
     surface->rect = *rect;
+    surface->color_key = CLR_INVALID;
+    surface->alpha_bits = -1;
+    surface->alpha_mask = 0;
     pthread_mutex_init( &surface->mutex, NULL );
     reset_bounds( &surface->bounds );
 
