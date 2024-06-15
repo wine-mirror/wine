@@ -1832,10 +1832,11 @@ static BOOL get_default_window_surface( HWND hwnd, const RECT *surface_rect, str
     return TRUE;
 }
 
-static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect,
+static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, BOOL create_layered,
+                                                     const RECT *window_rect, const RECT *client_rect,
                                                      RECT *visible_rect, RECT *surface_rect )
 {
-    BOOL shaped, needs_surface, layered, ulw_layered = FALSE;
+    BOOL shaped, needs_surface, create_opaque, is_layered;
     struct window_surface *new_surface;
     RECT dummy;
     HRGN shape;
@@ -1852,14 +1853,21 @@ static struct window_surface *create_window_surface( HWND hwnd, UINT swp_flags, 
     if (!get_surface_rect( visible_rect, surface_rect )) needs_surface = FALSE;
     if (!get_default_window_surface( hwnd, surface_rect, &new_surface )) return NULL;
 
+    is_layered = new_surface && new_surface->alpha_mask;
+    create_opaque = !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED);
+
+    if ((create_opaque && is_layered) || (create_layered && !is_layered))
+    {
+        window_surface_release( new_surface );
+        new_surface = &dummy_surface;
+        window_surface_add_ref( new_surface );
+    }
+
     if (!needs_surface || IsRectEmpty( visible_rect )) needs_surface = FALSE; /* use default surface */
     else needs_surface = !user_driver->pCreateWindowSurface( hwnd, surface_rect, &new_surface );
 
-    if ((layered = !!(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)))
-        ulw_layered = !NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL );
-
     /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
-    if (needs_surface && new_surface == &dummy_surface && (!layered || !ulw_layered))
+    if (needs_surface && new_surface == &dummy_surface && (create_opaque && !create_layered))
     {
         window_surface_release( new_surface );
         create_offscreen_window_surface( hwnd, surface_rect, &new_surface );
@@ -2203,7 +2211,7 @@ BOOL WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_
     TRACE( "window %p win %s client %s\n", hwnd,
            wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(&client_rect) );
 
-    surface = create_window_surface( hwnd, swp_flags, &window_rect, &client_rect, &visible_rect, &surface_rect );
+    surface = create_window_surface( hwnd, swp_flags, TRUE, &window_rect, &client_rect, &visible_rect, &surface_rect );
     apply_window_pos( hwnd, 0, swp_flags, surface, &window_rect, &client_rect, &visible_rect, NULL );
     if (surface) window_surface_release( surface );
 
@@ -3521,7 +3529,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
     calc_ncsize( winpos, &old_window_rect, &old_client_rect,
                  &new_window_rect, &new_client_rect, valid_rects, parent_x, parent_y );
 
-    surface = create_window_surface( winpos->hwnd, winpos->flags, &new_window_rect, &new_client_rect,
+    surface = create_window_surface( winpos->hwnd, winpos->flags, FALSE, &new_window_rect, &new_client_rect,
                                      &visible_rect, &surface_rect );
     if (!apply_window_pos( winpos->hwnd, winpos->hwndInsertAfter, winpos->flags, surface,
                            &new_window_rect, &new_client_rect, &visible_rect, valid_rects ))
@@ -4320,7 +4328,7 @@ void update_window_state( HWND hwnd )
     get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
     valid_rects[0] = valid_rects[1] = client_rect;
 
-    surface = create_window_surface( hwnd, swp_flags, &window_rect, &client_rect, &visible_rect, &surface_rect );
+    surface = create_window_surface( hwnd, swp_flags, FALSE, &window_rect, &client_rect, &visible_rect, &surface_rect );
     apply_window_pos( hwnd, 0, swp_flags, surface, &window_rect, &client_rect, &visible_rect, valid_rects );
     if (surface) window_surface_release( surface );
 
@@ -5364,7 +5372,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     if (cs.x > 0x7fffffff - cx) rect.right = 0x7fffffff;
     if (cs.y > 0x7fffffff - cy) rect.bottom = 0x7fffffff;
 
-    surface = create_window_surface( hwnd, SWP_NOZORDER | SWP_NOACTIVATE, &rect, &rect, &visible_rect, &surface_rect );
+    surface = create_window_surface( hwnd, SWP_NOZORDER | SWP_NOACTIVATE, FALSE, &rect, &rect, &visible_rect, &surface_rect );
     if (!apply_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, surface, &rect, &rect, &visible_rect, NULL ))
     {
         if (surface) window_surface_release( surface );
@@ -5403,7 +5411,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
         send_message( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
         map_window_points( 0, parent, (POINT *)&client_rect, 2, win_dpi );
 
-        surface = create_window_surface( hwnd, SWP_NOACTIVATE, &rect, &client_rect, &visible_rect, &surface_rect );
+        surface = create_window_surface( hwnd, SWP_NOACTIVATE, FALSE, &rect, &client_rect, &visible_rect, &surface_rect );
         apply_window_pos( hwnd, insert_after, SWP_NOACTIVATE, surface, &rect, &client_rect, &visible_rect, NULL );
         if (surface) window_surface_release( surface );
     }
