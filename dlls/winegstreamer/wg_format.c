@@ -203,6 +203,60 @@ static void wg_format_from_caps_audio_mpeg1(struct wg_format *format, const GstC
     format->u.audio.rate = rate;
 }
 
+static void wg_format_from_caps_audio_mpeg4(struct wg_format *format, const GstCaps *caps)
+{
+    const GstStructure *structure = gst_caps_get_structure(caps, 0);
+    const GValue *codec_data_value;
+    const gchar *stream_format;
+    GstBuffer *codec_data;
+    gint channels, rate;
+    GstMapInfo map;
+
+    if (!gst_structure_get_int(structure, "channels", &channels))
+    {
+        GST_WARNING("Missing \"channels\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "rate", &rate))
+    {
+        GST_WARNING("Missing \"rate\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!(codec_data_value = gst_structure_get_value(structure, "codec_data"))
+            || !(codec_data = gst_value_get_buffer(codec_data_value)))
+    {
+        GST_WARNING("Missing \"codec_data\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!(stream_format = gst_structure_get_string(structure, "stream-format")))
+    {
+        GST_WARNING("Missing \"stream-format\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG4;
+    format->u.audio.channels = channels;
+    format->u.audio.rate = rate;
+    if (!strcmp(stream_format, "raw"))
+        format->u.audio.payload_type = 0;
+    else if (!strcmp(stream_format, "adts"))
+        format->u.audio.payload_type = 1;
+    else if (!strcmp(stream_format, "adif"))
+        format->u.audio.payload_type = 2;
+    else if (!strcmp(stream_format, "loas"))
+        format->u.audio.payload_type = 3;
+
+    gst_buffer_map(codec_data, &map, GST_MAP_READ);
+    if (map.size <= sizeof(format->u.audio.codec_data))
+    {
+        format->u.audio.codec_data_len = map.size;
+        memcpy(format->u.audio.codec_data, map.data, map.size);
+    }
+    else
+        GST_WARNING("Too big codec_data value (%u) in %" GST_PTR_FORMAT ".", (UINT)map.size, caps);
+    gst_buffer_unmap(codec_data, &map);
+}
+
 static void wg_format_from_caps_audio_wma(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -418,6 +472,12 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
     else if (!strcmp(name, "audio/mpeg") && gst_structure_get_boolean(structure, "parsed", &parsed) && parsed)
     {
         wg_format_from_caps_audio_mpeg1(format, caps);
+    }
+    else if (!strcmp(name, "audio/mpeg")
+            && gst_structure_get_int(structure, "mpegversion", &version) && version == 4
+            && gst_structure_get_boolean(structure, "framed", &parsed) && parsed)
+    {
+        wg_format_from_caps_audio_mpeg4(format, caps);
     }
     else if (!strcmp(name, "audio/x-wma"))
     {
