@@ -446,6 +446,123 @@ static void wg_format_from_caps_video_mpeg1(struct wg_format *format, const GstC
     format->u.video.fps_d = fps_d;
 }
 
+static const struct
+{
+    enum eAVEncH264VLevel level;
+    const char *string;
+}
+h264_levels[] =
+{
+    {eAVEncH264VLevel1,   "1"},
+    {eAVEncH264VLevel1_1, "1.1"},
+    {eAVEncH264VLevel1_2, "1.2"},
+    {eAVEncH264VLevel1_3, "1.3"},
+    {eAVEncH264VLevel2,   "2"},
+    {eAVEncH264VLevel2_1, "2.1"},
+    {eAVEncH264VLevel2_2, "2.2"},
+    {eAVEncH264VLevel3,   "3"},
+    {eAVEncH264VLevel3_1, "3.1"},
+    {eAVEncH264VLevel3_2, "3.2"},
+    {eAVEncH264VLevel4,   "4"},
+    {eAVEncH264VLevel4_1, "4.1"},
+    {eAVEncH264VLevel4_2, "4.2"},
+    {eAVEncH264VLevel5,   "5"},
+    {eAVEncH264VLevel5_1, "5.1"},
+    {eAVEncH264VLevel5_2, "5.2"},
+};
+
+static enum eAVEncH264VLevel level_from_string(const char *string)
+{
+    for (unsigned int i = 0; i < ARRAY_SIZE(h264_levels); ++i)
+    {
+        if (!strcmp(h264_levels[i].string, string))
+            return h264_levels[i].level;
+    }
+
+    GST_FIXME("Unrecognized level %s.\n", string);
+    return eAVEncH264VLevel1;
+}
+
+static void wg_format_from_caps_video_h264(struct wg_format *format, const GstCaps *caps)
+{
+    const GstStructure *structure = gst_caps_get_structure(caps, 0);
+    const gchar *stream_format, *profile, *level;
+    gint width, height, fps_n, fps_d;
+    const GValue *codec_data_value;
+    GstBuffer *codec_data;
+    GstMapInfo map;
+
+    if (!(stream_format = gst_structure_get_string(structure, "stream-format")))
+    {
+        GST_WARNING("Missing \"stream-format\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+
+    /* Windows requires byte-stream format. */
+    if (strcmp(stream_format, "byte-stream"))
+    {
+        GST_DEBUG("Rejecting stream format %s.\n", stream_format);
+        return;
+    }
+
+    if (!gst_structure_get_int(structure, "width", &width))
+    {
+        GST_WARNING("Missing \"width\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_int(structure, "height", &height))
+    {
+        GST_WARNING("Missing \"height\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d))
+    {
+        fps_n = 0;
+        fps_d = 1;
+    }
+    if (!(profile = gst_structure_get_string(structure, "profile")))
+    {
+        GST_WARNING("Missing \"profile\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+    if (!(level = gst_structure_get_string(structure, "level")))
+    {
+        GST_WARNING("Missing \"level\" value in %" GST_PTR_FORMAT ".", caps);
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_H264;
+    format->u.video.width = width;
+    format->u.video.height = height;
+    format->u.video.fps_n = fps_n;
+    format->u.video.fps_d = fps_d;
+
+    if (!strcmp(profile, "high"))
+        format->u.video.profile = eAVEncH264VProfile_High;
+    else if (!strcmp(profile, "high-4:4:4"))
+        format->u.video.profile = eAVEncH264VProfile_444;
+    else if (!strcmp(profile, "main"))
+        format->u.video.profile = eAVEncH264VProfile_Main;
+    else
+        GST_FIXME("Unhandled profile %s.\n", profile);
+
+    format->u.video.level = level_from_string(level);
+
+    if ((codec_data_value = gst_structure_get_value(structure, "streamheader"))
+            && (codec_data = gst_value_get_buffer(codec_data_value)))
+    {
+        gst_buffer_map(codec_data, &map, GST_MAP_READ);
+        if (map.size <= sizeof(format->u.video.codec_data))
+        {
+            format->u.video.codec_data_len = map.size;
+            memcpy(format->u.video.codec_data, map.data, map.size);
+        }
+        else
+            GST_WARNING("Too big codec_data value (%u) in %" GST_PTR_FORMAT ".", (UINT)map.size, caps);
+        gst_buffer_unmap(codec_data, &map);
+    }
+}
+
 void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
 {
     const GstStructure *structure = gst_caps_get_structure(caps, 0);
@@ -496,6 +613,10 @@ void wg_format_from_caps(struct wg_format *format, const GstCaps *caps)
             && gst_structure_get_boolean(structure, "parsed", &parsed) && parsed)
     {
         wg_format_from_caps_video_mpeg1(format, caps);
+    }
+    else if (!strcmp(name, "video/x-h264"))
+    {
+        wg_format_from_caps_video_h264(format, caps);
     }
     else
     {
