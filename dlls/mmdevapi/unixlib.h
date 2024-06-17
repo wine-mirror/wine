@@ -140,6 +140,15 @@ struct is_format_supported_params
     HRESULT result;
 };
 
+struct get_loopback_capture_device_params
+{
+    const WCHAR *name;
+    const char *device;
+    char *ret_device;
+    UINT32 ret_device_len;
+    HRESULT result;
+};
+
 struct get_mix_format_params
 {
     const char *device;
@@ -313,6 +322,7 @@ enum unix_funcs
     get_capture_buffer,
     release_capture_buffer,
     is_format_supported,
+    get_loopback_capture_device,
     get_mix_format,
     get_device_period,
     get_buffer_size,

@@ -21,6 +21,9 @@
 
 #define COBJMACROS
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+
 #include <wchar.h>
 
 #include <audiopolicy.h>
@@ -400,6 +403,38 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     if (FAILED(params.result = main_loop_start())) {
         sessions_unlock();
         return params.result;
+    }
+
+    if (flags & AUDCLNT_STREAMFLAGS_LOOPBACK) {
+        struct get_loopback_capture_device_params params;
+
+        if (client->dataflow != eRender) {
+            sessions_unlock();
+            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        }
+
+        params.device = client->device_name;
+        params.name = name = get_application_name();
+        params.ret_device_len = 0;
+        params.ret_device = NULL;
+        params.result = E_NOTIMPL;
+        wine_unix_call(get_loopback_capture_device, &params);
+        while (params.result == STATUS_BUFFER_TOO_SMALL) {
+            free(params.ret_device);
+            params.ret_device = malloc(params.ret_device_len);
+            wine_unix_call(get_loopback_capture_device, &params);
+        }
+        free(name);
+        if (FAILED(params.result)) {
+            sessions_unlock();
+            free(params.ret_device);
+            if (params.result == E_NOTIMPL)
+                FIXME("get_loopback_capture_device is not supported by backend.\n");
+            return params.result;
+        }
+        free(client->device_name);
+        client->device_name = params.ret_device;
+        client->dataflow = eCapture;
     }
 
     if (FAILED(params.result = adjust_timing(client, force_def_period, &duration, &period, mode, flags, fmt))) {
