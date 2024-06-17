@@ -769,6 +769,20 @@ static inline void unlock_surface( struct windrv_physdev *dev )
     }
 }
 
+static inline void lock_surfaces( struct windrv_physdev *dst_dev, struct windrv_physdev *src_dev )
+{
+    lock_surface( dst_dev );
+    if (src_dev && !src_dev->lock_count++ && dst_dev->surface != src_dev->surface)
+        window_surface_lock( src_dev->surface );
+}
+
+static inline void unlock_surfaces( struct windrv_physdev *dst_dev, struct windrv_physdev *src_dev )
+{
+    if (src_dev && !--src_dev->lock_count && dst_dev->surface != src_dev->surface)
+        window_surface_unlock( src_dev->surface );
+    unlock_surface( dst_dev );
+}
+
 static void unlock_windrv_bits( struct gdi_image_bits *bits )
 {
     unlock_surface( bits->param );
@@ -820,13 +834,16 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
 static BOOL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func )
 {
-    struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
+    struct windrv_physdev *dst_physdev = get_windrv_physdev( dst_dev ), *src_physdev;
     BOOL ret;
 
-    lock_surface( physdev );
+    if (src_dev->funcs == &window_driver) src_physdev = get_windrv_physdev( src_dev );
+    else src_physdev = NULL;
+
+    lock_surfaces( dst_physdev, src_physdev );
     dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
     ret = dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, func );
-    unlock_surface( physdev );
+    unlock_surfaces( dst_physdev, src_physdev );
     return ret;
 }
 
@@ -1166,13 +1183,16 @@ static COLORREF windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 static BOOL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
-    struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
+    struct windrv_physdev *dst_physdev = get_windrv_physdev( dst_dev ), *src_physdev;
     BOOL ret;
 
-    lock_surface( physdev );
+    if (src_dev->funcs == &window_driver) src_physdev = get_windrv_physdev( src_dev );
+    else src_physdev = NULL;
+
+    lock_surfaces( dst_physdev, src_physdev );
     dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
     ret = dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
-    unlock_surface( physdev );
+    unlock_surfaces( dst_physdev, src_physdev );
     return ret;
 }
 
