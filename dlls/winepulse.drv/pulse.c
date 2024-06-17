@@ -2199,6 +2199,89 @@ static NTSTATUS pulse_is_format_supported(void *args)
     return STATUS_SUCCESS;
 }
 
+static void sink_name_info_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
+{
+    uint32_t *current_device_index = userdata;
+    pulse_broadcast();
+
+    if (!i || !i->name || !i->name[0])
+        return;
+    *current_device_index = i->index;
+}
+
+struct find_monitor_of_sink_cb_param
+{
+    struct get_loopback_capture_device_params *params;
+    uint32_t current_device_index;
+};
+
+static void find_monitor_of_sink_cb(pa_context *c, const pa_source_info *i, int eol, void *userdata)
+{
+    struct find_monitor_of_sink_cb_param *p = userdata;
+    unsigned int len;
+
+    pulse_broadcast();
+
+    if (!i || !i->name || !i->name[0])
+        return;
+    if (i->monitor_of_sink != p->current_device_index)
+        return;
+
+    len = strlen(i->name) + 1;
+    if (len <= p->params->ret_device_len)
+    {
+        memcpy(p->params->ret_device, i->name, len);
+        p->params->result = STATUS_SUCCESS;
+        return;
+    }
+    p->params->ret_device_len = len;
+    p->params->result = STATUS_BUFFER_TOO_SMALL;
+}
+
+static NTSTATUS pulse_get_loopback_capture_device(void *args)
+{
+    struct get_loopback_capture_device_params *params = args;
+    uint32_t current_device_index = PA_INVALID_INDEX;
+    struct find_monitor_of_sink_cb_param p;
+    const char *device_name;
+    char *name;
+
+    pulse_lock();
+
+    if (!pulse_ml)
+    {
+        pulse_unlock();
+        ERR("Called without main loop running.\n");
+        params->result = E_INVALIDARG;
+        return STATUS_SUCCESS;
+    }
+
+    name = wstr_to_str(params->name);
+    params->result = pulse_connect(name);
+    free(name);
+
+    if (FAILED(params->result))
+    {
+        pulse_unlock();
+        return STATUS_SUCCESS;
+    }
+
+    device_name = params->device;
+    if (device_name && !device_name[0]) device_name = NULL;
+
+    params->result = E_FAIL;
+    wait_pa_operation_complete(pa_context_get_sink_info_by_name(pulse_ctx, device_name, &sink_name_info_cb, &current_device_index));
+    if (current_device_index != PA_INVALID_INDEX)
+    {
+        p.current_device_index = current_device_index;
+        p.params = params;
+        wait_pa_operation_complete(pa_context_get_source_info_list(pulse_ctx, &find_monitor_of_sink_cb, &p));
+    }
+
+    pulse_unlock();
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pulse_get_mix_format(void *args)
 {
     struct get_mix_format_params *params = args;
@@ -2517,7 +2600,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_get_capture_buffer,
     pulse_release_capture_buffer,
     pulse_is_format_supported,
-    pulse_not_implemented,
+    pulse_get_loopback_capture_device,
     pulse_get_mix_format,
     pulse_get_device_period,
     pulse_get_buffer_size,
@@ -2706,6 +2789,31 @@ static NTSTATUS pulse_wow64_is_format_supported(void *args)
     };
     pulse_is_format_supported(&params);
     params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_loopback_capture_device(void *args)
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 device;
+        PTR32 ret_device;
+        UINT32 ret_device_len;
+        HRESULT result;
+    } *params32 = args;
+
+    struct get_loopback_capture_device_params params =
+    {
+        .name = ULongToPtr(params32->name),
+        .device = ULongToPtr(params32->device),
+        .ret_device = ULongToPtr(params32->ret_device),
+        .ret_device_len = params32->ret_device_len,
+    };
+
+    pulse_get_loopback_capture_device(&params);
+    params32->result = params.result;
+    params32->ret_device_len = params.ret_device_len;
     return STATUS_SUCCESS;
 }
 
@@ -2989,7 +3097,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_get_capture_buffer,
     pulse_release_capture_buffer,
     pulse_wow64_is_format_supported,
-    pulse_not_implemented,
+    pulse_wow64_get_loopback_capture_device,
     pulse_wow64_get_mix_format,
     pulse_wow64_get_device_period,
     pulse_wow64_get_buffer_size,
