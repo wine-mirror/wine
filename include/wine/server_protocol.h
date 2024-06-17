@@ -3516,11 +3516,13 @@ struct set_window_pos_request
     struct request_header __header;
     unsigned short swp_flags;
     unsigned short paint_flags;
+    unsigned int   monitor_dpi;
     user_handle_t  handle;
     user_handle_t  previous;
     rectangle_t    window;
     rectangle_t    client;
     /* VARARG(valid,rectangles); */
+    char __pad_60[4];
 };
 struct set_window_pos_reply
 {
@@ -6599,7 +6601,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 837
+#define SERVER_PROTOCOL_VERSION 838
 
 /* ### protocol_version end ### */
 

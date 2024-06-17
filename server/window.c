@@ -84,6 +84,7 @@ struct window
     unsigned int     alpha;           /* alpha value for a layered window */
     unsigned int     layered_flags;   /* flags for a layered window */
     unsigned int     dpi_context;     /* DPI awareness context */
+    unsigned int     monitor_dpi;     /* DPI of the window monitor */
     lparam_t         user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     data_size_t      text_len;        /* length of window caption */
@@ -245,20 +246,17 @@ static inline void update_pixel_format_flags( struct window *win )
         win->paint_flags |= PAINT_PIXEL_FORMAT_CHILD;
 }
 
-static unsigned int get_window_dpi( struct window *win )
-{
-    unsigned int dpi;
-    if ((dpi = NTUSER_DPI_CONTEXT_GET_DPI( win->dpi_context ))) return dpi;
-    /* FIXME: return the window monitor DPI? */
-    return USER_DEFAULT_SCREEN_DPI;
-}
-
 /* get the per-monitor DPI for a window */
 static unsigned int get_monitor_dpi( struct window *win )
 {
-    /* FIXME: we return the desktop window DPI for now */
-    while (!is_desktop_window( win )) win = win->parent;
-    return get_window_dpi( win );
+    while (win->parent && !is_desktop_window( win->parent )) win = win->parent;
+    return win->monitor_dpi;
+}
+
+static unsigned int get_window_dpi( struct window *win )
+{
+    if (NTUSER_DPI_CONTEXT_IS_MONITOR_AWARE( win->dpi_context )) return get_monitor_dpi( win );
+    return NTUSER_DPI_CONTEXT_GET_DPI( win->dpi_context );
 }
 
 /* link a window at the right place in the siblings list */
@@ -578,6 +576,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->is_layered     = 0;
     win->is_orphan      = 0;
     win->dpi_context    = NTUSER_DPI_PER_MONITOR_AWARE;
+    win->monitor_dpi    = USER_DEFAULT_SCREEN_DPI;
     win->user_data      = 0;
     win->text           = NULL;
     win->text_len       = 0;
@@ -2476,6 +2475,7 @@ DECL_HANDLER(set_window_pos)
     win->paint_flags = (win->paint_flags & ~PAINT_CLIENT_FLAGS) | (req->paint_flags & PAINT_CLIENT_FLAGS);
     if (win->paint_flags & PAINT_HAS_PIXEL_FORMAT) update_pixel_format_flags( win );
 
+    win->monitor_dpi = req->monitor_dpi;
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
 
