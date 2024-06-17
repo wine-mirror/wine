@@ -372,7 +372,7 @@ BOOL WINAPI SQLConfigDataSourceW(HWND hwnd, WORD request, LPCWSTR driver, LPCWST
     WORD mapped_request;
 
     TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_w(driver), debugstr_w(attributes));
-    if (TRACE_ON(odbc))
+    if (TRACE_ON(odbc) && attributes)
     {
         const WCHAR *p;
         for (p = attributes; *p; p += lstrlenW(p) + 1)
@@ -417,7 +417,7 @@ BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR a
 
     TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_a(driver), debugstr_a(attributes));
 
-    if (TRACE_ON(odbc))
+    if (TRACE_ON(odbc) && attributes)
     {
         const char *p;
         for (p = attributes; *p; p += lstrlenA(p) + 1)
