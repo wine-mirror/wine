@@ -2977,7 +2977,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         return 0;
     case WM_DISPLAYCHANGE:
     {
-        static RECT virtual_rect;
+        static RECT virtual_rect = {INT_MIN,INT_MIN,INT_MAX,INT_MAX};
 
         RECT new_rect = NtUserGetVirtualScreenRect(), old_rect = virtual_rect;
         UINT context, flags = 0;
