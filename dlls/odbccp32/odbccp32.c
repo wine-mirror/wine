@@ -223,7 +223,6 @@ static BOOL SQLInstall_narrow(int mode, LPSTR buffer, LPCWSTR str, WORD str_leng
 
 static HMODULE load_config_driver(const WCHAR *driver)
 {
-    static WCHAR reg_driver[] = {'d','r','i','v','e','r',0};
     long ret;
     HMODULE hmod;
     WCHAR *filename = NULL;
@@ -236,7 +235,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
 
         if ((ret = RegOpenKeyW(hkey, driver, &hkeydriver)) == ERROR_SUCCESS)
         {
-            ret = RegGetValueW(hkeydriver, NULL, reg_driver, RRF_RT_REG_SZ, &type, NULL, &size);
+            ret = RegGetValueW(hkeydriver, NULL, L"Setup", RRF_RT_REG_SZ, &type, NULL, &size);
             if(ret != ERROR_SUCCESS || type != REG_SZ)
             {
                 RegCloseKey(hkeydriver);
@@ -255,7 +254,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
 
                 return NULL;
             }
-            ret = RegGetValueW(hkeydriver, NULL, reg_driver, RRF_RT_REG_SZ, &type, filename, &size);
+            ret = RegGetValueW(hkeydriver, NULL, L"Setup", RRF_RT_REG_SZ, &type, filename, &size);
 
             RegCloseKey(hkeydriver);
         }
