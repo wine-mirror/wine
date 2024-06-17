@@ -109,7 +109,6 @@ typedef struct _CMD_FOR_CONTROL
 typedef struct _CMD_COMMAND
 {
   WCHAR              *command;     /* Command string to execute                */
-  CMD_REDIRECTION    *redirects;   /* Redirects in place                       */
   int                 bracketDepth;/* How deep bracketing have we got to       */
   WCHAR               pipeFile[MAX_PATH]; /* Where to get input from for pipes */
 } CMD_COMMAND;
@@ -117,6 +116,7 @@ typedef struct _CMD_COMMAND
 typedef struct _CMD_NODE
 {
     CMD_OPERATOR      op;            /* operator */
+    CMD_REDIRECTION  *redirects;     /* Redirects in place */
     union
     {
         CMD_COMMAND  *command;       /* CMD_SINGLE */
@@ -129,11 +129,15 @@ typedef struct _CMD_NODE
 } CMD_NODE;
 /* temporary helpers to fake a list into a tree */
 /* Note: for binary op, left should be a CMD_SINGLE node */
+static inline const CMD_NODE *CMD_node_get_single_node(const CMD_NODE *node)
+{
+    /* assert(node->left && node->left->op == CMD_SINGLE); */
+    return (node->op == CMD_SINGLE) ? node : node->left;
+}
+
 static inline CMD_COMMAND *CMD_node_get_command(const CMD_NODE *node)
 {
-    if (node->op == CMD_SINGLE) return node->command;
-    /* assert(node->left && node->left->op == CMD_SINGLE); */
-    return node->left->command;
+    return CMD_node_get_single_node(node)->command;
 }
 static inline CMD_NODE *CMD_node_next(const CMD_NODE *node)
 {

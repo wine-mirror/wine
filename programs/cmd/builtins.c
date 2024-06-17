@@ -1562,7 +1562,7 @@ void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
   /* Process the first command, if there is one */
   if (executecmds && firstcmd && *firstcmd) {
     WCHAR *command = xstrdupW(firstcmd);
-    WCMD_execute (firstcmd, CMD_node_get_command(*cmdList)->redirects, cmdList, FALSE);
+    WCMD_execute (firstcmd, CMD_node_get_single_node(*cmdList)->redirects, cmdList, FALSE);
     free(command);
   }
 
@@ -1590,7 +1590,7 @@ void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
       if (prev_op == CMD_ONFAILURE ||
           prev_op == CMD_ONSUCCESS) {
         if (processThese && CMD_node_get_command(*cmdList)->command) {
-          WCMD_execute (CMD_node_get_command(*cmdList)->command, CMD_node_get_command(*cmdList)->redirects,
+          WCMD_execute (CMD_node_get_command(*cmdList)->command, CMD_node_get_single_node(*cmdList)->redirects,
                         cmdList, FALSE);
         }
         if (curPosition == *cmdList)
@@ -1627,7 +1627,7 @@ void WCMD_part_execute(CMD_NODE **cmdList, const WCHAR *firstcmd,
             /* Skip leading whitespace between condition and the command */
             while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
             if (*cmd) {
-              WCMD_execute (cmd, CMD_node_get_command(*cmdList)->redirects, cmdList, FALSE);
+              WCMD_execute (cmd, CMD_node_get_single_node(*cmdList)->redirects, cmdList, FALSE);
             }
           } else {
               /* Loop skipping all commands until we get back to the current

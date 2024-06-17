@@ -969,12 +969,28 @@ static CMD_REDIRECTION *redirection_create_clone(unsigned fd, unsigned fd_clone)
     return redir;
 }
 
+static const char *debugstr_redirection(const CMD_REDIRECTION *redir)
+{
+    switch (redir->kind)
+    {
+    case REDIR_READ_FROM:
+        return wine_dbg_sprintf("%u< (%ls)", redir->fd, redir->file);
+    case REDIR_WRITE_TO:
+        return wine_dbg_sprintf("%u> (%ls)", redir->fd, redir->file);
+    case REDIR_WRITE_APPEND:
+       return wine_dbg_sprintf("%u>> (%ls)", redir->fd, redir->file);
+    case REDIR_WRITE_CLONE:
+        return wine_dbg_sprintf("%u>&%u", redir->fd, redir->clone);
+    default:
+        return "-^-";
+    }
+}
+
 static void command_dispose(CMD_COMMAND *cmd)
 {
     if (cmd)
     {
         free(cmd->command);
-        redirection_dispose_list(cmd->redirects);
         free(cmd);
     }
 }
@@ -1098,19 +1114,23 @@ void node_dispose_tree(CMD_NODE *cmds)
         CMD_NODE *thisCmd = cmds;
         cmds = CMD_node_next(cmds);
         if (thisCmd->op == CMD_SINGLE)
+        {
+            redirection_dispose_list(thisCmd->redirects);
             command_dispose(thisCmd->command);
+        }
         else
             node_dispose_tree(thisCmd->left);
         free(thisCmd);
     }
 }
 
-static CMD_NODE *node_create_single(CMD_COMMAND *c)
+static CMD_NODE *node_create_single(CMD_COMMAND *c, CMD_REDIRECTION *redir)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
     new->op = CMD_SINGLE;
     new->command = c;
+    new->redirects = redir;
 
     return new;
 }
@@ -1122,6 +1142,7 @@ static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
     new->op = op;
     new->left = l;
     new->right = r;
+    new->redirects = NULL;
 
     return new;
 }
@@ -2269,6 +2290,7 @@ syntax_error:
 union token_parameter
 {
     CMD_COMMAND *command;
+    CMD_REDIRECTION *redirection;
     void *none;
 };
 
@@ -2280,7 +2302,7 @@ struct node_builder
     {
         enum builder_token
         {
-            TKN_EOL, TKN_AMP, TKN_BARBAR, TKN_AMPAMP, TKN_BAR, TKN_COMMAND,
+            TKN_EOL, TKN_REDIRECTION, TKN_AMP, TKN_BARBAR, TKN_AMPAMP, TKN_BAR, TKN_COMMAND,
         } token;
         union token_parameter parameter;
     } *stack;
@@ -2290,13 +2312,14 @@ struct node_builder
 
 static const char* debugstr_token(enum builder_token tkn, union token_parameter tkn_pmt)
 {
-    static const char *tokens[] = {"EOL", "&", "||", "&&", "|", "CMD"};
+    static const char *tokens[] = {"EOL", "REDIR", "&", "||", "&&", "|", "CMD"};
 
     if (tkn >= ARRAY_SIZE(tokens)) return "<<<>>>";
     switch (tkn)
     {
-    case TKN_COMMAND: return wine_dbg_sprintf("%s {{%ls}}", tokens[tkn], tkn_pmt.command->command);
-    default:          return wine_dbg_sprintf("%s", tokens[tkn]);
+    case TKN_COMMAND:     return wine_dbg_sprintf("%s {{%ls}}", tokens[tkn], tkn_pmt.command ? tkn_pmt.command->command : L"<<nul>>");
+    case TKN_REDIRECTION: return wine_dbg_sprintf("%s {{%s}}", tokens[tkn], debugstr_redirection(tkn_pmt.redirection));
+    default:              return wine_dbg_sprintf("%s", tokens[tkn]);
     }
 }
 
@@ -2353,7 +2376,7 @@ static void node_builder_consume(struct node_builder *builder)
     builder->pos++;
 }
 
-static void WCMD_appendCommand(CMD_OPERATOR op, CMD_COMMAND *command, CMD_NODE **node)
+static void WCMD_appendCommand(CMD_OPERATOR op, CMD_COMMAND *command, CMD_REDIRECTION *redir, CMD_NODE **node)
 {
     /* append as left to right operators */
     if (*node)
@@ -2362,16 +2385,17 @@ static void WCMD_appendCommand(CMD_OPERATOR op, CMD_COMMAND *command, CMD_NODE *
         while ((*last)->op != CMD_SINGLE)
             last = &(*last)->right;
 
-        *last = node_create_binary(op, *last, node_create_single(command));
+        *last = node_create_binary(op, *last, node_create_single(command, redir));
     }
     else
     {
-        *node = node_create_single(command);
+        *node = node_create_single(command, redir);
     }
 }
 
 static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
 {
+    CMD_REDIRECTION *redir;
     unsigned bogus_line;
     CMD_NODE *left = NULL;
     union token_parameter pmt;
@@ -2383,6 +2407,7 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
     for (;;)
     {
         CMD_OPERATOR cmd_op;
+        CMD_COMMAND *cmd;
 
         done = FALSE;
         /* we always get a pair of OP CMMAND */
@@ -2400,11 +2425,25 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
         if (done) break;
         node_builder_consume(builder);
 
-        tkn = node_builder_peek_next_token(builder, &pmt);
+        if ((tkn = node_builder_peek_next_token(builder, &pmt)) == TKN_REDIRECTION)
+        {
+            redir = pmt.redirection;
+            node_builder_consume(builder);
+            tkn = node_builder_peek_next_token(builder, &pmt);
+        }
+        else redir = NULL;
         ERROR_IF(tkn != TKN_COMMAND)
+        cmd = pmt.command;
         node_builder_consume(builder);
 
-        WCMD_appendCommand(cmd_op, pmt.command, &left);
+        if ((tkn = node_builder_peek_next_token(builder, &pmt)) == TKN_REDIRECTION)
+        {
+            CMD_REDIRECTION **p = &redir;
+            for (; *p; p = &(*p)->next) {}
+            *p = pmt.redirection;
+            node_builder_consume(builder);
+        }
+        WCMD_appendCommand(cmd_op, cmd, redir, &left);
     } while (!done);
 #undef ERROR_IF
     *result = left;
@@ -2479,7 +2518,7 @@ static void lexer_push_command(struct node_builder *builder,
 
         if (redirs) redirs[*redirLen] = 0;
         /* Create redirects, keeping order (eg "2>foo 1>&2") */
-        insrt = &thisEntry->redirects;
+        insrt = &tkn_pmt.redirection;
         *insrt = NULL;
         for (pos = redirs; pos; insrt = &(*insrt)->next)
         {
@@ -2513,19 +2552,17 @@ static void lexer_push_command(struct node_builder *builder,
             }
             pos = p + 1;
         }
+        if (tkn_pmt.redirection)
+            node_builder_push_token_parameter(builder, TKN_REDIRECTION, tkn_pmt);
 
         /* Reset the lengths */
         *commandLen   = 0;
         *redirLen     = 0;
         *copyToLen    = commandLen;
         *copyTo       = command;
-
     }
     else
-    {
         thisEntry->command = NULL;
-        thisEntry->redirects = NULL;
-    }
 
     /* Fill in other fields */
     thisEntry->pipeFile[0] = 0x00;
@@ -3603,7 +3640,7 @@ CMD_NODE *WCMD_process_commands(CMD_NODE *thisCmd, BOOL oneBracket,
          Also, skip over any batch labels (eg. :fred)          */
       if (CMD_node_get_command(thisCmd)->command && CMD_node_get_command(thisCmd)->command[0] != ':') {
         WINE_TRACE("Executing command: '%s'\n", wine_dbgstr_w(CMD_node_get_command(thisCmd)->command));
-        WCMD_execute(CMD_node_get_command(thisCmd)->command, CMD_node_get_command(thisCmd)->redirects, &thisCmd, retrycall);
+        WCMD_execute(CMD_node_get_command(thisCmd)->command, CMD_node_get_single_node(thisCmd)->redirects, &thisCmd, retrycall);
       }
 
       /* Step on unless the command itself already stepped on */
