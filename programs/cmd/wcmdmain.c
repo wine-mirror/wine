@@ -2031,85 +2031,6 @@ static WCHAR *find_chr(WCHAR *in, WCHAR *last, const WCHAR *delims)
 }
 
 /***************************************************************************
- * WCMD_addCommand
- *
- *   Adds a command to the current command list
- */
-static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
-                                       WCHAR *redirs,  int *redirLen,
-                                       WCHAR **copyTo, int **copyToLen,
-                                       int curDepth)
-{
-    CMD_COMMAND *thisEntry = NULL;
-
-    /* Allocate storage for command */
-    thisEntry = xalloc(sizeof(CMD_COMMAND));
-
-    /* Copy in the command */
-    if (command) {
-        WCHAR *pos;
-        WCHAR *last = redirs + *redirLen;
-        CMD_REDIRECTION **insrt;
-
-        thisEntry->command = xalloc((*commandLen + 1) * sizeof(WCHAR));
-        memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
-        thisEntry->command[*commandLen] = 0x00;
-
-        if (redirs) redirs[*redirLen] = 0;
-        /* Create redirects, keeping order (eg "2>foo 1>&2") */
-        insrt = &thisEntry->redirects;
-        *insrt = NULL;
-        for (pos = redirs; pos; insrt = &(*insrt)->next)
-        {
-            WCHAR *p = find_chr(pos, last, L"<>");
-            WCHAR *filename;
-
-            if (!p) break;
-
-            if (*p == L'<')
-            {
-                filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
-                *insrt = redirection_create_file(REDIR_READ_FROM, 0, filename);
-            }
-            else
-            {
-                unsigned fd = 1;
-                unsigned op = REDIR_WRITE_TO;
-
-                if (p > redirs && p[-1] >= L'2' && p[-1] <= L'9') fd = p[-1] - L'0';
-                if (*++p == L'>') {p++; op = REDIR_WRITE_APPEND;}
-                if (*p == L'&' && (p[1] >= L'0' && p[1] <= L'9'))
-                {
-                    *insrt = redirection_create_clone(fd, p[1] - '0');
-                    p++;
-                }
-                else
-                {
-                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
-                    *insrt = redirection_create_file(op, fd, filename);
-                }
-            }
-            pos = p + 1;
-        }
-
-        /* Reset the lengths */
-        *commandLen   = 0;
-        *redirLen     = 0;
-        *copyToLen    = commandLen;
-        *copyTo       = command;
-
-    } else {
-        thisEntry->command = NULL;
-        thisEntry->redirects = NULL;
-    }
-
-    /* Fill in other fields */
-    thisEntry->pipeFile[0] = 0x00;
-    thisEntry->bracketDepth = curDepth;
-    return thisEntry;
-}
-
-/***************************************************************************
  * WCMD_IsEndQuote
  *
  *   Checks if the quote pointed to is the end-quote.
@@ -2364,6 +2285,7 @@ struct node_builder
         union token_parameter parameter;
     } *stack;
     unsigned pos;
+    unsigned opened_parenthesis;
 };
 
 static const char* debugstr_token(enum builder_token tkn, union token_parameter tkn_pmt)
@@ -2528,6 +2450,90 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     return FALSE;
 }
 
+/***************************************************************************
+ * WCMD_addCommand
+ *
+ *   Adds a command to the current command list
+ */
+static void lexer_push_command(struct node_builder *builder,
+                               WCHAR *command, int *commandLen,
+                               WCHAR *redirs,  int *redirLen,
+                               WCHAR **copyTo, int **copyToLen)
+{
+    union token_parameter tkn_pmt;
+    CMD_COMMAND *thisEntry = NULL;
+
+    /* Allocate storage for command */
+    thisEntry = xalloc(sizeof(CMD_COMMAND));
+
+    /* Copy in the command */
+    if (command)
+    {
+        WCHAR *pos;
+        WCHAR *last = redirs + *redirLen;
+        CMD_REDIRECTION **insrt;
+
+        thisEntry->command = xalloc((*commandLen + 1) * sizeof(WCHAR));
+        memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
+        thisEntry->command[*commandLen] = 0x00;
+
+        if (redirs) redirs[*redirLen] = 0;
+        /* Create redirects, keeping order (eg "2>foo 1>&2") */
+        insrt = &thisEntry->redirects;
+        *insrt = NULL;
+        for (pos = redirs; pos; insrt = &(*insrt)->next)
+        {
+            WCHAR *p = find_chr(pos, last, L"<>");
+            WCHAR *filename;
+
+            if (!p) break;
+
+            if (*p == L'<')
+            {
+                filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
+                *insrt = redirection_create_file(REDIR_READ_FROM, 0, filename);
+            }
+            else
+            {
+                unsigned fd = 1;
+                unsigned op = REDIR_WRITE_TO;
+
+                if (p > redirs && p[-1] >= L'2' && p[-1] <= L'9') fd = p[-1] - L'0';
+                if (*++p == L'>') {p++; op = REDIR_WRITE_APPEND;}
+                if (*p == L'&' && (p[1] >= L'0' && p[1] <= L'9'))
+                {
+                    *insrt = redirection_create_clone(fd, p[1] - '0');
+                    p++;
+                }
+                else
+                {
+                    filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
+                    *insrt = redirection_create_file(op, fd, filename);
+                }
+            }
+            pos = p + 1;
+        }
+
+        /* Reset the lengths */
+        *commandLen   = 0;
+        *redirLen     = 0;
+        *copyToLen    = commandLen;
+        *copyTo       = command;
+
+    }
+    else
+    {
+        thisEntry->command = NULL;
+        thisEntry->redirects = NULL;
+    }
+
+    /* Fill in other fields */
+    thisEntry->pipeFile[0] = 0x00;
+    thisEntry->bracketDepth = builder->opened_parenthesis;
+    tkn_pmt.command = thisEntry;
+    node_builder_push_token_parameter(builder, TKN_COMMAND, tkn_pmt);
+}
+
 static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* buffer)
 {
     /* display prompt */
@@ -2614,8 +2620,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     int       curRedirsLen = 0;
     WCHAR    *curCopyTo;
     int      *curLen;
-    int       curDepth = 0;
-    union token_parameter tkn_pmt;
     enum builder_token cmd_tkn = TKN_AMP;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      inOneLine = FALSE;
@@ -2657,7 +2661,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     curCopyTo    = curString;
     curLen       = &curStringLen;
     lastWasRedirect = FALSE;  /* Required e.g. for spaces between > and filename */
-    lineCurDepth = curDepth;  /* What was the curdepth at the beginning of the line */
+    lineCurDepth = builder.opened_parenthesis;  /* What was the curdepth at the beginning of the line */
 
     /* Parse every character on the line being processed */
     while (*curPos != 0x00) {
@@ -2723,7 +2727,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
           if (resetAtEndOfLine) {
             WINE_TRACE("Resetting curdepth at end of line to %d\n", lineCurDepth);
             resetAtEndOfLine = FALSE;
-            curDepth = lineCurDepth;
+            builder.opened_parenthesis = lineCurDepth;
           }
           continue;
 
@@ -2832,11 +2836,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
                     node_builder_push_token(&builder, cmd_tkn);
                     /* Add the current command */
-                    tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
-                                                         curRedirs, &curRedirsLen,
-                                                         &curCopyTo, &curLen,
-                                                         curDepth);
-                    node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
+                    lexer_push_command(&builder, curString, &curStringLen,
+                                       curRedirs, &curRedirsLen,
+                                       &curCopyTo, &curLen);
                   }
 
                   if (*(curPos+1) == '|') {
@@ -2849,8 +2851,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                   /* If in an IF or ELSE statement, put subsequent chained
                      commands at a higher depth as if brackets were supplied
                      but remember to reset to the original depth at EOL      */
-                  if ((inIf || inElse) && curDepth == lineCurDepth) {
-                    curDepth++;
+                  if ((inIf || inElse) && builder.opened_parenthesis == lineCurDepth) {
+                    builder.opened_parenthesis++;
                     resetAtEndOfLine = TRUE;
                   }
                 } else {
@@ -2881,7 +2883,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
                 /* Ignore open brackets inside the for set */
                 if (*curLen == 0 && !inIn) {
-                  curDepth++;
+                  builder.opened_parenthesis++;
 
                 /* If in quotes, ignore brackets */
                 } else if (inQuotes) {
@@ -2906,13 +2908,10 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
                   node_builder_push_token(&builder, cmd_tkn);
                   /* Add the current command */
-                  tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
-                                                       curRedirs, &curRedirsLen,
-                                                       &curCopyTo, &curLen,
-                                                       curDepth);
-                  node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
-
-                  curDepth++;
+                  lexer_push_command(&builder, curString, &curStringLen,
+                                     curRedirs, &curRedirsLen,
+                                     &curCopyTo, &curLen);
+                  builder.opened_parenthesis++;
                 } else {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
@@ -2947,11 +2946,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
                     node_builder_push_token(&builder, cmd_tkn);
                     /* Add the current command */
-                    tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
-                                                         curRedirs, &curRedirsLen,
-                                                         &curCopyTo, &curLen,
-                                                         curDepth);
-                    node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
+                    lexer_push_command(&builder, curString, &curStringLen,
+                                       curRedirs, &curRedirsLen,
+                                       &curCopyTo, &curLen);
                   }
 
                   if (*(curPos+1) == '&') {
@@ -2963,8 +2960,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                   /* If in an IF or ELSE statement, put subsequent chained
                      commands at a higher depth as if brackets were supplied
                      but remember to reset to the original depth at EOL      */
-                  if ((inIf || inElse) && curDepth == lineCurDepth) {
-                    curDepth++;
+                  if ((inIf || inElse) && builder.opened_parenthesis == lineCurDepth) {
+                    builder.opened_parenthesis++;
                     resetAtEndOfLine = TRUE;
                   }
                 } else {
@@ -2972,7 +2969,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
                 }
                 break;
 
-      case ')': if (!inQuotes && curDepth > 0) {
+      case ')': if (!inQuotes && builder.opened_parenthesis > 0) {
                   lastWasRedirect = FALSE;
 
                   /* Add the current command if there is one */
@@ -2980,23 +2977,19 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
                       node_builder_push_token(&builder, cmd_tkn);
                       /* Add the current command */
-                      tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
+                      lexer_push_command(&builder, curString, &curStringLen,
                                                            curRedirs, &curRedirsLen,
-                                                           &curCopyTo, &curLen,
-                                                           curDepth);
-                      node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
+                                                           &curCopyTo, &curLen);
                   }
 
                   /* Add an empty entry to the command list */
                   cmd_tkn = TKN_AMP;
                   node_builder_push_token(&builder, cmd_tkn);
-                  tkn_pmt.command = WCMD_createCommand(NULL, &curStringLen,
-                                                       curRedirs, &curRedirsLen,
-                                                       &curCopyTo, &curLen,
-                                                       curDepth);
-                  node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
+                  lexer_push_command(&builder, NULL, &curStringLen,
+                                     curRedirs, &curRedirsLen,
+                                     &curCopyTo, &curLen);
 
-                  curDepth--;
+                  builder.opened_parenthesis--;
 
                   /* Leave inIn if necessary */
                   if (inIn) inIn =  FALSE;
@@ -3028,24 +3021,22 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
 
           node_builder_push_token(&builder, cmd_tkn);
           /* Add an entry to the command list */
-          tkn_pmt.command = WCMD_createCommand(curString, &curStringLen,
-                                               curRedirs, &curRedirsLen,
-                                               &curCopyTo, &curLen,
-                                               curDepth);
-          node_builder_push_token_parameter(&builder, TKN_COMMAND, tkn_pmt);
+          lexer_push_command(&builder, curString, &curStringLen,
+                             curRedirs, &curRedirsLen,
+                             &curCopyTo, &curLen);
 
           /* If we had a single line if or else, and we pretended to add
              brackets, end them now                                      */
           if (resetAtEndOfLine) {
             WINE_TRACE("Resetting curdepth at end of line to %d\n", lineCurDepth);
             resetAtEndOfLine = FALSE;
-            curDepth = lineCurDepth;
+            builder.opened_parenthesis = lineCurDepth;
           }
         }
 
       /* If we have reached the end of the string, see if bracketing or
          final caret is outstanding */
-      if (*curPos == 0x00 && curDepth > 0 && readFrom != INVALID_HANDLE_VALUE) {
+      if (*curPos == 0x00 && builder.opened_parenthesis > 0 && readFrom != INVALID_HANDLE_VALUE) {
 
         WINE_TRACE("Need to read more data as outstanding brackets or carets\n");
         inOneLine = FALSE;
@@ -3065,7 +3056,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     }
 
     *output = NULL;
-    ret = curDepth <= lineCurDepth && node_builder_generate(&builder, output);
+    ret = builder.opened_parenthesis <= lineCurDepth && node_builder_generate(&builder, output);
     node_builder_dispose(&builder);
     if (!ret)
     {
