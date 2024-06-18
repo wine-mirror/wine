@@ -42,6 +42,53 @@ WINE_DECLARE_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(globalmem);
 
 
+
+static CROSS_PROCESS_WORK_LIST *open_cross_process_connection( HANDLE process )
+{
+#ifdef __aarch64__
+    CROSS_PROCESS_WORK_LIST *list;
+    HANDLE section;
+
+    RtlOpenCrossProcessEmulatorWorkConnection( process, &section, (void **)&list );
+    if (section) NtClose( section );
+    return list;
+#else
+    return NULL;
+#endif
+}
+
+static void close_cross_process_connection( CROSS_PROCESS_WORK_LIST *list )
+{
+    if (list) NtUnmapViewOfSection( GetCurrentProcess(), list );
+}
+
+static void send_cross_process_notification( CROSS_PROCESS_WORK_LIST *list, UINT id,
+                                             const void *addr, SIZE_T size, int nb_args, ... )
+{
+#ifdef __aarch64__
+    CROSS_PROCESS_WORK_ENTRY *entry;
+    void *unused;
+    va_list args;
+    int i;
+
+    if (!list) return;
+    if ((entry = RtlWow64PopCrossProcessWorkFromFreeList( &list->free_list )))
+    {
+        entry->id = id;
+        entry->addr = (ULONG_PTR)addr;
+        entry->size = size;
+        if (nb_args)
+        {
+            va_start( args, nb_args );
+            for (i = 0; i < nb_args; i++) entry->args[i] = va_arg( args, int );
+            va_end( args );
+        }
+        RtlWow64PushCrossProcessWorkOntoWorkList( &list->work_list, entry, &unused );
+    }
+#endif
+}
+
+
 /***********************************************************************
  * Virtual memory functions
  ***********************************************************************/
@@ -540,13 +587,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH VirtualUnlock( void *addr, SIZE_T size )
 BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, const void *buffer,
                                                   SIZE_T size, SIZE_T *bytes_written )
 {
+    CROSS_PROCESS_WORK_LIST *list = open_cross_process_connection( process );
     DWORD old_prot, prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE | PAGE_EXECUTE_WRITECOPY;
     MEMORY_BASIC_INFORMATION info;
     void *base_addr;
     SIZE_T region_size;
-    NTSTATUS status;
+    NTSTATUS status, status2;
 
-    if (!VirtualQueryEx( process, addr, &info, sizeof(info) )) return FALSE;
+    if (!VirtualQueryEx( process, addr, &info, sizeof(info) ))
+    {
+        close_cross_process_connection( list );
+        return FALSE;
+    }
 
     switch (info.Protect)
     {
@@ -556,6 +608,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
     case PAGE_EXECUTE_WRITECOPY:
         /* already writable */
         if ((status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written ))) break;
+        send_cross_process_notification( list, CrossProcessFlushCache, addr, size, 0 );
         NtFlushInstructionCache( process, addr, size );
         break;
 
@@ -565,12 +618,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
         base_addr = ROUND_ADDR( addr );
         region_size = ROUND_SIZE( addr, size );
         region_size = min( region_size,  (char *)info.BaseAddress + info.RegionSize - (char *)base_addr );
+
+        send_cross_process_notification( list, CrossProcessPreVirtualProtect,
+                                         base_addr, region_size, 1, prot );
         status = NtProtectVirtualMemory( process, &base_addr, &region_size, prot, &old_prot );
+        send_cross_process_notification( list, CrossProcessPostVirtualProtect,
+                                         base_addr, region_size, 2, prot, status );
         if (status) break;
+
         status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written );
-        if (!status) NtFlushInstructionCache( process, addr, size );
+        if (!status)
+        {
+            send_cross_process_notification( list, CrossProcessFlushCache, addr, size, 0 );
+            NtFlushInstructionCache( process, addr, size );
+        }
+
         prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE | old_prot;
-        NtProtectVirtualMemory( process, &base_addr, &region_size, prot, &old_prot );
+        send_cross_process_notification( list, CrossProcessPreVirtualProtect,
+                                         base_addr, region_size, 1, prot );
+        status2 = NtProtectVirtualMemory( process, &base_addr, &region_size, prot, &old_prot );
+        send_cross_process_notification( list, CrossProcessPostVirtualProtect,
+                                         base_addr, region_size, 2, prot, status2 );
         break;
 
     default:
@@ -579,6 +647,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
         break;
     }
 
+    close_cross_process_connection( list );
     return set_ntstatus( status );
 }
 
