@@ -6771,34 +6771,18 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
         {
             struct wined3d_swapchain_desc swapchain_desc;
-            struct d3d_device *device;
 
             wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
             swapchain_desc.backbuffer_width = mode.width;
             swapchain_desc.backbuffer_height = mode.height;
             swapchain_desc.backbuffer_format = mode.format_id;
 
-            LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
-            {
-                if (device->recording)
-                    wined3d_stateblock_decref(device->recording);
-                device->recording = NULL;
-                device->update_state = device->state;
-                wined3d_stateblock_reset(device->state);
-            }
-
             if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
-                    &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
+                    &swapchain_desc, NULL, ddraw_reset_enum_callback, FALSE)))
             {
                 ERR("Failed to reset device.\n");
                 free(texture);
                 return hr_ddraw_from_wined3d(hr);
-            }
-
-            LIST_FOR_EACH_ENTRY(device, &ddraw->d3ddevice_list, struct d3d_device, ddraw_entry)
-            {
-                wined3d_stateblock_set_render_state(device->state, WINED3D_RS_ZENABLE,
-                        !!swapchain_desc.enable_auto_depth_stencil);
             }
         }
     }

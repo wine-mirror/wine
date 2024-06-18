@@ -19809,10 +19809,10 @@ static void test_d3d_state_reset(void)
 
     hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_FOGCOLOR, &state);
     ok(hr == DD_OK, "got %#lx.\n", hr);
-    todo_wine ok(state == 0x00282828, "got %#lx.\n", state);
+    ok(state == 0x00282828, "got %#lx.\n", state);
     hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &state);
     ok(hr == DD_OK, "got %#lx.\n", hr);
-    todo_wine ok(state == TRUE, "got %#lx.\n", state);
+    ok(state == TRUE, "got %#lx.\n", state);
 
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
     ok(hr == DD_OK, "got %#lx.\n", hr);
