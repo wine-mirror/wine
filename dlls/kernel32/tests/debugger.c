@@ -2190,8 +2190,10 @@ static void test_debugger(const char *argv0)
     {
         next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok (ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT, "got exception\n");
+        if (ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) break;
     }
     while (ctx.ev.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+    if (ctx.ev.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT) TerminateProcess(pi.hProcess, 0);
 
     ret = CloseHandle(event);
     ok(ret, "CloseHandle failed, last error %ld.\n", GetLastError());
