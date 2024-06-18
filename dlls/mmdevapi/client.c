@@ -390,9 +390,6 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
         return E_INVALIDARG;
     }
 
-    if (FAILED(params.result = adjust_timing(client, force_def_period, &duration, &period, mode, flags, fmt)))
-        return params.result;
-
     sessions_lock();
 
     if (client->stream) {
@@ -401,6 +398,11 @@ static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_
     }
 
     if (FAILED(params.result = main_loop_start())) {
+        sessions_unlock();
+        return params.result;
+    }
+
+    if (FAILED(params.result = adjust_timing(client, force_def_period, &duration, &period, mode, flags, fmt))) {
         sessions_unlock();
         return params.result;
     }
