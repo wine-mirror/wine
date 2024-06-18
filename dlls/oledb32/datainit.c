@@ -783,6 +783,11 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPCOLESTR initstring, REF
         }
 
         hr = IDBProperties_SetProperties(dbprops, 1, propset);
+        /* Return S_OK for any successful code.  */
+        if (SUCCEEDED(hr))
+        {
+            hr = S_OK;
+        }
         IDBProperties_Release(dbprops);
         free_dbpropset(1, propset);
         if (FAILED(hr))
