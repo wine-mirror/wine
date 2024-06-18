@@ -784,7 +784,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
  * rather than at parse time, i.e. delayed expansion and for loops need to be
  * processed
  */
-static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
+static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
   /* For commands in a context (batch program):                  */
   /*   Expand environment variables in a batch file %{0-9} first */
@@ -798,6 +798,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
   WCHAR *p = cmd;
   WCHAR *t;
   int   i;
+  BOOL delayed = atExecute ? delayedsubst : FALSE;
   WCHAR *delayedp = NULL;
   WCHAR  startchar = '%';
   WCHAR *normalp;
@@ -811,15 +812,16 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
     }
   }
 
-  /* Find the next environment variable delimiter */
-  normalp = wcschr(p, '%');
-  if (delayed) delayedp = wcschr(p, '!');
-  if (!normalp) p = delayedp;
-  else if (!delayedp) p = normalp;
-  else p = min(p,delayedp);
-  if (p) startchar = *p;
-
-  while (p) {
+  for (;;)
+  {
+    /* Find the next environment variable delimiter */
+    normalp = wcschr(p, '%');
+    if (delayed) delayedp = wcschr(p, '!');
+    if (!normalp) p = delayedp;
+    else if (!delayedp) p = normalp;
+    else p = min(p,delayedp);
+    if (!p) break;
+    startchar = *p;
 
     WINE_TRACE("Translate command:%s %d (at: %s)\n",
                    wine_dbgstr_w(cmd), atExecute, wine_dbgstr_w(p));
@@ -867,17 +869,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
         p++;
       }
     }
-
-    /* Find the next environment variable delimiter */
-    normalp = wcschr(p, '%');
-    if (delayed) delayedp = wcschr(p, '!');
-    if (!normalp) p = delayedp;
-    else if (!delayedp) p = normalp;
-    else p = min(p,delayedp);
-    if (p) startchar = *p;
   }
-
-  return;
 }
 
 
@@ -1633,7 +1625,7 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir, WCHAR *in_pipe)
         case REDIR_READ_FROM:
             if (in_pipe) continue; /* give precedence to pipe */
             wcscpy(expanded_filename, redir->file);
-            handleExpansion(expanded_filename, context != NULL, delayedsubst);
+            handleExpansion(expanded_filename, TRUE);
             h = CreateFileW(expanded_filename, GENERIC_READ, FILE_SHARE_READ,
                             &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (h == INVALID_HANDLE_VALUE)
@@ -1648,7 +1640,7 @@ static BOOL set_std_redirections(CMD_REDIRECTION *redir, WCHAR *in_pipe)
             {
                 DWORD disposition = redir->kind == REDIR_WRITE_TO ? CREATE_ALWAYS : OPEN_ALWAYS;
                 wcscpy(expanded_filename, redir->file);
-                handleExpansion(expanded_filename, context != NULL, delayedsubst);
+                handleExpansion(expanded_filename, TRUE);
                 h = CreateFileW(expanded_filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
                                 &sa, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
                 if (h == INVALID_HANDLE_VALUE)
@@ -1716,7 +1708,7 @@ static void execute_single_command(const WCHAR *command, CMD_NODE **cmdList, BOO
     }
     parms_start = WCMD_skip_leading_spaces (&whichcmd[count]);
 
-    handleExpansion(new_cmd, (context != NULL), delayedsubst);
+    handleExpansion(new_cmd, TRUE);
 
 /*
  * Changing default drive has to be handled as a special case, anything
@@ -2077,7 +2069,6 @@ static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
             if (*p == L'<')
             {
                 filename = WCMD_parameter(p + 1, 0, NULL, FALSE, FALSE);
-                handleExpansion(filename, context != NULL, FALSE);
                 *insrt = redirection_create_file(REDIR_READ_FROM, 0, filename);
             }
             else
@@ -2095,7 +2086,6 @@ static CMD_COMMAND *WCMD_createCommand(WCHAR *command, int *commandLen,
                 else
                 {
                     filename = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
-                    handleExpansion(filename, context != NULL, FALSE);
                     *insrt = redirection_create_file(op, fd, filename);
                 }
             }
@@ -2563,7 +2553,7 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* bu
         WCMD_output_asis_stderr(L"\r\n");
     }
     /* Replace env vars if in a batch context */
-    if (context) handleExpansion(buffer, FALSE, FALSE);
+    handleExpansion(buffer, FALSE);
 
     buffer = WCMD_skip_leading_spaces(buffer);
     /* Show prompt before batch line IF echo is on and in batch program */
@@ -3102,7 +3092,7 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
             int level;
 
             wcscpy(expanded_left, cond->operand);
-            handleExpansion(expanded_left, context != NULL, delayedsubst);
+            handleExpansion(expanded_left, TRUE);
             level = wcstol(expanded_left, &endptr, 10);
             if (*endptr) return FALSE;
             *test = errorlevel >= level;
@@ -3115,7 +3105,7 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
             HANDLE hff;
 
             wcscpy(expanded_left, cond->operand);
-            handleExpansion(expanded_left, context != NULL, delayedsubst);
+            handleExpansion(expanded_left, TRUE);
             if ((len = wcslen(expanded_left)))
             {
                 /* FindFirstFile does not like a directory path ending in '\' or '/', so append a '.' */
@@ -3131,14 +3121,14 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
         break;
     case CMD_IF_DEFINED:
         wcscpy(expanded_left, cond->operand);
-        handleExpansion(expanded_left, context != NULL, delayedsubst);
+        handleExpansion(expanded_left, TRUE);
         *test = GetEnvironmentVariableW(expanded_left, NULL, 0) > 0;
         break;
     case CMD_IF_BINOP_EQUAL:
         wcscpy(expanded_left, cond->left);
-        handleExpansion(expanded_left, context != NULL, delayedsubst);
+        handleExpansion(expanded_left, TRUE);
         wcscpy(expanded_right, cond->right);
-        handleExpansion(expanded_right, context != NULL, delayedsubst);
+        handleExpansion(expanded_right, TRUE);
 
         /* == is a special case, as it always compares strings */
         *test = (*cmp)(expanded_left, expanded_right) == 0;
@@ -3150,9 +3140,9 @@ BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
             int cmp_val;
 
             wcscpy(expanded_left, cond->left);
-            handleExpansion(expanded_left, context != NULL, delayedsubst);
+            handleExpansion(expanded_left, TRUE);
             wcscpy(expanded_right, cond->right);
-            handleExpansion(expanded_right, context != NULL, delayedsubst);
+            handleExpansion(expanded_right, TRUE);
 
             /* Check if we have plain integers (in decimal, octal or hexadecimal notation) */
             left_int = wcstol(expanded_left, &end_left, 0);
@@ -3366,7 +3356,7 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
     int i;
 
     wcscpy(set, for_ctrl->set);
-    handleExpansion(set, context != NULL, delayedsubst);
+    handleExpansion(set, TRUE);
 
     args = WCMD_skip_leading_spaces(set);
     for (len = wcslen(args); len && (args[len - 1] == L' ' || args[len - 1] == L'\t'); len--)
@@ -3442,7 +3432,7 @@ static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR 
         len = 0;
 
     wcscpy(set, for_ctrl->set);
-    handleExpansion(set, context != NULL, delayedsubst);
+    handleExpansion(set, TRUE);
     for (i = 0; ; i++)
     {
         WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
@@ -3505,7 +3495,7 @@ static CMD_NODE *for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_N
         WCHAR buffer[MAXSTRING];
 
         wcscpy(buffer, for_ctrl->root_dir);
-        handleExpansion(buffer, context != NULL, delayedsubst);
+        handleExpansion(buffer, TRUE);
         dirs_to_walk = WCMD_dir_stack_create(buffer, NULL);
     }
     else dirs_to_walk = WCMD_dir_stack_create(NULL, NULL);
@@ -3534,7 +3524,7 @@ static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
     int i;
 
     wcscpy(set, for_ctrl->set);
-    handleExpansion(set, context != NULL, delayedsubst);
+    handleExpansion(set, TRUE);
 
     /* Note: native doesn't check the actual number of parameters, and set
      * them by default to 0.
