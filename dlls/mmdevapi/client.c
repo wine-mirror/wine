@@ -623,6 +623,7 @@ static ULONG WINAPI client_Release(IAudioClient3 *iface)
         if (This->stream)
             stream_release(This->stream, This->timer_thread);
 
+        free(This->device_name);
         free(This);
     }
 
@@ -1492,7 +1493,6 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
     struct audio_client *This;
     char *name;
     EDataFlow dataflow;
-    size_t size;
     HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), device, out);
@@ -1507,15 +1507,13 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
         return E_UNEXPECTED;
     }
 
-    size = strlen(name) + 1;
-    This = calloc(1, FIELD_OFFSET(struct audio_client, device_name[size]));
+    This = calloc(1, sizeof(*This));
     if (!This) {
         free(name);
         return E_OUTOFMEMORY;
     }
 
-    memcpy(This->device_name, name, size);
-    free(name);
+    This->device_name = name;
 
     This->IAudioCaptureClient_iface.lpVtbl = &AudioCaptureClient_Vtbl;
     This->IAudioClient3_iface.lpVtbl       = &AudioClient3_Vtbl;
@@ -1529,6 +1527,7 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->marshal);
     if (FAILED(hr)) {
+        free(This->device_name);
         free(This);
         return hr;
     }

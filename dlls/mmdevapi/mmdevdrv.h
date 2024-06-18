@@ -80,7 +80,5 @@ struct audio_client {
     struct audio_session_wrapper *session_wrapper;
 
     struct list entry;
-
-    /* Keep at end */
-    char device_name[0];
+    char *device_name;
 };
