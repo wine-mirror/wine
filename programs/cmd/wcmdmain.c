@@ -2879,6 +2879,7 @@ static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
     int i;
 
     wcscpy(set, for_ctrl->set);
+    handleExpansion(set, context != NULL, delayedsubst);
 
     /* Note: native doesn't check the actual number of parameters, and set
      * them by default to 0.

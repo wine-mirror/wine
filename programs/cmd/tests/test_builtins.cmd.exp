@@ -1018,17 +1018,17 @@ B D
 @todo_wine@inner argument {-x, y}
 --- nesting and delayed expansion
 a 1 2
-@todo_wine@1-A2
-@todo_wine@1-B1
-@todo_wine@2-A1
-@todo_wine@2-B2
-@todo_wine@b 1 3
-@todo_wine@1-A2
-@todo_wine@1-B1
-@todo_wine@2-A2
-@todo_wine@2-B2
-@todo_wine@3-A1
-@todo_wine@3-B2
+1-A2
+1-B1
+2-A1
+2-B2
+b 1 3
+1-A2
+1-B1
+2-A2
+2-B2
+3-A1
+3-B2
 --- nesting if/for
 @todo_wine@"f"
 @todo_wine@"g"

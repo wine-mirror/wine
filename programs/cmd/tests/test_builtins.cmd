@@ -757,11 +757,6 @@ setlocal EnableDelayedExpansion
 set WINE_FOO=foo bar
 for %%i in ("!WINE_FOO!") do echo %%i
 for %%i in (!WINE_FOO!) do echo %%i
-rem tests disabled for now... wine's cmd loops endlessly here
-rem set WINE_FOO=4 4 4
-rem for /l %%i in (!WINE_FOO!) do echo %%i
-rem set WINE_FOO=4
-rem for /l %%i in (1 2 !WINE_FOO!) do echo %%i
 setlocal DisableDelayedExpansion
 
 echo --- in digit variables
