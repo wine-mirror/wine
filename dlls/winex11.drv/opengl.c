@@ -1559,126 +1559,129 @@ void destroy_gl_drawable( HWND hwnd )
  */
 static int describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd )
 {
-  /*XVisualInfo *vis;*/
-  int value;
-  int rb,gb,bb,ab;
-  const struct glx_pixel_format *fmt;
+    int value;
+    int rb, gb, bb, ab;
+    const struct glx_pixel_format *fmt;
 
-  if (!has_opengl()) return 0;
+    if (!has_opengl()) return 0;
 
-  /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
-  fmt = get_pixel_format(gdi_display, iPixelFormat, TRUE /* Offscreen */);
-  if (!fmt) {
-      WARN("unexpected format %d\n", iPixelFormat);
-      return 0;
-  }
+    /* Look for the iPixelFormat in our list of supported formats. If it is
+     * supported we get the index in the FBConfig table and the number of
+     * supported formats back */
+    fmt = get_pixel_format( gdi_display, iPixelFormat, TRUE /* Offscreen */);
+    if (!fmt)
+    {
+        WARN( "unexpected format %d\n", iPixelFormat );
+        return 0;
+    }
 
-  memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-  ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-  ppfd->nVersion = 1;
+    memset( ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR) );
+    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    ppfd->nVersion = 1;
 
-  /* These flags are always the same... */
-  ppfd->dwFlags = PFD_SUPPORT_OPENGL;
-  /* Now the flags extracted from the Visual */
+    /* These flags are always the same... */
+    ppfd->dwFlags = PFD_SUPPORT_OPENGL;
+    /* Now the flags extracted from the Visual */
 
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-  if(value & GLX_WINDOW_BIT)
-      ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value );
+    if (value & GLX_WINDOW_BIT) ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
 
-  /* On Windows bitmap rendering is only offered using the GDI Software renderer. We reserve some formats (see get_formats for more info)
-   * for bitmap rendering since we require indirect rendering for this. Further pixel format logs of a GeforceFX, Geforce8800GT, Radeon HD3400 and a
-   * Radeon 9000 indicated that all bitmap formats have PFD_SUPPORT_GDI. Except for 2 formats on the Radeon 9000 none of the hw accelerated formats
-   * offered the GDI bit either. */
-  ppfd->dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
+    /* On Windows bitmap rendering is only offered using the GDI Software
+     * renderer. We reserve some formats (see get_formats for more info) for
+     * bitmap rendering since we require indirect rendering for this. Further
+     * pixel format logs of a GeforceFX, Geforce8800GT, Radeon HD3400 and a
+     * Radeon 9000 indicated that all bitmap formats have PFD_SUPPORT_GDI.
+     * Except for 2 formats on the Radeon 9000 none of the hw accelerated
+     * formats offered the GDI bit either. */
+    ppfd->dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
 
-  /* PFD_GENERIC_FORMAT - gdi software rendering
-   * PFD_GENERIC_ACCELERATED - some parts are accelerated by a display driver (MCD e.g. 3dfx minigl)
-   * none set - full hardware accelerated by a ICD
-   *
-   * We only set PFD_GENERIC_FORMAT on bitmap formats (see get_formats) as that's what ATI and Nvidia Windows drivers do  */
-  ppfd->dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
+    /* PFD_GENERIC_FORMAT - gdi software rendering
+     * PFD_GENERIC_ACCELERATED - some parts are accelerated by a display driver
+     * (MCD e.g. 3dfx minigl) none set - full hardware accelerated by a ICD
+     *
+     * We only set PFD_GENERIC_FORMAT on bitmap formats (see get_formats) as
+     * that's what ATI and Nvidia Windows drivers do  */
+    ppfd->dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
 
-  if (!(ppfd->dwFlags & PFD_GENERIC_FORMAT))
-    ppfd->dwFlags |= PFD_SUPPORT_COMPOSITION;
+    if (!(ppfd->dwFlags & PFD_GENERIC_FORMAT)) ppfd->dwFlags |= PFD_SUPPORT_COMPOSITION;
 
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
-  if (value) {
-      ppfd->dwFlags |= PFD_DOUBLEBUFFER;
-      ppfd->dwFlags &= ~PFD_SUPPORT_GDI;
-  }
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value );
+    if (value)
+    {
+        ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+        ppfd->dwFlags &= ~PFD_SUPPORT_GDI;
+    }
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_STEREO, &value );
+    if (value) ppfd->dwFlags |= PFD_STEREO;
 
-  /* Pixel type */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value);
-  if (value & GLX_RGBA_BIT)
-    ppfd->iPixelType = PFD_TYPE_RGBA;
-  else
-    ppfd->iPixelType = PFD_TYPE_COLORINDEX;
+    /* Pixel type */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_RENDER_TYPE, &value );
+    if (value & GLX_RGBA_BIT) ppfd->iPixelType = PFD_TYPE_RGBA;
+    else ppfd->iPixelType = PFD_TYPE_COLORINDEX;
 
-  /* Color bits */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, &value);
-  ppfd->cColorBits = value;
+    /* Color bits */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_BUFFER_SIZE, &value );
+    ppfd->cColorBits = value;
 
-  /* Red, green, blue and alpha bits / shifts */
-  if (ppfd->iPixelType == PFD_TYPE_RGBA) {
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_RED_SIZE, &rb);
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_GREEN_SIZE, &gb);
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_BLUE_SIZE, &bb);
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &ab);
+    /* Red, green, blue and alpha bits / shifts */
+    if (ppfd->iPixelType == PFD_TYPE_RGBA)
+    {
+        pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_RED_SIZE, &rb );
+        pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_GREEN_SIZE, &gb );
+        pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_BLUE_SIZE, &bb );
+        pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ALPHA_SIZE, &ab );
 
-    ppfd->cBlueBits = bb;
-    ppfd->cBlueShift = 0;
-    ppfd->cGreenBits = gb;
-    ppfd->cGreenShift = bb;
-    ppfd->cRedBits = rb;
-    ppfd->cRedShift = gb + bb;
-    ppfd->cAlphaBits = ab;
-    if (ab)
-        ppfd->cAlphaShift = rb + gb + bb;
+        ppfd->cBlueBits = bb;
+        ppfd->cBlueShift = 0;
+        ppfd->cGreenBits = gb;
+        ppfd->cGreenShift = bb;
+        ppfd->cRedBits = rb;
+        ppfd->cRedShift = gb + bb;
+        ppfd->cAlphaBits = ab;
+        if (ab) ppfd->cAlphaShift = rb + gb + bb;
+        else ppfd->cAlphaShift = 0;
+    }
     else
+    {
+        ppfd->cRedBits = 0;
+        ppfd->cRedShift = 0;
+        ppfd->cBlueBits = 0;
+        ppfd->cBlueShift = 0;
+        ppfd->cGreenBits = 0;
+        ppfd->cGreenShift = 0;
+        ppfd->cAlphaBits = 0;
         ppfd->cAlphaShift = 0;
-  } else {
-    ppfd->cRedBits = 0;
-    ppfd->cRedShift = 0;
-    ppfd->cBlueBits = 0;
-    ppfd->cBlueShift = 0;
-    ppfd->cGreenBits = 0;
-    ppfd->cGreenShift = 0;
-    ppfd->cAlphaBits = 0;
-    ppfd->cAlphaShift = 0;
-  }
+    }
 
-  /* Accum RGBA bits */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_RED_SIZE, &rb);
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_GREEN_SIZE, &gb);
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_BLUE_SIZE, &bb);
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_ACCUM_ALPHA_SIZE, &ab);
+    /* Accum RGBA bits */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_RED_SIZE, &rb );
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_GREEN_SIZE, &gb );
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_BLUE_SIZE, &bb );
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_ACCUM_ALPHA_SIZE, &ab );
 
-  ppfd->cAccumBits = rb+gb+bb+ab;
-  ppfd->cAccumRedBits = rb;
-  ppfd->cAccumGreenBits = gb;
-  ppfd->cAccumBlueBits = bb;
-  ppfd->cAccumAlphaBits = ab;
+    ppfd->cAccumBits = rb + gb + bb + ab;
+    ppfd->cAccumRedBits = rb;
+    ppfd->cAccumGreenBits = gb;
+    ppfd->cAccumBlueBits = bb;
+    ppfd->cAccumAlphaBits = ab;
 
-  /* Aux bits */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &value);
-  ppfd->cAuxBuffers = value;
+    /* Aux bits */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_AUX_BUFFERS, &value );
+    ppfd->cAuxBuffers = value;
 
-  /* Depth bits */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value);
-  ppfd->cDepthBits = value;
+    /* Depth bits */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_DEPTH_SIZE, &value );
+    ppfd->cDepthBits = value;
 
-  /* stencil bits */
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &value);
-  ppfd->cStencilBits = value;
+    /* stencil bits */
+    pglXGetFBConfigAttrib( gdi_display, fmt->fbconfig, GLX_STENCIL_SIZE, &value );
+    ppfd->cStencilBits = value;
 
-  ppfd->iLayerType = PFD_MAIN_PLANE;
+    ppfd->iLayerType = PFD_MAIN_PLANE;
 
-  if (TRACE_ON(wgl)) {
-    dump_PIXELFORMATDESCRIPTOR(ppfd);
-  }
+    if (TRACE_ON(wgl)) dump_PIXELFORMATDESCRIPTOR( ppfd );
 
-  return nb_onscreen_formats;
+    return nb_onscreen_formats;
 }
 
 
