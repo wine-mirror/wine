@@ -610,8 +610,8 @@ N
 ''
 '.eh'@or_broken@''
 "foo bar"
-@todo_wine@foo
-@todo_wine@bar
+foo
+bar
 --- in digit variables
 a %1 %2
 b %1 %2

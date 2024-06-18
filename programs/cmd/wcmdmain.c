@@ -3255,6 +3255,7 @@ static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR 
         len = 0;
 
     wcscpy(set, for_ctrl->set);
+    handleExpansion(set, context != NULL, delayedsubst);
     for (i = 0; ; i++)
     {
         WCHAR *element = WCMD_parameter(set, i, NULL, TRUE, FALSE);
@@ -3314,7 +3315,11 @@ static CMD_NODE *for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_N
 
     if (for_ctrl->root_dir)
     {
-        dirs_to_walk = WCMD_dir_stack_create(for_ctrl->root_dir, NULL);
+        WCHAR buffer[MAXSTRING];
+
+        wcscpy(buffer, for_ctrl->root_dir);
+        handleExpansion(buffer, context != NULL, delayedsubst);
+        dirs_to_walk = WCMD_dir_stack_create(buffer, NULL);
     }
     else dirs_to_walk = WCMD_dir_stack_create(NULL, NULL);
     ref_len = wcslen(dirs_to_walk->dirName);
