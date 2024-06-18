@@ -729,7 +729,7 @@ static void test_cross_process_notifications( HANDLE process, ULONG_PTR section,
 
     WriteProcessMemory( process, (char *)addr + 0x1ffe, data, sizeof(data), &size );
     entry = pop_from_work_list( &list->work_list );
-    todo_wine
+    todo_wine_if (current_machine == IMAGE_FILE_MACHINE_ARM64)
     {
     entry = expect_cross_work_entry( list, entry, CrossProcessPreVirtualProtect,
                                      (char *)addr + 0x1000, 0x2000, 0x60000000 | PAGE_EXECUTE_WRITECOPY,

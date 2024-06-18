@@ -46,6 +46,9 @@ WINE_DECLARE_DEBUG_CHANNEL(globalmem);
  * Virtual memory functions
  ***********************************************************************/
 
+static const SIZE_T page_mask = 0xfff;
+#define ROUND_ADDR(addr) ((void *)((UINT_PTR)(addr) & ~page_mask))
+#define ROUND_SIZE(addr,size) (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 /***********************************************************************
  *             DiscardVirtualMemory   (kernelbase.@)
@@ -537,7 +540,46 @@ BOOL WINAPI DECLSPEC_HOTPATCH VirtualUnlock( void *addr, SIZE_T size )
 BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, const void *buffer,
                                                   SIZE_T size, SIZE_T *bytes_written )
 {
-    return set_ntstatus( NtWriteVirtualMemory( process, addr, buffer, size, bytes_written ));
+    DWORD old_prot, prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE | PAGE_EXECUTE_WRITECOPY;
+    MEMORY_BASIC_INFORMATION info;
+    void *base_addr;
+    SIZE_T region_size;
+    NTSTATUS status;
+
+    if (!VirtualQueryEx( process, addr, &info, sizeof(info) )) return FALSE;
+
+    switch (info.Protect)
+    {
+    case PAGE_READWRITE:
+    case PAGE_WRITECOPY:
+    case PAGE_EXECUTE_READWRITE:
+    case PAGE_EXECUTE_WRITECOPY:
+        /* already writable */
+        if ((status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written ))) break;
+        NtFlushInstructionCache( process, addr, size );
+        break;
+
+    case PAGE_EXECUTE:
+    case PAGE_EXECUTE_READ:
+        /* make it writable */
+        base_addr = ROUND_ADDR( addr );
+        region_size = ROUND_SIZE( addr, size );
+        region_size = min( region_size,  (char *)info.BaseAddress + info.RegionSize - (char *)base_addr );
+        status = NtProtectVirtualMemory( process, &base_addr, &region_size, prot, &old_prot );
+        if (status) break;
+        status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written );
+        if (!status) NtFlushInstructionCache( process, addr, size );
+        prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE | old_prot;
+        NtProtectVirtualMemory( process, &base_addr, &region_size, prot, &old_prot );
+        break;
+
+    default:
+        /* not writable */
+        status = STATUS_ACCESS_VIOLATION;
+        break;
+    }
+
+    return set_ntstatus( status );
 }
 
 
