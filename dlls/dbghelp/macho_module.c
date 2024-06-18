@@ -153,6 +153,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_macho);
 
 #define MACHO_CPU_TYPE_X86     0x00000007
 #define MACHO_CPU_TYPE_X86_64  0x01000007
+#define MACHO_CPU_TYPE_ARM     0x0000000c
+#define MACHO_CPU_TYPE_ARM64   0x0100000c
 
 #define MACHO_MH_EXECUTE   0x2
 #define MACHO_MH_DYLIB     0x6
@@ -212,6 +214,8 @@ static USHORT macho_cpu_to_machine(unsigned cpu)
     {
     case MACHO_CPU_TYPE_X86:    return IMAGE_FILE_MACHINE_I386;
     case MACHO_CPU_TYPE_X86_64: return IMAGE_FILE_MACHINE_AMD64;
+    case MACHO_CPU_TYPE_ARM:    return IMAGE_FILE_MACHINE_ARMNT;
+    case MACHO_CPU_TYPE_ARM64:  return IMAGE_FILE_MACHINE_ARM64;
     default:
         FIXME("Untranslated Mach-O CPU %x\n", cpu);
         return IMAGE_FILE_MACHINE_UNKNOWN;
