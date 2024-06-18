@@ -737,15 +737,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH DuplicateHandle( HANDLE source_process, HANDLE sou
 }
 
 
-/****************************************************************************
- *           FlushInstructionCache   (kernelbase.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH FlushInstructionCache( HANDLE process, LPCVOID addr, SIZE_T size )
-{
-    return set_ntstatus( NtFlushInstructionCache( process, addr, size ));
-}
-
-
 /***********************************************************************
  *           GetApplicationRestartSettings   (kernelbase.@)
  */

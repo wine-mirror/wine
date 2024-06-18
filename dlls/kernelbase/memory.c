@@ -122,6 +122,22 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushViewOfFile( const void *base, SIZE_T size )
 }
 
 
+/****************************************************************************
+ *           FlushInstructionCache   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH FlushInstructionCache( HANDLE process, LPCVOID addr, SIZE_T size )
+{
+    CROSS_PROCESS_WORK_LIST *list;
+
+    if ((list = open_cross_process_connection( process )))
+    {
+        send_cross_process_notification( list, CrossProcessFlushCache, addr, size, 0 );
+        close_cross_process_connection( list );
+    }
+    return set_ntstatus( NtFlushInstructionCache( process, addr, size ));
+}
+
+
 /***********************************************************************
  *          GetLargePageMinimum   (kernelbase.@)
  */
