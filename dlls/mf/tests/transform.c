@@ -3903,7 +3903,10 @@ static void test_h264_encoder(void)
     check_mft_get_info(class_id, &expect_mft_info);
 
     hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    todo_wine
     ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
+    if (hr != S_OK)
+        goto failed;
 
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, FALSE);

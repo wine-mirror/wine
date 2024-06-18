@@ -133,6 +133,7 @@ class_objects[] =
     { &CLSID_GStreamerByteStreamHandler, &gstreamer_byte_stream_handler_create },
     { &CLSID_MSAACDecMFT, &aac_decoder_create },
     { &CLSID_MSH264DecoderMFT, &h264_decoder_create },
+    { &CLSID_MSH264EncoderMFT, &h264_encoder_create },
 };
 
 HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
@@ -206,6 +207,18 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Video, MFVideoFormat_IYUV},
         {MFMediaType_Video, MFVideoFormat_I420},
         {MFMediaType_Video, MFVideoFormat_YUY2},
+    };
+
+    MFT_REGISTER_TYPE_INFO h264_encoder_input_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_IYUV},
+        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+    };
+    MFT_REGISTER_TYPE_INFO h264_encoder_output_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_H264},
     };
 
     MFT_REGISTER_TYPE_INFO video_processor_input_types[] =
@@ -370,6 +383,16 @@ HRESULT mfplat_DllRegisterServer(void)
             h264_decoder_input_types,
             ARRAY_SIZE(h264_decoder_output_types),
             h264_decoder_output_types,
+        },
+        {
+            CLSID_MSH264EncoderMFT,
+            MFT_CATEGORY_VIDEO_ENCODER,
+            L"H264 Encoder MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(h264_encoder_input_types),
+            h264_encoder_input_types,
+            ARRAY_SIZE(h264_encoder_output_types),
+            h264_encoder_output_types,
         },
         {
             CLSID_WMVDecoderMFT,
