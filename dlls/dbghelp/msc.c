@@ -269,9 +269,7 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8],  ptrsz)->symt;
 }
 
-/* wrapper for migration to FAM */
-#define leaf_as_variant(v, l) _leaf_as_variant((v), (const unsigned char*)(l))
-static int _leaf_as_variant(VARIANT *v, const unsigned char *leaf)
+static int leaf_as_variant(VARIANT *v, const unsigned char *leaf)
 {
     unsigned short int type = *(const unsigned short *)leaf;
     int length = 2;
@@ -397,9 +395,7 @@ static int _leaf_as_variant(VARIANT *v, const unsigned char *leaf)
     return length;
 }
 
-/* wrapper for migration to FAM */
-#define numeric_leaf(v, l) _numeric_leaf(v, (const unsigned char *)(l))
-static int _numeric_leaf(int *value, const unsigned char *leaf)
+static int numeric_leaf(int *value, const unsigned char *leaf)
 {
     unsigned short int type = *(const unsigned short int *)leaf;
     int length = 2;
@@ -1581,6 +1577,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     unsigned int                k;
     const unsigned int*         filetab;
     const unsigned int*         lt_ptr;
+    const unsigned int*         offsets;
     const unsigned short*       linenos;
     const struct startend*      start;
     unsigned                    source;
@@ -1609,13 +1606,14 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
         for (j = 0; j < nseg; j++)
 	{
             ltb = (const struct codeview_linetab_block*)(linetab + *lt_ptr++);
-            linenos = (const unsigned short*)&ltb->offsets[ltb->num_lines];
+            offsets = (const unsigned int*)&ltb->data;
+            linenos = (const unsigned short*)&offsets[ltb->num_lines];
             func_addr0 = codeview_get_address(msc_dbg, ltb->seg, start[j].start);
             if (!func_addr0) continue;
             for (func = NULL, k = 0; k < ltb->num_lines; k++)
             {
                 /* now locate function (if any) */
-                addr = func_addr0 + ltb->offsets[k] - start[j].start;
+                addr = func_addr0 + offsets[k] - start[j].start;
                 /* unfortunately, we can have several functions in the same block, if there's no
                  * gap between them... find the new function if needed
                  */
@@ -1626,7 +1624,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                     if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
                     {
                         WARN("--not a func at %04x:%08x %Ix tag=%d\n",
-                             ltb->seg, ltb->offsets[k], addr, func ? func->symt.tag : -1);
+                             ltb->seg, offsets[k], addr, func ? func->symt.tag : -1);
                         func = NULL;
                         break;
                     }

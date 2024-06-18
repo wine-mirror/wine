@@ -83,10 +83,11 @@
  * symbol size (to be greater than 256), which was likely needed for
  * complex C++ types (nested + templates).
  *
- * It's somehow difficult to represent the layout of those types on
- * disk because:
- * - some integral values are stored as numeric leaf, which size is
- *   variable depending on its value
+ * It's not possible to represent some disk layout with C structures
+ * as there are several contiguous entries of variable length.
+ * Of example of them is called 'numeric leaf' and represent several
+ * leaf values (integers, reals...).
+ * All of these contiguous values are packed in a flexible array member.
  *
  * Symbols internal stream
  * -----------------------
@@ -101,6 +102,9 @@
  *             Internal types
  * ======================================== */
 
+/* First versions (v1, v2) of CV data is stored as Pascal strings.
+ * Third version uses C string instead.
+ */
 struct p_string
 {
     unsigned char               namelen;
@@ -2342,8 +2346,9 @@ struct codeview_linetab_block
 {
     unsigned short              seg;
     unsigned short              num_lines;
-    unsigned int                offsets[1];     /* in fact num_lines */
-/*  unsigned short              linenos[]; */
+    unsigned char               data[];
+    /* unsigned int             offsets[num_lines]; */
+    /* unsigned short           linenos[]; */
 };
 
 struct startend
