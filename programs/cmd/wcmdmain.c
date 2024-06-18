@@ -3140,13 +3140,17 @@ static CMD_NODE *for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE *
 
 static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
 {
+    WCHAR set[MAXSTRING];
     WCHAR *args;
     size_t len;
     CMD_NODE *body = NULL;
     FILE *input;
     int i;
 
-    args = WCMD_skip_leading_spaces((WCHAR *)for_ctrl->set);
+    wcscpy(set, for_ctrl->set);
+    handleExpansion(set, context != NULL, delayedsubst);
+
+    args = WCMD_skip_leading_spaces(set);
     for (len = wcslen(args); len && (args[len - 1] == L' ' || args[len - 1] == L'\t'); len--)
         args[len - 1] = L'\0';
     if (args[0] == (for_ctrl->use_backq ? L'\'' : L'"') && match_ending_delim(args))

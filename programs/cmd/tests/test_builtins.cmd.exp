@@ -1014,8 +1014,8 @@ A D
 B C
 B D
 --- nested FORs and args tempering
-@todo_wine@inner argument {-foo, bar}
-@todo_wine@inner argument {-x, y}
+inner argument {-foo, bar}
+inner argument {-x, y}
 --- nesting and delayed expansion
 a 1 2
 1-A2
