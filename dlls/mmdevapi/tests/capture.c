@@ -41,7 +41,8 @@
 /* undocumented error code */
 #define D3D11_ERROR_4E MAKE_HRESULT(SEVERITY_ERROR, FACILITY_DIRECT3D11, 0x4e)
 
-static IMMDevice *dev = NULL;
+static IMMDeviceEnumerator *mme;
+static IMMDevice *dev;
 static const LARGE_INTEGER ullZero;
 
 static void test_uninitialized(IAudioClient *ac)
@@ -1012,10 +1013,66 @@ static void test_marshal(void)
 
 }
 
+static void test_render_loopback(void)
+{
+    IAudioCaptureClient *capture;
+    IAudioRenderClient *render;
+    WAVEFORMATEX *pwfx;
+    IMMDevice *device;
+    IAudioClient *ac;
+    HRESULT hr;
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eRender, eMultimedia, &device);
+    ok(hr == S_OK || hr == E_NOTFOUND, "GetDefaultAudioEndpoint failed: %#lx.\n", hr);
+
+    if (hr != S_OK || !dev)
+    {
+        if (hr == E_NOTFOUND)
+            skip("No sound card available\n");
+        else
+            skip("GetDefaultAudioEndpoint returns 0x%08lx\n", hr);
+        return;
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK, 5000000, 0, pwfx, NULL);
+    ok(hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE, "got %#lx.\n", hr);
+    IAudioClient_Release(ac);
+    CoTaskMemFree(pwfx);
+
+    hr = IMMDevice_Activate(device, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 5000000, 0, pwfx, NULL);
+    todo_wine_if(hr == E_NOTIMPL) ok(hr == S_OK, "got %#lx.\n", hr);
+    if (FAILED(hr))
+        goto done;
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void **)&render);
+    ok(hr == AUDCLNT_E_WRONG_ENDPOINT_TYPE, "got %#lx.\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioCaptureClient, (void **)&capture);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IAudioCaptureClient_Release(capture);
+
+done:
+    IAudioClient_Release(ac);
+    IMMDevice_Release(device);
+    CoTaskMemFree(pwfx);
+}
+
 START_TEST(capture)
 {
     HRESULT hr;
-    IMMDeviceEnumerator *mme = NULL;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -1042,6 +1099,7 @@ START_TEST(capture)
     test_simplevolume();
     test_volume_dependence();
     test_marshal();
+    test_render_loopback();
 
     IMMDevice_Release(dev);
 
