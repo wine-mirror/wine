@@ -9297,6 +9297,9 @@ static DWORD get_sbix_formats(IDWriteFontFace4 *fontface)
             case MS_TIFF_TAG:
                 ret |= DWRITE_GLYPH_IMAGE_FORMATS_TIFF;
                 break;
+            case DWRITE_MAKE_OPENTYPE_TAG('f','l','i','p'):
+                /* ignore macOS-specific tag */
+                break;
             default:
                 ok(0, "unexpected format, %#lx\n", GET_BE_DWORD(format));
             }
