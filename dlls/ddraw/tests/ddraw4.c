@@ -19733,6 +19733,98 @@ static void test_vb_desc(void)
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_d3d_state_reset(void)
+{
+    struct find_different_mode_param param;
+    IDirect3DViewport3 *viewport;
+    IDirectDrawSurface4 *surface;
+    IDirect3DDevice3 *device;
+    D3DVIEWPORT2 vp1, vp2;
+    IDirectDraw4 *ddraw;
+    DDSURFACEDESC2 ddsd;
+    IDirect3D3 *d3d;
+    DWORD state;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, 0, 0);
+
+    if (!(device = create_device(window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)))
+    {
+        skip("Failed to create 3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_FOGCOLOR, 0x00282828);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    hr = IDirect3DDevice3_SetRenderState(device, D3DRENDERSTATE_ZENABLE, TRUE);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    memset(&param, 0, sizeof(param));
+    hr = IDirectDraw4_EnumDisplayModes(ddraw, 0, NULL, &param, find_different_mode_callback);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, param.old_width, param.old_height);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    vp1.dwSize = sizeof(vp1);
+    vp2.dwSize = sizeof(vp2);
+
+    hr = IDirect3DDevice3_SetCurrentViewport(device, viewport);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    hr = IDirect3DViewport3_GetViewport2(viewport, &vp1);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    hr = set_display_mode(ddraw, param.new_width, param.new_height);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DViewport3_GetViewport2(viewport, &vp2);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    ok(vp2.dwWidth == vp1.dwWidth, "got %ld, expected %ld.\n", vp2.dwWidth, vp1.dwWidth);
+    ok(vp2.dwHeight == vp1.dwHeight, "got %ld, expected %ld.\n", vp2.dwHeight, vp1.dwHeight);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    ok(ddsd.dwWidth == param.new_width, "got %ld, expected %d.\n", ddsd.dwWidth, param.new_width);
+    ok(ddsd.dwHeight == param.new_height, "got %ld, expected %d.\n", ddsd.dwHeight, param.new_height);
+
+    hr = IDirect3DViewport3_GetViewport2(viewport, &vp2);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    ok(vp2.dwWidth == vp1.dwWidth, "got %ld, expected %ld.\n", vp2.dwWidth, vp1.dwWidth);
+    ok(vp2.dwHeight == vp1.dwHeight, "got %ld, expected %ld.\n", vp2.dwHeight, vp1.dwHeight);
+
+    hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_FOGCOLOR, &state);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    todo_wine ok(state == 0x00282828, "got %#lx.\n", state);
+    hr = IDirect3DDevice3_GetRenderState(device, D3DRENDERSTATE_ZENABLE, &state);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+    todo_wine ok(state == TRUE, "got %#lx.\n", state);
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "got %#lx.\n", hr);
+
+    IDirect3DViewport3_Release(viewport);
+    IDirectDrawSurface4_Release(surface);
+    IDirectDraw4_Release(ddraw);
+    IDirect3D3_Release(d3d);
+    IDirect3DDevice3_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -19876,4 +19968,5 @@ START_TEST(ddraw4)
     test_enum_devices();
     test_multiple_devices();
     test_vb_desc();
+    test_d3d_state_reset();
 }
