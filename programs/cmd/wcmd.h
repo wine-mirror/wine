@@ -173,6 +173,14 @@ void WCMD_add_dirstowalk(struct _DIRECTORY_STACK *dirsToWalk);
 struct _DIRECTORY_STACK *WCMD_dir_stack_create(const WCHAR *dir, const WCHAR *file);
 struct _DIRECTORY_STACK *WCMD_dir_stack_free(struct _DIRECTORY_STACK *dir);
 
+/* The return code:
+ * - some of them are directly mapped to kernel32's errors
+ * - some others are cmd.exe specific
+ */
+typedef int RETURN_CODE;
+#define RETURN_CODE_SYNTAX_ERROR         255
+#define RETURN_CODE_CANT_LAUNCH          9009
+
 void WCMD_assoc (const WCHAR *, BOOL);
 void WCMD_batch (WCHAR *, WCHAR *, BOOL, WCHAR *, HANDLE);
 void WCMD_call (WCHAR *command);

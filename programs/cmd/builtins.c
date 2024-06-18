@@ -303,7 +303,7 @@ void WCMD_choice (const WCHAR * args) {
     BOOL opt_s = FALSE;
 
     have_console = GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldmode);
-    errorlevel = 0;
+    errorlevel = NO_ERROR;
 
     my_command = xstrdupW(WCMD_skip_leading_spaces((WCHAR*)args));
 
@@ -422,7 +422,7 @@ void WCMD_choice (const WCHAR * args) {
         if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count))
         {
             free(my_command);
-            errorlevel = 0;
+            errorlevel = NO_ERROR;
             return;
         }
 
@@ -641,12 +641,12 @@ void WCMD_copy(WCHAR * args) {
   COPY_FILES *prevcopy      = NULL;
 
   /* Assume we were successful! */
-  errorlevel = 0;
+  errorlevel = NO_ERROR;
 
   /* If no args supplied at all, report an error */
   if (param1[0] == 0x00) {
     WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
-    errorlevel = 1;
+    errorlevel = ERROR_INVALID_FUNCTION;
     return;
   }
 
@@ -726,7 +726,7 @@ void WCMD_copy(WCHAR * args) {
     if (*thisparam=='+') {
       if (lastcopyentry == NULL) {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-        errorlevel = 1;
+        errorlevel = ERROR_INVALID_FUNCTION;
         goto exitreturn;
       } else {
         concatnextfilename = TRUE;
@@ -781,7 +781,7 @@ void WCMD_copy(WCHAR * args) {
     } else {
       /* We have processed sources and destinations and still found more to do - invalid */
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
       goto exitreturn;
     }
     concatnextfilename    = FALSE;
@@ -798,7 +798,7 @@ void WCMD_copy(WCHAR * args) {
   /* Ensure we have at least one source file */
   if (!sourcelist) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
-    errorlevel = 1;
+    errorlevel = ERROR_INVALID_FUNCTION;
     goto exitreturn;
   }
 
@@ -1046,7 +1046,7 @@ void WCMD_copy(WCHAR * args) {
             }
             if (!status) {
               WCMD_print_error ();
-              errorlevel = 1;
+              errorlevel = ERROR_INVALID_FUNCTION;
             } else {
               WINE_TRACE("Copied successfully\n");
               if (anyconcats) writtenoneconcat = TRUE;
@@ -1058,7 +1058,7 @@ void WCMD_copy(WCHAR * args) {
               if (!destination->binarycopy && !anyconcats && !thiscopy->binarycopy) {
                 if (!WCMD_AppendEOF(outname)) {
                   WCMD_print_error ();
-                  errorlevel = 1;
+                  errorlevel = ERROR_INVALID_FUNCTION;
                 }
               }
             }
@@ -1070,7 +1070,7 @@ void WCMD_copy(WCHAR * args) {
       /* Error if the first file was not found */
       if (!anyconcats || !writtenoneconcat) {
         WCMD_print_error ();
-        errorlevel = 1;
+        errorlevel = ERROR_INVALID_FUNCTION;
       }
     }
 
@@ -1082,7 +1082,7 @@ void WCMD_copy(WCHAR * args) {
   if (!errorlevel && !destination->binarycopy && anyconcats && writtenoneconcat) {
     if (!WCMD_AppendEOF(destination->name)) {
       WCMD_print_error ();
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
     }
   }
 
@@ -1165,7 +1165,7 @@ void WCMD_create_dir (WCHAR *args) {
         if (!argN) break;
         if (!create_full_path(thisArg)) {
             WCMD_print_error ();
-            errorlevel = 1;
+            errorlevel = ERROR_INVALID_FUNCTION;
         }
     }
 }
@@ -1444,7 +1444,7 @@ BOOL WCMD_delete (WCHAR *args) {
     BOOL  argsProcessed = FALSE;
     BOOL  foundAny      = FALSE;
 
-    errorlevel = 0;
+    errorlevel = NO_ERROR;
 
     for (argno=0; ; argno++) {
         BOOL found;
@@ -2053,7 +2053,7 @@ void WCMD_pushd (const WCHAR *args)
     /* Change directory using CD code with /D parameter */
     lstrcpyW(quals, L"/D");
     GetCurrentDirectoryW (1024, thisdir);
-    errorlevel = 0;
+    errorlevel = NO_ERROR;
     WCMD_setshow_default(args);
     if (errorlevel) {
       LocalFree(curdir);
@@ -2253,7 +2253,7 @@ void WCMD_move (void)
 
     if (!status) {
       WCMD_print_error ();
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
     }
   } while (FindNextFileW(hff, &fd) != 0);
 
@@ -2368,12 +2368,12 @@ void WCMD_rename (void)
   WCHAR            fname[MAX_PATH];
   WCHAR            ext[MAX_PATH];
 
-  errorlevel = 0;
+  errorlevel = NO_ERROR;
 
   /* Must be at least two args */
   if (param1[0] == 0x00 || param2[0] == 0x00) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    errorlevel = 1;
+    errorlevel = ERROR_INVALID_FUNCTION;
     return;
   }
 
@@ -2381,7 +2381,7 @@ void WCMD_rename (void)
   if ((wcschr(param2,':') != NULL) || (wcschr(param2,'\\') != NULL)) {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
       return;
   }
 
@@ -2444,7 +2444,7 @@ void WCMD_rename (void)
 
     if (!status) {
       WCMD_print_error ();
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
     }
   } while (FindNextFileW(hff, &fd) != 0);
 
@@ -2683,7 +2683,7 @@ void WCMD_setshow_default (const WCHAR *args) {
 
     status = SetCurrentDirectoryW(string);
     if (!status) {
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
       WCMD_print_error ();
       return;
     } else {
@@ -3432,7 +3432,7 @@ void WCMD_setshow_env (WCHAR *s) {
       env = GetEnvironmentStringsW();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_MISSINGENV), s);
-        errorlevel = 1;
+        errorlevel = ERROR_INVALID_FUNCTION;
       }
       return;
     }
@@ -3444,9 +3444,9 @@ void WCMD_setshow_env (WCHAR *s) {
     status = SetEnvironmentVariableW(s, p);
     gle = GetLastError();
     if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
     } else if (!status) WCMD_print_error();
-    else if (!interactive) errorlevel = 0;
+    else if (!interactive) errorlevel = NO_ERROR;
   }
 }
 
@@ -3675,7 +3675,7 @@ void WCMD_start(WCHAR *args)
         DWORD exit_code;
         WaitForSingleObject( pi.hProcess, INFINITE );
         GetExitCodeProcess( pi.hProcess, &exit_code );
-        errorlevel = (exit_code == STILL_ACTIVE) ? 0 : exit_code;
+        errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
     }
@@ -3683,7 +3683,7 @@ void WCMD_start(WCHAR *args)
     {
         SetLastError(ERROR_FILE_NOT_FOUND);
         WCMD_print_error ();
-        errorlevel = 9009;
+        errorlevel = RETURN_CODE_CANT_LAUNCH;
     }
     free(cmdline);
 }
@@ -3717,7 +3717,7 @@ void WCMD_type (WCHAR *args) {
   if (param2[0] != 0x00) writeHeaders = TRUE;
 
   /* Loop through all args */
-  errorlevel = 0;
+  errorlevel = NO_ERROR;
   while (argN) {
     WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
 
@@ -3733,7 +3733,7 @@ void WCMD_type (WCHAR *args) {
     if (h == INVALID_HANDLE_VALUE) {
       WCMD_print_error ();
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-      errorlevel = 1;
+      errorlevel = ERROR_INVALID_FUNCTION;
     } else {
       if (writeHeaders) {
         WCMD_output_stderr(L"\n%1\n\n\n", thisArg);
@@ -3764,7 +3764,7 @@ void WCMD_more (WCHAR *args) {
   DWORD count;
 
   /* Prefix the NLS more with '-- ', then load the text */
-  errorlevel = 0;
+  errorlevel = NO_ERROR;
   lstrcpyW(moreStr, L"-- ");
   LoadStringW(hinst, WCMD_MORESTR, &moreStr[3], ARRAY_SIZE(moreStr)-3);
 
@@ -3828,7 +3828,7 @@ void WCMD_more (WCHAR *args) {
       if (h == INVALID_HANDLE_VALUE) {
         WCMD_print_error ();
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-        errorlevel = 1;
+        errorlevel = ERROR_INVALID_FUNCTION;
       } else {
         ULONG64 curPos  = 0;
         ULONG64 fileLen = 0;
@@ -3996,7 +3996,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
     HKEY    readKey;
 
     /* See if parameter includes '=' */
-    errorlevel = 0;
+    errorlevel = NO_ERROR;
     newValue = wcschr(args, '=');
     if (newValue) accessOptions |= KEY_WRITE;
 
@@ -4084,7 +4084,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
             LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer, ARRAY_SIZE(msgbuffer));
           }
           WCMD_output_stderr(msgbuffer, keyValue);
-          errorlevel = 2;
+          errorlevel = ERROR_FILE_NOT_FOUND;
         }
 
       /* Not a query - it's a set or clear of a value */
@@ -4109,7 +4109,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
           } else if (assoc && rc != ERROR_FILE_NOT_FOUND) {
             WCMD_print_error();
-            errorlevel = 2;
+            errorlevel = ERROR_FILE_NOT_FOUND;
 
           } else {
             WCHAR  msgbuffer[MAXSTRING];
@@ -4121,7 +4121,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
               LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer, ARRAY_SIZE(msgbuffer));
             }
             WCMD_output_stderr(msgbuffer, args);
-            errorlevel = 2;
+            errorlevel = ERROR_FILE_NOT_FOUND;
           }
 
         /* It really is a set value = contents */
@@ -4137,7 +4137,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
           if (rc != ERROR_SUCCESS) {
             WCMD_print_error();
-            errorlevel = 2;
+            errorlevel = ERROR_FILE_NOT_FOUND;
           } else {
             WCMD_output_asis(args);
             WCMD_output_asis(L"=");
@@ -4188,7 +4188,7 @@ void WCMD_color (void) {
 
       /* Fail if fg == bg color */
       if (((color & 0xF0) >> 4) == (color & 0x0F)) {
-        errorlevel = 1;
+        errorlevel = ERROR_INVALID_FUNCTION;
         return;
       }
 

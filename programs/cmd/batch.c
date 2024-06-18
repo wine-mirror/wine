@@ -654,7 +654,7 @@ void WCMD_call (WCHAR *command) {
   if (*command != ':') {
     WCMD_run_program(command, TRUE);
     /* If the thing we try to run does not exist, call returns 1 */
-    if (errorlevel) errorlevel=1;
+    if (errorlevel) errorlevel = ERROR_INVALID_FUNCTION;
   } else {
 
     WCHAR gotoLabel[MAX_PATH];

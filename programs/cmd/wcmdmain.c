@@ -1381,7 +1381,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   if (!firstParam) return;
 
   if (!firstParam[0]) {
-      errorlevel = 0;
+      errorlevel = NO_ERROR;
       return;
   }
 
@@ -1580,7 +1580,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
         if (!interactive || (console && !HIWORD(console)))
             WaitForSingleObject (pe.hProcess, INFINITE);
         GetExitCodeProcess (pe.hProcess, &exit_code);
-        errorlevel = (exit_code == STILL_ACTIVE) ? 0 : exit_code;
+        errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
 
         CloseHandle(pe.hProcess);
         CloseHandle(pe.hThread);
@@ -1606,7 +1606,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
 
   /* If a command fails to launch, it sets errorlevel 9009 - which
      does not seem to have any associated constant definition     */
-  errorlevel = 9009;
+  errorlevel = RETURN_CODE_CANT_LAUNCH;
   return;
 
 }
@@ -3096,7 +3096,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output, HANDLE
     if (!ret)
     {
         WINE_TRACE("Brackets do not match, error out without executing.\n");
-        errorlevel = 255;
+        errorlevel = RETURN_CODE_SYNTAX_ERROR;
     }
 
     return extraSpace;
@@ -3385,7 +3385,7 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
         {
             WCMD_print_error();
             WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), args);
-            errorlevel = 1;
+            errorlevel = ERROR_INVALID_FUNCTION;
             return NULL; /* FOR loop aborts at first failure here */
         }
         body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
@@ -3405,7 +3405,7 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
             {
                 WCMD_print_error();
                 WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), element);
-                errorlevel = 1;
+                errorlevel = ERROR_INVALID_FUNCTION;
                 return NULL; /* FOR loop aborts at first failure here */
             }
             body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
