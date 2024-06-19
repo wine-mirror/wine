@@ -3530,8 +3530,9 @@ struct set_window_pos_reply
     user_handle_t  surface_win;
     int            needs_update;
 };
-#define SET_WINPOS_PAINT_SURFACE 0x01
-#define SET_WINPOS_PIXEL_FORMAT  0x02
+#define SET_WINPOS_PAINT_SURFACE    0x01
+#define SET_WINPOS_PIXEL_FORMAT     0x02
+#define SET_WINPOS_LAYERED_WINDOW   0x04
 
 
 struct get_window_rectangles_request
@@ -6598,7 +6599,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 836
+#define SERVER_PROTOCOL_VERSION 837
 
 /* ### protocol_version end ### */
 

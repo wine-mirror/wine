@@ -123,9 +123,10 @@ static const struct object_ops window_ops =
 };
 
 /* flags that can be set by the client */
-#define PAINT_HAS_SURFACE        SET_WINPOS_PAINT_SURFACE
-#define PAINT_HAS_PIXEL_FORMAT   SET_WINPOS_PIXEL_FORMAT
-#define PAINT_CLIENT_FLAGS       (PAINT_HAS_SURFACE | PAINT_HAS_PIXEL_FORMAT)
+#define PAINT_HAS_SURFACE          SET_WINPOS_PAINT_SURFACE
+#define PAINT_HAS_PIXEL_FORMAT     SET_WINPOS_PIXEL_FORMAT
+#define PAINT_HAS_LAYERED_SURFACE  SET_WINPOS_LAYERED_WINDOW
+#define PAINT_CLIENT_FLAGS         (PAINT_HAS_SURFACE | PAINT_HAS_PIXEL_FORMAT | PAINT_HAS_LAYERED_SURFACE)
 /* flags only manipulated by the server */
 #define PAINT_INTERNAL           0x0010  /* internal WM_PAINT pending */
 #define PAINT_ERASE              0x0020  /* needs WM_ERASEBKGND */
@@ -2477,6 +2478,8 @@ DECL_HANDLER(set_window_pos)
 
     set_window_pos( win, previous, flags, &window_rect, &client_rect,
                     &visible_rect, &surface_rect, &valid_rect );
+
+    if (win->paint_flags & SET_WINPOS_LAYERED_WINDOW) validate_whole_window( win );
 
     reply->new_style = win->style;
     reply->new_ex_style = win->ex_style;

@@ -803,6 +803,7 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
 
     if (surface)
     {
+        if (surface->alpha_mask) surface = &dummy_surface;
         if (windev) push_dc_driver( &dc->physDev, windev, windev->funcs );
         else
         {

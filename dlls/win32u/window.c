@@ -1905,12 +1905,14 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
 {
     WND *win;
     HWND surface_win = 0;
-    BOOL ret, needs_update = FALSE;
+    BOOL ret, is_layered, needs_update = FALSE;
     RECT old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface;
 
+    is_layered = new_surface && new_surface->alpha_mask;
+
     get_window_rects( hwnd, COORDS_SCREEN, &old_window_rect, NULL, get_thread_dpi() );
-    if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;
+    if (IsRectEmpty( &valid_rects[0] ) || is_layered) valid_rects = NULL;
 
     if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
 
@@ -1945,6 +1947,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             wine_server_add_data( req, extra_rects, sizeof(extra_rects) );
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
+        if (is_layered) req->paint_flags |= SET_WINPOS_LAYERED_WINDOW;
         if (win->pixel_format || win->internal_pixel_format)
             req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
 

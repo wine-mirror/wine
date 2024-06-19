@@ -2603,8 +2603,9 @@ enum message_type
     user_handle_t  surface_win;   /* parent window that holds the surface */
     int            needs_update;  /* whether the surface region needs an update */
 @END
-#define SET_WINPOS_PAINT_SURFACE 0x01  /* window has a paintable surface */
-#define SET_WINPOS_PIXEL_FORMAT  0x02  /* window has a custom pixel format */
+#define SET_WINPOS_PAINT_SURFACE    0x01  /* window has a paintable surface */
+#define SET_WINPOS_PIXEL_FORMAT     0x02  /* window has a custom pixel format */
+#define SET_WINPOS_LAYERED_WINDOW   0x04  /* window is drawn with UpdateLayeredWindow */
 
 /* Get the window and client rectangles of a window */
 @REQ(get_window_rectangles)
