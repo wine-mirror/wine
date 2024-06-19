@@ -23,6 +23,106 @@
 #include "d3dx9tex.h"
 #include "d3dx9_test_images.h"
 
+struct volume_readback
+{
+    IDirect3DVolume9 *volume;
+    D3DLOCKED_BOX locked_box;
+};
+
+static inline uint32_t get_volume_readback_color(struct volume_readback *rb, uint32_t x, uint32_t y, uint32_t z)
+{
+    const uint32_t *pixels = rb->locked_box.pBits;
+    const D3DLOCKED_BOX *box = &rb->locked_box;
+
+    if (!box->pBits)
+        return 0xdeadbeef;
+    return pixels[(z * (box->SlicePitch / sizeof(uint32_t)) + (y * (box->RowPitch / sizeof(uint32_t))) + x)];
+}
+
+#define release_volume_readback(rb) release_volume_readback_(__FILE__, __LINE__, rb)
+static inline void release_volume_readback_(const char *file, uint32_t line, struct volume_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->volume)
+        return;
+    if (rb->locked_box.pBits && FAILED(hr = IDirect3DVolume9_UnlockBox(rb->volume)))
+        trace_(file, line)("Can't unlock the readback volume, hr %#lx.\n", hr);
+    IDirect3DVolume9_Release(rb->volume);
+}
+
+#define get_texture_volume_readback(device, volume_tex, mip_level, rb) \
+    get_texture_volume_readback_(__FILE__, __LINE__, device, volume_tex, mip_level, rb)
+static inline void get_texture_volume_readback_(const char *file, uint32_t line, IDirect3DDevice9 *device,
+        IDirect3DVolumeTexture9 *volume_tex, uint32_t mip_level, struct volume_readback *rb)
+{
+    IDirect3DVolumeTexture9 *rb_tex;
+    IDirect3DVolume9 *volume = NULL;
+    D3DVOLUME_DESC desc;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    hr = IDirect3DVolumeTexture9_GetLevelDesc(volume_tex, mip_level, &desc);
+    if (FAILED(hr))
+    {
+        trace_(file, line)("Failed to get volume description for mip level %d, hr %#lx.\n", mip_level, hr);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, desc.Width, desc.Height, desc.Depth, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &rb_tex, NULL);
+    if (FAILED(hr))
+    {
+        trace_(file, line)("Can't create the readback volume texture, hr %#lx.\n", hr);
+        return;
+    }
+
+    hr = IDirect3DVolumeTexture9_GetVolumeLevel(volume_tex, mip_level, &volume);
+    if (FAILED(hr))
+    {
+        trace_(file, line)("Failed to get the volume for mip_level %d, hr %#lx.\n", mip_level, hr);
+        goto exit;
+    }
+
+    hr = IDirect3DVolumeTexture9_GetVolumeLevel(rb_tex, 0, &rb->volume);
+    if (FAILED(hr))
+    {
+        trace_(file, line)("Failed to get readback volume, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = D3DXLoadVolumeFromVolume(rb->volume, NULL, NULL, volume, NULL, NULL, D3DX_FILTER_NONE, 0);
+    if (FAILED(hr))
+    {
+        trace_(file, line)("Can't load the source volume into the readback, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = IDirect3DVolume9_LockBox(rb->volume, &rb->locked_box, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+        trace_(file, line)("Can't lock the readback volume, hr %#lx.\n", hr);
+
+exit:
+    IDirect3DVolumeTexture9_Release(rb_tex);
+    if (volume)
+        IDirect3DVolume9_Release(volume);
+    if (FAILED(hr))
+    {
+        if (rb->volume)
+            IDirect3DVolume9_Release(rb->volume);
+        rb->volume = NULL;
+    }
+}
+
+#define check_volume_readback_pixel_4bpp(rb, x, y, z, color, todo) \
+    _check_volume_readback_pixel_4bpp(__FILE__, __LINE__, rb, x, y, z, color, todo)
+static inline void _check_volume_readback_pixel_4bpp(const char *file, uint32_t line, struct volume_readback *rb,
+        uint32_t x, uint32_t y, uint32_t z, uint32_t expected_color, BOOL todo)
+{
+   uint32_t color = get_volume_readback_color(rb, x, y, z);
+   todo_wine_if(todo) ok_(file, line)(color == expected_color, "Got color 0x%08x, expected 0x%08x.\n", color, expected_color);
+}
+
 #define check_pixel_4bpp(box, x, y, z, color) _check_pixel_4bpp(__LINE__, box, x, y, z, color)
 static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_BOX *box, int x, int y, int z, DWORD expected_color)
 {
@@ -199,8 +299,16 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     D3DBOX src_box;
+    uint32_t x, y, z;
+    D3DVOLUME_DESC desc;
+    D3DXIMAGE_INFO img_info;
     IDirect3DVolume9 *volume;
+    struct volume_readback volume_rb;
     IDirect3DVolumeTexture9 *volume_texture;
+    static const uint32_t bmp_32bpp_4_4_argb_expected[] =
+    {
+        0xffff0000, 0xff00ff00, 0xff0000ff, 0xff000000,
+    };
 
     hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_DXT3, D3DPOOL_DEFAULT,
             &volume_texture, NULL);
@@ -242,6 +350,73 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     set_box(&src_box, 0, 0, 4, 4, 0, 3);
     hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_volume_map, sizeof(dds_volume_map), &src_box, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadVolumeFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(volume_texture);
+
+    /* Load 2D DDS image into a volume. */
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 8, 8, 8, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+            &volume_texture, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_24bit_8_8, sizeof(dds_24bit_8_8), NULL,
+            D3DX_FILTER_POINT, 0, &img_info);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+
+        IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
+        get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+        for (z = 0; z < desc.Depth; ++z)
+        {
+            for (y = 0; y < desc.Height; ++y)
+            {
+                for (x = 0; x < desc.Width; ++x)
+                {
+                    check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, 0xffff0000, FALSE);
+                }
+            }
+        }
+        release_volume_readback(&volume_rb);
+    }
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(volume_texture);
+
+    /* Load a BMP image into a volume. */
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+            &volume_texture, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+    hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, bmp_32bpp_4_4_argb, sizeof(bmp_32bpp_4_4_argb), NULL,
+            D3DX_FILTER_POINT, 0, &img_info);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_image_info(&img_info, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_BMP, FALSE);
+
+        IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
+        get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+        for (z = 0; z < desc.Depth; ++z)
+        {
+            for (y = 0; y < desc.Height; ++y)
+            {
+                const uint32_t *expected_color = &bmp_32bpp_4_4_argb_expected[(y < (desc.Height / 2)) ? 0 : 2];
+
+                for (x = 0; x < desc.Width; ++x)
+                {
+                    if (x < (desc.Width / 2))
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], FALSE);
+                    else
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], FALSE);
+                }
+            }
+        }
+        release_volume_readback(&volume_rb);
+    }
 
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);

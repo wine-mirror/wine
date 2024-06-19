@@ -48,37 +48,6 @@ static inline void expect_vec4_(unsigned int line, const D3DXVECTOR4 *expected, 
         got->x, got->y, got->z, got->w);
 }
 
-#define check_image_info(info, width, height, depth, mip_levels, format, resource_type, image_file_format, wine_todo) \
-    check_image_info_(__LINE__, info, width, height, depth, mip_levels, format, resource_type, image_file_format, \
-            wine_todo)
-static inline void check_image_info_(uint32_t line, const D3DXIMAGE_INFO *info, uint32_t width, uint32_t height,
-        uint32_t depth, uint32_t mip_levels, D3DFORMAT format, D3DRESOURCETYPE resource_type,
-        D3DXIMAGE_FILEFORMAT image_file_format, BOOL wine_todo)
-{
-    const D3DXIMAGE_INFO expected_info = { width, height, depth, mip_levels, format, resource_type, image_file_format };
-    BOOL matched;
-
-    matched = !memcmp(&expected_info, info, sizeof(*info));
-    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected image info values.\n");
-    if (matched)
-        return;
-
-    todo_wine_if(wine_todo && info->Width != width)
-        ok_(__FILE__, line)(info->Width == width, "Expected width %u, got %u.\n", width, info->Width);
-    todo_wine_if(wine_todo && info->Height != height)
-        ok_(__FILE__, line)(info->Height == height, "Expected height %u, got %u.\n", height, info->Height);
-    todo_wine_if(wine_todo && info->Depth != depth)
-        ok_(__FILE__, line)(info->Depth == depth, "Expected depth %u, got %u.\n", depth, info->Depth);
-    todo_wine_if(wine_todo && info->MipLevels != mip_levels)
-        ok_(__FILE__, line)(info->MipLevels == mip_levels, "Expected mip_levels %u, got %u.\n", mip_levels,
-                info->MipLevels);
-    ok_(__FILE__, line)(info->Format == format, "Expected texture format %d, got %d.\n", format, info->Format);
-    ok_(__FILE__, line)(info->ResourceType == resource_type, "Expected resource_type %d, got %d.\n", resource_type,
-            info->ResourceType);
-    ok_(__FILE__, line)(info->ImageFileFormat == image_file_format, "Expected image_file_format %d, got %d.\n",
-            image_file_format, info->ImageFileFormat);
-}
-
 #define check_texture_level_desc(tex, level, format, usage, pool, multi_sample_type, multi_sample_quality, width, \
                                  height, wine_todo) \
     check_texture_level_desc_(__LINE__, tex, level, format, usage, pool, multi_sample_type, multi_sample_quality, \
