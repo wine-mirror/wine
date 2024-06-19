@@ -566,24 +566,6 @@ static HRESULT save_dds_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSur
     return D3D_OK;
 }
 
-HRESULT load_volume_from_dds(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *dst_palette,
-    const D3DBOX *dst_box, const void *src_data, const D3DBOX *src_box, DWORD filter, D3DCOLOR color_key,
-    const D3DXIMAGE_INFO *src_info)
-{
-    UINT row_pitch, slice_pitch;
-    const struct dds_header *header = src_data;
-    const BYTE *pixels = (BYTE *)(header + 1);
-
-    if (src_info->ResourceType != D3DRTYPE_VOLUMETEXTURE)
-        return D3DXERR_INVALIDDATA;
-
-    if (FAILED(d3dx_calculate_pixels_size(src_info->Format, src_info->Width, src_info->Height, &row_pitch, &slice_pitch)))
-        return E_NOTIMPL;
-
-    return D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels, src_info->Format,
-        row_pitch, slice_pitch, NULL, src_box, filter, color_key);
-}
-
 HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info)
 {

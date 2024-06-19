@@ -168,6 +168,8 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
 {
     HRESULT hr;
     D3DBOX box;
+    struct d3dx_image image;
+    struct d3dx_pixels pixels;
     D3DXIMAGE_INFO image_info;
 
     TRACE("dst_volume %p, dst_palette %p, dst_box %p, src_data %p, src_data_size %u, src_box %p, "
@@ -175,46 +177,43 @@ HRESULT WINAPI D3DXLoadVolumeFromFileInMemory(IDirect3DVolume9 *dst_volume, cons
             dst_volume, dst_palette, dst_box, src_data, src_data_size, src_box,
             filter, color_key, src_info);
 
-    if (!dst_volume || !src_data)
+    if (!dst_volume || !src_data || !src_data_size)
         return D3DERR_INVALIDCALL;
 
-    if (FAILED(hr = D3DXGetImageInfoFromFileInMemory(src_data, src_data_size, &image_info)))
-        return hr;
+    hr = d3dx_image_init(src_data, src_data_size, &image, 0, 0);
+    if (FAILED(hr))
+        return D3DXERR_INVALIDDATA;
 
+    d3dximage_info_from_d3dx_image(&image_info, &image);
     if (src_box)
     {
         if (src_box->Right > image_info.Width
                 || src_box->Bottom > image_info.Height
                 || src_box->Back > image_info.Depth)
-            return D3DERR_INVALIDCALL;
+        {
+            hr = D3DERR_INVALIDCALL;
+            goto exit;
+        }
 
         box = *src_box;
     }
     else
     {
-        box.Left = 0;
-        box.Top = 0;
-        box.Right = image_info.Width;
-        box.Bottom = image_info.Height;
-        box.Front = 0;
-        box.Back = image_info.Depth;
-
+        set_d3dbox(&box, 0, 0, image_info.Width, image_info.Height, 0, image_info.Depth);
     }
 
-    if (image_info.ImageFileFormat != D3DXIFF_DDS)
-    {
-        FIXME("File format %#x is not supported yet\n", image_info.ImageFileFormat);
-        return E_NOTIMPL;
-    }
+    hr = d3dx_image_get_pixels(&image, 0, &pixels);
+    if (FAILED(hr))
+        goto exit;
 
-    hr = load_volume_from_dds(dst_volume, dst_palette, dst_box, src_data, &box,
-            filter, color_key, &image_info);
-    if (FAILED(hr)) return hr;
-
-    if (src_info)
+    hr = D3DXLoadVolumeFromMemory(dst_volume, dst_palette, dst_box, pixels.data, image_info.Format,
+            pixels.row_pitch, pixels.slice_pitch, pixels.palette, &box, filter, color_key);
+    if (SUCCEEDED(hr) && src_info)
         *src_info = image_info;
 
-    return D3D_OK;
+exit:
+    d3dx_image_cleanup(&image);
+    return FAILED(hr) ? hr : D3D_OK;
 }
 
 HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume, const PALETTEENTRY *dst_palette,

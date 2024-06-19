@@ -362,25 +362,22 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
     hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, dds_24bit_8_8, sizeof(dds_24bit_8_8), NULL,
             D3DX_FILTER_POINT, 0, &img_info);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
 
-        IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
-        get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
-        for (z = 0; z < desc.Depth; ++z)
+    IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
+    get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+    for (z = 0; z < desc.Depth; ++z)
+    {
+        for (y = 0; y < desc.Height; ++y)
         {
-            for (y = 0; y < desc.Height; ++y)
+            for (x = 0; x < desc.Width; ++x)
             {
-                for (x = 0; x < desc.Width; ++x)
-                {
-                    check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, 0xffff0000, FALSE);
-                }
+                check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, 0xffff0000, FALSE);
             }
         }
-        release_volume_readback(&volume_rb);
     }
+    release_volume_readback(&volume_rb);
 
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);
@@ -393,30 +390,27 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
     hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, bmp_32bpp_4_4_argb, sizeof(bmp_32bpp_4_4_argb), NULL,
             D3DX_FILTER_POINT, 0, &img_info);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&img_info, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_BMP, FALSE);
+
+    IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
+    get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+    for (z = 0; z < desc.Depth; ++z)
     {
-        check_image_info(&img_info, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_BMP, FALSE);
-
-        IDirect3DVolumeTexture9_GetLevelDesc(volume_texture, 0, &desc);
-        get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
-        for (z = 0; z < desc.Depth; ++z)
+        for (y = 0; y < desc.Height; ++y)
         {
-            for (y = 0; y < desc.Height; ++y)
-            {
-                const uint32_t *expected_color = &bmp_32bpp_4_4_argb_expected[(y < (desc.Height / 2)) ? 0 : 2];
+            const uint32_t *expected_color = &bmp_32bpp_4_4_argb_expected[(y < (desc.Height / 2)) ? 0 : 2];
 
-                for (x = 0; x < desc.Width; ++x)
-                {
-                    if (x < (desc.Width / 2))
-                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], FALSE);
-                    else
-                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], FALSE);
-                }
+            for (x = 0; x < desc.Width; ++x)
+            {
+                if (x < (desc.Width / 2))
+                    check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], FALSE);
+                else
+                    check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], FALSE);
             }
         }
-        release_volume_readback(&volume_rb);
     }
+    release_volume_readback(&volume_rb);
 
     IDirect3DVolume9_Release(volume);
     IDirect3DVolumeTexture9_Release(volume_texture);
