@@ -92,6 +92,42 @@ static inline void check_texture_level_desc_(uint32_t line, IDirect3DTexture9 *t
         ok_(__FILE__, line)(desc.Height == height, "Expected height %u, got %u.\n", height, desc.Height);
 }
 
+#define check_volume_texture_level_desc(tex, level, format, usage, pool, width, height, depth, wine_todo) \
+    check_volume_texture_level_desc_(__LINE__, tex, level, format, usage, pool, width, height, depth, wine_todo)
+static inline void check_volume_texture_level_desc_(uint32_t line, IDirect3DVolumeTexture9 *tex, uint32_t level,
+        D3DFORMAT format, uint32_t usage, D3DPOOL pool, uint32_t width, uint32_t height, uint32_t depth, BOOL wine_todo)
+{
+    const D3DVOLUME_DESC expected_desc = { format, D3DRTYPE_VOLUME, usage, pool, width, height, depth };
+    D3DVOLUME_DESC desc;
+    BOOL matched;
+    HRESULT hr;
+
+    hr = IDirect3DVolumeTexture9_GetLevelDesc(tex, level, &desc);
+    todo_wine_if(wine_todo && FAILED(hr))
+        ok_(__FILE__, line)(hr == S_OK, "Failed to get texture level desc with hr %#lx.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    matched = !memcmp(&expected_desc, &desc, sizeof(desc));
+    todo_wine_if(wine_todo) ok_(__FILE__, line)(matched, "Got unexpected volume desc values.\n");
+    if (matched)
+        return;
+
+    todo_wine_if(wine_todo && desc.Format != format)
+        ok_(__FILE__, line)(desc.Format == format, "Expected volume format %d, got %d.\n", format, desc.Format);
+    ok_(__FILE__, line)(desc.Type == D3DRTYPE_VOLUME, "Expected D3DRTYPE_VOLUME, got %d.\n", desc.Type);
+    todo_wine_if(wine_todo && desc.Usage != usage)
+        ok_(__FILE__, line)(desc.Usage == usage, "Expected usage %u, got %lu.\n", usage, desc.Usage);
+    todo_wine_if(wine_todo && desc.Pool != pool)
+        ok_(__FILE__, line)(desc.Pool == pool, "Expected pool %d, got %d.\n", pool, desc.Pool);
+    todo_wine_if(wine_todo && desc.Width != width)
+        ok_(__FILE__, line)(desc.Width == width, "Expected width %u, got %u.\n", width, desc.Width);
+    todo_wine_if(wine_todo && desc.Height != height)
+        ok_(__FILE__, line)(desc.Height == height, "Expected height %u, got %u.\n", height, desc.Height);
+    todo_wine_if(wine_todo && desc.Depth != depth)
+        ok_(__FILE__, line)(desc.Depth == depth, "Expected depth %u, got %u.\n", depth, desc.Depth);
+}
+
 #define check_texture_mip_levels(tex, expected_mip_levels, wine_todo) \
     check_texture_mip_levels_(__LINE__, ((IDirect3DBaseTexture9 *)tex), expected_mip_levels, wine_todo)
 static inline void check_texture_mip_levels_(uint32_t line, IDirect3DBaseTexture9 *tex, uint32_t expected_mip_levels,
@@ -2406,7 +2442,23 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
 
 static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
 {
-    IDirect3DVolumeTexture9 *volume_texture;
+    static const uint32_t dds_volume_dxt3_4_4_4_expected_uncompressed[] =
+    {
+        0xffff0000, 0xff00ff00, 0xff0000ff,
+    };
+    static const uint32_t dds_24bit_8_8_expected[] =
+    {
+        0xffff0000, 0xff00ff00, 0xff0000ff, 0xff000000,
+    };
+    static const uint32_t bmp_32bpp_4_4_argb_expected[] =
+    {
+        0xffff0000, 0xff00ff00, 0xff0000ff, 0xff000000,
+    };
+    IDirect3DVolumeTexture9 *volume_texture, *texture;
+    struct volume_readback volume_rb;
+    uint32_t mip_level, x, y, z;
+    D3DXIMAGE_INFO img_info;
+    D3DVOLUME_DESC desc;
     HRESULT hr;
 
     hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_volume_map, sizeof(dds_volume_map), D3DX_DEFAULT,
@@ -2418,6 +2470,118 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
             D3DX_DEFAULT, D3DX_DEFAULT, 1, D3DUSAGE_DEPTHSTENCIL, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT,
             D3DX_DEFAULT, 0, NULL, NULL, &volume_texture);
     ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#lx.\n", hr);
+
+    /* Load a 2D texture DDS file with multiple mips into a volume texture. */
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_24bit_8_8, sizeof(dds_24bit_8_8),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, 0, &img_info, NULL, &texture);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_texture_mip_levels(texture, 4, FALSE);
+        check_image_info(&img_info, 8, 8, 1, 4, D3DFMT_R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+        check_volume_texture_level_desc(texture, 0, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 8, 8, 1, FALSE);
+        check_volume_texture_level_desc(texture, 1, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 4, 4, 1, FALSE);
+        check_volume_texture_level_desc(texture, 2, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
+        check_volume_texture_level_desc(texture, 3, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
+
+        for (mip_level = 0; mip_level < 4; ++mip_level)
+        {
+            const uint32_t expected_color = dds_24bit_8_8_expected[mip_level];
+            uint32_t x, y, z;
+
+            IDirect3DVolumeTexture9_GetLevelDesc(texture, mip_level, &desc);
+            get_texture_volume_readback(device, texture, mip_level, &volume_rb);
+            for (z = 0; z < desc.Depth; ++z)
+            {
+                for (y = 0; y < desc.Height; ++y)
+                {
+                    for (x = 0; x < desc.Width; ++x)
+                    {
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color, FALSE);
+                    }
+                }
+            }
+            release_volume_readback(&volume_rb);
+        }
+        IDirect3DVolumeTexture9_Release(texture);
+    }
+
+    /* Multi-mip compressed volume texture file. */
+    if (has_3d_dxt3)
+    {
+        hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, dds_volume_dxt3_4_4_4, sizeof(dds_volume_dxt3_4_4_4),
+                D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN,
+                D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, &img_info, NULL, &texture);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        check_texture_mip_levels(texture, 3, FALSE);
+        check_image_info(&img_info, 4, 4, 4, 3, D3DFMT_DXT3, D3DRTYPE_VOLUMETEXTURE, D3DXIFF_DDS, FALSE);
+        check_volume_texture_level_desc(texture, 0, D3DFMT_DXT3, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 4, 4, 4, FALSE);
+        check_volume_texture_level_desc(texture, 1, D3DFMT_DXT3, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 2, FALSE);
+        check_volume_texture_level_desc(texture, 2, D3DFMT_DXT3, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
+
+        for (mip_level = 0; mip_level < 3; ++mip_level)
+        {
+            const uint32_t expected_color = dds_volume_dxt3_4_4_4_expected_uncompressed[mip_level];
+            uint32_t x, y, z;
+
+            IDirect3DVolumeTexture9_GetLevelDesc(texture, mip_level, &desc);
+            get_texture_volume_readback(device, texture, mip_level, &volume_rb);
+            for (z = 0; z < desc.Depth; ++z)
+            {
+                for (y = 0; y < desc.Height; ++y)
+                {
+                    for (x = 0; x < desc.Width; ++x)
+                    {
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color, FALSE);
+                    }
+                }
+            }
+            release_volume_readback(&volume_rb);
+        }
+        IDirect3DVolumeTexture9_Release(texture);
+    }
+    else
+    {
+        skip("D3DFMT_DXT3 volume textures are not supported, skipping tests.\n");
+    }
+
+    /* Load a BMP file into a volume texture. */
+    hr = D3DXCreateVolumeTextureFromFileInMemoryEx(device, bmp_32bpp_4_4_argb, sizeof(bmp_32bpp_4_4_argb),
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_FILTER_POINT, 0, &img_info, NULL, &texture);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_texture_mip_levels(texture, 3, FALSE);
+        check_image_info(&img_info, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_BMP, FALSE);
+        check_volume_texture_level_desc(texture, 0, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 4, 4, 1, FALSE);
+        check_volume_texture_level_desc(texture, 1, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
+        check_volume_texture_level_desc(texture, 2, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
+
+        for (mip_level = 0; mip_level < 3; ++mip_level)
+        {
+            IDirect3DVolumeTexture9_GetLevelDesc(texture, mip_level, &desc);
+            get_texture_volume_readback(device, texture, mip_level, &volume_rb);
+            for (z = 0; z < desc.Depth; ++z)
+            {
+                for (y = 0; y < desc.Height; ++y)
+                {
+                    const uint32_t *expected_color = &bmp_32bpp_4_4_argb_expected[(desc.Height == 1 || y < (desc.Height / 2)) ? 0 : 2];
+
+                    for (x = 0; x < desc.Width; ++x)
+                    {
+                        if (desc.Width == 1 || x < (desc.Width / 2))
+                            check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], FALSE);
+                        else
+                            check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], FALSE);
+                    }
+                }
+            }
+            release_volume_readback(&volume_rb);
+        }
+        IDirect3DVolumeTexture9_Release(texture);
+    }
 }
 
 /* fills positive x face with red color */
