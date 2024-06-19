@@ -2540,8 +2540,16 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
 
 static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, HANDLE from, WCHAR* buffer)
 {
-    if (!context && !first_line)
-        WCMD_output_asis( WCMD_LoadMessage(WCMD_MOREPROMPT));
+    /* display prompt */
+    if (interactive && !context)
+    {
+        /* native does is this way... not symmetrical wrt. echo_mode */
+        if (!first_line)
+            WCMD_output_asis(WCMD_LoadMessage(WCMD_MOREPROMPT));
+        else if (echo_mode)
+            WCMD_show_prompt();
+    }
+
     if (feed && !WCMD_fgets(buffer, MAXSTRING, from))
     {
         buffer[0] = L'\0';
@@ -3999,7 +4007,6 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
     /* Read until EOF (which for std input is never, but if redirect
        in place, may occur                                          */
-    if (echo_mode) WCMD_show_prompt();
     if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE)))
       break;
     WCMD_process_commands(toExecute, FALSE, FALSE);
