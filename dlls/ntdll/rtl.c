@@ -800,6 +800,15 @@ void * WINAPI RtlEnumerateGenericTableWithoutSplayingAvl(RTL_AVL_TABLE *table, P
     return NULL;
 }
 
+/******************************************************************************
+ *  RtlNumberGenericTableElementsAvl  (NTDLL.@)
+ */
+ULONG WINAPI RtlNumberGenericTableElementsAvl(RTL_AVL_TABLE *table)
+{
+    FIXME("(%p) stub!\n", table);
+    return 0;
+}
+
 /***********************************************************************
  *           RtlInsertElementGenericTableAvl  (NTDLL.@)
  */
