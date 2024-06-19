@@ -65,10 +65,26 @@ struct macdrv_window_surface
     struct window_surface   header;
     macdrv_window           window;
     BOOL                    use_alpha;
+    CGDataProviderRef       provider;
     BITMAPINFO              info;   /* variable size, must be last */
 };
 
 static struct macdrv_window_surface *get_mac_surface(struct window_surface *surface);
+
+static CGDataProviderRef data_provider_create(size_t size, void **bits)
+{
+    CGDataProviderRef provider;
+    CFMutableDataRef data;
+
+    if (!(data = CFDataCreateMutable(kCFAllocatorDefault, size))) return NULL;
+    CFDataSetLength(data, size);
+
+    if ((provider = CGDataProviderCreateWithCFData(data)))
+        *bits = CFDataGetMutableBytePtr(data);
+    CFRelease(data);
+
+    return provider;
+}
 
 /***********************************************************************
  *              macdrv_surface_get_bitmap_info
@@ -107,6 +123,7 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p\n", surface);
+    CGDataProviderRelease(surface->provider);
     free(surface);
 }
 
@@ -130,11 +147,16 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
 static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
                                              struct window_surface *old_surface, BOOL use_alpha)
 {
-    struct macdrv_window_surface *surface;
+    struct macdrv_window_surface *surface = NULL;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     DWORD window_background;
+    D3DKMT_CREATEDCFROMMEMORY desc = {.Format = D3DDDIFMT_A8R8G8B8};
     char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
+    CGDataProviderRef provider;
+    HBITMAP bitmap = 0;
+    UINT status;
+    void *bits;
 
     memset(info, 0, sizeof(*info));
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
@@ -145,14 +167,31 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     info->bmiHeader.biSizeImage   = get_dib_image_size(info);
     info->bmiHeader.biCompression = BI_RGB;
 
-    surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3]));
-    if (!surface) return NULL;
-    if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, 0)) goto failed;
+    if (!(provider = data_provider_create(info->bmiHeader.biSizeImage, &bits))) return NULL;
+
+    /* wrap the data in a HBITMAP so we can write to the surface pixels directly */
+    desc.Width = info->bmiHeader.biWidth;
+    desc.Height = abs(info->bmiHeader.biHeight);
+    desc.Pitch = info->bmiHeader.biSizeImage / abs(info->bmiHeader.biHeight);
+    desc.pMemory = bits;
+    desc.hDeviceDc = NtUserGetDCEx(hwnd, 0, DCX_CACHE | DCX_WINDOW);
+    if ((status = NtGdiDdDDICreateDCFromMemory(&desc)))
+        ERR("Failed to create HBITMAP, status %#x\n", status);
+    else
+    {
+        bitmap = desc.hBitmap;
+        NtGdiDeleteObjectApp(desc.hDc);
+    }
+    if (desc.hDeviceDc) NtUserReleaseDC(hwnd, desc.hDeviceDc);
+
+    if (!(surface = calloc(1, FIELD_OFFSET(struct macdrv_window_surface, info.bmiColors[3])))) goto failed;
+    if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, bitmap)) goto failed;
     memcpy(&surface->info, info, offsetof(BITMAPINFO, bmiColors[3]));
 
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
     surface->use_alpha = use_alpha;
+    surface->provider = provider;
 
     window_background = macdrv_window_background_color();
     memset_pattern4(surface->header.color_bits, &window_background, info->bmiHeader.biSizeImage);
@@ -163,7 +202,9 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     return &surface->header;
 
 failed:
-    window_surface_release(&surface->header);
+    if (surface) window_surface_release(&surface->header);
+    if (bitmap) NtGdiDeleteObjectApp(bitmap);
+    CGDataProviderRelease(provider);
     return NULL;
 }
 
