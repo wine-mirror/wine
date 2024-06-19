@@ -788,6 +788,18 @@ void WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE table, PRTL_AVL_COMPARE_
     FIXME("%p %p %p %p %p: stub\n", table, compare, allocate, free, context);
 }
 
+/******************************************************************************
+ *           RtlEnumerateGenericTableWithoutSplayingAvl  (NTDLL.@)
+ */
+void * WINAPI RtlEnumerateGenericTableWithoutSplayingAvl(RTL_AVL_TABLE *table, PVOID *previous)
+{
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(%p, %p) stub!\n", table, previous);
+    return NULL;
+}
+
 /***********************************************************************
  *           RtlInsertElementGenericTableAvl  (NTDLL.@)
  */

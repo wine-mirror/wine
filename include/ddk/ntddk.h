@@ -275,6 +275,7 @@ NTSTATUS  WINAPI PsSetLoadImageNotifyRoutineEx(PLOAD_IMAGE_NOTIFY_ROUTINE,ULONG_
 LONG      WINAPI RtlCompareString(const STRING*,const STRING*,BOOLEAN);
 void      WINAPI RtlCopyString(STRING*,const STRING*);
 void *    WINAPI RtlEnumerateGenericTableWithoutSplaying(PRTL_GENERIC_TABLE,PVOID*);
+void *    WINAPI RtlEnumerateGenericTableWithoutSplayingAvl(PRTL_AVL_TABLE,PVOID*);
 BOOLEAN   WINAPI RtlEqualString(const STRING*,const STRING*,BOOLEAN);
 void *    WINAPI RtlGetElementGenericTable(PRTL_GENERIC_TABLE,ULONG);
 void      WINAPI RtlInitializeGenericTable(PRTL_GENERIC_TABLE,PRTL_GENERIC_COMPARE_ROUTINE,PRTL_GENERIC_ALLOCATE_ROUTINE,PRTL_GENERIC_FREE_ROUTINE,void *);
