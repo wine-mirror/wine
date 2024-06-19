@@ -159,7 +159,7 @@ static HRESULT load_typelib(void)
     if(typelib)
         return S_OK;
 
-    hres = LoadRegTypeLib(&LIBID_ADODB, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    hres = LoadRegTypeLib(&LIBID_ADODB, 2, 8, LOCALE_SYSTEM_DEFAULT, &tl);
     if(FAILED(hres)) {
         ERR("LoadRegTypeLib failed: %08lx\n", hres);
         return hres;
