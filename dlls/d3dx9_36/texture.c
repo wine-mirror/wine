@@ -1104,7 +1104,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     BOOL file_depth = FALSE;
     BOOL file_format = FALSE;
     BOOL file_mip_levels = FALSE;
-    IDirect3DVolumeTexture9 *tex, *buftex;
+    IDirect3DVolumeTexture9 *tex, *staging_tex;
 
     TRACE("device %p, data %p, data_size %u, width %u, height %u, depth %u, mip_levels %u, "
             "usage %#lx, format %#x, pool %#x, filter %#lx, mip_filter %#lx, color_key 0x%08lx, "
@@ -1115,6 +1115,7 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     if (!device || !data || !data_size || !volume_texture)
         return D3DERR_INVALIDCALL;
 
+    staging_tex = tex = *volume_texture = NULL;
     hr = D3DXGetImageInfoFromFileInMemory(data, data_size, &image_info);
     if (FAILED(hr)) return hr;
 
@@ -1170,7 +1171,11 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     }
 
     hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mip_levels, usage, &format, pool);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr))
+    {
+        FIXME("Couldn't find suitable texture parameters.\n");
+        goto err;
+    }
 
     if ((file_width && width != image_info.Width)
             || (file_height && height != image_info.Height)
@@ -1181,7 +1186,10 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     if (FAILED(hr))
-        return D3DERR_INVALIDCALL;
+    {
+        hr = D3DERR_INVALIDCALL;
+        goto err;
+    }
 
     if (mip_levels > image_info.MipLevels)
     {
@@ -1192,41 +1200,54 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
     if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
-        hr = D3DXCreateVolumeTexture(device, width, height, depth, mip_levels, 0, format, D3DPOOL_SYSTEMMEM, &buftex);
-        tex = buftex;
+        TRACE("Creating staging texture.\n");
+        hr = D3DXCreateVolumeTexture(device, width, height, depth, mip_levels, 0, format, D3DPOOL_SYSTEMMEM, &staging_tex);
+        tex = staging_tex;
     }
     else
     {
         hr = D3DXCreateVolumeTexture(device, width, height, depth, mip_levels, usage, format, pool, &tex);
-        buftex = NULL;
     }
-    if (FAILED(hr)) return hr;
 
+    if (FAILED(hr))
+    {
+        FIXME("Texture creation failed.\n");
+        goto err;
+    }
+
+    TRACE("Texture created correctly. Now loading the texture data into it.\n");
     hr = load_volume_texture_from_dds(tex, data, palette, filter, color_key, &image_info);
     if (FAILED(hr))
     {
-        IDirect3DVolumeTexture9_Release(tex);
-        return hr;
+        FIXME("Texture loading failed.\n");
+        goto err;
     }
 
-    if (buftex)
+    /* Move the data to the actual texture if necessary. */
+    if (staging_tex)
     {
-        hr = D3DXCreateVolumeTexture(device, width, height, depth, mip_levels, usage, format, pool, &tex);
+        hr = D3DXCreateVolumeTexture(device, width, height, depth, mip_levels, usage, format, pool, volume_texture);
         if (FAILED(hr))
-        {
-            IDirect3DVolumeTexture9_Release(buftex);
-            return hr;
-        }
+            goto err;
 
-        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)buftex, (IDirect3DBaseTexture9 *)tex);
-        IDirect3DVolumeTexture9_Release(buftex);
+        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)staging_tex, (IDirect3DBaseTexture9 *)(*volume_texture));
+        IDirect3DVolumeTexture9_Release(staging_tex);
+    }
+    else
+    {
+        *volume_texture = tex;
     }
 
     if (info)
         *info = image_info;
 
-    *volume_texture = tex;
-    return D3D_OK;
+    return hr;
+
+err:
+    if (tex)
+        IDirect3DVolumeTexture9_Release(tex);
+
+    return hr;
 }
 
 static inline void fill_texture(const struct pixel_format_desc *format, BYTE *pos, const D3DXVECTOR4 *value)
