@@ -158,7 +158,7 @@ M:	Marcus Meissner <marcus@jet.franken.de>
 F:	dlls/gphoto2.ds/
 
 GStreamer multimedia backend
-M:	Elizabeth Figura <zfigura@codeweavers.com>
+P:	Elizabeth Figura <zfigura@codeweavers.com>
 P:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/winegstreamer/
 
