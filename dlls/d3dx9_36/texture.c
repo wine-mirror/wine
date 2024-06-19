@@ -1098,13 +1098,8 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     HRESULT hr;
     D3DCAPS9 caps;
     D3DXIMAGE_INFO image_info;
-    BOOL dynamic_texture;
-    BOOL file_width = FALSE;
-    BOOL file_height = FALSE;
-    BOOL file_depth = FALSE;
-    BOOL file_format = FALSE;
-    BOOL file_mip_levels = FALSE;
     IDirect3DVolumeTexture9 *tex, *staging_tex;
+    BOOL dynamic_texture, format_specified = FALSE;
 
     TRACE("device %p, data %p, data_size %u, width %u, height %u, depth %u, mip_levels %u, "
             "usage %#lx, format %#x, pool %#x, filter %#lx, mip_filter %#lx, color_key 0x%08lx, "
@@ -1122,53 +1117,18 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     if (image_info.ImageFileFormat != D3DXIFF_DDS)
         return D3DXERR_INVALIDDATA;
 
-    if (width == 0 || width == D3DX_DEFAULT_NONPOW2)
-        width = image_info.Width;
-    if (width == D3DX_DEFAULT)
-        width = make_pow2(image_info.Width);
+    /* Handle default values. */
+    if (!width || width == D3DX_DEFAULT_NONPOW2 || width == D3DX_FROM_FILE || width == D3DX_DEFAULT)
+        width = (width == D3DX_DEFAULT) ? make_pow2(image_info.Width) : image_info.Width;
+    if (!height || height == D3DX_DEFAULT_NONPOW2 || height == D3DX_FROM_FILE || height == D3DX_DEFAULT)
+        height = (height == D3DX_DEFAULT) ? make_pow2(image_info.Height) : image_info.Height;
+    if (!depth || depth == D3DX_DEFAULT_NONPOW2 || depth == D3DX_FROM_FILE || depth == D3DX_DEFAULT)
+        depth = (depth == D3DX_DEFAULT) ? make_pow2(image_info.Depth) : image_info.Depth;
 
-    if (height == 0 || height == D3DX_DEFAULT_NONPOW2)
-        height = image_info.Height;
-    if (height == D3DX_DEFAULT)
-        height = make_pow2(image_info.Height);
-
-    if (depth == 0 || depth == D3DX_DEFAULT_NONPOW2)
-        depth = image_info.Depth;
-    if (depth == D3DX_DEFAULT)
-        depth = make_pow2(image_info.Depth);
-
-    if (format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
-        format = image_info.Format;
-
-    if (width == D3DX_FROM_FILE)
-    {
-        file_width = TRUE;
-        width = image_info.Width;
-    }
-
-    if (height == D3DX_FROM_FILE)
-    {
-        file_height = TRUE;
-        height = image_info.Height;
-    }
-
-    if (depth == D3DX_FROM_FILE)
-    {
-        file_depth = TRUE;
-        depth = image_info.Depth;
-    }
-
-    if (format == D3DFMT_FROM_FILE)
-    {
-        file_format = TRUE;
-        format = image_info.Format;
-    }
-
-    if (mip_levels == D3DX_FROM_FILE)
-    {
-        file_mip_levels = TRUE;
-        mip_levels = image_info.MipLevels;
-    }
+    format_specified = (format != D3DFMT_UNKNOWN && format != D3DX_DEFAULT);
+    if (format == D3DFMT_FROM_FILE || format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
+         format = image_info.Format;
+    mip_levels = (mip_levels == D3DX_FROM_FILE) ? image_info.MipLevels : mip_levels;
 
     hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mip_levels, usage, &format, pool);
     if (FAILED(hr))
@@ -1177,12 +1137,8 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         goto err;
     }
 
-    if ((file_width && width != image_info.Width)
-            || (file_height && height != image_info.Height)
-            || (file_depth && depth != image_info.Depth)
-            || (file_format && format != image_info.Format)
-            || (file_mip_levels && mip_levels != image_info.MipLevels))
-        return D3DERR_NOTAVAILABLE;
+    if (color_key && !format_specified)
+        format = get_alpha_replacement_format(format);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     if (FAILED(hr))
