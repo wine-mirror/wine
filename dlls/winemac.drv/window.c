@@ -1951,6 +1951,7 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect
 {
     struct macdrv_win_data *data = get_win_data(hwnd);
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+    RECT surface_rect;
     BOOL ret = FALSE;
 
     TRACE("%p swp %04x window %s client %s visible %s\n", hwnd,
@@ -1966,6 +1967,7 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect
     if (!data->cocoa_window) goto done; /* use default surface */
     if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
     if (data->ulw_layered) goto done; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     ret = TRUE;
 

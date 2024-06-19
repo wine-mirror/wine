@@ -365,6 +365,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
 @interface WineContentView : WineBaseView <NSTextInputClient, NSViewLayerContentScaleDelegate>
 {
+    CGRect surfaceRect;
     CGImageRef colorImage;
 
     NSMutableArray* glContexts;
@@ -489,6 +490,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         self = [super initWithFrame:frame];
         if (self)
         {
+            [self setLayerContentsPlacement:NSViewLayerContentsPlacementTopLeft];
             [self setWantsLayer:YES];
             [self setLayerRetinaProperties:retina_on];
             [self setAutoresizesSubviews:NO];
@@ -552,6 +554,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         if (image)
         {
+            layer.position = surfaceRect.origin;
             layer.contents = (id)image;
             CFRelease(image);
             [window windowDidDrawContent];
@@ -565,6 +568,11 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [window invalidateShadow];
             }
         }
+    }
+
+    - (void) setSurfaceRect:(CGRect)rect
+    {
+        surfaceRect = rect;
     }
 
     - (void) setColorImage:(CGImageRef)image
@@ -3516,6 +3524,7 @@ void macdrv_window_set_color_image(macdrv_window w, CGImageRef image, CGRect rec
         WineContentView *view = [window contentView];
 
         [view setColorImage:image];
+        [view setSurfaceRect:cgrect_mac_from_win(rect)];
         [view setNeedsDisplayInRect:NSRectFromCGRect(cgrect_mac_from_win(dirty))];
 
         CGImageRelease(image);

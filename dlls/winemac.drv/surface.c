@@ -225,16 +225,25 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
 }
 
 
-static inline RECT get_surface_rect(const RECT *visible_rect)
+BOOL get_surface_rect(const RECT *visible_rect, RECT *surface_rect)
 {
-    RECT rect = *visible_rect;
+    RECT virtual_rect = NtUserGetVirtualScreenRect();
 
-    OffsetRect(&rect, -visible_rect->left, -visible_rect->top);
-    rect.left &= ~127;
-    rect.top  &= ~127;
-    rect.right  = max(rect.left + 128, (rect.right + 127) & ~127);
-    rect.bottom = max(rect.top + 128, (rect.bottom + 127) & ~127);
-    return rect;
+    *surface_rect = *visible_rect;
+
+    /* crop surfaces which are larger than the virtual screen rect, some applications create huge windows */
+    if ((surface_rect->right - surface_rect->left > virtual_rect.right - virtual_rect.left ||
+         surface_rect->bottom - surface_rect->top > virtual_rect.bottom - virtual_rect.top) &&
+        !intersect_rect( surface_rect, surface_rect, &virtual_rect ))
+        return FALSE;
+    OffsetRect(surface_rect, -visible_rect->left, -visible_rect->top);
+
+    /* round the surface coordinates to avoid re-creating them too often on resize */
+    surface_rect->left &= ~127;
+    surface_rect->top  &= ~127;
+    surface_rect->right  = max(surface_rect->left + 128, (surface_rect->right + 127) & ~127);
+    surface_rect->bottom = max(surface_rect->top + 128, (surface_rect->bottom + 127) & ~127);
+    return TRUE;
 }
 
 
@@ -250,11 +259,11 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_r
     TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
 
     if (!(data = get_win_data(hwnd))) return TRUE; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     if (*surface) window_surface_release(*surface);
     *surface = NULL;
 
-    surface_rect = get_surface_rect(visible_rect);
     if (data->surface)
     {
         if (EqualRect(&data->surface->rect, &surface_rect))
