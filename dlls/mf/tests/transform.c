@@ -3585,6 +3585,8 @@ static void test_wma_decoder_dmo_output_type(void)
     good_output_type = (void *)buffer_good_output;
     bad_output_type = (void *)buffer_bad_output;
     init_dmo_media_type_audio(input_type, input_subtype, channel_count, rate, 16);
+    ((WAVEFORMATEX *)(input_type + 1))->nBlockAlign = 640;
+    ((WAVEFORMATEX *)(input_type + 1))->nAvgBytesPerSec = 2000;
     init_dmo_media_type_audio(good_output_type, &MEDIASUBTYPE_PCM, channel_count, rate, bits_per_sample);
     memset(bad_output_type, 0, sizeof(buffer_bad_output));
 
