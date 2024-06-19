@@ -604,7 +604,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
                                                   SIZE_T size, SIZE_T *bytes_written )
 {
     CROSS_PROCESS_WORK_LIST *list = open_cross_process_connection( process );
-    DWORD old_prot, prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE | PAGE_EXECUTE_WRITECOPY;
+    DWORD old_prot, prot = PAGE_TARGETS_NO_UPDATE | PAGE_ENCLAVE_NO_CHANGE;
     MEMORY_BASIC_INFORMATION info;
     void *base_addr;
     SIZE_T region_size;
@@ -634,6 +634,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteProcessMemory( HANDLE process, void *addr, co
         base_addr = ROUND_ADDR( addr );
         region_size = ROUND_SIZE( addr, size );
         region_size = min( region_size,  (char *)info.BaseAddress + info.RegionSize - (char *)base_addr );
+        prot |= (info.Type == MEM_PRIVATE) ? PAGE_EXECUTE_READWRITE : PAGE_EXECUTE_WRITECOPY;
 
         send_cross_process_notification( list, CrossProcessPreVirtualProtect,
                                          base_addr, region_size, 1, prot );
