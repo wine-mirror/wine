@@ -1121,10 +1121,20 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 }
 
 
-static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
+static BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    if (!intersect_rect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
+    RECT virtual_rect = NtUserGetVirtualScreenRect();
+
+    *surface_rect = *visible_rect;
+
+    /* crop surfaces which are larger than the virtual screen rect, some applications create huge windows */
+    if ((surface_rect->right - surface_rect->left > virtual_rect.right - virtual_rect.left ||
+         surface_rect->bottom - surface_rect->top > virtual_rect.bottom - virtual_rect.top) &&
+        !intersect_rect( surface_rect, surface_rect, &virtual_rect ))
+        return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
+
+    /* round the surface coordinates to avoid re-creating them too often on resize */
     surface_rect->left &= ~31;
     surface_rect->top  &= ~31;
     surface_rect->right  = max( surface_rect->left + 32, (surface_rect->right + 31) & ~31 );
