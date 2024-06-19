@@ -3864,8 +3864,7 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
         if (!set)
             set = CryptInitOIDFunctionSet(
              CRYPT_OID_VERIFY_CERTIFICATE_CHAIN_POLICY_FUNC, 0);
-        CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, szPolicyOID, 0,
-         (void **)&verifyPolicy, &hFunc);
+        CryptGetOIDFunctionAddress(set, 0, szPolicyOID, 0, (void **)&verifyPolicy, &hFunc);
     }
     if (verifyPolicy)
         ret = verifyPolicy(szPolicyOID, pChainContext, pPolicyPara,
