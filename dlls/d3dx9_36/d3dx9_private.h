@@ -174,8 +174,6 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 
 HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const void *src_data,
     const PALETTEENTRY *palette, DWORD filter, D3DCOLOR color_key, const D3DXIMAGE_INFO *src_info);
-HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, const void *src_data,
-    const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info);
 HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLOCKED_RECT *lock,
         IDirect3DSurface9 **temp_surface, BOOL write);
 HRESULT unlock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect,

@@ -619,58 +619,6 @@ HRESULT load_cube_texture_from_dds(IDirect3DCubeTexture9 *cube_texture, const vo
     return D3D_OK;
 }
 
-HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, const void *src_data,
-    const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info)
-{
-    HRESULT hr;
-    UINT mip_level;
-    UINT mip_levels;
-    UINT src_slice_pitch;
-    UINT src_row_pitch;
-    D3DBOX src_box;
-    UINT width, height, depth;
-    IDirect3DVolume9 *volume;
-    const struct dds_header *header = src_data;
-    const BYTE *pixels = (BYTE *)(header + 1);
-
-    if (src_info->ResourceType != D3DRTYPE_VOLUMETEXTURE)
-        return D3DXERR_INVALIDDATA;
-
-    width = src_info->Width;
-    height = src_info->Height;
-    depth = src_info->Depth;
-    mip_levels = min(src_info->MipLevels, IDirect3DVolumeTexture9_GetLevelCount(volume_texture));
-
-    for (mip_level = 0; mip_level < mip_levels; mip_level++)
-    {
-        hr = d3dx_calculate_pixels_size(src_info->Format, width, height, &src_row_pitch, &src_slice_pitch);
-        if (FAILED(hr)) return hr;
-
-        hr = IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, mip_level, &volume);
-        if (FAILED(hr)) return hr;
-
-        src_box.Left = 0;
-        src_box.Top = 0;
-        src_box.Right = width;
-        src_box.Bottom = height;
-        src_box.Front = 0;
-        src_box.Back = depth;
-
-        hr = D3DXLoadVolumeFromMemory(volume, palette, NULL, pixels, src_info->Format,
-            src_row_pitch, src_slice_pitch, NULL, &src_box, filter, color_key);
-
-        IDirect3DVolume9_Release(volume);
-        if (FAILED(hr)) return hr;
-
-        pixels += depth * src_slice_pitch;
-        width = max(1, width / 2);
-        height = max(1, height / 2);
-        depth = max(1, depth / 2);
-    }
-
-    return D3D_OK;
-}
-
 static HRESULT d3dx_initialize_image_from_dds(const void *src_data, uint32_t src_data_size,
         struct d3dx_image *image, uint32_t starting_mip_level)
 {
