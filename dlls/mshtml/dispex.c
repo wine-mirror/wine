@@ -799,6 +799,110 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     return hres;
 }
 
+static HRESULT get_disp_prop(IDispatchEx *dispex, const WCHAR *name, LCID lcid, VARIANT *res,
+        EXCEPINFO *ei, IServiceProvider *caller)
+{
+    DISPPARAMS dp = { 0 };
+    DISPID dispid;
+    HRESULT hres;
+    BSTR bstr;
+
+    if(!(bstr = SysAllocString(name)))
+        return E_OUTOFMEMORY;
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    SysFreeString(bstr);
+    if(SUCCEEDED(hres))
+        hres = IDispatchEx_InvokeEx(dispex, dispid, lcid, DISPATCH_PROPERTYGET, &dp, res, ei, caller);
+    return hres;
+}
+
+static HRESULT function_apply(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
+{
+    IWineJSDispatchHost *this_iface;
+    DISPPARAMS params = { 0 };
+    IDispatchEx *array = NULL;
+    UINT argc = 0;
+    VARIANT *arg;
+    HRESULT hres;
+
+    arg = dp->rgvarg + dp->cArgs - 1;
+    if(dp->cArgs < 1 || V_VT(arg) != VT_DISPATCH || !V_DISPATCH(arg))
+        return CTL_E_ILLEGALFUNCTIONCALL;
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(arg), &IID_IWineJSDispatchHost, (void**)&this_iface);
+    if(FAILED(hres))
+        return CTL_E_ILLEGALFUNCTIONCALL;
+
+    if(dp->cArgs >= 2) {
+        VARIANT length;
+
+        arg--;
+        if(V_VT(arg) != VT_DISPATCH) {
+            hres = CTL_E_ILLEGALFUNCTIONCALL;
+            goto fail;
+        }
+
+        /* FIXME: Native checks if it's an acual JS array. */
+        hres = IDispatch_QueryInterface(V_DISPATCH(arg), &IID_IDispatchEx, (void**)&array);
+        if(FAILED(hres))
+            goto fail;
+
+        V_VT(&length) = VT_EMPTY;
+        hres = get_disp_prop(array, L"length", lcid, &length, ei, caller);
+        if(FAILED(hres)) {
+            if(hres == DISP_E_UNKNOWNNAME)
+                hres = CTL_E_ILLEGALFUNCTIONCALL;
+            goto fail;
+        }
+        if(V_VT(&length) != VT_I4) {
+            VARIANT tmp = length;
+            hres = change_type(&length, &tmp, VT_I4, caller);
+            if(FAILED(hres)) {
+                hres = CTL_E_ILLEGALFUNCTIONCALL;
+                goto fail;
+            }
+        }
+        if(V_I4(&length) < 0) {
+            hres = CTL_E_ILLEGALFUNCTIONCALL;
+            goto fail;
+        }
+        params.cArgs = V_I4(&length);
+
+        /* alloc new params */
+        if(params.cArgs) {
+            if(!(params.rgvarg = malloc(params.cArgs * sizeof(VARIANTARG)))) {
+                hres = E_OUTOFMEMORY;
+                goto fail;
+            }
+            for(argc = 0; argc < params.cArgs; argc++) {
+                WCHAR buf[12];
+
+                arg = params.rgvarg + params.cArgs - argc - 1;
+                swprintf(buf, ARRAY_SIZE(buf), L"%u", argc);
+                hres = get_disp_prop(array, buf, lcid, arg, ei, caller);
+                if(FAILED(hres)) {
+                    if(hres == DISP_E_UNKNOWNNAME) {
+                        V_VT(arg) = VT_EMPTY;
+                        continue;
+                    }
+                    goto fail;
+                }
+            }
+        }
+    }
+
+    hres = IWineJSDispatchHost_CallFunction(this_iface, func->info->id, func->info->tid, &params, res, ei, caller);
+
+fail:
+    while(argc--)
+        VariantClear(&params.rgvarg[params.cArgs - argc - 1]);
+    free(params.rgvarg);
+    if(array)
+        IDispatchEx_Release(array);
+    IWineJSDispatchHost_Release(this_iface);
+    return hres == E_UNEXPECTED ? CTL_E_ILLEGALFUNCTIONCALL : hres;
+}
+
 static HRESULT function_call(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARIANT *res, EXCEPINFO *ei, IServiceProvider *caller)
 {
     DISPPARAMS params = { dp->rgvarg, NULL, dp->cArgs - 1, 0 };
@@ -823,6 +927,7 @@ static const struct {
     const WCHAR *name;
     HRESULT (*invoke)(func_disp_t*,DISPPARAMS*,LCID,VARIANT*,EXCEPINFO*,IServiceProvider*);
 } function_props[] = {
+    { L"apply", function_apply },
     { L"call",  function_call }
 };
 

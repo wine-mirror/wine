@@ -402,6 +402,21 @@ sync_test("builtin_obj", function() {
     elem2.onclick = function() { clicked = true; };
     elem1.click.call(elem2);
     ok(clicked === true, "elem2.onclick not called");
+
+    elem1 = f.apply(document, ["div"]);
+    elem2 = f.apply(document, ["br"]);
+    document.body.appendChild(elem1);
+    document.body.appendChild(elem2);
+    elem1.onclick = function() { ok(false, "unexpected elem1.onclick"); };
+    clicked = false;
+    elem2.onclick = function() { clicked = true; };
+    elem1.click.apply(elem2);
+    ok(clicked === true, "elem2.onclick not called");
+
+    try {
+        elem1.click.apply(elem2, { length: -1 });
+        ok(false, "exception expected");
+    }catch(ex) {}
 });
 
 sync_test("elem_props", function() {
