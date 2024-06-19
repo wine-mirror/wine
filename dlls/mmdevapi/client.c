@@ -140,21 +140,21 @@ static HRESULT adjust_timing(struct audio_client *client,
         const WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE *)fmt;
         if (fmtex->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
            (fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED))
-            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            return AUDCLNT_E_UNSUPPORTED_FORMAT;
         else {
             if (*period == 0)
                 *period = def_period;
             if (*period < min_period || *period > 5000000)
-                hr = AUDCLNT_E_INVALID_DEVICE_PERIOD;
+                return AUDCLNT_E_INVALID_DEVICE_PERIOD;
             else if (*duration > 20000000) /* The smaller the period, the lower this limit. */
-                hr = AUDCLNT_E_BUFFER_SIZE_ERROR;
+                return AUDCLNT_E_BUFFER_SIZE_ERROR;
             else if (flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) {
                 if (*duration != *period)
-                    hr = AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
+                    return AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
 
                 FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
 
-                hr = AUDCLNT_E_DEVICE_IN_USE;
+                return AUDCLNT_E_DEVICE_IN_USE;
             } else if (*duration < 8 * *period)
                 *duration = 8 * *period; /* May grow above 2s. */
         }
