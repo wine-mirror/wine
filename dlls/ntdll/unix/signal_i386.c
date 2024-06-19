@@ -2768,10 +2768,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI("\t.cfi_restore_state\n")
 
                    "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
-                   ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
-                   __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
                    "movl 8(%esp),%eax\n\t"
                    "movl 4(%esp),%esp\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
