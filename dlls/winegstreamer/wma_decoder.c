@@ -661,8 +661,8 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
         DMO_MEDIA_TYPE *type)
 {
     struct wma_decoder *decoder = impl_from_IMediaObject(iface);
+    UINT32 depth, channels, rate;
     IMFMediaType *media_type;
-    UINT32 depth;
     HRESULT hr;
 
     TRACE("iface %p, index %lu, type_index %lu, type %p\n", iface, index, type_index, type);
@@ -685,6 +685,16 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
         hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_Float);
     else
         hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, &channels);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, depth * channels / 8);
+
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate);
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, depth * channels / 8 * rate);
 
     if (SUCCEEDED(hr))
         hr = IMFMediaType_DeleteItem(media_type, &MF_MT_USER_DATA);
