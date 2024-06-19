@@ -2550,16 +2550,14 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
             D3DX_DEFAULT, D3DX_FILTER_POINT, 0, &img_info, NULL, &texture);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-    check_texture_mip_levels(texture, 3, TRUE);
+    check_texture_mip_levels(texture, 3, FALSE);
     check_image_info(&img_info, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_BMP, FALSE);
     check_volume_texture_level_desc(texture, 0, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 4, 4, 1, FALSE);
-    check_volume_texture_level_desc(texture, 1, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, TRUE);
-    check_volume_texture_level_desc(texture, 2, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, TRUE);
+    check_volume_texture_level_desc(texture, 1, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 2, 2, 1, FALSE);
+    check_volume_texture_level_desc(texture, 2, D3DFMT_A8R8G8B8, D3DUSAGE_DYNAMIC, D3DPOOL_DEFAULT, 1, 1, 1, FALSE);
 
     for (mip_level = 0; mip_level < 3; ++mip_level)
     {
-        BOOL todo = !!mip_level;
-
         IDirect3DVolumeTexture9_GetLevelDesc(texture, mip_level, &desc);
         get_texture_volume_readback(device, texture, mip_level, &volume_rb);
         for (z = 0; z < desc.Depth; ++z)
@@ -2571,9 +2569,9 @@ static void test_D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *dev
                 for (x = 0; x < desc.Width; ++x)
                 {
                     if (desc.Width == 1 || x < (desc.Width / 2))
-                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], todo);
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[0], FALSE);
                     else
-                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], todo);
+                        check_volume_readback_pixel_4bpp(&volume_rb, x, y, z, expected_color[1], FALSE);
                 }
             }
         }

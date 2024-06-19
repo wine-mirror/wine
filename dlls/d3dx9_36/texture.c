@@ -1154,12 +1154,6 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
         goto err;
     }
 
-    if (mip_levels > image_info.MipLevels)
-    {
-        FIXME("Generation of mipmaps for volume textures is not implemented yet.\n");
-        mip_levels = image_info.MipLevels;
-    }
-
     dynamic_texture = (caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (usage & D3DUSAGE_DYNAMIC);
     if (pool == D3DPOOL_DEFAULT && !dynamic_texture)
     {
@@ -1211,6 +1205,13 @@ HRESULT WINAPI D3DXCreateVolumeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
     if (FAILED(hr))
     {
         FIXME("Texture loading failed.\n");
+        goto err;
+    }
+
+    hr = D3DXFilterTexture((IDirect3DBaseTexture9 *)tex, palette, loaded_miplevels - 1, mip_filter);
+    if (FAILED(hr))
+    {
+        FIXME("Texture filtering failed.\n");
         goto err;
     }
 
