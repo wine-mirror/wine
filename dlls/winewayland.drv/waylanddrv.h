@@ -236,6 +236,7 @@ void wayland_output_use_xdg_extension(struct wayland_output *output);
  *          Wayland surface
  */
 
+BOOL get_surface_rect(const RECT *visible_rect, RECT *surface_rect);
 struct wayland_surface *wayland_surface_create(HWND hwnd);
 void wayland_surface_destroy(struct wayland_surface *surface);
 void wayland_surface_make_toplevel(struct wayland_surface *surface);
@@ -272,7 +273,7 @@ void wayland_shm_buffer_unref(struct wayland_shm_buffer *shm_buffer);
  *          Wayland window surface
  */
 
-void wayland_window_surface_update_wayland_surface(struct window_surface *surface,
+void wayland_window_surface_update_wayland_surface(struct window_surface *surface, const RECT *visible_rect,
                                                    struct wayland_surface *wayland_surface);
 void wayland_window_flush(HWND hwnd);
 

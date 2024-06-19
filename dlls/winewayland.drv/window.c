@@ -124,7 +124,7 @@ static void wayland_win_data_destroy(struct wayland_win_data *data)
 
     if (data->window_surface)
     {
-        wayland_window_surface_update_wayland_surface(data->window_surface, NULL);
+        wayland_window_surface_update_wayland_surface(data->window_surface, NULL, NULL);
         window_surface_release(data->window_surface);
     }
     if (data->wayland_surface) wayland_surface_destroy(data->wayland_surface);
@@ -200,20 +200,20 @@ static void reapply_cursor_clipping(void)
     NtUserSetThreadDpiAwarenessContext(context);
 }
 
-static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data)
+static void wayland_win_data_update_wayland_surface(struct wayland_win_data *data, const RECT *visible_rect)
 {
     struct wayland_surface *surface = data->wayland_surface;
     HWND parent = NtUserGetAncestor(data->hwnd, GA_PARENT);
     BOOL visible, xdg_visible;
     WCHAR text[1024];
 
-    TRACE("hwnd=%p\n", data->hwnd);
+    TRACE("hwnd=%p, rect=%s\n", data->hwnd, wine_dbgstr_rect(visible_rect));
 
     /* We don't want wayland surfaces for child windows. */
     if (parent != NtUserGetDesktopWindow() && parent != 0)
     {
         if (data->window_surface)
-            wayland_window_surface_update_wayland_surface(data->window_surface, NULL);
+            wayland_window_surface_update_wayland_surface(data->window_surface, NULL, NULL);
         if (surface) wayland_surface_destroy(surface);
         surface = NULL;
         goto out;
@@ -251,7 +251,7 @@ static void wayland_win_data_update_wayland_surface(struct wayland_win_data *dat
     pthread_mutex_unlock(&surface->mutex);
 
     if (data->window_surface)
-        wayland_window_surface_update_wayland_surface(data->window_surface, surface);
+        wayland_window_surface_update_wayland_surface(data->window_surface, visible_rect, surface);
 
     /* Size/position changes affect the effective pointer constraint, so update
      * it as needed. */
@@ -432,6 +432,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rec
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
     HWND parent;
     BOOL visible, ret = FALSE;
+    RECT surface_rect;
 
     TRACE("hwnd %p window %s client %s visible %s flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
@@ -445,6 +446,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rec
               !(swp_flags & SWP_HIDEWINDOW);
 
     if ((parent && parent != NtUserGetDesktopWindow()) || !visible) goto done; /* use default surface */
+    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     ret = TRUE;
 
@@ -484,7 +486,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
     if (data->window_surface) window_surface_release(data->window_surface);
     data->window_surface = surface;
 
-    wayland_win_data_update_wayland_surface(data);
+    wayland_win_data_update_wayland_surface(data, visible_rect);
     if (data->wayland_surface) wayland_win_data_update_wayland_state(data);
 
     wayland_win_data_release(data);
