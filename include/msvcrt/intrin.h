@@ -15,15 +15,32 @@
 extern "C" {
 #endif
 
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
+
 #if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+
+#if __has_builtin(__cpuidex) || (defined(_MSC_VER) && !defined(__clang__))
+void __cpuidex(int info[4], int ax, int cx);
+#pragma intrinsic(__cpuidex)
+#else
 static inline void __cpuidex(int info[4], int ax, int cx)
 {
   __asm__ ("cpuid" : "=a"(info[0]), "=b" (info[1]), "=c"(info[2]), "=d"(info[3]) : "a"(ax), "c"(cx));
 }
+#endif
+
+#if __has_builtin(__cpuid) || (defined(_MSC_VER) && !defined(__clang__))
+void __cpuid(int info[4], int ax);
+#pragma intrinsic(__cpuid)
+#else
 static inline void __cpuid(int info[4], int ax)
 {
     return __cpuidex(info, ax, 0);
 }
+#endif
+
 #endif
 
 #if defined(__aarch64__) || defined(__arm64ec__)
