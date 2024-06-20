@@ -249,7 +249,7 @@ NTSTATUS WINAPI RtlWow64GetThreadSelectorEntry( HANDLE handle, THREAD_DESCRIPTOR
     {
         /* hardcoded values */
 #ifdef __arm64ec__
-        context.SegCs = 0x33;
+        context.SegCs = 0x23;
         context.SegSs = 0x2b;
         context.SegFs = 0x53;
 #elif defined(__x86_64__)
