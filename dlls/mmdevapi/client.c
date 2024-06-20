@@ -1002,17 +1002,23 @@ static HRESULT WINAPI client_GetSharedModeEnginePeriod(IAudioClient3 *iface,
                                                 UINT32 *max_period_frames)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
-    FIXME("(%p)->(%p, %p, %p, %p, %p) - partial stub\n",
+    REFERENCE_TIME def_period, min_period;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p, %p, %p, %p)\n",
           This, format, default_period_frames,
           unit_period_frames, min_period_frames,
           max_period_frames);
 
-    *default_period_frames =
-        *min_period_frames =
-        *max_period_frames =
-        format->nSamplesPerSec / 100; /* ~10ms */
-    *unit_period_frames = 1;
-    return S_OK;
+    if (FAILED(hr = get_periods(This, &def_period, &min_period)))
+        return hr;
+
+    *default_period_frames = def_period * format->nSamplesPerSec / (REFERENCE_TIME)10000000;
+    *min_period_frames     = min_period * format->nSamplesPerSec / (REFERENCE_TIME)10000000;
+    *max_period_frames     = *default_period_frames;
+    *unit_period_frames    = 1;
+
+    return hr;
 }
 
 static HRESULT WINAPI client_GetCurrentSharedModeEnginePeriod(IAudioClient3 *iface,
