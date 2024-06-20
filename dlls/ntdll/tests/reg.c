@@ -2553,6 +2553,7 @@ struct query_reg_values_test
     ULONG expected_type;
     const WCHAR *expected_data;
     ULONG expected_data_size;
+    ULONG size_limit;
 };
 
 static unsigned int query_routine_calls;
@@ -2625,6 +2626,23 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
 
 static UNICODE_STRING query_reg_values_direct_str;
 
+static ULONG query_reg_values_direct_int;
+
+static union
+{
+    ULONG size;
+    char data[16];
+}
+query_reg_values_direct_sized;
+
+static struct
+{
+    ULONG size;
+    ULONG type;
+    char data[16];
+}
+query_reg_values_direct_typed;
+
 static struct query_reg_values_test query_reg_values_tests[] =
 {
     /* Empty table */
@@ -2644,7 +2662,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* The query routine is called for every value in current key */
     {
         {{ query_routine }},
-        STATUS_SUCCESS, 4, SKIP_NAME_CHECK | SKIP_DATA_CHECK
+        STATUS_SUCCESS, 6, SKIP_NAME_CHECK | SKIP_DATA_CHECK
     },
     /* NOVALUE is ignored when the name is not null */
     {
@@ -2677,6 +2695,26 @@ static struct query_reg_values_test query_reg_values_tests[] =
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive",
            &query_reg_values_direct_str }},
         STATUS_SUCCESS, 0, 0, REG_SZ, L"%SYSTEMDRIVE%"
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife32", &query_reg_values_direct_int }},
+        STATUS_SUCCESS, 0, 0, REG_DWORD, (WCHAR*)42
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_sized }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2a\0\0", sizeof(UINT64)
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_sized }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\xff", 1, 1
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_typed }},
+        STATUS_SUCCESS, 0, 0, REG_QWORD, L"\x2a\0\0", sizeof(UINT64)
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_typed }},
+        STATUS_SUCCESS, 0, 0, 0x23, L"\x23", 1, 1
     },
     /* DIRECT on a multi-string crashes on Windows without NOEXPAND */
     /* {
@@ -2783,8 +2821,8 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* DIRECT additionally requires the default value to be a string */
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
-           &query_reg_values_direct_str, REG_DWORD, (WCHAR*)0xdeadbeef }},
-        STATUS_SUCCESS, 0, 0, REG_NONE, NULL, -1
+           &query_reg_values_direct_int, REG_DWORD, (WCHAR*)0xdeadbeef }},
+        STATUS_SUCCESS, 0
     },
     /* REQUIRED fails if the value doesn't exist and there is no default */
     {
@@ -2821,8 +2859,16 @@ static void test_RtlQueryRegistryValues(void)
                              L"Brussels\0Paris\0%PATH%", sizeof(L"Brussels\0Paris\0%PATH%"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value CapitalsOfEurope: %lu\n", status);
 
+    status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"MeaningOfLife32", REG_DWORD,
+                             L"\x2a", sizeof(DWORD));
+    ok(status == ERROR_SUCCESS, "Failed to create registry value MeaningOfLife32: %lu\n", status);
+
+    status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"MeaningOfLife64", REG_QWORD,
+                             L"\x2a\0\0", sizeof(UINT64));
+    ok(status == ERROR_SUCCESS, "Failed to create registry value MeaningOfLife64: %lu\n", status);
+
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest\\subkey", L"Color", REG_SZ,
-                             (void*)L"Yellow", sizeof(L"Yellow"));
+                             L"Yellow", sizeof(L"Yellow"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value Color: %lu\n", status);
 
     query_reg_values_direct_str.MaximumLength = 32 * sizeof(WCHAR);
@@ -2846,9 +2892,21 @@ static void test_RtlQueryRegistryValues(void)
         }
 
         query_routine_calls = 0;
+
         query_reg_values_direct_str.Length = query_reg_values_direct_str.MaximumLength - sizeof(WCHAR);
         memset(query_reg_values_direct_str.Buffer, 0x23, query_reg_values_direct_str.Length);
         query_reg_values_direct_str.Buffer[query_reg_values_direct_str.Length] = 0;
+
+        query_reg_values_direct_int = 1;
+
+        memset(query_reg_values_direct_sized.data, 0x23, sizeof(query_reg_values_direct_sized));
+        query_reg_values_direct_sized.size = test->size_limit ? -test->size_limit
+                                                              : -(LONG)sizeof(query_reg_values_direct_sized);
+
+        query_reg_values_direct_typed.size = test->size_limit ? test->size_limit
+                                                              : sizeof(query_reg_values_direct_typed.data);
+        query_reg_values_direct_typed.type = 0x23;
+        memset(query_reg_values_direct_typed.data, 0x23, sizeof(query_reg_values_direct_typed.data));
 
         status = pRtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer, test->query_table, test, NULL);
 
@@ -2877,22 +2935,54 @@ static void test_RtlQueryRegistryValues(void)
                     expected_size = test->expected_data_size;
                 }
 
-                if (!expected_size && expected_data && (expected_type == REG_SZ || expected_type == REG_EXPAND_SZ))
-                    expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
-                else if (expected_size == -1)
-                    expected_size = query_reg_values_direct_str.MaximumLength;
-
-                todo_wine_if(test->flags & WINE_TODO_SIZE)
-                ok(query_reg_values_direct_str.Length + sizeof(WCHAR) == expected_size,
-                   "Expected size %lu, got %Iu\n", expected_size,
-                   query_reg_values_direct_str.Length + sizeof(WCHAR));
-
-                if (expected_data)
+                if (query->EntryContext == &query_reg_values_direct_str)
                 {
-                    todo_wine_if(test->flags & WINE_TODO_DATA)
-                    ok(!memcmp(query_reg_values_direct_str.Buffer, expected_data, expected_size),
-                       "Expected data %s, got %s\n", debugstr_w(expected_data),
-                       debugstr_w(query_reg_values_direct_str.Buffer));
+                    if (!expected_size && expected_data)
+                        expected_size = (wcslen(expected_data) + 1) * sizeof(WCHAR);
+                    else if (expected_size == -1)
+                        expected_size = query_reg_values_direct_str.MaximumLength;
+
+                    todo_wine_if(test->flags & WINE_TODO_SIZE)
+                    ok(query_reg_values_direct_str.Length + sizeof(WCHAR) == expected_size,
+                       "Expected size %lu, got %Iu\n", expected_size,
+                       query_reg_values_direct_str.Length + sizeof(WCHAR));
+
+                    if (expected_data)
+                    {
+                        todo_wine_if(test->flags & WINE_TODO_DATA)
+                        ok(!memcmp(query_reg_values_direct_str.Buffer, expected_data, expected_size),
+                           "Expected data %s, got %s\n", debugstr_w(expected_data),
+                           debugstr_w(query_reg_values_direct_str.Buffer));
+                    }
+                }
+                else if (query->EntryContext == &query_reg_values_direct_int)
+                {
+                    if (expected_data)
+                    {
+                        ok(!memcmp(&query_reg_values_direct_int, &expected_data, expected_size),
+                           "Data does not match\n");
+                    }
+                    else
+                    {
+-                       ok(query_reg_values_direct_int == 1,
+                           "Expected data to not change, got %lu\n", query_reg_values_direct_int);
+                    }
+                }
+                else if (query->EntryContext == &query_reg_values_direct_sized)
+                {
+                    ok(!memcmp(query_reg_values_direct_sized.data, expected_data, expected_size),
+                       "Data does not match\n");
+                }
+                else if (query->EntryContext == &query_reg_values_direct_typed)
+                {
+                    ok(query_reg_values_direct_typed.size == expected_size,
+                       "Expected size %lu, got %lu\n", expected_size, query_reg_values_direct_typed.size);
+
+                    ok(query_reg_values_direct_typed.type == expected_type,
+                       "Expected type %lu, got %lu\n", expected_type, query_reg_values_direct_typed.type);
+
+                    ok(!memcmp(query_reg_values_direct_typed.data, expected_data, expected_size),
+                       "Data does not match\n");
                 }
             }
         }

@@ -341,20 +341,19 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                     pInfo->DataLength);
             else
             {
-                if (bin[0] <= sizeof(ULONG))
+                if (bin[0] < 0)
                 {
-                    memcpy(&bin[1], ((CHAR*)pInfo) + pInfo->DataOffset,
-                    min(-bin[0], pInfo->DataLength));
+                    if (pInfo->DataLength <= -bin[0])
+                        memcpy(bin, (char*)pInfo + pInfo->DataOffset, pInfo->DataLength);
                 }
-                else
+                else if (pInfo->DataLength <= bin[0])
                 {
-                   len = min(bin[0], pInfo->DataLength);
-                    bin[1] = len;
-                    bin[2] = pInfo->Type;
-                    memcpy(&bin[3], ((CHAR*)pInfo) + pInfo->DataOffset, len);
+                    bin[0] = len;
+                    bin[1] = pInfo->Type;
+                    memcpy(bin + 2, (char*)pInfo + pInfo->DataOffset, len);
                 }
-           }
-           break;
+            }
+            break;
         }
     }
     else if (pQuery->QueryRoutine)
