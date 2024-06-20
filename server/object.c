@@ -116,6 +116,11 @@ void mark_block_noaccess( void *ptr, size_t size )
 /* mark a block of memory as uninitialized for debugging purposes */
 void mark_block_uninitialized( void *ptr, size_t size )
 {
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
+#endif
     memset( ptr, 0x55, size );
 #if defined(VALGRIND_MAKE_MEM_UNDEFINED)
     VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
