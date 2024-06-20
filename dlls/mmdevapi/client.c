@@ -355,6 +355,100 @@ skip:
     return wcsdup(name);
 }
 
+static HRESULT stream_init(struct audio_client *client,
+                           const AUDCLNT_SHAREMODE mode, const DWORD flags,
+                           REFERENCE_TIME duration, REFERENCE_TIME period,
+                           const WAVEFORMATEX *fmt, const GUID *sessionguid)
+{
+    struct create_stream_params params;
+    UINT32 i, channel_count;
+    stream_handle stream;
+    WCHAR *name;
+
+    if (!fmt)
+        return E_POINTER;
+
+    dump_fmt(fmt);
+
+    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        return E_INVALIDARG;
+
+    if (flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
+                  AUDCLNT_STREAMFLAGS_LOOPBACK |
+                  AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
+                  AUDCLNT_STREAMFLAGS_NOPERSIST |
+                  AUDCLNT_STREAMFLAGS_RATEADJUST |
+                  AUDCLNT_SESSIONFLAGS_EXPIREWHENUNOWNED |
+                  AUDCLNT_SESSIONFLAGS_DISPLAY_HIDE |
+                  AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED |
+                  AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY |
+                  AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)) {
+        FIXME("Unknown flags: %08lx\n", flags);
+        return E_INVALIDARG;
+    }
+
+    if (FAILED(params.result = adjust_timing(client, &duration, &period, mode, flags, fmt)))
+        return params.result;
+
+    sessions_lock();
+
+    if (client->stream) {
+        sessions_unlock();
+        return AUDCLNT_E_ALREADY_INITIALIZED;
+    }
+
+    if (FAILED(params.result = main_loop_start())) {
+        sessions_unlock();
+        return params.result;
+    }
+
+    params.name = name   = get_application_name();
+    params.device        = client->device_name;
+    params.flow          = client->dataflow;
+    params.share         = mode;
+    params.flags         = flags;
+    params.duration      = duration;
+    params.period        = period;
+    params.fmt           = fmt;
+    params.channel_count = &channel_count;
+    params.stream        = &stream;
+
+    wine_unix_call(create_stream, &params);
+
+    free(name);
+
+    if (FAILED(params.result)) {
+        sessions_unlock();
+        return params.result;
+    }
+
+    if (!(client->vols = malloc(channel_count * sizeof(*client->vols)))) {
+        params.result = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    for (i = 0; i < channel_count; i++)
+        client->vols[i] = 1.f;
+
+    params.result = get_audio_session(sessionguid, client->parent, channel_count, &client->session);
+
+exit:
+    if (FAILED(params.result)) {
+        stream_release(stream, NULL);
+        free(client->vols);
+        client->vols = NULL;
+    } else {
+        list_add_tail(&client->session->clients, &client->entry);
+        client->stream = stream;
+        client->channel_count = channel_count;
+        set_stream_volumes(client);
+    }
+
+    sessions_unlock();
+
+    return params.result;
+}
+
 static HRESULT WINAPI capture_QueryInterface(IAudioCaptureClient *iface, REFIID riid, void **ppv)
 {
     struct audio_client *This = impl_from_IAudioCaptureClient(iface);
@@ -537,97 +631,12 @@ static HRESULT WINAPI client_Initialize(IAudioClient3 *iface, AUDCLNT_SHAREMODE 
                                  const WAVEFORMATEX *fmt, const GUID *sessionguid)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
-    struct create_stream_params params;
-    UINT32 i, channel_count;
-    stream_handle stream;
-    WCHAR *name;
 
     TRACE("(%p)->(%x, %lx, %s, %s, %p, %s)\n", This, mode, flags, wine_dbgstr_longlong(duration),
                                                wine_dbgstr_longlong(period), fmt,
                                                debugstr_guid(sessionguid));
 
-    if (!fmt)
-        return E_POINTER;
-
-    dump_fmt(fmt);
-
-    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
-
-    if (flags & ~(AUDCLNT_STREAMFLAGS_CROSSPROCESS |
-                  AUDCLNT_STREAMFLAGS_LOOPBACK |
-                  AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
-                  AUDCLNT_STREAMFLAGS_NOPERSIST |
-                  AUDCLNT_STREAMFLAGS_RATEADJUST |
-                  AUDCLNT_SESSIONFLAGS_EXPIREWHENUNOWNED |
-                  AUDCLNT_SESSIONFLAGS_DISPLAY_HIDE |
-                  AUDCLNT_SESSIONFLAGS_DISPLAY_HIDEWHENEXPIRED |
-                  AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY |
-                  AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM)) {
-        FIXME("Unknown flags: %08lx\n", flags);
-        return E_INVALIDARG;
-    }
-
-    if (FAILED(params.result = adjust_timing(This, &duration, &period, mode, flags, fmt)))
-        return params.result;
-
-    sessions_lock();
-
-    if (This->stream) {
-        sessions_unlock();
-        return AUDCLNT_E_ALREADY_INITIALIZED;
-    }
-
-    if (FAILED(params.result = main_loop_start())) {
-        sessions_unlock();
-        return params.result;
-    }
-
-    params.name = name   = get_application_name();
-    params.device        = This->device_name;
-    params.flow          = This->dataflow;
-    params.share         = mode;
-    params.flags         = flags;
-    params.duration      = duration;
-    params.period        = period;
-    params.fmt           = fmt;
-    params.channel_count = &channel_count;
-    params.stream        = &stream;
-
-    wine_unix_call(create_stream, &params);
-
-    free(name);
-
-    if (FAILED(params.result)) {
-        sessions_unlock();
-        return params.result;
-    }
-
-    if (!(This->vols = malloc(channel_count * sizeof(*This->vols)))) {
-        params.result = E_OUTOFMEMORY;
-        goto exit;
-    }
-
-    for (i = 0; i < channel_count; i++)
-        This->vols[i] = 1.f;
-
-    params.result = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
-
-exit:
-    if (FAILED(params.result)) {
-        stream_release(stream, NULL);
-        free(This->vols);
-        This->vols = NULL;
-    } else {
-        list_add_tail(&This->session->clients, &This->entry);
-        This->stream = stream;
-        This->channel_count = channel_count;
-        set_stream_volumes(This);
-    }
-
-    sessions_unlock();
-
-    return params.result;
+    return stream_init(This, mode, flags, duration, period, fmt, sessionguid);
 }
 
 static HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface, UINT32 *out)
@@ -1025,7 +1034,7 @@ static HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface, D
         return E_POINTER;
 
     duration = period_frames * (REFERENCE_TIME)10000000 / format->nSamplesPerSec;
-    return client_Initialize(iface, AUDCLNT_SHAREMODE_SHARED, flags, duration, 0, format, session_guid);
+    return stream_init(This, AUDCLNT_SHAREMODE_SHARED, flags, duration, 0, format, session_guid);
 }
 
 const IAudioClient3Vtbl AudioClient3_Vtbl =
