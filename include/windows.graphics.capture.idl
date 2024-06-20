@@ -63,6 +63,17 @@ namespace Windows.Graphics.Capture {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 12.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(f2cdd966-22ae-5ea1-9596-3a289344c3be)
+    ]
+    interface IGraphicsCaptureSession3 : IInspectable
+    {
+        [propget] HRESULT IsBorderRequired([out, retval] boolean *value);
+        [propput] HRESULT IsBorderRequired([in] boolean value);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 6.0),
         exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
         uuid(2224a540-5974-49aa-b232-0882536f4cb5)
