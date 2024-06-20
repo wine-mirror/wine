@@ -1098,55 +1098,6 @@ void for_control_append_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *set)
         for_ctrl->set = xstrdupW(set);
 }
 
-/***************************************************************************
- * node_dispose_tree
- *
- * Frees the storage held for a parsed command line
- * - This is not done in the process_commands, as eventually the current
- *   pointer will be modified within the commands, and hence a single free
- *   routine is simpler
- */
-void node_dispose_tree(CMD_NODE *cmds)
-{
-    /* Loop through the commands, freeing them one by one */
-    while (cmds)
-    {
-        CMD_NODE *thisCmd = cmds;
-        cmds = CMD_node_next(cmds);
-        if (thisCmd->op == CMD_SINGLE)
-        {
-            redirection_dispose_list(thisCmd->redirects);
-            command_dispose(thisCmd->command);
-        }
-        else
-            node_dispose_tree(thisCmd->left);
-        free(thisCmd);
-    }
-}
-
-static CMD_NODE *node_create_single(CMD_COMMAND *c, CMD_REDIRECTION *redir)
-{
-    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
-
-    new->op = CMD_SINGLE;
-    new->command = c;
-    new->redirects = redir;
-
-    return new;
-}
-
-static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
-{
-    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
-
-    new->op = op;
-    new->left = l;
-    new->right = r;
-    new->redirects = NULL;
-
-    return new;
-}
-
 void if_condition_dispose(CMD_IF_CONDITION *cond)
 {
     switch (cond->op)
@@ -1285,6 +1236,55 @@ const char *debugstr_if_condition(const CMD_IF_CONDITION *cond)
         FIXME("Unexpected condition operator %u\n", cond->op);
         return "{{}}";
     }
+}
+
+/***************************************************************************
+ * node_dispose_tree
+ *
+ * Frees the storage held for a parsed command line
+ * - This is not done in the process_commands, as eventually the current
+ *   pointer will be modified within the commands, and hence a single free
+ *   routine is simpler
+ */
+void node_dispose_tree(CMD_NODE *cmds)
+{
+    /* Loop through the commands, freeing them one by one */
+    while (cmds)
+    {
+        CMD_NODE *thisCmd = cmds;
+        cmds = CMD_node_next(cmds);
+        if (thisCmd->op == CMD_SINGLE)
+        {
+            redirection_dispose_list(thisCmd->redirects);
+            command_dispose(thisCmd->command);
+        }
+        else
+            node_dispose_tree(thisCmd->left);
+        free(thisCmd);
+    }
+}
+
+static CMD_NODE *node_create_single(CMD_COMMAND *c, CMD_REDIRECTION *redir)
+{
+    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
+
+    new->op = CMD_SINGLE;
+    new->command = c;
+    new->redirects = redir;
+
+    return new;
+}
+
+static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
+{
+    CMD_NODE *new = xalloc(sizeof(CMD_NODE));
+
+    new->op = op;
+    new->left = l;
+    new->right = r;
+    new->redirects = NULL;
+
+    return new;
 }
 
 static void init_msvcrt_io_block(STARTUPINFOW* st)
