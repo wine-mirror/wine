@@ -3228,9 +3228,10 @@ static BOOL if_condition_evaluate(CMD_IF_CONDITION *cond, int *test)
     return TRUE;
 }
 
-static CMD_NODE *for_loop_fileset_parse_line(CMD_NODE *cmdList, int varidx, WCHAR *buffer,
-                                             WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
+static RETURN_CODE for_loop_fileset_parse_line(CMD_NODE *node, int varidx, WCHAR *buffer,
+                                               WCHAR forf_eol, const WCHAR *forf_delims, const WCHAR *forf_tokens)
 {
+    RETURN_CODE return_code = NO_ERROR;
     WCHAR *parm;
     int varoffset;
     int nexttoken, lasttoken = -1;
@@ -3308,14 +3309,13 @@ static CMD_NODE *for_loop_fileset_parse_line(CMD_NODE *cmdList, int varidx, WCHA
     /* Execute the body of the for loop with these values */
     if (forloopcontext->variable[varidx] && forloopcontext->variable[varidx][0] != forf_eol)
     {
-        cmdList = node_execute(cmdList) == NO_ERROR ? cmdList : NULL;
+        return_code = node_execute(node);
     }
     else
     {
         TRACE("Skipping line because of eol\n");
-        cmdList = NULL;
     }
-    return cmdList;
+    return return_code;
 }
 
 void WCMD_save_for_loop_context(BOOL reset)
@@ -3371,11 +3371,11 @@ static BOOL match_ending_delim(WCHAR *string)
     return FALSE;
 }
 
-static CMD_NODE *for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE *input, CMD_NODE *cmdList)
+static RETURN_CODE for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE *input, CMD_NODE *node)
 {
     WCHAR buffer[MAXSTRING];
     int skip_count = for_ctrl->num_lines_to_skip;
-    CMD_NODE *body = NULL;
+    RETURN_CODE return_code = NO_ERROR;
 
     /* Read line by line until end of file */
     while (fgetws(buffer, ARRAY_SIZE(buffer), input))
@@ -3396,19 +3396,19 @@ static CMD_NODE *for_control_execute_from_FILE(CMD_FOR_CONTROL *for_ctrl, FILE *
             break;
         while (len && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
             buffer[--len] = L'\0';
-        body = for_loop_fileset_parse_line(cmdList, for_ctrl->variable_index, buffer,
-                                           for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
+        return_code = for_loop_fileset_parse_line(node, for_ctrl->variable_index, buffer,
+                                                  for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
         buffer[0] = 0;
     }
-    return body;
+    return return_code;
 }
 
-static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+static RETURN_CODE for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
+    RETURN_CODE return_code = NO_ERROR;
     WCHAR set[MAXSTRING];
     WCHAR *args;
     size_t len;
-    CMD_NODE *body = NULL;
     FILE *input;
     int i;
 
@@ -3423,8 +3423,8 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
         args++;
         if (!for_ctrl->num_lines_to_skip)
         {
-            body = for_loop_fileset_parse_line(cmdList, for_ctrl->variable_index, args,
-                                               for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
+            return_code = for_loop_fileset_parse_line(node, for_ctrl->variable_index, args,
+                                                      for_ctrl->eol, for_ctrl->delims, for_ctrl->tokens);
         }
     }
     else if (args[0] == (for_ctrl->use_backq ? L'`' : L'\'') && match_ending_delim(args))
@@ -3439,10 +3439,9 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
         {
             WCMD_print_error();
             WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), args);
-            errorlevel = ERROR_INVALID_FUNCTION;
-            return NULL; /* FOR loop aborts at first failure here */
+            return errorlevel = ERROR_INVALID_FUNCTION; /* FOR loop aborts at first failure here */
         }
-        body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
+        return_code = for_control_execute_from_FILE(for_ctrl, input, node);
         fclose(input);
     }
     else
@@ -3459,20 +3458,19 @@ static CMD_NODE *for_control_execute_fileset(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
             {
                 WCMD_print_error();
                 WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), element);
-                errorlevel = ERROR_INVALID_FUNCTION;
-                return NULL; /* FOR loop aborts at first failure here */
+                return errorlevel = ERROR_INVALID_FUNCTION; /* FOR loop aborts at first failure here */
             }
-            body = for_control_execute_from_FILE(for_ctrl, input, cmdList);
+            return_code = for_control_execute_from_FILE(for_ctrl, input, node);
             fclose(input);
         }
     }
 
-    return body;
+    return return_code;
 }
 
-static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *from_dir, size_t ref_len, CMD_NODE *cmdList)
+static RETURN_CODE for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR *from_dir, size_t ref_len, CMD_NODE *node)
 {
-    CMD_NODE *body = NULL;
+    RETURN_CODE return_code = NO_ERROR;
     size_t len;
     WCHAR set[MAXSTRING];
     WCHAR buffer[MAX_PATH];
@@ -3481,7 +3479,6 @@ static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR 
     if (from_dir)
     {
         len = wcslen(from_dir) + 1;
-        if (len >= ARRAY_SIZE(buffer)) return NULL;
         wcscpy(buffer, from_dir);
         wcscat(buffer, L"\\");
     }
@@ -3524,26 +3521,25 @@ static CMD_NODE *for_control_execute_set(CMD_FOR_CONTROL *for_ctrl, const WCHAR 
 
                 if (insert_pos + wcslen(fd.cFileName) + 1 >= ARRAY_SIZE(buffer)) continue;
                 wcscpy(&buffer[insert_pos], fd.cFileName);
-                body = cmdList;
                 WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-                body = node_execute(cmdList) == NO_ERROR ? cmdList : NULL;
+                return_code = node_execute(node);
             } while (FindNextFileW(hff, &fd) != 0);
             FindClose(hff);
         }
         else
         {
             WCMD_set_for_loop_variable(for_ctrl->variable_index, buffer);
-            body = node_execute(cmdList) == NO_ERROR ? cmdList : NULL;
+            return_code = node_execute(node);
         }
     }
-    return body;
+    return return_code;
 }
 
-static CMD_NODE *for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+static RETURN_CODE for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
     DIRECTORY_STACK *dirs_to_walk;
     size_t ref_len;
-    CMD_NODE *body = NULL;
+    RETURN_CODE return_code = NO_ERROR;
 
     if (for_ctrl->root_dir)
     {
@@ -3562,19 +3558,19 @@ static CMD_NODE *for_control_execute_walk_files(CMD_FOR_CONTROL *for_ctrl, CMD_N
         if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
             WCMD_add_dirstowalk(dirs_to_walk);
 
-        body = for_control_execute_set(for_ctrl, dirs_to_walk->dirName, ref_len, cmdList);
+        return_code = for_control_execute_set(for_ctrl, dirs_to_walk->dirName, ref_len, node);
         /* If we are walking directories, move on to any which remain */
         dirs_to_walk = WCMD_dir_stack_free(dirs_to_walk);
     }
     TRACE("Finished all directories.\n");
 
-    return body;
+    return return_code;
 }
 
-static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *cmdList)
+static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
+    RETURN_CODE return_code = NO_ERROR;
     WCHAR set[MAXSTRING];
-    CMD_NODE *body = NULL;
     int numbers[3] = {0, 0, 0}, var;
     int i;
 
@@ -3603,14 +3599,14 @@ static CMD_NODE *for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NODE
         swprintf(tmp, ARRAY_SIZE(tmp), L"%d", var);
         WCMD_set_for_loop_variable(for_ctrl->variable_index, tmp);
         TRACE("Processing FOR number %s\n", wine_dbgstr_w(tmp));
-        body = node_execute(cmdList) == NO_ERROR ? cmdList : NULL;
+        return_code = node_execute(node);
     }
-    return body;
+    return return_code;
 }
 
-static CMD_NODE *for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
+static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
 {
-    CMD_NODE *last;
+    RETURN_CODE return_code;
 
     if (!for_ctrl->set) return NO_ERROR;
 
@@ -3620,22 +3616,22 @@ static CMD_NODE *for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node)
     {
     case CMD_FOR_FILETREE:
         if (for_ctrl->flags & CMD_FOR_FLAG_TREE_RECURSE)
-            last = for_control_execute_walk_files(for_ctrl, node);
+            return_code = for_control_execute_walk_files(for_ctrl, node);
         else
-            last = for_control_execute_set(for_ctrl, NULL, 0, node);
+            return_code = for_control_execute_set(for_ctrl, NULL, 0, node);
         break;
     case CMD_FOR_FILE_SET:
-        last = for_control_execute_fileset(for_ctrl, node);
+        return_code = for_control_execute_fileset(for_ctrl, node);
         break;
     case CMD_FOR_NUMBERS:
-        last = for_control_execute_numbers(for_ctrl, node);
+        return_code = for_control_execute_numbers(for_ctrl, node);
         break;
     default:
-        last = NULL;
+        return_code = NO_ERROR;
         break;
     }
     WCMD_restore_for_loop_context();
-    return last;
+    return return_code;
 }
 
 RETURN_CODE node_execute(CMD_NODE *node)
@@ -3723,7 +3719,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             return_code = ERROR_INVALID_FUNCTION;
         break;
     case CMD_FOR:
-        return_code = for_control_execute(&node->for_ctrl, node->do_block) ? NO_ERROR : ERROR_INVALID_FUNCTION;
+        return_code = for_control_execute(&node->for_ctrl, node->do_block);
         break;
     default:
         FIXME("Unexpected operator %u\n", node->op);
