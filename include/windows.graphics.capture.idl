@@ -38,6 +38,9 @@ namespace Windows.Graphics.Capture {
 
     interface IDirect3D11CaptureFrame;
     interface IDirect3D11CaptureFrame2;
+    interface IDirect3D11CaptureFramePool;
+    interface IDirect3D11CaptureFramePoolStatics;
+    interface IDirect3D11CaptureFramePoolStatics2;
     interface IGraphicsCaptureItem;
     interface IGraphicsCaptureItemStatics;
     interface IGraphicsCaptureItemStatics2;
@@ -47,12 +50,14 @@ namespace Windows.Graphics.Capture {
     interface IGraphicsCaptureSessionStatics;
 
     runtimeclass Direct3D11CaptureFrame;
+    runtimeclass Direct3D11CaptureFramePool;
     runtimeclass GraphicsCaptureItem;
     runtimeclass GraphicsCaptureSession;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Capture.GraphicsCaptureItem *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Capture.GraphicsCaptureItem *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.Direct3D11CaptureFramePool *, IInspectable *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *>;
     }
 
@@ -86,6 +91,59 @@ namespace Windows.Graphics.Capture {
     {
         [propget] HRESULT DirtyRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.RectInt32> **value);
         [propget] HRESULT DirtyRegionMode([out, retval] Windows.Graphics.Capture.GraphicsCaptureDirtyRegionMode *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(24eb6d22-1975-422e-82e7-780dbd8ddf24)
+    ]
+    interface IDirect3D11CaptureFramePool : IInspectable
+    {
+        HRESULT Recreate(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers, [in] Windows.Graphics.SizeInt32 size);
+        HRESULT TryGetNextFrame(
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFrame **result);
+        [eventadd] HRESULT FrameArrived(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.Direct3D11CaptureFramePool *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken* token);
+        [eventremove] HRESULT FrameArrived([in] EventRegistrationToken token);
+        HRESULT CreateCaptureSession(
+            [in] Windows.Graphics.Capture.GraphicsCaptureItem *item,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureSession **result);
+        [propget] HRESULT DispatcherQueue([out, retval] Windows.System.DispatcherQueue **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(7784056a-67aa-4d53-ae54-1088d5a8ca21)
+    ]
+    interface IDirect3D11CaptureFramePoolStatics : IInspectable
+    {
+        HRESULT Create(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers,
+            [in] Windows.Graphics.SizeInt32 size,
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFramePool **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFramePool),
+        uuid(589b103f-6bbc-5df5-a991-02e28b3b66d5)
+    ]
+    interface IDirect3D11CaptureFramePoolStatics2 : IInspectable
+    {
+        HRESULT CreateFreeThreaded(
+            [in] Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice *device,
+            [in] Windows.Graphics.DirectX.DirectXPixelFormat pixel_format,
+            [in] INT32 number_of_buffers,
+            [in] Windows.Graphics.SizeInt32 size,
+            [out, retval] Windows.Graphics.Capture.Direct3D11CaptureFramePool **result);
     }
 
     [
@@ -180,6 +238,19 @@ namespace Windows.Graphics.Capture {
     {
         [default] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame;
         [contract(Windows.Foundation.UniversalApiContract, 19.0)] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame2;
+        interface Windows.Foundation.IClosable;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Capture.IDirect3D11CaptureFramePoolStatics, Windows.Foundation.UniversalApiContract, 6.0),
+        static(Windows.Graphics.Capture.IDirect3D11CaptureFramePoolStatics2, Windows.Foundation.UniversalApiContract, 7.0),
+        threading(both)
+    ]
+    runtimeclass Direct3D11CaptureFramePool
+    {
+        [default] interface Windows.Graphics.Capture.IDirect3D11CaptureFramePool;
         interface Windows.Foundation.IClosable;
     }
 
