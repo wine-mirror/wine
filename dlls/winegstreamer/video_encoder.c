@@ -38,6 +38,9 @@ struct video_encoder
     IMFTransform IMFTransform_iface;
     LONG refcount;
 
+    const GUID *const *output_types;
+    UINT output_type_count;
+
     IMFAttributes *attributes;
 };
 
@@ -174,8 +177,14 @@ static HRESULT WINAPI transform_GetInputAvailableType(IMFTransform *iface, DWORD
 static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWORD id,
         DWORD index, IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+
+    *type = NULL;
+    if (index >= encoder->output_type_count)
+        return MF_E_NO_MORE_TYPES;
+    return MFCreateVideoMediaTypeFromSubtype(encoder->output_types[index], (IMFVideoMediaType **)type);
 }
 
 static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
@@ -275,7 +284,8 @@ static const IMFTransformVtbl transform_vtbl =
     transform_ProcessOutput,
 };
 
-static HRESULT video_encoder_create(struct video_encoder **out)
+static HRESULT video_encoder_create(const GUID *const *output_types, UINT output_type_count,
+        struct video_encoder **out)
 {
     struct video_encoder *encoder;
     HRESULT hr;
@@ -285,6 +295,9 @@ static HRESULT video_encoder_create(struct video_encoder **out)
 
     encoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
     encoder->refcount = 1;
+
+    encoder->output_types = output_types;
+    encoder->output_type_count = output_type_count;
 
     if (FAILED(hr = MFCreateAttributes(&encoder->attributes, 16)))
         goto failed;
@@ -301,6 +314,11 @@ failed:
     free(encoder);
     return hr;
 }
+
+static const GUID *const h264_encoder_output_types[] =
+{
+    &MFVideoFormat_H264,
+};
 
 HRESULT h264_encoder_create(REFIID riid, void **out)
 {
@@ -327,7 +345,8 @@ HRESULT h264_encoder_create(REFIID riid, void **out)
         return hr;
     }
 
-    if (FAILED(hr = video_encoder_create(&encoder)))
+    if (FAILED(hr = video_encoder_create(h264_encoder_output_types, ARRAY_SIZE(h264_encoder_output_types),
+            &encoder)))
         return hr;
 
     TRACE("Created h264 encoder transform %p.\n", &encoder->IMFTransform_iface);
