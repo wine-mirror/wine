@@ -117,7 +117,7 @@ static HRESULT get_periods(struct audio_client *client,
     return params.result;
 }
 
-static HRESULT adjust_timing(struct audio_client *client,
+static HRESULT adjust_timing(struct audio_client *client, const BOOLEAN force_def_period,
                              REFERENCE_TIME *duration, REFERENCE_TIME *period,
                              const AUDCLNT_SHAREMODE mode, const DWORD flags,
                              const WAVEFORMATEX *fmt)
@@ -133,7 +133,10 @@ static HRESULT adjust_timing(struct audio_client *client,
     TRACE("Device periods: %lu default and %lu minimum\n", (ULONG)def_period, (ULONG)min_period);
 
     if (mode == AUDCLNT_SHAREMODE_SHARED) {
-        *period = def_period;
+        if (*period == 0 || force_def_period)
+            *period = def_period;
+        else if (*period < min_period)
+            return AUDCLNT_E_INVALID_DEVICE_PERIOD;
         if (*duration < 3 * *period)
             *duration = 3 * *period;
     } else {
@@ -355,7 +358,7 @@ skip:
     return wcsdup(name);
 }
 
-static HRESULT stream_init(struct audio_client *client,
+static HRESULT stream_init(struct audio_client *client, const BOOLEAN force_def_period,
                            const AUDCLNT_SHAREMODE mode, const DWORD flags,
                            REFERENCE_TIME duration, REFERENCE_TIME period,
                            const WAVEFORMATEX *fmt, const GUID *sessionguid)
@@ -387,7 +390,7 @@ static HRESULT stream_init(struct audio_client *client,
         return E_INVALIDARG;
     }
 
-    if (FAILED(params.result = adjust_timing(client, &duration, &period, mode, flags, fmt)))
+    if (FAILED(params.result = adjust_timing(client, force_def_period, &duration, &period, mode, flags, fmt)))
         return params.result;
 
     sessions_lock();
@@ -636,7 +639,7 @@ static HRESULT WINAPI client_Initialize(IAudioClient3 *iface, AUDCLNT_SHAREMODE 
                                                wine_dbgstr_longlong(period), fmt,
                                                debugstr_guid(sessionguid));
 
-    return stream_init(This, mode, flags, duration, period, fmt, sessionguid);
+    return stream_init(This, TRUE, mode, flags, duration, period, fmt, sessionguid);
 }
 
 static HRESULT WINAPI client_GetBufferSize(IAudioClient3 *iface, UINT32 *out)
@@ -1027,14 +1030,16 @@ static HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface, D
                                                   const GUID *session_guid)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
-    REFERENCE_TIME duration;
-    FIXME("(%p)->(0x%lx, %u, %p, %s) - partial stub\n", This, flags, period_frames, format, debugstr_guid(session_guid));
+    REFERENCE_TIME period;
+
+    TRACE("(%p)->(0x%lx, %u, %p, %s)\n", This, flags, period_frames, format, debugstr_guid(session_guid));
 
     if (!format)
         return E_POINTER;
 
-    duration = period_frames * (REFERENCE_TIME)10000000 / format->nSamplesPerSec;
-    return stream_init(This, AUDCLNT_SHAREMODE_SHARED, flags, duration, 0, format, session_guid);
+    period = period_frames * (REFERENCE_TIME)10000000 / format->nSamplesPerSec;
+
+    return stream_init(This, FALSE, AUDCLNT_SHAREMODE_SHARED, flags, 0, period, format, session_guid);
 }
 
 const IAudioClient3Vtbl AudioClient3_Vtbl =
