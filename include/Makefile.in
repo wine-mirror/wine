@@ -849,6 +849,7 @@ SOURCES = \
 	windows.graphics.directx.idl \
 	windows.graphics.effects.idl \
 	windows.graphics.holographic.idl \
+	windows.graphics.idl \
 	windows.graphics.imaging.idl \
 	windows.h \
 	windows.management.deployment.idl \
