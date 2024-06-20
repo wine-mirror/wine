@@ -52,6 +52,17 @@ namespace Windows.Graphics.Capture {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 10.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
+        uuid(2c39ae40-7d2e-5044-804e-8b6799d4cf9e)
+    ]
+    interface IGraphicsCaptureSession2 : IInspectable
+    {
+        [propget] HRESULT IsCursorCaptureEnabled([out, retval] boolean *value);
+        [propput] HRESULT IsCursorCaptureEnabled([in] boolean value);
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 6.0),
         exclusiveto(Windows.Graphics.Capture.GraphicsCaptureSession),
         uuid(2224a540-5974-49aa-b232-0882536f4cb5)
