@@ -5177,26 +5177,33 @@ static void free_fill_working_set_info_data( struct fill_working_set_info_data *
 }
 
 static void fill_working_set_info( struct fill_working_set_info_data *d, struct file_view *view, BYTE vprot,
-                                   MEMORY_WORKING_SET_EX_INFORMATION *p )
+                                   struct working_set_info_ref *ref, SIZE_T count,
+                                   MEMORY_WORKING_SET_EX_INFORMATION *info )
 {
-    struct kinfo_vmentry *entry = NULL;
-    int i;
+    SIZE_T i;
+    int j;
 
-    for (i = 0; i < d->vmentry_count; i++)
+    for (i = 0; i < count; ++i)
     {
-        if (d->vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= d->vmentries[i].kve_end)
-        {
-            entry = &d->vmentries[i];
-            break;
-        }
-    }
+        MEMORY_WORKING_SET_EX_INFORMATION *p = &info[ref[i].orig_index];
+        struct kinfo_vmentry *entry = NULL;
 
-    p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
-    p->VirtualAttributes.Shared = !is_view_valloc( view );
-    if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
-        p->VirtualAttributes.ShareCount = 1; /* FIXME */
-    if (p->VirtualAttributes.Valid)
-        p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+        for (j = 0; j < d->vmentry_count; j++)
+        {
+            if (d->vmentries[j].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= d->vmentries[j].kve_end)
+            {
+                entry = &d->vmentries[j];
+                break;
+            }
+        }
+
+        p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
+        p->VirtualAttributes.Shared = !is_view_valloc( view );
+        if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+            p->VirtualAttributes.ShareCount = 1; /* FIXME */
+        if (p->VirtualAttributes.Valid)
+            p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+    }
 }
 #else
 static int pagemap_fd = -2;
@@ -5223,23 +5230,31 @@ static void free_fill_working_set_info_data( struct fill_working_set_info_data *
 }
 
 static void fill_working_set_info( struct fill_working_set_info_data *d, struct file_view *view, BYTE vprot,
-                                   MEMORY_WORKING_SET_EX_INFORMATION *p )
+                                   struct working_set_info_ref *ref, SIZE_T count,
+                                   MEMORY_WORKING_SET_EX_INFORMATION *info )
 {
+    MEMORY_WORKING_SET_EX_INFORMATION *p;
     UINT64 pagemap;
+    SIZE_T i;
 
-    if (pagemap_fd == -1 ||
-        pread( pagemap_fd, &pagemap, sizeof(pagemap), ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap) ) != sizeof(pagemap))
+    for (i = 0; i < count; ++i)
     {
-        /* If we don't have pagemap information, default to invalid. */
-        pagemap = 0;
-    }
+        p = &info[ref[i].orig_index];
 
-    p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
-    p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
-    if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
-        p->VirtualAttributes.ShareCount = 1; /* FIXME */
-    if (p->VirtualAttributes.Valid)
-        p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+        if (pagemap_fd == -1 ||
+            pread( pagemap_fd, &pagemap, sizeof(pagemap), ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap) ) != sizeof(pagemap))
+        {
+            /* If we don't have pagemap information, default to invalid. */
+            pagemap = 0;
+        }
+
+        p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
+        p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
+        if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+            p->VirtualAttributes.ShareCount = 1; /* FIXME */
+        if (p->VirtualAttributes.Valid)
+            p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+    }
 }
 #endif
 
@@ -5259,7 +5274,6 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
     struct fill_working_set_info_data data;
     char *start, *end;
     SIZE_T i, count;
-    size_t size;
     struct file_view *view, *prev_view;
     sigset_t sigset;
     BYTE vprot;
@@ -5304,13 +5318,11 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
         while (start != (char *)view->base + view->size && r != ref + count
                && r->addr < (char *)view->base + view->size)
         {
-            size = get_committed_size( view, start, end - start, &vprot, ~VPROT_WRITEWATCH );
-            while (r != ref + count && r->addr < start + size)
-            {
-                if (vprot & VPROT_COMMITTED) fill_working_set_info( &data, view, vprot, &info[r->orig_index] );
-                ++r;
-            }
-            start += size;
+            start += get_committed_size( view, start, end - start, &vprot, ~VPROT_WRITEWATCH );
+            i = 0;
+            while (r + i != ref + count && r[i].addr < start) ++i;
+            if (vprot & VPROT_COMMITTED) fill_working_set_info( &data, view, vprot, r, i, info );
+            r += i;
         }
         if (r == ref + count) break;
         view = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry );
