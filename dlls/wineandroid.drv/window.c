@@ -1136,7 +1136,6 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_re
     if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return FALSE; /* use default surface */
 
     if (data->parent) goto done; /* use default surface */
-    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
     if (is_argb_surface( data->surface )) goto done; /* use default surface */
 
     ret = TRUE;
@@ -1150,7 +1149,7 @@ done:
 /***********************************************************************
  *           ANDROID_CreateWindowSurface
  */
-BOOL ANDROID_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface )
+BOOL ANDROID_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
 {
     struct android_win_data *data;
     DWORD flags;
@@ -1158,7 +1157,7 @@ BOOL ANDROID_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface
     BYTE alpha;
     BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    TRACE( "hwnd %p, swp_flags %08x, surface_rect %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect( surface_rect ), surface );
+    TRACE( "hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
 
     if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
 
@@ -1173,8 +1172,6 @@ BOOL ANDROID_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface
             goto done;
         }
     }
-    if (!(swp_flags & SWP_SHOWWINDOW) && !(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
-        goto done;
 
     if (!layered || !NtUserGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags )) flags = 0;
     if (!(flags & LWA_ALPHA)) alpha = 255;

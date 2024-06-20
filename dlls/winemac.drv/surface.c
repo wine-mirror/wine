@@ -228,12 +228,11 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
 /***********************************************************************
  *              CreateWindowSurface   (MACDRV.@)
  */
-BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface)
+BOOL macdrv_CreateWindowSurface(HWND hwnd, const RECT *surface_rect, struct window_surface **surface)
 {
     struct macdrv_win_data *data;
-    DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
 
-    TRACE("hwnd %p, swp_flags %08x, surface_rect %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(surface_rect), surface);
+    TRACE("hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect(surface_rect), surface);
 
     if (!(data = get_win_data(hwnd))) return TRUE; /* use default surface */
 
@@ -250,7 +249,6 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *surface_r
             goto done;
         }
     }
-    else if (!(swp_flags & SWP_SHOWWINDOW) && !(style & WS_VISIBLE)) goto done;
 
     *surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, data->surface, FALSE);
 

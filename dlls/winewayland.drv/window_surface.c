@@ -524,11 +524,11 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
 /***********************************************************************
  *           WAYLAND_CreateWindowSurface
  */
-BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface)
+BOOL WAYLAND_CreateWindowSurface(HWND hwnd, const RECT *surface_rect, struct window_surface **surface)
 {
     struct wayland_win_data *data;
 
-    TRACE("hwnd %p, swp_flags %08x, surface_rect %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(surface_rect), surface);
+    TRACE("hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect(surface_rect), surface);
 
     if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
 

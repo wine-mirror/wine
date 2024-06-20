@@ -1964,7 +1964,6 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect
           wine_dbgstr_rect(visible_rect));
 
     if (!data->cocoa_window) goto done; /* use default surface */
-    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
     if (data->ulw_layered) goto done; /* use default surface */
 
     ret = TRUE;

@@ -889,7 +889,7 @@ static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *wi
     return TRUE;
 }
 
-static BOOL nulldrv_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface )
+static BOOL nulldrv_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
 {
     return FALSE;
 }

@@ -102,7 +102,7 @@ extern BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COL
                                          struct window_surface **surface );
 extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect );
-extern BOOL ANDROID_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface );
+extern BOOL ANDROID_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface );
 extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                       const RECT *window_rect, const RECT *client_rect,
                                       const RECT *visible_rect, const RECT *valid_rects,

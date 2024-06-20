@@ -431,7 +431,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rec
 {
     struct wayland_win_data *data = wayland_win_data_get(hwnd);
     HWND parent;
-    BOOL visible, ret = FALSE;
+    BOOL ret = FALSE;
 
     TRACE("hwnd %p window %s client %s visible %s flags %08x\n",
           hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
@@ -440,11 +440,7 @@ BOOL WAYLAND_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rec
     if (!data && !(data = wayland_win_data_create(hwnd, window_rect, client_rect))) return FALSE; /* use default surface */
 
     parent = NtUserGetAncestor(hwnd, GA_PARENT);
-    visible = ((NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE) ||
-               (swp_flags & SWP_SHOWWINDOW)) &&
-              !(swp_flags & SWP_HIDEWINDOW);
-
-    if ((parent && parent != NtUserGetDesktopWindow()) || !visible) goto done; /* use default surface */
+    if ((parent && parent != NtUserGetDesktopWindow())) goto done; /* use default surface */
 
     ret = TRUE;
 

@@ -1845,13 +1845,16 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     RECT surface_rect, visible_rect = *window_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface;
 
-    needs_surface = user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect, &visible_rect );
+    if (!user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect, &visible_rect )) needs_surface = FALSE;
+    else if (swp_flags & SWP_HIDEWINDOW) needs_surface = FALSE;
+    else if (swp_flags & SWP_SHOWWINDOW) needs_surface = TRUE;
+    else needs_surface = !!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE);
 
     if (!get_surface_rect( &visible_rect, &surface_rect )) needs_surface = FALSE;
     if (!get_default_window_surface( hwnd, &surface_rect, &new_surface )) return FALSE;
 
     if (!needs_surface || IsRectEmpty( &visible_rect )) needs_surface = FALSE; /* use default surface */
-    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, swp_flags, &surface_rect, &new_surface );
+    else needs_surface = !user_driver->pCreateWindowSurface( hwnd, &surface_rect, &new_surface );
 
     get_window_rects( hwnd, COORDS_SCREEN, &old_window_rect, NULL, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;

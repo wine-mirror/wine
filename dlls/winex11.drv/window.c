@@ -2599,7 +2599,6 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, const RECT *window_rec
     X11DRV_window_to_X_rect( data, visible_rect, window_rect, client_rect );
 
     if (!data->whole_window && !data->embedded) goto done; /* use default surface */
-    if (swp_flags & SWP_HIDEWINDOW) goto done; /* use default surface */
     if (data->use_alpha) goto done; /* use default surface */
 
     ret = TRUE;
