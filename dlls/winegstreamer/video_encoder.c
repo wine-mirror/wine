@@ -41,6 +41,8 @@ struct video_encoder
     const GUID *const *output_types;
     UINT output_type_count;
 
+    IMFMediaType *output_type;
+
     IMFAttributes *attributes;
 };
 
@@ -87,6 +89,8 @@ static ULONG WINAPI transform_Release(IMFTransform *iface)
 
     if (!refcount)
     {
+        if (encoder->output_type)
+            IMFMediaType_Release(encoder->output_type);
         IMFAttributes_Release(encoder->attributes);
         free(encoder);
     }
@@ -195,8 +199,55 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
 
 static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+    UINT32 uint32_value;
+    UINT64 uint64_value;
+    GUID major, subtype;
+    ULONG i;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (!type)
+    {
+        if (encoder->output_type)
+        {
+            IMFMediaType_Release(encoder->output_type);
+            encoder->output_type = NULL;
+        }
+        return S_OK;
+    }
+
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major))
+            || FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+        return E_INVALIDARG;
+
+    if (!IsEqualGUID(&major, &MFMediaType_Video))
+        return MF_E_INVALIDMEDIATYPE;
+
+    for (i = 0; i < encoder->output_type_count; ++i)
+        if (IsEqualGUID(&subtype, encoder->output_types[i]))
+            break;
+    if (i == encoder->output_type_count)
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &uint64_value)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+
+    if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &uint64_value))
+            || FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AVG_BITRATE, &uint32_value))
+            || FAILED(IMFMediaType_GetUINT32(type, &MF_MT_INTERLACE_MODE, &uint32_value)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (encoder->output_type)
+        IMFMediaType_Release(encoder->output_type);
+    IMFMediaType_AddRef((encoder->output_type = type));
+
+    /* FIXME: Add MF_MT_MPEG_SEQUENCE_HEADER attribute. */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
