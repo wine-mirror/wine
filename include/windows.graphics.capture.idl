@@ -34,6 +34,10 @@ import "windows.ui.idl";
 import "windows.ui.composition.idl";
 
 namespace Windows.Graphics.Capture {
+    typedef enum GraphicsCaptureDirtyRegionMode GraphicsCaptureDirtyRegionMode;
+
+    interface IDirect3D11CaptureFrame;
+    interface IDirect3D11CaptureFrame2;
     interface IGraphicsCaptureItem;
     interface IGraphicsCaptureItemStatics;
     interface IGraphicsCaptureItemStatics2;
@@ -42,6 +46,7 @@ namespace Windows.Graphics.Capture {
     interface IGraphicsCaptureSession3;
     interface IGraphicsCaptureSessionStatics;
 
+    runtimeclass Direct3D11CaptureFrame;
     runtimeclass GraphicsCaptureItem;
     runtimeclass GraphicsCaptureSession;
 
@@ -49,6 +54,38 @@ namespace Windows.Graphics.Capture {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Capture.GraphicsCaptureItem *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Capture.GraphicsCaptureItem *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 19.0)
+    ]
+    enum GraphicsCaptureDirtyRegionMode
+    {
+        ReportOnly = 0,
+        ReportAndRender = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFrame),
+        uuid(fa50c623-38da-4b32-acf3-fa9734ad800e)
+    ]
+    interface IDirect3D11CaptureFrame : IInspectable
+    {
+        [propget] HRESULT Surface([out, retval] Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface **value);
+        [propget] HRESULT SystemRelativeTime([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT ContentSize([out, retval] Windows.Graphics.SizeInt32 *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 19.0),
+        exclusiveto(Windows.Graphics.Capture.Direct3D11CaptureFrame),
+        uuid(37869cfa-2b48-5ebf-9afb-dffd805defdb)
+    ]
+    interface IDirect3D11CaptureFrame2 : IInspectable
+    {
+        [propget] HRESULT DirtyRegions([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Graphics.RectInt32> **value);
+        [propget] HRESULT DirtyRegionMode([out, retval] Windows.Graphics.Capture.GraphicsCaptureDirtyRegionMode *value);
     }
 
     [
@@ -133,6 +170,17 @@ namespace Windows.Graphics.Capture {
     interface IGraphicsCaptureSessionStatics : IInspectable
     {
         HRESULT IsSupported([out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass Direct3D11CaptureFrame
+    {
+        [default] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame;
+        [contract(Windows.Foundation.UniversalApiContract, 19.0)] interface Windows.Graphics.Capture.IDirect3D11CaptureFrame2;
+        interface Windows.Foundation.IClosable;
     }
 
     [
