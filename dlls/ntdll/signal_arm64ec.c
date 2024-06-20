@@ -52,6 +52,41 @@ static inline BOOL is_valid_arm64ec_frame( ULONG_PTR frame )
             frame <= get_arm64ec_cpu_area()->EmulatorStackBase);
 }
 
+
+/**********************************************************************
+ *           send_cross_process_notification
+ */
+static BOOL send_cross_process_notification( HANDLE process, UINT id, const void *addr, SIZE_T size,
+                                             int nb_args, ... )
+{
+    CROSS_PROCESS_WORK_LIST *list;
+    CROSS_PROCESS_WORK_ENTRY *entry;
+    void *unused;
+    HANDLE section;
+    va_list args;
+    int i;
+
+    RtlOpenCrossProcessEmulatorWorkConnection( process, &section, (void **)&list );
+    if (!list) return FALSE;
+    if ((entry = RtlWow64PopCrossProcessWorkFromFreeList( &list->free_list )))
+    {
+        entry->id = id;
+        entry->addr = (ULONG_PTR)addr;
+        entry->size = size;
+        if (nb_args)
+        {
+            va_start( args, nb_args );
+            for (i = 0; i < nb_args; i++) entry->args[i] = va_arg( args, int );
+            va_end( args );
+        }
+        RtlWow64PushCrossProcessWorkOntoWorkList( &list->work_list, entry, &unused );
+    }
+    NtUnmapViewOfSection( GetCurrentProcess(), list );
+    NtClose( section );
+    return TRUE;
+}
+
+
 /*******************************************************************
  *         syscalls
  */
@@ -84,8 +119,8 @@ DEFINE_SYSCALL(NtAlertThread, (HANDLE handle))
 DEFINE_SYSCALL(NtAlertThreadByThreadId, (HANDLE tid))
 DEFINE_SYSCALL(NtAllocateLocallyUniqueId, (LUID *luid))
 DEFINE_SYSCALL(NtAllocateUuids, (ULARGE_INTEGER *time, ULONG *delta, ULONG *sequence, UCHAR *seed))
-DEFINE_SYSCALL(NtAllocateVirtualMemory, (HANDLE process, PVOID *ret, ULONG_PTR zero_bits, SIZE_T *size_ptr, ULONG type, ULONG protect))
-DEFINE_SYSCALL(NtAllocateVirtualMemoryEx, (HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type, ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count))
+DEFINE_WRAPPED_SYSCALL(NtAllocateVirtualMemory, (HANDLE process, PVOID *ret, ULONG_PTR zero_bits, SIZE_T *size_ptr, ULONG type, ULONG protect))
+DEFINE_WRAPPED_SYSCALL(NtAllocateVirtualMemoryEx, (HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type, ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count))
 DEFINE_SYSCALL(NtAreMappedFilesTheSame, (PVOID addr1, PVOID addr2))
 DEFINE_SYSCALL(NtAssignProcessToJobObject, (HANDLE job, HANDLE process))
 DEFINE_SYSCALL(NtCallbackReturn, (void *ret_ptr, ULONG ret_len, NTSTATUS status))
@@ -141,11 +176,11 @@ DEFINE_SYSCALL(NtEnumerateValueKey, (HANDLE handle, ULONG index, KEY_VALUE_INFOR
 DEFINE_SYSCALL(NtFilterToken, (HANDLE token, ULONG flags, TOKEN_GROUPS *disable_sids, TOKEN_PRIVILEGES *privileges, TOKEN_GROUPS *restrict_sids, HANDLE *new_token))
 DEFINE_SYSCALL(NtFindAtom, (const WCHAR *name, ULONG length, RTL_ATOM *atom))
 DEFINE_SYSCALL(NtFlushBuffersFile, (HANDLE handle, IO_STATUS_BLOCK *io))
-DEFINE_SYSCALL(NtFlushInstructionCache, (HANDLE handle, const void *addr, SIZE_T size))
+DEFINE_WRAPPED_SYSCALL(NtFlushInstructionCache, (HANDLE handle, const void *addr, SIZE_T size))
 DEFINE_SYSCALL(NtFlushKey, (HANDLE key))
 DEFINE_SYSCALL(NtFlushProcessWriteBuffers, (void))
 DEFINE_SYSCALL(NtFlushVirtualMemory, (HANDLE process, LPCVOID *addr_ptr, SIZE_T *size_ptr, ULONG unknown))
-DEFINE_SYSCALL(NtFreeVirtualMemory, (HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG type))
+DEFINE_WRAPPED_SYSCALL(NtFreeVirtualMemory, (HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG type))
 DEFINE_SYSCALL(NtFsControlFile, (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io, ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size))
 DEFINE_WRAPPED_SYSCALL(NtGetContextThread, (HANDLE handle, ARM64_NT_CONTEXT *context))
 DEFINE_SYSCALL_(ULONG, NtGetCurrentProcessorNumber, (void))
@@ -193,7 +228,7 @@ DEFINE_SYSCALL(NtOpenThreadTokenEx, (HANDLE thread, DWORD access, BOOLEAN self, 
 DEFINE_SYSCALL(NtOpenTimer, (HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr))
 DEFINE_SYSCALL(NtPowerInformation, (POWER_INFORMATION_LEVEL level, void *input, ULONG in_size, void *output, ULONG out_size))
 DEFINE_SYSCALL(NtPrivilegeCheck, (HANDLE token, PRIVILEGE_SET *privs, BOOLEAN *res))
-DEFINE_SYSCALL(NtProtectVirtualMemory, (HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG new_prot, ULONG *old_prot))
+DEFINE_WRAPPED_SYSCALL(NtProtectVirtualMemory, (HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG new_prot, ULONG *old_prot))
 DEFINE_SYSCALL(NtPulseEvent, (HANDLE handle, LONG *prev_state))
 DEFINE_SYSCALL(NtQueryAttributesFile, (const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info))
 DEFINE_SYSCALL(NtQueryDefaultLocale, (BOOLEAN user, LCID *lcid))
@@ -311,6 +346,42 @@ DEFINE_SYSCALL(NtYieldExecution, (void))
 DEFINE_SYSCALL(wine_nt_to_unix_file_name, (const OBJECT_ATTRIBUTES *attr, char *nameA, ULONG *size, UINT disposition))
 DEFINE_SYSCALL(wine_unix_to_nt_file_name, (const char *name, WCHAR *buffer, ULONG *size))
 
+NTSTATUS SYSCALL_API NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR zero_bits,
+                                              SIZE_T *size_ptr, ULONG type, ULONG protect )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (!*ret && (type & MEM_COMMIT)) type |= MEM_RESERVE;
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
+                                                      *ret, *size_ptr, 3, type, protect, 0 );
+
+    status = syscall_NtAllocateVirtualMemory( process, ret, zero_bits, size_ptr, type, protect );
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
+                                                      *ret, *size_ptr, 3, type, protect, status );
+    return status;
+}
+
+NTSTATUS SYSCALL_API NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type,
+                                                ULONG protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (!*ret && (type & MEM_COMMIT)) type |= MEM_RESERVE;
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualAlloc,
+                                                      *ret, *size_ptr, 3, type, protect, 0 );
+
+    status = syscall_NtAllocateVirtualMemoryEx( process, ret, size_ptr, type, protect, parameters, count );
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualAlloc,
+                                                      *ret, *size_ptr, 3, type, protect, status );
+    return status;
+}
+
 NTSTATUS SYSCALL_API NtContinue( CONTEXT *context, BOOLEAN alertable )
 {
     ARM64_NT_CONTEXT arm_ctx;
@@ -319,12 +390,55 @@ NTSTATUS SYSCALL_API NtContinue( CONTEXT *context, BOOLEAN alertable )
     return syscall_NtContinue( &arm_ctx, alertable );
 }
 
+NTSTATUS SYSCALL_API NtFlushInstructionCache( HANDLE process, const void *addr, SIZE_T size )
+{
+    NTSTATUS status = syscall_NtFlushInstructionCache( process, addr, size );
+
+    if (!status)
+    {
+        if (!RtlIsCurrentProcess( process ))
+            send_cross_process_notification( process, CrossProcessFlushCache, addr, size, 0 );
+    }
+    return status;
+}
+
+NTSTATUS SYSCALL_API NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG type )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualFree,
+                                                      *addr_ptr, *size_ptr, 2, type, 0 );
+
+    status = syscall_NtFreeVirtualMemory( process, addr_ptr, size_ptr, type );
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualFree,
+                                                      *addr_ptr, *size_ptr, 2, type, status );
+    return status;
+}
+
 NTSTATUS SYSCALL_API NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
     ARM64_NT_CONTEXT arm_ctx = { .ContextFlags = ctx_flags_x64_to_arm( context->ContextFlags ) };
     NTSTATUS status = syscall_NtGetContextThread( handle, &arm_ctx );
 
     if (!status) context_arm_to_x64( (ARM64EC_NT_CONTEXT *)context, &arm_ctx );
+    return status;
+}
+
+NTSTATUS SYSCALL_API NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
+                                             ULONG new_prot, ULONG *old_prot )
+{
+    BOOL is_current = RtlIsCurrentProcess( process );
+    NTSTATUS status;
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPreVirtualProtect,
+                                                      *addr_ptr, *size_ptr, 2, new_prot, 0 );
+
+    status = syscall_NtProtectVirtualMemory( process, addr_ptr, size_ptr, new_prot, old_prot );
+
+    if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualProtect,
+                                                      *addr_ptr, *size_ptr, 2, new_prot, status );
     return status;
 }
 
