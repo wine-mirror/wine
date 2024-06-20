@@ -910,6 +910,7 @@ struct shared_cursor
 typedef volatile struct
 {
     struct shared_cursor cursor;           /* global cursor information */
+    unsigned char        keystate[256];    /* asynchronous key state */
 } desktop_shm_t;
 
 typedef volatile union

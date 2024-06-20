@@ -894,6 +894,7 @@ struct shared_cursor
 typedef volatile struct
 {
     struct shared_cursor cursor;
+    unsigned char        keystate[256];
 } desktop_shm_t;
 
 typedef volatile union
@@ -6568,7 +6569,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 814
+#define SERVER_PROTOCOL_VERSION 815
 
 /* ### protocol_version end ### */
 
