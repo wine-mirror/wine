@@ -5135,6 +5135,12 @@ static unsigned int get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY
     return STATUS_SUCCESS;
 }
 
+struct working_set_info_ref
+{
+    char *addr;
+    SIZE_T orig_index;
+};
+
 #if defined(HAVE_LIBPROCSTAT)
 struct fill_working_set_info_data
 {
@@ -5237,13 +5243,24 @@ static void fill_working_set_info( struct fill_working_set_info_data *d, struct 
 }
 #endif
 
+static int compare_working_set_info_ref( const void *a, const void *b )
+{
+    const struct working_set_info_ref *r1 = a, *r2 = b;
+
+    if (r1->addr < r2->addr) return -1;
+    return r1->addr > r2->addr;
+}
+
 static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
                                     MEMORY_WORKING_SET_EX_INFORMATION *info,
                                     SIZE_T len, SIZE_T *res_len )
 {
+    struct working_set_info_ref ref_buffer[256], *ref = ref_buffer, *r;
     struct fill_working_set_info_data data;
-    MEMORY_WORKING_SET_EX_INFORMATION *p;
-    struct file_view *view;
+    char *start, *end;
+    SIZE_T i, count;
+    size_t size;
+    struct file_view *view, *prev_view;
     sigset_t sigset;
     BYTE vprot;
 
@@ -5255,17 +5272,52 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
 
     if (len < sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
 
+    count = len / sizeof(*info);
+
+    if (count > ARRAY_SIZE(ref_buffer)) ref = malloc( count * sizeof(*ref) );
+    for (i = 0; i < count; ++i)
+    {
+        ref[i].orig_index = i;
+        ref[i].addr = ROUND_ADDR( info[i].VirtualAddress, page_mask );
+        info[i].VirtualAttributes.Flags = 0;
+    }
+    qsort( ref, count, sizeof(*ref), compare_working_set_info_ref );
+    start = ref[0].addr;
+    end = ref[count - 1].addr + page_size;
+
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     init_fill_working_set_info_data( &data );
-    for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
+
+    view = find_view_range( start, end - start );
+    while (view && (char *)view->base > start)
     {
-        memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
-        if ((view = find_view( p->VirtualAddress, 0 ))
-             && get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED )
-             && (vprot & VPROT_COMMITTED))
-            fill_working_set_info( &data, view, vprot, p );
+        prev_view = RB_ENTRY_VALUE( rb_prev( &view->entry ), struct file_view, entry );
+        if (!prev_view || (char *)prev_view->base + prev_view->size <= start) break;
+        view = prev_view;
     }
+
+    r = ref;
+    while (view && (char *)view->base < end)
+    {
+        if (start < (char *)view->base) start = view->base;
+        while (r != ref + count && r->addr < start) ++r;
+        while (start != (char *)view->base + view->size && r != ref + count
+               && r->addr < (char *)view->base + view->size)
+        {
+            size = get_committed_size( view, start, &vprot, ~VPROT_WRITEWATCH );
+            while (r != ref + count && r->addr < start + size)
+            {
+                if (vprot & VPROT_COMMITTED) fill_working_set_info( &data, view, vprot, &info[r->orig_index] );
+                ++r;
+            }
+            start += size;
+        }
+        if (r == ref + count) break;
+        view = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry );
+    }
+
     free_fill_working_set_info_data( &data );
+    if (ref != ref_buffer) free( ref );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     if (res_len)
