@@ -1705,8 +1705,16 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
         /* If the query was already ended because the command buffer was
          * flushed or the render pass ended, we don't need to end it here. */
         if (query_vk->flags & WINED3D_QUERY_VK_FLAG_ACTIVE)
-        {
             vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
+
+        /* wined3d_context_vk_get_command_buffer() might have triggered
+         * submission of the previous command buffer (due to retired
+         * resource accumulation or periodic submit).
+         * This will have suspended the query, and if it's a render pass
+         * query, it won't have been resumed and therefore shouldn't be ended
+         * here. Therefore we need to check whether it's active again. */
+        if (query_vk->flags & WINED3D_QUERY_VK_FLAG_ACTIVE)
+        {
             if (!(query_vk->flags & WINED3D_QUERY_VK_FLAG_RENDER_PASS))
                 wined3d_context_vk_end_current_render_pass(context_vk);
             wined3d_query_vk_end(query_vk, context_vk, vk_command_buffer);
