@@ -2171,17 +2171,16 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         if (input->kbd.flags & KEYEVENTF_KEYUP)
         {
             /* send WM_SYSKEYUP if Alt still pressed and no other key in between */
-            /* we use 0x02 as a flag to track if some other SYSKEYUP was sent already */
-            if ((desktop->keystate[VK_MENU] & 0x82) != 0x82) break;
+            if (!(desktop->keystate[VK_MENU] & 0x80) || !desktop->alt_pressed) break;
             message_code = WM_SYSKEYUP;
-            desktop->keystate[VK_MENU] &= ~0x02;
+            desktop->alt_pressed = 0;
         }
         else
         {
             /* send WM_SYSKEYDOWN for Alt except with Ctrl */
             if (desktop->keystate[VK_CONTROL] & 0x80) break;
             message_code = WM_SYSKEYDOWN;
-            desktop->keystate[VK_MENU] |= 0x02;
+            desktop->alt_pressed = 1;
         }
         break;
 
@@ -2191,7 +2190,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         if (!(input->kbd.flags & KEYEVENTF_KEYUP)) break;
         if (!(desktop->keystate[VK_MENU] & 0x80)) break;
         message_code = WM_SYSKEYUP;
-        desktop->keystate[VK_MENU] &= ~0x02;
+        desktop->alt_pressed = 0;
         break;
 
     default:
@@ -2201,7 +2200,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         /* fall through */
     case VK_F10:
         message_code = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_SYSKEYUP : WM_SYSKEYDOWN;
-        desktop->keystate[VK_MENU] &= ~0x02;
+        desktop->alt_pressed = 0;
         break;
     }
 

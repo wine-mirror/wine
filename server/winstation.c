@@ -294,6 +294,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_init( &desktop->threads );
             desktop->clip_flags = 0;
             desktop->cursor_win = 0;
+            desktop->alt_pressed = 0;
             memset( desktop->keystate, 0, sizeof(desktop->keystate) );
             memset( &desktop->key_repeat, 0, sizeof(desktop->key_repeat) );
             list_add_tail( &winstation->desktops, &desktop->entry );
