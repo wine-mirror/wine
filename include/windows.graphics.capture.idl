@@ -25,21 +25,73 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
-/* import "windows.graphics.idl"; */
+import "windows.graphics.idl";
 import "windows.graphics.directx.idl";
 import "windows.graphics.directx.direct3d11.idl";
 /* import "windows.security.authorization.appcapabilityaccess.idl"; */
 import "windows.system.idl";
 import "windows.ui.idl";
-/* import "windows.ui.composition.idl"; */
+import "windows.ui.composition.idl";
 
 namespace Windows.Graphics.Capture {
+    interface IGraphicsCaptureItem;
+    interface IGraphicsCaptureItemStatics;
+    interface IGraphicsCaptureItemStatics2;
     interface IGraphicsCaptureSession;
     interface IGraphicsCaptureSession2;
     interface IGraphicsCaptureSession3;
     interface IGraphicsCaptureSessionStatics;
 
+    runtimeclass GraphicsCaptureItem;
     runtimeclass GraphicsCaptureSession;
+
+    declare {
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Graphics.Capture.GraphicsCaptureItem *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Graphics.Capture.GraphicsCaptureItem *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(79c3f95b-31f7-4ec2-a464-632ef5d30760)
+    ]
+    interface IGraphicsCaptureItem : IInspectable
+    {
+        [propget] HRESULT DisplayName([out, retval] HSTRING *value);
+        [propget] HRESULT Size([out, retval] Windows.Graphics.SizeInt32 *value);
+        [eventadd] HRESULT Closed(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Graphics.Capture.GraphicsCaptureItem *, IInspectable *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Closed([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(a87ebea5-457c-5788-ab47-0cf1d3637e74)
+    ]
+    interface IGraphicsCaptureItemStatics : IInspectable
+    {
+        HRESULT CreateFromVisual(
+            [in] Windows.UI.Composition.Visual *visual,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 12.0),
+        exclusiveto(Windows.Graphics.Capture.GraphicsCaptureItem),
+        uuid(3b92acc9-e584-5862-bf5c-9c316c6d2dbb)
+    ]
+    interface IGraphicsCaptureItemStatics2 : IInspectable
+    {
+        HRESULT TryCreateFromWindowId(
+            [in] Windows.UI.WindowId window_id,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+        HRESULT TryCreateFromDisplayId(
+            [in] Windows.Graphics.DisplayId display_id,
+            [out, retval] Windows.Graphics.Capture.GraphicsCaptureItem **result);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 6.0),
@@ -81,6 +133,18 @@ namespace Windows.Graphics.Capture {
     interface IGraphicsCaptureSessionStatics : IInspectable
     {
         HRESULT IsSupported([out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        marshaling_behavior(agile),
+        static(Windows.Graphics.Capture.IGraphicsCaptureItemStatics, Windows.Foundation.UniversalApiContract, 7.0),
+        static(Windows.Graphics.Capture.IGraphicsCaptureItemStatics2, Windows.Foundation.UniversalApiContract, 12.0),
+        threading(both)
+    ]
+    runtimeclass GraphicsCaptureItem
+    {
+        [default] interface Windows.Graphics.Capture.IGraphicsCaptureItem;
     }
 
     [
