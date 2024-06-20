@@ -5150,7 +5150,7 @@ struct fill_working_set_info_data
     struct kinfo_vmentry *vmentries;
 };
 
-static void init_fill_working_set_info_data( struct fill_working_set_info_data *d )
+static void init_fill_working_set_info_data( struct fill_working_set_info_data *d, char *end )
 {
     unsigned int proc_count;
 
@@ -5210,10 +5210,19 @@ static int pagemap_fd = -2;
 
 struct fill_working_set_info_data
 {
+    UINT64 pm_buffer[256];
+    SIZE_T buffer_start;
+    ssize_t buffer_len;
+    SIZE_T end_page;
 };
 
-static void init_fill_working_set_info_data( struct fill_working_set_info_data *d )
+static void init_fill_working_set_info_data( struct fill_working_set_info_data *d, char *end )
 {
+    d->buffer_start = 0;
+    d->buffer_len = 0;
+    d->end_page = (UINT_PTR)end >> page_shift;
+    memset( d->pm_buffer, 0, sizeof(d->pm_buffer) );
+
     if (pagemap_fd != -2) return;
 
 #ifdef O_CLOEXEC
@@ -5235,18 +5244,31 @@ static void fill_working_set_info( struct fill_working_set_info_data *d, struct 
 {
     MEMORY_WORKING_SET_EX_INFORMATION *p;
     UINT64 pagemap;
-    SIZE_T i;
+    SIZE_T i, page;
+    ssize_t len;
 
     for (i = 0; i < count; ++i)
     {
+        page = (UINT_PTR)ref[i].addr >> page_shift;
         p = &info[ref[i].orig_index];
 
-        if (pagemap_fd == -1 ||
-            pread( pagemap_fd, &pagemap, sizeof(pagemap), ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap) ) != sizeof(pagemap))
+        assert(page >= d->buffer_start);
+        if (page >= d->buffer_start + d->buffer_len)
         {
-            /* If we don't have pagemap information, default to invalid. */
-            pagemap = 0;
+            d->buffer_start = page;
+            len = min( sizeof(d->pm_buffer), (d->end_page - page) * sizeof(pagemap) );
+            if (pagemap_fd != -1)
+            {
+                d->buffer_len = pread( pagemap_fd, d->pm_buffer, len, page * sizeof(pagemap) );
+                if (d->buffer_len != len)
+                {
+                    d->buffer_len = max( d->buffer_len, 0 );
+                    memset( d->pm_buffer + d->buffer_len / sizeof(pagemap), 0, len - d->buffer_len );
+                }
+            }
+            d->buffer_len = len / sizeof(pagemap);
         }
+        pagemap = d->pm_buffer[page - d->buffer_start];
 
         p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
         p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
@@ -5300,7 +5322,7 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
     end = ref[count - 1].addr + page_size;
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-    init_fill_working_set_info_data( &data );
+    init_fill_working_set_info_data( &data, end );
 
     view = find_view_range( start, end - start );
     while (view && (char *)view->base > start)
