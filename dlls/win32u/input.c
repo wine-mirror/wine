@@ -2555,24 +2555,21 @@ BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_P
 
 BOOL get_clip_cursor( RECT *rect, UINT dpi )
 {
-    BOOL ret;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const desktop_shm_t *desktop_shm;
+    NTSTATUS status;
 
     if (!rect) return FALSE;
 
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = 0;
-        if ((ret = !wine_server_call( req )))
-            *rect = wine_server_get_rect( reply->new_clip );
-    }
-    SERVER_END_REQ;
+    while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
+        *rect = wine_server_get_rect( desktop_shm->cursor.clip );
 
-    if (ret)
+    if (!status)
     {
         HMONITOR monitor = monitor_from_rect( rect, MONITOR_DEFAULTTOPRIMARY, 0 );
         *rect = map_dpi_rect( *rect, get_monitor_dpi( monitor ), dpi );
     }
-    return ret;
+    return !status;
 }
 
 BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
