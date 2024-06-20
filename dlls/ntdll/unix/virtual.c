@@ -5135,15 +5135,117 @@ static unsigned int get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY
     return STATUS_SUCCESS;
 }
 
+#if defined(HAVE_LIBPROCSTAT)
+struct fill_working_set_info_data
+{
+    struct procstat *pstat;
+    struct kinfo_proc *kip;
+    unsigned int vmentry_count;
+    struct kinfo_vmentry *vmentries;
+};
+
+static void init_fill_working_set_info_data( struct fill_working_set_info_data *d )
+{
+    unsigned int proc_count;
+
+    d->kip = NULL;
+    d->vmentry_count = 0;
+    d->vmentries = NULL;
+
+    if ((d->pstat = procstat_open_sysctl()))
+        d->kip = procstat_getprocs( d->pstat, KERN_PROC_PID, getpid(), &proc_count );
+    if (d->kip)
+        d->vmentries = procstat_getvmmap( d->pstat, d->kip, &d->vmentry_count );
+    if (!d->vmentries)
+        WARN( "couldn't get process vmmap, errno %d\n", errno );
+}
+
+static void free_fill_working_set_info_data( struct fill_working_set_info_data *d )
+{
+    if (d->vmentries)
+        procstat_freevmmap( d->pstat, d->vmentries );
+    if (d->kip)
+        procstat_freeprocs( d->pstat, d->kip );
+    if (d->pstat)
+        procstat_close( d->pstat );
+}
+
+static void fill_working_set_info( struct fill_working_set_info_data *d, struct file_view *view, BYTE vprot,
+                                   MEMORY_WORKING_SET_EX_INFORMATION *p )
+{
+    struct kinfo_vmentry *entry = NULL;
+    int i;
+
+    for (i = 0; i < d->vmentry_count; i++)
+    {
+        if (d->vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= d->vmentries[i].kve_end)
+        {
+            entry = &d->vmentries[i];
+            break;
+        }
+    }
+
+    p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
+    p->VirtualAttributes.Shared = !is_view_valloc( view );
+    if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+        p->VirtualAttributes.ShareCount = 1; /* FIXME */
+    if (p->VirtualAttributes.Valid)
+        p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+}
+#else
+static int pagemap_fd = -2;
+
+struct fill_working_set_info_data
+{
+};
+
+static void init_fill_working_set_info_data( struct fill_working_set_info_data *d )
+{
+    if (pagemap_fd != -2) return;
+
+#ifdef O_CLOEXEC
+    if ((pagemap_fd = open( "/proc/self/pagemap", O_RDONLY | O_CLOEXEC, 0 )) == -1 && errno == EINVAL)
+#endif
+        pagemap_fd = open( "/proc/self/pagemap", O_RDONLY, 0 );
+
+    if (pagemap_fd == -1) WARN( "unable to open /proc/self/pagemap\n" );
+    else fcntl(pagemap_fd, F_SETFD, FD_CLOEXEC);  /* in case O_CLOEXEC isn't supported */
+}
+
+static void free_fill_working_set_info_data( struct fill_working_set_info_data *d )
+{
+}
+
+static void fill_working_set_info( struct fill_working_set_info_data *d, struct file_view *view, BYTE vprot,
+                                   MEMORY_WORKING_SET_EX_INFORMATION *p )
+{
+    UINT64 pagemap;
+
+    if (pagemap_fd == -1 ||
+        pread( pagemap_fd, &pagemap, sizeof(pagemap), ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap) ) != sizeof(pagemap))
+    {
+        /* If we don't have pagemap information, default to invalid. */
+        pagemap = 0;
+    }
+
+    p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
+    p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
+    if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
+        p->VirtualAttributes.ShareCount = 1; /* FIXME */
+    if (p->VirtualAttributes.Valid)
+        p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
+}
+#endif
+
 static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
                                     MEMORY_WORKING_SET_EX_INFORMATION *info,
                                     SIZE_T len, SIZE_T *res_len )
 {
-#if !defined(HAVE_LIBPROCSTAT)
-    static int pagemap_fd = -2;
-#endif
+    struct fill_working_set_info_data data;
     MEMORY_WORKING_SET_EX_INFORMATION *p;
+    struct file_view *view;
     sigset_t sigset;
+    BYTE vprot;
 
     if (process != NtCurrentProcess())
     {
@@ -5153,100 +5255,18 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
 
     if (len < sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
 
-#if defined(HAVE_LIBPROCSTAT)
-    {
-        struct procstat *pstat;
-        unsigned int proc_count;
-        struct kinfo_proc *kip = NULL;
-        unsigned int vmentry_count = 0;
-        struct kinfo_vmentry *vmentries = NULL;
-
-        pstat = procstat_open_sysctl();
-        if (pstat)
-            kip = procstat_getprocs( pstat, KERN_PROC_PID, getpid(), &proc_count );
-        if (kip)
-            vmentries = procstat_getvmmap( pstat, kip, &vmentry_count );
-        if (vmentries == NULL)
-            WARN( "couldn't get process vmmap, errno %d\n", errno );
-
-        server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-        for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
-        {
-             int i;
-             struct kinfo_vmentry *entry = NULL;
-             BYTE vprot;
-             struct file_view *view;
-
-             memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
-             if ((view = find_view( p->VirtualAddress, 0 )) &&
-                 get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
-                 (vprot & VPROT_COMMITTED))
-             {
-                 for (i = 0; i < vmentry_count && entry == NULL; i++)
-                 {
-                     if (vmentries[i].kve_start <= (ULONG_PTR)p->VirtualAddress && (ULONG_PTR)p->VirtualAddress <= vmentries[i].kve_end)
-                         entry = &vmentries[i];
-                 }
-
-                 p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && entry && entry->kve_type != KVME_TYPE_SWAP;
-                 p->VirtualAttributes.Shared = !is_view_valloc( view );
-                 if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
-                     p->VirtualAttributes.ShareCount = 1; /* FIXME */
-                 if (p->VirtualAttributes.Valid)
-                     p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
-             }
-        }
-        server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-
-        if (vmentries)
-            procstat_freevmmap( pstat, vmentries );
-        if (kip)
-            procstat_freeprocs( pstat, kip );
-        if (pstat)
-            procstat_close( pstat );
-    }
-#else
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-    if (pagemap_fd == -2)
-    {
-#ifdef O_CLOEXEC
-        if ((pagemap_fd = open( "/proc/self/pagemap", O_RDONLY | O_CLOEXEC, 0 )) == -1 && errno == EINVAL)
-#endif
-            pagemap_fd = open( "/proc/self/pagemap", O_RDONLY, 0 );
-
-        if (pagemap_fd == -1) WARN( "unable to open /proc/self/pagemap\n" );
-        else fcntl(pagemap_fd, F_SETFD, FD_CLOEXEC);  /* in case O_CLOEXEC isn't supported */
-    }
-
+    init_fill_working_set_info_data( &data );
     for (p = info; (UINT_PTR)(p + 1) <= (UINT_PTR)info + len; p++)
     {
-        BYTE vprot;
-        UINT64 pagemap;
-        struct file_view *view;
-
         memset( &p->VirtualAttributes, 0, sizeof(p->VirtualAttributes) );
-
-        if ((view = find_view( p->VirtualAddress, 0 )) &&
-            get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED ) &&
-            (vprot & VPROT_COMMITTED))
-        {
-            if (pagemap_fd == -1 ||
-                pread( pagemap_fd, &pagemap, sizeof(pagemap), ((UINT_PTR)p->VirtualAddress >> page_shift) * sizeof(pagemap) ) != sizeof(pagemap))
-            {
-                /* If we don't have pagemap information, default to invalid. */
-                pagemap = 0;
-            }
-
-            p->VirtualAttributes.Valid = !(vprot & VPROT_GUARD) && (vprot & 0x0f) && (pagemap >> 63);
-            p->VirtualAttributes.Shared = !is_view_valloc( view ) && ((pagemap >> 61) & 1);
-            if (p->VirtualAttributes.Shared && p->VirtualAttributes.Valid)
-                p->VirtualAttributes.ShareCount = 1; /* FIXME */
-            if (p->VirtualAttributes.Valid)
-                p->VirtualAttributes.Win32Protection = get_win32_prot( vprot, view->protect );
-        }
+        if ((view = find_view( p->VirtualAddress, 0 ))
+             && get_committed_size( view, p->VirtualAddress, &vprot, VPROT_COMMITTED )
+             && (vprot & VPROT_COMMITTED))
+            fill_working_set_info( &data, view, vprot, p );
     }
+    free_fill_working_set_info_data( &data );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-#endif
 
     if (res_len)
         *res_len = len;
