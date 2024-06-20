@@ -159,7 +159,6 @@ _ACRTIMP float __cdecl powf(float, float);
 _ACRTIMP float __cdecl sqrtf(float);
 _ACRTIMP float __cdecl ceilf(float);
 _ACRTIMP float __cdecl floorf(float);
-_ACRTIMP float __cdecl frexpf(float, int*);
 _ACRTIMP float __cdecl modff(float, float*);
 _ACRTIMP float __cdecl fmodf(float, float);
 
@@ -186,7 +185,6 @@ static inline float powf(float x, float y) { return pow(x, y); }
 static inline float sqrtf(float x) { return sqrt(x); }
 static inline float ceilf(float x) { return ceil(x); }
 static inline float floorf(float x) { return floor(x); }
-static inline float frexpf(float x, int *y) { return frexp(x, y); }
 static inline float modff(float x, float *y) { double yd, ret = modf(x, &yd); *y = yd; return ret; }
 static inline float fmodf(float x, float y) { return fmod(x, y); }
 
@@ -207,6 +205,12 @@ static inline int   _fpclassf(float x)
     return _fpclass(d);
 }
 
+#endif
+
+#if (defined(__x86_64__) && !defined(_UCRT)) || defined(_NO_CRT_MATH_INLINE)
+_ACRTIMP float __cdecl frexpf(float, int*);
+#else
+static inline float frexpf(float x, int *y) { return frexp(x, y); }
 #endif
 
 #if (!defined(__i386__) && !defined(__x86_64__) && (_MSVCR_VER == 0 || _MSVCR_VER >= 110)) || defined(_NO_CRT_MATH_INLINE)
