@@ -1150,6 +1150,32 @@ free_page:
     VirtualFree(addr, 0, MEM_RELEASE);
 }
 
+static void check_working_set_info(PSAPI_WORKING_SET_EX_INFORMATION *info, const char *desc, DWORD expected_valid,
+                                   DWORD expected_protection, DWORD expected_shared, BOOL todo)
+{
+    todo_wine_if(todo)
+    ok(info->VirtualAttributes.Valid == expected_valid, "%s expected Valid=%lu but got %u\n",
+        desc, expected_valid, info->VirtualAttributes.Valid);
+
+    todo_wine_if(todo)
+    ok(info->VirtualAttributes.Win32Protection == expected_protection, "%s expected Win32Protection=%lu but got %u\n",
+        desc, expected_protection, info->VirtualAttributes.Win32Protection);
+
+    ok(info->VirtualAttributes.Node == 0, "%s expected Node=0 but got %u\n",
+        desc, info->VirtualAttributes.Node);
+    ok(info->VirtualAttributes.LargePage == 0, "%s expected LargePage=0 but got %u\n",
+        desc, info->VirtualAttributes.LargePage);
+
+    ok(info->VirtualAttributes.Shared == expected_shared || broken(!info->VirtualAttributes.Valid) /* w2003 */,
+        "%s expected Shared=%lu but got %u\n", desc, expected_shared, info->VirtualAttributes.Shared);
+    if (info->VirtualAttributes.Valid && info->VirtualAttributes.Shared)
+        ok(info->VirtualAttributes.ShareCount > 0, "%s expected ShareCount > 0 but got %u\n",
+            desc, info->VirtualAttributes.ShareCount);
+    else
+        ok(info->VirtualAttributes.ShareCount == 0, "%s expected ShareCount == 0 but got %u\n",
+            desc, info->VirtualAttributes.ShareCount);
+}
+
 static void check_QueryWorkingSetEx(PVOID addr, const char *desc, DWORD expected_valid,
                                     DWORD expected_protection, DWORD expected_shared, BOOL todo)
 {
@@ -1161,32 +1187,13 @@ static void check_QueryWorkingSetEx(PVOID addr, const char *desc, DWORD expected
     ret = pQueryWorkingSetEx(GetCurrentProcess(), &info, sizeof(info));
     ok(ret, "QueryWorkingSetEx failed with %ld\n", GetLastError());
 
-    todo_wine_if(todo)
-    ok(info.VirtualAttributes.Valid == expected_valid, "%s expected Valid=%lu but got %u\n",
-        desc, expected_valid, info.VirtualAttributes.Valid);
-
-    todo_wine_if(todo)
-    ok(info.VirtualAttributes.Win32Protection == expected_protection, "%s expected Win32Protection=%lu but got %u\n",
-        desc, expected_protection, info.VirtualAttributes.Win32Protection);
-
-    ok(info.VirtualAttributes.Node == 0, "%s expected Node=0 but got %u\n",
-        desc, info.VirtualAttributes.Node);
-    ok(info.VirtualAttributes.LargePage == 0, "%s expected LargePage=0 but got %u\n",
-        desc, info.VirtualAttributes.LargePage);
-
-    ok(info.VirtualAttributes.Shared == expected_shared || broken(!info.VirtualAttributes.Valid) /* w2003 */,
-        "%s expected Shared=%lu but got %u\n", desc, expected_shared, info.VirtualAttributes.Shared);
-    if (info.VirtualAttributes.Valid && info.VirtualAttributes.Shared)
-        ok(info.VirtualAttributes.ShareCount > 0, "%s expected ShareCount > 0 but got %u\n",
-            desc, info.VirtualAttributes.ShareCount);
-    else
-        ok(info.VirtualAttributes.ShareCount == 0, "%s expected ShareCount == 0 but got %u\n",
-            desc, info.VirtualAttributes.ShareCount);
+    check_working_set_info(&info, desc, expected_valid, expected_protection, expected_shared, todo);
 }
 
 static void test_QueryWorkingSetEx(void)
 {
-    PVOID addr;
+    PSAPI_WORKING_SET_EX_INFORMATION info[4];
+    char *addr, *addr2;
     DWORD prot;
     BOOL ret;
 
@@ -1196,7 +1203,7 @@ static void test_QueryWorkingSetEx(void)
         return;
     }
 
-    addr = GetModuleHandleA(NULL);
+    addr = (void *)GetModuleHandleA(NULL);
     check_QueryWorkingSetEx(addr, "exe", 1, PAGE_READONLY, 1, FALSE);
 
     ret = VirtualProtect(addr, 0x1000, PAGE_NOACCESS, &prot);
@@ -1211,7 +1218,7 @@ static void test_QueryWorkingSetEx(void)
     ok(ret, "VirtualProtect failed with %ld\n", GetLastError());
     check_QueryWorkingSetEx(addr, "exe,readonly2", 1, PAGE_READONLY, 1, FALSE);
 
-    addr = VirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    addr = VirtualAlloc(NULL, 0x2000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     ok(addr != NULL, "VirtualAlloc failed with %ld\n", GetLastError());
     check_QueryWorkingSetEx(addr, "valloc", 0, 0, 0, FALSE);
 
@@ -1232,9 +1239,39 @@ static void test_QueryWorkingSetEx(void)
     *(volatile char *)addr;
     check_QueryWorkingSetEx(addr, "valloc,readwrite2", 1, PAGE_READWRITE, 0, FALSE);
 
+    addr2 = VirtualAlloc(NULL, 0x2000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    ok(!!addr2, "VirtualAlloc failed with %ld\n", GetLastError());
+    *(addr2 + 0x1000) = 1;
+
+    info[1].VirtualAddress = addr;
+    info[0].VirtualAddress = addr + 0x1000;
+    info[3].VirtualAddress = addr2;
+    info[2].VirtualAddress = addr2 + 0x1000;
+    ret = pQueryWorkingSetEx(GetCurrentProcess(), info, sizeof(info));
+    ok(ret, "got error %lu\n", GetLastError());
+    check_working_set_info(&info[1], "[1] range[1] valid", 1, PAGE_READWRITE, 0, FALSE);
+    check_working_set_info(&info[0], "[1] range[0] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[3], "[1] range[3] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[2], "[1] range[2] valid", 1, PAGE_READWRITE, 0, FALSE);
+
     ret = VirtualFree(addr, 0, MEM_RELEASE);
     ok(ret, "VirtualFree failed with %ld\n", GetLastError());
     check_QueryWorkingSetEx(addr, "valloc,free", FALSE, 0, 0, FALSE);
+
+    ret = pQueryWorkingSetEx(GetCurrentProcess(), info, sizeof(info));
+    ok(ret, "got error %lu\n", GetLastError());
+    check_working_set_info(&info[1], "[2] range[1] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[0], "[2] range[0] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[3], "[2] range[3] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[2], "[2] range[2] valid", 1, PAGE_READWRITE, 0, FALSE);
+
+    VirtualFree(addr2, 0, MEM_RELEASE);
+    ret = pQueryWorkingSetEx(GetCurrentProcess(), info, sizeof(info));
+    ok(ret, "got error %lu\n", GetLastError());
+    check_working_set_info(&info[1], "[3] range[1] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[0], "[3] range[0] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[3], "[3] range[3] invalid", 0, 0, 0, FALSE);
+    check_working_set_info(&info[2], "[3] range[2] invalid", 0, 0, 0, FALSE);
 }
 
 START_TEST(psapi_main)
