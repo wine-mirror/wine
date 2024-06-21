@@ -376,8 +376,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             dst.MaximumLength = res;
             dst.Buffer = RtlAllocateHeap(GetProcessHeap(), 0, res * sizeof(WCHAR));
             RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
-            status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type, dst.Buffer,
-                                          dst.Length, pContext, pQuery->EntryContext);
+            status = pQuery->QueryRoutine(pQuery->Name, REG_SZ, dst.Buffer, res, pContext, pQuery->EntryContext);
             RtlFreeHeap(GetProcessHeap(), 0, dst.Buffer);
         }
         else /* REG_MULTI_SZ */

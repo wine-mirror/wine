@@ -2863,7 +2863,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     /* DELETE deletes the value after reading it */
     {
         {{ query_routine, RTL_QUERY_REGISTRY_DELETE, (WCHAR*)L"WindowsDrive" }},
-        STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
+        STATUS_SUCCESS, 1, 0, REG_SZ, L"C:"
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ, (WCHAR*)L"Some default" }},
