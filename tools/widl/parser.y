@@ -151,6 +151,7 @@ PARSER_LTYPE pop_import(void);
 	char *str;
 	struct uuid *uuid;
 	unsigned int num;
+	struct integer integer;
 	double dbl;
 	typelib_t *typelib;
 	struct _import_t *import;
@@ -163,7 +164,7 @@ PARSER_LTYPE pop_import(void);
 
 %token <str> aIDENTIFIER aPRAGMA
 %token <str> aKNOWNTYPE
-%token <num> aNUM aHEXNUM
+%token <integer> aNUM aHEXNUM
 %token <dbl> aDOUBLE
 %token <str> aSTRING aWSTRING aSQSTRING
 %token <str> tCDECL
@@ -494,8 +495,8 @@ pragma_warning: tPRAGMA_WARNING '(' aIDENTIFIER ':' warnings ')'
 	;
 
 warnings:
-	  aNUM { $$ = append_warning(NULL, $1); }
-	| warnings aNUM { $$ = append_warning($1, $2); }
+	  aNUM { $$ = append_warning(NULL, $1.value); }
+	| warnings aNUM { $$ = append_warning($1, $2.value); }
 	;
 
 typedecl:
@@ -591,8 +592,8 @@ marshaling_behavior:
 	;
 
 contract_ver:
-	  aNUM					{ $$ = MAKEVERSION(0, $1); }
-	| aNUM '.' aNUM				{ $$ = MAKEVERSION($3, $1); }
+	  aNUM					{ $$ = MAKEVERSION(0, $1.value); }
+	| aNUM '.' aNUM				{ $$ = MAKEVERSION($3.value, $1.value); }
 	;
 
 contract_req
@@ -844,10 +845,8 @@ m_expr
 	| expr
 	;
 
-expr:     aNUM                                  { struct integer integer = {.value = $1};
-                                                  $$ = make_exprl(EXPR_NUM, &integer); }
-        | aHEXNUM                               { struct integer integer = {.value = $1, .is_hex = TRUE};
-                                                  $$ = make_exprl(EXPR_NUM, &integer); }
+expr:     aNUM                                  { $$ = make_exprl(EXPR_NUM, &$1); }
+        | aHEXNUM                               { $$ = make_exprl(EXPR_NUM, &$1); }
 	| aDOUBLE				{ $$ = make_exprd(EXPR_DOUBLE, $1); }
         | tFALSE                                { struct integer integer = {.value = 0};
                                                   $$ = make_exprl(EXPR_TRUEFALSE, &integer); }
@@ -1385,9 +1384,9 @@ uniondef: tUNION m_typename '{' ne_union_fields '}'
 	;
 
 version:
-	  aNUM					{ $$ = MAKEVERSION($1, 0); }
-	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1, $3); }
-	| aHEXNUM				{ $$ = $1; }
+	  aNUM					{ $$ = MAKEVERSION($1.value, 0); }
+	| aNUM '.' aNUM				{ $$ = MAKEVERSION($1.value, $3.value); }
+	| aHEXNUM				{ $$ = $1.value; }
 	;
 
 acf_statements
