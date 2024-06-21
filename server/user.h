@@ -67,7 +67,6 @@ struct key_repeat
 struct desktop
 {
     struct object        obj;              /* object header */
-    unsigned int         flags;            /* desktop flags */
     struct winstation   *winstation;       /* winstation this desktop belongs to */
     timeout_t            input_time;       /* last time this desktop had the input */
     struct list          entry;            /* entry in winstation list of desktops */
