@@ -256,12 +256,16 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
 
 BOOL is_virtual_desktop(void)
 {
-    HANDLE desktop = NtUserGetThreadDesktop( GetCurrentThreadId() );
-    USEROBJECTFLAGS flags = {0};
-    DWORD len;
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const desktop_shm_t *desktop_shm;
+    BOOL ret = FALSE;
+    UINT status;
 
-    if (!NtUserGetObjectInformation( desktop, UOI_FLAGS, &flags, sizeof(flags), &len )) return FALSE;
-    return !!(flags.dwFlags & DF_WINE_VIRTUAL_DESKTOP);
+    while ((status = get_shared_desktop( &lock, &desktop_shm )) == STATUS_PENDING)
+        ret = !!(desktop_shm->flags & DF_WINE_VIRTUAL_DESKTOP);
+    if (status) ret = FALSE;
+
+    return ret;
 }
 
 /***********************************************************************
