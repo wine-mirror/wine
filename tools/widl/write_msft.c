@@ -1299,9 +1299,8 @@ static void set_custdata_attr(msft_typelib_t *typelib, attr_custdata_t *custdata
         case EXPR_WSTRLIT:
             set_custdata(typelib, &custdata->id, VT_BSTR, custdata->pval->u.sval, offset);
             break;
-        case EXPR_HEXNUM:
         case EXPR_NUM:
-            set_custdata(typelib, &custdata->id, VT_I4, &custdata->pval->u.lval, offset);
+            set_custdata(typelib, &custdata->id, VT_I4, &custdata->pval->u.integer.value, offset);
             break;
         default:
             error("custom() attribute with unknown type\n");
@@ -1395,7 +1394,7 @@ static int add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             break;
         case ATTR_HELPCONTEXT:
             extra_attr = max(extra_attr, 1);
-            help_context = expr->u.lval;
+            help_context = expr->u.integer.value;
             break;
         case ATTR_HELPSTRING:
             extra_attr = max(extra_attr, 2);
@@ -1403,7 +1402,7 @@ static int add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             break;
         case ATTR_HELPSTRINGCONTEXT:
             extra_attr = max(extra_attr, 6);
-            help_string_context = expr->u.lval;
+            help_string_context = expr->u.integer.value;
             break;
         case ATTR_HIDDEN:
             funcflags |= 0x40; /* FUNCFLAG_FHIDDEN */

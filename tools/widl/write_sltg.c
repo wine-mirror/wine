@@ -1060,7 +1060,7 @@ static int get_func_flags(const var_t *func, int *dispid, int *invokekind, int *
             flags |= 0x10; /* FUNCFLAG_FDISPLAYBIND */
             break;
         case ATTR_HELPCONTEXT:
-            *helpcontext = expr->u.lval;
+            *helpcontext = expr->u.integer.value;
             break;
         case ATTR_HELPSTRING:
             *helpstring = attr->u.pval;

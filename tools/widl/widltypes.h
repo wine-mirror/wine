@@ -191,7 +191,6 @@ enum expr_type
 {
     EXPR_VOID,
     EXPR_NUM,
-    EXPR_HEXNUM,
     EXPR_DOUBLE,
     EXPR_IDENTIFIER,
     EXPR_NEG,
@@ -349,11 +348,17 @@ struct _attr_t {
   struct location where;
 };
 
+struct integer
+{
+    int value;
+    int is_hex;
+};
+
 struct _expr_t {
   enum expr_type type;
   const expr_t *ref;
   union {
-    int lval;
+    struct integer integer;
     double dval;
     const char *sval;
     const expr_t *ext;

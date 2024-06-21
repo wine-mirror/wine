@@ -596,12 +596,14 @@ contract_ver:
 	;
 
 contract_req
-	: decl_spec ',' contract_ver		{ if ($1->type->type_type != TYPE_APICONTRACT)
-						      error_loc("type %s is not an apicontract\n", $1->type->name);
-						  $$ = make_exprl(EXPR_NUM, $3);
-						  $$ = make_exprt(EXPR_GTREQL, declare_var(NULL, $1, make_declarator(NULL), 0), $$);
-						}
-	;
+        : decl_spec ',' contract_ver            {
+                                                  struct integer integer = {.value = $3};
+                                                  if ($1->type->type_type != TYPE_APICONTRACT)
+                                                    error_loc("type %s is not an apicontract\n", $1->type->name);
+                                                  $$ = make_exprl(EXPR_NUM, &integer);
+                                                  $$ = make_exprt(EXPR_GTREQL, declare_var(NULL, $1, make_declarator(NULL), 0), $$);
+                                                }
+        ;
 
 static_attr
 	: decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
@@ -793,21 +795,28 @@ enums
 	| enum_list
 	;
 
-enum_list: enum					{ if (!$1->eval)
-						    $1->eval = make_exprl(EXPR_NUM, 0 /* default for first enum entry */);
+enum_list: enum                                 {
+                                                  struct integer integer = {.value = 0};
+                                                  if (!$1->eval)
+                                                    $1->eval = make_exprl(EXPR_NUM, &integer);
                                                   $$ = append_var( NULL, $1 );
-						}
-	| enum_list ',' enum			{ if (!$3->eval)
+                                                }
+        | enum_list ',' enum                    {
+                                                  if (!$3->eval)
                                                   {
                                                     var_t *last = LIST_ENTRY( list_tail($$), var_t, entry );
-                                                    enum expr_type type = EXPR_NUM;
-                                                    if (last->eval->type == EXPR_HEXNUM) type = EXPR_HEXNUM;
-                                                    if (last->eval->cval + 1 < 0) type = EXPR_HEXNUM;
-                                                    $3->eval = make_exprl(type, last->eval->cval + 1);
+                                                    struct integer integer;
+
+                                                    if (last->eval->type == EXPR_NUM)
+                                                      integer.is_hex = last->eval->u.integer.is_hex;
+                                                    integer.value = last->eval->cval + 1;
+                                                    if (integer.value < 0)
+                                                      integer.is_hex = TRUE;
+                                                    $3->eval = make_exprl(EXPR_NUM, &integer);
                                                   }
                                                   $$ = append_var( $1, $3 );
-						}
-	;
+                                                }
+        ;
 
 enum_member: m_attributes ident 		{ $$ = $2;
 						  $$->attrs = check_enum_member_attrs($1);
@@ -835,12 +844,17 @@ m_expr
 	| expr
 	;
 
-expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
-	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
+expr:     aNUM                                  { struct integer integer = {.value = $1};
+                                                  $$ = make_exprl(EXPR_NUM, &integer); }
+        | aHEXNUM                               { struct integer integer = {.value = $1, .is_hex = TRUE};
+                                                  $$ = make_exprl(EXPR_NUM, &integer); }
 	| aDOUBLE				{ $$ = make_exprd(EXPR_DOUBLE, $1); }
-	| tFALSE				{ $$ = make_exprl(EXPR_TRUEFALSE, 0); }
-	| tNULL					{ $$ = make_exprl(EXPR_NUM, 0); }
-	| tTRUE					{ $$ = make_exprl(EXPR_TRUEFALSE, 1); }
+        | tFALSE                                { struct integer integer = {.value = 0};
+                                                  $$ = make_exprl(EXPR_TRUEFALSE, &integer); }
+        | tNULL                                 { struct integer integer = {.value = 0};
+                                                  $$ = make_exprl(EXPR_NUM, &integer); }
+        | tTRUE                                 { struct integer integer = {.value = 1};
+                                                  $$ = make_exprl(EXPR_TRUEFALSE, &integer); }
 	| aSTRING				{ $$ = make_exprs(EXPR_STRLIT, $1); }
 	| aWSTRING				{ $$ = make_exprs(EXPR_WSTRLIT, $1); }
 	| aSQSTRING				{ $$ = make_exprs(EXPR_CHARCONST, $1); }
