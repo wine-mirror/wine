@@ -31,6 +31,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
@@ -597,6 +598,35 @@ NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
                                                void *info, ULONG size, ULONG *ret_size )
 {
     return NtQuerySystemInformation( class, info, size, ret_size );
+}
+
+
+/***********************************************************************
+ *           RtlIsProcessorFeaturePresent [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
+{
+    static const ULONGLONG arm64_features =
+        (1ull << PF_COMPARE_EXCHANGE_DOUBLE) |
+        (1ull << PF_NX_ENABLED) |
+        (1ull << PF_ARM_VFP_32_REGISTERS_AVAILABLE) |
+        (1ull << PF_ARM_NEON_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_SECOND_LEVEL_ADDRESS_TRANSLATION) |
+        (1ull << PF_FASTFAIL_AVAILABLE) |
+        (1ull << PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE) |
+        (1ull << PF_ARM_64BIT_LOADSTORE_ATOMIC) |
+        (1ull << PF_ARM_EXTERNAL_CACHE_AVAILABLE) |
+        (1ull << PF_ARM_FMAC_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE) |
+        (1ull << PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE);
+
+    return (feature < PROCESSOR_FEATURE_MAX && (arm64_features & (1ull << feature)) &&
+            user_shared_data->ProcessorFeatures[feature]);
 }
 
 

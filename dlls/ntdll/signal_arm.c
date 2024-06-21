@@ -566,6 +566,15 @@ NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
 }
 
 
+/***********************************************************************
+ *           RtlIsProcessorFeaturePresent [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
+{
+    return NtWow64IsProcessorFeaturePresent( feature );
+}
+
+
 /*************************************************************************
  *		RtlWalkFrameChain (NTDLL.@)
  */
