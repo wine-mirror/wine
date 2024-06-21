@@ -622,6 +622,8 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         MEMORY_WORKING_SET_EX_INFORMATION *info;
         ULONG i, count = len / sizeof(*info32);
 
+        if (len < sizeof(*info32)) return STATUS_INFO_LENGTH_MISMATCH;
+
         info = Wow64AllocateTemp( count * sizeof(*info) );
         for (i = 0; i < count; i++) info[i].VirtualAddress = ULongToPtr( info32[i].VirtualAddress );
         if (!(status = NtQueryVirtualMemory( handle, addr, class, info, count * sizeof(*info), &res_len )))
@@ -633,7 +635,7 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         break;
     }
 
-    case MemoryImageInformation: /* MEMORY_IMAEG_INFORMATION */
+    case MemoryImageInformation: /* MEMORY_IMAGE_INFORMATION */
     {
         if (len < sizeof(MEMORY_IMAGE_INFORMATION32)) return STATUS_INFO_LENGTH_MISMATCH;
 

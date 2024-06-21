@@ -1194,6 +1194,8 @@ static void test_QueryWorkingSetEx(void)
 {
     PSAPI_WORKING_SET_EX_INFORMATION info[4];
     char *addr, *addr2;
+    NTSTATUS status;
+    SIZE_T size;
     DWORD prot;
     BOOL ret;
 
@@ -1202,6 +1204,25 @@ static void test_QueryWorkingSetEx(void)
         win_skip("QueryWorkingSetEx not found, skipping tests\n");
         return;
     }
+
+    size = 0xdeadbeef;
+    memset(info, 0, sizeof(info));
+    status = pNtQueryVirtualMemory(GetCurrentProcess(), NULL, MemoryWorkingSetExInformation, info, 0, &size);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx.\n", status);
+    ok(size == 0xdeadbeef, "got %Iu.\n", size);
+
+    memset(&info, 0, sizeof(info));
+    ret = pQueryWorkingSetEx(GetCurrentProcess(), info, 0);
+    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "got ret %d, err %lu.\n", ret, GetLastError());
+
+    size = 0xdeadbeef;
+    memset(info, 0, sizeof(info));
+    status = pNtQueryVirtualMemory(GetCurrentProcess(), NULL, MemoryWorkingSetExInformation, info,
+            sizeof(*info) + sizeof(*info) / 2, &size);
+    ok(!status, "got %#lx.\n", status);
+    ok(!info->VirtualAttributes.Valid, "got %d.\n", info->VirtualAttributes.Valid);
+    ok(size == sizeof(*info) /* wow64 */ || size == sizeof(*info) + sizeof(*info) / 2 /* win64 */,
+            "got %Iu, sizeof(info) %Iu.\n", size, sizeof(info));
 
     addr = (void *)GetModuleHandleA(NULL);
     check_QueryWorkingSetEx(addr, "exe", 1, PAGE_READONLY, 1, FALSE);
