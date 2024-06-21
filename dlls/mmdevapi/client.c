@@ -1026,8 +1026,18 @@ static HRESULT WINAPI client_GetCurrentSharedModeEnginePeriod(IAudioClient3 *ifa
                                                        UINT32 *cur_period_frames)
 {
     struct audio_client *This = impl_from_IAudioClient3(iface);
-    FIXME("(%p)->(%p, %p) - stub\n", This, cur_format, cur_period_frames);
-    return E_NOTIMPL;
+    UINT32 dummy;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p)\n", This, cur_format, cur_period_frames);
+
+    if (!cur_format || !cur_period_frames)
+        return E_POINTER;
+
+    if (FAILED(hr = client_GetMixFormat(iface, cur_format)))
+        return hr;
+
+    return client_GetSharedModeEnginePeriod(iface, *cur_format, cur_period_frames, &dummy, &dummy, &dummy);
 }
 
 static HRESULT WINAPI client_InitializeSharedAudioStream(IAudioClient3 *iface, DWORD flags,
