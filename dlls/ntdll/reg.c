@@ -327,7 +327,8 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                 str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, len);
                 str->MaximumLength = len;
             }
-            len = min(len, str->MaximumLength);
+            else if (str->MaximumLength < len)
+                return STATUS_BUFFER_TOO_SMALL;
             len -= sizeof(WCHAR);
             memcpy(str->Buffer, ((CHAR*)pInfo) + pInfo->DataOffset, len);
             str->Buffer[len / sizeof(WCHAR)] = 0;

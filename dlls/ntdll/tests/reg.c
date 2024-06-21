@@ -2624,7 +2624,8 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
     return STATUS_SUCCESS;
 }
 
-static UNICODE_STRING query_reg_values_direct_str;
+static WCHAR query_reg_values_direct_str_buf[32];
+static UNICODE_STRING query_reg_values_direct_str = {0, 0, query_reg_values_direct_str_buf};
 
 static ULONG query_reg_values_direct_int;
 
@@ -2689,16 +2690,25 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, 0, REG_SZ, L"C:"
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"C:"
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"WindowsDrive", &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive",
            &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, 0, REG_SZ, L"%SYSTEMDRIVE%"
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"%SYSTEMDRIVE%"
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"WindowsDrive",
+           &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife32", &query_reg_values_direct_int }},
-        STATUS_SUCCESS, 0, 0, REG_DWORD, (WCHAR*)42
+        STATUS_SUCCESS, 0, 0, REG_NONE, (WCHAR*)42
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_sized }},
@@ -2724,7 +2734,12 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
            &query_reg_values_direct_str }},
-        STATUS_SUCCESS, 0, 0, REG_SZ, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"Brussels\0Paris\0%PATH%\0", sizeof(L"Brussels\0Paris\0%PATH%\0")
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"CapitalsOfEurope",
+           &query_reg_values_direct_str }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
     },
     /* DIRECT with a null buffer crashes on Windows */
     /* {
@@ -2790,13 +2805,23 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, WINE_TODO_SIZE | WINE_TODO_DATA, REG_EXPAND_SZ, L"C:"
+        STATUS_SUCCESS, 0, WINE_TODO_SIZE | WINE_TODO_DATA, REG_NONE, L"C:"
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
+        STATUS_SUCCESS, 0, WINE_TODO_SIZE, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
     },
     /* DIRECT with a multi-string default value crashes on Windows */
     /* {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
-           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
+           &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
         STATUS_SUCCESS, EXPECT_DEFAULT_DATA
     }, */
     /* The default value is not used if it is not valid */
@@ -2871,10 +2896,6 @@ static void test_RtlQueryRegistryValues(void)
                              L"Yellow", sizeof(L"Yellow"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value Color: %lu\n", status);
 
-    query_reg_values_direct_str.MaximumLength = 32 * sizeof(WCHAR);
-    query_reg_values_direct_str.Buffer = pRtlAllocateHeap(GetProcessHeap(), 0,
-                                                          query_reg_values_direct_str.MaximumLength);
-
     for (i = 0; i < ARRAY_SIZE(query_reg_values_tests); i++)
     {
         struct query_reg_values_test *test = &query_reg_values_tests[i];
@@ -2893,9 +2914,14 @@ static void test_RtlQueryRegistryValues(void)
 
         query_routine_calls = 0;
 
-        query_reg_values_direct_str.Length = query_reg_values_direct_str.MaximumLength - sizeof(WCHAR);
+        query_reg_values_direct_str.MaximumLength = test->size_limit ? test->size_limit
+                                                                     : sizeof(query_reg_values_direct_str_buf);
+        if (query_reg_values_direct_str.MaximumLength >= sizeof(WCHAR))
+           query_reg_values_direct_str.Length = query_reg_values_direct_str.MaximumLength - sizeof(WCHAR);
+        else
+            query_reg_values_direct_str.Length = 0;
         memset(query_reg_values_direct_str.Buffer, 0x23, query_reg_values_direct_str.Length);
-        query_reg_values_direct_str.Buffer[query_reg_values_direct_str.Length] = 0;
+        query_reg_values_direct_str.Buffer[query_reg_values_direct_str.Length / sizeof(WCHAR)] = 0;
 
         query_reg_values_direct_int = 1;
 
@@ -2992,8 +3018,6 @@ static void test_RtlQueryRegistryValues(void)
 
     status = RegDeleteKeyValueW(HKEY_CURRENT_USER, L"WineTest", L"WindowsDrive");
     ok(status == ERROR_FILE_NOT_FOUND, "Registry value WindowsDrive should have been deleted already\n");
-
-    pRtlFreeHeap(GetProcessHeap(), 0, query_reg_values_direct_str.Buffer);
 }
 
 START_TEST(reg)
