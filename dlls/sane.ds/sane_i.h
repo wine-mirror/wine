@@ -201,7 +201,7 @@ TW_UINT16 sane_option_set_int( const char *option_name, int val, BOOL *reload );
 TW_UINT16 sane_option_get_str( const char *option_name, char *val, int len );
 TW_UINT16 sane_option_set_str( const char *option_name, char *val, BOOL *reload );
 TW_UINT16 sane_option_probe_resolution( const char *option_name, struct option_descriptor *opt );
-TW_UINT16 sane_option_probe_mode(TW_UINT16 *current, TW_UINT32 *choices, int *count);
+TW_UINT16 sane_option_probe_str( const char* option_name, const WCHAR* const* filter[], char* opt_vals, int buf_len );
 TW_UINT16 sane_option_get_bool( const char *option_name, BOOL *val );
 TW_UINT16 sane_option_set_bool( const char *option_name, BOOL val );
 TW_UINT16 sane_option_get_scan_area( int *tlx, int *tly, int *brx, int *bry );

@@ -115,30 +115,41 @@ TW_UINT16 sane_option_probe_resolution(const char *option_name, struct option_de
     return sane_find_option(option_name, TYPE_INT, opt);
 }
 
-TW_UINT16 sane_option_probe_mode(TW_UINT16 *current, TW_UINT32 *choices, int *count)
+static TW_UINT32 sane_categorize_value(const WCHAR* value, const WCHAR* const* filter[], char* categories, int buf_len)
+{
+    TW_UINT32 i, j;
+    for(i=0; filter[i]; ++i)
+    {
+        if (!*categories)
+        {
+            for(j=0; filter[i][j]; ++j)
+            {
+                if (!wcscmp(value, filter[i][j]))
+                {
+                    wcstombs(categories, value, buf_len);
+                    return i;
+                }
+            }
+        }
+        categories += buf_len;
+    }
+    return 0;
+}
+
+TW_UINT16 sane_option_probe_str(const char* option_name, const WCHAR* const* filter[], char* opt_values, int buf_len)
 {
     WCHAR *p;
-    char buffer[256];
     struct option_descriptor opt;
-    TW_UINT16 rc = sane_find_option("mode", TYPE_STRING, &opt);
+    TW_UINT16 rc = sane_find_option(option_name, TYPE_STRING, &opt);
 
     if (rc != TWCC_SUCCESS) return rc;
-    if (opt.size > sizeof(buffer)) return TWCC_BADVALUE;
-    rc = sane_option_get_value( opt.optno, buffer );
-    if (rc != TWCC_SUCCESS) return rc;
+    if (opt.size > buf_len) return TWCC_BADVALUE;
 
-    if (!strcmp( buffer, "Lineart" )) *current = TWPT_BW;
-    else if (!strcmp( buffer, "Color" )) *current = TWPT_RGB;
-    else if (!strncmp( buffer, "Gray", 4 )) *current = TWPT_GRAY;
-
-    *count = 0;
     if (opt.constraint_type == CONSTRAINT_STRING_LIST)
     {
         for (p = opt.constraint.strings; *p; p += lstrlenW(p) + 1)
         {
-            if (!wcscmp( p, L"Lineart" )) choices[(*count)++] = TWPT_BW;
-            else if (!wcscmp( p, L"Color" )) choices[(*count)++] = TWPT_RGB;
-            else if (!wcsncmp( p, L"Gray", 4 )) choices[(*count)++] = TWPT_GRAY;
+            sane_categorize_value(p, filter, opt_values, buf_len);
         }
     }
     return rc;
