@@ -629,8 +629,9 @@ foo
 foo@or_broken@!WINE_FOO!
 foo
 bar@or_broken@foo
-0
-0@or_broken@1
+gotitright
+33
+@todo_wine@0@or_broken@1
 foo
 !WINE_FOO!
 @todo_wine@not empty

@@ -802,6 +802,12 @@ if %WINE_FOO% == foo (
     set WINE_FOO=bar
     if !WINE_FOO! == bar (echo bar) else echo foo
 )
+set WINE_FOO=32
+if %WINE_FOO% == 32 (
+  set WINE_FOO=33
+  call :setError 33
+  if errorlevel !WINE_FOO! (echo gotitright) else echo gotitwrong
+)
 echo %ErrorLevel%
 setlocal DisableDelayedExpansion
 echo %ErrorLevel%
