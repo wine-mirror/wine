@@ -224,25 +224,6 @@ void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha
     if (surface) surface->use_alpha = use_alpha;
 }
 
-/***********************************************************************
- *              surface_clip_to_visible_rect
- *
- * Intersect the accumulated drawn region with a new visible rect,
- * effectively discarding stale drawing in the surface slack area.
- */
-static void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect)
-{
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    RECT rect = *visible_rect;
-    OffsetRect(&rect, -rect.left, -rect.top);
-
-    if (!surface) return;
-
-    window_surface_lock(window_surface);
-    intersect_rect(&window_surface->bounds, &window_surface->bounds, &rect);
-    window_surface_unlock(window_surface);
-}
-
 
 static inline RECT get_surface_rect(const RECT *visible_rect)
 {
@@ -279,7 +260,6 @@ BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_r
         if (EqualRect(&data->surface->rect, &surface_rect))
         {
             /* existing surface is good enough */
-            surface_clip_to_visible_rect(data->surface, visible_rect);
             window_surface_add_ref(data->surface);
             *surface = data->surface;
             goto done;
