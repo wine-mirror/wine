@@ -127,8 +127,8 @@ static struct macdrv_window_surface *get_mac_surface(struct window_surface *surf
 /***********************************************************************
  *              create_surface
  */
-struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
-                                      struct window_surface *old_surface, BOOL use_alpha)
+static struct window_surface *create_surface(HWND hwnd, macdrv_window window, const RECT *rect,
+                                             struct window_surface *old_surface, BOOL use_alpha)
 {
     struct macdrv_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
@@ -265,7 +265,7 @@ done:
  * Intersect the accumulated drawn region with a new visible rect,
  * effectively discarding stale drawing in the surface slack area.
  */
-void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect)
+static void surface_clip_to_visible_rect(struct window_surface *window_surface, const RECT *visible_rect)
 {
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
     RECT rect = *visible_rect;
@@ -276,4 +276,96 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
     window_surface_lock(window_surface);
     intersect_rect(&window_surface->bounds, &window_surface->bounds, &rect);
     window_surface_unlock(window_surface);
+}
+
+
+static inline RECT get_surface_rect(const RECT *visible_rect)
+{
+    RECT rect = *visible_rect;
+
+    OffsetRect(&rect, -visible_rect->left, -visible_rect->top);
+    rect.left &= ~127;
+    rect.top  &= ~127;
+    rect.right  = max(rect.left + 128, (rect.right + 127) & ~127);
+    rect.bottom = max(rect.top + 128, (rect.bottom + 127) & ~127);
+    return rect;
+}
+
+
+/***********************************************************************
+ *              CreateWindowSurface   (MACDRV.@)
+ */
+BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface)
+{
+    struct macdrv_win_data *data;
+    DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+    RECT surface_rect;
+
+    TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
+
+    if (!(data = get_win_data(hwnd))) return TRUE; /* use default surface */
+
+    if (*surface) window_surface_release(*surface);
+    *surface = NULL;
+
+    surface_rect = get_surface_rect(visible_rect);
+    if (data->surface)
+    {
+        if (EqualRect(&data->surface->rect, &surface_rect))
+        {
+            /* existing surface is good enough */
+            surface_clip_to_visible_rect(data->surface, visible_rect);
+            window_surface_add_ref(data->surface);
+            *surface = data->surface;
+            goto done;
+        }
+    }
+    else if (!(swp_flags & SWP_SHOWWINDOW) && !(style & WS_VISIBLE)) goto done;
+
+    *surface = create_surface(data->hwnd, data->cocoa_window, &surface_rect, data->surface, FALSE);
+
+done:
+    release_win_data(data);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *              CreateLayeredWindow   (MACDRV.@)
+ */
+BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
+                                struct window_surface **window_surface)
+{
+    struct window_surface *surface;
+    struct macdrv_win_data *data;
+    RECT rect;
+
+    if (!(data = get_win_data(hwnd))) return FALSE;
+
+    data->layered = TRUE;
+    data->ulw_layered = TRUE;
+
+    rect = *window_rect;
+    OffsetRect(&rect, -window_rect->left, -window_rect->top);
+
+    surface = data->surface;
+    if (!surface || !EqualRect(&surface->rect, &rect))
+    {
+        data->surface = create_surface(data->hwnd, data->cocoa_window, &rect, NULL, TRUE);
+        macdrv_set_window_surface(data->cocoa_window, data->surface);
+        if (surface) window_surface_release(surface);
+        surface = data->surface;
+        if (data->unminimized_surface)
+        {
+            window_surface_release(data->unminimized_surface);
+            data->unminimized_surface = NULL;
+        }
+    }
+    else set_surface_use_alpha(surface, TRUE);
+
+    if ((*window_surface = surface)) window_surface_add_ref(surface);
+
+    release_win_data(data);
+
+    return TRUE;
 }
