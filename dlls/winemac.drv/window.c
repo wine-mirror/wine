@@ -2011,7 +2011,6 @@ void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
         }
         else
         {
-            macdrv_set_window_surface(data->cocoa_window, surface);
             if (data->unminimized_surface)
             {
                 window_surface_release(data->unminimized_surface);

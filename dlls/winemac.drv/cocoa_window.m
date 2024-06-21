@@ -410,8 +410,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @property (nonatomic) void* hwnd;
 @property (retain, readwrite, nonatomic) WineEventQueue* queue;
 
-@property (nonatomic) void* surface;
-
 @property (nonatomic) BOOL shapeChangedSinceLastDraw;
 @property (readonly, nonatomic) BOOL needsTransparency;
 
@@ -527,7 +525,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if ([window contentView] != self)
             return;
 
-        if (window.closing || !window.surface)
+        if (window.closing)
             return;
 
         imageRect = layer.bounds;
@@ -1021,7 +1019,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
     @synthesize disabled, noForeground, preventsAppActivation, floating, fullscreen, fakingClose, closing, latentParentWindow, hwnd, queue;
     @synthesize drawnSinceShown;
-    @synthesize surface;
     @synthesize shapeChangedSinceLastDraw;
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
@@ -3500,20 +3497,6 @@ void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent)
     });
 }
 
-/***********************************************************************
- *              macdrv_set_window_surface
- */
-void macdrv_set_window_surface(macdrv_window w, struct window_surface *window_surface)
-{
-@autoreleasepool
-{
-    WineWindow* window = (WineWindow*)w;
-
-    OnMainThread(^{
-        window.surface = window_surface;
-    });
-}
-}
 
 /***********************************************************************
  *              macdrv_window_set_color_image

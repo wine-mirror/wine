@@ -317,7 +317,6 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
     if (!surface || !EqualRect(&surface->rect, &rect))
     {
         data->surface = create_surface(data->hwnd, data->cocoa_window, &rect, NULL, TRUE);
-        macdrv_set_window_surface(data->cocoa_window, data->surface);
         if (surface) window_surface_release(surface);
         surface = data->surface;
         if (data->unminimized_surface)

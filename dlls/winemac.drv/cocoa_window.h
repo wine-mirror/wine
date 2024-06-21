@@ -44,9 +44,6 @@
     void* hwnd;
     WineEventQueue* queue;
 
-    void* surface;
-    pthread_mutex_t* surface_mutex;
-
     CGDirectDisplayID _lastDisplayID;
     NSTimeInterval _lastDisplayTime;
 
