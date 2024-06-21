@@ -147,12 +147,6 @@ SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4] =
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
 #endif
 
-#ifdef HAVE_WINE_PRELOADER
-static const BOOL use_preloader = TRUE;
-#else
-static const BOOL use_preloader = FALSE;
-#endif
-
 static const char *bin_dir;
 static const char *dll_dir;
 static const char *ntdll_dir;
@@ -500,31 +494,30 @@ char *get_alternate_wineloader( WORD machine )
 
 static void preloader_exec( char **argv )
 {
-    if (use_preloader)
-    {
-        static const char *preloader = "wine-preloader";
-        char *p;
+#ifdef HAVE_WINE_PRELOADER
+    static const char *preloader = "wine-preloader";
+    char *p;
 
-        if (!(p = strrchr( argv[1], '/' ))) p = argv[1];
-        else p++;
+    if (!(p = strrchr( argv[1], '/' ))) p = argv[1];
+    else p++;
 
-        if (strlen(p) > 2 && !strcmp( p + strlen(p) - 2, "64" )) preloader = "wine64-preloader";
-        argv[0] = malloc( p - argv[1] + strlen(preloader) + 1 );
-        memcpy( argv[0], argv[1], p - argv[1] );
-        strcpy( argv[0] + (p - argv[1]), preloader );
+    if (strlen(p) > 2 && !strcmp( p + strlen(p) - 2, "64" )) preloader = "wine64-preloader";
+    argv[0] = malloc( p - argv[1] + strlen(preloader) + 1 );
+    memcpy( argv[0], argv[1], p - argv[1] );
+    strcpy( argv[0] + (p - argv[1]), preloader );
 
 #ifdef __APPLE__
-        {
-            posix_spawnattr_t attr;
-            posix_spawnattr_init( &attr );
-            posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC | _POSIX_SPAWN_DISABLE_ASLR );
-            posix_spawn( NULL, argv[0], NULL, &attr, argv, *_NSGetEnviron() );
-            posix_spawnattr_destroy( &attr );
-        }
-#endif
-        execv( argv[0], argv );
-        free( argv[0] );
+    {
+        posix_spawnattr_t attr;
+        posix_spawnattr_init( &attr );
+        posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC | _POSIX_SPAWN_DISABLE_ASLR );
+        posix_spawn( NULL, argv[0], NULL, &attr, argv, *_NSGetEnviron() );
+        posix_spawnattr_destroy( &attr );
     }
+#endif
+    execv( argv[0], argv );
+    free( argv[0] );
+#endif
     execv( argv[1], argv + 1 );
 }
 
@@ -2035,18 +2028,7 @@ static void apple_main_thread(void)
 #endif  /* __APPLE__ */
 
 
-#ifdef __ANDROID__
-
-static int pre_exec(void)
-{
-#if defined(__i386__) || defined(__x86_64__)
-    return 1;  /* we have a preloader */
-#else
-    return 0;  /* no exec needed */
-#endif
-}
-
-#elif defined(__linux__) && (defined(__i386__) || defined(__arm__))
+#if defined(__linux__) && !defined(__ANDROID__) && (defined(__i386__) || defined(__arm__))
 
 static void check_vmsplit( void *stack )
 {
@@ -2067,20 +2049,6 @@ static int pre_exec(void)
     return 1;  /* we have a preloader on x86/arm */
 }
 
-#elif defined(__linux__) && (defined(__x86_64__) || defined(__aarch64__))
-
-static int pre_exec(void)
-{
-    return 1;  /* we have a preloader on x86-64/arm64 */
-}
-
-#elif defined(__APPLE__) && defined(HAVE_WINE_PRELOADER)
-
-static int pre_exec(void)
-{
-    return 1;  /* we have a preloader */
-}
-
 #elif (defined(__FreeBSD__) || defined (__FreeBSD_kernel__) || defined(__DragonFly__))
 
 static int pre_exec(void)
@@ -2097,7 +2065,11 @@ static int pre_exec(void)
 
 static int pre_exec(void)
 {
+#ifdef HAVE_WINE_PRELOADER
+    return 1;  /* we have a preloader */
+#else
     return 0;  /* no exec needed */
+#endif
 }
 
 #endif
