@@ -793,6 +793,16 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
 
 
 /*************************************************************************
+ *		RtlGetNativeSystemInformation (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class,
+                                               void *info, ULONG size, ULONG *ret_size )
+{
+    return NtQuerySystemInformation( class, info, size, ret_size );
+}
+
+
+/*************************************************************************
  *		RtlWalkFrameChain (NTDLL.@)
  */
 ULONG WINAPI RtlWalkFrameChain( void **buffer, ULONG count, ULONG flags )
