@@ -2698,7 +2698,6 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
                 info.msg.pt.x    = reply->x;
                 info.msg.pt.y    = reply->y;
                 hw_id            = 0;
-                thread_info->active_hooks = reply->active_hooks;
             }
             else buffer_size = reply->total;
         }

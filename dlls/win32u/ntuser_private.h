@@ -114,7 +114,6 @@ struct user_thread_info
     WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     WORD                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
-    UINT                          active_hooks;           /* Bitmap of active hooks */
     struct received_message_info *receive_info;           /* Message being currently received */
     struct imm_thread_data       *imm_thread_data;        /* IMM thread data */
     HKL                           kbd_layout;             /* Current keyboard layout */
