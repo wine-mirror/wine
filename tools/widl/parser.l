@@ -431,8 +431,8 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 
     [a-zA-Z_][0-9a-zA-Z_]*                      { return token_ident( yytext, yylval ); }
 
-    0[xX]{hd}+([lL][uU]?|[uU][lL]?)?            { return token_num( aHEXNUM, yytext, yylval ); }
-    [0-9]+([lL][uU]?|[uU][lL]?)?                { return token_num( aNUM, yytext, yylval ); }
+    0[xX]{hd}+[uU]?[lL]?                        { return token_num( aHEXNUM, yytext, yylval ); }
+    [0-9]+[uU]?[lL]?                            { return token_num( aNUM, yytext, yylval ); }
 
     L\"(\\.|[^"\\])*\"                          { return token_str( aWSTRING, yytext + 1, yylval ); }
     \"(\\.|[^"\\])*\"                           { return token_str( aSTRING, yytext, yylval ); }
