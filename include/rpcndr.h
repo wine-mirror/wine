@@ -30,6 +30,14 @@
 extern "C" {
 #endif
 
+#ifndef __has_declspec_attribute
+# if defined(_MSC_VER)
+#  define __has_declspec_attribute(x) 1
+# else
+#  define __has_declspec_attribute(x) 0
+# endif
+#endif
+
 #undef CONST_VTBL
 #ifdef CONST_VTABLE
 # define CONST_VTBL const
@@ -112,7 +120,14 @@ typedef void (__RPC_USER *NDR_RUNDOWN)(void *context);
 typedef void (__RPC_USER *NDR_NOTIFY_ROUTINE)(void);
 typedef void (__RPC_USER *NDR_NOTIFY2_ROUTINE)(boolean flag);
 
-#define DECLSPEC_UUID(x)
+#ifndef DECLSPEC_UUID
+# if __has_declspec_attribute(uuid) && defined (__cplusplus)
+#  define DECLSPEC_UUID(x) __declspec(uuid(x))
+# else
+#  define DECLSPEC_UUID(x)
+# endif
+#endif
+
 #define MIDL_INTERFACE(x)   struct
 
 struct _MIDL_STUB_MESSAGE;
