@@ -288,16 +288,16 @@ static void init_readback(IDirect3DDevice9 *device, struct readback *rb)
     D3DSURFACE_DESC desc;
     HRESULT hr;
 
-    hr = IDirect3DDevice9Ex_GetRenderTarget(device, 0, &rt);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DSurface9_GetDesc(rt, &desc);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, desc.Width, desc.Height,
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height,
             desc.Format, D3DPOOL_SYSTEMMEM, &rb->surface, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
-    hr = IDirect3DDevice9Ex_GetRenderTargetData(device, rt, rb->surface);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, rt, rb->surface);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(rb->surface, &rb->rect, NULL, D3DLOCK_READONLY);
