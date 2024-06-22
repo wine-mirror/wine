@@ -177,7 +177,7 @@ static void get_d3d9_surface_readback(IDirect3DSurface9 *surface, struct d3d9_su
             rb->surf_desc.Format, D3DPOOL_SYSTEMMEM, &rb->readback_surface, NULL);
     ok(hr == D3D_OK, "Failed to create surface, hr %#lx.\n", hr);
 
-    hr = IDirect3DDevice9Ex_GetRenderTargetData(device, surface, rb->readback_surface);
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surface, rb->readback_surface);
     ok(hr == D3D_OK, "Failed to get render target data, hr %#lx.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(rb->readback_surface, &rb->map_desc, NULL, 0);
