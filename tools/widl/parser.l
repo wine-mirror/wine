@@ -158,6 +158,8 @@ static int token_num( const char *yytext, YYSTYPE *yylval, int is_hex )
 {
     yylval->integer.value = xstrtoul( yytext, NULL, 0 );
     yylval->integer.is_hex = is_hex;
+    yylval->integer.is_long = !!strchr(yytext, 'l');
+    yylval->integer.is_unsigned = !!strchr(yytext, 'u');
     return is_hex ? aHEXNUM : aNUM;
 }
 

@@ -512,7 +512,7 @@ static struct expression_type resolve_expression(const struct expr_loc *expr_loc
     case EXPR_NUM:
     case EXPR_TRUEFALSE:
         result.is_temporary = FALSE;
-        result.type = type_new_int(TYPE_BASIC_INT, 0);
+        result.type = type_new_int(e->u.integer.is_long ? TYPE_BASIC_LONG : TYPE_BASIC_INT, e->u.integer.is_unsigned);
         break;
     case EXPR_STRLIT:
         result.is_temporary = TRUE;
@@ -690,6 +690,10 @@ void write_expr(FILE *h, const expr_t *e, int brackets,
             fprintf(h, "0x%x", e->u.integer.value);
         else
             fprintf(h, "%u", e->u.integer.value);
+        if (e->u.integer.is_unsigned)
+            fprintf(h, "u");
+        if (e->u.integer.is_long)
+            fprintf(h, "l");
         break;
     case EXPR_DOUBLE:
         fprintf(h, "%#.15g", e->u.dval);

@@ -351,6 +351,8 @@ struct _attr_t {
 struct integer
 {
     int value;
+    int is_unsigned;
+    int is_long;
     int is_hex;
 };
 
