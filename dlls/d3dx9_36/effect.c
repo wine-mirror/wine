@@ -4164,7 +4164,7 @@ static BOOL param_on_lost_device(void *data, struct d3dx_parameter *param)
                 cube_texture = *(IDirect3DCubeTexture9 **)param->data;
                 if (!cube_texture)
                     return FALSE;
-                IDirect3DTexture9_GetLevelDesc(cube_texture, 0, &surface_desc);
+                IDirect3DCubeTexture9_GetLevelDesc(cube_texture, 0, &surface_desc);
                 if (surface_desc.Pool != D3DPOOL_DEFAULT)
                     return FALSE;
                 break;

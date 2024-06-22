@@ -84,7 +84,7 @@ HRESULT WINAPI D3DXFilterTexture(IDirect3DBaseTexture9 *texture,
             else
             {
                 numfaces = 6;
-                IDirect3DCubeTexture9_GetLevelDesc((IDirect3DTexture9*) texture, srclevel, &desc);
+                IDirect3DCubeTexture9_GetLevelDesc((IDirect3DCubeTexture9 *)texture, srclevel, &desc);
             }
 
             if (filter == D3DX_DEFAULT)
@@ -1303,7 +1303,7 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
     if (!texture || !function)
         return D3DERR_INVALIDCALL;
 
-    miplevels = IDirect3DBaseTexture9_GetLevelCount(texture);
+    miplevels = IDirect3DTexture9_GetLevelCount(texture);
 
     for (m = 0; m < miplevels; m++)
     {
@@ -1652,7 +1652,7 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
     if (texture == NULL || function == NULL)
         return D3DERR_INVALIDCALL;
 
-    miplevels = IDirect3DBaseTexture9_GetLevelCount(texture);
+    miplevels = IDirect3DCubeTexture9_GetLevelCount(texture);
 
     for (m = 0; m < miplevels; m++)
     {
@@ -1713,7 +1713,7 @@ HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LP
     if (texture == NULL || function == NULL)
         return D3DERR_INVALIDCALL;
 
-    miplevels = IDirect3DBaseTexture9_GetLevelCount(texture);
+    miplevels = IDirect3DVolumeTexture9_GetLevelCount(texture);
 
     for (m = 0; m < miplevels; m++)
     {

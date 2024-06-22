@@ -503,7 +503,8 @@ static ULONG WINAPI D3DXRenderToEnvMap_Release(ID3DXRenderToEnvMap *iface)
 
     if (!ref)
     {
-        if (render->dst_cube_texture) IDirect3DSurface9_Release(render->dst_cube_texture);
+        if (render->dst_cube_texture)
+            IDirect3DCubeTexture9_Release(render->dst_cube_texture);
 
         if (render->render_target) IDirect3DSurface9_Release(render->render_target);
         if (render->depth_stencil) IDirect3DSurface9_Release(render->depth_stencil);
@@ -585,7 +586,8 @@ static HRESULT WINAPI D3DXRenderToEnvMap_BeginCube(ID3DXRenderToEnvMap *iface,
     return D3D_OK;
 
 cleanup:
-    if (render->dst_cube_texture) IDirect3DSurface9_Release(render->dst_cube_texture);
+    if (render->dst_cube_texture)
+        IDirect3DCubeTexture9_Release(render->dst_cube_texture);
     render->dst_cube_texture = NULL;
 
     if (render->render_target) IDirect3DSurface9_Release(render->render_target);
@@ -705,7 +707,7 @@ static HRESULT WINAPI D3DXRenderToEnvMap_End(ID3DXRenderToEnvMap *iface,
         render->depth_stencil = NULL;
     }
 
-    IDirect3DSurface9_Release(render->dst_cube_texture);
+    IDirect3DCubeTexture9_Release(render->dst_cube_texture);
     render->dst_cube_texture = NULL;
 
     render->state = INITIAL;
