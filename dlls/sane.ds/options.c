@@ -59,6 +59,7 @@ TW_UINT16 sane_option_set_int(const char *option_name, int val, BOOL *needs_relo
 {
     struct option_descriptor opt;
     TW_UINT16 rc = sane_find_option(option_name, TYPE_INT, &opt);
+    if (!opt.is_settable) return TWCC_OPERATIONERROR;
 
     if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, &val, needs_reload );
     return rc;
@@ -77,6 +78,7 @@ TW_UINT16 sane_option_set_bool(const char *option_name, int val )
 {
     struct option_descriptor opt;
     TW_UINT16 rc = sane_find_option(option_name, TYPE_BOOL, &opt);
+    if (!opt.is_settable) return TWCC_OPERATIONERROR;
 
     if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, &val, NULL );
     return rc;
@@ -102,6 +104,7 @@ TW_UINT16 sane_option_set_str(const char *option_name, char *val, BOOL *needs_re
 {
     struct option_descriptor opt;
     TW_UINT16 rc = sane_find_option(option_name, TYPE_STRING, &opt);
+    if (!opt.is_settable) return TWCC_OPERATIONERROR;
 
     if (rc == TWCC_SUCCESS) rc = sane_option_set_value( opt.optno, val, needs_reload );
     return rc;

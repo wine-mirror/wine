@@ -159,6 +159,7 @@ static void map_descr( struct option_descriptor *descr, const SANE_Option_Descri
     descr->constraint_type = map_constraint_type( opt->constraint_type );
     descr->size = opt->size;
     descr->is_active = SANE_OPTION_IS_ACTIVE( opt->cap );
+    descr->is_settable = SANE_OPTION_IS_SETTABLE( opt->cap );
     if (opt->title) len = ntdll_umbstowcs( opt->title, strlen(opt->title),
                                            descr->title, ARRAY_SIZE(descr->title) );
     descr->title[len] = 0;
