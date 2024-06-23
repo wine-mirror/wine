@@ -935,6 +935,7 @@ typedef volatile struct
     rectangle_t          caret_rect;       /* caret rectangle */
     user_handle_t        cursor;           /* handle to the cursor */
     int                  cursor_count;     /* cursor show count */
+    unsigned char        keystate[256];    /* key state */
 } input_shm_t;
 
 typedef volatile union
