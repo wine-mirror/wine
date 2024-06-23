@@ -925,6 +925,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
+    int                  foreground;       /* is desktop foreground thread input */
     user_handle_t        active;           /* handle to the active window */
     user_handle_t        focus;            /* handle to the focus window */
     user_handle_t        capture;          /* handle to the capture window */

@@ -275,6 +275,7 @@ static struct thread_input *create_thread_input( struct thread *thread )
 
         SHARED_WRITE_BEGIN( input->shared, input_shm_t )
         {
+            shared->foreground = 0;
             shared->active = 0;
             shared->focus = 0;
             shared->capture = 0;
@@ -609,9 +610,26 @@ void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect, unsig
 /* change the foreground input and reset the cursor clip rect */
 static void set_foreground_input( struct desktop *desktop, struct thread_input *input )
 {
+    const input_shm_t *input_shm, *old_input_shm, dummy_shm = {0};
+
     if (desktop->foreground_input == input) return;
+    input_shm = input ? input->shared : &dummy_shm;
+    old_input_shm = desktop->foreground_input ? desktop->foreground_input->shared : &dummy_shm;
+
     set_clip_rectangle( desktop, NULL, SET_CURSOR_NOCLIP, 1 );
     desktop->foreground_input = input;
+
+    SHARED_WRITE_BEGIN( old_input_shm, input_shm_t )
+    {
+        input_shm_t *old_shared = shared;
+        SHARED_WRITE_BEGIN( input_shm, input_shm_t )
+        {
+            old_shared->foreground = 0;
+            shared->foreground = 1;
+        }
+        SHARED_WRITE_END;
+    }
+    SHARED_WRITE_END;
 }
 
 /* get the hook table for a given thread */
