@@ -936,6 +936,7 @@ typedef volatile struct
     user_handle_t        cursor;           /* handle to the cursor */
     int                  cursor_count;     /* cursor show count */
     unsigned char        keystate[256];    /* key state */
+    int                  keystate_lock;    /* keystate is locked */
 } input_shm_t;
 
 typedef volatile union

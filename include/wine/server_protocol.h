@@ -920,6 +920,7 @@ typedef volatile struct
     user_handle_t        cursor;
     int                  cursor_count;
     unsigned char        keystate[256];
+    int                  keystate_lock;
 } input_shm_t;
 
 typedef volatile union
@@ -6597,7 +6598,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 832
+#define SERVER_PROTOCOL_VERSION 833
 
 /* ### protocol_version end ### */
 
