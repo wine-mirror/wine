@@ -486,7 +486,6 @@ DECL_HANDLER(set_hook)
                           req->flags, req->proc, req->unicode, module, module_size )))
     {
         reply->handle = hook->handle;
-        reply->active_hooks = get_active_hooks();
     }
     else free( module );
 
@@ -525,7 +524,6 @@ DECL_HANDLER(remove_hook)
     }
 
     remove_hook( hook );
-    reply->active_hooks = get_active_hooks();
 }
 
 
@@ -541,8 +539,6 @@ DECL_HANDLER(start_hook_chain)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-
-    reply->active_hooks = get_active_hooks();
 
     if (!table || !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK, req->event,
                                                  req->window, req->object_id, req->child_id )))

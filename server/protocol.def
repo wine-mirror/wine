@@ -2231,7 +2231,6 @@ enum message_type
     int             x;         /* message x position */
     int             y;         /* message y position */
     unsigned int    time;      /* message time */
-    unsigned int    active_hooks; /* active hooks bitmap */
     data_size_t     total;     /* total size of extra data */
     VARARG(data,message_data); /* message data for sent messages */
 @END
@@ -3035,7 +3034,6 @@ enum caret_state
     VARARG(module,unicode_str);    /* module name */
 @REPLY
     user_handle_t  handle;         /* handle to the hook */
-    unsigned int   active_hooks;   /* active hooks bitmap */
 @END
 
 
@@ -3045,7 +3043,6 @@ enum caret_state
     client_ptr_t   proc;           /* hook procedure if handle is 0 */
     int            id;             /* id of the hook if handle is 0 */
 @REPLY
-    unsigned int   active_hooks;   /* active hooks bitmap */
 @END
 
 
@@ -3062,7 +3059,6 @@ enum caret_state
     thread_id_t    tid;            /* thread id for low-level keyboard/mouse hooks */
     int            unicode;        /* is it a unicode hook? */
     client_ptr_t   proc;           /* hook procedure */
-    unsigned int   active_hooks;   /* active hooks bitmap */
     VARARG(module,unicode_str);    /* module name */
 @END
 

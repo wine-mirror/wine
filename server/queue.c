@@ -625,21 +625,6 @@ void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
     queue->hooks = hooks;
 }
 
-/* get the thread message queue active hooks bitmap */
-unsigned int get_active_hooks(void)
-{
-    unsigned int ret = 1u << 31;  /* set high bit to indicate that the bitmap is valid */
-    struct msg_queue *queue;
-    int bit;
-
-    if (!(queue = current->queue)) return ret;
-
-    for (bit = 0; bit < ARRAY_SIZE(queue->shared->hooks_count); bit++)
-        if (queue->shared->hooks_count[bit]) ret |= 1 << bit;
-
-    return ret;
-}
-
 /* update the thread message queue hooks counters */
 void add_queue_hook_count( struct thread *thread, unsigned int index, int count )
 {
@@ -3124,8 +3109,6 @@ DECL_HANDLER(get_message)
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
     unsigned int filter = req->flags >> 16;
-
-    reply->active_hooks = get_active_hooks();
 
     if (get_win && get_win != 1 && get_win != -1 && !get_user_object( get_win, USER_WINDOW ))
     {

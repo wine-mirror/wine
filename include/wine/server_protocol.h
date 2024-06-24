@@ -2967,9 +2967,9 @@ struct get_message_reply
     int             x;
     int             y;
     unsigned int    time;
-    unsigned int    active_hooks;
     data_size_t     total;
     /* VARARG(data,message_data); */
+    char __pad_52[4];
 };
 
 
@@ -4228,7 +4228,7 @@ struct set_hook_reply
 {
     struct reply_header __header;
     user_handle_t  handle;
-    unsigned int   active_hooks;
+    char __pad_12[4];
 };
 
 
@@ -4244,8 +4244,6 @@ struct remove_hook_request
 struct remove_hook_reply
 {
     struct reply_header __header;
-    unsigned int   active_hooks;
-    char __pad_12[4];
 };
 
 
@@ -4267,9 +4265,7 @@ struct start_hook_chain_reply
     thread_id_t    tid;
     int            unicode;
     client_ptr_t   proc;
-    unsigned int   active_hooks;
     /* VARARG(module,unicode_str); */
-    char __pad_36[4];
 };
 
 
@@ -6591,7 +6587,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 818
+#define SERVER_PROTOCOL_VERSION 819
 
 /* ### protocol_version end ### */
 
