@@ -1,0 +1,16 @@
+language: c
+
+dist: trusty
+
+before_script:
+- cat /proc/cpuinfo
+- sudo add-apt-repository --yes ppa:ubuntu-wine/ppa --enable-source && sudo apt-get update && sudo apt-get build-dep --yes wine && sudo apt-get install --yes lib32ncurses5 lib32z1 lib32bz2-1.0
+    # - `sudo sed -i '/^#\sdeb-src /s/^#//' "/etc/apt/sources.list"` doesn't avoid `E: Unable to find a source package for wine` during `apt-get build-dep`
+    # - `lib32ncurses5 lib32z1 lib32bz2-1.0` replace `ia32-libs` which isn't available on 14.04
+- sudo apt-get install libx11-dev libfreetype6-dev libxrender-dev libxml2-dev libxslt1-dev libicu-dev
+    # can't build 32-bit version on 64-bit system (in case it become possible use a matrix with a varialbe which is check in script with `if [ "$BUILD_ARCH" = "i386" ]; then [...]; fi`
+
+script:
+- export MAKEFLAGS="-j`grep -c ^processor /proc/cpuinfo`"
+- autoreconf -i -v -f && ./configure --enable-win64 && make && make check && make distcheck && sudo make install
+    # -j causes gcc to be killed due to lack of RAM
