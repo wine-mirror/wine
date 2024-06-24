@@ -899,7 +899,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int                  placeholder;
+    int                  hooks_count[WH_MAX - WH_MIN + 2];
 } queue_shm_t;
 
 typedef volatile union
@@ -6575,7 +6575,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 816
+#define SERVER_PROTOCOL_VERSION 817
 
 /* ### protocol_version end ### */
 

@@ -410,6 +410,7 @@ static void close_desktop_timeout( void *private )
 static void add_desktop_thread( struct desktop *desktop, struct thread *thread )
 {
     list_add_tail( &desktop->threads, &thread->desktop_entry );
+    add_desktop_hook_count( desktop, thread, 1 );
 
     if (!thread->process->is_system)
     {
@@ -441,6 +442,7 @@ static void remove_desktop_user( struct desktop *desktop, struct thread *thread 
 /* remove a thread from the list of threads attached to a desktop */
 static void remove_desktop_thread( struct desktop *desktop, struct thread *thread )
 {
+    add_desktop_hook_count( desktop, thread, -1 );
     list_remove( &thread->desktop_entry );
 
     if (!thread->process->is_system) remove_desktop_user( desktop, thread );

@@ -108,12 +108,14 @@ extern void cleanup_clipboard_thread( struct thread *thread );
 extern void remove_thread_hooks( struct thread *thread );
 extern unsigned int get_active_hooks(void);
 extern struct thread *get_first_global_hook( struct desktop *desktop, int id );
+extern void add_desktop_hook_count( struct desktop *desktop, struct thread *thread, int count );
 
 /* queue functions */
 
 extern void free_msg_queue( struct thread *thread );
 extern struct hook_table *get_queue_hooks( struct thread *thread );
 extern void set_queue_hooks( struct thread *thread, struct hook_table *hooks );
+extern void add_queue_hook_count( struct thread *thread, unsigned int index, int count );
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int init_thread_queue( struct thread *thread );

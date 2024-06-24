@@ -290,6 +290,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
 {
     struct thread_input *new_input = NULL;
     struct msg_queue *queue;
+    struct desktop *desktop;
     int i;
 
     if (!input)
@@ -328,7 +329,19 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
             return NULL;
         }
 
+        SHARED_WRITE_BEGIN( queue->shared, queue_shm_t )
+        {
+            memset( (void *)shared->hooks_count, 0, sizeof(shared->hooks_count) );
+        }
+        SHARED_WRITE_END;
+
         thread->queue = queue;
+
+        if ((desktop = get_thread_desktop( thread, 0 )))
+        {
+            add_desktop_hook_count( desktop, thread, 1 );
+            release_object( desktop );
+        }
     }
     if (new_input) release_object( new_input );
     return queue;
@@ -610,6 +623,35 @@ void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
     if (!queue && !(queue = create_msg_queue( thread, NULL ))) return;
     if (queue->hooks) release_object( queue->hooks );
     queue->hooks = hooks;
+}
+
+/* get the thread message queue active hooks bitmap */
+unsigned int get_active_hooks(void)
+{
+    unsigned int ret = 1u << 31;  /* set high bit to indicate that the bitmap is valid */
+    struct msg_queue *queue;
+    int bit;
+
+    if (!(queue = current->queue)) return ret;
+
+    for (bit = 0; bit < ARRAY_SIZE(queue->shared->hooks_count); bit++)
+        if (queue->shared->hooks_count[bit]) ret |= 1 << bit;
+
+    return ret;
+}
+
+/* update the thread message queue hooks counters */
+void add_queue_hook_count( struct thread *thread, unsigned int index, int count )
+{
+    if (!thread->queue) return;
+
+    SHARED_WRITE_BEGIN( thread->queue->shared, queue_shm_t )
+    {
+        shared->hooks_count[index] += count;
+    }
+    SHARED_WRITE_END;
+
+    assert( thread->queue->shared->hooks_count[index] >= 0 );
 }
 
 /* check the queue status */

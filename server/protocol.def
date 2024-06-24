@@ -915,7 +915,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    int                  placeholder;
+    int                  hooks_count[WH_MAX - WH_MIN + 2]; /* active hooks count */
 } queue_shm_t;
 
 typedef volatile union
