@@ -23100,7 +23100,6 @@ test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine"
 
 if test "x$enable_tools" != xno
 then
-    as_fn_append CONFIGURE_TARGETS " tools/makedep$ac_exeext"
     ac_config_commands="$ac_config_commands tools/makedep"
 
 fi
@@ -23140,18 +23139,6 @@ include/config.h.in: include/stamp-h.in
 include/stamp-h.in: configure.ac aclocal.m4
 	autoheader --warnings=all
 	@echo timestamp > \$@"
-fi
-
-if test "x$enable_tools" != xno
-then
-    as_fn_append wine_rules "
-tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
-	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext"
-else
-    as_fn_append wine_rules "
-\$(MAKEDEP):
-	@echo \"You need to run make in $toolsdir first\" && false"
 fi
 
 
@@ -23905,7 +23892,8 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 wine_fn_output_makedep ()
 {
     as_dir=tools; as_fn_mkdir_p
-    $CC -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ -DWINE_UNIX_LIB $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext ${wine_srcdir}tools/makedep.c $LDFLAGS
+    $CC -c -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ -DWINE_UNIX_LIB $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep.o ${wine_srcdir}tools/makedep.c
+    $CC -o tools/makedep$ac_exeext tools/makedep.o $LDFLAGS
 }
 wine_fn_output_makefile ()
 {

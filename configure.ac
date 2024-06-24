@@ -3586,12 +3586,12 @@ test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine)
 
 if test "x$enable_tools" != xno
 then
-    WINE_IGNORE_FILE(tools/makedep$ac_exeext)
     AC_CONFIG_COMMANDS([tools/makedep],[wine_fn_output_makedep || AS_EXIT],
 [wine_fn_output_makedep ()
 {
     AS_MKDIR_P(tools)
-    $CC -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ -DWINE_UNIX_LIB $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext ${wine_srcdir}tools/makedep.c $LDFLAGS
+    $CC -c -I${wine_srcdir}tools -Iinclude -I${wine_srcdir}include -D__WINESRC__ -DWINE_UNIX_LIB $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep.o ${wine_srcdir}tools/makedep.c
+    $CC -o tools/makedep$ac_exeext tools/makedep.o $LDFLAGS
 }])
 fi
 
@@ -3653,18 +3653,6 @@ include/config.h.in: include/stamp-h.in
 include/stamp-h.in: configure.ac aclocal.m4
 	autoheader --warnings=all
 	@echo timestamp > \$[@]])
-fi
-
-if test "x$enable_tools" != xno
-then
-    WINE_APPEND_RULE(
-[tools/makedep$ac_exeext: ${wine_srcdir}tools/makedep.c include/config.h config.status
-	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext])
-else
-    WINE_APPEND_RULE(
-[\$(MAKEDEP):
-	@echo \"You need to run make in $toolsdir first\" && false])
 fi
 
 dnl Rules for wineloader
