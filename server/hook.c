@@ -127,8 +127,20 @@ static struct hook_table *get_global_hooks( struct thread *thread )
     return table;
 }
 
+/* check if a given hook should run in the given thread */
+static int run_hook_in_thread( struct hook *hook, struct thread *thread )
+{
+    if (hook->process && hook->process != thread->process) return 0;
+    if ((hook->flags & WINEVENT_SKIPOWNPROCESS) && hook->process == thread->process) return 0;
+    if (hook->thread && hook->thread != thread) return 0;
+    if ((hook->flags & WINEVENT_SKIPOWNTHREAD) && hook->thread == thread) return 0;
+    return 1;
+}
+
 /* create a new hook and add it to the specified table */
-static struct hook *add_hook( struct desktop *desktop, struct thread *thread, int index, int global )
+static struct hook *add_hook( struct desktop *desktop, struct process *process, struct thread *thread, int index, int global,
+                              int event_min, int event_max, int flags, client_ptr_t proc, int unicode,
+                              WCHAR *module, data_size_t module_size )
 {
     struct hook *hook;
     struct hook_table *table = global ? desktop->global_hooks : get_queue_hooks(thread);
@@ -146,10 +158,19 @@ static struct hook *add_hook( struct desktop *desktop, struct thread *thread, in
         free( hook );
         return NULL;
     }
-    hook->desktop = (struct desktop *)grab_object( desktop );
-    hook->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
-    hook->table  = table;
-    hook->index  = index;
+    hook->owner       = (struct thread *)grab_object( current );
+    hook->desktop     = (struct desktop *)grab_object( desktop );
+    hook->process     = process ? (struct process *)grab_object( process ) : NULL;
+    hook->thread      = thread ? (struct thread *)grab_object( thread ) : NULL;
+    hook->table       = table;
+    hook->index       = index;
+    hook->event_min   = event_min;
+    hook->event_max   = event_max;
+    hook->flags       = flags;
+    hook->proc        = proc;
+    hook->unicode     = unicode;
+    hook->module      = module;
+    hook->module_size = module_size;
     list_add_head( &table->hooks[index], &hook->chain );
     if (thread) thread->desktop_users++;
     return hook;
@@ -209,10 +230,7 @@ static inline int run_hook_in_owner_thread( struct hook *hook )
 /* check if a given hook should run in the current thread */
 static inline int run_hook_in_current_thread( struct hook *hook )
 {
-    if (hook->process && hook->process != current->process) return 0;
-    if ((hook->flags & WINEVENT_SKIPOWNPROCESS) && hook->process == current->process) return 0;
-    if (hook->thread && hook->thread != current) return 0;
-    if ((hook->flags & WINEVENT_SKIPOWNTHREAD) && hook->thread == current) return 0;
+    if (!run_hook_in_thread( hook, current )) return 0;
     /* don't run low-level hooks in processes suspended for debugging */
     if (run_hook_in_owner_thread( hook ) && hook->owner->process->suspend) return 0;
     return 1;
@@ -454,17 +472,9 @@ DECL_HANDLER(set_hook)
         global = 0;
     }
 
-    if ((hook = add_hook( desktop, thread, req->id - WH_MINHOOK, global )))
+    if ((hook = add_hook( desktop, process, thread, req->id - WH_MINHOOK, global, req->event_min, req->event_max,
+                          req->flags, req->proc, req->unicode, module, module_size )))
     {
-        hook->owner = (struct thread *)grab_object( current );
-        hook->process = process ? (struct process *)grab_object( process ) : NULL;
-        hook->event_min   = req->event_min;
-        hook->event_max   = req->event_max;
-        hook->flags       = req->flags;
-        hook->proc        = req->proc;
-        hook->unicode     = req->unicode;
-        hook->module      = module;
-        hook->module_size = module_size;
         reply->handle = hook->handle;
         reply->active_hooks = get_active_hooks();
     }
