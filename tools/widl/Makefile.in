@@ -26,8 +26,8 @@ SOURCES = \
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \
-	-DDLLDIR="\"${dlldir}\"" \
+	-DDLLDIR="\"${libdir}/wine\"" \
 	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\" \
-	-DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${dlldir}`\"
+	-DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${libdir}/wine`\"
 
 INSTALL_DEV = $(PROGRAMS)

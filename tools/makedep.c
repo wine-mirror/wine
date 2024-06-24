@@ -2664,7 +2664,7 @@ static struct strarray get_removable_dirs( struct strarray files )
 static void output_uninstall_rules( struct makefile *make )
 {
     static const char *dirs_order[] =
-        { "$(includedir)", "$(mandir)", "$(datadir)", "$(dlldir)" };
+        { "$(includedir)", "$(mandir)", "$(datadir)" };
 
     struct strarray uninstall_dirs;
     unsigned int i, j;
@@ -3383,7 +3383,7 @@ static void output_fake_module( struct makefile *make, const char *spec_file )
     if (make->disabled[arch]) return;
 
     strarray_add( &make->all_targets[arch], name );
-    add_install_rule( make, make->module, arch, name, strmake( "d$(dlldir)/%s", name ));
+    add_install_rule( make, make->module, arch, name, strmake( "d$(libdir)/wine/%s", name ));
 
     output( "%s:", obj_dir_path( make, name ));
     if (spec_file) output_filename( spec_file );
@@ -3460,7 +3460,7 @@ static void output_module( struct makefile *make, unsigned int arch )
     strarray_add( &make->all_targets[link_arch], module_name );
     if (make->data_only)
         add_install_rule( make, make->module, link_arch, module_name,
-                          strmake( "d$(dlldir)/%s%s", arch_pe_dirs[arch], make->module ));
+                          strmake( "d$(libdir)/wine/%s%s", arch_pe_dirs[arch], make->module ));
     else
         add_install_rule( make, make->module, link_arch, module_name,
                           strmake( "%c%s%s%s", '0' + arch, arch_install_dirs[arch], make->module,
@@ -4554,7 +4554,7 @@ int main( int argc, char *argv[] )
 
     arch_dirs[0] = "";
     arch_pe_dirs[0] = strmake( "%s-windows/", archs.str[0] );
-    arch_install_dirs[0] = unix_lib_supported ? strmake( "$(dlldir)/%s-unix/", archs.str[0] ) : "$(dlldir)/";
+    arch_install_dirs[0] = unix_lib_supported ? strmake( "$(libdir)/wine/%s-unix/", archs.str[0] ) : "$(libdir)/wine/";
     strip_progs[0] = "\"$(STRIP)\"";
 
     for (arch = 1; arch < archs.count; arch++)
@@ -4564,7 +4564,7 @@ int main( int argc, char *argv[] )
         strarray_add( &target_flags[arch], target );
         arch_dirs[arch] = strmake( "%s-windows/", archs.str[arch] );
         arch_pe_dirs[arch] = arch_dirs[arch];
-        arch_install_dirs[arch] = strmake( "$(dlldir)/%s", arch_dirs[arch] );
+        arch_install_dirs[arch] = strmake( "$(libdir)/wine/%s", arch_dirs[arch] );
         strip_progs[arch] = strmake( "%s-strip", target );
         dll_ext[arch] = "";
     }

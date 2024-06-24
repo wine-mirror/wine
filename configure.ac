@@ -91,7 +91,6 @@ AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine i
 
 AC_CANONICAL_HOST
 
-AC_SUBST(dlldir,[\${libdir}/wine])
 AC_SUBST(srcdir)
 
 dnl **** Check for some programs ****
@@ -196,7 +195,7 @@ fi
 AC_SUBST(toolsdir,[$wine_cv_toolsdir])
 AC_SUBST(MAKEDEP,[$wine_makedep])
 AC_SUBST(RUNTESTFLAGS,["-q -P wine"])
-AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@dlldir@,\${dlldir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
+AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
 
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
