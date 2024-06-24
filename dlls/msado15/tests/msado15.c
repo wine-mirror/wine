@@ -53,7 +53,7 @@ static void test_Recordset(void)
     Properties *props;
     Property *prop;
     LONG count, state;
-    ADO_LONGPTR rec_count;
+    ADO_LONGPTR rec_count, max_records;
     VARIANT missing, val, index;
     CursorLocationEnum location;
     CursorTypeEnum cursor;
@@ -125,6 +125,21 @@ static void test_Recordset(void)
     ok( cache_size == 5, "got %ld\n", cache_size );
 
     hr = _Recordset_put_CacheSize( recordset, 1 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    max_records = 0;
+    hr = _Recordset_get_MaxRecords( recordset, &max_records );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( max_records == 0, "got %Id\n", max_records );
+
+    hr = _Recordset_put_MaxRecords( recordset, 5 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Recordset_get_MaxRecords( recordset, &max_records );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( max_records == 5, "got %Id\n", max_records );
+
+    hr = _Recordset_put_MaxRecords( recordset, 0 );
     ok( hr == S_OK, "got %08lx\n", hr );
 
     editmode = -1;

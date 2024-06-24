@@ -51,6 +51,7 @@ struct recordset
     IRowset           *row_set;
     EditModeEnum      editmode;
     LONG               cache_size;
+    ADO_LONGPTR        max_records;
     VARIANT            filter;
 
     DBTYPE            *columntypes;
@@ -1532,14 +1533,20 @@ static HRESULT WINAPI recordset_put_LockType( _Recordset *iface, LockTypeEnum lo
 
 static HRESULT WINAPI recordset_get_MaxRecords( _Recordset *iface, ADO_LONGPTR *max_records )
 {
-    FIXME( "%p, %p\n", iface, max_records );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %p\n", iface, max_records );
+
+    *max_records = recordset->max_records;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_MaxRecords( _Recordset *iface, ADO_LONGPTR max_records )
 {
-    FIXME( "%p, %Id\n", iface, max_records );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %Id\n", iface, max_records );
+
+    recordset->max_records = max_records;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_RecordCount( _Recordset *iface, ADO_LONGPTR *count )
@@ -2800,6 +2807,7 @@ HRESULT Recordset_create( void **obj )
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
     recordset->cache_size = 1;
+    recordset->max_records = 0;
     VariantInit( &recordset->filter );
     recordset->columntypes = NULL;
     recordset->haccessors = NULL;
