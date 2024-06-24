@@ -986,6 +986,16 @@ static const char *debugstr_redirection(const CMD_REDIRECTION *redir)
     }
 }
 
+static CMD_COMMAND *command_create(const WCHAR *ptr, size_t len)
+{
+    CMD_COMMAND *ret = xalloc(sizeof(CMD_COMMAND));
+
+    ret->command = xalloc((len + 1) * sizeof(WCHAR));
+    memcpy(ret->command, ptr, len * sizeof(WCHAR));
+    ret->command[len] = L'\0';
+    return ret;
+}
+
 static void command_dispose(CMD_COMMAND *cmd)
 {
     if (cmd)
@@ -2417,6 +2427,13 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
                 node_builder_consume(builder);
                 tkn = node_builder_peek_next_token(builder, &pmt);
                 ERROR_IF(tkn != TKN_COMMAND);
+                if (!wcscmp(pmt.command->command, L"/?"))
+                {
+                    node_builder_consume(builder);
+                    command_dispose(pmt.command);
+                    left = node_create_single(command_create(L"help if", 7));
+                    break;
+                }
                 ERROR_IF(!if_condition_parse(pmt.command->command, &end, &cond));
                 command_dispose(pmt.command);
                 node_builder_consume(builder);
@@ -2451,6 +2468,13 @@ static BOOL node_builder_parse(struct node_builder *builder, CMD_NODE **result)
                 node_builder_consume(builder);
                 tkn = node_builder_peek_next_token(builder, &pmt);
                 ERROR_IF(tkn != TKN_COMMAND);
+                if (!wcscmp(pmt.command->command, L"/?"))
+                {
+                    node_builder_consume(builder);
+                    command_dispose(pmt.command);
+                    left = node_create_single(command_create(L"help for", 8));
+                    break;
+                }
                 node_builder_consume(builder);
                 for_ctrl = for_control_parse(pmt.command->command);
                 command_dispose(pmt.command);
@@ -2627,12 +2651,7 @@ static void lexer_push_command(struct node_builder *builder,
     }
     if (*commandLen)
     {
-        tkn_pmt.command = xalloc(sizeof(CMD_COMMAND));
-
-        tkn_pmt.command->command = xalloc((*commandLen + 1) * sizeof(WCHAR));
-        memcpy(tkn_pmt.command->command, command, *commandLen * sizeof(WCHAR));
-        tkn_pmt.command->command[*commandLen] = L'\0';
-
+        tkn_pmt.command = command_create(command, *commandLen);
         node_builder_push_token_parameter(builder, TKN_COMMAND, tkn_pmt);
     }
     /* Reset the lengths */
