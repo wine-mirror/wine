@@ -2777,6 +2777,7 @@ static void test_ScriptTextOut(HDC hdc)
     hr = ScriptTextOut(hdc, &psc, 0, 0, 0, NULL, &pItem[0].a, NULL, 0,
             pwOutGlyphs1, pcGlyphs, piAdvance, NULL, pGoffset);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!psc, "Got unexpected psc %p.\n", psc);
 
     /* Test Rect Rgn is acceptable. */
     SetRect(&rect, 10, 10, 40, 20);

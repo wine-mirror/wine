@@ -3510,7 +3510,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
                              int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance,
                              const int *piJustify, const GOFFSET *pGoffset)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
     INT i, dir = 1;
     INT *lpDx;
     WORD *reordered_glyphs = (WORD *)pwGlyphs;
@@ -3521,6 +3521,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 
     if (!hdc || !psc) return E_INVALIDARG;
     if (!piAdvance || !psa || !pwGlyphs) return E_INVALIDARG;
+    if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
 
     fuOptions &= ETO_CLIPPED | ETO_OPAQUE;
     fuOptions |= ETO_IGNORELANGUAGE;
