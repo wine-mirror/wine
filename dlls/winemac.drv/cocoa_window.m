@@ -564,7 +564,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 clearedGlSurface = TRUE;
             }
             context.needsUpdate = TRUE;
-            macdrv_update_opengl_context(context);
+            macdrv_update_opengl_context((macdrv_opengl_context)context);
         }
         [glContexts addObjectsFromArray:pendingGlContexts];
         [pendingGlContexts removeAllObjects];
