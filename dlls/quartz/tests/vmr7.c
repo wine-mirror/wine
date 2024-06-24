@@ -3641,6 +3641,7 @@ static void test_default_presenter_allocate(void)
     IVMRSurfaceAllocator *allocator;
     VMRALLOCATIONINFO info;
     DDSURFACEDESC2 desc;
+    HWND window;
     HRESULT hr;
     LONG ref;
 
@@ -3669,6 +3670,9 @@ static void test_default_presenter_allocate(void)
         {16, mmioFOURCC('Y','U','Y','2')},
     };
 
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            100, 100, NULL, NULL, NULL, NULL);
+
     hr = CoCreateInstance(&CLSID_AllocPresenter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IVMRSurfaceAllocator, (void **)&allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3687,6 +3691,8 @@ static void test_default_presenter_allocate(void)
 
     for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        DWORD expect_caps = 0;
+        HRESULT expect_hr;
         DWORD count = 2;
 
         winetest_push_context("Compression %#lx, depth %u", tests[i].compression, tests[i].depth);
@@ -3694,14 +3700,53 @@ static void test_default_presenter_allocate(void)
         bitmap_header.biBitCount = tests[i].depth;
         bitmap_header.biCompression = tests[i].compression;
 
+        ddraw = create_ddraw(window);
+
+        /* Test whether we can create a surface directly, and how that will
+         * be translated to the error message and caps. */
+        memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_BACKBUFFERCOUNT | DDSD_WIDTH | DDSD_HEIGHT;
+        desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+        desc.dwWidth = desc.dwHeight = 32;
+        desc.dwBackBufferCount = 2;
+        desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+        if (tests[i].compression)
+        {
+            desc.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+            desc.ddpfPixelFormat.dwFourCC = tests[i].compression;
+        }
+        else
+        {
+            desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+            desc.ddpfPixelFormat.dwRGBBitCount = 32;
+            desc.ddpfPixelFormat.dwRBitMask = 0x00ff0000;
+            desc.ddpfPixelFormat.dwGBitMask = 0x0000ff00;
+            desc.ddpfPixelFormat.dwBBitMask = 0x000000ff;
+        }
+        hr = IDirectDraw7_CreateSurface(ddraw, &desc, &frontbuffer, NULL);
+        ok(hr == S_OK || hr == DDERR_INVALIDPIXELFORMAT, "Got hr %#lx.\n", hr);
+        expect_hr = (hr == S_OK ? S_OK : VFW_E_DDRAW_CAPS_NOT_SUITABLE);
+        if (hr == S_OK)
+        {
+            memset(&desc, 0, sizeof(desc));
+            desc.dwSize = sizeof(desc);
+            hr = IDirectDrawSurface7_GetSurfaceDesc(frontbuffer, &desc);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            expect_caps = desc.ddsCaps.dwCaps & ~(DDSCAPS_FRONTBUFFER | DDSCAPS_COMPLEX);
+            IDirectDrawSurface7_Release(frontbuffer);
+        }
+
+        IDirectDraw7_Release(ddraw);
+
         hr = IVMRSurfaceAllocator_AllocateSurface(allocator, 0, &info, &count, &frontbuffer);
+        ok(hr == expect_hr, "Got hr %#lx.\n", hr);
         if (hr == VFW_E_DDRAW_CAPS_NOT_SUITABLE)
         {
             skip("Format is not supported.\n");
             winetest_pop_context();
             continue;
         }
-        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         ok(count == 3, "Got count %lu.\n", count);
 
         memset(&desc, 0, sizeof(desc));
@@ -3710,8 +3755,8 @@ static void test_default_presenter_allocate(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         todo_wine ok(desc.dwFlags == (DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT),
                 "Got flags %#lx.\n", desc.dwFlags);
-        todo_wine ok(desc.ddsCaps.dwCaps == (DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN
-                | DDSCAPS_FRONTBUFFER | DDSCAPS_FLIP), "Got caps %#lx.\n", desc.ddsCaps.dwCaps);
+        todo_wine ok(desc.ddsCaps.dwCaps == (expect_caps | DDSCAPS_FRONTBUFFER),
+                "Expected caps %#lx, got %#lx.\n", (expect_caps | DDSCAPS_FRONTBUFFER), desc.ddsCaps.dwCaps);
         ok(!desc.ddsCaps.dwCaps2, "Got caps2 %#lx.\n", desc.ddsCaps.dwCaps2);
         ok(!desc.ddsCaps.dwCaps3, "Got caps2 %#lx.\n", desc.ddsCaps.dwCaps3);
         ok(!desc.ddsCaps.dwCaps4, "Got caps2 %#lx.\n", desc.ddsCaps.dwCaps4);
@@ -3744,8 +3789,8 @@ static void test_default_presenter_allocate(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         todo_wine ok(desc.dwFlags == (DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT),
                 "Got flags %#lx.\n", desc.dwFlags);
-        todo_wine ok(desc.ddsCaps.dwCaps == (DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN
-                | DDSCAPS_BACKBUFFER | DDSCAPS_FLIP), "Got caps %#lx.\n", desc.ddsCaps.dwCaps);
+        todo_wine ok(desc.ddsCaps.dwCaps == (expect_caps | DDSCAPS_BACKBUFFER),
+                "Expected caps %#lx, got %#lx.\n", (expect_caps | DDSCAPS_BACKBUFFER), desc.ddsCaps.dwCaps);
 
         desc.ddsCaps.dwCaps = DDSCAPS_FLIP;
         hr = IDirectDrawSurface7_GetAttachedSurface(backbuffer, &desc.ddsCaps, &backbuffer2);
@@ -3757,12 +3802,10 @@ static void test_default_presenter_allocate(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         todo_wine ok(desc.dwFlags == (DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT),
                 "Got flags %#lx.\n", desc.dwFlags);
-        todo_wine_if(desc.ddsCaps.dwCaps == (DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN
-                | DDSCAPS_FLIP | DDSCAPS_COMPLEX))
-        ok(desc.ddsCaps.dwCaps == (DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN
-                | DDSCAPS_FLIP), "Got caps %#lx.\n", desc.ddsCaps.dwCaps);
+        todo_wine ok(desc.ddsCaps.dwCaps == expect_caps,
+                "Expected caps %#lx, got %#lx.\n", expect_caps, desc.ddsCaps.dwCaps);
 
-        desc.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;
+        desc.ddsCaps.dwCaps = DDSCAPS_FLIP;
         hr = IDirectDrawSurface7_GetAttachedSurface(backbuffer2, &desc.ddsCaps, &backbuffer3);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (hr == S_OK)
@@ -3804,6 +3847,7 @@ static void test_default_presenter_allocate(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IDirectDraw7_Release(prev_ddraw);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    DestroyWindow(window);
 }
 
 START_TEST(vmr7)
