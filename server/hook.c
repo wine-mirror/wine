@@ -43,6 +43,7 @@ struct hook
 {
     struct list         chain;    /* hook chain entry */
     user_handle_t       handle;   /* user handle for this hook */
+    struct desktop     *desktop;  /* desktop the hook is registered for */
     struct process     *process;  /* process the hook is set to */
     struct thread      *thread;   /* thread the hook is set to */
     struct thread      *owner;    /* owner of the out of context hook */
@@ -145,6 +146,7 @@ static struct hook *add_hook( struct desktop *desktop, struct thread *thread, in
         free( hook );
         return NULL;
     }
+    hook->desktop = (struct desktop *)grab_object( desktop );
     hook->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
     hook->table  = table;
     hook->index  = index;
@@ -165,6 +167,7 @@ static void free_hook( struct hook *hook )
         release_object( hook->thread );
     }
     if (hook->process) release_object( hook->process );
+    release_object( hook->desktop );
     release_object( hook->owner );
     list_remove( &hook->chain );
     free( hook );
@@ -500,6 +503,7 @@ DECL_HANDLER(remove_hook)
             return;
         }
     }
+
     remove_hook( hook );
     reply->active_hooks = get_active_hooks();
 }
