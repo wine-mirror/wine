@@ -56,5 +56,3 @@ SOURCES = \
 	vulkan.c \
 	window.c \
 	winstation.c
-
-font_EXTRADEFS = -DWINE_FONT_DIR=\"`${MAKEDEP} -R ${datadir}/wine ${fontdir}`\"

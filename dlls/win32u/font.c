@@ -462,10 +462,6 @@ static const struct nls_update_font_list
 
 static pthread_mutex_t font_lock = PTHREAD_MUTEX_INITIALIZER;
 
-#ifndef WINE_FONT_DIR
-#define WINE_FONT_DIR "fonts"
-#endif
-
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
 #define GET_BE_DWORD(x) (x)
@@ -476,20 +472,12 @@ static pthread_mutex_t font_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    const char *dir;
+    const char *dir = ntdll_get_build_dir();
     ULONG len = MAX_PATH;
 
-    if ((dir = ntdll_get_data_dir()))
-    {
-        wine_unix_to_nt_file_name( dir, path, &len );
-        asciiz_to_unicode( path + len - 1, "\\" WINE_FONT_DIR "\\" );
-    }
-    else if ((dir = ntdll_get_build_dir()))
-    {
-        wine_unix_to_nt_file_name( dir, path, &len );
-        asciiz_to_unicode( path + len - 1, "\\fonts\\" );
-    }
-
+    if (!dir) dir = ntdll_get_data_dir();
+    wine_unix_to_nt_file_name( dir, path, &len );
+    asciiz_to_unicode( path + len - 1, "\\fonts\\" );
     if (file) lstrcatW( path, file );
 }
 

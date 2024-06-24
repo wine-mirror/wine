@@ -2664,7 +2664,7 @@ static struct strarray get_removable_dirs( struct strarray files )
 static void output_uninstall_rules( struct makefile *make )
 {
     static const char *dirs_order[] =
-        { "$(includedir)", "$(mandir)", "$(fontdir)", "$(nlsdir)", "$(datadir)", "$(dlldir)" };
+        { "$(includedir)", "$(mandir)", "$(nlsdir)", "$(datadir)", "$(dlldir)" };
 
     struct strarray uninstall_dirs;
     unsigned int i, j;
@@ -2987,7 +2987,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
     }
     if (source->file->flags & FLAG_INSTALL)
     {
-        add_install_rule( make, source->name, 0, ttf_obj, strmake( "D$(fontdir)/%s", ttf_obj ));
+        add_install_rule( make, source->name, 0, ttf_obj, strmake( "D$(datadir)/wine/fonts/%s", ttf_obj ));
         output_srcdir_symlink( make, ttf_obj );
     }
 
@@ -3005,7 +3005,7 @@ static void output_source_sfd( struct makefile *make, struct incl_file *source, 
                     tools_path( make, "sfnt2fon" ), ttf_file );
             output( "\t%s%s -q -o $@ %s %s\n", cmd_prefix( "GEN" ),
                     tools_path( make, "sfnt2fon" ), ttf_file, args );
-            add_install_rule( make, source->name, 0, xstrdup(font), strmake( "d$(fontdir)/%s", font ));
+            add_install_rule( make, source->name, 0, xstrdup(font), strmake( "d$(datadir)/wine/fonts/%s", font ));
         }
     }
 }

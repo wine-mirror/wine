@@ -869,7 +869,6 @@ CC
 SET_MAKE
 srcdir
 nlsdir
-fontdir
 dlldir
 host_os
 host_vendor
@@ -4677,8 +4676,6 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 dlldir=\${libdir}/wine
-
-fontdir=\${datadir}/wine/fonts
 
 nlsdir=\${datadir}/wine/nls
 
@@ -23982,7 +23979,6 @@ host_cpu = $host_cpu
 host_vendor = $host_vendor
 host_os = $host_os
 dlldir = $dlldir
-fontdir = $fontdir
 nlsdir = $nlsdir
 srcdir = $srcdir
 SET_MAKE = $SET_MAKE

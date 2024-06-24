@@ -92,7 +92,6 @@ AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine i
 AC_CANONICAL_HOST
 
 AC_SUBST(dlldir,[\${libdir}/wine])
-AC_SUBST(fontdir,[\${datadir}/wine/fonts])
 AC_SUBST(nlsdir,[\${datadir}/wine/nls])
 AC_SUBST(srcdir)
 
