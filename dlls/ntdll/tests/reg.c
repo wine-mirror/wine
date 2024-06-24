@@ -2632,7 +2632,7 @@ static ULONG query_reg_values_direct_int;
 static union
 {
     ULONG size;
-    char data[16];
+    char data[32];
 }
 query_reg_values_direct_sized;
 
@@ -2640,7 +2640,7 @@ static struct
 {
     ULONG size;
     ULONG type;
-    char data[16];
+    char data[32];
 }
 query_reg_values_direct_typed;
 
@@ -2708,7 +2708,7 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife32", &query_reg_values_direct_int }},
-        STATUS_SUCCESS, 0, 0, REG_NONE, (WCHAR*)42
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2a"
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"MeaningOfLife64", &query_reg_values_direct_sized }},
@@ -2783,11 +2783,11 @@ static struct query_reg_values_test query_reg_values_tests[] =
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 1, WINE_TODO_TYPE | WINE_TODO_SIZE, REG_SZ, L"C:"
+        STATUS_SUCCESS, 1, 0, REG_SZ, L"C:"
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_MULTI_SZ, (WCHAR*)L"Brussels\0Paris\0%PATH%\0" }},
-        STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI | WINE_TODO_CALLS | WINE_TODO_TYPE | WINE_TODO_SIZE
+        STATUS_SUCCESS, 3, EXPECT_DEFAULT_DATA | SPLIT_MULTI
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_DWORD, (WCHAR*)0xdeadbeef }},
@@ -2811,23 +2811,68 @@ static struct query_reg_values_test query_reg_values_tests[] =
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, WINE_TODO_SIZE | WINE_TODO_DATA, REG_NONE, L"C:"
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"C:"
     },
     {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_EXPAND_SZ, (WCHAR*)L"%SYSTEMDRIVE%" }},
-        STATUS_SUCCESS, 0, WINE_TODO_SIZE, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\x2323", 0, 2 * sizeof(WCHAR)
     },
-    /* DIRECT with a multi-string default value crashes on Windows */
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_int, REG_DWORD, (WCHAR*)0xdeadbeef }},
+        STATUS_SUCCESS, 0
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_int, REG_DWORD, (WCHAR*)L"\x2a", sizeof(DWORD) }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_sized, REG_DWORD, (WCHAR*)L"Some default", sizeof(L"Some default") }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_sized, REG_DWORD, (WCHAR*)L"Some default", sizeof(L"Some default") }},
+        STATUS_SUCCESS, 0, 0, REG_NONE, L"\xff", 1, 1
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_typed, REG_NONE, (WCHAR*)L"Some default", sizeof(L"Some default") }},
+        STATUS_SUCCESS, 0, WINE_TODO_TYPE | WINE_TODO_SIZE, 0x23, NULL, -1
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_typed, REG_QWORD, (WCHAR*)L"Some default", sizeof(L"Some default") }},
+        STATUS_SUCCESS, 0, WINE_TODO_TYPE | WINE_TODO_SIZE, 0x23, NULL, -1
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_typed, REG_QWORD, (WCHAR*)L"\x2a\0\0", sizeof(UINT64) }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
+    },
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_typed, REG_QWORD, (WCHAR*)L"\x2a\0\0", sizeof(UINT64) }},
+        STATUS_SUCCESS, 0, 0, 0x23, L"\x23", 1, 1
+    },
+    /* DIRECT with a multi-string default value crashes on Windows without NOEXPAND */
     /* {
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
-           &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
-        STATUS_SUCCESS, EXPECT_DEFAULT_DATA
+           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA
     }, */
+    {
+        {{ NULL, RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_NOEXPAND, (WCHAR*)L"I don't exist",
+           &query_reg_values_direct_str, REG_MULTI_SZ, (WCHAR*)L"A\0B\0C\0", sizeof(L"A\0B\0C\0") }},
+        STATUS_SUCCESS, 0, EXPECT_DEFAULT_DATA | WINE_TODO_SIZE
+    },
     /* The default value is not used if it is not valid */
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_SZ }},
-        STATUS_DATA_OVERRUN, 0, EXPECT_DEFAULT_DATA | WINE_TODO_RET | WINE_TODO_CALLS
+        STATUS_DATA_OVERRUN, 0, EXPECT_DEFAULT_DATA
     },
     {
         {{ query_routine, 0, (WCHAR*)L"I don't exist", NULL, REG_NONE, (WCHAR*)L"Some default" }},
@@ -2842,12 +2887,6 @@ static struct query_reg_values_test query_reg_values_tests[] =
         {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
            &query_reg_values_direct_str, REG_NONE, (WCHAR*)L"Some default" }},
         STATUS_SUCCESS, 0, 0, REG_NONE, NULL, -1
-    },
-    /* DIRECT additionally requires the default value to be a string */
-    {
-        {{ NULL, RTL_QUERY_REGISTRY_DIRECT, (WCHAR*)L"I don't exist",
-           &query_reg_values_direct_int, REG_DWORD, (WCHAR*)0xdeadbeef }},
-        STATUS_SUCCESS, 0
     },
     /* REQUIRED fails if the value doesn't exist and there is no default */
     {
@@ -2985,12 +3024,12 @@ static void test_RtlQueryRegistryValues(void)
                 {
                     if (expected_data)
                     {
-                        ok(!memcmp(&query_reg_values_direct_int, &expected_data, expected_size),
+                        ok(!memcmp(&query_reg_values_direct_int, expected_data, expected_size),
                            "Data does not match\n");
                     }
                     else
                     {
--                       ok(query_reg_values_direct_int == 1,
+                        ok(query_reg_values_direct_int == 1,
                            "Expected data to not change, got %lu\n", query_reg_values_direct_int);
                     }
                 }
@@ -3001,14 +3040,22 @@ static void test_RtlQueryRegistryValues(void)
                 }
                 else if (query->EntryContext == &query_reg_values_direct_typed)
                 {
+                    if (expected_size == -1)
+                        expected_size = sizeof(query_reg_values_direct_typed.data);
+
+                    todo_wine_if(test->flags & WINE_TODO_SIZE)
                     ok(query_reg_values_direct_typed.size == expected_size,
                        "Expected size %lu, got %lu\n", expected_size, query_reg_values_direct_typed.size);
 
+                    todo_wine_if(test->flags & WINE_TODO_TYPE)
                     ok(query_reg_values_direct_typed.type == expected_type,
                        "Expected type %lu, got %lu\n", expected_type, query_reg_values_direct_typed.type);
 
-                    ok(!memcmp(query_reg_values_direct_typed.data, expected_data, expected_size),
-                       "Data does not match\n");
+                    if (expected_data)
+                    {
+                        ok(!memcmp(query_reg_values_direct_typed.data, expected_data, expected_size),
+                           "Data does not match\n");
+                    }
                 }
             }
         }

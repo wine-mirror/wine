@@ -243,58 +243,59 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                                         PRTL_QUERY_REGISTRY_TABLE pQuery, PVOID pContext, PVOID pEnvironment)
 {
     PUNICODE_STRING str = pQuery->EntryContext;
+    ULONG type, len, offset, count, res;
     UNICODE_STRING src, dst;
+    WCHAR *data, *wstr;
     LONG *bin;
-    ULONG offset;
-    PWSTR wstr;
-    DWORD res;
     NTSTATUS status = STATUS_SUCCESS;
-    ULONG len;
 
-    if (pInfo == NULL)
+    if (pInfo)
     {
-        ULONG default_size = pQuery->DefaultLength;
-        if (!default_size && pQuery->DefaultType == REG_SZ && pQuery->DefaultData)
-            default_size = (wcslen(pQuery->DefaultData) + 1) * sizeof(WCHAR);
-
-        if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
-        {
-            if (pQuery->QueryRoutine)
-                return STATUS_INVALID_PARAMETER;
-
-            if (pQuery->DefaultType == REG_SZ || pQuery->DefaultType == REG_EXPAND_SZ ||
-                pQuery->DefaultType == REG_MULTI_SZ || pQuery->DefaultType == REG_LINK)
-            {
-                if (!pQuery->DefaultData)
-                    return STATUS_DATA_OVERRUN;
-                if (str->MaximumLength < default_size)
-                    return STATUS_BUFFER_TOO_SMALL;
-                memcpy(str->Buffer, pQuery->DefaultData, default_size);
-                str->Length = default_size - sizeof(WCHAR);
-            }
-
-            return STATUS_SUCCESS;
-        }
-        else if (pQuery->QueryRoutine)
-        {
-            status = pQuery->QueryRoutine(pQuery->Name, pQuery->DefaultType, pQuery->DefaultData,
-                                          default_size, pContext, pQuery->EntryContext);
-        }
-        return status;
+        type = pInfo->Type;
+        data = (WCHAR*)((char*)pInfo + pInfo->DataOffset);
+        len = pInfo->DataLength;
     }
-    len = pInfo->DataLength;
+    else
+    {
+        type = pQuery->DefaultType;
+        data = pQuery->DefaultData;
+        len = pQuery->DefaultLength;
+
+        if (!data)
+            return STATUS_DATA_OVERRUN;
+
+        if (!len)
+        {
+            switch (type)
+            {
+            case REG_SZ:
+            case REG_EXPAND_SZ:
+            case REG_LINK:
+                len = (wcslen(data) + 1) * sizeof(WCHAR);
+                break;
+
+            case REG_MULTI_SZ:
+                for (wstr = data; *wstr; wstr += count)
+                {
+                    count = wcslen(wstr) + 1;
+                    len += count * sizeof(WCHAR);
+                }
+                break;
+            }
+        }
+    }
 
     if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
     {
         if (pQuery->QueryRoutine)
             return STATUS_INVALID_PARAMETER;
 
-        switch(pInfo->Type)
+        switch (type)
         {
         case REG_EXPAND_SZ:
             if (!(pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND))
             {
-                RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+                RtlInitUnicodeString(&src, data);
                 res = 0;
                 dst.MaximumLength = 0;
                 RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
@@ -307,12 +308,12 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         case REG_SZ:
         case REG_LINK:
             if (str->Buffer == NULL)
-                RtlCreateUnicodeString(str, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+                RtlCreateUnicodeString(str, data);
             else
             {
                 if (str->MaximumLength < len)
                     return STATUS_BUFFER_TOO_SMALL;
-                memcpy(str->Buffer, (char*)pInfo + pInfo->DataOffset, len);
+                memcpy(str->Buffer, data, len);
                 str->Length = len - sizeof(WCHAR);
             }
             break;
@@ -330,28 +331,27 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             else if (str->MaximumLength < len)
                 return STATUS_BUFFER_TOO_SMALL;
             len -= sizeof(WCHAR);
-            memcpy(str->Buffer, ((CHAR*)pInfo) + pInfo->DataOffset, len);
+            memcpy(str->Buffer, data, len);
             str->Buffer[len / sizeof(WCHAR)] = 0;
             str->Length = len;
             break;
 
         default:
             bin = pQuery->EntryContext;
-            if (pInfo->DataLength <= sizeof(ULONG))
-                memcpy(bin, ((CHAR*)pInfo) + pInfo->DataOffset,
-                    pInfo->DataLength);
+            if (len <= sizeof(ULONG))
+                memcpy(bin, data, len);
             else
             {
                 if (bin[0] < 0)
                 {
-                    if (pInfo->DataLength <= -bin[0])
-                        memcpy(bin, (char*)pInfo + pInfo->DataOffset, pInfo->DataLength);
+                    if (len <= -bin[0])
+                        memcpy(bin, data, len);
                 }
-                else if (pInfo->DataLength <= bin[0])
+                else if (len <= bin[0])
                 {
                     bin[0] = len;
-                    bin[1] = pInfo->Type;
-                    memcpy(bin + 2, (char*)pInfo + pInfo->DataOffset, len);
+                    bin[1] = type;
+                    memcpy(bin + 2, data, len);
                 }
             }
             break;
@@ -360,15 +360,13 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
     else if (pQuery->QueryRoutine)
     {
         if((pQuery->Flags & RTL_QUERY_REGISTRY_NOEXPAND) ||
-           (pInfo->Type != REG_EXPAND_SZ && pInfo->Type != REG_MULTI_SZ))
+           (type != REG_EXPAND_SZ && type != REG_MULTI_SZ))
         {
-            status = pQuery->QueryRoutine(pQuery->Name, pInfo->Type,
-                ((CHAR*)pInfo) + pInfo->DataOffset, pInfo->DataLength,
-                pContext, pQuery->EntryContext);
+            status = pQuery->QueryRoutine(pQuery->Name, type, data, len, pContext, pQuery->EntryContext);
         }
-        else if (pInfo->Type == REG_EXPAND_SZ)
+        else if (type == REG_EXPAND_SZ)
         {
-            RtlInitUnicodeString(&src, (WCHAR*)(((CHAR*)pInfo) + pInfo->DataOffset));
+            RtlInitUnicodeString(&src, data);
             res = 0;
             dst.MaximumLength = 0;
             RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
@@ -381,11 +379,11 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
         }
         else /* REG_MULTI_SZ */
         {
-            for (offset = 0; offset < pInfo->DataLength; offset += len)
+            for (offset = 0; offset < len; offset += count)
             {
-                wstr = (WCHAR*)((char*)pInfo + pInfo->DataOffset + offset);
-                len = (wcslen(wstr) + 1) * sizeof(WCHAR);
-                status = pQuery->QueryRoutine(pQuery->Name, REG_SZ, wstr, len, pContext, pQuery->EntryContext);
+                wstr = (WCHAR*)((char*)data + offset);
+                count = (wcslen(wstr) + 1) * sizeof(WCHAR);
+                status = pQuery->QueryRoutine(pQuery->Name, REG_SZ, wstr, count, pContext, pQuery->EntryContext);
                 if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
                     return status;
             }
