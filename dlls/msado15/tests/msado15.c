@@ -61,6 +61,7 @@ static void test_Recordset(void)
     HRESULT hr;
     VARIANT bookmark, filter, active;
     EditModeEnum editmode;
+    LONG cache_size;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -110,6 +111,21 @@ static void test_Recordset(void)
     hr = _Recordset_get_CursorType( recordset, &cursor );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( cursor == adOpenForwardOnly, "got %d\n", cursor );
+
+    cache_size = 0;
+    hr = _Recordset_get_CacheSize( recordset, &cache_size );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( cache_size == 1, "got %ld\n", cache_size );
+
+    hr = _Recordset_put_CacheSize( recordset, 5 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+
+    hr = _Recordset_get_CacheSize( recordset, &cache_size );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( cache_size == 5, "got %ld\n", cache_size );
+
+    hr = _Recordset_put_CacheSize( recordset, 1 );
+    ok( hr == S_OK, "got %08lx\n", hr );
 
     editmode = -1;
     hr = _Recordset_get_EditMode( recordset, &editmode );
