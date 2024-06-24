@@ -12,7 +12,7 @@ SOURCES = \
 	write.c
 
 wmc_EXTRADEFS = \
-	-DNLSDIR="\"${nlsdir}\"" \
-	-DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\"
+	-DNLSDIR="\"${datadir}/wine/nls\"" \
+	-DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${datadir}/wine/nls`\"
 
 INSTALL_DEV = $(PROGRAMS)

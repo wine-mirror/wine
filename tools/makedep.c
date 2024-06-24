@@ -2664,7 +2664,7 @@ static struct strarray get_removable_dirs( struct strarray files )
 static void output_uninstall_rules( struct makefile *make )
 {
     static const char *dirs_order[] =
-        { "$(includedir)", "$(mandir)", "$(nlsdir)", "$(datadir)", "$(dlldir)" };
+        { "$(includedir)", "$(mandir)", "$(datadir)", "$(dlldir)" };
 
     struct strarray uninstall_dirs;
     unsigned int i, j;
@@ -3042,7 +3042,7 @@ static void output_source_svg( struct makefile *make, struct incl_file *source, 
 static void output_source_nls( struct makefile *make, struct incl_file *source, const char *obj )
 {
     add_install_rule( make, source->name, 0, source->name,
-                      strmake( "D$(nlsdir)/%s", source->name ));
+                      strmake( "D$(datadir)/wine/nls/%s", source->name ));
     output_srcdir_symlink( make, strmake( "%s.nls", obj ));
 }
 

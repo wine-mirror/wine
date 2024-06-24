@@ -15,9 +15,9 @@ SOURCES = \
 	wrc.man.in
 
 wrc_EXTRADEFS = \
-	-DNLSDIR="\"${nlsdir}\"" \
+	-DNLSDIR="\"${datadir}/wine/nls\"" \
 	-DINCLUDEDIR="\"${includedir}\"" \
-	-DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${nlsdir}`\" \
+	-DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${datadir}/wine/nls`\" \
 	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\"
 
 INSTALL_DEV = $(PROGRAMS)
