@@ -1,0 +1,6 @@
+MODULE    = rometadata.dll
+IMPORTLIB = rometadata
+IMPORTS   = combase
+
+SOURCES = \
+	main.c
