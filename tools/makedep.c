@@ -540,6 +540,31 @@ static char *get_relative_path( const char *from, const char *dest )
 
 
 /*******************************************************************
+ *         get_root_relative_path
+ *
+ * Get relative path from obj dir to root.
+ */
+static const char *get_root_relative_path( struct makefile *make )
+{
+    const char *dir = make->obj_dir;
+    char *ret, *p;
+    unsigned int dotdots = 0;
+
+    if (!dir) return ".";
+    while (*dir)
+    {
+        dotdots++;
+        while (*dir && *dir != '/') dir++;
+        while (*dir == '/') dir++;
+    }
+    ret = xmalloc( 3 * dotdots );
+    for (p = ret; dotdots; dotdots--, p += 3) memcpy( p, "../", 3 );
+    p[-1] = 0;  /* remove trailing slash */
+    return ret;
+}
+
+
+/*******************************************************************
  *         concat_paths
  */
 static char *concat_paths( const char *base, const char *path )
@@ -2491,7 +2516,7 @@ static void output_srcdir_symlink( struct makefile *make, const char *obj )
 
     src_name = src_file;
     if (src_name[0] != '/' && make->obj_dir)
-        src_name = concat_paths( get_relative_path( make->obj_dir, "" ), src_name );
+        src_name = concat_paths( get_root_relative_path( make ), src_name );
 
     output_symlink_rule( src_name, dst_file, 0 );
     strarray_add( &make->all_targets[0], obj );
@@ -4159,7 +4184,7 @@ static void output_stub_makefile( struct makefile *make )
     output_filenames( targets );
     output_filenames( make->clean_files );
     output( ":\n" );
-    output( "\t@cd %s && $(MAKE) %s/$@\n", get_relative_path( make->obj_dir, "" ), make->obj_dir );
+    output( "\t@cd %s && $(MAKE) %s/$@\n", get_root_relative_path( make ), make->obj_dir );
     output( ".PHONY:" );
     output_filenames( targets );
     output( "\n" );
