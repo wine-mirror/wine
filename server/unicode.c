@@ -235,10 +235,46 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
     return count;
 }
 
+/* build a path with the relative dir from 'from' to 'dest' appended to base */
+static char *build_relative_path( const char *base, const char *from, const char *dest )
+{
+    const char *start;
+    char *ret;
+    unsigned int dotdots = 0;
+
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
+        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
+
+        do  /* count remaining elements in 'from' */
+        {
+            dotdots++;
+            while (*from && *from != '/') from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+
+    ret = malloc( strlen(base) + 3 * dotdots + strlen(start) + 2 );
+    strcpy( ret, base );
+    while (dotdots--) strcat( ret, "/.." );
+
+    if (!start[0]) return ret;
+    strcat( ret, "/" );
+    strcat( ret, start );
+    return ret;
+}
+
 static char *get_nls_dir(void)
 {
     char *p, *dir, *ret;
-    const char *nlsdir = BIN_TO_NLSDIR;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -264,8 +300,12 @@ static char *get_nls_dir(void)
         return NULL;
     }
     *(++p) = 0;
-    if (p > dir + 8 && !strcmp( p - 8, "/server/" )) nlsdir = "../nls";  /* inside build tree */
-    asprintf( &ret, "%s%s", dir, nlsdir );
+    if (p > dir + 8 && !strcmp( p - 8, "/server/" ))  /* inside build tree */
+    {
+        strcpy( p - 8, "/nls" );
+        return dir;
+    }
+    ret = build_relative_path( dir, BINDIR, DATADIR "/wine/nls" );
     free( dir );
     return ret;
 }
@@ -273,7 +313,7 @@ static char *get_nls_dir(void)
 /* load the case mapping table */
 struct fd *load_intl_file(void)
 {
-    static const char *nls_dirs[] = { NULL, NLSDIR, "/usr/local/share/wine/nls", "/usr/share/wine/nls" };
+    static const char *nls_dirs[] = { NULL, DATADIR "/wine/nls", "/usr/local/share/wine/nls", "/usr/share/wine/nls" };
     static const WCHAR nt_pathW[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
         's','y','s','t','e','m','3','2','\\','l','_','i','n','t','l','.','n','l','s',0};
     static const struct unicode_str nt_name = { nt_pathW, sizeof(nt_pathW) };

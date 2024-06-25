@@ -49,4 +49,4 @@ SOURCES = \
 
 UNIX_LIBS = $(LDEXECFLAGS) $(RT_LIBS) $(INOTIFY_LIBS) $(PROCSTAT_LIBS)
 
-unicode_EXTRADEFS = -DNLSDIR="\"${datadir}/wine/nls\"" -DBIN_TO_NLSDIR=\"`${MAKEDEP} -R ${bindir} ${datadir}/wine/nls`\"
+unicode_EXTRADEFS = -DBINDIR="\"${bindir}\"" -DDATADIR="\"${datadir}\""
