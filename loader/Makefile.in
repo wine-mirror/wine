@@ -16,7 +16,7 @@ UNIX_CFLAGS = -fPIE
 
 preloader_EXTRADEFS = -fno-builtin
 
-main_EXTRADEFS = -DDLLDIR=\"${libdir}/wine\" -DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${libdir}/wine`\"
+main_EXTRADEFS = -DBINDIR=\"${bindir}\" -DLIBDIR=\"${libdir}\"
 
 wine_OBJS = main.o
 wine_DEPS = $(WINELOADER_DEPENDS)

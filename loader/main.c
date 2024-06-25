@@ -125,6 +125,43 @@ static char *build_path( const char *dir, const char *name )
     return ret;
 }
 
+/* build a path with the relative dir from 'from' to 'dest' appended to base */
+static char *build_relative_path( const char *base, const char *from, const char *dest )
+{
+    const char *start;
+    char *ret;
+    unsigned int dotdots = 0;
+
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
+        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
+
+        do  /* count remaining elements in 'from' */
+        {
+            dotdots++;
+            while (*from && *from != '/') from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+
+    ret = malloc( strlen(base) + 3 * dotdots + strlen(start) + 2 );
+    strcpy( ret, base );
+    while (dotdots--) strcat( ret, "/.." );
+
+    if (!start[0]) return ret;
+    strcat( ret, "/" );
+    strcat( ret, start );
+    return ret;
+}
+
 static const char *get_self_exe( char *argv0 )
 {
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
@@ -187,11 +224,10 @@ static void *load_ntdll( char *argv0 )
     if (self && ((path = realpath_dirname( self ))))
     {
         if ((p = remove_tail( path, "/loader" )))
-        {
             handle = try_dlopen( p, "dlls/ntdll/ntdll.so" );
-            free( p );
-        }
-        else handle = try_dlopen( path, BIN_TO_DLLDIR "/" SO_DIR "ntdll.so" );
+        else if ((p = build_relative_path( path, BINDIR, LIBDIR )))
+            handle = try_dlopen( p, "wine/" SO_DIR "ntdll.so" );
+        free( p );
         free( path );
     }
 
@@ -207,7 +243,7 @@ static void *load_ntdll( char *argv0 )
         free( path );
     }
 
-    if (!handle && !self) handle = try_dlopen( DLLDIR, SO_DIR "ntdll.so" );
+    if (!handle && !self) handle = try_dlopen( LIBDIR, "wine/" SO_DIR "ntdll.so" );
 
     return handle;
 }
