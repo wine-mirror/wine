@@ -2708,8 +2708,6 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
             free( buffer );
             if (res == STATUS_PENDING)
             {
-                thread_info->wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
-                thread_info->changed_mask = filter->mask;
                 return 0;
             }
             if (res != STATUS_BUFFER_OVERFLOW)
@@ -3018,6 +3016,23 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
 }
 
 /***********************************************************************
+ *           check_queue_masks
+ */
+static BOOL check_queue_masks( UINT wake_mask, UINT changed_mask )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    BOOL skip = FALSE;
+    UINT status;
+
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+        skip = queue_shm->wake_mask == wake_mask && queue_shm->changed_mask == changed_mask;
+
+    if (status) return FALSE;
+    return skip;
+}
+
+/***********************************************************************
  *           wait_objects
  *
  * Wait for multiple objects including the server queue, with specific queue masks.
@@ -3025,14 +3040,11 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
 static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
                            DWORD wake_mask, DWORD changed_mask, DWORD flags )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    DWORD ret;
-
     assert( count );  /* we must have at least the server queue */
 
     flush_window_surfaces( TRUE );
 
-    if (thread_info->wake_mask != wake_mask || thread_info->changed_mask != changed_mask)
+    if (!check_queue_masks( wake_mask, changed_mask ))
     {
         SERVER_START_REQ( set_queue_mask )
         {
@@ -3042,14 +3054,9 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
             wine_server_call( req );
         }
         SERVER_END_REQ;
-        thread_info->wake_mask = wake_mask;
-        thread_info->changed_mask = changed_mask;
     }
 
-    ret = wait_message( count, handles, timeout, changed_mask, flags );
-
-    if (ret != WAIT_TIMEOUT) thread_info->wake_mask = thread_info->changed_mask = 0;
-    return ret;
+    return wait_message( count, handles, timeout, changed_mask, flags );
 }
 
 static HANDLE normalize_std_handle( HANDLE handle )
@@ -3314,7 +3321,6 @@ done:
  */
 static void wait_message_reply( UINT flags )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
     HANDLE server_queue = get_server_queue_handle();
     unsigned int wake_mask = QS_SMRESULT | ((flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE);
 
@@ -3330,8 +3336,6 @@ static void wait_message_reply( UINT flags )
             if (!wine_server_call( req )) wake_bits = reply->wake_bits & wake_mask;
         }
         SERVER_END_REQ;
-
-        thread_info->wake_mask = thread_info->changed_mask = 0;
 
         if (wake_bits & QS_SMRESULT) return;  /* got a result */
         if (wake_bits & QS_SENDMESSAGE)
