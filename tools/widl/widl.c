@@ -134,8 +134,9 @@ struct strarray temp_files = { 0 };
 const char *temp_dir = NULL;
 const char *prefix_client = "";
 const char *prefix_server = "";
+static const char *bindir;
+static const char *libdir;
 static const char *includedir;
-static const char *dlldir;
 static struct strarray dlldirs;
 static char *output_name;
 static const char *sysroot = "";
@@ -469,15 +470,6 @@ void write_id_data(const statement_list_t *stmts)
   fclose(idfile);
 }
 
-static void init_argv0_dir( const char *argv0 )
-{
-    char *dir = get_argv0_dir( argv0 );
-
-    if (!dir) return;
-    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
-    dlldir = strmake( "%s/%s", dir, BIN_TO_DLLDIR );
-}
-
 static void option_callback( int optc, char *optarg )
 {
     switch (optc)
@@ -643,7 +635,7 @@ static void option_callback( int optc, char *optarg )
 
 int open_typelib( const char *name )
 {
-    static const char *default_dirs[] = { DLLDIR, "/usr/lib/wine", "/usr/local/lib/wine" };
+    static const char *default_dirs[] = { LIBDIR "/wine", "/usr/lib/wine", "/usr/local/lib/wine" };
     struct target win_target = { target.cpu, PLATFORM_WINDOWS };
     const char *pe_dir = get_arch_dir( win_target );
     int fd;
@@ -672,10 +664,10 @@ int open_typelib( const char *name )
 
     if (stdinc)
     {
-        if (dlldir)
+        if (libdir)
         {
-            TRYOPEN( strmake( "%s%s/%s", dlldir, pe_dir, name ));
-            TRYOPEN( strmake( "%s/%s", dlldir, name ));
+            TRYOPEN( strmake( "%s/wine%s/%s", libdir, pe_dir, name ));
+            TRYOPEN( strmake( "%s/wine/%s", libdir, name ));
         }
         for (i = 0; i < ARRAY_SIZE(default_dirs); i++)
         {
@@ -694,7 +686,9 @@ int main(int argc,char *argv[])
   struct strarray files;
 
   init_signals( exit_on_signal );
-  init_argv0_dir( argv[0] );
+  bindir = get_bindir( argv[0] );
+  libdir = get_libdir( bindir );
+  includedir = get_includedir( bindir );
   target = init_argv0_target( argv[0] );
 
   now = time(NULL);

@@ -611,13 +611,6 @@ static char *get_lib_dir( struct options *opts )
     return strmake( "%s%s", root, LIBDIR );
 }
 
-static void init_argv0_dir( const char *argv0 )
-{
-    if (!(bindir = get_argv0_dir( argv0 ))) return;
-    includedir = strmake( "%s/%s", bindir, BIN_TO_INCLUDEDIR );
-    libdir = strmake( "%s/%s", bindir, BIN_TO_LIBDIR );
-}
-
 static void compile(struct options* opts, const char* lang)
 {
     struct strarray comp_args = get_translator(opts);
@@ -1489,7 +1482,9 @@ int main(int argc, char **argv)
     char* str;
 
     init_signals( exit_on_signal );
-    init_argv0_dir( argv[0] );
+    bindir = get_bindir( argv[0] );
+    libdir = get_libdir( bindir );
+    includedir = get_includedir( bindir );
 
     /* setup tmp file removal at exit */
     atexit(clean_temp_files);

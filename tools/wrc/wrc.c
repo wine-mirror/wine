@@ -137,8 +137,9 @@ static int stdinc = 1;
 static int po_mode;
 static const char *po_dir;
 static const char *sysroot = "";
+static const char *bindir;
 static const char *includedir;
-const char *nlsdirs[3] = { NULL, NLSDIR, NULL };
+const char *nlsdirs[3] = { NULL, DATADIR "/wine/nls", NULL };
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
@@ -282,16 +283,6 @@ static int load_file( const char *input_name, const char *output_name )
     return ret;
 }
 
-static void init_argv0_dir( const char *argv0 )
-{
-    char *dir = get_argv0_dir( argv0 );
-
-    if (!dir) return;
-    includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
-    if (strendswith( dir, "/tools/wrc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
-    else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
-}
-
 static void option_callback( int optc, char *optarg )
 {
     switch(optc)
@@ -396,7 +387,9 @@ int main(int argc,char *argv[])
 	int i;
 
         init_signals( exit_on_signal );
-	init_argv0_dir( argv[0] );
+        bindir = get_bindir( argv[0] );
+        includedir = get_includedir( bindir );
+        nlsdirs[0] = get_nlsdir( bindir, "/tools/wrc" );
 
 	/* Set the default defined stuff */
         set_version_defines();

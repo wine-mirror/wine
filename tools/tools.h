@@ -326,6 +326,43 @@ static inline char *replace_extension( const char *name, const char *old_ext, co
     return strmake( "%.*s%s", name_len, name, new_ext );
 }
 
+/* build a path with the relative dir from 'from' to 'dest' appended to base */
+static inline char *build_relative_path( const char *base, const char *from, const char *dest )
+{
+    const char *start;
+    char *ret;
+    unsigned int dotdots = 0;
+
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
+        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
+
+        do  /* count remaining elements in 'from' */
+        {
+            dotdots++;
+            while (*from && *from != '/') from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+
+    ret = xmalloc( strlen(base) + 3 * dotdots + strlen(start) + 2 );
+    strcpy( ret, base );
+    while (dotdots--) strcat( ret, "/.." );
+
+    if (!start[0]) return ret;
+    strcat( ret, "/" );
+    strcat( ret, start );
+    return ret;
+}
+
 /* temp files management */
 
 extern const char *temp_dir;
@@ -651,7 +688,7 @@ static inline struct target init_argv0_target( const char *argv0 )
 }
 
 
-static inline char *get_argv0_dir( const char *argv0 )
+static inline char *get_bindir( const char *argv0 )
 {
 #ifndef _WIN32
     char *dir = NULL;
@@ -671,6 +708,49 @@ static inline char *get_argv0_dir( const char *argv0 )
 #else
     return get_dirname( argv0 );
 #endif
+}
+
+#ifdef LIBDIR
+static inline const char *get_libdir( const char *bindir )
+{
+#ifdef BINDIR
+    if (bindir) return build_relative_path( bindir, BINDIR, LIBDIR );
+#endif
+    return LIBDIR;
+}
+#endif
+
+#ifdef DATADIR
+static inline const char *get_datadir( const char *bindir )
+{
+#ifdef BINDIR
+    if (bindir) return build_relative_path( bindir, BINDIR, DATADIR );
+#endif
+    return DATADIR;
+}
+#endif
+
+#ifdef INCLUDEDIR
+static inline const char *get_includedir( const char *bindir )
+{
+#ifdef BINDIR
+    if (bindir) return build_relative_path( bindir, BINDIR, INCLUDEDIR );
+#endif
+    return INCLUDEDIR;
+}
+#endif
+
+static inline const char *get_nlsdir( const char *bindir, const char *srcdir )
+{
+    if (bindir && strendswith( bindir, srcdir )) return strmake( "%s/../../nls", bindir );
+#ifdef DATADIR
+    else
+    {
+        const char *datadir = get_datadir( bindir );
+        if (datadir) return strmake( "%s/wine/nls", datadir );
+    }
+#endif
+    return NULL;
 }
 
 

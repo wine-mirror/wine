@@ -24,10 +24,6 @@ SOURCES = \
 	write_msft.c \
 	write_sltg.c
 
-widl_EXTRADEFS = \
-	-DINCLUDEDIR="\"${includedir}\"" \
-	-DDLLDIR="\"${libdir}/wine\"" \
-	-DBIN_TO_INCLUDEDIR=\"`${MAKEDEP} -R ${bindir} ${includedir}`\" \
-	-DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${libdir}/wine`\"
+widl_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\"" -DBINDIR="\"${bindir}\"" -DLIBDIR="\"${libdir}\""
 
 INSTALL_DEV = $(PROGRAMS)
