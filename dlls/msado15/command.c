@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 struct command
 {
     _Command         Command_iface;
+    ADOCommandConstruction ADOCommandConstruction_iface;
     LONG             ref;
     CommandTypeEnum  type;
     BSTR             text;
@@ -43,8 +44,14 @@ static inline struct command *impl_from_Command( _Command *iface )
     return CONTAINING_RECORD( iface, struct command, Command_iface );
 }
 
+static inline struct command *impl_from_ADOCommandConstruction( ADOCommandConstruction *iface )
+{
+    return CONTAINING_RECORD( iface, struct command, ADOCommandConstruction_iface );
+}
+
 static HRESULT WINAPI command_QueryInterface( _Command *iface, REFIID riid, void **obj )
 {
+    struct command *command = impl_from_Command( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
     *obj = NULL;
@@ -57,6 +64,10 @@ static HRESULT WINAPI command_QueryInterface( _Command *iface, REFIID riid, void
         IsEqualIID(riid, &IID__Command))
     {
         *obj = iface;
+    }
+    else if (IsEqualIID(riid, &IID_ADOCommandConstruction))
+    {
+        *obj = &command->ADOCommandConstruction_iface;
     }
     else
     {
@@ -374,12 +385,67 @@ static const struct _CommandVtbl command_vtbl =
     command_get_NamedParameters
 };
 
+static HRESULT WINAPI construction_QueryInterface(ADOCommandConstruction *iface, REFIID riid, void **obj)
+{
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown)    ||
+        IsEqualIID(riid, &IID_ADOCommandConstruction))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+
+    ADOCommandConstruction_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI construction_AddRef(ADOCommandConstruction *iface)
+{
+    struct command *command = impl_from_ADOCommandConstruction( iface );
+    return _Command_AddRef(&command->Command_iface);
+}
+
+static ULONG WINAPI construction_Release(ADOCommandConstruction *iface)
+{
+    struct command *command = impl_from_ADOCommandConstruction( iface );
+    return _Command_Release(&command->Command_iface);
+}
+
+static HRESULT WINAPI construction_get_OLEDBCommand(ADOCommandConstruction *iface, IUnknown **command)
+{
+    FIXME("%p, %p\n", iface, command);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI construction_put_OLEDBCommand(ADOCommandConstruction *iface, IUnknown *command)
+{
+    FIXME("%p, %p\n", iface, command);
+    return E_NOTIMPL;
+}
+
+static ADOCommandConstructionVtbl construct_vtbl =
+{
+    construction_QueryInterface,
+    construction_AddRef,
+    construction_Release,
+    construction_get_OLEDBCommand,
+    construction_put_OLEDBCommand
+};
+
 HRESULT Command_create( void **obj )
 {
     struct command *command;
 
     if (!(command = malloc( sizeof(*command) ))) return E_OUTOFMEMORY;
     command->Command_iface.lpVtbl = &command_vtbl;
+    command->ADOCommandConstruction_iface.lpVtbl = &construct_vtbl;
     command->type = adCmdUnknown;
     command->text = NULL;
     command->connection = NULL;

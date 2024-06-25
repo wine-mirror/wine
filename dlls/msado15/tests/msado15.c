@@ -1331,6 +1331,7 @@ static void test_Command(void)
     CommandTypeEnum cmd_type = adCmdUnspecified;
     BSTR cmd_text = (BSTR)"test";
     _Connection *connection;
+    ADOCommandConstruction *adocommand;
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -1346,6 +1347,10 @@ static void test_Command(void)
     hr = _Command_QueryInterface( command, &IID_Command25, (void **)&command25 );
     ok( hr == S_OK, "got %08lx\n", hr );
     Command25_Release( command25 );
+
+    hr = _Command_QueryInterface( command, &IID_ADOCommandConstruction, (void **)&adocommand );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ADOCommandConstruction_Release( adocommand );
 
     hr = _Command_get_CommandType( command, &cmd_type );
     ok( hr == S_OK, "got %08lx\n", hr );
