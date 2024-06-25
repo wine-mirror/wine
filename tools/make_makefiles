@@ -41,7 +41,6 @@ my %modules16 =
 my %ignored_source_files = (
     "dlls/wineps.drv/afm2c.c" => 1,
     "dlls/wineps.drv/mkagl.c" => 1,
-    "tools/makedep.c" => 1,
 );
 
 my (@makefiles, %makefiles);

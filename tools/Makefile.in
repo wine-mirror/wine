@@ -3,8 +3,8 @@ PROGRAMS = \
 	make_xftmpl
 
 SOURCES = \
-	makedep.c \
 	make_xftmpl.c \
+	makedep.c \
 	wineapploader.in
 
 makedep_OBJS = makedep.o
