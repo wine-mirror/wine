@@ -1802,6 +1802,34 @@ static BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
     return TRUE;
 }
 
+static BOOL get_default_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
+{
+    struct window_surface *previous;
+    WND *win;
+
+    TRACE( "hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
+
+    if ((previous = win->surface) && EqualRect( &previous->rect, surface_rect ))
+    {
+        window_surface_add_ref( (*surface = previous) );
+        TRACE( "trying to reuse previous surface %p\n", previous );
+    }
+    else if (!win->parent || win->parent == get_desktop_window())
+    {
+        *surface = &dummy_surface;  /* provide a default surface for top-level windows */
+        window_surface_add_ref( *surface );
+    }
+    else
+    {
+        *surface = NULL; /* use parent surface for child windows */
+        TRACE( "using parent window surface\n" );
+    }
+
+    release_win_ptr( win );
+    return TRUE;
+}
 
 /***********************************************************************
  *           apply_window_pos
@@ -1812,19 +1840,15 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                               const RECT *window_rect, const RECT *client_rect, const RECT *valid_rects )
 {
     WND *win;
-    HWND surface_win = 0, parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    HWND surface_win = 0;
     BOOL ret, needs_surface, needs_update = FALSE;
     RECT surface_rect, visible_rect = *window_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
-    struct window_surface *old_surface, *new_surface = NULL;
+    struct window_surface *old_surface, *new_surface;
 
     needs_surface = user_driver->pWindowPosChanging( hwnd, swp_flags, window_rect, client_rect, &visible_rect );
 
     if (!get_surface_rect( &visible_rect, &surface_rect )) needs_surface = FALSE;
-    if (!parent || parent == get_desktop_window())
-    {
-        new_surface = &dummy_surface;  /* provide a default surface for top-level windows */
-        window_surface_add_ref( new_surface );
-    }
+    if (!get_default_window_surface( hwnd, &surface_rect, &new_surface )) return FALSE;
 
     if (!needs_surface || IsRectEmpty( &visible_rect )) needs_surface = FALSE; /* use default surface */
     else needs_surface = !user_driver->pCreateWindowSurface( hwnd, swp_flags, &surface_rect, &new_surface );
