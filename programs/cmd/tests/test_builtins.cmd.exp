@@ -1585,6 +1585,12 @@ Line two
 Get if
 ... and else!
 passed
+abc
+abc
+%WINE_BAR%
+@todo_wine@abc
+@todo_wine@abc %WINE_BAR% %WINE_BAR%
+@todo_wine@abc def def
 --- mixing batch and builtins
 bar@space@
 @todo_wine@foo

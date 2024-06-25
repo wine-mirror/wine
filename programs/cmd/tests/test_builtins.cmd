@@ -2785,6 +2785,27 @@ call if 1==1 (
   echo ... and else!
 )
 call call call echo passed
+set WINE_FOO=WINE_BAR
+set WINE_BAR=abc
+call echo %%%WINE_FOO%%%
+call cmd.exe /c echo %%%WINE_FOO%%%
+call echo %%%%%WINE_FOO%%%%%
+call cmd.exe /c echo %%%%%WINE_FOO%%%%%
+
+set WINE_BAR=abc
+set WINE_FOO=%%WINE_BAR%%
+
+call :call_expand %WINE_FOO% %%WINE_FOO%% %%%WINE_FOO%%%
+goto :call_expand_done
+
+:call_expand
+set WINE_BAR=def
+echo %1 %2 %3
+call echo %1 %2 %3
+exit /b 0
+
+:call_expand_done
+
 cd .. & rd /s/q foobar
 
 echo --- mixing batch and builtins
