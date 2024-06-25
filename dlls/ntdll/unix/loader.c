@@ -302,6 +302,42 @@ static char *build_path( const char *dir, const char *name )
     return ret;
 }
 
+/* build a path with the relative dir from 'from' to 'dest' appended to base */
+static char *build_relative_path( const char *base, const char *from, const char *dest )
+{
+    const char *start;
+    char *ret;
+    unsigned int dotdots = 0;
+
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
+        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
+
+        do  /* count remaining elements in 'from' */
+        {
+            dotdots++;
+            while (*from && *from != '/') from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+
+    ret = malloc( strlen(base) + 3 * dotdots + strlen(start) + 2 );
+    strcpy( ret, base );
+    while (dotdots--) strcat( ret, "/.." );
+
+    if (!start[0]) return ret;
+    strcat( ret, "/" );
+    strcat( ret, start );
+    return ret;
+}
 
 /* build a path to a binary and exec it */
 static int build_path_and_exec( pid_t *pid, const char *dir, const char *name, char **argv )
@@ -444,8 +480,8 @@ static void init_paths( char *argv[] )
             free( path );
         }
 #endif
-        if (!bin_dir) bin_dir = build_path( dll_dir, DLL_TO_BINDIR );
-        data_dir = build_path( bin_dir, BIN_TO_DATADIR );
+        if (!bin_dir) bin_dir = build_relative_path( dll_dir, LIBDIR "/wine", BINDIR );
+        data_dir = build_relative_path( bin_dir, BINDIR, DATADIR "/wine" );
         wineloader = build_path( bin_dir, basename );
     }
     else
