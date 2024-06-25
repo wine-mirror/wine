@@ -2184,40 +2184,17 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 }
 
 
-BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
-{
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
-
-    *surface_rect = *visible_rect;
-
-    /* crop surfaces which are larger than the virtual screen rect, some applications create huge windows */
-    if ((surface_rect->right - surface_rect->left > virtual_rect.right - virtual_rect.left ||
-         surface_rect->bottom - surface_rect->top > virtual_rect.bottom - virtual_rect.top) &&
-        !intersect_rect( surface_rect, surface_rect, &virtual_rect ))
-        return FALSE;
-    OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
-
-    /* round the surface coordinates to avoid re-creating them too often on resize */
-    surface_rect->left &= ~31;
-    surface_rect->top  &= ~31;
-    surface_rect->right  = max( surface_rect->left + 32, (surface_rect->right + 31) & ~31 );
-    surface_rect->bottom = max( surface_rect->top + 32, (surface_rect->bottom + 31) & ~31 );
-    return TRUE;
-}
-
-
 /***********************************************************************
  *      CreateWindowSurface   (X11DRV.@)
  */
-BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface )
+BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface )
 {
     struct x11drv_win_data *data;
-    RECT surface_rect;
     DWORD flags;
     COLORREF key;
     BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    TRACE( "hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect( visible_rect ), surface );
+    TRACE( "hwnd %p, swp_flags %08x, surface_rect %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect( surface_rect ), surface );
 
     if (!(data = get_win_data( hwnd ))) return TRUE; /* use default surface */
 
@@ -2229,10 +2206,9 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_
     if (data->client_window) goto done; /* draw directly to the window */
     if (!client_side_graphics && !layered) goto done; /* draw directly to the window */
 
-    if (!get_surface_rect( visible_rect, &surface_rect )) goto done;
     if (data->surface)
     {
-        if (EqualRect( &data->surface->rect, &surface_rect ))
+        if (EqualRect( &data->surface->rect, surface_rect ))
         {
             /* existing surface is good enough */
             window_surface_add_ref( data->surface );
@@ -2245,7 +2221,7 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, UINT swp_flags, const RECT *visible_
     if (!layered || !NtUserGetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
         key = CLR_INVALID;
 
-    *surface = create_surface( data->hwnd, data->whole_window, &data->vis, &surface_rect, key, FALSE );
+    *surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect, key, FALSE );
 
 done:
     release_win_data( data );

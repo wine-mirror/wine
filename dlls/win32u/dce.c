@@ -154,32 +154,27 @@ static const struct window_surface_funcs offscreen_window_surface_funcs =
     offscreen_window_surface_destroy
 };
 
-void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struct window_surface **surface )
+void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
     struct offscreen_window_surface *impl;
-    RECT surface_rect = *visible_rect;
 
-    TRACE( "hwnd %p, visible_rect %s, surface %p.\n", hwnd, wine_dbgstr_rect( visible_rect ), surface );
-
-    OffsetRect( &surface_rect, -surface_rect.left, -surface_rect.top );
-    surface_rect.right  = (surface_rect.right + 0x1f) & ~0x1f;
-    surface_rect.bottom = (surface_rect.bottom + 0x1f) & ~0x1f;
+    TRACE( "hwnd %p, surface_rect %s, surface %p.\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
 
     /* check that old surface is an offscreen_window_surface, or release it */
     if ((impl = impl_from_window_surface( *surface )))
     {
         /* if the rect didn't change, keep the same surface */
-        if (EqualRect( &surface_rect, &impl->header.rect )) return;
+        if (EqualRect( surface_rect, &impl->header.rect )) return;
         window_surface_release( &impl->header );
     }
     else if (*surface) window_surface_release( *surface );
 
     memset( info, 0, sizeof(*info) );
     info->bmiHeader.biSize        = sizeof(info->bmiHeader);
-    info->bmiHeader.biWidth       = surface_rect.right;
-    info->bmiHeader.biHeight      = -surface_rect.bottom; /* top-down */
+    info->bmiHeader.biWidth       = surface_rect->right;
+    info->bmiHeader.biHeight      = -surface_rect->bottom; /* top-down */
     info->bmiHeader.biPlanes      = 1;
     info->bmiHeader.biBitCount    = 32;
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
@@ -188,7 +183,7 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *visible_rect, struc
     /* create a new window surface */
     *surface = NULL;
     if (!(impl = calloc(1, sizeof(*impl)))) return;
-    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, &surface_rect, info, 0 );
+    window_surface_init( &impl->header, &offscreen_window_surface_funcs, hwnd, surface_rect, info, 0 );
     impl->info = *info;
 
     TRACE( "created window surface %p\n", &impl->header );

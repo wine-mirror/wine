@@ -521,40 +521,16 @@ void wayland_window_surface_update_wayland_surface(struct window_surface *window
 }
 
 
-BOOL get_surface_rect(const RECT *visible_rect, RECT *surface_rect)
-{
-    RECT virtual_rect = NtUserGetVirtualScreenRect();
-
-    *surface_rect = *visible_rect;
-
-    /* crop surfaces which are larger than the virtual screen rect, some applications create huge windows */
-    if ((surface_rect->right - surface_rect->left > virtual_rect.right - virtual_rect.left ||
-         surface_rect->bottom - surface_rect->top > virtual_rect.bottom - virtual_rect.top) &&
-        !intersect_rect( surface_rect, surface_rect, &virtual_rect ))
-        return FALSE;
-    OffsetRect(surface_rect, -visible_rect->left, -visible_rect->top);
-
-    /* round the surface coordinates to avoid re-creating them too often on resize */
-    surface_rect->left &= ~127;
-    surface_rect->top  &= ~127;
-    surface_rect->right  = max(surface_rect->left + 128, (surface_rect->right + 127) & ~127);
-    surface_rect->bottom = max(surface_rect->top + 128, (surface_rect->bottom + 127) & ~127);
-    return TRUE;
-}
-
-
 /***********************************************************************
  *           WAYLAND_CreateWindowSurface
  */
-BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface)
+BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface)
 {
     struct wayland_win_data *data;
-    RECT surface_rect;
 
-    TRACE("hwnd %p, swp_flags %08x, visible %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(visible_rect), surface);
+    TRACE("hwnd %p, swp_flags %08x, surface_rect %s, surface %p\n", hwnd, swp_flags, wine_dbgstr_rect(surface_rect), surface);
 
     if (!(data = wayland_win_data_get(hwnd))) return TRUE; /* use default surface */
-    if (!get_surface_rect( visible_rect, &surface_rect )) goto done; /* use default surface */
 
     /* Release the dummy surface wine provides for toplevels. */
     if (*surface) window_surface_release(*surface);
@@ -562,7 +538,7 @@ BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_
 
     /* Check if we can reuse our current window surface. */
     if (data->window_surface &&
-        EqualRect(&data->window_surface->rect, &surface_rect))
+        EqualRect(&data->window_surface->rect, surface_rect))
     {
         window_surface_add_ref(data->window_surface);
         *surface = data->window_surface;
@@ -570,7 +546,7 @@ BOOL WAYLAND_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_
         goto done;
     }
 
-    *surface = wayland_window_surface_create(data->hwnd, &surface_rect);
+    *surface = wayland_window_surface_create(data->hwnd, surface_rect);
 
 done:
     wayland_win_data_release(data);

@@ -151,7 +151,7 @@ extern void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLOR
                                        BYTE alpha, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, const RECT *window_rect, const RECT *client_rect, RECT *visible_rect);
-extern BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *visible_rect, struct window_surface **surface);
+extern BOOL macdrv_CreateWindowSurface(HWND hwnd, UINT swp_flags, const RECT *surface_rect, struct window_surface **surface);
 extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags,
                                     const RECT *window_rect, const RECT *client_rect,
                                     const RECT *visible_rect, const RECT *valid_rects,
@@ -208,7 +208,6 @@ extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen);
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp);
 extern void activate_on_following_focus(void);
 extern void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha);
-extern BOOL get_surface_rect(const RECT *visible_rect, RECT *surface_rect);
 
 extern void macdrv_handle_event(const macdrv_event *event);
 
