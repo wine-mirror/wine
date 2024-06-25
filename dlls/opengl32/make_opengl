@@ -177,6 +177,7 @@ my %manual_win_thunks =
      "glUnmapBufferARB" => 1,
      "glUnmapNamedBuffer" => 1,
      "glUnmapNamedBufferEXT" => 1,
+     "wglChoosePixelFormatARB" => 1,
      "wglGetCurrentReadDCARB" => 1,
      "wglGetExtensionsStringARB" => 1,
      "wglGetExtensionsStringEXT" => 1,

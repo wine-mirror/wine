@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
@@ -490,6 +491,288 @@ static BOOL wgl_pixel_format_get_attrib( const struct wgl_pixel_format *fmt, int
     if (valid) *value = val;
 
     return valid;
+}
+
+enum attrib_match
+{
+    ATTRIB_MATCH_INVALID = -1,
+    ATTRIB_MATCH_IGNORE,
+    ATTRIB_MATCH_EXACT,
+    ATTRIB_MATCH_MINIMUM,
+};
+
+static enum attrib_match wgl_attrib_match_criteria( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB:
+    case WGL_DRAW_TO_BITMAP_ARB:
+    case WGL_ACCELERATION_ARB:
+    case WGL_NEED_PALETTE_ARB:
+    case WGL_NEED_SYSTEM_PALETTE_ARB:
+    case WGL_SWAP_LAYER_BUFFERS_ARB:
+    case WGL_SWAP_METHOD_ARB:
+    case WGL_SHARE_DEPTH_ARB:
+    case WGL_SHARE_STENCIL_ARB:
+    case WGL_SHARE_ACCUM_ARB:
+    case WGL_SUPPORT_GDI_ARB:
+    case WGL_SUPPORT_OPENGL_ARB:
+    case WGL_DOUBLE_BUFFER_ARB:
+    case WGL_STEREO_ARB:
+    case WGL_PIXEL_TYPE_ARB:
+    case WGL_BIND_TO_TEXTURE_RGB_ARB:
+    case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGB_NV:
+    case WGL_BIND_TO_TEXTURE_RECTANGLE_RGBA_NV:
+    case WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB:
+    case WGL_FLOAT_COMPONENTS_NV:
+        return ATTRIB_MATCH_EXACT;
+    case WGL_NUMBER_OVERLAYS_ARB:
+    case WGL_NUMBER_UNDERLAYS_ARB:
+    case WGL_COLOR_BITS_ARB:
+    case WGL_RED_BITS_ARB:
+    case WGL_GREEN_BITS_ARB:
+    case WGL_BLUE_BITS_ARB:
+    case WGL_ALPHA_BITS_ARB:
+    case WGL_ACCUM_BITS_ARB:
+    case WGL_ACCUM_RED_BITS_ARB:
+    case WGL_ACCUM_GREEN_BITS_ARB:
+    case WGL_ACCUM_BLUE_BITS_ARB:
+    case WGL_ACCUM_ALPHA_BITS_ARB:
+    case WGL_DEPTH_BITS_ARB:
+    case WGL_STENCIL_BITS_ARB:
+    case WGL_AUX_BUFFERS_ARB:
+    case WGL_SAMPLE_BUFFERS_ARB:
+    case WGL_SAMPLES_ARB:
+        return ATTRIB_MATCH_MINIMUM;
+    case WGL_NUMBER_PIXEL_FORMATS_ARB:
+    case WGL_RED_SHIFT_ARB:
+    case WGL_GREEN_SHIFT_ARB:
+    case WGL_BLUE_SHIFT_ARB:
+    case WGL_ALPHA_SHIFT_ARB:
+    case WGL_TRANSPARENT_ARB:
+    case WGL_TRANSPARENT_RED_VALUE_ARB:
+    case WGL_TRANSPARENT_GREEN_VALUE_ARB:
+    case WGL_TRANSPARENT_BLUE_VALUE_ARB:
+    case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
+    case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+        return ATTRIB_MATCH_IGNORE;
+    default:
+        return ATTRIB_MATCH_INVALID;
+    }
+}
+
+static void filter_format_array( const struct wgl_pixel_format **array,
+                                 UINT num_formats, int attrib, int value )
+{
+    enum attrib_match match = wgl_attrib_match_criteria( attrib );
+    int fmt_value;
+    UINT i;
+
+    assert(match != ATTRIB_MATCH_INVALID);
+
+    if (match == ATTRIB_MATCH_IGNORE) return;
+
+    for (i = 0; i < num_formats; ++i)
+    {
+        if (!array[i]) continue;
+        if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ) ||
+            (match == ATTRIB_MATCH_EXACT && fmt_value != value) ||
+            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value))
+        {
+            array[i] = NULL;
+        }
+    }
+}
+
+static int wgl_attrib_sort_priority( int attrib )
+{
+    switch (attrib)
+    {
+    case WGL_DRAW_TO_WINDOW_ARB: return 1;
+    case WGL_DRAW_TO_BITMAP_ARB: return 2;
+    case WGL_ACCELERATION_ARB: return 3;
+    case WGL_COLOR_BITS_ARB: return 4;
+    case WGL_ACCUM_BITS_ARB: return 5;
+    case WGL_PIXEL_TYPE_ARB: return 6;
+    case WGL_ALPHA_BITS_ARB: return 7;
+    case WGL_AUX_BUFFERS_ARB: return 8;
+    case WGL_DEPTH_BITS_ARB: return 9;
+    case WGL_STENCIL_BITS_ARB: return 10;
+    case WGL_DOUBLE_BUFFER_ARB: return 11;
+    case WGL_SWAP_METHOD_ARB: return 12;
+    default: return 100;
+    }
+}
+
+static int compare_attribs( const void *a, const void *b )
+{
+    return wgl_attrib_sort_priority( *(int *)a ) - wgl_attrib_sort_priority( *(int *)b );
+}
+
+static int wgl_attrib_value_priority( int value )
+{
+    switch (value)
+    {
+    case WGL_SWAP_UNDEFINED_ARB: return 1;
+    case WGL_SWAP_EXCHANGE_ARB: return 2;
+    case WGL_SWAP_COPY_ARB: return 3;
+
+    case WGL_FULL_ACCELERATION_ARB: return 1;
+    case WGL_GENERIC_ACCELERATION_ARB: return 2;
+    case WGL_NO_ACCELERATION_ARB: return 3;
+
+    case WGL_TYPE_RGBA_ARB: return 1;
+    case WGL_TYPE_RGBA_FLOAT_ATI: return 2;
+    case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT: return 3;
+    case WGL_TYPE_COLORINDEX_ARB: return 4;
+
+    default: return 100;
+    }
+}
+
+struct compare_formats_ctx
+{
+    int attribs[256];
+    UINT num_attribs;
+};
+
+static int compare_formats( void *arg, const void *a, const void *b )
+{
+    const struct wgl_pixel_format *fmt_a = *(void **)a, *fmt_b = *(void **)b;
+    struct compare_formats_ctx *ctx = arg;
+    int attrib, val_a, val_b;
+    UINT i;
+
+    if (!fmt_a) return 1;
+    if (!fmt_b) return -1;
+
+    for (i = 0; i < ctx->num_attribs; ++i)
+    {
+        attrib = ctx->attribs[2 * i];
+        if (wgl_pixel_format_get_attrib( fmt_a, attrib, &val_a ) &&
+            wgl_pixel_format_get_attrib( fmt_b, attrib, &val_b ) &&
+            val_a != val_b)
+        {
+            switch (attrib)
+            {
+            case WGL_ACCELERATION_ARB:
+            case WGL_SWAP_METHOD_ARB:
+            case WGL_PIXEL_TYPE_ARB:
+                return wgl_attrib_value_priority( val_a ) -
+                       wgl_attrib_value_priority( val_b );
+            case WGL_COLOR_BITS_ARB:
+                /* Prefer 32bpp over other values */
+                if (val_a >= 32 && val_b >= 32) return val_a - val_b;
+                else return val_b - val_a;
+            default:
+                /* Smaller values first */
+                return val_a - val_b;
+            }
+        }
+    }
+
+    /* Maintain pixel format id order */
+    return fmt_a - fmt_b;
+}
+
+static void compare_formats_ctx_set_attrib( struct compare_formats_ctx *ctx,
+                                            int attrib, int value )
+{
+    UINT i;
+
+    /* Overwrite attribute if it exists already */
+    for (i = 0; i < ctx->num_attribs; ++i)
+        if (ctx->attribs[2 * i] == attrib) break;
+
+    assert(i < ARRAY_SIZE(ctx->attribs) / 2);
+
+    ctx->attribs[2 * i] = attrib;
+    ctx->attribs[2 * i + 1] = value;
+    if (i == ctx->num_attribs) ++ctx->num_attribs;
+}
+
+/***********************************************************************
+ *		wglChoosePixelFormatARB (OPENGL32.@)
+ */
+BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *attribs_int, const FLOAT *attribs_float,
+                                     UINT max_formats, int *formats, UINT *num_formats )
+{
+    struct wgl_pixel_format *wgl_formats;
+    UINT i, num_wgl_formats, num_wgl_onscreen_formats;
+    const struct wgl_pixel_format **format_array;
+    struct compare_formats_ctx ctx = { 0 };
+
+    TRACE( "hdc %p, attribs_int %p, attribs_float %p, max_formats %u, formats %p, num_formats %p\n",
+           hdc, attribs_int, attribs_float, max_formats, formats, num_formats );
+
+    wgl_formats = get_pixel_formats( hdc, &num_wgl_formats, &num_wgl_onscreen_formats );
+
+    /* If the driver doesn't yet provide ARB attrib information in
+     * wgl_pixel_format, fall back to an explicit call. */
+    if (num_wgl_formats && !wgl_formats[0].pixel_type)
+    {
+        struct wglChoosePixelFormatARB_params args =
+        {
+            .teb = NtCurrentTeb(),
+            .hdc = hdc,
+            .piAttribIList = attribs_int,
+            .pfAttribFList = attribs_float,
+            .nMaxFormats = max_formats,
+            .piFormats = formats,
+            .nNumFormats = num_formats
+        };
+        NTSTATUS status;
+
+        if ((status = UNIX_CALL( wglChoosePixelFormatARB, &args )))
+            WARN( "wglChoosePixelFormatARB returned %#lx\n", status );
+
+        return args.ret;
+    }
+
+    /* Gather, validate and deduplicate all attributes */
+    for (i = 0; attribs_int && attribs_int[i]; i += 2)
+    {
+        if (wgl_attrib_match_criteria( attribs_int[i] ) == ATTRIB_MATCH_INVALID) return FALSE;
+        compare_formats_ctx_set_attrib( &ctx, attribs_int[i], attribs_int[i + 1] );
+    }
+    for (i = 0; attribs_float && attribs_float[i]; i += 2)
+    {
+        if (wgl_attrib_match_criteria( attribs_float[i] ) == ATTRIB_MATCH_INVALID) return FALSE;
+        compare_formats_ctx_set_attrib( &ctx, attribs_float[i], attribs_float[i + 1] );
+    }
+
+    /* Initialize the format_array with (pointers to) all wgl formats */
+    format_array = malloc( num_wgl_formats * sizeof(*format_array) );
+    if (!format_array) return FALSE;
+    for (i = 0; i < num_wgl_formats; ++i) format_array[i] = &wgl_formats[i];
+
+    /* Remove formats that are not acceptable */
+    for (i = 0; i < ctx.num_attribs; ++i)
+        filter_format_array( format_array, num_wgl_formats, ctx.attribs[2 * i],
+                             ctx.attribs[2 * i + 1] );
+
+    /* Some attributes we always want to sort by (values don't matter for sorting) */
+    compare_formats_ctx_set_attrib( &ctx, WGL_ACCELERATION_ARB, 0 );
+    compare_formats_ctx_set_attrib( &ctx, WGL_COLOR_BITS_ARB, 0 );
+    compare_formats_ctx_set_attrib( &ctx, WGL_ACCUM_BITS_ARB, 0 );
+
+    /* Arrange attributes in the order which we want to check them */
+    qsort( ctx.attribs, ctx.num_attribs, 2 * sizeof(*ctx.attribs), compare_attribs );
+
+    /* Sort pixel formats based on the specified attributes */
+    qsort_s( format_array, num_wgl_formats, sizeof(*format_array), compare_formats, &ctx );
+
+    /* Return the best max_formats format ids */
+    *num_formats = 0;
+    for (i = 0; i < num_wgl_formats && i < max_formats && format_array[i]; ++i)
+    {
+        ++*num_formats;
+        formats[i] = format_array[i] - wgl_formats + 1;
+    }
+
+    free( format_array );
+    return TRUE;
 }
 
 INT WINAPI wglDescribePixelFormat( HDC hdc, int index, UINT size, PIXELFORMATDESCRIPTOR *ppfd )

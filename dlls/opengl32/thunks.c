@@ -24164,15 +24164,6 @@ static BOOL WINAPI wglBindTexImageARB( HPBUFFERARB hPbuffer, int iBuffer )
     return args.ret;
 }
 
-static BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats )
-{
-    struct wglChoosePixelFormatARB_params args = { .teb = NtCurrentTeb(), .hdc = hdc, .piAttribIList = piAttribIList, .pfAttribFList = pfAttribFList, .nMaxFormats = nMaxFormats, .piFormats = piFormats, .nNumFormats = nNumFormats };
-    NTSTATUS status;
-    TRACE( "hdc %p, piAttribIList %p, pfAttribFList %p, nMaxFormats %u, piFormats %p, nNumFormats %p\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats );
-    if ((status = UNIX_CALL( wglChoosePixelFormatARB, &args ))) WARN( "wglChoosePixelFormatARB returned %#lx\n", status );
-    return args.ret;
-}
-
 static HGLRC WINAPI wglCreateContextAttribsARB( HDC hDC, HGLRC hShareContext, const int *attribList )
 {
     struct wglCreateContextAttribsARB_params args = { .teb = NtCurrentTeb(), .hDC = hDC, .hShareContext = hShareContext, .attribList = attribList };
@@ -24319,6 +24310,7 @@ extern GLboolean WINAPI glUnmapBuffer( GLenum target );
 extern GLboolean WINAPI glUnmapBufferARB( GLenum target );
 extern GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer );
 extern GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer );
+extern BOOL WINAPI wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats );
 extern HDC WINAPI wglGetCurrentReadDCARB(void);
 extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc );
 extern const char * WINAPI wglGetExtensionsStringEXT(void);
