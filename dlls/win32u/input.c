@@ -842,6 +842,26 @@ SHORT WINAPI NtUserGetAsyncKeyState( INT key )
 }
 
 /***********************************************************************
+ *           get_shared_queue_bits
+ */
+static BOOL get_shared_queue_bits( UINT *wake_bits, UINT *changed_bits )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    UINT status;
+
+    *wake_bits = *changed_bits = 0;
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+    {
+        *wake_bits = queue_shm->wake_bits;
+        *changed_bits = queue_shm->changed_bits;
+    }
+
+    if (status) return FALSE;
+    return TRUE;
+}
+
+/***********************************************************************
  *           NtUserGetQueueStatus (win32u.@)
  */
 DWORD WINAPI NtUserGetQueueStatus( UINT flags )
@@ -871,18 +891,12 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
  */
 DWORD get_input_state(void)
 {
-    DWORD ret;
+    UINT wake_bits, changed_bits;
 
     check_for_events( QS_INPUT );
 
-    SERVER_START_REQ( get_queue_status )
-    {
-        req->clear_bits = 0;
-        wine_server_call( req );
-        ret = reply->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (!get_shared_queue_bits( &wake_bits, &changed_bits )) return 0;
+    return wake_bits & (QS_KEY | QS_MOUSEBUTTON);
 }
 
 /***********************************************************************
