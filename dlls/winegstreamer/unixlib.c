@@ -47,6 +47,8 @@
 
 GST_DEBUG_CATEGORY(wine);
 
+static UINT thread_count;
+
 GstStreamType stream_type_from_caps(GstCaps *caps)
 {
     const gchar *media_type;
@@ -244,6 +246,17 @@ bool push_event(GstPad *pad, GstEvent *event)
     return true;
 }
 
+static ULONG popcount(ULONG val)
+{
+#if HAVE___BUILTIN_POPCOUNT
+    return __builtin_popcount(val);
+#else
+    val -= val >> 1 & 0x55555555;
+    val = (val & 0x33333333) + (val >> 2 & 0x33333333);
+    return ((val + (val >> 4)) & 0x0f0f0f0f) * 0x01010101 >> 24;
+#endif
+}
+
 NTSTATUS wg_init_gstreamer(void *arg)
 {
     struct wg_init_gstreamer_params *params = arg;
@@ -253,6 +266,7 @@ NTSTATUS wg_init_gstreamer(void *arg)
     int argc = ARRAY_SIZE(args) - 1;
     char **argv = args;
     GError *err;
+    DWORD_PTR process_mask;
 
     if (params->trace_on)
         setenv("GST_DEBUG", "WINE:9,4", FALSE);
@@ -275,6 +289,12 @@ NTSTATUS wg_init_gstreamer(void *arg)
         g_error_free(err);
         return STATUS_UNSUCCESSFUL;
     }
+
+    if (!NtQueryInformationProcess(GetCurrentProcess(),
+            ProcessAffinityMask, &process_mask, sizeof(process_mask), NULL))
+        thread_count = popcount(process_mask);
+    else
+        thread_count = 0;
 
     GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
 
