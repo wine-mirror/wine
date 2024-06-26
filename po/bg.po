@@ -14579,6 +14579,11 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr ""
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+msgid "End of line"
+msgstr "Добави към от&метките..."
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr ""

@@ -14375,6 +14375,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "语法错误\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "文件尾。\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "光标尺寸"

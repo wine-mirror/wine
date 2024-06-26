@@ -14585,6 +14585,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "Sintaksės klaida: netikėtas %1\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "Failo pabaiga.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Žymeklio dydis"

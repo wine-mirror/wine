@@ -15018,6 +15018,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "Синтаксическая ошибка\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "Достигнут конец файла.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Размер курсора"

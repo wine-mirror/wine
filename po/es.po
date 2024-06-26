@@ -15264,6 +15264,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "Error de sintaxis\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "Fin del archivo.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Tamaño del cursor"

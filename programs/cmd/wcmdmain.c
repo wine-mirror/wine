@@ -2466,15 +2466,34 @@ static BOOL node_builder_generate(struct node_builder *builder, CMD_NODE **node)
     /* print error on first unused token */
     if (builder->pos < builder->num)
     {
+        WCHAR buffer[MAXSTRING];
+        const WCHAR *tknstr;
+
         tkn = node_builder_peek_next_token(builder, &tkn_pmt);
         switch (tkn)
         {
         case TKN_COMMAND:
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADTOKEN), tkn_pmt.command->command);
+            tknstr = tkn_pmt.command->command;
+            break;
+        case TKN_EOL:
+            tknstr = WCMD_LoadMessage(WCMD_ENDOFLINE);
+            break;
+        case TKN_REDIRECTION:
+            MultiByteToWideChar(CP_ACP, 0, debugstr_redirection(tkn_pmt.redirection), -1, buffer, ARRAY_SIZE(buffer));
+            tknstr = buffer;
+            break;
+        case TKN_AMP:
+        case TKN_AMPAMP:
+        case TKN_BAR:
+        case TKN_BARBAR:
+            MultiByteToWideChar(CP_ACP, 0, debugstr_token(tkn, tkn_pmt), -1, buffer, ARRAY_SIZE(buffer));
+            tknstr = buffer;
             break;
         default:
-            WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADTOKEN), debugstr_token(tkn, tkn_pmt));
+            FIXME("Unexpected situation\n");
+            tknstr = L"";
         }
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_BADTOKEN), tknstr);
     }
     /* free remaining tokens */
     for (;;)

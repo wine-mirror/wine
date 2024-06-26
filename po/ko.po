@@ -14538,6 +14538,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "문법 오류\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "파일 끝.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "커서 크기"

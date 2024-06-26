@@ -14561,6 +14561,12 @@ msgstr ""
 msgid "Syntax error: unexpected %1\n"
 msgstr "Syntaksivirhe\n"
 
+#: programs/cmd/cmd.rc:412
+#, fuzzy
+#| msgid "End of file.\n"
+msgid "End of line"
+msgstr "Tiedoston loppu.\n"
+
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
 msgstr "Kursorin koko"

@@ -482,3 +482,4 @@ extern WCHAR version_string[];
 #define WCMD_BADHEXOCT        1045
 #define WCMD_FILENAMETOOLONG  1046
 #define WCMD_BADTOKEN         1047
+#define WCMD_ENDOFLINE        1048
