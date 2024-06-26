@@ -35,6 +35,8 @@ struct vmr7_presenter
     IDirectDrawSurface7 *frontbuffer;
     IDirectDrawSurface7 *primary;
     HWND window;
+
+    SIZE native_size, aspect_ratio;
 };
 
 static struct vmr7_presenter *impl_from_IVMRImagePresenter(IVMRImagePresenter *iface)
@@ -213,6 +215,10 @@ static HRESULT WINAPI surface_allocator_AllocateSurface(IVMRSurfaceAllocator *if
     }
     *surface = presenter->frontbuffer;
     ++*count;
+
+    presenter->native_size = info->szNativeSize;
+    presenter->aspect_ratio = info->szAspectRatio;
+
     return S_OK;
 }
 
@@ -286,9 +292,24 @@ static ULONG WINAPI windowless_control_Release(IVMRWindowlessControl *iface)
 static HRESULT WINAPI windowless_control_GetNativeVideoSize(IVMRWindowlessControl *iface,
         LONG *width, LONG *height, LONG *aspect_width, LONG *aspect_height)
 {
-    FIXME("iface %p, width %p, height %p, aspect_width %p, aspect_height %p.\n",
+    struct vmr7_presenter *presenter = impl_from_IVMRWindowlessControl(iface);
+
+    TRACE("iface %p, width %p, height %p, aspect_width %p, aspect_height %p.\n",
             iface, width, height, aspect_width, aspect_height);
-    return E_NOTIMPL;
+
+    if (width)
+        *width = presenter->native_size.cx;
+    if (height)
+        *height = presenter->native_size.cy;
+    if (aspect_width)
+        *aspect_width = presenter->aspect_ratio.cx;
+    if (aspect_height)
+        *aspect_height = presenter->aspect_ratio.cy;
+
+    TRACE("Returning size (%ld, %ld), aspect ratio (%ld, %ld).\n",
+            presenter->native_size.cx, presenter->native_size.cy,
+            presenter->aspect_ratio.cx, presenter->aspect_ratio.cy);
+    return S_OK;
 }
 
 static HRESULT WINAPI windowless_control_GetMinIdealVideoSize(

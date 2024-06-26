@@ -3895,15 +3895,15 @@ static void test_default_presenter_window(void)
 
     width = height = 0xdeadbeef;
     hr = IVMRWindowlessControl_GetNativeVideoSize(control, &width, &height, NULL, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(width == 420, "Got width %ld.\n", width);
-    todo_wine ok(height == 180, "Got height %ld.\n", height);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(width == 420, "Got width %ld.\n", width);
+    ok(height == 180, "Got height %ld.\n", height);
 
     width = height = 0xdeadbeef;
     hr = IVMRWindowlessControl_GetNativeVideoSize(control, NULL, NULL, &width, &height);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(width == 400, "Got width %ld.\n", width);
-    todo_wine ok(height == 200, "Got height %ld.\n", height);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(width == 400, "Got width %ld.\n", width);
+    ok(height == 200, "Got height %ld.\n", height);
 
     hr = IVMRSurfaceAllocator_FreeSurface(allocator, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
