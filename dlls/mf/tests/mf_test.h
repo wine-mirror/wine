@@ -58,6 +58,7 @@ struct attribute_desc
     PROPVARIANT value;
     BOOL ratio;
     BOOL required;
+    BOOL required_set;
     BOOL todo;
     BOOL todo_value;
 };

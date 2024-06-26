@@ -63,6 +63,8 @@ DEFINE_MEDIATYPE_GUID(MEDIASUBTYPE_IV50,MAKEFOURCC('I','V','5','0'));
 
 DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
 
+static const GUID test_attr_guid = {0xdeadbeef};
+
 struct media_buffer
 {
     IMediaBuffer IMediaBuffer_iface;
@@ -678,13 +680,25 @@ static void check_mft_set_input_type_required_(int line, IMFTransform *transform
     for (attr = attributes; attr && attr->key; attr++)
     {
         winetest_push_context("%s", debugstr_a(attr->name));
+
         hr = IMFMediaType_DeleteItem(media_type, attr->key);
         ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+
         hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
         todo_wine_if(attr->todo)
         ok_(__FILE__, line)(FAILED(hr) == attr->required, "SetInputType returned %#lx.\n", hr);
+
+        if (attr->required_set)
+        {
+            hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+            ok_(__FILE__, line)(FAILED(hr), "SetInputType Succeeded.\n");
+            hr = IMFTransform_SetInputType(transform, 0, NULL, 0);
+            ok_(__FILE__, line)(hr == S_OK, "Failed to clear input type.\n");
+        }
+
         hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
         ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
+
         winetest_pop_context();
     }
 
@@ -759,12 +773,24 @@ static void check_mft_set_output_type_required_(int line, IMFTransform *transfor
     for (attr = attributes; attr && attr->key; attr++)
     {
         winetest_push_context("%s", debugstr_a(attr->name));
+
         hr = IMFMediaType_DeleteItem(media_type, attr->key);
         ok_(__FILE__, line)(hr == S_OK, "DeleteItem returned %#lx\n", hr);
+
         hr = IMFTransform_SetOutputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
         ok_(__FILE__, line)(FAILED(hr) == attr->required, "SetOutputType returned %#lx.\n", hr);
+
+        if (attr->required_set)
+        {
+            hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+            ok_(__FILE__, line)(FAILED(hr), "SetOutputType Succeeded.\n");
+            hr = IMFTransform_SetOutputType(transform, 0, NULL, 0);
+            ok_(__FILE__, line)(hr == S_OK, "Failed to clear output type.\n");
+        }
+
         hr = IMFMediaType_SetItem(media_type, attr->key, &attr->value);
         ok_(__FILE__, line)(hr == S_OK, "SetItem returned %#lx\n", hr);
+
         winetest_pop_context();
     }
 
@@ -3810,35 +3836,34 @@ static void test_h264_encoder(void)
             {.subtype = &MFVideoFormat_H264},
         },
     };
-    static const media_type_desc default_outputs[] =
-    {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264),
-        },
-    };
     static const media_type_desc default_inputs[] =
     {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
-        },
+        {ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV)},
+        {ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12)},
+        {ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12)},
+        {ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2)},
+    };
+    static const media_type_desc default_outputs[] =
+    {
+        {ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264)},
     };
     static const struct attribute_desc expect_transform_attributes[] =
     {
         ATTR_UINT32(MFT_ENCODER_SUPPORTS_CONFIG_EVENT, 1),
+        {0},
+    };
+    static const struct attribute_desc expect_common_attributes[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
+        {0},
+    };
+    static const struct attribute_desc expect_available_input_attributes[] =
+    {
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_UINT32(MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_Wide),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive),
+        ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
         {0},
     };
     const struct attribute_desc input_type_desc[] =
@@ -3847,6 +3872,7 @@ static void test_h264_encoder(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
     const struct attribute_desc output_type_desc[] =
@@ -3854,9 +3880,10 @@ static void test_h264_encoder(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
-        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
-        ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001, .required_set = TRUE),
+        ATTR_UINT32(MF_MT_AVG_BITRATE, 193540, .required_set = TRUE),
+        ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive, .required_set = TRUE),
+        ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
     const struct attribute_desc expect_input_type_desc[] =
@@ -3865,6 +3892,7 @@ static void test_h264_encoder(void)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
         ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
+        ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
     const struct attribute_desc expect_output_type_desc[] =
@@ -3876,6 +3904,7 @@ static void test_h264_encoder(void)
         ATTR_UINT32(MF_MT_AVG_BITRATE, 193540),
         ATTR_BLOB(MF_MT_MPEG_SEQUENCE_HEADER, test_h264_sequence_header, sizeof(test_h264_sequence_header)),
         ATTR_UINT32(MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive),
+        ATTR_UINT32(test_attr_guid, 0),
         {0},
     };
     static const MFT_OUTPUT_STREAM_INFO expect_output_info = {.cbSize = 0x8000};
@@ -3929,6 +3958,7 @@ static void test_h264_encoder(void)
     {
         winetest_push_context("out %lu", i);
         ok(hr == S_OK, "GetOutputAvailableType returned %#lx.\n", hr);
+        check_media_type(media_type, expect_common_attributes, -1);
         check_media_type(media_type, default_outputs[i], -1);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
@@ -3948,6 +3978,8 @@ static void test_h264_encoder(void)
     {
         winetest_push_context("out %lu", i);
         ok(hr == S_OK, "IMFTransform_GetInputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_common_attributes, -1);
+        check_media_type(media_type, expect_available_input_attributes, -1);
         check_media_type(media_type, default_inputs[i], -1);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
