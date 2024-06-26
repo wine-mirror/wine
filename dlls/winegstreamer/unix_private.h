@@ -46,6 +46,7 @@ extern bool link_src_to_sink(GstPad *src_pad, GstPad *sink_pad);
 extern bool link_src_to_element(GstPad *src_pad, GstElement *element);
 extern bool link_element_to_sink(GstElement *element, GstPad *sink_pad);
 extern bool push_event(GstPad *pad, GstEvent *event);
+extern void set_max_threads(GstElement *element);
 
 /* wg_format.c */
 

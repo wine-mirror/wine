@@ -555,6 +555,8 @@ NTSTATUS wg_transform_create(void *args)
         if (!(element = find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, parsed_caps, sink_caps))
                 || !append_element(transform->container, element, &first, &last))
             goto out;
+
+        set_max_threads(element);
     }
 
     if (g_str_has_prefix(output_mime, "audio/"))
