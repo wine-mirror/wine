@@ -324,6 +324,27 @@ static HRESULT WINAPI transform_SetInputType(IMFTransform *iface, DWORD id, IMFM
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
 
+    if (!type)
+    {
+        if (decoder->input_type)
+        {
+            IMFMediaType_Release(decoder->input_type);
+            decoder->input_type = NULL;
+        }
+        if (decoder->output_type)
+        {
+            IMFMediaType_Release(decoder->output_type);
+            decoder->output_type = NULL;
+        }
+        if (decoder->wg_transform)
+        {
+            wg_transform_destroy(decoder->wg_transform);
+            decoder->wg_transform = 0;
+        }
+
+        return S_OK;
+    }
+
     if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(type, (WAVEFORMATEX **)&format, &size,
             MFWaveFormatExConvertFlag_ForceExtensible)))
         return hr;
@@ -364,6 +385,23 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 
     if (id)
         return MF_E_INVALIDSTREAMNUMBER;
+
+    if (!type)
+    {
+        if (decoder->output_type)
+        {
+            IMFMediaType_Release(decoder->output_type);
+            decoder->input_type = NULL;
+        }
+        if (decoder->wg_transform)
+        {
+            wg_transform_destroy(decoder->wg_transform);
+            decoder->wg_transform = 0;
+        }
+
+        return S_OK;
+    }
+
     if (!decoder->input_type)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
