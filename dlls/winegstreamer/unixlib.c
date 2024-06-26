@@ -326,12 +326,12 @@ void set_max_threads(GstElement *element)
      * of RAM each (w * h * bpp).
      *
      * So we will instead explictly set 'max-threads' to the minimum of thread_count (process affinity at time of
-     * initialization) or 16.
+     * initialization) or 16 (4 for 32-bit processors).
      */
 
     if (shortname && strstr(shortname, "avdec_") && element_has_property(element, "max-threads"))
     {
-        gint32 max_threads = MIN(thread_count, 16);
+        gint32 max_threads = MIN(thread_count, sizeof(void *) == 4 ? 4 : 16);
         GST_DEBUG("%s found, setting max-threads to %d.", shortname, max_threads);
         g_object_set(element, "max-threads", max_threads, NULL);
     }
