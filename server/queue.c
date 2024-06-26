@@ -125,8 +125,6 @@ struct msg_queue
 {
     struct object          obj;             /* object header */
     struct fd             *fd;              /* optional file descriptor to poll */
-    unsigned int           wake_bits;       /* wakeup bits */
-    unsigned int           changed_bits;    /* changed wakeup bits */
     int                    paint_count;     /* pending paint messages count */
     int                    hotkey_count;    /* pending hotkey messages count */
     int                    quit_message;    /* is there a pending quit message? */
@@ -300,8 +298,6 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->fd              = NULL;
-        queue->wake_bits       = 0;
-        queue->changed_bits    = 0;
         queue->paint_count     = 0;
         queue->hotkey_count    = 0;
         queue->quit_message    = 0;
@@ -329,7 +325,9 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         {
             memset( (void *)shared->hooks_count, 0, sizeof(shared->hooks_count) );
             shared->wake_mask = 0;
+            shared->wake_bits = 0;
             shared->changed_mask = 0;
+            shared->changed_bits = 0;
         }
         SHARED_WRITE_END;
 
@@ -641,29 +639,44 @@ void add_queue_hook_count( struct thread *thread, unsigned int index, int count 
 static inline int is_signaled( struct msg_queue *queue )
 {
     const queue_shm_t *queue_shm = queue->shared;
-    return (queue->wake_bits & queue_shm->wake_mask) ||
-           (queue->changed_bits & queue_shm->changed_mask);
+    return (queue_shm->wake_bits & queue_shm->wake_mask) ||
+           (queue_shm->changed_bits & queue_shm->changed_mask);
 }
 
 /* set some queue bits */
 static inline void set_queue_bits( struct msg_queue *queue, unsigned int bits )
 {
+    const queue_shm_t *queue_shm = queue->shared;
+
     if (bits & (QS_KEY | QS_MOUSEBUTTON))
     {
         if (!queue->keystate_lock) lock_input_keystate( queue->input );
         queue->keystate_lock = 1;
     }
-    queue->wake_bits |= bits;
-    queue->changed_bits |= bits;
+
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
+    {
+        shared->wake_bits |= bits;
+        shared->changed_bits |= bits;
+    }
+    SHARED_WRITE_END;
+
     if (is_signaled( queue )) wake_up( &queue->obj, 0 );
 }
 
 /* clear some queue bits */
 static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits )
 {
-    queue->wake_bits &= ~bits;
-    queue->changed_bits &= ~bits;
-    if (!(queue->wake_bits & (QS_KEY | QS_MOUSEBUTTON)))
+    const queue_shm_t *queue_shm = queue->shared;
+
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
+    {
+        shared->wake_bits &= ~bits;
+        shared->changed_bits &= ~bits;
+    }
+    SHARED_WRITE_END;
+
+    if (!(queue_shm->wake_bits & (QS_KEY | QS_MOUSEBUTTON)))
     {
         if (queue->keystate_lock) unlock_input_keystate( queue->input );
         queue->keystate_lock = 0;
@@ -1181,7 +1194,7 @@ static void msg_queue_dump( struct object *obj, int verbose )
     struct msg_queue *queue = (struct msg_queue *)obj;
     const queue_shm_t *queue_shm = queue->shared;
     fprintf( stderr, "Msg queue bits=%x mask=%x\n",
-             queue->wake_bits, queue_shm->wake_mask );
+             queue_shm->wake_bits, queue_shm->wake_mask );
 }
 
 static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entry )
@@ -2955,8 +2968,9 @@ DECL_HANDLER(set_queue_mask)
         }
         SHARED_WRITE_END;
 
-        reply->wake_bits    = queue->wake_bits;
-        reply->changed_bits = queue->changed_bits;
+        reply->wake_bits    = queue_shm->wake_bits;
+        reply->changed_bits = queue_shm->changed_bits;
+
         if (is_signaled( queue ))
         {
             /* if skip wait is set, do what would have been done in the subsequent wait */
@@ -2981,9 +2995,16 @@ DECL_HANDLER(get_queue_status)
     struct msg_queue *queue = current->queue;
     if (queue)
     {
-        reply->wake_bits    = queue->wake_bits;
-        reply->changed_bits = queue->changed_bits;
-        queue->changed_bits &= ~req->clear_bits;
+        const queue_shm_t *queue_shm = queue->shared;
+
+        reply->wake_bits    = queue_shm->wake_bits;
+        reply->changed_bits = queue_shm->changed_bits;
+
+        SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
+        {
+            shared->changed_bits &= ~req->clear_bits;
+        }
+        SHARED_WRITE_END;
     }
     else reply->wake_bits = reply->changed_bits = 0;
 }
@@ -3167,13 +3188,17 @@ DECL_HANDLER(get_message)
     }
 
     /* clear changed bits so we can wait on them if we don't find a message */
-    if (filter & QS_POSTMESSAGE)
+    SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
     {
-        queue->changed_bits &= ~(QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER);
-        if (req->get_first == 0 && req->get_last == ~0U) queue->changed_bits &= ~QS_ALLPOSTMESSAGE;
+        if (filter & QS_POSTMESSAGE)
+        {
+            shared->changed_bits &= ~(QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER);
+            if (req->get_first == 0 && req->get_last == ~0U) shared->changed_bits &= ~QS_ALLPOSTMESSAGE;
+        }
+        if (filter & QS_INPUT) shared->changed_bits &= ~QS_INPUT;
+        if (filter & QS_PAINT) shared->changed_bits &= ~QS_PAINT;
     }
-    if (filter & QS_INPUT) queue->changed_bits &= ~QS_INPUT;
-    if (filter & QS_PAINT) queue->changed_bits &= ~QS_PAINT;
+    SHARED_WRITE_END;
 
     /* then check for posted messages */
     if ((filter & QS_POSTMESSAGE) &&
