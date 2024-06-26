@@ -258,8 +258,18 @@ static HRESULT WINAPI transform_GetInputCurrentType(IMFTransform *iface, DWORD i
 
 static HRESULT WINAPI transform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
 {
-    FIXME("iface %p, id %#lx, type %p\n", iface, id, type);
-    return E_NOTIMPL;
+    struct video_encoder *encoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, type %p\n", iface, id, type);
+
+    if (!encoder->output_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = MFCreateMediaType(type)))
+        return hr;
+
+    return IMFMediaType_CopyAllItems(encoder->output_type, (IMFAttributes *)*type);
 }
 
 static HRESULT WINAPI transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
