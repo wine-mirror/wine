@@ -4189,6 +4189,7 @@ static void output_top_makefile( struct makefile *make )
     FILE *src_file;
     unsigned int i;
     int found = 0;
+    const char *makedep;
 
     output_file_name = obj_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
@@ -4206,10 +4207,21 @@ static void output_top_makefile( struct makefile *make )
     if (!found) output( "\n%s (everything below this line is auto-generated; DO NOT EDIT!!)\n", separator );
 
     if (silent_rules) output_silent_rules();
+
+    /* add special targets for makefile and dependencies */
+
+    output( ".INIT: Makefile\n" );
+    output( ".MAKEFILEDEPS:\n" );
+    output( ".SUFFIXES:\n" );
+    makedep = strmake( "%s%s",tools_dir_path( make, "makedep" ), tools_ext );
+    output( "Makefile: %s\n", makedep );
+    output( "depend: %s\n", makedep );
+    output( "\t%s%s\n", makedep,
+            silent_rules ? " -S" : "" );
+    strarray_add( &make->phony_targets, "depend" );
+
     for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );
     output_sources( make );
-    /* disable implicit rules */
-    output( ".SUFFIXES:\n" );
 
     fclose( output_file );
     output_file = NULL;

@@ -809,7 +809,6 @@ BISON
 FLEX
 SED_CMD
 RUNTESTFLAGS
-MAKEDEP
 toolsdir
 x86_64_DISABLED_SUBDIRS
 x86_64_DELAYLOADFLAG
@@ -6463,8 +6462,6 @@ else
     as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
 fi
 toolsdir=$wine_cv_toolsdir
-
-MAKEDEP=$wine_makedep
 
 RUNTESTFLAGS="-q -P wine"
 
@@ -23116,19 +23113,12 @@ ac_config_commands="$ac_config_commands Makefile"
 SHELL=/bin/sh
 
 
+
 as_fn_append wine_rules "
 all: wine
 	@echo \"Wine build complete.\"
-.INIT: Makefile
-.MAKEFILEDEPS:
-all: Makefile
-Makefile: config.status \$(MAKEDEP)
+Makefile: config.status
 	@./config.status Makefile
-depend: \$(MAKEDEP)
-	\$(MAKEDEP)$makedep_flags"
-
-
-as_fn_append wine_rules "
 config.status: ${wine_srcdir}configure
 	@./config.status --recheck
 include/config.h: include/stamp-h
@@ -23220,7 +23210,7 @@ tags ctags:
 	rm -f tags
 	(test -d .git && git ls-files || find -L $srcdir -name '*.[ch]' -print) | xargs ctags -a \$(TAGSFLAGS)
 dummy:
-.PHONY: depend dummy install-manpages"
+.PHONY: dummy"
 
 printf "%s\n" " done" >&6
 cat >confcache <<\_ACEOF
@@ -24023,7 +24013,6 @@ x86_64_TARGET = $x86_64_TARGET
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
 x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
 toolsdir = $toolsdir
-MAKEDEP = $MAKEDEP
 RUNTESTFLAGS = $RUNTESTFLAGS
 SED_CMD = $SED_CMD
 FLEX = $FLEX

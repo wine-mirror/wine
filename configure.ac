@@ -193,7 +193,6 @@ else
     AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
 fi
 AC_SUBST(toolsdir,[$wine_cv_toolsdir])
-AC_SUBST(MAKEDEP,[$wine_makedep])
 AC_SUBST(RUNTESTFLAGS,["-q -P wine"])
 AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
 
@@ -3625,21 +3624,14 @@ dnl Main makefile
 
 AC_SUBST(SHELL,[/bin/sh])
 
-WINE_APPEND_RULE(
-[all: wine
-	@echo \"Wine build complete.\"
-.INIT: Makefile
-.MAKEFILEDEPS:
-all: Makefile
-Makefile: config.status \$(MAKEDEP)
-	@./config.status Makefile
-depend: \$(MAKEDEP)
-	\$(MAKEDEP)$makedep_flags])
-
 dnl Rules for re-running configure
 
 WINE_APPEND_RULE(
-[config.status: ${wine_srcdir}configure
+[all: wine
+	@echo \"Wine build complete.\"
+Makefile: config.status
+	@./config.status Makefile
+config.status: ${wine_srcdir}configure
 	@./config.status --recheck
 include/config.h: include/stamp-h
 include/stamp-h: ${wine_srcdir}include/config.h.in config.status
@@ -3734,7 +3726,7 @@ tags ctags:
 	rm -f tags
 	(test -d .git && git ls-files || find -L $srcdir -name '*.[[ch]]' -print) | xargs ctags -a \$(TAGSFLAGS)
 dummy:
-.PHONY: depend dummy install-manpages])
+.PHONY: dummy])
 
 AS_ECHO(" done") >&AS_MESSAGE_FD
 AC_OUTPUT
