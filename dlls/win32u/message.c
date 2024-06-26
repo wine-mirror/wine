@@ -2644,6 +2644,40 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
 }
 
 /***********************************************************************
+ *           check_queue_bits
+ *
+ * returns TRUE and the queue wake bits and changed bits if we can skip a server request
+ * returns FALSE if we need to make a server request to update the queue masks or bits
+ */
+static BOOL check_queue_bits( UINT wake_mask, UINT changed_mask, UINT signal_bits, UINT clear_bits,
+                              UINT *wake_bits, UINT *changed_bits )
+{
+    struct object_lock lock = OBJECT_LOCK_INIT;
+    const queue_shm_t *queue_shm;
+    BOOL skip = FALSE;
+    UINT status;
+
+    while ((status = get_shared_queue( &lock, &queue_shm )) == STATUS_PENDING)
+    {
+        /* if the masks need an update */
+        if (queue_shm->wake_mask != wake_mask) skip = FALSE;
+        else if (queue_shm->changed_mask != changed_mask) skip = FALSE;
+        /* or if some bits need to be cleared, or queue is signaled */
+        else if (queue_shm->wake_bits & signal_bits) skip = FALSE;
+        else if (queue_shm->changed_bits & clear_bits) skip = FALSE;
+        else
+        {
+            *wake_bits = queue_shm->wake_bits;
+            *changed_bits = queue_shm->changed_bits;
+            skip = TRUE;
+        }
+    }
+
+    if (status) return FALSE;
+    return skip;
+}
+
+/***********************************************************************
  *           peek_message
  *
  * Peek for a message matching the given parameters. Return 0 if none are
@@ -3326,14 +3360,18 @@ static void wait_message_reply( UINT flags )
 
     for (;;)
     {
-        unsigned int wake_bits = 0;
+        UINT wake_bits, changed_bits;
 
-        SERVER_START_REQ( set_queue_mask )
+        if (check_queue_bits( wake_mask, wake_mask, wake_mask, wake_mask,
+                              &wake_bits, &changed_bits ))
+            wake_bits = wake_bits & wake_mask;
+        else SERVER_START_REQ( set_queue_mask )
         {
             req->wake_mask    = wake_mask;
             req->changed_mask = wake_mask;
             req->skip_wait    = 1;
-            if (!wine_server_call( req )) wake_bits = reply->wake_bits & wake_mask;
+            wine_server_call( req );
+            wake_bits = reply->wake_bits & wake_mask;
         }
         SERVER_END_REQ;
 
