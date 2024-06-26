@@ -2725,10 +2725,30 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
         NTSTATUS res;
         size_t size = 0;
         const message_data_t *msg_data = buffer;
+        UINT wake_mask, signal_bits, wake_bits, changed_bits, clear_bits = 0;
+
+        /* use the same logic as in server/queue.c get_message */
+        if (!(signal_bits = flags >> 16)) signal_bits = QS_ALLINPUT;
+
+        if (signal_bits & QS_POSTMESSAGE)
+        {
+            clear_bits |= QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER;
+            if (first == 0 && last == ~0U) clear_bits |= QS_ALLPOSTMESSAGE;
+        }
+        if (signal_bits & QS_INPUT) clear_bits |= QS_INPUT;
+        if (signal_bits & QS_PAINT) clear_bits |= QS_PAINT;
+
+        /* if filter includes QS_RAWINPUT we have to translate hardware messages */
+        if (signal_bits & QS_RAWINPUT) signal_bits |= QS_KEY | QS_MOUSEMOVE | QS_MOUSEBUTTON;
 
         thread_info->client_info.msg_source = prev_source;
+        wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
 
-        SERVER_START_REQ( get_message )
+        if (NtGetTickCount() - thread_info->last_getmsg_time < 3000 && /* avoid hung queue */
+            check_queue_bits( wake_mask, filter->mask, wake_mask | signal_bits, filter->mask | clear_bits,
+                              &wake_bits, &changed_bits ))
+            res = STATUS_PENDING;
+        else SERVER_START_REQ( get_message )
         {
             req->internal  = filter->internal;
             req->flags     = flags;
@@ -2736,9 +2756,10 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
             req->get_first = first;
             req->get_last  = last;
             req->hw_id     = hw_id;
-            req->wake_mask = filter->mask & (QS_SENDMESSAGE | QS_SMRESULT);
+            req->wake_mask = wake_mask;
             req->changed_mask = filter->mask;
             wine_server_set_reply( req, buffer, buffer_size );
+            thread_info->last_getmsg_time = NtGetTickCount();
             if (!(res = wine_server_call( req )))
             {
                 size = wine_server_reply_size( reply );

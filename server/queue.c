@@ -3207,7 +3207,7 @@ DECL_HANDLER(get_message)
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
     const queue_shm_t *queue_shm;
-    unsigned int filter = req->flags >> 16;
+    unsigned int filter;
 
     if (get_win && get_win != 1 && get_win != -1 && !get_user_object( get_win, USER_WINDOW ))
     {
@@ -3230,7 +3230,6 @@ DECL_HANDLER(get_message)
     }
 
     queue->last_get_msg = current_time;
-    if (!filter) filter = QS_ALLINPUT;
 
     /* first check for sent messages */
     if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))
@@ -3239,6 +3238,9 @@ DECL_HANDLER(get_message)
         receive_message( queue, msg, reply );
         return;
     }
+
+    /* use the same logic as in win32u/message.c peek_message */
+    if (!(filter = req->flags >> 16)) filter = QS_ALLINPUT;
 
     /* clear changed bits so we can wait on them if we don't find a message */
     SHARED_WRITE_BEGIN( queue_shm, queue_shm_t )
