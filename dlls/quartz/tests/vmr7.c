@@ -3850,6 +3850,69 @@ static void test_default_presenter_allocate(void)
     DestroyWindow(window);
 }
 
+static void test_default_presenter_window(void)
+{
+    IDirectDrawSurface7 *frontbuffer;
+    IVMRSurfaceAllocator *allocator;
+    IVMRWindowlessControl *control;
+    VMRALLOCATIONINFO info;
+    LONG width, height;
+    DWORD count;
+    HRESULT hr;
+    LONG ref;
+
+    BITMAPINFOHEADER bitmap_header =
+    {
+        .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = 320,
+        .biHeight = 240,
+        .biCompression = BI_RGB,
+        .biBitCount = 32,
+        .biPlanes = 1,
+    };
+
+    hr = CoCreateInstance(&CLSID_AllocPresenter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IVMRSurfaceAllocator, (void **)&allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    count = 2;
+    info.dwFlags = AMAP_DIRECTED_FLIP | AMAP_ALLOW_SYSMEM;
+    info.dwMinBuffers = count;
+    info.dwMaxBuffers = count;
+    info.dwInterlaceFlags = 0;
+    info.szNativeSize.cx = 420;
+    info.szAspectRatio.cx = 400;
+    info.szNativeSize.cy = 180;
+    info.szAspectRatio.cy = 200;
+    info.lpHdr = &bitmap_header;
+    info.lpPixFmt = NULL;
+
+    hr = IVMRSurfaceAllocator_AllocateSurface(allocator, 0, &info, &count, &frontbuffer);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IVMRSurfaceAllocator_QueryInterface(allocator, &IID_IVMRWindowlessControl, (void **)&control);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    width = height = 0xdeadbeef;
+    hr = IVMRWindowlessControl_GetNativeVideoSize(control, &width, &height, NULL, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(width == 420, "Got width %ld.\n", width);
+    todo_wine ok(height == 180, "Got height %ld.\n", height);
+
+    width = height = 0xdeadbeef;
+    hr = IVMRWindowlessControl_GetNativeVideoSize(control, NULL, NULL, &width, &height);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(width == 400, "Got width %ld.\n", width);
+    todo_wine ok(height == 200, "Got height %ld.\n", height);
+
+    hr = IVMRSurfaceAllocator_FreeSurface(allocator, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    IVMRWindowlessControl_Release(control);
+    ref = IVMRSurfaceAllocator_Release(allocator);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(vmr7)
 {
     CoInitialize(NULL);
@@ -3870,6 +3933,7 @@ START_TEST(vmr7)
     test_windowless_size();
     test_unconnected_eos();
     test_default_presenter_allocate();
+    test_default_presenter_window();
     test_renderless_formats();
 
     CoUninitialize();
