@@ -866,7 +866,7 @@ static BOOL get_shared_queue_bits( UINT *wake_bits, UINT *changed_bits )
  */
 DWORD WINAPI NtUserGetQueueStatus( UINT flags )
 {
-    DWORD ret;
+    UINT ret, wake_bits, changed_bits;
 
     if (flags & ~(QS_ALLINPUT | QS_ALLPOSTMESSAGE | QS_SMRESULT))
     {
@@ -876,7 +876,9 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
 
     check_for_events( flags );
 
-    SERVER_START_REQ( get_queue_status )
+    if (get_shared_queue_bits( &wake_bits, &changed_bits ) && !(changed_bits & flags))
+        ret = MAKELONG( changed_bits & flags, wake_bits & flags );
+    else SERVER_START_REQ( get_queue_status )
     {
         req->clear_bits = flags;
         wine_server_call( req );
