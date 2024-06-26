@@ -21924,7 +21924,7 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 
 printf %s "creating Makefile rules..." >&6
 
-makedep_flags=""
+makedep_flags=" -C"
 test "x$enable_silent_rules" = xyes && makedep_flags="$makedep_flags -S"
 
 wine_srcdir=
@@ -23094,6 +23094,7 @@ test "x$enable_tools" = xno || wine_fn_config_makefile tools/wrc enable_wrc
 as_fn_append CONFIGURE_TARGETS " TAGS"
 as_fn_append CONFIGURE_TARGETS " tags"
 as_fn_append CONFIGURE_TARGETS " autom4te.cache"
+as_fn_append CONFIGURE_TARGETS " compile_commands.json"
 as_fn_append CONFIGURE_TARGETS " config.log"
 as_fn_append CONFIGURE_TARGETS " config.status"
 as_fn_append CONFIGURE_TARGETS " include/config.h"
