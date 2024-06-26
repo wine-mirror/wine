@@ -3038,19 +3038,14 @@ static HANDLE get_server_queue_handle(void)
 }
 
 /* check for driver events if we detect that the app is not properly consuming messages */
-static inline void check_for_driver_events( UINT msg )
+static inline void check_for_driver_events(void)
 {
-    if (get_user_thread_info()->message_count > 200)
+    if (get_user_thread_info()->last_driver_time != NtGetTickCount())
     {
         flush_window_surfaces( FALSE );
         user_driver->pProcessEvents( QS_ALLINPUT );
+        get_user_thread_info()->last_driver_time = NtGetTickCount();
     }
-    else if (msg == WM_TIMER || msg == WM_SYSTIMER)
-    {
-        /* driver events should have priority over timers, so make sure we'll check for them soon */
-        get_user_thread_info()->message_count += 100;
-    }
-    else get_user_thread_info()->message_count++;
 }
 
 /* helper for kernel32->ntdll timeout format conversion */
@@ -3075,8 +3070,8 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
             lock = *(DWORD *)ret_ptr;
     }
 
-    if (user_driver->pProcessEvents( mask )) ret = count ? count - 1 : 0;
-    else if (count)
+    if (user_driver->pProcessEvents( mask )) ret = count - 1;
+    else
     {
         ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
                                         !!(flags & MWMO_ALERTABLE), get_nt_timeout( &time, timeout ));
@@ -3087,10 +3082,9 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
             ret = WAIT_FAILED;
         }
     }
-    else ret = WAIT_TIMEOUT;
 
     if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
-    if ((mask & QS_INPUT) == QS_INPUT) get_user_thread_info()->message_count = 0;
+    if (ret == count - 1) get_user_thread_info()->last_driver_time = NtGetTickCount();
 
     if (enable_thunk_lock)
         KeUserModeCallback( NtUserThunkLock, &lock, sizeof(lock), &ret_ptr, &ret_len );
@@ -3247,20 +3241,19 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
     int ret;
 
     user_check_not_lock();
-    check_for_driver_events( 0 );
+    check_for_driver_events();
 
-    ret = peek_message( &msg, &filter );
-    if (ret < 0) return FALSE;
-
-    if (!ret)
+    if ((ret = peek_message( &msg, &filter )) <= 0)
     {
-        flush_window_surfaces( TRUE );
-        ret = wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
-        /* if we received driver events, check again for a pending message */
-        if (ret == WAIT_TIMEOUT || peek_message( &msg, &filter ) <= 0) return FALSE;
+        if (!ret)
+        {
+            flush_window_surfaces( TRUE );
+            NtYieldExecution();
+        }
+        return FALSE;
     }
 
-    check_for_driver_events( msg.message );
+    check_for_driver_events();
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used
@@ -3286,7 +3279,7 @@ BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
     int ret;
 
     user_check_not_lock();
-    check_for_driver_events( 0 );
+    check_for_driver_events();
 
     if (first || last)
     {
@@ -3307,7 +3300,7 @@ BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
     }
     if (ret < 0) return -1;
 
-    check_for_driver_events( msg->message );
+    check_for_driver_events();
 
     return msg->message != WM_QUIT;
 }
