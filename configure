@@ -20253,16 +20253,14 @@ if test "x$ac_cv_cflags__Wno_format" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wno-format"
 fi ;;
-                *) if test -z "$PE_ARCHS"
-           then
-               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
+                *) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for working -mabi=ms" >&5
 printf %s "checking for working -mabi=ms... " >&6; }
 if test ${ac_cv_mabi_ms+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   CFLAGS="$CFLAGS -mabi=ms"
-                    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
 int a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }
@@ -20281,13 +20279,17 @@ else $as_nop
   ac_cv_mabi_ms=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-                    CFLAGS=$saved_CFLAGS
+                CFLAGS=$saved_CFLAGS
 fi
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_mabi_ms" >&5
 printf "%s\n" "$ac_cv_mabi_ms" >&6; }
-               test $ac_cv_mabi_ms = yes || as_fn_error $? "The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64." "$LINENO" 5
-           fi
-           MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms" ;;
+           if test "x$ac_cv_mabi_ms" = xyes
+then :
+  MSVCRTFLAGS="$MSVCRTFLAGS -mabi=ms"
+else $as_nop
+  test -n "$PE_ARCHS" || as_fn_error $? "The compiler doesn't support -mabi=ms. Use gcc instead of clang, or install mingw-w64." "$LINENO" 5
+                      DLLEXT=""
+fi ;;
       esac ;;
     arm)
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wincompatible-function-pointer-types" >&5
