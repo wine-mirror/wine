@@ -20,7 +20,7 @@
 
 struct video_frame_sink;
 
-HRESULT create_video_frame_sink(IMFMediaType *media_type, IMFAsyncCallback *events_callback,
+HRESULT create_video_frame_sink(IMFMediaType *media_type, IUnknown *device_manager, IMFAsyncCallback *events_callback,
     struct video_frame_sink **sink);
 HRESULT video_frame_sink_query_iface(struct video_frame_sink *object, REFIID riid, void **obj);
 ULONG video_frame_sink_release(struct video_frame_sink *sink);

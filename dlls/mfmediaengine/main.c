@@ -1196,7 +1196,7 @@ static HRESULT media_engine_create_video_renderer(struct media_engine *engine, I
     IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
 
-    hr = create_video_frame_sink(media_type, &engine->sink_events, &engine->presentation.frame_sink);
+    hr = create_video_frame_sink(media_type, (IUnknown *)engine->device_manager, &engine->sink_events, &engine->presentation.frame_sink);
     IMFMediaType_Release(media_type);
     if (FAILED(hr))
         return hr;
@@ -2458,6 +2458,83 @@ static void media_engine_update_d3d11_frame_surface(ID3D11DeviceContext *context
     IMFSample_Release(sample);
 }
 
+static HRESULT get_d3d11_resource_from_sample(IMFSample *sample, ID3D11Texture2D **resource, UINT *subresource)
+{
+    IMFDXGIBuffer *dxgi_buffer;
+    IMFMediaBuffer *buffer;
+    HRESULT hr;
+
+    *resource = NULL;
+    *subresource = 0;
+
+    if (FAILED(hr = IMFSample_GetBufferByIndex(sample, 0, &buffer)))
+        return hr;
+
+    if (SUCCEEDED(hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer)))
+    {
+        IMFDXGIBuffer_GetSubresourceIndex(dxgi_buffer, subresource);
+        hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)resource);
+        IMFDXGIBuffer_Release(dxgi_buffer);
+    }
+
+    IMFMediaBuffer_Release(buffer);
+    return hr;
+}
+
+static HRESULT media_engine_transfer_d3d11(struct media_engine *engine, ID3D11Texture2D *dst_texture,
+        const MFVideoNormalizedRect *src_rect, const RECT *dst_rect, const MFARGB *color)
+{
+    MFVideoNormalizedRect src_rect_default = {0.0, 0.0, 1.0, 1.0};
+    MFARGB color_default = {0, 0, 0, 0};
+    D3D11_TEXTURE2D_DESC src_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Texture2D *src_texture;
+    RECT dst_rect_default = {0};
+    D3D11_BOX src_box = {0};
+    ID3D11Device *device;
+    IMFSample *sample;
+    UINT subresource;
+    HRESULT hr;
+
+    if (!src_rect)
+        src_rect = &src_rect_default;
+    if (!dst_rect)
+        dst_rect = &dst_rect_default;
+    if (!color)
+        color = &color_default;
+
+    if (!video_frame_sink_get_sample(engine->presentation.frame_sink, &sample))
+        return MF_E_UNEXPECTED;
+    hr = get_d3d11_resource_from_sample(sample, &src_texture, &subresource);
+    IMFSample_Release(sample);
+    if (FAILED(hr))
+        return hr;
+
+    if (FAILED(hr = media_engine_lock_d3d_device(engine, &device)))
+    {
+        ID3D11Texture2D_Release(src_texture);
+        return hr;
+    }
+
+    ID3D11Texture2D_GetDesc(src_texture, &src_desc);
+
+    src_box.left = src_rect->left * src_desc.Width;
+    src_box.top = src_rect->top * src_desc.Height;
+    src_box.front = 0;
+    src_box.right = src_rect->right * src_desc.Width;
+    src_box.bottom = src_rect->bottom * src_desc.Height;
+    src_box.back = 1;
+
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
+            dst_rect->left, dst_rect->top, 0, (ID3D11Resource *)src_texture, subresource, &src_box);
+    ID3D11DeviceContext_Release(context);
+
+    media_engine_unlock_d3d_device(engine, device);
+    ID3D11Texture2D_Release(src_texture);
+    return hr;
+}
+
 static HRESULT media_engine_transfer_to_d3d11_texture(struct media_engine *engine, ID3D11Texture2D *texture,
         const MFVideoNormalizedRect *src_rect, const RECT *dst_rect, const MFARGB *color)
 {
@@ -2623,7 +2700,8 @@ static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngineEx *iface, I
 
     if (SUCCEEDED(IUnknown_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture)))
     {
-        hr = media_engine_transfer_to_d3d11_texture(engine, texture, src_rect, dst_rect, color);
+        if (!engine->device_manager || FAILED(hr = media_engine_transfer_d3d11(engine, texture, src_rect, dst_rect, color)))
+            hr = media_engine_transfer_to_d3d11_texture(engine, texture, src_rect, dst_rect, color);
         ID3D11Texture2D_Release(texture);
     }
     else
