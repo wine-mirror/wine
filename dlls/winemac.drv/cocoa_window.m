@@ -373,7 +373,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     BOOL _everHadGLContext;
     BOOL _cachedHasGLDescendant;
     BOOL _cachedHasGLDescendantValid;
-    BOOL clearedGlSurface;
 
     NSMutableAttributedString* markedText;
     NSRange markedTextSelection;
@@ -587,11 +586,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         for (WineOpenGLContext* context in pendingGlContexts)
         {
-            if (!clearedGlSurface)
-            {
-                context.shouldClearToBlack = TRUE;
-                clearedGlSurface = TRUE;
-            }
             context.needsUpdate = TRUE;
             macdrv_update_opengl_context((macdrv_opengl_context)context);
         }
@@ -610,11 +604,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         if ([[self window] windowNumber] > 0 && !NSIsEmptyRect([self visibleRect]))
         {
             [glContexts addObject:context];
-            if (!clearedGlSurface)
-            {
-                context.shouldClearToBlack = TRUE;
-                clearedGlSurface = TRUE;
-            }
             context.needsUpdate = TRUE;
         }
         else
