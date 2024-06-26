@@ -240,16 +240,14 @@ static const char *output_makefile_name = "Makefile";
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
-static int relative_dir_mode;
 static int silent_rules;
 static int input_line;
 static int output_column;
 static FILE *output_file;
 
 static const char Usage[] =
-    "Usage: makedep [options] [directories]\n"
+    "Usage: makedep [options]\n"
     "Options:\n"
-    "   -R from to  Compute the relative path between two directories\n"
     "   -S          Generate Automake-style silent rules\n"
     "   -fxxx       Store output in file 'xxx' (default: Makefile)\n";
 
@@ -489,52 +487,6 @@ static char *replace_substr( const char *str, const char *start, size_t len, con
     memcpy( ret, str, pos );
     strcpy( ret + pos, replace );
     strcat( ret + pos, start + len );
-    return ret;
-}
-
-
-/*******************************************************************
- *         get_relative_path
- *
- * Determine where the destination path is located relative to the 'from' path.
- */
-static char *get_relative_path( const char *from, const char *dest )
-{
-    const char *start;
-    char *ret, *p;
-    unsigned int dotdots = 0;
-
-    /* a path of "." is equivalent to an empty path */
-    if (!strcmp( from, "." )) from = "";
-
-    for (;;)
-    {
-        while (*from == '/') from++;
-        while (*dest == '/') dest++;
-        start = dest;  /* save start of next path element */
-        if (!*from) break;
-
-        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
-        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
-
-        /* count remaining elements in 'from' */
-        do
-        {
-            dotdots++;
-            while (*from && *from != '/') from++;
-            while (*from == '/') from++;
-        }
-        while (*from);
-        break;
-    }
-
-    if (!start[0] && !dotdots) return NULL;  /* empty path */
-
-    ret = xmalloc( 3 * dotdots + strlen( start ) + 1 );
-    for (p = ret; dotdots; dotdots--, p += 3) memcpy( p, "../", 3 );
-
-    if (start[0]) strcpy( p, start );
-    else p[-1] = 0;  /* remove trailing slash */
     return ret;
 }
 
@@ -4432,9 +4384,6 @@ static int parse_option( const char *opt )
     case 'f':
         if (opt[2]) output_makefile_name = opt + 2;
         break;
-    case 'R':
-        relative_dir_mode = 1;
-        break;
     case 'S':
         silent_rules = 1;
         break;
@@ -4479,21 +4428,11 @@ int main( int argc, char *argv[] )
         else i++;
     }
 
-    if (relative_dir_mode)
+    if (argc > 1)
     {
-        char *relpath;
-
-        if (argc != 3)
-        {
-            fprintf( stderr, "Option -R needs two directories\n%s", Usage );
-            exit( 1 );
-        }
-        relpath = get_relative_path( argv[1], argv[2] );
-        printf( "%s\n", relpath ? relpath : "." );
-        exit( 0 );
+        fprintf( stderr, "Unknown argument '%s'\n%s", argv[1], Usage );
+        exit(1);
     }
-
-    if (argc > 1) fatal_error( "Directory arguments not supported in this mode\n" );
 
     atexit( cleanup_files );
     init_signals( exit_on_signal );
