@@ -1737,13 +1737,6 @@ static BOOL CRYPT_KeyUsageValid(CertificateChainEngine *engine,
          &usage, &size);
         if (!ret)
             return FALSE;
-        else if (usage.cbData > 2)
-        {
-            /* The key usage extension only defines 9 bits => no more than 2
-             * bytes are needed to encode all known usages.
-             */
-            return FALSE;
-        }
         else
         {
             /* The only bit relevant to chain validation is the keyCertSign
