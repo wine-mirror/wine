@@ -1867,7 +1867,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         break;
       case WCMD_REN:
       case WCMD_RENAME:
-        WCMD_rename ();
+        return_code = WCMD_rename();
 	break;
       case WCMD_RD:
       case WCMD_RMDIR:

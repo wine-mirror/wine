@@ -2144,10 +2144,9 @@ void WCMD_remove_dir (WCHAR *args) {
  * Rename a file.
  */
 
-void WCMD_rename (void)
+RETURN_CODE WCMD_rename(void)
 {
-  BOOL             status;
-  HANDLE          hff;
+  HANDLE           hff;
   WIN32_FIND_DATAW fd;
   WCHAR            input[MAX_PATH];
   WCHAR           *dotDst = NULL;
@@ -2161,20 +2160,18 @@ void WCMD_rename (void)
   /* Must be at least two args */
   if (param1[0] == 0x00 || param2[0] == 0x00) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    errorlevel = ERROR_INVALID_FUNCTION;
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
   }
 
   /* Destination cannot contain a drive letter or directory separator */
   if ((wcschr(param2,':') != NULL) || (wcschr(param2,'\\') != NULL)) {
       SetLastError(ERROR_INVALID_PARAMETER);
       WCMD_print_error();
-      errorlevel = ERROR_INVALID_FUNCTION;
-      return;
+      return errorlevel = ERROR_INVALID_FUNCTION;
   }
 
   /* Convert partial path to full path */
-  if (!WCMD_get_fullpath(param1, ARRAY_SIZE(input), input, NULL)) return;
+  if (!WCMD_get_fullpath(param1, ARRAY_SIZE(input), input, NULL)) return errorlevel = ERROR_INVALID_FUNCTION;
   WINE_TRACE("Rename from '%s'('%s') to '%s'\n", wine_dbgstr_w(input),
              wine_dbgstr_w(param1), wine_dbgstr_w(param2));
   dotDst = wcschr(param2, '.');
@@ -2184,8 +2181,9 @@ void WCMD_rename (void)
 
   hff = FindFirstFileW(input, &fd);
   if (hff == INVALID_HANDLE_VALUE)
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
 
+ errorlevel = NO_ERROR;
  do {
     WCHAR  dest[MAX_PATH];
     WCHAR  src[MAX_PATH];
@@ -2228,15 +2226,14 @@ void WCMD_rename (void)
     WINE_TRACE("Source '%s'\n", wine_dbgstr_w(src));
     WINE_TRACE("Dest   '%s'\n", wine_dbgstr_w(dest));
 
-    status = MoveFileW(src, dest);
-
-    if (!status) {
+    if (!MoveFileW(src, dest)) {
       WCMD_print_error ();
       errorlevel = ERROR_INVALID_FUNCTION;
     }
   } while (FindNextFileW(hff, &fd) != 0);
 
   FindClose(hff);
+  return errorlevel;
 }
 
 /*****************************************************************************
