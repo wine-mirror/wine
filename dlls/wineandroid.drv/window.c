@@ -561,25 +561,6 @@ static struct android_window_surface *get_android_surface( struct window_surface
     return (struct android_window_surface *)surface;
 }
 
-/* store the palette or color mask data in the bitmap info structure */
-static void set_color_info( BITMAPINFO *info, BOOL has_alpha )
-{
-    DWORD *colors = (DWORD *)info->bmiColors;
-
-    info->bmiHeader.biSize = sizeof(info->bmiHeader);
-    info->bmiHeader.biClrUsed = 0;
-    info->bmiHeader.biBitCount = 32;
-    if (has_alpha)
-    {
-        info->bmiHeader.biCompression = BI_RGB;
-        return;
-    }
-    info->bmiHeader.biCompression = BI_BITFIELDS;
-    colors[0] = 0xff0000;
-    colors[1] = 0x00ff00;
-    colors[2] = 0x0000ff;
-}
-
 /* apply the window region to a single line of the destination image. */
 static void apply_line_region( DWORD *dst, int width, int x, int y, const RECT *rect, const RECT *end )
 {
@@ -717,8 +698,7 @@ static BOOL is_argb_surface( struct window_surface *surface )
 /***********************************************************************
  *           create_surface
  */
-static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
-                                              BYTE alpha, COLORREF color_key, BOOL src_alpha )
+static struct window_surface *create_surface( HWND hwnd, const RECT *rect )
 {
     struct android_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
@@ -726,11 +706,13 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     BITMAPINFO *info = (BITMAPINFO *)buffer;
 
     memset( info, 0, sizeof(*info) );
-    set_color_info( info, src_alpha );
-    info->bmiHeader.biWidth     = width;
-    info->bmiHeader.biHeight    = -height; /* top-down */
-    info->bmiHeader.biPlanes    = 1;
-    info->bmiHeader.biSizeImage = get_dib_image_size( info );
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = width;
+    info->bmiHeader.biHeight      = -height; /* top-down */
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biSizeImage   = get_dib_image_size(info);
+    info->bmiHeader.biCompression = BI_RGB;
 
     if (!(surface = calloc( 1, sizeof(*surface) ))) return NULL;
     if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect, info, 0 )) goto failed;
@@ -738,9 +720,6 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->window = get_ioctl_window( hwnd );
 
     TRACE( "created %p hwnd %p %s\n", surface, hwnd, wine_dbgstr_rect(rect) );
-
-    if (src_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
-    else window_surface_set_layered( &surface->header, color_key, alpha << 24, 0 );
 
     return &surface->header;
 
@@ -1089,10 +1068,6 @@ done:
 BOOL ANDROID_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
 {
     struct android_win_data *data;
-    DWORD flags;
-    COLORREF key;
-    BYTE alpha;
-    BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
     TRACE( "hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
 
@@ -1110,12 +1085,8 @@ BOOL ANDROID_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct wi
         }
     }
 
-    if (!layered || !NtUserGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags )) flags = 0;
-    if (!(flags & LWA_ALPHA)) alpha = 255;
-    if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
-
     if (*surface) window_surface_release( *surface );
-    *surface = create_surface( data->hwnd, surface_rect, alpha, key, FALSE );
+    *surface = create_surface( data->hwnd, surface_rect );
 
 done:
     release_win_data( data );
@@ -1280,27 +1251,8 @@ void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
             if (data->surface) window_surface_release( data->surface );
             data->surface = NULL;
         }
-        else if (data->surface) window_surface_set_layered( data->surface, CLR_INVALID, -1, 0 );
     }
     release_win_data( data );
-}
-
-
-/***********************************************************************
- *	     ANDROID_SetLayeredWindowAttributes
- */
-void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
-{
-    struct android_win_data *data;
-
-    if (!(flags & LWA_ALPHA)) alpha = 255;
-    if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
-
-    if ((data = get_win_data( hwnd )))
-    {
-        if (data->surface) window_surface_set_layered( data->surface, key, alpha << 24, 0 );
-        release_win_data( data );
-    }
 }
 
 
@@ -1324,11 +1276,10 @@ BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF 
 
     if (!surface || !EqualRect( &surface->rect, surface_rect ))
     {
-        data->surface = create_surface( data->hwnd, surface_rect, 255, color_key, TRUE );
+        data->surface = create_surface( data->hwnd, surface_rect );
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
-    else window_surface_set_layered( surface, color_key, -1, 0xff000000 );
 
     if ((*window_surface = surface)) window_surface_add_ref( surface );
     release_win_data( data );

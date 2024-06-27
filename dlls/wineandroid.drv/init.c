@@ -344,7 +344,6 @@ static const struct user_driver_funcs android_drv_funcs =
     .pDestroyWindow = ANDROID_DestroyWindow,
     .pProcessEvents = ANDROID_ProcessEvents,
     .pSetCapture = ANDROID_SetCapture,
-    .pSetLayeredWindowAttributes = ANDROID_SetLayeredWindowAttributes,
     .pSetParent = ANDROID_SetParent,
     .pSetWindowStyle = ANDROID_SetWindowStyle,
     .pShowWindow = ANDROID_ShowWindow,
