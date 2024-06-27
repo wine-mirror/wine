@@ -665,21 +665,16 @@ static inline BOOL is_digit(WCHAR c)
 static int get_arg(const WCHAR **cmdline, WCHAR **arg)
 {
     const WCHAR *ptr = *cmdline;
-    BOOL in_quotes = FALSE;
     int len;
 
-    for (;;) {
-        for (; *ptr != '\0' && *ptr != '"' &&
-                 (in_quotes || !is_whitespace(*ptr)); ptr++);
+    if (*ptr == '/') ptr++;
+    while (*ptr && !is_whitespace(*ptr) && *ptr != '/') {
         if (*ptr == '"') {
-            in_quotes = !in_quotes;
-            ptr++;
+            while (*ptr && *ptr != '"') ptr++;
+            /* Odd number of double quotes is illegal for XCOPY */
+            if (!*ptr) return RC_INITERROR;
         }
-        /* Odd number of double quotes is illegal for XCOPY */
-        if (in_quotes && *ptr == '\0')
-            return RC_INITERROR;
-        if (*ptr == '\0' || (!in_quotes && is_whitespace(*ptr)))
-            break;
+        ptr++;
     }
 
     len = ptr - *cmdline;
