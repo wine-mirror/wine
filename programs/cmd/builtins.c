@@ -1928,11 +1928,10 @@ void WCMD_popd (void) {
  * Move a file, directory tree or wildcarded set of files.
  */
 
-void WCMD_move (void)
+RETURN_CODE WCMD_move(void)
 {
-  BOOL             status;
   WIN32_FIND_DATAW fd;
-  HANDLE          hff;
+  HANDLE           hff;
   WCHAR            input[MAX_PATH];
   WCHAR            output[MAX_PATH];
   WCHAR            drive[10];
@@ -1942,7 +1941,7 @@ void WCMD_move (void)
 
   if (param1[0] == 0x00) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
   }
 
   /* If no destination supplied, assume current directory */
@@ -1953,7 +1952,8 @@ void WCMD_move (void)
   /* If 2nd parm is directory, then use original filename */
   /* Convert partial path to full path */
   if (!WCMD_get_fullpath(param1, ARRAY_SIZE(input), input, NULL) ||
-      !WCMD_get_fullpath(param2, ARRAY_SIZE(output), output, NULL)) return;
+      !WCMD_get_fullpath(param2, ARRAY_SIZE(output), output, NULL))
+      return errorlevel = ERROR_INVALID_FUNCTION;
   WINE_TRACE("Move from '%s'('%s') to '%s'\n", wine_dbgstr_w(input),
              wine_dbgstr_w(param1), wine_dbgstr_w(output));
 
@@ -1962,8 +1962,9 @@ void WCMD_move (void)
 
   hff = FindFirstFileW(input, &fd);
   if (hff == INVALID_HANDLE_VALUE)
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
 
+  errorlevel = NO_ERROR;
   do {
     WCHAR  dest[MAX_PATH];
     WCHAR  src[MAX_PATH];
@@ -2036,19 +2037,15 @@ void WCMD_move (void)
         flags |= MOVEFILE_REPLACE_EXISTING;
     }
 
-    if (ok) {
-      status = MoveFileExW(src, dest, flags);
-    } else {
-      status = TRUE;
-    }
-
-    if (!status) {
-      WCMD_print_error ();
+    if (!ok || !MoveFileExW(src, dest, flags))
+    {
+      if (!ok) WCMD_print_error();
       errorlevel = ERROR_INVALID_FUNCTION;
     }
   } while (FindNextFileW(hff, &fd) != 0);
 
   FindClose(hff);
+  return errorlevel;
 }
 
 /****************************************************************************

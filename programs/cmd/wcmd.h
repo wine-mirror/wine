@@ -179,7 +179,7 @@ void WCMD_give_help (const WCHAR *args);
 RETURN_CODE WCMD_goto(void);
 void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);
-void WCMD_move (void);
+RETURN_CODE WCMD_move (void);
 WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...);
 void WINAPIV WCMD_output (const WCHAR *format, ...);
 void WINAPIV WCMD_output_stderr (const WCHAR *format, ...);

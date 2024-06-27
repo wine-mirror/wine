@@ -480,11 +480,11 @@ SUCCESS 0
 @todo_wine@FAILURE 1
 @todo_wine@FAILURE 1
 --- success/failure for MOVE command
-@todo_wine@FAILURE 1
-@todo_wine@SUCCESS 0
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 1
+SUCCESS 0
+FAILURE 1
+FAILURE 1
+FAILURE 1
 --- success/failure for RENAME command
 @todo_wine@FAILURE 1
 @todo_wine@FAILURE 1

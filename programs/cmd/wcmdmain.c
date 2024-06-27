@@ -1852,7 +1852,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_create_dir (parms_start);
         break;
       case WCMD_MOVE:
-        WCMD_move ();
+        return_code = WCMD_move();
         break;
       case WCMD_PATH:
         WCMD_setshow_path (parms_start);
