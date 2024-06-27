@@ -2172,25 +2172,21 @@ done:
 /*****************************************************************************
  *              CreateLayeredWindow  (X11DRV.@)
  */
-BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF color_key,
                                  struct window_surface **window_surface )
 {
     struct window_surface *surface;
     struct x11drv_win_data *data;
-    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
 
     data->layered = TRUE;
     if (!data->embedded && argb_visual.visualid) set_window_visual( data, &argb_visual, TRUE );
 
-    rect = *window_rect;
-    OffsetRect( &rect, -window_rect->left, -window_rect->top );
-
     surface = data->surface;
-    if (!surface || !EqualRect( &surface->rect, &rect ))
+    if (!surface || !EqualRect( &surface->rect, surface_rect ))
     {
-        data->surface = create_surface( data->hwnd, data->whole_window, &data->vis, &rect,
+        data->surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect,
                                         color_key, data->use_alpha );
         if (surface) window_surface_release( surface );
         surface = data->surface;

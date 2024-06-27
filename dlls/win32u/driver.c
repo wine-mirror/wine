@@ -867,7 +867,7 @@ static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
     return -1;
 }
 
-static BOOL nulldrv_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+static BOOL nulldrv_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF color_key,
                                          struct window_surface **surface )
 {
     *surface = NULL;
@@ -1217,10 +1217,10 @@ static void loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
-static BOOL loaderdrv_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+static BOOL loaderdrv_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF color_key,
                                            struct window_surface **surface )
 {
-    return load_driver()->pCreateLayeredWindow( hwnd, window_rect, color_key, surface );
+    return load_driver()->pCreateLayeredWindow( hwnd, surface_rect, color_key, surface );
 }
 
 static void loaderdrv_UpdateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,

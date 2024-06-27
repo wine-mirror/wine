@@ -226,25 +226,21 @@ done:
 /***********************************************************************
  *              CreateLayeredWindow   (MACDRV.@)
  */
-BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF color_key,
+BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *surface_rect, COLORREF color_key,
                                 struct window_surface **window_surface)
 {
     struct window_surface *surface;
     struct macdrv_win_data *data;
-    RECT rect;
 
     if (!(data = get_win_data(hwnd))) return FALSE;
 
     data->layered = TRUE;
     data->ulw_layered = TRUE;
 
-    rect = *window_rect;
-    OffsetRect(&rect, -window_rect->left, -window_rect->top);
-
     surface = data->surface;
-    if (!surface || !EqualRect(&surface->rect, &rect))
+    if (!surface || !EqualRect(&surface->rect, surface_rect))
     {
-        data->surface = create_surface(data->hwnd, data->cocoa_window, &rect, NULL, TRUE);
+        data->surface = create_surface(data->hwnd, data->cocoa_window, surface_rect, NULL, TRUE);
         if (surface) window_surface_release(surface);
         surface = data->surface;
         if (data->unminimized_surface)

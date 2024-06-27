@@ -1305,17 +1305,13 @@ void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DW
 /*****************************************************************************
  *           ANDROID_CreateLayeredWindow
  */
-BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF color_key,
+BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF color_key,
                                   struct window_surface **window_surface )
 {
     struct window_surface *surface;
     struct android_win_data *data;
-    RECT rect;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
-
-    rect = *window_rect;
-    OffsetRect( &rect, -window_rect->left, -window_rect->top );
 
     surface = data->surface;
     if (!is_argb_surface( surface ))
@@ -1324,9 +1320,9 @@ BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF c
         surface = NULL;
     }
 
-    if (!surface || !EqualRect( &surface->rect, &rect ))
+    if (!surface || !EqualRect( &surface->rect, surface_rect ))
     {
-        data->surface = create_surface( data->hwnd, &rect, 255, color_key, TRUE );
+        data->surface = create_surface( data->hwnd, surface_rect, 255, color_key, TRUE );
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
