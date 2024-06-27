@@ -1917,7 +1917,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
         data->layered = FALSE;
         set_window_visual( data, &default_visual, FALSE );
         sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
-        if (data->surface) set_surface_color_key( data->surface, CLR_INVALID );
+        if (data->surface) window_surface_set_layered( data->surface, CLR_INVALID, -1, 0 );
     }
 done:
     release_win_data( data );
@@ -2889,7 +2889,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
         if (data->whole_window)
             sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
         if (data->surface)
-            set_surface_color_key( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID );
+            window_surface_set_layered( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID, alpha << 24, 0 );
 
         data->layered = TRUE;
         if (!data->mapped)  /* mapping is delayed until attributes are set */

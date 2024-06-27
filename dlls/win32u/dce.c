@@ -193,6 +193,32 @@ void create_offscreen_window_surface( HWND hwnd, const RECT *surface_rect, struc
 
 /* window surface common helpers */
 
+static UINT get_color_component( UINT color, UINT mask )
+{
+    int shift;
+    for (shift = 0; !(mask & 1); shift++) mask >>= 1;
+    return (color * mask / 255) << shift;
+}
+
+static COLORREF get_color_key( const BITMAPINFO *info, COLORREF color_key )
+{
+    if (color_key == CLR_INVALID) return CLR_INVALID;
+    if (info->bmiHeader.biBitCount <= 8) return CLR_INVALID;
+    if (color_key & (1 << 24)) /* PALETTEINDEX */ return 0;
+    if (color_key >> 16 == 0x10ff) /* DIBINDEX */ return 0;
+
+    if (info->bmiHeader.biBitCount == 24) return color_key;
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        UINT *masks = (UINT *)info->bmiColors;
+        return get_color_component( GetRValue( color_key ), masks[0] ) |
+               get_color_component( GetGValue( color_key ), masks[1] ) |
+               get_color_component( GetBValue( color_key ), masks[2] );
+    }
+
+    return (GetRValue( color_key ) << 16) | (GetGValue( color_key ) << 8) | GetBValue( color_key );
+}
+
 W32KAPI BOOL window_surface_init( struct window_surface *surface, const struct window_surface_funcs *funcs,
                                   HWND hwnd, const RECT *rect, BITMAPINFO *info, HBITMAP bitmap )
 {
@@ -263,6 +289,36 @@ W32KAPI void window_surface_flush( struct window_surface *surface )
     }
 
     window_surface_unlock( surface );
+}
+
+W32KAPI void window_surface_set_layered( struct window_surface *surface, COLORREF color_key, UINT alpha_bits, UINT alpha_mask )
+{
+    char color_buf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *color_info = (BITMAPINFO *)color_buf;
+
+    window_surface_lock( surface );
+    surface->funcs->get_info( surface, color_info );
+
+    color_key = get_color_key( color_info, color_key );
+    if (color_key != surface->color_key)
+    {
+        surface->color_key = color_key;
+        surface->bounds = surface->rect;
+    }
+    if (alpha_bits != surface->alpha_bits)
+    {
+        surface->alpha_bits = alpha_bits;
+        surface->bounds = surface->rect;
+    }
+    if (alpha_mask != surface->alpha_mask)
+    {
+        surface->alpha_mask = alpha_mask;
+        surface->bounds = surface->rect;
+    }
+
+    window_surface_unlock( surface );
+
+    window_surface_flush( surface );
 }
 
 W32KAPI void window_surface_set_clip( struct window_surface *surface, HRGN clip_region )

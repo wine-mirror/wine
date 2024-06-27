@@ -1597,13 +1597,6 @@ static struct x11drv_window_surface *get_x11_surface( struct window_surface *sur
     return (struct x11drv_window_surface *)surface;
 }
 
-static inline UINT get_color_component( UINT color, UINT mask )
-{
-    int shift;
-    for (shift = 0; !(mask & 1); shift++) mask >>= 1;
-    return (color * mask / 255) << shift;
-}
-
 #ifdef HAVE_LIBXSHAPE
 static inline void flush_rgn_data( HRGN rgn, RGNDATA *data )
 {
@@ -1759,31 +1752,6 @@ static void update_surface_region( struct x11drv_window_surface *surface, const 
 
     NtGdiDeleteObjectApp( rgn );
 #endif
-}
-
-/***********************************************************************
- *           set_color_key
- */
-static void set_color_key( struct x11drv_window_surface *surface, COLORREF key )
-{
-    UINT *masks = (UINT *)surface->info.bmiColors;
-
-    if (key == CLR_INVALID)
-        surface->header.color_key = CLR_INVALID;
-    else if (surface->info.bmiHeader.biBitCount <= 8)
-        surface->header.color_key = CLR_INVALID;
-    else if (key & (1 << 24))  /* PALETTEINDEX */
-        surface->header.color_key = 0;
-    else if (key >> 16 == 0x10ff)  /* DIBINDEX */
-        surface->header.color_key = 0;
-    else if (surface->info.bmiHeader.biBitCount == 24)
-        surface->header.color_key = key;
-    else if (surface->info.bmiHeader.biCompression == BI_RGB)
-        surface->header.color_key = (GetRValue(key) << 16) | (GetGValue(key) << 8) | GetBValue(key);
-    else
-        surface->header.color_key = get_color_component( GetRValue(key), masks[0] ) |
-                                    get_color_component( GetGValue(key), masks[1] ) |
-                                    get_color_component( GetBValue(key), masks[2] );
 }
 
 #ifdef HAVE_LIBXXSHM
@@ -2132,9 +2100,6 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
     surface->window = window;
-    if (use_alpha && vis->depth == 32 && info->bmiHeader.biCompression == BI_RGB) surface->header.alpha_mask = 0xff000000;
-    set_color_key( surface, color_key );
-
     surface->gc = XCreateGC( gdi_display, window, 0, NULL );
     XSetSubwindowMode( gdi_display, surface->gc, IncludeInferiors );
 
@@ -2142,28 +2107,14 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage,
            surface->image->ximage->data );
 
+    if (use_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
+    else window_surface_set_layered( &surface->header, color_key, -1, 0 );
+
     return &surface->header;
 
 failed:
     window_surface_release( &surface->header );
     return NULL;
-}
-
-/***********************************************************************
- *           set_surface_color_key
- */
-void set_surface_color_key( struct window_surface *window_surface, COLORREF color_key )
-{
-    struct x11drv_window_surface *surface = get_x11_surface( window_surface );
-    COLORREF prev;
-
-    if (window_surface->funcs != &x11drv_surface_funcs) return;  /* we may get the null surface */
-
-    window_surface_lock( window_surface );
-    prev = surface->header.color_key;
-    set_color_key( surface, color_key );
-    if (surface->header.color_key != prev) update_surface_region( surface, window_surface->color_bits, surface->header.color_key, surface->header.alpha_mask );
-    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -2263,7 +2214,7 @@ BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF co
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
-    else set_surface_color_key( surface, color_key );
+    else window_surface_set_layered( surface, color_key, -1, 0xff000000 );
 
     if ((*window_surface = surface)) window_surface_add_ref( surface );
     release_win_data( data );

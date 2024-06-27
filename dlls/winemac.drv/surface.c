@@ -196,7 +196,6 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
 
     surface->window = window;
     if (old_surface) surface->header.bounds = old_surface->bounds;
-    surface->header.alpha_mask = use_alpha ? 0xff000000 : 0;
     surface->provider = provider;
 
     window_background = macdrv_window_background_color();
@@ -205,6 +204,9 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     TRACE("created %p for %p %s color_bits %p-%p\n", surface, window, wine_dbgstr_rect(rect),
           surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage);
 
+    if (use_alpha) window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0xff000000 );
+    else window_surface_set_layered( &surface->header, CLR_INVALID, -1, 0 );
+
     return &surface->header;
 
 failed:
@@ -212,15 +214,6 @@ failed:
     if (bitmap) NtGdiDeleteObjectApp(bitmap);
     CGDataProviderRelease(provider);
     return NULL;
-}
-
-/***********************************************************************
- *              set_surface_use_alpha
- */
-void set_surface_use_alpha(struct window_surface *window_surface, BOOL use_alpha)
-{
-    struct macdrv_window_surface *surface = get_mac_surface(window_surface);
-    if (surface) surface->header.alpha_mask = use_alpha ? 0xff000000 : 0;
 }
 
 
@@ -287,7 +280,7 @@ BOOL macdrv_CreateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
             data->unminimized_surface = NULL;
         }
     }
-    else set_surface_use_alpha(surface, TRUE);
+    else window_surface_set_layered(surface, color_key, -1, 0xff000000);
 
     if ((*window_surface = surface)) window_surface_add_ref(surface);
 

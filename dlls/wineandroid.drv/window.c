@@ -736,25 +736,6 @@ static BOOL is_argb_surface( struct window_surface *surface )
 }
 
 /***********************************************************************
- *           set_color_key
- */
-static void set_color_key( struct android_window_surface *surface, COLORREF key )
-{
-    if (key == CLR_INVALID)
-        surface->header.color_key = CLR_INVALID;
-    else if (surface->info.bmiHeader.biBitCount <= 8)
-        surface->header.color_key = CLR_INVALID;
-    else if (key & (1 << 24))  /* PALETTEINDEX */
-        surface->header.color_key = 0;
-    else if (key >> 16 == 0x10ff)  /* DIBINDEX */
-        surface->header.color_key = 0;
-    else if (surface->info.bmiHeader.biBitCount == 24)
-        surface->header.color_key = key;
-    else
-        surface->header.color_key = (GetRValue(key) << 16) | (GetGValue(key) << 8) | GetBValue(key);
-}
-
-/***********************************************************************
  *           create_surface
  */
 static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
@@ -777,39 +758,19 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     if (!window_surface_init( &surface->header, &android_surface_funcs, hwnd, rect, info, 0 )) goto failed;
     memcpy( &surface->info, info, get_dib_info_size( info, DIB_RGB_COLORS ) );
 
-    surface->window       = get_ioctl_window( hwnd );
-    surface->header.alpha_bits = (UINT)alpha << 24;
-    set_color_key( surface, color_key );
+    surface->window = get_ioctl_window( hwnd );
 
     TRACE( "created %p hwnd %p %s bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
            surface->header.color_bits, (char *)surface->header.color_bits + info->bmiHeader.biSizeImage );
+
+    if (src_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
+    else window_surface_set_layered( &surface->header, color_key, alpha << 24, 0 );
 
     return &surface->header;
 
 failed:
     window_surface_release( &surface->header );
     return NULL;
-}
-
-/***********************************************************************
- *           set_surface_layered
- */
-static void set_surface_layered( struct window_surface *window_surface, BYTE alpha, COLORREF color_key )
-{
-    struct android_window_surface *surface = get_android_surface( window_surface );
-    COLORREF prev_key;
-    BYTE prev_alpha;
-
-    if (window_surface->funcs != &android_surface_funcs) return;  /* we may get the null surface */
-
-    window_surface_lock( window_surface );
-    prev_key = surface->header.color_key;
-    prev_alpha = surface->header.alpha_bits;
-    surface->header.alpha_bits = (UINT)alpha << 24;
-    set_color_key( surface, color_key );
-    if (alpha != prev_alpha || surface->header.color_key != prev_key)  /* refresh */
-        window_surface->bounds = surface->header.rect;
-    window_surface_unlock( window_surface );
 }
 
 /***********************************************************************
@@ -1342,7 +1303,7 @@ void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
             if (data->surface) window_surface_release( data->surface );
             data->surface = NULL;
         }
-        else if (data->surface) set_surface_layered( data->surface, 255, CLR_INVALID );
+        else if (data->surface) window_surface_set_layered( data->surface, CLR_INVALID, -1, 0 );
     }
     release_win_data( data );
 }
@@ -1360,7 +1321,7 @@ void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DW
 
     if ((data = get_win_data( hwnd )))
     {
-        if (data->surface) set_surface_layered( data->surface, alpha, key );
+        if (data->surface) window_surface_set_layered( data->surface, key, alpha << 24, 0 );
         release_win_data( data );
     }
 }
@@ -1394,7 +1355,7 @@ BOOL ANDROID_CreateLayeredWindow( HWND hwnd, const RECT *window_rect, COLORREF c
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
-    else set_surface_layered( surface, 255, color_key );
+    else window_surface_set_layered( surface, color_key, -1, 0xff000000 );
 
     if ((*window_surface = surface)) window_surface_add_ref( surface );
     release_win_data( data );
