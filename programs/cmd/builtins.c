@@ -3490,21 +3490,22 @@ void WCMD_title (const WCHAR *args) {
  * Copy a file to standard output.
  */
 
-void WCMD_type (WCHAR *args) {
-
+RETURN_CODE WCMD_type(WCHAR *args)
+{
+  RETURN_CODE return_code;
   int   argno         = 0;
   WCHAR *argN          = args;
   BOOL  writeHeaders  = FALSE;
 
   if (param1[0] == 0x00) {
     WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
-    return;
+    return errorlevel = ERROR_INVALID_FUNCTION;
   }
 
   if (param2[0] != 0x00) writeHeaders = TRUE;
 
   /* Loop through all args */
-  errorlevel = NO_ERROR;
+  return_code = NO_ERROR;
   while (argN) {
     WCHAR *thisArg = WCMD_parameter (args, argno++, &argN, FALSE, FALSE);
 
@@ -3520,7 +3521,7 @@ void WCMD_type (WCHAR *args) {
     if (h == INVALID_HANDLE_VALUE) {
       WCMD_print_error ();
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
-      errorlevel = ERROR_INVALID_FUNCTION;
+      return errorlevel = ERROR_INVALID_FUNCTION;
     } else {
       if (writeHeaders) {
         WCMD_output_stderr(L"\n%1\n\n\n", thisArg);
@@ -3533,6 +3534,7 @@ void WCMD_type (WCHAR *args) {
       CloseHandle (h);
     }
   }
+  return errorlevel = return_code;
 }
 
 /****************************************************************************

@@ -1896,7 +1896,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
           WCMD_title(&whichcmd[count+1]);
         break;
       case WCMD_TYPE:
-        WCMD_type (parms_start);
+        return_code = WCMD_type(parms_start);
         break;
       case WCMD_VER:
         WCMD_output_asis(L"\r\n");
