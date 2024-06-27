@@ -145,13 +145,25 @@ static NTSTATUS wrap_datalink_val_to_name( void *args )
 static NTSTATUS wrap_dump( void *args )
 {
     const struct dump_params *params = args;
-    struct pcap_pkthdr hdr_unix;
 
-    hdr_unix.ts.tv_sec  = params->hdr->ts.tv_sec;
-    hdr_unix.ts.tv_usec = params->hdr->ts.tv_usec;
-    hdr_unix.caplen     = params->hdr->caplen;
-    hdr_unix.len        = params->hdr->len;
-    pcap_dump( params->user, &hdr_unix, params->packet );
+    if (sizeof(void *) == 4)
+    {
+        struct pcap_pkthdr_win32 hdr32;
+        hdr32.ts.tv_sec  = params->hdr->ts.tv_sec;
+        hdr32.ts.tv_usec = params->hdr->ts.tv_usec;
+        hdr32.caplen     = params->hdr->caplen;
+        hdr32.len        = params->hdr->len;
+        pcap_dump( params->user, (const struct pcap_pkthdr *)&hdr32, params->packet );
+    }
+    else
+    {
+        struct pcap_pkthdr hdr64;
+        hdr64.ts.tv_sec  = params->hdr->ts.tv_sec;
+        hdr64.ts.tv_usec = params->hdr->ts.tv_usec;
+        hdr64.caplen     = params->hdr->caplen;
+        hdr64.len        = params->hdr->len;
+        pcap_dump( params->user, &hdr64, params->packet );
+    }
     return STATUS_SUCCESS;
 }
 
@@ -300,16 +312,30 @@ static NTSTATUS wrap_minor_version( void *args )
 static NTSTATUS wrap_next_ex( void *args )
 {
     struct next_ex_params *params = args;
-    struct pcap_pkthdr *hdr_unix;
     int ret;
 
-    if ((ret = pcap_next_ex( (pcap_t *)(ULONG_PTR)params->handle, &hdr_unix, params->data )) == 1)
+    if (sizeof(void *) == 4)
     {
-        if (hdr_unix->ts.tv_sec > INT_MAX || hdr_unix->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
-        params->hdr->ts.tv_sec  = hdr_unix->ts.tv_sec;
-        params->hdr->ts.tv_usec = hdr_unix->ts.tv_usec;
-        params->hdr->caplen     = hdr_unix->caplen;
-        params->hdr->len        = hdr_unix->len;
+        struct pcap_pkthdr_win32 *hdr32;
+        if ((ret = pcap_next_ex( (pcap_t *)(ULONG_PTR)params->handle, (struct pcap_pkthdr **)&hdr32, params->data )) == 1)
+        {
+            params->hdr->ts.tv_sec  = hdr32->ts.tv_sec;
+            params->hdr->ts.tv_usec = hdr32->ts.tv_usec;
+            params->hdr->caplen     = hdr32->caplen;
+            params->hdr->len        = hdr32->len;
+        }
+    }
+    else
+    {
+        struct pcap_pkthdr *hdr64;
+        if ((ret = pcap_next_ex( (pcap_t *)(ULONG_PTR)params->handle, &hdr64, params->data )) == 1)
+        {
+            if (hdr64->ts.tv_sec > INT_MAX || hdr64->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
+            params->hdr->ts.tv_sec  = hdr64->ts.tv_sec;
+            params->hdr->ts.tv_usec = hdr64->ts.tv_usec;
+            params->hdr->caplen     = hdr64->caplen;
+            params->hdr->len        = hdr64->len;
+        }
     }
     return ret;
 }
