@@ -1438,37 +1438,41 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
  *         non-hidden files
  */
 
-BOOL WCMD_delete (WCHAR *args) {
+RETURN_CODE WCMD_delete(WCHAR *args)
+{
     int   argno;
     WCHAR *argN;
     BOOL  argsProcessed = FALSE;
-    BOOL  foundAny      = FALSE;
 
     errorlevel = NO_ERROR;
 
-    for (argno=0; ; argno++) {
-        BOOL found;
+    for (argno = 0; ; argno++)
+    {
         WCHAR *thisArg;
 
         argN = NULL;
-        thisArg = WCMD_parameter (args, argno, &argN, FALSE, FALSE);
+        thisArg = WCMD_parameter(args, argno, &argN, FALSE, FALSE);
         if (!argN)
             break;       /* no more parameters */
         if (argN[0] == '/')
             continue;    /* skip options */
 
         argsProcessed = TRUE;
-        found = WCMD_delete_one(thisArg);
-        if (!found)
+        if (!WCMD_delete_one(thisArg))
+        {
             WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
-        foundAny |= found;
+            errorlevel = ERROR_INVALID_FUNCTION;
+        }
     }
 
     /* Handle no valid args */
     if (!argsProcessed)
+    {
         WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
+        errorlevel = ERROR_INVALID_FUNCTION;
+    }
 
-    return foundAny;
+    return errorlevel;
 }
 
 /*

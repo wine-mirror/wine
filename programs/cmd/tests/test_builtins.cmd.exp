@@ -492,10 +492,10 @@ SUCCESS 0
 @todo_wine@FAILURE 1
 SUCCESS 0
 --- success/failure for ERASE command
-@todo_wine@FAILURE 1
+FAILURE 1
 SUCCESS 0
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 1
+FAILURE 1
 @todo_wine@---
 ------------ Testing 'set' ------------
 1
