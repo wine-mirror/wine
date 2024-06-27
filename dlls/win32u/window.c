@@ -1841,7 +1841,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 {
     WND *win;
     HWND surface_win = 0;
-    BOOL ret, needs_surface, needs_update = FALSE;
+    BOOL ret, needs_surface, needs_update = FALSE, layered, ulw_layered = FALSE;
     RECT surface_rect, visible_rect = *window_rect, old_visible_rect, old_window_rect, old_client_rect, extra_rects[3];
     struct window_surface *old_surface, *new_surface;
 
@@ -1856,6 +1856,16 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     if (!needs_surface || IsRectEmpty( &visible_rect )) needs_surface = FALSE; /* use default surface */
     else needs_surface = !user_driver->pCreateWindowSurface( hwnd, &surface_rect, &new_surface );
 
+    if ((layered = !!(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED)))
+        ulw_layered = !NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL );
+
+    /* create or update window surface for top-level windows if the driver doesn't implement CreateWindowSurface */
+    if (needs_surface && new_surface == &dummy_surface && (!layered || !ulw_layered))
+    {
+        window_surface_release( new_surface );
+        create_offscreen_window_surface( hwnd, &surface_rect, &new_surface );
+    }
+
     get_window_rects( hwnd, COORDS_SCREEN, &old_window_rect, NULL, get_thread_dpi() );
     if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;
 
@@ -1863,15 +1873,6 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     {
         if (new_surface) window_surface_release( new_surface );
         return FALSE;
-    }
-
-    /* create or update window surface for top-level windows if the driver doesn't implement WindowPosChanging */
-    if (needs_surface && new_surface && (!(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
-                                         NtUserGetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
-    {
-        window_surface_release( new_surface );
-        if ((new_surface = win->surface)) window_surface_add_ref( new_surface );
-        create_offscreen_window_surface( hwnd, &surface_rect, &new_surface );
     }
 
     old_visible_rect = win->visible_rect;
