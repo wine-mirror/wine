@@ -1834,7 +1834,7 @@ static RETURN_CODE execute_single_command(const WCHAR *command)
         WCMD_directory (parms_start);
         break;
       case WCMD_ECHO:
-        WCMD_echo(&whichcmd[count]);
+        return_code = WCMD_echo(&whichcmd[count]);
         break;
       case WCMD_GOTO:
         return_code = WCMD_goto();

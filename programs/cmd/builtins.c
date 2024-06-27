@@ -1506,7 +1506,7 @@ static WCHAR *WCMD_strtrim(const WCHAR *s)
  * in DOS (try typing "ECHO ON AGAIN" for an example).
  */
 
-void WCMD_echo (const WCHAR *args)
+RETURN_CODE WCMD_echo(const WCHAR *args)
 {
   int count;
   const WCHAR *origcommand = args;
@@ -1517,7 +1517,7 @@ void WCMD_echo (const WCHAR *args)
     args++;
 
   trimmed = WCMD_strtrim(args);
-  if (!trimmed) return;
+  if (!trimmed) return NO_ERROR;
 
   count = lstrlenW(trimmed);
   if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':'
@@ -1525,7 +1525,7 @@ void WCMD_echo (const WCHAR *args)
     if (echo_mode) WCMD_output(WCMD_LoadMessage(WCMD_ECHOPROMPT), L"ON");
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), L"OFF");
     free(trimmed);
-    return;
+    return NO_ERROR;
   }
 
   if (lstrcmpiW(trimmed, L"ON") == 0)
@@ -1537,6 +1537,7 @@ void WCMD_echo (const WCHAR *args)
     WCMD_output_asis(L"\r\n");
   }
   free(trimmed);
+  return NO_ERROR;
 }
 
 /*****************************************************************************

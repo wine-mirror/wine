@@ -168,7 +168,7 @@ void WCMD_copy (WCHAR *);
 void WCMD_create_dir (WCHAR *);
 BOOL WCMD_delete (WCHAR *);
 void WCMD_directory (WCHAR *);
-void WCMD_echo (const WCHAR *);
+RETURN_CODE WCMD_echo(const WCHAR *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(const WCHAR *);
 RETURN_CODE WCMD_exit(void);
