@@ -315,7 +315,7 @@ static jsval_t transform_json_object(struct transform_json_object_ctx *proc_ctx,
                         goto ret;
                     if(FAILED(jsdisp_get_id(obj, str, 0, &id)))
                         continue;
-                    proc_ctx->hres = disp_delete((IDispatch*)&obj->IDispatchEx_iface, id, &b);
+                    proc_ctx->hres = disp_delete(to_disp(obj), id, &b);
                 }else {
                     proc_ctx->hres = jsdisp_define_data_property(obj, str, PROPF_WRITABLE | PROPF_ENUMERABLE | PROPF_CONFIGURABLE, res);
                     jsval_release(res);
@@ -334,7 +334,7 @@ static jsval_t transform_json_object(struct transform_json_object_ctx *proc_ctx,
                 res = transform_json_object(proc_ctx, obj, jsstr);
                 if(is_undefined(res)) {
                     if(SUCCEEDED(proc_ctx->hres))
-                        proc_ctx->hres = disp_delete((IDispatch*)&obj->IDispatchEx_iface, id, &b);
+                        proc_ctx->hres = disp_delete(to_disp(obj), id, &b);
                 }else {
                     if(!(str = jsstr_flatten(jsstr)))
                         proc_ctx->hres = E_OUTOFMEMORY;

@@ -3317,7 +3317,7 @@ static HRESULT bind_event_target(script_ctx_t *ctx, function_code_t *func, jsdis
     disp = get_object(v);
     hres = IDispatch_QueryInterface(disp, &IID_IBindEventHandler, (void**)&target);
     if(SUCCEEDED(hres)) {
-        hres = IBindEventHandler_BindHandler(target, func->name, (IDispatch*)&func_obj->IDispatchEx_iface);
+        hres = IBindEventHandler_BindHandler(target, func->name, to_disp(func_obj));
         IBindEventHandler_Release(target);
         if(FAILED(hres))
             WARN("BindEvent failed: %08lx\n", hres);
