@@ -448,11 +448,6 @@ done:
     return r ? jsval_copy(argv[0], r) : S_OK;
 }
 
-static void Object_destructor(jsdisp_t *dispex)
-{
-    free(dispex);
-}
-
 static const builtin_prop_t Object_props[] = {
     {L"__defineGetter__",      Object_defineGetter,          PROPF_METHOD|PROPF_ES6|2},
     {L"__defineSetter__",      Object_defineSetter,          PROPF_METHOD|PROPF_ES6|2},
@@ -468,12 +463,10 @@ static const builtin_info_t Object_info = {
     .class      = JSCLASS_OBJECT,
     .props_cnt  = ARRAY_SIZE(Object_props),
     .props      = Object_props,
-    .destructor = Object_destructor,
 };
 
 static const builtin_info_t ObjectInst_info = {
-    .class      = JSCLASS_OBJECT,
-    .destructor = Object_destructor,
+    .class = JSCLASS_OBJECT,
 };
 
 static void release_property_descriptor(property_desc_t *desc)
