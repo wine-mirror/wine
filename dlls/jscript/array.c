@@ -1589,11 +1589,6 @@ done:
     return hres;
 }
 
-static void Array_destructor(jsdisp_t *dispex)
-{
-    free(dispex);
-}
-
 static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
 {
     ArrayInstance *array = array_from_jsdisp(dispex);
@@ -1643,7 +1638,6 @@ static const builtin_info_t Array_info = {
     .class      = JSCLASS_ARRAY,
     .props_cnt  = ARRAY_SIZE(Array_props),
     .props      = Array_props,
-    .destructor = Array_destructor,
     .on_put     = Array_on_put,
 };
 
@@ -1655,7 +1649,6 @@ static const builtin_info_t ArrayInst_info = {
     .class      = JSCLASS_ARRAY,
     .props_cnt  = ARRAY_SIZE(ArrayInst_props),
     .props      = ArrayInst_props,
-    .destructor = Array_destructor,
     .on_put     = Array_on_put,
 };
 
