@@ -438,8 +438,7 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
 /***********************************************************************
  *              sync_window_opacity
  */
-static void sync_window_opacity( Display *display, Window win,
-                                 COLORREF key, BYTE alpha, DWORD flags )
+static void sync_window_opacity( Display *display, Window win, BYTE alpha, DWORD flags )
 {
     unsigned long opacity = 0xffffffff;
 
@@ -1794,7 +1793,7 @@ static void create_whole_window( struct x11drv_win_data *data )
 
     /* set the window opacity */
     if (!NtUserGetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
-    sync_window_opacity( data->display, data->whole_window, key, alpha, layered_flags );
+    sync_window_opacity( data->display, data->whole_window, alpha, layered_flags );
 
     XFlush( data->display );  /* make sure the window exists before we start painting to it */
 
@@ -1919,8 +1918,7 @@ void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
     {
         data->layered = FALSE;
         set_window_visual( data, &default_visual, FALSE );
-        sync_window_opacity( data->display, data->whole_window, 0, 0, 0 );
-        if (data->surface) window_surface_set_layered( data->surface, CLR_INVALID, -1, 0 );
+        sync_window_opacity( data->display, data->whole_window, 0, 0 );
     }
 done:
     release_win_data( data );
@@ -2896,9 +2894,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
         set_window_visual( data, &default_visual, FALSE );
 
         if (data->whole_window)
-            sync_window_opacity( data->display, data->whole_window, key, alpha, flags );
-        if (data->surface)
-            window_surface_set_layered( data->surface, (flags & LWA_COLORKEY) ? key : CLR_INVALID, alpha << 24, 0 );
+            sync_window_opacity( data->display, data->whole_window, alpha, flags );
 
         data->layered = TRUE;
         if (!data->mapped)  /* mapping is delayed until attributes are set */
@@ -2920,7 +2916,7 @@ void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
         Window win = X11DRV_get_whole_window( hwnd );
         if (win)
         {
-            sync_window_opacity( gdi_display, win, key, alpha, flags );
+            sync_window_opacity( gdi_display, win, alpha, flags );
             if (flags & LWA_COLORKEY)
                 FIXME( "LWA_COLORKEY not supported on foreign process window %p\n", hwnd );
         }

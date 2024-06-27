@@ -1882,7 +1882,7 @@ static const struct window_surface_funcs x11drv_surface_funcs =
  *           create_surface
  */
 static struct window_surface *create_surface( HWND hwnd, Window window, const XVisualInfo *vis, const RECT *rect,
-                                              COLORREF color_key, BOOL use_alpha )
+                                              BOOL use_alpha )
 {
     const XPixmapFormatValues *format = pixmap_formats[vis->depth];
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
@@ -1952,9 +1952,6 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
 
     TRACE( "created %p for %lx %s image %p\n", surface, window, wine_dbgstr_rect(rect), surface->image->ximage->data );
 
-    if (use_alpha) window_surface_set_layered( &surface->header, color_key, -1, 0xff000000 );
-    else window_surface_set_layered( &surface->header, color_key, -1, 0 );
-
     return &surface->header;
 
 failed:
@@ -1995,8 +1992,6 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
 BOOL X11DRV_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct window_surface **surface )
 {
     struct x11drv_win_data *data;
-    DWORD flags;
-    COLORREF key;
     BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
     TRACE( "hwnd %p, surface_rect %s, surface %p\n", hwnd, wine_dbgstr_rect( surface_rect ), surface );
@@ -2022,10 +2017,7 @@ BOOL X11DRV_CreateWindowSurface( HWND hwnd, const RECT *surface_rect, struct win
         }
     }
 
-    if (!layered || !NtUserGetLayeredWindowAttributes( hwnd, &key, NULL, &flags ) || !(flags & LWA_COLORKEY))
-        key = CLR_INVALID;
-
-    *surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect, key, FALSE );
+    *surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect, FALSE );
 
 done:
     release_win_data( data );
@@ -2050,12 +2042,10 @@ BOOL X11DRV_CreateLayeredWindow( HWND hwnd, const RECT *surface_rect, COLORREF c
     surface = data->surface;
     if (!surface || !EqualRect( &surface->rect, surface_rect ))
     {
-        data->surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect,
-                                        color_key, data->use_alpha );
+        data->surface = create_surface( data->hwnd, data->whole_window, &data->vis, surface_rect, data->use_alpha );
         if (surface) window_surface_release( surface );
         surface = data->surface;
     }
-    else window_surface_set_layered( surface, color_key, -1, 0xff000000 );
 
     if ((*window_surface = surface)) window_surface_add_ref( surface );
     release_win_data( data );
