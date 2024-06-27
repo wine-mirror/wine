@@ -27,6 +27,7 @@
 #include "mshtmhst.h"
 #include "rpcproxy.h"
 #include "jscript_classes.h"
+#include "jsdisp.h"
 
 #include "wine/debug.h"
 

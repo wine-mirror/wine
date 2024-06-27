@@ -3273,3 +3273,107 @@ HRESULT jsdisp_get_prop_name(jsdisp_t *obj, DISPID id, jsstr_t **r)
     *r = jsstr_alloc(prop->name);
     return *r ? S_OK : E_OUTOFMEMORY;
 }
+
+typedef struct {
+    jsdisp_t jsdisp;
+    IWineJSDispatchHost *host_iface;
+} HostObject;
+
+static inline HostObject *HostObject_from_jsdisp(jsdisp_t *jsdisp)
+{
+    return CONTAINING_RECORD(jsdisp, HostObject, jsdisp);
+}
+
+static ULONG HostObject_addref(jsdisp_t *jsdisp)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+    return IWineJSDispatchHost_AddRef(This->host_iface);
+}
+
+static ULONG HostObject_release(jsdisp_t *jsdisp)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+    return IWineJSDispatchHost_Release(This->host_iface);
+}
+
+static HRESULT HostObject_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsigned  flags, struct property_info *desc)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+
+    return IWineJSDispatchHost_LookupProperty(This->host_iface, name, flags, desc);
+}
+
+static HRESULT HostObject_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+    EXCEPINFO ei = { 0 };
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IWineJSDispatchHost_GetProperty(This->host_iface, idx, jsdisp->ctx->lcid, &v, &ei,
+                                           &jsdisp->ctx->jscaller->IServiceProvider_iface);
+    if(hres == DISP_E_EXCEPTION)
+        handle_dispatch_exception(jsdisp->ctx, &ei);
+    if(FAILED(hres))
+        return hres;
+
+    hres = variant_to_jsval(jsdisp->ctx, &v, r);
+    VariantClear(&v);
+    return hres;
+}
+
+static HRESULT HostObject_prop_put(jsdisp_t *jsdisp, unsigned idx, jsval_t v)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+    EXCEPINFO ei = { 0 };
+    VARIANT var;
+    HRESULT hres;
+
+    hres = jsval_to_variant(v, &var);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IWineJSDispatchHost_SetProperty(This->host_iface, idx, jsdisp->ctx->lcid, &var, &ei,
+                                           &jsdisp->ctx->jscaller->IServiceProvider_iface);
+    if(hres == DISP_E_EXCEPTION)
+        handle_dispatch_exception(jsdisp->ctx, &ei);
+    VariantClear(&var);
+    return hres;
+}
+
+static HRESULT HostObject_next_prop(jsdisp_t *jsdisp, unsigned id, struct property_info *desc)
+{
+    HostObject *This = HostObject_from_jsdisp(jsdisp);
+
+    return IWineJSDispatchHost_NextProperty(This->host_iface, id, desc);
+}
+
+static const builtin_info_t HostObject_info = {
+    .class       = JSCLASS_OBJECT,
+    .addref      = HostObject_addref,
+    .release     = HostObject_release,
+    .lookup_prop = HostObject_lookup_prop,
+    .prop_get    = HostObject_prop_get,
+    .prop_put    = HostObject_prop_put,
+    .next_prop   = HostObject_next_prop,
+};
+
+HRESULT init_host_object(script_ctx_t *ctx, IWineJSDispatchHost *host_iface, IWineJSDispatch **ret)
+{
+    HostObject *host_obj;
+    HRESULT hres;
+
+    if(!(host_obj = calloc(1, sizeof(*host_obj))))
+        return E_OUTOFMEMORY;
+
+    hres = init_dispex(&host_obj->jsdisp, ctx, &HostObject_info, ctx->object_prototype);
+    if(FAILED(hres)) {
+        free(host_obj);
+        return hres;
+    }
+
+    host_obj->host_iface = host_iface;
+    *ret = &host_obj->jsdisp.IWineJSDispatch_iface;
+    return S_OK;
+}

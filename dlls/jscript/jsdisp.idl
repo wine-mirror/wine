@@ -42,3 +42,28 @@ interface IWineJSDispatch : IDispatchEx
 {
     void Free();
 }
+
+[
+    object,
+    uuid(b1ebc544-6644-40c6-97f6-ccd9cc32bfba),
+    local
+]
+interface IWineJSDispatchHost : IDispatchEx
+{
+    HRESULT GetJSDispatch(IWineJSDispatch **ret);
+    HRESULT LookupProperty(const WCHAR *name, DWORD flags, struct property_info *desc);
+    HRESULT NextProperty(DISPID id, struct property_info *desc);
+    HRESULT GetProperty(DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller);
+    HRESULT SetProperty(DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller);
+    HRESULT CallFunction(DISPID id, UINT32 iid, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
+}
+
+[
+    object,
+    uuid(d359f2fe-5531-741b-a41a-5cf92edc971d),
+    local
+]
+interface IWineJScript : IUnknown
+{
+    HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch **ret);
+}
