@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-06-27 08:36+0300\n"
+"PO-Revision-Date: 2024-06-28 01:14+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14590,10 +14590,8 @@ msgid "End of line"
 msgstr "Eilutės pabaiga"
 
 #: programs/cmd/cmd.rc:413
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "Failo pabaiga.\n"
+msgstr "Failo pabaiga"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
