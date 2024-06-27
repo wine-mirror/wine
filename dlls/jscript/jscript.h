@@ -216,6 +216,11 @@ static inline IDispatch *to_disp(jsdisp_t *jsdisp)
     return (IDispatch*)&jsdisp->IDispatchEx_iface;
 }
 
+static inline IDispatchEx *to_dispex(jsdisp_t *jsdisp)
+{
+    return &jsdisp->IDispatchEx_iface;
+}
+
 jsdisp_t *as_jsdisp(IDispatch*);
 jsdisp_t *to_jsdisp(IDispatch*);
 void jsdisp_free(jsdisp_t*);

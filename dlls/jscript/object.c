@@ -655,7 +655,7 @@ static HRESULT jsdisp_define_properties(script_ctx_t *ctx, jsdisp_t *obj, jsval_
         if(FAILED(hres))
             break;
 
-        hres = IDispatchEx_GetMemberName(&list_obj->IDispatchEx_iface, id, &name);
+        hres = IDispatchEx_GetMemberName(to_dispex(list_obj), id, &name);
         if(SUCCEEDED(hres))
             hres = jsdisp_define_property(obj, name, &prop_desc);
         release_property_descriptor(&prop_desc);

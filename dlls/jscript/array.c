@@ -1560,7 +1560,7 @@ static HRESULT Array_unshift(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
                 hres = jsdisp_propput_idx(jsthis, i+argc, val);
                 jsval_release(val);
             }else if(hres == DISP_E_UNKNOWNNAME) {
-                hres = IDispatchEx_DeleteMemberByDispID(&jsthis->IDispatchEx_iface, id);
+                hres = IDispatchEx_DeleteMemberByDispID(to_dispex(jsthis), id);
             }
         }
 

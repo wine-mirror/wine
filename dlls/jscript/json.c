@@ -671,7 +671,7 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
     if(!append_char(ctx, '{'))
         return E_OUTOFMEMORY;
 
-    while((hres = IDispatchEx_GetNextDispID(&obj->IDispatchEx_iface, fdexEnumDefault, dispid, &dispid)) == S_OK) {
+    while((hres = IDispatchEx_GetNextDispID(to_dispex(obj), fdexEnumDefault, dispid, &dispid)) == S_OK) {
         stepback = ctx->buf_len;
 
         if(prop_cnt && !append_char(ctx, ',')) {
@@ -693,7 +693,7 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
             }
         }
 
-        hres = IDispatchEx_GetMemberName(&obj->IDispatchEx_iface, dispid, &prop_name);
+        hres = IDispatchEx_GetMemberName(to_dispex(obj), dispid, &prop_name);
         if(FAILED(hres))
             return hres;
 

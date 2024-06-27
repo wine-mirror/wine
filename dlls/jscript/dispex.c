@@ -1893,7 +1893,7 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
     TRACE("(%p)->(%ld %s %ld %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return IDispatchEx_InvokeEx(&This->IDispatchEx_iface, dispIdMember, lcid, wFlags,
+    return IDispatchEx_InvokeEx(to_dispex(This), dispIdMember, lcid, wFlags,
             pDispParams, pVarResult, pExcepInfo, NULL);
 }
 
