@@ -95,6 +95,31 @@ static BOOL macdrv_surface_flush(struct window_surface *window_surface, const RE
     macdrv_window_set_color_image(surface->window, image, cgrect_from_rect(*rect), cgrect_from_rect(*dirty));
     CGImageRelease(image);
 
+    if (shape_changed)
+    {
+        if (!shape_bits)
+            macdrv_window_set_shape_image(surface->window, NULL);
+        else
+        {
+            const BYTE *src = shape_bits;
+            CGDataProviderRef provider;
+            CGImageRef image;
+            BYTE *dst;
+            UINT i;
+
+            if (!(provider = data_provider_create(shape_info->bmiHeader.biSizeImage, (void **)&dst))) return TRUE;
+            for (i = 0; i < shape_info->bmiHeader.biSizeImage; i++) dst[i] = ~src[i]; /* CGImage mask bits are inverted */
+
+            image = CGImageMaskCreate(shape_info->bmiHeader.biWidth, abs(shape_info->bmiHeader.biHeight), 1, 1,
+                                      shape_info->bmiHeader.biSizeImage / abs(shape_info->bmiHeader.biHeight),
+                                      provider, NULL, retina_on);
+            CGDataProviderRelease(provider);
+
+            macdrv_window_set_shape_image(surface->window, image);
+            CGImageRelease(image);
+        }
+    }
+
     return TRUE;
 }
 
@@ -166,7 +191,7 @@ static struct window_surface *create_surface(HWND hwnd, macdrv_window window, co
     }
     if (desc.hDeviceDc) NtUserReleaseDC(hwnd, desc.hDeviceDc);
 
-    if (!(surface = calloc(1, sizeof(*surface)))) goto failed;
+    if (!(surface = calloc(1, sizeof(*surface)))) return NULL;
     if (!window_surface_init(&surface->header, &macdrv_surface_funcs, hwnd, rect, info, bitmap)) goto failed;
 
     surface->window = window;

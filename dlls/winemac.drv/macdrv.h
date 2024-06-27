@@ -189,7 +189,6 @@ struct macdrv_win_data
     RECT                whole_rect;             /* Mac window rectangle for the whole window relative to parent */
     RECT                client_rect;            /* client area relative to parent */
     int                 pixel_format;           /* pixel format for GL */
-    COLORREF            color_key;              /* color key for layered window; CLR_INVALID is not color keyed */
     HANDLE              drag_event;             /* event to signal that Cocoa-driven window dragging has ended */
     unsigned int        on_screen : 1;          /* is window ordered in? (minimized or not) */
     unsigned int        shaped : 1;             /* is window using a custom region shape? */

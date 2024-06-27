@@ -278,7 +278,6 @@ static struct macdrv_win_data *alloc_win_data(HWND hwnd)
     if ((data = calloc(1, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        data->color_key = CLR_INVALID;
         data->swap_interval = 1;
         pthread_mutex_lock(&win_data_mutex);
         if (!win_datas)
@@ -485,7 +484,7 @@ static inline void add_bounds_rect(RECT *bounds, const RECT *rect)
 /***********************************************************************
  *              sync_window_opacity
  */
-static void sync_window_opacity(struct macdrv_win_data *data, COLORREF key, BYTE alpha,
+static void sync_window_opacity(struct macdrv_win_data *data, BYTE alpha,
                                 BOOL per_pixel_alpha, DWORD flags)
 {
     CGFloat opacity = 1.0;
@@ -495,33 +494,6 @@ static void sync_window_opacity(struct macdrv_win_data *data, COLORREF key, BYTE
 
     TRACE("setting window %p/%p alpha to %g\n", data->hwnd, data->cocoa_window, opacity);
     macdrv_set_window_alpha(data->cocoa_window, opacity);
-
-    if (flags & LWA_COLORKEY)
-    {
-        /* FIXME: treat PALETTEINDEX and DIBINDEX as black */
-        if ((key & (1 << 24)) || key >> 16 == 0x10ff)
-            key = RGB(0, 0, 0);
-    }
-    else
-        key = CLR_INVALID;
-
-    if (data->color_key != key)
-    {
-        if (key == CLR_INVALID)
-        {
-            TRACE("clearing color-key for window %p/%p\n", data->hwnd, data->cocoa_window);
-            macdrv_clear_window_color_key(data->cocoa_window);
-        }
-        else
-        {
-            TRACE("setting color-key for window %p/%p to RGB %d,%d,%d\n", data->hwnd, data->cocoa_window,
-                  GetRValue(key), GetGValue(key), GetBValue(key));
-            macdrv_set_window_color_key(data->cocoa_window, GetRValue(key), GetGValue(key), GetBValue(key));
-        }
-
-        data->color_key = key;
-        needs_flush = TRUE;
-    }
 
     if (!data->per_pixel_alpha != !per_pixel_alpha)
     {
@@ -757,7 +729,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
 
     /* set the window opacity */
     if (!NtUserGetLayeredWindowAttributes(data->hwnd, &key, &alpha, &layered_flags)) layered_flags = 0;
-    sync_window_opacity(data, key, alpha, FALSE, layered_flags);
+    sync_window_opacity(data, alpha, FALSE, layered_flags);
 
 done:
     if (win_rgn) NtGdiDeleteObjectApp(win_rgn);
@@ -778,7 +750,6 @@ static void destroy_cocoa_window(struct macdrv_win_data *data)
     macdrv_destroy_cocoa_window(data->cocoa_window);
     data->cocoa_window = 0;
     data->on_screen = FALSE;
-    data->color_key = CLR_INVALID;
     if (data->surface) window_surface_release(data->surface);
     data->surface = NULL;
     if (data->unminimized_surface) window_surface_release(data->unminimized_surface);
@@ -1685,7 +1656,7 @@ void macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha, DWOR
         data->ulw_layered = FALSE;
         if (data->cocoa_window)
         {
-            sync_window_opacity(data, key, alpha, FALSE, flags);
+            sync_window_opacity(data, alpha, FALSE, flags);
             /* since layered attributes are now set, can now show the window */
             if ((NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_VISIBLE) && !data->on_screen)
                 show_window(data);
@@ -1780,7 +1751,7 @@ void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style)
         {
             data->layered = FALSE;
             data->ulw_layered = FALSE;
-            sync_window_opacity(data, 0, 0, FALSE, 0);
+            sync_window_opacity(data, 0, FALSE, 0);
         }
 
         if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYOUTRTL))
@@ -1903,7 +1874,7 @@ void macdrv_UpdateLayeredWindow(HWND hwnd, const RECT *window_rect, COLORREF col
             show_window(data);
 
         /* The ULW flags are a superset of the LWA flags. */
-        sync_window_opacity(data, color_key, 255, TRUE, flags);
+        sync_window_opacity(data, 255, TRUE, flags);
         release_win_data(data);
     }
 }
