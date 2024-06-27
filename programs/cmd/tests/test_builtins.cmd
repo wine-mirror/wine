@@ -451,14 +451,23 @@ if 1==0 (echo p1) else echo p2||echo p3
 echo ---
 if 1==0 (echo q1) else echo q2&echo q3
 echo ------------- Testing internal commands return codes
-call :setError 0 &&echo SUCCESS||echo FAILURE %errorlevel%
-call :setError 33 &&echo SUCCESS||echo FAILURE %errorlevel%
-call :setError 666
-echo foo &&echo SUCCESS||echo FAILURE %errorlevel%
-echo foo >> h:\i\dont\exist\at\all.txt &&echo SUCCESS||echo FAILURE %errorlevel%
-type NUL &&echo SUCCESS||echo FAILURE %errorlevel%
-type h:\i\dont\exist\at\all.txt &&echo SUCCESS||echo FAILURE %errorlevel%
+setlocal EnableDelayedExpansion
+
+echo --- call and IF/FOR blocks
+call :setError 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 33 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
+call :setError 666 & (echo foo &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (echo foo >> h:\i\dont\exist\at\all.txt &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((if 1==1 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((if 1==0 echo "">NUL) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((if 1==1 (call :setError 33)) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((if 1==0 (call :setError 33) else call :setError 34) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((for %%i in () do echo "") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((for %%i in () do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((for %%i in (a) do call :setError 0) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((for %%i in (a) do call :setError 33) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 echo ---
+setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
 call :setError 0
 rem Remove any WINE_FOO* WINE_BA* environment variables from shell before proceeding

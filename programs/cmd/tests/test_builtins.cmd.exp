@@ -450,13 +450,20 @@ p2
 q2
 q3
 ------------- Testing internal commands return codes
-SUCCESS
-FAILURE 0
+--- call and IF/FOR blocks
+SUCCESS 0
+@todo_wine@FAILURE 33
 @todo_wine@foo@space@
-@todo_wine@SUCCESS
-@todo_wine@FAILURE 666
-SUCCESS
-@todo_wine@FAILURE 0
+@todo_wine@SUCCESS 666
+@todo_wine@FAILURE 1
+SUCCESS 666
+@todo_wine@SUCCESS 666
+@todo_wine@FAILURE 33
+@todo_wine@FAILURE 34
+SUCCESS 666
+@todo_wine@SUCCESS 666
+@todo_wine@SUCCESS 0
+@todo_wine@FAILURE 33
 @todo_wine@---
 ------------ Testing 'set' ------------
 1
