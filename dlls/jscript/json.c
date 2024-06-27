@@ -948,12 +948,9 @@ static const builtin_prop_t JSON_props[] = {
 };
 
 static const builtin_info_t JSON_info = {
-    JSCLASS_JSON,
-    NULL,
-    ARRAY_SIZE(JSON_props),
-    JSON_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_JSON,
+    .props_cnt = ARRAY_SIZE(JSON_props),
+    .props     = JSON_props,
 };
 
 HRESULT create_json(script_ctx_t *ctx, jsdisp_t **ret)

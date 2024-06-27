@@ -121,12 +121,9 @@ static const builtin_prop_t ArrayBuffer_props[] = {
 };
 
 static const builtin_info_t ArrayBuffer_info = {
-    JSCLASS_ARRAYBUFFER,
-    NULL,
-    ARRAY_SIZE(ArrayBuffer_props),
-    ArrayBuffer_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_ARRAYBUFFER,
+    .props_cnt = ARRAY_SIZE(ArrayBuffer_props),
+    .props     = ArrayBuffer_props,
 };
 
 static const builtin_prop_t ArrayBufferInst_props[] = {
@@ -134,12 +131,9 @@ static const builtin_prop_t ArrayBufferInst_props[] = {
 };
 
 static const builtin_info_t ArrayBufferInst_info = {
-    JSCLASS_ARRAYBUFFER,
-    NULL,
-    ARRAY_SIZE(ArrayBufferInst_props),
-    ArrayBufferInst_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_ARRAYBUFFER,
+    .props_cnt = ARRAY_SIZE(ArrayBufferInst_props),
+    .props     = ArrayBufferInst_props,
 };
 
 static HRESULT create_arraybuf(script_ctx_t *ctx, DWORD size, ArrayBufferInstance **ret)
@@ -214,12 +208,10 @@ static const builtin_prop_t ArrayBufferConstr_props[] = {
 };
 
 static const builtin_info_t ArrayBufferConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(ArrayBufferConstr_props),
-    ArrayBufferConstr_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_FUNCTION,
+    .call      = Function_value,
+    .props_cnt = ARRAY_SIZE(ArrayBufferConstr_props),
+    .props     = ArrayBufferConstr_props,
 };
 
 static inline DataViewInstance *dataview_this(jsval_t vthis)
@@ -610,29 +602,17 @@ static HRESULT DataView_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op o
 }
 
 static const builtin_info_t DataView_info = {
-    JSCLASS_DATAVIEW,
-    NULL,
-    ARRAY_SIZE(DataView_props),
-    DataView_props,
-    DataView_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    DataView_gc_traverse
+    .class       = JSCLASS_DATAVIEW,
+    .props_cnt   = ARRAY_SIZE(DataView_props),
+    .props       = DataView_props,
+    .destructor  = DataView_destructor,
+    .gc_traverse = DataView_gc_traverse
 };
 
 static const builtin_info_t DataViewInst_info = {
-    JSCLASS_DATAVIEW,
-    NULL,
-    0,
-    NULL,
-    DataView_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    DataView_gc_traverse
+    .class       = JSCLASS_DATAVIEW,
+    .destructor  = DataView_destructor,
+    .gc_traverse = DataView_gc_traverse
 };
 
 static HRESULT DataViewConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -701,12 +681,8 @@ static HRESULT DataViewConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags
 }
 
 static const builtin_info_t DataViewConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    0,
-    NULL,
-    NULL,
-    NULL
+    .class = JSCLASS_FUNCTION,
+    .call  = Function_value,
 };
 
 HRESULT init_arraybuf_constructors(script_ctx_t *ctx)

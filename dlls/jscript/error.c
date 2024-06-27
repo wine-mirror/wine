@@ -139,21 +139,15 @@ static const builtin_prop_t Error_props[] = {
 };
 
 static const builtin_info_t Error_info = {
-    JSCLASS_ERROR,
-    Error_value,
-    ARRAY_SIZE(Error_props),
-    Error_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_ERROR,
+    .call      = Error_value,
+    .props_cnt = ARRAY_SIZE(Error_props),
+    .props     = Error_props,
 };
 
 static const builtin_info_t ErrorInst_info = {
-    JSCLASS_ERROR,
-    Error_value,
-    0,
-    NULL,
-    NULL,
-    NULL
+    .class = JSCLASS_ERROR,
+    .call  = Error_value,
 };
 
 static HRESULT alloc_error(script_ctx_t *ctx, jsdisp_t *prototype,

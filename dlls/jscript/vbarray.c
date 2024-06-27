@@ -247,12 +247,11 @@ static const builtin_prop_t VBArray_props[] = {
 };
 
 static const builtin_info_t VBArray_info = {
-    JSCLASS_VBARRAY,
-    VBArray_value,
-    ARRAY_SIZE(VBArray_props),
-    VBArray_props,
-    VBArray_destructor,
-    NULL
+    .class      = JSCLASS_VBARRAY,
+    .call       = VBArray_value,
+    .props_cnt  = ARRAY_SIZE(VBArray_props),
+    .props      = VBArray_props,
+    .destructor = VBArray_destructor,
 };
 
 static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBArrayInstance **ret)

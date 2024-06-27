@@ -182,25 +182,15 @@ static const builtin_prop_t Enumerator_props[] = {
 };
 
 static const builtin_info_t Enumerator_info = {
-    JSCLASS_ENUMERATOR,
-    NULL,
-    ARRAY_SIZE(Enumerator_props),
-    Enumerator_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_ENUMERATOR,
+    .props_cnt = ARRAY_SIZE(Enumerator_props),
+    .props     = Enumerator_props,
 };
 
 static const builtin_info_t EnumeratorInst_info = {
-    JSCLASS_ENUMERATOR,
-    NULL,
-    0,
-    NULL,
-    Enumerator_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Enumerator_gc_traverse
+    .class       = JSCLASS_ENUMERATOR,
+    .destructor  = Enumerator_destructor,
+    .gc_traverse = Enumerator_gc_traverse
 };
 
 static HRESULT alloc_enumerator(script_ctx_t *ctx, jsdisp_t *object_prototype, EnumeratorInstance **ret)
@@ -324,12 +314,8 @@ static HRESULT EnumeratorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD fla
 }
 
 static const builtin_info_t EnumeratorConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    0,
-    NULL,
-    NULL,
-    NULL
+    .class = JSCLASS_FUNCTION,
+    .call  = Function_value,
 };
 
 HRESULT create_enumerator_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)

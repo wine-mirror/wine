@@ -185,15 +185,13 @@ static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op 
 }
 
 static const builtin_info_t Arguments_info = {
-    JSCLASS_ARGUMENTS,
-    Arguments_value,
-    0, NULL,
-    Arguments_destructor,
-    NULL,
-    Arguments_idx_length,
-    Arguments_idx_get,
-    Arguments_idx_put,
-    Arguments_gc_traverse
+    .class       = JSCLASS_ARGUMENTS,
+    .call        = Arguments_value,
+    .destructor  = Arguments_destructor,
+    .idx_length  = Arguments_idx_length,
+    .idx_get     = Arguments_idx_get,
+    .idx_put     = Arguments_idx_put,
+    .gc_traverse = Arguments_gc_traverse
 };
 
 HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
@@ -602,16 +600,12 @@ static const builtin_prop_t Function_props[] = {
 };
 
 static const builtin_info_t Function_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(Function_props),
-    Function_props,
-    Function_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Function_gc_traverse
+    .class       = JSCLASS_FUNCTION,
+    .call        = Function_value,
+    .props_cnt   = ARRAY_SIZE(Function_props),
+    .props       = Function_props,
+    .destructor  = Function_destructor,
+    .gc_traverse = Function_gc_traverse
 };
 
 static const builtin_prop_t FunctionInst_props[] = {
@@ -621,16 +615,12 @@ static const builtin_prop_t FunctionInst_props[] = {
 };
 
 static const builtin_info_t FunctionInst_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(FunctionInst_props),
-    FunctionInst_props,
-    Function_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Function_gc_traverse
+    .class       = JSCLASS_FUNCTION,
+    .call        = Function_value,
+    .props_cnt   = ARRAY_SIZE(FunctionInst_props),
+    .props       = FunctionInst_props,
+    .destructor  = Function_destructor,
+    .gc_traverse = Function_gc_traverse
 };
 
 static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_info, const function_vtbl_t *vtbl, size_t size,
@@ -808,16 +798,12 @@ static const builtin_prop_t InterpretedFunction_props[] = {
 };
 
 static const builtin_info_t InterpretedFunction_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(InterpretedFunction_props),
-    InterpretedFunction_props,
-    Function_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Function_gc_traverse
+    .class       = JSCLASS_FUNCTION,
+    .call        = Function_value,
+    .props_cnt   = ARRAY_SIZE(InterpretedFunction_props),
+    .props       = InterpretedFunction_props,
+    .destructor  = Function_destructor,
+    .gc_traverse = Function_gc_traverse
 };
 
 static HRESULT InterpretedFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsval_t vthis, unsigned flags,
@@ -940,16 +926,12 @@ static const builtin_prop_t BindFunction_props[] = {
 };
 
 static const builtin_info_t BindFunction_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(BindFunction_props),
-    BindFunction_props,
-    Function_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Function_gc_traverse
+    .class       = JSCLASS_FUNCTION,
+    .call        = Function_value,
+    .props_cnt   = ARRAY_SIZE(BindFunction_props),
+    .props       = BindFunction_props,
+    .destructor  = Function_destructor,
+    .gc_traverse = Function_gc_traverse
 };
 
 static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsval_t vthis, unsigned flags,

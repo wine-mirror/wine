@@ -465,20 +465,15 @@ static const builtin_prop_t Object_props[] = {
 };
 
 static const builtin_info_t Object_info = {
-    JSCLASS_OBJECT,
-    NULL,
-    ARRAY_SIZE(Object_props),
-    Object_props,
-    Object_destructor,
-    NULL
+    .class      = JSCLASS_OBJECT,
+    .props_cnt  = ARRAY_SIZE(Object_props),
+    .props      = Object_props,
+    .destructor = Object_destructor,
 };
 
 static const builtin_info_t ObjectInst_info = {
-    JSCLASS_OBJECT,
-    NULL,
-    0, NULL,
-    Object_destructor,
-    NULL
+    .class      = JSCLASS_OBJECT,
+    .destructor = Object_destructor,
 };
 
 static void release_property_descriptor(property_desc_t *desc)
@@ -1069,12 +1064,10 @@ static const builtin_prop_t ObjectConstr_props[] = {
 };
 
 static const builtin_info_t ObjectConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(ObjectConstr_props),
-    ObjectConstr_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_FUNCTION,
+    .call      = Function_value,
+    .props_cnt = ARRAY_SIZE(ObjectConstr_props),
+    .props     = ObjectConstr_props,
 };
 
 static HRESULT ObjectConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

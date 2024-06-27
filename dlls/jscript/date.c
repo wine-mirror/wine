@@ -1900,20 +1900,13 @@ static const builtin_prop_t Date_props[] = {
 };
 
 static const builtin_info_t Date_info = {
-    JSCLASS_DATE,
-    NULL,
-    ARRAY_SIZE(Date_props),
-    Date_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_DATE,
+    .props_cnt = ARRAY_SIZE(Date_props),
+    .props     = Date_props,
 };
 
 static const builtin_info_t DateInst_info = {
-    JSCLASS_DATE,
-    NULL,
-    0, NULL,
-    NULL,
-    NULL
+    .class = JSCLASS_DATE,
 };
 
 static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE time, DateInstance **ret)
@@ -2436,12 +2429,10 @@ static const builtin_prop_t DateConstr_props[] = {
 };
 
 static const builtin_info_t DateConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(DateConstr_props),
-    DateConstr_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_FUNCTION,
+    .call      = Function_value,
+    .props_cnt = ARRAY_SIZE(DateConstr_props),
+    .props     = DateConstr_props,
 };
 
 HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)

@@ -1569,12 +1569,10 @@ static const builtin_prop_t String_props[] = {
 };
 
 static const builtin_info_t String_info = {
-    JSCLASS_STRING,
-    NULL,
-    ARRAY_SIZE(String_props),
-    String_props,
-    String_destructor,
-    NULL
+    .class      = JSCLASS_STRING,
+    .props_cnt  = ARRAY_SIZE(String_props),
+    .props      = String_props,
+    .destructor = String_destructor,
 };
 
 static const builtin_prop_t StringInst_props[] = {
@@ -1582,14 +1580,12 @@ static const builtin_prop_t StringInst_props[] = {
 };
 
 static const builtin_info_t StringInst_info = {
-    JSCLASS_STRING,
-    NULL,
-    ARRAY_SIZE(StringInst_props),
-    StringInst_props,
-    String_destructor,
-    NULL,
-    String_idx_length,
-    String_idx_get
+    .class      = JSCLASS_STRING,
+    .props_cnt  = ARRAY_SIZE(StringInst_props),
+    .props      = StringInst_props,
+    .destructor = String_destructor,
+    .idx_length = String_idx_length,
+    .idx_get    = String_idx_get,
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */
@@ -1703,12 +1699,10 @@ static const builtin_prop_t StringConstr_props[] = {
 };
 
 static const builtin_info_t StringConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(StringConstr_props),
-    StringConstr_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_FUNCTION,
+    .call      = Function_value,
+    .props_cnt = ARRAY_SIZE(StringConstr_props),
+    .props     = StringConstr_props,
 };
 
 HRESULT create_string_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)

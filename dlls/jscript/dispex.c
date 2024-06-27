@@ -2204,13 +2204,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
     return S_OK;
 }
 
-static const builtin_info_t dispex_info = {
-    JSCLASS_NONE,
-    NULL,
-    0, NULL,
-    NULL,
-    NULL
-};
+static const builtin_info_t dispex_info = { .class = JSCLASS_NONE };
 
 HRESULT create_dispex(script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *prototype, jsdisp_t **dispex)
 {

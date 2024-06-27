@@ -1640,12 +1640,11 @@ static const builtin_prop_t Array_props[] = {
 };
 
 static const builtin_info_t Array_info = {
-    JSCLASS_ARRAY,
-    NULL,
-    ARRAY_SIZE(Array_props),
-    Array_props,
-    Array_destructor,
-    Array_on_put
+    .class      = JSCLASS_ARRAY,
+    .props_cnt  = ARRAY_SIZE(Array_props),
+    .props      = Array_props,
+    .destructor = Array_destructor,
+    .on_put     = Array_on_put,
 };
 
 static const builtin_prop_t ArrayInst_props[] = {
@@ -1653,12 +1652,11 @@ static const builtin_prop_t ArrayInst_props[] = {
 };
 
 static const builtin_info_t ArrayInst_info = {
-    JSCLASS_ARRAY,
-    NULL,
-    ARRAY_SIZE(ArrayInst_props),
-    ArrayInst_props,
-    Array_destructor,
-    Array_on_put
+    .class      = JSCLASS_ARRAY,
+    .props_cnt  = ARRAY_SIZE(ArrayInst_props),
+    .props      = ArrayInst_props,
+    .destructor = Array_destructor,
+    .on_put     = Array_on_put,
 };
 
 /* ECMA-262 5.1 Edition    15.4.3.2 */
@@ -1761,12 +1759,10 @@ static const builtin_prop_t ArrayConstr_props[] = {
 };
 
 static const builtin_info_t ArrayConstr_info = {
-    JSCLASS_FUNCTION,
-    Function_value,
-    ARRAY_SIZE(ArrayConstr_props),
-    ArrayConstr_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_FUNCTION,
+    .call      = Function_value,
+    .props_cnt = ARRAY_SIZE(ArrayConstr_props),
+    .props     = ArrayConstr_props,
 };
 
 HRESULT create_array_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)

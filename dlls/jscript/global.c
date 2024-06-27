@@ -905,12 +905,9 @@ static const builtin_prop_t JSGlobal_props[] = {
 };
 
 static const builtin_info_t JSGlobal_info = {
-    JSCLASS_GLOBAL,
-    NULL,
-    ARRAY_SIZE(JSGlobal_props),
-    JSGlobal_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_GLOBAL,
+    .props_cnt = ARRAY_SIZE(JSGlobal_props),
+    .props     = JSGlobal_props,
 };
 
 static HRESULT init_object_prototype_accessors(script_ctx_t *ctx, jsdisp_t *object_prototype)

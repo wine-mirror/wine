@@ -119,20 +119,15 @@ static const builtin_prop_t Bool_props[] = {
 };
 
 static const builtin_info_t Bool_info = {
-    JSCLASS_BOOLEAN,
-    Bool_value,
-    ARRAY_SIZE(Bool_props),
-    Bool_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_BOOLEAN,
+    .call      = Bool_value,
+    .props_cnt = ARRAY_SIZE(Bool_props),
+    .props     = Bool_props,
 };
 
 static const builtin_info_t BoolInst_info = {
-    JSCLASS_BOOLEAN,
-    Bool_value,
-    0, NULL,
-    NULL,
-    NULL
+    .class = JSCLASS_BOOLEAN,
+    .call  = Bool_value,
 };
 
 static HRESULT BoolConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

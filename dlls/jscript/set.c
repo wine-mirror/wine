@@ -401,25 +401,19 @@ static const builtin_prop_t Map_props[] = {
 };
 
 static const builtin_info_t Map_prototype_info = {
-    JSCLASS_OBJECT,
-    Map_value,
-    ARRAY_SIZE(Map_prototype_props),
-    Map_prototype_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_OBJECT,
+    .call      = Map_value,
+    .props_cnt = ARRAY_SIZE(Map_prototype_props),
+    .props     = Map_prototype_props,
 };
 
 static const builtin_info_t Map_info = {
-    JSCLASS_MAP,
-    Map_value,
-    ARRAY_SIZE(Map_props),
-    Map_props,
-    Map_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Map_gc_traverse
+    .class       = JSCLASS_MAP,
+    .call        = Map_value,
+    .props_cnt   = ARRAY_SIZE(Map_props),
+    .props       = Map_props,
+    .destructor  = Map_destructor,
+    .gc_traverse = Map_gc_traverse,
 };
 
 static HRESULT Map_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -560,25 +554,19 @@ static const builtin_prop_t Set_prototype_props[] = {
 };
 
 static const builtin_info_t Set_prototype_info = {
-    JSCLASS_OBJECT,
-    Set_value,
-    ARRAY_SIZE(Set_prototype_props),
-    Set_prototype_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_OBJECT,
+    .call      = Set_value,
+    .props_cnt = ARRAY_SIZE(Set_prototype_props),
+    .props     = Set_prototype_props,
 };
 
 static const builtin_info_t Set_info = {
-    JSCLASS_SET,
-    Set_value,
-    ARRAY_SIZE(Map_props),
-    Map_props,
-    Map_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    Map_gc_traverse
+    .class       = JSCLASS_SET,
+    .call        = Set_value,
+    .props_cnt   = ARRAY_SIZE(Map_props),
+    .props       = Map_props,
+    .destructor  = Map_destructor,
+    .gc_traverse = Map_gc_traverse,
 };
 
 static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -857,25 +845,17 @@ static const builtin_prop_t WeakMap_prototype_props[] = {
 };
 
 static const builtin_info_t WeakMap_prototype_info = {
-    JSCLASS_OBJECT,
-    WeakMap_value,
-    ARRAY_SIZE(WeakMap_prototype_props),
-    WeakMap_prototype_props,
-    NULL,
-    NULL
+    .class     = JSCLASS_OBJECT,
+    .call      = WeakMap_value,
+    .props_cnt = ARRAY_SIZE(WeakMap_prototype_props),
+    .props     = WeakMap_prototype_props,
 };
 
 static const builtin_info_t WeakMap_info = {
-    JSCLASS_WEAKMAP,
-    WeakMap_value,
-    0,
-    NULL,
-    WeakMap_destructor,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    WeakMap_gc_traverse
+    .class       = JSCLASS_WEAKMAP,
+    .call        = WeakMap_value,
+    .destructor  = WeakMap_destructor,
+    .gc_traverse = WeakMap_gc_traverse,
 };
 
 static HRESULT WeakMap_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

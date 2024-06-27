@@ -546,15 +546,11 @@ static HRESULT scope_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, 
 
 static const builtin_info_t scope_info = {
     JSCLASS_NONE,
-    NULL,
-    0,
-    NULL,
-    scope_destructor,
-    NULL,
-    scope_idx_length,
-    scope_idx_get,
-    scope_idx_put,
-    scope_gc_traverse
+    .destructor  = scope_destructor,
+    .idx_length  = scope_idx_length,
+    .idx_get     = scope_idx_get,
+    .idx_put     = scope_idx_put,
+    .gc_traverse = scope_gc_traverse
 };
 
 static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, IDispatch *obj, scope_chain_t **ret)
