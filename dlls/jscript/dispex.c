@@ -1111,7 +1111,7 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
     {
         for (i = This->num_funcs; i--;)
             release_bytecode(This->funcs[i].code->bytecode);
-        IDispatchEx_Release(&This->jsdisp->IDispatchEx_iface);
+        jsdisp_release(This->jsdisp);
         free(This->funcs);
         free(This->vars);
         free(This);
@@ -1850,7 +1850,7 @@ static HRESULT WINAPI DispatchEx_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
     }
 
     /* Keep a ref to the props and their names */
-    IDispatchEx_AddRef(&This->IDispatchEx_iface);
+    jsdisp_addref(This);
 
     *ppTInfo = &typeinfo->ITypeInfo_iface;
     return S_OK;
