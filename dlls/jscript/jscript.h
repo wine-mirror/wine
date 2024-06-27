@@ -28,6 +28,7 @@
 #include "ole2.h"
 #include "dispex.h"
 #include "activscp.h"
+#include "jsdisp.h"
 
 #include "resource.h"
 
@@ -79,9 +80,6 @@ HRESULT get_dispatch_typeinfo(ITypeInfo**);
 #define PROPF_METHOD        0x0100
 #define PROPF_CONSTR        0x0200
 
-#define PROPF_ENUMERABLE    0x0400
-#define PROPF_WRITABLE      0x0800
-#define PROPF_CONFIGURABLE  0x1000
 #define PROPF_ALL           (PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE)
 
 #define PROPF_VERSION_MASK  0x01ff0000
@@ -178,12 +176,6 @@ typedef struct {
     builtin_setter_t setter;
 } builtin_prop_t;
 
-struct property_info
-{
-    UINT32 id;
-    UINT32 flags;
-};
-
 typedef struct {
     jsclass_t class;
     builtin_invoke_t call;
@@ -201,7 +193,7 @@ typedef struct {
 } builtin_info_t;
 
 struct jsdisp_t {
-    IDispatchEx IDispatchEx_iface;
+    IWineJSDispatch IWineJSDispatch_iface;
 
     LONG ref;
 
@@ -222,12 +214,12 @@ struct jsdisp_t {
 
 static inline IDispatch *to_disp(jsdisp_t *jsdisp)
 {
-    return (IDispatch*)&jsdisp->IDispatchEx_iface;
+    return (IDispatch *)&jsdisp->IWineJSDispatch_iface;
 }
 
 static inline IDispatchEx *to_dispex(jsdisp_t *jsdisp)
 {
-    return &jsdisp->IDispatchEx_iface;
+    return (IDispatchEx *)&jsdisp->IWineJSDispatch_iface;
 }
 
 jsdisp_t *as_jsdisp(IDispatch*);

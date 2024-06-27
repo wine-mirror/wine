@@ -1,0 +1,42 @@
+/*
+ * Copyright 2024 Gabriel Ivăncescu for CodeWeavers
+ * Copyright 2024 Jacek Caban for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep header
+
+import "dispex.idl";
+
+struct property_info
+{
+    UINT32 id;
+    UINT32 flags;
+};
+
+const unsigned int PROPF_ENUMERABLE   = 0x0400;
+const unsigned int PROPF_WRITABLE     = 0x0800;
+const unsigned int PROPF_CONFIGURABLE = 0x1000;
+
+[
+    object,
+    uuid(d359f2fe-5531-741b-a41a-5cf92edc971c),
+    local
+]
+interface IWineJSDispatch : IDispatchEx
+{
+    void Free();
+}
