@@ -476,7 +476,6 @@ static void scope_destructor(jsdisp_t *dispex)
 
     if(scope->obj)
         IDispatch_Release(scope->obj);
-    free(scope);
 }
 
 static unsigned scope_idx_length(jsdisp_t *dispex)

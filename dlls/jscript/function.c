@@ -115,8 +115,6 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
 
     if(arguments->scope)
         scope_release(arguments->scope);
-
-    free(arguments);
 }
 
 static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
@@ -580,7 +578,6 @@ static void Function_destructor(jsdisp_t *dispex)
 {
     FunctionInstance *function = function_from_jsdisp(dispex);
     function->vtbl->destructor(function);
-    free(function);
 }
 
 static HRESULT Function_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)

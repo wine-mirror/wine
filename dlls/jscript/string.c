@@ -1499,7 +1499,6 @@ static void String_destructor(jsdisp_t *dispex)
     StringInstance *This = string_from_jsdisp(dispex);
 
     jsstr_release(This->str);
-    free(This);
 }
 
 static unsigned String_idx_length(jsdisp_t *jsdisp)

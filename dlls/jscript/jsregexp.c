@@ -550,7 +550,6 @@ static void RegExp_destructor(jsdisp_t *dispex)
         regexp_destroy(This->jsregexp);
     jsval_release(This->last_index_val);
     jsstr_release(This->str);
-    free(This);
 }
 
 static HRESULT RegExp_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)

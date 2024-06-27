@@ -2263,8 +2263,7 @@ void jsdisp_free(jsdisp_t *obj)
 
     if(obj->builtin_info->destructor)
         obj->builtin_info->destructor(obj);
-    else
-        free(obj);
+    free(obj);
 }
 
 #ifdef TRACE_REFCNT

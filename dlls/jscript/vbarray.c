@@ -235,7 +235,6 @@ static void VBArray_destructor(jsdisp_t *dispex)
     VBArrayInstance *vbarray = vbarray_from_jsdisp(dispex);
 
     SafeArrayDestroy(vbarray->safearray);
-    free(vbarray);
 }
 
 static const builtin_prop_t VBArray_props[] = {

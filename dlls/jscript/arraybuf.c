@@ -592,7 +592,6 @@ static void DataView_destructor(jsdisp_t *dispex)
     DataViewInstance *view = dataview_from_jsdisp(dispex);
     if(view->buffer)
         jsdisp_release(&view->buffer->dispex);
-    free(view);
 }
 
 static HRESULT DataView_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)

@@ -87,7 +87,6 @@ static void Enumerator_destructor(jsdisp_t *dispex)
     if(This->enumvar)
         IEnumVARIANT_Release(This->enumvar);
     jsval_release(This->item);
-    free(dispex);
 }
 
 static HRESULT Enumerator_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)

@@ -359,8 +359,6 @@ static void Map_destructor(jsdisp_t *dispex)
         assert(!entry->deleted);
         release_map_entry(entry);
     }
-
-    free(map);
 }
 
 static HRESULT Map_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
@@ -806,8 +804,6 @@ static void WeakMap_destructor(jsdisp_t *dispex)
 
     while(weakmap->map.root)
         remove_weakmap_entry(RB_ENTRY_VALUE(weakmap->map.root, struct weakmap_entry, entry));
-
-    free(weakmap);
 }
 
 static HRESULT WeakMap_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
